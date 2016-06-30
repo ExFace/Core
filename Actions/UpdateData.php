@@ -1,0 +1,59 @@
+<?php namespace exface\Apps\exface\Core\Actions;
+
+use exface\Core\Interfaces\Actions\iUpdateData;
+use exface\Core\Interfaces\Actions\iCanBeUndone;
+use exface\Core\Exceptions\ActionRuntimeException;
+
+class UpdateData extends SaveData implements iUpdateData, iCanBeUndone {
+	private $use_context_filters = false;
+	
+	protected function perform(){
+		$data_sheet = $this->get_input_data_sheet();
+		if (!$data_sheet->get_uid_column()){
+			foreach ($this->get_app()->exface()->context()->get_scope_window()->get_filter_context()->get_conditions($data_sheet->get_meta_object()) as $cond){
+				$data_sheet->get_filters()->add_condition($cond);
+			}
+		}
+		
+		if ($this->get_use_context_filters()){
+			if ($conditions = $this->exface()->context()->get_scope_window()->get_filter_context()->get_conditions($data_sheet->get_meta_object())){
+				foreach ($conditions as $condition){
+					$data_sheet->get_filters()->add_condition($condition);
+				}
+			}
+		}
+		
+		// Create a backup of the current data for this data sheet (it can be used for undo operations later)
+		if ($data_sheet->count_rows() && $data_sheet->get_uid_column()){
+			$backup = $data_sheet->copy();
+			$backup->add_filter_from_column_values($backup->get_uid_column());
+			$backup->remove_rows()->data_read();
+			$this->set_undo_data_sheet($backup);
+		} else {
+			$this->set_undoable(false);
+		}
+		
+		// TODO Check here, if the last edit timestamp had changend!
+		$this->set_affected_rows($data_sheet->data_update());
+		$this->set_result_data_sheet($data_sheet);
+		$this->set_result_message($this->get_affected_rows() . ' entries updated');
+	}
+	
+	public function undo(){
+		if (!$data_sheet = $this->get_undo_data_sheet()){
+			throw new ActionRuntimeException('Cannot undo action "' . $this->get_alias() . '": Failed to load history for this action!');
+		}
+		$data_sheet->data_update();
+		return $data_sheet;
+	}
+	
+	public function get_use_context_filters() {
+		return $this->use_context_filters;
+	}
+	
+	public function set_use_context_filters($value) {
+		$this->use_context_filters = $value;
+		return $this;
+	}  
+}
+?>
