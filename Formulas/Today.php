@@ -1,4 +1,4 @@
-<?php namespace exface\Apps\exface\Core\Formulas;
+<?php namespace exface\Core\Formulas;
 
 class Today extends \exface\Core\Model\Formula {
 	

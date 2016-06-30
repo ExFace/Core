@@ -1,5 +1,5 @@
 <?php
-namespace exface\Widgets;
+namespace exface\Core\Widgets;
 use exface\Core\Exceptions\UiWidgetConfigException;
 use exface\Core\Factories\WidgetFactory;
 /**
@@ -50,7 +50,7 @@ class Tabs extends Container {
 	 * Adding widgets to Tabs will automatically produce Tab widgets for each added widget, unless it already is a tab. This
 	 * way, a short an understandable notation of tabs is possible: simply add any type of widget to the tabs array and 
 	 * see them be displayed in tabs.
-	 * @see \exface\Widgets\Container::set_widgets()
+	 * @see \exface\Core\Widgets\Container::set_widgets()
 	 */
 	public function set_widgets(array $widget_or_uxon_array){
 		$widgets = array();

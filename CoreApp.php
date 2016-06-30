@@ -1,5 +1,5 @@
 <?php
-namespace exface\Apps\exface\Core;
+namespace exface\Core;
 class coreApp extends \exface\Core\AbstractApp {
 	
 }

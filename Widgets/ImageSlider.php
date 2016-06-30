@@ -1,5 +1,5 @@
 <?php
-namespace exface\Widgets;
+namespace exface\Core\Widgets;
 class ImageSlider extends DataList {
 	private $image_url_column_id = null;
 	private $image_title_column_id = null;

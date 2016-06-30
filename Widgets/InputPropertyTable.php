@@ -1,5 +1,5 @@
 <?php
-namespace exface\Widgets;
+namespace exface\Core\Widgets;
 class InputPropertyTable extends Input {
 	 private $allow_add_properties = true;
 	 private $allow_remove_properties = true;

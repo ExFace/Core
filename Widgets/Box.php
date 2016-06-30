@@ -1,5 +1,5 @@
 <?php
-namespace exface\Widgets;
+namespace exface\Core\Widgets;
 class Box extends Panel {
 	
 }

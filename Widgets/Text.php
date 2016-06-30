@@ -1,5 +1,5 @@
 <?php
-namespace exface\Widgets;
+namespace exface\Core\Widgets;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\Interfaces\Widgets\iHaveValue;
 use exface\Core\Interfaces\Widgets\iShowText;
@@ -48,7 +48,7 @@ class Text extends AbstractWidget implements iShowSingleAttribute, iHaveValue, i
 	
 	/**
 	 * {@inheritDoc}
-	 * @see \exface\Widgets\AbstractWidget::prepare_data_sheet_to_read()
+	 * @see \exface\Core\Widgets\AbstractWidget::prepare_data_sheet_to_read()
 	 */
 	public function prepare_data_sheet_to_read(DataSheetInterface $data_sheet = null){
 		$data_sheet = parent::prepare_data_sheet_to_read($data_sheet);
@@ -105,7 +105,7 @@ class Text extends AbstractWidget implements iShowSingleAttribute, iHaveValue, i
 	
 	/**
 	 * {@inheritDoc}
-	 * @see \exface\Widgets\AbstractWidget::prepare_data_sheet_to_prefill()
+	 * @see \exface\Core\Widgets\AbstractWidget::prepare_data_sheet_to_prefill()
 	 */
 	public function prepare_data_sheet_to_prefill(DataSheetInterface $data_sheet = null){
 		// Do not request any prefill data, if the value is already set explicitly (e.g. a fixed value)
@@ -117,7 +117,7 @@ class Text extends AbstractWidget implements iShowSingleAttribute, iHaveValue, i
 	
 	/**
 	 * Prefills the input with a value taken from the corresponding column of a given data sheet
-	 * @see \exface\Widgets\AbstractWidget::prefill()
+	 * @see \exface\Core\Widgets\AbstractWidget::prefill()
 	 */
 	public function prefill(\exface\Core\Interfaces\DataSheets\DataSheetInterface $data_sheet){
 		parent::prefill($data_sheet);

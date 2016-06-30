@@ -1,5 +1,5 @@
 <?php
-namespace exface\Widgets;
+namespace exface\Core\Widgets;
 class Form extends Panel {
 	private $method = 'POST'; // FIXME DEPRECATED should be moved to the templates
 	private $submit_action = ''; // FIXME DEPRECATED should depend on the button pressed (buttons have own actions!)

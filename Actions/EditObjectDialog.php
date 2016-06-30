@@ -1,7 +1,7 @@
-<?php namespace exface\Apps\exface\Core\Actions;
+<?php namespace exface\Core\Actions;
 
-use exface\Widgets\AbstractWidget;
-use exface\Widgets\Dialog;
+use exface\Core\Widgets\AbstractWidget;
+use exface\Core\Widgets\Dialog;
 use exface\Core\Exceptions\MetaModelAttributeNotFoundException;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Factories\WidgetFactory;
@@ -62,12 +62,12 @@ class EditObjectDialog extends ShowDialog {
 	
 	/**
 	 * Creates the dialog widget. Just the dialog itself, no contents!
-	 * @return \exface\Widgets\exfDialog
+	 * @return \exface\Core\Widgets\exfDialog
 	 */
 	protected function create_dialog_widget(AbstractWidget $contained_widget = NULL){
 		$dialog = parent::create_dialog_widget();
 		// TODO add save button via followup actions in the init() method instead of the button directly
-		/* @var $save_button \exface\Widgets\Button */
+		/* @var $save_button \exface\Core\Widgets\Button */
 		$save_button = $this->get_called_on_ui_page()->create_widget('DialogButton', $dialog);
 		$save_button->set_action_alias($this->get_save_action());
 		$save_button->set_caption("Speichern");

@@ -1,4 +1,4 @@
-<?php namespace exface\Widgets;
+<?php namespace exface\Core\Widgets;
 
 use exface\Core\Interfaces\Widgets\iHaveIcon;
 use exface\Core\Interfaces\Actions\ActionInterface;
@@ -124,7 +124,7 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iHaveC
 	 * Buttons allow to set action options as an options array or directly as an option of the button itself.
 	 * In the latter case the option's name must be prefixed by "action_": to set a action's property
 	 * called "script" simply add "action_script": XXX to the button.
-	 * @see \exface\Widgets\AbstractWidget::import_uxon_object()
+	 * @see \exface\Core\Widgets\AbstractWidget::import_uxon_object()
 	 */
 	public function import_uxon_object(\stdClass $source) {
 		// If there are button attributes starting with "action_", these are just shortcuts for
@@ -215,7 +215,7 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iHaveC
 	/**
 	 * The Button may have a child widget, if the action it triggers shows a widget.
 	 * NOTE: the widget description will only be returned, if the widget is explicitly defined, not merely by a link to another resource.
-	 * @see \exface\Widgets\AbstractWidget::get_children()
+	 * @see \exface\Core\Widgets\AbstractWidget::get_children()
 	 */
 	public function get_children(){
 		$children = array();

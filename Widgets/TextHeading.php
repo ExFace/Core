@@ -1,5 +1,5 @@
 <?php
-namespace exface\Widgets;
+namespace exface\Core\Widgets;
 
 /**
  * The TextHeading widget can be used for headings. In most HTML-based templates it will get mapped to <h1></h1> or similar.

@@ -1,4 +1,4 @@
-<?php namespace exface\Widgets;
+<?php namespace exface\Core\Widgets;
 
 use exface\Core\Interfaces\Widgets\iHaveColumns;
 use exface\Core\Interfaces\Widgets\iHaveButtons;
@@ -101,7 +101,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 
 	/**
 	 * {@inheritDoc}
-	 * @see \exface\Widgets\AbstractWidget::prepare_data_sheet_to_read()
+	 * @see \exface\Core\Widgets\AbstractWidget::prepare_data_sheet_to_read()
 	 */
 	public function prepare_data_sheet_to_read(DataSheetInterface $data_sheet = null){
 		$data_sheet = parent::prepare_data_sheet_to_read($data_sheet);
@@ -137,7 +137,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 	 * To prefill a dataSet we need to filter it's results, so that they are related to the object we prefill
 	 * with. Thus, the prefill data needs to contain the UID of that object.
 	 * 
-	 * @see \exface\Widgets\AbstractWidget::prepare_data_sheet_to_read()
+	 * @see \exface\Core\Widgets\AbstractWidget::prepare_data_sheet_to_read()
 	 */
 	public function prepare_data_sheet_to_prefill(DataSheetInterface $data_sheet = null){
 		$data_sheet = parent::prepare_data_sheet_to_prefill($data_sheet);
@@ -257,7 +257,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 	/**
 	 * Returns the first column with a matching attribute alias.
 	 * @param string $alias_with_relation_path
-	 * @return \exface\Widgets\DataColumn|boolean
+	 * @return \exface\Core\Widgets\DataColumn|boolean
 	 */
 	public function get_column_by_attribute_alias($alias_with_relation_path){
 		foreach ($this->get_columns() as $col){
@@ -279,7 +279,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 	
 	/**
 	 * Returns an array with columns containing system attributes
-	 * @return \exface\Widgets\DataColumn[]
+	 * @return \exface\Core\Widgets\DataColumn[]
 	 */
 	function get_columns_with_system_attributes(){
 		$result = array();
@@ -416,7 +416,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 	/**
 	 * Returns the filter widget matching the given widget id
 	 * @param string $filter_widget_id
-	 * @return \exface\Widgets\Filter
+	 * @return \exface\Core\Widgets\Filter
 	 */
 	public function get_filter($filter_widget_id) {
 		foreach ($this->get_filters() as $fltr){
@@ -428,7 +428,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 	
 	/**
 	 * Returns all filters, that have values and thus will be applied to the result
-	 * @return \exface\Widgets\AbstractWidget[] array of widgets
+	 * @return \exface\Core\Widgets\AbstractWidget[] array of widgets
 	 */
 	public function get_filters_applied(){
 		$result = array();
@@ -471,7 +471,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 		if (!$attribute_alias) throw new UiWidgetException('Cannot create a filter for an empty attribute alias in widget "' . $this->get_id() . '"!');
 		if (!$attr = $this->get_meta_object()->get_attribute($attribute_alias)) throw new UiWidgetException('Cannot create a filter for attribute alias "' . $attribute_alias . '" in widget "' . $this->get_id() . '": attribute not found for object "' . $this->get_meta_object()->get_alias_with_namespace() . '"!');
 			
-		// determine the widget for the filte
+		// determine the widget for the filte
 		$uxon = $attr->get_default_widget_uxon()->copy();
 		if ($uxon_object){
 			$uxon = $uxon->extend(UxonObject::from_stdClass($uxon_object));
@@ -496,7 +496,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 	}
 	
 	/**
-	 * @see \exface\Widgets\AbstractWidget::prefill()
+	 * @see \exface\Core\Widgets\AbstractWidget::prefill()
 	 */
 	public function prefill(\exface\Core\Interfaces\DataSheets\DataSheetInterface $data_sheet){
 		// First, take care of basic stuff like set_prefill_data()
@@ -547,7 +547,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 	/**
 	 * Creates and adds a filter based on the given relation
 	 * @param relation $relation
-	 * @return \exface\Widgets\AbstractWidget
+	 * @return \exface\Core\Widgets\AbstractWidget
 	 */
 	protected function create_filter_from_relation(Relation $relation){
 		$filter_widget = $this->find_filter_by_relation($relation);
@@ -603,7 +603,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 	 * Returns the first filter based on the given object or it's attributes
 	 * TODO Make the method return an array like find_filters_by_attribute() does
 	 * @param Object $object
-	 * @return \exface\Widgets\Filter|boolean
+	 * @return \exface\Core\Widgets\Filter|boolean
 	 */
 	protected function find_filters_by_object(Object $object){
 		$result = array();
@@ -626,8 +626,8 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 	 * @param boolean $include_in_quick_search 
 	 * @see \exface\Core\Interfaces\Widgets\iHaveFilters::add_filter()
 	 */
-	public function add_filter(\exface\Widgets\AbstractWidget $filter_widget, $include_in_quick_search = false){
-		if ($filter_widget instanceof \exface\Widgets\Filter){
+	public function add_filter(\exface\Core\Widgets\AbstractWidget $filter_widget, $include_in_quick_search = false){
+		if ($filter_widget instanceof \exface\Core\Widgets\Filter){
 			$filter = $filter_widget;
 		} else {
 			$filter = $this->get_page()->create_widget('Filter', $this);
@@ -960,7 +960,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 	/**
 	 * 
 	 * @param WidgetLinkInterface|UxonObject|string $value
-	 * @return \exface\Widgets\Data
+	 * @return \exface\Core\Widgets\Data
 	 */
 	public function set_refresh_with_widget($widget_link_or_uxon_or_string) {
 		$exface = $this->exface();

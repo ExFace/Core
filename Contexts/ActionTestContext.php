@@ -147,7 +147,7 @@ class ActionTestContext extends AbstractContext {
 				}
 				
 				// Add performance monitor data
-				/* @var $monitor_app \exface\Apps\exface\PerformanceMonitor\PerformanceMonitorApp */
+				/* @var $monitor_app \exface\PerformanceMonitor\PerformanceMonitorApp */
 				if ($monitor_app = $this->exface()->get_app('exface.PerformanceMonitor')){
 					$duration = $monitor_app->get_monitor()->get_action_duration($action);
 					$data_sheet->set_cell_value('DURATION_CORRECT', 0, $duration);

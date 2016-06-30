@@ -1,5 +1,5 @@
 <?php
-namespace exface\Apps\exface\Core\Actions;
+namespace exface\Core\Actions;
 class showHeaders extends ShowWidget {
 	public function get_result_output(){
 		$this->prefill_widget();

@@ -1,4 +1,4 @@
-<?php namespace exface\Apps\exface\Core\Formulas;
+<?php namespace exface\Core\Formulas;
 
 /**
  * Sums all its arguments. Analogous to Excel's SUM() function.

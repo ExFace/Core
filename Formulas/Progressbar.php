@@ -1,4 +1,4 @@
-<?php namespace exface\Apps\exface\Core\Formulas;
+<?php namespace exface\Core\Formulas;
 
 /**
  * Creates an HTML-Progressbar taking the text, value and a max value as parameters.

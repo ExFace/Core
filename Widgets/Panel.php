@@ -1,5 +1,5 @@
 <?php
-namespace exface\Widgets;
+namespace exface\Core\Widgets;
 use exface\Core\Interfaces\Widgets\iHaveButtons;
 use exface\Core\Interfaces\Widgets\iCollapsible;
 use exface\Core\Interfaces\Widgets\iHaveIcon;
@@ -132,7 +132,7 @@ class Panel extends Container implements iSupportLazyLoading, iHaveButtons, iHav
 	/**
 	 * 
 	 * {@inheritDoc}
-	 * @see \exface\Widgets\Container::get_children()
+	 * @see \exface\Core\Widgets\Container::get_children()
 	 */
 	public function get_children(){		
 		return array_merge(parent::get_children(), $this->get_buttons());

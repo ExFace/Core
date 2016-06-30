@@ -1,5 +1,5 @@
 <?php
-namespace exface\Widgets;
+namespace exface\Core\Widgets;
 /**
  * Dropdown menu to select from. Each menu item has a value and a text. One or more items can be selected.
  * Selects should be used for small data sets, as not all frameworks will support searching for values or 

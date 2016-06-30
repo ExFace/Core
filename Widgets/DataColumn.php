@@ -1,4 +1,4 @@
-<?php namespace exface\Widgets;
+<?php namespace exface\Core\Widgets;
 
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\Model\DataTypes\AbstractDataType;
@@ -65,7 +65,7 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
 	
 	/**
 	 * Returns the editor widget instance for this column 
-	 * @return \exface\Widgets\AbstractWidget
+	 * @return \exface\Core\Widgets\AbstractWidget
 	 */
 	public function get_editor() {
 		return $this->editor;
@@ -198,7 +198,7 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
 	 * {@inheritDoc}
 	 * By default the caption of a DataColumn will be set to the name of the displayed attribute or the name of the first attribute
 	 * required for the formula (if the contents of the column is a formula).
-	 * @see \exface\Widgets\AbstractWidget::get_caption()
+	 * @see \exface\Core\Widgets\AbstractWidget::get_caption()
 	 */
 	public function get_caption(){
 		if (!parent::get_caption()){

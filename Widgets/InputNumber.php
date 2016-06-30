@@ -1,5 +1,5 @@
 <?php
-namespace exface\Widgets;
+namespace exface\Core\Widgets;
 class InputNumber extends Input {
 	private $precision = 3;
 	private $min_value = false;

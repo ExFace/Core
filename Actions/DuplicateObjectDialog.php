@@ -1,5 +1,5 @@
 <?php
-namespace exface\Apps\exface\Core\Actions;
+namespace exface\Core\Actions;
 class DuplicateObjectDialog extends EditObjectDialog {
 	
 	protected function init(){
@@ -14,7 +14,7 @@ class DuplicateObjectDialog extends EditObjectDialog {
 	 * In the case of the dublicate-action we need to remove the UID column from the data sheet to ensure, that the
 	 * duplicated object will get new ids.
 	 * 
-	 * @see \exface\Apps\exface\Core\Actions\ShowWidget::get_prefill_data_sheet()
+	 * @see \exface\Core\Actions\ShowWidget::get_prefill_data_sheet()
 	 */
 	protected function prefill_widget(){
 		$data_sheet = $this->get_input_data_sheet();

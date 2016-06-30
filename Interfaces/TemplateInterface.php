@@ -2,12 +2,12 @@
 
 interface TemplateInterface extends ExfaceClassInterface, AliasInterface {
 	
-	function draw(\exface\Widgets\AbstractWidget $widget);
+	function draw(\exface\Core\Widgets\AbstractWidget $widget);
 	/**
 	 * Generates the declaration of the JavaScript sources
 	 * @return string
 	 */
-	function draw_headers(\exface\Widgets\AbstractWidget $widget);
+	function draw_headers(\exface\Core\Widgets\AbstractWidget $widget);
 	
 	/**
 	 * @return string

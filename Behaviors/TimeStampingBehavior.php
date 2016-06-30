@@ -1,11 +1,11 @@
-<?php namespace exface\Apps\exface\Core\Behaviors;
+<?php namespace exface\Core\Behaviors;
 
 use exface\Core\AbstractBehavior;
 use exface\Core\Model\Attribute;
 use exface\Core\Events\DataSheetEvent;
 use exface\Core\Exceptions\MetaModelBehaviorException;
 use exface\Core\Interfaces\Actions\iUndoActions;
-use exface\Apps\exface\Core\Exceptions\TimeStampingBehaviorError;
+use exface\Core\Exceptions\TimeStampingBehaviorError;
 
 class TimeStampingBehavior extends AbstractBehavior {
 	private $created_on_attribute_alias = null;

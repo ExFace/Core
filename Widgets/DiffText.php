@@ -1,5 +1,5 @@
 <?php
-namespace exface\Widgets;
+namespace exface\Core\Widgets;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Exceptions\UiWidgetException;
 /**
@@ -70,7 +70,7 @@ class DiffText extends AbstractWidget {
 	
 	/**
 	 * {@inheritDoc}
-	 * @see \exface\Widgets\AbstractWidget::prepare_data_sheet_to_read()
+	 * @see \exface\Core\Widgets\AbstractWidget::prepare_data_sheet_to_read()
 	 */
 	public function prepare_data_sheet_to_read(DataSheetInterface $data_sheet = null){
 		$data_sheet = parent::prepare_data_sheet_to_read($data_sheet);
@@ -91,7 +91,7 @@ class DiffText extends AbstractWidget {
 	
 	/**
 	 * {@inheritDoc}
-	 * @see \exface\Widgets\AbstractWidget::prepare_data_sheet_to_prefill()
+	 * @see \exface\Core\Widgets\AbstractWidget::prepare_data_sheet_to_prefill()
 	 */
 	public function prepare_data_sheet_to_prefill(DataSheetInterface $data_sheet = null){
 		// Do not request any prefill data, if the values are already set explicitly (e.g. a fixed value)

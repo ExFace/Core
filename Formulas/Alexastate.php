@@ -1,4 +1,4 @@
-<?php namespace exface\Apps\exface\Core\Formulas;
+<?php namespace exface\Core\Formulas;
 
 /**
  * Creates an HTML-Progressbar for object states in alexa.

@@ -1,5 +1,5 @@
 <?php
-namespace exface\Widgets;
+namespace exface\Core\Widgets;
 use exface\Core\Exceptions\UxonParserWarning;
 /**
  * A message is a special type of text widget, which is meant to communicate some information to the user. There are different types of messages: warnings,

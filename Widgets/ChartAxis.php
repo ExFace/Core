@@ -1,5 +1,5 @@
 <?php
-namespace exface\Widgets;
+namespace exface\Core\Widgets;
 class ChartAxis extends AbstractWidget {
 	private $number = null;
 	private $dimension = null;
@@ -111,7 +111,7 @@ class ChartAxis extends AbstractWidget {
 	/**
 	 * The caption for an axis can either be set directly, or will be inherited from the used data column
 	 * {@inheritDoc}
-	 * @see \exface\Widgets\AbstractWidget::get_caption()
+	 * @see \exface\Core\Widgets\AbstractWidget::get_caption()
 	 */
 	public function get_caption(){
 		if (is_null(parent::get_caption())){

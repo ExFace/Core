@@ -1,4 +1,4 @@
-<?php namespace exface\Apps\exface\Core\Formulas;
+<?php namespace exface\Core\Formulas;
 
 /**
  * Replaces a set of characters with another. E.g. SUBSTITUTE('asdf', 'df', 'as') = 'asas'

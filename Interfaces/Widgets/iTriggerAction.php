@@ -1,6 +1,6 @@
 <?php
 namespace exface\Core\Interfaces\Widgets;
-use exface\Widgets\AbstractWidget;
+use exface\Core\Widgets\AbstractWidget;
 use exface\Core\Interfaces\Actions\ActionInterface;
 interface iTriggerAction {
 	/**

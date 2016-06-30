@@ -1,4 +1,4 @@
-<?php namespace exface\Apps\exface\Core\Actions;
+<?php namespace exface\Core\Actions;
 
 /**
  * This action is equivalent to ShowWidget except it requires at least one selected row. To linke to another page or a widget

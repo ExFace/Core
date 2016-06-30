@@ -1,5 +1,5 @@
 <?php
-namespace exface\Widgets;
+namespace exface\Core\Widgets;
 use exface\Core\Interfaces\Widgets\iHaveTopToolbar;
 use exface\Core\Interfaces\Widgets\iHaveBottomToolbar;
 

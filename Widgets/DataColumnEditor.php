@@ -1,5 +1,5 @@
 <?php
-namespace exface\Widgets;
+namespace exface\Core\Widgets;
 use exface\Core\Interfaces\Widgets\iHaveChildren;
 /**
  * The DataColumnEditor is a wrapper widget for inputs and other widget types, that enables them to be used as in-table-editors. It encapsulates

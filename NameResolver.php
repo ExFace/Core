@@ -36,7 +36,7 @@ class NameResolver extends AbstractExfaceClass implements NameResolverInterface 
 	const OBJECT_TYPE_TEMPLATE = 'Template';
 	const CLASS_NAMESPACE_SEPARATOR = '\\';
 	const NAMESPACE_SEPARATOR = '.';
-	const APPS_NAMESPACE = '\\exface\\Apps\\';
+	const APPS_NAMESPACE = '\\';
 	const APPS_DIRECTORY = 'Apps';
 	
 	private $object_type = null;

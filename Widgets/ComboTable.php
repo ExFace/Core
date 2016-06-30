@@ -1,4 +1,4 @@
-<?php namespace exface\Widgets;
+<?php namespace exface\Core\Widgets;
 
 use exface\Core\Exceptions\UxonParserError;
 use exface\Core\Interfaces\Widgets\iHaveChildren;
@@ -66,7 +66,7 @@ class ComboTable extends InputCombo implements iHaveChildren {
 	
 	/**
 	 * Returns the DataTable, that is used for autosuggesting in a ComboTable or false if a DataTable cannot be created
-	 * @return \exface\Widgets\DataTable|boolean
+	 * @return \exface\Core\Widgets\DataTable|boolean
 	 */
 	public function get_table(){
 		// If the data table was not specified explicitly, attempt to create one from the attirbute_alias
@@ -84,7 +84,7 @@ class ComboTable extends InputCombo implements iHaveChildren {
 		}
 			
 		// Now, that we know, the attribute of this widget is a relation, we can create a default DataTable for the related object
-		/* @var $table \exface\Widgets\DataTable */
+		/* @var $table \exface\Core\Widgets\DataTable */
 		$table = $this->get_page()->create_widget('DataTable', $this);
 		$table->set_meta_object_id($this->get_table_object()->get_id());
 		$table->add_columns_for_default_display_attributes();
@@ -147,7 +147,7 @@ class ComboTable extends InputCombo implements iHaveChildren {
 	
 	/**
 	 * Returns the column of the DataTable, where the text displayed in the combo will come from
-	 * @return exface\Widgets\DataColumn
+	 * @return exface\Core\Widgets\DataColumn
 	 */
 	public function get_text_column(){
 		return $this->get_table()->get_column($this->get_text_column_id());
@@ -164,7 +164,7 @@ class ComboTable extends InputCombo implements iHaveChildren {
 	
 	/**
 	 * Returns the column of the DataTable, where the value of the combo will come from
-	 * @return exface\Widgets\DataColumn
+	 * @return exface\Core\Widgets\DataColumn
 	 */
 	public function get_value_column(){
 		return $this->get_table()->get_column($this->get_value_column_id());
@@ -172,7 +172,7 @@ class ComboTable extends InputCombo implements iHaveChildren {
 	
 	/**
 	 * Prefills a ComboTable with the value it represents and the corresponding text. 
-	 * @see \exface\Widgets\Text::prefill()
+	 * @see \exface\Core\Widgets\Text::prefill()
 	 */
 	public function prefill(\exface\Core\Interfaces\DataSheets\DataSheetInterface $data_sheet, $relation_path_to_prefill_object=''){
 		// Do not do anything, if the value is already set explicitly (e.g. a fixed value)
@@ -230,7 +230,7 @@ class ComboTable extends InputCombo implements iHaveChildren {
 	 * 
 	 * To prefill a combo, we need it's value and the corresponding text.
 	 * 
-	 * @see \exface\Widgets\AbstractWidget::prepare_data_sheet_to_prefill()
+	 * @see \exface\Core\Widgets\AbstractWidget::prepare_data_sheet_to_prefill()
 	 */
 	public function prepare_data_sheet_to_prefill(DataSheetInterface $data_sheet = null){
 		$data_sheet = parent::prepare_data_sheet_to_prefill($data_sheet);
@@ -270,7 +270,7 @@ class ComboTable extends InputCombo implements iHaveChildren {
 	/**
 	 * Since the ComboTable contains a DataTable widget, we need to return it as a child widget to allow ajax data loaders to
 	 * find the table a load data for it. This does not make the ComboTable a container though!
-	 * @see \exface\Widgets\AbstractWidget::get_children()
+	 * @see \exface\Core\Widgets\AbstractWidget::get_children()
 	 */
 	public function get_children(){
 		return array($this->get_table());

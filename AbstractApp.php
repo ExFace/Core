@@ -20,7 +20,7 @@ abstract class AbstractApp implements AppInterface {
 	 */
 	public function __construct(\exface\exface &$exface){
 		$this->exface = $exface;
-		// Create an alias from the class (e.g. "exface.core" from "exface\Apps\exface\Core\Core\CoreApp")
+		// Create an alias from the class (e.g. "exface.core" from "exface\Core\Core\CoreApp")
 		$this->alias_with_namespace = str_replace(array($this->get_apps_class_namespace(), NameResolver::CLASS_NAMESPACE_SEPARATOR), array('', NameResolver::NAMESPACE_SEPARATOR), substr(get_class($this), 0, strrpos(get_class($this), NameResolver::CLASS_NAMESPACE_SEPARATOR)));
 		$this->init();
 	}
@@ -39,7 +39,7 @@ abstract class AbstractApp implements AppInterface {
 	 * @param unknown $action_alias
 	 * @return ActionInterface
 	 */
-	public function get_action($action_alias, \exface\Widgets\AbstractWidget $called_by_widget = null, \stdClass $uxon_description = null){
+	public function get_action($action_alias, \exface\Core\Widgets\AbstractWidget $called_by_widget = null, \stdClass $uxon_description = null){
 		if (!$action_alias) return false;
 		$action_class = '\\exface\\Apps\\' . $this->get_class_namespace() . '\\Actions\\' . $action_alias;
 		$action = new $action_class($this);
@@ -122,10 +122,6 @@ abstract class AbstractApp implements AppInterface {
 	 */
 	public function get_configuration_value($code){
 		return $this->get_configuration_data_sheet()->get_cell_value('VALUE', $this->get_configuration_data_sheet()->get_column('CODE')->find_row_by_value($code));
-	}
-	
-	public function get_apps_folder_path(){
-		return 'exface' . DIRECTORY_SEPARATOR . 'Apps' . DIRECTORY_SEPARATOR;
 	}
 	
 	public function get_apps_class_namespace(){

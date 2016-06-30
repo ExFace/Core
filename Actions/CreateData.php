@@ -1,5 +1,5 @@
 <?php
-namespace exface\Apps\exface\Core\Actions;
+namespace exface\Core\Actions;
 use exface\Core\Interfaces\Actions\iCreateData;
 use exface\Core\Exceptions\ActionRuntimeException;
 class CreateData extends SaveData implements iCreateData {

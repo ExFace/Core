@@ -1,4 +1,4 @@
-<?php namespace exface\Apps\exface\Core\Formulas;
+<?php namespace exface\Core\Formulas;
 
 /**
  * Subtracts all arguments from the first one. There is no Excel analogon.

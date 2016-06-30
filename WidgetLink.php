@@ -1,7 +1,7 @@
 <?php namespace exface\Core;
 
 use exface\Core\Exceptions\UxonParserError;
-use exface\Widgets\AbstractWidget;
+use exface\Core\Widgets\AbstractWidget;
 use exface\Core\Exceptions\UiWidgetNotFoundException;
 use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 use exface\Core\Interfaces\UiPageInterface;

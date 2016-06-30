@@ -1,4 +1,4 @@
-<?php namespace exface\Widgets;
+<?php namespace exface\Core\Widgets;
 
 use exface\Core\Model\Expression;
 use exface\Core\Interfaces\Widgets\iHaveChildren;
@@ -38,7 +38,7 @@ abstract class AbstractWidget implements WidgetInterface {
 	protected $height = null;
 	protected $hidden = false;
 	protected $visibility = null;
-	/** @var \exface\Widgets\AbstractWidget the parent widget */
+	/** @var \exface\Core\Widgets\AbstractWidget the parent widget */
 	protected $parent = null;
 	
 	private $ui = null;

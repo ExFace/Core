@@ -1,7 +1,7 @@
 <?php namespace exface\Core\Interfaces;
 
 use exface\exface;
-use exface\Widgets\AbstractWidget;
+use exface\Core\Widgets\AbstractWidget;
 use exface\Core\Interfaces\Actions\ActionInterface;
 
 interface AppInterface extends ExfaceClassInterface, AliasInterface {

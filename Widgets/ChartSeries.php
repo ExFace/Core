@@ -1,4 +1,4 @@
-<?php namespace exface\Widgets;
+<?php namespace exface\Core\Widgets;
 
 use exface\Core\Exceptions\UiWidgetConfigException;
 
@@ -121,7 +121,7 @@ class ChartSeries extends AbstractWidget {
 	/**
 	 * The caption for a series can either be set directly, or will be inherited from the used data column
 	 * {@inheritDoc}
-	 * @see \exface\Widgets\AbstractWidget::get_caption()
+	 * @see \exface\Core\Widgets\AbstractWidget::get_caption()
 	 */
 	public function get_caption(){
 		if (is_null(parent::get_caption())){

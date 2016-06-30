@@ -1,5 +1,5 @@
 <?php
-namespace exface\Widgets;
+namespace exface\Core\Widgets;
 class FileUploader extends AbstractWidget {
 	private $default_file_description = 'Upload';
 	/**

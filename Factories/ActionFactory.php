@@ -4,7 +4,7 @@ use exface\exface;
 use exface\Core\NameResolver;
 use exface\Core\Interfaces\NameResolverInterface;
 use exface\Core\Interfaces\Actions\ActionInterface;
-use exface\Widgets\AbstractWidget;
+use exface\Core\Widgets\AbstractWidget;
 use exface\Core\Exceptions\UxonParserError;
 use exface\Core\UxonObject;
 

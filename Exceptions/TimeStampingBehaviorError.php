@@ -1,4 +1,4 @@
-<?php namespace exface\Apps\exface\Core\Exceptions;
+<?php namespace exface\Core\Exceptions;
 
 use exface\Core\Exceptions\MetaModelBehaviorException;
 

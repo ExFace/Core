@@ -1,6 +1,6 @@
-<?php namespace exface\Apps\exface\Core\Actions;
+<?php namespace exface\Core\Actions;
 
-use exface\Widgets\Dialog;
+use exface\Core\Widgets\Dialog;
 
 class MassEditDialog extends ShowDialog {
 	private $affected_counter_widget_id = NULL;

@@ -1,4 +1,4 @@
-<?php namespace exface\Apps\exface\Core\Actions;
+<?php namespace exface\Core\Actions;
 
 use exface\Core\Contexts\AbstractContext;
 use exface\Core\AbstractAction;

@@ -1,5 +1,5 @@
 <?php
-namespace exface\Apps\exface\Core\Actions;
+namespace exface\Core\Actions;
 class CreateObjectDialog extends EditObjectDialog {
 	
 	protected function init(){

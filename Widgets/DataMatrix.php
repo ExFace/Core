@@ -1,5 +1,5 @@
 <?php
-namespace exface\Widgets;
+namespace exface\Core\Widgets;
 class DataMatrix extends DataTable {
 	private $label_column_id = null;
 	private $data_column_id = null;
@@ -28,7 +28,7 @@ class DataMatrix extends DataTable {
 	
 	/**
 	 * Returns the data column widget or false if no data column specified
-	 * @return \exface\Widgets\DataColumn | boolean
+	 * @return \exface\Core\Widgets\DataColumn | boolean
 	 */
 	public function get_data_column(){
 		if (!$result = $this->get_column($this->get_data_column_id())){
@@ -39,7 +39,7 @@ class DataMatrix extends DataTable {
 	
 	/**
 	 * Returns the label column widget or false if no label column specified
-	 * @return \exface\Widgets\DataColumn | boolean
+	 * @return \exface\Core\Widgets\DataColumn | boolean
 	 */
 	public function get_label_column(){
 		if (!$result = $this->get_column($this->get_label_column_id())){

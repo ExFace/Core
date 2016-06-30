@@ -1,6 +1,6 @@
 <?php namespace exface\Core;
 
-use exface\Widgets\AbstractWidget;
+use exface\Core\Widgets\AbstractWidget;
 use exface\Core\Exceptions\TemplateError;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Factories\UiPageFactory;

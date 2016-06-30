@@ -1,4 +1,4 @@
-<?php namespace exface\Widgets;
+<?php namespace exface\Core\Widgets;
 
 use exface\Core\Model\Attribute;
 use exface\Core\Interfaces\Widgets\iHaveColumns;
@@ -44,7 +44,7 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns {
 	/**
 	 * Creates a DataColumn from a meta attribute. For relations the column will automatically show the label of the related object
 	 * @param attribute $attribute
-	 * @return \exface\Widgets\DataColumn
+	 * @return \exface\Core\Widgets\DataColumn
 	 */
 	function create_column_from_attribute(Attribute $attribute, $caption=null, $hidden=null){
 		if ($attribute->is_relation()){
@@ -125,7 +125,7 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns {
 	/**
 	 * Returns the data column matching the given id.
 	 * @param unknown $column_id
-	 * @return \exface\Widgets\DataColumn|boolean
+	 * @return \exface\Core\Widgets\DataColumn|boolean
 	 */
 	public function get_column($column_id, $use_data_column_names_as_fallback = true){
 		foreach ($this->get_columns() as $col){

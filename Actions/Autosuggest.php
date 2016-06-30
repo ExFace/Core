@@ -1,5 +1,5 @@
 <?php
-namespace exface\Apps\exface\Core\Actions;
+namespace exface\Core\Actions;
 /**
  * The autosuggest action is similar to the general ReadData, but it does not affect the current window filter context because the user
  * does not really perform an explicit serch here - it's merely the system helping the user to speed up input. The context, the user is

@@ -3,8 +3,8 @@
 
 // DB connection for the metamodel
 // MODx
-$exf_config['model_data_connector'] = 'Apps\exface\ModxCmsConnector\DataConnectors\ModxDb.php';
-$exf_config['model_loader'] = 'Apps\exface\SqlDataConnector\ModelLoaders\SqlModelLoader.php';
+$exf_config['model_data_connector'] = 'exface\ModxCmsConnector\DataConnectors\ModxDb.php';
+$exf_config['model_loader'] = 'exface\SqlDataConnector\ModelLoaders\SqlModelLoader.php';
 
 
 // alexaUI
@@ -19,7 +19,7 @@ $exf_config['db']['character_set'] = 'AL32UTF8';
 */
 
 // CMS
-$exf_config['CMS_connector'] = 'Apps\exface\ModxCmsConnector\CmsConnectors\Modx.php';
+$exf_config['CMS_connector'] = 'exface\ModxCmsConnector\CmsConnectors\Modx.php';
 $exf_config['CMS_base_path'] = '/exface';
 
 // UI

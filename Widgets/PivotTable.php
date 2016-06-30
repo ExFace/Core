@@ -1,5 +1,5 @@
 <?php
-namespace exface\Widgets;
+namespace exface\Core\Widgets;
 class PivotTable extends DataTable {
 	
 	// override some defaults of Data

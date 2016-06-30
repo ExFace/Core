@@ -1,5 +1,5 @@
 <?php
-namespace exface\Widgets;
+namespace exface\Core\Widgets;
 use exface\Core\Interfaces\Widgets\iHaveButtons;
 use exface\Core\Interfaces\Widgets\iHaveIcon;
 use exface\Core\Factories\WidgetFactory;
@@ -58,7 +58,7 @@ class ButtonGroup extends AbstractWidget implements iHaveButtons, iHaveIcon {
 	
 	/**
 	 * (non-PHPdoc)
-	 * @see \exface\Widgets\AbstractWidget::get_children()
+	 * @see \exface\Core\Widgets\AbstractWidget::get_children()
 	 */
 	public function get_children() {
 		return $this->get_buttons();

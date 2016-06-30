@@ -1,6 +1,6 @@
-<?php namespace exface\Apps\exface\Core\Actions;
+<?php namespace exface\Core\Actions;
 
-use exface\Widgets\AbstractWidget;
+use exface\Core\Widgets\AbstractWidget;
 use exface\Core\Interfaces\Actions\iShowWidget;
 use exface\Core\Exceptions\UxonParserError;
 use exface\Core\Interfaces\Actions\ActionInterface;
@@ -195,7 +195,7 @@ class ShowWidget extends AbstractAction implements iShowWidget, iUsePrefillData 
 	/**
 	 * If set to TRUE, the values of the filters registered in the window context scope will be used to prefill the widget (if possible)
 	 * @param boolean $value
-	 * @return \exface\Apps\exface\Core\Actions\ShowWidget
+	 * @return \exface\Core\Actions\ShowWidget
 	 */
 	public function set_prefill_with_filter_context($value) {
 		$this->prefill_with_filter_context = $value;
@@ -260,7 +260,7 @@ class ShowWidget extends AbstractAction implements iShowWidget, iUsePrefillData 
 	/**
 	 * @deprecated use set_page_id() instead! This method is kept for backwards compatibility only.
 	 * @param string $value
-	 * @return \exface\Apps\exface\Core\Actions\ShowWidget
+	 * @return \exface\Core\Actions\ShowWidget
 	 */
 	public function set_document_id($value){
 		return $this->set_page_id($value);

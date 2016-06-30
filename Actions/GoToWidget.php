@@ -1,5 +1,5 @@
 <?php
-namespace exface\Apps\exface\Core\Actions;
+namespace exface\Core\Actions;
 /**
  * This action is just a better understandable alias for ShowWidgetPrefilled
  * @see ShowWidgetPrefilled

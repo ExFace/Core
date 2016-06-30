@@ -25,7 +25,7 @@ abstract class WidgetFactory extends AbstractFactory {
 			throw new UiWidgetException('Cannot create widget "' . $widget_type . '": invalid widget type!');
 		}
 	
-		/* @var $widget \exface\Widgets\AbstractWidget */
+		/* @var $widget \exface\Core\Widgets\AbstractWidget */
 		$widget_class = static::get_widget_class_from_type($widget_type);
 		$widget = new $widget_class($page, $parent_widget);
 	
@@ -106,7 +106,7 @@ abstract class WidgetFactory extends AbstractFactory {
 	}
 	
 	protected static function get_widget_class_from_type($widget_type){
-		return '\\exface\\Widgets\\' . ucfirst($widget_type);
+		return '\\exface\\Core\\Widgets\\' . ucfirst($widget_type);
 	}
 	
 	public static function create_from_anything(UiPage &$page, $widget_or_uxon_object, WidgetInterface $parent_widget = null){

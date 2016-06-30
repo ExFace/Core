@@ -1,5 +1,5 @@
 <?php
-namespace exface\Widgets;
+namespace exface\Core\Widgets;
 use exface\Core\Factories\WidgetFactory;
 
 /**
@@ -39,7 +39,7 @@ class SplitVertical extends Container {
 	 * Adding widgets to a Split will automatically produce SplitPanels for each widget, unless it already is one. This
 	 * way, a short an understandable notation of splits is possible: simply add any type of widget to the panels or widgets
 	 * array and see them be displayed in the split.
-	 * @see \exface\Widgets\Container::set_widgets()
+	 * @see \exface\Core\Widgets\Container::set_widgets()
 	 */
 	public function set_widgets(array $widget_or_uxon_array){
 		$widgets = array();

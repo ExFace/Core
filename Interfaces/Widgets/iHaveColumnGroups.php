@@ -1,6 +1,6 @@
 <?php namespace exface\Core\Interfaces\Widgets;
 
-use exface\Widgets\DataColumnGroup;
+use exface\Core\Widgets\DataColumnGroup;
 
 interface iHaveColumnGroups extends iHaveChildren {
 	

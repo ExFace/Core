@@ -1,5 +1,5 @@
 <?php
-namespace exface\Widgets;
+namespace exface\Core\Widgets;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Exceptions\UiWidgetException;
 /**
@@ -22,7 +22,7 @@ class Tab extends Panel {
 	
 	/**
 	 * {@inheritDoc}
-	 * @see \exface\Widgets\AbstractWidget::prepare_data_sheet_to_read()
+	 * @see \exface\Core\Widgets\AbstractWidget::prepare_data_sheet_to_read()
 	 */
 	public function prepare_data_sheet_to_read(DataSheetInterface $data_sheet = null){
 		$data_sheet = parent::prepare_data_sheet_to_read($data_sheet);
@@ -34,7 +34,7 @@ class Tab extends Panel {
 	
 	/**
 	 * {@inheritDoc}
-	 * @see \exface\Widgets\AbstractWidget::prepare_data_sheet_to_prefill()
+	 * @see \exface\Core\Widgets\AbstractWidget::prepare_data_sheet_to_prefill()
 	 */
 	public function prepare_data_sheet_to_prefill(DataSheetInterface $data_sheet = null){
 		$data_sheet = parent::prepare_data_sheet_to_prefill($data_sheet);

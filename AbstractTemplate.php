@@ -56,13 +56,13 @@ abstract class AbstractTemplate implements TemplateInterface {
 		return $this->exface;
 	}
 	
-	abstract function draw(\exface\Widgets\AbstractWidget $widget);
+	abstract function draw(\exface\Core\Widgets\AbstractWidget $widget);
 	
 	/**
 	 * Generates the declaration of the JavaScript sources
 	 * @return string
 	 */
-	abstract function draw_headers(\exface\Widgets\AbstractWidget $widget);
+	abstract function draw_headers(\exface\Core\Widgets\AbstractWidget $widget);
 	
 	/**
 	 * Processes the current HTTP request, assuming it was made from a UI using this template

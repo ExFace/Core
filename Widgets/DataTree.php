@@ -1,5 +1,5 @@
 <?php
-namespace exface\Widgets;
+namespace exface\Core\Widgets;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 
 class DataTree extends DataTable {
@@ -21,7 +21,7 @@ class DataTree extends DataTable {
 	
 	/**
 	 * 
-	 * @return boolean|\exface\Widgets\DataColumn
+	 * @return boolean|\exface\Core\Widgets\DataColumn
 	 */
 	public function get_tree_column(){
 		if (!$result = $this->get_column($this->get_tree_column_id())){
@@ -118,7 +118,7 @@ class DataTree extends DataTable {
 	/**
 	 * {@inheritDoc}
 	 * 
-	 * @see \exface\Widgets\AbstractWidget::prepare_data_sheet_to_read()
+	 * @see \exface\Core\Widgets\AbstractWidget::prepare_data_sheet_to_read()
 	 */
 	public function prepare_data_sheet_to_read(DataSheetInterface $data_sheet = null){
 		$data_sheet = parent::prepare_data_sheet_to_read($data_sheet);

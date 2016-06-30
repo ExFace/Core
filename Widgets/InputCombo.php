@@ -1,5 +1,5 @@
 <?php
-namespace exface\Widgets;
+namespace exface\Core\Widgets;
 use exface\Core\Interfaces\Widgets\iSupportLazyLoading;
 /**
  * A combo is similar to a select menu, hovever it must have a search function, supports lazy loading and optionally can accept new input values,

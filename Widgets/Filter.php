@@ -1,5 +1,5 @@
 <?php
-namespace exface\Widgets;
+namespace exface\Core\Widgets;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\WidgetInterface;
 
@@ -18,7 +18,7 @@ class Filter extends Container {
 	
 	/**
 	 * Returns the widget used to interact with the filter (typically some kind of input widget)
-	 * @return \exface\Widgets\AbstractWidget
+	 * @return \exface\Core\Widgets\AbstractWidget
 	 */
 	public function get_widget() {
 		if (!$this->widget){
@@ -30,7 +30,7 @@ class Filter extends Container {
 	/**
 	 * Sets the widget used to interact with the filter (typically some kind of input widget)
 	 * @param \exface\widget\AbstractWidget || \stdClass $widget_or_uxon_object
-	 * @return \exface\Widgets\Filter
+	 * @return \exface\Core\Widgets\Filter
 	 */
 	public function set_widget($widget_or_uxon_object) {
 		$page = $this->get_page();
@@ -63,7 +63,7 @@ class Filter extends Container {
 	}  
 	
 	/**
-	 * @see \exface\Widgets\Container::get_children()
+	 * @see \exface\Core\Widgets\Container::get_children()
 	 */
 	public function get_children(){
 		return array($this->get_widget());

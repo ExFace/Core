@@ -1,6 +1,6 @@
 <?php
 namespace exface\Core\Interfaces\Actions;
-use exface\Widgets\Dialog;
+use exface\Core\Widgets\Dialog;
 interface iShowDialog {
 	public function get_dialog_widget();
 	

@@ -1,5 +1,5 @@
 <?php
-namespace exface\Widgets;
+namespace exface\Core\Widgets;
 class CheckBox extends Input {
 	
 	public function transform_into_select(){

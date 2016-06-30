@@ -1,5 +1,5 @@
 <?php
-namespace exface\Widgets;
+namespace exface\Core\Widgets;
 /**
  * A special type of button to use in DataTables and other data widgets. Additionally to the normal button functionality
  * this button can be assigned as a click action. So, if a button is bound to a double click, it's action will be called

@@ -1,14 +1,14 @@
 <?php namespace exface\Core\Interfaces\Widgets;
 
-use exface\Widgets\Button;
+use exface\Core\Widgets\Button;
 
 interface iHaveButtons extends iHaveChildren {
 	
 	/**
 	 * Adds a button to the table
-	 * @param \exface\Widgets\Button $button_widget
+	 * @param \exface\Core\Widgets\Button $button_widget
 	 */
-	public function add_button(\exface\Widgets\Button $button_widget);
+	public function add_button(\exface\Core\Widgets\Button $button_widget);
 	
 	/**
 	 * Returs an array of button widgets

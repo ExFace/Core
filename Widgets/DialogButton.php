@@ -1,5 +1,5 @@
 <?php
-namespace exface\Widgets;
+namespace exface\Core\Widgets;
 /**
  * A special type of button to use in dialogs. Additionally to the normal button functionality
  * this button can explicitly control the dialog it belongs to. Thus, the user can decide whether

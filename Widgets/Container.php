@@ -1,5 +1,5 @@
 <?php
-namespace exface\Widgets;
+namespace exface\Core\Widgets;
 use exface\Core\Interfaces\Widgets\iHaveChildren;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Model\Attribute;
@@ -19,7 +19,7 @@ class Container extends AbstractWidget implements iHaveChildren {
 	
 	/**
 	 * {@inheritDoc}
-	 * @see \exface\Widgets\AbstractWidget::prepare_data_sheet_to_read()
+	 * @see \exface\Core\Widgets\AbstractWidget::prepare_data_sheet_to_read()
 	 */
 	public function prepare_data_sheet_to_read(DataSheetInterface $data_sheet = null){
 		$data_sheet = parent::prepare_data_sheet_to_read($data_sheet);
@@ -35,7 +35,7 @@ class Container extends AbstractWidget implements iHaveChildren {
 	
 	/**
 	 * {@inheritDoc}
-	 * @see \exface\Widgets\AbstractWidget::prepare_data_sheet_to_read()
+	 * @see \exface\Core\Widgets\AbstractWidget::prepare_data_sheet_to_read()
 	 */
 	public function prepare_data_sheet_to_prefill(DataSheetInterface $data_sheet = null){
 		$data_sheet = parent::prepare_data_sheet_to_prefill($data_sheet);
@@ -74,7 +74,7 @@ class Container extends AbstractWidget implements iHaveChildren {
 	
 	/**
 	 * (non-PHPdoc)
-	 * @see \exface\Widgets\AbstractWidget::get_children()
+	 * @see \exface\Core\Widgets\AbstractWidget::get_children()
 	 */
 	public function get_children() {
 		return $this->get_widgets();
@@ -103,7 +103,7 @@ class Container extends AbstractWidget implements iHaveChildren {
 
 	/**
 	 * If a container is disabled, all children widgets will be disabled too
-	 * @see \exface\Widgets\AbstractWidget::set_disabled()
+	 * @see \exface\Core\Widgets\AbstractWidget::set_disabled()
 	 */
 	public function set_disabled($value){
 		foreach ($this->get_children() as $child){

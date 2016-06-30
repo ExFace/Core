@@ -1,5 +1,5 @@
 <?php
-namespace exface\Widgets;
+namespace exface\Core\Widgets;
 /**
  * A Split consists of multiple panels aligned vertically or horizontally. Using splits groups of
  * widgets can be positioned next to each other instead of one-after-another. The borders between

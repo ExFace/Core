@@ -1,5 +1,5 @@
 <?php
-namespace exface\Widgets;
+namespace exface\Core\Widgets;
 use exface\Core\Interfaces\Widgets\iAmResizable;
 use exface\Core\Interfaces\Widgets\iHaveBorders;
 /**

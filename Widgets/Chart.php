@@ -1,5 +1,5 @@
 <?php
-namespace exface\Widgets;
+namespace exface\Core\Widgets;
 use exface\Core\Exceptions\UiWidgetConfigException;
 use exface\Core\UxonObject;
 use exface\Core\Interfaces\Widgets\iHaveTopToolbar;
@@ -328,7 +328,7 @@ class Chart extends AbstractWidget implements iHaveButtons, iHaveTopToolbar, iHa
 	 * a linked widget, the prefill does not make sense and will be ignored. But the linked widget will surely be prefilled, so the
 	 * the chart will get the correct data anyway.
 	 * 
-	 * @see \exface\Widgets\Data::prefill()
+	 * @see \exface\Core\Widgets\Data::prefill()
 	 */
 	public function prefill(DataSheetInterface $data_sheet){
 		if ($this->get_data_widget_link()){
@@ -341,7 +341,7 @@ class Chart extends AbstractWidget implements iHaveButtons, iHaveTopToolbar, iHa
 	/**
 	 * 
 	 * {@inheritDoc}
-	 * @see \exface\Widgets\AbstractWidget::prepare_data_sheet_to_prefill()
+	 * @see \exface\Core\Widgets\AbstractWidget::prepare_data_sheet_to_prefill()
 	 */
 	public function prepare_data_sheet_to_prefill(DataSheetInterface $data_sheet = null){
 		return $this->get_data()->prepare_data_sheet_to_prefill($data_sheet);
@@ -350,7 +350,7 @@ class Chart extends AbstractWidget implements iHaveButtons, iHaveTopToolbar, iHa
 	/**
 	 * 
 	 * {@inheritDoc}
-	 * @see \exface\Widgets\AbstractWidget::prepare_data_sheet_to_read()
+	 * @see \exface\Core\Widgets\AbstractWidget::prepare_data_sheet_to_read()
 	 */
 	public function prepare_data_sheet_to_read(DataSheetInterface $data_sheet = null){
 		return $this->get_data()->prepare_data_sheet_to_read($data_sheet);
