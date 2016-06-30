@@ -7,7 +7,6 @@ use exface\Core\Model\Formula;
 use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Exceptions\DataSheetException;
 use exface\Core\Factories\EntityListFactory;
-use exface\Core\Interfaces\DataSheets\DataColumnTotalsListInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\DataSheets\DataColumnInterface;
 use exface\Core\Model\DataTypes\AbstractDataType;
