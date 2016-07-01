@@ -1,6 +1,5 @@
 <?php namespace exface\Core;
 
-use exface\Core\Events\ExFaceEvent;
 use Jmikola\WildcardEventDispatcher\WildcardEventDispatcher;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use exface\Core\Interfaces\Events\EventManagerInterface;
