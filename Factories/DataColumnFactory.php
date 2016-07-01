@@ -1,7 +1,7 @@
 <?php namespace exface\Core\Factories;
 
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\exface;
+use exface\Core\exface;
 use exface\Core\UxonObject;
 use exface\Core\DataColumn;
 use exface\Core\Model\Expression;

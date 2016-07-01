@@ -1,6 +1,6 @@
 <?php namespace exface\Core\Factories;
 
-use exface\exface;
+use exface\Core\exface;
 use exface\Core\Model\Condition;
 use exface\Core\Exceptions\FactoryError;
 use exface\Core\Model\ConditionGroup;

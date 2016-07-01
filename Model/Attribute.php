@@ -1,7 +1,7 @@
 <?php namespace exface\Core\Model;
 
 use exface\Core\Model\DataTypes\AbstractDataType;
-use exface\exface;
+use exface\Core\exface;
 use exface\Core\UxonObject;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Factories\RelationPathFactory;

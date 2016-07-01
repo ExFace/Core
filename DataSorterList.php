@@ -1,6 +1,6 @@
 <?php namespace exface\Core;
 
-use exface\exface;
+use exface\Core\exface;
 use exface\Core\Factories\DataSorterFactory;
 use exface\Core\Interfaces\DataSheets\DataSorterListInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;

@@ -1,6 +1,6 @@
 <?php namespace exface\Core\Interfaces\DataSources;
 
-use exface\exface;
+use exface\Core\exface;
 use exface\Core\Interfaces\ExfaceClassInterface;
 use exface\Core\Interfaces\AliasInterface;
 use exface\Core\Exceptions\DataConnectionError;

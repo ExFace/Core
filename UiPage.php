@@ -1,7 +1,7 @@
 <?php namespace exface\Core;
 
 use exface\Core\Interfaces\UiPageInterface;
-use exface\exface;
+use exface\Core\exface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Exceptions\UiWidgetConfigException;
 use exface\Core\Interfaces\TemplateInterface;

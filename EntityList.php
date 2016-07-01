@@ -1,7 +1,7 @@
 <?php namespace exface\Core;
 
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
-use exface\exface;
+use exface\Core\exface;
 use exface\Core\Exceptions\UxonParserError;
 use exface\Core\Interfaces\EntityListInterface;
 use exface\Core\Interfaces\NameResolverInterface;

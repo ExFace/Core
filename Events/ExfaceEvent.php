@@ -1,7 +1,7 @@
 <?php namespace exface\Core\Events;
 
 use Symfony\Component\EventDispatcher\Event;
-use exface\exface;
+use exface\Core\exface;
 use exface\Core\Interfaces\Events\EventInterface;
 use exface\Core\NameResolver;
 

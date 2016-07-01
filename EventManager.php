@@ -17,7 +17,7 @@ class EventManager implements EventManagerInterface {
 	private $exface = null;
 	private $dispatcher = null;
 	
-	function __construct(\exface\exface &$exface){
+	function __construct(\exface\Core\exface &$exface){
 		$this->exface = $exface;	
 		$this->dispatcher = new WildcardEventDispatcher(new EventDispatcher);
 	}

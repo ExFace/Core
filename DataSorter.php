@@ -4,7 +4,7 @@ use exface\Core\Exceptions\DataSheetException;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Interfaces\ExfaceClassInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\exface;
+use exface\Core\exface;
 
 class DataSorter implements iCanBeConvertedToUxon, ExfaceClassInterface {
 	const DIRECTION_ASC = 'ASC';

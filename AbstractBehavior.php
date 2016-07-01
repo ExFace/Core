@@ -1,6 +1,6 @@
 <?php namespace exface\Core;
 
-use exface\exface;
+use exface\Core\exface;
 use exface\Core\UxonObject;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Model\Object;

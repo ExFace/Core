@@ -1,7 +1,7 @@
 <?php namespace exface\Core;
 
 use exface\Core\Model\Object;
-use exface\exface;
+use exface\Core\exface;
 use exface\Core\Exceptions\DataSheetException;
 
 class DataSheetList extends EntityList {

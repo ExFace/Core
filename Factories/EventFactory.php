@@ -1,6 +1,6 @@
 <?php namespace exface\Core\Factories;
 
-use exface\exface;
+use exface\Core\exface;
 use exface\Core\NameResolver;
 use exface\Core\Interfaces\NameResolverInterface;
 use exface\Core\Interfaces\Actions\ActionInterface;

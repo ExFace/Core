@@ -9,7 +9,7 @@ abstract class AbstractContext implements ContextInterface {
 	private $scope = null;
 	private $alias = NULL;
 	
-	public function __construct(\exface\exface &$exface){
+	public function __construct(\exface\Core\exface &$exface){
 		$this->exface = $exface;
 	}
 	
@@ -40,7 +40,7 @@ abstract class AbstractContext implements ContextInterface {
 	}
 	
 	/**
-	 * @return \exface\exface
+	 * @return \exface\Core\exface
 	 */
 	public function exface(){
 		return $this->exface;

@@ -23,12 +23,12 @@ class Condition implements iCanBeConvertedToUxon {
 	
 	/**
 	 * 
-	 * @param \exface\exface $exface
+	 * @param \exface\Core\exface $exface
 	 * @param string|\exface\Core\Model\Expression $string_or_expression
 	 * @param string $value
 	 * @param string $comparator
 	 */
-	public function __construct(\exface\exface &$exface){
+	public function __construct(\exface\Core\exface &$exface){
 		$this->exface = $exface;
 	}
 	

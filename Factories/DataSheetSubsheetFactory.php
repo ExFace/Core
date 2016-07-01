@@ -1,7 +1,7 @@
 <?php namespace exface\Core\Factories;
 
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\exface;
+use exface\Core\exface;
 use exface\Core\Interfaces\DataSheets\DataSheetSubsheetInterface;
 use exface\Core\Model\Object;
 use exface\Core\DataSheetSubsheet;

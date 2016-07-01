@@ -11,7 +11,7 @@ class DataManager implements DataManagerInterface {
 	private $cache;
 	private $exface;
 	
-	function __construct(\exface\exface &$exface){
+	function __construct(\exface\Core\exface &$exface){
 		$this->exface = $exface;
 		$this->active_sources = array();
 		$this->active_connections = array();		

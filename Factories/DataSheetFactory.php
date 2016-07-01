@@ -2,7 +2,7 @@
 
 use exface\Core\UxonObject;
 use exface\Core\Model\Object;
-use exface\exface;
+use exface\Core\exface;
 use exface\Core\DataSheet;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Exceptions\FactoryError;

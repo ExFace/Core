@@ -1,6 +1,6 @@
 <?php namespace exface\Core\Interfaces\DataSheets;
 
-use exface\exface;
+use exface\Core\exface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\EntityListInterface;
 

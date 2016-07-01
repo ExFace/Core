@@ -9,7 +9,7 @@ abstract class AbstractTemplate implements TemplateInterface {
 	private $name_resolver = null;
 	private $response = '';
 	
-	public final function __construct(\exface\exface &$exface){
+	public final function __construct(\exface\Core\exface &$exface){
 		$this->exface = $exface;
 		$this->alias = substr(get_class($this), (strrpos(get_class($this), DIRECTORY_SEPARATOR)+1));
 		$this->init();

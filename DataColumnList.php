@@ -1,6 +1,6 @@
 <?php namespace exface\Core;
 
-use exface\exface;
+use exface\Core\exface;
 use exface\Core\Exceptions\DataSheetException;
 use exface\Core\Model\RelationPath;
 use exface\Core\Factories\DataColumnFactory;

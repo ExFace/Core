@@ -1,7 +1,7 @@
 <?php namespace exface\Core\Interfaces;
 
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
-use exface\exface;
+use exface\Core\exface;
 
 /**
  * The EntityList is a generic container for all kinds of object collections or lists in ExFace. Basically, it is an array with a proper API and some

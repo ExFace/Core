@@ -1,6 +1,6 @@
 <?php namespace exface\Core;
 
-use exface\exface;
+use exface\Core\exface;
 
 abstract class AbstractDataConnectorWithoutTransactions extends AbstractDataConnector {
 	

@@ -1,6 +1,6 @@
 <?php namespace exface\Core\Interfaces\DataSources;
 
-use exface\exface;
+use exface\Core\exface;
 use exface\Core\Model\Object;
 
 interface ModelLoaderInterface {

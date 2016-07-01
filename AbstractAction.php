@@ -12,7 +12,7 @@ use exface\Core\Factories\EventFactory;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Events\ActionEvent;
-use exface\exface;
+use exface\Core\exface;
 use exface\Core\Factories\WidgetLinkFactory;
 
 /**

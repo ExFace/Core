@@ -1,6 +1,6 @@
 <?php namespace exface\Core;
 
-use exface\exface;
+use exface\Core\exface;
 use exface\Core\Factories\DataAggregatorFactory;
 use exface\Core\Interfaces\DataSheets\DataAggregatorListInterface;
 

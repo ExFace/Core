@@ -1,6 +1,6 @@
 <?php namespace exface\Core\Factories;
 
-use exface\exface;
+use exface\Core\exface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Exceptions\UxonParserError;
 use exface\Core\UxonObject;

@@ -78,7 +78,7 @@ class QueryPart {
 	}
 	
 	/**
-	 * @return \exface\exface
+	 * @return \exface\Core\exface
 	 */
 	public function exface(){
 		return $this->get_query()->exface();

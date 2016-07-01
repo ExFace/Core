@@ -4,7 +4,7 @@ class WidgetDimension {
 	private $exface;
 	private $value = NULL;
 	
-	function __construct(\exface\exface &$exface){
+	function __construct(\exface\Core\exface &$exface){
 		$this->exface = $exface;
 	}
 	

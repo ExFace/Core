@@ -1,6 +1,6 @@
 <?php namespace exface\Core\Model;
 
-use exface\exface;
+use exface\Core\exface;
 use exface\Core\EntityList;
 use exface\Core\Factories\AttributeListFactory;
 

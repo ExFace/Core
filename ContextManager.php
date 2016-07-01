@@ -20,7 +20,7 @@ class ContextManager implements ContextManagerInterface {
 	private $user_scope = NULL;
 	private $request_scope = null;
 	
-	public function __construct(\exface\exface &$exface){
+	public function __construct(\exface\Core\exface &$exface){
 		$this->exface = $exface;
 		$this->window_scope = new WindowContextScope($this->exface);
 		$this->session_scope = new SessionContextScope($this->exface);

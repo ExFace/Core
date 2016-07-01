@@ -1,6 +1,6 @@
 <?php namespace exface\Core\Factories;
 
-use exface\exface;
+use exface\Core\exface;
 use exface\Core\WidgetLink;
 use exface\Core\UxonObject;
 use exface\Core\Interfaces\Widgets\WidgetLinkInterface;

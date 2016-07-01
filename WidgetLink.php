@@ -13,7 +13,7 @@ class WidgetLink implements WidgetLinkInterface {
 	private $column_id;
 	private $row_number;
 	
-	function __construct(\exface\exface &$exface){
+	function __construct(\exface\Core\exface &$exface){
 		$this->exface = $exface;
 	}
 	

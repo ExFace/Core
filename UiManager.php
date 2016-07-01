@@ -18,7 +18,7 @@ class UiManager implements UiManagerInterface {
 	private $exface = null;
 	private $base_template = null;
 	
-	function __construct(\exface\exface &$exface){
+	function __construct(\exface\Core\exface &$exface){
 		$this->exface = $exface;
 	}
 	

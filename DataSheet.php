@@ -21,7 +21,7 @@ use exface\Core\Interfaces\DataSheets\DataAggregatorListInterface;
 use exface\Core\Interfaces\DataSheets\DataSorterListInterface;
 use exface\Core\Interfaces\DataSheets\DataColumnInterface;
 use exface\Core\Factories\EventFactory;
-use exface\exface;
+use exface\Core\exface;
 use exface\Core\Events\DataSheetEvent;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Exceptions\DataSourceError;

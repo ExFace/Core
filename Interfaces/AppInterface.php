@@ -1,6 +1,6 @@
 <?php namespace exface\Core\Interfaces;
 
-use exface\exface;
+use exface\Core\exface;
 use exface\Core\Widgets\AbstractWidget;
 use exface\Core\Interfaces\Actions\ActionInterface;
 

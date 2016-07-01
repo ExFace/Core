@@ -17,7 +17,7 @@ class ConditionGroup implements iCanBeConvertedToUxon {
 	private $conditions = array();
 	private $nested_groups = array();
 	
-	function __construct(\exface\exface &$exface, $operator = EXF_LOGICAL_AND){
+	function __construct(\exface\Core\exface &$exface, $operator = EXF_LOGICAL_AND){
 		$this->exface = $exface;
 		$this->set_operator($operator);
 	}

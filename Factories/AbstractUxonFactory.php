@@ -1,7 +1,7 @@
 <?php namespace exface\Core\Factories;
 
 use exface\Core\UxonObject;
-use exface\exface;
+use exface\Core\exface;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Exceptions\FactoryError;
 

@@ -5,7 +5,7 @@ use exface\Core\NameResolver;
 use exface\Core\Interfaces\DataSources\ModelLoaderInterface;
 
 class Model {
-	/** @var \exface\exface */
+	/** @var \exface\Core\exface */
 	private $exface;
 	/** @var \exface\Core\Model\Object[] [ id => object ] */
 	private $loaded_objects = array();
@@ -14,7 +14,7 @@ class Model {
 	private $default_namespace;
 	private $model_loader;
 	
-	function __construct(\exface\exface &$exface){
+	function __construct(\exface\Core\exface &$exface){
 		$this->exface = $exface;
 	}
 	
