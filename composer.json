@@ -1,24 +1,22 @@
 {
-    "name": "ExFace/Core",
-    "description": "Business web application plattform",
-    "type": "project",
-    "license": "GPL-3.0+",
-    "authors": [
-        {
-            "name": "Andrej Kabachnik",
-            "email": "kabachnik@gmail.com",
-            "role": "Creator"
-        }
-    ],
-    "support": {
-        "issues": "https://github.com/exface/core/issues"
-    },
-    "require": {
-        "php": ">=5.4",
-        "symfony/FileSystem": "2.*",
-        "symfony/Event-Dispatcher": "2.*",
-        "jmikola/Wildcard-Event-Dispatcher": "1.*",
-		"myclabs/Deep-Copy": "1.*",
-		"exface/AbstractAjaxTemplate": "1.*"
-    }
+	"name" : "ExFace/Core",
+	"description" : "Business web application plattform",
+	"type" : "project",
+	"license" : "GPL-3.0+",
+	"authors" : [{
+			"name" : "Andrej Kabachnik",
+			"email" : "kabachnik@gmail.com",
+			"role" : "Creator"
+		}
+	],
+	"support" : {
+		"issues" : "https://github.com/exface/core/issues"
+	},
+	"require" : {
+		"php" : ">=5.4",
+		"symfony/FileSystem" : "2.*",
+		"symfony/Event-Dispatcher" : "2.*",
+		"jmikola/Wildcard-Event-Dispatcher" : "1.*",
+		"myclabs/Deep-Copy" : "1.*"
+	}
 }
