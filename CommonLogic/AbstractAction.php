@@ -294,14 +294,14 @@ abstract class AbstractAction implements ActionInterface {
 	 */
 	public function get_result_stringified(){
 		$result = $this->get_result();
-		if ($result instanceof DataSheet){
+		if ($result instanceof DataSheetInterface){
 			return $result->to_uxon();
 		} elseif ($result instanceof WidgetInterface){
 			return '';
 		} elseif (!is_object($result)){
 			return $result;
 		} else {
-			throw new ActionRuntimeException('Cannot convert result object of type "' . gettype($result) . '" to string for action "' . $this->get_alias_with_namespace() . '"');
+			throw new ActionRuntimeException('Cannot convert result object of type "' . get_class($result) . '" to string for action "' . $this->get_alias_with_namespace() . '"');
 		}
 	}
 	
