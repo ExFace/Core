@@ -30,6 +30,7 @@ use exface\Core\Factories\WidgetLinkFactory;
  *
  */
 abstract class AbstractAction implements ActionInterface {
+	private $id = null;
 	private $exface = null;
 	private $app = null;
 	/** @var WidgetInterface widget, that called this action */
@@ -125,7 +126,10 @@ abstract class AbstractAction implements ActionInterface {
 	 * @see \exface\Core\Interfaces\Actions\ActionInterface::get_id()
 	 */
 	public function get_id(){
-		return md5($this->export_uxon_object()->to_json());
+		if (is_null($this->id)){
+			$this->id = md5($this->export_uxon_object()->to_json());
+		}
+		return $this->id;
 	}
 	
 	public function get_app(){
