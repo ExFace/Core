@@ -5,7 +5,7 @@
  * @author aka
  *
  */
-class alexastate extends \exface\Core\Model\Formula {
+class alexastate extends \exface\Core\CommonLogic\Model\Formula {
 	
 	function run($state, $substate, $object){
 		if (!$state) return '';

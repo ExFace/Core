@@ -1,8 +1,8 @@
 <?php namespace exface\Core\Actions;
 
 use exface\Core\Interfaces\Actions\iShowUrl;
-use exface\Core\Model\DataTypes\Boolean;
-use exface\Core\AbstractAction;
+use exface\Core\CommonLogic\Model\DataTypes\Boolean;
+use exface\Core\CommonLogic\AbstractAction;
 
 /**
  * This action opens a URL for a given object instance. The URL can contain placeholders, that will

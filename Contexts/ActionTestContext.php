@@ -1,7 +1,7 @@
 <?php namespace exface\Core\Contexts;
 
-use exface\Core\Model\Object;
-use exface\Core\UxonObject;
+use exface\Core\CommonLogic\Model\Object;
+use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Events\ActionEvent;
 
 /**

@@ -1,10 +1,10 @@
 <?php namespace exface\Core\Factories;
 
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\Core\exface;
+use exface\Core\CommonLogic\Workbench;
 use exface\Core\Interfaces\DataSheets\DataSheetSubsheetInterface;
-use exface\Core\Model\Object;
-use exface\Core\DataSheetSubsheet;
+use exface\Core\CommonLogic\Model\Object;
+use exface\Core\CommonLogic\DataSheets\DataSheetSubsheet;
 
 abstract class DataSheetSubsheetFactory {
 	

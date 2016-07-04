@@ -1,8 +1,8 @@
 <?php namespace exface\Core\Factories;
 
-use exface\Core\exface;
-use exface\Core\Model\Object;
-use exface\Core\Model\RelationPath;
+use exface\Core\CommonLogic\Workbench;
+use exface\Core\CommonLogic\Model\Object;
+use exface\Core\CommonLogic\Model\RelationPath;
 
 abstract class RelationPathFactory extends AbstractFactory {
 	

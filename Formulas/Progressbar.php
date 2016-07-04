@@ -5,7 +5,7 @@
  * @author aka
  *
  */
-class Progressbar extends \exface\Core\Model\Formula {
+class Progressbar extends \exface\Core\CommonLogic\Model\Formula {
 	
 	function run($caption, $value, $max=100){
 		if (!$value) $value = $caption;

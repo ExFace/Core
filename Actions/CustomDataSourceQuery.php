@@ -1,11 +1,11 @@
 <?php namespace exface\Core\Actions;
 
-use exface\Core\AbstractAction;
+use exface\Core\CommonLogic\AbstractAction;
 use exface\Core\Interfaces\Actions\iRunDataSourceQuery;
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
-use exface\Core\Model\Object;
+use exface\Core\CommonLogic\Model\Object;
 use exface\Core\Exceptions\ActionRuntimeException;
-use exface\Core\DataColumn;
+use exface\Core\CommonLogic\DataSheets\DataColumn;
 use exface\Core\Exceptions\DataSourceError;
 
 class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuery {
@@ -87,7 +87,7 @@ class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuer
 				// See if the query has any placeholders
 				$placeholders = array();
 				foreach ($this->exface()->utils()->find_placeholders_in_string($query) as $ph){
-					/* @var $col exface\Core\DataColumn */
+					/* @var $col exface\Core\CommonLogic\DataSheets\DataColumn */
 					if (!$col = $data_sheet->get_columns()->get(DataColumn::sanitize_column_name($ph))){
 						throw new ActionRuntimeException('Cannot perform custom query in "' . $this->get_alias_with_namespace() . '": placeholder "' . $ph . '" not found in inupt data!');
 					}

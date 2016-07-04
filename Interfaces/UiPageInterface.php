@@ -1,6 +1,6 @@
 <?php namespace exface\Core\Interfaces;
 
-use exface\Core\UxonObject;
+use exface\Core\CommonLogic\UxonObject;
 
 interface UiPageInterface extends ExfaceClassInterface {
 	/**
@@ -34,14 +34,14 @@ interface UiPageInterface extends ExfaceClassInterface {
 	/**
 	 *
 	 * @param string $value
-	 * @return \exface\Core\UiPage
+	 * @return \exface\Core\CommonLogic\UiPage
 	 */
 	public function set_id($value);
 	
 	/**
 	 *
 	 * @param string $widget_id
-	 * @return \exface\Core\UiPage
+	 * @return \exface\Core\CommonLogic\UiPage
 	 */
 	public function remove_widget($widget_id);
 	

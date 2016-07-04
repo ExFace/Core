@@ -1,7 +1,7 @@
 <?php namespace exface\Core\Interfaces\DataSheets;
 
 use exface\Core\Interfaces\EntityListInterface;
-use exface\Core\Model\Attribute;
+use exface\Core\CommonLogic\Model\Attribute;
 
 interface DataColumnListInterface extends EntityListInterface {
 	/**
@@ -35,7 +35,7 @@ interface DataColumnListInterface extends EntityListInterface {
 	
 	/**
 	 * Adds a new column from an instatiated expression object or a string expression and returns it.
-	 * @param \exface\Core\Model\Expression|string $expression
+	 * @param \exface\Core\CommonLogic\Model\Expression|string $expression
 	 * @param string $name
 	 * @param string $hidden
 	 * @return DataColumnInterface

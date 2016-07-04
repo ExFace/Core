@@ -1,7 +1,7 @@
 <?php namespace exface\Core\Interfaces\Model;
 
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
-use exface\Core\Model\Object;
+use exface\Core\CommonLogic\Model\Object;
 use exface\Core\Interfaces\EntityListInterface;
 
 interface BehaviorListInterface extends iCanBeConvertedToUxon, \IteratorAggregate {

@@ -1,7 +1,7 @@
 <?php namespace exface\Core\Actions;
 
 use exface\Core\Contexts\AbstractContext;
-use exface\Core\AbstractAction;
+use exface\Core\CommonLogic\AbstractAction;
 
 /**
  * This is the base action to modify context data.

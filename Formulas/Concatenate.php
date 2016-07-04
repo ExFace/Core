@@ -6,7 +6,7 @@
  * @author aka
  *
  */
-class Concatenate extends \exface\Core\Model\Formula {
+class Concatenate extends \exface\Core\CommonLogic\Model\Formula {
 	
 	function run(){
 		for($i=0;$i<func_num_args();$i++) {

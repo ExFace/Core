@@ -3,18 +3,18 @@
 use exface\Core\Interfaces\Widgets\iHaveColumns;
 use exface\Core\Interfaces\Widgets\iHaveButtons;
 use exface\Core\Interfaces\Widgets\iHaveFilters;
-use exface\Core\Model\Attribute;
-use exface\Core\Model\Relation;
+use exface\Core\CommonLogic\Model\Attribute;
+use exface\Core\CommonLogic\Model\Relation;
 use exface\Core\Interfaces\Widgets\iSupportLazyLoading;
 use exface\Core\Exceptions\UiWidgetException;
-use exface\Core\UxonObject;
+use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\Core\Model\RelationPath;
+use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Exceptions\UxonParserError;
 use exface\Core\Interfaces\Widgets\iHaveColumnGroups;
 use exface\Core\Factories\DataColumnTotalsFactory;
 use exface\Core\Factories\WidgetFactory;
-use exface\Core\Model\Object;
+use exface\Core\CommonLogic\Model\Object;
 use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 use exface\Core\Factories\WidgetLinkFactory;
 
@@ -172,7 +172,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 			if (!$fltr){
 				// TODO currently this only works for direct relations, not for chained ones.
 				// FIXME check, if a filter on the current relation is there already, and add it only in this case
-				/* @var $rel \exface\Core\Model\relation */
+				/* @var $rel \exface\Core\CommonLogic\Model\relation */
 				if ($rel = $this->get_meta_object()->find_relation($data_sheet->get_meta_object()->get_id())){
 					$fltr = $this->create_filter_from_relation($rel);
 					$data_sheet = $fltr->prepare_data_sheet_to_prefill($data_sheet);

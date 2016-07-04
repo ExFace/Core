@@ -1,6 +1,6 @@
 <?php namespace exface\Core\Events;
 
-use exface\Core\NameResolver;
+use exface\Core\CommonLogic\NameResolver;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 
 /**

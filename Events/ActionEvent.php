@@ -1,7 +1,7 @@
 <?php namespace exface\Core\Events;
 
 use exface\Core\Interfaces\Actions\ActionInterface;
-use exface\Core\NameResolver;
+use exface\Core\CommonLogic\NameResolver;
 
 /**
  * Action sheet event names consist of the qualified alias of the app followed by "Action" and the respective event type:

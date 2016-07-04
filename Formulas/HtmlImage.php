@@ -1,6 +1,6 @@
 <?php namespace exface\Core\Formulas;
 
-class HtmlImage extends \exface\Core\Model\Formula {
+class HtmlImage extends \exface\Core\CommonLogic\Model\Formula {
 	
 	function run($url, $properties = null, $placeholder_url = null){
 		if (!$url) $url = $placeholder_url;

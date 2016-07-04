@@ -1,18 +1,18 @@
 <?php namespace exface\Core\Widgets;
 
-use exface\Core\Model\Expression;
+use exface\Core\CommonLogic\Model\Expression;
 use exface\Core\Interfaces\Widgets\iHaveChildren;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Exceptions\UiWidgetException;
 use exface\Core\Interfaces\Widgets\iTriggerAction;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
-use exface\Core\WidgetLink;
+use exface\Core\CommonLogic\WidgetLink;
 use exface\Core\Exceptions\UxonParserError;
-use exface\Core\WidgetDimension;
+use exface\Core\CommonLogic\WidgetDimension;
 use exface\Core\Interfaces\WidgetInterface;
-use exface\Core\NameResolver;
-use exface\Core\Model\Object;
+use exface\Core\CommonLogic\NameResolver;
+use exface\Core\CommonLogic\Model\Object;
 use exface\Core\Factories\WidgetDimensionFactory;
 use exface\Core\Interfaces\UiPageInterface;
 use exface\Core\Exceptions\UiWidgetInvalidIdError;

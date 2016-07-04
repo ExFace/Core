@@ -2,7 +2,7 @@
 namespace exface\Core\Widgets;
 use exface\Core\Interfaces\Widgets\iHaveTopToolbar;
 use exface\Core\Interfaces\Widgets\iHaveBottomToolbar;
-use exface\Core\Model\RelationPath;
+use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Factories\WidgetFactory;
 
 class DataTable extends Data implements iHaveTopToolbar, iHaveBottomToolbar {

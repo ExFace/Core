@@ -1,6 +1,6 @@
 <?php namespace exface\Core\Interfaces\Widgets;
 
-use exface\Core\Model\Expression;
+use exface\Core\CommonLogic\Model\Expression;
 
 interface iHaveValue {
 	

@@ -1,7 +1,7 @@
 <?php namespace exface\Core\Behaviors;
 
-use exface\Core\AbstractBehavior;
-use exface\Core\Model\Attribute;
+use exface\Core\CommonLogic\AbstractBehavior;
+use exface\Core\CommonLogic\Model\Attribute;
 use exface\Core\Events\DataSheetEvent;
 use exface\Core\Exceptions\MetaModelBehaviorException;
 use exface\Core\Interfaces\Actions\iUndoActions;
@@ -65,7 +65,7 @@ class TimeStampingBehavior extends AbstractBehavior {
 	/**
 	 * 
 	 * {@inheritDoc}
-	 * @see \exface\Core\AbstractBehavior::export_uxon_object()
+	 * @see \exface\Core\CommonLogic\AbstractBehavior::export_uxon_object()
 	 */
 	public function export_uxon_object(){
 		$uxon = parent::export_uxon_object();

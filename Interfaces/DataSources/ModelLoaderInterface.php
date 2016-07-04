@@ -1,7 +1,7 @@
 <?php namespace exface\Core\Interfaces\DataSources;
 
-use exface\Core\exface;
-use exface\Core\Model\Object;
+use exface\Core\CommonLogic\Workbench;
+use exface\Core\CommonLogic\Model\Object;
 
 interface ModelLoaderInterface {
 	

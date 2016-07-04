@@ -26,7 +26,7 @@ class EditObjectDialog extends ShowDialog {
 	protected function create_editors(AbstractWidget $parent_widget){
 		$editors = array();
 		$cnt = 0;
-		/* @var $attr \exface\Core\Model\attribute */
+		/* @var $attr \exface\Core\CommonLogic\Model\attribute */
 		foreach ($this->get_meta_object()->get_attributes() as $attr){
 			$cnt++;
 			// Ignore hidden attributes if they are not system attributes

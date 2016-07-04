@@ -2,7 +2,7 @@
 
 use exface\Core\Interfaces\ExfaceClassInterface;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
-use exface\Core\Model\Object;
+use exface\Core\CommonLogic\Model\Object;
 use exface\Core\Interfaces\AliasInterface;
 use exface\Core\Interfaces\iCanBeCopied;
 

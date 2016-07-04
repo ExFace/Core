@@ -4,7 +4,7 @@ use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\Interfaces\Widgets\iHaveValue;
 use exface\Core\Interfaces\Widgets\iShowText;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\Core\Model\RelationPath;
+use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Interfaces\Widgets\iHaveColumns;
 

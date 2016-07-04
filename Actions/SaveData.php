@@ -4,9 +4,9 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Actions\iModifyData;
 use exface\Core\Interfaces\Actions\iCanBeUndone;
 use exface\Core\Exceptions\ActionRuntimeException;
-use exface\Core\UxonObject;
+use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\DataSheetFactory;
-use exface\Core\AbstractAction;
+use exface\Core\CommonLogic\AbstractAction;
 
 class SaveData extends AbstractAction implements iModifyData, iCanBeUndone {
 	private $affected_rows = 0;

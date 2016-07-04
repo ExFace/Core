@@ -1,8 +1,8 @@
 <?php namespace exface\Core\Factories;
 
-use exface\Core\exface;
-use exface\Core\Model\Expression;
-use exface\Core\Model\Attribute;
+use exface\Core\CommonLogic\Workbench;
+use exface\Core\CommonLogic\Model\Expression;
+use exface\Core\CommonLogic\Model\Attribute;
 
 abstract class ExpressionFactory {
 	
@@ -15,7 +15,7 @@ abstract class ExpressionFactory {
 	 * @param object $object
 	 * @return Expression
 	 */
-	public static function create_from_string(exface &$exface, $string, $meta_object = null){
+	public static function create_from_string(Workbench &$exface, $string, $meta_object = null){
 		return new Expression($exface, $string, $meta_object);
 	}
 	

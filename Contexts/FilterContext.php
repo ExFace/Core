@@ -1,10 +1,10 @@
 <?php
 namespace exface\Core\Contexts;
-use exface\Core\Model\Attribute;
-use exface\Core\Model\Condition;
-use exface\Core\Model\Object;
+use exface\Core\CommonLogic\Model\Attribute;
+use exface\Core\CommonLogic\Model\Condition;
+use exface\Core\CommonLogic\Model\Object;
 use exface\Core\Exceptions\UxonParserError;
-use exface\Core\UxonObject;
+use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\ConditionFactory;
 use exface\Core\Factories\ExpressionFactory;
 class FilterContext extends AbstractContext {

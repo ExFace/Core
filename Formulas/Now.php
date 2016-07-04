@@ -1,6 +1,6 @@
 <?php namespace exface\Core\Formulas;
 
-class Now extends \exface\Core\Model\Formula {
+class Now extends \exface\Core\CommonLogic\Model\Formula {
 	
 	function run($format=''){
 		global $exface;

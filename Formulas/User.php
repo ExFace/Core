@@ -5,7 +5,7 @@
  * @author aka
  *
  */
-class User extends \exface\Core\Model\Formula {
+class User extends \exface\Core\CommonLogic\Model\Formula {
 	
 	function run($variable = null){
 		global $exface;

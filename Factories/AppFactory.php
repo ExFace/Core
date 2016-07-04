@@ -1,7 +1,7 @@
 <?php namespace exface\Core\Factories;
 
 use exface;
-use exface\Core\NameResolver;
+use exface\Core\CommonLogic\NameResolver;
 use exface\Core\Interfaces\NameResolverInterface;
 use exface\Core\Interfaces\AppInterface;
 

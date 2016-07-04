@@ -1,13 +1,13 @@
 <?php namespace exface\Core\Interfaces\DataSheets;
 
-use exface\Core\Model\Attribute;
-use exface\Core\Model\Expression;
-use exface\Core\Model\DataTypes\AbstractDataType;
+use exface\Core\CommonLogic\Model\Attribute;
+use exface\Core\CommonLogic\Model\Expression;
+use exface\Core\CommonLogic\Model\DataTypes\AbstractDataType;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Exceptions\DataSheetException;
 use exface\Core\Interfaces\DataSheets\DataColumnTotalsListInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\Core\Model\DataTypes\Boolean;
+use exface\Core\CommonLogic\Model\DataTypes\Boolean;
 use exface\Core\Interfaces\iCanBeCopied;
 
 interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied {
@@ -22,7 +22,7 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied {
 	
 	/**
 	 * 
-	 * @return \exface\Core\Model\Expression
+	 * @return \exface\Core\CommonLogic\Model\Expression
 	 */
 	public function get_expression_obj();
 	

@@ -1,8 +1,8 @@
 <?php namespace exface\Core\Widgets;
 
-use exface\Core\Model\Attribute;
+use exface\Core\CommonLogic\Model\Attribute;
 use exface\Core\Interfaces\Widgets\iHaveColumns;
-use exface\Core\Model\RelationPath;
+use exface\Core\CommonLogic\Model\RelationPath;
 
 /**
  * The DataColumnGroup is a group of columns in a data widget from one side and at the same time a full featured data widget on the other.

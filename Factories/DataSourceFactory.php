@@ -1,8 +1,8 @@
 <?php namespace exface\Core\Factories;
 
-use exface\Core\exface;
-use exface\Core\Model\Model;
-use exface\Core\DataSource;
+use exface\Core\CommonLogic\Workbench;
+use exface\Core\CommonLogic\Model\Model;
+use exface\Core\CommonLogic\DataSource;
 use exface\Core\Interfaces\DataSources\DataSourceInterface;
 
 abstract class DataSourceFactory extends AbstractFactory {

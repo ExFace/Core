@@ -1,7 +1,7 @@
 <?php namespace exface\Core\Interfaces\DataSources;
 
-use exface\Core\exface;
-use exface\Core\Model\Model;
+use exface\Core\CommonLogic\Workbench;
+use exface\Core\CommonLogic\Model\Model;
 use exface\Core\Interfaces\ExfaceClassInterface;
 
 interface DataSourceInterface extends ExfaceClassInterface {

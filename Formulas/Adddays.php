@@ -1,6 +1,6 @@
 <?php namespace exface\Core\Formulas;
 
-use exface\Core\Model\Formula;
+use exface\Core\CommonLogic\Model\Formula;
 
 class Adddays extends Formula {
 	

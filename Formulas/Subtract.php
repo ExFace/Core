@@ -6,7 +6,7 @@
  * @author aka
  *
  */
-class Subtract extends \exface\Core\Model\Formula {
+class Subtract extends \exface\Core\CommonLogic\Model\Formula {
 	
 	function run(){
 		$return = func_get_arg(0);

@@ -1,13 +1,13 @@
 <?php namespace exface\Core\Factories;
 
-use exface\Core\exface;
+use exface\Core\CommonLogic\Workbench;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Exceptions\UxonParserError;
-use exface\Core\UxonObject;
+use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\UiWidgetException;
 use exface\Core\Interfaces\UiPageInterface;
 use exface\Core\Factories\WidgetLinkFactory;
-use exface\Core\UiPage;
+use exface\Core\CommonLogic\UiPage;
 
 abstract class WidgetFactory extends AbstractFactory {
 	

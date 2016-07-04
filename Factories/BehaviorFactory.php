@@ -1,9 +1,9 @@
 <?php namespace exface\Core\Factories;
 
-use exface\Core\exface;
-use exface\Core\NameResolver;
-use exface\Core\UxonObject;
-use exface\Core\Model\Object;
+use exface\Core\CommonLogic\Workbench;
+use exface\Core\CommonLogic\NameResolver;
+use exface\Core\CommonLogic\UxonObject;
+use exface\Core\CommonLogic\Model\Object;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Interfaces\NameResolverInterface;
 

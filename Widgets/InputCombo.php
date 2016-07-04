@@ -95,7 +95,7 @@ class InputCombo extends InputSelect implements iSupportLazyLoading {
 	
 	/**
 	 * 
-	 * @return \exface\Core\Model\Attribute
+	 * @return \exface\Core\CommonLogic\Model\Attribute
 	 */
 	public function get_text_attribute(){
 		return $this->get_meta_object()->get_attribute($this->get_text_attribute_alias());
@@ -115,7 +115,7 @@ class InputCombo extends InputSelect implements iSupportLazyLoading {
 	
 	/**
 	 * 
-	 * @return \exface\Core\Model\Attribute
+	 * @return \exface\Core\CommonLogic\Model\Attribute
 	 */
 	public function get_value_attribute(){
 		return $this->get_meta_object()->get_attribute($this->get_value_attribute_alias());

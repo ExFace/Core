@@ -1,7 +1,7 @@
 <?php namespace exface\Core\Factories;
 
-use exface\Core\exface;
-use exface\Core\NameResolver;
+use exface\Core\CommonLogic\Workbench;
+use exface\Core\CommonLogic\NameResolver;
 use exface\Core\Interfaces\NameResolverInterface;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Events\ExFaceEvent;
@@ -27,7 +27,7 @@ abstract class EventFactory extends AbstractNameResolverFactory {
 	 * @param exface $exface
 	 * @return ExFaceEvent
 	 */
-	public static function create_basic_event(exface $exface, $event_name){
+	public static function create_basic_event(Workbench $exface, $event_name){
 		$instance = new ExFaceEvent($exface);
 		$instance->set_name($event_name);
 		return $instance;

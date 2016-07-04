@@ -1,6 +1,6 @@
 <?php namespace exface\Core\Interfaces;
 
-use exface\Core\exface;
+use exface\Core\CommonLogic\Workbench;
 
 interface ExfaceClassInterface {
 	

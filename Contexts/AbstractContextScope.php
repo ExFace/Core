@@ -1,7 +1,7 @@
 <?php namespace exface\Core\Contexts;
 
 use exface\Core\Exceptions\ContextError;
-use exface\Core\exface;
+use exface\Core\CommonLogic\Workbench;
 use exface\Core\Interfaces\Contexts\ContextScopeInterface;
 use exface\Core\Interfaces\Contexts\ContextInterface;
 
@@ -85,7 +85,7 @@ abstract class AbstractContextScope implements ContextScopeInterface {
 	abstract public function save_contexts();
 	
 	/**
-	 * @return \exface\Core\exface
+	 * @return \exface\Core\CommonLogic\Workbench
 	 */
 	public function exface(){
 		return $this->exface;

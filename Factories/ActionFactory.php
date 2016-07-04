@@ -1,12 +1,12 @@
 <?php namespace exface\Core\Factories;
 
-use exface\Core\exface;
-use exface\Core\NameResolver;
+use exface\Core\CommonLogic\Workbench;
+use exface\Core\CommonLogic\NameResolver;
 use exface\Core\Interfaces\NameResolverInterface;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Widgets\AbstractWidget;
 use exface\Core\Exceptions\UxonParserError;
-use exface\Core\UxonObject;
+use exface\Core\CommonLogic\UxonObject;
 
 abstract class ActionFactory extends AbstractNameResolverFactory {
 	
@@ -36,7 +36,7 @@ abstract class ActionFactory extends AbstractNameResolverFactory {
 	 * @throws UxonParserError
 	 * @return ActionInterface
 	 */
-	public static function create_from_uxon(exface &$exface, \stdClass $uxon_description, AbstractWidget $called_by_widget = null){
+	public static function create_from_uxon(Workbench &$exface, \stdClass $uxon_description, AbstractWidget $called_by_widget = null){
 		if ($action_alias = $uxon_description->alias){
 			unset($uxon_description->alias);
 		} else {
@@ -54,7 +54,7 @@ abstract class ActionFactory extends AbstractNameResolverFactory {
 	 * @param AbstractWidget $called_by_widget
 	 * @return ActionInterface
 	 */
-	public static function create_from_string(exface &$exface, $qualified_action_alias, AbstractWidget $called_by_widget = null){
+	public static function create_from_string(Workbench &$exface, $qualified_action_alias, AbstractWidget $called_by_widget = null){
 		$name_resolver = $exface->create_name_resolver($qualified_action_alias, NameResolver::OBJECT_TYPE_ACTION);
 		return static::create($name_resolver, $called_by_widget);
 	}

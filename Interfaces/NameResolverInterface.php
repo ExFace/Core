@@ -1,10 +1,10 @@
 <?php namespace exface\Core\Interfaces;
 
-use exface\Core\exface;
+use exface\Core\CommonLogic\Workbench;
 
 interface NameResolverInterface extends ExfaceClassInterface {
 	
-	public static function create_from_string($string, $object_type, exface &$exface);
+	public static function create_from_string($string, $object_type, Workbench &$exface);
 	
 	public function get_object_type();
 	

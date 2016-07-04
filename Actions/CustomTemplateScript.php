@@ -1,7 +1,7 @@
 <?php namespace exface\Core\Actions;
 
 use exface\Core\Interfaces\Actions\iRunTemplateScript;
-use exface\Core\AbstractAction;
+use exface\Core\CommonLogic\AbstractAction;
 
 class CustomTemplateScript extends AbstractAction implements iRunTemplateScript {
 	private $script_language = "javascript";

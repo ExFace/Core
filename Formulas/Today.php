@@ -1,6 +1,6 @@
 <?php namespace exface\Core\Formulas;
 
-class Today extends \exface\Core\Model\Formula {
+class Today extends \exface\Core\CommonLogic\Model\Formula {
 	
 	function run(){
 		global $exface;

@@ -2,9 +2,9 @@
 
 use exface\Core\Exceptions\UxonParserError;
 use exface\Core\Interfaces\Widgets\iHaveChildren;
-use exface\Core\Model\Object;
+use exface\Core\CommonLogic\Model\Object;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\Core\Model\RelationPath;
+use exface\Core\CommonLogic\Model\RelationPath;
 
 /**
  * A ComboTable is an InputCombo, which uses a DataTable to show the autosuggest values. Thus, the user can see more
@@ -54,7 +54,7 @@ class ComboTable extends InputCombo implements iHaveChildren {
 	/**
 	 * Returns the relation, this widget represents or FALSE if the widget stands for a direct attribute. 
 	 * This shortcut function is very handy because a ComboTable often stands for a relation.
-	 * @return \exface\Core\Model\relation
+	 * @return \exface\Core\CommonLogic\Model\relation
 	 */
 	public function get_relation(){
 		if ($this->get_attribute()->is_relation()){

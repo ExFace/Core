@@ -2,7 +2,7 @@
 
 use exface\Core\Exceptions\ActionRuntimeException;
 use exface\Core\Interfaces\Actions\iUndoActions;
-use exface\Core\AbstractAction;
+use exface\Core\CommonLogic\AbstractAction;
 
 /**
  * This action performs an undo operation on one or more other actions from the action context history. 

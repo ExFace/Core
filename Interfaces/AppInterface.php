@@ -1,12 +1,12 @@
 <?php namespace exface\Core\Interfaces;
 
-use exface\Core\exface;
+use exface\Core\CommonLogic\Workbench;
 use exface\Core\Widgets\AbstractWidget;
 use exface\Core\Interfaces\Actions\ActionInterface;
 
 interface AppInterface extends ExfaceClassInterface, AliasInterface {
 	
-	public function __construct(exface &$exface);
+	public function __construct(Workbench &$exface);
 	
 	/**
 	 * Returns an action object

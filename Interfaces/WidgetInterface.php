@@ -1,8 +1,8 @@
 <?php namespace exface\Core\Interfaces;
 
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\Core\Model\Object;
-use exface\Core\WidgetLink;
+use exface\Core\CommonLogic\Model\Object;
+use exface\Core\CommonLogic\WidgetLink;
 use exface\Core\Interfaces\Actions\ActionInterface;
 
 interface WidgetInterface extends ExfaceClassInterface {
@@ -123,7 +123,7 @@ interface WidgetInterface extends ExfaceClassInterface {
 	/**
 	 * 
 	 * @throws \exface\Core\Exceptions\UiWidgetException
-	 * @return \exface\Core\Model\Object
+	 * @return \exface\Core\CommonLogic\Model\Object
 	 */
 	public function get_meta_object();
 	

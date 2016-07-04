@@ -1,8 +1,8 @@
 <?php namespace exface\Core\Factories;
 
 use exface;
-use exface\Core\NameResolver;
-use exface\Core\QueryBuilder\AbstractQueryBuilder;
+use exface\Core\CommonLogic\NameResolver;
+use exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder;
 use exface\Core\Interfaces\NameResolverInterface;
 
 abstract class QueryBuilderFactory extends AbstractNameResolverFactory {
@@ -21,11 +21,11 @@ abstract class QueryBuilderFactory extends AbstractNameResolverFactory {
 	 * - file path relative to the ExFace installation directory
 	 * - ExFace alias with namespace
 	 * - class name
-	 * @param exface\Core\exface $exface
+	 * @param exface\Core\CommonLogic\Workbench $exface
 	 * @param string $alias_with_namespace
 	 * @return AbstractQueryBuilder
 	 */
-	public static function create_from_alias(exface\Core\exface &$exface, $path_or_qualified_alias){
+	public static function create_from_alias(exface\Core\CommonLogic\Workbench &$exface, $path_or_qualified_alias){
 		$name_resolver = $exface->create_name_resolver($path_or_qualified_alias, NameResolver::OBJECT_TYPE_QUERY_BUILDER);
 		return static::create($name_resolver);
 	}

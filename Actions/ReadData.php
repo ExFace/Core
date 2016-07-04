@@ -2,7 +2,7 @@
 
 use exface\Core\Interfaces\Actions\iReadData;
 use exface\Core\Exceptions\ActionRuntimeException;
-use exface\Core\AbstractAction;
+use exface\Core\CommonLogic\AbstractAction;
 
 class ReadData extends AbstractAction implements iReadData {
 	private $affected_rows = 0;

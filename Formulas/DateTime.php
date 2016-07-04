@@ -1,6 +1,6 @@
 <?php namespace exface\Core\Formulas;
 
-class DateTime extends \exface\Core\Model\Formula {
+class DateTime extends \exface\Core\CommonLogic\Model\Formula {
 	
 	function run($date, $format=''){
 		global $exface;

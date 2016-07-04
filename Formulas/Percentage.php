@@ -5,7 +5,7 @@
  * @author aka
  *
  */
-class Percentage extends \exface\Core\Model\Formula {
+class Percentage extends \exface\Core\CommonLogic\Model\Formula {
 	
 	function run($value, $in_percent_of, $precision = 1){
 		if (!$in_percent_of) return 0;

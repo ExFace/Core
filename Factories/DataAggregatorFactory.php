@@ -1,11 +1,11 @@
 <?php namespace exface\Core\Factories;
 
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\Core\exface;
-use exface\Core\UxonObject;
+use exface\Core\CommonLogic\Workbench;
+use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\DataSheets\DataAggregatorInterface;
 use exface\Core\Exceptions\FactoryError;
-use exface\Core\DataAggregator;
+use exface\Core\CommonLogic\DataSheets\DataAggregator;
 
 abstract class DataAggregatorFactory extends AbstractFactory {
 	

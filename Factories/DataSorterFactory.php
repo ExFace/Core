@@ -1,15 +1,15 @@
 <?php namespace exface\Core\Factories;
 
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\Core\exface;
+use exface\Core\CommonLogic\Workbench;
 use exface\Core\Interfaces\DataSheets\DataSorterInterface;
-use exface\Core\UxonObject;
+use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\FactoryError;
-use exface\Core\DataSorter;
+use exface\Core\CommonLogic\DataSheets\DataSorter;
 
 abstract class DataSorterFactory extends AbstractFactory {
 	
-	public static function create_empty(exface &$exface){
+	public static function create_empty(Workbench &$exface){
 		return new DataSorter($exface);
 	}
 	

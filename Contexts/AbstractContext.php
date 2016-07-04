@@ -1,6 +1,6 @@
 <?php namespace exface\Core\Contexts;
 
-use exface\Core\UxonObject;
+use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Contexts\ContextInterface;
 use exface\Core\Interfaces\Contexts\ContextScopeInterface;
 
@@ -9,7 +9,7 @@ abstract class AbstractContext implements ContextInterface {
 	private $scope = null;
 	private $alias = NULL;
 	
-	public function __construct(\exface\Core\exface &$exface){
+	public function __construct(\exface\Core\CommonLogic\Workbench &$exface){
 		$this->exface = $exface;
 	}
 	
@@ -40,7 +40,7 @@ abstract class AbstractContext implements ContextInterface {
 	}
 	
 	/**
-	 * @return \exface\Core\exface
+	 * @return \exface\Core\CommonLogic\Workbench
 	 */
 	public function exface(){
 		return $this->exface;

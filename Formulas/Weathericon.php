@@ -5,7 +5,7 @@
  * @author aka
  *
  */
-class Weathericon extends \exface\Core\Model\Formula {
+class Weathericon extends \exface\Core\CommonLogic\Model\Formula {
 	
 	function run($condition_code){
 		global $exface;

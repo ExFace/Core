@@ -5,12 +5,12 @@ use exface\Core\Interfaces\Actions\iShowWidget;
 use exface\Core\Exceptions\UxonParserError;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\Core\Model\Condition;
+use exface\Core\CommonLogic\Model\Condition;
 use exface\Core\Exceptions\DataSheetMergeError;
 use exface\Core\Factories\DataSheetFactory;
-use exface\Core\UxonObject;
+use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Actions\iUsePrefillData;
-use exface\Core\AbstractAction;
+use exface\Core\CommonLogic\AbstractAction;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Factories\WidgetFactory;
 
@@ -120,7 +120,7 @@ class ShowWidget extends AbstractAction implements iShowWidget, iUsePrefillData 
 				$data_sheet = $this->get_app()->exface()->data()->create_data_sheet($this->get_widget()->get_meta_object());
 			}
 			
-			/* @var $condition \exface\Core\Model\Condition */
+			/* @var $condition \exface\Core\CommonLogic\Model\Condition */
 			foreach($context_conditions as $condition){
 				/*if ($this->get_widget() && $condition->get_expression()->get_meta_object()->get_id() == $this->get_widget()->get_meta_object_id()){
 				 // If the expressions belong to the same object, as the one being displayed, use them as filters

@@ -6,7 +6,7 @@
  * @author aka
  *
  */
-class Sum extends \exface\Core\Model\Formula {
+class Sum extends \exface\Core\CommonLogic\Model\Formula {
 	
 	function run(){
 		$return = 0;

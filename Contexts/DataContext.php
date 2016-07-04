@@ -1,6 +1,6 @@
 <?php namespace exface\Core\Contexts;
 
-use exface\Core\UxonObject;
+use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\ContextError;
 
 /**

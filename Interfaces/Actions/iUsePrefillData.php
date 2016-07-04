@@ -1,7 +1,7 @@
 <?php namespace exface\Core\Interfaces\Actions;
 
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\Core\UxonObject;
+use exface\Core\CommonLogic\UxonObject;
 
 interface iUsePrefillData {
 	

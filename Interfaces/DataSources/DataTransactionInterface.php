@@ -1,6 +1,6 @@
 <?php namespace exface\Core\Interfaces\DataSources;
 
-use exface\Core\exface;
+use exface\Core\CommonLogic\Workbench;
 use exface\Core\Interfaces\ExfaceClassInterface;
 
 interface DataTransactionInterface extends ExfaceClassInterface {

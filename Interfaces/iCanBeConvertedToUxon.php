@@ -1,6 +1,6 @@
 <?php
 namespace exface\Core\Interfaces;
-use exface\Core\UxonObject;
+use exface\Core\CommonLogic\UxonObject;
 
 interface iCanBeConvertedToUxon {
 	/**

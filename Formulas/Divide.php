@@ -1,6 +1,6 @@
 <?php namespace exface\Core\Formulas;
 
-class Divide extends \exface\Core\Model\Formula {
+class Divide extends \exface\Core\CommonLogic\Model\Formula {
 	
 	function run($numerator, $denominator, $alternate_result = 0){
 		if (!$denominator) return $alternate_result;

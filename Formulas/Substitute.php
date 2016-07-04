@@ -5,7 +5,7 @@
  * @author aka
  *
  */
-class Substitute extends \exface\Core\Model\Formula {
+class Substitute extends \exface\Core\CommonLogic\Model\Formula {
 	
 	function run($text, $old_text, $new_text){
         return str_replace($old_text, $new_text, $text);

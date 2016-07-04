@@ -4,7 +4,7 @@ use exface\Core\Interfaces\Widgets\iHaveButtons;
 use exface\Core\Interfaces\Widgets\iCollapsible;
 use exface\Core\Interfaces\Widgets\iHaveIcon;
 use exface\Core\Interfaces\Widgets\iSupportLazyLoading;
-use exface\Core\UxonObject;
+use exface\Core\CommonLogic\UxonObject;
 class Panel extends Container implements iSupportLazyLoading, iHaveButtons, iHaveIcon, iCollapsible {
 	protected $lazy_loading = false; // A panel will not be loaded via AJAX by default
 	protected $lazy_loading_action = 'exface.Core.ShowWidget';

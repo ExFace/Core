@@ -1,9 +1,9 @@
 <?php namespace exface\Core\Interfaces\DataSheets;
 
 use exface\Core\Exceptions\DataSheetException;
-use exface\Core\Model\ConditionGroup;
-use exface\Core\Model\Condition;
-use exface\Core\Model\Object;
+use exface\Core\CommonLogic\Model\ConditionGroup;
+use exface\Core\CommonLogic\Model\Condition;
+use exface\Core\CommonLogic\Model\Object;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\DataSheets\DataColumnInterface;

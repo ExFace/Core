@@ -1,7 +1,7 @@
 <?php namespace exface\Core\Events;
 
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
-use exface\Core\NameResolver;
+use exface\Core\CommonLogic\NameResolver;
 
 /**
  * Action sheet event names consist of the alias of the connector followed by "DataConnection" and the respective event type:

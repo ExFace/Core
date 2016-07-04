@@ -6,7 +6,7 @@ use exface\Core\Exceptions\UiWidgetException;
 use exface\Core\Interfaces\Widgets\iTriggerAction;
 use exface\Core\Interfaces\Widgets\iHaveChildren;
 use exface\Core\Factories\ActionFactory;
-use exface\Core\NameResolver;
+use exface\Core\CommonLogic\NameResolver;
 
 /**
  * A Button is the primary widget for triggering actions. In addition to the general widget attributes it can have

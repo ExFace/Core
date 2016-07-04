@@ -1,16 +1,16 @@
 <?php namespace exface\Core\Events;
 
 use Symfony\Component\EventDispatcher\Event;
-use exface\Core\exface;
+use exface\Core\CommonLogic\Workbench;
 use exface\Core\Interfaces\Events\EventInterface;
-use exface\Core\NameResolver;
+use exface\Core\CommonLogic\NameResolver;
 
 class ExFaceEvent extends Event implements EventInterface {
 	private $exface = null;
 	private $name = null;
 	private $namespace = null;
 	
-	public function __construct(exface &$exface){
+	public function __construct(Workbench &$exface){
 		$this->exface = $exface;
 	}
 	

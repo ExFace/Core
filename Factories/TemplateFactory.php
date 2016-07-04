@@ -1,8 +1,8 @@
 <?php namespace exface\Core\Factories;
 
-use exface\Core\exface;
+use exface\Core\CommonLogic\Workbench;
 use exface\Core\Interfaces\NameResolverInterface;
-use exface\Core\NameResolver;
+use exface\Core\CommonLogic\NameResolver;
 use exface\Core\Interfaces\TemplateInterface;
 
 abstract class TemplateFactory extends AbstractNameResolverFactory {
@@ -25,7 +25,7 @@ abstract class TemplateFactory extends AbstractNameResolverFactory {
 	 * @param exface $exface
 	 * @return TemplateInterface
 	 */
-	public static function create_from_string($qualified_alias, exface &$exface){
+	public static function create_from_string($qualified_alias, Workbench &$exface){
 		$name_resolver = NameResolver::create_from_string($qualified_alias, NameResolver::OBJECT_TYPE_TEMPLATE, $exface);
 		return static::create($name_resolver);
 	}
@@ -36,7 +36,7 @@ abstract class TemplateFactory extends AbstractNameResolverFactory {
 	 * @param exface $exface
 	 * @return \exface\Core\Interfaces\TemplateInterface
 	 */
-	public static function create_from_anything($name_reslver_or_alias_or_template, exface &$exface){
+	public static function create_from_anything($name_reslver_or_alias_or_template, Workbench &$exface){
 		if ($name_reslver_or_alias_or_template instanceof TemplateInterface){
 			$template = $name_reslver_or_alias_or_template;
 		} elseif ($name_reslver_or_alias_or_template instanceof NameResolverInterface){

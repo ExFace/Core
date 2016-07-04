@@ -1,6 +1,6 @@
 <?php namespace exface\Core\Formulas;
 
-class Round extends \exface\Core\Model\Formula {
+class Round extends \exface\Core\CommonLogic\Model\Formula {
 	
 	function run($number, $digits = 0, $pad_digits = false){
 		if (is_numeric($number)){

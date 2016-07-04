@@ -1,10 +1,10 @@
 <?php namespace exface\Core\Factories;
 
-use exface\Core\exface;
-use exface\Core\UxonObject;
+use exface\Core\CommonLogic\Workbench;
+use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\DataSheets\DataColumnInterface;
 use exface\Core\Interfaces\DataSheets\DataColumnTotalInterface;
-use exface\Core\DataColumnTotal;
+use exface\Core\CommonLogic\DataSheets\DataColumnTotal;
 
 abstract class DataColumnTotalsFactory extends AbstractFactory {
 	

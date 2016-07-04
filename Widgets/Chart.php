@@ -1,12 +1,12 @@
 <?php
 namespace exface\Core\Widgets;
 use exface\Core\Exceptions\UiWidgetConfigException;
-use exface\Core\UxonObject;
+use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Widgets\iHaveTopToolbar;
 use exface\Core\Interfaces\Widgets\iHaveBottomToolbar;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Factories\WidgetLinkFactory;
-use exface\Core\WidgetLink;
+use exface\Core\CommonLogic\WidgetLink;
 use exface\Core\Interfaces\Widgets\iHaveButtons;
 use exface\Core\Interfaces\Widgets\iSupportLazyLoading;
 

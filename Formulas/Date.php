@@ -1,6 +1,6 @@
 <?php namespace exface\Core\Formulas;
 
-class Date extends \exface\Core\Model\Formula {
+class Date extends \exface\Core\CommonLogic\Model\Formula {
 	
 	function run($date, $format=''){
 		if (!$date) return;

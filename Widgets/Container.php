@@ -2,10 +2,10 @@
 namespace exface\Core\Widgets;
 use exface\Core\Interfaces\Widgets\iHaveChildren;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\Core\Model\Attribute;
+use exface\Core\CommonLogic\Model\Attribute;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\Factories\WidgetFactory;
-use exface\Core\UxonObject;
+use exface\Core\CommonLogic\UxonObject;
 class Container extends AbstractWidget implements iHaveChildren {
 	private $widgets = array();
 	

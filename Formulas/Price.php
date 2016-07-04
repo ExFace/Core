@@ -9,7 +9,7 @@ use exface\Core\Factories\DataTypeFactory;
  * @author aka
  *
  */
-class Price extends \exface\Core\Model\Formula {
+class Price extends \exface\Core\CommonLogic\Model\Formula {
 	
 	function run($price, $currency_oid = null, $decimals='', $dec_point='', $thousands_sep=''){
 		if (!$price && $price !== 0) return;

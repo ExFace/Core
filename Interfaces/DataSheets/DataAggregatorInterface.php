@@ -3,7 +3,7 @@
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\iCanBeCopied;
-use exface\Core\UxonObject;
+use exface\Core\CommonLogic\UxonObject;
 
 interface DataAggregatorInterface extends iCanBeConvertedToUxon, iCanBeCopied {
 	

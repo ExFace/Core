@@ -3,7 +3,7 @@
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Exceptions\DataSheetException;
 use exface\Core\Interfaces\DataSheets\DataColumnInterface;
-use exface\Core\UxonObject;
+use exface\Core\CommonLogic\UxonObject;
 
 interface DataColumnTotalInterface extends iCanBeConvertedToUxon {
 		

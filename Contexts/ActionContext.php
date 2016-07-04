@@ -2,7 +2,7 @@
 namespace exface\Core\Contexts;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Exceptions\UxonParserError;
-use exface\Core\UxonObject;
+use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\ActionFactory;
 class ActionContext extends AbstractContext {
 	private $action_history = array();

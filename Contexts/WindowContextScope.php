@@ -1,7 +1,7 @@
 <?php namespace exface\Core\Contexts;
 
 use exface\Core\Exceptions\ContextError;
-use exface\Core\UxonObject;
+use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Contexts\ContextInterface;
 
 /**
@@ -60,7 +60,7 @@ class WindowContextScope extends AbstractContextScope {
 	
 	/**
 	 * @see \exface\Core\Contexts\AbstractContextScope::get_saved_contexts()
-	 * @return \exface\Core\UxonObject
+	 * @return \exface\Core\CommonLogic\UxonObject
 	 */
 	public function get_saved_contexts($context_alias = null){
 		

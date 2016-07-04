@@ -1,7 +1,7 @@
 <?php namespace exface\Core\Factories;
 
-use exface\Core\Model\Object;
-use exface\Core\Model\AttributeList;
+use exface\Core\CommonLogic\Model\Object;
+use exface\Core\CommonLogic\Model\AttributeList;
 
 abstract class AttributeListFactory {
 	

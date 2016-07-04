@@ -1,8 +1,8 @@
 <?php namespace exface\Core\Factories;
 
 use exface\Core\Interfaces\TemplateInterface;
-use exface\Core\UiPage;
-use exface\Core\UxonObject;
+use exface\Core\CommonLogic\UiPage;
+use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\UiManagerInterface;
 
 class UiPageFactory extends AbstractFactory {
@@ -10,7 +10,7 @@ class UiPageFactory extends AbstractFactory {
 	/**
 	 * 
 	 * @param TemplateInterface $template
-	 * @return \exface\Core\UiPage
+	 * @return \exface\Core\CommonLogic\UiPage
 	 */
 	public static function create(UiManagerInterface &$ui, $page_id){
 		$page = new UiPage($ui);
@@ -23,7 +23,7 @@ class UiPageFactory extends AbstractFactory {
 	 * @param TemplateInterface $template
 	 * @param string $page_id
 	 * @param string $page_text
-	 * @return \exface\Core\UiPage
+	 * @return \exface\Core\CommonLogic\UiPage
 	 */
 	public static function create_from_string(UiManagerInterface &$ui, $page_id, $page_text){
 		$page = static::create($ui, $page_id);
@@ -35,7 +35,7 @@ class UiPageFactory extends AbstractFactory {
 	 * TODO This method is still unfinished!
 	 * @param TemplateInterface $template
 	 * @param string $page_id
-	 * @return \exface\Core\UiPage
+	 * @return \exface\Core\CommonLogic\UiPage
 	 */
 	public static function create_from_cms_page(UiManagerInterface &$ui, $page_id){
 		$page_text = $ui->exface()->CMS()->get_page($page_id);

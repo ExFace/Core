@@ -1,7 +1,7 @@
 <?php namespace exface\Core\Interfaces\Actions;
 
 use exface\Core\Interfaces\WidgetInterface;
-use exface\Core\UxonObject;
+use exface\Core\CommonLogic\UxonObject;
 
 interface iShowWidget extends iNavigate {
 	

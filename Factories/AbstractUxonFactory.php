@@ -1,7 +1,7 @@
 <?php namespace exface\Core\Factories;
 
-use exface\Core\UxonObject;
-use exface\Core\exface;
+use exface\Core\CommonLogic\UxonObject;
+use exface\Core\CommonLogic\Workbench;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Exceptions\FactoryError;
 
@@ -12,7 +12,7 @@ abstract class AbstractUxonFactory extends AbstractFactory {
 	 * @param exface $exface
 	 * @param \stdClass $json_object
 	 */
-	public static function create_from_stdClass(exface &$exface, \stdClass $json_object){
+	public static function create_from_stdClass(Workbench &$exface, \stdClass $json_object){
 		if ($json_object instanceof UxonObject){
 			$uxon = $json_object;
 		} else {
@@ -28,7 +28,7 @@ abstract class AbstractUxonFactory extends AbstractFactory {
 	 * @param UxonObject $uxon
 	 * @throws FactoryError
 	 */
-	public static function create_from_uxon(exface &$exface, UxonObject $uxon){
+	public static function create_from_uxon(Workbench &$exface, UxonObject $uxon){
 		$result = static::create_empty($exface);
 		if ($result instanceof iCanBeConvertedToUxon){
 			$result->import_uxon_object($uxon);

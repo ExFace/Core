@@ -1,13 +1,13 @@
 <?php namespace exface\Core\Widgets;
 
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
-use exface\Core\Model\DataTypes\AbstractDataType;
+use exface\Core\CommonLogic\Model\DataTypes\AbstractDataType;
 use exface\Core\Interfaces\Widgets\iShowText;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Factories\ExpressionFactory;
-use exface\Core\Model\Expression;
+use exface\Core\CommonLogic\Model\Expression;
 use exface\Core\Factories\WidgetFactory;
-use exface\Core\UxonObject;
+use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Widgets\iShowDataColumn;
 
 class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleAttribute, iShowText {
@@ -224,7 +224,7 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
 	
 	public function get_data_column_name() {
 		if (is_null($this->data_column_name)){
-			$this->data_column_name = \exface\Core\DataColumn::sanitize_column_name($this->get_attribute_alias());
+			$this->data_column_name = \exface\Core\CommonLogic\DataSheets\DataColumn::sanitize_column_name($this->get_attribute_alias());
 		}
 		return $this->data_column_name;
 	}

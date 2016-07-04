@@ -1,7 +1,7 @@
 <?php namespace exface\Core\Actions;
 
 use exface\Core\Interfaces\Actions\iDeleteData;
-use exface\Core\AbstractAction;
+use exface\Core\CommonLogic\AbstractAction;
 
 class DeleteObject extends AbstractAction implements iDeleteData {
 	private $affected_rows = 0;

@@ -1,7 +1,7 @@
 <?php namespace exface\Core\Factories;
 
-use exface\Core\Model\Object;
-use exface\Core\Model\AttributeGroup;
+use exface\Core\CommonLogic\Model\Object;
+use exface\Core\CommonLogic\Model\AttributeGroup;
 
 abstract class AttributeGroupFactory extends AbstractFactory {
 	

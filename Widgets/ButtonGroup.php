@@ -3,7 +3,7 @@ namespace exface\Core\Widgets;
 use exface\Core\Interfaces\Widgets\iHaveButtons;
 use exface\Core\Interfaces\Widgets\iHaveIcon;
 use exface\Core\Factories\WidgetFactory;
-use exface\Core\UxonObject;
+use exface\Core\CommonLogic\UxonObject;
 class ButtonGroup extends AbstractWidget implements iHaveButtons, iHaveIcon {
 	private $buttons =  array();
 	private $icon_name = null;
