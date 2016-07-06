@@ -14,8 +14,8 @@
 	},
 	"require" : {
 		"php" : ">=5.4",
-		"symfony/FileSystem" : "2.*",
-		"symfony/Event-Dispatcher" : "2.*",
+		"symfony/FileSystem" : ">=2",
+		"symfony/Event-Dispatcher" : ">=2*",
 		"jmikola/Wildcard-Event-Dispatcher" : "1.*",
 		"myclabs/Deep-Copy" : "1.*"
 	}
