@@ -9,7 +9,7 @@ use exface\Core\Exceptions\DataSheetException;
 use exface\Core\Factories\EntityListFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\DataSheets\DataColumnInterface;
-use exface\Core\CommonLogic\Model\DataTypes\AbstractDataType;
+use exface\Core\DataTypes\AbstractDataType;
 use exface\Core\Factories\DataColumnTotalsFactory;
 use exface\Core\CommonLogic\UxonObject;
 

@@ -1,7 +1,7 @@
 <?php namespace exface\Core\Widgets;
 
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
-use exface\Core\CommonLogic\Model\DataTypes\AbstractDataType;
+use exface\Core\DataTypes\AbstractDataType;
 use exface\Core\Interfaces\Widgets\iShowText;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Factories\ExpressionFactory;

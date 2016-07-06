@@ -2,8 +2,7 @@
 namespace exface\Core\CommonLogic\Model;
 use exface\Core\CommonLogic\Model\Expression;
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\CommonLogic\Model\DataTypes\String;
-use exface\Core\CommonLogic\Model\DataTypes\AbstractDataType;
+use exface\Core\DataTypes\AbstractDataType;
 use exface\Core\Exceptions\DataValidationException;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Factories\DataTypeFactory;
@@ -54,7 +53,6 @@ class Condition implements iCanBeConvertedToUxon {
 		} catch (\Exception $e) {
 			throw new DataValidationException('Illegal filter value "' . $value . '" for attribute "' . $this->get_attribute_alias() . '" of data type "' . $this->get_expression()->get_attribute()->get_data_type()->get_name() . '": ' . $e->getMessage());
 			$value = null;
-			break;
 		}
 		$this->value = $value;
 	}

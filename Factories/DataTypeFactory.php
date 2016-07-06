@@ -1,7 +1,7 @@
 <?php namespace exface\Core\Factories;
 
 use exface\Core\CommonLogic\Workbench;
-use exface\Core\CommonLogic\Model\DataTypes\AbstractDataType;
+use exface\Core\DataTypes\AbstractDataType;
 use exface\Core\Interfaces\NameResolverInterface;
 
 abstract class DataTypeFactory extends AbstractNameResolverFactory {
@@ -24,7 +24,7 @@ abstract class DataTypeFactory extends AbstractNameResolverFactory {
 	 * @return AbstractDataType
 	 */
 	public static function create_from_alias(Workbench &$exface, $data_type_alias){
-		$class = 'exface\\Core\\CommonLogic\\Model\\DataTypes\\' . $data_type_alias;
+		$class = 'exface\\Core\\DataTypes\\' . $data_type_alias . 'DataType';
 		return new $class($exface);
 	}
 	

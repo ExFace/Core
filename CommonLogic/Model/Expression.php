@@ -1,10 +1,10 @@
-<?php
-namespace exface\Core\CommonLogic\Model;
+<?php namespace exface\Core\CommonLogic\Model;
+
 use exface\Core\Exceptions\FormulaError;
-use exface\Core\CommonLogic\Model\DataTypes\String;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Factories\FormulaFactory;
 use exface\Core\Factories\WidgetLinkFactory;
+
 class Expression {
 	// Expression types
 	// const FORMULA = 'formula';

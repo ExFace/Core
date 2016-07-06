@@ -1,2 +1,2 @@
 eclipse.preferences.version=1
-include_path=0;/ExFace Core
+include_path=1;C\:/xampp/htdocs/exface/exface/vendor/jmikola/wildcard-event-dispatcher/src/Jmikola/WildcardEventDispatcher\u00051;C\:/xampp/htdocs/exface/exface/vendor/symfony

@@ -1,7 +1,6 @@
 <?php namespace exface\Core\Actions;
 
 use exface\Core\Interfaces\Actions\iShowUrl;
-use exface\Core\CommonLogic\Model\DataTypes\Boolean;
 use exface\Core\CommonLogic\AbstractAction;
 
 /**
@@ -16,7 +15,7 @@ class GoToUrl extends AbstractAction implements iShowUrl {
 	private $open_in_new_window = false;
 	/**
 	 * @uxon urlencode_placeholders Makes all placeholders get encoded and thus URL-safe if set to TRUE. Use FALSE if placeholders are ment to use as-is (e.g. the URL itself is a placeholder)
-	 * @var Boolean
+	 * @var boolean
 	 */
 	private $urlencode_placeholders = true;
 	

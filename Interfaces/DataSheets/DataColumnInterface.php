@@ -2,12 +2,11 @@
 
 use exface\Core\CommonLogic\Model\Attribute;
 use exface\Core\CommonLogic\Model\Expression;
-use exface\Core\CommonLogic\Model\DataTypes\AbstractDataType;
+use exface\Core\DataTypes\AbstractDataType;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Exceptions\DataSheetException;
 use exface\Core\Interfaces\DataSheets\DataColumnTotalsListInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\Core\CommonLogic\Model\DataTypes\Boolean;
 use exface\Core\Interfaces\iCanBeCopied;
 
 interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied {
