@@ -316,7 +316,7 @@ abstract class AbstractAction implements ActionInterface {
 	 */
 	public function get_result_output(){
 		$result = $this->get_result();
-		if ($result instanceof DataSheet){
+		if ($result instanceof DataSheetInterface){
 			return $result->to_uxon();
 		} elseif ($result instanceof WidgetInterface){
 			return $this->get_template()->draw($this->get_widget());
@@ -370,7 +370,7 @@ abstract class AbstractAction implements ActionInterface {
 	}
 	
 	protected function set_result_data_sheet(DataSheetInterface $data_sheet){
-		$this->result_data_sheet = $data_sheet ;
+		$this->result_data_sheet = $data_sheet;
 	}
 	
 	/**
