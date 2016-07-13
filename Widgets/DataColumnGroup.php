@@ -192,13 +192,36 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns {
 		return $this;
 	}
 	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Widgets\AbstractWidget::get_children()
+	 */
 	public function get_children(){
 		$children = $this->get_columns();
 		return $children;
 	}
 	
+	/**
+	 * Returns the number of columns in this group (including hidden columns!)
+	 * @return integer
+	 */
 	public function count_columns(){
 		return count($this->get_columns());
+	}
+	
+	/**
+	 * Returns the number of visible columns in this group
+	 * @return integer
+	 */
+	public function count_columns_visible(){
+		$result = 0;
+		foreach ($this->get_columns() as $column){
+			if (!$column->is_hidden()){
+				$result++;
+			}
+		}
+		return $result;
 	}
 }
 ?>
