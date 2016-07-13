@@ -23,19 +23,20 @@ class Workbench {
 	private $running_apps = array();
 	private $utils = null;
 	private $event_manager = null;
+	private $vendor_dir_path = '';
 	
 	private $request_params = array();
 	
 	function __construct(){
 		
-		$vendor_dir = dirname(__FILE__) . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..';
+		$this->vendor_dir_path = dirname(__FILE__) . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..';
 		require_once 'splClassLoader.php';
-		$classLoader = new \SplClassLoader(null, array($vendor_dir));
+		$classLoader = new \SplClassLoader(null, array($this->vendor_dir_path));
 		$classLoader->register();
 		
-		require_once($vendor_dir.DIRECTORY_SEPARATOR.'autoload.php');
+		require_once($this->vendor_dir_path.DIRECTORY_SEPARATOR.'autoload.php');
 		
-		$base_path = $vendor_dir.DIRECTORY_SEPARATOR.'..'.DIRECTORY_SEPARATOR;
+		$base_path = $this->vendor_dir_path.DIRECTORY_SEPARATOR.'..'.DIRECTORY_SEPARATOR;
 		
 		// load the config
 		require(dirname(__FILE__).'/../config.php');;
@@ -229,11 +230,11 @@ class Workbench {
 	}
 	
 	/**
-	 * Returns the absolute path of the Workbench installation folder
+	 * Returns the absolute path of the ExFace installation folder
 	 * @return string
 	 */
 	public function get_installation_path(){
-		return dirname(__FILE__);
+		return $this->vendor_dir_path . DIRECTORY_SEPARATOR . '..';
 	}
 	
 	public function filemanager(){
