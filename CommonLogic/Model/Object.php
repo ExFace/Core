@@ -146,7 +146,6 @@ class Object implements ExfaceClassInterface, AliasInterface {
 					return $r;
 				}
 			}
-			throw new UxonParserWarning('Multiple relations with alias "' . $alias . '" for object "' . $this->get_alias() . '" detected!');
 			return $first_rel;
 		}
 		return false;
