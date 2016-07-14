@@ -6,7 +6,7 @@ use exface\Core\Factories\DataTypeFactory;
  * Formats prices based on a currency meta object.
  * Currency information is cached, so in general only one query per displayed
  * currency is needed.
- * @author aka
+ * @author Andrej Kabachnik
  *
  */
 class Price extends \exface\Core\CommonLogic\Model\Formula {
@@ -43,7 +43,7 @@ class Price extends \exface\Core\CommonLogic\Model\Formula {
 	}
 	
 	public function get_data_type(){
-		$exface = $this->get_data_sheet()->exface();
+		$exface = $this->get_data_sheet()->get_workbench();
 		return DataTypeFactory::create_from_alias($exface, EXF_DATA_TYPE_PRICE);
 	}
 }

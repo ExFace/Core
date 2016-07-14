@@ -15,7 +15,7 @@ class DeleteObject extends AbstractAction implements iDeleteData {
 	protected function perform(){
 		/* @var $data_sheet \exface\Core\Interfaces\DataSheets\DataSheetInterface */
 		$obj = $this->get_input_data_sheet()->get_meta_object();
-		$ds = $this->get_app()->exface()->data()->create_data_sheet($obj);
+		$ds = $this->get_app()->get_workbench()->data()->create_data_sheet($obj);
 		$instances = array();
 		foreach ($this->get_input_data_sheet()->get_rows() as $row){
 			$instances[] = $row[$obj->get_uid_alias()];

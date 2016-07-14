@@ -20,7 +20,7 @@ use exface\Core\Exceptions\EntityListError;
  * over all sorts of add_xxx and get_by_xxx methods. The EntityList can be quickly extended by entity-specific getters and setters like
  * get_by_data_type() for data sheet columns, etc.
  * 
- * @author aka
+ * @author Andrej Kabachnik
  *
  */
 class EntityList extends AbstractExfaceClass implements EntityListInterface {
@@ -81,7 +81,7 @@ class EntityList extends AbstractExfaceClass implements EntityListInterface {
 		if (!class_exists($factory_class_name)){
 			$factory_class_name = '\\exface\\Core\\Factories\\' . $factory_class_name;
 		}
-		$exface = $this->exface();
+		$exface = $this->get_workbench();
 		foreach ((array)$uxon as $u){
 			$this->add($factory_class_name::from_uxon($exface, $u));
 		}
@@ -105,7 +105,7 @@ class EntityList extends AbstractExfaceClass implements EntityListInterface {
 		if (!class_exists($factory_class_name)){
 			$factory_class_name = '\\exface\\Core\\Factories\\' . $factory_class_name;
 		}
-		$exface = $this->exface();
+		$exface = $this->get_workbench();
 		foreach ((array)$uxon as $u){
 			$this->add($factory_class_name::create_from_uxon($exface, $u));
 		}
@@ -324,7 +324,7 @@ class EntityList extends AbstractExfaceClass implements EntityListInterface {
 			throw new EntityListMergeError('Cannot merge entity lists of different types ("' . get_class($this) . '" and "' . get_class($other_list) . '")!');
 			return $this;
 		}
-		$exface = $this->exface();
+		$exface = $this->get_workbench();
 		$parent_object = $this->get_parent();
 		$result = new self($exface, $parent_object);
 		$entities = array_merge($this->get_all(), $other_list->get_all());

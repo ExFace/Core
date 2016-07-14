@@ -25,7 +25,7 @@ abstract class ExpressionFactory {
 	 * @return Expression
 	 */
 	public static function create_from_attribute(Attribute $attribute) {
-		$exface = $attribute->get_object()->exface();
+		$exface = $attribute->get_object()->get_workbench();
 		return self::create_from_string($exface, $attribute->get_alias_with_relation_path(), $attribute->get_relation_path()->get_start_object());
 	}
 	

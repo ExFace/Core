@@ -54,7 +54,7 @@ class DataSorter implements iCanBeConvertedToUxon, ExfaceClassInterface {
 	}
 	
 	public function export_uxon_object(){
-		$uxon = $this->exface()->create_uxon_object();
+		$uxon = $this->get_workbench()->create_uxon_object();
 		$uxon->set_property('attribute_alias', $this->get_attribute_alias());
 		$uxon->set_property('direction', $this->get_direction());
 		return $uxon;
@@ -67,7 +67,7 @@ class DataSorter implements iCanBeConvertedToUxon, ExfaceClassInterface {
 		}
 	}
 	
-	public function exface(){
+	public function get_workbench(){
 		return $this->exface;
 	}
 	

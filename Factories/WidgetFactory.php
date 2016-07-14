@@ -47,7 +47,7 @@ abstract class WidgetFactory extends AbstractFactory {
 		// If the widget is supposed to be extended from another one, merge the uxon descriptions before doing anything else
 		if ($uxon_object->extend_widget){
 			// TODO Remove UxonObject::from_anything($uxon_object) as soon as all \stdClass UXONs will be replaced by real ones
-			$exface = $page->exface();
+			$exface = $page->get_workbench();
 			$linked_object = WidgetLinkFactory::create_from_anything($exface, $uxon_object->extend_widget)->get_widget_uxon();
 			// Remove the id from the new widget, because otherwise it would be identical to the id of the widget extended from
 			$linked_object->unset_property('id');
@@ -64,7 +64,7 @@ abstract class WidgetFactory extends AbstractFactory {
 		if (!$widget_type){
 			// First of all, we need to figure out, which object the widget is representing
 			if ($uxon_object->object_alias){
-				$obj = $page->exface()->model()->get_object($uxon_object->object_alias);
+				$obj = $page->get_workbench()->model()->get_object($uxon_object->object_alias);
 			} elseif ($parent_widget) {
 				$obj = $parent_widget->get_meta_object();
 			} else {

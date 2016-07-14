@@ -13,7 +13,7 @@ abstract class AppFactory extends AbstractNameResolverFactory {
 	 * @return AppInterface
 	 */
 	public static function create(NameResolverInterface $name_resolver){
-		$exface = $name_resolver->exface();
+		$exface = $name_resolver->get_workbench();
 		$class = $name_resolver->get_class_name_with_namespace();
 		$app = new $class($exface);
 		$app->set_name_resolver($name_resolver);

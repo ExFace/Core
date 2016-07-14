@@ -10,7 +10,7 @@ use exface\Core\Interfaces\Widgets\iHaveColumns;
 
 /**
  * The text widget simply shows text with an optional title created from the caption of the widget
- * @author aka
+ * @author Andrej Kabachnik
  *
  */
 class Text extends AbstractWidget implements iShowSingleAttribute, iHaveValue, iShowText {
@@ -128,7 +128,7 @@ class Text extends AbstractWidget implements iShowSingleAttribute, iHaveValue, i
 		// To figure out, which attributes we need from the data sheet, we just run prepare_data_sheet_to_prefill()
 		// Since an Input only needs one value, we take the first one from the returned array, fetch it from the data sheet
 		// and set it as the value of our input.
-		$prefill_columns = $this->prepare_data_sheet_to_prefill($this->exface()->data()->create_data_sheet($data_sheet->get_meta_object()))->get_columns();
+		$prefill_columns = $this->prepare_data_sheet_to_prefill($this->get_workbench()->data()->create_data_sheet($data_sheet->get_meta_object()))->get_columns();
 		if ($col = $prefill_columns->get_first()){
 			$this->set_value($data_sheet->get_cell_value($col->get_name(), 0));
 		}
@@ -202,7 +202,7 @@ class Text extends AbstractWidget implements iShowSingleAttribute, iHaveValue, i
 		} elseif ($attr = $this->get_attribute()){
 			return $attr->get_data_type();
 		} else {
-			$exface = $this->exface();
+			$exface = $this->get_workbench();
 			return DataTypeFactory::create_from_alias($exface, EXF_DATA_TYPE_STRING);
 		}
 	}

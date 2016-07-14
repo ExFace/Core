@@ -96,7 +96,7 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied {
 		if ($object_or_name instanceof AbstractDataType){
 			$this->data_type = $object_or_name;
 		} else {
-			$exface = $this->get_model()->exface();
+			$exface = $this->get_model()->get_workbench();
 			$this->data_type = DataTypeFactory::create_from_alias($exface, $object_or_name);
 		}
 		return $this;
@@ -344,7 +344,7 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied {
 	 * @return Attribute
 	 */
 	public function copy(){
-		$copy = $this->get_object()->exface()->utils()->deep_copy($this, array('model', 'relation_path'));
+		$copy = $this->get_object()->get_workbench()->utils()->deep_copy($this, array('model', 'relation_path'));
 		// Set the relation path explicitly because if we deep copy it, it will also copy the mode referenced
 		// in the path object.
 		$copy->set_relation_path($this->get_relation_path()->copy());
@@ -375,8 +375,8 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied {
 	/**
 	 * @return exface
 	 */
-	public function exface(){
-		return $this->get_model()->exface();
+	public function get_workbench(){
+		return $this->get_model()->get_workbench();
 	}
 }
 ?>

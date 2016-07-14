@@ -65,7 +65,7 @@ class ActionContext extends AbstractContext {
 		// Now instantiate actions for every entry of the array holding the required amount of history steps
 		$result = array();
 		foreach ($result_raw as $uxon){
-			$exface = $this->exface();
+			$exface = $this->get_workbench();
 			$action = ActionFactory::create_from_uxon($exface, $uxon->action);
 			if ($uxon->undo_data){
 				$action->set_undo_data($uxon->undo_data);
@@ -81,7 +81,7 @@ class ActionContext extends AbstractContext {
 	 * @see \exface\Core\Contexts\AbstractContext::get_default_scope()
 	 */
 	public function get_default_scope(){
-		return $this->exface()->context()->get_scope_session();
+		return $this->get_workbench()->context()->get_scope_session();
 	}
 	
 	/**
@@ -109,7 +109,7 @@ class ActionContext extends AbstractContext {
 		}
 		
 		// Pack into a uxon object
-		$uxon = $this->exface()->create_uxon_object();
+		$uxon = $this->get_workbench()->create_uxon_object();
 		if (count($array) > 0){
 			$uxon->action_history = $array;
 		}

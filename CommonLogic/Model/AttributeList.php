@@ -6,7 +6,7 @@ use exface\Core\Factories\AttributeListFactory;
 
 /**
  * 
- * @author aka
+ * @author Andrej Kabachnik
  * 
  */
 class AttributeList extends EntityList {

@@ -22,7 +22,7 @@ class DataManager implements DataManagerInterface {
 		if ($this->active_sources[$id . '-' . $data_connection_id_or_alias]) return $this->active_sources[$id . '-' . $data_connection_id_or_alias];		
 		
 		// if it is a new source, create it here
-		$model = $this->exface()->model();
+		$model = $this->get_workbench()->model();
 		$data_source = DataSourceFactory::create_for_data_connection($model, $id, $data_connection_id_or_alias);
 		$this->active_sources[$id . '-' . $data_connection_id_or_alias] = $data_source;
 		return $data_source;
@@ -92,7 +92,7 @@ class DataManager implements DataManagerInterface {
 		return $transaction;
 	}
 	
-	function exface(){
+	function get_workbench(){
 		return $this->exface;
 	}
 }

@@ -28,7 +28,7 @@ abstract class BehaviorFactory extends AbstractNameResolverFactory {
 	 * @return BehaviorInterface
 	 */
 	public static function create_from_uxon(Object &$object, $behavior_name, UxonObject $uxon){
-		$exface = $object->exface();
+		$exface = $object->get_workbench();
 		$name_resolver = NameResolver::create_from_string($behavior_name, NameResolver::OBJECT_TYPE_BEHAVIOR, $exface);
 		$class = $name_resolver->get_class_name_with_namespace();
 		$instance = new $class($object);

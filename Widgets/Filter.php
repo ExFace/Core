@@ -9,7 +9,7 @@ use exface\Core\Interfaces\WidgetInterface;
  * TODO Add an optional operator menu to the filter. That would be a drowdown populated with suitable comparison operators for the data
  * type of the value widget.
  * IDEA Should one filter also be able to create condition groups? Or should there be a FilterGroup widget?
- * @author aka
+ * @author Andrej Kabachnik
  *
  */
 class Filter extends Container {

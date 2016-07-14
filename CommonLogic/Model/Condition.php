@@ -10,7 +10,7 @@ use exface\Core\Factories\DataTypeFactory;
  * . Thus, a condition is basically
  * something like "expr = a" or "date > 01.01.1970", etc, while a ConditionGroup can be used to combine multiple conditions using
  * logical operators like AND, OR, etc.
- * @author aka
+ * @author Andrej Kabachnik
  * 
  */
 class Condition implements iCanBeConvertedToUxon {

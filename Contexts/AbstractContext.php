@@ -36,13 +36,13 @@ abstract class AbstractContext implements ContextInterface {
 	 * @return \exface\Core\Contexts\windowContextScope
 	 */
 	public function get_default_scope(){
-		return $this->exface()->context()->get_scope_window();
+		return $this->get_workbench()->context()->get_scope_window();
 	}
 	
 	/**
 	 * @return \exface\Core\CommonLogic\Workbench
 	 */
-	public function exface(){
+	public function get_workbench(){
 		return $this->exface;
 	}
 	
@@ -56,7 +56,7 @@ abstract class AbstractContext implements ContextInterface {
 	 * @return UxonObject
 	 */
 	public function export_uxon_object(){
-		return $this->exface()->create_uxon_object();
+		return $this->get_workbench()->create_uxon_object();
 	}
 	
 	/**

@@ -7,7 +7,7 @@ use exface\Core\Factories\WidgetFactory;
  * typical tabbed navigation between them. Tabs will typically show the contents of
  * the active tab and a navbar to enable the user to change tabs. The position of that
  * navbar can be determined by the tab_position attribute. Most typical position is "top".
- * @author aka
+ * @author Andrej Kabachnik
  *
  */
 class Tabs extends Container {

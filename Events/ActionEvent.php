@@ -6,7 +6,7 @@ use exface\Core\CommonLogic\NameResolver;
 /**
  * Action sheet event names consist of the qualified alias of the app followed by "Action" and the respective event type:
  * e.g. exface.Core.ReadData.Action.Perform.Before, etc.
- * @author aka
+ * @author Andrej Kabachnik
  *
  */
 class ActionEvent extends ExFaceEvent {

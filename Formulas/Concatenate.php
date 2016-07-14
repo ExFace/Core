@@ -3,7 +3,7 @@
 /**
  * Concatenates all its arguments. Used to quickly concatenate values from different cells of a data sheet.
  * E.g.: concatenate(ALIAS1, ALIAS2, ALIAS3...)
- * @author aka
+ * @author Andrej Kabachnik
  *
  */
 class Concatenate extends \exface\Core\CommonLogic\Model\Formula {

@@ -87,7 +87,7 @@ abstract class AbstractContextScope implements ContextScopeInterface {
 	/**
 	 * @return \exface\Core\CommonLogic\Workbench
 	 */
-	public function exface(){
+	public function get_workbench(){
 		return $this->exface;
 	}
 	

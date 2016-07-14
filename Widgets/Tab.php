@@ -4,7 +4,7 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Exceptions\UiWidgetException;
 /**
  * A Tab is a special panel to be used within the tabs widget
- * @author aka
+ * @author Andrej Kabachnik
  *
  */
 class Tab extends Panel {

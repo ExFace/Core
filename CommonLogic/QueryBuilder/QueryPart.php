@@ -80,8 +80,8 @@ class QueryPart {
 	/**
 	 * @return \exface\Core\CommonLogic\Workbench
 	 */
-	public function exface(){
-		return $this->get_query()->exface();
+	public function get_workbench(){
+		return $this->get_query()->get_workbench();
 	}
 	
 }

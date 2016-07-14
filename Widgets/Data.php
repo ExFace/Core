@@ -20,7 +20,7 @@ use exface\Core\Factories\WidgetLinkFactory;
 
 /**
  * 
- * @author aka
+ * @author Andrej Kabachnik
  *
  */
 class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iHaveButtons, iHaveFilters, iSupportLazyLoading {
@@ -963,7 +963,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 	 * @return \exface\Core\Widgets\Data
 	 */
 	public function set_refresh_with_widget($widget_link_or_uxon_or_string) {
-		$exface = $this->exface();
+		$exface = $this->get_workbench();
 		if ($link = WidgetLinkFactory::create_from_anything($exface, $widget_link_or_uxon_or_string)){
 			$this->refresh_with_widget = $link;
 		}

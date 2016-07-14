@@ -39,7 +39,7 @@ abstract class EventFactory extends AbstractNameResolverFactory {
 	 * @return DataConnectionEvent
 	 */
 	public static function create_data_connection_event(DataConnectionInterface &$connection, $event_name, $current_query = null){
-		$exface = $connection->exface();
+		$exface = $connection->get_workbench();
 		$instance = new DataConnectionEvent($exface);
 		$instance->set_name($event_name);
 		$instance->set_data_connection($connection);
@@ -53,7 +53,7 @@ abstract class EventFactory extends AbstractNameResolverFactory {
 	 * @return ActionEvent
 	 */
 	public static function create_action_event(ActionInterface &$action, $event_name){
-		$exface = $action->exface();
+		$exface = $action->get_workbench();
 		$instance = new ActionEvent($exface);
 		$instance->set_name($event_name);
 		$instance->set_action($action);
@@ -61,7 +61,7 @@ abstract class EventFactory extends AbstractNameResolverFactory {
 	}
 	
 	public static function create_data_sheet_event(DataSheetInterface &$data_sheet, $event_name){
-		$exface = $data_sheet->exface();
+		$exface = $data_sheet->get_workbench();
 		$instance = new DataSheetEvent($exface);
 		$instance->set_data_sheet($data_sheet);
 		$instance->set_name($event_name);

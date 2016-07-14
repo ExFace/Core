@@ -2,7 +2,7 @@
 
 /**
  * Creates an HTML-Progressbar for object states in alexa.
- * @author aka
+ * @author Andrej Kabachnik
  *
  */
 class alexastate extends \exface\Core\CommonLogic\Model\Formula {

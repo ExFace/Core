@@ -148,8 +148,8 @@ class DataTransaction implements DataTransactionInterface {
 	 * {@inheritDoc}
 	 * @see \exface\Core\Interfaces\ExfaceClassInterface::exface()
 	 */
-	public function exface(){
-		return $this->get_data_manager()->exface();
+	public function get_workbench(){
+		return $this->get_data_manager()->get_workbench();
 	}
 	
 }

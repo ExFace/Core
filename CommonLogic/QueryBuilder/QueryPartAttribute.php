@@ -90,7 +90,7 @@ class QueryPartAttribute extends QueryPart {
 	 * @return \exface\Core\CommonLogic\Model\Expression
 	 */
 	public function get_expression(){
-		return $this->exface()->model()->parse_expression($this->get_alias(), $this->get_query()->get_main_object());
+		return $this->get_workbench()->model()->parse_expression($this->get_alias(), $this->get_query()->get_main_object());
 	}
 	
 	public function rebase(AbstractQueryBuilder &$new_query, $relation_path_to_new_base_object){

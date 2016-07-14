@@ -33,7 +33,7 @@ class DataAggregator implements iCanBeConvertedToUxon {
 	}
 	
 	public function export_uxon_object(){
-		$uxon = $this->get_data_sheet()->exface()->create_uxon_object();
+		$uxon = $this->get_data_sheet()->get_workbench()->create_uxon_object();
 		$uxon->set_property('attribute_alias', $this->get_attribute_alias());
 		return $uxon;
 	}

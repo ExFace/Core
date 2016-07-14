@@ -22,7 +22,7 @@ class ExFaceEvent extends Event implements EventInterface {
 		$this->isPropagationStopped();
 	}
 	
-	public function exface(){
+	public function get_workbench(){
 		return $this->exface;
 	}
 	

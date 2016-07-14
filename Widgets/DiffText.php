@@ -6,7 +6,7 @@ use exface\Core\Exceptions\UiWidgetException;
  * The DiffText widget compares two texts - an original and a new one - an shows a report highlighting the changes. This widget
  * is especially usefull since all objects in ExFace can be converted to a UXON text representation, which can be compared using
  * this widget.
- * @author aka
+ * @author Andrej Kabachnik
  *
  */
 class DiffText extends AbstractWidget {

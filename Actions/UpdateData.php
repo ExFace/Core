@@ -10,13 +10,13 @@ class UpdateData extends SaveData implements iUpdateData, iCanBeUndone {
 	protected function perform(){
 		$data_sheet = $this->get_input_data_sheet();
 		if (!$data_sheet->get_uid_column()){
-			foreach ($this->get_app()->exface()->context()->get_scope_window()->get_filter_context()->get_conditions($data_sheet->get_meta_object()) as $cond){
+			foreach ($this->get_app()->get_workbench()->context()->get_scope_window()->get_filter_context()->get_conditions($data_sheet->get_meta_object()) as $cond){
 				$data_sheet->get_filters()->add_condition($cond);
 			}
 		}
 		
 		if ($this->get_use_context_filters()){
-			if ($conditions = $this->exface()->context()->get_scope_window()->get_filter_context()->get_conditions($data_sheet->get_meta_object())){
+			if ($conditions = $this->get_workbench()->context()->get_scope_window()->get_filter_context()->get_conditions($data_sheet->get_meta_object())){
 				foreach ($conditions as $condition){
 					$data_sheet->get_filters()->add_condition($condition);
 				}

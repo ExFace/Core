@@ -59,7 +59,7 @@ class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuer
 	 * @return Object
 	 */
 	public function get_aplicable_to_object(){
-		return $this->exface()->model()->get_object($this->get_aplicable_to_object_alias());
+		return $this->get_workbench()->model()->get_object($this->get_aplicable_to_object_alias());
 	}
 	
 	public function set_aplicable_to_object_alias($value) {
@@ -78,7 +78,7 @@ class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuer
 		}
 		
 		// Start transaction
-		$transaction = $this->exface()->data()->start_transaction();
+		$transaction = $this->get_workbench()->data()->start_transaction();
 		$transaction->add_data_connection($this->get_data_connection());
 		
 		// Build and perform all queries. Rollback if anything fails
@@ -86,7 +86,7 @@ class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuer
 			foreach ($this->get_queries() as $query){
 				// See if the query has any placeholders
 				$placeholders = array();
-				foreach ($this->exface()->utils()->find_placeholders_in_string($query) as $ph){
+				foreach ($this->get_workbench()->utils()->find_placeholders_in_string($query) as $ph){
 					/* @var $col exface\Core\CommonLogic\DataSheets\DataColumn */
 					if (!$col = $data_sheet->get_columns()->get(DataColumn::sanitize_column_name($ph))){
 						throw new ActionRuntimeException('Cannot perform custom query in "' . $this->get_alias_with_namespace() . '": placeholder "' . $ph . '" not found in inupt data!');

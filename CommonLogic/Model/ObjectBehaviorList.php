@@ -7,7 +7,7 @@ use exface\Core\Interfaces\Model\BehaviorListInterface;
 
 /**
  * 
- * @author aka
+ * @author Andrej Kabachnik
  * 
  */
 class ObjectBehaviorList extends EntityList implements BehaviorListInterface {

@@ -2,7 +2,7 @@
 
 /**
  * Replaces a set of characters with another. E.g. SUBSTITUTE('asdf', 'df', 'as') = 'asas'
- * @author aka
+ * @author Andrej Kabachnik
  *
  */
 class User extends \exface\Core\CommonLogic\Model\Formula {

@@ -13,7 +13,7 @@ use exface\Core\Factories\RelationPathFactory;
  * be rewritten to use them: specificly query builders and widgets, relying on relation paths! After this, the
  * static methods relation_path_xxx can be removed or made protected!
  * 
- * @author aka
+ * @author Andrej Kabachnik
  *
  */
 class RelationPath implements \IteratorAggregate {
@@ -94,8 +94,8 @@ class RelationPath implements \IteratorAggregate {
 		return $path;
 	}
 	
-	public function exface(){
-		return $this->get_start_object()->get_model()->exface();
+	public function get_workbench(){
+		return $this->get_start_object()->get_model()->get_workbench();
 	}
 	
 	public function get_start_object(){
@@ -304,7 +304,7 @@ class RelationPath implements \IteratorAggregate {
 	 * Clones the attribute keeping the model and object
 	 */
 	public function copy(){
-		return $this->exface()->utils()->deep_copy($this, array('start_object', 'relations'));
+		return $this->get_workbench()->utils()->deep_copy($this, array('start_object', 'relations'));
 	}
 	
 	/**

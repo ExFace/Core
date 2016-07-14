@@ -19,7 +19,7 @@ use exface\Core\Exceptions\UiWidgetInvalidIdError;
 
 /**
  * Basic ExFace widget
- * @author aka
+ * @author Andrej Kabachnik
  *
  */
 abstract class AbstractWidget implements WidgetInterface {
@@ -130,7 +130,7 @@ abstract class AbstractWidget implements WidgetInterface {
 	}
 	
 	protected function create_data_sheet(){
-		return $this->exface()->data()->create_data_sheet($this->get_meta_object());
+		return $this->get_workbench()->data()->create_data_sheet($this->get_meta_object());
 	}
 	
 	/**
@@ -252,9 +252,9 @@ abstract class AbstractWidget implements WidgetInterface {
 	 */
 	function get_meta_object() {
 		if ($this->meta_object_id) {
-			$obj = $this->get_ui()->exface()->model()->get_object($this->meta_object_id);
+			$obj = $this->get_ui()->get_workbench()->model()->get_object($this->meta_object_id);
 		} elseif ($this->get_object_qualified_alias()) {
-			$obj = $this->get_ui()->exface()->model()->get_object($this->get_object_qualified_alias());
+			$obj = $this->get_ui()->get_workbench()->model()->get_object($this->get_object_qualified_alias());
 		} elseif ($this->get_parent()) {
 			$obj = $this->get_parent()->get_meta_object();
 		} else {
@@ -362,7 +362,7 @@ abstract class AbstractWidget implements WidgetInterface {
 		if ($expression_or_string instanceof expression){
 			$this->value = $expression_or_string;
 		} else {
-			$this->value = $this->exface()->model()->parse_expression($expression_or_string, $this->get_meta_object());
+			$this->value = $this->get_workbench()->model()->parse_expression($expression_or_string, $this->get_meta_object());
 		}
 		return $this;
 	}
@@ -393,7 +393,7 @@ abstract class AbstractWidget implements WidgetInterface {
 	 */
 	public function get_width() {
 		if (!$this->width){
-			$exface = $this->exface();
+			$exface = $this->get_workbench();
 			$this->width = WidgetDimensionFactory::create_empty($exface);
 		}
 		return $this->width;
@@ -405,7 +405,7 @@ abstract class AbstractWidget implements WidgetInterface {
 	 * @see \exface\Core\Interfaces\WidgetInterface::set_width()
 	 */
 	public function set_width($value) {
-		$exface = $this->exface();
+		$exface = $this->get_workbench();
 		$this->width = WidgetDimensionFactory::create_from_anything($exface, $value);
 		return $this;
 	} 
@@ -417,7 +417,7 @@ abstract class AbstractWidget implements WidgetInterface {
 	 */
 	public function get_height() {
 		if (!$this->height){
-			$exface = $this->exface();
+			$exface = $this->get_workbench();
 			$this->height = WidgetDimensionFactory::create_empty($exface);
 		}
 		return $this->height;
@@ -429,7 +429,7 @@ abstract class AbstractWidget implements WidgetInterface {
 	 * @see \exface\Core\Interfaces\WidgetInterface::set_height()
 	 */
 	public function set_height($value) {
-		$exface = $this->exface();
+		$exface = $this->get_workbench();
 		$this->height = WidgetDimensionFactory::create_from_anything($exface, $value);
 		return $this;
 	}
@@ -447,9 +447,9 @@ abstract class AbstractWidget implements WidgetInterface {
 	 * @see \exface\Core\Interfaces\WidgetInterface::set_object_alias()
 	 */
 	public function set_object_alias($full_or_object_alias) {
-		if ($app = $this->get_ui()->exface()->model()->get_namespace_from_qualified_alias($full_or_object_alias)){
+		if ($app = $this->get_ui()->get_workbench()->model()->get_namespace_from_qualified_alias($full_or_object_alias)){
 			$this->object_qualified_alias = $full_or_object_alias;
-			$this->object_alias = $this->get_ui()->exface()->model()->get_object_alias_from_qualified_alias($full_or_object_alias);
+			$this->object_alias = $this->get_ui()->get_workbench()->model()->get_object_alias_from_qualified_alias($full_or_object_alias);
 		} else {
 			if ($this->get_parent()){
 				$app = $this->get_parent()->get_meta_object()->get_namespace();
@@ -513,7 +513,7 @@ abstract class AbstractWidget implements WidgetInterface {
 	 * @see \exface\Core\Interfaces\WidgetInterface::get_ui()
 	 */
 	public function get_ui() {
-		return $this->get_page()->exface()->ui();
+		return $this->get_page()->get_workbench()->ui();
 	}
 	
 	/**
@@ -685,7 +685,7 @@ abstract class AbstractWidget implements WidgetInterface {
 	 * @see \exface\Core\Interfaces\WidgetInterface::create_widget_link()
 	 */
 	public function create_widget_link(){
-		$exface = $this->exface();
+		$exface = $this->get_workbench();
 		$link = new WidgetLink($exface);
 		$link->set_widget_id($this->get_id());
 		$link->set_page_id($this->get_page_id());
@@ -697,8 +697,8 @@ abstract class AbstractWidget implements WidgetInterface {
 	 * {@inheritDoc}
 	 * @see \exface\Core\Interfaces\ExfaceClassInterface::exface()
 	 */
-	public function exface(){
-		return $this->get_page()->exface();
+	public function get_workbench(){
+		return $this->get_page()->get_workbench();
 	}
 	
 	/**

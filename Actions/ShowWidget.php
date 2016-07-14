@@ -16,7 +16,7 @@ use exface\Core\Factories\WidgetFactory;
 
 /**
  * The ShowWidget action is the base for all actions, that render widgets. 
- * @author aka
+ * @author Andrej Kabachnik
  *
  */
 class ShowWidget extends AbstractAction implements iShowWidget, iUsePrefillData {
@@ -46,7 +46,7 @@ class ShowWidget extends AbstractAction implements iShowWidget, iUsePrefillData 
 			} elseif ($this->page_id && !$this->widget_id){
 				// TODO
 			} elseif ($this->page_id && $this->widget_id){
-				$this->widget = $this->get_app()->exface()->ui()->get_widget($this->widget_id, $this->page_id);
+				$this->widget = $this->get_app()->get_workbench()->ui()->get_widget($this->widget_id, $this->page_id);
 			}
 		}
 		return $this->widget;
@@ -115,9 +115,9 @@ class ShowWidget extends AbstractAction implements iShowWidget, iUsePrefillData 
 		// TODO Use the context prefill even if the widget already has other prefill data: use DataSheet::merge()!
 		if ($this->get_prefill_with_filter_context() 
 		&& $this->get_widget() 
-		&& $context_conditions = $this->get_app()->exface()->context()->get_scope_window()->get_filter_context()->get_conditions($this->get_widget()->get_meta_object())){
+		&& $context_conditions = $this->get_app()->get_workbench()->context()->get_scope_window()->get_filter_context()->get_conditions($this->get_widget()->get_meta_object())){
 			if (!$data_sheet || $data_sheet->is_empty()){
-				$data_sheet = $this->get_app()->exface()->data()->create_data_sheet($this->get_widget()->get_meta_object());
+				$data_sheet = $this->get_app()->get_workbench()->data()->create_data_sheet($this->get_widget()->get_meta_object());
 			}
 			
 			/* @var $condition \exface\Core\CommonLogic\Model\Condition */
@@ -157,7 +157,7 @@ class ShowWidget extends AbstractAction implements iShowWidget, iUsePrefillData 
 	 * @return ShowWidget
 	 */
 	public function set_prefill_data_sheet($data_sheet_or_uxon_object){
-		$exface = $this->exface();
+		$exface = $this->get_workbench();
 		$data_sheet = DataSheetFactory::create_from_anything($exface, $data_sheet_or_uxon_object);
 		if (!is_null($this->prefill_data_sheet)){
 			try {

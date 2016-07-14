@@ -40,7 +40,7 @@ class MassEditDialog extends ShowDialog {
 				return 'Editing ' . ($this->get_input_data_sheet() ? $this->get_input_data_sheet()->count_rows() : 0) . ' objects';
 			} else {
 				$filters = array();
-				$filter_conditions = array_merge($this->get_input_data_sheet()->get_filters()->get_conditions(), $this->get_app()->exface()->context()->get_scope_window()->get_filter_context()->get_conditions($this->get_input_data_sheet()->get_meta_object()));
+				$filter_conditions = array_merge($this->get_input_data_sheet()->get_filters()->get_conditions(), $this->get_app()->get_workbench()->context()->get_scope_window()->get_filter_context()->get_conditions($this->get_input_data_sheet()->get_meta_object()));
 				if (is_array($filter_conditions) && count($filter_conditions) > 0){
 					foreach ($filter_conditions as $cond){
 						$filters[$cond->get_expression()->to_string()] = $cond->get_expression()->get_attribute()->get_name() . ' ' . $cond->get_comparator() . ' ' . $cond->get_value();

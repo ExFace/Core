@@ -3,7 +3,7 @@
 /**
  * Sums all its arguments. Analogous to Excel's SUM() function.
  * E.g.: SUM(ALIAS1, ALIAS2, ALIAS3...)
- * @author aka
+ * @author Andrej Kabachnik
  *
  */
 class Sum extends \exface\Core\CommonLogic\Model\Formula {

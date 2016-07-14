@@ -18,7 +18,7 @@ abstract class AbstractDataType implements DataTypeInterface {
 	 * @see \exface\Core\Interfaces\Model\DataTypeInterface::get_model()
 	 */
 	public function get_model(){
-		return $this->exface()->model;
+		return $this->get_workbench()->model;
 	}
 	
 	/**
@@ -26,7 +26,7 @@ abstract class AbstractDataType implements DataTypeInterface {
 	 * {@inheritDoc}
 	 * @see \exface\Core\Interfaces\ExfaceClassInterface::exface()
 	 */
-	public function exface(){
+	public function get_workbench(){
 		return $this->exface;
 	}
 	

@@ -57,7 +57,7 @@ class SaveData extends AbstractAction implements iModifyData, iCanBeUndone {
 	}
 	
 	public function set_undo_data(\stdClass $uxon_object){
-		$exface = $this->get_app()->exface();
+		$exface = $this->get_app()->get_workbench();
 		$this->undo_data_sheet = DataSheetFactory::create_from_stdClass($exface, $uxon_object);
 	}
 	

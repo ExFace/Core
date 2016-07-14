@@ -6,7 +6,7 @@ use exface\Core\CommonLogic\AbstractAction;
 /**
  * This is the base action to modify context data.
  * 
- * @author aka
+ * @author Andrej Kabachnik
  *
  */
 class SetContext extends AbstractAction {
@@ -36,7 +36,7 @@ class SetContext extends AbstractAction {
 	 * @return AbstractContext
 	 */
 	public function get_context(){
-		return $this->get_app()->exface()->context()->get_scope($this->get_scope())->get_context($this->get_context_type());
+		return $this->get_app()->get_workbench()->context()->get_scope($this->get_scope())->get_context($this->get_context_type());
 	}
 	
 	protected function perform(){

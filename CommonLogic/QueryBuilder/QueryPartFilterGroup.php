@@ -5,7 +5,7 @@ use exface\Core\CommonLogic\Model\ConditionGroup;
 use exface\Core\Factories\ConditionGroupFactory;
 /**
  * A filter group query part represents a condition group used for filtering in a query.
- * @author aka
+ * @author Andrej Kabachnik
  *
  */
 class QueryPartFilterGroup extends QueryPart {
@@ -164,7 +164,7 @@ class QueryPartFilterGroup extends QueryPart {
 	 * @return \exface\Core\CommonLogic\Model\ConditionGroup
 	 */
 	public function get_condition_group() {
-		$exface = $this->exface();
+		$exface = $this->get_workbench();
 		if (!$this->condition_group) $this->condition_group = ConditionGroupFactory::create_empty($exface, $this->get_operator());
 		return $this->condition_group;
 	}

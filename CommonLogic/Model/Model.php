@@ -114,7 +114,7 @@ class Model {
 		return true;
 	}
 	
-	public function exface(){
+	public function get_workbench(){
 		return $this->exface;
 	}
 	

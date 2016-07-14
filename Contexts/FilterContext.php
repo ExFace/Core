@@ -37,7 +37,7 @@ class FilterContext extends AbstractContext {
 					// 2) Create an alternative rebase() method, that would work with objects. This would probably be harder to understand.
 					if ($object_id != $object->get_id()){
 						foreach ($this->conditions_by_object[$object_id] as $condition){
-							$exface = $this->exface();
+							$exface = $this->get_workbench();
 							$new_expresseion = ExpressionFactory::create_from_string($exface, $condition->get_expression()->to_string(), $object);
 							$condition = ConditionFactory::create_from_expression($exface, $new_expresseion, $condition->get_value(), $condition->get_comparator());
 							$array[] = $condition;
@@ -107,7 +107,7 @@ class FilterContext extends AbstractContext {
 	 * @return UxonObject
 	 */
 	public function export_uxon_object(){
-		$uxon = $this->exface()->create_uxon_object();
+		$uxon = $this->get_workbench()->create_uxon_object();
 		if (!$this->is_empty()){
 			$uxon->conditions = array();
 			foreach ($this->get_conditions() as $condition){
@@ -124,7 +124,7 @@ class FilterContext extends AbstractContext {
 	 * @return \exface\Core\Contexts\FilterContext
 	 */
 	public function import_uxon_object(UxonObject $uxon){
-		$exface = $this->exface();
+		$exface = $this->get_workbench();
 		if (is_array($uxon->conditions)){
 			foreach ($uxon->conditions as $uxon_condition){
 				try {

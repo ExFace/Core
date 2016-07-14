@@ -310,7 +310,7 @@ class ComboTable extends InputCombo implements iHaveChildren {
 	public function get_table_object(){
 		if (!$this->table_object){
 			if ($this->get_table_object_alias()){
-				$this->table_object = $this->exface()->model()->get_object($this->get_table_object_alias());
+				$this->table_object = $this->get_workbench()->model()->get_object($this->get_table_object_alias());
 			} elseif($this->get_attribute()->is_relation()) {
 				$this->table_object = $this->get_meta_object()->get_relation($this->get_attribute_alias())->get_related_object();
 			} else {

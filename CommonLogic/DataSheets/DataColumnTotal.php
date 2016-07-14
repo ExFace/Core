@@ -47,7 +47,7 @@ class DataColumnTotal implements iCanBeConvertedToUxon, ExfaceClassInterface {
 	}  
 	
 	public function export_uxon_object(){
-		$uxon = $this->get_column()->get_data_sheet()->exface()->create_uxon_object();
+		$uxon = $this->get_column()->get_data_sheet()->get_workbench()->create_uxon_object();
 		$uxon->set_property('function', $this->get_function());
 		return $uxon;
 	}
@@ -56,7 +56,7 @@ class DataColumnTotal implements iCanBeConvertedToUxon, ExfaceClassInterface {
 		$this->set_function($uxon->get_property('function'));
 	}
 	
-	public function exface(){
-		return $this->get_column()->exface();
+	public function get_workbench(){
+		return $this->get_column()->get_workbench();
 	}
 }

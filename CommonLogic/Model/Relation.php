@@ -183,7 +183,7 @@ class Relation{
      * Clones the attribute keeping the model and object
      */
     public function copy(){
-    	return $this->get_main_object()->exface()->utils()->deep_copy($this, array('model'));
+    	return $this->get_main_object()->get_workbench()->utils()->deep_copy($this, array('model'));
     }
 }
 ?>

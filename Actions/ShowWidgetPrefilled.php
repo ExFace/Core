@@ -5,7 +5,7 @@
  * within another page there is also an action called "crosslink", that basically does the same thing but uses a better
  * understandable name.
  * @see crosslink
- * @author aka
+ * @author Andrej Kabachnik
  *
  */
 class ShowWidgetPrefilled extends ShowWidget {

@@ -11,7 +11,7 @@ use exface\Core\CommonLogic\NameResolver;
 /**
  * A Button is the primary widget for triggering actions. In addition to the general widget attributes it can have
  * an icon and also subwidgets (if the triggered action shows a widget).
- * @author aka
+ * @author Andrej Kabachnik
  *
  */
 class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iHaveChildren {
@@ -29,7 +29,7 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iHaveC
 	public function get_action() {
 		if (!$this->action){
 			if ($this->get_action_alias()){
-				$this->action = ActionFactory::create($this->exface()->create_name_resolver($this->get_action_alias(), NameResolver::OBJECT_TYPE_ACTION), $this);
+				$this->action = ActionFactory::create($this->get_workbench()->create_name_resolver($this->get_action_alias(), NameResolver::OBJECT_TYPE_ACTION), $this);
 			}
 		}
 		return $this->action;

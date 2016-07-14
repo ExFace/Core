@@ -37,7 +37,7 @@ class Object implements ExfaceClassInterface, AliasInterface {
 	private $behaviors = array();
 	
 	function __construct(\exface\Core\CommonLogic\Model\Model $model){
-		$exface = $model->exface();
+		$exface = $model->get_workbench();
 		$this->model = $model;
 		$this->attributes = AttributeListFactory::create_for_object($this);
 		$this->default_sorters = EntityListFactory::create_empty($exface, $this);
@@ -399,7 +399,7 @@ class Object implements ExfaceClassInterface, AliasInterface {
 	 * @return \exface\Core\CommonLogic\DataSource
 	 */
 	public function get_data_source(){
-		return $this->get_model()->exface()->data()->get_data_source($this->get_data_source_id(), $this->data_connection_alias);
+		return $this->get_model()->get_workbench()->data()->get_data_source($this->get_data_source_id(), $this->data_connection_alias);
 	}
 	
 	/**
@@ -407,7 +407,7 @@ class Object implements ExfaceClassInterface, AliasInterface {
 	 * @return \exface\Core\CommonLogic\AbstractDataConnector
 	 */
 	function get_data_connection(){
-		return $this->get_model()->exface()->data()->get_data_connection($this->data_source_id, $this->data_connection_alias);
+		return $this->get_model()->get_workbench()->data()->get_data_connection($this->data_source_id, $this->data_connection_alias);
 	}
 	
 	/**
@@ -422,7 +422,7 @@ class Object implements ExfaceClassInterface, AliasInterface {
 	
 	function get_query_builder(){
 		
-		return $this->get_model()->exface()->data()->get_query_builder($this->data_source_id);
+		return $this->get_model()->get_workbench()->data()->get_query_builder($this->data_source_id);
 	}
 	
 	/**
@@ -431,7 +431,7 @@ class Object implements ExfaceClassInterface, AliasInterface {
 	 */
 	function create_data_sheet(){
 		
-		$ds = $this->get_model()->exface()->data()->create_data_sheet($this);
+		$ds = $this->get_model()->get_workbench()->data()->create_data_sheet($this);
 		return $ds;
 	}
 	
@@ -551,7 +551,7 @@ class Object implements ExfaceClassInterface, AliasInterface {
 	 */
 	public function get_inheriting_objects(){
 		$result = array();
-		$res = $this->get_model()->exface()->get_model_data_connector()->query('SELECT o.oid FROM exf_object o WHERE o.parent_object_oid = ' . $this->get_id());
+		$res = $this->get_model()->get_workbench()->get_model_data_connector()->query('SELECT o.oid FROM exf_object o WHERE o.parent_object_oid = ' . $this->get_id());
 		foreach ($res as $row){
 			if ($obj = $this->get_model()->get_object($row['oid'])){
 				$result[] = $obj;
@@ -630,11 +630,11 @@ class Object implements ExfaceClassInterface, AliasInterface {
 	 * @return array ["alias"] for the above example
 	 */
 	public function get_data_address_required_placeholders(){
-		return $this->get_model()->exface()->utils()->find_placeholders_in_string($this->get_data_address());
+		return $this->get_model()->get_workbench()->utils()->find_placeholders_in_string($this->get_data_address());
 	}
 	
-	public function exface(){
-		return $this->get_model()->exface();
+	public function get_workbench(){
+		return $this->get_model()->get_workbench();
 	}
 	
 	/**

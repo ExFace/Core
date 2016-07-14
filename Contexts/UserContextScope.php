@@ -6,7 +6,7 @@ class UserContextScope extends AbstractContextScope {
 	private $user_data = null;
 	
 	public function get_user_name(){
-		return $this->exface()->cms()->get_user_name();
+		return $this->get_workbench()->cms()->get_user_name();
 	}
 	
 	public function get_user_id(){
@@ -14,7 +14,7 @@ class UserContextScope extends AbstractContextScope {
 	}
 	
 	public function get_user_data_folder_absolute_path(){
-		$path = $this->exface()->get_installation_path() . DIRECTORY_SEPARATOR . EXF_FOLDER_USER_DATA . DIRECTORY_SEPARATOR . $this->get_user_data_folder_name();
+		$path = $this->get_workbench()->get_installation_path() . DIRECTORY_SEPARATOR . EXF_FOLDER_USER_DATA . DIRECTORY_SEPARATOR . $this->get_user_data_folder_name();
 		if (!file_exists($path)){
 			mkdir($path);
 		}
@@ -43,8 +43,8 @@ class UserContextScope extends AbstractContextScope {
 	 */
 	protected function get_user_data(){
 		if (is_null($this->user_data)){
-			$user_object = $this->exface()->model()->get_object('exface.Core.USER');
-			$ds = $this->exface()->data()->create_data_sheet($user_object);
+			$user_object = $this->get_workbench()->model()->get_object('exface.Core.USER');
+			$ds = $this->get_workbench()->data()->create_data_sheet($user_object);
 			$ds->get_columns()->add_from_expression($user_object->get_uid_alias());
 			$ds->get_columns()->add_from_expression('USERNAME');
 			$ds->get_columns()->add_from_expression('FIRST_NAME');

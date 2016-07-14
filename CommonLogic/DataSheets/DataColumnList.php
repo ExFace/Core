@@ -128,7 +128,7 @@ class DataColumnList extends EntityList implements DataColumnListInterface {
 	}
 	
 	public function get_system(){
-		$exface = $this->exface();
+		$exface = $this->get_workbench();
 		$parent = $this->get_parent();
 		$result = new self($exface, $parent);
 		foreach ($this->get_all() as $col){

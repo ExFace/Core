@@ -82,7 +82,7 @@ class UiManager implements UiManagerInterface {
 		}
 	}
 	
-	public function exface(){
+	public function get_workbench(){
 		return $this->exface;
 	}
 	
@@ -103,12 +103,12 @@ class UiManager implements UiManagerInterface {
 	 * @return \exface\Core\Interfaces\UiPageInterface
 	 */
 	public function get_page_current(){
-		return $this->get_page($this->exface()->cms()->get_page_id());
+		return $this->get_page($this->get_workbench()->cms()->get_page_id());
 	}
 	
 	public function get_template_from_request() {
 		if (is_null($this->base_template)){
-			$this->base_template = $this->get_template($this->exface()->get_config_value('default_ui_template'));
+			$this->base_template = $this->get_template($this->get_workbench()->get_config_value('default_ui_template'));
 		}
 		return $this->get_template($this->base_template);
 	}

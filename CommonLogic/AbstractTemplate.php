@@ -52,7 +52,7 @@ abstract class AbstractTemplate implements TemplateInterface {
 		return $this->alias;
 	}
 	
-	public function exface(){
+	public function get_workbench(){
 		return $this->exface;
 	}
 	

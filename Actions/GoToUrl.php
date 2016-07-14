@@ -7,7 +7,7 @@ use exface\Core\CommonLogic\AbstractAction;
  * This action opens a URL for a given object instance. The URL can contain placeholders, that will
  * ber replaced by attribute values of the instance. This is usefull in tables, where a URL needs
  * to be opened for a specific row. Any value from that row can be passed to the URL vial placeholder [#column_id#]
- * @author aka
+ * @author Andrej Kabachnik
  *
  */
 class GoToUrl extends AbstractAction implements iShowUrl {

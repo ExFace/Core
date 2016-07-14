@@ -28,7 +28,7 @@ class DataColumn implements DataColumnInterface {
 	const COLUMN_NAME_VALIDATOR = '[^A-Za-z0-9_\.]';
 	
 	function __construct($expression, $name='', DataSheetInterface &$data_sheet){
-		$exface = $data_sheet->exface();
+		$exface = $data_sheet->get_workbench();
 		$this->data_sheet = $data_sheet;
 		$this->set_expression($expression);
 		$this->set_name($name ? $name : $this->get_expression_obj()->to_string());
@@ -43,7 +43,7 @@ class DataColumn implements DataColumnInterface {
 	public function get_expression_obj() {
 		if (is_null($this->expression) || $this->expression->is_empty()){
 			if ($this->attribute_alias){
-				$exface = $this->exface();
+				$exface = $this->get_workbench();
 				$this->expression = ExpressionFactory::create_from_string($exface, $this->get_attribute_alias(), $this->get_data_sheet()->get_meta_object());
 			}
 		}
@@ -57,7 +57,7 @@ class DataColumn implements DataColumnInterface {
 	 */
 	public function set_expression($expression_or_string) {
 		if (!($expression_or_string instanceof Expression)){
-			$exface = $this->exface();
+			$exface = $this->get_workbench();
 			$expression = ExpressionFactory::create_from_string($exface, $expression_or_string);
 		} else {
 			$expression = $expression_or_string;
@@ -77,8 +77,8 @@ class DataColumn implements DataColumnInterface {
 	 * {@inheritDoc}
 	 * @see \exface\Core\Interfaces\ExfaceClassInterface::exface()
 	 */
-	public function exface(){
-		return $this->get_data_sheet()->exface();
+	public function get_workbench(){
+		return $this->get_data_sheet()->get_workbench();
 	}
 	
 	/**
@@ -164,7 +164,7 @@ class DataColumn implements DataColumnInterface {
 	 */
 	public function get_data_type() {
 		if (is_null($this->data_type)){
-			$exface = $this->get_data_sheet()->exface();
+			$exface = $this->get_data_sheet()->get_workbench();
 			$this->data_type = DataTypeFactory::create_from_alias($exface, EXF_DATA_TYPE_STRING);
 		}
 		return $this->data_type;
@@ -180,7 +180,7 @@ class DataColumn implements DataColumnInterface {
 			if ($data_type_or_string instanceof AbstractDataType){
 				$this->data_type = $data_type_or_string;
 			} else {
-				$exface = $this->exface();
+				$exface = $this->get_workbench();
 				$this->data_type = DataTypeFactory::create_from_alias($exface, $data_type_or_string);
 			}
 		}
@@ -270,7 +270,7 @@ class DataColumn implements DataColumnInterface {
 	 * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::export_uxon_object()
 	 */
 	public function export_uxon_object(){
-		$uxon = $this->get_data_sheet()->exface()->create_uxon_object();
+		$uxon = $this->get_data_sheet()->get_workbench()->create_uxon_object();
 		$uxon->expression = $this->get_expression_obj()->to_string();
 		$uxon->name = $this->get_name();
 		$uxon->hidden = $this->get_hidden();
@@ -381,7 +381,7 @@ class DataColumn implements DataColumnInterface {
 			if ($expression_or_string instanceof Expression){
 				$expression = $expression_or_string;
 			} else {
-				$exface = $this->exface();
+				$exface = $this->get_workbench();
 				$expression = ExpressionFactory::create_from_string($exface, $expression_or_string);
 			}
 			if (!$expression->is_formula() && !$expression->is_reference()){

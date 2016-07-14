@@ -69,7 +69,7 @@ abstract class AbstractApp implements AppInterface {
 	 */
 	public function get_directory(){
 		if (!$this->directory){
-			$this->directory = str_replace($this->exface()->get_config_value('namespace_separator'), DIRECTORY_SEPARATOR, $this->get_alias_with_namespace());
+			$this->directory = str_replace($this->get_workbench()->get_config_value('namespace_separator'), DIRECTORY_SEPARATOR, $this->get_alias_with_namespace());
 		}
 		return $this->directory;
 	}
@@ -79,7 +79,7 @@ abstract class AbstractApp implements AppInterface {
 	}
 	
 	public function get_class_namespace(){
-		return str_replace($this->exface()->get_config_value('namespace_separator'), '\\', $this->get_alias_with_namespace());
+		return str_replace($this->get_workbench()->get_config_value('namespace_separator'), '\\', $this->get_alias_with_namespace());
 	}
 	
 	/**
@@ -93,7 +93,7 @@ abstract class AbstractApp implements AppInterface {
 		return $this->vendor;
 	}
 	
-	public function exface(){
+	public function get_workbench(){
 		return $this->exface;
 	}
 	
@@ -105,7 +105,7 @@ abstract class AbstractApp implements AppInterface {
 	 */
 	protected function get_configuration_data_sheet(){
 		if (is_null($this->configuration_data_sheet)){
-			$ds = $this->exface()->data()->create_data_sheet($this->exface()->model()->get_object('exface.Core.APP_CONFIG'));
+			$ds = $this->get_workbench()->data()->create_data_sheet($this->get_workbench()->model()->get_object('exface.Core.APP_CONFIG'));
 			$ds->get_columns()->add_from_expression('CODE');
 			$ds->get_columns()->add_from_expression('VALUE');
 			$ds->add_filter_from_string('APP__ALIAS', $this->get_alias_with_namespace());
@@ -130,7 +130,7 @@ abstract class AbstractApp implements AppInterface {
 	
 	public function get_uid(){
 		if (is_null($this->uid)){
-			$ds = $this->exface()->data()->create_data_sheet($this->exface()->model()->get_object('exface.Core.APP'));
+			$ds = $this->get_workbench()->data()->create_data_sheet($this->get_workbench()->model()->get_object('exface.Core.APP'));
 			$ds->add_filter_from_string('ALIAS', $this->get_alias_with_namespace());
 			$ds->data_read();
 			$this->uid = $ds->get_uid_column()->get_cell_value(0);

@@ -11,7 +11,7 @@ use exface\Core\Interfaces\Contexts\ContextInterface;
  * 
  * TODO Currently the window session scope includes all windows of a browser - fix this by sending a session id with each request
  * 
- * @author aka
+ * @author Andrej Kabachnik
  *
  */
 class WindowContextScope extends AbstractContextScope {

@@ -44,7 +44,7 @@ use exface\Core\Exceptions\DataSheetSaveError;
  * - DeleteData (.Before/.After)
  * - ValidateData (.Before/.After)
  * 
- * @author aka
+ * @author Andrej Kabachnik
  *
  */
 class DataSheet implements DataSheetInterface {
@@ -64,7 +64,7 @@ class DataSheet implements DataSheetInterface {
 	private $invalid_data_flag = false;
 	
 	public function __construct(\exface\Core\CommonLogic\Model\Object &$meta_object){
-		$this->exface = $meta_object->get_model()->exface();
+		$this->exface = $meta_object->get_model()->get_workbench();
 		$this->meta_object = $meta_object;
 		$this->filters = ConditionGroupFactory::create_empty($this->exface, EXF_LOGICAL_AND);
 		$this->cols = new DataColumnList($this->exface, $this);
@@ -463,7 +463,7 @@ class DataSheet implements DataSheetInterface {
 		
 		// Start a new transaction, if not given
 		if (!$transaction){
-			$transaction = $this->exface()->data()->start_transaction();
+			$transaction = $this->get_workbench()->data()->start_transaction();
 			$commit = true;
 		} else {
 			$commit = false;
@@ -499,7 +499,7 @@ class DataSheet implements DataSheetInterface {
 		}
 		
 		// Now the actual updating starts
-		$this->exface()->event_manager()->dispatch(EventFactory::create_data_sheet_event($this, 'UpdateData.Before'));
+		$this->get_workbench()->event_manager()->dispatch(EventFactory::create_data_sheet_event($this, 'UpdateData.Before'));
 		
 		// Add columns with fixed values to the data sheet
 		$processed_relations = array();
@@ -611,7 +611,7 @@ class DataSheet implements DataSheetInterface {
 			$transaction->commit();
 		}
 		
-		$this->exface()->event_manager()->dispatch(EventFactory::create_data_sheet_event($this, 'UpdateData.After'));
+		$this->get_workbench()->event_manager()->dispatch(EventFactory::create_data_sheet_event($this, 'UpdateData.After'));
 		
 		return $counter;
 	}
@@ -624,13 +624,13 @@ class DataSheet implements DataSheetInterface {
 	public function data_replace_matching_filters($delete_redundant_rows = true, DataTransactionInterface $transaction = null){
 		// Start a new transaction, if not given
 		if (!$transaction){
-			$transaction = $this->exface()->data()->start_transaction();
+			$transaction = $this->get_workbench()->data()->start_transaction();
 			$commit = true;
 		} else {
 			$commit = false;
 		}
 		
-		$this->exface()->event_manager()->dispatch(EventFactory::create_data_sheet_event($this, 'ReplaceData.Before'));
+		$this->get_workbench()->event_manager()->dispatch(EventFactory::create_data_sheet_event($this, 'ReplaceData.Before'));
 		
 		$counter = 0;
 		if ($delete_redundant_rows){
@@ -660,7 +660,7 @@ class DataSheet implements DataSheetInterface {
 			$transaction->commit();
 		}
 		
-		$this->exface()->event_manager()->dispatch(EventFactory::create_data_sheet_event($this, 'ReplaceData.After'));
+		$this->get_workbench()->event_manager()->dispatch(EventFactory::create_data_sheet_event($this, 'ReplaceData.After'));
 		
 		return $counter;
 	}
@@ -673,13 +673,13 @@ class DataSheet implements DataSheetInterface {
 	public function data_create($update_if_uid_found = true, DataTransactionInterface $transaction = null){
 		// Start a new transaction, if not given
 		if (!$transaction){
-			$transaction = $this->exface()->data()->start_transaction();
+			$transaction = $this->get_workbench()->data()->start_transaction();
 			$commit = true;
 		} else {
 			$commit = false;
 		}
 		
-		$this->exface()->event_manager()->dispatch(EventFactory::create_data_sheet_event($this, 'CreateData.Before'));
+		$this->get_workbench()->event_manager()->dispatch(EventFactory::create_data_sheet_event($this, 'CreateData.Before'));
 		// Create a query
 		$query = QueryBuilderFactory::create_from_alias($this->exface, $this->get_meta_object()->get_query_builder());
 		$query->set_main_object($this->get_meta_object());
@@ -754,7 +754,7 @@ class DataSheet implements DataSheetInterface {
 		// Save the new UIDs in the data sheet
 		$this->set_column_values($this->get_meta_object()->get_uid_alias(), $new_uids);
 		
-		$this->exface()->event_manager()->dispatch(EventFactory::create_data_sheet_event($this, 'CreateData.After'));
+		$this->get_workbench()->event_manager()->dispatch(EventFactory::create_data_sheet_event($this, 'CreateData.After'));
 		
 		return count($new_uids);
 	}
@@ -767,13 +767,13 @@ class DataSheet implements DataSheetInterface {
 	public function data_delete(DataTransactionInterface $transaction = null){
 		// Start a new transaction, if not given
 		if (!$transaction){
-			$transaction = $this->exface()->data()->start_transaction();
+			$transaction = $this->get_workbench()->data()->start_transaction();
 			$commit = true;
 		} else {
 			$commit = false;
 		}
 		
-		$this->exface()->event_manager()->dispatch(EventFactory::create_data_sheet_event($this, 'DeleteData.Before'));
+		$this->get_workbench()->event_manager()->dispatch(EventFactory::create_data_sheet_event($this, 'DeleteData.Before'));
 		
 		$affected_rows = 0;
 		// create new query for the main object
@@ -816,7 +816,7 @@ class DataSheet implements DataSheetInterface {
 			$transaction->commit();
 		}
 		
-		$this->exface()->event_manager()->dispatch(EventFactory::create_data_sheet_event($this, 'DeleteData.After'));
+		$this->get_workbench()->event_manager()->dispatch(EventFactory::create_data_sheet_event($this, 'DeleteData.After'));
 		
 		return $affected_rows;
 	}
@@ -1291,7 +1291,7 @@ class DataSheet implements DataSheetInterface {
 	/**
 	 * @return exface
 	 */
-	public function exface(){
+	public function get_workbench(){
 		return $this->exface;
 	}
 	
@@ -1333,12 +1333,12 @@ class DataSheet implements DataSheetInterface {
 	 * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::data_validate()
 	 */
 	public function data_validate(){
-		$this->exface()->event_manager()->dispatch(EventFactory::create_data_sheet_event($this, 'ValidateData.Before'));
+		$this->get_workbench()->event_manager()->dispatch(EventFactory::create_data_sheet_event($this, 'ValidateData.Before'));
 		if ($this->invalid_data_flag !== true){
 			// TODO Add data type validation here
 			$this->invalid_data_flag = false;
 		}
-		$this->exface()->event_manager()->dispatch(EventFactory::create_data_sheet_event($this, 'ValidateData.After'));
+		$this->get_workbench()->event_manager()->dispatch(EventFactory::create_data_sheet_event($this, 'ValidateData.After'));
 		return $this->invalid_data_flag;
 	}
 	

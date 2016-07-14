@@ -6,7 +6,7 @@
  * case, the uploads folder will have subfolders for each window session id, containing alle files uploaded from the current window
  * (browser window). Similarly, the upload context can be placed in other scopes.
  * 
- * @author aka
+ * @author Andrej Kabachnik
  *
  */
 class UploadContext extends AbstractContext {
@@ -17,7 +17,7 @@ class UploadContext extends AbstractContext {
 	 * IDEA Make it possible to define a user-specific UserData folder
 	 */
 	public function get_uploads_path(){
-		return $this->exface()->context()->get_scope_user()->get_user_data_folder_absolute_path()
+		return $this->get_workbench()->context()->get_scope_user()->get_user_data_folder_absolute_path()
 				. DIRECTORY_SEPARATOR . $this->upload_folder
 				. DIRECTORY_SEPARATOR . $this->get_scope()->get_scope_id();
 	}
@@ -84,7 +84,7 @@ class UploadContext extends AbstractContext {
 	 * @see \exface\Core\Contexts\AbstractContext::get_default_scope()
 	 */
 	public function get_default_scope(){
-		return $this->exface()->context()->get_scope_window();
+		return $this->get_workbench()->context()->get_scope_window();
 	}
 }
 ?>

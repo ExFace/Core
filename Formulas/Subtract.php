@@ -3,7 +3,7 @@
 /**
  * Subtracts all arguments from the first one. There is no Excel analogon.
  * E.g.: SUBTRACT(ALIAS1, ALIAS2, ALIAS3...)
- * @author aka
+ * @author Andrej Kabachnik
  *
  */
 class Subtract extends \exface\Core\CommonLogic\Model\Formula {

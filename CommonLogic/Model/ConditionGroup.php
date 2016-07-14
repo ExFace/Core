@@ -8,7 +8,7 @@ use exface\Core\Factories\ConditionGroupFactory;
 /**
  * A condition group contains one or more conditions and/or other (nested) condition groups combined by one logical operator, 
  * e.g. OR( AND( cond1 = val1, cond2 < val2 ), cond3 = val3 ).
- * @author aka
+ * @author Andrej Kabachnik
  *
  */
 class ConditionGroup implements iCanBeConvertedToUxon {
@@ -182,7 +182,7 @@ class ConditionGroup implements iCanBeConvertedToUxon {
 		return $result;
 	}
 	
-	public function exface(){
+	public function get_workbench(){
 		return $this->exface;
 	}
 	
@@ -222,7 +222,7 @@ class ConditionGroup implements iCanBeConvertedToUxon {
 	}
 	
 	public function get_model(){
-		return $this->exface()->model();
+		return $this->get_workbench()->model();
 	}
 	
 	public function is_empty(){

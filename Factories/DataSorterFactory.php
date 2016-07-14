@@ -19,7 +19,7 @@ abstract class DataSorterFactory extends AbstractFactory {
 	 * @return DataSorterInterface
 	 */
 	public static function create_for_data_sheet(DataSheetInterface &$data_sheet){
-		$exface = $data_sheet->exface();
+		$exface = $data_sheet->get_workbench();
 		$instance = new DataSorter($exface);
 		$instance->set_data_sheet($data_sheet);
 		return $instance;

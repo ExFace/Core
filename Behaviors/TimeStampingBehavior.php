@@ -16,7 +16,7 @@ class TimeStampingBehavior extends AbstractBehavior {
 	public function register(){
 		$this->get_updated_on_attribute()->set_system(true);
 		if ($this->get_check_for_conflicts_on_update()){
-			$this->exface()->event_manager()->add_listener($this->get_object()->get_alias_with_namespace() . '.DataSheet.UpdateData.Before', array($this, 'check_for_conflicts_on_update'));
+			$this->get_workbench()->event_manager()->add_listener($this->get_object()->get_alias_with_namespace() . '.DataSheet.UpdateData.Before', array($this, 'check_for_conflicts_on_update'));
 		}
 		$this->set_registered(true);
 	}
@@ -94,7 +94,7 @@ class TimeStampingBehavior extends AbstractBehavior {
 		
 		$conflict_rows = array();
 		// See, if the UndoAction is performed currently. It needs special treatment
-		$current_action = $this->exface()->context()->get_scope_window()->get_action_context()->get_current_action();
+		$current_action = $this->get_workbench()->context()->get_scope_window()->get_action_context()->get_current_action();
 		if ($current_action instanceof iUndoActions){
 			// FIXME To check for conflicts when performing and undo, we need to see, if the timestamp changed
 			// since the undone action had been performed. The current problem is, however, that we do not store

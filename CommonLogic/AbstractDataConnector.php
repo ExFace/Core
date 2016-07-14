@@ -63,9 +63,9 @@ abstract class AbstractDataConnector implements DataConnectionInterface {
 	 * @see \exface\Core\Interfaces\DataSources\DataConnectionInterface::connect()
 	 */
 	public final function connect(){
-		$this->exface()->event_manager()->dispatch(EventFactory::create_data_connection_event($this, 'Connect.Before'));
+		$this->get_workbench()->event_manager()->dispatch(EventFactory::create_data_connection_event($this, 'Connect.Before'));
 		$result = $this->perform_connect();
-		$this->exface()->event_manager()->dispatch(EventFactory::create_data_connection_event($this, 'Connect.After'));
+		$this->get_workbench()->event_manager()->dispatch(EventFactory::create_data_connection_event($this, 'Connect.After'));
 		return $result;
 	}
 	
@@ -77,9 +77,9 @@ abstract class AbstractDataConnector implements DataConnectionInterface {
 	 * @see \exface\Core\Interfaces\DataSources\DataConnectionInterface::disconnect()
 	 */
 	public final function disconnect(){
-		$this->exface()->event_manager()->dispatch(EventFactory::create_data_connection_event($this, 'Disconnect.Before'));
+		$this->get_workbench()->event_manager()->dispatch(EventFactory::create_data_connection_event($this, 'Disconnect.Before'));
 		$result = $this->perform_disconnect();
-		$this->exface()->event_manager()->dispatch(EventFactory::create_data_connection_event($this, 'Disconnect.After'));
+		$this->get_workbench()->event_manager()->dispatch(EventFactory::create_data_connection_event($this, 'Disconnect.After'));
 		return $result;
 	}
 	
@@ -91,9 +91,9 @@ abstract class AbstractDataConnector implements DataConnectionInterface {
 	 * @see \exface\Core\Interfaces\DataSources\DataConnectionInterface::query()
 	 */
 	public final function query($query_string){
-		$this->exface()->event_manager()->dispatch(EventFactory::create_data_connection_event($this, 'Query.Before'));
+		$this->get_workbench()->event_manager()->dispatch(EventFactory::create_data_connection_event($this, 'Query.Before'));
 		$result = $this->perform_query($query_string);
-		$this->exface()->event_manager()->dispatch(EventFactory::create_data_connection_event($this, 'Query.After'));
+		$this->get_workbench()->event_manager()->dispatch(EventFactory::create_data_connection_event($this, 'Query.After'));
 		return $result;
 	}
 	
@@ -154,7 +154,7 @@ abstract class AbstractDataConnector implements DataConnectionInterface {
 	 * {@inheritDoc}
 	 * @see \exface\Core\Interfaces\ExfaceClassInterface::exface()
 	 */
-	public function exface(){
+	public function get_workbench(){
 		return $this->exface;
 	}
 	

@@ -15,7 +15,7 @@ abstract class DataConnectorFactory extends AbstractNameResolverFactory {
 	 */
 	public static function create(NameResolverInterface $name_resolver, array $config = null){
 		$class = $name_resolver->get_class_name_with_namespace();
-		$exface = $name_resolver->exface();
+		$exface = $name_resolver->get_workbench();
 		$instance = new $class($exface, $config);
 		$instance->set_name_resolver($name_resolver);
 		return $instance;

@@ -122,7 +122,7 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
 		} elseif ($attr = $this->get_attribute()){
 			return $attr->get_data_type();
 		} else {
-			$exface = $this->exface();
+			$exface = $this->get_workbench();
 			return DataTypeFactory::create_from_alias($exface, EXF_DATA_TYPE_STRING);
 		}
 	}
@@ -218,7 +218,7 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
 	 * @return Expression
 	 */
 	public function get_expression(){
-		$exface = $this->exface();
+		$exface = $this->get_workbench();
 		return ExpressionFactory::create_from_string($exface, $this->get_attribute_alias());
 	}
 	

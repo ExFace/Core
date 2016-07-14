@@ -26,7 +26,7 @@ use exface\Core\Factories\WidgetLinkFactory;
  * The abstract action dispatches the following events prefixed by the actions alias (@see ActionEvent):
  * - Perform (.Before/.After)
  * 
- * @author aka
+ * @author Andrej Kabachnik
  *
  */
 abstract class AbstractAction implements ActionInterface {
@@ -82,7 +82,7 @@ abstract class AbstractAction implements ActionInterface {
 	
 	function __construct(\exface\Core\CommonLogic\AbstractApp &$app){
 		$this->app = $app;
-		$this->exface = $app->exface();
+		$this->exface = $app->get_workbench();
 		// TODO read action config from DB here
 		// call init method of concrete implementation to enable some additional processing like auto install, validity checks, etc.
 		$this->init();
@@ -242,7 +242,7 @@ abstract class AbstractAction implements ActionInterface {
 		// Register the action in the action context of the window. Since it is passed by reference, we can
 		// safely do it here, befor perform(). On the other hand, this gives all kinds of action event handlers
 		// the possibility to access the current action and it's current state
-		$this->get_app()->exface()->context()->get_scope_window()->get_action_context()->add_action($this);
+		$this->get_app()->get_workbench()->context()->get_scope_window()->get_action_context()->add_action($this);
 		// Marke the action as performed first, to make sure it is not performed again if there is some exception
 		// In the case of an exception in perform() it might be caught somewhere outside and the execution will 
 		// move on an mitght lead to another call on perform()
@@ -455,7 +455,7 @@ abstract class AbstractAction implements ActionInterface {
 	 * @see \exface\Core\Interfaces\Actions\ActionInterface::set_object_alias()
 	 */
 	public function set_object_alias($qualified_alias){
-		if ($object = $this->exface()->model()->get_object($qualified_alias)){
+		if ($object = $this->get_workbench()->model()->get_object($qualified_alias)){
 			$this->meta_object = $object;
 		} else {
 			throw new ActionConfigException('Cannot load object "' . $qualified_alias . '" for action "' . $this->get_alias_with_namespace() . '"!');
@@ -540,7 +540,7 @@ abstract class AbstractAction implements ActionInterface {
 	 * @return UxonObject
 	 */
 	public function export_uxon_object(){
-		$uxon = $this->exface()->create_uxon_object();
+		$uxon = $this->get_workbench()->create_uxon_object();
 		$uxon->alias = $this->get_alias_with_namespace();
 		$uxon->called_by_widget = $this->get_called_by_widget()->create_widget_link()->export_uxon_object();
 		$uxon->template_alias = $this->get_template_alias();
@@ -551,7 +551,7 @@ abstract class AbstractAction implements ActionInterface {
 	
 	protected function dispatch_event($event_name){
 		/* @var $event \exface\Core\Events\ActionEvent */
-		$this->get_app()->exface()->event_manager()->dispatch(EventFactory::create_action_event($this, $event_name));
+		$this->get_app()->get_workbench()->event_manager()->dispatch(EventFactory::create_action_event($this, $event_name));
 	}
 	
 	/**
@@ -560,7 +560,7 @@ abstract class AbstractAction implements ActionInterface {
 	 * @see \exface\Core\Interfaces\ExfaceClassInterface::exface()
 	 * @return exface
 	 */
-	public function exface(){
+	public function get_workbench(){
 		return $this->exface;
 	}
 	
@@ -598,7 +598,7 @@ abstract class AbstractAction implements ActionInterface {
 	 * @see \exface\Core\Interfaces\Actions\ActionInterface::get_called_on_ui_page()
 	 */
 	public function get_called_on_ui_page(){
-		return $this->get_called_by_widget() ? $this->get_called_by_widget()->get_page() : $this->exface()->ui()->get_page_current();
+		return $this->get_called_by_widget() ? $this->get_called_by_widget()->get_page() : $this->get_workbench()->ui()->get_page_current();
 	}
 	
 	/**
@@ -607,7 +607,7 @@ abstract class AbstractAction implements ActionInterface {
 	 * @see \exface\Core\Interfaces\Actions\ActionInterface::get_template()
 	 */
 	public function get_template() {
-		return $this->exface()->ui()->get_template($this->get_template_alias());
+		return $this->get_workbench()->ui()->get_template($this->get_template_alias());
 	}
 	
 	/**

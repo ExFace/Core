@@ -13,7 +13,7 @@ use exface\Core\CommonLogic\Workbench;
  * over all sorts of add_xxx and get_by_xxx methods. The EntityList can be quickly extended by entity-specific getters and setters like
  * get_by_data_type() for data sheet columns, etc.
  * 
- * @author aka
+ * @author Andrej Kabachnik
  *
  */
 interface EntityListInterface extends iCanBeConvertedToUxon, \IteratorAggregate {

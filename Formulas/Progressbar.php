@@ -2,7 +2,7 @@
 
 /**
  * Creates an HTML-Progressbar taking the text, value and a max value as parameters.
- * @author aka
+ * @author Andrej Kabachnik
  *
  */
 class Progressbar extends \exface\Core\CommonLogic\Model\Formula {

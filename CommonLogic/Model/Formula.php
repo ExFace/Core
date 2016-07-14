@@ -6,7 +6,7 @@ use exface\Core\Factories\DataTypeFactory;
  * Data functions are much like Excel functions. They calculate 
  * the value of a cell in a data_sheet based on other data from 
  * this sheet and user defined arguments. 
- * @author aka
+ * @author Andrej Kabachnik
  *
  */
 abstract class Formula {
@@ -101,7 +101,7 @@ abstract class Formula {
 	
 	public function get_data_type() {
 		if (is_null($this->data_type)){
-			$exface = $this->get_data_sheet()->exface();
+			$exface = $this->get_data_sheet()->get_workbench();
 			$this->data_type = DataTypeFactory::create_from_alias($exface, EXF_DATA_TYPE_STRING);
 		}
 		return $this->data_type;

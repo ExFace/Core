@@ -13,7 +13,7 @@ use exface\Core\Factories\AttributeGroupFactory;
  * attributes must be selectable from the parent object of the group: thus, they must be related somehow.
  * 
  * IDEA use a Condition as a selector to populate the group
- * @author aka
+ * @author Andrej Kabachnik
  * 
  */
 class AttributeGroup extends AttributeList {

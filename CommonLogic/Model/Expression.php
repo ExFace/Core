@@ -233,7 +233,7 @@ class Expression {
 		return $this->value;
 	}
 	
-	function exface(){
+	function get_workbench(){
 		return $this->exface;
 	}
 	
@@ -324,7 +324,7 @@ class Expression {
 				$new_expression_string .= $rel->get_related_object_key_alias();
 			}
 			
-			return $this->exface()->model()->parse_expression($new_expression_string, $rel->get_related_object());
+			return $this->get_workbench()->model()->parse_expression($new_expression_string, $rel->get_related_object());
 		} else {
 			// In all other cases (i.e. for constants), just leave the expression as it is. It does not depend on any meta model!
 			return $this;

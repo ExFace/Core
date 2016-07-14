@@ -188,8 +188,8 @@ class UiPage implements UiPageInterface {
 	 * {@inheritDoc}
 	 * @see \exface\Core\Interfaces\ExfaceClassInterface::exface()
 	 */
-	public function exface(){
-		return $this->get_ui()->exface();
+	public function get_workbench(){
+		return $this->get_ui()->get_workbench();
 	}
   
 }

@@ -263,7 +263,7 @@ class Chart extends AbstractWidget implements iHaveButtons, iHaveTopToolbar, iHa
 	}
 	
 	public function set_data_widget_link($value) {
-		$exface = $this->exface();
+		$exface = $this->get_workbench();
 		$this->data_widget_link = WidgetLinkFactory::create_from_anything($exface, $value);
 		return $this;
 	}  

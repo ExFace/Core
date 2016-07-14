@@ -17,9 +17,9 @@ class ReadData extends AbstractAction implements iReadData {
 		// context filters would affect the result of the read operation (context filters are automatically 
 		// applied to the query, each time, data is fetched)
 		if ($this->get_update_filter_context()){
-			$this->get_app()->exface()->context()->get_scope_window()->get_filter_context()->remove_all_conditions();
+			$this->get_app()->get_workbench()->context()->get_scope_window()->get_filter_context()->remove_all_conditions();
 			foreach ($data_sheet->get_filters()->get_conditions() as $condition){
-				$this->get_app()->exface()->context()->get_scope_window()->get_filter_context()->add_condition($condition);
+				$this->get_app()->get_workbench()->context()->get_scope_window()->get_filter_context()->add_condition($condition);
 			}
 		}
 		
@@ -49,9 +49,9 @@ class ReadData extends AbstractAction implements iReadData {
 	
 	public function get_result_output(){
 		if (!$this->get_called_by_widget()) throw new ActionRuntimeException('Security violaion! Cannot read data without a target widget in action "' . $this->get_alias_with_namespace() . '"!');
-		$elem = $this->get_app()->exface()->ui()->get_template()->get_element($this->get_called_by_widget());
+		$elem = $this->get_app()->get_workbench()->ui()->get_template()->get_element($this->get_called_by_widget());
 		$output = $elem->prepare_data($this->get_result_data_sheet());
-		return $this->get_app()->exface()->ui()->get_template()->encode_data($output);
+		return $this->get_app()->get_workbench()->ui()->get_template()->encode_data($output);
 	} 
 	  
 }

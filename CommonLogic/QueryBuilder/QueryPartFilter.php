@@ -5,7 +5,7 @@ use exface\Core\CommonLogic\Model\RelationPath;
 /**
  * The filter query part represents one filter within a query (in SQL it translates to a WHERE-statement). Filter query parts
  * implement the general filter interface and thus can be aggregated to filter groups with logical operators like AND, OR, etc.
- * @author aka
+ * @author Andrej Kabachnik
  *
  */
 class QueryPartFilter extends QueryPartAttribute {

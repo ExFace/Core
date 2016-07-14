@@ -3,7 +3,7 @@ namespace exface\Core\Actions;
 /**
  * This action is just a better understandable alias for ShowWidgetPrefilled
  * @see ShowWidgetPrefilled
- * @author aka
+ * @author Andrej Kabachnik
  *
  */
 class GoToWidget extends ShowWidgetPrefilled {

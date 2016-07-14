@@ -9,7 +9,7 @@ use exface\Core\Interfaces\NameResolverInterface;
 
 /**
  * 
- * @author aka
+ * @author Andrej Kabachnik
  * 
  */
 abstract class AbstractBehavior implements BehaviorInterface {
@@ -67,8 +67,8 @@ abstract class AbstractBehavior implements BehaviorInterface {
 	 * @see \exface\Core\Interfaces\ExfaceClassInterface::exface()
 	 * @return exface
 	 */
-	public function exface(){
-		return $this->get_object()->exface();
+	public function get_workbench(){
+		return $this->get_object()->get_workbench();
 	}
 	
 	public function import_uxon_object(UxonObject $uxon){

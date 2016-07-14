@@ -8,7 +8,7 @@ namespace exface\Core\Actions;
  * Another difference is, that the autosuggest result also includes mixins like previously used entities, etc. - even if they are not
  * included in the regular result set of the ReadData action.
  * 
- * @author aka
+ * @author Andrej Kabachnik
  *
  */
 class Autosuggest extends ReadData {

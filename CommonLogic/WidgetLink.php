@@ -146,7 +146,7 @@ class WidgetLink implements WidgetLinkInterface {
 	 * @see \exface\Core\Interfaces\Widgets\WidgetLinkInterface::get_page()
 	 */
 	public function get_page(){
-		return $this->exface()->ui()->get_page($this->get_page_id());
+		return $this->get_workbench()->ui()->get_page($this->get_page_id());
 	}
 	
 	/**
@@ -248,7 +248,7 @@ class WidgetLink implements WidgetLinkInterface {
 	 * {@inheritDoc}
 	 * @see \exface\Core\Interfaces\ExfaceClassInterface::exface()
 	 */
-	public function exface(){
+	public function get_workbench(){
 		return $this->exface;
 	}
 }

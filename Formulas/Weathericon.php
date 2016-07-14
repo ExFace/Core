@@ -2,7 +2,7 @@
 
 /**
  * Shows weather icon based on yahoo condition code (e.g. 28 = cloudy).
- * @author aka
+ * @author Andrej Kabachnik
  *
  */
 class Weathericon extends \exface\Core\CommonLogic\Model\Formula {

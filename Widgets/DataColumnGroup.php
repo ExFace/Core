@@ -9,7 +9,7 @@ use exface\Core\CommonLogic\Model\RelationPath;
  * This duality makes it possible to define custom filters and even aggregators for each column group. If not done so, it will just be
  * a group of columns with it's own caption, etc.
  * 
- * @author aka
+ * @author Andrej Kabachnik
  *
  */
 class DataColumnGroup extends AbstractWidget implements iHaveColumns {

@@ -8,7 +8,7 @@ use exface\Core\CommonLogic\EntityList;
 
 /**
  * 
- * @author aka
+ * @author Andrej Kabachnik
  *
  */
 class DataSorterList extends EntityList implements DataSorterListInterface {

@@ -16,7 +16,7 @@ abstract class ActionFactory extends AbstractNameResolverFactory {
 	 * @return ActionInterface
 	 */
 	public static function create(NameResolverInterface $name_resolver, AbstractWidget $called_by_widget = null, \stdClass $uxon_description = null){
-		$app = $name_resolver->exface()->get_app($name_resolver->get_namespace());
+		$app = $name_resolver->get_workbench()->get_app($name_resolver->get_namespace());
 		$class = $name_resolver->get_class_name_with_namespace();
 		$action = new $class($app);
 		if ($called_by_widget){

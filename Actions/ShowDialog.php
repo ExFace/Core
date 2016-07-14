@@ -91,10 +91,10 @@ class ShowDialog extends ShowWidget implements iShowDialog {
 			$code = '';
 			if (is_array($dialog_contents)){
 				foreach ($dialog_contents as $w){
-					$code .= $this->get_app()->exface()->ui()->draw($w);
+					$code .= $this->get_app()->get_workbench()->ui()->draw($w);
 				}
 			} else {
-				$code = $this->get_app()->exface()->ui()->draw($dialog_contents, $this->get_alias());
+				$code = $this->get_app()->get_workbench()->ui()->draw($dialog_contents, $this->get_alias());
 			}
 		} else {
 			$code = parent::get_result_output();

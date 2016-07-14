@@ -6,7 +6,7 @@ use exface\Core\Events\ActionEvent;
 
 /**
  * FIXME Use the generic DataContext instead of this ugly ActionTest specific context
- * @author aka
+ * @author Andrej Kabachnik
  *
  */
 class ActionTestContext extends AbstractContext {
@@ -52,7 +52,7 @@ class ActionTestContext extends AbstractContext {
 	 * @return UxonObject
 	 */
 	public function export_uxon_object(){
-		$uxon = $this->exface()->create_uxon_object();
+		$uxon = $this->get_workbench()->create_uxon_object();
 		if ($this->is_recording()){
 			$uxon->recording = $this->is_recording();
 			if ($this->get_skip_next_actions()){
@@ -82,9 +82,9 @@ class ActionTestContext extends AbstractContext {
 			
 			// If we are recording, register a callback to record an actions output whenever an action is performed
 			if ($this->is_recording()){
-				$this->exface()->event_manager()->add_listener('#.Action.Perform.After', array($this, 'record_action'));
+				$this->get_workbench()->event_manager()->add_listener('#.Action.Perform.After', array($this, 'record_action'));
 				// Initialize the performance monitor
-				$this->exface()->get_app('exface.PerformanceMonitor');
+				$this->get_workbench()->get_app('exface.PerformanceMonitor');
 			}
 		}
 		if (isset($uxon->skip_next_actions)){
@@ -114,30 +114,30 @@ class ActionTestContext extends AbstractContext {
 			if ($action->get_called_by_widget()){
 				$page_id = $action->get_called_by_widget()->get_page()->get_id();
 			}
-			if (is_null(page_id)) $page_id = $this->exface()->cms()->get_page_id();
+			if (is_null(page_id)) $page_id = $this->get_workbench()->cms()->get_page_id();
 			
 			// Only continue if the current page is not the excluded list
 			//var_dump($page_id, $this->get_skip_page_ids());
 			if (!in_array($page_id, $this->get_skip_page_ids())){
 				// Create a test case if needed
 				if (!$this->get_recording_test_case_id()){
-					$test_case_data = $this->exface()->data()->create_data_sheet($this->exface()->model()->get_object('EXFACE.ACTIONTEST.TEST_CASE'));
-					$test_case_data->set_cell_value('NAME', 0, $this->create_test_case_name($this->exface()->cms()->get_page_name($page_id)));
+					$test_case_data = $this->get_workbench()->data()->create_data_sheet($this->get_workbench()->model()->get_object('EXFACE.ACTIONTEST.TEST_CASE'));
+					$test_case_data->set_cell_value('NAME', 0, $this->create_test_case_name($this->get_workbench()->cms()->get_page_name($page_id)));
 					$test_case_data->set_cell_value('START_PAGE_ID', 0, $page_id);
-					$test_case_data->set_cell_value('START_PAGE_NAME', 0, $this->exface()->cms()->get_page_name($page_id));
+					$test_case_data->set_cell_value('START_PAGE_NAME', 0, $this->get_workbench()->cms()->get_page_name($page_id));
 					$test_case_data->set_cell_value('START_OBJECT', 0, $action->get_input_data_sheet()->get_meta_object()->get_id());
 					$test_case_data->data_create();
 					$this->set_recording_test_case_id($test_case_data->get_cell_value($test_case_data->get_meta_object()->get_uid_alias(), 0));
 				}
 				
 				// Create the test step itself
-				$data_sheet = $this->exface()->data()->create_data_sheet($this->exface()->model()->get_object('EXFACE.ACTIONTEST.TEST_STEP'));
+				$data_sheet = $this->get_workbench()->data()->create_data_sheet($this->get_workbench()->model()->get_object('EXFACE.ACTIONTEST.TEST_STEP'));
 				$data_sheet->set_cell_value('SEQUENCE', 0, ($this->get_recorded_steps_counter()+1));
 				$data_sheet->set_cell_value('TEST_CASE', 0, $this->get_recording_test_case_id());
 				$data_sheet->set_cell_value('ACTION_ALIAS', 0, $action->get_alias_with_namespace());
 				$data_sheet->set_cell_value('ACTION_DATA', 0, $action->export_uxon_object()->to_json(true));
-				$data_sheet->set_cell_value('OUTPUT_CORRECT', 0, $this->exface()->get_app('exface.ActionTest')->prettify($action->get_result_output()));
-				$data_sheet->set_cell_value('OUTPUT_CURRENT', 0, $this->exface()->get_app('exface.ActionTest')->prettify($action->get_result_output()));
+				$data_sheet->set_cell_value('OUTPUT_CORRECT', 0, $this->get_workbench()->get_app('exface.ActionTest')->prettify($action->get_result_output()));
+				$data_sheet->set_cell_value('OUTPUT_CURRENT', 0, $this->get_workbench()->get_app('exface.ActionTest')->prettify($action->get_result_output()));
 				$data_sheet->set_cell_value('MESSAGE_CORRECT', 0, $action->get_result_message());
 				$data_sheet->set_cell_value('MESSAGE_CURRENT', 0, $action->get_result_message());
 				$data_sheet->set_cell_value('RESULT_CORRECT', 0, $action->get_result_stringified());
@@ -148,7 +148,7 @@ class ActionTestContext extends AbstractContext {
 				
 				// Add performance monitor data
 				/* @var $monitor_app \exface\PerformanceMonitor\PerformanceMonitorApp */
-				if ($monitor_app = $this->exface()->get_app('exface.PerformanceMonitor')){
+				if ($monitor_app = $this->get_workbench()->get_app('exface.PerformanceMonitor')){
 					$duration = $monitor_app->get_monitor()->get_action_duration($action);
 					$data_sheet->set_cell_value('DURATION_CORRECT', 0, $duration);
 					$data_sheet->set_cell_value('DURATION_CURRENT', 0, $duration);
@@ -156,7 +156,7 @@ class ActionTestContext extends AbstractContext {
 				
 				// Add page attributes
 				$data_sheet->set_cell_value('PAGE_ID', 0, $page_id);
-				$data_sheet->set_cell_value('PAGE_NAME', 0, $this->exface()->cms()->get_page_name($page_id));
+				$data_sheet->set_cell_value('PAGE_NAME', 0, $this->get_workbench()->cms()->get_page_name($page_id));
 				$data_sheet->set_cell_value('OBJECT', 0, $action->get_input_data_sheet()->get_meta_object()->get_id());
 				$data_sheet->set_cell_value('TEMPLATE_ALIAS', 0, $action->get_template_alias());
 				
@@ -169,7 +169,7 @@ class ActionTestContext extends AbstractContext {
 	}
 	
 	protected function create_test_case_name($page_name=null){
-		return $page_name . ' (' . date($this->exface()->get_config_value('default_datetime_format')) . ')';
+		return $page_name . ' (' . date($this->get_workbench()->get_config_value('default_datetime_format')) . ')';
 	}
 	
 	public function get_recording_test_case_id() {

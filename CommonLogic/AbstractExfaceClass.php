@@ -9,7 +9,7 @@ abstract class AbstractExfaceClass {
 		$this->exface = $exface;
 	}
 	
-	public function exface(){
+	public function get_workbench(){
 		return $this->exface;
 	}
 	

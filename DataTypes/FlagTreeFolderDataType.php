@@ -2,7 +2,7 @@
 namespace exface\Core\DataTypes;
 /**
  * @DEPRECATED
- * @author aka
+ * @author Andrej Kabachnik
  *
  */
 class FlagTreeFolderDataType extends BooleanDataType {

@@ -12,7 +12,7 @@ abstract class AttributeGroupFactory extends AbstractFactory {
 	 * @return AttributeGroup
 	 */
 	public static function create_for_object(Object &$object, $alias = null){
-		$exface = $object->exface();
+		$exface = $object->get_workbench();
 		$group = new AttributeGroup($exface, $object);
 		$group->set_alias($alias);
 		switch ($alias) {

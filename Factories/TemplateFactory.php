@@ -13,7 +13,7 @@ abstract class TemplateFactory extends AbstractNameResolverFactory {
 	 * @return TemplateInterface
 	 */
 	public static function create(NameResolverInterface $name_resolver){
-		$exface = $name_resolver->exface();
+		$exface = $name_resolver->get_workbench();
 		$class = $name_resolver->get_class_name_with_namespace();
 		$template = new $class($exface);
 		$template->set_name_resolver($name_resolver);

@@ -6,7 +6,7 @@ use exface\Core\CommonLogic\AbstractAction;
 
 /**
  * This action performs an undo operation on one or more other actions from the action context history. 
- * @author aka
+ * @author Andrej Kabachnik
  *
  */
 class UndoAction extends AbstractAction implements iUndoActions {
@@ -48,7 +48,7 @@ class UndoAction extends AbstractAction implements iUndoActions {
 	 */
 	public function get_actions_to_undo(){
 		$data_sheet = $this->get_input_data_sheet();
-		return $this->get_app()->exface()->context()->get_scope_window()->get_action_context()->get_action_history($data_sheet && $data_sheet->count_rows() ? $data_sheet->count_rows() : 1);
+		return $this->get_app()->get_workbench()->context()->get_scope_window()->get_action_context()->get_action_history($data_sheet && $data_sheet->count_rows() ? $data_sheet->count_rows() : 1);
 	}
 	
 	public function count_undone_actions(){

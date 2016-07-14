@@ -71,7 +71,7 @@ class EventManager implements EventManagerInterface {
 		return $this->dispatcher->hasListeners($event_name);
 	}
 	
-	public function exface(){
+	public function get_workbench(){
 		return $this->exface;
 	}
 }

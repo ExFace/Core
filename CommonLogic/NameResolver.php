@@ -20,7 +20,7 @@ use exface\Core\Interfaces\NameResolverInterface;
  * create_from_string() method) and passed to factories manually. Factory methods, that do not require a name resolver
  * will use the default one.
  * 
- * @author aka
+ * @author Andrej Kabachnik
  *
  */
 class NameResolver extends AbstractExfaceClass implements NameResolverInterface {
@@ -122,7 +122,7 @@ class NameResolver extends AbstractExfaceClass implements NameResolverInterface 
 	}
 	
 	public function get_vendor(){
-		$pos = stripos($this->get_namespace(), $this->exface()->get_config_value('namespace_separator'));
+		$pos = stripos($this->get_namespace(), $this->get_workbench()->get_config_value('namespace_separator'));
 		if ($pos !== false){
 			return substr($this->get_namespace(), 0, $pos);
 		} else {

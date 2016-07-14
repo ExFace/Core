@@ -127,8 +127,8 @@ abstract class AbstractQueryBuilder {
 	 * @return \exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder
 	 */
 	public function add_filter_from_string($attribute_alias, $value, $comparator = EXF_COMPARATOR_IS){
-		$exface = $this->exface();
-		$condition = ConditionFactory::create_from_expression($exface, $this->exface()->model()->parse_expression($attribute_alias, $this->get_main_object()), $value, $comparator);
+		$exface = $this->get_workbench();
+		$condition = ConditionFactory::create_from_expression($exface, $this->get_workbench()->model()->parse_expression($attribute_alias, $this->get_main_object()), $value, $comparator);
 		return $this->add_filter_condition($condition);
 	}
 	
@@ -347,8 +347,8 @@ abstract class AbstractQueryBuilder {
 	 */
 	abstract function get_result_total_rows();
 	
-	public function exface(){
-		return $this->get_main_object()->get_model()->exface();
+	public function get_workbench(){
+		return $this->get_main_object()->get_model()->get_workbench();
 	}
 	
 	/**

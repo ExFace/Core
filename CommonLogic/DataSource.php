@@ -25,8 +25,8 @@ class DataSource implements DataSourceInterface {
 		return $this->model;
 	}
 	
-	public function exface(){
-		return $this->get_model()->exface();
+	public function get_workbench(){
+		return $this->get_model()->get_workbench();
 	}
 	
 	/**
@@ -35,7 +35,7 @@ class DataSource implements DataSourceInterface {
 	 * @see \exface\Core\Interfaces\DataSources\DataSourceInterface::get_connection()
 	 */
 	public function get_connection() {
-		return $this->exface()->data()->get_data_connection($this->get_id(), $this->get_connection_id());
+		return $this->get_workbench()->data()->get_data_connection($this->get_id(), $this->get_connection_id());
 	}
 	
 	/**

@@ -9,7 +9,7 @@ use exface\Core\Exceptions\ContextError;
  * 
  * To avoid name conflicts between different apps, all data is tagged with a namespace (the app namespace by default)
  * 
- * @author aka
+ * @author Andrej Kabachnik
  *
  */
 class DataContext extends AbstractContext {
@@ -62,7 +62,7 @@ class DataContext extends AbstractContext {
 	 * @see \exface\Core\Contexts\AbstractContext::get_default_scope()
 	 */
 	public function get_default_scope(){
-		return $this->exface()->context()->get_scope_window();
+		return $this->get_workbench()->context()->get_scope_window();
 	}
 	
 	public function import_uxon_object(UxonObject $uxon){
@@ -91,12 +91,12 @@ class DataContext extends AbstractContext {
 	 * @see \exface\Core\Contexts\AbstractContext::export_uxon_object()
 	 */
 	public function export_uxon_object(){
-		$uxon = $this->exface()->create_uxon_object();
+		$uxon = $this->get_workbench()->create_uxon_object();
 		foreach ($this->get_namespaces_active() as $namespace){
 			if (count($this->get_variables_from_namespace($namespace)) <= 0){
 				continue;
 			}
-			$uxon->set_property($namespace, $this->exface()->create_uxon_object());
+			$uxon->set_property($namespace, $this->get_workbench()->create_uxon_object());
 			foreach ($this->get_variables_from_namespace($namespace) as $var => $value){
 				$uxon = $this->export_uxon_for_variable($uxon->get_property($namespace), $var, $value);
 			}
@@ -109,7 +109,7 @@ class DataContext extends AbstractContext {
 			|| (!is_object($variable_value) && !is_array($variable_value))){
 			$uxon_container->set_property($variable_name, $variable_value);
 		} elseif (is_array($variable_value)) {
-			$uxon_container->set_property($variable_name, $this->exface()->create_uxon_object());
+			$uxon_container->set_property($variable_name, $this->get_workbench()->create_uxon_object());
 			foreach ($variable_value as $var => $value){
 				$this->export_uxon_for_variable($uxon_container->get_property($variable_name), $var, $value);
 			}

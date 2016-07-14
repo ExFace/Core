@@ -5,7 +5,7 @@ use exface\Core\Exceptions\UxonParserWarning;
  * A message is a special type of text widget, which is meant to communicate some information to the user. There are different types of messages: warnings,
  * errors, general information, success messages, etc. Messages are displayed alongside other widgets within regular panels - in contrast to toasts or 
  * popups, which are displayed above the main level of widgets.
- * @author aka
+ * @author Andrej Kabachnik
  *
  */
 class Message extends Text {
