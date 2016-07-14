@@ -1,7 +1,6 @@
 <?php namespace exface\Core\Factories;
 
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\Core\CommonLogic\Workbench;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\DataSheets\DataColumn;
 use exface\Core\CommonLogic\Model\Expression;

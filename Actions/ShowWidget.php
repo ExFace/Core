@@ -132,8 +132,13 @@ class ShowWidget extends AbstractAction implements iShowWidget, iUsePrefillData 
 				|| $condition->get_comparator() == EXF_COMPARATOR_EQUALS 
 				|| $condition->get_comparator() == EXF_COMPARATOR_IN){
 					// If it is not the same object, as the one displayed, add the context values as filters
-					$col = $data_sheet->get_columns()->add_from_expression($condition->get_expression());
-					$col->set_values(array($condition->get_value()));
+					try {
+						$col = $data_sheet->get_columns()->add_from_expression($condition->get_expression());
+						$col->set_values(array($condition->get_value()));
+					} catch (\Exception $e){
+						// Do nothing if anything goes wrong. After all the context prefills are just an attempt the help
+						// the user. It's not a good Idea to throw a real error here!
+					}
 				}
 			}
 			

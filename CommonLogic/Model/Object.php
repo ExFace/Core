@@ -13,6 +13,7 @@ use exface\Core\CommonLogic\EntityList;
 use exface\Core\Factories\EntityListFactory;
 use exface\Core\Interfaces\ExfaceClassInterface;
 use exface\Core\Interfaces\AliasInterface;
+use exface\Core\Exceptions\MetaModelRelationNotFoundException;
 
 class Object implements ExfaceClassInterface, AliasInterface {
 	private $id;
@@ -189,7 +190,10 @@ class Object implements ExfaceClassInterface, AliasInterface {
 		if ($rel_parts = RelationPath::relation_path_parse($alias, 1)){
 			if ($rel_attr = $this->get_related_object($rel_parts[0])->get_attribute($rel_parts[1])){
 				$attr = $rel_attr->copy();
-				$attr->get_relation_path()->prepend_relation($this->get_relation($rel_parts[0]));
+				if (!$rel = $this->get_relation($rel_parts[0])){
+					throw new MetaModelRelationNotFoundException('Relation "' . $alias . '" not found for object "' . $this->get_alias_with_namespace() . '"!');
+				}
+				$attr->get_relation_path()->prepend_relation($rel);
 				return $attr;
 			} 
 		}
