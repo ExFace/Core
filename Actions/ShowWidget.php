@@ -35,7 +35,9 @@ class ShowWidget extends AbstractAction implements iShowWidget, iUsePrefillData 
 		
 	protected function perform(){
 		$this->prefill_widget();
-		$this->set_result_data_sheet($this->get_input_data_sheet());
+		if ($this->get_input_data_sheet()){
+			$this->set_result_data_sheet($this->get_input_data_sheet());
+		}
 		$this->set_result($this->get_widget());
 	}
 	
