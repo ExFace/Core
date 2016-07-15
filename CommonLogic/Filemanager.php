@@ -1,8 +1,61 @@
 <?php namespace exface\Core\CommonLogic;
 
 use Symfony\Component\Filesystem\Filesystem;
+use exface\Core\Interfaces\ExfaceClassInterface;
 
-class Filemanager extends Filesystem {	
+class Filemanager extends Filesystem implements ExfaceClassInterface {	
+	private $workbench = null;
+	private $path_to_cache_folder = null;
+	private $path_to_user_data_folder = null;
+	
+	public function __construct(Workbench $exface){
+		$this->workbench = $exface;
+	}
+	
+	/**
+	 * Returns the absolute path to the base installation folder (e.g. c:\xampp\htdocs\exface\exface)
+	 * @return string
+	 */
+	public function get_path_to_base_folder(){
+		return $this->get_workbench()->get_installation_path();
+	}
+	
+	/**
+	 * Returns the absolute path to the base installation folder (e.g. c:\xampp\htdocs\exface\exface\vendor)
+	 * @return string
+	 */
+	public function get_path_to_vendor_folder(){
+		return $this->get_path_to_base_folder() . DIRECTORY_SEPARATOR . 'vendor';
+	}
+	
+	/**
+	 * Returns the absolute path to the base installation folder (e.g. c:\xampp\htdocs\exface\exface\UserData)
+	 * @return string
+	 */
+	public function get_path_to_user_data_folder(){
+		if (is_null($this->path_to_user_data_folder)){
+			$this->path_to_user_data_folder = $this->get_path_to_base_folder() . DIRECTORY_SEPARATOR . EXF_FOLDER_USER_DATA;
+			if (!is_dir($this->path_to_user_data_folder)){
+				mkdir($this->path_to_user_data_folder);
+			}
+		}
+		return $this->path_to_user_data_folder;
+	}
+	
+	/**
+	 * Returns the absolute path to the base installation folder (e.g. c:\xampp\htdocs\exface\exface\cache)
+	 * @return string
+	 */
+	public function get_path_to_cache_folder(){
+		if (is_null($this->path_to_cache_folder)){
+			$this->path_to_cache_folder = $this->get_path_to_base_folder() . DIRECTORY_SEPARATOR . 'cache';
+			if (!is_dir($this->path_to_cache_folder)){
+				mkdir($this->path_to_cache_folder);
+			}
+		}
+		return $this->path_to_cache_folder;
+	}
+	
 	/**
 	 * Copies a complete folder to a new location including all subfolders
 	 * @param string $originDir
@@ -22,6 +75,10 @@ class Filemanager extends Filesystem {
 			}
 		}
 		closedir($dir);
+	}
+	
+	public function get_workbench(){
+		return $this->workbench;
 	}
 }
 ?>

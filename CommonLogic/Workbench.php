@@ -238,7 +238,7 @@ class Workbench {
 	}
 	
 	public function filemanager(){
-		return new Filemanager();
+		return new Filemanager($this);
 	}
 
 }

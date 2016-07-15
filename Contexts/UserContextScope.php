@@ -12,9 +12,13 @@ class UserContextScope extends AbstractContextScope {
 	public function get_user_id(){
 		return $this->get_user_data()->get_uid_column()->get_cell_value(0);
 	}
-	
+		
+	/**
+	 * Returns the absolute path to the base installation folder (e.g. c:\xampp\htdocs\exface\exface\UserData\username)
+	 * @return string
+	 */
 	public function get_user_data_folder_absolute_path(){
-		$path = $this->get_workbench()->get_installation_path() . DIRECTORY_SEPARATOR . EXF_FOLDER_USER_DATA . DIRECTORY_SEPARATOR . $this->get_user_data_folder_name();
+		$path = $this->get_workbench()->filemanager()->get_path_to_user_data_folder() . DIRECTORY_SEPARATOR . $this->get_user_data_folder_name();
 		if (!file_exists($path)){
 			mkdir($path);
 		}
