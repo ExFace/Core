@@ -91,10 +91,16 @@ interface WidgetInterface extends ExfaceClassInterface {
 	public function is_container();
 	
 	/**
-	 * Returns all children of the curren widget or an empty array, if the widget has no children
+	 * Returns all direct children of the current widget or an empty array, if the widget has no children
 	 * @return WidgetInterface[]
 	 */
 	public function get_children();
+	
+	/**
+	 * Returns all children of the current widget including with their children, childrens children, etc. as a flat array of widgets
+	 * @return WidgetInterface[]
+	 */
+	public function get_children_recursive();
 	
 	/**
 	 * Returns the child widget matching the given id or FALSE if no child with this id was found

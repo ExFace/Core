@@ -197,8 +197,21 @@ abstract class AbstractWidget implements WidgetInterface {
 	 * {@inheritDoc}
 	 * @see \exface\Core\Interfaces\WidgetInterface::get_children()
 	 */
-	function get_children(){
+	public function get_children(){
 		return array();
+	}
+	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\WidgetInterface::get_children_recursive()
+	 */
+	public function get_children_recursive(){
+		$children = $this->get_children();
+		foreach ($children as $child){
+			$children = array_merge($children, $child->get_children_recursive());
+		}
+		return $children;
 	}
 	
 	/**
@@ -628,7 +641,7 @@ abstract class AbstractWidget implements WidgetInterface {
 	 * @see \exface\Core\Interfaces\WidgetInterface::is_of_type()
 	 */
 	public function is_of_type($type){
-		$type_class = '\\exface\\Widgets\\' . $type;
+		$type_class = '\\exface\\Core\\Widgets\\' . $type;
 		if ($this instanceof $type_class){
 			return true;
 		} else {
