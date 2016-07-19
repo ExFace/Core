@@ -5,7 +5,7 @@ class DuplicateObjectDialog extends EditObjectDialog {
 	protected function init(){
 		parent::init();
 		$this->set_icon_name('copy');
-		$this->set_save_action('exface.Core.CreateData');
+		$this->set_save_action_alias('exface.Core.CreateData');
 	}
 	
 	/**

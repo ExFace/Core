@@ -7,14 +7,14 @@ use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Factories\WidgetFactory;
 
 class EditObjectDialog extends ShowDialog {
-	private $save_action = null;
+	private $save_action_alias = null;
 	private $show_only_editable_attributes = true;
 	
 	protected function init(){
 		$this->set_input_rows_min(1);
 		$this->set_input_rows_max(1);
 		$this->set_icon_name('edit');
-		$this->set_save_action('exface.Core.UpdateData');
+		$this->set_save_action_alias('exface.Core.UpdateData');
 		// Disable prefilling the widget from contexts as we only whant to fill in data that actually comes from the data source
 		$this->set_prefill_with_filter_context(false);
 	}
@@ -69,7 +69,7 @@ class EditObjectDialog extends ShowDialog {
 		// TODO add save button via followup actions in the init() method instead of the button directly
 		/* @var $save_button \exface\Core\Widgets\Button */
 		$save_button = $this->get_called_on_ui_page()->create_widget('DialogButton', $dialog);
-		$save_button->set_action_alias($this->get_save_action());
+		$save_button->set_action_alias($this->get_save_action_alias());
 		$save_button->set_caption("Speichern");
 		$save_button->set_visibility(EXF_WIDGET_VISIBILITY_PROMOTED);
 		$dialog->add_button($save_button);
@@ -89,12 +89,12 @@ class EditObjectDialog extends ShowDialog {
 	}
 
 	
-	public function get_save_action() {
-		return $this->save_action;
+	public function get_save_action_alias() {
+		return $this->save_action_alias;
 	}
 	
-	public function set_save_action($value) {
-		$this->save_action = $value;
+	public function set_save_action_alias($value) {
+		$this->save_action_alias = $value;
 	} 
 	
 	/**
