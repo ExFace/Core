@@ -80,14 +80,14 @@ class ShowWidget extends AbstractAction implements iShowWidget, iUsePrefillData 
 		
 		if ($this->get_prefill_with_input_data() && $input_data = $this->get_input_data_sheet()){
 			if (!$data_sheet || $data_sheet->is_empty()){
-				$data_sheet = $input_data;
+				$data_sheet = $input_data->copy();
 			} else {
 				try {
 					$data_sheet = $data_sheet->merge($input_data);
 				} catch (\exface\Core\Exceptions\DataSheetMergeError $e){
 					// If anything goes wrong, use the input data to prefill. It is more important for an action, than
 					// other prefill sources.
-					$data_sheet = $input_data;
+					$data_sheet = $input_data->copy();
 				}
 			}
 		}
