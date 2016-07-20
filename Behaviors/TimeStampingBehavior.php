@@ -109,8 +109,14 @@ class TimeStampingBehavior extends AbstractBehavior {
 			$check_column = $check_sheet->get_columns()->get_by_attribute($this->get_updated_on_attribute());
 			foreach ($updated_column->get_values() as $row_nr => $val){
 				$check_val = $check_column->get_cell_value($check_sheet->get_uid_column()->find_row_by_value($data_sheet->get_uid_column()->get_cell_value($row_nr)));
-				$val_date = new \DateTime($val);
-				$check_date = new \DateTime($check_val);
+				try {
+					$val_date = new \DateTime($val);
+					$check_date = new \DateTime($check_val);
+				} catch (\Exception $e){
+					$val_date = 0;
+					$check_date = 0;
+				}
+				
 				if ($val_date != $check_date){
 					$conflict_rows[] = $row_nr;
 				}
