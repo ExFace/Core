@@ -126,7 +126,7 @@ class NameResolver extends AbstractExfaceClass implements NameResolverInterface 
 		if ($pos !== false){
 			return substr($this->get_namespace(), 0, $pos);
 		} else {
-			return '';
+			return $this->get_namespace();
 		}
 	}
 	
@@ -138,8 +138,7 @@ class NameResolver extends AbstractExfaceClass implements NameResolverInterface 
 		$result = $this->get_class_namespace();
 		switch ($this->get_object_type()){
 			case self::OBJECT_TYPE_APP:
-				$result .= self::CLASS_NAMESPACE_SEPARATOR . $this->get_alias() 
-						. self::CLASS_NAMESPACE_SEPARATOR . $this->get_alias() . 'App';
+				$result .= self::CLASS_NAMESPACE_SEPARATOR . $this->get_alias() . 'App';
 				break;
 			case self::OBJECT_TYPE_TEMPLATE:
 				$result .= self::CLASS_NAMESPACE_SEPARATOR . $this->get_alias() 
@@ -163,6 +162,9 @@ class NameResolver extends AbstractExfaceClass implements NameResolverInterface 
 					$result .= 'exface\\Core';
 				}
 				$result .= self::CLASS_NAMESPACE_SEPARATOR . self::get_subdir_from_object_type($this->get_object_type());
+				break;
+			case self::OBJECT_TYPE_APP:
+				$result = self::APPS_NAMESPACE . self::convert_namespace_to_class_namespace($this->get_alias_with_namespace());
 				break;
 			default: 
 				$result = self::APPS_NAMESPACE . self::convert_namespace_to_class_namespace($this->get_namespace());
