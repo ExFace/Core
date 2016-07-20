@@ -4,6 +4,7 @@ use exface;
 use exface\Core\CommonLogic\NameResolver;
 use exface\Core\Interfaces\NameResolverInterface;
 use exface\Core\Interfaces\AppInterface;
+use exface\Core\Exceptions\AppNotFoundError;
 
 abstract class AppFactory extends AbstractNameResolverFactory {
 	
@@ -15,6 +16,9 @@ abstract class AppFactory extends AbstractNameResolverFactory {
 	public static function create(NameResolverInterface $name_resolver){
 		$exface = $name_resolver->get_workbench();
 		$class = $name_resolver->get_class_name_with_namespace();
+		if (!class_exists($class)){
+			throw new AppNotFoundError('No class found for app "' . $name_resolver->get_alias_with_namespace() . '"!');
+		}
 		$app = new $class($exface);
 		$app->set_name_resolver($name_resolver);
 		return $app;
