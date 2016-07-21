@@ -140,9 +140,10 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied {
 	/**
 	 * Returns the sequential number of the row, that contains the given value or FALSE if none of the cells of this column match the value.
 	 * @param string $cell_value
+	 * @param boolean $case_sensitive
 	 * @return integer
 	 */
-	public function find_row_by_value($cell_value);
+	public function find_row_by_value($cell_value, $case_sensitive = false);
 	
 	/**
 	 * Returns an array with all values of this column, which are not present in another one. 

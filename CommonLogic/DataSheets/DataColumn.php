@@ -310,14 +310,18 @@ class DataColumn implements DataColumnInterface {
 	 * {@inheritDoc}
 	 * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::find_row_by_value()
 	 */
-	public function find_row_by_value($cell_value){
-		foreach ($this->get_values(false) as $row_nr => $row_val){
-			if (strcasecmp($cell_value, $row_val) === 0){
-				return $row_nr;
+	public function find_row_by_value($cell_value, $case_sensitive = false){
+		$result = false;
+		if ($case_sensitive){
+			$result = array_search($cell_value, $this->get_values(false));
+		} else {
+			foreach ($this->get_values(false) as $row_nr => $row_val){
+				if (strcasecmp($cell_value, $row_val) === 0){
+					$result = $row_nr;
+				}
 			}
 		}
-		//return array_search($cell_value, $this->get_values(false));
-		return false;
+		return $result;
 	}
 	
 	/**
