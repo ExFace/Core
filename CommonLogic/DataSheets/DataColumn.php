@@ -311,7 +311,13 @@ class DataColumn implements DataColumnInterface {
 	 * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::find_row_by_value()
 	 */
 	public function find_row_by_value($cell_value){
-		return array_search($cell_value, $this->get_values(false));
+		foreach ($this->get_values(false) as $row_nr => $row_val){
+			if (strcasecmp($cell_value, $row_val) === 0){
+				return $row_nr;
+			}
+		}
+		//return array_search($cell_value, $this->get_values(false));
+		return false;
 	}
 	
 	/**
