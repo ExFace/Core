@@ -24,6 +24,7 @@ class DataColumn implements DataColumnInterface {
 	private $data_type = null;
 	private $up_to_date = false;
 	private $totals = array();
+	private $ignore_fixed_values = false;
 	
 	const COLUMN_NAME_VALIDATOR = '[^A-Za-z0-9_\.]';
 	
@@ -224,7 +225,8 @@ class DataColumn implements DataColumnInterface {
 	 * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::set_values()
 	 */
 	public function set_values($column_values, $totals_values = null){
-		return $this->get_data_sheet()->set_column_values($this->get_name(), $column_values, $totals_values);
+		$this->get_data_sheet()->set_column_values($this->get_name(), $column_values, $totals_values);
+		return $this;
 	}
 	
 	/**
@@ -232,8 +234,17 @@ class DataColumn implements DataColumnInterface {
 	 * {@inheritDoc}
 	 * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::set_values_by_expression()
 	 */
-	public function set_values_by_expression(Expression $expression){
-		return $this->set_values($expression->evaluate($this->get_data_sheet(), $this->get_name()));
+	public function set_values_by_expression(Expression $expression, $overwrite = true){
+		if ($overwrite || $this->is_empty()){
+			$this->set_values($expression->evaluate($this->get_data_sheet(), $this->get_name()));
+		} else {
+			foreach ($this->get_values(false) as $row => $val){
+				if (!is_null($val) && $val !== ''){
+					$this->set_value($row, $expression->evaluate($this->get_data_sheet(), $this->get_name(), $row));
+				}
+			}
+		}
+		return $this;
 	}
 	
 	/**
@@ -483,5 +494,24 @@ class DataColumn implements DataColumnInterface {
 	public function set_value($row_number, $value){
 		$this->get_data_sheet()->set_cell_value($this->get_name(), $row_number, $value);
 	}
+	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::get_ignore_fixed_values()
+	 */
+	public function get_ignore_fixed_values() {
+		return $this->ignore_fixed_values;
+	}
+	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::set_ignore_fixed_values()
+	 */
+	public function set_ignore_fixed_values($value) {
+		$this->ignore_fixed_values = $value;
+		return $this;
+	} 
  
 }

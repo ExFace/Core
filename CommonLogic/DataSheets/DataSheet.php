@@ -517,7 +517,9 @@ class DataSheet implements DataSheetInterface {
 					$alias_with_relation_path = RelationPath::relation_path_add($rel_path, $attr->get_alias());
 					if (!$col = $this->get_column($alias_with_relation_path)){
 						$col = $this->get_columns()->add_from_expression($alias_with_relation_path, NULL, true);
-					} 
+					} elseif ($col->get_ignore_fixed_values()){
+						continue;
+					}
 					$col->set_values_by_expression($expr);
 				}
 			}

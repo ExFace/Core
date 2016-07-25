@@ -110,15 +110,16 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied {
 	 * 
 	 * @param array $column_values
 	 * @param array $totals_values
+	 * @return DataColumnInterface
 	 */
 	public function set_values($column_values, $totals_values = null);
 	
 	/**
 	 * Sets the values of the column by evaluating the given expression for this column
 	 * @param expression $expression
-	 * @return \exface\Core\Interfaces\DataSheets\DataSheetInterface
+	 * @return @return DataColumnInterface
 	 */
-	public function set_values_by_expression(Expression $expression);
+	public function set_values_by_expression(Expression $expression, $overwrite = true);
 	
 	/**
 	 * @return boolean
@@ -200,7 +201,7 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied {
 	public function get_totals();
 	
 	/**
-	 * Returns TRUE if the column contains at least one data row and FALSE otherwise
+	 * Returns FALSE if the column contains at least one data row and TRUE otherwise
 	 * @return boolean
 	 */
 	public function is_empty();
@@ -218,5 +219,18 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied {
 	 * @param string $value
 	 */
 	public function set_value($row_number, $value);
+	
+	/**
+	 * Returns TRUE if setting fixed values from the meta model is disabled for this column and FALSE otherwise
+	 * @return boolean
+	 */
+	public function get_ignore_fixed_values();
+	
+	/**
+	 * Prevents setting fixed values based on expressions in the meta model for this column if set to TRUE
+	 * @param boolean $value
+	 * @return \exface\Core\Interfaces\DataSheets\DataColumnInterface
+	 */
+	public function set_ignore_fixed_values($value);
  
 }
