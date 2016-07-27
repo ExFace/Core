@@ -94,7 +94,7 @@ class ShowWidget extends AbstractAction implements iShowWidget, iUsePrefillData 
 		
 		if ($prefill_data = $this->get_prefill_data_sheet()){
 			if (!$data_sheet || $data_sheet->is_empty()){
-				$data_sheet = $prefill_data;
+				$data_sheet = $prefill_data->copy();
 			} else {
 				try {
 					$data_sheet = $data_sheet->merge($prefill_data);
