@@ -13,7 +13,8 @@ abstract class CmsConnectorFactory extends AbstractNameResolverFactory {
 	 */
 	public static function create(NameResolverInterface $name_resolver){
 		$class = $name_resolver->get_class_name_with_namespace();
-		return new $class();
+		$exface = $name_resolver->get_workbench();
+		return new $class($exface);
 	}
 	
 }

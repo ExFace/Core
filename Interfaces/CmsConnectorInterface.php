@@ -1,6 +1,6 @@
 <?php namespace exface\Core\Interfaces;
 
-interface CmsConnectorInterface {
+interface CmsConnectorInterface extends ExfaceClassInterface {
 
 	function get_page_id();
 	
