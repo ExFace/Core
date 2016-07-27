@@ -32,7 +32,7 @@ interface AppInterface extends ExfaceClassInterface, AliasInterface {
 	 * @param string $code
 	 * @return multitype
 	 */
-	public function get_configuration_value($code);
+	public function get_config_value($code);
 	
 	public function get_uid();
 	

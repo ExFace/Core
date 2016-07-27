@@ -12,6 +12,8 @@ abstract class AbstractApp implements AppInterface {
 	private $directory = '';
 	private $configuration_data_sheet = null;
 	private $name_resolver =  null;
+	private $config_folder = 'Config';
+	private $config_uxon = null;
 	
 	/**
 	 * 
@@ -21,7 +23,7 @@ abstract class AbstractApp implements AppInterface {
 	public function __construct(\exface\Core\CommonLogic\Workbench &$exface){
 		$this->exface = $exface;
 		// Create an alias from the class (e.g. "exface.core" from "exface\Core\Core\CoreApp")
-		$this->alias_with_namespace = str_replace(array($this->get_apps_class_namespace(), NameResolver::CLASS_NAMESPACE_SEPARATOR), array('', NameResolver::NAMESPACE_SEPARATOR), substr(get_class($this), 0, strrpos(get_class($this), NameResolver::CLASS_NAMESPACE_SEPARATOR)));
+		$this->alias_with_namespace = str_replace(NameResolver::CLASS_NAMESPACE_SEPARATOR, NameResolver::NAMESPACE_SEPARATOR, substr(get_class($this), 0, strrpos(get_class($this), NameResolver::CLASS_NAMESPACE_SEPARATOR)));
 		$this->init();
 	}
 	
@@ -98,21 +100,22 @@ abstract class AbstractApp implements AppInterface {
 	}
 	
 	/**
-	 * Returns a data sheet, that contains all configuration options for this app.
-	 * NOTE: To fetch a single configuration value it is far better to use get_configuration_value()
-	 * @see get_configuration_value()
-	 * @return DataSheetInterface
+	 * Returns a UXON object with the current configuration options for this app. Options defined on different levels
+	 * (user, installation, etc.) are already merged at this point.
+	 * @return \exface\Core\CommonLogic\UxonObject
 	 */
-	protected function get_configuration_data_sheet(){
-		if (is_null($this->configuration_data_sheet)){
-			$ds = $this->get_workbench()->data()->create_data_sheet($this->get_workbench()->model()->get_object('exface.Core.APP_CONFIG'));
-			$ds->get_columns()->add_from_expression('CODE');
-			$ds->get_columns()->add_from_expression('VALUE');
-			$ds->add_filter_from_string('APP__ALIAS', $this->get_alias_with_namespace());
-			$ds->data_read();
-			$this->configuration_data_sheet = $ds;
+	public function get_config_uxon(){
+		$config_path = $this->get_workbench()->filemanager()->get_path_to_vendor_folder() . DIRECTORY_SEPARATOR . $this->get_directory() . DIRECTORY_SEPARATOR . $this->config_folder;
+		if (is_null($this->config_uxon) && is_dir($config_path)){
+			foreach (scandir($config_path) as $file){
+				if (stripos($file, '.json') !== false || stripos($file, '.uxon') !== false){
+					if ($uxon = UxonObject::from_json(file_get_contents($config_path . DIRECTORY_SEPARATOR . $file))){
+						$this->config_uxon = $this->config_uxon instanceof UxonObject ? $this->config_uxon->extend($uxon) : $uxon;
+					}
+				}
+			}
 		}
-		return $this->configuration_data_sheet;
+		return $this->config_uxon;
 	}
 	
 	/**
@@ -120,12 +123,8 @@ abstract class AbstractApp implements AppInterface {
 	 * @param string $code
 	 * @return multitype
 	 */
-	public function get_configuration_value($code){
-		return $this->get_configuration_data_sheet()->get_cell_value('VALUE', $this->get_configuration_data_sheet()->get_column('CODE')->find_row_by_value($code));
-	}
-	
-	public function get_apps_class_namespace(){
-		return 'exface\\Apps\\';
+	public function get_config_value($code){
+		return $this->get_config_uxon()->get_property($code);
 	}
 	
 	public function get_uid(){

@@ -6,6 +6,7 @@ use exface\Core\Interfaces\ExfaceClassInterface;
 class Filemanager extends Filesystem implements ExfaceClassInterface {	
 	private $workbench = null;
 	private $path_to_cache_folder = null;
+	private $path_to_config_folder = null;
 	private $path_to_user_data_folder = null;
 	
 	public function __construct(Workbench $exface){
@@ -43,7 +44,7 @@ class Filemanager extends Filesystem implements ExfaceClassInterface {
 	}
 	
 	/**
-	 * Returns the absolute path to the base installation folder (e.g. c:\xampp\htdocs\exface\exface\cache)
+	 * Returns the absolute path to the main cache folder (e.g. c:\xampp\htdocs\exface\exface\cache)
 	 * @return string
 	 */
 	public function get_path_to_cache_folder(){
@@ -54,6 +55,20 @@ class Filemanager extends Filesystem implements ExfaceClassInterface {
 			}
 		}
 		return $this->path_to_cache_folder;
+	}
+	
+	/**
+	 * Returns the absolute path to main config folder (e.g. c:\xampp\htdocs\exface\exface\config)
+	 * @return string
+	 */
+	public function get_path_to_config_folder(){
+		if (is_null($this->path_to_config_folder)){
+			$this->path_to_config_folder = $this->get_path_to_base_folder() . DIRECTORY_SEPARATOR . 'config';
+			if (!is_dir($this->path_to_config_folder)){
+				mkdir($this->path_to_config_folder);
+			}
+		}
+		return $this->path_to_config_folder;
 	}
 	
 	/**
