@@ -117,20 +117,33 @@ class DataTransaction implements DataTransactionInterface {
 			$this->start();
 		}
 		
-		// Start a transaction in the data connection
-		foreach ($this->get_data_connections() as $connection){
-			if ($connection->transaction_is_started()){
-				throw new DataTransactionError('Cannot start new transaction for "' . $connection->get_alias_with_namespace() . '": a transaction is already open!');
+		// See if the connection is already registered in this transaction
+		foreach ($this->get_data_connections() as $existing_connection){
+			if ($existing_connection == $connection){
+				
 			} else {
-				try {
-					$connection->transaction_start();
-				} catch (DataConnectionError $e){
-					throw new DataTransactionError('Cannot start new transaction for "' . $connection->get_alias_with_namespace() . '":' . $e->getMessage());
-				}
+				$existing_connection = null;
 			}
 		}
 		
-		$this->connections[] = $connection;
+		// If this is a new connection, start a transaction there and add it to this DataTransaction.
+		// Otherwise make sure, there is a transaction started in the existing connection.
+		if (!$existing_connection){
+			try {
+				$connection->transaction_start();
+			} catch (DataConnectionError $e){
+				throw new DataTransactionError('Cannot start new transaction for "' . $connection->get_alias_with_namespace() . '":' . $e->getMessage());
+			}
+			$this->connections[] = $connection;
+		} elseif (!$existing_connection->transaction_is_started()){
+			try {
+				$existing_connection->transaction_start();
+			} catch (DataConnectionError $e){
+				throw new DataTransactionError('Cannot start new transaction for "' . $connection->get_alias_with_namespace() . '":' . $e->getMessage());
+			}
+		}
+		
+		
 		return $this;
 	}
 	
