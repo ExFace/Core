@@ -246,5 +246,15 @@ class ConditionGroup implements iCanBeConvertedToUxon {
 		}
 		return $this;
 	}
+	
+	/**
+	 * Removes all conditions and nested groups from this condition group thus resetting it completely
+	 * @return ConditionGroup
+	 */
+	public function remove_all(){
+		$this->conditions = array();
+		$this->nested_groups = array();
+		return $this;
+	}
 }
 ?>

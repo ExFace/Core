@@ -112,7 +112,7 @@ interface DataSheetInterface extends ExfaceClassInterface, iCanBeCopied, iCanBeC
 	 * @param DataTransactionInterface $transaction
 	 * @param boolean $delete_missing_rows
 	 */
-	public function data_replace_matching_filters($delete_redundant_rows = true, DataTransactionInterface $transaction = null);
+	public function data_replace_by_filters($delete_redundant_rows = true, DataTransactionInterface $transaction = null);
 	
 	/**
 	 * Saves all values of the data sheets creating new data in the corresponding data sources. By default rows with existing UID-values are updated. 
@@ -237,6 +237,20 @@ interface DataSheetInterface extends ExfaceClassInterface, iCanBeCopied, iCanBeC
 	 * @return DataSheetInterface
 	 */
 	public function remove_rows();
+	
+	/**
+	 * Removes a single row of the data sheet
+	 * @param integer $row_number
+	 * @return DataSheetInterface
+	 */
+	public function remove_row($row_number);
+	
+	/**
+	 * Removes all rows from the specified column. If it is the only column in the row, the entire row will be removed.
+	 * @param string $column_name
+	 * @return DataSheetInterface
+	 */
+	public function remove_rows_for_column($column_name);
 	
 	/**
 	 * Returns TRUE if the data sheet currently does not have any data and FALSE otherwise.

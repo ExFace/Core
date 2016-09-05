@@ -27,6 +27,7 @@ use exface\Core\Events\DataSheetEvent;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Exceptions\DataSourceError;
 use exface\Core\Exceptions\DataSheetSaveError;
+use exface\Core\Factories\DataSheetFactory;
 
 /**
  * Internal data respresentation object in exface. Similar to an Excel-table:
@@ -621,9 +622,9 @@ class DataSheet implements DataSheetInterface {
 	/**
 	 * 
 	 * {@inheritDoc}
-	 * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::data_replace_matching_filters()
+	 * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::data_replace_by_filters()
 	 */
-	public function data_replace_matching_filters($delete_redundant_rows = true, DataTransactionInterface $transaction = null){
+	public function data_replace_by_filters($delete_redundant_rows = true, DataTransactionInterface $transaction = null){
 		// Start a new transaction, if not given
 		if (!$transaction){
 			$transaction = $this->get_workbench()->data()->start_transaction();
@@ -647,8 +648,9 @@ class DataSheet implements DataSheetInterface {
 				$redundant_rows_ds->data_read();
 				$redundant_rows = $redundant_rows_ds->get_uid_column()->diff_values($this->get_uid_column());
 				if (count($redundant_rows) > 0){
-					$delete_ds = $this->copy()->remove_rows();
-					$delete_ds->add_rows($redundant_rows);
+					$delete_ds = DataSheetFactory::create_from_object($this->get_meta_object());
+					$delete_ds->get_columns()->add($uid_column->copy());
+					$delete_ds->get_uid_column()->remove_rows()->set_values(array_values($redundant_rows));
 					$counter += $delete_ds->data_delete($transaction);
 				}
 			} else {
@@ -1010,7 +1012,11 @@ class DataSheet implements DataSheetInterface {
 	public function remove_rows_for_column($column_name){
 		foreach ($this->get_rows() as $id => $row){
 			unset($this->rows[$id][$column_name]);
+			if (count($this->rows[$id]) == 0){
+				$this->remove_row($id);
+			}
 		}
+		return $this;
 	}
 	
 	/**
@@ -1178,8 +1184,23 @@ class DataSheet implements DataSheetInterface {
 		}
 	}
 	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::remove_rows()
+	 */
 	public function remove_rows(){
 		$this->rows = array();
+		return $this;
+	}
+	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::remove_row()
+	 */
+	public function remove_row($row_number){
+		unset($this->rows[$row_number]);
 		return $this;
 	}
 	

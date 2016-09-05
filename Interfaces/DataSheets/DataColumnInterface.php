@@ -232,5 +232,11 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied {
 	 * @return \exface\Core\Interfaces\DataSheets\DataColumnInterface
 	 */
 	public function set_ignore_fixed_values($value);
+	
+	/**
+	 * Removes all rows from this column, thus making it empty
+	 * @return DataColumnInterface
+	 */
+	public function remove_rows();
  
 }

@@ -513,5 +513,15 @@ class DataColumn implements DataColumnInterface {
 		$this->ignore_fixed_values = $value;
 		return $this;
 	} 
+	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::remove_rows()
+	 */
+	public function remove_rows(){
+		$this->get_data_sheet()->remove_rows_for_column($this->get_name());
+		return $this;
+	}
  
 }
