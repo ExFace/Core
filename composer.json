@@ -1,22 +1,31 @@
 {
-	"name" : "ExFace/Core",
-	"description" : "Business web application plattform",
-	"type" : "project",
-	"license" : "GPL-3.0+",
-	"authors" : [{
-			"name" : "Andrej Kabachnik",
-			"email" : "kabachnik@gmail.com",
-			"role" : "Creator"
-		}
-	],
-	"support" : {
-		"issues" : "https://github.com/exface/core/issues"
-	},
-	"require" : {
-		"php" : ">=5.4",
-		"symfony/FileSystem" : ">=2.8",
-		"symfony/Event-Dispatcher" : ">=2.8",
-		"jmikola/Wildcard-Event-Dispatcher" : "1.*",
-		"myclabs/Deep-Copy" : "1.*"
-	}
+    "name": "ExFace/Core",
+    "description": "Business web application plattform",
+    "type": "project",
+    "license": "GPL-3.0+",
+    "authors": [
+        {
+            "name": "Andrej Kabachnik",
+            "email": "kabachnik@gmail.com",
+            "role": "Creator"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/exface/core/issues"
+    },
+    "require": {
+        "php": ">=5.4",
+        "symfony/FileSystem": ">=2.8",
+        "symfony/Event-Dispatcher": ">=2.8",
+        "jmikola/Wildcard-Event-Dispatcher": "1.*",
+        "myclabs/Deep-Copy": "1.*"
+    },
+    "extra": {
+        "app": {
+            "app_uid": "0x31000000000000000000000000000000",
+            "app_alias": "exface.Core",
+            "model_md5": "8079f162354f8ae2f82f9d323d322d88",
+            "model_timestamp": "2016-07-21 11:41:46"
+        }
+    }
 }
