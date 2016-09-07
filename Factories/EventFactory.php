@@ -27,7 +27,7 @@ abstract class EventFactory extends AbstractNameResolverFactory {
 	 * @param exface $exface
 	 * @return ExFaceEvent
 	 */
-	public static function create_basic_event(Workbench $exface, $event_name){
+	public static function create_basic_event(Workbench &$exface, $event_name){
 		$instance = new ExFaceEvent($exface);
 		$instance->set_name($event_name);
 		return $instance;

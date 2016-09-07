@@ -15,7 +15,8 @@ abstract class FormulaFactory extends AbstractNameResolverFactory {
 	 */
 	public static function create(NameResolverInterface $name_resolver, array $arguments = array()){
 		$class = $name_resolver->get_class_name_with_namespace();
-		$formula = new $class();
+		$workbench = $name_resolver->get_workbench();
+		$formula = new $class($workbench);
 		$formula->init($arguments);
 		return $formula;
 	}

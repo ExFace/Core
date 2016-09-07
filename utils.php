@@ -1,12 +1,14 @@
-<?php
-namespace exface\Core;
+<?php namespace exface\Core;
+
 use \DeepCopy\DeepCopy;
 use \DeepCopy\Matcher\PropertyNameMatcher;
 use \DeepCopy\Filter\KeepFilter;
+
 class utils {
 	public function deep_copy($object, array $properties_to_keep = null){
 		$deepCopy = new DeepCopy();
 		$deepCopy->addFilter(new KeepFilter(), new PropertyNameMatcher('exface'));
+		$deepCopy->addFilter(new KeepFilter(), new PropertyNameMatcher('workbench'));
 		if (is_array($properties_to_keep)){
 			foreach ($properties_to_keep as $prop){
 				$deepCopy->addFilter(new KeepFilter(), new PropertyNameMatcher($prop));

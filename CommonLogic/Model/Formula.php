@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\CommonLogic\Model;
 use exface\Core\Factories\DataTypeFactory;
+use exface\Core\Interfaces\ExfaceClassInterface;
+use exface\Core\CommonLogic\Workbench;
 
 /**
  * Data functions are much like Excel functions. They calculate 
@@ -9,20 +11,22 @@ use exface\Core\Factories\DataTypeFactory;
  * @author Andrej Kabachnik
  *
  */
-abstract class Formula {
+abstract class Formula implements ExfaceClassInterface {
 	private $required_attributes = array();
 	private $arguments = array();
 	private $data_sheet = null;
 	private $relation_path = null;
 	private $data_type = NULL;
+	private $exface = null;
 	
-	static function create($function_name, array $arguments=array()){
-		$function_class = '\\exface\\Formulas\\' . $function_name;
-		$function = new $function_class();
-		$function->init($arguments);
-		return $function;
+	public function __construct(Workbench &$workbench){
+		$this->exface = $workbench;
 	}
 	
+	public function get_workbench(){
+		return $this->exface;
+	}
+		
 	/**
 	 * Parses the the arguments for this function. Each argument 
 	 * is an ExFace expression, which in turn can be another function, 
@@ -35,10 +39,9 @@ abstract class Formula {
 	 * @param array arguments
 	 */
 	function init(array $arguments){
-		global $exface;
 		// now find out, what each parameter is: a column reference, a string, a widget reference etc.
 		foreach ($arguments as $arg){
-			$expr = $exface->model()->parse_expression($arg);
+			$expr = $this->get_workbench()->model()->parse_expression($arg);
 			$this->arguments[] = $expr;
 			$this->required_attributes = array_merge($this->required_attributes, $expr->get_required_attributes());
 		}

@@ -2,6 +2,7 @@
 
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Interfaces\Actions\ActionInterface;
+use exface\Core\Factories\ActionFactory;
 
 abstract class AbstractApp implements AppInterface {
 	private $exface = null;
@@ -38,16 +39,13 @@ abstract class AbstractApp implements AppInterface {
 	
 	/**
 	 * Returns an action object
-	 * @param unknown $action_alias
+	 * @param string $action_alias
 	 * @return ActionInterface
 	 */
 	public function get_action($action_alias, \exface\Core\Widgets\AbstractWidget $called_by_widget = null, \stdClass $uxon_description = null){
 		if (!$action_alias) return false;
-		$action_class = '\\exface\\Apps\\' . $this->get_class_namespace() . '\\Actions\\' . $action_alias;
-		$action = new $action_class($this);
-		if ($called_by_widget){
-			$action->set_called_by_widget($called_by_widget);
-		}
+		$exface = $this->get_workbench();
+		$action = ActionFactory::create_from_string($exface, $this->get_alias_with_namespace() . NameResolver::NAMESPACE_SEPARATOR . $action_alias, $called_by_widget);
 		if ($uxon_description instanceof \stdClass){
 			$action->import_uxon_object($uxon_description);
 		}

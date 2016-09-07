@@ -27,7 +27,7 @@ class Price extends \exface\Core\CommonLogic\Model\Formula {
 	}
 	
 	private function fetch_currency($currency_oid){
-		global $exface;
+		$exface = $this->get_workbench();
 		if ($cache = $exface->data()->get_cache('currencies', $currency_oid)) return $cache;
 		
 		$curr = $exface->model()->get_object('ALEXA.RMS.CURR');

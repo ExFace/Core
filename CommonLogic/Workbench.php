@@ -12,6 +12,7 @@ use exface\Core\CommonLogic\DataManager;
 use exface\Core\Factories\ModelLoaderFactory;
 use exface\Core\Factories\EventFactory;
 use exface\Core\Interfaces\Events\EventManagerInterface;
+use exface\Core\Interfaces\AppInterface;
 
 class Workbench {
 	private $data;
@@ -76,6 +77,16 @@ class Workbench {
 		
 	}
 	
+	/**
+	 * 
+	 * @return \exface\Core\CommonLogic\Workbench
+	 */
+	public static function start_new_instance(){
+		$instance = new self();
+		$instance->start();
+		return $instance;
+	}
+	
 	function get_config_value($param){
 		return $this->config[$param];
 	}
@@ -129,7 +140,7 @@ class Workbench {
 	/**
 	 * Launches an ExFace app and returns it. Apps are cached and kept running for script (request) window
 	 * @param string $app_alias
-	 * @return \Workbench\Core\AbstractApp
+	 * @return AppInterface
 	 */
 	public function get_app($app_alias){
 		if (!$this->running_apps[$app_alias]){

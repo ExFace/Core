@@ -1,6 +1,9 @@
-<?php
-namespace exface\Core\CommonLogic\Model;
-class Relation{
+<?php namespace exface\Core\CommonLogic\Model;
+
+use exface\Core\Interfaces\ExfaceClassInterface;
+use exface\Core\CommonLogic\Workbench;
+
+class Relation implements ExfaceClassInterface {
 	
 	// TODO Make all private
 	public $id;
@@ -14,6 +17,7 @@ class Relation{
 	private $foreign_key_alias;
 	private $type = 'n1';
 	private $inherited_from_object_id = null;
+	private $exface = null;
 	
 	/**
 	 * 
@@ -25,8 +29,9 @@ class Relation{
 	 * @param unknown $related_object_id
 	 * @param string $type 1n n1 or 11
 	 */
-	function __construct($id, $alias, $name, $main_object_id, $foreign_key_alias, $related_object_id, $related_object_key_attribute_id = null, $type = 'n1'){
-		$this->id = $id;
+	function __construct(Workbench &$workbench, $relation_id, $alias, $name, $main_object_id, $foreign_key_alias, $related_object_id, $related_object_key_attribute_id = null, $type = 'n1'){
+		$this->exface = $workbench;
+		$this->id = $relation_id;
 		$this->alias = $alias;
 		$this->name = $name;
 		$this->main_object_id = $main_object_id;
@@ -37,8 +42,7 @@ class Relation{
 	}
     
     function get_related_object(){
-    	global $exface;
-    	return $exface->model()->get_object($this->related_object_id, $this->get_alias());
+    	return $this->get_model()->get_object($this->related_object_id, $this->get_alias());
     }
     
     public function get_id() {
@@ -94,8 +98,7 @@ class Relation{
     }
     
     public function get_main_object() {
-    	global $exface;
-      return $exface->model()->get_object($this->main_object_id);
+      return $this->get_model()->get_object($this->main_object_id);
     }
     
     public function set_main_object(\exface\Core\CommonLogic\Model\Object $obj) {
@@ -181,9 +184,18 @@ class Relation{
     
     /**
      * Clones the attribute keeping the model and object
+     * @return Relation
      */
     public function copy(){
-    	return $this->get_main_object()->get_workbench()->utils()->deep_copy($this, array('model'));
+    	return $this->get_main_object()->get_workbench()->utils()->deep_copy($this, array('exface'));
+    }
+    
+    public function get_workbench(){
+    	return $this->exface;
+    }
+    
+    public function get_model(){
+    	return $this->get_workbench()->model();
     }
 }
 ?>

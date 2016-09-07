@@ -151,9 +151,8 @@ class DataColumn implements DataColumnInterface {
 	 * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::set_formatter()
 	 */
 	public function set_formatter($expression) {
-		global $exface;
 		if (!($expression instanceof expression)){
-			$expression = $exface->model()->parse_expression($expression);
+			$expression = $this->get_workbench()->model()->parse_expression($expression);
 		}
 		$this->formatter = $expression;
 	}

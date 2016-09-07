@@ -3,7 +3,7 @@
 class DateTime extends \exface\Core\CommonLogic\Model\Formula {
 	
 	function run($date, $format=''){
-		global $exface;
+		$exface = $this->get_workbench();
 		if (!$date) return;
 		if (!$format) $format = $exface->get_config_value('default_datetime_format');
 		try {

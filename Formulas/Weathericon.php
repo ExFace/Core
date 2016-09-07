@@ -8,7 +8,7 @@
 class Weathericon extends \exface\Core\CommonLogic\Model\Formula {
 	
 	function run($condition_code){
-		global $exface;
+		$exface = $this->get_workbench();
 		if (!$condition_code) return '';
 		$return = '<img src="' . $exface->get_config_value('path_to_images') . '/weather/' . $condition_code . '.png" />';
         return $return;

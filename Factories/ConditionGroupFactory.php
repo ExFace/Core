@@ -56,7 +56,7 @@ abstract class ConditionGroupFactory extends AbstractUxonFactory {
 	 * @throws FactoryError
 	 * @return ConditionGroup
 	 */
-	public static function create_from_object_or_array(Workbench $exface, $uxon_or_array){
+	public static function create_from_object_or_array(Workbench &$exface, $uxon_or_array){
 		if ($uxon_or_array instanceof \stdClass){
 			return self::create_from_stdClass($exface, $uxon_or_array);
 		} elseif (is_array($uxon_or_array)){

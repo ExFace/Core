@@ -4,13 +4,13 @@ use Symfony\Component\Filesystem\Filesystem;
 use exface\Core\Interfaces\ExfaceClassInterface;
 
 class Filemanager extends Filesystem implements ExfaceClassInterface {	
-	private $workbench = null;
+	private $exface = null;
 	private $path_to_cache_folder = null;
 	private $path_to_config_folder = null;
 	private $path_to_user_data_folder = null;
 	
-	public function __construct(Workbench $exface){
-		$this->workbench = $exface;
+	public function __construct(Workbench &$exface){
+		$this->exface = $exface;
 	}
 	
 	/**
@@ -93,7 +93,7 @@ class Filemanager extends Filesystem implements ExfaceClassInterface {
 	}
 	
 	public function get_workbench(){
-		return $this->workbench;
+		return $this->exface;
 	}
 }
 ?>
