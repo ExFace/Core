@@ -238,5 +238,13 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied {
 	 * @return DataColumnInterface
 	 */
 	public function remove_rows();
+	
+	/**
+	 * Aggregates all values in this column using the given function. The function names are the same, as in 
+	 * the column definitions (e.g. attribute_alias:SUM)
+	 * @param string $aggregate_function
+	 * @return string
+	 */
+	public function aggregate($aggregate_function_name);
  
 }

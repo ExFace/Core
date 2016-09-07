@@ -523,5 +523,33 @@ class DataColumn implements DataColumnInterface {
 		$this->get_data_sheet()->remove_rows_for_column($this->get_name());
 		return $this;
 	}
+	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::aggregate()
+	 */
+	public function aggregate($aggregate_function_name){
+		$result = '';
+		$values = $this->get_values(false);
+		switch (mb_strtoupper($aggregate_function_name)){
+			case EXF_AGGREGATOR_SUM: $result = array_sum($values); break;
+			case EXF_AGGREGATOR_AVERAGE:
+			case EXF_AGGREGATOR_AVG: 
+				if (count($values) > 0){
+					$result = array_sum($values) / count($values);
+				} else {
+					$result = 0;
+				}
+				break;
+			case EXF_AGGREGATOR_MIN: $result = count($values) > 0 ? min($values) : 0; break;
+			case EXF_AGGREGATOR_MAX: $result = count($values) > 0 ? max($values) : 0; break;
+			case EXF_AGGREGATOR_LIST: $result = implode(',', $values); break;
+			case EXF_AGGREGATOR_LIST_DISTINCT: $result = implode(',', array_unique($values)); break;
+			default:
+				throw new DataSheetException('Cannot aggregate over column "' . $this->get_name() . '" of a data sheet of "' . $this->get_data_sheet()->get_meta_object()->get_alias_with_namespace() . '": unknown aggregator function "' . $aggregate_function_name . '"!');
+		}
+		return $result;
+	}
  
 }

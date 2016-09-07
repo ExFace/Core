@@ -83,6 +83,15 @@ const EXF_LOGICAL_OR = 'OR';
 const EXF_LOGICAL_XOR = 'XOR';
 const EXF_LOGICAL_NOT = 'NOT';
 
+// Aggregator function names
+const EXF_AGGREGATOR_SUM = 'SUM';
+const EXF_AGGREGATOR_AVG = 'AVG';
+const EXF_AGGREGATOR_AVERAGE = 'AVERAGE';
+const EXF_AGGREGATOR_MIN = 'MIN';
+const EXF_AGGREGATOR_MAX = 'MAX';
+const EXF_AGGREGATOR_LIST = 'LIST';
+const EXF_AGGREGATOR_LIST_DISTINCT = 'LIST_DISTINCT';
+
 // Alignment options
 const EXF_ALIGN_LEFT = 'left';
 const EXF_ALIGN_RIGHT = 'right';
