@@ -279,23 +279,6 @@
             "DATA_ADDRESS": "exf_app"
         },
         {
-            "CREATED_ON": "2016-03-03 13:57:23",
-            "MODIFIED_ON": "2016-04-21 09:05:16",
-            "CREATED_BY_USER": "0x31000000000000000000000000000000",
-            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
-            "UID": "0x11e5e13f5b07f8dda8340050568905af",
-            "DATA_SOURCE": "0x32000000000000000000000000000000",
-            "long_description": "",
-            "APP": "0x31000000000000000000000000000000",
-            "SHORT_DESCRIPTION": "Configuration variables for installed apps",
-            "PARENT_OBJECT": "",
-            "DATA_ADDRESS_PROPS": "{}",
-            "DEFAULT_EDITOR_UXON": "{}",
-            "LABEL": "App configuration",
-            "ALIAS": "APP_CONFIG",
-            "DATA_ADDRESS": "exf_app_config"
-        },
-        {
             "CREATED_ON": "2016-04-25 13:19:43",
             "MODIFIED_ON": "2016-04-25 21:54:38",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
