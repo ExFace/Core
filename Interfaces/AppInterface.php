@@ -36,5 +36,25 @@ interface AppInterface extends ExfaceClassInterface, AliasInterface {
 	
 	public function get_uid();
 	
+	/**
+	 * This method must be performed by package managers after the app had been installed or updated. App developers can
+	 * implement custom code here to finalize the installation. When this method is called, you can be sure, that the app
+	 * files are already in place and the meta model had already been imported. Thus simple apps would already be functional.
+	 * This method only needs to be implemented if the app needs to instantiate some cache, build indexes, copy files 
+	 * somewhere, etc. - things the package manager will not do by default. 
+	 * The method should return some user readable result statement.
+	 * 
+	 * @return string 
+	 */
+	public function install();
+	
+	/**
+	 * This method must be performed by package managers before the app gets uninstalled. App developers can implement custom code 
+	 * here to clean up data a prepare the deinstallation. The method should return some user readable result statement.
+	 * 
+	 * @return string 
+	 */
+	public function uninstall();
+	
 }
 ?>

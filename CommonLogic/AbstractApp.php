@@ -143,5 +143,23 @@ abstract class AbstractApp implements AppInterface {
 		$this->name_resolver = $value;
 		return $this;
 	}	
+	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\AppInterface::install()
+	 */
+	public function install(){
+		return '';
+	}
+	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\AppInterface::uninstall()
+	 */
+	public function uninstall(){
+		return '';
+	}
 }
 ?>
