@@ -13,6 +13,8 @@ use exface\Core\Factories\ModelLoaderFactory;
 use exface\Core\Factories\EventFactory;
 use exface\Core\Interfaces\Events\EventManagerInterface;
 use exface\Core\Interfaces\AppInterface;
+use exface\Core\Interfaces\ConfigurationInterface;
+use exface\Core\Exceptions\exfError;
 
 class Workbench {
 	private $data;
@@ -29,22 +31,19 @@ class Workbench {
 	private $request_params = array();
 	
 	function __construct(){
-		
+		// Determine the absolute path to the vendor folder
 		$this->vendor_dir_path = dirname(__FILE__) . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..';
+		
+		// Init the class loader
 		require_once 'splClassLoader.php';
 		$classLoader = new \SplClassLoader(null, array($this->vendor_dir_path));
 		$classLoader->register();
 		
+		// Init composer autoload
 		require_once($this->vendor_dir_path.DIRECTORY_SEPARATOR.'autoload.php');
 		
-		$base_path = $this->vendor_dir_path.DIRECTORY_SEPARATOR.'..'.DIRECTORY_SEPARATOR;
-		
-		// load the config
-		require(dirname(__FILE__).'/../config.php');;
-		$this->config = $exf_config;
-		$this->config['base_path'] = $base_path;
-		
-		$this->debug = false;
+		// Load the internal constants file
+		require_once('Constants.php');
 	}
 	
 	function start(){
@@ -55,7 +54,7 @@ class Workbench {
 		$this->utils = new utils();
 		
 		// load the CMS connector
-		$this->cms = CmsConnectorFactory::create($this->create_name_resolver($this->config['CMS_connector'], NameResolver::OBJECT_TYPE_CMS_CONNECTOR));
+		$this->cms = CmsConnectorFactory::create($this->create_name_resolver($this->get_config()->get_option('CMS_CONNECTOR'), NameResolver::OBJECT_TYPE_CMS_CONNECTOR));
 		// init data module
 		$this->data = new DataManager($this);
 		
@@ -63,9 +62,12 @@ class Workbench {
 		$this->mm = new \exface\Core\CommonLogic\Model\Model($this);
 		
 		// Init the ModelLoader
-		$model_loader_name = NameResolver::create_from_string($this->config['model_loader'], NameResolver::OBJECT_TYPE_MODEL_LOADER, $this);
+		$model_loader_name = NameResolver::create_from_string($this->get_config()->get_option('MODEL_LOADER'), NameResolver::OBJECT_TYPE_MODEL_LOADER, $this);
+		if (!$model_loader_name->class_exists()){
+			throw new exfError('No valid model loader found in current configuration - please add a valid "MODEL_LOADER" : "file_path_or_qualified_alias_or_qualified_class_name" to your config in "' . $this->filemanager()->get_path_to_config_folder() . '"');
+		}
 		$model_loader = ModelLoaderFactory::create($model_loader_name);
-		$model_connection = DataConnectorFactory::create_from_alias($this, $this->config['model_data_connector'], $this->config['db']);
+		$model_connection = DataConnectorFactory::create_from_alias($this, $this->get_config()->get_option('MODEL_DATA_CONNECTOR'));
 		$model_loader->set_data_connection($model_connection);
 		$this->model()->set_model_loader($model_loader);
 		
@@ -87,8 +89,11 @@ class Workbench {
 		return $instance;
 	}
 	
-	function get_config_value($param){
-		return $this->config[$param];
+	/**
+	 * @return ConfigurationInterface
+	 */
+	public function get_config(){
+		return $this->get_app('exface.Core')->get_config();
 	}
 	
 	/**

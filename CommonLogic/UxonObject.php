@@ -95,9 +95,39 @@ class UxonObject extends \stdClass implements \IteratorAggregate {
 	/**
 	 * Returns a property specified by name (alternative to $uxon->name)
 	 * @param string $name
+	 * @return mixed
 	 */
 	public function get_property($name){
 		return $this->$name;
+	}
+	
+	/**
+	 * 
+	 * @param string $name
+	 * @return boolean
+	 */
+	public function has_property($name){
+		return property_exists($this, $name);
+	}
+	
+	/**
+	 * 
+	 * @param string $name
+	 * @param boolean $case_sensitive
+	 * @return mixed
+	 */
+	public function find_property_key($name, $case_sensitive = false){
+		if ($this->has_property($name)){
+			return $name;
+		} else {
+			$property_names = array_keys(get_object_vars($this));
+			foreach($property_names as $property_name)
+			{
+				if (strcasecmp($name, $property_name) == 0)
+					return $property_name;
+			}
+			return false;
+		}
 	}
 	
 	/**

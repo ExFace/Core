@@ -3,7 +3,12 @@
 use Symfony\Component\Filesystem\Filesystem;
 use exface\Core\Interfaces\ExfaceClassInterface;
 
-class Filemanager extends Filesystem implements ExfaceClassInterface {	
+class Filemanager extends Filesystem implements ExfaceClassInterface {
+	const FOLDER_NAME_VENDOR = 'vendor';
+	const FOLDER_NAME_USER_DATA = 'UserData';
+	const FOLDER_NAME_CACHE = 'cache';
+	const FOLDER_NAME_CONFIG = 'config';
+	
 	private $exface = null;
 	private $path_to_cache_folder = null;
 	private $path_to_config_folder = null;
@@ -26,7 +31,7 @@ class Filemanager extends Filesystem implements ExfaceClassInterface {
 	 * @return string
 	 */
 	public function get_path_to_vendor_folder(){
-		return $this->get_path_to_base_folder() . DIRECTORY_SEPARATOR . 'vendor';
+		return $this->get_path_to_base_folder() . DIRECTORY_SEPARATOR . static::FOLDER_NAME_VENDOR;
 	}
 	
 	/**
@@ -35,7 +40,7 @@ class Filemanager extends Filesystem implements ExfaceClassInterface {
 	 */
 	public function get_path_to_user_data_folder(){
 		if (is_null($this->path_to_user_data_folder)){
-			$this->path_to_user_data_folder = $this->get_path_to_base_folder() . DIRECTORY_SEPARATOR . EXF_FOLDER_USER_DATA;
+			$this->path_to_user_data_folder = $this->get_path_to_base_folder() . DIRECTORY_SEPARATOR . static::FOLDER_NAME_USER_DATA;
 			if (!is_dir($this->path_to_user_data_folder)){
 				mkdir($this->path_to_user_data_folder);
 			}
@@ -49,7 +54,7 @@ class Filemanager extends Filesystem implements ExfaceClassInterface {
 	 */
 	public function get_path_to_cache_folder(){
 		if (is_null($this->path_to_cache_folder)){
-			$this->path_to_cache_folder = $this->get_path_to_base_folder() . DIRECTORY_SEPARATOR . 'cache';
+			$this->path_to_cache_folder = $this->get_path_to_base_folder() . DIRECTORY_SEPARATOR . static::FOLDER_NAME_CACHE;
 			if (!is_dir($this->path_to_cache_folder)){
 				mkdir($this->path_to_cache_folder);
 			}
@@ -63,7 +68,7 @@ class Filemanager extends Filesystem implements ExfaceClassInterface {
 	 */
 	public function get_path_to_config_folder(){
 		if (is_null($this->path_to_config_folder)){
-			$this->path_to_config_folder = $this->get_path_to_base_folder() . DIRECTORY_SEPARATOR . 'config';
+			$this->path_to_config_folder = $this->get_path_to_base_folder() . DIRECTORY_SEPARATOR . static::FOLDER_NAME_CONFIG;
 			if (!is_dir($this->path_to_config_folder)){
 				mkdir($this->path_to_config_folder);
 			}

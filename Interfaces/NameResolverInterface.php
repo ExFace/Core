@@ -1,6 +1,7 @@
 <?php namespace exface\Core\Interfaces;
 
 use exface\Core\CommonLogic\Workbench;
+use exface\Core\Exceptions\NameResolverError;
 
 interface NameResolverInterface extends ExfaceClassInterface {
 	
@@ -33,5 +34,12 @@ interface NameResolverInterface extends ExfaceClassInterface {
 	public function get_class_directory();
 	
 	public function class_exists();
+	
+	/**
+	 * Validates if the name resolver can instatiate the required object and throws exceptions if not so
+	 * @throws NameResolverError
+	 * @return NameResolverInterface
+	 */
+	public function validate();
 	
 }

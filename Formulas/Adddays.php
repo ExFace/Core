@@ -6,9 +6,9 @@ class Adddays extends Formula {
 	
 	function run($date, $days_to_add=null){
 		if (!$date) return;
-		if (!$format) $format = $this->get_workbench()->get_config_value('default_date_format');
+		if (!$format) $format = $this->get_workbench()->get_config()->get_option('DEFAULT_DATE_FORMAT');
 		$date = new \DateTime($date);
-		$interval = ($day_to_add < 0 ? 'N' : 'P') . intval($days_to_add) . 'D';
+		$interval = ($days_to_add < 0 ? 'N' : 'P') . intval($days_to_add) . 'D';
 		$date->add(new \DateInterval($interval));
 		return $date->format($format);
 	}

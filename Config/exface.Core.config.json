@@ -2,7 +2,6 @@
 "MODEL_DATA_CONNECTOR": "exface\\ModxCmsConnector\\DataConnectors\\ModxDb.php",
 "MODEL_LOADER": "exface\\SqlDataConnector\\ModelLoaders\\SqlModelLoader.php",
 "CMS_CONNECTOR": "exface\\ModxCmsConnector\\CmsConnectors\\Modx.php",
-"CMS_BASE_PATH": "/exface",
 "DEFAULT_UI_TEMPLATE": "exface.JEasyUiTemplate",
 "WIDGET_FOR_UNKNOWN_DATA_TYPES" : "Input",
 "RELATION_SEPARATOR": "__",
@@ -12,7 +11,5 @@
 "OBJECT_LABEL_ALIAS": "LABEL",
 "DEFAULT_DATE_FORMAT": "d.m.Y",
 "DEFAULT_DATETIME_FORMAT": "d.m.Y H:i:s",
-"FOLDER_USER_DATA": "UserData",
-"FOLDER_CACHE": "cache",
-"FOLDER_CONFIG": "config"
+"FOLDER_USER_DATA": "UserData"
 }

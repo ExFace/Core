@@ -8,7 +8,7 @@ class Date extends \exface\Core\CommonLogic\Model\Formula {
 	}
 	
 	function format_date($date, $format=''){
-		if (!$format) $format = $this->get_workbench()->get_config_value('default_date_format');
+		if (!$format) $format = $this->get_workbench()->get_config()->get_option('DEFAULT_DATE_FORMAT');
 		try {
 			$date = new \DateTime($date);
 		} catch (\Exception $e){

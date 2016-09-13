@@ -1,44 +1,8 @@
 <?php
-// IDEA put the options into a DB. This would be mor user friendly.
-
-// DB connection for the metamodel
-// MODx
-$exf_config['model_data_connector'] = 'exface\ModxCmsConnector\DataConnectors\ModxDb.php';
-$exf_config['model_loader'] = 'exface\SqlDataConnector\ModelLoaders\SqlModelLoader.php';
-
-
-// alexaUI
-/*
-$exf_config['db_connector'] = 'db_oracleLC';
-$exf_config['db']['host'] = 'sdroraalx11';
-$exf_config['db']['port'] = 1521;
-$exf_config['db']['sid'] = 'alexa11';
-$exf_config['db']['user'] = 'exf_demo';
-$exf_config['db']['password'] = 'exf_demo';
-$exf_config['db']['character_set'] = 'AL32UTF8';
-*/
-
-// CMS
-$exf_config['CMS_connector'] = 'exface\ModxCmsConnector\CmsConnectors\Modx.php';
-$exf_config['CMS_base_path'] = '/exface';
-
-// UI
-$exf_config['default_ui_template'] = 'exface.JEasyUiTemplate';
-$exf_config['widget_for_unknown_data_types'] = 'Input';
-
-// other config options
-$exf_config['path_to_images'] = 'assets/images';
-
-// model
-$exf_config['relation_separator'] = '__';
-$exf_config['aggregation_separator'] = ':';
-$exf_config['namespace_separator'] = '.';
-$exf_config['widget_id_separator'] = '_';
-$exf_config['object_label_alias'] = 'LABEL';
-
-// data
-$exf_config['default_date_format'] = "d.m.Y";
-$exf_config['default_datetime_format'] = "d.m.Y H:i:s";
+/**
+ * This files holds all global constants used in ExFace. These are part of the core source code and must not be changed for
+ * customizing reasons! They are jsut here for ease of access and because of backward compatibility to older components.
+ */
 
 // data types
 // IDEA if data types will become separate php files or classes, move the constants to the respective
@@ -115,7 +79,5 @@ const EXF_TEXT_STYLE_BOLD = 'bold';
 const EXF_TEXT_STYLE_NORMAL = 'normal';
 const EXF_TEXT_STYLE_STRIKETHROUGH = 'strikethrough';
 const EXF_TEXT_STYLE_UNDERLINE = 'underline';
-
-const EXF_FOLDER_USER_DATA = 'UserData';
 
 ?>

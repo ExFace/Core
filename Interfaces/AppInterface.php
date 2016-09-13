@@ -28,12 +28,17 @@ interface AppInterface extends ExfaceClassInterface, AliasInterface {
 	public function get_vendor();
 	
 	/**
-	 * Returns a single configuration value specified by the given code
-	 * @param string $code
-	 * @return multitype
+	 * Returns the configuration object of this app. At this point, the configuration is already fully compiled and contains
+	 * all options from all definition levels: defaults, installation config, user config, etc.
+	 * 
+	 * @return ConfigurationInterface
 	 */
-	public function get_config_value($code);
+	public function get_config();
 	
+	/**
+	 * Returns the unique identifier of this app. It is a UUID by default.
+	 * @return string
+	 */
 	public function get_uid();
 	
 	/**

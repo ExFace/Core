@@ -5,7 +5,7 @@ class DateTime extends \exface\Core\CommonLogic\Model\Formula {
 	function run($date, $format=''){
 		$exface = $this->get_workbench();
 		if (!$date) return;
-		if (!$format) $format = $exface->get_config_value('default_datetime_format');
+		if (!$format) $format = $exface->get_config()->get_option('DEFAULT_DATETIME_FORMAT');
 		try {
 			$date = new \DateTime($date);
 		} catch (\Exception $e){

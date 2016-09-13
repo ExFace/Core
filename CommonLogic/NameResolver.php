@@ -2,6 +2,7 @@
 
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\Interfaces\NameResolverInterface;
+use exface\Core\Exceptions\NameResolverError;
 
 /**
  * The name resolver translates all kinds of references to important objects within ExFace to their class names, thus
@@ -122,7 +123,7 @@ class NameResolver extends AbstractExfaceClass implements NameResolverInterface 
 	}
 	
 	public function get_vendor(){
-		$pos = stripos($this->get_namespace(), $this->get_workbench()->get_config_value('namespace_separator'));
+		$pos = stripos($this->get_namespace(), NameResolver::NAMESPACE_SEPARATOR);
 		if ($pos !== false){
 			return substr($this->get_namespace(), 0, $pos);
 		} else {
@@ -216,6 +217,18 @@ class NameResolver extends AbstractExfaceClass implements NameResolverInterface 
 	
 	public static function get_default_factory_class_namespace(){
 		return self::CLASS_NAMESPACE_SEPARATOR . 'exface' . self::CLASS_NAMESPACE_SEPARATOR . 'Core' . self::CLASS_NAMESPACE_SEPARATOR . 'Factories' . self::CLASS_NAMESPACE_SEPARATOR;
+	}
+	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\NameResolverInterface::validate()
+	 */
+	public function validate(){
+		if (!$this->class_exists()){
+			throw new NameResolverError('Cannot locate ' . $this->get_object_type() . ' "' . $this->get_alias_with_namespace() . '" : class "' . $this->get_class_name_with_namespace() . '" not found!');
+		}
+		return $this;
 	}
 	
 }

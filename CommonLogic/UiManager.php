@@ -108,7 +108,7 @@ class UiManager implements UiManagerInterface {
 	
 	public function get_template_from_request() {
 		if (is_null($this->base_template)){
-			$this->base_template = $this->get_template($this->get_workbench()->get_config_value('default_ui_template'));
+			$this->base_template = $this->get_template($this->get_workbench()->get_config()->get_option('DEFAULT_UI_TEMPLATE'));
 		}
 		return $this->get_template($this->base_template);
 	}

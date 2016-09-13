@@ -169,7 +169,7 @@ class ActionTestContext extends AbstractContext {
 	}
 	
 	protected function create_test_case_name($page_name=null){
-		return $page_name . ' (' . date($this->get_workbench()->get_config_value('default_datetime_format')) . ')';
+		return $page_name . ' (' . date($this->get_workbench()->get_config()->get_option('DEFAULT_DATETIME_FORMAT')) . ')';
 	}
 	
 	public function get_recording_test_case_id() {

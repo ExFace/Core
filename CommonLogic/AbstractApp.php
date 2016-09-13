@@ -3,18 +3,21 @@
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Factories\ActionFactory;
+use exface\Core\Factories\ConfigurationFactory;
+use exface\Core\Interfaces\ConfigurationInterface;
 
 abstract class AbstractApp implements AppInterface {
+	const CONFIG_FOLDER_IN_APP = 'Config';
+	const CONFIG_FILE_SUFFIX = '.config.json';
+	
 	private $exface = null;
 	private $uid = null;
 	private $vendor = null;
 	private $alias = null;
 	private $alias_with_namespace = '';
 	private $directory = '';
-	private $configuration_data_sheet = null;
 	private $name_resolver =  null;
-	private $config_folder = 'Config';
-	private $config_uxon = null;
+	private $config = null;
 	
 	/**
 	 * 
@@ -69,7 +72,7 @@ abstract class AbstractApp implements AppInterface {
 	 */
 	public function get_directory(){
 		if (!$this->directory){
-			$this->directory = str_replace($this->get_workbench()->get_config_value('namespace_separator'), DIRECTORY_SEPARATOR, $this->get_alias_with_namespace());
+			$this->directory = str_replace(NameResolver::NAMESPACE_SEPARATOR, DIRECTORY_SEPARATOR, $this->get_alias_with_namespace());
 		}
 		return $this->directory;
 	}
@@ -79,7 +82,7 @@ abstract class AbstractApp implements AppInterface {
 	}
 	
 	public function get_class_namespace(){
-		return str_replace($this->get_workbench()->get_config_value('namespace_separator'), '\\', $this->get_alias_with_namespace());
+		return str_replace(NameResolver::NAMESPACE_SEPARATOR, '\\', $this->get_alias_with_namespace());
 	}
 	
 	/**
@@ -98,33 +101,63 @@ abstract class AbstractApp implements AppInterface {
 	}
 	
 	/**
-	 * Returns a UXON object with the current configuration options for this app. Options defined on different levels
-	 * (user, installation, etc.) are already merged at this point.
-	 * @return \exface\Core\CommonLogic\UxonObject
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\AppInterface::get_config()
 	 */
-	public function get_config_uxon(){
-		$config_path = $this->get_workbench()->filemanager()->get_path_to_vendor_folder() . DIRECTORY_SEPARATOR . $this->get_directory() . DIRECTORY_SEPARATOR . $this->config_folder;
-		if (is_null($this->config_uxon) && is_dir($config_path)){
-			foreach (scandir($config_path) as $file){
-				if (stripos($file, '.json') !== false || stripos($file, '.uxon') !== false){
-					if ($uxon = UxonObject::from_json(file_get_contents($config_path . DIRECTORY_SEPARATOR . $file))){
-						$this->config_uxon = $this->config_uxon instanceof UxonObject ? $this->config_uxon->extend($uxon) : $uxon;
-					}
-				}
-			}
+	public function get_config(){
+		if (is_null($this->config)){
+			$this->config = $this->load_config_files();
 		}
-		return $this->config_uxon;
+		return $this->config;
 	}
 	
 	/**
-	 * Returns a single configuration value specified by the given code
-	 * @param string $code
-	 * @return multitype
+	 * Loads configuration files from the app folder and the installation config folder and merges the respecitve config options
+	 * into the given configuration object.
+	 * 
+	 * This method is handy if an app needs to create some custom base config object and load the config files on that. In this case,
+	 * simply overwrite the get_config() method to pass a non-empty $base_config.
+	 * 
+	 * @param ConfigurationInterface $base_config
+	 * @return \exface\Core\Interfaces\ConfigurationInterface
 	 */
-	public function get_config_value($code){
-		return $this->get_config_uxon()->get_property($code);
+	protected function load_config_files(ConfigurationInterface $base_config = null){
+		$config = !is_null($base_config) ? $base_config : ConfigurationFactory::create_from_app($this);
+		
+		// Load the default config of the app	
+		$config->load_config_file($this->get_config_folder() . DIRECTORY_SEPARATOR . $this->get_config_file_name());
+		
+		// Load the installation config of the app
+		$config->load_config_file($this->get_workbench()->filemanager()->get_path_to_config_folder() . DIRECTORY_SEPARATOR . $this->get_config_file_name());
+
+		// IDEA Enable user specific configurations by looking into config files in the UserData folder here
+		
+		return $config;		
 	}
 	
+	/**
+	 * Returns the file name for configurations of this app. By default it is [vendor].[app_alias].config.json. The app will look for files
+	 * with this name in all configuration folders. If your app needs a custom file name, overwrite this method.
+	 * @return string
+	 */
+	protected function get_config_file_name(){
+		return $this->get_alias_with_namespace() . static::CONFIG_FILE_SUFFIX;
+	}
+	
+	/**
+	 * Returns the absolute path to the config folder of this app. Overwrite this if you want your app configs to be placed somewhere else.
+	 * @return string
+	 */
+	protected function get_config_folder(){
+		return $this->get_workbench()->filemanager()->get_path_to_vendor_folder() . DIRECTORY_SEPARATOR . $this->get_directory() . DIRECTORY_SEPARATOR . static::CONFIG_FOLDER_IN_APP;
+	}
+	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\AppInterface::get_uid()
+	 */
 	public function get_uid(){
 		if (is_null($this->uid)){
 			$ds = $this->get_workbench()->data()->create_data_sheet($this->get_workbench()->model()->get_object('exface.Core.APP'));
