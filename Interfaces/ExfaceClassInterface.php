@@ -6,7 +6,7 @@ interface ExfaceClassInterface {
 	
 	/**
 	 * Returns the instance of ExFace, this entity has been instantiated for
-	 * @return exface
+	 * @return Workbench
 	 */
 	public function get_workbench();
 }
