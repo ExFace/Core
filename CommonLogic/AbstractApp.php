@@ -67,14 +67,24 @@ abstract class AbstractApp implements AppInterface {
 	}
 	
 	/**
-	 * Returns the directory path to the app folder relative to exface/apps
-	 * @return string;
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\AppInterface::get_directory()
 	 */
 	public function get_directory(){
 		if (!$this->directory){
 			$this->directory = str_replace(NameResolver::NAMESPACE_SEPARATOR, DIRECTORY_SEPARATOR, $this->get_alias_with_namespace());
 		}
 		return $this->directory;
+	}
+	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\AppInterface::get_directory_absolute_path()
+	 */
+	public function get_directory_absolute_path(){
+		return $this->get_workbench()->filemanager()->get_path_to_vendor_folder() . DIRECTORY_SEPARATOR . $this->get_directory();
 	}
 	
 	public function get_namespace(){
@@ -96,6 +106,11 @@ abstract class AbstractApp implements AppInterface {
 		return $this->vendor;
 	}
 	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\ExfaceClassInterface::get_workbench()
+	 */
 	public function get_workbench(){
 		return $this->exface;
 	}

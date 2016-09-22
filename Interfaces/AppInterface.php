@@ -16,10 +16,16 @@ interface AppInterface extends ExfaceClassInterface, AliasInterface {
 	public function get_action($action_alias, AbstractWidget $called_by_widget = null, \stdClass $uxon_description = null);
 	
 	/**
-	 * Returns the directory path to the app folder relative to exface/apps
-	 * @return string;
+	 * Returns the path to the app's folder relative to the vendor folder
+	 * @return string
 	 */
 	public function get_directory();
+	
+	/**
+	 * Returns the absolute path to the app's folder
+	 * @return string
+	 */
+	public function get_directory_absolute_path();
 	
 	/**
 	 * Return the applications vendor (first part of the namespace)
