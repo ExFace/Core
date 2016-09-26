@@ -8,7 +8,8 @@ use exface\Core\Interfaces\ConfigurationInterface;
 
 abstract class AbstractApp implements AppInterface {
 	const CONFIG_FOLDER_IN_APP = 'Config';
-	const CONFIG_FILE_SUFFIX = '.config.json';
+	const CONFIG_FILE_SUFFIX = 'config';
+	const CONFIG_FILE_EXTENSION = '.json';
 	
 	private $exface = null;
 	private $uid = null;
@@ -152,12 +153,18 @@ abstract class AbstractApp implements AppInterface {
 	}
 	
 	/**
-	 * Returns the file name for configurations of this app. By default it is [vendor].[app_alias].config.json. The app will look for files
-	 * with this name in all configuration folders. If your app needs a custom file name, overwrite this method.
+	 * Returns the file name for configurations of this app. By default it is [vendor].[app_alias].[file_suffix].json. 
+	 * The app will look for files with this name in all configuration folders. If your app needs a custom file name, overwrite this method.
+	 * Using different file suffixes allows the developer to have separate configuration files for app specific purposes. 
+	 * @param string $file_suffix
 	 * @return string
 	 */
-	protected function get_config_file_name(){
-		return $this->get_alias_with_namespace() . static::CONFIG_FILE_SUFFIX;
+	protected function get_config_file_name($file_suffix = 'config'){
+		if (is_null($file_suffix)){
+			$file_suffix = static::CONFIG_FILE_SUFFIX;
+		}
+		$file_suffix = $file_suffix ? '.' . $file_suffix : '';
+		return $this->get_alias_with_namespace() . $file_suffix .  static::CONFIG_FILE_EXTENSION;
 	}
 	
 	/**
