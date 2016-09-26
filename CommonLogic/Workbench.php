@@ -253,6 +253,10 @@ class Workbench {
 		return $this->vendor_dir_path . DIRECTORY_SEPARATOR . '..';
 	}
 	
+	/**
+	 * 
+	 * @return Filemanager
+	 */
 	public function filemanager(){
 		return new Filemanager($this);
 	}
