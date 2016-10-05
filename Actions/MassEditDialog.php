@@ -70,7 +70,7 @@ class MassEditDialog extends ShowDialog {
 		// TODO Perhaps it would be a good idea to save lists of system attributes in the panel by default. Maybe by using a special
 		// widget like "InputHiddenList" which would prefill itself by all rows, not just the first one...
 		foreach ($this->get_dialog_widget()->get_widgets()[0]->get_widgets() as $widget){
-			if ($widget->get_attribute_alias() == $this->get_input_data_sheet()->get_uid_column()->get_attribute_alias()){
+			if ($this->get_input_data_sheet()->get_uid_column() && $widget->get_attribute_alias() == $this->get_input_data_sheet()->get_uid_column()->get_attribute_alias()){
 				$widget->set_value(implode(',', $this->get_input_data_sheet()->get_uid_column()->get_values(false)));
 			}
 		}
