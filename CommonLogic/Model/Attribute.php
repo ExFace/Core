@@ -17,7 +17,7 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied {
 	private $alias;
 	private $name;
 	private $data;
-	private $data_address_properies;
+	private $data_address_properties;
 	private $formatter;
 	private $data_type;
 	private $required = false;
