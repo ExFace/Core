@@ -25,6 +25,12 @@ interface ContextScopeInterface extends ExfaceClassInterface {
 	public function save_contexts();
 	
 	/**
+	 * Returns the ContextManager, which this context belongs to
+	 * @return ContextManagerInterface
+	 */
+	public function get_context_manager();
+	
+	/**
 	 * Returns a unique identifier of the context scope: e.g. the session id for window or session context, the user id
 	 * for user context, the app alias for app contexts, etc. This id is mainly used as a key for storing information from
 	 * the context (see session scope example).

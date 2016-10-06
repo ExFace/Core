@@ -13,14 +13,13 @@ class FilterContext extends AbstractContext {
 	/**
 	 * Returns an array with all conditions from the current context
 	 * @param object $object
-	 * @return Condition[]array
+	 * @return Condition[]
 	 * 
 	 * TODO Modify to look for possible related objects and rebase() their conditions!
 	 * Ccurrently we only look for conitions based on direct attributes of the object given.
 	 */
 	public function get_conditions(Object $object = NULL) {
 		$array = array();
-		
 		if ($object){
 			// Get object ids of the given object and all its parents
 			$ids = array_merge(array($object->get_id()), $object->get_parent_objects_ids());

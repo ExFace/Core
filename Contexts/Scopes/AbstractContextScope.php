@@ -4,6 +4,9 @@ use exface\Core\Exceptions\ContextError;
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\Interfaces\Contexts\ContextScopeInterface;
 use exface\Core\Interfaces\Contexts\ContextInterface;
+use exface\Core\Contexts\Types\FilterContext;
+use exface\Core\Contexts\Types\ActionContext;
+use exface\Core\Contexts\Types\AbstractContext;
 
 abstract class AbstractContextScope implements ContextScopeInterface {
 	private $active_contexts = array();
@@ -85,10 +88,21 @@ abstract class AbstractContextScope implements ContextScopeInterface {
 	abstract public function save_contexts();
 	
 	/**
-	 * @return \exface\Core\CommonLogic\Workbench
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\ExfaceClassInterface::get_workbench()
 	 */
 	public function get_workbench(){
 		return $this->exface;
+	}
+	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\Contexts\ContextScopeInterface::get_context_manager()
+	 */
+	public function get_context_manager(){
+		return $this->get_workbench()->context();
 	}
 	
 	/**

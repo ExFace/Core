@@ -29,22 +29,42 @@ class ContextManager implements ContextManagerInterface {
 		$this->request_scope = new RequestContextScope($this->exface);
 	}
 	
+	/**
+	 * 
+	 * @return \exface\Core\Contexts\Scopes\WindowContextScope
+	 */
 	public function get_scope_window(){
 		return $this->window_scope;
 	}
 	
+	/**
+	 * 
+	 * @return \exface\Core\Contexts\Scopes\SessionContextScope
+	 */
 	public function get_scope_session(){
 		return $this->session_scope;
 	}
 	
+	/**
+	 * 
+	 * @return \exface\Core\Contexts\Scopes\ApplicationContextScope
+	 */
 	public function get_scope_application(){
 		return $this->application_scope;
 	}
 	
+	/**
+	 * 
+	 * @return \exface\Core\Contexts\Scopes\UserContextScope
+	 */
 	public function get_scope_user(){
 		return $this->user_scope;
 	}
 	
+	/**
+	 * 
+	 * @return \exface\Core\Contexts\Scopes\RequestContextScope
+	 */
 	public function get_scope_request(){
 		return $this->request_scope;
 	}
