@@ -5,6 +5,7 @@ use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Factories\ActionFactory;
 use exface\Core\Factories\ConfigurationFactory;
 use exface\Core\Interfaces\ConfigurationInterface;
+use exface\Core\Interfaces\Contexts\ContextManagerInterface;
 
 abstract class AbstractApp implements AppInterface {
 	const CONFIG_FOLDER_IN_APP = 'Config';
@@ -19,6 +20,7 @@ abstract class AbstractApp implements AppInterface {
 	private $directory = '';
 	private $name_resolver =  null;
 	private $config = null;
+	private $context_data_default_scope = null;
 	
 	/**
 	 * 
@@ -215,6 +217,67 @@ abstract class AbstractApp implements AppInterface {
 	 */
 	public function uninstall(){
 		return '';
+	}
+	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\AppInterface::get_context_data_default_scope()
+	 */
+	public function get_context_data_default_scope() {
+		if (is_null($this->context_data_default_scope)){
+			$this->context_data_default_scope = ContextManagerInterface::CONTEXT_SCOPE_WINDOW;
+		}
+		return $this->context_data_default_scope;
+	}
+	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\AppInterface::set_context_data_default_scope()
+	 */
+	public function set_context_data_default_scope($scope_alias) {
+		$this->context_data_default_scope = $scope_alias;
+		return $this;
+	}  
+	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\AppInterface::get_context_data()
+	 */
+	public function get_context_data($scope = null){
+		if (is_null($scope)){
+			$scope = $this->get_context_data_default_scope();
+		}
+		return $this->get_workbench()->context()->get_scope($scope)->get_context('Data');
+	}
+	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\AppInterface::get_context_variable()
+	 */
+	public function get_context_variable($variable_name, $scope = null){
+		return $this->get_context_data($scope)->get_variable_for_app($this, $variable_name);
+	}
+	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\AppInterface::set_context_variable()
+	 */
+	public function set_context_variable($variable_name, $value, $scope = null){
+		return $this->get_context_data($scope)->set_variable_for_app($this, $variable_name, $value);
+	}
+	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\AppInterface::unset_context_variable()
+	 */
+	public function unset_context_variable($variable_name, $scope = null){
+		return $this->get_context_data($scope)->unset_variable_for_app($this, $variable_name);
 	}
 }
 ?>

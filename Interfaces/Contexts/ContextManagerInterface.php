@@ -4,6 +4,12 @@ use exface\Core\Exceptions\ContextError;
 
 interface ContextManagerInterface {
 	
+	const CONTEXT_SCOPE_USER = 'User';
+	const CONTEXT_SCOPE_SESSION = 'Session';
+	const CONTEXT_SCOPE_WINDOW = 'Window';
+	const CONTEXT_SCOPE_REQUEST = 'Request';
+	const CONTEXT_SCOPE_APPLICATION = 'Application';
+	
 	/**
 	 * Return an array of all existing context scopes. Usefull to get a context from all scopes
 	 * @return ContextScopeInterface[]
@@ -23,5 +29,36 @@ interface ContextManagerInterface {
 	 * @return ContextScopeInterface
 	 */
 	public function get_scope($scope_name);
+	
+	/**
+	 *
+	 * @return \exface\Core\Contexts\Scopes\WindowContextScope
+	 */
+	public function get_scope_window();
+	
+	/**
+	 *
+	 * @return \exface\Core\Contexts\Scopes\SessionContextScope
+	 */
+	public function get_scope_session();
+	
+	/**
+	 *
+	 * @return \exface\Core\Contexts\Scopes\ApplicationContextScope
+	 */
+	public function get_scope_application();
+	
+	/**
+	 *
+	 * @return \exface\Core\Contexts\Scopes\UserContextScope
+	 */
+	public function get_scope_user();
+	
+	/**
+	 *
+	 * @return \exface\Core\Contexts\Scopes\RequestContextScope
+	 */
+	public function get_scope_request();
+	
 }
 ?>

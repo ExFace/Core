@@ -2,12 +2,13 @@
 
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\ContextError;
+use exface\Core\Interfaces\AppInterface;
 
 /**
  * The DataContext provides a unified interface to store arbitrary data in any context scope. It's like storing
  * PHP variables in a specific context scope.
  * 
- * To avoid name conflicts between different apps, all data is tagged with a namespace (the app namespace by default)
+ * To avoid name conflicts between different apps, all data is tagged with a namespace (the apps qualified alias by default)
  * 
  * @author Andrej Kabachnik
  *
@@ -19,9 +20,10 @@ class DataContext extends AbstractContext {
 	 * Returns the value stored under the given name
 	 * @param string $namespace
 	 * @param string $variable_name
+	 * @return mixed
 	 */
 	public function get_variable($namespace, $variable_name) {
-		$this->variables[$namespace][$variable_name];
+		return $this->variables[$namespace][$variable_name];
 	}
 	
 	/**
@@ -37,9 +39,52 @@ class DataContext extends AbstractContext {
 	}
 	
 	/**
+	 * Removes the given variable from the data context
+	 * @param string $namespace
+	 * @param string $variable_name
+	 * @return \exface\Core\Contexts\Types\DataContext
+	 */
+	public function unset_variable($namespace, $variable_name){
+		unset($this->variables[$namespace][$variable_name]);
+		return $this;
+	}
+	
+	/**
+	 * Removes the given variable from the data context
+	 * @param AppInterface $app
+	 * @param string $variable_name
+	 * @return \exface\Core\Contexts\Types\DataContext
+	 */
+	public function unset_variable_for_app(AppInterface $app, $variable_name){
+		unset($this->variables[$app->get_alias_with_namespace()][$variable_name]);
+		return $this;
+	}
+	
+	/**
+	 * 
+	 * @param AppInterface $app
+	 * @param string $variable_name
+	 * @param mixed $value
+	 * @return \exface\Core\Contexts\Types\DataContext
+	 */
+	public function set_variable_for_app(AppInterface $app, $variable_name, $value){
+		return $this->set_variable($app->get_alias_with_namespace(), $variable_name, $value);
+	}
+	
+	/**
+	 * 
+	 * @param AppInterface $app
+	 * @param string $variable_name
+	 * @return mixed
+	 */
+	public function get_variable_for_app(AppInterface $app, $variable_name){
+		return $this->get_variable($app->get_alias_with_namespace(), $variable_name);
+	}
+	
+	/**
 	 * Returns an array with all variables from the given namespace
 	 * @param string $namespace
-	 * @return array[mixed]
+	 * @return mixed[]
 	 */
 	public function get_variables_from_namespace($namespace){
 		$vars = $this->variables[$namespace];
@@ -50,7 +95,16 @@ class DataContext extends AbstractContext {
 	}
 	
 	/**
-	 * @return array[string]
+	 *
+	 * @param AppInterface $app
+	 * @return mixed[]
+	 */
+	public function get_variables_for_app(AppInterface $app){
+		return $this->get_variables_from_namespace($app->get_alias_with_namespace());
+	}
+	
+	/**
+	 * @return string[]
 	 */
 	public function get_namespaces_active(){
 		return array_keys($this->variables);
@@ -65,6 +119,11 @@ class DataContext extends AbstractContext {
 		return $this->get_workbench()->context()->get_scope_window();
 	}
 	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Contexts\Types\AbstractContext::import_uxon_object()
+	 */
 	public function import_uxon_object(UxonObject $uxon){
 		foreach ($uxon as $namespace => $vars){
 			if (!$vars || count($vars) <= 0){
@@ -96,10 +155,13 @@ class DataContext extends AbstractContext {
 			if (count($this->get_variables_from_namespace($namespace)) <= 0){
 				continue;
 			}
-			$uxon->set_property($namespace, $this->get_workbench()->create_uxon_object());
+			
+			$namespace_uxon = $this->get_workbench()->create_uxon_object();
 			foreach ($this->get_variables_from_namespace($namespace) as $var => $value){
-				$uxon = $this->export_uxon_for_variable($uxon->get_property($namespace), $var, $value);
+				$namespace_uxon = $this->export_uxon_for_variable($namespace_uxon, $var, $value);
 			}
+			
+			$uxon->set_property($namespace, $namespace_uxon);
 		}
 		return $uxon;
 	}
