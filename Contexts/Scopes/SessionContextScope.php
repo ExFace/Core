@@ -1,11 +1,11 @@
-<?php namespace exface\Core\Contexts;
+<?php namespace exface\Core\Contexts\Scopes;
 
 use exface\Core\Interfaces\Contexts\ContextInterface;
 
 class SessionContextScope extends AbstractContextScope {
 	/**
 	 * TODO
-	 * @see \exface\Core\Contexts\AbstractContextScope::load_contexts()
+	 * @see \exface\Core\Contexts\Scopes\AbstractContextScope::load_contexts()
 	 */
 	public function load_context_data(ContextInterface &$context){
 		
@@ -13,7 +13,7 @@ class SessionContextScope extends AbstractContextScope {
 	
 	/**
 	 * TODO
-	 * @see \exface\Core\Contexts\AbstractContextScope::save_contexts()
+	 * @see \exface\Core\Contexts\Scopes\AbstractContextScope::save_contexts()
 	 */
 	public function save_contexts(){
 		
@@ -21,7 +21,7 @@ class SessionContextScope extends AbstractContextScope {
 	
 	/**
 	 * 
-	 * @see \exface\Core\Contexts\AbstractContextScope::get_scope_id()
+	 * @see \exface\Core\Contexts\Scopes\AbstractContextScope::get_scope_id()
 	 */
 	public function get_scope_id(){
 		return session_id();

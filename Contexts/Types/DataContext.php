@@ -1,4 +1,4 @@
-<?php namespace exface\Core\Contexts;
+<?php namespace exface\Core\Contexts\Types;
 
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\ContextError;
@@ -29,7 +29,7 @@ class DataContext extends AbstractContext {
 	 * @param string $namespace
 	 * @param string $variable_name
 	 * @param mixed $value
-	 * @return \exface\Core\Contexts\DataContext
+	 * @return \exface\Core\Contexts\Types\DataContext
 	 */
 	public function set_variable($namespace, $variable_name, $value) {
 		$this->variables[$namespace][$variable_name] = $value;
@@ -59,7 +59,7 @@ class DataContext extends AbstractContext {
 	/**
 	 * The default scope of the data context is the window. Most apps will run in the context of a single window,
 	 * so two windows running one app are independant in general.
-	 * @see \exface\Core\Contexts\AbstractContext::get_default_scope()
+	 * @see \exface\Core\Contexts\Types\AbstractContext::get_default_scope()
 	 */
 	public function get_default_scope(){
 		return $this->get_workbench()->context()->get_scope_window();
@@ -88,7 +88,7 @@ class DataContext extends AbstractContext {
 	 * 		namespace2: ...
 	 * }
 	 * {@inheritDoc}
-	 * @see \exface\Core\Contexts\AbstractContext::export_uxon_object()
+	 * @see \exface\Core\Contexts\Types\AbstractContext::export_uxon_object()
 	 */
 	public function export_uxon_object(){
 		$uxon = $this->get_workbench()->create_uxon_object();

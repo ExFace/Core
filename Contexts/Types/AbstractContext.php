@@ -1,4 +1,4 @@
-<?php namespace exface\Core\Contexts;
+<?php namespace exface\Core\Contexts\Types;
 
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Contexts\ContextInterface;
@@ -33,7 +33,7 @@ abstract class AbstractContext implements ContextInterface {
 	
 	/**
 	 * Returns the default scope for this type of context.
-	 * @return \exface\Core\Contexts\windowContextScope
+	 * @return \exface\Core\Contexts\Scopes\windowContextScope
 	 */
 	public function get_default_scope(){
 		return $this->get_workbench()->context()->get_scope_window();

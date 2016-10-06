@@ -1,4 +1,4 @@
-<?php namespace exface\Core\Contexts;
+<?php namespace exface\Core\Contexts\Types;
 
 use exface\Core\CommonLogic\Model\Object;
 use exface\Core\CommonLogic\UxonObject;

@@ -1,9 +1,10 @@
-<?php
-namespace exface\Core\Contexts;
+<?php namespace exface\Core\Contexts\Types;
+
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Exceptions\UxonParserError;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\ActionFactory;
+
 class ActionContext extends AbstractContext {
 	private $action_history = array();
 	private $action_history_raw = array();
@@ -29,7 +30,7 @@ class ActionContext extends AbstractContext {
 	/**
 	 * Registers an action in this context
 	 * @param ActionInterface $action
-	 * @return \exface\Core\Contexts\ActionContext
+	 * @return \exface\Core\Contexts\Types\ActionContext
 	 */
 	public function add_action(ActionInterface &$action){
 		$this->current_actions[] = $action;
@@ -78,14 +79,14 @@ class ActionContext extends AbstractContext {
 	}
 	
 	/**
-	 * @see \exface\Core\Contexts\AbstractContext::get_default_scope()
+	 * @see \exface\Core\Contexts\Types\AbstractContext::get_default_scope()
 	 */
 	public function get_default_scope(){
 		return $this->get_workbench()->context()->get_scope_session();
 	}
 	
 	/**
-	 * @see \exface\Core\Contexts\AbstractContext::export_uxon_object()
+	 * @see \exface\Core\Contexts\Types\AbstractContext::export_uxon_object()
 	 */
 	public function export_uxon_object(){
 		// First, grab the raw history
@@ -117,7 +118,7 @@ class ActionContext extends AbstractContext {
 	}
 	
 	/**
-	 * @see \exface\Core\Contexts\AbstractContext::import_uxon_object()
+	 * @see \exface\Core\Contexts\Types\AbstractContext::import_uxon_object()
 	 */
 	public function import_uxon_object(UxonObject $uxon){
 		if (is_array($uxon->action_history)){

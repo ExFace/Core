@@ -1,5 +1,5 @@
 <?php
-namespace exface\Core\Contexts;
+namespace exface\Core\Contexts\Types;
 use exface\Core\CommonLogic\Model\Attribute;
 use exface\Core\CommonLogic\Model\Condition;
 use exface\Core\CommonLogic\Model\Object;
@@ -60,7 +60,7 @@ class FilterContext extends AbstractContext {
 	/**
 	 * Adds a condition to the current context
 	 * @param Condition $condition
-	 * @return \exface\Core\Contexts\FilterContext
+	 * @return \exface\Core\Contexts\Types\FilterContext
 	 */
 	public function add_condition(Condition $condition){
 		$this->conditions_by_object[$condition->get_expression()->get_meta_object()->get_id()][$condition->get_expression()->to_string()] = $condition;
@@ -70,7 +70,7 @@ class FilterContext extends AbstractContext {
 	/**
 	 * Removes a given condition from the current context
 	 * @param Condition $condition
-	 * @return \exface\Core\Contexts\FilterContext
+	 * @return \exface\Core\Contexts\Types\FilterContext
 	 */
 	public function remove_condition(Condition $condition){
 		unset($this->conditions_by_object[$condition->get_expression()->get_meta_object()->get_id()][$condition->get_expression()->to_string()]);
@@ -80,7 +80,7 @@ class FilterContext extends AbstractContext {
 	/**
 	 * Removes all conditions based on a certain attribute
 	 * @param attribute $attribute
-	 * @return \exface\Core\Contexts\FilterContext
+	 * @return \exface\Core\Contexts\Types\FilterContext
 	 */
 	public function remove_conditions_for_attribute(Attribute $attribute){
 		if (is_array($this->conditions_by_object[$attribute->get_object_id()])){
@@ -95,7 +95,7 @@ class FilterContext extends AbstractContext {
 	
 	/**
 	 * Clears all conditions from this context
-	 * @return \exface\Core\Contexts\FilterContext
+	 * @return \exface\Core\Contexts\Types\FilterContext
 	 */
 	public function remove_all_conditions(){
 		$this->conditions_by_object = array();
@@ -121,7 +121,7 @@ class FilterContext extends AbstractContext {
 	 * Loads an array of conditions in UXON representation into the context
 	 * @param UxonObject $uxon
 	 * @throws UxonParserError
-	 * @return \exface\Core\Contexts\FilterContext
+	 * @return \exface\Core\Contexts\Types\FilterContext
 	 */
 	public function import_uxon_object(UxonObject $uxon){
 		$exface = $this->get_workbench();

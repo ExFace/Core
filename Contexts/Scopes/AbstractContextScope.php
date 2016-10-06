@@ -1,4 +1,4 @@
-<?php namespace exface\Core\Contexts;
+<?php namespace exface\Core\Contexts\Scopes;
 
 use exface\Core\Exceptions\ContextError;
 use exface\Core\CommonLogic\Workbench;
@@ -59,7 +59,7 @@ abstract class AbstractContextScope implements ContextScopeInterface {
 	public function get_context($alias){
 		// If no context matching the alias exists, try to create one
 		if (!$this->active_contexts[$alias]){
-			$context_class = __NAMESPACE__ . '\\' . ucfirst(strtolower($alias)) . 'Context';
+			$context_class = '\\exface\\Core\\Contexts\\Types\\' . ucfirst(strtolower($alias)) . 'Context';
 			if (class_exists($context_class)){
 				$context = new $context_class($this->exface);
 				$context->set_scope($this);

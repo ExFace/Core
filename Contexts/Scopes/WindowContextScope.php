@@ -1,4 +1,4 @@
-<?php namespace exface\Core\Contexts;
+<?php namespace exface\Core\Contexts\Scopes;
 
 use exface\Core\Exceptions\ContextError;
 use exface\Core\CommonLogic\UxonObject;
@@ -21,7 +21,7 @@ class WindowContextScope extends AbstractContextScope {
 	 * Since the window context ist stored in the $_SESSION, init() makes sure, the session is available and tries to
 	 * instantiate all contexts saved there. Thus, the window contexts are always loaded on startup, not only once they are
 	 * actually used. This should be OK, since window contexts will probably be used in every single request.
-	 * @see \exface\Core\Contexts\AbstractContextScope::init()
+	 * @see \exface\Core\Contexts\Scopes\AbstractContextScope::init()
 	 */
 	protected function init(){
 		
@@ -46,7 +46,7 @@ class WindowContextScope extends AbstractContextScope {
 	/**
 	 * Since the window context ist stored in the $_SESSION, loading contexts simply fetches the contents
 	 * of the contexts array in the $_SESSION variable and tries to parse it as a UXON object.
-	 * @see \exface\Core\Contexts\AbstractContextScope::load_context_data()
+	 * @see \exface\Core\Contexts\Scopes\AbstractContextScope::load_context_data()
 	 */
 	public function load_context_data(ContextInterface &$context){
 		// Check to see if the session had been started by some other code (e.g. the CMS, etc.)
@@ -59,7 +59,7 @@ class WindowContextScope extends AbstractContextScope {
 	}
 	
 	/**
-	 * @see \exface\Core\Contexts\AbstractContextScope::get_saved_contexts()
+	 * @see \exface\Core\Contexts\Scopes\AbstractContextScope::get_saved_contexts()
 	 * @return \exface\Core\CommonLogic\UxonObject
 	 */
 	public function get_saved_contexts($context_alias = null){
@@ -75,7 +75,7 @@ class WindowContextScope extends AbstractContextScope {
 	
 	/**
 	 * The window scope saves all it's contexts as UXON objects in the $_SESSION
-	 * @see \exface\Core\Contexts\AbstractContextScope::save_contexts()
+	 * @see \exface\Core\Contexts\Scopes\AbstractContextScope::save_contexts()
 	 */
 	public function save_contexts(){
 		//var_dump($_SESSION);
@@ -109,7 +109,7 @@ class WindowContextScope extends AbstractContextScope {
 	 * TODO The session id should get somehow bound to a window, since the window context scope only exists in a
 	 * specific instance of ExFace in contrast to the session context scope, which actually is quite like the php session!
 	 * {@inheritDoc}
-	 * @see \exface\Core\Contexts\AbstractContextScope::get_scope_id()
+	 * @see \exface\Core\Contexts\Scopes\AbstractContextScope::get_scope_id()
 	 */
 	public function get_scope_id(){
 		return $this->get_session_id();

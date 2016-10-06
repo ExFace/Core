@@ -1,4 +1,4 @@
-<?php namespace exface\Core\Contexts;
+<?php namespace exface\Core\Contexts\Types;
 
 /**
  * The upload context takes care of files uploaded by the user. Uploads are saved in the UserData/Uploads folder and organized in
@@ -51,7 +51,7 @@ class UploadContext extends AbstractContext {
 	
 	/**
 	 * Clears all uploaded files from the current context
-	 * @return \exface\Core\Contexts\UploadContext
+	 * @return \exface\Core\Contexts\Types\UploadContext
 	 */
 	public function clear_uploads(){
 		$this->delete_folder($this->get_uploads_path());
@@ -81,7 +81,7 @@ class UploadContext extends AbstractContext {
 	/**
 	 * The default scope of the upload context ist window, because it should only show the uploads from the current
 	 * browser window if the user works with multiple windows at the same time.
-	 * @see \exface\Core\Contexts\AbstractContext::get_default_scope()
+	 * @see \exface\Core\Contexts\Types\AbstractContext::get_default_scope()
 	 */
 	public function get_default_scope(){
 		return $this->get_workbench()->context()->get_scope_window();

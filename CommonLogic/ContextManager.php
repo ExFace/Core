@@ -1,15 +1,15 @@
 <?php namespace exface\Core\CommonLogic;
 
-use exface\Core\Contexts\WindowContextScope;
-use exface\Core\Contexts\SessionContextScope;
-use exface\Core\Contexts\AbstractContextScope;
+use exface\Core\Contexts\Scopes\WindowContextScope;
+use exface\Core\Contexts\Scopes\SessionContextScope;
+use exface\Core\Contexts\Scopes\AbstractContextScope;
 use exface\Core\CommonLogic\Model\Condition;
-use exface\Core\Contexts\ApplicationContextScope;
+use exface\Core\Contexts\Scopes\ApplicationContextScope;
 use exface\Core\CommonLogic\Model\Object;
 use exface\Core\Exceptions\ContextError;
-use exface\Core\Contexts\UserContextScope;
+use exface\Core\Contexts\Scopes\UserContextScope;
 use exface\Core\Interfaces\Contexts\ContextManagerInterface;
-use exface\Core\Contexts\RequestContextScope;
+use exface\Core\Contexts\Scopes\RequestContextScope;
 
 class ContextManager implements ContextManagerInterface {
 	

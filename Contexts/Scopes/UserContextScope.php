@@ -1,4 +1,4 @@
-<?php namespace exface\Core\Contexts;
+<?php namespace exface\Core\Contexts\Scopes;
 
 use exface\Core\Interfaces\Contexts\ContextInterface;
 
@@ -31,7 +31,7 @@ class UserContextScope extends AbstractContextScope {
 	
 	/**
 	 * TODO
-	 * @see \exface\Core\Contexts\AbstractContextScope::load_context_data()
+	 * @see \exface\Core\Contexts\Scopes\AbstractContextScope::load_context_data()
 	 */
 	public function load_context_data(ContextInterface &$context){
 		
