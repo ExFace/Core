@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <buildpath>
 	<buildpathentry kind="src" path=""/>
-	<buildpathentry external="true" kind="lib" path="C:/xampp/htdocs/exface/exface/vendor/symfony"/>
-	<buildpathentry external="true" kind="lib" path="C:/xampp/htdocs/exface/exface/vendor/jmikola/wildcard-event-dispatcher/src/Jmikola/WildcardEventDispatcher"/>
+	<buildpathentry external="true" kind="lib" path="C:/wamp/www/exface/exface/vendor/symfony"/>
+	<buildpathentry external="true" kind="lib" path="C:/wamp/www/exface/exface/vendor/jmikola/wildcard-event-dispatcher/src/Jmikola/WildcardEventDispatcher"/>
 	<buildpathentry kind="con" path="org.eclipse.php.core.LANGUAGE"/>
 </buildpath>
