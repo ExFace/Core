@@ -147,12 +147,15 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied {
 	public function find_row_by_value($cell_value, $case_sensitive = false);
 	
 	/**
-	 * Returns an array with all values of this column, which are not present in another one. 
+	 * Returns an array with all values of this column, which are not present in another one. It does not matter,
+	 * if the values are in corresponding rows or not, so there is no need to take care of sorting rows.
+	 * 
 	 * NOTE: The keys of the returned array are not the row numbers!
 	 * This method only relies on the values ignoring the row numbers. Thus, if this column has value A in row 1 
 	 * and value B in row 2 and the other column hast value B in row 1 and value A in row 2, the diff will return 
 	 * an empty array, because both values are present in both columns (however in different rows). 
 	 * If you need to compare the columns per-row, use diff_rows() instead.
+	 * 
 	 * @param DataColumn $another_column
 	 * @return array
 	 */

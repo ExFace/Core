@@ -799,7 +799,12 @@ class DataSheet implements DataSheetInterface {
 		foreach ($this->get_subsheets_for_cascading_delete() as $ds){
 			// Just perform the delete if there really is some data to delete. This sure means an extra data source connection, but
 			// preventing delete operations on empty data sheets also prevents calculating their cascading deletes, etc. This saves
-			// a lot of iterations and reduces the risc of unwanted deletes due to some unforseeable filter constellations
+			// a lot of iterations and reduces the risc of unwanted deletes due to some unforseeable filter constellations.
+			
+			// First check if the sheet theoretically can have data - that is, if it has UIDs in it's rows or at least some filters
+			// This makes sure, reading data in the next step will not return the entire table, which would then get deleted of course!
+			if ((!$ds->get_uid_column() || $ds->get_uid_column()->is_empty()) && $ds->get_filters()->is_empty()) continue;
+			// If the there can be data, but there are no rows, read the data
 			if ($ds->data_read()){
 				$ds->data_delete($transaction);
 			}
@@ -812,7 +817,6 @@ class DataSheet implements DataSheetInterface {
 			$affected_rows += $query->delete($connection);
 		} catch (DataSourceError $e){
 			$transaction->rollback();
-			$commit = false;
 			throw new DataSheetSaveError($e->getMessage(), $e->getCode(), $e);
 		}
 		
@@ -842,8 +846,17 @@ class DataSheet implements DataSheetInterface {
 				// FIXME Throw a warning here! Need to be able to show warning along with success messages!
 				//throw new DataSheetException('Cascading deletion via optional relations not yet implemented: no instances were deleted for relation "' . $rel->get_alias() . '" to object "' . $rel->get_related_object()->get_alias_with_namespace() . '"!');
 			} else {
-				$ds = $this->exface->data()->create_data_sheet($rel->get_related_object());
+				$ds = DataSheetFactory::create_from_object($rel->get_related_object());
+				// Use all filters of the original query in the cascading queries
 				$ds->set_filters($this->get_filters()->rebase($rel->get_alias()));
+				// Additionally add a filter over UIDs in the original query, if it has data with UIDs. This makes sure, the cascading deletes
+				// only affect the loaded rows and nothing "invisible" to the user!
+				if ($this->get_uid_column()){
+					$uids = $this->get_uid_column()->get_values(false);
+					if (count($uids) > 0){
+						$ds->add_filter_in_from_string($this->get_uid_column()->get_expression_obj()->rebase($rel->get_alias())->to_string(), $uids);
+					}
+				}
 				$subsheets[] = $ds;
 			}
 		}
