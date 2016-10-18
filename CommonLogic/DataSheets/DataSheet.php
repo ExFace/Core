@@ -475,10 +475,8 @@ class DataSheet implements DataSheetInterface {
 		if ($create_if_uid_not_found){
 			if ($this->get_uid_column()){
 				// Create another data sheet selecting those UIDs currently present in the data source
-				$uid_check_ds = $this->copy();
-				$uid_check_ds->get_columns()->remove_all();
-				$uid_column = $this->get_uid_column()->copy();
-				$uid_check_ds->get_columns()->add($uid_column);
+				$uid_check_ds = DataSheetFactory::create_from_object($this->get_meta_object());
+				$uid_check_ds->get_columns()->add($this->get_uid_column()->copy());
 				$uid_check_ds->add_filter_from_column_values($this->get_uid_column());
 				$uid_check_ds->data_read();
 				$missing_uids = $this->get_uid_column()->diff_values($uid_check_ds->get_uid_column());
