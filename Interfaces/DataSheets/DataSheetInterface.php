@@ -271,6 +271,15 @@ interface DataSheetInterface extends ExfaceClassInterface, iCanBeCopied, iCanBeC
 	 */
 	public function is_up_to_date();
 	
+	/**
+	 * Returns true if the data sheet will load all available data when performing data_read(). In general this is the case, 
+	 * if neither filters nor UIDs in the data rows are specified. This method is mainly usefull for error detection, as
+	 * it is generally not a good idea to delete or update the entire data - it is always a good idea to have some filters.
+	 * 
+	 * @return boolean
+	 */
+	public function is_unfiltered();
+	
 	public function get_rows_on_page();
 	
 	public function set_rows_on_page($value);

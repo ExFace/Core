@@ -488,7 +488,7 @@ class DataSheet implements DataSheetInterface {
 					$counter += $create_ds->data_create(false, $transaction);
 				}
 			} else {
-				throw new DataSheetSaveError('Creating rows from an update statement without a UID-column not implemented yet!');
+				throw new DataSheetSaveError('Creating rows from an update statement without a UID-column not supported yet!');
 			}
 		}
 		
@@ -564,7 +564,7 @@ class DataSheet implements DataSheetInterface {
 						$uid_column_alias = $rel_path;
 					} else {
 						//$uid_column = $this->get_column($this->get_meta_object()->get_relation($rel_path)->get_main_object_key_attribute()->get_alias_with_relation_path());
-						throw new DataSheetException('Updating attributes from reverse relations ("' . $column->get_expression_obj()->to_string() . '") is not implemented yet!');	
+						throw new DataSheetException('Updating attributes from reverse relations ("' . $column->get_expression_obj()->to_string() . '") is not supported yet!');	
 					}
 				} else {
 					$uid_column_alias = $this->get_meta_object()->get_uid_alias();
@@ -792,7 +792,7 @@ class DataSheet implements DataSheetInterface {
 		$query = QueryBuilderFactory::create_from_alias($this->exface, $this->get_meta_object()->get_query_builder());
 		$query->set_main_object($this->get_meta_object());
 		
-		if (!$this->get_uid_column() && $this->get_filters()->is_empty()) {
+		if ($this->is_unfiltered()) {
 			throw new DataSheetSaveError('Cannot delete all instances of "' . $this->get_meta_object()->get_alias_with_namespace() . '": forbidden operation!');
 		}
 		// set filters
@@ -1394,6 +1394,19 @@ class DataSheet implements DataSheetInterface {
 	public function data_mark_invalid(){
 		$this->invalid_data_flag = true;
 		return $this;
+	}
+	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::is_unfiltered()
+	 */
+	public function is_unfiltered(){
+		if ((!$this->get_uid_column() || $this->get_uid_column()->is_empty()) && $this->get_filters()->is_empty()) {
+			return true;
+		} else {
+			return false;
+		}
 	}
 }
 
