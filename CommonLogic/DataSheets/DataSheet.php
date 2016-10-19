@@ -622,7 +622,7 @@ class DataSheet implements DataSheetInterface {
 	 * {@inheritDoc}
 	 * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::data_replace_by_filters()
 	 */
-	public function data_replace_by_filters($delete_redundant_rows = true, DataTransactionInterface $transaction = null){
+	public function data_replace_by_filters(DataTransactionInterface $transaction = null, $delete_redundant_rows = true, $update_by_uid_ignoring_filters = true){
 		// Start a new transaction, if not given
 		if (!$transaction){
 			$transaction = $this->get_workbench()->data()->start_transaction();
@@ -656,7 +656,14 @@ class DataSheet implements DataSheetInterface {
 			}
 		}
 		
-		$counter += $this->data_update(true, $transaction);
+		if ($this->get_uid_column() && !$this->get_uid_column()->is_empty()){
+			$update_ds = $this->copy();
+			$update_ds->get_filters()->remove_all();
+		} else {
+			$update_ds = $this;
+		}
+		
+		$counter += $update_ds->data_update(true, $transaction);
 		
 		if ($commit  && !$transaction->is_rolled_back()){
 			$transaction->commit();
