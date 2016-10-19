@@ -103,9 +103,11 @@ interface DataSheetInterface extends ExfaceClassInterface, iCanBeCopied, iCanBeC
 	public function data_update($create_if_uid_not_found = false, DataTransactionInterface $transaction = null);
 	
 	/**
-	 * Replaces all rows matching current filters with data contained in this data sheet: rows with matching UIDs are updated, new rows
-	 * are created and those missing in the current data sheet will get deleted in the data source, unless $delete_missing_rows is set to
-	 * FALSE. The update operation will perform an update on all records matching the UIDs in the data sheet - regardless of the filter.
+	 * Replaces all rows matching current filters with data contained in this data sheet returning the number of rows changed in the data source.
+	 * Rows with matching UIDs are updated, new rows are created and those missing in the current data sheet will get deleted in the data source, 
+	 * unless $delete_missing_rows is set to FALSE. 
+	 * 
+	 * The update operation will perform an update on all records matching the UIDs in the data sheet - regardless of the filter.
 	 * Thus, if replacing all attributes of an object, all attributes in the data sheet will get updated - even if they belong to another
 	 * object in the data source (so the probably will get attached to the object we are replacing for). Set $update_by_uid_ignoring_filters 
 	 * to FALSE to use the filters in the update operation too. In the above example, this would mean that attributes, that currently belong
@@ -115,6 +117,7 @@ interface DataSheetInterface extends ExfaceClassInterface, iCanBeCopied, iCanBeC
 	 * 
 	 * @param DataTransactionInterface $transaction
 	 * @param boolean $delete_missing_rows
+	 * @return number 
 	 */
 	public function data_replace_by_filters(DataTransactionInterface $transaction = null, $delete_redundant_rows = true, $update_by_uid_ignoring_filters = true);
 	

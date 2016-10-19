@@ -656,7 +656,10 @@ class DataSheet implements DataSheetInterface {
 			}
 		}
 		
-		if ($this->get_uid_column() && !$this->get_uid_column()->is_empty()){
+		// If we need to update records by UID and we have a non-empty UID column, we need to remove all filters to make sure the update
+		// runs via UID only. Thus, the update is being performed on a copy of the sheet, which does not have any filters. In all other
+		// cases, the update should be performed on the original data sheet itself.
+		if ($update_by_uid_ignoring_filters && $this->get_uid_column() && !$this->get_uid_column()->is_empty()){
 			$update_ds = $this->copy();
 			$update_ds->get_filters()->remove_all();
 		} else {
