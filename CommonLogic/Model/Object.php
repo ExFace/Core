@@ -302,13 +302,26 @@ class Object implements ExfaceClassInterface, AliasInterface {
 	 * @see find_relation_path()
 	 * 
 	 * @param string $related_object_id
-	 * @return relation
+	 * @return Relation
 	 */
 	public function find_relation($related_object_id){
 		foreach ($this->get_relations() as $rel){
 			if ($rel->get_related_object_id() == $related_object_id) return $rel;
 		}
 		return false;
+	}
+	
+	/**
+	 * Finds all relations to the specified object. Regular and reverse relations will be returned in one array.
+	 * @param string $related_object_id
+	 * @return Relation[]
+	 */
+	public function find_relations($related_object_id, $relation_type = null){
+		$rels = array();
+		foreach ($this->get_relations() as $rel){
+			if ($rel->get_related_object_id() == $related_object_id && ($relation_type == null || $relation_type == $rel->get_type())) $rels[] = $rel;
+		}
+		return $rels;
 	}
 	
 	/**

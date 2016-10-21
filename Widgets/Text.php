@@ -7,6 +7,7 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Interfaces\Widgets\iHaveColumns;
+use exface\Core\CommonLogic\Model\Relation;
 
 /**
  * The text widget simply shows text with an optional title created from the caption of the widget
@@ -61,10 +62,11 @@ class Text extends AbstractWidget implements iShowSingleAttribute, iHaveValue, i
 				var_dump($data_column->get_attribute_alias());
 			}
 		} else*/
-		if ($this->get_meta_object_id() == $data_sheet->get_meta_object()->get_id()){
+		if ($this->get_meta_object()->is($data_sheet->get_meta_object())){
 			// If we are looking for attributes of the object of this widget, then just return the attribute_alias
 			$data_sheet->get_columns()->add_from_expression($this->get_attribute_alias());
 		} else {
+			// If not...
 			if ($this->get_attribute() && $rel_path = $this->get_attribute()->get_relation_path()->to_string()){
 				$rel_parts = RelationPath::relation_path_parse($rel_path);
 				if (is_array($rel_parts)){
@@ -82,7 +84,25 @@ class Text extends AbstractWidget implements iShowSingleAttribute, iHaveValue, i
 			
 			// Otherwise we are looking for attributes relative to another object
 			// So try to find a relation from this widgets object to the data sheet object and vice versa
-			if ($this->get_attribute() && $rel = $this->get_meta_object()->find_relation($data_sheet->get_meta_object()->get_id())){
+			if ($this->get_attribute()){
+				if ($this->get_attribute()->is_relation() && $this->get_attribute()->get_relation()->get_related_object()->is($data_sheet->get_meta_object())){
+					// If this widget represents the direct relation attribute, the attribute to display would be the UID of the
+					// of the related object (e.g. trying to fill the order positions attribute "ORDER" relative to the object
+					// "ORDER" should result in the attribute UID of ORDER because it holds the same value)
+					$data_sheet->get_columns()->add_from_expression($this->get_attribute()->get_relation()->get_related_object_key_alias());
+				} elseif ($rel = $data_sheet->get_meta_object()->find_relation($this->get_meta_object_id())){
+					// 
+					$rel_path = RelationPath::relation_path_add($rel->get_alias(), $this->get_attribute()->get_alias());
+					if ($rel_attr = $data_sheet->get_meta_object()->get_attribute($rel_path)){
+						$data_sheet->get_columns()->add_from_attribute($rel_attr);
+					}
+				}
+			}
+			
+			
+			// Otherwise we are looking for attributes relative to another object
+			// So try to find a relation from this widgets object to the data sheet object and vice versa
+			/*if ($this->get_attribute() && $rel = $this->get_meta_object()->find_relation($data_sheet->get_meta_object()->get_id())){
 				// First of all, find the relation to that object (if not, do nothing)
 				if ($this->get_attribute()->is_relation() && $this->get_attribute_alias() == $rel->get_foreign_key_alias()){
 					// If this widget represents the direct relation attribute, the attribute to display would be the UID of the
@@ -97,7 +117,7 @@ class Text extends AbstractWidget implements iShowSingleAttribute, iHaveValue, i
 						}
 					}
 				}
-			} 
+			}*/
 		}
 		
 		return $data_sheet;

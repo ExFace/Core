@@ -5,6 +5,10 @@ use exface\Core\CommonLogic\Workbench;
 
 class Relation implements ExfaceClassInterface {
 	
+	const RELATION_TYPE_FORWARD = 'n1';
+	const RELATION_TYPE_REVERSE = '1n';
+	const RELATION_TYPE_ONE_TO_ONE = '11';
+	
 	// TODO Make all private
 	public $id;
 	public $alias;
@@ -196,6 +200,18 @@ class Relation implements ExfaceClassInterface {
     
     public function get_model(){
     	return $this->get_workbench()->model();
+    }
+    
+    public function is_reverse_relation(){
+    	return $this->get_type() == self::RELATION_TYPE_REVERSE ? true : false;
+    }
+    
+    public function is_forward_relation(){
+    	return $this->get_type() == self::RELATION_TYPE_FORWARD ? true : false;
+    }
+    
+    public function is_one_to_one_relation(){
+    	return $this->get_type() == self::RELATION_TYPE_ONE_TO_ONE ? true : false;
     }
 }
 ?>
