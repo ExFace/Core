@@ -1,6 +1,5 @@
 <?php namespace exface\Core\CommonLogic;
 
-use exface\Core\CommonLogic\Workbench;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\CommonLogic\Model\Object;

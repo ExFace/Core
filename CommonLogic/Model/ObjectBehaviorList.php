@@ -1,6 +1,5 @@
 <?php namespace exface\Core\CommonLogic\Model;
 
-use exface\Core\CommonLogic\Workbench;
 use exface\Core\CommonLogic\EntityList;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Interfaces\Model\BehaviorListInterface;
@@ -23,7 +22,9 @@ class ObjectBehaviorList extends EntityList implements BehaviorListInterface {
 			$behavior->set_object($this->get_parent());
 		}
 		$result = parent::add($behavior, $key);
-		$behavior->register();
+		if (!$behavior->is_disabled()){
+			$behavior->register();
+		}
 		return $result;
 	}
 	
