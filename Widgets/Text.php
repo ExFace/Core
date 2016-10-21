@@ -90,8 +90,11 @@ class Text extends AbstractWidget implements iShowSingleAttribute, iHaveValue, i
 					// of the related object (e.g. trying to fill the order positions attribute "ORDER" relative to the object
 					// "ORDER" should result in the attribute UID of ORDER because it holds the same value)
 					$data_sheet->get_columns()->add_from_expression($this->get_attribute()->get_relation()->get_related_object_key_alias());
-				} elseif ($rel = $data_sheet->get_meta_object()->find_relation($this->get_meta_object_id())){
-					// 
+				} elseif ($rel = $data_sheet->get_meta_object()->find_relation($this->get_meta_object_id(), true)){
+					// If the attribute is not a relation, we still can use it for prefills if we find a relation to access
+					// it from the $data_sheet's object.
+					// TODO currently we use the first relation found. However, this does not work well if that relation
+					// is an attribute of an inherited object. Perhaps it would be better to prefer direct attributes. But how?
 					$rel_path = RelationPath::relation_path_add($rel->get_alias(), $this->get_attribute()->get_alias());
 					if ($rel_attr = $data_sheet->get_meta_object()->get_attribute($rel_path)){
 						$data_sheet->get_columns()->add_from_attribute($rel_attr);
@@ -99,10 +102,11 @@ class Text extends AbstractWidget implements iShowSingleAttribute, iHaveValue, i
 				}
 			}
 			
-			
+			/* FIXME Remove this commented out block if the new way to find suitable attributes to prefill (above) works well
+			 * 
 			// Otherwise we are looking for attributes relative to another object
 			// So try to find a relation from this widgets object to the data sheet object and vice versa
-			/*if ($this->get_attribute() && $rel = $this->get_meta_object()->find_relation($data_sheet->get_meta_object()->get_id())){
+			if ($this->get_attribute() && $rel = $this->get_meta_object()->find_relation($data_sheet->get_meta_object()->get_id())){
 				// First of all, find the relation to that object (if not, do nothing)
 				if ($this->get_attribute()->is_relation() && $this->get_attribute_alias() == $rel->get_foreign_key_alias()){
 					// If this widget represents the direct relation attribute, the attribute to display would be the UID of the

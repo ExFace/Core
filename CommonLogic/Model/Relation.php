@@ -149,13 +149,29 @@ class Relation implements ExfaceClassInterface {
     	// return $this->get_related_object()->get_attribute($this->get_related_object_key_alias());
     }
     
+    /**
+     * Returns the UID of the object, this attribute was inherited from or NULL if it is a direct attribute of it's object
+     * @return string
+     */
     public function get_inherited_from_object_id() {
     	return $this->inherited_from_object_id;
     }
     
+    /**
+     * 
+     * @param string $value
+     */
     public function set_inherited_from_object_id($value) {
     	$this->inherited_from_object_id = $value;
-    }  
+    } 
+    
+    /**
+     * Returns TRUE if this Relation was inherited from a parent object
+     * @return boolean
+     */
+    public function is_inherited(){
+    	return is_null($this->get_inherited_from_object_id()) ? true : false;
+    }
 	
     /**
      * Returns a related attribute as if it was queried via $object->get_attribute("this_relation_alias->attribute_alias").
