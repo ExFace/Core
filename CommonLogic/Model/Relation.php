@@ -5,6 +5,10 @@ use exface\Core\CommonLogic\Workbench;
 
 class Relation implements ExfaceClassInterface {
 	
+	const RELATION_TYPE_FORWARD = 'n1';
+	const RELATION_TYPE_REVERSE = '1n';
+	const RELATION_TYPE_ONE_TO_ONE = '11';
+	
 	// TODO Make all private
 	public $id;
 	public $alias;
@@ -145,13 +149,29 @@ class Relation implements ExfaceClassInterface {
     	// return $this->get_related_object()->get_attribute($this->get_related_object_key_alias());
     }
     
+    /**
+     * Returns the UID of the object, this attribute was inherited from or NULL if it is a direct attribute of it's object
+     * @return string
+     */
     public function get_inherited_from_object_id() {
     	return $this->inherited_from_object_id;
     }
     
+    /**
+     * 
+     * @param string $value
+     */
     public function set_inherited_from_object_id($value) {
     	$this->inherited_from_object_id = $value;
-    }  
+    } 
+    
+    /**
+     * Returns TRUE if this Relation was inherited from a parent object
+     * @return boolean
+     */
+    public function is_inherited(){
+    	return is_null($this->get_inherited_from_object_id()) ? true : false;
+    }
 	
     /**
      * Returns a related attribute as if it was queried via $object->get_attribute("this_relation_alias->attribute_alias").
@@ -196,6 +216,18 @@ class Relation implements ExfaceClassInterface {
     
     public function get_model(){
     	return $this->get_workbench()->model();
+    }
+    
+    public function is_reverse_relation(){
+    	return $this->get_type() == self::RELATION_TYPE_REVERSE ? true : false;
+    }
+    
+    public function is_forward_relation(){
+    	return $this->get_type() == self::RELATION_TYPE_FORWARD ? true : false;
+    }
+    
+    public function is_one_to_one_relation(){
+    	return $this->get_type() == self::RELATION_TYPE_ONE_TO_ONE ? true : false;
     }
 }
 ?>

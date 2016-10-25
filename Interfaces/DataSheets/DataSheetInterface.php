@@ -103,16 +103,23 @@ interface DataSheetInterface extends ExfaceClassInterface, iCanBeCopied, iCanBeC
 	public function data_update($create_if_uid_not_found = false, DataTransactionInterface $transaction = null);
 	
 	/**
-	 * Replaces all rows matching current filters with data contained in this data sheet: rows with matching UIDs are updated, new rows
-	 * are created and those missing in the current data sheet will get deleted in the data source, unless $delete_missing_rows is set to
-	 * FALSE.
+	 * Replaces all rows matching current filters with data contained in this data sheet returning the number of rows changed in the data source.
+	 * Rows with matching UIDs are updated, new rows are created and those missing in the current data sheet will get deleted in the data source, 
+	 * unless $delete_missing_rows is set to FALSE. 
+	 * 
+	 * The update operation will perform an update on all records matching the UIDs in the data sheet - regardless of the filter.
+	 * Thus, if replacing all attributes of an object, all attributes in the data sheet will get updated - even if they belong to another
+	 * object in the data source (so the probably will get attached to the object we are replacing for). Set $update_by_uid_ignoring_filters 
+	 * to FALSE to use the filters in the update operation too. In the above example, this would mean that attributes, that currently belong
+	 * to the other object will remain untouched.
 	 * 
 	 * If no transaction is given, a new transaction will be created an committed at the end of this method
 	 * 
 	 * @param DataTransactionInterface $transaction
 	 * @param boolean $delete_missing_rows
+	 * @return number 
 	 */
-	public function data_replace_by_filters($delete_redundant_rows = true, DataTransactionInterface $transaction = null);
+	public function data_replace_by_filters(DataTransactionInterface $transaction = null, $delete_redundant_rows = true, $update_by_uid_ignoring_filters = true);
 	
 	/**
 	 * Saves all values of the data sheets creating new data in the corresponding data sources. By default rows with existing UID-values are updated. 
@@ -263,6 +270,15 @@ interface DataSheetInterface extends ExfaceClassInterface, iCanBeCopied, iCanBeC
 	 * @return boolean
 	 */
 	public function is_up_to_date();
+	
+	/**
+	 * Returns true if the data sheet will load all available data when performing data_read(). In general this is the case, 
+	 * if neither filters nor UIDs in the data rows are specified. This method is mainly usefull for error detection, as
+	 * it is generally not a good idea to delete or update the entire data - it is always a good idea to have some filters.
+	 * 
+	 * @return boolean
+	 */
+	public function is_unfiltered();
 	
 	public function get_rows_on_page();
 	

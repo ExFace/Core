@@ -2,7 +2,6 @@
 
 use exface\Core\Exceptions\MetaModelValidationException;
 use exface\Core\Exceptions\UxonParserError;
-use exface\Core\Exceptions\UxonParserWarning;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\NameResolver;
 use exface\Core\Factories\RelationPathFactory;
@@ -57,7 +56,7 @@ class Object implements ExfaceClassInterface, AliasInterface {
 	
 	/**
 	 * Returns all direct relations of this object as a flat array. Optionally filtered by relation type.
-	 * @return array
+	 * @return Relation[]
 	 */
 	function get_relations($relation_type = null){
 		$result = array();
@@ -294,21 +293,45 @@ class Object implements ExfaceClassInterface, AliasInterface {
 	}
 	
 	/**
-	 * Finds a relation to a specific object. If there are regular and reverse relations to the desired 
-	 * object, the regular relation (n-to-1) will be returned. If there are multiple reverse relations,
-	 * the first one will be returned. 
+	 * Finds a relation to a specific object. If there are multiple reverse relations, the first one will be returned. 
+	 * Setting $prefer_direct_relations to TRUE will check direct (not inherited) relation first and return the first
+	 * one of them - and only if there are no direct relation, the first inherited relation. 
+	 * If there are regular and reverse relations to the desired object, the first regular relation (n-to-1) will be 
+	 * returned. 
+	 * 
 	 * Returns FALSE if no relation to the given object is found.
+	 * 
 	 * Note: Currently this will only work for direct relations. Chained relations can be found via find_relation_path().
 	 * @see find_relation_path()
 	 * 
 	 * @param string $related_object_id
-	 * @return relation
+	 * @return Relation
 	 */
-	public function find_relation($related_object_id){
+	public function find_relation($related_object_id, $prefer_direct_relations = false){
+		$first_relation = false;
 		foreach ($this->get_relations() as $rel){
-			if ($rel->get_related_object_id() == $related_object_id) return $rel;
+			if ($rel->get_related_object_id() == $related_object_id) {
+				if (!$rel->is_inherited() || !$prefer_direct_relations){
+					return $rel;
+				} else {
+					$first_relation = $rel;
+				}
+			}
 		}
-		return false;
+		return $first_relation;
+	}
+	
+	/**
+	 * Finds all relations to the specified object. Regular and reverse relations will be returned in one array.
+	 * @param string $related_object_id
+	 * @return Relation[]
+	 */
+	public function find_relations($related_object_id, $relation_type = null){
+		$rels = array();
+		foreach ($this->get_relations() as $rel){
+			if ($rel->get_related_object_id() == $related_object_id && ($relation_type == null || $relation_type == $rel->get_type())) $rels[] = $rel;
+		}
+		return $rels;
 	}
 	
 	/**

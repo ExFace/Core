@@ -291,13 +291,29 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied {
 		return '[' . $this->get_data_type()->get_name() . '] ' . $this->get_short_description();
 	}	
 
+	/**
+	 * Returns the UID of the object, this attribute was inherited from or NULL if it is a direct attribute of it's object
+	 * @return string
+	 */
 	public function get_inherited_from_object_id() {
 		return $this->inherited_from_object_id;
 	}
 	
+	/**
+	 *
+	 * @param string $value
+	 */
 	public function set_inherited_from_object_id($value) {
 		$this->inherited_from_object_id = $value;
-	} 
+	}
+	
+	/**
+	 * Returns TRUE if this Relation was inherited from a parent object
+	 * @return boolean
+	 */
+	public function is_inherited(){
+		return is_null($this->get_inherited_from_object_id()) ? true : false;
+	}
 
 	public function get_data_address_properties() {
 		return $this->data_address_properties;

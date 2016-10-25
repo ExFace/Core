@@ -2,6 +2,7 @@
 namespace exface\Core\Widgets;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\CommonLogic\Model\Attribute;
 
 /**
  * A filter is a wrapper widget, which typically consist of one or more input widgets. The purpose of filters is to enable the user to
@@ -69,6 +70,10 @@ class Filter extends Container {
 		return array($this->get_widget());
 	}
 	
+	/**
+	 * 
+	 * @return Attribute
+	 */
 	public function get_attribute(){
 		return $this->get_widget()->get_attribute();
 	}

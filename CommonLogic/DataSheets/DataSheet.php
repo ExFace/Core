@@ -475,8 +475,7 @@ class DataSheet implements DataSheetInterface {
 		if ($create_if_uid_not_found){
 			if ($this->get_uid_column()){
 				// Create another data sheet selecting those UIDs currently present in the data source
-				$uid_check_ds = $this->copy();
-				$uid_check_ds->get_columns()->remove_all();
+				$uid_check_ds = DataSheetFactory::create_from_object($this->get_meta_object());
 				$uid_column = $this->get_uid_column()->copy();
 				$uid_check_ds->get_columns()->add($uid_column);
 				$uid_check_ds->add_filter_from_column_values($this->get_uid_column());
@@ -490,7 +489,7 @@ class DataSheet implements DataSheetInterface {
 					$counter += $create_ds->data_create(false, $transaction);
 				}
 			} else {
-				throw new DataSheetSaveError('Creating rows from an update statement without a UID-column not implemented yet!');
+				throw new DataSheetSaveError('Creating rows from an update statement without a UID-column not supported yet!');
 			}
 		}
 		
@@ -566,7 +565,7 @@ class DataSheet implements DataSheetInterface {
 						$uid_column_alias = $rel_path;
 					} else {
 						//$uid_column = $this->get_column($this->get_meta_object()->get_relation($rel_path)->get_main_object_key_attribute()->get_alias_with_relation_path());
-						throw new DataSheetException('Updating attributes from reverse relations ("' . $column->get_expression_obj()->to_string() . '") is not implemented yet!');	
+						throw new DataSheetException('Updating attributes from reverse relations ("' . $column->get_expression_obj()->to_string() . '") is not supported yet!');	
 					}
 				} else {
 					$uid_column_alias = $this->get_meta_object()->get_uid_alias();
@@ -624,7 +623,7 @@ class DataSheet implements DataSheetInterface {
 	 * {@inheritDoc}
 	 * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::data_replace_by_filters()
 	 */
-	public function data_replace_by_filters($delete_redundant_rows = true, DataTransactionInterface $transaction = null){
+	public function data_replace_by_filters(DataTransactionInterface $transaction = null, $delete_redundant_rows = true, $update_by_uid_ignoring_filters = true){
 		// Start a new transaction, if not given
 		if (!$transaction){
 			$transaction = $this->get_workbench()->data()->start_transaction();
@@ -658,7 +657,17 @@ class DataSheet implements DataSheetInterface {
 			}
 		}
 		
-		$counter += $this->data_update(true, $transaction);
+		// If we need to update records by UID and we have a non-empty UID column, we need to remove all filters to make sure the update
+		// runs via UID only. Thus, the update is being performed on a copy of the sheet, which does not have any filters. In all other
+		// cases, the update should be performed on the original data sheet itself.
+		if ($update_by_uid_ignoring_filters && $this->get_uid_column() && !$this->get_uid_column()->is_empty()){
+			$update_ds = $this->copy();
+			$update_ds->get_filters()->remove_all();
+		} else {
+			$update_ds = $this;
+		}
+		
+		$counter += $update_ds->data_update(true, $transaction);
 		
 		if ($commit  && !$transaction->is_rolled_back()){
 			$transaction->commit();
@@ -784,7 +793,7 @@ class DataSheet implements DataSheetInterface {
 		$query = QueryBuilderFactory::create_from_alias($this->exface, $this->get_meta_object()->get_query_builder());
 		$query->set_main_object($this->get_meta_object());
 		
-		if (!$this->get_uid_column() && $this->get_filters()->is_empty()) {
+		if ($this->is_unfiltered()) {
 			throw new DataSheetSaveError('Cannot delete all instances of "' . $this->get_meta_object()->get_alias_with_namespace() . '": forbidden operation!');
 		}
 		// set filters
@@ -799,7 +808,12 @@ class DataSheet implements DataSheetInterface {
 		foreach ($this->get_subsheets_for_cascading_delete() as $ds){
 			// Just perform the delete if there really is some data to delete. This sure means an extra data source connection, but
 			// preventing delete operations on empty data sheets also prevents calculating their cascading deletes, etc. This saves
-			// a lot of iterations and reduces the risc of unwanted deletes due to some unforseeable filter constellations
+			// a lot of iterations and reduces the risc of unwanted deletes due to some unforseeable filter constellations.
+			
+			// First check if the sheet theoretically can have data - that is, if it has UIDs in it's rows or at least some filters
+			// This makes sure, reading data in the next step will not return the entire table, which would then get deleted of course!
+			if ((!$ds->get_uid_column() || $ds->get_uid_column()->is_empty()) && $ds->get_filters()->is_empty()) continue;
+			// If the there can be data, but there are no rows, read the data
 			if ($ds->data_read()){
 				$ds->data_delete($transaction);
 			}
@@ -812,7 +826,6 @@ class DataSheet implements DataSheetInterface {
 			$affected_rows += $query->delete($connection);
 		} catch (DataSourceError $e){
 			$transaction->rollback();
-			$commit = false;
 			throw new DataSheetSaveError($e->getMessage(), $e->getCode(), $e);
 		}
 		
@@ -842,8 +855,17 @@ class DataSheet implements DataSheetInterface {
 				// FIXME Throw a warning here! Need to be able to show warning along with success messages!
 				//throw new DataSheetException('Cascading deletion via optional relations not yet implemented: no instances were deleted for relation "' . $rel->get_alias() . '" to object "' . $rel->get_related_object()->get_alias_with_namespace() . '"!');
 			} else {
-				$ds = $this->exface->data()->create_data_sheet($rel->get_related_object());
+				$ds = DataSheetFactory::create_from_object($rel->get_related_object());
+				// Use all filters of the original query in the cascading queries
 				$ds->set_filters($this->get_filters()->rebase($rel->get_alias()));
+				// Additionally add a filter over UIDs in the original query, if it has data with UIDs. This makes sure, the cascading deletes
+				// only affect the loaded rows and nothing "invisible" to the user!
+				if ($this->get_uid_column()){
+					$uids = $this->get_uid_column()->get_values(false);
+					if (count($uids) > 0){
+						$ds->add_filter_in_from_string($this->get_uid_column()->get_expression_obj()->rebase($rel->get_alias())->to_string(), $uids);
+					}
+				}
 				$subsheets[] = $ds;
 			}
 		}
@@ -1373,6 +1395,19 @@ class DataSheet implements DataSheetInterface {
 	public function data_mark_invalid(){
 		$this->invalid_data_flag = true;
 		return $this;
+	}
+	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::is_unfiltered()
+	 */
+	public function is_unfiltered(){
+		if ((!$this->get_uid_column() || $this->get_uid_column()->is_empty()) && $this->get_filters()->is_empty()) {
+			return true;
+		} else {
+			return false;
+		}
 	}
 }
 

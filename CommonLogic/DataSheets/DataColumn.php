@@ -48,6 +48,11 @@ class DataColumn implements DataColumnInterface {
 				$this->expression = ExpressionFactory::create_from_string($exface, $this->get_attribute_alias(), $this->get_data_sheet()->get_meta_object());
 			}
 		}
+		// Make sure, there is always a meta object in the expression. For some reason, this is not always the case.
+		// IDEA this check can be removed, once meta object have become mandatory for expressions (planned in distant future)
+		if (!$this->expression->get_meta_object()){
+			$this->expression->set_meta_object($this->get_data_sheet()->get_meta_object());
+		}
 		return $this->expression;
 	}
 	

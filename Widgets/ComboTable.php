@@ -240,7 +240,7 @@ class ComboTable extends InputCombo implements iHaveChildren {
 			return $data_sheet;
 		}
 		
-		if ($data_sheet->get_meta_object()->get_id() == $this->get_meta_object_id()){
+		if ($data_sheet->get_meta_object()->is($this->get_meta_object())){
 			$data_sheet->get_columns()->add_from_expression($this->get_attribute_alias());
 				
 			// Be carefull with the value text. If the combo stands for a relation, it can be retrieved from the prefill data,
@@ -257,13 +257,12 @@ class ComboTable extends InputCombo implements iHaveChildren {
 			if ($text_column_name){
 				$data_sheet->get_columns()->add_from_expression($text_column_name);
 			}
-		} elseif ($this->get_relation() && $this->get_relation()->get_related_object_id() == $data_sheet->get_meta_object()->get_id()){
+		} elseif ($this->get_relation() && $this->get_relation()->get_related_object()->is($data_sheet->get_meta_object())){
 			$data_sheet->get_columns()->add_from_expression($this->get_relation()->get_related_object_key_alias());
 			$data_sheet->get_columns()->add_from_expression($this->get_text_column()->get_attribute_alias(), $this->get_text_column_id());
 		} else {
 			// TODO what if the prefill object is not the one at the end of the current relation?
 		}
-		
 		return $data_sheet;
 	}
 	
