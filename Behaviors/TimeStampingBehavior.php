@@ -110,8 +110,11 @@ class TimeStampingBehavior extends AbstractBehavior {
 			foreach ($updated_column->get_values() as $row_nr => $val){
 				$check_val = $check_column->get_cell_value($check_sheet->get_uid_column()->find_row_by_value($data_sheet->get_uid_column()->get_cell_value($row_nr)));
 				try {
-					$val_date = new \DateTime($val);
-					$check_date = new \DateTime($check_val);
+					$format = $this->get_workbench()->get_config()->get_option('DEFAULT_DATETIME_FORMAT');
+					$v_date = new \DateTime($val);
+					$val_date = new \DateTime($v_date->format($format));
+					$c_date = new \DateTime($check_val);
+					$check_date = new \DateTime($c_date->format($format));
 				} catch (\Exception $e){
 					$val_date = 0;
 					$check_date = 0;
