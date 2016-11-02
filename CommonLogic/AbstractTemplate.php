@@ -2,9 +2,12 @@
 
 use exface\Core\Interfaces\TemplateInterface;
 use exface\Core\Interfaces\NameResolverInterface;
+use exface\Core\Interfaces\AppInterface;
+use exface\Core\Factories\AppFactory;
 
 abstract class AbstractTemplate implements TemplateInterface {
 	private $exface = null;
+	private $app = null;
 	private $alias = '';
 	private $name_resolver = null;
 	private $response = '';
@@ -96,5 +99,31 @@ abstract class AbstractTemplate implements TemplateInterface {
 		$this->response = $value;
 		return $this;
 	}
+	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\TemplateInterface::get_app()
+	 */
+	public function get_app() {
+		if (is_null($this->app)){
+			$this->app = AppFactory::create_from_alias($this->get_name_resolver()->get_alias_with_namespace(), $this->exface);
+		}
+		return $this->app;
+	}
+	
+	public function set_app(AppInterface $value) {
+		$this->app = $value;
+		return $this;
+	}
+	
+	/**
+	 * Returns the configuration
+	 * @return Configuration
+	 */
+	public function get_config(){
+		return $this->get_app()->get_config();
+	}
+  
 }
 ?>

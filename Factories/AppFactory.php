@@ -5,6 +5,7 @@ use exface\Core\CommonLogic\NameResolver;
 use exface\Core\Interfaces\NameResolverInterface;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Exceptions\AppNotFoundError;
+use exface\Core\CommonLogic\Workbench;
 
 abstract class AppFactory extends AbstractNameResolverFactory {
 	
@@ -22,6 +23,17 @@ abstract class AppFactory extends AbstractNameResolverFactory {
 		$app = new $class($exface);
 		$app->set_name_resolver($name_resolver);
 		return $app;
+	}
+	
+	/**
+	 * 
+	 * @param string $alias_with_namespace
+	 * @param Workbench $exface
+	 * @return AppInterface
+	 */
+	public static function create_from_alias($alias_with_namespace, Workbench &$exface){
+		$name_resolver = NameResolver::create_from_string($alias_with_namespace, NameResolver::OBJECT_TYPE_APP, $exface);
+		return static::create($name_resolver);
 	}
 }
 ?>

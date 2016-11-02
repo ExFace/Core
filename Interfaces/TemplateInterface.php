@@ -37,5 +37,11 @@ interface TemplateInterface extends ExfaceClassInterface, AliasInterface {
 	 * @return \exface\Core\Interfaces\TemplateInterface
 	 */
 	public function set_response($value);
+	
+	/**
+	 * Returns the app, that contains the template
+	 * @return AppInterface
+	 */
+	public function get_app();
 }
 ?>
