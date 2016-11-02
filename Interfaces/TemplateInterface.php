@@ -1,5 +1,7 @@
 <?php namespace exface\Core\Interfaces;
 
+use exface\Core\CommonLogic\Configuration;
+
 interface TemplateInterface extends ExfaceClassInterface, AliasInterface {
 	
 	function draw(\exface\Core\Widgets\AbstractWidget $widget);
@@ -43,5 +45,11 @@ interface TemplateInterface extends ExfaceClassInterface, AliasInterface {
 	 * @return AppInterface
 	 */
 	public function get_app();
+	
+	/**
+	 * Returns the configuration object for this template. By default, it is the configuration object of the app of the template
+	 * @return Configuration
+	 */
+	public function get_config();
 }
 ?>

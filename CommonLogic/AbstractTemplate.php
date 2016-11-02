@@ -118,8 +118,9 @@ abstract class AbstractTemplate implements TemplateInterface {
 	}
 	
 	/**
-	 * Returns the configuration
-	 * @return Configuration
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\TemplateInterface::get_config()
 	 */
 	public function get_config(){
 		return $this->get_app()->get_config();
