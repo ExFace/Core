@@ -49,7 +49,7 @@ class Configuration implements ConfigurationInterface {
 			if ($key_found = $this->get_config_uxon()->find_property_key($key, false)){
 				$key = $key_found;
 			} else {
-				throw new ConfigurationNotFoundError('Required configuration key "' . $key . '"not found in "' . $this->get_config_uxon()->to_json(false) . '"!');
+				throw new ConfigurationNotFoundError('Required configuration key "' . $key . '" not found in "' . $this->get_config_uxon()->to_json(false) . '"!');
 			}
 		}
 		return $this->get_config_uxon()->get_property($key);
