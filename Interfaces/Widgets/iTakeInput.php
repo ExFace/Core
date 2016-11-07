@@ -1,8 +1,6 @@
-<?php
-namespace exface\Core\Interfaces\Widgets;
-interface iTakeInput extends iHaveValue {
-	public function is_required();
-	public function set_required($value);
+<?php namespace exface\Core\Interfaces\Widgets;
+
+interface iTakeInput extends iCanBeRequired {
 	public function is_disabled();
 	public function set_disabled($value);
 }

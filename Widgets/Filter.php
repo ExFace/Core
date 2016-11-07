@@ -1,8 +1,8 @@
-<?php
-namespace exface\Core\Widgets;
+<?php namespace exface\Core\Widgets;
+
 use exface\Core\Factories\WidgetFactory;
-use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\CommonLogic\Model\Attribute;
+use exface\Core\Interfaces\Widgets\iCanBeRequired;
 
 /**
  * A filter is a wrapper widget, which typically consist of one or more input widgets. The purpose of filters is to enable the user to
@@ -13,9 +13,10 @@ use exface\Core\CommonLogic\Model\Attribute;
  * @author Andrej Kabachnik
  *
  */
-class Filter extends Container {
+class Filter extends Container implements iCanBeRequired {
 	private $widget = null;
 	private $comparator = null;
+	private $required = null;
 	
 	/**
 	 * Returns the widget used to interact with the filter (typically some kind of input widget)
@@ -53,10 +54,15 @@ class Filter extends Container {
 				break;
 		}
 		
-		/*$this->set_id($this->widget->get_id());
-		$this->widget->set_id($this->widget->get_id() . '_value');*/
+		// The widgets in the filter should not be required accept for the case if the filter itself is marked 
+		// as required (see set_required()). This is important because, inputs based on required attributes are
+		// marked required by default: this should not be the case for filters, however!
+		if ($this->widget instanceof iCanBeRequired){
+			$this->widget->set_required(false);
+		}
+		
 		// The filter should be enabled all the time, except for the case, when it is diabled explicitly
-		if (is_null($this->is_disabled())){
+		if (!parent::is_disabled()){
 			$this->set_disabled(false);
 		}
 		
@@ -98,12 +104,6 @@ class Filter extends Container {
 		return $this->get_widget()->set_value($value);
 	}
 	
-	public function set_disabled($value){
-		// All parts of the filter have the same disabled state as the filter by default
-		$this->widget->set_disabled($value);
-		return parent::set_disabled($value);
-	}
-	
 	public function get_caption(){
 		return $this->get_widget()->get_caption();
 	}
@@ -129,6 +129,29 @@ class Filter extends Container {
 	public function set_comparator($value) {
 		$this->comparator = $value;
 		return $this;
+	} 
+	
+	public function is_required() {
+		if (is_null($this->required)){
+			return false;
+		}
+		return $this->required;
+	}
+	
+	public function set_required($value) {
+		$this->required = $value;
+		if ($this->get_widget() && $this->get_widget() instanceof iCanBeRequired){
+			$this->get_widget()->set_required($value);
+		}
+		return $this;
+	}
+	
+	public function set_disabled($value) {
+		if ($this->get_widget()){
+			$this->get_widget()->set_disabled($value);
+		}
+		return parent::set_disabled($value);
 	}  
+	  
 }
 ?>

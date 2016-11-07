@@ -3,7 +3,7 @@ namespace exface\Core\Widgets;
 use exface\Core\Interfaces\Widgets\iTakeInput;
 
 class Input extends Text implements iTakeInput {
-	protected $required = false;
+	private $required = null;
 	private $validator = null;
 	
 	public function get_validator() {
@@ -14,7 +14,20 @@ class Input extends Text implements iTakeInput {
 		$this->validator = $value;
 	}
 	
+	/**
+	 * {@inheritDoc}
+	 * Input widgets are considered as required if they are explicitly marked as such or if the represent a meta attribute, 
+	 * that is a required one.
+	 * @see \exface\Core\Interfaces\Widgets\iTakeInput::is_required()
+	 */
 	public function is_required() {
+		if (is_null($this->required)){
+			if ($this->get_attribute()){
+				return $this->get_attribute()->is_required();
+			} else {
+				return false;
+			}
+		}
 		return $this->required;
 	}
 	

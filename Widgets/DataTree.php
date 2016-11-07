@@ -4,13 +4,16 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 
 class DataTree extends DataTable {
 	
-	protected $tree_column_id = null;
-	protected $tree_parent_id_attribute_alias = null;
-	protected $tree_folder_flag_attribute_alias = null;
-	protected $tree_expanded = false;
-	protected $tree_root_uid = null;
+	private $tree_column_id = null;
+	private $tree_parent_id_attribute_alias = null;
+	private $tree_folder_flag_attribute_alias = null;
+	private $tree_expanded = false;
+	private $tree_root_uid = null;
 	
-	protected $paginate = false;
+	protected function init(){
+		parent::init();
+		$this->set_paginate(false);
+	}
 	
 	/**
 	 * Returns the id of the column, that is supposed to display the tree

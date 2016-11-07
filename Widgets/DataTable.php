@@ -1,16 +1,17 @@
-<?php
-namespace exface\Core\Widgets;
+<?php namespace exface\Core\Widgets;
+
 use exface\Core\Interfaces\Widgets\iHaveTopToolbar;
 use exface\Core\Interfaces\Widgets\iHaveBottomToolbar;
-use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Factories\WidgetFactory;
 
 class DataTable extends Data implements iHaveTopToolbar, iHaveBottomToolbar {
-	/**
-	 * Container-Widget, that holds everything to display in the optional row details (e.g. expandable rows)
-	 * @var Container
-	 */
-	protected $show_filter_row = false;
+	
+	private $show_filter_row = false;
+	private $show_row_numbers = false;
+	private $multi_select = false;
+	private $striped = true;
+	private $nowrap = true;
+	private $auto_row_height = true;
 	
 	private $hide_toolbar_top = false;
 	private $hide_toolbar_bottom = false;
@@ -172,6 +173,54 @@ class DataTable extends Data implements iHaveTopToolbar, iHaveBottomToolbar {
 		$this->set_hide_toolbar_top($value);
 		$this->set_hide_toolbar_bottom($value);
 		return $this;
-	}	    
+	}	
+	
+	public function get_show_row_numbers() {
+		return $this->show_row_numbers;
+	}
+	
+	public function set_show_row_numbers($value) {
+		$this->show_row_numbers = $value;
+	}
+	
+	public function get_nowrap() {
+		return $this->nowrap;
+	}
+	
+	public function set_nowrap($value) {
+		$this->nowrap = $value;
+	}
+	
+	public function get_striped() {
+		return $this->striped;
+	}
+	
+	public function set_striped($value) {
+		$this->striped = $value;
+	}
+	
+	/**
+	 * TODO move to data table
+	 * @return boolean|unknown
+	 */
+	public function get_auto_row_height() {
+		return $this->auto_row_height;
+	}
+	
+	/**
+	 * 
+	 * @return boolean
+	 */
+	public function set_auto_row_height($value) {
+		$this->auto_row_height = $value;
+	}
+	
+	public function get_multi_select() {
+		return $this->multi_select;
+	}
+	
+	public function set_multi_select($value) {
+		$this->multi_select = $value;
+	}
 }
 ?>

@@ -4,11 +4,12 @@ class DataMatrix extends DataTable {
 	private $label_column_id = null;
 	private $data_column_id = null;
 	
-	// override some defaults of Data
-	protected $paginate = false;
-	protected $show_row_numbers = false;
-	protected $multi_select = false;
-	
+	protected function init(){
+		parent:: init();
+		$this->set_paginate(false);
+		$this->set_show_row_numbers(false);
+		$this->set_multi_select(false);
+	}
 	
 	public function get_label_column_id() {
 		return $this->label_column_id;

@@ -2,14 +2,15 @@
 namespace exface\Core\Widgets;
 use exface\Core\Interfaces\Widgets\iAmClosable;
 class Dialog extends Panel implements iAmClosable {
-	protected $lazy_loading = true; // The contents of the dialog can be loaded via AJAX by default (if the template supports it)
-	protected $button_class = 'DialogButton';
 	private $hide_close_button = false;
 	private $close_button = null;
 	private $maximizable = true;
 	private $maximized = false;
 	
 	protected function init(){
+		parent::init();
+		$this->set_lazy_loading(true);
+		$this->set_button_widget_type('DialogButton');
 		if (count($this->get_widgets()) == 0){
 			$form = $this->get_page()->create_widget('Form', $this);
 			parent::add_widget($form);

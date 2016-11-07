@@ -1,7 +1,12 @@
 <?php
 namespace exface\Core\Widgets;
 class InputHidden extends Input {
-	protected $hidden = true;
-	protected $visibility = EXF_WIDGET_VISIBILITY_HIDDEN;  
+
+	protected function init(){
+		parent::init();
+		$this->set_hidden(true);
+		$this->set_visibility(EXF_WIDGET_VISIBILITY_HIDDEN);
+	}
+	
 }
 ?>

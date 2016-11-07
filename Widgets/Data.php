@@ -25,17 +25,12 @@ use exface\Core\Factories\WidgetLinkFactory;
  */
 class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iHaveButtons, iHaveFilters, iSupportLazyLoading {
 	// properties
-	protected $auto_row_height = true;
-	protected $striped = true; // FIXME move to DataTable
-	protected $nowrap = true; // FIXME move to DataTable
-	protected $paginate = true;
-	protected $paginate_page_sizes = array(10, 20, 30, 40, 50);
-	protected $paginate_default_page_size = 20;
-	protected $show_row_numbers = false; // FIXME move to DataTable
-	protected $multi_select = false; // FIXME move to DataTable
-	protected $aggregate_by_attribute_alias = null;
-	protected $lazy_loading = true; // Data should be loaded lazily by defaul (via AJAX) - of course, only if the used template supports this
-	protected $lazy_loading_action = 'exface.Core.ReadData';
+	private $paginate = true;
+	private $paginate_page_sizes = array(10, 20, 30, 40, 50);
+	private $paginate_default_page_size = 20;
+	private $aggregate_by_attribute_alias = null;
+	private $lazy_loading = true; // Data should be loaded lazily by defaul (via AJAX) - of course, only if the used template supports this
+	private $lazy_loading_action = 'exface.Core.ReadData';
 	
 	/** @var DataColumnGroup[] */
 	private $column_groups = array();
@@ -652,7 +647,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 				if (count($this->filters)){
 					$ph_filters = $this->find_filters_by_attribute($ph_attr);
 					foreach ($ph_filters as $ph_filter){
-						$ph_filter->get_widget()->set_required(true);
+						$ph_filter->set_required(true);
 					}
 				} else {
 					$ph_filter = $this->create_filter_widget($ph);
@@ -686,38 +681,6 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 		return $children;
 	}
 	
-	public function get_striped() {
-		return $this->striped;
-	}
-	
-	public function set_striped($value) {
-		$this->striped = $value;
-	}
-	
-	/**
-	 * TODO move to data table
-	 * @return boolean|unknown
-	 */
-	public function get_auto_row_height() {
-		return $this->auto_row_height;
-	}
-	
-	/**
-	 * TODO move to data table
-	 * @return boolean|unknown
-	 */
-	public function set_auto_row_height($value) {
-		$this->auto_row_height = $value;
-	}
-	
-	public function get_multi_select() {
-		return $this->multi_select;
-	}
-	
-	public function set_multi_select($value) {
-		$this->multi_select = $value;
-	}
-	
 	public function get_paginate() {
 		return $this->paginate;
 	}
@@ -740,22 +703,6 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 	
 	public function set_paginate_page_sizes(array $value) {
 		$this->paginate_page_sizes = $value;
-	}
-	
-	public function get_show_row_numbers() {
-		return $this->show_row_numbers;
-	}
-	
-	public function set_show_row_numbers($value) {
-		$this->show_row_numbers = $value;
-	}
-
-	public function get_nowrap() {
-		return $this->nowrap;
-	}
-	
-	public function set_nowrap($value) {
-		$this->nowrap = $value;
 	}
 	
 	/**

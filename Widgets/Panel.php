@@ -6,10 +6,10 @@ use exface\Core\Interfaces\Widgets\iHaveIcon;
 use exface\Core\Interfaces\Widgets\iSupportLazyLoading;
 use exface\Core\CommonLogic\UxonObject;
 class Panel extends Container implements iSupportLazyLoading, iHaveButtons, iHaveIcon, iCollapsible {
-	protected $lazy_loading = false; // A panel will not be loaded via AJAX by default
-	protected $lazy_loading_action = 'exface.Core.ShowWidget';
-	protected $button_class = 'Button'; // Which type of Buttons should be used. Can be overridden by inheriting widgets
 	
+	private $lazy_loading = false; // A panel will not be loaded via AJAX by default
+	private $lazy_loading_action = 'exface.Core.ShowWidget';
+	private $button_widget_type = 'Button'; // Which type of Buttons should be used. Can be overridden by inheriting widgets
 	private $collapsible = false;
 	private $buttons =  array();
 	private $icon_name = null;
@@ -41,7 +41,7 @@ class Panel extends Container implements iSupportLazyLoading, iHaveButtons, iHav
 	public function set_buttons(array $buttons_array) {
 		if (!is_array($buttons_array)) return false;
 		foreach ($buttons_array as $b){
-			$button = $this->get_page()->create_widget($this->get_button_class(), $this, UxonObject::from_anything($b));
+			$button = $this->get_page()->create_widget($this->get_button_widget_type(), $this, UxonObject::from_anything($b));
 			$this->add_button($button);
 		}
 	}
@@ -125,8 +125,18 @@ class Panel extends Container implements iSupportLazyLoading, iHaveButtons, iHav
 	 * button class.
 	 * @return string
 	 */
-	public function get_button_class(){
-		return $this->button_class;
+	public function get_button_widget_type(){
+		return $this->button_widget_type;
+	}
+	
+	/**
+	 * 
+	 * @param string $string
+	 * @return \exface\Core\Widgets\Panel
+	 */
+	public function set_button_widget_type($string){
+		$this->button_widget_type = $string;
+		return $this;
 	}
 	
 	/**
