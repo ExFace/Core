@@ -18,6 +18,12 @@ class Input extends Text implements iTakeInput {
 	 * {@inheritDoc}
 	 * Input widgets are considered as required if they are explicitly marked as such or if the represent a meta attribute, 
 	 * that is a required one.
+	 * 
+	 * IDEA It's not quite clear, if automatically marking an input as required depending on it's attribute being required,
+	 * is a good idea. This works well for forms creating objects, but what if the form is used for something else? If there
+	 * will be problems with this feature, the alternative would be making the EditObjectAction loop through it's widgets
+	 * and set the required flag depending on attribute setting.
+	 * 
 	 * @see \exface\Core\Interfaces\Widgets\iTakeInput::is_required()
 	 */
 	public function is_required() {
