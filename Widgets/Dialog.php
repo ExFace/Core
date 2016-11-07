@@ -1,6 +1,8 @@
-<?php
-namespace exface\Core\Widgets;
+<?php namespace exface\Core\Widgets;
+
 use exface\Core\Interfaces\Widgets\iAmClosable;
+use exface\Core\Interfaces\Widgets\iFillContainers;
+
 class Dialog extends Panel implements iAmClosable {
 	private $hide_close_button = false;
 	private $close_button = null;
@@ -11,34 +13,24 @@ class Dialog extends Panel implements iAmClosable {
 		parent::init();
 		$this->set_lazy_loading(true);
 		$this->set_button_widget_type('DialogButton');
-		if ($this->count_widgets() == 0){
-			$form = $this->get_page()->create_widget('Form', $this);
-			parent::add_widget($form);
-		}
 	}
 	
 	/**
-	 * Adds a widget to the dialog. Input widgets are wrapped in a form automatically,
-	 * while containers of all sort are added directly to the dialog.
-	 * 
-	 * FIXME As such, a form containing other containers should not be a problem,
-	 * however this does not work in jEasyUI: tabs within a form are not displayed properly.
-	 * Perhaps relying on forms for input dialogs is not a good idea in general. Should
-	 * make own serializers in JS to avoid such kind of problems and include all children
-	 * of the widget - regardless of weather they are compatible to HTML forms or not. 
+	 * Adds a widget to the dialog. Widgets, that fill a container completely, will be added as the only child of the
+	 * dialog, while any already present children will be moved to the filling widget automatically. Thus, if a panel
+	 * or the tabs widget are added, they will be the only child of the dialog and will wrap all other widgets within
+	 * it - even if those other children were added earlier!
 	 * 
 	 * @see Panel::add_widget()
 	 */
 	public function add_widget(AbstractWidget $widget, $position = NULL){
-		if ($widget instanceof Container){
-			if ($widget->get_widget_type() == 'Container'){
-				return parent::add_widgets($widget->get_widgets());
+		if ($widget instanceof iFillContainers && $widget instanceof Container){
+			foreach ($this->get_widgets() as $w){
+				$widget->add_widget($w);
 			}
-			return parent::add_widget($widget, $position);
-		} else {
-			$form = $this->get_widgets()[0];
-			return $form->add_widget($widget, $position);
-		}
+			parent::remove_widgets();
+		} 
+		return parent::add_widget($widget, $position);
 	}
 	
 	/**

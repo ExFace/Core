@@ -3,8 +3,9 @@
 use exface\Core\Interfaces\Widgets\iHaveTopToolbar;
 use exface\Core\Interfaces\Widgets\iHaveBottomToolbar;
 use exface\Core\Factories\WidgetFactory;
+use exface\Core\Interfaces\Widgets\iFillContainers;
 
-class DataTable extends Data implements iHaveTopToolbar, iHaveBottomToolbar {
+class DataTable extends Data implements iHaveTopToolbar, iHaveBottomToolbar, iFillContainers {
 	
 	private $show_filter_row = false;
 	private $show_row_numbers = false;

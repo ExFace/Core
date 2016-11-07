@@ -88,6 +88,11 @@ class Container extends AbstractWidget implements iHaveChildren {
 		return $this->widgets;
 	}
 	
+	public function remove_widgets(){
+		$this->widgets = array();
+		return $this;
+	}
+	
 	public function set_widgets(array $widget_or_uxon_array){
 		if (!is_array($widget_or_uxon_array)) return false;
 		foreach ($widget_or_uxon_array as $w){
@@ -99,6 +104,7 @@ class Container extends AbstractWidget implements iHaveChildren {
 				$this->add_widget($widget);
 			}
 		}
+		return $this;
 	}	 
 
 	/**

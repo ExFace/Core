@@ -1,6 +1,5 @@
 <?php namespace exface\Core\Factories;
 
-use exface\Core\CommonLogic\Workbench;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Exceptions\UxonParserError;
 use exface\Core\CommonLogic\UxonObject;
@@ -14,9 +13,9 @@ abstract class WidgetFactory extends AbstractFactory {
 	/**
 	 * Creates a widget of the specified type in the given page.
 	 * @param UiPageInterface $page
-	 * @param unknown $widget_type
+	 * @param string $widget_type
 	 * @param WidgetInterface $parent_widget
-	 * @param unknown $widget_id
+	 * @param string $widget_id
 	 * @throws UiWidgetException
 	 * @return WidgetInterface
 	 */

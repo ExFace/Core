@@ -66,21 +66,28 @@ class EditObjectDialog extends ShowDialog {
 	 */
 	protected function create_dialog_widget(AbstractWidget $contained_widget = NULL){
 		$dialog = parent::create_dialog_widget();
+		$page = $this->get_called_on_ui_page();
 		// TODO add save button via followup actions in the init() method instead of the button directly
 		/* @var $save_button \exface\Core\Widgets\Button */
-		$save_button = $this->get_called_on_ui_page()->create_widget('DialogButton', $dialog);
+		$save_button = $page->create_widget('DialogButton', $dialog);
 		$save_button->set_action_alias($this->get_save_action_alias());
 		$save_button->set_caption("Speichern");
 		$save_button->set_visibility(EXF_WIDGET_VISIBILITY_PROMOTED);
 		$dialog->add_button($save_button);
 		if ($dialog->get_meta_object()->get_default_editor_uxon() && !$dialog->get_meta_object()->get_default_editor_uxon()->is_empty()){
-			$page = $this->get_called_on_ui_page();
+			// If there is a default editor for an object, use it
 			$default_editor = WidgetFactory::create_from_uxon($page, $dialog->get_meta_object()->get_default_editor_uxon(), $dialog);
 			$dialog->add_widget($default_editor);
 		} else {
-			$dialog->add_widgets($this->create_editors($dialog));
+			// If there is no editor defined, create one: Add a panel to the dialog and generate editors for all attributes
+			// of the object in that panel.
+			// IDEA A separate method "create_object_editor" would probably be handy, once we have attribute groups and
+			// other information, that would enable us to build better editors (with tabs, etc.)
+			// FIXME Adding a form here is actually a workaround for wrong width calculation in the AdmnLTE template. It currently works only for forms there, not for panels.
+			$panel = WidgetFactory::create($page, 'Form', $dialog);
+			$panel->add_widgets($this->create_editors($panel));
+			$dialog->add_widget($panel);
 		}
-		
 		return $dialog;
 	}
 	

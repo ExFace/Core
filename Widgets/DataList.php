@@ -2,8 +2,9 @@
 namespace exface\Core\Widgets;
 use exface\Core\Interfaces\Widgets\iHaveTopToolbar;
 use exface\Core\Interfaces\Widgets\iHaveBottomToolbar;
+use exface\Core\Interfaces\Widgets\iFillContainers;
 
-class DataList extends Data implements iHaveTopToolbar, iHaveBottomToolbar {
+class DataList extends Data implements iHaveTopToolbar, iHaveBottomToolbar, iFillContainers {
 	private $hide_toolbar_top = false;
 	private $hide_toolbar_bottom = false;
 	

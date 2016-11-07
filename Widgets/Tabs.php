@@ -1,7 +1,9 @@
-<?php
-namespace exface\Core\Widgets;
+<?php namespace exface\Core\Widgets;
+
 use exface\Core\Exceptions\UiWidgetConfigException;
 use exface\Core\Factories\WidgetFactory;
+use exface\Core\Interfaces\Widgets\iFillContainers;
+
 /**
  * Tabs is a special container widget, that holds one or more Tab widgets allowing the
  * typical tabbed navigation between them. Tabs will typically show the contents of
@@ -10,10 +12,14 @@ use exface\Core\Factories\WidgetFactory;
  * @author Andrej Kabachnik
  *
  */
-class Tabs extends Container {
+class Tabs extends Container implements iFillContainers {
 	private $tab_position = 'top';
 	private $active_tab = 1;
 	
+	/**
+	 * 
+	 * @return Tab[]
+	 */
 	public function get_tabs() {
 		return $this->get_widgets();
 	}
@@ -31,6 +37,10 @@ class Tabs extends Container {
 		return $this->set_widgets($widget_or_uxon_array);
 	}
 	
+	/**
+	 * 
+	 * @return string
+	 */
 	public function get_tab_position() {
 		return $this->tab_position;
 	}
@@ -46,6 +56,10 @@ class Tabs extends Container {
 		}
 	}  
 	
+	/**
+	 * 
+	 * @return number
+	 */
 	public function get_active_tab() {
 		return $this->active_tab;
 	}
@@ -116,6 +130,29 @@ class Tabs extends Container {
 			$tab = $this->create_tab($widget);
 		}
 		return $this->add_widget($tab, $position);
+	}
+	
+	public function count_tabs(){
+		return parent::count_widgets();
+	}
+	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Widgets\Container::add_widget()
+	 */
+	public function add_widget(AbstractWidget $widget, $position = null){
+		if ($widget instanceof Tab){
+			return parent::add_widget($widget);
+		} else {
+			if ($this->count_tabs() == 0){
+				$page = $this->get_page();
+				$tab = WidgetFactory::create($page, 'Tab', $this);
+				$tab->set_caption('General');
+				parent::add_widget($tab);
+			}
+			return $this->get_tabs()[0]->add_widget($widget);
+		}
 	}
 }
 ?>
