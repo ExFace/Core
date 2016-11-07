@@ -11,7 +11,7 @@ class Dialog extends Panel implements iAmClosable {
 		parent::init();
 		$this->set_lazy_loading(true);
 		$this->set_button_widget_type('DialogButton');
-		if (count($this->get_widgets()) == 0){
+		if ($this->count_widgets() == 0){
 			$form = $this->get_page()->create_widget('Form', $this);
 			parent::add_widget($form);
 		}
@@ -31,10 +31,13 @@ class Dialog extends Panel implements iAmClosable {
 	 */
 	public function add_widget(AbstractWidget $widget, $position = NULL){
 		if ($widget instanceof Container){
-			parent::add_widget($widget, $position);
+			if ($widget->get_widget_type() == 'Container'){
+				return parent::add_widgets($widget->get_widgets());
+			}
+			return parent::add_widget($widget, $position);
 		} else {
 			$form = $this->get_widgets()[0];
-			$form->add_widget($widget, $position);
+			return $form->add_widget($widget, $position);
 		}
 	}
 	

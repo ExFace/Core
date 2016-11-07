@@ -76,7 +76,7 @@ class EditObjectDialog extends ShowDialog {
 		if ($dialog->get_meta_object()->get_default_editor_uxon() && !$dialog->get_meta_object()->get_default_editor_uxon()->is_empty()){
 			$page = $this->get_called_on_ui_page();
 			$default_editor = WidgetFactory::create_from_uxon($page, $dialog->get_meta_object()->get_default_editor_uxon(), $dialog);
-			$dialog->add_widgets($default_editor->get_widgets());
+			$dialog->add_widget($default_editor);
 		} else {
 			$dialog->add_widgets($this->create_editors($dialog));
 		}

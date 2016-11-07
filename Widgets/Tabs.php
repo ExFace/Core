@@ -19,6 +19,15 @@ class Tabs extends Container {
 	}
 	
 	public function set_tabs(array $widget_or_uxon_array) {
+		// If a UXON array is given, make sure every element has a widget type specified. If there is none,
+		// assume it's a tab.
+		if (is_array($widget_or_uxon_array)){
+			foreach ($widget_or_uxon_array as $tab){
+				if (!isset($tab->widget_type)){
+					$tab->widget_type = 'Tab';
+				}
+			}
+		}
 		return $this->set_widgets($widget_or_uxon_array);
 	}
 	
