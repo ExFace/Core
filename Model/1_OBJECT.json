@@ -144,7 +144,7 @@
         },
         {
             "CREATED_ON": "0000-00-00 00:00:00",
-            "MODIFIED_ON": "0000-00-00 00:00:00",
+            "MODIFIED_ON": "2016-11-07 17:27:37",
             "CREATED_BY_USER": "",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x31350000000000000000000000000000",
@@ -154,7 +154,7 @@
             "SHORT_DESCRIPTION": "",
             "PARENT_OBJECT": "",
             "DATA_ADDRESS_PROPS": "{}",
-            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Container\",\"widgets\":[{\"attribute_alias\":\"APP\"},{\"attribute_alias\":\"ALIAS\"},{\"attribute_alias\":\"LABEL\"},{\"attribute_alias\":\"PARENT_OBJECT\"},{\"attribute_alias\":\"DATA_SOURCE\"},{\"attribute_alias\":\"SHORT_DESCRIPTION\"},{\"attribute_alias\":\"DATA_ADDRESS\"},{\"attribute_alias\":\"DATA_ADDRESS_PROPS\"},{\"attribute_alias\":\"DEFAULT_EDITOR_UXON\",\"widget_type\":\"InputJson\",\"hide_caption\":true,\"width\":\"2\",\"height\":12}]}",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Panel\",\"widgets\":[{\"attribute_alias\":\"APP\"},{\"attribute_alias\":\"ALIAS\"},{\"attribute_alias\":\"LABEL\"},{\"attribute_alias\":\"PARENT_OBJECT\"},{\"attribute_alias\":\"DATA_SOURCE\"},{\"attribute_alias\":\"SHORT_DESCRIPTION\"},{\"attribute_alias\":\"DATA_ADDRESS\"},{\"attribute_alias\":\"DATA_ADDRESS_PROPS\"},{\"attribute_alias\":\"DEFAULT_EDITOR_UXON\",\"widget_type\":\"InputJson\",\"hide_caption\":true,\"width\":\"2\",\"height\":12}]}",
             "LABEL": "ExFace Meta Object",
             "ALIAS": "OBJECT",
             "DATA_ADDRESS": "exf_object"
@@ -195,7 +195,7 @@
         },
         {
             "CREATED_ON": "0000-00-00 00:00:00",
-            "MODIFIED_ON": "0000-00-00 00:00:00",
+            "MODIFIED_ON": "2016-11-07 17:49:46",
             "CREATED_BY_USER": "",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x32350000000000000000000000000000",
@@ -205,7 +205,7 @@
             "SHORT_DESCRIPTION": "",
             "PARENT_OBJECT": "",
             "DATA_ADDRESS_PROPS": "{}",
-            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Container\",\"widgets\":[{\"attribute_alias\":\"OBJECT\"},{\"attribute_alias\":\"ALIAS\"},{\"attribute_alias\":\"LABEL\"},{\"attribute_alias\":\"DATA_ADDRESS\"},{\"attribute_alias\":\"DATATYPE\"},{\"attribute_alias\":\"RELATED_OBJ\"},{\"attribute_alias\":\"FORMATTER\"},{\"attribute_alias\":\"RELATED_OBJ_ATTR\"},{\"attribute_alias\":\"DEFAULT_VALUE\"},{\"attribute_alias\":\"DISPLAYORDER\"},{\"attribute_alias\":\"FIXED_VALUE\"},{\"attribute_alias\":\"EDITABLEFLAG\"},{\"attribute_alias\":\"SORTERPOS\"},{\"attribute_alias\":\"REQUIREDFLAG\"},{\"attribute_alias\":\"SORTERDIR\"},{\"attribute_alias\":\"HIDDENFLAG\"},{\"attribute_alias\":\"UIDFLAG\"},{\"attribute_alias\":\"LABELFLAG\"},{\"attribute_alias\":\"DATA_ADDRESS_PROPS\"},{\"attribute_alias\":\"SHORT_DESCRIPTION\"},{\"attribute_alias\":\"DEFAULT_EDITOR_UXON\"}]}",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Tabs\",\"tabs\":[{\"caption\":\"General\",\"widgets\":[{\"attribute_alias\":\"OBJECT\"},{\"attribute_alias\":\"ALIAS\"},{\"attribute_alias\":\"LABEL\"},{\"attribute_alias\":\"DATA_ADDRESS\"},{\"attribute_alias\":\"DATATYPE\"},{\"attribute_alias\":\"RELATED_OBJ\"},{\"attribute_alias\":\"FORMATTER\"},{\"attribute_alias\":\"RELATED_OBJ_ATTR\"},{\"attribute_alias\":\"DEFAULT_VALUE\"},{\"attribute_alias\":\"DISPLAYORDER\"},{\"attribute_alias\":\"FIXED_VALUE\"},{\"attribute_alias\":\"EDITABLEFLAG\"},{\"attribute_alias\":\"SORTERPOS\"},{\"attribute_alias\":\"REQUIREDFLAG\"},{\"attribute_alias\":\"SORTERDIR\"},{\"attribute_alias\":\"HIDDENFLAG\"},{\"attribute_alias\":\"DATA_ADDRESS_PROPS\"},{\"attribute_alias\":\"SHORT_DESCRIPTION\"}]},{\"caption\":\"Advanced\",\"widgets\":[{\"attribute_alias\":\"UIDFLAG\"},{\"attribute_alias\":\"LABELFLAG\"}]},{\"caption\":\"Default Editor\",\"widgets\":[{\"attribute_alias\":\"DEFAULT_EDITOR_UXON\",\"hide_caption\":true,\"height\":12}]}]}",
             "LABEL": "ExFace Attribut",
             "ALIAS": "ATTRIBUTE",
             "DATA_ADDRESS": "exf_attribute"
