@@ -287,7 +287,7 @@ class Chart extends AbstractWidget implements iHaveButtons, iHaveTopToolbar, iHa
 	}
 	
 	public function get_width(){
-		if (!$this->width){
+		if (parent::get_width()->is_undefined()){
 			$this->set_width('max');
 		}
 		return parent::get_width();

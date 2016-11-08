@@ -4,6 +4,7 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\CommonLogic\Model\Object;
 use exface\Core\CommonLogic\WidgetLink;
 use exface\Core\Interfaces\Actions\ActionInterface;
+use exface\Core\CommonLogic\WidgetDimension;
 
 interface WidgetInterface extends ExfaceClassInterface {
 	

@@ -133,7 +133,7 @@ class DataTable extends Data implements iHaveTopToolbar, iHaveBottomToolbar, iFi
 	}  
 	
 	public function get_width(){
-		if (!$this->width){
+		if (parent::get_width()->is_undefined()){
 			$this->set_width('max');
 		}
 		return parent::get_width();
