@@ -25,11 +25,12 @@ class Dialog extends Panel implements iAmClosable {
 	 */
 	public function add_widget(AbstractWidget $widget, $position = NULL){
 		if ($widget instanceof iFillEntireContainer){
-			$container = $widget->get_alternative_container_for_orphaned_siblings();
-			foreach ($this->get_widgets() as $w){
-				$container->add_widget($w);
+			if ($container = $widget->get_alternative_container_for_orphaned_siblings()){
+				foreach ($this->get_widgets() as $w){
+					$container->add_widget($w);
+				}
+				parent::remove_widgets();
 			}
-			parent::remove_widgets();
 		} 
 		return parent::add_widget($widget, $position);
 	}

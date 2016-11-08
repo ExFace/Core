@@ -74,7 +74,7 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iHaveC
 	 */
 	public function set_caption($caption) {
 		// TODO get caption automatically from action model once it is created
-		$this->caption = $caption;
+		return parent::set_caption($caption);
 	}
 	
 	/**
