@@ -1,7 +1,7 @@
 <?php namespace exface\Core\Widgets;
 
 use exface\Core\Interfaces\Widgets\iAmClosable;
-use exface\Core\Interfaces\Widgets\iFillContainers;
+use exface\Core\Interfaces\Widgets\iFillEntireContainer;
 
 class Dialog extends Panel implements iAmClosable {
 	private $hide_close_button = false;
@@ -24,9 +24,10 @@ class Dialog extends Panel implements iAmClosable {
 	 * @see Panel::add_widget()
 	 */
 	public function add_widget(AbstractWidget $widget, $position = NULL){
-		if ($widget instanceof iFillContainers && $widget instanceof Container){
+		if ($widget instanceof iFillEntireContainer){
+			$container = $widget->get_alternative_container_for_orphaned_siblings();
 			foreach ($this->get_widgets() as $w){
-				$widget->add_widget($w);
+				$container->add_widget($w);
 			}
 			parent::remove_widgets();
 		} 

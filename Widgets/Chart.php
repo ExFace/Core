@@ -9,7 +9,6 @@ use exface\Core\Factories\WidgetLinkFactory;
 use exface\Core\CommonLogic\WidgetLink;
 use exface\Core\Interfaces\Widgets\iHaveButtons;
 use exface\Core\Interfaces\Widgets\iSupportLazyLoading;
-use exface\Core\Interfaces\Widgets\iFillContainers;
 
 class Chart extends AbstractWidget implements iHaveButtons, iHaveTopToolbar, iHaveBottomToolbar, iSupportLazyLoading {
 	/**

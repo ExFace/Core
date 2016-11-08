@@ -2,7 +2,7 @@
 
 use exface\Core\Exceptions\UiWidgetConfigException;
 use exface\Core\Factories\WidgetFactory;
-use exface\Core\Interfaces\Widgets\iFillContainers;
+use exface\Core\Interfaces\Widgets\iFillEntireContainer;
 
 /**
  * Tabs is a special container widget, that holds one or more Tab widgets allowing the
@@ -12,7 +12,7 @@ use exface\Core\Interfaces\Widgets\iFillContainers;
  * @author Andrej Kabachnik
  *
  */
-class Tabs extends Container implements iFillContainers {
+class Tabs extends Container implements iFillEntireContainer {
 	private $tab_position = 'top';
 	private $active_tab = 1;
 	
@@ -25,15 +25,6 @@ class Tabs extends Container implements iFillContainers {
 	}
 	
 	public function set_tabs(array $widget_or_uxon_array) {
-		// If a UXON array is given, make sure every element has a widget type specified. If there is none,
-		// assume it's a tab.
-		if (is_array($widget_or_uxon_array)){
-			foreach ($widget_or_uxon_array as $tab){
-				if (!isset($tab->widget_type)){
-					$tab->widget_type = 'Tab';
-				}
-			}
-		}
 		return $this->set_widgets($widget_or_uxon_array);
 	}
 	
@@ -79,6 +70,9 @@ class Tabs extends Container implements iFillContainers {
 		$widgets = array();
 		foreach ($widget_or_uxon_array as $w){
 			if ($w instanceof \stdClass || $w instanceof AbstractWidget){
+				if ($w instanceof \stdClass && !isset($w->widget_type)){
+					$w->widget_type = 'Tab';
+				}
 				// If we have a UXON or instantiated widget object, use the widget directly
 				$page = $this->get_page();
 				$widget = WidgetFactory::create_from_anything($page, $w, $this);
@@ -101,7 +95,12 @@ class Tabs extends Container implements iFillContainers {
 		return parent::set_widgets($widgets);
 	}
 	
-	private function create_tab(AbstractWidget $contents = null){
+	/**
+	 * Creates a tab and adds 
+	 * @param AbstractWidget $contents
+	 * @return \exface\Core\Interfaces\WidgetInterface
+	 */
+	protected function create_tab(AbstractWidget $contents = null){
 		// Create an empty tab
 		$widget = $this->get_page()->create_widget('Tab', $this);
 		
@@ -132,6 +131,10 @@ class Tabs extends Container implements iFillContainers {
 		return $this->add_widget($tab, $position);
 	}
 	
+	/**
+	 * Returns the number of currently contained tabs
+	 * @return number
+	 */
 	public function count_tabs(){
 		return parent::count_widgets();
 	}
@@ -145,14 +148,32 @@ class Tabs extends Container implements iFillContainers {
 		if ($widget instanceof Tab){
 			return parent::add_widget($widget);
 		} else {
-			if ($this->count_tabs() == 0){
-				$page = $this->get_page();
-				$tab = WidgetFactory::create($page, 'Tab', $this);
-				$tab->set_caption('General');
-				parent::add_widget($tab);
-			}
-			return $this->get_tabs()[0]->add_widget($widget);
+			return $this->get_default_tab()->add_widget($widget);
 		}
+		return $this;
+	}
+	
+	/**
+	 * 
+	 * @return Tab
+	 */
+	protected function get_default_tab(){
+		if ($this->count_tabs() == 0){
+			$tab = $this->create_tab();
+			// FIXME translate "General"
+			$tab->set_caption('General');
+			$this->add_widget($tab);
+		}
+		return $this->get_tabs()[0];
+	}
+	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\Widgets\iFillEntireContainer::get_alternative_container_for_orphaned_siblings()
+	 */
+	public function get_alternative_container_for_orphaned_siblings(){
+		return $this->get_default_tab();
 	}
 }
 ?>

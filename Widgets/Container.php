@@ -1,12 +1,24 @@
-<?php
-namespace exface\Core\Widgets;
-use exface\Core\Interfaces\Widgets\iHaveChildren;
+<?php namespace exface\Core\Widgets;
+
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\CommonLogic\Model\Attribute;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\CommonLogic\UxonObject;
-class Container extends AbstractWidget implements iHaveChildren {
+use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
+
+/**
+ * The Container is a basic widget, that contains other widgets - typically simple ones like inputs. The conainer itself is mostly invisible - it
+ * is just a technical grouping element. Use it, if you just need to place multiple widgets somewhere, where only one widget is expected. The
+ * Container is also a common base for many other wigdets: the Panel (a visible UI area, that contains other widgets), the Form, Tabs and Splits, etc.
+ * 
+ * In HTML-templates the container will either be a simple (invisible) <div> or completely invisible - thus, just a list of it's contents without
+ * any wrapper.
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
+class Container extends AbstractWidget implements iContainOtherWidgets {
 	private $widgets = array();
 	
 	public function prefill (\exface\Core\Interfaces\DataSheets\DataSheetInterface $data_sheet){
@@ -48,9 +60,9 @@ class Container extends AbstractWidget implements iHaveChildren {
 	}
 	
 	/**
-	 * @param AbstractWidget $widget
-	 * @param int $position
-	 * @return Container
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::add_widget()
 	 */
 	public function add_widget(AbstractWidget $widget, $position = NULL){
 		$widget->set_parent($this);
@@ -64,7 +76,8 @@ class Container extends AbstractWidget implements iHaveChildren {
 	
 	/**
 	 * 
-	 * @param AbstractWidget[] $widgets
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::add_widgets()
 	 */
 	public function add_widgets(array $widgets){
 		foreach ($widgets as $widget){
@@ -81,18 +94,29 @@ class Container extends AbstractWidget implements iHaveChildren {
 	}
 	
 	/**
-	 * Returns all widgets the panel contains as an array
-	 * @return AbstractWidget[]
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::get_widgets()
 	 */
 	public function get_widgets(){
 		return $this->widgets;
 	}
 	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::remove_widgets()
+	 */
 	public function remove_widgets(){
 		$this->widgets = array();
 		return $this;
 	}
 	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::set_widgets()
+	 */
 	public function set_widgets(array $widget_or_uxon_array){
 		if (!is_array($widget_or_uxon_array)) return false;
 		foreach ($widget_or_uxon_array as $w){
@@ -119,8 +143,9 @@ class Container extends AbstractWidget implements iHaveChildren {
 	}
 	
 	/**
-	 * Returns the current number of child widgets
-	 * @return int
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::count_widgets()
 	 */
 	public function count_widgets(){
 		return count($this->get_widgets());
@@ -128,8 +153,8 @@ class Container extends AbstractWidget implements iHaveChildren {
 	
 	/**
 	 * 
-	 * @param Attribute $attribute
-	 * @return AbstractWidget[]
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::get_widgets_by_attribute()
 	 */
 	public function get_widgets_by_attribute(Attribute $attribute){
 		$result = array();

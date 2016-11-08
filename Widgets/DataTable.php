@@ -3,9 +3,9 @@
 use exface\Core\Interfaces\Widgets\iHaveTopToolbar;
 use exface\Core\Interfaces\Widgets\iHaveBottomToolbar;
 use exface\Core\Factories\WidgetFactory;
-use exface\Core\Interfaces\Widgets\iFillContainers;
+use exface\Core\Interfaces\Widgets\iFillEntireContainer;
 
-class DataTable extends Data implements iHaveTopToolbar, iHaveBottomToolbar, iFillContainers {
+class DataTable extends Data implements iHaveTopToolbar, iHaveBottomToolbar, iFillEntireContainer {
 	
 	private $show_filter_row = false;
 	private $show_row_numbers = false;
@@ -222,6 +222,15 @@ class DataTable extends Data implements iHaveTopToolbar, iHaveBottomToolbar, iFi
 	
 	public function set_multi_select($value) {
 		$this->multi_select = $value;
+	}
+	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\Widgets\iFillEntireContainer::get_alternative_container_for_orphaned_siblings()
+	 */
+	public function get_alternative_container_for_orphaned_siblings(){
+		return null;
 	}
 }
 ?>

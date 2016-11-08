@@ -2,9 +2,9 @@
 namespace exface\Core\Widgets;
 use exface\Core\Interfaces\Widgets\iHaveTopToolbar;
 use exface\Core\Interfaces\Widgets\iHaveBottomToolbar;
-use exface\Core\Interfaces\Widgets\iFillContainers;
+use exface\Core\Interfaces\Widgets\iFillEntireContainer;
 
-class DataList extends Data implements iHaveTopToolbar, iHaveBottomToolbar, iFillContainers {
+class DataList extends Data implements iHaveTopToolbar, iHaveBottomToolbar, iFillEntireContainer {
 	private $hide_toolbar_top = false;
 	private $hide_toolbar_bottom = false;
 	
@@ -41,6 +41,15 @@ class DataList extends Data implements iHaveTopToolbar, iHaveBottomToolbar, iFil
 			$this->set_width('max');
 		}
 		return parent::get_width();
+	}
+	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\Widgets\iFillEntireContainer::get_alternative_container_for_orphaned_siblings()
+	 */
+	public function get_alternative_container_for_orphaned_siblings(){
+		return null;
 	}
 }
 ?>

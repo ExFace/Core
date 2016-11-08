@@ -1,12 +1,13 @@
-<?php
-namespace exface\Core\Widgets;
+<?php namespace exface\Core\Widgets;
+
 use exface\Core\Interfaces\Widgets\iHaveButtons;
 use exface\Core\Interfaces\Widgets\iCollapsible;
 use exface\Core\Interfaces\Widgets\iHaveIcon;
 use exface\Core\Interfaces\Widgets\iSupportLazyLoading;
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\Interfaces\Widgets\iFillContainers;
-class Panel extends Container implements iSupportLazyLoading, iHaveButtons, iHaveIcon, iCollapsible, iFillContainers {
+use exface\Core\Interfaces\Widgets\iFillEntireContainer;
+
+class Panel extends Container implements iSupportLazyLoading, iHaveButtons, iHaveIcon, iCollapsible, iFillEntireContainer {
 	
 	private $lazy_loading = false; // A panel will not be loaded via AJAX by default
 	private $lazy_loading_action = 'exface.Core.ShowWidget';
@@ -204,6 +205,19 @@ class Panel extends Container implements iSupportLazyLoading, iHaveButtons, iHav
 	public function has_buttons() {
 		if (count($this->buttons)) return true;
 		else return false;
+	}
+	
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * If the parent widget of a panel has other children (siblings of the panel), they should be moved to the panel itself, once it is
+	 * added to it's paren.
+	 * 
+	 * @see \exface\Core\Interfaces\Widgets\iFillEntireContainer::get_alternative_container_for_orphaned_siblings()
+	 * @return Panel
+	 */
+	public function get_alternative_container_for_orphaned_siblings(){
+		return $this;
 	}
 }
 ?>
