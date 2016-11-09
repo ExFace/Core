@@ -1,6 +1,5 @@
 <?php namespace exface\Core\CommonLogic\Model;
 
-use exface\Core\CommonLogic\Workbench;
 use exface\Core\CommonLogic\EntityList;
 use exface\Core\Factories\AttributeListFactory;
 

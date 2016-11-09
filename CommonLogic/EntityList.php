@@ -5,7 +5,6 @@ use exface\Core\CommonLogic\Workbench;
 use exface\Core\Exceptions\UxonParserError;
 use exface\Core\Interfaces\EntityListInterface;
 use exface\Core\Interfaces\NameResolverInterface;
-use exface\Core\Exceptions\exfError;
 use exface\Core\Exceptions\EntityListMergeError;
 use exface\Core\Interfaces\iCanBeCopied;
 use exface\Core\Exceptions\EntityListError;
