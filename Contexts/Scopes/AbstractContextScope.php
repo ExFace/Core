@@ -1,19 +1,19 @@
 <?php namespace exface\Core\Contexts\Scopes;
 
 use exface\Core\Exceptions\ContextError;
-use exface\Core\CommonLogic\Workbench;
 use exface\Core\Interfaces\Contexts\ContextScopeInterface;
 use exface\Core\Interfaces\Contexts\ContextInterface;
 use exface\Core\Contexts\Types\FilterContext;
 use exface\Core\Contexts\Types\ActionContext;
 use exface\Core\Contexts\Types\AbstractContext;
+use exface\Core\CommonLogic\Workbench;
 
 abstract class AbstractContextScope implements ContextScopeInterface {
 	private $active_contexts = array();
 	private $exface = NULL;
 	private $name = null;
 	
-	public function __construct(&$exface){
+	public function __construct(Workbench &$exface){
 		$this->exface = $exface;
 		$this->init();
 		$this->name = substr(get_class($this), (strrpos(get_class($this), '\\')+1));
