@@ -7,13 +7,13 @@ use exface\Core\Contexts\Types\FavoritesContext;
  * @author Andrej Kabachnik
  *
  */
-class FavoritesAdd extends SetContext {
+class FavoritesRemove extends FavoritesFetch {
 	
 	protected function init(){
 		parent::init();
 		$this->set_input_rows_min(1);
 		$this->set_input_rows_max(null);
-		$this->set_icon_name('pin');
+		$this->set_icon_name('star');
 		$this->set_context_type('Favorites');
 	}	
 
@@ -28,16 +28,12 @@ class FavoritesAdd extends SetContext {
 		$counter = 0;
 		$input = $this->get_input_data_sheet();
 		$object = $input->get_meta_object();
-		foreach ($input->get_rows() as $row){
-			$uid = $row[$object->get_uid_alias()];
-			$label = $row[$object->get_label_alias()];
-			if (!$label){
-				// TODO fetch label from data source with a simple data sheet
-			}
-			$this->get_context()->add_instance($object->get_id(), $uid, $label);
-			$counter++;
+		if ($input->is_empty()){
+			$this->get_context()->remove_instances_for_object_id($object->get_id());
+		} else {
+			// TODO remove single instances
 		}
-		$this->set_result_message($counter . ' objects added to favorites.');
+		$this->set_result($this->get_favorites_json());
 	}
 	
 	/**

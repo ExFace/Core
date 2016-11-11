@@ -2,6 +2,8 @@
 
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\Model\Object;
+use exface\Core\Factories\EntityListFactory;
+use exface\Core\Exceptions\ContextError;
 
 /**
  * The FavoritesContext provides a unified interface to store links to selected instances of meta objects in any context scope.
@@ -25,19 +27,20 @@ class FavoritesContext extends AbstractContext {
 		return $object;
 	}
 	
-	public function add_instance($meta_object_or_alias_or_id, $uid, $label = null){
-		$object = $this->get_object_from_input($meta_object_or_alias_or_id);
+	public function add_instance($object_id, $uid, $label = null){
+		$this->get_favorites_by_object_id($object_id)->add_instance($uid, $label);
+		/*$object = $this->get_object_from_input($meta_object_or_alias_or_id);
 		$this->favorites[$object->get_id()][$uid] = array(
 				$object->get_uid_alias() => $uid,
 				$object->get_label_alias() => $label,
 				$this->get_workbench()->get_config()->get_option('OBJECT_LABEL_ALIAS') => $label
 				
-		);
+		);*/
 		return $this;
 	}
 	
-	public function add_instances($meta_object_or_alias_or_id, array $instances){
-		$object = $this->get_object_from_input($meta_object_or_alias_or_id);
+	public function add_instances($object_id, array $instances){
+		$object = $this->get_workbench()->model()->get_object_by_id($object_id);
 		foreach ($instances as $instance){
 			if (is_array($instance) || $instance instanceof \stdClass){
 				$instance = (array) $instance;
@@ -46,43 +49,53 @@ class FavoritesContext extends AbstractContext {
 			} else {
 				$uid = $instance;
 			}
-			
-			$this->add_instance($meta_object_or_alias_or_id, $uid, $label);
+			$this->add_instance($object_id, $uid, $label);
 		}
 		return $this;
 	}
 	
 	/**
-	 * Returns a nested array with favorites. The structure is described below. If an object or it's id/alias is given, only the branch for
-	 * this object is returned.
-	 * Structure of the resulting array:
-	 * [
-	 * 		object_id1: [ 
-	 * 			uid1: [
-	 * 				UID_attribute_alias: uid1,
-	 * 				LABEL_attribute_alias: label1
-	 * 			],
-	 * 			uid2: [...]
-	 * 		],
-	 * 		object_id2: [...]
-	 * ]
-	 * 
-	 * IDEA: Deeply nested arrays are evil. Better to use UXON object or even a dedicated stack of favorites classes.
-	 * 
-	 * @param string|Object $meta_object_or_alias_or_id
-	 * @return array
+	 * @return FavoritesInstanceList[]
 	 */
-	public function get_favorites($meta_object_or_alias_or_id = null){
-		if ($meta_object_or_alias_or_id){
-			$object_id = $this->get_object_from_input($meta_object_or_alias_or_id)->get_id();
-			if (is_array($this->favorites[$object_id])){
-				$favs = $this->favorites[$object_id];
-			} else {
-				$favs = array();
-			}
-			return array($object_id => $favs);
+	public function get_favorites_all(){
+		return $this->favorites;
+	}
+	
+	/**
+	 * 
+	 * @param string $object_id
+	 * @return FavoritesInstanceList
+	 */
+	public function get_favorites_by_object_id($object_id){
+		if (!($this->favorites[$object_id] instanceof FavoritesInstanceList)){
+			$exface = $this->get_workbench();
+			$object = $exface->model()->get_object_by_id($object_id);
+			$this->favorites[$object_id] = new FavoritesInstanceList($exface, $object);
+		}
+		return $this->favorites[$object_id];
+	}
+	
+	/**
+	 * 
+	 * @param Object $object
+	 * @return FavoritesInstanceList
+	 */
+	public function get_favorites_by_object(Object $object){
+		return $this->get_favorites_by_object_id($object->get_id());
+	}
+	
+	/**
+	 * 
+	 * @param string $alias_with_namespace
+	 * @throws ContextError
+	 * @return FavoritesInstanceList
+	 */
+	public function get_favorites_by_object_alias($alias_with_namespace){
+		$object = $this->get_workbench()->model()->get_object_by_alias($alias_with_namespace);
+		if ($object){
+			return $this->get_favorites_by_object_id($object->get_id());
 		} else {
-			return $this->favorites;
+			throw new ContextError('Favorites requested for non-existant object alias "' . $alias_with_namespace . '"!');
 		}
 	}
 	
@@ -123,12 +136,22 @@ class FavoritesContext extends AbstractContext {
 	 */
 	public function export_uxon_object(){
 		$uxon = $this->get_workbench()->create_uxon_object();
-		foreach ($this->get_favorites() as $object_id => $favorites){
-			if (is_array($favorites) && count($favorites) > 0) {
-				$uxon->set_property($object_id, $favorites);
+		foreach ($this->get_favorites_all() as $object_id => $favorites){
+			if (!$favorites->is_empty()) {
+				$uxon->set_property($object_id, $favorites->export_uxon_object());
 			}
 		}
 		return $uxon;
+	}
+	
+	/**
+	 * 
+	 * @param string $object_id
+	 * @return \exface\Core\Contexts\Types\FavoritesContext
+	 */
+	public function remove_instances_for_object_id($object_id){
+		unset($this->favorites[$object_id]);
+		return $this;
 	}
 	
 }
