@@ -148,7 +148,7 @@ class Workbench {
 	 * @return AppInterface
 	 */
 	public function get_app($app_alias){
-		if (!$this->running_apps[$app_alias]){
+		if (!array_key_exists($app_alias, $this->running_apps)){
 			$this->running_apps[$app_alias] = AppFactory::create($this->create_name_resolver($app_alias, NameResolver::OBJECT_TYPE_APP));
 		}
 		return $this->running_apps[$app_alias];
