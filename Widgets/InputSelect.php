@@ -6,11 +6,12 @@ namespace exface\Core\Widgets;
  * lazy loading. If you have a large amount of data, use an InputCombo instead!
  */
 use exface\Core\Exceptions\UxonParserError;
+use exface\Core\Interfaces\Widgets\iSupportMultiSelect;
 /**
  * 
  * @author PATRIOT
  */
-class InputSelect extends Input { 
+class InputSelect extends Input implements iSupportMultiSelect { 
 	private $value_text = '';
 	private $multi_select = false;
 	private $selectable_options = array();
