@@ -3,10 +3,12 @@ namespace exface\Core\Widgets;
 use exface\Core\Interfaces\Widgets\iHaveTopToolbar;
 use exface\Core\Interfaces\Widgets\iHaveBottomToolbar;
 use exface\Core\Interfaces\Widgets\iFillEntireContainer;
+use exface\Core\Interfaces\Widgets\iSupportMultiSelect;
 
-class DataList extends Data implements iHaveTopToolbar, iHaveBottomToolbar, iFillEntireContainer {
+class DataList extends Data implements iHaveTopToolbar, iHaveBottomToolbar, iFillEntireContainer, iSupportMultiSelect {
 	private $hide_toolbar_top = false;
 	private $hide_toolbar_bottom = false;
+	private $multi_select = false;
 	
 	public function get_hide_toolbar_top() {
 		return $this->hide_toolbar_top;
@@ -51,5 +53,14 @@ class DataList extends Data implements iHaveTopToolbar, iHaveBottomToolbar, iFil
 	public function get_alternative_container_for_orphaned_siblings(){
 		return null;
 	}
+	
+	public function get_multi_select() {
+		return $this->multi_select;
+	}
+	
+	public function set_multi_select($value) {
+		$this->multi_select = $value;
+		return $this;
+	}	  
 }
 ?>
