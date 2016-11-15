@@ -60,7 +60,7 @@ class Panel extends Container implements iSupportLazyLoading, iHaveButtons, iHav
 		// contains alls system attributes of the base object, because they may be needed by the business logic
 		if ($button_widget->get_action() && $button_widget->get_action()->implements_interface('iModifyData')){
 			foreach ($this->get_meta_object()->get_attributes()->get_system() as $attr){
-				if (count($this->get_widgets_by_attribute($attr)) <= 0){
+				if (count($this->find_children_by_attribute($attr)) <= 0){
 					$widget = $this->get_page()->create_widget('InputHidden', $this);
 					$widget->set_attribute_alias($attr->get_alias());
 					$this->add_widget($widget);

@@ -2,6 +2,7 @@
 
 use exface\Core\Interfaces\Widgets\iAmClosable;
 use exface\Core\Interfaces\Widgets\iFillEntireContainer;
+use exface\Core\CommonLogic\Model\Attribute;
 
 class Dialog extends Panel implements iAmClosable {
 	private $hide_close_button = false;
@@ -114,5 +115,22 @@ class Dialog extends Panel implements iAmClosable {
 		$this->maximized = $value;
 		return $this;
 	}  
+	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Widgets\Container::find_children_by_attribute()
+	 */
+	public function find_children_by_attribute(Attribute $attribute){
+		// If the container has a single filling child, which is a container itself, search that child
+		if ($this->count_widgets() == 1){
+			$widgets = $this->get_widgets();
+			$first_widget = reset($widgets);
+			if  ($first_widget instanceof iFillEntireContainer && $first_widget instanceof iContainOtherWidgets){
+				return $first_widget->find_children_by_attribute($attribute);
+			}
+		}
+		return parent::find_children_by_attribute($attribute);
+	}
 }
 ?>

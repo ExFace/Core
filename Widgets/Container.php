@@ -6,6 +6,7 @@ use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
+use exface\Core\Interfaces\Widgets\iFillEntireContainer;
 
 /**
  * The Container is a basic widget, that contains other widgets - typically simple ones like inputs. The conainer itself is mostly invisible - it
@@ -154,15 +155,17 @@ class Container extends AbstractWidget implements iContainOtherWidgets {
 	/**
 	 * 
 	 * {@inheritDoc}
-	 * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::get_widgets_by_attribute()
+	 * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::find_children_by_attribute()
 	 */
-	public function get_widgets_by_attribute(Attribute $attribute){
+	public function find_children_by_attribute(Attribute $attribute){
 		$result = array();
+		
 		foreach ($this->widgets as $widget){
-			if ($widget instanceof iShowSingleAttribute && $widget->get_attribute()->get_id() == $attribute->get_id()){
+			if ($widget instanceof iShowSingleAttribute && $widget->get_attribute() && $widget->get_attribute()->get_id() == $attribute->get_id()){
 				$result[] = $widget;
 			}
 		}
+		
 		return $result;
 	}
 }

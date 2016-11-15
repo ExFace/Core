@@ -49,10 +49,12 @@ interface iContainOtherWidgets extends iHaveChildren {
 	public function count_widgets();
 
 	/**
-	 *
+	 * Returns an array of direct children, that show the given attribute. The array will contain only widgets implementing the interface 
+	 * iShowSingleAttribute. 
+	 *  
 	 * @param Attribute $attribute
 	 * @return WidgetInterface[]
 	 */
-	public function get_widgets_by_attribute(Attribute $attribute);
+	public function find_children_by_attribute(Attribute $attribute);
 	
 }
