@@ -110,11 +110,17 @@ class TimeStampingBehavior extends AbstractBehavior {
 			foreach ($updated_column->get_values() as $row_nr => $val){
 				$check_val = $check_column->get_cell_value($check_sheet->get_uid_column()->find_row_by_value($data_sheet->get_uid_column()->get_cell_value($row_nr)));
 				try {
+					$val_date = new \DateTime($val);
+					$check_date = new \DateTime($check_val);
+					/* FIXME These commented out lines were a workaround for a problem of oracle SQL delivering an other date format by default
+					 * (with milliseconds). This would cause the Check to fail, if the attribute with the timestamp had a formatter. The 
+					 * formatter would change the timestamp in the GUI, thus the comparison would naturally fail. This should not be
+					 * neccessary as long as timestamping attributes do not use formatters. The lines should be removed after some testing.
 					$format = $this->get_workbench()->get_config()->get_option('DEFAULT_DATETIME_FORMAT');
 					$v_date = new \DateTime($val);
 					$val_date = new \DateTime($v_date->format($format));
 					$c_date = new \DateTime($check_val);
-					$check_date = new \DateTime($c_date->format($format));
+					$check_date = new \DateTime($c_date->format($format));*/
 				} catch (\Exception $e){
 					$val_date = 0;
 					$check_date = 0;
