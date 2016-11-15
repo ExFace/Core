@@ -558,7 +558,6 @@ abstract class AbstractAction implements ActionInterface {
 	 * 
 	 * {@inheritDoc}
 	 * @see \exface\Core\Interfaces\ExfaceClassInterface::exface()
-	 * @return exface
 	 */
 	public function get_workbench(){
 		return $this->exface;

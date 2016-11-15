@@ -26,10 +26,10 @@ interface DataManagerInterface extends ExfaceClassInterface {
 	public function get_data_source($id, $data_connection_id_or_alias=NULL);
 	
 	/**
-	 * 
-	 * @param unknown $data_connector
-	 * @param unknown $config
-	 * @param unknown $data_connection_id
+	 * Establishes a data connection specified by the given alias
+	 * @param string $data_connector connection alias
+	 * @param array $config
+	 * @param string $data_connection_id
 	 * @return DataConnectionInterface
 	 */
 	public function connect($data_connector, $config, $data_connection_id);
@@ -41,7 +41,7 @@ interface DataManagerInterface extends ExfaceClassInterface {
 	
 	/**
 	 * Creates the data connection described in the given data source and returns the connector object
-	 * @param int $data_source_id
+	 * @param string $data_source_id
 	 * @return DataConnectionInterface
 	 */
 	public function get_data_connection($data_source_id, $data_connection_id_or_alias = NULL);

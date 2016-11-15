@@ -11,12 +11,21 @@ class DataManager implements DataManagerInterface {
 	private $cache;
 	private $exface;
 	
+	/**
+	 * 
+	 * @param \exface\Core\CommonLogic\Workbench $exface
+	 */
 	function __construct(\exface\Core\CommonLogic\Workbench &$exface){
 		$this->exface = $exface;
 		$this->active_sources = array();
 		$this->active_connections = array();		
 	}
 	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\DataSources\DataManagerInterface::get_data_source()
+	 */
 	function get_data_source($id, $data_connection_id_or_alias=NULL){
 		// first check the cache
 		if ($this->active_sources[$id . '-' . $data_connection_id_or_alias]) return $this->active_sources[$id . '-' . $data_connection_id_or_alias];		
@@ -28,7 +37,12 @@ class DataManager implements DataManagerInterface {
 		return $data_source;
 	}
 	
-	function connect($data_connector, $config, $data_connection_id){
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\DataSources\DataManagerInterface::connect()
+	 */
+	public function connect($data_connector, $config, $data_connection_id){
 		// check if connection exists (we only need a data_connection once!)
 		if ($data_connection_id && $this->active_connections[$data_connection_id]){
 			return $this->active_connections[$data_connection_id];
@@ -43,7 +57,9 @@ class DataManager implements DataManagerInterface {
 	}
 	
 	/**
-	 * Shut down all open connections
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\DataSources\DataManagerInterface::disconnect_all()
 	 */
 	function disconnect_all(){
 		foreach ($this->active_connections as $src){
@@ -52,8 +68,9 @@ class DataManager implements DataManagerInterface {
 	}
 	
 	/**
-	 * Creates the data connection described in the given data source and returns the connector object
-	 * @param int $data_source_id
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\DataSources\DataManagerInterface::get_data_connection()
 	 */
 	function get_data_connection($data_source_id, $data_connection_id_or_alias = NULL){
 		$data_source = $this->get_data_source($data_source_id, $data_connection_id_or_alias);
@@ -61,6 +78,7 @@ class DataManager implements DataManagerInterface {
 	}
 	
 	/**
+	 * @deprecated use QueryBuilderFactory instead!
 	 * Returns the default query builder for the given data source
 	 * @param unknown $data_source_id
 	 */
@@ -69,14 +87,31 @@ class DataManager implements DataManagerInterface {
 		return $data_source->get_query_builder_alias();
 	}
 	
-	function create_data_sheet(\exface\Core\CommonLogic\Model\Object $meta_object){
+	/**
+	 * @deprecated use DataSheetFactory instead
+	 * @param \exface\Core\CommonLogic\Model\Object $meta_object
+	 * @return \exface\Core\Interfaces\DataSheets\DataSheetInterface
+	 */
+	public function create_data_sheet(\exface\Core\CommonLogic\Model\Object $meta_object){
 		return DataSheetFactory::create_from_object($meta_object);
 	}
 	
+	/**
+	 * @deprecated use DataContext instead
+	 * @param unknown $path
+	 * @param unknown $id
+	 * @param unknown $value
+	 */
 	function set_cache($path, $id, $value){
 		$this->cache[$path][$id] = $value;
 	}
 	
+	/**
+	 * @deprecated use DataContext instead
+	 * @param unknown $path
+	 * @param unknown $id
+	 * @return unknown
+	 */
 	function get_cache($path, $id){
 		return $this->cache[$path][$id];
 	}
@@ -92,6 +127,11 @@ class DataManager implements DataManagerInterface {
 		return $transaction;
 	}
 	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\ExfaceClassInterface::get_workbench()
+	 */
 	function get_workbench(){
 		return $this->exface;
 	}
