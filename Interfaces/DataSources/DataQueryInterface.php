@@ -17,9 +17,7 @@ interface DataQueryInterface {
 	 * 
 	 * @return AbstractQueryBuilder
 	 */
-	public function get_query_builder(){
-		
-	}
+	public function get_query_builder();
 	
 }
 ?>
