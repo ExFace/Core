@@ -58,6 +58,16 @@ class Configuration implements ConfigurationInterface {
 	/**
 	 * 
 	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\ConfigurationInterface::set_option()
+	 */
+	public function set_option($key, $value_or_object_or_string){
+		$this->get_config_uxon()->set_property(mb_strtoupper($key), $value_or_object_or_string);
+		return $this;
+	}
+	
+	/**
+	 * 
+	 * {@inheritDoc}
 	 * @see \exface\Core\Interfaces\ExfaceClassInterface::get_workbench()
 	 */
 	public function get_workbench(){
@@ -86,10 +96,20 @@ class Configuration implements ConfigurationInterface {
 		return $this;
 	}
 	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::export_uxon_object()
+	 */
 	public function export_uxon_object(){
 		return $this->get_config_uxon();
 	}
 	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::import_uxon_object()
+	 */
 	public function import_uxon_object(UxonObject $uxon){
 		return $this->set_config_uxon($uxon);
 	}
