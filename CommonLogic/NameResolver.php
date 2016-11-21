@@ -37,6 +37,7 @@ class NameResolver extends AbstractExfaceClass implements NameResolverInterface 
 	const OBJECT_TYPE_TEMPLATE = 'Template';
 	const CLASS_NAMESPACE_SEPARATOR = '\\';
 	const NAMESPACE_SEPARATOR = '.';
+	const NORMALIZED_DIRECTORY_SEPARATOR = '/';
 	const APPS_NAMESPACE = '\\';
 	const APPS_DIRECTORY = 'Apps';
 	
@@ -78,13 +79,20 @@ class NameResolver extends AbstractExfaceClass implements NameResolverInterface 
 	public static function create_from_string($string, $object_type, Workbench &$exface){
 		$instance = new self($exface);
 		$instance->set_object_type($object_type);
-		if (mb_strpos($string, DIRECTORY_SEPARATOR) !== false && mb_strpos($string, '.php') !== false){
+		if ((mb_strpos($string, DIRECTORY_SEPARATOR) > 0 || mb_strpos($string, self::NORMALIZED_DIRECTORY_SEPARATOR) !== false) 
+		&& mb_strpos($string, '.php') !== false){
+			// If the string contains "/" or "\" (but the first character is not "\") and also contains ".php" - treat it as a file name
+			// In this case, we need to normalize it by replacing all "/" by the DIRECTORY_SEPARATOR of the current system, so all other
+			// code knows, it's a valid path.
 			$string = str_replace(array('.php', self::APPS_DIRECTORY . DIRECTORY_SEPARATOR), '', $string);
+			$string = str_replace(self::NORMALIZED_DIRECTORY_SEPARATOR, DIRECTORY_SEPARATOR, $string);
 			$instance->set_alias(self::get_alias_from_string($string, DIRECTORY_SEPARATOR));
 			$instance->set_namespace(self::get_namespace_from_string($string, DIRECTORY_SEPARATOR));
-		} elseif (mb_strpos($string, self::CLASS_NAMESPACE_SEPARATOR) !== false){
+		} elseif (mb_strpos($string, self::CLASS_NAMESPACE_SEPARATOR) === 0){
+			// If the first character of the string is "\" - it is a class name with a namespace
 			// TODO
 		} else {
+			// Otherwise treat the string as an alias
 			$instance->set_alias(self::get_alias_from_string($string));
 			$instance->set_namespace(self::get_namespace_from_string($string));
 		}

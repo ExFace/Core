@@ -27,6 +27,7 @@ class Workbench {
 	private $utils = null;
 	private $event_manager = null;
 	private $vendor_dir_path = '';
+	private $installation_path = null;
 	
 	private $request_params = array();
 	
@@ -250,7 +251,10 @@ class Workbench {
 	 * @return string
 	 */
 	public function get_installation_path(){
-		return $this->vendor_dir_path . DIRECTORY_SEPARATOR . '..';
+		if (is_null($this->installation_path)){
+			$this->installation_path = Filemanager::normalize($this->vendor_dir_path . DIRECTORY_SEPARATOR . '..', DIRECTORY_SEPARATOR);
+		}
+		return $this->installation_path;
 	}
 	
 	/**

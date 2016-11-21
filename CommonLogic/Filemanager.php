@@ -2,6 +2,7 @@
 
 use Symfony\Component\Filesystem\Filesystem;
 use exface\Core\Interfaces\ExfaceClassInterface;
+use Webmozart\PathUtil\Path;
 
 class Filemanager extends Filesystem implements ExfaceClassInterface {
 	const FOLDER_NAME_VENDOR = 'vendor';
@@ -118,6 +119,20 @@ class Filemanager extends Filesystem implements ExfaceClassInterface {
 					unlink($file); // delete file
 			}
 		}
+	}
+	
+	/**
+	 * Transforms "C:\wamp\www\exface\exface\vendor\exface\Core\CommonLogic\..\..\..\.." to "C:/wamp/www/exface/exface"
+	 * 
+	 * @param string $path
+	 * @return string
+	 */
+	public static function normalize($path, $directory_separator = '/'){
+		$path = Path::canonicalize($path);
+		if ($directory_separator !== '/'){
+			$path = str_replace('/', $directory_separator, $path);
+		}
+		return $path;
 	}
 }
 ?>
