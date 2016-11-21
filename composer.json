@@ -17,8 +17,9 @@
         "php": ">=5.4",
         "symfony/FileSystem": ">=2.8",
         "symfony/Event-Dispatcher": ">=2.8",
-        "jmikola/Wildcard-Event-Dispatcher": "1.*",
-        "myclabs/Deep-Copy": "1.*"
+        "jmikola/Wildcard-Event-Dispatcher": "~1.1.0",
+        "myclabs/Deep-Copy": "1.*",
+        "webmozart/path-util": "~2.3.0"
     },
     "extra": {
         "app": {
