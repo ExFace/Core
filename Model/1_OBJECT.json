@@ -345,6 +345,23 @@
             "LABEL": "Object Behavior",
             "ALIAS": "BEHAVIOR",
             "DATA_ADDRESS": "vendor\/*\/*\/Behaviors\/*.php"
+        },
+        {
+            "CREATED_ON": "2016-11-21 16:24:10",
+            "MODIFIED_ON": "2016-11-21 13:08:53",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e6b006ed6b9e4a8943e4b318306b9a",
+            "DATA_SOURCE": "0x11e6afd8d2fa47e78943e4b318306b9a",
+            "long_description": null,
+            "APP": "0x31000000000000000000000000000000",
+            "SHORT_DESCRIPTION": "",
+            "PARENT_OBJECT": "",
+            "DATA_ADDRESS_PROPS": "{\"use_vendor_path_as_base\":\"1\"}",
+            "DEFAULT_EDITOR_UXON": "{}",
+            "LABEL": "Widget",
+            "ALIAS": "WIDGET",
+            "DATA_ADDRESS": "vendor\/*\/*\/Widgets\/*.php"
         }
     ],
     "totals_rows": [],
