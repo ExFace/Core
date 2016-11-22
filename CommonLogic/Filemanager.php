@@ -127,12 +127,31 @@ class Filemanager extends Filesystem implements ExfaceClassInterface {
 	 * @param string $path
 	 * @return string
 	 */
-	public static function normalize($path, $directory_separator = '/'){
+	public static function path_normalize($path, $directory_separator = '/'){
 		$path = Path::canonicalize($path);
 		if ($directory_separator !== '/'){
 			$path = str_replace('/', $directory_separator, $path);
 		}
 		return $path;
 	}
+	
+	/**
+	 * Returns TRUE if the given string is an absolute path and FALSE otherwise
+	 * @param string $path
+	 * @return boolean
+	 */
+	public static function path_is_absolute($path){
+		return Path::isAbsolute($path);
+	}
+	
+	/**
+	 * Joins all paths given in the array and returns the resulting path
+	 * @param array $paths
+	 * @return string
+	 */
+	public static function path_join(array $paths){
+		return Path::join($paths);
+	}
+	
 }
 ?>

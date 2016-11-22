@@ -252,7 +252,7 @@ class Workbench {
 	 */
 	public function get_installation_path(){
 		if (is_null($this->installation_path)){
-			$this->installation_path = Filemanager::normalize($this->vendor_dir_path . DIRECTORY_SEPARATOR . '..', DIRECTORY_SEPARATOR);
+			$this->installation_path = Filemanager::path_normalize($this->vendor_dir_path . DIRECTORY_SEPARATOR . '..', DIRECTORY_SEPARATOR);
 		}
 		return $this->installation_path;
 	}
