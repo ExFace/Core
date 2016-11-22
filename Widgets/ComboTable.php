@@ -116,10 +116,15 @@ class ComboTable extends InputCombo implements iHaveChildren {
 		$table = $this->get_table();
 		$table_meta_object = $this->get_table()->get_meta_object();
 		if (!$this->get_text_column_id()){
+			// If there is no text column explicitly defined, take the label attribute as text column
 			if ($text_column = $this->get_table()->get_column_by_attribute_alias($this->get_text_attribute_alias())){
+				// If the table already has a lable column, use it
 				$this->set_text_column_id($text_column->get_id());
 			} else {
+				// If there is no label column yet, add it, but make it hidden, because the regular columns are what the user actually
+				// wants to see - they will probably already contain the label data, but, perhaps, split into multiple columns.
 				$text_column = $table->create_column_from_attribute($table_meta_object->get_attribute($this->get_text_attribute_alias()));
+				$text_column->set_hidden(true);
 				$this->set_text_column_id($text_column->get_id());
 				$table->add_column($text_column);
 			}
