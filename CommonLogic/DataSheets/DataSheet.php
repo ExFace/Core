@@ -114,6 +114,9 @@ class DataSheet implements DataSheetInterface {
 		// Now process the data and join rows
 		if (!is_null($left_key_column) && !is_null($right_key_column)){
 			foreach ($this->rows as $left_row => $row){
+				if (!$data_sheet->get_columns()->get($right_key_column)){
+					throw new DataSheetMergeError('Cannot find right key column "' . $right_key_column . '" for a left join!');
+				}
 				$right_row = $data_sheet->get_columns()->get($right_key_column)->find_row_by_value($row[$left_key_column]);
 				if ($right_row !== false){
 					foreach ($data_sheet->get_columns() as $new_col => $col_model){
