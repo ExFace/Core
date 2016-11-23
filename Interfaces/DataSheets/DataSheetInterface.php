@@ -27,7 +27,7 @@ interface DataSheetInterface extends ExfaceClassInterface, iCanBeCopied, iCanBeC
 	public function add_row(array $row);
 	
 	/**
-	 * Makes $this LEFT JOIN $data_sheet ON $this.$left_key_column = $data_sheet.right_key_column
+	 * Makes this data sheet LEFT JOIN the other data sheet ON $this.$left_key_column = $data_sheet.right_key_column
 	 * All joined columns are prefixed with the $column_prefix.
 	 * 
 	 * IDEA improve performance by checking, which data sheet has less rows and iterating through that one instead of alwasy the left one.
