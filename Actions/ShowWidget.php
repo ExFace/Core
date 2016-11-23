@@ -13,6 +13,7 @@ use exface\Core\Interfaces\Actions\iUsePrefillData;
 use exface\Core\CommonLogic\AbstractAction;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Factories\WidgetFactory;
+use exface\Core\Factories\WidgetLinkFactory;
 
 /**
  * The ShowWidget action is the base for all actions, that render widgets. 
@@ -24,6 +25,7 @@ class ShowWidget extends AbstractAction implements iShowWidget, iUsePrefillData 
 	private $widget_id = null;
 	private $prefill_with_filter_context = true;
 	private $prefill_with_input_data = true;
+	private $prefill_with_data_from_widget_link = null;
 	/** @var DataSheetInterface $prefill_data_sheet */
 	private $prefill_data_sheet = null;
 	private $filter_contexts = array();
@@ -93,6 +95,7 @@ class ShowWidget extends AbstractAction implements iShowWidget, iUsePrefillData 
 		}
 		
 		if ($prefill_data = $this->get_prefill_data_sheet()){
+			$prefill_data_merge_failed = false;
 			if (!$data_sheet || $data_sheet->is_empty()){
 				$data_sheet = $prefill_data->copy();
 			} else {
@@ -100,6 +103,7 @@ class ShowWidget extends AbstractAction implements iShowWidget, iUsePrefillData 
 					$data_sheet = $data_sheet->merge($prefill_data);
 				} catch (DataSheetMergeError $e){
 					// Do not use the prefill data if it cannot be merged with the input data
+					$prefill_data_merge_failed = true;
 				}
 			}
 		}
@@ -148,6 +152,9 @@ class ShowWidget extends AbstractAction implements iShowWidget, iUsePrefillData 
 		
 		if ($data_sheet){
 			$this->get_widget()->prefill($data_sheet);
+		}
+		if ($prefill_data_merge_failed){
+			$this->get_widget()->prefill($prefill_data);
 		}
 	}
 	
@@ -273,5 +280,16 @@ class ShowWidget extends AbstractAction implements iShowWidget, iUsePrefillData 
 		return $this->set_page_id($value);
 	}
 	
+	public function get_prefill_with_data_from_widget_link() {
+		return $this->prefill_with_data_from_widget_link;
+	}
+	
+	public function set_prefill_with_data_from_widget_link($string_or_widget_link) {
+		$exface = $this->get_workbench();
+		if ($string_or_widget_link){
+			$this->prefill_with_data_from_widget_link = WidgetLinkFactory::create_from_anything($exface, $string_or_widget_link);
+		}
+		return $this;
+	}	
 }
 ?>
