@@ -65,6 +65,11 @@ class UxonObject extends \stdClass implements \IteratorAggregate {
 	public static function from_array(array $uxon){
 		$result = array();
 		foreach ($uxon as $var => $val){
+			// If at some point we find a non-numeric key, we stop and try handling the array as an assotiative one
+			if (!is_numeric($var)){
+				return static::from_array_assotiative($uxon);
+			}
+			
 			if (is_array($val)){
 				$result[$var] = self::from_array($val);
 			} elseif ($val instanceof \stdClass){
@@ -72,6 +77,14 @@ class UxonObject extends \stdClass implements \IteratorAggregate {
 			} else {
 				$result[$var] = $val;
 			}
+		}
+		return $result;
+	}
+	
+	protected static function from_array_assotiative(array $uxon){
+		$result = new self;
+		foreach ($uxon as $var => $val){
+			$result->set_property($var, $val);
 		}
 		return $result;
 	}
