@@ -9,8 +9,9 @@ use exface\Core\Factories\WidgetLinkFactory;
 use exface\Core\CommonLogic\WidgetLink;
 use exface\Core\Interfaces\Widgets\iHaveButtons;
 use exface\Core\Interfaces\Widgets\iSupportLazyLoading;
+use exface\Core\Interfaces\Widgets\iShowDataSet;
 
-class Chart extends AbstractWidget implements iHaveButtons, iHaveTopToolbar, iHaveBottomToolbar, iSupportLazyLoading {
+class Chart extends AbstractWidget implements iShowDataSet, iHaveButtons, iHaveTopToolbar, iHaveBottomToolbar, iSupportLazyLoading {
 	/**
 	 * @uxon axes_x Array of x-axis definitions. At least one axis must be provided!
 	 * @var ChartAxis[]
@@ -144,9 +145,6 @@ class Chart extends AbstractWidget implements iHaveButtons, iHaveTopToolbar, iHa
 		return $this;
 	}
 	
-	/**
-	 * @return Data
-	 */
 	public function get_data() {
 		if (is_null($this->data)){
 			if ($link = $this->get_data_widget_link()){
@@ -254,10 +252,6 @@ class Chart extends AbstractWidget implements iHaveButtons, iHaveTopToolbar, iHa
 		return $this;
 	}
 	
-	/**
-	 * 
-	 * @return WidgetLink
-	 */
 	public function get_data_widget_link() {
 		return $this->data_widget_link;
 	}

@@ -28,6 +28,7 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren {
 	private $widget_type = null;
 	private $meta_object_id = null;
 	private $object_alias = null;
+	private $object_relation_path_to_parent = null;
 	private $relation_path_from_parent = null;
 	private $object_qualified_alias = null;
 	private $value = null;
@@ -488,6 +489,15 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren {
 		$this->set_object_alias($this->get_parent()->get_meta_object()->get_related_object($value)->get_alias_with_namespace());
 		return $this;
 	}
+	
+	public function get_object_relation_path_to_parent() {
+		return $this->object_relation_path_to_parent;
+	}
+	
+	public function set_object_relation_path_to_parent($value) {
+		$this->object_relation_path_to_parent = $value;
+		return $this;
+	}  
  
 	
 	/**
