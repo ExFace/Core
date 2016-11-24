@@ -3,6 +3,9 @@
 use exface\Core\Interfaces\Widgets\iSupportLazyLoading;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\UiWidgetConfigException;
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\Factories\WidgetFactory;
 
 /**
  * Widget to display diagrams like planograms, entity-relationships, organigrams, etc.
@@ -15,8 +18,9 @@ class Diagram extends Container implements iSupportLazyLoading {
 	private $lazy_loading_action = 'exface.Core.ReadData';
 	private $diagram_options_attribute_alias = null;
 	private $background_image = null;
+	private $background_image_attribute_alias = null;
 	private $scale = null;
-	private $object_filter_widget = null;
+	private $diagram_object_selector_widget = null;
 	
 	public function get_shapes() {
 		return $this->get_widgets();
@@ -58,6 +62,15 @@ class Diagram extends Container implements iSupportLazyLoading {
 		$this->background_image = $value;
 		return $this;
 	}
+	
+	public function get_background_image_attribute_alias() {
+		return $this->background_image_attribute_alias;
+	}
+	
+	public function set_background_image_attribute_alias($value) {
+		$this->background_image_attribute_alias = $value;
+		return $this;
+	}  
 	
 	/**
 	 * 
@@ -105,21 +118,33 @@ class Diagram extends Container implements iSupportLazyLoading {
 		return $this;
 	}
 	 
-	public function get_object_filter_widget(){
-		if (is_null($this->object_filter_widget)){
-			//$this->object_filter_widget = $this->get_page()->create_widget('Filter', $this);
+	public function get_diagram_object_selector_widget(){
+		if (is_null($this->diagram_object_selector_widget)){
+			$this->set_diagram_object_selector_widget($this->get_workbench()->create_uxon_object());
+		}
+		
+		return $this->diagram_object_selector_widget;
+	}
+	
+	public function set_diagram_object_selector_widget($widget_or_uxon){
+		if ($widget_or_uxon instanceof \stdClass){
+			//$this->diagram_object_selector_widget = $this->get_page()->create_widget('Filter', $this);
 			/* @var $widget \exface\Core\Widgets\ComboTable */
-			$widget = $this->get_page()->create_widget('ComboTable', $this);
+			
+			$widget_or_uxon->widget_type = $widget_or_uxon->widget_type ? $widget_or_uxon->widget_type : 'ComboTable';
+			$widget = $this->get_page()->create_widget($widget_or_uxon->widget_type, $this, $widget_or_uxon);
 			$widget->set_meta_object_id($this->get_meta_object()->get_id());
 			$widget->set_attribute_alias($this->get_meta_object()->get_uid_alias());
 			$widget->set_table_object_alias($this->get_meta_object()->get_alias_with_namespace());
 			$widget->set_caption($this->get_meta_object()->get_name());
 			$widget->set_disabled(false);
-			//$this->object_filter_widget->set_widget($widget);
-			$this->object_filter_widget = $widget;
+			//$this->diagram_object_selector_widget->set_widget($widget);
+		} elseif ($widget_or_uxon instanceof WidgetInterface){
+			$widget = $widget_or_uxon;
+		} else {
+			throw new UiWidgetConfigException('');
 		}
-		
-		return $this->object_filter_widget;
+		$this->diagram_object_selector_widget = $widget;
 	}
 	
 	/**
@@ -128,8 +153,20 @@ class Diagram extends Container implements iSupportLazyLoading {
 	 * @see \exface\Core\Widgets\Container::get_children()
 	 */
 	public function get_children(){
-		return array_merge(parent::get_children(), array($this->get_object_filter_widget()));
+		return array_merge(parent::get_children(), array($this->get_diagram_object_selector_widget()));
 	}
+	
+	public function prepare_data_sheet_to_prefill(DataSheetInterface $data_sheet = null){
+		$data_sheet = parent::prepare_data_sheet_to_prefill($data_sheet);
+		if ($data_sheet->get_meta_object()->is($this->get_meta_object())){
+			
+			if ($attr = $this->get_meta_object()->get_attribute($this->get_background_image_attribute_alias())){
+				$data_sheet->get_columns()->add_from_attribute($attr);
+			}
+		}
+		return $data_sheet;
+	}
+
 }
 
 ?>

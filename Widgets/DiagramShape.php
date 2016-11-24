@@ -21,6 +21,7 @@ class DiagramShape extends Panel implements iShowDataSet, iHaveBorders {
 	const SHAPE_DONUT = 'donut';
 	
 	private $shape_options_attribute_alias = null;
+	private $shape_caption_attribute_alias = null;
 	private $shape_type = SHAPE_TYPE_POLYGON;
 	private $coordinates = null;
 	private $background_color = null;
@@ -139,7 +140,12 @@ class DiagramShape extends Panel implements iShowDataSet, iHaveBorders {
 	public function prepare_data_sheet_to_read(DataSheetInterface $data_sheet = null){
 		$data_sheet = parent::prepare_data_sheet_to_read($data_sheet);
 		if ($this->get_meta_object()->is($data_sheet->get_meta_object()) && $this->get_shape_options_attribute()){
-			$data_sheet->get_columns()->add_from_attribute($this->get_shape_options_attribute());
+			if ($this->get_shape_options_attribute_alias()){
+				$data_sheet->get_columns()->add_from_attribute($this->get_shape_options_attribute());
+			}
+			if ($this->get_shape_caption_attribute_alias()){
+				$data_sheet->get_columns()->add_from_attribute($this->get_shape_caption_attribute());
+			}
 			
 		} else {
 			// TODO
@@ -162,6 +168,29 @@ class DiagramShape extends Panel implements iShowDataSet, iHaveBorders {
 	public function get_diagram(){
 		return $this->get_parent();
 	}
+	
+	public function get_shape_caption_attribute_alias() {
+		return $this->shape_caption_attribute_alias;
+	}
+	
+	/**
+	 * 
+	 * @return \exface\Core\CommonLogic\Model\Attribute
+	 */
+	public function get_shape_caption_attribute(){
+		return $this->get_meta_object()->get_attribute($this->get_shape_caption_attribute_alias());
+	}
+	
+	/**
+	 * 
+	 * @param string $value
+	 * @return \exface\Core\Widgets\DiagramShape
+	 */
+	public function set_shape_caption_attribute_alias($value) {
+		$this->shape_caption_attribute_alias = $value;
+		return $this;
+	}
+
 }
 
 ?>
