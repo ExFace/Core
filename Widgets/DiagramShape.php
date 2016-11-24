@@ -147,20 +147,12 @@ class DiagramShape extends Panel implements iShowDataSet, iHaveBorders {
 		return $data_sheet;
 	}
 	
+	/**
+	 * 
+	 * @return \exface\Core\CommonLogic\Model\RelationPath
+	 */
 	public function get_relation_path_to_diagram_object(){
-		$relation_path = new RelationPath($this->get_meta_object());
-		var_dump($this->get_meta_object()->get_alias(), $this->get_diagram()->get_meta_object()->get_alias());
-		if (!$this->get_meta_object()->is($this->get_diagram()->get_meta_object())){
-
-			
-			
-			if ($path = $this->get_object_relation_path_to_parent()){
-				$relation_path->append_relations_from_string_path($path);
-			} elseif ($rel = $this->get_meta_object()->find_relation($this->get_diagram()->get_meta_object()->get_id())){
-				$relation_path->append_relation($rel);
-			}
-		}
-		return $relation_path;
+		return $this->get_object_relation_path_to_parent();
 	}
 		
 	/**

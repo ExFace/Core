@@ -5,6 +5,7 @@ use exface\Core\CommonLogic\Model\Object;
 use exface\Core\CommonLogic\WidgetLink;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\CommonLogic\WidgetDimension;
+use exface\Core\CommonLogic\Model\RelationPath;
 
 interface WidgetInterface extends ExfaceClassInterface {
 	
@@ -188,15 +189,38 @@ interface WidgetInterface extends ExfaceClassInterface {
 	public function set_object_alias($qualified_alias_with_namespace);
 	
 	/**
-	 * @return string
+	 * Returns the relation path from the object of the parent widget to the object of this widget. If both widgets are based on the
+	 * same object or no valid path can be found, an empty path will be returned.
+	 * 
+	 * @return RelationPath
 	 */
-	public function get_relation_path_from_parent();
+	public function get_object_relation_path_from_parent();
 	
 	/**
 	 * 
-	 * @param string $value
+	 * @param string $string
 	 */
-	public function set_relation_path_from_parent($value);
+	public function set_object_relation_path_from_parent($string);
+	
+	/**
+	 * Returns the relation path from the object of this widget to the object of its parent widget. If both widgets are based on the
+	 * same object or no valid path can be found, an empty path will be returned.
+	 * 
+	 * @return RelationPath
+	 */
+	public function get_object_relation_path_to_parent();
+	
+	/**
+	 * 
+	 * @param string $string
+	 */
+	public function set_object_relation_path_to_parent($string);
+	
+	/**
+	 * Returns TRUE if the meta object of this widget was not set explicitly but inherited from it's parent and FALSE otherwise.
+	 * @return boolean
+	 */
+	public function is_object_inherited_from_parent();
 	
 	/**
 	 * Returns the parent widget

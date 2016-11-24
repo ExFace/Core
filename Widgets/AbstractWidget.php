@@ -14,6 +14,8 @@ use exface\Core\CommonLogic\Model\Object;
 use exface\Core\Factories\WidgetDimensionFactory;
 use exface\Core\Interfaces\UiPageInterface;
 use exface\Core\Exceptions\UiWidgetInvalidIdError;
+use exface\Core\CommonLogic\Model\RelationPath;
+use exface\Core\Factories\RelationPathFactory;
 
 /**
  * Basic ExFace widget
@@ -29,7 +31,7 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren {
 	private $meta_object_id = null;
 	private $object_alias = null;
 	private $object_relation_path_to_parent = null;
-	private $relation_path_from_parent = null;
+	private $object_relation_path_from_parent = null;
 	private $object_qualified_alias = null;
 	private $value = null;
 	private $disabled = NULL;
@@ -473,31 +475,110 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren {
 	/**
 	 * 
 	 * {@inheritDoc}
-	 * @see \exface\Core\Interfaces\WidgetInterface::get_relation_path_from_parent()
+	 * @see \exface\Core\Interfaces\WidgetInterface::get_object_relation_path_from_parent()
 	 */
-	public function get_relation_path_from_parent() {
-		return $this->relation_path_from_parent;
+	public function get_object_relation_path_from_parent() {
+		if (is_null($this->object_relation_path_from_parent)){
+			// If there is no relation to the parent set yet, see if there is a parent.
+			// If not, do not do anything - maybe there will be some parent when the method is called the next time
+			if ($this->get_parent()){
+				// If there is no relation path yet, create one
+				$this->object_relation_path_from_parent = RelationPathFactory::create_for_object($this->get_parent()->get_meta_object());
+				// If the parent is based on another object, search for a relation to it - append it to the path if found
+				if (!$this->get_parent()->get_meta_object()->is($this->get_meta_object())){
+					if ($this->object_relation_path_to_parent){
+						// If we already know the path from this widgets object to the parent, just reverse it
+						$this->object_relation_path_from_parent = $this->get_object_relation_path_to_parent()->reverse();
+					} elseif ($rel = $this->get_parent()->get_meta_object()->find_relation($this->get_meta_object_id(), true)){
+						// Otherwise, try to find a path automatically 
+						$this->object_relation_path_from_parent->append_relation($rel);
+					}
+				}
+			}
+		} elseif (!($this->object_relation_path_from_parent instanceof RelationPath)){
+			$this->object_relation_path_from_parent = RelationPathFactory::create_from_string($this->get_parent()->get_meta_object(), $this->object_relation_path_from_parent);
+		} else {
+			// If there is a relation path already built, check if it still fits to the current parent widget (which might have changed)
+			// If not, removed the cached path and runt the getter again to try to find a new path
+			if (!$this->get_parent()->get_meta_object()->is($this->object_relation_path_from_parent->get_start_object())){
+				$this->object_relation_path_from_parent = null;
+				return $this->get_object_relation_path_from_parent();
+			}
+		}
+		return $this->object_relation_path_from_parent;
 	}
 	
 	/**
 	 * 
 	 * {@inheritDoc}
-	 * @see \exface\Core\Interfaces\WidgetInterface::set_relation_path_from_parent()
+	 * @see \exface\Core\Interfaces\WidgetInterface::set_object_relation_path_from_parent()
 	 */
-	public function set_relation_path_from_parent($value) {
-		$this->relation_path_from_parent = $value;
-		$this->set_object_alias($this->get_parent()->get_meta_object()->get_related_object($value)->get_alias_with_namespace());
+	public function set_object_relation_path_from_parent($string) {
+		$this->object_relation_path_from_parent = $string;
+		if ($this->is_object_inherited_from_parent()){
+			$this->set_object_alias($this->get_parent()->get_meta_object()->get_related_object($string)->get_alias_with_namespace());
+		}
 		return $this;
 	}
 	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\WidgetInterface::is_object_inherited_from_parent()
+	 */
+	public function is_object_inherited_from_parent(){
+		if (is_null($this->object_qualified_alias) && is_null($this->meta_object_id)){
+			return false;
+		} else {
+			return true;
+		}
+	}
+	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\WidgetInterface::get_object_relation_path_to_parent()
+	 */
 	public function get_object_relation_path_to_parent() {
+		if (is_null($this->object_relation_path_to_parent)){
+			// If there is no relation to the parent set yet, see if there is a parent. 
+			// If not, do not do anything - maybe there will be some parent when the method is called the next time
+			if ($this->get_parent()){
+				// If there is no relation path yet, create one
+				$this->object_relation_path_to_parent = RelationPathFactory::create_for_object($this->get_meta_object());
+				// If the parent is based on another object, search for a relation to it - append it to the path if found
+				if (!$this->get_parent()->get_meta_object()->is($this->get_meta_object())){
+					if ($this->object_relation_path_from_parent){
+						// If we already know the path from the parents object to this widget, just reverse it
+						$this->object_relation_path_to_parent = $this->get_object_relation_path_to_parent()->reverse();
+					} elseif ($rel = $this->get_meta_object()->find_relation($this->get_parent()->get_meta_object_id(), true)){
+						$this->object_relation_path_to_parent->append_relation($rel);
+					}
+				}
+			}
+		} elseif (!($this->object_relation_path_to_parent instanceof RelationPath)){
+			// If there is a path, but it is a string (e.g. it was just set via UXON import), create an object from it
+			$this->object_relation_path_to_parent = RelationPathFactory::create_from_string($this->get_meta_object(), $this->object_relation_path_to_parent);
+		} else {
+			// If there is a relation path already built, check if it still fits to the current parent widget (which might have changed)
+			// If not, removed the cached path and runt the getter again to try to find a new path
+			if (!$this->get_parent()->get_meta_object()->is($this->object_relation_path_to_parent->get_end_object())){
+				$this->object_relation_path_to_parent = null;
+				return $this->get_object_relation_path_to_parent();
+			}
+		}
 		return $this->object_relation_path_to_parent;
 	}
 	
-	public function set_object_relation_path_to_parent($value) {
-		$this->object_relation_path_to_parent = $value;
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\WidgetInterface::set_object_relation_path_to_parent()
+	 */
+	public function set_object_relation_path_to_parent($string) {
+		$this->object_relation_path_to_parent = $string;
 		return $this;
-	}  
+	}
  
 	
 	/**
