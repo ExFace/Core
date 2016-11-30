@@ -36,7 +36,7 @@ class UpdateData extends SaveData implements iUpdateData, iCanBeUndone {
 		// TODO Check here, if the last edit timestamp had changend!
 		$this->set_affected_rows($data_sheet->data_update());
 		$this->set_result_data_sheet($data_sheet);
-		$this->set_result_message($this->get_affected_rows() . ' entries updated');
+		$this->set_result_message($this->get_app()->get_translator()->translate_plural('ACTION.UPDATEDATA.RESULT', $this->get_affected_rows(), array('%number%' => $this->get_affected_rows())));
 	}
 	
 	public function undo(){

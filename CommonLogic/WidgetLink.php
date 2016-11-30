@@ -153,7 +153,7 @@ class WidgetLink implements WidgetLinkInterface {
 	 * @return UxonObject
 	 */
 	public function get_widget_uxon(){
-		$resource = $this->exface->cms()->get_page($this->get_page_id());
+		$resource = $this->exface->cms()->get_page_contents($this->get_page_id());
 		$uxon = UxonObject::from_json($resource);
 		if ($this->get_widget_id() && $uxon->widget_id != $this->get_widget_id()){
 			$uxon = $this->find_widget_id_in_uxon($uxon, $this->get_widget_id());

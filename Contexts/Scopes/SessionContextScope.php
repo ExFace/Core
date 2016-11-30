@@ -14,6 +14,7 @@ use exface\Core\Interfaces\Contexts\ContextInterface;
 class SessionContextScope extends AbstractContextScope {
 	
 	private $session_id = null;
+	private $session_locale = null;
 	
 	/**
 	 * Since the session context ist stored in the $_SESSION, init() makes sure, the session is available and tries to
@@ -194,5 +195,26 @@ class SessionContextScope extends AbstractContextScope {
 		return $this;
 	}
 	
+	/**
+	 * Returns the locale used in the current session. If no locale was set for the session explicitly, the locale from 
+	 * the user context scope is returned.
+	 * @return string
+	 */
+	public function get_session_locale() {
+		if (is_null($this->session_locale)){
+			return $this->get_context_manager()->get_scope_user()->get_user_locale();
+		}
+		return $this->session_locale;
+	}
+	
+	/**
+	 * Sets the locale to be used in the current session
+	 * @param string $value
+	 * @return SessionContextScope
+	 */
+	public function set_session_locale($value) {
+		$this->session_locale = $value;
+		return $this;
+	}	
 }
 ?>

@@ -1,9 +1,11 @@
 <?php namespace exface\Core\Contexts\Scopes;
 
 use exface\Core\Interfaces\Contexts\ContextInterface;
+use exface\Core\Factories\DataSheetFactory;
 
 class UserContextScope extends AbstractContextScope {
 	private $user_data = null;
+	private $user_locale = null;
 	
 	public function get_user_name(){
 		return $this->get_workbench()->cms()->get_user_name();
@@ -48,7 +50,7 @@ class UserContextScope extends AbstractContextScope {
 	protected function get_user_data(){
 		if (is_null($this->user_data)){
 			$user_object = $this->get_workbench()->model()->get_object('exface.Core.USER');
-			$ds = $this->get_workbench()->data()->create_data_sheet($user_object);
+			$ds = DataSheetFactory::create_from_object($user_object);
 			$ds->get_columns()->add_from_expression($user_object->get_uid_alias());
 			$ds->get_columns()->add_from_expression('USERNAME');
 			$ds->get_columns()->add_from_expression('FIRST_NAME');
@@ -58,6 +60,27 @@ class UserContextScope extends AbstractContextScope {
 			$this->user_data = $ds;
 		}
 		return $this->user_data;
+	}
+	
+	/**
+	 * Returns the locale, set for the current user
+	 * @return string
+	 */
+	public function get_user_locale(){
+		if (is_null($this->user_locale)){
+			$this->set_user_locale($this->get_workbench()->CMS()->get_user_locale());
+		}
+		return $this->user_locale;
+	}
+	
+	/**
+	 * Sets the locale for the current user
+	 * @param string $string
+	 * @return \exface\Core\Contexts\Scopes\UserContextScope
+	 */
+	public function set_user_locale($string){
+		$this->user_locale = $string;
+		return $this;
 	}
 }
 ?>

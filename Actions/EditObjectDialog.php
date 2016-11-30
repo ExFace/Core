@@ -71,7 +71,7 @@ class EditObjectDialog extends ShowDialog {
 		/* @var $save_button \exface\Core\Widgets\Button */
 		$save_button = $page->create_widget('DialogButton', $dialog);
 		$save_button->set_action_alias($this->get_save_action_alias());
-		$save_button->set_caption("Speichern");
+		$save_button->set_caption($this->get_app()->get_translator()->translate("ACTION.EDITOBJECTDIALOG.SAVE_BUTTON"));
 		$save_button->set_visibility(EXF_WIDGET_VISIBILITY_PROMOTED);
 		$dialog->add_button($save_button);
 		if ($dialog->get_meta_object()->get_default_editor_uxon() && !$dialog->get_meta_object()->get_default_editor_uxon()->is_empty()){

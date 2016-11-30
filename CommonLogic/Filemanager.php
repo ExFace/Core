@@ -9,6 +9,7 @@ class Filemanager extends Filesystem implements ExfaceClassInterface {
 	const FOLDER_NAME_USER_DATA = 'UserData';
 	const FOLDER_NAME_CACHE = 'cache';
 	const FOLDER_NAME_CONFIG = 'config';
+	const FOLDER_NAME_TRANSLATIONS = 'translations';
 	
 	private $exface = null;
 	private $path_to_cache_folder = null;
@@ -64,7 +65,7 @@ class Filemanager extends Filesystem implements ExfaceClassInterface {
 	}
 	
 	/**
-	 * Returns the absolute path to main config folder (e.g. c:\xampp\htdocs\exface\exface\config)
+	 * Returns the absolute path to the installation specific config folder (e.g. c:\xampp\htdocs\exface\exface\config)
 	 * @return string
 	 */
 	public function get_path_to_config_folder(){
@@ -75,6 +76,20 @@ class Filemanager extends Filesystem implements ExfaceClassInterface {
 			}
 		}
 		return $this->path_to_config_folder;
+	}
+	
+	/**
+	 * Returns the absolute path to the installation specific translations folder (e.g. c:\xampp\htdocs\exface\exface\translations)
+	 * @return string
+	 */
+	public function get_path_to_translations_folder(){
+		if (is_null($this->path_to_translations_folder)){
+			$this->path_to_translations_folder = $this->get_path_to_base_folder() . DIRECTORY_SEPARATOR . static::FOLDER_NAME_TRANSLATIONS;
+			if (!is_dir($this->path_to_translations_folder)){
+				mkdir($this->path_to_translations_folder);
+			}
+		}
+		return $this->path_to_translations_folder;
 	}
 	
 	/**

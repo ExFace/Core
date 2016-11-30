@@ -122,9 +122,9 @@ class ActionTestContext extends AbstractContext {
 				// Create a test case if needed
 				if (!$this->get_recording_test_case_id()){
 					$test_case_data = $this->get_workbench()->data()->create_data_sheet($this->get_workbench()->model()->get_object('EXFACE.ACTIONTEST.TEST_CASE'));
-					$test_case_data->set_cell_value('NAME', 0, $this->create_test_case_name($this->get_workbench()->cms()->get_page_name($page_id)));
+					$test_case_data->set_cell_value('NAME', 0, $this->create_test_case_name($this->get_workbench()->cms()->get_page_title($page_id)));
 					$test_case_data->set_cell_value('START_PAGE_ID', 0, $page_id);
-					$test_case_data->set_cell_value('START_PAGE_NAME', 0, $this->get_workbench()->cms()->get_page_name($page_id));
+					$test_case_data->set_cell_value('START_PAGE_NAME', 0, $this->get_workbench()->cms()->get_page_title($page_id));
 					$test_case_data->set_cell_value('START_OBJECT', 0, $action->get_input_data_sheet()->get_meta_object()->get_id());
 					$test_case_data->data_create();
 					$this->set_recording_test_case_id($test_case_data->get_cell_value($test_case_data->get_meta_object()->get_uid_alias(), 0));
@@ -156,7 +156,7 @@ class ActionTestContext extends AbstractContext {
 				
 				// Add page attributes
 				$data_sheet->set_cell_value('PAGE_ID', 0, $page_id);
-				$data_sheet->set_cell_value('PAGE_NAME', 0, $this->get_workbench()->cms()->get_page_name($page_id));
+				$data_sheet->set_cell_value('PAGE_NAME', 0, $this->get_workbench()->cms()->get_page_title($page_id));
 				$data_sheet->set_cell_value('OBJECT', 0, $action->get_input_data_sheet()->get_meta_object()->get_id());
 				$data_sheet->set_cell_value('TEMPLATE_ALIAS', 0, $action->get_template_alias());
 				

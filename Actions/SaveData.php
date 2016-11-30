@@ -22,7 +22,7 @@ class SaveData extends AbstractAction implements iModifyData, iCanBeUndone {
 		$data_sheet = $this->get_input_data_sheet()->copy();
 		$this->set_affected_rows($data_sheet->data_save());
 		$this->set_result_data_sheet($data_sheet);
-		$this->set_result_message($this->get_affected_rows() . ' entries created or updated');
+		$this->set_result_message($this->get_app()->get_translator()->translate_plural('ACTION.SAVEDATA.RESULT', $this->get_affected_rows(), array('%number%' => $this->get_affected_rows())));
 	}
 	
 	protected function get_affected_rows() {

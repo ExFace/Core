@@ -1,0 +1,9 @@
+{
+	"ACTION.UPDATEDATA.RESULT": "%number% row updated.|%number% rows updated.",
+	"ACTION.SAVEDATA.RESULT": "%number% row created or updated.|%number% rows created or updated.",
+	"ACTION.CREATEDATA.RESULT": "%number% row created.|%number% rows created.",
+	"ACTION.CUSTOMDATAQUERY.RESULT": "%number% object affected.|%number% objects affected.",
+	"ACTION.DELETEDATA.RESULT": "%number% item deleted.|%number% items deleted.",
+	"ACTION.EDITOBJECTDIALOG.SAVE_BUTTON": "Save",
+	"ACTION.SHOWDIALOG.CANCEL_BUTTON": "Cancel"
+}

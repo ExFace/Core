@@ -38,7 +38,7 @@ class UiPageFactory extends AbstractFactory {
 	 * @return \exface\Core\CommonLogic\UiPage
 	 */
 	public static function create_from_cms_page(UiManagerInterface &$ui, $page_id){
-		$page_text = $ui->get_workbench()->CMS()->get_page($page_id);
+		$page_text = $ui->get_workbench()->CMS()->get_page_contents($page_id);
 		return static::create_from_string($ui, $page_id, $page_text);
 	}
 }

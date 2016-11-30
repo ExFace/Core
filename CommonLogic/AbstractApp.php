@@ -6,11 +6,14 @@ use exface\Core\Factories\ActionFactory;
 use exface\Core\Factories\ConfigurationFactory;
 use exface\Core\Interfaces\ConfigurationInterface;
 use exface\Core\Interfaces\Contexts\ContextManagerInterface;
+use exface\Core\Factories\DataSheetFactory;
+use exface\Core\Interfaces\TranslationInterface;
 
 abstract class AbstractApp implements AppInterface {
 	const CONFIG_FOLDER_IN_APP = 'Config';
 	const CONFIG_FILE_SUFFIX = 'config';
 	const CONFIG_FILE_EXTENSION = '.json';
+	const TRANSLATIONS_FOLDER_IN_APP = 'Translations';
 	
 	private $exface = null;
 	private $uid = null;
@@ -21,6 +24,7 @@ abstract class AbstractApp implements AppInterface {
 	private $name_resolver =  null;
 	private $config = null;
 	private $context_data_default_scope = null;
+	private $translator = null;
 	
 	/**
 	 * 
@@ -184,7 +188,7 @@ abstract class AbstractApp implements AppInterface {
 	 */
 	public function get_uid(){
 		if (is_null($this->uid)){
-			$ds = $this->get_workbench()->data()->create_data_sheet($this->get_workbench()->model()->get_object('exface.Core.APP'));
+			$ds = DataSheetFactory::create_from_object_id_or_alias($this->exface, 'exface.Core.APP');
 			$ds->add_filter_from_string('ALIAS', $this->get_alias_with_namespace());
 			$ds->data_read();
 			$this->uid = $ds->get_uid_column()->get_cell_value(0);
@@ -278,6 +282,42 @@ abstract class AbstractApp implements AppInterface {
 	 */
 	public function unset_context_variable($variable_name, $scope = null){
 		return $this->get_context_data($scope)->unset_variable_for_app($this, $variable_name);
+	}
+	
+	public function get_translator(){
+		if (is_null($this->translator)){
+			$translator = new Translation($this);
+			$translator->set_locale($this->get_workbench()->context()->get_scope_session()->get_session_locale());
+			$translator->set_fallback_locales(array('en_US'));
+			$this->translator = $this->load_translation_files($translator);
+		}
+		return $this->translator;
+	}
+	
+	protected function load_translation_files(TranslationInterface $translator){
+		$locales = array_unique(array_merge(array($translator->get_locale()), $translator->get_fallback_locales()));
+		
+		foreach ($locales as $locale){
+			$locale_suffixes = array();
+			$locale_suffixes[] = $locale;
+			$locale_suffixes[] = explode('_', $locale)[0];
+			$locale_suffixes = array_unique($locale_suffixes);
+			
+			foreach ($locale_suffixes as $suffix){
+				$filename = $this->get_alias_with_namespace() . '.' . $suffix . '.json';
+				// Load the default translation of the app
+				$translator->add_dictionary_from_file($this->get_translations_folder() . DIRECTORY_SEPARATOR . $filename, $locale);
+			
+				// Load the installation specific translation of the app
+				$translator->add_dictionary_from_file($this->get_workbench()->filemanager()->get_path_to_translations_folder() . DIRECTORY_SEPARATOR . $filename, $locale);
+			}
+		}
+	
+		return $translator;
+	}
+	
+	protected function get_translations_folder(){
+		return $this->get_workbench()->filemanager()->get_path_to_vendor_folder() . DIRECTORY_SEPARATOR . $this->get_directory() . DIRECTORY_SEPARATOR . static::TRANSLATIONS_FOLDER_IN_APP;
 	}
 }
 ?>

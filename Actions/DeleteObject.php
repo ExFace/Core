@@ -25,7 +25,7 @@ class DeleteObject extends AbstractAction implements iDeleteData {
 			$ds->add_filter_in_from_string($obj->get_uid_alias(), $instances);
 			$this->set_affected_rows($this->get_affected_rows() + $ds->data_delete());
 		}
-		$this->set_result_message($this->get_affected_rows() . ' entries deleted');
+		$this->set_result_message($this->get_app()->get_translator()->translate_plural('ACTION.DELETEDATA.RESULT', $this->get_affected_rows(), array('%number%' => $this->get_affected_rows())));
 		// IDEA Currently the delete action returns an empty data sheet with a filter, but
 		// no columns. Perhaps it is more elegant to return the input data sheet with a filter
 		// and not data, but the columns still being there...

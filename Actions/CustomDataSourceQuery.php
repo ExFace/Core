@@ -114,7 +114,7 @@ class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuer
 		$data_sheet->data_read();
 		$this->set_result_data_sheet($data_sheet);
 		$this->set_result('');
-		$this->set_result_message($counter . ' objects affected.');
+		$this->set_result_message($this->get_app()->get_translator()->translate_plural('ACTION.CUSTOMDATAQUERY.RESULT', $counter, array('%number%' => $counter)));
 	}
 }
 ?>

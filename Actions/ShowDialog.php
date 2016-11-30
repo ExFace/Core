@@ -34,7 +34,7 @@ class ShowDialog extends ShowWidget implements iShowDialog {
 	 * @return \exface\Core\Widgets\Dialog
 	 */
 	protected function enhance_dialog_widget(Dialog $dialog){
-		$dialog->set_close_button_caption('Abbrechen');
+		$dialog->set_close_button_caption($this->get_app()->get_translator()->translate('ACTION.SHOWDIALOG.CANCEL_BUTTON'));
 		
 		// If the widget calling the action (typically a button) is known, inherit some of it's attributes
 		if ($this->get_called_by_widget()){
