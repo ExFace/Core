@@ -7,8 +7,8 @@
 	
 	"ACTION.CUSTOMDATAQUERY.RESULT": "%number% row affected.|%number% rows affected.",
 	
-	"ACTION.DELETEDATA.RESULT": "%number% item deleted.|%number% items deleted.",
-	"ACTION.DELETEDATA.NAME": "Delete",
+	"ACTION.DELETEOBJECT.RESULT": "%number% item deleted.|%number% items deleted.",
+	"ACTION.DELETEOBJECT.NAME": "Delete",
 	
 	"ACTION.DUPLICATEOBJECTDIALOG.NAME": "Copy",
 	
