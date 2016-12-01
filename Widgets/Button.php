@@ -224,5 +224,18 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iHaveC
 		}
 		return $children;
 	}    
+	
+	/**
+	 * The button's caption falls back to the name of the action if there is no caption defined explicitly and the button has an action.
+	 * {@inheritDoc}
+	 * @see \exface\Core\Widgets\AbstractWidget::get_caption()
+	 */
+	public function get_caption(){
+		$caption = parent::get_caption();
+		if (is_null($caption) && $this->get_action()){
+			$caption = $this->get_action()->get_name();
+		}
+		return $caption;
+	}
 }
 ?>

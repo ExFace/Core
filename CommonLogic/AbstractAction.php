@@ -630,6 +630,42 @@ abstract class AbstractAction implements ActionInterface {
 		$this->template_alias = $value;
 		return $this;
 	} 
-  
+	
+	/**
+	 * Returns the translation string for the given message id. 
+	 * 
+	 * This is a shortcut for calling $this->get_app()->get_translator()->translate(). Additionally it will automatically append an
+	 * action prefix to the given id: e.g. $action->translate('SOME_MESSAGE') will result in 
+	 * $action->get_app()->get_translator()->translate('ACTION.ALIAS.SOME_MESSAGE')
+	 * 
+	 * @see Translation::translate()
+	 * @see Translation::translate_plural()
+	 * 
+	 * @param string $message_id
+	 * @param array $placeholders
+	 * @param float $number_for_plurification
+	 * @return string
+	 */
+	public function translate($message_id, array $placeholders = null, $number_for_plurification = null){
+		$message_id = trim($message_id);
+		$key_prefix = 'ACTION.' . mb_strtoupper($this->get_alias()) . '.';
+		if (mb_strpos($message_id, $key_prefix) !== 0){
+			$message_id = $key_prefix . $message_id;
+		}
+		if (!is_null($number_for_plurification)){
+			$this->get_app()->get_translator()->translate_plural($message_id, $number_for_plurification, $placeholders);
+		} else {
+			return $this->get_app()->get_translator()->translate($message_id, $placeholders);
+		}
+	}
+	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\Actions\ActionInterface::get_name()
+	 */
+	public function get_name(){
+		return $this->translate('NAME');
+	}
 }
 ?>

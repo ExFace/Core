@@ -38,7 +38,7 @@ class UndoAction extends AbstractAction implements iUndoActions {
 			}
 		}
 		$this->set_result_data_sheet($result);
-		$this->set_result_message('Successfully undone ' . $this->count_undone_actions() . ' actions!');
+		$this->set_result_message($this->translate('RESULT', array('%number%' => $this->count_undone_actions()), $this->count_undone_actions()));
 	}
 	
 	/**

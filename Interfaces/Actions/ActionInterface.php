@@ -243,6 +243,12 @@ interface ActionInterface extends ExfaceClassInterface, AliasInterface {
 	 * @return \exface\Core\Interfaces\Actions\ActionInterface
 	 */
 	public function set_template_alias($value);
+	
+	/**
+	 * Returns the default name of the action translated to the currently used locale.
+	 * @return string
+	 */
+	public function get_name();
 }
 
 ?>

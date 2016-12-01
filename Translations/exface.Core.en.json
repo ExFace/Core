@@ -1,9 +1,48 @@
 {
-	"ACTION.UPDATEDATA.RESULT": "%number% row updated.|%number% rows updated.",
-	"ACTION.SAVEDATA.RESULT": "%number% row created or updated.|%number% rows created or updated.",
-	"ACTION.CREATEDATA.RESULT": "%number% row created.|%number% rows created.",
-	"ACTION.CUSTOMDATAQUERY.RESULT": "%number% object affected.|%number% objects affected.",
+	"ACTION.AUTOSUGGEST.NAME": "Autosuggest",
+	
+	"ACTION.CREATEDATA.RESULT": "%number% item created.|%number% items created.",
+	"ACTION.CREATEDATA.NAME": "Create",
+	"ACTION.CREATEOBJECTDIALOG.NAME": "NEW",
+	
+	"ACTION.CUSTOMDATAQUERY.RESULT": "%number% row affected.|%number% rows affected.",
+	
 	"ACTION.DELETEDATA.RESULT": "%number% item deleted.|%number% items deleted.",
+	"ACTION.DELETEDATA.NAME": "Delete",
+	
+	"ACTION.DUPLICATEOBJECTDIALOG.NAME": "Copy",
+	
 	"ACTION.EDITOBJECTDIALOG.SAVE_BUTTON": "Save",
-	"ACTION.SHOWDIALOG.CANCEL_BUTTON": "Cancel"
+	"ACTION.EDITOBJECTDIALOG.NAME": "Edit",
+	
+	"ACTION.FAVORITESADD.NAME": "Add to favorites",
+	"ACTION.FAVORITESADD.RESULT": "%number% objects added to favorites.",
+	"ACTION.FAVORITESFETCH.NAME": "Load favorites",
+	"ACTION.FAVORITESREMOVE.NAME": "Remove from favorites",
+	
+	"ACTION.GOBACK.NAME": "Back",
+	"ACTION.GOTOURL.NAME": "Visit URL",
+	"ACTION.GOTOWIDGET.NAME": "Go to",
+	
+	"ACTION.MASSEDITDIALOG.NAME": "Mass edit",
+	"ACTION.MASSEDITDIALOG.EDITING_BY_FILTER": "Editing all objects matching the following filters: %filters%",
+	"ACTION.MASSEDITDIALOG.EDITING_ALL": "Editing all objects",
+	"ACTION.MASSEDITDIALOG.EDITING_SELECTED": "Editing %number% object|Editing %number% objects",
+	
+	"ACTION.READDATA.NAME": "Reload",
+	
+	"ACTION.SAVEDATA.RESULT": "%number% item created or updated.|%number% items created or updated.",
+	"ACTION.SAVEDATA.NAME": "Save",
+	
+	"ACTION.SETCONTEXT.NAME": "Set context",
+	
+	"ACTION.SHOWDIALOG.NAME": "Open dialog",
+	"ACTION.SHOWDIALOG.CANCEL_BUTTON": "Cancel",
+	
+	"ACTION.UNDOACTION.NAME": "Undo",
+	"ACTION.UNDOACTION.RESULT": "Successfully undone %number% action.|Successfully undone %number% actions.",
+	
+	"ACTION.UPDATEDATA.NAME": "Update",
+	"ACTION.UPDATEDATA.RESULT": "%number% item updated.|%number% items updated."
+	
 }

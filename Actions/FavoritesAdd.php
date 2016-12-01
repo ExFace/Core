@@ -37,7 +37,7 @@ class FavoritesAdd extends SetContext {
 			$this->get_context()->add_instance($object->get_id(), $uid, $label);
 			$counter++;
 		}
-		$this->set_result_message($counter . ' objects added to favorites.');
+		$this->set_result_message($this->translate('RESULT', array('%number%' => $counter), $counter));
 	}
 	
 	/**

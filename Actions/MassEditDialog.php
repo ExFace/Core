@@ -37,7 +37,8 @@ class MassEditDialog extends ShowDialog {
 	protected function get_affected_counter_text(){
 		if ($this->get_input_data_sheet()){
 			if ($this->get_input_data_sheet()->count_rows()){
-				return 'Editing ' . ($this->get_input_data_sheet() ? $this->get_input_data_sheet()->count_rows() : 0) . ' objects';
+				$counter = $this->get_input_data_sheet() ? $this->get_input_data_sheet()->count_rows() : 0;
+				return $this->translate('EDITING_SELECTED', array("%number%" => $counter), $counter);
 			} else {
 				$filters = array();
 				$filter_conditions = array_merge($this->get_input_data_sheet()->get_filters()->get_conditions(), $this->get_app()->get_workbench()->context()->get_scope_window()->get_filter_context()->get_conditions($this->get_input_data_sheet()->get_meta_object()));
@@ -45,9 +46,9 @@ class MassEditDialog extends ShowDialog {
 					foreach ($filter_conditions as $cond){
 						$filters[$cond->get_expression()->to_string()] = $cond->get_expression()->get_attribute()->get_name() . ' ' . $cond->get_comparator() . ' ' . $cond->get_value();
 					}
-					return 'Editing all objects matching the following filters: ' . implode($filters, ' AND ');
+					return $this->translate('EDITING_BY_FILTER', array('%filters%', implode($filters, ' AND ')));
 				} else {
-					return 'Editing all objects';
+					return $this->translate('EDITING_ALL');
 				}
 				
 			}
