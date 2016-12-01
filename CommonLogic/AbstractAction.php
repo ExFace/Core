@@ -653,7 +653,7 @@ abstract class AbstractAction implements ActionInterface {
 			$message_id = $key_prefix . $message_id;
 		}
 		if (!is_null($number_for_plurification)){
-			$this->get_app()->get_translator()->translate_plural($message_id, $number_for_plurification, $placeholders);
+			return $this->get_app()->get_translator()->translate_plural($message_id, $number_for_plurification, $placeholders);
 		} else {
 			return $this->get_app()->get_translator()->translate($message_id, $placeholders);
 		}
