@@ -3,17 +3,17 @@
 	
 	"ACTION.CREATEDATA.RESULT": "%number% item created.|%number% items created.",
 	"ACTION.CREATEDATA.NAME": "Create",
-	"ACTION.CREATEOBJECTDIALOG.NAME": "New",
+	"ACTION.CREATEOBJECTDIALOG.NAME": "Neu",
 	
 	"ACTION.CUSTOMDATAQUERY.RESULT": "%number% row affected.|%number% rows affected.",
 	
 	"ACTION.DELETEOBJECT.RESULT": "%number% item deleted.|%number% items deleted.",
-	"ACTION.DELETEOBJECT.NAME": "Delete",
+	"ACTION.DELETEOBJECT.NAME": "Löschen",
 	
-	"ACTION.DUPLICATEOBJECTDIALOG.NAME": "Copy",
+	"ACTION.DUPLICATEOBJECTDIALOG.NAME": "Dublizieren",
 	
-	"ACTION.EDITOBJECTDIALOG.SAVE_BUTTON": "Save",
-	"ACTION.EDITOBJECTDIALOG.NAME": "Edit",
+	"ACTION.EDITOBJECTDIALOG.SAVE_BUTTON": "Speichern",
+	"ACTION.EDITOBJECTDIALOG.NAME": "Bearbeiten",
 	
 	"ACTION.FAVORITESADD.NAME": "Add to favorites",
 	"ACTION.FAVORITESADD.RESULT": "%number% objects added to favorites.",
@@ -32,12 +32,12 @@
 	"ACTION.READDATA.NAME": "Reload",
 	
 	"ACTION.SAVEDATA.RESULT": "%number% item created or updated.|%number% items created or updated.",
-	"ACTION.SAVEDATA.NAME": "Save",
+	"ACTION.SAVEDATA.NAME": "Speichern",
 	
 	"ACTION.SETCONTEXT.NAME": "Set context",
 	
 	"ACTION.SHOWDIALOG.NAME": "Open dialog",
-	"ACTION.SHOWDIALOG.CANCEL_BUTTON": "Cancel",
+	"ACTION.SHOWDIALOG.CANCEL_BUTTON": "Abbrechen",
 	
 	"ACTION.UNDOACTION.NAME": "Undo",
 	"ACTION.UNDOACTION.RESULT": "Successfully undone %number% action.|Successfully undone %number% actions.",
