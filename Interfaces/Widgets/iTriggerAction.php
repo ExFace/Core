@@ -25,7 +25,7 @@ interface iTriggerAction {
 	public function set_action($action_object_or_uxon_description);
 	
 	/**
-	 * Sets the widget, that supplies the input data for the action
+	 * Returns the widget, that supplies the input data for the action
 	 * @return AbstractWidget $widget
 	 */
 	public function get_input_widget();
