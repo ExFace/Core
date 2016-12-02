@@ -11,6 +11,9 @@ use exface\Core\CommonLogic\Model\RelationPath;
 /**
  * Shapes are what diagrams show: e.g. a blue rectangle. The diagram will show as many rectangles as rows in it's data subwidget.
  * 
+ * In an editable diagram, there would typically be a toolbar with shapes, that can be dragged on the canvas. Each of them is a DiagramShape widget.
+ * Dropping a shape onto the diagram would create an instance of it and fill that instance with data (title, attributes, etc.). The instances of
+ * a shape are accessible via the data() subwidget. 
  * 
  * @author Andrej Kabachnik
  *
@@ -92,7 +95,10 @@ class DiagramShape extends Panel implements iShowDataSet, iHaveBorders {
 	}
 	
 	public function set_data(\stdClass $uxon_object) {
-		$data = $this->get_page()->create_widget('Data', $this);
+		// Force the data to be a DiagramShapeData widget
+		$data = $this->get_page()->create_widget('DiagramShapeData', $this);
+		unset($uxon_object->widget_type);
+		// Import it's uxon definition
 		$data->import_uxon_object($uxon_object);
 		$this->data = $data;
 	}
@@ -190,7 +196,6 @@ class DiagramShape extends Panel implements iShowDataSet, iHaveBorders {
 		$this->shape_caption_attribute_alias = $value;
 		return $this;
 	}
-
 }
 
 ?>

@@ -5,7 +5,6 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\UiWidgetConfigException;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\WidgetInterface;
-use exface\Core\Factories\WidgetFactory;
 
 /**
  * Widget to display diagrams like planograms, entity-relationships, organigrams, etc.
@@ -22,6 +21,11 @@ class Diagram extends Container implements iSupportLazyLoading {
 	private $scale = null;
 	private $diagram_object_selector_widget = null;
 	
+	/**
+	 * Returns an array of shapes usable in this diagram. Keep in mind, that these are not the actually plotted instances of
+	 * shapes, but rather "types of shapes".
+	 * @return DiagramShape[]
+	 */
 	public function get_shapes() {
 		return $this->get_widgets();
 	}
