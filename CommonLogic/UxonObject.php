@@ -193,7 +193,8 @@ class UxonObject extends \stdClass implements \IteratorAggregate {
 	 * @see IteratorAggregate::getIterator()
 	 */
 	public function getIterator(){
-		return new \ArrayIterator((array)$this);
+		$array = $this->is_empty() ? array() : (array)$this;
+		return new \ArrayIterator($array);
 	}
 	
 	/**
