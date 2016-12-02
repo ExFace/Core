@@ -5,6 +5,7 @@ use exface\Core\Widgets\Dialog;
 use exface\Core\Exceptions\MetaModelAttributeNotFoundException;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Factories\WidgetFactory;
+use exface\Core\Widgets\Button;
 
 class EditObjectDialog extends ShowDialog {
 	private $save_action_alias = null;
@@ -73,6 +74,11 @@ class EditObjectDialog extends ShowDialog {
 		$save_button->set_action_alias($this->get_save_action_alias());
 		$save_button->set_caption($this->get_app()->get_translator()->translate("ACTION.EDITOBJECTDIALOG.SAVE_BUTTON"));
 		$save_button->set_visibility(EXF_WIDGET_VISIBILITY_PROMOTED);
+		// Make the save button refresh the same widget as the Button showing the dialog would do
+		if ($this->get_called_by_widget() instanceof Button){
+			$save_button->set_refresh_widget_link($this->get_called_by_widget()->get_refresh_widget_link());
+			$this->get_called_by_widget()->set_refresh_widget_link(null);
+		}
 		$dialog->add_button($save_button);
 		if ($dialog->get_meta_object()->get_default_editor_uxon() && !$dialog->get_meta_object()->get_default_editor_uxon()->is_empty()){
 			// If there is a default editor for an object, use it

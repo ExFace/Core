@@ -7,6 +7,9 @@ use exface\Core\Interfaces\Widgets\iTriggerAction;
 use exface\Core\Interfaces\Widgets\iHaveChildren;
 use exface\Core\Factories\ActionFactory;
 use exface\Core\CommonLogic\NameResolver;
+use exface\Core\Factories\WidgetLinkFactory;
+use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
+use exface\Core\CommonLogic\UxonObject;
 
 /**
  * A Button is the primary widget for triggering actions. In addition to the general widget attributes it can have
@@ -23,6 +26,7 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iHaveC
 	private $hotkey = null;
 	private $icon_name = null;
 	private $refresh_input = true;
+	private $refresh_widget_link = null;
 	private $hide_button_text = false;
 	private $hide_button_icon = false;
 	
@@ -237,5 +241,30 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iHaveC
 		}
 		return $caption;
 	}
+	
+	/**
+	 * Returns a link to the widget, that should be refreshed when this button is pressed.
+	 * @return \exface\Core\Interfaces\Widgets\WidgetLinkInterface
+	 */
+	public function get_refresh_widget_link() {
+		return $this->refresh_widget_link;
+	}
+	
+	/**
+	 * Sets the link to the widget to be refreshed when this button is pressed. Pass NULL to unset the link
+	 * @param WidgetLinkInterface|UxonObject|string $widget_link_or_uxon_or_string
+	 * @return \exface\Core\Widgets\Button
+	 */
+	public function set_refresh_widget_link($widget_link_or_uxon_or_string) {
+		if (is_null($widget_link_or_uxon_or_string)){
+			$this->refresh_widget_link = null;
+		} else {
+			$exface = $this->get_workbench();
+			if ($link = WidgetLinkFactory::create_from_anything($exface, $widget_link_or_uxon_or_string)){
+				$this->refresh_widget_link = $link;
+			}
+		}
+		return $this;
+	}  
 }
 ?>
