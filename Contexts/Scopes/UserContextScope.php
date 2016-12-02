@@ -67,8 +67,8 @@ class UserContextScope extends AbstractContextScope {
 	 * @return string
 	 */
 	public function get_user_locale(){
-		if (is_null($this->user_locale)){
-			$this->set_user_locale($this->get_workbench()->CMS()->get_user_locale());
+		if (is_null($this->user_locale) && $cms_locale = $this->get_workbench()->CMS()->get_user_locale()){
+			$this->set_user_locale($cms_locale);
 		}
 		return $this->user_locale;
 	}
