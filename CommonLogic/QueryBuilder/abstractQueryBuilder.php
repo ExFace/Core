@@ -233,10 +233,19 @@ abstract class AbstractQueryBuilder {
 		return $qpart;
 	}
 	
+	/**
+	 * Returns an array of sorter query parts
+	 * @return QueryPartSorter[]
+	 */
 	protected function get_sorters(){
 		return $this->sorters;
 	}
 	
+	/**
+	 * Addes a an attribute to aggregate over (= group by for SQL builders)
+	 * @param string $attribute_alias
+	 * @return \exface\Core\CommonLogic\QueryBuilder\QueryPartAttribute
+	 */
 	public function add_aggregation($attribute_alias){
 		$qpart = new QueryPartAttribute($attribute_alias, $this);
 		$this->aggregations[$attribute_alias] = $qpart;
@@ -245,10 +254,19 @@ abstract class AbstractQueryBuilder {
 		return $qpart;
 	}
 	
+	/**
+	 * Returns an array of attribute query parts, that are to be used for aggregation
+	 * @return QueryPartAttribute[]
+	 */
 	protected function get_aggregations(){
 		return $this->aggregations;
 	}
 	
+	/**
+	 * 
+	 * @param string $alias
+	 * @return QueryPartAttribute
+	 */
 	protected function get_aggregation($alias){
 		return $this->aggregations[$alias];
 	}
@@ -263,10 +281,18 @@ abstract class AbstractQueryBuilder {
 		$this->offset = $offset;
 	}
 	
+	/**
+	 * 
+	 * @return number
+	 */
 	protected function get_limit(){
 		return $this->limit;
 	}
 	
+	/**
+	 * 
+	 * @return number
+	 */
 	protected function get_offset(){
 		return $this->offset;
 	}
