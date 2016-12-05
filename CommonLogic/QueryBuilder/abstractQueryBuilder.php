@@ -402,4 +402,81 @@ abstract class AbstractQueryBuilder {
 		} // FIXME add all other query parts. Perhaps use this metho even in the regular add...() methods to centralize the population of the private arrays.
 		return $this;
 	}
+	
+	/**
+	 * Sorts the given array of data rows by applying the sorters defined for this query. Returns the sorted array.
+	 * 
+	 * @param array $row_array
+	 * @return array
+	 */
+	protected function apply_sorting($row_array){
+		if (!is_array($row_array)){
+			return $row_array;
+		}
+		$sorter = new RowDataArraySorter();
+		foreach ($this->get_sorters() as $qpart){
+			$sorter->addCriteria($qpart->get_alias(), $qpart->get_order());
+		}
+		return $sorter->sort($row_array);
+	}
+	
+	/**
+	 * Filters the given array of data rows by applying the filters defined for this query where 
+	 * $query_part_filter->get_apply_after_reading() is TRUE. Returns the resulting array, that
+	 * now only contains rows matching the filters
+	 * 
+	 * @param array $row_array
+	 * @return array
+	 */
+	protected function apply_filters($row_array){
+		if (!is_array($row_array)){
+			return $row_array;
+		}
+		// Apply filters
+		$row_filter = new RowDataArrayFilter();
+		foreach ($this->get_filters()->get_filters() as $qpart){
+			if (!$qpart->get_apply_after_reading()) continue;
+			$row_filter->add_and($qpart->get_alias(), $qpart->get_compare_value(), $qpart->get_comparator());
+		}
+		return $row_filter->filter($row_array);
+	}
+	
+	/**
+	 * Applies the pagination limit and offset of this query to the given data array. The result only
+	 * contains rows, that match the requested page.
+	 * 
+	 * @param array $row_array
+	 * @return array
+	 */
+	protected function apply_pagination($row_array){
+		if (!is_array($row_array) || !$this->get_limit()){
+			return $row_array;
+		}
+		return array_slice($row_array, $this->get_offset(), $this->get_limit());
+	}
+	
+	/**
+	 * Reduces the given array of values to a single value by applying the given aggregator function. If no function is specified,
+	 * returns the first value.
+	 * 
+	 * @param array $row_array
+	 * @return array
+	 */
+	protected function aggregate_values(array $row_array, $group_function = null){
+		$group_function = trim($group_function);
+		$args = array();
+		if ($args_pos = strpos($group_function, '(')){
+			$func = substr($group_function, 0, $args_pos);
+			$args = explode(',', substr($group_function, ($args_pos+1), -1));
+		} else {
+			$func = $group_function;
+		}
+	
+		$output = '';
+		switch ($func) {
+			case 'LIST': $output = implode(', ', $row_array); break;
+			default: $output = reset($row_array);
+		}
+		return $output;
+	}
 }

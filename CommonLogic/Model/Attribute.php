@@ -314,13 +314,23 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied {
 	public function is_inherited(){
 		return is_null($this->get_inherited_from_object_id()) ? true : false;
 	}
-
+	
+	/**
+	 * 
+	 * @return \exface\Core\CommonLogic\UxonObject
+	 */
 	public function get_data_address_properties() {
 		return $this->data_address_properties;
 	}
 	
+	/**
+	 * 
+	 * @param UxonObject $value
+	 * @return Attribute
+	 */
 	public function set_data_address_properties(UxonObject $value) {
 		$this->data_address_properties = $value;
+		return $this;
 	} 
 
 	/**
@@ -329,6 +339,17 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied {
 	 */
 	public function get_data_address_property($id){
 		return $this->get_data_address_properties()->get_property($id);
+	}
+	
+	/**
+	 * 
+	 * @param string $id
+	 * @param mixed $value
+	 * @return \exface\Core\CommonLogic\Model\Attribute
+	 */
+	public function set_data_address_property($id, $value){
+		$this->get_data_address_properties()->set_property($id, $value);
+		return $this;
 	}
 	
 	/**

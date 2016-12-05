@@ -12,6 +12,7 @@ class QueryPartFilter extends QueryPartAttribute {
 	private $compare_value = null;
 	private $comparator = null;
 	private $condition = NULL;
+	private $apply_after_reading = false;
 	
 	function __construct($alias, AbstractQueryBuilder &$query){
 		parent::__construct($alias, $query);
@@ -50,5 +51,14 @@ class QueryPartFilter extends QueryPartAttribute {
 	public function set_condition(Condition $condition) {
 		$this->condition = $condition;
 	}  
+	
+	public function get_apply_after_reading() {
+		return $this->apply_after_reading;
+	}
+	
+	public function set_apply_after_reading($value) {
+		$this->apply_after_reading = $value ? true : false;
+		return $this;
+	} 
 }
 ?>
