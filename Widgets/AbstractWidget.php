@@ -134,8 +134,11 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren {
 	}
 	
 	/**
-	 * Sets the widget type. This method is only needed for correct UXON imports. It cannot be used to chang the type of an
-	 * instantiated widget.
+	 * Sets the widget type. Set to the name of the widget, to instantiate it (e.g. "DataTable").
+	 * 
+	 * @uxon-property widget_type
+	 * @uxon-type string 
+	 * 
 	 * @param string $value
 	 */
 	protected function set_widget_type($value){
@@ -143,6 +146,10 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren {
 	}
 	
 	/**
+	 * Sets the caption or title of the widget.
+	 * 
+	 * @uxon-property caption
+	 * @uxon-type string
 	 * 
 	 * {@inheritDoc}
 	 * @see \exface\Core\Interfaces\WidgetInterface::set_caption()
@@ -171,6 +178,10 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren {
 	}
 	
 	/**
+	 * Explicitly specifies the ID of the widget. The ID must be unique on every page containing the widget and can be used in widget links
+	 * 
+	 * @uxon-property id
+	 * @uxon-type string
 	 * 
 	 * {@inheritDoc}
 	 * @see \exface\Core\Interfaces\WidgetInterface::set_id()
@@ -249,6 +260,10 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren {
 	}
 	
 	/**
+	 * Set to TRUE to hide the caption of the widget. FALSE by default.
+	 * 
+	 * @uxon-property hide caption
+	 * @uxon-type boolean 
 	 * 
 	 * {@inheritDoc}
 	 * @see \exface\Core\Interfaces\WidgetInterface::set_hide_caption()
@@ -368,6 +383,11 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren {
 	}
 	
 	/**
+	 * Explicitly sets the value of the widget
+	 * 
+	 * @uxon-property value
+	 * @uxon-type Expression|string 
+	 * 
 	 * TODO Move to iHaveValue-Widgets or trait
 	 * @param Expression|string $expression_or_string
 	 */
@@ -390,6 +410,11 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren {
 	}
 	
 	/**
+	 * Set to TRUE to disable the widget. Disabled widgets cannot accept input or interact with the user in any other way.
+	 * 
+	 * @uxon-property disabled
+	 * @uxon-type boolean
+	 * 
 	 * 
 	 * {@inheritDoc}
 	 * @see \exface\Core\Interfaces\WidgetInterface::set_disabled()
@@ -413,6 +438,16 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren {
 	}
 	
 	/**
+	 * Sets the width of the widget. Set to "1" for default widget width in a template or "max" for maximum width possible.
+	 * 
+	 * The width can be specified either in 
+	 * - template-specific relative units (e.g. "width: 2" makes the widget twice as wide
+	 * as the default width of a widget in the current template) 
+	 * - percent (e.g. "width: 50%" will make the widget take up half the available space)
+	 * - any other template-compatible units (e.g. "width: 200px" will work in CSS-based templates)
+	 * 
+	 * @uxon-property width
+	 * @uxon-type string
 	 * 
 	 * {@inheritDoc}
 	 * @see \exface\Core\Interfaces\WidgetInterface::set_width()
@@ -437,6 +472,16 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren {
 	}
 	
 	/**
+	 * Sets the height of the widget. Set to "1" for default widget height in a template or "max" for maximum height possible.
+	 * 
+	 * The height can be specified either in 
+	 * - template-specific relative units (e.g. "height: 2" makes the widget twice as high
+	 * as the default width of a widget in the current template) 
+	 * - percent (e.g. "height: 50%" will make the widget take up half the available space)
+	 * - any other template-compatible units (e.g. "height: 200px" will work in CSS-based templates)
+	 * 
+	 * @uxon-property height
+	 * @uxon-type string
 	 * 
 	 * {@inheritDoc}
 	 * @see \exface\Core\Interfaces\WidgetInterface::set_height()
@@ -455,6 +500,10 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren {
 	}
 	
 	/**
+	 * Sets the alias of the main object of the widget. Use qualified aliases (with namespace)!
+	 * 
+	 * @uxon-property object_alias
+	 * @uxon-type string
 	 * 
 	 * {@inheritDoc}
 	 * @see \exface\Core\Interfaces\WidgetInterface::set_object_alias()
@@ -509,6 +558,10 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren {
 	}
 	
 	/**
+	 * Sets the relation path from the parent widget's object to this widget's object
+	 * 
+	 * @uxon-property object_relation_path_from_parent
+	 * @uxon-type string 
 	 * 
 	 * {@inheritDoc}
 	 * @see \exface\Core\Interfaces\WidgetInterface::set_object_relation_path_from_parent()
@@ -571,6 +624,10 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren {
 	}
 	
 	/**
+	 * Sets the relation path from this widget's meta object to the object of the parent widget
+	 * 
+	 * @uxon-property object_relation_path_to_parent
+	 * @uxon-type string 
 	 * 
 	 * {@inheritDoc}
 	 * @see \exface\Core\Interfaces\WidgetInterface::set_object_relation_path_to_parent()
@@ -630,6 +687,10 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren {
 	}
 	
 	/**
+	 * Sets a hint message for the widget. The hint will typically be used for pop-overs, etc.
+	 * 
+	 * @uxon-property hint
+	 * @uxon-type string 
 	 * 
 	 * {@inheritDoc}
 	 * @see \exface\Core\Interfaces\WidgetInterface::set_hint()
@@ -648,6 +709,10 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren {
 	}
 	
 	/**
+	 * Set to TRUE to hide the widget. The same effect can be achieved by setting "visibility: hidden"
+	 * 
+	 * @uxon-property hidden
+	 * @uxon-type boolean 
 	 * 
 	 * {@inheritDoc}
 	 * @see \exface\Core\Interfaces\WidgetInterface::set_hidden()
@@ -670,6 +735,10 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren {
 	}
 	
 	/**
+	 * Sets the visibility of the widget: normal, hidden, optional, promoted.
+	 * 
+	 * @uxon-property visibility
+	 * @uxon-type string 
 	 * 
 	 * {@inheritDoc}
 	 * @see \exface\Core\Interfaces\WidgetInterface::set_visibility()

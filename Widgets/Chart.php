@@ -6,54 +6,40 @@ use exface\Core\Interfaces\Widgets\iHaveTopToolbar;
 use exface\Core\Interfaces\Widgets\iHaveBottomToolbar;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Factories\WidgetLinkFactory;
-use exface\Core\CommonLogic\WidgetLink;
 use exface\Core\Interfaces\Widgets\iHaveButtons;
 use exface\Core\Interfaces\Widgets\iSupportLazyLoading;
 use exface\Core\Interfaces\Widgets\iShowDataSet;
 
 class Chart extends AbstractWidget implements iShowDataSet, iHaveButtons, iHaveTopToolbar, iHaveBottomToolbar, iSupportLazyLoading {
 	/**
-	 * @uxon axes_x Array of x-axis definitions. At least one axis must be provided!
 	 * @var ChartAxis[]
 	 */
 	private $axes_x = array();
 	/**
-	 * @uxon axes_y Array of y-axis definitions. At least one axis must be provided!
 	 * @var ChartAxis[]
 	 */
 	private $axes_y = array();
 	/**
-	 * @uxon series Array of series descriptions.
 	 * @var ChartSeries[] $series
 	 */
 	private $series = array();
-	/**
-	 * @uxon data Data widget (simple table with data), wich will be the source for the chart. Chart axes and series will be
-	 * bound to columns of this data widget. In the simplest case, there should be a coulum with x-axis-values and one with
-	 * y-axis-values. The series property is optional, as you can also add a chart_type property to any axis to have get
-	 * an automatically generated series for values of that axis. 
+	/** 
 	 * @var Data
 	 */
 	private $data = null;
 	/**
-	 * @uxon data_widget_link If a valid link to another data widget is specified, it's data will be used instead of the data property of the chart itself.
-	 * This is very handy if you want to visualize the data presented by a table or so. Using the link will make the chart automatically react to filters
-	 * and other setting of the target data widget.
-	 * @var UxonObject || string
+	 * @var UxonObject|string
 	 */
 	private $data_widget_link = null;
 	/**
-	 * @uxon stack_series Set to true to stack all series of this chart
 	 * @var boolean
 	 */
 	private $stack_series = false;
 	/**
-	 * @uxon hide_toolbar_top Set to true to hide the top toolbar, which generally will contain filters and other settings
 	 * @var boolean
 	 */
 	private $hide_toolbar_top = false;
 	/**
-	 * @uxon hide_toolbar_bottom Set to true to hide the bottom toolbar, which generally will contain pagination
 	 * @var boolean
 	 */
 	private $hide_toolbar_bottom = false;
@@ -80,6 +66,15 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveButtons, iHaveT
 		return $this->axes_x;
 	}
 	
+	/**
+	 * Sets X-axis of the chart. Multiple axes are possible, at least one must be provided!
+	 * 
+	 * @uxon-property axis_x 
+	 * @uxon-type Widget:ChartAxis[]
+	 * 
+	 * @param ChartAxis|UxonObject|array $axis_or_uxon_object_or_array
+	 * @return \exface\Core\Widgets\Chart
+	 */
 	public function set_axis_x($axis_or_uxon_object_or_array) {
 		if ($axis_or_uxon_object_or_array instanceof ChartAxis){
 			$this->add_axis('x', $axis_or_uxon_object_or_array);
@@ -114,6 +109,15 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveButtons, iHaveT
 		}
 	}
 	
+	/**
+	 * Sets Y-axis of the chart. Multiple axes are possible, at least one must be provided!
+	 * 
+	 * @uxon-property axis_y 
+	 * @uxon-type Widget:ChartAxis[]
+	 * 
+	 * @param unknown $axis_or_uxon_object_or_array
+	 * @return \exface\Core\Widgets\Chart
+	 */
 	public function set_axis_y($axis_or_uxon_object_or_array) {
 		if ($axis_or_uxon_object_or_array instanceof ChartAxis){
 			$this->add_axis('y', $axis_or_uxon_object_or_array);
@@ -156,6 +160,19 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveButtons, iHaveT
 		return $this->data;
 	}
 	
+	/**
+	 * Sets the Data widget (simple table with data), wich will be the source for the chart. 
+	 * 
+	 * Chart axes and series will be bound to columns of this data widget. In the simplest case, there should 
+	 * be a coulum with x-axis-values and one with y-axis-values. The series property is optional, as you can also 
+	 * add a chart_type property to any axis to have get an automatically generated series for values of that axis.
+	 * 
+	 * @uxon-property data
+	 * @uxon-type Widget:Data
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\Widgets\iShowDataSet::set_data()
+	 */
 	public function set_data(\stdClass $uxon_object) {
 		$data = $this->get_page()->create_widget('Data', $this);
 		$data->set_meta_object_id($this->get_meta_object_id());
@@ -215,6 +232,15 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveButtons, iHaveT
 		return $result;
 	}
 	
+	/**
+	 * Sets the series to be displayed in the chart. Multiple series are possible.
+	 * 
+	 * @uxon-property series
+	 * @uxon-type Widget:ChartSeries[]
+	 * 
+	 * @param unknown $series_or_uxon_object_or_array
+	 * @return \exface\Core\Widgets\Chart
+	 */
 	public function set_series($series_or_uxon_object_or_array) {
 		if ($series_or_uxon_object_or_array instanceof ChartAxis){
 			$this->add_series($series_or_uxon_object_or_array);
@@ -256,6 +282,18 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveButtons, iHaveT
 		return $this->data_widget_link;
 	}
 	
+	/**
+	 * If a valid link to another data widget is specified, it's data will be used instead of the data property of the chart itself.
+	 * 
+	 * This is very handy if you want to visualize the data presented by a table or so. Using the link will make the chart automatically react to filters
+	 * and other setting of the target data widget.
+	 * 
+	 * @uxon-property data_widget_link
+	 * @uxon-type string
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\Widgets\iShowDataSet::set_data_widget_link()
+	 */
 	public function set_data_widget_link($value) {
 		$exface = $this->get_workbench();
 		$this->data_widget_link = WidgetLinkFactory::create_from_anything($exface, $value);
@@ -266,11 +304,27 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveButtons, iHaveT
 		return $this->stack_series;
 	}
 	
+	/**
+	 * Set to true to stack all series of this chart
+	 * 
+	 * @uxon-property stack_series 
+	 * 
+	 * @param boolean $value
+	 * @return \exface\Core\Widgets\Chart
+	 */
 	public function set_stack_series($value) {
 		$this->stack_series = $value;
 		return $this;
 	}  
 	
+	/**
+	 * Set to TRUE to hide axes.
+	 * 
+	 * @uxon-property hide_axes
+	 * 
+	 * @param boolean $boolean
+	 * @return \exface\Core\Widgets\Chart
+	 */
 	public function set_hide_axes($boolean){
 		if ($boolean){
 			foreach ($this->get_axes() as $axis){
@@ -287,6 +341,14 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveButtons, iHaveT
 		return parent::get_width();
 	}
 	
+	/**
+	 * Set to true to hide the top toolbar, which generally will contain filters and other settings
+	 * 
+	 * @uxon-property hide_toolbar_top 
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\Widgets\iHaveTopToolbar::get_hide_toolbar_top()
+	 */
 	public function get_hide_toolbar_top() {
 		return $this->hide_toolbar_top;
 	}
@@ -300,6 +362,14 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveButtons, iHaveT
 		return $this->hide_toolbar_bottom;
 	}
 	
+	/**
+	 * Set to true to hide the bottom toolbar, which generally will contain pagination
+	 * 
+	 * @uxon-property hide_toolbar_bottom 
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\Widgets\iHaveBottomToolbar::set_hide_toolbar_bottom()
+	 */
 	public function set_hide_toolbar_bottom($value) {
 		$this->hide_toolbar_bottom = $value;
 		return $this;
@@ -414,6 +484,11 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveButtons, iHaveT
 	}
 	
 	/**
+	 * Set to TRUE for asynchronous data loading (must be supported by template)
+	 * 
+	 * @uxon-property lazy_loading
+	 * @uxon-type boolean
+	 * 
 	 * (non-PHPdoc)
 	 * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::set_lazy_loading()
 	 */
@@ -422,6 +497,7 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveButtons, iHaveT
 	}
 	
 	/**
+	 * 
 	 * (non-PHPdoc)
 	 * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::get_lazy_loading_action()
 	 */
@@ -430,6 +506,11 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveButtons, iHaveT
 	}
 	
 	/**
+	 * Sets the action alias to be used for lazy loading
+	 * 
+	 * @uxon-property lazy_loading_action
+	 * @uxon-type string
+	 * 
 	 * (non-PHPdoc)
 	 * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::set_lazy_loading_action()
 	 */
