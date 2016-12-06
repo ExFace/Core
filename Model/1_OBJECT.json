@@ -370,7 +370,7 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6b8b162faa64ca587e4b318306b9a",
             "DATA_SOURCE": "0x11e6afd8d2fa47e78943e4b318306b9a",
-            "long_description": null,
+            "long_description": "",
             "APP": "0x31000000000000000000000000000000",
             "SHORT_DESCRIPTION": "",
             "PARENT_OBJECT": "",
@@ -379,6 +379,23 @@
             "LABEL": "Action",
             "ALIAS": "ACTION",
             "DATA_ADDRESS": "*\/*\/Actions\/*.php"
+        },
+        {
+            "CREATED_ON": "2016-12-06 15:31:51",
+            "MODIFIED_ON": "2016-12-06 15:31:05",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e6bbc91b7533339ee0e4b318306b9a",
+            "DATA_SOURCE": "0x11e6bbc75f27b3a29ee0e4b318306b9a",
+            "long_description": null,
+            "APP": "0x31000000000000000000000000000000",
+            "SHORT_DESCRIPTION": "",
+            "PARENT_OBJECT": "",
+            "DATA_ADDRESS_PROPS": "{}",
+            "DEFAULT_EDITOR_UXON": "{}",
+            "LABEL": "Widget property",
+            "ALIAS": "WIDGET_PROPERTY",
+            "DATA_ADDRESS": "[#FILE#]"
         }
     ],
     "totals_rows": [],
