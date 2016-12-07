@@ -260,7 +260,9 @@ class Object implements ExfaceClassInterface, AliasInterface {
 		// Otherwise clone all attributes and relations of the parent and add them to this object
 		$parent = $this->get_model()->get_object($parent_object_id);
 		$this->add_parent_object_id($parent_object_id);
-		// Inherit some basic object properties, that migtht later be overridden by attributes
+		// Inherit object properties
+		$this->set_data_address_properties($parent->get_data_address_properties());
+		// Inherit some object properties originating from attributes
 		$this->set_uid_alias($parent->get_uid_alias());
 		$this->set_label_alias($parent->get_label_alias());
 		// Inherit attributes
@@ -498,6 +500,9 @@ class Object implements ExfaceClassInterface, AliasInterface {
 	 * Returns an assotiative array of all data source specific properties of the object
 	 */
 	public function get_data_address_properties() {
+		if (is_null($this->data_address_properties)){
+			$this->data_address_properties = $this->get_workbench()->create_uxon_object();
+		}
 		return $this->data_address_properties;
 	}
 	
