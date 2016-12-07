@@ -25,9 +25,9 @@
 	"ACTION.GOTOWIDGET.NAME": "Go to",
 	
 	"ACTION.MASSEDITDIALOG.NAME": "Mass edit",
-	"ACTION.MASSEDITDIALOG.EDITING_BY_FILTER": "Editing all objects matching the following filters: %filters%",
-	"ACTION.MASSEDITDIALOG.EDITING_ALL": "Editing all objects",
-	"ACTION.MASSEDITDIALOG.EDITING_SELECTED": "Editing %number% object|Editing %number% objects",
+	"ACTION.MASSEDITDIALOG.EDITING_BY_FILTER": "Bearbeitung aller Objekte, die folgenden Filtern entsprechen: %filters%",
+	"ACTION.MASSEDITDIALOG.EDITING_ALL": "Bearbeitung aller Objekte",
+	"ACTION.MASSEDITDIALOG.EDITING_SELECTED": "Bearbeitung für %number% Objekt|Bearbeitung für %number% Objekte",
 	
 	"ACTION.READDATA.NAME": "Reload",
 	

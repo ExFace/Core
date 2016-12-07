@@ -44,9 +44,9 @@ class MassEditDialog extends ShowDialog {
 				$filter_conditions = array_merge($this->get_input_data_sheet()->get_filters()->get_conditions(), $this->get_app()->get_workbench()->context()->get_scope_window()->get_filter_context()->get_conditions($this->get_input_data_sheet()->get_meta_object()));
 				if (is_array($filter_conditions) && count($filter_conditions) > 0){
 					foreach ($filter_conditions as $cond){
-						$filters[$cond->get_expression()->to_string()] = $cond->get_expression()->get_attribute()->get_name() . ' ' . $cond->get_comparator() . ' ' . $cond->get_value();
+						$filters[$cond->get_expression()->to_string()] = $cond->get_expression()->get_attribute()->get_name() . ' (' . $cond->get_expression()->get_attribute()->get_data_address() . ') ' . $cond->get_comparator() . ' ' . $cond->get_value();
 					}
-					return $this->translate('EDITING_BY_FILTER', array('%filters%', implode($filters, ' AND ')));
+					return $this->translate('EDITING_BY_FILTER', array('%filters%' => implode($filters, ' AND ')));
 				} else {
 					return $this->translate('EDITING_ALL');
 				}
