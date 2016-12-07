@@ -454,29 +454,4 @@ abstract class AbstractQueryBuilder {
 		}
 		return array_slice($row_array, $this->get_offset(), $this->get_limit());
 	}
-	
-	/**
-	 * Reduces the given array of values to a single value by applying the given aggregator function. If no function is specified,
-	 * returns the first value.
-	 * 
-	 * @param array $row_array
-	 * @return array
-	 */
-	protected function aggregate_values(array $row_array, $group_function = null){
-		$group_function = trim($group_function);
-		$args = array();
-		if ($args_pos = strpos($group_function, '(')){
-			$func = substr($group_function, 0, $args_pos);
-			$args = explode(',', substr($group_function, ($args_pos+1), -1));
-		} else {
-			$func = $group_function;
-		}
-	
-		$output = '';
-		switch ($func) {
-			case 'LIST': $output = implode(', ', $row_array); break;
-			default: $output = reset($row_array);
-		}
-		return $output;
-	}
 }

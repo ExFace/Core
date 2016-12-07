@@ -34,6 +34,7 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied {
 	private $default_sorter_dir = 'ASC';
 	private $model;
 	private $short_description;
+	private $defaul_aggregate_function = null;
 	
 	public function __construct(Model &$model){
 		$this->model = $model;
@@ -415,5 +416,14 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied {
 	public function get_workbench(){
 		return $this->get_model()->get_workbench();
 	}
+	
+	public function get_default_aggregate_function() {
+		return $this->default_aggregate_function;
+	}
+	
+	public function set_default_aggregate_function($value) {
+		$this->default_aggregate_function = $value;
+		return $this;
+	}  
 }
 ?>

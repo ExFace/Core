@@ -555,5 +555,33 @@ class DataColumn implements DataColumnInterface {
 		}
 		return $result;
 	}
+	
+	/**
+	 * Reduces the given array of values to a single value by applying the given aggregator function. If no function is specified,
+	 * returns the first value.
+	 *
+	 * @param array $row_array
+	 * @return array
+	 */
+	public static function aggregate_values(array $row_array, $group_function = null){
+		$group_function = trim($group_function);
+		$args = array();
+		if ($args_pos = strpos($group_function, '(')){
+			$func = substr($group_function, 0, $args_pos);
+			$args = explode(',', substr($group_function, ($args_pos+1), -1));
+		} else {
+			$func = $group_function;
+		}
+	
+		$output = '';
+		switch ($func) {
+			// TODO replace by constants EXF_AGGREGATOR_SUM etc.
+			case 'LIST': $output = implode(', ', $row_array); break;
+			case 'MAX': $output = max($row_array); break;
+			case 'SUM': case 'AVG': case 'COUNT': case 'LIST_DISTINCT': case 'MIN': // TODO
+			default: $output = reset($row_array);
+		}
+		return $output;
+	}
  
 }

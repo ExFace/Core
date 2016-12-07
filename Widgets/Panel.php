@@ -59,10 +59,16 @@ class Panel extends Container implements iSupportLazyLoading, iHaveButtons, iHav
 		// If the button has an action, that is supposed to modify data, we need to make sure, that the panel
 		// contains alls system attributes of the base object, because they may be needed by the business logic
 		if ($button_widget->get_action() && $button_widget->get_action()->implements_interface('iModifyData')){
+			/* @var $attr \exface\Core\CommonLogic\Model\Attribute */
 			foreach ($this->get_meta_object()->get_attributes()->get_system() as $attr){
 				if (count($this->find_children_by_attribute($attr)) <= 0){
 					$widget = $this->get_page()->create_widget('InputHidden', $this);
 					$widget->set_attribute_alias($attr->get_alias());
+					if ($attr->is_uid_for_object()){
+						$widget->set_aggregate_function('LIST');
+					} else {
+						$widget->set_aggregate_function($attr->get_default_aggregate_function());
+					}
 					$this->add_widget($widget);
 				}
 			}

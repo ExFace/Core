@@ -63,24 +63,5 @@ class MassEditDialog extends ShowDialog {
 		$this->affected_counter_widget_id = $value;
 		return $this;
 	}  
-	
-	protected function prefill_widget(){
-		$result = parent::prefill_widget();
-		// This is a bit of a hack: we need the panel to hold system attributes of multiple rows (UIDs in this case). So we just
-		// look for the UID widget and override it's value _after_ the normal prefill was done.
-		// TODO Perhaps it would be a good idea to save lists of system attributes in the panel by default. Maybe by using a special
-		// widget like "InputHiddenList" which would prefill itself by all rows, not just the first one...
-		if ($this->get_input_data_sheet()->get_uid_column()){
-			foreach($this->get_dialog_widget()->find_children_by_attribute($this->get_input_data_sheet()->get_uid_column()->get_attribute()) as $widget){
-				$widget->set_value(implode(',', $this->get_input_data_sheet()->get_uid_column()->get_values(false)));
-			}
-		}
-		/*foreach ($this->get_dialog_widget()->get_widgets()[0]->get_widgets() as $widget){
-			if ($this->get_input_data_sheet()->get_uid_column() && $widget->get_attribute_alias() == $this->get_input_data_sheet()->get_uid_column()->get_attribute_alias()){
-				
-			}
-		}*/
-		return $result;
-	}
 }
 ?>

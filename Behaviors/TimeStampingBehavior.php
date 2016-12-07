@@ -14,7 +14,7 @@ class TimeStampingBehavior extends AbstractBehavior {
 	private $disabled = false;
 	
 	public function register(){
-		$this->get_updated_on_attribute()->set_system(true);
+		$this->get_updated_on_attribute()->set_system(true)->set_default_aggregate_function('MAX');
 		if ($this->get_check_for_conflicts_on_update()){
 			$this->get_workbench()->event_manager()->add_listener($this->get_object()->get_alias_with_namespace() . '.DataSheet.UpdateData.Before', array($this, 'check_for_conflicts_on_update'));
 		}
@@ -105,6 +105,7 @@ class TimeStampingBehavior extends AbstractBehavior {
 			// Check the current update timestamp in the data source
 			$check_sheet = $data_sheet->copy()->remove_rows();
 			$check_sheet->add_filter_from_column_values($data_sheet->get_uid_column());
+			//$check_sheet->get_aggregators()->add_from_string($check_sheet->get_meta_object()->get_uid_alias());
 			$check_sheet->data_read();
 			$check_column = $check_sheet->get_columns()->get_by_attribute($this->get_updated_on_attribute());
 			foreach ($updated_column->get_values() as $row_nr => $val){

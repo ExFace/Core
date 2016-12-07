@@ -8,6 +8,8 @@ use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Interfaces\Widgets\iHaveColumns;
 use exface\Core\CommonLogic\Model\Relation;
+use exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder;
+use exface\Core\CommonLogic\DataSheets\DataColumn;
 
 /**
  * The text widget simply shows text with an optional title created from the caption of the widget
@@ -21,6 +23,7 @@ class Text extends AbstractWidget implements iShowSingleAttribute, iHaveValue, i
 	private $data_type = null;
 	private $size = null;
 	private $style = null;
+	private $aggregate_function = null;
 	
 	public function get_text() {
 		if (is_null($this->text)){
@@ -155,9 +158,22 @@ class Text extends AbstractWidget implements iShowSingleAttribute, iHaveValue, i
 		// and set it as the value of our input.
 		$prefill_columns = $this->prepare_data_sheet_to_prefill($this->get_workbench()->data()->create_data_sheet($data_sheet->get_meta_object()))->get_columns();
 		if ($col = $prefill_columns->get_first()){
-			$this->set_value($data_sheet->get_cell_value($col->get_name(), 0));
+			if (count($data_sheet->get_column_values($col->get_name(false))) > 1 && $this->get_aggregate_function()){
+				$this->set_value(DataColumn::aggregate_values($data_sheet->get_column_values($col->get_name(false)), $this->get_aggregate_function()));
+			} else {
+				$this->set_value($data_sheet->get_cell_value($col->get_name(), 0));
+			}
 		}
 	}
+	
+	public function get_aggregate_function() {
+		return $this->aggregate_function;
+	}
+	
+	public function set_aggregate_function($value) {
+		$this->aggregate_function = $value;
+		return $this;
+	}  
 	
 	public function get_caption(){
 		if (!parent::get_caption()){
