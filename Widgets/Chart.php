@@ -70,7 +70,7 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveButtons, iHaveT
 	 * Sets X-axis of the chart. Multiple axes are possible, at least one must be provided!
 	 * 
 	 * @uxon-property axis_x 
-	 * @uxon-type Widget:ChartAxis[]
+	 * @uxon-type \exface\Core\Widget\ChartAxis[]
 	 * 
 	 * @param ChartAxis|UxonObject|array $axis_or_uxon_object_or_array
 	 * @return \exface\Core\Widgets\Chart
@@ -113,7 +113,7 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveButtons, iHaveT
 	 * Sets Y-axis of the chart. Multiple axes are possible, at least one must be provided!
 	 * 
 	 * @uxon-property axis_y 
-	 * @uxon-type Widget:ChartAxis[]
+	 * @uxon-type \exface\Core\Widget\ChartAxis[]
 	 * 
 	 * @param unknown $axis_or_uxon_object_or_array
 	 * @return \exface\Core\Widgets\Chart
@@ -168,7 +168,7 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveButtons, iHaveT
 	 * add a chart_type property to any axis to have get an automatically generated series for values of that axis.
 	 * 
 	 * @uxon-property data
-	 * @uxon-type Widget:Data
+	 * @uxon-type \exface\Core\Widget\Data
 	 * 
 	 * {@inheritDoc}
 	 * @see \exface\Core\Interfaces\Widgets\iShowDataSet::set_data()
@@ -236,7 +236,7 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveButtons, iHaveT
 	 * Sets the series to be displayed in the chart. Multiple series are possible.
 	 * 
 	 * @uxon-property series
-	 * @uxon-type Widget:ChartSeries[]
+	 * @uxon-type \exface\Core\Widget\ChartSeries[]
 	 * 
 	 * @param unknown $series_or_uxon_object_or_array
 	 * @return \exface\Core\Widgets\Chart
@@ -405,7 +405,7 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveButtons, iHaveT
 	/**
 	 * 
 	 * {@inheritDoc}
-	 * @see \exface\Core\Widgets\AbstractWidget::prepare_data_sheet_to_prefill()
+	 * @see \exface\Core\Widgets\Abstract\exface\Core\Widget\:prepare_data_sheet_to_prefill()
 	 */
 	public function prepare_data_sheet_to_prefill(DataSheetInterface $data_sheet = null){
 		return $this->get_data()->prepare_data_sheet_to_prefill($data_sheet);
@@ -414,7 +414,7 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveButtons, iHaveT
 	/**
 	 * 
 	 * {@inheritDoc}
-	 * @see \exface\Core\Widgets\AbstractWidget::prepare_data_sheet_to_read()
+	 * @see \exface\Core\Widgets\Abstract\exface\Core\Widget\:prepare_data_sheet_to_read()
 	 */
 	public function prepare_data_sheet_to_read(DataSheetInterface $data_sheet = null){
 		return $this->get_data()->prepare_data_sheet_to_read($data_sheet);
