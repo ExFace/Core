@@ -223,27 +223,33 @@ class Object implements ExfaceClassInterface, AliasInterface {
 	
 	/**
 	 * Adds a relation to the object.
+	 * 
+	 * NOTE: Adding multiple relations with the same alias will work differently depending on the relation type:
+	 * - Regular relations will get overwritten with every new relation with the same alias (important for extending objects!)
+	 * - Reverse relations will be accumulated in an array
+	 * 
 	 * TODO When adding reverse relations, it is possible, that there are two relations from the same object,
 	 * thus having the same aliases (the alias of the reverse relation is currently the alias of the object,
 	 * where it comes from). I like this kind of naming, but it needs to be extended by the possibility to
 	 * specify which of the two reverse relation to use (e.g. LOCATION->ADDRESS[SHIPPING_ADDRESS] or something)
+	 * 
 	 * @param relation $relation
+	 * @return Object
 	 */
 	function add_relation(Relation $relation){
 		// If there already is a relation with this alias, add another one, making it an array of relations
-		if ($duplicate = $this->get_relation($relation->get_alias())){
-			// Make sure, this only happens to reverse relation!!! Direct relation MUST have different aliases!
-			if ($relation->is_reverse_relation()){
-				// Create an array for the alias or just add the relation to the array if there already is one
-				if (is_array($duplicate)){
-					$this->relations[$relation->get_alias()][] = $relation;
-				} else {
-					$this->relations[$relation->get_alias()] = array($duplicate, $relation);
-				}
+		// Make sure, this only happens to reverse relation!!! Direct relation MUST have different aliases!
+		if ($relation->is_reverse_relation() && $duplicate = $this->get_relation($relation->get_alias())){
+			// Create an array for the alias or just add the relation to the array if there already is one
+			if (is_array($duplicate)){
+				$this->relations[$relation->get_alias()][] = $relation;
+			} else {
+				$this->relations[$relation->get_alias()] = array($duplicate, $relation);
 			}
 		} else {
 			$this->relations[$relation->get_alias()] = $relation;
 		}
+		return $this;
 	}
 	
 	/**
@@ -266,6 +272,7 @@ class Object implements ExfaceClassInterface, AliasInterface {
 		$this->add_parent_object_id($parent_object_id);
 		// Inherit object properties
 		$this->set_data_address_properties($parent->get_data_address_properties());
+		$this->set_default_editor_uxon($parent->get_default_editor_uxon());
 		// Inherit some object properties originating from attributes
 		$this->set_uid_alias($parent->get_uid_alias());
 		$this->set_label_alias($parent->get_label_alias());
@@ -310,13 +317,13 @@ class Object implements ExfaceClassInterface, AliasInterface {
 	 * Note: Currently this will only work for direct relations. Chained relations can be found via find_relation_path().
 	 * @see find_relation_path()
 	 * 
-	 * @param string $related_object_id
+	 * @param Object $related_object
 	 * @return Relation
 	 */
-	public function find_relation($related_object_id, $prefer_direct_relations = false){
+	public function find_relation(Object $related_object, $prefer_direct_relations = false){
 		$first_relation = false;
 		foreach ($this->get_relations() as $rel){
-			if ($rel->get_related_object_id() == $related_object_id) {
+			if ($related_object->is($rel->get_related_object())) {
 				if (!$rel->is_inherited() || !$prefer_direct_relations){
 					return $rel;
 				} else {
@@ -355,7 +362,7 @@ class Object implements ExfaceClassInterface, AliasInterface {
 	public function find_relation_path(Object $related_object, $max_depth = 3, RelationPath $start_path = null){
 		$path = $start_path ? $start_path : new RelationPath($this);
 		
-		if ($rel = $path->get_end_object()->find_relation($related_object->get_id())){
+		if ($rel = $path->get_end_object()->find_relation($related_object)){
 			$path->append_relation($rel);
 		} elseif ($max_depth > 1){
 			$result = false;
@@ -645,14 +652,23 @@ class Object implements ExfaceClassInterface, AliasInterface {
 	 * @return UxonObject
 	 */
 	public function get_default_editor_uxon(){	
-		if (!is_null($this->default_editor_uxon) && !($this->default_editor_uxon instanceof UxonObject)){
+		if (is_null($this->default_editor_uxon)) {
+			$this->default_editor_uxon = $this->get_workbench()->create_uxon_object();
+		} elseif (!($this->default_editor_uxon instanceof UxonObject)){
 			$this->default_editor_uxon = UxonObject::from_json($this->default_editor_uxon);
 		}
 		return $this->default_editor_uxon;
 	}
 	
+	/**
+	 * Sets the UXON description for the default editor widget for this object (e.g. to build the EditObjectDialog)
+	 *  
+	 * @param UxonObject $value
+	 * @return Object
+	 */
 	public function set_default_editor_uxon(UxonObject $value){
 		$this->default_editor_uxon = $value;
+		return $this;
 	}
 	
 	/**

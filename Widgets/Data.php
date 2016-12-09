@@ -168,7 +168,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 				// TODO currently this only works for direct relations, not for chained ones.
 				// FIXME check, if a filter on the current relation is there already, and add it only in this case
 				/* @var $rel \exface\Core\CommonLogic\Model\relation */
-				if ($rel = $this->get_meta_object()->find_relation($data_sheet->get_meta_object()->get_id())){
+				if ($rel = $this->get_meta_object()->find_relation($data_sheet->get_meta_object())){
 					$fltr = $this->create_filter_from_relation($rel);
 					$data_sheet = $fltr->prepare_data_sheet_to_prefill($data_sheet);
 				}
@@ -532,7 +532,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 			
 			// Otherwise, try to find a suitable relation via generic relation searcher
 			// TODO currently this only works for direct relations, not for chained ones.
-			if (!$fltr && $rel = $this->get_meta_object()->find_relation($data_sheet->get_meta_object()->get_id())){
+			if (!$fltr && $rel = $this->get_meta_object()->find_relation($data_sheet->get_meta_object())){
 				$filter_widget = $this->create_filter_from_relation($rel);
 				$filter_widget->prefill($data_sheet);
 			}

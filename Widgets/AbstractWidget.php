@@ -538,7 +538,7 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren {
 					if ($this->object_relation_path_to_parent){
 						// If we already know the path from this widgets object to the parent, just reverse it
 						$this->object_relation_path_from_parent = $this->get_object_relation_path_to_parent()->reverse();
-					} elseif ($rel = $this->get_parent()->get_meta_object()->find_relation($this->get_meta_object_id(), true)){
+					} elseif ($rel = $this->get_parent()->get_meta_object()->find_relation($this->get_meta_object(), true)){
 						// Otherwise, try to find a path automatically 
 						$this->object_relation_path_from_parent->append_relation($rel);
 					}
@@ -604,7 +604,7 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren {
 					if ($this->object_relation_path_from_parent){
 						// If we already know the path from the parents object to this widget, just reverse it
 						$this->object_relation_path_to_parent = $this->get_object_relation_path_to_parent()->reverse();
-					} elseif ($rel = $this->get_meta_object()->find_relation($this->get_parent()->get_meta_object_id(), true)){
+					} elseif ($rel = $this->get_meta_object()->find_relation($this->get_parent()->get_meta_object(), true)){
 						$this->object_relation_path_to_parent->append_relation($rel);
 					}
 				}

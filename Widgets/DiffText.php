@@ -81,7 +81,7 @@ class DiffText extends AbstractWidget {
 			$data_sheet->get_columns()->add_from_expression($this->get_right_attribute_alias());
 		} else {
 			// Otherwise we are looking for attributes relative to another object
-			if ($this->get_meta_object()->find_relation($data_sheet->get_meta_object()->get_id())){
+			if ($this->get_meta_object()->find_relation($data_sheet->get_meta_object())){
 				throw new UiWidgetException('Prefilling DiffText with data sheets from related objects not implemented!');
 			}
 		}
