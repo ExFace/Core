@@ -1,11 +1,13 @@
 <?php
 namespace exface\Core\Widgets;
 /**
- * A special type of button to use in DataTables and other data widgets. Additionally to the normal button functionality
- * this button can be assigned as a click action. So, if a button is bound to a double click, it's action will be called
- * if the user doubleclicks a data element. In theory multiple buttons can be bound to a click action - if so, the template
- * should show a popup menu for this action.
- * @author PATRIOT
+ * A special type of button to use in DataTables and other Data widgets. The action can be bound to clicks on the Data widget.
+ * 
+ * Additionally to the normal button functionality this button can be assigned as a click action. So, if a button is bound to 
+ * a double click, it's action will be called if the user doubleclicks a data element. In theory multiple buttons can be bound 
+ * to a click action - if so, the template should show a popup menu for this action.
+ * 
+ * @author Andrej Kabachnik
  *
  */
 class DataButton extends Button {
@@ -31,6 +33,11 @@ class DataButton extends Button {
 	}  
 	
 	/**
+	 * Set to TRUE to perform the action of this button when an item of the parent Data widget is doubleclicked
+	 * 
+	 * @uxon-property bind_to_double_click
+	 * @uxon-type boolean
+	 * 
 	 * This a shortcut for set_bind_to_mouse_action(EXF_MOUSE_ACTION_DOUBLE_CLICK), which makes it possible to use easy-to-
 	 * understand UXON-attributes
 	 * @see set_bind_to_mouse_action()
@@ -44,6 +51,11 @@ class DataButton extends Button {
 	}
 	
 	/**
+	 * Set to TRUE to perform the action of this button when an item of the parent Data widget is right clicked
+	 * 
+	 * @uxon-property bind_to_right_click
+	 * @uxon-type boolean
+	 * 
 	 * This a shortcut for set_bind_to_mouse_action(EXF_MOUSE_ACTION_RIGHT_CLICK), which makes it possible to use easy-to-
 	 * understand UXON-attributes
 	 * @see set_bind_to_mouse_action()
@@ -57,6 +69,11 @@ class DataButton extends Button {
 	}
 	
 	/**
+	 * Set to TRUE to perform the action of this button when an item of the parent Data widget is left clicked
+	 * 
+	 * @uxon-property bind_to_left_click
+	 * @uxon-type boolean
+	 * 
 	 * This a shortcut for set_bind_to_mouse_action(EXF_MOUSE_ACTION_DOUBLE_CLICK), which makes it possible to use easy-to-
 	 * understand UXON-attributes
 	 * @see set_bind_to_mouse_action()
