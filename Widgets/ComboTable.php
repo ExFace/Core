@@ -187,7 +187,7 @@ class ComboTable extends InputCombo implements iHaveChildren {
 		
 		if (!$data_sheet->is_empty()){
 			$this->set_prefill_data($data_sheet);
-			if ($data_sheet->get_meta_object()->get_id() == $this->get_meta_object_id()){
+			if ($data_sheet->get_meta_object()->is($this->get_meta_object())){
 				// If the prefill data is based on the same object, as the widget, simply look for the required attributes
 				// in the prefill data.
 				$this->set_value($data_sheet->get_cell_value($this->get_attribute_alias(), 0));
@@ -208,7 +208,7 @@ class ComboTable extends InputCombo implements iHaveChildren {
 				}
 			} else {
 				// If the prefill data was loaded for another object, there are still multiple possibilities to prefill
-				if ($data_sheet->get_meta_object()->get_id() == $this->get_relation()->get_related_object_id()){
+				if ($data_sheet->get_meta_object()->is($this->get_relation()->get_related_object())){
 					// If the sheet is based upon the object, that is being selected by this Combo, we can use the prefill sheet
 					// values directly
 					$this->set_value($data_sheet->get_cell_value($this->get_relation()->get_related_object_key_alias(), 0));

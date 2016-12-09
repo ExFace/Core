@@ -232,10 +232,14 @@ class Object implements ExfaceClassInterface, AliasInterface {
 	function add_relation(Relation $relation){
 		// If there already is a relation with this alias, add another one, making it an array of relations
 		if ($duplicate = $this->get_relation($relation->get_alias())){
-			if (is_array($duplicate)){
-				$this->relations[$relation->get_alias()][] = $relation;
-			} else {
-				$this->relations[$relation->get_alias()] = array($duplicate, $relation);
+			// Make sure, this only happens to reverse relation!!! Direct relation MUST have different aliases!
+			if ($relation->is_reverse_relation()){
+				// Create an array for the alias or just add the relation to the array if there already is one
+				if (is_array($duplicate)){
+					$this->relations[$relation->get_alias()][] = $relation;
+				} else {
+					$this->relations[$relation->get_alias()] = array($duplicate, $relation);
+				}
 			}
 		} else {
 			$this->relations[$relation->get_alias()] = $relation;
@@ -673,6 +677,7 @@ class Object implements ExfaceClassInterface, AliasInterface {
 	 * Returns the attribute group specified by the given alias or NULL if no such group exists.
 	 * Apart from explicitly defined attribute groups, built-in groups can be used. Built-in groups have aliases starting with "~". 
 	 * For every built-in alias there is a constant in the AttributeGroup class (e.g. AttributeGroup::ALL, etc.) 
+	 * 
 	 * @param string $alias
 	 * @return AttributeGroup
 	 */
@@ -684,12 +689,34 @@ class Object implements ExfaceClassInterface, AliasInterface {
 	}
 	
 	/**
-	 * Checks if this object matches the given object identifier: if so, returns TRUE and FALSE otherwise.
-	 * The identifier may be a qualified alias, a UID or an instantiated object. 
-	 * @param Object|string $alias_with_relation_path
+	 * Returns TRUE if this object is exactly the one given or inherits from it and FALSE otherwise - similarly to the behavior of PHP instance_of.
+	 * E.g. if you have an object SPECIAL_FILE, which extends FILE, SPECIAL_FILE->is(FILE) = true, but FILE->is(SPECIAL_FILE) = false.
+	 * 
+	 * @param Object|string $object_or_alias_or_id
 	 * @return boolean
+	 * 
+	 * @see is_exactly()
+	 * @see is_extended_from()
 	 */
 	public function is($object_or_alias_or_id){
+		if ($this->is_exactly($object_or_alias_or_id)){
+			return true;
+		} else {
+			return $this->is_extended_from($object_or_alias_or_id);
+		}
+	}
+	
+	/**
+	 * Checks if this object matches the given object identifier: if so, returns TRUE and FALSE otherwise.
+	 * The identifier may be a qualified alias, a UID or an instantiated object. 
+	 * 
+	 * @param Object|string $alias_with_relation_path
+	 * @return boolean
+	 * 
+	 * @see is()
+	 * @see is_extended_from()
+	 */
+	public function is_exactly($object_or_alias_or_id){
 		if ($object_or_alias_or_id instanceof Object){
 			if ($object_or_alias_or_id->get_id() == $this->get_id()){
 				return true;
@@ -709,12 +736,16 @@ class Object implements ExfaceClassInterface, AliasInterface {
 	/**
 	 * Returns TRUE if this object is extended from the given object identifier. 
 	 * The identifier may be a qualified alias, a UID or an instantiated object. 
+	 * 
 	 * @param Object|string $object_or_alias_or_id
 	 * @return boolean
+	 * 
+	 * @see is_exactly()
+	 * @see is()
 	 */
 	public function is_extended_from($object_or_alias_or_id){
 		foreach ($this->get_parent_objects() as $parent){
-			if ($parent->is($object_or_alias_or_id)){
+			if ($parent->is_exactly($object_or_alias_or_id)){
 				return true;
 			}
 		}

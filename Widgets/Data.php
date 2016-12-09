@@ -151,7 +151,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 			// time. If data for the other filters will be found in the prefill sheet when actually doing the prefilling,
 			// it should, of course, be applied too, but we do not tell ExFace to always fetch this data.
 			foreach ($relevant_filters as $fltr){
-				if ($fltr->get_attribute()->is_relation() && $fltr->get_attribute()->get_relation()->get_related_object()->is($data_sheet->get_meta_object())){
+				if ($fltr->get_attribute()->is_relation() && $fltr->get_attribute()->get_relation()->get_related_object()->is_exactly($data_sheet->get_meta_object())){
 					$data_sheet = $fltr->prepare_data_sheet_to_prefill($data_sheet);
 					$uid_filters_found = true;
 				}
@@ -497,7 +497,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 		// First, take care of basic stuff like set_prefill_data()
 		parent::prefill($data_sheet);
 		// Now do the widget specific prefill
-		if ($data_sheet->get_meta_object()->is($this->get_meta_object())){
+		if ($data_sheet->get_meta_object()->is_exactly($this->get_meta_object())){
 			// If the prefill data is based on the same object as the widget, inherit the filter conditions from the prefill
 			foreach ($data_sheet->get_filters()->get_conditions() as $condition){
 				// For each filter condition look for filters over the same attribute

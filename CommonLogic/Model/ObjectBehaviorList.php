@@ -18,7 +18,7 @@ class ObjectBehaviorList extends EntityList implements BehaviorListInterface {
 	 * @param BehaviorInterface $behavior
 	 */
 	public function add(&$behavior, $key = null){
-		if (!$behavior->get_object()->is($this->get_parent())){
+		if (!$behavior->get_object()->is_exactly($this->get_parent())){
 			$behavior->set_object($this->get_parent());
 		}
 		$result = parent::add($behavior, $key);

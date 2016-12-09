@@ -140,7 +140,7 @@ class DataSheet implements DataSheetInterface {
 	 * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::import_rows()
 	 */
 	public function import_rows(DataSheetInterface $other_sheet){
-		if (!$this->get_meta_object()->is($other_sheet->get_meta_object()->get_alias_with_namespace())){
+		if (!$this->get_meta_object()->is_exactly($other_sheet->get_meta_object()->get_alias_with_namespace())){
 			throw new DataSheetException('Cannot replace rows for object "' . $this->get_meta_object()->get_alias_with_namespace() . '" with rows from "' . $other_sheet->get_meta_object()->get_alias_with_namespace() . '": replacing rows only possible for identical objects!');
 		}
 		
@@ -317,20 +317,28 @@ class DataSheet implements DataSheetInterface {
 					$last_rel_path = $rel_path;
 					if ($depth == (count($rels) - 2)) break; // stop one path step before the end because that would be the attribute of the related object
 				}
-				
-				// create a subsheet for the relation if not yet existent and add the required attribute
+				// Create a subsheet for the relation if not yet existent and add the required attribute
 				if (!$subsheet = $this->get_subsheets()->get($rel_path_to_subsheet)){
 					$subsheet_object = $this->get_meta_object()->get_related_object($rel_path_to_subsheet);
 					$subsheet = DataSheetSubsheetFactory::create_for_object($subsheet_object, $this);
 					$this->get_subsheets()->add($subsheet, $rel_path_to_subsheet);
-					// add the foreign key to the main query and to this sheet
-					$query->add_attribute($rel_path_to_subsheet);
+					if (!$this->get_meta_object()->get_relation($rel_path_to_subsheet)->is_reverse_relation()){
+						// add the foreign key to the main query and to this sheet
+						$query->add_attribute($rel_path_to_subsheet);
+						// IDEA do we need to add the column to the sheet? This is just useless data...
+						// Additionally it would make trouble when the column has formatters...
+					
+						$this->get_columns()->add_from_expression($rel_path_to_subsheet, '', true);
+					}
 				}
+				// Add the current attribute to the subsheet prefixing it with it's relation path relative to the subsheet's object
 				$subsheet->get_columns()->add_from_expression(RelationPath::relation_path_add($rel_path_in_subsheet, $attribute->get_alias()));
-				$subsheet->get_columns()->add_from_expression(RelationPath::relation_path_add($rel_path_in_main_ds, $this->get_meta_object()->get_relation($rel_path_to_subsheet)->get_related_object_key_alias()));
-				// IDEA do we need to add the column to the sheet? This is just useless data...
-				// Additionally it would make trouble when the column has formatters...
-				$this->get_columns()->add_from_expression($rel_path_to_subsheet, '', true);
+				// Add the related object key alias of the relation to the subsheet to that subsheet. This will be the right key in the future JOIN.
+				if ($rel_path_to_subsheet_right_key = $this->get_meta_object()->get_relation($rel_path_to_subsheet)->get_related_object_key_alias()){
+					$subsheet->get_columns()->add_from_expression(RelationPath::relation_path_add($rel_path_in_main_ds, $rel_path_to_subsheet_right_key));
+				} else {
+					throw new DataSheetException('Cannot find UID (primary key) for subsheet: no key alias can be determined for the relation "' . $rel_path_to_subsheet . '" from "' . $this->get_meta_object()->get_alias_with_namespace() . '" to "' . $this->get_meta_object()->get_relation($rel_path_to_subsheet)->get_related_object()->get_alias_with_namespace() . '"!');
+				}
 			}
 			
 			if ($attribute->get_formatter()){
@@ -385,7 +393,7 @@ class DataSheet implements DataSheetInterface {
 				$this->get_data_for_column($col, $query);
 			}
 		}
-	
+		
 		// Set explicitly defined filters
 		$query->set_filters_condition_group($this->get_filters());
 		// Add filters from the contexts
@@ -417,8 +425,17 @@ class DataSheet implements DataSheetInterface {
 		// load data for subsheets if needed
 		/* @var $subsheet DataSheet */
 		foreach ($this->get_subsheets() as $rel_path => $subsheet){
-			$foreign_keys = $this->get_column_values($rel_path);
-			$subsheet->add_filter_from_string($this->get_meta_object()->get_relation($rel_path)->get_related_object_key_alias(), implode(',', array_unique($foreign_keys)), EXF_COMPARATOR_IN);
+			if (!$this->get_meta_object()->get_relation($rel_path)->is_reverse_relation()){
+				$foreign_keys = $this->get_column_values($rel_path);
+				$subsheet->add_filter_from_string($this->get_meta_object()->get_relation($rel_path)->get_related_object_key_alias(), implode(',', array_unique($foreign_keys)), EXF_COMPARATOR_IN);
+			} else {
+				if ($this->get_meta_object()->get_relation($rel_path)->get_main_object_key_attribute()){
+					throw new DataSheetException('Joining subsheets via reverse relations the explicitly specified foreign keys, not implemented yet!');
+				} else {
+					$foreign_keys = $this->get_uid_column()->get_values();					
+					$subsheet->add_filter_from_string($this->get_meta_object()->get_relation($rel_path)->get_foreign_key_alias(), implode(',', array_unique($foreign_keys)), EXF_COMPARATOR_IN);
+				}				
+			}
 			$subsheet->data_read();
 			// add the columns from the sub-sheets, but prefix their names with the relation alias, because they came from this relation!
 			$this->join_left($subsheet, $rel_path, $this->get_meta_object()->get_relation($rel_path)->get_related_object_key_alias(), $rel_path);

@@ -82,7 +82,7 @@ class TimeStampingBehavior extends AbstractBehavior {
 		
 		// Do not do anything, if the base object of the data sheet is not the object with the behavior and is not
 		// extended from it.
-		if (!$data_sheet->get_meta_object()->is($this->get_object())){
+		if (!$data_sheet->get_meta_object()->is_exactly($this->get_object())){
 			return;
 		}
 		
