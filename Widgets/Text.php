@@ -6,10 +6,6 @@ use exface\Core\Interfaces\Widgets\iShowText;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Factories\DataTypeFactory;
-use exface\Core\Interfaces\Widgets\iHaveColumns;
-use exface\Core\CommonLogic\Model\Relation;
-use exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder;
-use exface\Core\CommonLogic\DataSheets\DataColumn;
 
 /**
  * The text widget simply shows text with an optional title created from the caption of the widget
@@ -138,7 +134,7 @@ class Text extends AbstractWidget implements iShowSingleAttribute, iHaveValue, i
 		$prefill_columns = $this->prepare_data_sheet_to_prefill($this->get_workbench()->data()->create_data_sheet($data_sheet->get_meta_object()))->get_columns();
 		if ($col = $prefill_columns->get_first()){
 			if (count($data_sheet->get_column_values($col->get_name(false))) > 1 && $this->get_aggregate_function()){
-				$this->set_value(DataColumn::aggregate_values($data_sheet->get_column_values($col->get_name(false)), $this->get_aggregate_function()));
+				$this->set_value(\exface\Core\CommonLogic\DataSheets\DataColumn::aggregate_values($data_sheet->get_column_values($col->get_name(false)), $this->get_aggregate_function()));
 			} else {
 				$this->set_value($data_sheet->get_cell_value($col->get_name(), 0));
 			}
