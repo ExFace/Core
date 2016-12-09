@@ -39,6 +39,8 @@
 	"ACTION.SHOWDIALOG.NAME": "Open dialog",
 	"ACTION.SHOWDIALOG.CANCEL_BUTTON": "Cancel",
 	
+	"ACTION.SHOWOBJECTDIALOG.NAME": "Information",
+	
 	"ACTION.UNDOACTION.NAME": "Undo",
 	"ACTION.UNDOACTION.RESULT": "Successfully undone %number% action.|Successfully undone %number% actions.",
 	
