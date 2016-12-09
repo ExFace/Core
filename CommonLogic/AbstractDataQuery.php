@@ -23,4 +23,14 @@ abstract class AbstractDataQuery implements DataQueryInterface {
 	public function get_query_builder(){
 		return $this->query_builder;
 	}
+	
+	/**
+	 * 
+	 * @param AbstractQueryBuilder $query_builder
+	 * @return \exface\Core\CommonLogic\AbstractDataQuery
+	 */
+	public function set_query_builder(AbstractQueryBuilder $query_builder){
+		$this->query_builder = $query_builder;
+		return $this;
+	}
 }
