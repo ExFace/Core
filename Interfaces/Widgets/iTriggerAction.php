@@ -37,10 +37,4 @@ interface iTriggerAction {
 	 */
 	public function set_input_widget(AbstractWidget $widget);
 	
-	/**
-	 * Sets options of the action, defined in the button's description.
-	 * NOTE: the action must be defined first!
-	 * @param \stdClass $action_options
-	 */
-	public function set_action_options(\stdClass $action_options);
 }

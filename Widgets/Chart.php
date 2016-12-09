@@ -1,5 +1,6 @@
 <?php
 namespace exface\Core\Widgets;
+
 use exface\Core\Exceptions\UiWidgetConfigException;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Widgets\iHaveTopToolbar;
@@ -10,6 +11,13 @@ use exface\Core\Interfaces\Widgets\iHaveButtons;
 use exface\Core\Interfaces\Widgets\iSupportLazyLoading;
 use exface\Core\Interfaces\Widgets\iShowDataSet;
 
+/**
+ * A Button is the primary widget for triggering actions. In addition to the general widget attributes it can have
+ * an icon and also subwidgets (if the triggered action shows a widget).
+ *
+ * @author Andrej Kabachnik
+ *
+ */
 class Chart extends AbstractWidget implements iShowDataSet, iHaveButtons, iHaveTopToolbar, iHaveBottomToolbar, iSupportLazyLoading {
 	/**
 	 * @var ChartAxis[]
@@ -20,7 +28,7 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveButtons, iHaveT
 	 */
 	private $axes_y = array();
 	/**
-	 * @var ChartSeries[] $series
+	 * @var ChartSeries[]
 	 */
 	private $series = array();
 	/** 

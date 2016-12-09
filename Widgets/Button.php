@@ -14,6 +14,7 @@ use exface\Core\CommonLogic\UxonObject;
 /**
  * A Button is the primary widget for triggering actions. In addition to the general widget attributes it can have
  * an icon and also subwidgets (if the triggered action shows a widget).
+ * 
  * @author Andrej Kabachnik
  *
  */
@@ -39,6 +40,18 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iHaveC
 		return $this->action;
 	}
 	
+	/**
+	 * Sets the action, that the button will trigger. 
+	 * 
+	 * Properties of the action can also be set as properties of the button directly by prefixing them with "action_". 
+	 * Thus setting "action_alias: SOME_ALIAS" for the button is the same as settin "action: {alias: SOME_ALIAS}".
+	 * 
+	 * @uxon-property action
+	 * @uxon-type \exface\Core\CommonLogic\AbstractAction
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\Widgets\iTriggerAction::set_action()
+	 */
 	public function set_action($action_object_or_uxon_description) {
 		if ($action_object_or_uxon_description instanceof ActionInterface){
 			$this->action = $action_object_or_uxon_description;
@@ -60,22 +73,21 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iHaveC
 		return $this->action_alias;
 	}
 	
+	/**
+	 * Specifies the action to be performed by it's fully qualified alias (with namespace!).
+	 * 
+	 * This property does the same as {widget_type: Button, action: {alias: SOME_ALIAS} }
+	 * 
+	 * @uxon-property action_alias
+	 * @uxon-type string
+	 * 
+	 * @param string $value
+	 */
 	public function set_action_alias($value) {
 		$this->action_alias = $value;
-	}  
-	
-	public function get_active_condition() {
-		return $this->active_condition;
-	}
-	
-	public function set_active_condition($value) {
-		$this->active_condition = $value;
-	}
+	} 
 	
 	
-	/**
-	 * @param string $caption
-	 */
 	public function set_caption($caption) {
 		// TODO get caption automatically from action model once it is created
 		return parent::set_caption($caption);
@@ -100,7 +112,11 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iHaveC
 	}
 	
 	/**
-	 * Sets the input widget id 
+	 * Sets the id of the widget to be used to fetch input data for the action performed by this button.
+	 * 
+	 * @uxon-property input_widget_id
+	 * @uxon-type string
+	 * 
 	 * @param string $value
 	 */
 	public function set_input_widget_id($value) {
@@ -152,10 +168,11 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iHaveC
 	/**
 	 * Sets options of the action, defined in the button's description.
 	 * NOTE: the action must be defined first!
+	 * 
 	 * @param \stdClass $action_options
 	 * @throws \exface\Core\Exceptions\UiWidgetException
 	 */
-	public function set_action_options(\stdClass $action_options){
+	protected function set_action_options(\stdClass $action_options){
 		if (!$action = $this->get_action()){
 			throw new \exface\Core\Exceptions\UiWidgetException('Cannot set action properties prior to action initialization! Please ensure, that the action_alias is defined first!');
 		} else {
@@ -172,9 +189,13 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iHaveC
 	}
 	
 	/**
-	 * Make the button perform it's action when the hotkey is pressed. Hotkeys can be passed in
-	 * JS manner: ctrl+z, alt+q, etc. Multiple hotkeys can be used by separating them by comma.
+	 * Make the button perform it's action when the hotkey is pressed. 
+	 * Hotkeys can be passed in JS manner: ctrl+z, alt+q, etc. Multiple hotkeys can be used by separating them by comma.
 	 * If multiple hotkeys defined, they will all act exactly the same.
+	 * 
+	 * @uxon-property hotkey
+	 * @uxon-type string
+	 * 
 	 * @param string $value
 	 */
 	public function set_hotkey($value) {
@@ -188,6 +209,18 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iHaveC
 		return $this->icon_name;
 	}
 	
+	/**
+	 * Specifies the name of the icon to be displayed by this button.
+	 * 
+	 * There are some default icons defined in the core, but every template is free to add more icons. The names of the latter
+	 * are, of course, absolutely template specific.
+	 * 
+	 * @uxon-property icon_name
+	 * @uxon-type string
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\Widgets\iHaveIcon::set_icon_name()
+	 */
 	public function set_icon_name($value) {
 		$this->icon_name = $value;
 	}
@@ -196,6 +229,14 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iHaveC
 		return $this->refresh_input;
 	}
 	
+	/**
+	 * Set to FALSE to prevent the button from refreshing it's input widget automatically. Default: TRUE.
+	 * 
+	 * @uxon-property refresh_input
+	 * @uxon-type boolean
+	 * 
+	 * @param boolean $value
+	 */
 	public function set_refresh_input($value) {
 		$this->refresh_input = $value;
 	}  
@@ -204,6 +245,14 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iHaveC
 		return $this->hide_button_text;
 	}
 	
+	/**
+	 * Set to TRUE to hide the button's caption leaving only the icon. Default: FALSE.
+	 * 
+	 * @uxon-property hide_button_text
+	 * @uxon-type boolean
+	 * 
+	 * @param boolean $value
+	 */
 	public function set_hide_button_text($value) {
 		$this->hide_button_text = $value;
 	}
@@ -212,6 +261,14 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iHaveC
 		return $this->hide_button_icon;
 	}
 	
+	/**
+	 * Set to TRUE to hide the button's icon leaving only the caption. Default: FALSE.
+	 * 
+	 * @uxon-property hide_button_icon
+	 * @uxon-type boolean
+	 * 
+	 * @param boolean $value
+	 */
 	public function set_hide_button_icon($value) {
 		$this->hide_button_icon = $value;
 	}
@@ -252,6 +309,10 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iHaveC
 	
 	/**
 	 * Sets the link to the widget to be refreshed when this button is pressed. Pass NULL to unset the link
+	 * 
+	 * @uxon-property refresh_widget_link
+	 * @uxon-type string|\exface\Core\CommonLogic\WidgetLink
+	 * 
 	 * @param WidgetLinkInterface|UxonObject|string $widget_link_or_uxon_or_string
 	 * @return \exface\Core\Widgets\Button
 	 */
