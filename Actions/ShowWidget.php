@@ -123,7 +123,7 @@ class ShowWidget extends AbstractAction implements iShowWidget, iUsePrefillData 
 		&& $this->get_widget() 
 		&& $context_conditions = $this->get_app()->get_workbench()->context()->get_scope_window()->get_filter_context()->get_conditions($this->get_widget()->get_meta_object())){
 			if (!$data_sheet || $data_sheet->is_empty()){
-				$data_sheet = $this->get_app()->get_workbench()->data()->create_data_sheet($this->get_widget()->get_meta_object());
+				$data_sheet = DataSheetFactory::create_from_object($this->get_widget()->get_meta_object());
 			}
 			
 			/* @var $condition \exface\Core\CommonLogic\Model\Condition */
