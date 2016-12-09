@@ -12,8 +12,9 @@ use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 use exface\Core\CommonLogic\UxonObject;
 
 /**
- * A Button is the primary widget for triggering actions. In addition to the general widget attributes it can have
- * an icon and also subwidgets (if the triggered action shows a widget).
+ * A Button is the primary widget for triggering actions. 
+ * 
+ * In addition to the general widget attributes it can have an icon and also subwidgets (if the triggered action shows a widget).
  * 
  * @author Andrej Kabachnik
  *
