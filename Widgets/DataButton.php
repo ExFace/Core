@@ -1,5 +1,5 @@
-<?php
-namespace exface\Core\Widgets;
+<?php namespace exface\Core\Widgets;
+
 /**
  * A special type of button to use in DataTables and other Data widgets. The action can be bound to clicks on the Data widget.
  * 
@@ -16,14 +16,16 @@ class DataButton extends Button {
 	/**
 	 * Returns the mouse action, this button is bound to (one of the EXF_MOUSE_ACTION_*** constants) or NULL if the button
 	 * is not bound to any mouse action.
+	 * 
 	 * @return string
 	 */
 	public function get_bind_to_mouse_action() {
 		return $this->bind_to_mouse_action;
 	}
-	
+
 	/**
 	 * Binds the button to a specific mouse action (like a double click). Accepts one of the EXF_MOUSE_ACTION_*** constants
+	 * 
 	 * @param string $mouse_action_name
 	 * @return DataButton
 	 */
