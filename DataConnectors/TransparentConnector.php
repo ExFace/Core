@@ -1,6 +1,7 @@
 <?php namespace exface\Core\DataConnectors;
 
 use exface\Core\CommonLogic\AbstractDataConnectorWithoutTransactions;
+use exface\Core\Interfaces\DataSources\DataQueryInterface;
 
 /**
  * This simple data connector merely returns the given query right back while being fully compilant to all data connector specs.
@@ -19,7 +20,7 @@ class TransparentConnector extends AbstractDataConnectorWithoutTransactions {
 	 * @see \exface\Core\CommonLogic\AbstractDataConnector::perform_query()
 	 * @return \SplFileInfo[]
 	 */
-	protected function perform_query($query, $options = null) {
+	protected function perform_query(DataQueryInterface $query) {
 		return $query;
 	}
 	

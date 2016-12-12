@@ -18,11 +18,11 @@ interface DataConnectionInterface extends ExfaceClassInterface, AliasInterface {
 	public function disconnect();
 	
 	/**
-	 * Queries the data source using the passed query (presumably build by a suitable query builder) and returns the result in whatever form, that can be interpreted
+	 * Queries the data source using the passed query object (presumably build by a suitable query builder) and returns the result in whatever form, that can be interpreted
 	 * by the query builder. The recommended return format is an assotiative array.
-	 * @param string $query_string
+	 * @param DataQueryInterface $query_string
 	 */
-	public function query($query_string);
+	public function query(DataQueryInterface $query);
 	
 	/**
 	 * Returns the id of the data row inserted by the last query

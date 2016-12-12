@@ -4,6 +4,7 @@ use exface\Core\CommonLogic\Workbench;
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 use exface\Core\Interfaces\NameResolverInterface;
 use exface\Core\Factories\EventFactory;
+use exface\Core\Interfaces\DataSources\DataQueryInterface;
 
 abstract class AbstractDataConnector implements DataConnectionInterface {
 	private $config_array = array();
@@ -90,14 +91,14 @@ abstract class AbstractDataConnector implements DataConnectionInterface {
 	 * {@inheritDoc}
 	 * @see \exface\Core\Interfaces\DataSources\DataConnectionInterface::query()
 	 */
-	public final function query($query_string, $options = null){
+	public final function query(DataQueryInterface $query){
 		$this->get_workbench()->event_manager()->dispatch(EventFactory::create_data_connection_event($this, 'Query.Before'));
-		$result = $this->perform_query($query_string, $options);
+		$result = $this->perform_query($query);
 		$this->get_workbench()->event_manager()->dispatch(EventFactory::create_data_connection_event($this, 'Query.After'));
 		return $result;
 	}
 	
-	protected abstract function perform_query($query_string, $options = null);
+	protected abstract function perform_query(DataQueryInterface $query);
 	
 	/**
 	 * 

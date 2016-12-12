@@ -594,7 +594,7 @@ class Object implements ExfaceClassInterface, AliasInterface {
 	 */
 	public function get_inheriting_objects(){
 		$result = array();
-		$res = $this->get_model()->get_workbench()->get_model_data_connector()->query('SELECT o.oid FROM exf_object o WHERE o.parent_object_oid = ' . $this->get_id());
+		$res = $this->get_model()->get_workbench()->get_model_data_connector()->run_sql('SELECT o.oid FROM exf_object o WHERE o.parent_object_oid = ' . $this->get_id());
 		foreach ($res as $row){
 			if ($obj = $this->get_model()->get_object($row['oid'])){
 				$result[] = $obj;
