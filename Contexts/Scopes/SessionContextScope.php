@@ -25,7 +25,7 @@ class SessionContextScope extends AbstractContextScope {
 	protected function init(){
 	
 		$this->session_open();
-		if (is_array($this->get_saved_contexts())){
+		if ($this->get_saved_contexts() instanceof UxonObject || is_array($this->get_saved_contexts())){
 			foreach ($this->get_saved_contexts() as $alias => $uxon){
 				try {
 					$this->get_context($alias);
