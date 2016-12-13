@@ -65,7 +65,7 @@ class Panel extends Container implements iSupportLazyLoading, iHaveButtons, iHav
 					$widget = $this->get_page()->create_widget('InputHidden', $this);
 					$widget->set_attribute_alias($attr->get_alias());
 					if ($attr->is_uid_for_object()){
-						$widget->set_aggregate_function('LIST');
+						$widget->set_aggregate_function(EXF_AGGREGATOR_LIST);
 					} else {
 						$widget->set_aggregate_function($attr->get_default_aggregate_function());
 					}

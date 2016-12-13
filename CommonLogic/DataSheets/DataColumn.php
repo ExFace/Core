@@ -483,7 +483,7 @@ class DataColumn implements DataColumnInterface {
 				} elseif ($attr->get_default_value()){
 					$this->set_value($row_id, $attr->get_default_value()->evaluate($this->get_data_sheet(), $this->get_name(), $row_id));
 				} else {
-					throw new \exface\Core\Exceptions\DataSheetException('Cannot create ' . $this->get_meta_object()->get_name() . ': attribute ' . $attr->get_name() . ' not set in row ' . $row_id . '!');
+					throw new \exface\Core\Exceptions\DataSheetException('Cannot create ' . $this->get_data_sheet()->get_meta_object()->get_name() . ': attribute ' . $attr->get_name() . ' not set in row ' . $row_id . '!');
 				}
 			}
 		}
@@ -576,9 +576,14 @@ class DataColumn implements DataColumnInterface {
 		$output = '';
 		switch ($func) {
 			// TODO replace by constants EXF_AGGREGATOR_SUM etc.
-			case 'LIST': $output = implode(', ', $row_array); break;
-			case 'MAX': $output = max($row_array); break;
-			case 'SUM': case 'AVG': case 'COUNT': case 'LIST_DISTINCT': case 'MIN': // TODO
+			case EXF_AGGREGATOR_LIST: $output = implode(', ', $row_array); break;
+			case EXF_AGGREGATOR_LIST_DISTINCT: $output = implode(', ', array_unique($row_array)); break;
+			case EXF_AGGREGATOR_MIN: $output = min($row_array); break;
+			case EXF_AGGREGATOR_MAX: $output = max($row_array); break;
+			case EXF_AGGREGATOR_COUNT: $output = count($row_array); break;
+			case EXF_AGGREGATOR_COUNT_DISTINCT: $output = count(array_unique($row_array)); break;
+			case EXF_AGGREGATOR_SUM: $output = array_sum($row_array); break;
+			case EXF_AGGREGATOR_AVG: $output = array_sum($row_array)/count($row_array); break;
 			default: $output = reset($row_array);
 		}
 		return $output;
