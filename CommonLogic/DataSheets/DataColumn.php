@@ -483,7 +483,7 @@ class DataColumn implements DataColumnInterface {
 				} elseif ($attr->get_default_value()){
 					$this->set_value($row_id, $attr->get_default_value()->evaluate($this->get_data_sheet(), $this->get_name(), $row_id));
 				} else {
-					throw new \exface\Core\Exceptions\DataSheetException('Cannot create ' . $this->get_meta_object()->get_name() . ': attribute ' . $attr->get_name() . ' not set in row ' . $row_id . '!');
+					throw new \exface\Core\Exceptions\DataSheetException('Cannot create ' . $this->get_data_sheet()->get_meta_object()->get_name() . ': attribute ' . $attr->get_name() . ' not set in row ' . $row_id . '!');
 				}
 			}
 		}

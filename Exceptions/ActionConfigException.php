@@ -1,6 +1,6 @@
 <?php
 namespace exface\Core\Exceptions;
-class ActionConfigException extends exfException {
+class ActionConfigException extends exfError {
 	
 }
 ?>
