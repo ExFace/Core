@@ -1,6 +1,5 @@
 <?php namespace exface\Core\Interfaces\DataSources;
 
-use exface\Core\CommonLogic\Workbench;
 use exface\Core\Interfaces\ExfaceClassInterface;
 use exface\Core\Interfaces\AliasInterface;
 use exface\Core\Exceptions\DataConnectionError;
@@ -9,18 +8,26 @@ interface DataConnectionInterface extends ExfaceClassInterface, AliasInterface {
 	
 	/**
 	 * Connects to the data source using the configuration array passed to the constructor of the connector
+	 * 
+	 * @return void
 	 */
 	public function connect();
 	
 	/**
 	 * Closes the connection to the data source
+	 * 
+	 * @return void
 	 */
 	public function disconnect();
 	
 	/**
-	 * Queries the data source using the passed query object (presumably build by a suitable query builder) and returns the result in whatever form, that can be interpreted
-	 * by the query builder. The recommended return format is an assotiative array.
+	 * Queries the data source using the passed query object (presumably build by a suitable query builder) and returns 
+	 * a query object containing the result in addition to the query. The form in which the result is stored depends
+	 * on the specific implementation - it must be readable by compatible query builders but apart from that it can be
+	 * anything. 
+	 * 
 	 * @param DataQueryInterface $query_string
+	 * @return DataQueryInterface
 	 */
 	public function query(DataQueryInterface $query);
 	
