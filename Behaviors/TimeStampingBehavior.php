@@ -6,7 +6,6 @@ use exface\Core\Events\DataSheetEvent;
 use exface\Core\Exceptions\MetaModelBehaviorException;
 use exface\Core\Interfaces\Actions\iUndoActions;
 use exface\Core\Exceptions\TimeStampingBehaviorError;
-use exface\Core\CommonLogic\DataSheets\DataColumn;
 
 class TimeStampingBehavior extends AbstractBehavior {
 	private $created_on_attribute_alias = null;
@@ -92,8 +91,8 @@ class TimeStampingBehavior extends AbstractBehavior {
 		if (!$updated_column){
 			throw new MetaModelBehaviorException('Cannot check for potential update conflicts in TimeStamping behavior: column "' . $this->get_updated_on_attribute_alias() . '" not found in given data sheet!');
 		}
-		$updated_val = $updated_column->get_values()[0];
 		
+		$conflict_rows = array();
 		// See, if the UndoAction is performed currently. It needs special treatment
 		$current_action = $this->get_workbench()->context()->get_scope_window()->get_action_context()->get_current_action();
 		if ($current_action instanceof iUndoActions){
@@ -106,35 +105,37 @@ class TimeStampingBehavior extends AbstractBehavior {
 			// Check the current update timestamp in the data source
 			$check_sheet = $data_sheet->copy()->remove_rows();
 			$check_sheet->add_filter_from_column_values($data_sheet->get_uid_column());
+			//$check_sheet->get_aggregators()->add_from_string($check_sheet->get_meta_object()->get_uid_alias());
 			$check_sheet->data_read();
 			$check_column = $check_sheet->get_columns()->get_by_attribute($this->get_updated_on_attribute());
-			$check_val = DataColumn::aggregate_values($check_column->get_values(), $check_column->get_attribute()->get_default_aggregate_function());
-			
-			try {
-				//TODO Beim Massenupdate mit Filtern wird kein TS_UPDATE-Wert mitgeliefert, da nicht klar ist welche Objekte
-				//betroffen sind. Momentan wird daher das Update einfach gestattet, später soll hier eine Warnung ausgegeben
-				//werden.
-				$updated_date = !empty($updated_val) ? new \DateTime($updated_val) : new \DateTime($check_val);
-				$check_date = new \DateTime($check_val);
-				/* FIXME These commented out lines were a workaround for a problem of oracle SQL delivering an other date format by default
-				 * (with milliseconds). This would cause the Check to fail, if the attribute with the timestamp had a formatter. The
-				 * formatter would change the timestamp in the GUI, thus the comparison would naturally fail. This should not be
-				 * neccessary as long as timestamping attributes do not use formatters. The lines should be removed after some testing.
-				 $format = $this->get_workbench()->get_config()->get_option('DEFAULT_DATETIME_FORMAT');
-				 $v_date = new \DateTime($val);
-				 $val_date = new \DateTime($v_date->format($format));
-				 $c_date = new \DateTime($check_val);
-				 $check_date = new \DateTime($c_date->format($format));*/
-			} catch (\Exception $e){
-				$updated_date = 0;
-				$check_date = 0;
+			foreach ($updated_column->get_values() as $row_nr => $val){
+				$check_val = $check_column->get_cell_value($check_sheet->get_uid_column()->find_row_by_value($data_sheet->get_uid_column()->get_cell_value($row_nr)));
+				try {
+					$val_date = new \DateTime($val);
+					$check_date = new \DateTime($check_val);
+					/* FIXME These commented out lines were a workaround for a problem of oracle SQL delivering an other date format by default
+					 * (with milliseconds). This would cause the Check to fail, if the attribute with the timestamp had a formatter. The 
+					 * formatter would change the timestamp in the GUI, thus the comparison would naturally fail. This should not be
+					 * neccessary as long as timestamping attributes do not use formatters. The lines should be removed after some testing.
+					$format = $this->get_workbench()->get_config()->get_option('DEFAULT_DATETIME_FORMAT');
+					$v_date = new \DateTime($val);
+					$val_date = new \DateTime($v_date->format($format));
+					$c_date = new \DateTime($check_val);
+					$check_date = new \DateTime($c_date->format($format));*/
+				} catch (\Exception $e){
+					$val_date = 0;
+					$check_date = 0;
+				}
+				
+				if ($val_date != $check_date){
+					$conflict_rows[] = $row_nr;
+				}
 			}
-			
-			if ($updated_date != $check_date){
-				$data_sheet->data_mark_invalid();
-				$conflict_rows = array_keys($check_column->get_values(), $check_val);
-				throw new TimeStampingBehaviorError('Cannot update data in data sheet with "' . $data_sheet->get_meta_object()->get_alias_with_namespace() . '": row(s) ' . implode(',', $conflict_rows) . ' changed by another user!');
-			}
+		}
+		
+		if (count($conflict_rows) > 0){
+			$data_sheet->data_mark_invalid();
+			throw new TimeStampingBehaviorError('Cannot update data in data sheet with "' . $data_sheet->get_meta_object()->get_alias_with_namespace() . '": row(s) ' . implode(',', $conflict_rows) . ' changed by another user!');
 		}
 	}
 }
