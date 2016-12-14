@@ -6,7 +6,6 @@ use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 use exface\Core\CommonLogic\Model\Object;
 use exface\Core\Exceptions\ActionRuntimeException;
 use exface\Core\CommonLogic\DataSheets\DataColumn;
-use exface\Core\Exceptions\DataSourceError;
 
 class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuery {
 	private $queries = array();
