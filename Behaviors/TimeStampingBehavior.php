@@ -6,6 +6,7 @@ use exface\Core\Events\DataSheetEvent;
 use exface\Core\Exceptions\MetaModelBehaviorException;
 use exface\Core\Interfaces\Actions\iUndoActions;
 use exface\Core\Exceptions\TimeStampingBehaviorError;
+use exface\Core\Exceptions\TimeStampingMassupdateException;
 use exface\Core\CommonLogic\DataSheets\DataColumn;
 
 class TimeStampingBehavior extends AbstractBehavior {
@@ -152,7 +153,7 @@ class TimeStampingBehavior extends AbstractBehavior {
 						//ist, als alle Werte in der Datenbank. Es werden jedoch keine oid-Werte uebergeben, da nicht klar ist welche
 						//Objekte betroffen sind. Momentan wird daher das Update einfach gestattet, später soll hier eine Warnung
 						//ausgegeben werden.
-						throw new \Exception('Allow mass-updates with filters.');
+						throw new TimeStampingMassupdateException('Allow mass-updates with filters.');
 					}
 					$updated_date = new \DateTime($updated_val);
 					$check_date = new \DateTime($check_val);
