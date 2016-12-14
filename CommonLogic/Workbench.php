@@ -15,6 +15,8 @@ use exface\Core\Interfaces\Events\EventManagerInterface;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Interfaces\ConfigurationInterface;
 use exface\Core\Exceptions\exfError;
+use Whoops\Run;
+use Whoops\Handler\PrettyPageHandler;
 
 class Workbench {
 	private $data;
@@ -48,6 +50,11 @@ class Workbench {
 	}
 	
 	function start(){
+		// Start the error handler
+		$whoops = new Run();
+		$whoops->pushHandler(new PrettyPageHandler);
+		$whoops->register();
+		
 		// start the event dispatcher
 		$this->event_manager = new EventManager($this);
 		$this->event_manager->dispatch(EventFactory::create_basic_event($this, 'Start'));
