@@ -756,6 +756,7 @@ class DataSheet implements DataSheetInterface {
 			// Check if the meta attribute really exists
 			if (!$column->get_attribute()){
 				throw new MetaModelAttributeNotFoundException('Cannot find attribute for data sheet column "' . $column->get_name() . '"!');
+				continue;
 			}
 				
 			// Check the uid column for values. If there, it's an update!
