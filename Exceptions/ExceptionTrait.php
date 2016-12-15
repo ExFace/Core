@@ -5,7 +5,7 @@ use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Exceptions\WarningExceptionInterface;
 
-class Exception implements ExceptionInterface {
+trait ExceptionTrait {
 	
 	public function export_uxon_object(){
 		return new UxonObject();
