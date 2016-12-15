@@ -22,6 +22,7 @@ class SaveData extends AbstractAction implements iModifyData, iCanBeUndone {
 		$data_sheet = $this->get_input_data_sheet()->copy();
 		$this->set_affected_rows($data_sheet->data_save());
 		$this->set_result_data_sheet($data_sheet);
+		$this->set_result('');
 		$this->set_result_message($this->get_app()->get_translator()->translate_plural('ACTION.SAVEDATA.RESULT', $this->get_affected_rows(), array('%number%' => $this->get_affected_rows())));
 	}
 	
@@ -63,14 +64,6 @@ class SaveData extends AbstractAction implements iModifyData, iCanBeUndone {
 	
 	public function undo(){
 		throw new ActionRuntimeException('Undo functionality not implemented yet for action "' . $this->get_alias() . '"!');
-	}
-	
-	/**
-	 * Saving data does not produce any visible output
-	 * @see \exface\Core\Interfaces\Actions\ActionInterface::get_result_output()
-	 */
-	public function get_result_output(){
-		return '';
 	}
 }
 ?>

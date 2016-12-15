@@ -37,6 +37,7 @@ class UndoAction extends AbstractAction implements iUndoActions {
 				throw new ActionRuntimeException('Cannot undo action "' . $undo_action->get_alias_with_namespace() . '". This type of action cannot be undone!');
 			}
 		}
+		$this->set_result('');
 		$this->set_result_data_sheet($result);
 		$this->set_result_message($this->translate('RESULT', array('%number%' => $this->count_undone_actions()), $this->count_undone_actions()));
 	}
@@ -54,13 +55,6 @@ class UndoAction extends AbstractAction implements iUndoActions {
 	public function count_undone_actions(){
 		return $this->undone_actions;
 	}
-	
-	/**
-	 * Undoing actions does not produce any visible output
-	 * @see \exface\Core\Interfaces\Actions\ActionInterface::get_result_output()
-	 */
-	public function get_result_output(){
-		return '';
-	}
+
 }
 ?>
