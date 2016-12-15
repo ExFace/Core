@@ -13,5 +13,12 @@ use exface\Core\Interfaces\iCanBeConvertedToString;
  */
 interface DataQueryInterface extends iCanBeConvertedToUxon, iCanBeConvertedToString {
 	
+	/**
+	 * Returns the number of rows affected by the this query
+	 * @return integer
+	 */
+	public function count_affected_rows();
+	
+
 }
 ?>

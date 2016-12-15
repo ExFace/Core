@@ -32,24 +32,6 @@ interface DataConnectionInterface extends ExfaceClassInterface, AliasInterface {
 	public function query(DataQueryInterface $query);
 	
 	/**
-	 * Returns the id of the data row inserted by the last query
-	 * @return string
-	 */
-	public function get_insert_id();
-	
-	/**
-	 * Returns the number of rows affected by the last query
-	 * @return int
-	 */
-	public function get_affected_rows_count();
-	
-	/**
-	 * Returns the last error
-	 * @return string
-	 */
-	public function get_last_error();
-	
-	/**
 	 * TODO replace array by UxonObject
 	 * @return array
 	 */
