@@ -1,5 +1,5 @@
 <?php
-namespace exface\Core\Exceptions\DataSource;
+namespace exface\Core\Exceptions\DataSources;
 
 use exface\Core\Interfaces\DataSources\DataQueryInterface;
 
