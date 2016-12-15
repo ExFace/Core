@@ -119,8 +119,8 @@ class DataSheet implements DataSheetInterface {
 				}
 				$right_row = $data_sheet->get_columns()->get($right_key_column)->find_row_by_value($row[$left_key_column]);
 				if ($right_row !== false){
-					foreach ($data_sheet->get_columns() as $new_col => $col_model){
-						$this->set_cell_value(RelationPath::relation_path_add($relation_path, $new_col), $left_row, $data_sheet->get_cell_value($new_col, $right_row));
+					foreach ($data_sheet->get_columns() as $col){
+						$this->set_cell_value(RelationPath::relation_path_add($relation_path, $col->get_name()), $left_row, $data_sheet->get_cell_value($col->get_name(), $right_row));
 					}
 				}
 			}

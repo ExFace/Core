@@ -51,9 +51,11 @@ class Workbench {
 	
 	function start(){
 		// Start the error handler
-		$whoops = new Run();
-		$whoops->pushHandler(new PrettyPageHandler);
-		$whoops->register();
+		if ($this->get_config()->get_option('PRETTIFY_ERRORS')){
+			$whoops = new Run();
+			$whoops->pushHandler(new PrettyPageHandler);
+			$whoops->register();
+		}
 		
 		// start the event dispatcher
 		$this->event_manager = new EventManager($this);

@@ -10,6 +10,7 @@ use exface\Core\Interfaces\DataSheets\DataColumnInterface;
 use exface\Core\Interfaces\ExfaceClassInterface;
 use exface\Core\Interfaces\iCanBeCopied;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
+use exface\Core\CommonLogic\DataSheets\DataColumn;
 
 interface DataSheetInterface extends ExfaceClassInterface, iCanBeCopied, iCanBeConvertedToUxon {
 	
@@ -201,7 +202,7 @@ interface DataSheetInterface extends ExfaceClassInterface, iCanBeCopied, iCanBeC
 	
 	/**
 	 * Returns an array of DataColumns
-	 * @return DataColumnListInterface
+	 * @return DataColumn[]|DataColumnListInterface
 	 */
 	public function get_columns();
 	

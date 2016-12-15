@@ -52,11 +52,19 @@ class DataColumnList extends EntityList implements DataColumnListInterface {
 			if ($col instanceof DataColumn){
 				$col_name = $relation_path ? RelationPath::relation_path_add($relation_path, $col->get_name()) : $col->get_name();
 				if (!$this->get($col_name)){
-					$col->get_expression_obj()->set_relation_path($relation_path);
+					// Change the column name so it does not overwrite any existing columns
+					$col->set_name($col_name);
+					// Add the column (this will change the column's data sheet
+					$this->add($col);
+					// Modify the column's expression and overwrite the old one. Overwriting explicitly is important because
+					// it will also update the attribute alias, etc.
+					// FIXME perhaps it would be nicer to use the expression::rebase() here, but the relation path seems to 
+					// be in the wrong direction here
+					$col->set_expression($col->get_expression_obj()->set_relation_path($relation_path));
+					// Update the formatter
 					if ($col->get_formatter()){
 						$col->get_formatter()->set_relation_path($relation_path);
 					}
-					$this->add($col);
 				}
 			} else {
 				$col_name = $relation_path ? RelationPath::relation_path_add($relation_path, $col) : $col;
