@@ -103,29 +103,6 @@ abstract class AbstractDataConnector implements DataConnectionInterface {
 	/**
 	 * 
 	 * {@inheritDoc}
-	 * @see \exface\Core\Interfaces\DataSources\DataConnectionInterface::get_insert_id()
-	 */
-	abstract function get_insert_id();
-	
-	/**
-	 * 
-	 * {@inheritDoc}
-	 * @see \exface\Core\Interfaces\DataSources\DataConnectionInterface::get_affected_rows_count()
-	 */
-	function get_affected_rows_count(){
-		return 0;
-	}
-	
-	/**
-	 * 
-	 * {@inheritDoc}
-	 * @see \exface\Core\Interfaces\DataSources\DataConnectionInterface::get_last_error()
-	 */
-	abstract function get_last_error();
-	
-	/**
-	 * 
-	 * {@inheritDoc}
 	 * @see \exface\Core\Interfaces\DataSources\DataConnectionInterface::get_config_array()
 	 */
 	public function get_config_array() {

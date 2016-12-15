@@ -41,25 +41,6 @@ class TransparentConnector extends AbstractDataConnectorWithoutTransactions {
 	protected function perform_disconnect() {
 		return;
 	}
-	
-	function get_insert_id() {
-		return null;
-	}
-	
-	/**
-	 * @name:  get_affected_rows_count
-	 *
-	 */
-	function get_affected_rows_count() {
-		return 0;
-	}
-	
-	/**
-	 * @name:  get_last_error
-	 *
-	 */
-	function get_last_error() {
-		return '';
-	}  
+	 
 }
 ?>
