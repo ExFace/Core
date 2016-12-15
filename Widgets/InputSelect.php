@@ -39,7 +39,13 @@ class InputSelect extends Input implements iSupportMultiSelect {
 				$this->set_selectable_options(array(1,0), array('Yes','No'));
 			}
 		}
-		return $this->selectable_options;
+		// Add unselected uption
+		if (!$this->is_required()){
+			$options = array_merge(array('' => ''), $this->selectable_options);
+		} else {
+			$options = $this->selectable_options;
+		}
+		return $options;
 	}
 	
 	/**
@@ -51,11 +57,7 @@ class InputSelect extends Input implements iSupportMultiSelect {
 	 */
 	public function set_selectable_options($array_or_object, array $options_texts_array = NULL) {
 		$options = array();
-		// Add unselected uption
-		if (!$this->is_required()){
-			$options[''] = '';
-		}
-		
+				
 		// Add the specified options
 		if ($array_or_object instanceof \stdClass){
 			$options = array_merge($options, (array) $array_or_object);
