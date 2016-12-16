@@ -430,6 +430,23 @@
             "LABEL": "UXON entity PHP-file",
             "ALIAS": "UXON_ENTITY_PHP_FILE",
             "DATA_ADDRESS": ""
+        },
+        {
+            "CREATED_ON": "2016-12-16 11:48:53",
+            "MODIFIED_ON": "2016-12-16 11:52:43",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e6c3859abc5faea3e40205857feb80",
+            "DATA_SOURCE": "0x32000000000000000000000000000000",
+            "long_description": null,
+            "APP": "0x31000000000000000000000000000000",
+            "SHORT_DESCRIPTION": "",
+            "PARENT_OBJECT": "",
+            "DATA_ADDRESS_PROPS": "{}",
+            "DEFAULT_EDITOR_UXON": "{}",
+            "LABEL": "Error",
+            "ALIAS": "ERROR",
+            "DATA_ADDRESS": "exf_error"
         }
     ],
     "totals_rows": [],
