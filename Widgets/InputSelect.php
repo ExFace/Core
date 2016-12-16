@@ -36,12 +36,13 @@ class InputSelect extends Input implements iSupportMultiSelect {
 		// If there are no selectable options set explicitly, try to determine them from the data type. Otherwise the select box would be empty.
 		if (empty($this->selectable_options)){
 			if($this->get_attribute()->get_data_type()->is(EXF_DATA_TYPE_BOOLEAN)){
-				$this->set_selectable_options(array(1,0), array('Yes','No'));
+				$this->set_selectable_options(array(1,0), array($this->translate('WIDGET.SELECT_YES'), $this->translate('WIDGET.SELECT_NO')));
 			}
 		}
+		
 		// Add unselected uption
 		if (!$this->is_required()){
-			$options = array_merge(array('' => ''), $this->selectable_options);
+			$options = array_merge(array('' => $this->translate('WIDGET.SELECT_ALL')), $this->selectable_options);
 		} else {
 			$options = $this->selectable_options;
 		}

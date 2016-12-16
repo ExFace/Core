@@ -879,6 +879,27 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren {
 	public function get_page(){
 		return $this->page;
 	}
-	  
+	
+	/**
+	 * Returns the translation string for the given message id.
+	 *
+	 * This is a shortcut for calling $this->get_app()->get_translator()->translate().
+	 *
+	 * @see Translation::translate()
+	 * @see Translation::translate_plural()
+	 *
+	 * @param string $message_id
+	 * @param array $placeholders
+	 * @param float $number_for_plurification
+	 * @return string
+	 */
+	public function translate($message_id, array $placeholders = null, $number_for_plurification = null){
+		$message_id = trim($message_id);
+		if (!is_null($number_for_plurification)){
+			return $this->get_workbench()->get_app('exface.Core')->get_translator()->translate_plural($message_id, $number_for_plurification, $placeholders);
+		} else {
+			return $this->get_workbench()->get_app('exface.Core')->get_translator()->translate($message_id, $placeholders);
+		}
+	}
 }
 ?>
