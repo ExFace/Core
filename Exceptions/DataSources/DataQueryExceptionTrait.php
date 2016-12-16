@@ -9,7 +9,7 @@ trait DataQueryExceptionTrait {
 	
 	public function __construct (DataQueryInterface $query, $message = null, $code = null, $previous = null) {
 		parent::__construct($message, $code, $previous);
-		$this->get_query($query);
+		$this->set_query($query);
 	}
 	
 	/**

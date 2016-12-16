@@ -3,8 +3,9 @@
 use exface\Core\Interfaces\ExfaceClassInterface;
 use exface\Core\Interfaces\AliasInterface;
 use exface\Core\Exceptions\DataConnectionError;
+use exface\Core\Interfaces\iCanBeConvertedToUxon;
 
-interface DataConnectionInterface extends ExfaceClassInterface, AliasInterface {
+interface DataConnectionInterface extends ExfaceClassInterface, AliasInterface, iCanBeConvertedToUxon {
 	
 	/**
 	 * Connects to the data source using the configuration array passed to the constructor of the connector
@@ -30,24 +31,6 @@ interface DataConnectionInterface extends ExfaceClassInterface, AliasInterface {
 	 * @return DataQueryInterface
 	 */
 	public function query(DataQueryInterface $query);
-	
-	/**
-	 * TODO replace array by UxonObject
-	 * @return array
-	 */
-	public function get_config_array();
-	
-	/**
-	 * @param string $key
-	 * @return mixed
-	 */
-	public function get_config_value($key);
-	
-	/**
-	 * TODO replace array by UxonObject
-	 * @param array $array
-	 */
-	public function set_config_array(array $array);
 	
 	/**
 	 * Starts a new transaction in the data source.

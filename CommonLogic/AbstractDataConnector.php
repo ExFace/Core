@@ -16,7 +16,30 @@ abstract class AbstractDataConnector implements DataConnectionInterface {
 	function __construct(Workbench &$exface, array $config = null) {
 		$this->exface = $exface;
 		if ($config){
-			$this->set_config_array($config);
+			$this->import_uxon_object(UxonObject::from_array($config));
+		}
+	}
+	
+	/**
+	 *
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::export_uxon_object()
+	 */
+	public function export_uxon_object(){
+		return new UxonObject();
+	}
+	
+	/**
+	 *
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::import_uxon_object()
+	 */
+	public function import_uxon_object(UxonObject $uxon){
+		foreach ($uxon as $property => $value){
+			$method_name = 'set_' . $property;
+			if (method_exists($this, $method_name)){
+				call_user_func(array($this, $method_name), $value);
+			}
 		}
 	}
 	
@@ -99,33 +122,6 @@ abstract class AbstractDataConnector implements DataConnectionInterface {
 	}
 	
 	protected abstract function perform_query(DataQueryInterface $query);
-	
-	/**
-	 * 
-	 * {@inheritDoc}
-	 * @see \exface\Core\Interfaces\DataSources\DataConnectionInterface::get_config_array()
-	 */
-	public function get_config_array() {
-		return $this->config_array;
-	}
-	
-	/**
-	 * 
-	 * {@inheritDoc}
-	 * @see \exface\Core\Interfaces\DataSources\DataConnectionInterface::get_config_value()
-	 */
-	public function get_config_value($key){
-		return $this->get_config_array()[$key];
-	}
-	
-	/**
-	 * 
-	 * {@inheritDoc}
-	 * @see \exface\Core\Interfaces\DataSources\DataConnectionInterface::set_config_array()
-	 */
-	public function set_config_array(array $array) {
-		$this->config_array = $array;
-	}	
 	
 	/**
 	 * 
