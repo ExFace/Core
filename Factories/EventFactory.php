@@ -10,6 +10,8 @@ use exface\Core\Events\DataConnectionEvent;
 use exface\Core\Events\ActionEvent;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Events\DataSheetEvent;
+use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\Events\WidgetEvent;
 
 abstract class EventFactory extends AbstractNameResolverFactory {
 	
@@ -65,6 +67,14 @@ abstract class EventFactory extends AbstractNameResolverFactory {
 		$instance = new DataSheetEvent($exface);
 		$instance->set_data_sheet($data_sheet);
 		$instance->set_name($event_name);
+		return $instance;
+	}
+	
+	public static function create_widget_event(WidgetInterface &$widget, $event_name) {
+		$exface = $widget->get_workbench();
+		$instance = new WidgetEvent($exface);
+		$instance->set_name($event_name);
+		$instance->set_widget($widget);
 		return $instance;
 	}
 }

@@ -16,6 +16,7 @@ use exface\Core\Interfaces\UiPageInterface;
 use exface\Core\Exceptions\UiWidgetInvalidIdError;
 use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Factories\RelationPathFactory;
+use exface\Core\Factories\EventFactory;
 
 /**
  * Basic ExFace widget
@@ -103,6 +104,7 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren {
 	 */
 	function prefill(\exface\Core\Interfaces\DataSheets\DataSheetInterface $data_sheet){
 		$this->set_prefill_data($data_sheet);
+		$this->get_workbench()->event_manager()->dispatch(EventFactory::create_widget_event($this, 'Prefill'));
 	}
 	
 	/**

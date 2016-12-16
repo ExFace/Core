@@ -5,6 +5,7 @@ use exface\Core\Interfaces\Widgets\iHaveChildren;
 use exface\Core\CommonLogic\Model\Object;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\CommonLogic\Model\RelationPath;
+use exface\Core\Factories\EventFactory;
 
 /**
  * A ComboTable is an InputCombo, which uses a DataTable to show the autosuggest values. Thus, the user can see more
@@ -187,6 +188,7 @@ class ComboTable extends InputCombo implements iHaveChildren {
 		
 		if (!$data_sheet->is_empty()){
 			$this->set_prefill_data($data_sheet);
+			$this->get_workbench()->event_manager()->dispatch(EventFactory::create_widget_event($this, 'Prefill'));
 			if ($data_sheet->get_meta_object()->is($this->get_meta_object())){
 				// If the prefill data is based on the same object, as the widget, simply look for the required attributes
 				// in the prefill data.
