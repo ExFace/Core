@@ -49,6 +49,7 @@
 	
 	"WIDGET.SELECT_ALL": "Alle",
 	"WIDGET.SELECT_YES": "Ja",
-	"WIDGET.SELECT_NO": "Nein"
+	"WIDGET.SELECT_NO": "Nein",
+	"WIDGET.SELECT_NONE": "-"
 	
 }
