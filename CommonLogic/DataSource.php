@@ -89,7 +89,7 @@ class DataSource implements DataSourceInterface {
 	 * @see \exface\Core\Interfaces\DataSources\DataSourceInterface::set_connection_id()
 	 */
 	public function set_connection_id($value) {
-	  $this->connection_id = intval($value);
+	  $this->connection_id = $value;
 	}
 	
 	/**

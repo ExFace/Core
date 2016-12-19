@@ -48,7 +48,9 @@ class ReadData extends AbstractAction implements iReadData {
 	}
 	
 	public function get_result_output(){
-		if (!$this->get_called_by_widget()) throw new ActionRuntimeException('Security violaion! Cannot read data without a target widget in action "' . $this->get_alias_with_namespace() . '"!');
+		if (!$this->get_called_by_widget()) {
+			throw new ActionRuntimeException('Security violaion! Cannot read data without a target widget in action "' . $this->get_alias_with_namespace() . '"!');
+		}
 		$elem = $this->get_app()->get_workbench()->ui()->get_template()->get_element($this->get_called_by_widget());
 		$output = $elem->prepare_data($this->get_result_data_sheet());
 		return $this->get_app()->get_workbench()->ui()->get_template()->encode_data($output);

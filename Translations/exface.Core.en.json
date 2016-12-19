@@ -45,6 +45,10 @@
 	"ACTION.UNDOACTION.RESULT": "Successfully undone %number% action.|Successfully undone %number% actions.",
 	
 	"ACTION.UPDATEDATA.NAME": "Update",
-	"ACTION.UPDATEDATA.RESULT": "%number% item updated.|%number% items updated."
+	"ACTION.UPDATEDATA.RESULT": "%number% item updated.|%number% items updated.",
+	
+	"WIDGET.SELECT_ALL": "All",
+	"WIDGET.SELECT_YES": "Yes",
+	"WIDGET.SELECT_NO": "No"
 	
 }
