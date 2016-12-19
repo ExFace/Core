@@ -41,8 +41,8 @@ class InputSelect extends Input implements iSupportMultiSelect {
 		}
 		
 		// Add unselected uption
-		if (!$this->is_required()){
-			$options = array_merge(array('' => $this->translate('WIDGET.SELECT_ALL')), $this->selectable_options);
+		if (!$this->is_required() && !array_key_exists('', $this->selectable_options)){
+			$options = array_merge(array('' => $this->translate('WIDGET.SELECT_NONE')), $this->selectable_options);
 		} else {
 			$options = $this->selectable_options;
 		}
@@ -77,7 +77,6 @@ class InputSelect extends Input implements iSupportMultiSelect {
 		} else {
 			throw new UxonParserError('Wrong data type for possible values of ' . get_class($this) . '! Expecting array or object, ' . gettype($array_or_object) . ' given.');
 		}
-		
 		$this->selectable_options = $options;
 		return $this;
 	}
