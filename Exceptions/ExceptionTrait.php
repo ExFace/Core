@@ -16,6 +16,9 @@ trait ExceptionTrait {
 			$method_name = 'set_' . $property;
 			if (method_exists($this, $method_name)){
 				call_user_func(array($this, $method_name), $value);
+			} else {
+				// Ignore invalid exception properties. They might originate from earlier versions of the export and should not bother us.
+				// IDEA alternatively we can throw an exception here and catch it in those places, where we can accept wrong parameters.
 			}
 		}
 	}

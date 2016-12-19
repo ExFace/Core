@@ -47,6 +47,9 @@ abstract class AbstractDataQuery implements DataQueryInterface {
 			$method_name = 'set_' . $property;
 			if (method_exists($this, $method_name)){
 				call_user_func(array($this, $method_name), $value);
+			} else {
+				// Ignore properties, that cannot be set, as data queries will only import automatically generated UXON and thus will
+				// not contain user input, where we would have to look out for wrong parameters.
 			}
 		}
 	}

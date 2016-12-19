@@ -5,6 +5,7 @@ use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 use exface\Core\Interfaces\NameResolverInterface;
 use exface\Core\Factories\EventFactory;
 use exface\Core\Interfaces\DataSources\DataQueryInterface;
+use exface\Core\Exceptions\DataSources\DataConnectionConfigurationError;
 
 abstract class AbstractDataConnector implements DataConnectionInterface {
 	private $config_array = array();
@@ -39,6 +40,8 @@ abstract class AbstractDataConnector implements DataConnectionInterface {
 			$method_name = 'set_' . $property;
 			if (method_exists($this, $method_name)){
 				call_user_func(array($this, $method_name), $value);
+			} else {
+				throw new DataConnectionConfigurationError($this, 'Invalid data connection configuration: option "' . $property . '" not found for "' . get_class() . '"!', '6T4F41P');
 			}
 		}
 	}
