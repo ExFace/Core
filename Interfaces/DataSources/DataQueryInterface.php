@@ -2,6 +2,7 @@
 
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Interfaces\iCanBeConvertedToString;
+use exface\Core\Interfaces\iCanBePrinted;
 
 /**
  * DataQueries are what query builder actually build. The extact contents of the data query depends solemly on the DataConnector it is
@@ -11,7 +12,7 @@ use exface\Core\Interfaces\iCanBeConvertedToString;
  * @author Andrej Kabachnik
  *
  */
-interface DataQueryInterface extends iCanBeConvertedToUxon, iCanBeConvertedToString {
+interface DataQueryInterface extends iCanBeConvertedToUxon, iCanBeConvertedToString, iCanBePrinted {
 	
 	/**
 	 * Returns the number of rows affected by the this query

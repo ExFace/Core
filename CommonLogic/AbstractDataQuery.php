@@ -59,4 +59,18 @@ abstract class AbstractDataQuery implements DataQueryInterface {
 	public function count_affected_rows(){
 		return 0;
 	}
+	
+	/**
+	 * Returns a human-redable description of the data query. 
+	 * 
+	 * By default it is the corresponding JSON-export of it's UXON-representation, but it is advisable to override this method
+	 * to print the actual queries in a format that can be used to reproduce the query with another tool: e.g. SQL-based queries 
+	 * should print the SQL (so it can be run through a regular SQL front-end), URL-based queries should print the ready-made
+	 * URL, and so on. 
+	 * 
+	 * @see \exface\Core\Interfaces\iCanBePrinted::print()
+	 */
+	public function print(){
+		return $this->export_uxon_object()->to_json(true);
+	}
 }
