@@ -71,9 +71,9 @@ abstract class AbstractDataQuery implements DataQueryInterface {
 	 * should print the SQL (so it can be run through a regular SQL front-end), URL-based queries should print the ready-made
 	 * URL, and so on. 
 	 * 
-	 * @see \exface\Core\Interfaces\iCanBePrinted::print()
+	 * @see \exface\Core\Interfaces\iCanBePrinted::to_string()
 	 */
-	public function print(){
+	public function to_string(){
 		return $this->export_uxon_object()->to_json(true);
 	}
 }

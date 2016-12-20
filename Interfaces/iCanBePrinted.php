@@ -8,6 +8,6 @@ interface iCanBePrinted {
 	 * 
 	 * @return string
 	 */
-	public function print();
+	public function to_string();
 }
 ?>
