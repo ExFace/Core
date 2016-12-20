@@ -7,7 +7,7 @@ trait DataQueryExceptionTrait {
 	
 	private $query = null;
 	
-	public function __construct (DataQueryInterface $query, $message = null, $code = null, $previous = null) {
+	public function __construct (DataQueryInterface $query, $message, $code, $previous = null) {
 		parent::__construct($message, $code, $previous);
 		$this->set_query($query);
 	}

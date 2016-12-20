@@ -6,6 +6,15 @@ interface DataQueryExceptionInterface extends ExceptionInterface {
 	
 	/**
 	 * 
+	 * @param DataQueryInterface $query
+	 * @param string $message
+	 * @param string $code
+	 * @param string $previous
+	 */
+	public function __construct (DataQueryInterface $query, $message, $code, $previous = null);
+	
+	/**
+	 * 
 	 * @return DataQueryInterface
 	 */
 	public function get_query();

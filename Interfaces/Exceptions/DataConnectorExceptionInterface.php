@@ -5,6 +5,15 @@ use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 interface DataConnectorExceptionInterface extends ExceptionInterface {
 	
 	/**
+	 *
+	 * @param DataConnectionInterface $connector
+	 * @param string $message
+	 * @param string $code
+	 * @param \Throwable $previous
+	 */
+	public function __construct (DataConnectionInterface $connector, $message, $code, $previous = null);
+	
+	/**
 	 * 
 	 * @return DataConnectionInterface
 	 */

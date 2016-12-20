@@ -7,7 +7,14 @@ trait DataConnectorExceptionTrait {
 	
 	private $connector = null;
 	
-	public function __construct (DataConnectionInterface $connector, $message = null, $code = null, $previous = null) {
+	/**
+	 * 
+	 * @param DataConnectionInterface $connector
+	 * @param string $message
+	 * @param string $code
+	 * @param \Throwable $previous
+	 */
+	public function __construct (DataConnectionInterface $connector, $message, $code, $previous = null) {
 		parent::__construct($message, $code, $previous);
 		$this->set_connector($connector);
 	}
