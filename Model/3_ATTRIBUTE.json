@@ -2551,7 +2551,7 @@
         },
         {
             "CREATED_ON": "2016-12-16 11:52:46",
-            "MODIFIED_ON": "2016-12-16 11:56:03",
+            "MODIFIED_ON": "2016-12-20 08:56:16",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6c386254fbe8ea3e40205857feb80",
@@ -2576,7 +2576,7 @@
             "SORTERDIR": "",
             "RELATED_OBJ_ATTR": "",
             "SHORT_DESCRIPTION": "",
-            "DATA_ADDRESS_PROPS": "{}",
+            "DATA_ADDRESS_PROPS": "{\"SQL_DATA_TYPE\":\"binary\"}",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
             "DEFAULT_EDITOR_UXON": "{}"
