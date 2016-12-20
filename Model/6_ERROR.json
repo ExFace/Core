@@ -37,6 +37,13 @@
             "attribute_alias": "UID"
         },
         {
+            "expression": "FULL_ERROR_CODE",
+            "name": "FULL_ERROR_CODE",
+            "hidden": false,
+            "data_type": "String",
+            "attribute_alias": "FULL_ERROR_CODE"
+        },
+        {
             "expression": "APP",
             "name": "APP",
             "hidden": false,
@@ -58,13 +65,6 @@
             "attribute_alias": "ERROR_TEXT"
         },
         {
-            "expression": "FULL_ERROR_CODE",
-            "name": "FULL_ERROR_CODE",
-            "hidden": false,
-            "data_type": "String",
-            "attribute_alias": "FULL_ERROR_CODE"
-        },
-        {
             "expression": "LABEL",
             "name": "LABEL",
             "hidden": false,
@@ -79,10 +79,10 @@
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6c6053da2b468a3e40205857feb80",
+            "FULL_ERROR_CODE": "exface.Core.6T4F41P",
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6T4F41P",
             "ERROR_TEXT": "Invalid data connector configuration option",
-            "FULL_ERROR_CODE": "exface.Core.6T4F41P",
             "LABEL": "exface.Core.6T4F41P"
         },
         {
@@ -91,10 +91,10 @@
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6c68909e0a6caa3e40205857feb80",
+            "FULL_ERROR_CODE": "exface.Core.6T4R8UM",
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6T4R8UM",
             "ERROR_TEXT": "Multiple user credentials found for data connection",
-            "FULL_ERROR_CODE": "exface.Core.6T4R8UM",
             "LABEL": "exface.Core.6T4R8UM"
         },
         {
@@ -103,10 +103,10 @@
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6c68926058b57a3e40205857feb80",
+            "FULL_ERROR_CODE": "exface.Core.6T4R97R",
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6T4R97R",
             "ERROR_TEXT": "Data connection not found in model",
-            "FULL_ERROR_CODE": "exface.Core.6T4R97R",
             "LABEL": "exface.Core.6T4R97R"
         }
     ],
