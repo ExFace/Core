@@ -104,7 +104,7 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren {
 	 */
 	function prefill(\exface\Core\Interfaces\DataSheets\DataSheetInterface $data_sheet){
 		$this->set_prefill_data($data_sheet);
-		$this->get_workbench()->event_manager()->dispatch(EventFactory::create_widget_event($this, 'Prefill'));
+		$this->get_workbench()->event_manager()->dispatch(EventFactory::create_widget_event($this, 'Prefill.After'));
 	}
 	
 	/**

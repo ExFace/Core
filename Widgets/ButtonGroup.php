@@ -4,17 +4,41 @@ use exface\Core\Interfaces\Widgets\iHaveButtons;
 use exface\Core\Interfaces\Widgets\iHaveIcon;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Interfaces\Widgets\iTriggerAction;
 class ButtonGroup extends AbstractWidget implements iHaveButtons, iHaveIcon {
 	private $buttons =  array();
 	private $icon_name = null;
 	private $input_widget = null;
+	
+	private $smb_buttons = array();
 	
 	/**
 	 * (non-PHPdoc)
 	 * @see \exface\Core\Interfaces\Widgets\iHaveButtons::get_buttons()
 	 */
 	public function get_buttons() {
-		return $this->buttons;
+		//Falls am Objekt ein StateMachineBehavior haengt wird versucht den momentanen Status aus
+		//dem Objekt auszulesen und die entsprechenden Buttons aus dem Behavior hinzuzufuegen
+		if (!$this->smb_buttons && ($smb = $this->get_meta_object()->get_behaviors()->get_by_alias('exface.Core.Behaviors.StateMachineBehavior'))) {
+			$template = $this->get_ui()->get_template_from_request();
+			if ((($data_sheet = $this->get_prefill_data()) || ($data_sheet = $template->get_data_sheet_from_request($template->get_request_object_id())))
+					&& ($state_column = $data_sheet->get_column_values($smb->get_state_attribute_alias()))) {
+				$current_state = $state_column[0];
+			} else {
+				$current_state = $smb::DEFAULT_STATE;
+			}
+			
+			if ($smb_buttons = $smb->get_state_buttons($current_state)) {
+				foreach ($smb_buttons as $smb_button) {
+					$button = $this->get_page()->create_widget('Button', $this, UxonObject::from_anything($smb_button));
+					$button->set_parent($this);
+					$button->set_input_widget($this->get_input_widget());
+					$this->smb_buttons[] = $button;
+				}
+			}
+		}
+		
+		return array_merge($this->buttons, $this->smb_buttons);
 	}
 	
 	/**
@@ -35,7 +59,6 @@ class ButtonGroup extends AbstractWidget implements iHaveButtons, iHaveIcon {
 	 */
 	public function add_button(Button $button_widget){
 		$button_widget->set_parent($this);
-		$button_widget->set_input_widget($this->get_input_widget());
 		$button_widget->set_input_widget($this->get_input_widget());
 		$this->buttons[] = $button_widget;
 	}
@@ -72,9 +95,10 @@ class ButtonGroup extends AbstractWidget implements iHaveButtons, iHaveIcon {
 	 */
 	protected function get_input_widget(){
 		if (!$this->input_widget){
-			do {
-				$parent = $this->get_parent();
-			} while ($parent instanceof ButtonGroup);
+			$parent = $this;
+			while (!$parent instanceof Dialog && !$parent instanceof DataTable && !is_null($parent->get_parent())) {
+				$parent = $parent->get_parent();
+			}
 			$this->input_widget = $parent;
 		}
 		return $this->input_widget;

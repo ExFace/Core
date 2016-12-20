@@ -188,7 +188,7 @@ class ComboTable extends InputCombo implements iHaveChildren {
 		
 		if (!$data_sheet->is_empty()){
 			$this->set_prefill_data($data_sheet);
-			$this->get_workbench()->event_manager()->dispatch(EventFactory::create_widget_event($this, 'Prefill'));
+			$this->get_workbench()->event_manager()->dispatch(EventFactory::create_widget_event($this, 'Prefill.After'));
 			if ($data_sheet->get_meta_object()->is($this->get_meta_object())){
 				// If the prefill data is based on the same object, as the widget, simply look for the required attributes
 				// in the prefill data.
