@@ -666,7 +666,8 @@ class DataSheet implements DataSheetInterface {
 				$redundant_rows = $redundant_rows_ds->get_uid_column()->diff_values($this->get_uid_column());
 				if (count($redundant_rows) > 0){
 					$delete_ds = DataSheetFactory::create_from_object($this->get_meta_object());
-					$delete_ds->get_columns()->add($uid_column->copy());
+					$delete_col = $uid_column->copy();
+					$delete_ds->get_columns()->add($delete_col);
 					$delete_ds->get_uid_column()->remove_rows()->set_values(array_values($redundant_rows));
 					$counter += $delete_ds->data_delete($transaction);
 				}
