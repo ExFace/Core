@@ -2,8 +2,13 @@
 namespace exface\Core\Exceptions\DataSources;
 
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\Exceptions\ExceptionTrait;
 
 trait DataSheetExceptionTrait {
+	
+	use ExceptionTrait {
+		create_widget as create_parent_widget;
+	}
 	
 	private $data_sheet = null;
 	

@@ -1,6 +1,8 @@
 <?php namespace exface\Core\Interfaces\Exceptions;
 
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
+use exface\Core\Interfaces\UiPageInterface;
+use exface\Core\Interfaces\WidgetInterface;
 
 interface ExceptionInterface extends iCanBeConvertedToUxon {
 	/**
@@ -14,4 +16,12 @@ interface ExceptionInterface extends iCanBeConvertedToUxon {
 	 * @return boolean
 	 */
 	public function is_error();
+	
+	/**
+	 * Creates a widget with detailed information about this exception. 
+	 * 
+	 * @param UiPageInterface $page
+	 * @return WidgetInterface
+	 */
+	public function create_widget(UiPageInterface $page);
 }

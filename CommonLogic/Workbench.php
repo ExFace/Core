@@ -15,8 +15,7 @@ use exface\Core\Interfaces\Events\EventManagerInterface;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Interfaces\ConfigurationInterface;
 use exface\Core\Exceptions\exfError;
-use Whoops\Run;
-use Whoops\Handler\PrettyPageHandler;
+use exface\Core\Interfaces\DebuggerInterface;
 
 class Workbench {
 	private $data;
@@ -24,6 +23,7 @@ class Workbench {
 	private $mm;
 	private $ui;
 	private $db;
+	private $debugger;
 	private $context;
 	private $running_apps = array();
 	private $utils = null;
@@ -51,10 +51,10 @@ class Workbench {
 	
 	function start(){
 		// Start the error handler
+		$dbg = new Debugger();
+		$this->set_debugger($dbg);
 		if ($this->get_config()->get_option('PRETTIFY_ERRORS')){
-			$whoops = new Run();
-			$whoops->pushHandler(new PrettyPageHandler);
-			$whoops->register();
+			$dbg->set_prettify_errors(true);
 		}
 		
 		// start the event dispatcher
@@ -273,6 +273,15 @@ class Workbench {
 	public function filemanager(){
 		return new Filemanager($this);
 	}
+	
+	public function get_debugger() {
+		return $this->debugger;
+	}
+	
+	public function set_debugger(DebuggerInterface $value) {
+		$this->debugger = $value;
+		return $this;
+	}  
 
 }
 ?>

@@ -4,6 +4,9 @@ namespace exface\Core\Exceptions;
 use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Exceptions\WarningExceptionInterface;
+use exface\Core\Interfaces\UiPageInterface;
+use exface\Core\Factories\WidgetFactory;
+use exface\Core\Factories\WidgetLinkFactory;
 
 trait ExceptionTrait {
 	
@@ -42,6 +45,20 @@ trait ExceptionTrait {
 	 */
 	public function is_error(){
 		return $this->is_warning() ? false : true;
+	}
+	
+	public function create_widget(UiPageInterface $page){
+		/* @var $tabs \exface\Core\Widgets\Tabs */
+		$tabs = WidgetFactory::create($page, 'Tabs');
+		$tabs->set_meta_object($page->get_workbench()->model()->get_object('exface.Core.ERROR'));
+		$error_tab = $tabs->create_tab();
+		$error_tab->set_caption('Error');
+		$error_widget = WidgetFactory::create($page, 'Html');
+		$error_tab->add_widget($error_widget);
+		//$error_widget->set_value($page->get_workbench()->get_debugger()->print_exception($this));
+		$error_widget->set_value($this->getMessage());
+		$tabs->add_tab($error_tab);
+		return $tabs;
 	}
 }
 ?>

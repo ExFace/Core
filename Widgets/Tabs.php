@@ -100,7 +100,7 @@ class Tabs extends Container implements iFillEntireContainer {
 	 * @param AbstractWidget $contents
 	 * @return \exface\Core\Interfaces\WidgetInterface
 	 */
-	protected function create_tab(AbstractWidget $contents = null){
+	public function create_tab(AbstractWidget $contents = null){
 		// Create an empty tab
 		$widget = $this->get_page()->create_widget('Tab', $this);
 		
@@ -119,12 +119,20 @@ class Tabs extends Container implements iFillEntireContainer {
 	 * be specified optionally. If the given widget is not a tab itself, it will be wrapped
 	 * in a Tab widget.
 	 * @see add_widget()
+	 * 
 	 * @param AbstractWidget $widget
 	 * @param int $position
+	 * @return Tabs
 	 */
 	public function add_tab(AbstractWidget $widget, $position = null){
 		if ($widget instanceof Tab){
 			$tab = $widget;
+		} elseif ($widget->is_exactly('Panel')){
+			$tab = $this->create_tab();
+			$tab->set_caption($widget->get_caption());
+			foreach($widget->get_widgets() as $child){
+				$tab->add_widget($child);
+			}
 		} else {
 			$tab = $this->create_tab($widget);
 		}

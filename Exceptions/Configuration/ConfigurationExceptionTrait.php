@@ -2,8 +2,13 @@
 namespace exface\Core\Exceptions\DataSources;
 
 use exface\Core\Interfaces\ConfigurationInterface;
+use exface\Core\Exceptions\ExceptionTrait;
 
 trait ConfigurationExceptionTrait {
+	
+	use ExceptionTrait {
+		create_widget as create_parent_widget;
+	}
 	
 	private $configuration = null;
 	

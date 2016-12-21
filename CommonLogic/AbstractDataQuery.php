@@ -1,6 +1,7 @@
 <?php namespace exface\Core\CommonLogic;
 
 use exface\Core\Interfaces\DataSources\DataQueryInterface;
+use exface\Core\Interfaces\UiPageInterface;
 
 /**
  * This is the base class for data queries. It includes a default UXON importer.
@@ -75,5 +76,14 @@ abstract class AbstractDataQuery implements DataQueryInterface {
 	 */
 	public function to_string(){
 		return $this->export_uxon_object()->to_json(true);
+	}
+	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\iCanGenerateDebugWidgets::get_debug_panels()
+	 */
+	public function get_debug_panels(UiPageInterface $page){
+		return array();
 	}
 }

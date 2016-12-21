@@ -795,15 +795,28 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren {
 	/**
 	 * 
 	 * {@inheritDoc}
-	 * @see \exface\Core\Interfaces\WidgetInterface::is_of_type()
+	 * @see \exface\Core\Interfaces\WidgetInterface::is()
 	 */
-	public function is_of_type($type){
+	public function is($type){
 		$type_class = '\\exface\\Core\\Widgets\\' . $type;
 		if ($this instanceof $type_class){
 			return true;
 		} else {
 			return false;
 		}
+	}
+	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\WidgetInterface::is_exactly()
+	 */
+	public function is_exactly($widget_type){
+		$type_class = 'exface\\Core\\Widgets\\' . $widget_type;
+		if (get_class($this) === $type_class){
+			return true;
+		}
+		return false;
 	}
 	
 	/**

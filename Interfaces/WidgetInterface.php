@@ -295,9 +295,24 @@ interface WidgetInterface extends ExfaceClassInterface {
 	/**
 	 * Returns TRUE if the widget is of the given widget type or extends from it and FALSE otherwise 
 	 * (e.g. a DataTable would return TRUE for DataTable and Data)
-	 * @param unknown $type
+	 * 
+	 * @param string $widget_type
+	 * @return boolean
+	 * 
+	 * @see is_exactly()
 	 */
-	public function is_of_type($type);
+	public function is($widget_type);
+	
+	/**
+	 * Returns TRUE if the widget is of the given type and FALSE otherwise. In contrast to is(), it will return FALSE even
+	 * if the widget extends from the given type.
+	 * 
+	 * @param string $widget_type
+	 * @return boolean
+	 * 
+	 * @see is()
+	 */
+	public function is_exactly($widget_type);
 	
 	/**
 	 * Returns all actions callable from this widget or it's children as an array. Optional filters can be used to
