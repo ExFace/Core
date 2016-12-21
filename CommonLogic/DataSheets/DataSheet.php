@@ -169,11 +169,17 @@ class DataSheet implements DataSheetInterface {
 		return $this;
 	}
 	
-	public function import_rows2(DataSheetInterface $other_sheet){
+	/**
+	 * Existing columns are kept and new columns are added.
+	 * @param DataSheetInterface $other_sheet
+	 * @throws DataSheetException
+	 * @return \exface\Core\CommonLogic\DataSheets\DataSheet
+	 */
+	public function import_rows_add_no_replace(DataSheetInterface $other_sheet){
 		if (!$this->get_meta_object()->is_exactly($other_sheet->get_meta_object()->get_alias_with_namespace())){
 			throw new DataSheetException('Cannot replace rows for object "' . $this->get_meta_object()->get_alias_with_namespace() . '" with rows from "' . $other_sheet->get_meta_object()->get_alias_with_namespace() . '": replacing rows only possible for identical objects!');
 		}
-	
+		
 		foreach ($other_sheet->get_columns() as $other_col) {
 			if (!$this_col = $this->get_column($other_col->get_name())) {
 				$this->get_columns()->add($other_col->copy());

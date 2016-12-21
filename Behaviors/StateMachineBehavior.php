@@ -7,6 +7,11 @@ use exface\Core\Widgets\Container;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\StateMachineConfigError;
 
+/**
+ * 
+ * @author SFL
+ *
+ */
 class StateMachineBehavior extends AbstractBehavior {
 	
 	private $state_attribute_alias = null;
@@ -16,15 +21,29 @@ class StateMachineBehavior extends AbstractBehavior {
 	
 	const DEFAULT_STATE = 10;
 	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\CommonLogic\AbstractBehavior::register()
+	 */
 	public function register(){
 		$this->get_workbench()->event_manager()->add_listener($this->get_object()->get_alias_with_namespace() . '.Widget.Prefill.After', array($this, 'set_widget_states'));
 		$this->set_registered(true);
 	}
 	
+	/**
+	 * 
+	 * @return unknown
+	 */
 	public function get_state_attribute_alias() {
 		return $this->state_attribute_alias;
 	}
 	
+	/**
+	 * 
+	 * @param unknown $value
+	 * @return \exface\Core\Behaviors\StateMachineBehavior
+	 */
 	public function set_state_attribute_alias($value) {
 		$this->state_attribute_alias = $value;
 		return $this;
@@ -32,12 +51,18 @@ class StateMachineBehavior extends AbstractBehavior {
 	
 	/**
 	 * 
-	 * @return UxonObject
+	 * @return \exface\Core\CommonLogic\UxonObject
 	 */
 	public function get_states() {
 		return $this->states;
 	}
 	
+	/**
+	 * 
+	 * @param unknown $value
+	 * @throws StateMachineConfigError
+	 * @return \exface\Core\Behaviors\StateMachineBehavior
+	 */
 	public function set_states($value) {
 		$this->states = UxonObject::from_anything($value);
 		$this->smstates = [];
@@ -57,17 +82,31 @@ class StateMachineBehavior extends AbstractBehavior {
 		return $this;
 	}
 	
+	/**
+	 * 
+	 */
 	public function get_smstates() {
 		return $this->smstates;
 	}
 	
+	/**
+	 * 
+	 * @param unknown $state_id
+	 * @return mixed
+	 */
 	public function get_smstate($state_id) {
 		return $this->smstates[$state_id];
 	}
 	
+	/**
+	 * 
+	 * @param unknown $state_id
+	 * @return unknown
+	 */
 	public function get_state_buttons($state_id) {
-		if ($this->is_disabled() || !$this->get_states()) return [];
-		return $this->get_smstate($state_id)->get_buttons();
+		if ($this->is_disabled() || !$this->get_smstates()) return [];
+		$smstate = $this->get_smstate($state_id);
+		return $smstate instanceof StateMachineState ? $smstate->get_buttons() : [];
 	}
 	
 	/**
@@ -82,6 +121,10 @@ class StateMachineBehavior extends AbstractBehavior {
 		return $uxon;
 	}
 	
+	/**
+	 * 
+	 * @param WidgetEvent $event
+	 */
 	public function set_widget_states(WidgetEvent $event) {
 		if ($this->is_disabled()) return;
 		if (!$this->get_state_attribute_alias() || !$this->get_states()) return;
@@ -104,10 +147,6 @@ class StateMachineBehavior extends AbstractBehavior {
 				&& in_array($widget->get_attribute_alias(), $disabled_attributes)) {
 			$widget->set_disabled(true);
 		}
-		
-		//if ($widget instanceof Dialog && $this->states->$current_state->buttons) {
-		//	$widget->set_buttons($this->states->$current_state->buttons);
-		//}
 	}
 }
 

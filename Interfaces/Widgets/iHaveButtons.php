@@ -8,7 +8,7 @@ interface iHaveButtons extends iHaveChildren {
 	 * Adds a button to the table
 	 * @param \exface\Core\Widgets\Button $button_widget
 	 */
-	public function add_button(\exface\Core\Widgets\Button $button_widget);
+	public function add_button($button_widget);
 	
 	/**
 	 * Returs an array of button widgets

@@ -382,7 +382,12 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 	public function set_buttons(array $buttons_array) {
 		if (!is_array($buttons_array)) return false;
 		foreach ($buttons_array as $b){
-			$button = $this->get_page()->create_widget('DataButton', $this, UxonObject::from_anything($b));
+			$button_uxon = UxonObject::from_anything($b);
+			if (!$button_uxon->widget_type) {
+				$button = $this->get_page()->create_widget('DataButton', $this, $button_uxon);
+			} else {
+				$button = $this->get_page()->create_widget($button_uxon->widget_type, $this, $button_uxon);
+			}
 			$this->add_button($button);
 		}
 	}
@@ -391,7 +396,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 	 * (non-PHPdoc)
 	 * @see \exface\Core\Interfaces\Widgets\iHaveButtons::add_button()
 	 */
-	public function add_button(Button $button_widget){
+	public function add_button($button_widget){
 		$button_widget->set_parent($this);
 		$button_widget->set_meta_object_id($this->get_meta_object()->get_id());
 		$this->buttons[] = $button_widget;
