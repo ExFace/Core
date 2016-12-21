@@ -4,6 +4,7 @@ namespace exface\Core\Exceptions\DataSources;
 use exface\Core\Interfaces\DataSources\DataQueryInterface;
 use exface\Core\Interfaces\UiPageInterface;
 use exface\Core\Exceptions\ExceptionTrait;
+use exface\Core\Widgets\ErrorMessage;
 
 trait DataQueryExceptionTrait {
 	
@@ -37,13 +38,18 @@ trait DataQueryExceptionTrait {
 		return $this;
 	}
 	
+	/**
+	 * Exceptions for data queries can add extra tabs (e.g. an SQL-tab). Which tabs will be added depends on the implementation of
+	 * the data query.
+	 * 
+	 * @see \exface\Core\Interfaces\Exceptions\ExceptionInterface::create_widget()
+	 * 
+	 * @param UiPageInterface $page
+	 * @return ErrorMessage
+	 */
 	public function create_widget(UiPageInterface $page){
-		/* @var $tabs \exface\Core\Widgets\Tabs */
-		$tabs = $this->create_parent_widget($page);
-		foreach ($this->get_query()->get_debug_panels($page, $tabs) as $panel){
-			$tabs->add_tab($panel);
-		}
-		return $tabs;
+		$error_message = $this->create_parent_widget($page);
+		return $this->get_query()->create_debug_widget($error_message);
 	}
 	
 }

@@ -50,6 +50,9 @@
 	"WIDGET.SELECT_ALL": "All",
 	"WIDGET.SELECT_YES": "Yes",
 	"WIDGET.SELECT_NO": "No",
-	"WIDGET.SELECT_NONE": "-"
+	"WIDGET.SELECT_NONE": "-",
+	
+	"ERROR.CAPTION": "Error",
+	"WARNING.CAPTION": "Warning"
 	
 }

@@ -16,6 +16,7 @@ use exface\Core\Interfaces\AppInterface;
 use exface\Core\Interfaces\ConfigurationInterface;
 use exface\Core\Exceptions\exfError;
 use exface\Core\Interfaces\DebuggerInterface;
+use exface\Core\coreApp;
 
 class Workbench {
 	private $data;
@@ -162,6 +163,14 @@ class Workbench {
 			$this->running_apps[$app_alias] = AppFactory::create($this->create_name_resolver($app_alias, NameResolver::OBJECT_TYPE_APP));
 		}
 		return $this->running_apps[$app_alias];
+	}
+	
+	/**
+	 * Returns the core app
+	 * @return coreApp
+	 */
+	public function get_core_app(){
+		return $this->get_app('exface.Core');
 	}
 	
 	/**

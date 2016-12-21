@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core;
-class coreApp extends \exface\Core\CommonLogic\AbstractApp {
+use exface\Core\CommonLogic\AbstractApp;
+
+class coreApp extends AbstractApp {
 	
 }
 ?>

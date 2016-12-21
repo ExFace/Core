@@ -4,6 +4,7 @@ use exface\Core\Interfaces\DebuggerInterface;
 use Symfony\Component\Debug\Debug;
 use Symfony\Component\Debug\ExceptionHandler;
 use Symfony\Component\Debug\Exception\FlattenException;
+use Symfony\Component\Debug\ErrorHandler;
 
 class Debugger implements DebuggerInterface {
 	
@@ -29,7 +30,9 @@ class Debugger implements DebuggerInterface {
 	}
 	
 	protected function register_handler(){
-		Debug::enable(E_ALL & ~E_NOTICE);
+		//Debug::enable(E_ALL & ~E_NOTICE);
+		ExceptionHandler::register();
+		ErrorHandler::register();
 	}
 	  
 }

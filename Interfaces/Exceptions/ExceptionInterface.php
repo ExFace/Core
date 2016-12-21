@@ -2,7 +2,7 @@
 
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Interfaces\UiPageInterface;
-use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\Widgets\ErrorMessage;
 
 interface ExceptionInterface extends iCanBeConvertedToUxon {
 	/**
@@ -21,7 +21,7 @@ interface ExceptionInterface extends iCanBeConvertedToUxon {
 	 * Creates a widget with detailed information about this exception. 
 	 * 
 	 * @param UiPageInterface $page
-	 * @return WidgetInterface
+	 * @return ErrorMessage
 	 */
 	public function create_widget(UiPageInterface $page);
 }

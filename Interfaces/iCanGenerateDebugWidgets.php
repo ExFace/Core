@@ -1,7 +1,7 @@
 <?php
 namespace exface\Core\Interfaces;
 
-use exface\Core\Widgets\Panel;
+use exface\Core\Widgets\DebugMessage;
 
 /**
  * Debug widgets help a non-programmer app designer to understand, what's going on in the code. Many core object can be automatically
@@ -25,8 +25,8 @@ interface iCanGenerateDebugWidgets {
 	/**
 	 * Returns an array of panels to be included in the debugger widget (typically tabbed dialog)
 	 * 
-	 * @return Panel[]
+	 * @return DebugMessage
 	 */
-	public function get_debug_panels(UiPageInterface $page);
+	public function create_debug_widget(DebugMessage $debug_widget);
 }
 ?>

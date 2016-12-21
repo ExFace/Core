@@ -2,6 +2,7 @@
 
 use exface\Core\Interfaces\DataSources\DataQueryInterface;
 use exface\Core\Interfaces\UiPageInterface;
+use exface\Core\Widgets\DebugMessage;
 
 /**
  * This is the base class for data queries. It includes a default UXON importer.
@@ -81,9 +82,9 @@ abstract class AbstractDataQuery implements DataQueryInterface {
 	/**
 	 * 
 	 * {@inheritDoc}
-	 * @see \exface\Core\Interfaces\iCanGenerateDebugWidgets::get_debug_panels()
+	 * @see \exface\Core\Interfaces\iCanGenerateDebugWidgets::create_debug_widget()
 	 */
-	public function get_debug_panels(UiPageInterface $page){
-		return array();
+	public function create_debug_widget(DebugMessage $debug_widget){
+		return $debug_widget;
 	}
 }

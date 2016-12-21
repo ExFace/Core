@@ -6,6 +6,7 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Exceptions\WarningExceptionInterface;
 use exface\Core\Interfaces\UiPageInterface;
 use exface\Core\Factories\WidgetFactory;
+use exface\Core\Widgets\ErrorMessage;
 
 trait ExceptionTrait {
 	
@@ -46,18 +47,29 @@ trait ExceptionTrait {
 		return $this->is_warning() ? false : true;
 	}
 	
+	/**
+	 * The basic error widget for an exception only contains one tab with the exception printout (stacktrace, etc.)
+	 * 
+	 * @see \exface\Core\Interfaces\Exceptions\ExceptionInterface::create_widget()
+	 * 
+	 * @param UiPageInterface $page
+	 * @return ErrorMessage
+	 */
 	public function create_widget(UiPageInterface $page){
-		/* @var $tabs \exface\Core\Widgets\Tabs */
-		$tabs = WidgetFactory::create($page, 'Tabs');
-		$tabs->set_meta_object($page->get_workbench()->model()->get_object('exface.Core.ERROR'));
-		$error_tab = $tabs->create_tab();
-		$error_tab->set_caption('Error');
+		// Create a new error message
+		/* @var $tabs \exface\Core\Widgets\ErrorMessage */
+		$debug_message = WidgetFactory::create($page, 'ErrorMessage');
+		$debug_message->set_meta_object($page->get_workbench()->model()->get_object('exface.Core.ERROR'));
+		
+		// Add a tab with the exception printout
+		$error_tab = $debug_message->create_tab();
+		$error_tab->set_caption($page->get_workbench()->get_core_app()->get_translator()->translate('ERROR.CAPTION'));
 		$error_widget = WidgetFactory::create($page, 'Html');
 		$error_tab->add_widget($error_widget);
 		$error_widget->set_value($page->get_workbench()->get_debugger()->print_exception($this));
-		//$error_widget->set_value($this->getMessage());
-		$tabs->add_tab($error_tab);
-		return $tabs;
+		$debug_message->add_tab($error_tab);
+		
+		return $debug_message;
 	}
 }
 ?>
