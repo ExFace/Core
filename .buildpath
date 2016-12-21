@@ -4,6 +4,5 @@
 	<buildpathentry external="true" kind="lib" path="C:/wamp/www/exface/exface/vendor/symfony"/>
 	<buildpathentry external="true" kind="lib" path="C:/wamp/www/exface/exface/vendor/jmikola/wildcard-event-dispatcher/src/Jmikola/WildcardEventDispatcher"/>
 	<buildpathentry external="true" kind="lib" path="C:/wamp/www/exface/exface/vendor/webmozart/path-util/src"/>
-	<buildpathentry external="true" kind="lib" path="C:/wamp/www/exface/exface/vendor/filp/whoops/src"/>
 	<buildpathentry kind="con" path="org.eclipse.php.core.LANGUAGE"/>
 </buildpath>

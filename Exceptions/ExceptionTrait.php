@@ -6,7 +6,6 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Exceptions\WarningExceptionInterface;
 use exface\Core\Interfaces\UiPageInterface;
 use exface\Core\Factories\WidgetFactory;
-use exface\Core\Factories\WidgetLinkFactory;
 
 trait ExceptionTrait {
 	
@@ -55,8 +54,8 @@ trait ExceptionTrait {
 		$error_tab->set_caption('Error');
 		$error_widget = WidgetFactory::create($page, 'Html');
 		$error_tab->add_widget($error_widget);
-		//$error_widget->set_value($page->get_workbench()->get_debugger()->print_exception($this));
-		$error_widget->set_value($this->getMessage());
+		$error_widget->set_value($page->get_workbench()->get_debugger()->print_exception($this));
+		//$error_widget->set_value($this->getMessage());
 		$tabs->add_tab($error_tab);
 		return $tabs;
 	}

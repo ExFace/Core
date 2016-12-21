@@ -1,31 +1,19 @@
 <?php namespace exface\Core\CommonLogic;
 
 use exface\Core\Interfaces\DebuggerInterface;
-use Whoops\Run;
-use Whoops\Handler\PrettyPageHandler;
+use Symfony\Component\Debug\Debug;
+use Symfony\Component\Debug\ExceptionHandler;
+use Symfony\Component\Debug\Exception\FlattenException;
 
 class Debugger implements DebuggerInterface {
 	
-	private $exception_handler = null;
 	private $prettify_errors = false;
 	
-	public function get_exception_handler() {
-		return $this->exception_handler;
-	}
-	
-	public function set_exception_handler($value) {
-		$this->exception_handler = $value;
-		return $this;
-	} 
-	
-	public function print_exception(\Throwable $exception){
-		if ($this->get_exception_handler()){
-			$this->get_exception_handler()->allowQuit(false);
-			$this->get_exception_handler()->writeToOutput(false);
-			return $this->get_exception_handler()->handleException($exception);
-		} else {
-			return $exception->getMessage();
-		}
+	public function print_exception(\Throwable $exception, $use_html = true){
+		$handler = new ExceptionHandler();
+		$flattened_exception = FlattenException::create($exception);
+		$output = "<style>" . $handler->getStylesheet($flattened_exception) . " #sf-resetcontent {padding: 10px;} h2.block_exception.clear_fix {margin: 0}</style>" . $handler->getContent($flattened_exception);
+		return $output;
 	}
 	
 	public function get_prettify_errors() {
@@ -41,10 +29,7 @@ class Debugger implements DebuggerInterface {
 	}
 	
 	protected function register_handler(){
-		$whoops = new Run();
-		$whoops->pushHandler(new PrettyPageHandler());
-		$whoops->register();
-		$this->set_exception_handler($whoops);
+		Debug::enable(E_ALL & ~E_NOTICE);
 	}
 	  
 }
