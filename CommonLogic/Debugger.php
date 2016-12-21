@@ -12,7 +12,7 @@ class Debugger implements DebuggerInterface {
 	public function print_exception(\Throwable $exception, $use_html = true){
 		$handler = new ExceptionHandler();
 		$flattened_exception = FlattenException::create($exception);
-		$output = "<style>" . $handler->getStylesheet($flattened_exception) . " #sf-resetcontent {padding: 10px;} h2.block_exception.clear_fix {margin: 0}</style>" . $handler->getContent($flattened_exception);
+		$output = "<style>" . $handler->getStylesheet($flattened_exception) . " #sf-resetcontent {padding: 20px 10px 0 10px;} #sf-resetcontent h1 {display: none;} h2.block_exception.clear_fix {margin: 0}</style>" . $handler->getContent($flattened_exception);
 		return $output;
 	}
 	
