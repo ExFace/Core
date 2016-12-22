@@ -11,7 +11,7 @@ use exface\Core\CommonLogic\EntityList;
 use exface\Core\Factories\EntityListFactory;
 use exface\Core\Interfaces\ExfaceClassInterface;
 use exface\Core\Interfaces\AliasInterface;
-use exface\\Core\\Exceptions\\Model\\MetaRelationNotFoundError;
+use exface\Core\Exceptions\Model\MetaRelationNotFoundError;
 
 class Object implements ExfaceClassInterface, AliasInterface {
 	private $id;

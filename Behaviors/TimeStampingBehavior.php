@@ -3,7 +3,7 @@
 use exface\Core\CommonLogic\AbstractBehavior;
 use exface\Core\CommonLogic\Model\Attribute;
 use exface\Core\Events\DataSheetEvent;
-use exface\\Core\\Exceptions\\Model\\MetaModelBehaviorException;
+use exface\Core\Exceptions\Model\MetaModelBehaviorException;
 use exface\Core\Interfaces\Actions\iUndoActions;
 use exface\Core\Exceptions\TimeStampingBehaviorError;
 use exface\Core\Exceptions\TimeStampingMassupdateException;

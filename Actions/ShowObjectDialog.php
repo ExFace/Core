@@ -4,7 +4,7 @@ use exface\Core\Widgets\AbstractWidget;
 use exface\Core\Widgets\Dialog;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Factories\WidgetFactory;
-use exface\\Core\\Exceptions\\Model\\MetaAttributeNotFoundError;
+use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 
 class ShowObjectDialog extends ShowDialog {
 	

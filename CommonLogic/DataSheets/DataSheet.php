@@ -28,7 +28,7 @@ use exface\Core\Exceptions\DataSheets\DataSheetWriteError;
 use exface\Core\Exceptions\DataSheets\DataSheetColumnNotFoundError;
 use exface\Core\Exceptions\DataSheets\DataSheetRuntimeError;
 use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;
-use exface\\Core\\Exceptions\\Model\\MetaAttributeNotFoundError;
+use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 
 /**
  * Internal data respresentation object in exface. Similar to an Excel-table:
