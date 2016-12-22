@@ -5,13 +5,14 @@ use exface\Core\CommonLogic\Model\Expression;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\CommonLogic\Model\Formula;
 use exface\Core\Factories\ExpressionFactory;
-use exface\Core\Exceptions\DataSheetException;
 use exface\Core\Factories\EntityListFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\DataSheets\DataColumnInterface;
 use exface\Core\DataTypes\AbstractDataType;
 use exface\Core\Factories\DataColumnTotalsFactory;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Exceptions\DataSheets\DataSheetDiffError;
+use exface\Core\Exceptions\DataSheets\DataSheetRuntimeError;
 
 class DataColumn implements DataColumnInterface {
 	private $name = null;
@@ -373,10 +374,10 @@ class DataColumn implements DataColumnInterface {
 		$this_uid_column = $this->get_data_sheet()->get_uid_column();
 		$other_uid_column = $another_column->get_data_sheet()->get_uid_column();
 		if (!$this_uid_column || !$other_uid_column){
-			throw new DataSheetException('Cannot diff rows by uid for column "' . $this->get_name() . '": no UID column found in data sheet!');
+			throw new DataSheetDiffError($this->get_data_sheet(), 'Cannot diff rows by uid for column "' . $this->get_name() . '": no UID column found in data sheet!', '6T5UUOI');
 		}
 		if ($this_uid_column->is_empty() || $other_uid_column->is_empty()){
-			throw new DataSheetException('Cannot diff rows by uid for column "' . $this->get_name() . '": the UID column has no data!');
+			throw new DataSheetDiffError($this->get_data_sheet(), 'Cannot diff rows by uid for column "' . $this->get_name() . '": the UID column has no data!', '6T5UUOI');
 		}
 		foreach ($this->get_values(false) as $row_nr => $val){
 			$uid = $this_uid_column->get_cell_value($row_nr);
@@ -410,7 +411,7 @@ class DataColumn implements DataColumnInterface {
 				$expression = ExpressionFactory::create_from_string($exface, $expression_or_string);
 			}
 			if (!$expression->is_formula() && !$expression->is_reference()){
-				throw new DataSheetException('Invalid formula "' . $expression->to_string() . 'given to data sheet column "' . $this->get_name() . '"!');
+				throw new DataSheetRuntimeError($this->get_data_sheet(), 'Invalid formula "' . $expression->to_string() . 'given to data sheet column "' . $this->get_name() . '"!', '6T5UW0E');
 			}
 			$this->formula = $expression;
 		}
@@ -483,7 +484,7 @@ class DataColumn implements DataColumnInterface {
 				} elseif ($attr->get_default_value()){
 					$this->set_value($row_id, $attr->get_default_value()->evaluate($this->get_data_sheet(), $this->get_name(), $row_id));
 				} else {
-					throw new \exface\Core\Exceptions\DataSheetException('Cannot create ' . $this->get_data_sheet()->get_meta_object()->get_name() . ': attribute ' . $attr->get_name() . ' not set in row ' . $row_id . '!');
+					throw new DataSheetRuntimeError($this->get_data_sheet(), 'Cannot fill column with default values ' . $this->get_data_sheet()->get_meta_object()->get_name() . ': attribute ' . $attr->get_name() . ' not set in row ' . $row_id . '!', '6T5UX3Q');
 				}
 			}
 		}
@@ -551,7 +552,7 @@ class DataColumn implements DataColumnInterface {
 			case EXF_AGGREGATOR_LIST: $result = implode(',', $values); break;
 			case EXF_AGGREGATOR_LIST_DISTINCT: $result = implode(',', array_unique($values)); break;
 			default:
-				throw new DataSheetException('Cannot aggregate over column "' . $this->get_name() . '" of a data sheet of "' . $this->get_data_sheet()->get_meta_object()->get_alias_with_namespace() . '": unknown aggregator function "' . $aggregate_function_name . '"!');
+				throw new DataSheetRuntimeError($this->get_data_sheet(), 'Cannot aggregate over column "' . $this->get_name() . '" of a data sheet of "' . $this->get_data_sheet()->get_meta_object()->get_alias_with_namespace() . '": unknown aggregator function "' . $aggregate_function_name . '"!', '6T5UXLD');
 		}
 		return $result;
 	}

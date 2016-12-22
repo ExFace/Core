@@ -1,6 +1,5 @@
 <?php namespace exface\Core\Interfaces\DataSheets;
 
-use exface\Core\Exceptions\DataSheetException;
 use exface\Core\CommonLogic\Model\ConditionGroup;
 use exface\Core\CommonLogic\Model\Condition;
 use exface\Core\CommonLogic\Model\Object;
@@ -11,6 +10,7 @@ use exface\Core\Interfaces\ExfaceClassInterface;
 use exface\Core\Interfaces\iCanBeCopied;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\CommonLogic\DataSheets\DataColumn;
+use exface\Core\Exceptions\DataSheets\DataSheetColumnNotFoundError;
 
 interface DataSheetInterface extends ExfaceClassInterface, iCanBeCopied, iCanBeConvertedToUxon {
 	
@@ -185,7 +185,7 @@ interface DataSheetInterface extends ExfaceClassInterface, iCanBeCopied, iCanBeC
 	 * Returns the first row, that contains a given value in the specified column. Returns NULL if no row matches.
 	 * @param string $column_name
 	 * @param mixed $value
-	 * @throws DataSheetException
+	 * @throws DataSheetColumnNotFoundError
 	 * @return array
 	 */
 	public function get_row_by_column_value($column_name, $value);
@@ -328,7 +328,6 @@ interface DataSheetInterface extends ExfaceClassInterface, iCanBeCopied, iCanBeC
 	 * Apart from automatic validation based on the meta model (e.g. data types, etc.), custom validators can be
 	 * easily added by creating object behaviours listening to validation events. If they detect invalid data,
 	 * they would only need to call data_mark_invalid() and the sheet will fail validation in any case.
-	 * @throws DataSheetValidationError
 	 * @return boolean
 	 */
 	public function data_validate();

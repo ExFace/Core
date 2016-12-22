@@ -2,7 +2,7 @@
 
 use exface\Core\Interfaces\DataSources\DataQueryInterface;
 
-interface DataQueryExceptionInterface extends ExceptionInterface {
+interface DataQueryExceptionInterface extends DataSourceExceptionInterface {
 	
 	/**
 	 * 

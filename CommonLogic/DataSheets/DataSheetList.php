@@ -1,8 +1,8 @@
 <?php namespace exface\Core\CommonLogic\DataSheets;
 
 use exface\Core\CommonLogic\Model\Object;
-use exface\Core\Exceptions\DataSheetException;
 use exface\Core\CommonLogic\EntityList;
+use exface\Core\Exceptions\DataSheets\DataSheetLogicError;
 
 class DataSheetList extends EntityList {
 	
@@ -17,7 +17,7 @@ class DataSheetList extends EntityList {
 			$result = parent::add($sheet, $key);
 		} else {
 			$result = $this;
-			throw new DataSheetException('Adding regular data sheets as subsheets not implemented yet!');
+			throw new DataSheetLogicError($this, 'Adding regular data sheets as subsheets not implemented yet!');
 		}
 		return $result;
 	}

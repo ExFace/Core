@@ -2,7 +2,7 @@
 
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 
-interface DataConnectorExceptionInterface extends ExceptionInterface {
+interface DataConnectorExceptionInterface extends DataSourceExceptionInterface {
 	
 	/**
 	 *

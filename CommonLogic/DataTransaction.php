@@ -5,6 +5,10 @@ use exface\Core\Interfaces\DataSources\DataManagerInterface;
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 use exface\Core\Exceptions\DataTransactionError;
 use exface\Core\Exceptions\DataConnectionError;
+use exface\Core\Exceptions\DataSources\DataTransactionCommitError;
+use exface\Core\Exceptions\DataSources\DataTransactionRollbackError;
+use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;
+use exface\Core\Exceptions\DataSources\DataTransactionStartError;
 
 class DataTransaction implements DataTransactionInterface {
 	private $data_manager = null;
@@ -43,14 +47,14 @@ class DataTransaction implements DataTransactionInterface {
 	 */
 	public function commit(){
 		if ($this->is_rolled_back()){
-			throw new DataTransactionError('Cannot commit a transaction, that has already been rolled back!');
+			throw new DataTransactionCommitError('Cannot commit a transaction, that has already been rolled back!', '6T5VIIA');
 		}
 		
 		foreach ($this->get_data_connections() as $connection){
 			try {
 				$connection->transaction_commit();
 				$this->is_committed = true;
-			} catch (DataConnectionError $e){
+			} catch (ErrorExceptionInterface $e){
 				$this->rollback();
 			}
 		}
@@ -65,15 +69,15 @@ class DataTransaction implements DataTransactionInterface {
 	 */
 	public function rollback(){
 		if ($this->is_committed()){
-			throw new DataTransactionError('Cannot roll back a transaction, that has already been committed!');
+			throw new DataTransactionRollbackError('Cannot roll back a transaction, that has already been committed!', '6T5VIT8');
 		}
 		
 		foreach ($this->get_data_connections() as $connection){
 			try {
 				$connection->transaction_rollback();
 				$this->is_rolled_back = true;
-			} catch (DataConnectionError $e){
-				throw new DataTransactionError('Cannot rollback transaction for "' . $connection->get_alias_with_namespace() . '":' . $e->getMessage());
+			} catch (ErrorExceptionInterface $e){
+				throw new DataTransactionRollbackError('Cannot rollback transaction for "' . $connection->get_alias_with_namespace() . '":' . $e->getMessage());
 			}
 			
 		}
@@ -131,15 +135,15 @@ class DataTransaction implements DataTransactionInterface {
 		if (!$existing_connection){
 			try {
 				$connection->transaction_start();
-			} catch (DataConnectionError $e){
-				throw new DataTransactionError('Cannot start new transaction for "' . $connection->get_alias_with_namespace() . '":' . $e->getMessage());
+			} catch (ErrorExceptionInterface $e){
+				throw new DataTransactionStartError('Cannot start new transaction for "' . $connection->get_alias_with_namespace() . '":' . $e->getMessage());
 			}
 			$this->connections[] = $connection;
 		} elseif (!$existing_connection->transaction_is_started()){
 			try {
 				$existing_connection->transaction_start();
-			} catch (DataConnectionError $e){
-				throw new DataTransactionError('Cannot start new transaction for "' . $connection->get_alias_with_namespace() . '":' . $e->getMessage());
+			} catch (ErrorExceptionInterface $e){
+				throw new DataTransactionStartError('Cannot start new transaction for "' . $connection->get_alias_with_namespace() . '":' . $e->getMessage());
 			}
 		}
 		

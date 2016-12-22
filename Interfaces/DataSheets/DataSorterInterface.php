@@ -1,9 +1,9 @@
 <?php namespace exface\Core\Interfaces\DataSheets;
 
-use exface\Core\Exceptions\DataSheetException;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\iCanBeCopied;
+use exface\Core\Exceptions\InvalidArgumentException;
 
 interface DataSorterInterface extends iCanBeConvertedToUxon, iCanBeCopied {
 	
@@ -29,7 +29,7 @@ interface DataSorterInterface extends iCanBeConvertedToUxon, iCanBeCopied {
 	/**
 	 * 
 	 * @param string $value
-	 * @throws DataSheetException
+	 * @throws InvalidArgumentException
 	 * @return DataSorterInterface
 	 */
 	public function set_direction($value) ;

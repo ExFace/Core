@@ -4,7 +4,6 @@ use exface\Core\CommonLogic\Model\Attribute;
 use exface\Core\CommonLogic\Model\Expression;
 use exface\Core\DataTypes\AbstractDataType;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
-use exface\Core\Exceptions\DataSheetException;
 use exface\Core\Interfaces\DataSheets\DataColumnTotalsListInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\iCanBeCopied;
@@ -188,8 +187,6 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied {
 	/**
 	 * 
 	 * @param string|Expression $expression_or_string
-	 * @throws DataSheetException
-	 * @return DataColumnInterface
 	 */
 	public function set_formula($expression_or_string);
 	
@@ -211,7 +208,6 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied {
 	
 	/**
 	 * Applies default and fixed values defined in the meta model to this column.
-	 * @throws \exface\Core\Exceptions\DataSheetException
 	 * @return DataColumnInterface
 	 */
 	public function set_values_from_defaults();

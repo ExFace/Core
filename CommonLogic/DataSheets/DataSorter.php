@@ -6,6 +6,7 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\ExfaceClassInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\CommonLogic\Workbench;
+use exface\Core\Exceptions\InvalidArgumentException;
 
 class DataSorter implements iCanBeConvertedToUxon, ExfaceClassInterface {
 	const DIRECTION_ASC = 'ASC';
@@ -39,7 +40,7 @@ class DataSorter implements iCanBeConvertedToUxon, ExfaceClassInterface {
 		} elseif (strtoupper($value) == $this::DIRECTION_DESC){
 			$this->direction = $this::DIRECTION_DESC;
 		} else {
-			throw new DataSheetException('Invalid sort direction "' . $value . '" for a data sheet sorter: only DESC or ASC are allowed!');
+			throw new InvalidArgumentException('Invalid sort direction "' . $value . '" for a data sheet sorter: only DESC or ASC are allowed!', '6T5V9KS');
 		}
 		return $this;
 	}

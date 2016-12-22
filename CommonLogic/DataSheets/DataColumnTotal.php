@@ -3,14 +3,10 @@
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\ExfaceClassInterface;
-use exface\Core\Exceptions\DataSheetException;
 use exface\Core\Interfaces\DataSheets\DataColumnInterface;
+use exface\Core\Exceptions\DomainException;
 
 class DataColumnTotal implements iCanBeConvertedToUxon, ExfaceClassInterface {
-	const FUNCTION_SUM = 'SUM';
-	const FUNCTION_AVG = 'AVG';
-	const FUNCTION_MIN = 'MIN';
-	const FUNCTION_MAX = 'MAX';
 	
 	private $function = null;
 	private $data_column = null;
@@ -39,8 +35,8 @@ class DataColumnTotal implements iCanBeConvertedToUxon, ExfaceClassInterface {
 	}
 	
 	public function set_function($value) {
-		if (!defined('self::FUNCTION_' . $value)){
-			throw new DataSheetException('Cannot set totals function "' . $value . '" for data column "' . $this->get_column()->get_name() . '": invalid function!');
+		if (!defined('EXF_AGGREGATOR_' . $value)){
+			throw new DomainException('Cannot set totals function "' . $value . '" for data column "' . $this->get_column()->get_name() . '": invalid function!', '6T5UXLD');
 		}
 		$this->function = $value;
 		return $this;

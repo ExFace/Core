@@ -1,9 +1,9 @@
 <?php namespace exface\Core\Interfaces\DataSheets;
 
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
-use exface\Core\Exceptions\DataSheetException;
 use exface\Core\Interfaces\DataSheets\DataColumnInterface;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Exceptions\InvalidArgumentException;
 
 interface DataColumnTotalInterface extends iCanBeConvertedToUxon {
 		
@@ -28,7 +28,7 @@ interface DataColumnTotalInterface extends iCanBeConvertedToUxon {
 	/**
 	 * 
 	 * @param string $value
-	 * @throws DataSheetException
+	 * @throws InvalidArgumentException
 	 * @return \exface\Core\Interfaces\DataSheets\DataColumnTotalInterface
 	 */
 	public function set_function($value);

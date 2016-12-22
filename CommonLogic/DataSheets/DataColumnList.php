@@ -1,13 +1,12 @@
 <?php namespace exface\Core\CommonLogic\DataSheets;
 
-use exface\Core\Exceptions\DataSheetException;
 use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Factories\DataColumnFactory;
 use exface\Core\Interfaces\DataSheets\DataColumnListInterface;
 use exface\Core\Interfaces\DataSheets\DataColumnInterface;
 use exface\Core\CommonLogic\Model\Attribute;
-use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\EntityList;
+use exface\Core\Exceptions\InvalidArgumentException;
 
 class DataColumnList extends EntityList implements DataColumnListInterface {
 	
@@ -19,7 +18,7 @@ class DataColumnList extends EntityList implements DataColumnListInterface {
 	 */
 	public function add(&$column, $key = null, $overwrite_values = true){
 		if (!($column instanceof DataColumn)){
-			throw new DataSheetException('Cannot add column to data sheet: only DataColumns can be added to the column list of a datasheet, "' . get_class($column) . '" given instead!');
+			throw new InvalidArgumentException('Cannot add column to data sheet: only DataColumns can be added to the column list of a datasheet, "' . get_class($column) . '" given instead!');
 		}
 		$data_sheet = $this->get_data_sheet();
 		if (!$this->get($column->get_name())){

@@ -23,9 +23,14 @@ use exface\Core\Interfaces\DataSheets\DataColumnInterface;
 use exface\Core\Factories\EventFactory;
 use exface\Core\Events\DataSheetEvent;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
-use exface\Core\Exceptions\DataSourceError;
-use exface\Core\Exceptions\DataSheetSaveError;
 use exface\Core\Factories\DataSheetFactory;
+use exface\Core\Exceptions\DataSheets\DataSheetJoinError;
+use exface\Core\Exceptions\DataSheets\DataSheetImportRowError;
+use exface\Core\Exceptions\DataSheets\DataSheetUidColumnNotFoundError;
+use exface\Core\Exceptions\DataSheets\DataSheetWriteError;
+use exface\Core\Exceptions\DataSheets\DataSheetColumnNotFoundError;
+use exface\Core\Exceptions\DataSheets\DataSheetRuntimeError;
+use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;
 
 /**
  * Internal data respresentation object in exface. Similar to an Excel-table:
@@ -129,7 +134,7 @@ class DataSheet implements DataSheetInterface {
 				$this->rows[$left_row] = array_merge($row, $data_sheet->get_row($left_row));
 			}
 		} else {
-			throw new DataSheetException('Cannot join data sheets, if only one key column specified!');
+			throw new DataSheetJoinError($this, 'Cannot join data sheets, if only one key column specified!', '6T5V0GU');
 		}
 		return true;
 	}
@@ -141,7 +146,7 @@ class DataSheet implements DataSheetInterface {
 	 */
 	public function import_rows(DataSheetInterface $other_sheet){
 		if (!$this->get_meta_object()->is_exactly($other_sheet->get_meta_object()->get_alias_with_namespace())){
-			throw new DataSheetException('Cannot replace rows for object "' . $this->get_meta_object()->get_alias_with_namespace() . '" with rows from "' . $other_sheet->get_meta_object()->get_alias_with_namespace() . '": replacing rows only possible for identical objects!');
+			throw new DataSheetImportRowError($this, 'Cannot replace rows for object "' . $this->get_meta_object()->get_alias_with_namespace() . '" with rows from "' . $other_sheet->get_meta_object()->get_alias_with_namespace() . '": replacing rows only possible for identical objects!', '6T5V1DR');
 		}
 		
 		if (!$this->get_uid_column() && $other_sheet->get_uid_column()){
@@ -157,7 +162,7 @@ class DataSheet implements DataSheetInterface {
 			}
 			if ($other_col = $other_sheet->get_column($this_col->get_name())){
 				if (count($this_col->get_values(false)) > 0 && count($this_col->get_values(false)) !== count($other_col->get_values(false))){
-					throw new DataSheetException('Cannot replace rows of column "' . $this_col->get_name() . '": source and target columns have different amount of rows!');
+					throw new DataSheetImportRowError('Cannot replace rows of column "' . $this_col->get_name() . '": source and target columns have different amount of rows!', '6T5V1XX');
 				}
 				$this_col->set_values($other_col->get_values(false));
 			}
@@ -337,7 +342,7 @@ class DataSheet implements DataSheetInterface {
 				if ($rel_path_to_subsheet_right_key = $this->get_meta_object()->get_relation($rel_path_to_subsheet)->get_related_object_key_alias()){
 					$subsheet->get_columns()->add_from_expression(RelationPath::relation_path_add($rel_path_in_main_ds, $rel_path_to_subsheet_right_key));
 				} else {
-					throw new DataSheetException('Cannot find UID (primary key) for subsheet: no key alias can be determined for the relation "' . $rel_path_to_subsheet . '" from "' . $this->get_meta_object()->get_alias_with_namespace() . '" to "' . $this->get_meta_object()->get_relation($rel_path_to_subsheet)->get_related_object()->get_alias_with_namespace() . '"!');
+					throw new DataSheetUidColumnNotFoundError($this, 'Cannot find UID (primary key) for subsheet: no key alias can be determined for the relation "' . $rel_path_to_subsheet . '" from "' . $this->get_meta_object()->get_alias_with_namespace() . '" to "' . $this->get_meta_object()->get_relation($rel_path_to_subsheet)->get_related_object()->get_alias_with_namespace() . '"!');
 				}
 			}
 			
@@ -430,7 +435,7 @@ class DataSheet implements DataSheetInterface {
 				$subsheet->add_filter_from_string($this->get_meta_object()->get_relation($rel_path)->get_related_object_key_alias(), implode(',', array_unique($foreign_keys)), EXF_COMPARATOR_IN);
 			} else {
 				if ($this->get_meta_object()->get_relation($rel_path)->get_main_object_key_attribute()){
-					throw new DataSheetException('Joining subsheets via reverse relations the explicitly specified foreign keys, not implemented yet!');
+					throw new DataSheetJoinError($this, 'Joining subsheets via reverse relations the explicitly specified foreign keys, not implemented yet!', '6T5V36I');
 				} else {
 					$foreign_keys = $this->get_uid_column()->get_values();					
 					$subsheet->add_filter_from_string($this->get_meta_object()->get_relation($rel_path)->get_foreign_key_alias(), implode(',', array_unique($foreign_keys)), EXF_COMPARATOR_IN);
@@ -507,7 +512,7 @@ class DataSheet implements DataSheetInterface {
 					$counter += $create_ds->data_create(false, $transaction);
 				}
 			} else {
-				throw new DataSheetSaveError('Creating rows from an update statement without a UID-column not supported yet!');
+				throw new DataSheetWriteError($this, 'Creating rows from an update statement without a UID-column not supported yet!', '6T5VBHF');
 			}
 		}
 		
@@ -583,7 +588,7 @@ class DataSheet implements DataSheetInterface {
 						$uid_column_alias = $rel_path;
 					} else {
 						//$uid_column = $this->get_column($this->get_meta_object()->get_relation($rel_path)->get_main_object_key_attribute()->get_alias_with_relation_path());
-						throw new DataSheetException('Updating attributes from reverse relations ("' . $column->get_expression_obj()->to_string() . '") is not supported yet!');	
+						throw new DataSheetWriteError($this, 'Updating attributes from reverse relations ("' . $column->get_expression_obj()->to_string() . '") is not supported yet!', '6T5V4HW');	
 					}
 				} else {
 					$uid_column_alias = $this->get_meta_object()->get_uid_alias();
@@ -621,10 +626,10 @@ class DataSheet implements DataSheetInterface {
 		$transaction->add_data_connection($connection);
 		try {
 			$counter += $query->update($connection);
-		} catch (DataSourceError $e){
+		} catch (ErrorExceptionInterface $e){
 			$transaction->rollback();
 			$commit = false;
-			throw new DataSheetSaveError($e->getMessage(), $e->getCode(), $e);
+			throw new DataSheetWriteError($this, 'Data source error. ' . $e->getMessage(), $e->getCode(), $e);
 		}
 		
 		if ($commit  && !$transaction->is_rolled_back()){
@@ -655,7 +660,7 @@ class DataSheet implements DataSheetInterface {
 		$counter = 0;
 		if ($delete_redundant_rows){
 			if ($this->get_filters()->is_empty()){
-				throw new DataSheetException('Cannot delete redundant rows while replacing data if no filter are defined! This would delete ALL data for the object "' . $this->get_meta_object()->get_alias_with_namespace() . '"!');
+				throw new DataSheetWriteError($this, 'Cannot delete redundant rows while replacing data if no filter are defined! This would delete ALL data for the object "' . $this->get_meta_object()->get_alias_with_namespace() . '"!', '6T5V4TS');
 			}
 			if ($this->get_uid_column()){
 				$redundant_rows_ds = $this->copy();
@@ -672,7 +677,7 @@ class DataSheet implements DataSheetInterface {
 					$counter += $delete_ds->data_delete($transaction);
 				}
 			} else {
-				throw new DataSheetException('Cannot delete redundant rows while replacing data for "' . $this->get_meta_object()->get_alias_with_namespace() . '" if no UID column is present in the data sheet');
+				throw new DataSheetWriteError($this, 'Cannot delete redundant rows while replacing data for "' . $this->get_meta_object()->get_alias_with_namespace() . '" if no UID column is present in the data sheet', '6T5V5EB');
 			}
 		}
 		
@@ -774,7 +779,7 @@ class DataSheet implements DataSheetInterface {
 		$transaction->add_data_connection($connection);
 		try {
 			$new_uids = $query->create($connection);
-		} catch (DataSourceError $e) {
+		} catch (ErrorExceptionInterface $e) {
 			$transaction->rollback();
 			$commit = false;
 			throw $e;
@@ -814,7 +819,7 @@ class DataSheet implements DataSheetInterface {
 		$query->set_main_object($this->get_meta_object());
 		
 		if ($this->is_unfiltered()) {
-			throw new DataSheetSaveError('Cannot delete all instances of "' . $this->get_meta_object()->get_alias_with_namespace() . '": forbidden operation!');
+			throw new DataSheetWriteError($this, 'Cannot delete all instances of "' . $this->get_meta_object()->get_alias_with_namespace() . '": forbidden operation!', '6T5VCA6');
 		}
 		// set filters
 		$query->set_filters_condition_group($this->get_filters());
@@ -844,9 +849,9 @@ class DataSheet implements DataSheetInterface {
 		$transaction->add_data_connection($connection);
 		try {
 			$affected_rows += $query->delete($connection);
-		} catch (DataSourceError $e){
+		} catch (ErrorExceptionInterface $e){
 			$transaction->rollback();
-			throw new DataSheetSaveError($e->getMessage(), $e->getCode(), $e);
+			throw new DataSheetWriteError($this, 'Data source error. ' . $e->getMessage(), $e->getCode(), $e);
 		}
 		
 		if ($commit && !$transaction->is_rolled_back()){
@@ -873,7 +878,7 @@ class DataSheet implements DataSheetInterface {
 			// FIXME use $rel->get_related_object_key_attribute() here instead. This must be fixed first though, as it returns false now
 			if (!$rel->get_related_object()->get_attribute($rel->get_foreign_key_alias())->is_required()){
 				// FIXME Throw a warning here! Need to be able to show warning along with success messages!
-				//throw new DataSheetException('Cascading deletion via optional relations not yet implemented: no instances were deleted for relation "' . $rel->get_alias() . '" to object "' . $rel->get_related_object()->get_alias_with_namespace() . '"!');
+				//throw new DataSheetWriteError($this, 'Cascading deletion via optional relations not yet implemented: no instances were deleted for relation "' . $rel->get_alias() . '" to object "' . $rel->get_related_object()->get_alias_with_namespace() . '"!');
 			} else {
 				$ds = DataSheetFactory::create_from_object($rel->get_related_object());
 				// Use all filters of the original query in the cascading queries
@@ -1003,13 +1008,13 @@ class DataSheet implements DataSheetInterface {
 	 * Returns the first row, that contains a given value in the specified column. Returns NULL if no row matches.
 	 * @param string $column_name
 	 * @param mixed $value
-	 * @throws DataSheetException
+	 * @throws DataSheetColumnNotFoundError
 	 * @return array
 	 */
 	public function get_row_by_column_value($column_name, $value){
 		$column = $this->get_column($column_name);
 		if (!$column){
-			throw new DataSheetException('Cannot find row by column value: invalid column name "' . $column_name . '"!');
+			throw new DataSheetColumnNotFoundError($this, 'Cannot find row by column value: invalid column name "' . $column_name . '"!');
 		}
 		return $this->get_row($column->find_row_by_value($value));
 	}
@@ -1075,7 +1080,7 @@ class DataSheet implements DataSheetInterface {
 				// of calling $this->get_column_values('X') was different from this->get_column('X')->get_values(). I have no idea why... This line sure fixes the problem
 				// but it needs to be investigated at some point as it might also hit other parent-child-combinations!
 				$result->set_data_sheet($this);
-				throw new DataSheetException('Column "' . $result->get_name() . '" belongs to the wrong data sheet!');
+				throw new DataSheetRuntimeError($this, 'Column "' . $result->get_name() . '" belongs to the wrong data sheet!');
 			}
 			return $result;
 		}
