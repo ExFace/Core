@@ -71,5 +71,14 @@ trait ExceptionTrait {
 		
 		return $debug_message;
 	}
+	
+	/**
+	 *
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\Exceptions\ExceptionInterface::get_default_code()
+	 */
+	public static function get_default_code(){
+		return '';
+	}
 }
 ?>

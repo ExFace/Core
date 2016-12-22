@@ -4,8 +4,9 @@ use exface\Core\CommonLogic\AbstractAction;
 use exface\Core\Interfaces\Actions\iRunDataSourceQuery;
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 use exface\Core\CommonLogic\Model\Object;
-use exface\Core\Exceptions\ActionRuntimeException;
 use exface\Core\CommonLogic\DataSheets\DataColumn;
+use exface\Core\Exceptions\Actions\ActionInputTypeError;
+use exface\Core\Exceptions\Actions\ActionInputMissingError;
 
 class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuery {
 	private $queries = array();
@@ -72,7 +73,7 @@ class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuer
 		// Check if the action is aplicable to the input object
 		if ($this->get_aplicable_to_object_alias()){
 			if (!$data_sheet->get_meta_object()->is($this->get_aplicable_to_object_alias())){
-				throw new ActionRuntimeException('Cannot perform action "' . $this->get_alias_with_namespace() . '" on object "' . $data_sheet->get_meta_object()->get_alias_with_namespace() . '": action only aplicable to "' . $this->get_aplicable_to_object_alias() . '"!');
+				throw new ActionInputTypeError($this, 'Cannot perform action "' . $this->get_alias_with_namespace() . '" on object "' . $data_sheet->get_meta_object()->get_alias_with_namespace() . '": action only aplicable to "' . $this->get_aplicable_to_object_alias() . '"!', '6T5DMU');
 			}
 		}
 		
@@ -88,7 +89,7 @@ class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuer
 				foreach ($this->get_workbench()->utils()->find_placeholders_in_string($query) as $ph){
 					/* @var $col exface\Core\CommonLogic\DataSheets\DataColumn */
 					if (!$col = $data_sheet->get_columns()->get(DataColumn::sanitize_column_name($ph))){
-						throw new ActionRuntimeException('Cannot perform custom query in "' . $this->get_alias_with_namespace() . '": placeholder "' . $ph . '" not found in inupt data!');
+						throw new ActionInputMissingError($this, 'Cannot perform custom query in "' . $this->get_alias_with_namespace() . '": placeholder "' . $ph . '" not found in inupt data!', '6T5DNWE');
 					}
 					$placeholders['[#'.$ph.'#]'] = implode(',', $col->get_values(false));
 				}

@@ -1,5 +1,4 @@
-<?php
-namespace exface\Core\Exceptions\DataSources;
+<?php namespace exface\Core\Exceptions\DataSheets;
 
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Exceptions\ExceptionTrait;
@@ -12,8 +11,8 @@ trait DataSheetExceptionTrait {
 	
 	private $data_sheet = null;
 	
-	public function __construct (DataSheetInterface $data_sheet, $message, $code, $previous = null) {
-		parent::__construct($message, $code, $previous);
+	public function __construct (DataSheetInterface $data_sheet, $message, $code = null, $previous = null) {
+		parent::__construct($message, ($code ? $code : static::get_default_code()), $previous);
 		$this->set_data_sheet($data_sheet);
 	}
 	

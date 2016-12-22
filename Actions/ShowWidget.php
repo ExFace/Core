@@ -1,12 +1,11 @@
 <?php namespace exface\Core\Actions;
 
-use exface\Core\Widgets\AbstractWidget;
 use exface\Core\Interfaces\Actions\iShowWidget;
 use exface\Core\Exceptions\UxonParserError;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\CommonLogic\Model\Condition;
-use exface\Core\Exceptions\DataSheetMergeError;
+use exface\Core\Exceptions\DataSheets\DataSheetMergeError;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Actions\iUsePrefillData;
@@ -86,7 +85,7 @@ class ShowWidget extends AbstractAction implements iShowWidget, iUsePrefillData 
 			} else {
 				try {
 					$data_sheet = $data_sheet->merge($input_data);
-				} catch (\exface\Core\Exceptions\DataSheetMergeError $e){
+				} catch (DataSheetMergeError $e){
 					// If anything goes wrong, use the input data to prefill. It is more important for an action, than
 					// other prefill sources.
 					$data_sheet = $input_data->copy();

@@ -1,7 +1,9 @@
 <?php
 namespace exface\Core\Actions;
+
 use exface\Core\Interfaces\Actions\iCreateData;
-use exface\Core\Exceptions\ActionRuntimeException;
+use exface\Core\Exceptions\Actions\ActionUndoFailedError;
+
 class CreateData extends SaveData implements iCreateData {
 	
 	protected function perform(){
@@ -15,7 +17,7 @@ class CreateData extends SaveData implements iCreateData {
 	
 	public function undo(){
 		if (!$data_sheet = $this->get_undo_data_sheet()){
-			throw new ActionRuntimeException('Cannot undo action "' . $this->get_alias() . '": Failed to load history for this action!');
+			throw new ActionUndoFailedError($this, 'Cannot undo action "' . $this->get_alias_with_namespace() . '": Failed to load history for this action!', '6T5DLGN');
 		}
 		$data_sheet->data_delete();
 		return $data_sheet;

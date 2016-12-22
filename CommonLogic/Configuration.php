@@ -2,7 +2,7 @@
 
 use exface\Core\Interfaces\ExfaceClassInterface;
 use exface\Core\Interfaces\ConfigurationInterface;
-use exface\Core\Exceptions\ConfigurationNotFoundError;
+use exface\Core\Exceptions\Configuration\ConfigOptionNotFoundError;
 
 class Configuration implements ConfigurationInterface {
 	
@@ -49,7 +49,7 @@ class Configuration implements ConfigurationInterface {
 			if ($key_found = $this->get_config_uxon()->find_property_key($key, false)){
 				$key = $key_found;
 			} else {
-				throw new ConfigurationNotFoundError('Required configuration key "' . $key . '" not found in "' . $this->get_config_uxon()->to_json(false) . '"!');
+				throw new ConfigOptionNotFoundError($this, 'Required configuration key "' . $key . '" not found!', '6T5DZN2');
 			}
 		}
 		return $this->get_config_uxon()->get_property($key);

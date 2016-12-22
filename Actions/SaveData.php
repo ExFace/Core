@@ -3,10 +3,10 @@
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Actions\iModifyData;
 use exface\Core\Interfaces\Actions\iCanBeUndone;
-use exface\Core\Exceptions\ActionRuntimeException;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\CommonLogic\AbstractAction;
+use exface\Core\Exceptions\Actions\ActionUndoFailedError;
 
 class SaveData extends AbstractAction implements iModifyData, iCanBeUndone {
 	private $affected_rows = 0;
@@ -63,7 +63,7 @@ class SaveData extends AbstractAction implements iModifyData, iCanBeUndone {
 	}
 	
 	public function undo(){
-		throw new ActionRuntimeException('Undo functionality not implemented yet for action "' . $this->get_alias() . '"!');
+		throw new ActionUndoFailedError($this, 'Undo functionality not implemented yet for action "' . $this->get_alias() . '"!', '6T5DS00');
 	}
 }
 ?>

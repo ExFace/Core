@@ -1,19 +1,20 @@
 <?php namespace exface\Core\CommonLogic;
 
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\Core\Exceptions\ActionRuntimeException;
 use exface\Core\CommonLogic\Model\Object;
 use exface\Core\Interfaces\Actions\iCanBeUndone;
 use exface\Core\Interfaces\Actions\iModifyData;
 use exface\Core\Factories\DataSheetFactory;
-use exface\Core\Exceptions\ActionConfigException;
 use exface\Core\Factories\ActionFactory;
 use exface\Core\Factories\EventFactory;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Events\ActionEvent;
-use exface\Core\CommonLogic\Workbench;
 use exface\Core\Factories\WidgetLinkFactory;
+use exface\Core\Exceptions\Actions\ActionConfigurationError;
+use exface\Core\Exceptions\Model\MetaObjectNotFoundError;
+use exface\Core\Exceptions\Actions\ActionOutputTypeError;
+use exface\Core\Exceptions\Actions\ActionObjectNotSpecifiedError;
 
 /**
  * The abstract action is the base ActionInterface implementation, that simplifies the creation of custom actions. All core
@@ -154,7 +155,7 @@ abstract class AbstractAction implements ActionInterface {
 			if (method_exists($this, 'set_'.$var)){
 				call_user_func(array($this, 'set_'.$var), $val);
 			} else {
-				throw new ActionConfigException('Property "' . $var . '" of action "' . $this->get_alias() . '" cannot be set: setter function not found!');
+				throw new ActionConfigurationError($this, 'Property "' . $var . '" of action "' . $this->get_alias() . '" cannot be set: setter function not found!', '6T5DI5E');
 			}
 		}
 		return true;
@@ -305,7 +306,7 @@ abstract class AbstractAction implements ActionInterface {
 		} elseif (!is_object($result)){
 			return $result;
 		} else {
-			throw new ActionRuntimeException('Cannot convert result object of type "' . get_class($result) . '" to string for action "' . $this->get_alias_with_namespace() . '"');
+			throw new ActionOutputTypeError($this, 'Cannot convert result object of type "' . get_class($result) . '" to string for action "' . $this->get_alias_with_namespace() . '"', '6T5DUT1');
 		}
 	}
 	
@@ -323,7 +324,7 @@ abstract class AbstractAction implements ActionInterface {
 		} elseif (!is_object($result)){
 			return $result;
 		} else {
-			throw new ActionRuntimeException('Cannot render output for unknown result object type "' . gettype($result) . '" of action "' . $this->get_alias_with_namespace() . '"');
+			throw new ActionOutputTypeError($this, 'Cannot render output for unknown result object type "' . gettype($result) . '" of action "' . $this->get_alias_with_namespace() . '"', '6T5DUT1');
 		}
 	}
 	
@@ -434,7 +435,7 @@ abstract class AbstractAction implements ActionInterface {
 			} elseif ($this->get_called_by_widget()){
 				$this->meta_object = $this->get_called_by_widget()->get_meta_object();
 			} else {
-				throw new ActionRuntimeException('Cannot determine the meta object, the action is performed upon! An action must either have an input data sheet or a reference to the widget, that called it, or an explicitly specified object_alias option to determine the meta object.');
+				throw new ActionObjectNotSpecifiedError('Cannot determine the meta object, the action is performed upon! An action must either have an input data sheet or a reference to the widget, that called it, or an explicitly specified object_alias option to determine the meta object.');
 			}
 		}
 		return $this->meta_object;
@@ -458,7 +459,7 @@ abstract class AbstractAction implements ActionInterface {
 		if ($object = $this->get_workbench()->model()->get_object($qualified_alias)){
 			$this->meta_object = $object;
 		} else {
-			throw new ActionConfigException('Cannot load object "' . $qualified_alias . '" for action "' . $this->get_alias_with_namespace() . '"!');
+			throw new MetaObjectNotFoundError('Cannot load object "' . $qualified_alias . '" for action "' . $this->get_alias_with_namespace() . '"!', '6T5DJPP');
 		}
 		return $this;
 	}

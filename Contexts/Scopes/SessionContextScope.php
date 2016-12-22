@@ -1,8 +1,8 @@
 <?php namespace exface\Core\Contexts\Scopes;
 
-use exface\Core\Exceptions\ContextError;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Contexts\ContextInterface;
+use exface\Core\Exceptions\Contexts\ContextNotFoundError;
 
 /**
  * The session context scope represents the PHP session (on server side). Contexts in this scope live as long as
@@ -29,7 +29,7 @@ class SessionContextScope extends AbstractContextScope {
 			foreach ($this->get_saved_contexts() as $alias => $uxon){
 				try {
 					$this->get_context($alias);
-				} catch (ContextError $error){
+				} catch (ContextNotFoundError $error){
 					$this->remove_context($alias);
 				}
 			}

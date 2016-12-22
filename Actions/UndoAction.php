@@ -1,8 +1,8 @@
 <?php namespace exface\Core\Actions;
 
-use exface\Core\Exceptions\ActionRuntimeException;
 use exface\Core\Interfaces\Actions\iUndoActions;
 use exface\Core\CommonLogic\AbstractAction;
+use exface\Core\Exceptions\Actions\ActionUndoFailedError;
 
 /**
  * This action performs an undo operation on one or more other actions from the action context history. 
@@ -34,7 +34,7 @@ class UndoAction extends AbstractAction implements iUndoActions {
 				$result = $undo_action->undo();
 				$this->undone_actions++;
 			} else {
-				throw new ActionRuntimeException('Cannot undo action "' . $undo_action->get_alias_with_namespace() . '". This type of action cannot be undone!');
+				throw new ActionUndoFailedError($this, 'Cannot undo action "' . $undo_action->get_alias_with_namespace() . '". This type of action cannot be undone!', '6T5DT14');
 			}
 		}
 		$this->set_result('');

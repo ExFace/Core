@@ -1,8 +1,8 @@
 <?php namespace exface\Core\Actions;
 
 use exface\Core\Interfaces\Actions\iReadData;
-use exface\Core\Exceptions\ActionRuntimeException;
 use exface\Core\CommonLogic\AbstractAction;
+use exface\Core\Exceptions\Actions\ActionCallingWidgetNotSpecifiedError;
 
 class ReadData extends AbstractAction implements iReadData {
 	private $affected_rows = 0;
@@ -49,7 +49,7 @@ class ReadData extends AbstractAction implements iReadData {
 	
 	public function get_result_output(){
 		if (!$this->get_called_by_widget()) {
-			throw new ActionRuntimeException('Security violaion! Cannot read data without a target widget in action "' . $this->get_alias_with_namespace() . '"!');
+			throw new ActionCallingWidgetNotSpecifiedError($this, 'Security violaion! Cannot read data without a target widget in action "' . $this->get_alias_with_namespace() . '"!', '6T5DOSV');
 		}
 		$elem = $this->get_app()->get_workbench()->ui()->get_template()->get_element($this->get_called_by_widget());
 		$output = $elem->prepare_data($this->get_result_data_sheet());

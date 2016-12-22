@@ -7,7 +7,7 @@ use exface\Core\CommonLogic\Model\Condition;
 use exface\Core\Exceptions\MetaModelValidationException;
 use exface\Core\Exceptions\MetaModelAttributeNotFoundException;
 use exface\Core\CommonLogic\Model\Object;
-use exface\Core\Exceptions\DataSheetMergeError;
+use exface\Core\Exceptions\DataSheets\DataSheetMergeError;
 use exface\Core\Factories\QueryBuilderFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
@@ -115,7 +115,7 @@ class DataSheet implements DataSheetInterface {
 		if (!is_null($left_key_column) && !is_null($right_key_column)){
 			foreach ($this->rows as $left_row => $row){
 				if (!$data_sheet->get_columns()->get($right_key_column)){
-					throw new DataSheetMergeError('Cannot find right key column "' . $right_key_column . '" for a left join!');
+					throw new DataSheetMergeError($this, 'Cannot find right key column "' . $right_key_column . '" for a left join!', '6T5E849');
 				}
 				$right_row = $data_sheet->get_columns()->get($right_key_column)->find_row_by_value($row[$left_key_column]);
 				if ($right_row !== false){
@@ -1313,14 +1313,14 @@ class DataSheet implements DataSheetInterface {
 		}		
 		// Check if the sheets are based on the same object
 		if ($this->get_meta_object()->get_id() !== $other_sheet->get_meta_object()->get_id()){
-			throw new DataSheetMergeError('Cannot merge non-empty data sheets for different objects ("' . $this->get_meta_object()->get_alias_with_namespace() . '" and "' . $other_sheet->get_meta_object()->get_alias_with_namespace() . '"): not implemented!');
+			throw new DataSheetMergeError($this, 'Cannot merge non-empty data sheets for different objects ("' . $this->get_meta_object()->get_alias_with_namespace() . '" and "' . $other_sheet->get_meta_object()->get_alias_with_namespace() . '"): not implemented!', '6T5E8GM');
 		}
 		// Check if both sheets have UID columns if they are not empty
 		if ((!$this->is_empty() && !$this->get_uid_column()) || (!$other_sheet->is_empty() && !$other_sheet->get_uid_column())){
 			if ($this->count_rows() == $other_sheet->count_rows()){
 				$this->join_left($other_sheet);	
 			} else {
-				throw new DataSheetMergeError('Cannot merge data sheets without UID columns!');
+				throw new DataSheetMergeError($this, 'Cannot merge data sheets without UID columns!', '6T5E8Q6');
 			}
 		}
 		

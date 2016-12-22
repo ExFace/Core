@@ -6,10 +6,10 @@ use exface\Core\Contexts\Scopes\AbstractContextScope;
 use exface\Core\CommonLogic\Model\Condition;
 use exface\Core\Contexts\Scopes\ApplicationContextScope;
 use exface\Core\CommonLogic\Model\Object;
-use exface\Core\Exceptions\ContextError;
 use exface\Core\Contexts\Scopes\UserContextScope;
 use exface\Core\Interfaces\Contexts\ContextManagerInterface;
 use exface\Core\Contexts\Scopes\RequestContextScope;
+use exface\Core\Exceptions\Contexts\ContextScopeNotFoundError;
 
 class ContextManager implements ContextManagerInterface {
 	
@@ -110,13 +110,13 @@ class ContextManager implements ContextManagerInterface {
 	/**
 	 * Returns the context scope specified by the given name (e.g. window, application, etc)
 	 * @param string $scope_name
-	 * @throws ContextError if no context scope is found for the given name
+	 * @throws ContextScopeNotFoundError if no context scope is found for the given name
 	 * @return AbstractContextScope
 	 */
 	public function get_scope($scope_name){
 		$getter_method = 'get_scope_' . $scope_name;
 		if (!method_exists($this, $getter_method)){
-			throw new ContextError('Context scope "' . $scope_name . '" not found!');
+			throw new ContextScopeNotFoundError('Context scope "' . $scope_name . '" not found!', '6T5E14B');
 		}
 		return call_user_func(get_class($this) . '::' . $getter_method);
 	}

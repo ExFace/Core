@@ -1,5 +1,4 @@
-<?php
-namespace exface\Core\Exceptions\DataSources;
+<?php namespace exface\Core\Exceptions\Contexts;
 
 use exface\Core\Interfaces\Contexts\ContextInterface;
 use exface\Core\Exceptions\ExceptionTrait;
@@ -17,8 +16,8 @@ trait ContextExceptionTrait {
 	 * {@inheritDoc}
 	 * @see \exface\Core\Interfaces\Exceptions\ContextExceptionInterface::__construct()
 	 */
-	public function __construct (ContextInterface $context, $message, $code, $previous = null) {
-		parent::__construct($message, $code, $previous);
+	public function __construct (ContextInterface $context, $message, $code = null, $previous = null) {
+		parent::__construct($message, ($code ? $code : static::get_default_code()), $previous);
 		$this->set_context($context);
 	}
 	

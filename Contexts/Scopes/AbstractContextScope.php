@@ -1,12 +1,12 @@
 <?php namespace exface\Core\Contexts\Scopes;
 
-use exface\Core\Exceptions\ContextError;
 use exface\Core\Interfaces\Contexts\ContextScopeInterface;
 use exface\Core\Interfaces\Contexts\ContextInterface;
 use exface\Core\Contexts\Types\FilterContext;
 use exface\Core\Contexts\Types\ActionContext;
 use exface\Core\Contexts\Types\AbstractContext;
 use exface\Core\CommonLogic\Workbench;
+use exface\Core\Exceptions\Contexts\ContextNotFoundError;
 
 abstract class AbstractContextScope implements ContextScopeInterface {
 	private $active_contexts = array();
@@ -69,7 +69,7 @@ abstract class AbstractContextScope implements ContextScopeInterface {
 				$this->load_context_data($context);
 				$this->active_contexts[$alias] = $context;
 			} else {
-				throw new ContextError('Cannot create context "' . $alias . '": class not found!');
+				throw new ContextNotFoundError('Cannot create context "' . $alias . '": class not found!', '6T5E24E');
 			}
 		}
 		return $this->active_contexts[$alias];

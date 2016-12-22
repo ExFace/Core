@@ -1,8 +1,9 @@
 <?php namespace exface\Core\Contexts\Types;
 
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\Exceptions\ContextError;
 use exface\Core\Interfaces\AppInterface;
+use exface\Core\Exceptions\Contexts\ContextSaveError;
+use exface\Core\Exceptions\Contexts\ContextLoadError;
 
 /**
  * The DataContext provides a unified interface to store arbitrary data in any context scope. It's like storing
@@ -176,7 +177,7 @@ class DataContext extends AbstractContext {
 				$this->export_uxon_for_variable($uxon_container->get_property($variable_name), $var, $value);
 			}
 		} else {
-			throw new ContextError('Cannot save data context in for "' . $this->get_scope()->get_name() . '": invalid variable value type for "' . get_class($variable_name) . '"!');
+			throw new ContextSaveError($this, 'Cannot save data context in for "' . $this->get_scope()->get_name() . '": invalid variable value type for "' . get_class($variable_name) . '"!', '6T5E3ID');
 		}
 		return $uxon_container;
 	}
@@ -187,7 +188,7 @@ class DataContext extends AbstractContext {
 		} elseif (!is_object($value)){
 			$this->set_variable($namespace, $variable_name, $value);
 		} else {
-			throw new ContextError('Cannot load context data for "' . $this->get_scope()->get_name() . '": invalid variable value type for "' . get_class($variable_name) . '"!');
+			throw new ContextLoadError($this, 'Cannot load context data for "' . $this->get_scope()->get_name() . '": invalid variable value type for "' . get_class($variable_name) . '"!', '6T5E400');
 		}
 	}
 }

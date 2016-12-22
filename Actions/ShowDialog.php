@@ -3,7 +3,6 @@
 use exface\Core\Interfaces\Actions\iShowDialog;
 use exface\Core\Widgets\AbstractWidget;
 use exface\Core\Widgets\Dialog;
-use exface\Core\Exceptions\ActionRuntimeException;
 
 class ShowDialog extends ShowWidget implements iShowDialog {
 	private $dialog_widget = null;
@@ -11,7 +10,7 @@ class ShowDialog extends ShowWidget implements iShowDialog {
 	
 	/**
 	 * Creates the dialog widget. If not contents is passed, an empty dialog widget will be returned.
-	 * @throws ActionRuntimeException the dialog canot be created for some reason
+	 * 
 	 * @return \exface\Core\Widgets\Dialog
 	 */
 	protected function create_dialog_widget(AbstractWidget $contained_widget = NULL){

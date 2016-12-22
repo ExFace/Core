@@ -18,7 +18,7 @@ abstract class AppFactory extends AbstractNameResolverFactory {
 		$exface = $name_resolver->get_workbench();
 		$class = $name_resolver->get_class_name_with_namespace();
 		if (!class_exists($class)){
-			throw new AppNotFoundError('No class found for app "' . $name_resolver->get_alias_with_namespace() . '"!');
+			throw new AppNotFoundError('No class found for app "' . $name_resolver->get_alias_with_namespace() . '"!', '6T5DXWP');
 		}
 		$app = new $class($exface);
 		$app->set_name_resolver($name_resolver);

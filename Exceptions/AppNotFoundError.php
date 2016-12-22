@@ -1,5 +1,8 @@
 <?php namespace exface\Core\Exceptions;
-class AppNotFoundError extends exfError {
+
+use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;
+
+class AppNotFoundError extends OutOfRangeException implements ErrorExceptionInterface {
 	
 }
 ?>

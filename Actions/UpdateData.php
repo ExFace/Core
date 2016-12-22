@@ -2,7 +2,7 @@
 
 use exface\Core\Interfaces\Actions\iUpdateData;
 use exface\Core\Interfaces\Actions\iCanBeUndone;
-use exface\Core\Exceptions\ActionRuntimeException;
+use exface\Core\Exceptions\Actions\ActionUndoFailedError;
 
 class UpdateData extends SaveData implements iUpdateData, iCanBeUndone {
 	private $use_context_filters = false;
@@ -41,7 +41,7 @@ class UpdateData extends SaveData implements iUpdateData, iCanBeUndone {
 	
 	public function undo(){
 		if (!$data_sheet = $this->get_undo_data_sheet()){
-			throw new ActionRuntimeException('Cannot undo action "' . $this->get_alias() . '": Failed to load history for this action!');
+			throw new ActionUndoFailedError($this, 'Cannot undo action "' . $this->get_alias() . '": Failed to load history for this action!', '6T5DLGN');
 		}
 		$data_sheet->data_update();
 		return $data_sheet;

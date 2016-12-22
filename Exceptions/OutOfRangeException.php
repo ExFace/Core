@@ -3,7 +3,13 @@ namespace exface\Core\Exceptions;
 
 use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 
-class InvalidArgumentException extends \OutOfRangeException implements ExceptionInterface {
+/**
+ * Exception thrown when an illegal index was requested. This represents errors that should be detected at compile time.
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
+class OutOfRangeException extends \OutOfRangeException implements ExceptionInterface {
 	
 	use ExceptionTrait;
 	

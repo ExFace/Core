@@ -1,5 +1,4 @@
-<?php
-namespace exface\Core\Exceptions\DataSources;
+<?php namespace exface\Core\Exceptions\Actions;
 
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Exceptions\ExceptionTrait;
@@ -17,8 +16,8 @@ trait ActionExceptionTrait {
 	 * {@inheritDoc}
 	 * @see \exface\Core\Interfaces\Exceptions\ActionExceptionInterface::__construct()
 	 */
-	public function __construct (ActionInterface $action, $message, $code, $previous = null) {
-		parent::__construct($message, $code, $previous);
+	public function __construct (ActionInterface $action, $message, $code = null, $previous = null) {
+		parent::__construct($message, ($code ? $code : static::get_default_code()), $previous);
 		$this->set_action($action);
 	}
 	

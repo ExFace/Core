@@ -7,6 +7,8 @@ use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Interfaces\UiPageInterface;
 use exface\Core\Interfaces\TemplateInterface;
+use exface\Core\Exceptions\Actions\ActionInputTypeError;
+use exface\Core\Exceptions\Actions\ActionObjectNotSpecifiedError;
 
 interface ActionInterface extends ExfaceClassInterface, AliasInterface {
 	
@@ -112,7 +114,7 @@ interface ActionInterface extends ExfaceClassInterface, AliasInterface {
 	/**
 	 * Sets the data sheet, the action is supposed to be performed upon.
 	 * @param DataSheet || UxonObject || string $data_sheet_or_uxon
-	 * @throws ActionRuntimeException if the passed input data is of an unsupported type
+	 * @throws ActionInputTypeError if the passed input data is of an unsupported type
 	 * @return \exface\Core\Interfaces\Actions\ActionInterface
 	 */
 	public function set_input_data_sheet($data_sheet_or_uxon);
@@ -155,7 +157,7 @@ interface ActionInterface extends ExfaceClassInterface, AliasInterface {
 	 * from the input data sheet, because this is the data the action is performed with. If not input
 	 * data is set, the meta object of the calling widget is used because it is most likely, that it's
 	 * data will be the input (i.e. after an ajax-request).
-	 * @throws ActionRuntimeException if neither input data nor calling widget are known
+	 * @throws ActionObjectNotSpecifiedError if neither input data nor calling widget are known
 	 * @return Object
 	 */
 	public function get_meta_object();
