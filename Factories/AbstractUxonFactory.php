@@ -3,7 +3,7 @@
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
-use exface\Core\Exceptions\FactoryError;
+use exface\Core\Exceptions\UnexpectedValueException;
 
 abstract class AbstractUxonFactory extends AbstractFactory {
 	
@@ -26,14 +26,14 @@ abstract class AbstractUxonFactory extends AbstractFactory {
 	 * will work automatically. Otherwise it needs to be overridden in the specific factory.
 	 * @param exface $exface
 	 * @param UxonObject $uxon
-	 * @throws FactoryError
+	 * @throws UnexpectedValueException
 	 */
 	public static function create_from_uxon(Workbench &$exface, UxonObject $uxon){
 		$result = static::create_empty($exface);
 		if ($result instanceof iCanBeConvertedToUxon){
 			$result->import_uxon_object($uxon);
 		} else {
-			throw new FactoryError('Cannot create "' . get_class($result) . '" from UXON automatically! It should either implement the interface iCanBeConvertedToUxon or the create_from_uxon() method must be overridden in "' . get_class(self) . '"!');
+			throw new UnexpectedValueException('Cannot create "' . get_class($result) . '" from UXON automatically! It should either implement the interface iCanBeConvertedToUxon or the create_from_uxon() method must be overridden in "' . get_class(self) . '"!');
 		}
 		return $result;
 	}

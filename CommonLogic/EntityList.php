@@ -5,9 +5,8 @@ use exface\Core\CommonLogic\Workbench;
 use exface\Core\Exceptions\UxonParserError;
 use exface\Core\Interfaces\EntityListInterface;
 use exface\Core\Interfaces\NameResolverInterface;
-use exface\Core\Exceptions\EntityListMergeError;
 use exface\Core\Interfaces\iCanBeCopied;
-use exface\Core\Exceptions\EntityListError;
+use exface\Core\Exceptions\InvalidArgumentException;
 
 /**
  * The EntityList is a generic container for all kinds of object collections or lists in ExFace. Basically, it is an array with a proper API and some
@@ -298,7 +297,7 @@ class EntityList extends AbstractExfaceClass implements EntityListInterface {
 	
 	/**
 	 * Copies the entire list including all entities by calling the copy() method on each entity
-	 * @throws EntityListError
+	 * @throws InvalidArgumentException
 	 * @return EntityList
 	 */
 	public function copy(){
@@ -306,7 +305,7 @@ class EntityList extends AbstractExfaceClass implements EntityListInterface {
 		$copy->reset();
 		foreach ($this->content_array as $key => $entity){
 			if (!($entity instanceof iCanBeCopied)){
-				throw new EntityListError('Cannot use the generic copy() method for a list with entities, that do not implement the iCanBeCopied interface!');
+				throw new InvalidArgumentException('Cannot use the generic copy() method for a list with entities, that do not implement the iCanBeCopied interface!');
 			}
 			$copy->content_array[$key] = $entity->copy();
 		}
@@ -320,7 +319,7 @@ class EntityList extends AbstractExfaceClass implements EntityListInterface {
 	 */
 	public function merge(EntityListInterface $other_list){
 		if (get_class($this) !== get_class($other_list)){
-			throw new EntityListMergeError('Cannot merge entity lists of different types ("' . get_class($this) . '" and "' . get_class($other_list) . '")!');
+			throw new InvalidArgumentException('Cannot merge entity lists of different types ("' . get_class($this) . '" and "' . get_class($other_list) . '")!');
 			return $this;
 		}
 		$exface = $this->get_workbench();

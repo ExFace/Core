@@ -1,6 +1,6 @@
 <?php namespace exface\Core\Exceptions;
 
-class NameResolverError extends exfError {
+class NameResolverError extends RuntimeException {
 	
 }
 ?>

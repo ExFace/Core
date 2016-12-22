@@ -2,8 +2,10 @@
 
 use exface\Core\Interfaces\ExfaceClassInterface;
 use exface\Core\Interfaces\AliasInterface;
-use exface\Core\Exceptions\DataConnectionError;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
+use exface\Core\Exceptions\DataSources\DataConnectionFailedError;
+use exface\Core\Exceptions\DataSources\DataConnectionCommitFailedError;
+use exface\Core\Exceptions\DataSources\DataConnectionRollbackFailedError;
 
 interface DataConnectionInterface extends ExfaceClassInterface, AliasInterface, iCanBeConvertedToUxon {
 	
@@ -34,21 +36,21 @@ interface DataConnectionInterface extends ExfaceClassInterface, AliasInterface, 
 	
 	/**
 	 * Starts a new transaction in the data source.
-	 * @throws DataConnectionError if no transaction could be started
+	 * @throws DataConnectionFailedError if no transaction could be started
 	 * @return DataConnectionInterface
 	 */
 	public function transaction_start();
 	
 	/**
 	 * Commits the current transaction in the data source. Returns TRUE on success and FALSE otherwise.
-	 * @throws DataConnectionError if the transaction cannot be committed
+	 * @throws DataConnectionCommitFailedError if the transaction cannot be committed
 	 * @return DataConnectionInterface
 	 */
 	public function transaction_commit();
 	
 	/**
 	 * Rolls back the current transaction in the data source.
-	 * @throws DataConnectionError if the transaction cannot be rolled back
+	 * @throws DataConnectionRollbackFailedError if the transaction cannot be rolled back
 	 * @return DataConnectionInterface
 	 */
 	public function transaction_rollback();

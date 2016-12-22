@@ -1,7 +1,7 @@
 <?php
 namespace exface\Core\Exceptions;
 
-use exface\Core\Interfaces\Exceptions\ExceptionInterface;
+use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;
 
 /**
  * Exception thrown when adding an element to a full container.
@@ -9,7 +9,7 @@ use exface\Core\Interfaces\Exceptions\ExceptionInterface;
  * @author Andrej Kabachnik
  *
  */
-class OverflowException extends \OverflowException implements ExceptionInterface {
+class OverflowException extends \OverflowException implements ErrorExceptionInterface {
 	
 	use ExceptionTrait;
 	

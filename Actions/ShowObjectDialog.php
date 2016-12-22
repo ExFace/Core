@@ -2,9 +2,9 @@
 
 use exface\Core\Widgets\AbstractWidget;
 use exface\Core\Widgets\Dialog;
-use exface\Core\Exceptions\MetaModelAttributeNotFoundException;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Factories\WidgetFactory;
+use exface\\Core\\Exceptions\\Model\\MetaAttributeNotFoundError;
 
 class ShowObjectDialog extends ShowDialog {
 	
@@ -47,7 +47,7 @@ class ShowObjectDialog extends ShowDialog {
 	function create_widget_from_attribute($obj, $attribute_alias, $parent_widget){		
 		$attr = $obj->get_attribute($attribute_alias);
 		if (!$attr){
-			throw new MetaModelAttributeNotFoundException('Requested attribute "' . $attribute_alias . '" not found in object "' . $obj->get_alias() . '"');
+			throw new MetaAttributeNotFoundError('Requested attribute "' . $attribute_alias . '" not found in object "' . $obj->get_alias() . '"');
 		}
 		$page = $this->get_called_on_ui_page();
 		$widget = WidgetFactory::create_from_uxon($page, $attr->get_default_widget_uxon(), $parent_widget);

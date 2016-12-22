@@ -7,6 +7,7 @@ use exface\Core\Exceptions\UxonParserError;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\ConditionFactory;
 use exface\Core\Factories\ExpressionFactory;
+use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;
 class FilterContext extends AbstractContext {
 	private $conditions_by_object = array();
 	
@@ -128,7 +129,7 @@ class FilterContext extends AbstractContext {
 			foreach ($uxon->conditions as $uxon_condition){
 				try {
 					$this->add_condition(ConditionFactory::create_from_stdClass($exface, $uxon_condition));
-				} catch (\exface\Core\Exceptions\exfException $e) {
+				} catch (ErrorExceptionInterface $e) {
 					// ignore context that cannot be instantiated!
 				}
 			}

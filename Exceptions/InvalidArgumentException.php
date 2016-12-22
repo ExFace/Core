@@ -1,7 +1,7 @@
 <?php
 namespace exface\Core\Exceptions;
 
-use exface\Core\Interfaces\Exceptions\ExceptionInterface;
+use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;
 
 /**
  * Exception thrown if an argument is not of the expected type.
@@ -9,7 +9,7 @@ use exface\Core\Interfaces\Exceptions\ExceptionInterface;
  * @author Andrej Kabachnik
  *
  */
-class InvalidArgumentException extends \InvalidArgumentException implements ExceptionInterface {
+class InvalidArgumentException extends \InvalidArgumentException implements ErrorExceptionInterface {
 	
 	use ExceptionTrait;
 	

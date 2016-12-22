@@ -1,7 +1,7 @@
 <?php
 namespace exface\Core\Exceptions;
 
-use exface\Core\Interfaces\Exceptions\ExceptionInterface;
+use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;
 
 /**
  * Exception thrown if a callback refers to an undefined method or if some arguments are missing.
@@ -9,7 +9,7 @@ use exface\Core\Interfaces\Exceptions\ExceptionInterface;
  * @author Andrej Kabachnik
  *
  */
-class BadMethodCallException extends \BadMethodCallException implements ExceptionInterface {
+class BadMethodCallException extends \BadMethodCallException implements ErrorExceptionInterface {
 	
 	use ExceptionTrait;
 	

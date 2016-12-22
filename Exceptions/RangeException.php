@@ -1,7 +1,7 @@
 <?php
 namespace exface\Core\Exceptions;
 
-use exface\Core\Interfaces\Exceptions\ExceptionInterface;
+use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;
 
 /**
  * Exception thrown to indicate range errors during program execution. 
@@ -10,7 +10,7 @@ use exface\Core\Interfaces\Exceptions\ExceptionInterface;
  * @author Andrej Kabachik
  *
  */
-class RangeException extends \RangeException implements ExceptionInterface {
+class RangeException extends \RangeException implements ErrorExceptionInterface {
 	
 	use ExceptionTrait;
 	

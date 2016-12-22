@@ -1,11 +1,8 @@
 <?php namespace exface\Core\CommonLogic\DataSheets;
 
-use exface\Core\Exceptions\DataSheetException;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\Model\ConditionGroup;
 use exface\Core\CommonLogic\Model\Condition;
-use exface\Core\Exceptions\MetaModelValidationException;
-use exface\Core\Exceptions\MetaModelAttributeNotFoundException;
 use exface\Core\CommonLogic\Model\Object;
 use exface\Core\Exceptions\DataSheets\DataSheetMergeError;
 use exface\Core\Factories\QueryBuilderFactory;
@@ -31,6 +28,7 @@ use exface\Core\Exceptions\DataSheets\DataSheetWriteError;
 use exface\Core\Exceptions\DataSheets\DataSheetColumnNotFoundError;
 use exface\Core\Exceptions\DataSheets\DataSheetRuntimeError;
 use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;
+use exface\\Core\\Exceptions\\Model\\MetaAttributeNotFoundError;
 
 /**
  * Internal data respresentation object in exface. Similar to an Excel-table:
@@ -528,7 +526,7 @@ class DataSheet implements DataSheetInterface {
 		$processed_relations = array();
 		foreach ($this->get_columns() as $col){
 			if (!$col->get_attribute()){
-				//throw new MetaModelAttributeNotFoundException('Cannot find attribute for data sheet column "' . $col->get_name() . '"!');
+				//throw new MetaAttributeNotFoundError('Cannot find attribute for data sheet column "' . $col->get_name() . '"!');
 				continue;
 			}
 			// Fetch all attributes with fixed values and add them to the sheet if not already there
@@ -569,8 +567,7 @@ class DataSheet implements DataSheetInterface {
 			} elseif (!$column->get_attribute()) {
 				// Skip columns, that reference non existing attributes
 				// TODO Is throwing an exception appropriate here?
-				throw new MetaModelValidationException('Attribute "' . $column->get_expression_obj()->to_string() . '" of object "' . $this->get_meta_object()->get_alias_with_namespace() . '" not found!');
-				continue;
+				throw new MetaAttributeNotFoundError('Attribute "' . $column->get_expression_obj()->to_string() . '" of object "' . $this->get_meta_object()->get_alias_with_namespace() . '" not found!');
 			} elseif (DataAggregator::get_aggregate_function_from_alias($column->get_expression_obj()->to_string())) {
 				// Skip columns with aggregate functions
 				continue;
@@ -761,7 +758,7 @@ class DataSheet implements DataSheetInterface {
 			if (!$column->get_expression_obj()->is_meta_attribute()) continue;
 			// Check if the meta attribute really exists
 			if (!$column->get_attribute()){
-				throw new MetaModelAttributeNotFoundException('Cannot find attribute for data sheet column "' . $column->get_name() . '"!');
+				throw new MetaAttributeNotFoundError('Cannot find attribute for data sheet column "' . $column->get_name() . '"!');
 				continue;
 			}
 				

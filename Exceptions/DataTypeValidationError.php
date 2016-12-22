@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\Exceptions;
-class DataTypeValidationError extends exfError {
+use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;
+
+class DataTypeValidationError extends RangeException implements ErrorExceptionInterface {
 	
 }
 ?>

@@ -1,6 +1,12 @@
 <?php
 namespace exface\Core\Exceptions;
-class UiWidgetException extends exfError {
+
+/**
+ * FIXME 
+ * @author aka
+ *
+ */
+class UiWidgetException extends RuntimeException {
 	
 }
 ?>

@@ -1,11 +1,10 @@
 <?php namespace exface\Core\Factories;
 
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\Core\CommonLogic\Workbench;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\DataSheets\DataAggregatorInterface;
-use exface\Core\Exceptions\FactoryError;
 use exface\Core\CommonLogic\DataSheets\DataAggregator;
+use exface\Core\Exceptions\UnexpectedValueException;
 
 abstract class DataAggregatorFactory extends AbstractFactory {
 	
@@ -34,7 +33,7 @@ abstract class DataAggregatorFactory extends AbstractFactory {
 	 * 
 	 * @param DataSheetInterface $data_sheet
 	 * @param unknown $aggregator_or_string_or_uxon
-	 * @throws FactoryError
+	 * @throws UnexpectedValueException
 	 * @return DataAggregatorInterface
 	 */
 	public function create_from_anything(DataSheetInterface &$data_sheet, $aggregator_or_string_or_uxon){
@@ -43,7 +42,7 @@ abstract class DataAggregatorFactory extends AbstractFactory {
 		} elseif ($aggregator_or_string_or_uxon instanceof DataAggregator){
 			$result = $aggregator_or_string_or_uxon;
 		} else {
-			throw new FactoryError('Cannot set aggregator "' . $aggregator_or_string_or_uxon . '": only instantiated data aggregators or uxon objects allowed!');
+			throw new UnexpectedValueException('Cannot set aggregator "' . $aggregator_or_string_or_uxon . '": only instantiated data aggregators or uxon objects allowed!');
 		}
 		return $result;
 	}

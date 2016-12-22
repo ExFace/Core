@@ -1,7 +1,7 @@
 <?php
 namespace exface\Core\Exceptions;
 
-use exface\Core\Interfaces\Exceptions\ExceptionInterface;
+use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;
 
 /**
  * Exception thrown if a value does not match with a set of values. Typically this happens when a 
@@ -11,7 +11,7 @@ use exface\Core\Interfaces\Exceptions\ExceptionInterface;
  * @author Andrej Kabachnik
  *
  */
-class UnexpectedValueException extends \UnexpectedValueException implements ExceptionInterface {
+class UnexpectedValueException extends \UnexpectedValueException implements ErrorExceptionInterface {
 	
 	use ExceptionTrait;
 	

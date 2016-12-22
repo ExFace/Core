@@ -1,7 +1,7 @@
 <?php
 namespace exface\Core\Exceptions;
 
-use exface\Core\Interfaces\Exceptions\ExceptionInterface;
+use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;
 
 /**
  * Exception thrown if an error which can only be found on runtime occurs.
@@ -9,7 +9,7 @@ use exface\Core\Interfaces\Exceptions\ExceptionInterface;
  * @author Andrej Kabachnik
  *
  */
-class RuntimeException extends \RuntimeException implements ExceptionInterface {
+class RuntimeException extends \RuntimeException implements ErrorExceptionInterface {
 	
 	use ExceptionTrait;
 	

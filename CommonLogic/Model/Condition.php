@@ -3,9 +3,9 @@ namespace exface\Core\CommonLogic\Model;
 use exface\Core\CommonLogic\Model\Expression;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\AbstractDataType;
-use exface\Core\Exceptions\DataValidationException;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Factories\DataTypeFactory;
+use exface\Core\Exceptions\RangeException;
 /**
  * . Thus, a condition is basically
  * something like "expr = a" or "date > 01.01.1970", etc, while a ConditionGroup can be used to combine multiple conditions using
@@ -50,8 +50,8 @@ class Condition implements iCanBeConvertedToUxon {
 	public function set_value($value) {
 		try {
 			$value = $this->get_data_type()->parse($value);
-		} catch (\Exception $e) {
-			throw new DataValidationException('Illegal filter value "' . $value . '" for attribute "' . $this->get_attribute_alias() . '" of data type "' . $this->get_expression()->get_attribute()->get_data_type()->get_name() . '": ' . $e->getMessage());
+		} catch (\Throwable $e) {
+			throw new RangeException('Illegal filter value "' . $value . '" for attribute "' . $this->get_attribute_alias() . '" of data type "' . $this->get_expression()->get_attribute()->get_data_type()->get_name() . '": ' . $e->getMessage(), '6T5WBNB', $e);
 			$value = null;
 		}
 		$this->value = $value;

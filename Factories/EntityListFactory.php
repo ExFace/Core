@@ -4,12 +4,11 @@ use exface\Core\CommonLogic\Workbench;
 use exface\Core\CommonLogic\EntityList;
 use exface\Core\CommonLogic\NameResolver;
 use exface\Core\Interfaces\NameResolverInterface;
-use exface\Core\Exceptions\FactoryError;
 
 abstract class EntityListFactory extends AbstractUxonFactory {
 	
 	public static function crate(NameResolverInterface $name_resolver){
-		throw new FactoryError('Creating empty entity lists from a name resolver currently unsupported!');
+		throw new \LogicException('Creating empty entity lists from a name resolver currently unsupported!');
 	}
 	
 	/**

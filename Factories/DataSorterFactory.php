@@ -4,8 +4,8 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\Interfaces\DataSheets\DataSorterInterface;
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\Exceptions\FactoryError;
 use exface\Core\CommonLogic\DataSheets\DataSorter;
+use exface\Core\Exceptions\UnexpectedValueException;
 
 abstract class DataSorterFactory extends AbstractFactory {
 	
@@ -41,7 +41,7 @@ abstract class DataSorterFactory extends AbstractFactory {
 	 * 
 	 * @param DataSheet $data_sheet
 	 * @param DataSorter | string | UxonObject $sorter_or_string_or_uxon
-	 * @throws FactoryError
+	 * @throws UnexpectedValueException
 	 * @return DataSorterInterface
 	 */
 	public function create_from_anything(DataSheetInterface &$data_sheet, $sorter_or_string_or_uxon){
@@ -50,7 +50,7 @@ abstract class DataSorterFactory extends AbstractFactory {
 		} elseif ($sorter_or_string_or_uxon instanceof DataSorter){
 			$result = $sorter_or_string_or_uxon;
 		} else {
-			throw new FactoryError('Cannot set aggregator "' . $sorter_or_string_or_uxon . '": only instantiated data aggregators or uxon objects allowed!');
+			throw new UnexpectedValueException('Cannot set aggregator "' . $sorter_or_string_or_uxon . '": only instantiated data aggregators or uxon objects allowed!');
 		}
 		return $result;
 	}

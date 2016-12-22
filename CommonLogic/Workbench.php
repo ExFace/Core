@@ -14,9 +14,9 @@ use exface\Core\Factories\EventFactory;
 use exface\Core\Interfaces\Events\EventManagerInterface;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Interfaces\ConfigurationInterface;
-use exface\Core\Exceptions\exfError;
 use exface\Core\Interfaces\DebuggerInterface;
 use exface\Core\coreApp;
+use exface\Core\Exceptions\InvalidArgumentException;
 
 class Workbench {
 	private $data;
@@ -75,7 +75,7 @@ class Workbench {
 		// Init the ModelLoader
 		$model_loader_name = NameResolver::create_from_string($this->get_config()->get_option('MODEL_LOADER'), NameResolver::OBJECT_TYPE_MODEL_LOADER, $this);
 		if (!$model_loader_name->class_exists()){
-			throw new exfError('No valid model loader found in current configuration - please add a valid "MODEL_LOADER" : "file_path_or_qualified_alias_or_qualified_class_name" to your config in "' . $this->filemanager()->get_path_to_config_folder() . '"');
+			throw new InvalidArgumentException('No valid model loader found in current configuration - please add a valid "MODEL_LOADER" : "file_path_or_qualified_alias_or_qualified_class_name" to your config in "' . $this->filemanager()->get_path_to_config_folder() . '"');
 		}
 		$model_loader = ModelLoaderFactory::create($model_loader_name);
 		$model_connection = DataConnectorFactory::create_from_alias($this, $this->get_config()->get_option('MODEL_DATA_CONNECTOR'));

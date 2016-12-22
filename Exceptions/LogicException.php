@@ -1,7 +1,7 @@
 <?php
 namespace exface\Core\Exceptions;
 
-use exface\Core\Interfaces\Exceptions\ExceptionInterface;
+use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;
 
 /**
  * Exception that represents error in the program logic. This kind of exception should lead directly to a fix in your code.
@@ -9,7 +9,7 @@ use exface\Core\Interfaces\Exceptions\ExceptionInterface;
  * @author Andrej Kabachnik
  *
  */
-class LogicException extends \LogicException implements ExceptionInterface {
+class LogicException extends \LogicException implements ErrorExceptionInterface {
 	
 	use ExceptionTrait;
 	

@@ -3,8 +3,6 @@
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\DataSources\DataManagerInterface;
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
-use exface\Core\Exceptions\DataTransactionError;
-use exface\Core\Exceptions\DataConnectionError;
 use exface\Core\Exceptions\DataSources\DataTransactionCommitError;
 use exface\Core\Exceptions\DataSources\DataTransactionRollbackError;
 use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;

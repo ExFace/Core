@@ -3,7 +3,7 @@
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\CommonLogic\Model\Expression;
 use exface\Core\CommonLogic\Model\Condition;
-use exface\Core\Exceptions\FactoryError;
+use exface\Core\Exceptions\UnexpectedValueException;
 
 abstract class ConditionFactory extends AbstractUxonFactory {
 	
@@ -48,7 +48,7 @@ abstract class ConditionFactory extends AbstractUxonFactory {
 	 * 
 	 * @param exface $exface
 	 * @param string|array $uxon_or_array
-	 * @throws FactoryError
+	 * @throws UnexpectedValueException
 	 * @return Condition
 	 */
 	public static function create_from_object_or_array(Workbench &$exface, $uxon_or_array){
@@ -57,7 +57,7 @@ abstract class ConditionFactory extends AbstractUxonFactory {
 		} elseif (is_array($uxon_or_array)){
 			return self::create_from_array($exface, $uxon_or_array);
 		} else {
-			throw new FactoryError('Cannot parse condition "' . print_r($uxon_or_array) . '"!');
+			throw new UnexpectedValueException('Cannot parse condition "' . print_r($uxon_or_array) . '"!');
 		}
 	}
 }

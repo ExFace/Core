@@ -5,6 +5,7 @@ use exface\Core\Interfaces\DataSheets\DataSorterListInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\EntityList;
+use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;
 
 /**
  * 
@@ -75,7 +76,7 @@ class DataSorterList extends EntityList implements DataSorterListInterface {
 		$data_sheet = $this->get_data_sheet();
 		try {
 			$attr = $data_sheet->get_meta_object()->get_attribute($attribute_alias_or_column_id);
-		} catch (exfException $e){
+		} catch (ErrorExceptionInterface $e){
 			// No need to do anything here, because $attr will automatically remain NULL
 		}
 	

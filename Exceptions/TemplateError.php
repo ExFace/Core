@@ -1,6 +1,12 @@
 <?php
 namespace exface\Core\Exceptions;
-class TemplateError extends exfError {
+/**
+ * TODO move to /Templates and split into different types
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
+class TemplateError extends LogicException {
 	
 }
 ?>

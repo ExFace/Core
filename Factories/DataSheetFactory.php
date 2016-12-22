@@ -5,7 +5,7 @@ use exface\Core\CommonLogic\Model\Object;
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\CommonLogic\DataSheets\DataSheet;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\Core\Exceptions\FactoryError;
+use exface\Core\Exceptions\InvalidArgumentException;
 
 abstract class DataSheetFactory extends AbstractUxonFactory {
 	
@@ -61,7 +61,7 @@ abstract class DataSheetFactory extends AbstractUxonFactory {
 	 * 
 	 * @param exface $exface
 	 * @param unknown $data_sheet_or_uxon
-	 * @throws FactoryError
+	 * @throws InvalidArgumentException
 	 * @return DataSheetInterface
 	 */
 	public static function create_from_anything(Workbench &$exface, $data_sheet_or_uxon){
@@ -72,7 +72,7 @@ abstract class DataSheetFactory extends AbstractUxonFactory {
 		} elseif (!is_object($data_sheet_or_uxon)) {
 			return static::create_from_uxon($exface, UxonObject::from_json($data_sheet_or_uxon));
 		} else {
-			throw new FactoryError('Cannot create data sheet from "' . get_class($data_sheet_or_uxon) . '"!');
+			throw new InvalidArgumentException('Cannot create data sheet from "' . get_class($data_sheet_or_uxon) . '"!');
 		}
 	}
 	

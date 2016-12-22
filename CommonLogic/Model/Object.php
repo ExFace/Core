@@ -1,6 +1,5 @@
 <?php namespace exface\Core\CommonLogic\Model;
 
-use exface\Core\Exceptions\MetaModelValidationException;
 use exface\Core\Exceptions\UxonParserError;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\NameResolver;
@@ -12,7 +11,7 @@ use exface\Core\CommonLogic\EntityList;
 use exface\Core\Factories\EntityListFactory;
 use exface\Core\Interfaces\ExfaceClassInterface;
 use exface\Core\Interfaces\AliasInterface;
-use exface\Core\Exceptions\MetaModelRelationNotFoundException;
+use exface\\Core\\Exceptions\\Model\\MetaRelationNotFoundError;
 
 class Object implements ExfaceClassInterface, AliasInterface {
 	private $id;
@@ -99,7 +98,6 @@ class Object implements ExfaceClassInterface, AliasInterface {
 	 * 
 	 * @param string $alias
 	 * @param string $foreign_key_alias
-	 * @throws MetaModelValidationException if multiple relations are detected for the alias and not reverse alias is specified
 	 * @return relation|boolean
 	 */
 	function get_relation($alias, $foreign_key_alias = ''){
@@ -190,7 +188,7 @@ class Object implements ExfaceClassInterface, AliasInterface {
 			if ($rel_attr = $this->get_related_object($rel_parts[0])->get_attribute($rel_parts[1])){
 				$attr = $rel_attr->copy();
 				if (!$rel = $this->get_relation($rel_parts[0])){
-					throw new MetaModelRelationNotFoundException('Relation "' . $alias . '" not found for object "' . $this->get_alias_with_namespace() . '"!');
+					throw new MetaRelationNotFoundError('Relation "' . $alias . '" not found for object "' . $this->get_alias_with_namespace() . '"!');
 				}
 				$attr->get_relation_path()->prepend_relation($rel);
 				return $attr;

@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Exceptions;
-class FormulaError extends exfError {
+
+class FormulaError extends RuntimeException {
 	
 }
 ?>

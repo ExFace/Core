@@ -2,10 +2,10 @@
 namespace exface\Core\CommonLogic\QueryBuilder;
 use exface\Core\CommonLogic\Model\Condition;
 use exface\Core\CommonLogic\Model\ConditionGroup;
-use exface\Core\Exceptions\MetaModelValidationException;
 use exface\Core\CommonLogic\AbstractDataConnector;
 use exface\Core\Exceptions\QueryBuilderException;
 use exface\Core\Factories\ConditionFactory;
+use exface\Core\Exceptions\Model\MetaObjectDataConnectionNotFoundError;
 abstract class AbstractQueryBuilder {
 	protected $main_object;
 	protected $attributes = array();
@@ -57,14 +57,14 @@ abstract class AbstractQueryBuilder {
 	/**
 	 * Set the main object for the query
 	 * @param \exface\Core\CommonLogic\Model\Object $meta_object
-	 * @throws MetaModelValidationException if the data connection for the object cannot be established
+	 * @throws MetaObjectDataConnectionNotFoundError if the data connection for the object cannot be established
 	 * @return \exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder
 	 */
 	public function set_main_object(\exface\Core\CommonLogic\Model\Object $meta_object){
 		$this->main_object = $meta_object;
 		// Instantiate the data connection for the object here to make sure, all it's settings, contexts, etc. are applied before the query is built!
 		if (!$meta_object->get_data_connection()){
-			throw new MetaModelValidationException('Cannot setup data connection for object "' . $meta_object->get_alias_with_namespace() . '"!');
+			throw new MetaObjectDataConnectionNotFoundError('Cannot setup data connection for object "' . $meta_object->get_alias_with_namespace() . '"!');
 		}
 		return $this;
 	}

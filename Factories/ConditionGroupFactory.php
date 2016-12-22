@@ -2,8 +2,8 @@
 
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\CommonLogic\Model\Condition;
-use exface\Core\Exceptions\FactoryError;
 use exface\Core\CommonLogic\Model\ConditionGroup;
+use exface\Core\Exceptions\UnexpectedValueException;
 
 abstract class ConditionGroupFactory extends AbstractUxonFactory {
 	
@@ -43,7 +43,7 @@ abstract class ConditionGroupFactory extends AbstractUxonFactory {
 						$group->add_condition(ConditionFactory::create_from_object_or_array($exface, $part));
 				}
 			} else {
-				throw new FactoryError('Cannot parse condition "' . print_r($part) . '" of condition group "' . print_r($array_notation) . '"!');
+				throw new UnexpectedValueException('Cannot parse condition "' . print_r($part) . '" of condition group "' . print_r($array_notation) . '"!');
 			}
 		}
 		return $group;
@@ -53,7 +53,7 @@ abstract class ConditionGroupFactory extends AbstractUxonFactory {
 	 * 
 	 * @param exface $exface
 	 * @param string|array $uxon_or_array
-	 * @throws FactoryError
+	 * @throws UnexpectedValueException
 	 * @return ConditionGroup
 	 */
 	public static function create_from_object_or_array(Workbench &$exface, $uxon_or_array){
@@ -62,7 +62,7 @@ abstract class ConditionGroupFactory extends AbstractUxonFactory {
 		} elseif (is_array($uxon_or_array)){
 			return self::create_from_array($exface, $uxon_or_array);
 		} else {
-			throw new FactoryError('Cannot parse condition "' . print_r($uxon_or_array) . '"!');
+			throw new UnexpectedValueException('Cannot parse condition "' . print_r($uxon_or_array) . '"!');
 		}
 	}
 }
