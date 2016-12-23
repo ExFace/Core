@@ -11,7 +11,7 @@ interface DataConnectorExceptionInterface extends DataSourceExceptionInterface {
 	 * @param string $code
 	 * @param \Throwable $previous
 	 */
-	public function __construct (DataConnectionInterface $connector, $message, $code, $previous = null);
+	public function __construct (DataConnectionInterface $connector, $message, $code = null, $previous = null);
 	
 	/**
 	 * 

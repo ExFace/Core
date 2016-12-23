@@ -12,7 +12,7 @@ Interface ContextExceptionInterface {
 	 * @param string $code
 	 * @param \Throwable $previous
 	 */
-	public function __construct (ContextInterface $context, $message, $code, $previous = null);
+	public function __construct (ContextInterface $context, $message, $code = null, $previous = null);
 	
 	/**
 	 * 

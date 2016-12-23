@@ -3,11 +3,12 @@
 use exface\Core\CommonLogic\AbstractBehavior;
 use exface\Core\CommonLogic\Model\Attribute;
 use exface\Core\Events\DataSheetEvent;
-use exface\Core\Exceptions\Model\MetaModelBehaviorException;
 use exface\Core\Interfaces\Actions\iUndoActions;
-use exface\Core\Exceptions\TimeStampingBehaviorError;
+use exface\Core\Exceptions\Model\TimeStampingBehaviorError;
 use exface\Core\Exceptions\TimeStampingMassupdateException;
 use exface\Core\CommonLogic\DataSheets\DataColumn;
+use exface\Core\Exceptions\Behaviors\ConcurrentWriteError;
+use exface\Core\Exceptions\Behaviors\ConcurrentWritesCannotBePreventedWarning;
 
 class TimeStampingBehavior extends AbstractBehavior {
 	private $created_on_attribute_alias = null;
@@ -153,7 +154,7 @@ class TimeStampingBehavior extends AbstractBehavior {
 						//ist, als alle Werte in der Datenbank. Es werden jedoch keine oid-Werte uebergeben, da nicht klar ist welche
 						//Objekte betroffen sind. Momentan wird daher das Update einfach gestattet, später soll hier eine Warnung
 						//ausgegeben werden.
-						throw new TimeStampingMassupdateException('Allow mass-updates with filters.');
+						throw new ConcurrentWritesCannotBePreventedWarning('Cannot check for concurrent writes on mass updates via filters', '6T6I04D');
 					}
 					$updated_date = new \DateTime($updated_val);
 					$check_date = new \DateTime($check_val);
@@ -170,7 +171,7 @@ class TimeStampingBehavior extends AbstractBehavior {
 		
 		if (count($conflict_rows) > 0){
 			$data_sheet->data_mark_invalid();
-			throw new TimeStampingBehaviorError('Cannot update data in data sheet with "' . $data_sheet->get_meta_object()->get_alias_with_namespace() . '": row(s) ' . implode(',', $conflict_rows) . ' changed by another user!');
+			throw new ConcurrentWriteError($data_sheet, 'Cannot update data in data sheet with "' . $data_sheet->get_meta_object()->get_alias_with_namespace() . '": row(s) ' . implode(',', $conflict_rows) . ' changed by another user!');
 		}
 	}
 }

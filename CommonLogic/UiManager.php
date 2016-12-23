@@ -1,7 +1,6 @@
 <?php namespace exface\Core\CommonLogic;
 
 use exface\Core\Widgets\AbstractWidget;
-use exface\Core\Exceptions\TemplateError;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Factories\UiPageFactory;
 use exface\Core\Interfaces\TemplateInterface;
@@ -46,7 +45,6 @@ class UiManager implements UiManagerInterface {
 	 * @return string
 	 */
 	function draw(WidgetInterface $widget, TemplateInterface $template = null){
-		if (!$widget) throw new TemplateError('Cannot draw empty widget!');
 		if (is_null($template)) $template = $this->get_template_from_request();
 		return $template->draw($widget);
 	}
@@ -61,7 +59,6 @@ class UiManager implements UiManagerInterface {
 	 * @return string
 	 */
 	function draw_headers(WidgetInterface $widget, TemplateInterface $template = null){
-		if (!$widget) throw new TemplateError('Cannot draw empty widget!');
 		if (is_null($template)) $template = $this->get_template_from_request();
 		return $template->draw_headers($widget);
 	}

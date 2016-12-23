@@ -13,9 +13,9 @@ use exface\Core\CommonLogic\NameResolver;
 use exface\Core\CommonLogic\Model\Object;
 use exface\Core\Factories\WidgetDimensionFactory;
 use exface\Core\Interfaces\UiPageInterface;
-use exface\Core\Exceptions\UiWidgetInvalidIdError;
 use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Factories\RelationPathFactory;
+use exface\Core\Exceptions\Widgets\WidgetIdConflictError;
 
 /**
  * Basic ExFace widget
@@ -341,9 +341,9 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren {
 			if ($old_id){
 				$this->get_page()->remove_widget($this->id_specified);
 			}
-		} catch (UiWidgetInvalidIdError $e){
+		} catch (WidgetIdConflictError $e){
 			$this->id_specified = $old_id;
-			$e->rethrow();
+			throw $e;
 		}
 		
 		return $this;

@@ -11,7 +11,7 @@ interface DataQueryExceptionInterface extends DataSourceExceptionInterface {
 	 * @param string $code
 	 * @param string $previous
 	 */
-	public function __construct (DataQueryInterface $query, $message, $code, $previous = null);
+	public function __construct (DataQueryInterface $query, $message, $code = null, $previous = null);
 	
 	/**
 	 * 

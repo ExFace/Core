@@ -11,7 +11,7 @@ Interface ConfigurationExceptionInterface {
 	 * @param string $code
 	 * @param \Throwable $previous
 	 */
-	public function __construct (ConfigurationInterface $configuration, $message, $code, $previous = null);
+	public function __construct (ConfigurationInterface $configuration, $message, $code = null, $previous = null);
 	
 	/**
 	 * 

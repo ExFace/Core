@@ -12,7 +12,7 @@ Interface DataSheetExceptionInterface {
 	 * @param string $code
 	 * @param \Throwable $previous
 	 */
-	public function __construct (DataSheetInterface $data_sheet, $message, $code, $previous = null);
+	public function __construct (DataSheetInterface $data_sheet, $message, $code = null, $previous = null);
 	
 	/**
 	 * 
