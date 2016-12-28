@@ -1,15 +1,15 @@
 <?php
 namespace exface\Core\Widgets;
+
+use exface\Core\Interfaces\Widgets\iSupportMultiSelect;
+use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
+
 /**
  * Dropdown menu to select from. Each menu item has a value and a text. One or more items can be selected.
  * Selects should be used for small data sets, as not all frameworks will support searching for values or 
  * lazy loading. If you have a large amount of data, use an InputCombo instead!
- */
-use exface\Core\Exceptions\UxonParserError;
-use exface\Core\Interfaces\Widgets\iSupportMultiSelect;
-/**
- * 
- * @author PATRIOT
+ *
+ * @author Andrej Kabachnik
  */
 class InputSelect extends Input implements iSupportMultiSelect { 
 	private $value_text = '';
@@ -54,7 +54,7 @@ class InputSelect extends Input implements iSupportMultiSelect {
 	 * separate arrays with equal length: one for keys and one for the labels.
 	 * @param array | stdClass $array_or_object
 	 * @param array $options_texts_array
-	 * @throws UxonParserError
+	 * @throws WidgetPropertyInvalidValueError
 	 */
 	public function set_selectable_options($array_or_object, array $options_texts_array = NULL) {
 		$options = array();
@@ -65,7 +65,7 @@ class InputSelect extends Input implements iSupportMultiSelect {
 		} elseif(is_array($array_or_object)) {
 			if (is_array($options_texts_array)){
 				if (count($array_or_object) != count($options_texts_array)){
-					throw new UxonParserError('Number of possible values (' . count($array_or_object) . ') differs from the number of keys (' . count($options_texts_array) . ') for widget "' . $this->get_id() . '"!');
+					throw new WidgetPropertyInvalidValueError($this, 'Number of possible values (' . count($array_or_object) . ') differs from the number of keys (' . count($options_texts_array) . ') for widget "' . $this->get_id() . '"!', '6T91S9G');
 				} else {
 					foreach ($array_or_object as $nr => $id){
 						$options[$id] = $options_texts_array[$nr];	
@@ -75,7 +75,7 @@ class InputSelect extends Input implements iSupportMultiSelect {
 				$options = array_merge($options, array_combine($array_or_object, $array_or_object));
 			}
 		} else {
-			throw new UxonParserError('Wrong data type for possible values of ' . get_class($this) . '! Expecting array or object, ' . gettype($array_or_object) . ' given.');
+			throw new WidgetPropertyInvalidValueError($this, 'Wrong data type for possible values of ' . $this->get_widget_type() . '! Expecting array or object, ' . gettype($array_or_object) . ' given.', '6T91S9G');
 		}
 		$this->selectable_options = $options;
 		return $this;

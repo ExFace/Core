@@ -1,6 +1,5 @@
 <?php namespace exface\Core\Interfaces\Widgets;
 
-use exface\Core\Exceptions\UiWidgetNotFoundException;
 use exface\Core\Interfaces\ExfaceClassInterface;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Interfaces\WidgetInterface;

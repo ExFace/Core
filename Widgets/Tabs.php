@@ -1,8 +1,8 @@
 <?php namespace exface\Core\Widgets;
 
-use exface\Core\Exceptions\UiWidgetConfigException;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Widgets\iFillEntireContainer;
+use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 
 /**
  * Tabs is a special container widget, that holds one or more Tab widgets allowing the
@@ -41,7 +41,7 @@ class Tabs extends Container implements iFillEntireContainer {
 		&& $value != 'bottom'
 		&& $value != 'left'
 		&& $value != 'right'){
-			throw new UiWidgetConfigException('Tab position accepts only the following values: top, left, right, bottom. "' . $value . '" given!');
+			throw new WidgetPropertyInvalidValueError($this, 'Tab position accepts only the following values: top, left, right, bottom. "' . $value . '" given!', '6T911YV');
 		} else {
 			$this->tab_position = $value;
 		}

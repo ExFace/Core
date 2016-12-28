@@ -2,9 +2,9 @@
 
 use exface\Core\Interfaces\Widgets\iSupportLazyLoading;
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\Exceptions\UiWidgetConfigException;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 
 /**
  * Widget to display diagrams like planograms, entity-relationships, organigrams, etc.
@@ -42,7 +42,7 @@ class Diagram extends Container implements iSupportLazyLoading {
 			} elseif ($shape instanceof DiagramShape) {
 				$shapes[] = $shape;
 			} else {
-				throw new UiWidgetConfigException('Wrong data type for diagram shape: Shapes must be defined as UXON objects or widgets of type DiagramShape: "' . get_class($shape) . '" given!');
+				throw new WidgetPropertyInvalidValueError($this, 'Wrong data type for diagram shape: Shapes must be defined as UXON objects or widgets of type DiagramShape: "' . get_class($shape) . '" given!', '6T910B6');
 			}
 		}
 		$this->set_widgets($shapes);
@@ -146,7 +146,7 @@ class Diagram extends Container implements iSupportLazyLoading {
 		} elseif ($widget_or_uxon instanceof WidgetInterface){
 			$widget = $widget_or_uxon;
 		} else {
-			throw new UiWidgetConfigException('');
+			throw new WidgetPropertyInvalidValueError($this, 'Invalid diagram selector widget!', '6T910B6');
 		}
 		$this->diagram_object_selector_widget = $widget;
 	}

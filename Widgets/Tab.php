@@ -1,7 +1,7 @@
 <?php
 namespace exface\Core\Widgets;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\Core\Exceptions\UiWidgetException;
+use exface\Core\Exceptions\NotImplementedError;
 /**
  * A Tab is a special panel to be used within the tabs widget
  * @author Andrej Kabachnik
@@ -59,7 +59,7 @@ class Tab extends Panel {
 			if ($this->get_meta_object_id() == $data_sheet->get_meta_object()->get_id()){
 				$this->set_badge_value($data_sheet->get_cell_value($this->get_badge_attribute_alias(), 0));
 			} else {
-				throw new UiWidgetException('Prefilling Tab badges with data sheets from related objects not implemented!');
+				throw new NotImplementedError('Prefilling Tab badges with data sheets from related objects not implemented!');
 			}
 		}
 		return $this;

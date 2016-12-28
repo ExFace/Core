@@ -5,8 +5,9 @@ use exface\Core\CommonLogic\NameResolver;
 use exface\Core\Interfaces\NameResolverInterface;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Widgets\AbstractWidget;
-use exface\Core\Exceptions\UxonParserError;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Exceptions\UnexpectedValueException;
+use exface\Core\Exceptions\UxonParserError;
 
 abstract class ActionFactory extends AbstractNameResolverFactory {
 	
@@ -33,14 +34,14 @@ abstract class ActionFactory extends AbstractNameResolverFactory {
 	 * @param exface $exface
 	 * @param UxonObject $uxon_description
 	 * @param AbstractWidget $called_by_widget
-	 * @throws UxonParserError
+	 * @throws UnexpectedValueException
 	 * @return ActionInterface
 	 */
 	public static function create_from_uxon(Workbench &$exface, \stdClass $uxon_description, AbstractWidget $called_by_widget = null){
 		if ($action_alias = $uxon_description->alias){
 			unset($uxon_description->alias);
 		} else {
-			throw new UxonParserError('Cannot instantiate action from UXON: no action alias found in "' . print_r($uxon_description) . '"!');
+			throw new UxonParserError($uxon_description, 'Cannot instantiate action from UXON: no action alias found!');
 		}
 		$name_resolver = $exface->create_name_resolver($action_alias, NameResolver::OBJECT_TYPE_ACTION);
 		$action = static::create($name_resolver, $called_by_widget, $uxon_description);
@@ -51,7 +52,7 @@ abstract class ActionFactory extends AbstractNameResolverFactory {
 	 * 
 	 * @param exface $exface
 	 * @param string $qualified_action_alias
-	 * @param AbstractWidget $called_by_widget
+	 * @param UxonParserError $called_by_widget
 	 * @return ActionInterface
 	 */
 	public static function create_from_string(Workbench &$exface, $qualified_action_alias, AbstractWidget $called_by_widget = null){

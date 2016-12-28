@@ -2,7 +2,6 @@
 
 use exface\Core\Interfaces\Widgets\iHaveIcon;
 use exface\Core\Interfaces\Actions\ActionInterface;
-use exface\Core\Exceptions\UiWidgetException;
 use exface\Core\Interfaces\Widgets\iTriggerAction;
 use exface\Core\Interfaces\Widgets\iHaveChildren;
 use exface\Core\Factories\ActionFactory;
@@ -10,6 +9,7 @@ use exface\Core\CommonLogic\NameResolver;
 use exface\Core\Factories\WidgetLinkFactory;
 use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 
 /**
  * A Button is the primary widget for triggering actions. 
@@ -60,7 +60,7 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iHaveC
 			$this->set_action_alias($action_object_or_uxon_description->alias);
 			$this->set_action_options($action_object_or_uxon_description);
 		} else {
-			throw new UiWidgetException('The set_action() method of a button accepts either an action object extended from ActionInterface or a UXON description object. ' . gettype($action_object_or_uxon_description) . ' given for button "' . $this->get_id() . '".');
+			throw new WidgetPropertyInvalidValueError($this, 'The set_action() method of a button accepts either an action object extended from ActionInterface or a UXON description object. ' . gettype($action_object_or_uxon_description) . ' given for button "' . $this->get_id() . '".', '6T919D5');
 		}
 	}
 	
@@ -171,11 +171,11 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iHaveC
 	 * NOTE: the action must be defined first!
 	 * 
 	 * @param \stdClass $action_options
-	 * @throws \exface\Core\Exceptions\UiWidgetException
+	 * @throws WidgetPropertyInvalidValueError
 	 */
 	protected function set_action_options(\stdClass $action_options){
 		if (!$action = $this->get_action()){
-			throw new \exface\Core\Exceptions\UiWidgetException('Cannot set action properties prior to action initialization! Please ensure, that the action_alias is defined first!');
+			throw new WidgetPropertyInvalidValueError($this, 'Cannot set action properties prior to action initialization! Please ensure, that the action_alias is defined first!', '6T919D5');
 		} else {
 			$action->import_uxon_object($action_options);
 		}

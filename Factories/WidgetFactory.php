@@ -3,10 +3,11 @@
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Exceptions\UxonParserError;
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\Exceptions\UiWidgetException;
 use exface\Core\Interfaces\UiPageInterface;
 use exface\Core\Factories\WidgetLinkFactory;
 use exface\Core\CommonLogic\UiPage;
+use exface\Core\Exceptions\UnexpectedValueException;
+use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 
 abstract class WidgetFactory extends AbstractFactory {
 	
@@ -16,12 +17,12 @@ abstract class WidgetFactory extends AbstractFactory {
 	 * @param string $widget_type
 	 * @param WidgetInterface $parent_widget
 	 * @param string $widget_id
-	 * @throws UiWidgetException
+	 * @throws UnexpectedValueException
 	 * @return WidgetInterface
 	 */
 	public static function create(UiPageInterface &$page, $widget_type, WidgetInterface &$parent_widget = null){
 		if (is_null($widget_type)){
-			throw new UiWidgetException('Cannot create widget "' . $widget_type . '": invalid widget type!');
+			throw new UnexpectedValueException('Cannot create widget "' . $widget_type . '": invalid widget type!');
 		}
 	
 		/* @var $widget \exface\Core\Widgets\AbstractWidget */
@@ -67,14 +68,14 @@ abstract class WidgetFactory extends AbstractFactory {
 			} elseif ($parent_widget) {
 				$obj = $parent_widget->get_meta_object();
 			} else {
-				throw new UxonParserError('Cannot determine a meta object for widget ' . json_encode($uxon_object) . '. Please specify an object_alias or a parent widget!');
+				throw new UxonParserError($uxon_object, 'Cannot find a meta object in UXON widget definition. Please specify an object_alias or a parent widget!');
 			}
 			// TODO Determine the object via parent_relation_alias, once this field is supported in UXON
 	
 			// Now, that we have an object, see if the widget should show an attribute. If so, get the default widget for the attribute
 			if ($uxon_object->attribute_alias){
 				$attr = $obj->get_attribute($uxon_object->attribute_alias);
-				if (!$attr) throw new UxonParserError('Cannot create an editor widget for attribute "' . $uxon_object->attribute_alias . '" of object "' . $obj->get_alias() . '". Attribute not found!');
+				if (!$attr) throw new MetaAttributeNotFoundError('Cannot create an editor widget for attribute "' . $uxon_object->attribute_alias . '" of object "' . $obj->get_alias() . '". Attribute not found!');
 				$uxon_object = $attr->get_default_widget_uxon()->extend($uxon_object);
 				$widget_type = $uxon_object->get_property('widget_type');
 			}

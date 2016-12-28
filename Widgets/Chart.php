@@ -1,7 +1,6 @@
 <?php
 namespace exface\Core\Widgets;
 
-use exface\Core\Exceptions\UiWidgetConfigException;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Widgets\iHaveTopToolbar;
 use exface\Core\Interfaces\Widgets\iHaveBottomToolbar;
@@ -10,6 +9,8 @@ use exface\Core\Factories\WidgetLinkFactory;
 use exface\Core\Interfaces\Widgets\iHaveButtons;
 use exface\Core\Interfaces\Widgets\iSupportLazyLoading;
 use exface\Core\Interfaces\Widgets\iShowDataSet;
+use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
+use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 
 /**
  * A Button is the primary widget for triggering actions. In addition to the general widget attributes it can have
@@ -148,7 +149,7 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveButtons, iHaveT
 			switch ($x_or_y){
 				case $this::AXIS_Y: $axis->set_position(ChartAxis::POSITION_LEFT); break;
 				case $this::AXIS_X: $axis->set_position(ChartAxis::POSITION_BOTTOM); break;
-				default: throw new UiWidgetConfigException('Invalid axis coordinate: "' . $x_or_y . '"! "x" or "y" expected!');
+				default: throw new WidgetPropertyInvalidValueError($this, 'Invalid axis coordinate: "' . $x_or_y . '"! "x" or "y" expected!', '6T90UV9');
 			}
 		}
 		$var = 'axes_' . $x_or_y;
@@ -162,7 +163,7 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveButtons, iHaveT
 			if ($link = $this->get_data_widget_link()){
 				return $link->get_widget();
 			} else {
-				throw new UiWidgetConfigException('Cannot get data for ' . $this->get_widget_type() . ' "' . $this->get_id() . '": either data or data_widget_link must be defined in the UXON description!');
+				throw new WidgetConfigurationError($this, 'Cannot get data for ' . $this->get_widget_type() . ' "' . $this->get_id() . '": either data or data_widget_link must be defined in the UXON description!', '6T90WFX');
 			}
 		}
 		return $this->data;

@@ -73,7 +73,6 @@ class ActionTestContext extends AbstractContext {
 	
 	/**
 	 * @param UxonObject $uxon
-	 * @throws UxonParserError
 	 * @return ActionTestContext
 	 */
 	public function import_uxon_object(UxonObject $uxon){

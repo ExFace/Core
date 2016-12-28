@@ -6,6 +6,8 @@ use exface\Core\CommonLogic\WidgetLink;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\CommonLogic\WidgetDimension;
 use exface\Core\CommonLogic\Model\RelationPath;
+use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
+use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 
 interface WidgetInterface extends ExfaceClassInterface {
 	
@@ -118,7 +120,7 @@ interface WidgetInterface extends ExfaceClassInterface {
 	
 	/**
 	 * 
-	 * @throws \exface\Core\Exceptions\UiWidgetException
+	 * @throws WidgetConfigurationError
 	 * @return \exface\Core\CommonLogic\Model\Object
 	 */
 	public function get_meta_object();
@@ -270,7 +272,7 @@ interface WidgetInterface extends ExfaceClassInterface {
 	/**
 	 * Sets visibility of the widget (one of the EXF_WIDGET_VISIBILITY_xxx constants)
 	 * @param string $value
-	 * @throws \exface\Core\Exceptions\UiWidgetConfigException
+	 * @throws WidgetPropertyInvalidValueError
 	 */
 	public function set_visibility($value);
 	

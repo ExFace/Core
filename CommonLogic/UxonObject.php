@@ -2,7 +2,7 @@
 namespace exface\Core\CommonLogic;
 
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
-use exface\Core\Exceptions\UxonParserError;
+use exface\Core\Exceptions\UnexpectedValueException;
 
 class UxonObject extends \stdClass implements \IteratorAggregate {
 	/**
@@ -202,7 +202,7 @@ class UxonObject extends \stdClass implements \IteratorAggregate {
 	 * using it's public setters. It is a generic alternative to a manually defined import_uxon_object() method.
 	 * @param iCanBeConvertedToUxon $instance
 	 * @param array $exclue_properties
-	 * @throws UxonParserError
+	 * @throws UnexpectedValueException
 	 * @return UxonObject
 	 */
 	public function import_to_instance(iCanBeConvertedToUxon &$instance, $exclue_properties = array()){
@@ -211,7 +211,7 @@ class UxonObject extends \stdClass implements \IteratorAggregate {
 			if (method_exists($instance, 'set_'.$var)){
 				call_user_func(array($instance, 'set_'.$var), $val);
 			} else {
-				throw new UxonParserError('Property "' . $var . '" cannot be automatically imported to "' . get_class($instance) . '": setter function not found!');
+				throw new UnexpectedValueException('Property "' . $var . '" cannot be automatically imported to "' . get_class($instance) . '": setter function not found!');
 			}
 		}
 		return $this;

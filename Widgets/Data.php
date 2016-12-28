@@ -6,17 +6,16 @@ use exface\Core\Interfaces\Widgets\iHaveFilters;
 use exface\Core\CommonLogic\Model\Attribute;
 use exface\Core\CommonLogic\Model\Relation;
 use exface\Core\Interfaces\Widgets\iSupportLazyLoading;
-use exface\Core\Exceptions\UiWidgetException;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\CommonLogic\Model\RelationPath;
-use exface\Core\Exceptions\UxonParserError;
 use exface\Core\Interfaces\Widgets\iHaveColumnGroups;
 use exface\Core\Factories\DataColumnTotalsFactory;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\CommonLogic\Model\Object;
 use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 use exface\Core\Factories\WidgetLinkFactory;
+use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 
 /**
  * 
@@ -328,7 +327,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 					$last_element_was_a_column_group = false;
 				}
 			} else {
-				throw new UxonParserError('The elements of "columns" in a data widget must be objects or arrays, "' . print_r($c) . '" given instead!');
+				throw new WidgetPropertyInvalidValueError($this, 'The elements of "columns" in a data widget must be objects or arrays, "' . gettype($c) . '" given instead!', '6T91RQ5');
 			}
 		}
 		
@@ -463,8 +462,8 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 	
 	public function create_filter_widget($attribute_alias, \stdClass $uxon_object = null){
 		// a filter can only be applied, if the attribute alias is specified and the attribute exists
-		if (!$attribute_alias) throw new UiWidgetException('Cannot create a filter for an empty attribute alias in widget "' . $this->get_id() . '"!');
-		if (!$attr = $this->get_meta_object()->get_attribute($attribute_alias)) throw new UiWidgetException('Cannot create a filter for attribute alias "' . $attribute_alias . '" in widget "' . $this->get_id() . '": attribute not found for object "' . $this->get_meta_object()->get_alias_with_namespace() . '"!');
+		if (!$attribute_alias) throw new WidgetPropertyInvalidValueError($this, 'Cannot create a filter for an empty attribute alias in widget "' . $this->get_id() . '"!', '6T91AR9');
+		if (!$attr = $this->get_meta_object()->get_attribute($attribute_alias)) throw new WidgetPropertyInvalidValueError($this, 'Cannot create a filter for attribute alias "' . $attribute_alias . '" in widget "' . $this->get_id() . '": attribute not found for object "' . $this->get_meta_object()->get_alias_with_namespace() . '"!', '6T91AR9');
 			
 		// determine the widget for the filte
 		$uxon = $attr->get_default_widget_uxon()->copy();

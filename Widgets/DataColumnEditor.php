@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Widgets;
 use exface\Core\Interfaces\Widgets\iHaveChildren;
+use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 /**
  * The DataColumnEditor is a wrapper widget for inputs and other widget types, that enables them to be used as in-table-editors. It encapsulates
  * special logic additionally needed for in-table-editing and also holds some parameters, that these widgets would not need if used stan alone
@@ -37,7 +38,7 @@ class DataColumnEditor extends AbstractWidget implements iHaveChildren {
 	 * 	{ ... }
 	 * ]
 	 * @param ActionInterface|\stdClass $widget_or_uxon_object
-	 * @throws UiWidgetException
+	 * @throws WidgetPropertyInvalidValueError
 	 */
 	public function set_widget($widget_or_uxon_object) {
 		if ($widget_or_uxon_object instanceof AbstractWidget){
@@ -47,7 +48,7 @@ class DataColumnEditor extends AbstractWidget implements iHaveChildren {
 			 * 
 			 */
 		} else {
-			throw new UiWidgetException('The set_widget() method of a ColumnEditor accepts either an instantiated input widget or a UXON description object. ' . gettype($widget_or_uxon_object) . ' given for column "' . $this->get_parent()->get_id() . '".');
+			throw new WidgetPropertyInvalidValueError($this, 'The set_widget() method of a ColumnEditor accepts either an instantiated input widget or a UXON description object. ' . gettype($widget_or_uxon_object) . ' given for column "' . $this->get_parent()->get_id() . '".');
 		}
 	}
 	

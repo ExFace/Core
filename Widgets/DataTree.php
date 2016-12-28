@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Widgets;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 
 class DataTree extends DataTable {
 	
@@ -51,7 +52,7 @@ class DataTree extends DataTable {
 				$flag = $flags->get_first();
 				$this->set_tree_folder_flag_attribute_alias($flag->get_alias());
 			} else {
-				throw new \exface\Core\Exceptions\UiWidgetException('More than one tree folder flag found for the treeGrid "' . $this->get_id() . '". Please specify "tree_folder_flag_attribute_alias" in the description of the widget!');
+				throw new WidgetConfigurationError($this, 'More than one tree folder flag found for the treeGrid "' . $this->get_id() . '". Please specify "tree_folder_flag_attribute_alias" in the description of the widget!', '6T91BRG');
 			}
 		}
 		return $this->tree_folder_flag_attribute_alias;
@@ -70,7 +71,7 @@ class DataTree extends DataTable {
 	 * Returns the alias of the relation to the parent object (same as the alias of the corresponding attribute).
 	 * If the relation is not explicitly defined, ExFace tries to determine it automatically by searching for
 	 * a recursive relation to the object itself.
-	 * @throws \exface\Core\Exceptions\UiWidgetException if more than one recursive relation is found
+	 * @throws WidgetConfigurationError if more than one recursive relation is found
 	 */
 	public function get_tree_parent_id_attribute_alias() {
 		// If the parent relation is not specified explicitly, we search for a relation to the object itself
@@ -79,7 +80,7 @@ class DataTree extends DataTable {
 			foreach ($this->get_meta_object()->get_relations_array() as $rel){
 				if ($rel->get_related_object_id() == $this->get_meta_object_id() && $rel->get_type() == 'n1'){
 					if ($found_one === true){
-						throw new \exface\Core\Exceptions\UiWidgetException('More than one recursive relations found for the treeGrid "' . $this->get_id() . '". Please specify "tree_parent_id_attribute_alias" in the description of the widget!');
+						throw new WidgetConfigurationError($this, 'More than one recursive relations found for the treeGrid "' . $this->get_id() . '". Please specify "tree_parent_id_attribute_alias" in the description of the widget!', '6T91BRG');
 					}
 					$this->set_tree_parent_id_attribute_alias($rel->get_alias());
 					$found_one = true;

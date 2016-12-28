@@ -1,10 +1,9 @@
 <?php namespace exface\Core\CommonLogic;
 
-use exface\Core\Exceptions\UxonParserError;
 use exface\Core\Widgets\AbstractWidget;
-use exface\Core\Exceptions\UiWidgetNotFoundException;
 use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
-use exface\Core\Interfaces\UiPageInterface;
+use exface\Core\Exceptions\Widgets\WidgetNotFoundError;
+use exface\Core\Exceptions\UnexpectedValueException;
 
 class WidgetLink implements WidgetLinkInterface {
 	private $exface;
@@ -44,7 +43,7 @@ class WidgetLink implements WidgetLinkInterface {
 				$this->set_page_id($page_id);
 				$string = substr($string, strpos($string, ']')+1);
 			} else {
-				throw new UxonParserError('Cannot parse widget reference "' . $string . '"! Expected format: "[page_id]widget_id".');
+				throw new UnexpectedValueException('Cannot parse widget reference "' . $string . '"! Expected format: "[page_id]widget_id".', '6T91IGZ');
 			}
 		} 
 		
@@ -135,7 +134,7 @@ class WidgetLink implements WidgetLinkInterface {
 	public function get_widget() {
 		$widget = $this->get_page()->get_widget($this->get_widget_id());
 		if (!$widget){
-			throw new UiWidgetNotFoundException('Cannot find widget "' . $this->get_widget_id() . '" in resource "' . $this->get_page_id() . '"!');
+			throw new WidgetNotFoundError('Cannot find widget "' . $this->get_widget_id() . '" in resource "' . $this->get_page_id() . '"!');
 		}
 		return $widget;
 	}   

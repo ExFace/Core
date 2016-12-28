@@ -2,11 +2,11 @@
 
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Widgets\iHaveBorders;
-use exface\Core\Exceptions\UiWidgetConfigException;
 use exface\Core\Interfaces\Widgets\iShowDataSet;
 use exface\Core\Factories\WidgetLinkFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\CommonLogic\Model\RelationPath;
+use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 
 /**
  * Shapes are what diagrams show: e.g. a blue rectangle. The diagram will show as many rectangles as rows in it's data subwidget.
@@ -78,7 +78,7 @@ class DiagramShape extends Panel implements iShowDataSet, iHaveBorders {
 			if ($link = $this->get_data_widget_link()){
 				return $link->get_widget();
 			} else {
-				throw new UiWidgetConfigException('Cannot get data for ' . $this->get_widget_type() . ' "' . $this->get_id() . '": either data or data_widget_link must be defined in the UXON description!');
+				throw new WidgetConfigurationError($this, 'Cannot get data for ' . $this->get_widget_type() . ' "' . $this->get_id() . '": either data or data_widget_link must be defined in the UXON description!', '6T90WFX');
 			}
 		}
 		return $this->data;

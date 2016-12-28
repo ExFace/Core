@@ -2,6 +2,7 @@
 namespace exface\Core\Interfaces\Widgets;
 use exface\Core\Widgets\AbstractWidget;
 use exface\Core\Interfaces\Actions\ActionInterface;
+use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 interface iTriggerAction {
 	/**
 	 * Returns the action object
@@ -20,7 +21,7 @@ interface iTriggerAction {
 	 *   }
 	 * }
 	 * @param ActionInterface|\stdClass $action_object_or_uxon_description
-	 * @throws UiWidgetException
+	 * @throws WidgetPropertyInvalidValueError
 	 */
 	public function set_action($action_object_or_uxon_description);
 	

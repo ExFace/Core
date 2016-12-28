@@ -1,6 +1,5 @@
 <?php namespace exface\Core\CommonLogic\Model;
 
-use exface\Core\Exceptions\UxonParserError;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\NameResolver;
 use exface\Core\Factories\RelationPathFactory;
@@ -12,6 +11,7 @@ use exface\Core\Factories\EntityListFactory;
 use exface\Core\Interfaces\ExfaceClassInterface;
 use exface\Core\Interfaces\AliasInterface;
 use exface\Core\Exceptions\Model\MetaRelationNotFoundError;
+use exface\Core\Exceptions\UnexpectedValueException;
 
 class Object implements ExfaceClassInterface, AliasInterface {
 	private $id;
@@ -113,7 +113,7 @@ class Object implements ExfaceClassInterface, AliasInterface {
 			// Check, if a foreign key is specified in the alias (e.g. ADDRESS->COMPANY[SHIPPING_ADDRESS])
 			// If so, extract it and call get_relation() again using the separated alias and foreign_key_alias
 			if ($start = strpos($alias, '[')){
-				if (!$end = strpos($alias, ']')) throw new UxonParserError('Missing "]" in relation alias "' . $alias . '"');
+				if (!$end = strpos($alias, ']')) throw new UnexpectedValueException('Missing "]" in relation alias "' . $alias . '"', '6T91HJK');
 				$foreign_key_alias = substr($alias, $start+1, $end-$start-1);
 				$alias = substr($alias, 0, $start);
 				return $this->get_relation($alias, $foreign_key_alias);

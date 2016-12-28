@@ -1,10 +1,10 @@
 <?php namespace exface\Core\Widgets;
 
-use exface\Core\Exceptions\UxonParserError;
 use exface\Core\Interfaces\Widgets\iHaveChildren;
 use exface\Core\CommonLogic\Model\Object;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\CommonLogic\Model\RelationPath;
+use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 
 /**
  * A ComboTable is an InputCombo, which uses a DataTable to show the autosuggest values. Thus, the user can see more
@@ -79,7 +79,7 @@ class ComboTable extends InputCombo implements iHaveChildren {
 	protected function init_table(){
 		// This will only work if there is an attribute_alias specified
 		if (!$this->get_attribute_alias()){
-			throw new UxonParserError('Cannot create a DataTable for a ComboTable before an attribute_alias for the Comobo is specified!');
+			throw new WidgetConfigurationError($this, 'Cannot create a DataTable for a ComboTable before an attribute_alias for the Comobo is specified!', '6T91QQ8');
 			return false;
 		}
 			
@@ -308,7 +308,7 @@ class ComboTable extends InputCombo implements iHaveChildren {
 	
 	/**
 	 * Returns the meta object, that the table within the combo will show
-	 * @throws UxonParserError
+	 * @throws WidgetConfigurationError
 	 * @return object
 	 */
 	public function get_table_object(){
@@ -318,7 +318,7 @@ class ComboTable extends InputCombo implements iHaveChildren {
 			} elseif($this->get_attribute()->is_relation()) {
 				$this->table_object = $this->get_meta_object()->get_relation($this->get_attribute_alias())->get_related_object();
 			} else {
-				throw new UxonParserError('Cannot use a ComboTable for the attribute "' . $this->get_attribute_alias() . '" of object "' . $this->get_meta_object()->get_alias() . '": it is neither a relation nor is the table object specified directly!');
+				throw new WidgetConfigurationError($this, 'Cannot use a ComboTable for the attribute "' . $this->get_attribute_alias() . '" of object "' . $this->get_meta_object()->get_alias() . '": it is neither a relation nor is the table object specified directly!', '6T91QQ8');
 			}
 		}
 		return $this->table_object;

@@ -1,7 +1,6 @@
 <?php namespace exface\Core\Actions;
 
 use exface\Core\Interfaces\Actions\iShowWidget;
-use exface\Core\Exceptions\UxonParserError;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\CommonLogic\Model\Condition;
@@ -13,6 +12,7 @@ use exface\Core\CommonLogic\AbstractAction;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Factories\WidgetLinkFactory;
+use exface\Core\Exceptions\Actions\ActionConfigurationError;
 
 /**
  * The ShowWidget action is the base for all actions, that render widgets. 
@@ -67,7 +67,7 @@ class ShowWidget extends AbstractAction implements iShowWidget, iUsePrefillData 
 			$page = $this->get_called_on_ui_page();
 			$widget = WidgetFactory::create_from_anything($page, $widget_or_uxon_object, $this->get_called_by_widget());
 		} else {
-			throw new UxonParserError('Action "' . $this->get_alias() . '" expects the parameter "widget" to be either an instantiated widget or a valid UXON widget description object!');
+			throw new ActionConfigurationError($this, 'Action "' . $this->get_alias() . '" expects the parameter "widget" to be either an instantiated widget or a valid UXON widget description object!', '6T91H2S');
 		}
 		
 		$this->widget = $widget;

@@ -3,11 +3,11 @@ namespace exface\Core\Contexts\Types;
 use exface\Core\CommonLogic\Model\Attribute;
 use exface\Core\CommonLogic\Model\Condition;
 use exface\Core\CommonLogic\Model\Object;
-use exface\Core\Exceptions\UxonParserError;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\ConditionFactory;
 use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;
+use exface\Core\Exceptions\Contexts\ContextLoadError;
 class FilterContext extends AbstractContext {
 	private $conditions_by_object = array();
 	
@@ -120,7 +120,7 @@ class FilterContext extends AbstractContext {
 	/**
 	 * Loads an array of conditions in UXON representation into the context
 	 * @param UxonObject $uxon
-	 * @throws UxonParserError
+	 * @throws ContextLoadError
 	 * @return \exface\Core\Contexts\Types\FilterContext
 	 */
 	public function import_uxon_object(UxonObject $uxon){
@@ -134,7 +134,7 @@ class FilterContext extends AbstractContext {
 				}
 			}
 		} elseif (!is_null($uxon->conditions)) {
-			throw new UxonParserError('Cannot load filter contexts: Expecting an array of UXON objects, ' . gettype($uxon->conditions) . ' given instead!');
+			throw new ContextLoadError($this, 'Cannot load filter contexts: Expecting an array of UXON objects, ' . gettype($uxon->conditions) . ' given instead!');
 		}
 		return $this;
 	}

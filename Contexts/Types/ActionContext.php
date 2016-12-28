@@ -1,9 +1,9 @@
 <?php namespace exface\Core\Contexts\Types;
 
 use exface\Core\Interfaces\Actions\ActionInterface;
-use exface\Core\Exceptions\UxonParserError;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\ActionFactory;
+use exface\Core\Exceptions\Contexts\ContextLoadError;
 
 class ActionContext extends AbstractContext {
 	private $action_history = array();
@@ -124,7 +124,7 @@ class ActionContext extends AbstractContext {
 		if (is_array($uxon->action_history)){
 			$this->action_history_raw = $uxon->action_history;
 		} elseif (!is_null($uxon->action_history)) {
-			throw new UxonParserError('Cannot load action contexts: expecting UXON objects, received ' . gettype($uxon->action_history) . ' instead!');
+			throw new ContextLoadError($this, 'Cannot load action contexts: expecting UXON objects, received ' . gettype($uxon->action_history) . ' instead!');
 		}
 		return $this;
 	}

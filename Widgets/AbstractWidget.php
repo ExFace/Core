@@ -3,11 +3,9 @@
 use exface\Core\CommonLogic\Model\Expression;
 use exface\Core\Interfaces\Widgets\iHaveChildren;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\Core\Exceptions\UiWidgetException;
 use exface\Core\Interfaces\Widgets\iTriggerAction;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\CommonLogic\WidgetLink;
-use exface\Core\Exceptions\UxonParserError;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\CommonLogic\NameResolver;
 use exface\Core\CommonLogic\Model\Object;
@@ -16,6 +14,9 @@ use exface\Core\Interfaces\UiPageInterface;
 use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Factories\RelationPathFactory;
 use exface\Core\Exceptions\Widgets\WidgetIdConflictError;
+use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
+use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
+use exface\Core\Exceptions\Widgets\WidgetPropertyUnknownError;
 
 /**
  * Basic ExFace widget
@@ -95,7 +96,7 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren {
 			if (method_exists($this, 'set_'.$var)){
 				call_user_func(array($this, 'set_'.$var), $val);
 			} else {
-				throw new UxonParserError('Property "' . $var . '" of widget "' . $this->get_widget_type() . '" cannot be set: setter function not found!');
+				throw new WidgetPropertyUnknownError($this, 'Property "' . $var . '" of widget "' . $this->get_widget_type() . '" cannot be set: setter method not found!');
 			}
 		}
 	}
@@ -290,7 +291,7 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren {
 		} elseif ($this->get_parent()) {
 			$obj = $this->get_parent()->get_meta_object();
 		} else {
-			throw new \exface\Core\Exceptions\UiWidgetException('A widget must have either an object_id, an object_alias or a parent widget with an object reference!');
+			throw new WidgetConfigurationError($this, 'A widget must have either an object_id, an object_alias or a parent widget with an object reference!', '6T9137Y');
 		}
 		$this->set_meta_object_id($obj->get_id());
 		return $obj;
@@ -752,7 +753,7 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren {
 		&& $value != EXF_WIDGET_VISIBILITY_NORMAL
 		&& $value != EXF_WIDGET_VISIBILITY_OPTIONAL
 		&& $value != EXF_WIDGET_VISIBILITY_PROMOTED){
-			throw new \exface\Core\Exceptions\UiWidgetConfigException('Invalid visibility value "' . $value . '" for widget "' . $this->get_widget_type() . '"!');
+			throw new WidgetPropertyInvalidValueError($this, 'Invalid visibility value "' . $value . '" for widget "' . $this->get_widget_type() . '"!', '6T90UH3');
 			return;
 		}
 		$this->visibility = $value;

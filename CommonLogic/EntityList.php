@@ -2,11 +2,11 @@
 
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\CommonLogic\Workbench;
-use exface\Core\Exceptions\UxonParserError;
 use exface\Core\Interfaces\EntityListInterface;
 use exface\Core\Interfaces\NameResolverInterface;
 use exface\Core\Interfaces\iCanBeCopied;
 use exface\Core\Exceptions\InvalidArgumentException;
+use exface\Core\Exceptions\UnexpectedValueException;
 
 /**
  * The EntityList is a generic container for all kinds of object collections or lists in ExFace. Basically, it is an array with a proper API and some
@@ -74,7 +74,7 @@ class EntityList extends AbstractExfaceClass implements EntityListInterface {
 			$factory_class_name = $this->get_entity_factory_name();
 		}
 		if (is_null($factory_class_name)){
-			throw new UxonParserError('Cannot instantiate EntityList from UXON: factory class for contained objects not speicified!');
+			throw new UnexpectedValueException('Cannot instantiate EntityList from UXON: factory class for contained objects not speicified!');
 		}
 		if (!class_exists($factory_class_name)){
 			$factory_class_name = '\\exface\\Core\\Factories\\' . $factory_class_name;
@@ -98,7 +98,7 @@ class EntityList extends AbstractExfaceClass implements EntityListInterface {
 			$factory_class_name = $this->get_entity_factory_name();
 		}
 		if (is_null($factory_class_name)){
-			throw new UxonParserError('Cannot instantiate EntityList from UXON: factory class for contained objects not speicified!');
+			throw new UnexpectedValueException('Cannot instantiate EntityList from UXON: factory class for contained objects not speicified!');
 		}
 		if (!class_exists($factory_class_name)){
 			$factory_class_name = '\\exface\\Core\\Factories\\' . $factory_class_name;

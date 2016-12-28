@@ -1,6 +1,6 @@
 <?php namespace exface\Core\Widgets;
 
-use exface\Core\Exceptions\UiWidgetConfigException;
+use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 
 class ChartSeries extends AbstractWidget {
 	const CHART_TYPE_LINE = 'line';
@@ -64,7 +64,7 @@ class ChartSeries extends AbstractWidget {
 				$axis = $this->get_chart()->get_axes_x()[0];
 			}
 			if (!$axis){
-				throw new UiWidgetConfigException('Cannot find x-axis for series "' . $this->get_id() . '" of widget "' . $this->get_chart()->get_id() . '"!');
+				throw new WidgetConfigurationError($this, 'Cannot find x-axis for series "' . $this->get_id() . '" of widget "' . $this->get_chart()->get_id() . '"!', '6T90UV9');
 			}
 			$this->axis_x = $axis;
 		}
@@ -94,7 +94,7 @@ class ChartSeries extends AbstractWidget {
 				$axis = $this->get_chart()->get_axes_y()[0];
 			}
 			if (!$axis){
-				throw new UiWidgetConfigException('Cannot find y-axis for series "' . $this->get_chart_type() . '" of widget "' . $this->get_chart()->get_id() . '"!');
+				throw new WidgetConfigurationError($this, 'Cannot find y-axis for series "' . $this->get_chart_type() . '" of widget "' . $this->get_chart()->get_id() . '"!', '6T90UV9');
 			}
 			$this->axis_y = $axis;
 		}

@@ -1,7 +1,7 @@
 <?php
 namespace exface\Core\Widgets;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\Core\Exceptions\UiWidgetException;
+use exface\Core\Exceptions\NotImplementedError;
 /**
  * The DiffText widget compares two texts - an original and a new one - an shows a report highlighting the changes. This widget
  * is especially usefull since all objects in ExFace can be converted to a UXON text representation, which can be compared using
@@ -63,7 +63,7 @@ class DiffText extends AbstractWidget {
 			$this->set_left_value($data_sheet->get_cell_value($this->get_left_attribute_alias(), 0));
 			$this->set_right_value($data_sheet->get_cell_value($this->get_right_attribute_alias(), 0));
 		} else {
-			throw new UiWidgetException('Prefilling DiffText with data sheets from related objects not implemented!');
+			throw new NotImplementedError('Prefilling DiffText with data sheets from related objects not implemented!');
 		}
 		return $this;
 	}
@@ -82,7 +82,7 @@ class DiffText extends AbstractWidget {
 		} else {
 			// Otherwise we are looking for attributes relative to another object
 			if ($this->get_meta_object()->find_relation($data_sheet->get_meta_object())){
-				throw new UiWidgetException('Prefilling DiffText with data sheets from related objects not implemented!');
+				throw new NotImplementedError('Prefilling DiffText with data sheets from related objects not implemented!');
 			}
 		}
 	

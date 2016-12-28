@@ -20,8 +20,8 @@ trait WidgetExceptionTrait {
 		return $this->widget;
 	}
 
-	public function set_widget(WidgetInterface $sheet){
-		$this->widget = $sheet;
+	public function set_widget(WidgetInterface $widget){
+		$this->widget = $widget;
 		return $this;
 	}
 
