@@ -2,7 +2,7 @@
 
 class ActionInputInvalidObjectError extends ActionInputTypeError {
 	
-	public function get_default_code(){
+	public static function get_default_code(){
 		return '6T5DMUS';
 	}
 	
