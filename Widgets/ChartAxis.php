@@ -1,5 +1,7 @@
 <?php
 namespace exface\Core\Widgets;
+use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
+
 class ChartAxis extends AbstractWidget {
 	private $number = null;
 	private $dimension = null;
@@ -9,14 +11,14 @@ class ChartAxis extends AbstractWidget {
 	private $max_value = null;
 	private $position = null;
 	
-	const POSITION_TOP = 'top';
-	const POSITION_RIGHT = 'right';
-	const POSITION_BOTTOM = 'bottom';
-	const POSITION_LEFT = 'left';
+	const POSITION_TOP = 'TOP';
+	const POSITION_RIGHT = 'RIGHT';
+	const POSITION_BOTTOM = 'BOTTOM';
+	const POSITION_LEFT = 'LEFT';
 	
-	const AXIS_TYPE_TIME = 'time';
-	const AXIS_TYPE_TEXT = 'text';
-	const AXIS_TYPE_NUMBER = 'number';
+	const AXIS_TYPE_TIME = 'TIME';
+	const AXIS_TYPE_TEXT = 'TEXT';
+	const AXIS_TYPE_NUMBER = 'NUMBER';
 	
 	/**
 	 * @return DataColumn
@@ -39,6 +41,15 @@ class ChartAxis extends AbstractWidget {
 		$this->chart = $this->set_parent($widget);
 	}
 	
+	/**
+	 * Creates a chart series from the data of this axis. It's a shortcut instead of a full series definition.
+	 * 
+	 * @uxon-property chart_type
+	 * @uxon-type string
+	 * 
+	 * @param string $value
+	 * @return \exface\Core\Widgets\ChartAxis
+	 */
 	public function set_chart_type($value) {
 		$series = $this->get_chart()->create_series($value);
 		switch ($value){
@@ -54,6 +65,14 @@ class ChartAxis extends AbstractWidget {
 		return $this->data_column_id;
 	}
 	
+	/**
+	 * Specifies the data column to use for values of this axis by the column's id.
+	 * 
+	 * @uxon-property data_column_id
+	 * @uxon-type string
+	 * 
+	 * @param string $value
+	 */
 	public function set_data_column_id($value) {
 		$this->data_column_id = $value;
 	}
@@ -62,6 +81,14 @@ class ChartAxis extends AbstractWidget {
 		return $this->min_value;
 	}
 	
+	/**
+	 * Sets the minimum value for the scale of this axis. If not set, the minimum value of the underlying data will be used.
+	 * 
+	 * @uxon-property min_value
+	 * @uxon-type number
+	 * 
+	 * @param float $value
+	 */
 	public function set_min_value($value) {
 		$this->min_value = $value;
 	}
@@ -70,6 +97,14 @@ class ChartAxis extends AbstractWidget {
 		return $this->max_value;
 	}
 	
+	/**
+	 * Sets the maximum value for the scale of this axis. If not set, the maximum value of the underlying data will be used.
+	 *
+	 * @uxon-property max_value
+	 * @uxon-type number
+	 *
+	 * @param float $value
+	 */
 	public function set_max_value($value) {
 		$this->max_value = $value;
 	}
@@ -78,16 +113,46 @@ class ChartAxis extends AbstractWidget {
 		return $this->position;
 	}
 	
+	/**
+	 * Defines the position of the axis on the chart: LEFT/RIGHT for Y-axes and TOP/BOTTOM for X-axes.
+	 * 
+	 * @uxon-property position
+	 * @uxon-type string
+	 * 
+	 * @param string $value
+	 * @return ChartAxis
+	 */
 	public function set_position($value) {
-		$this->position = $value;
+		$value = mb_strtoupper($value);
+		if (defined('\\exface\\Core\\Widgets\\ChartAxis::POSITION_' . $value)){
+			$this->position = $value;
+		} else {
+			throw new WidgetPropertyInvalidValueError($this, 'Invalid axis position "' . $value . '". Only TOP, RIGHT, BOTTOM or LEFT allowed!', '6TA2Y6A');
+		}
+		return $this;
 	}
 	
-	public function get_axes_type() {
+	public function get_axis_type() {
 		return $this->axis_type;
 	}
 	
+	/**
+	 * Sets the type of the axis: TIME, TEXT or NUMBER.
+	 * 
+	 * @uxon-property chart_type
+	 * @uxon-type string
+	 * 
+	 * @param string $value
+	 * @return ChartAxis
+	 */
 	public function set_axis_type($value) {
-		$this->axis_type = $value;
+		$value = mb_strtoupper($value);
+		if (defined('\\exface\\Core\\Widgets\\ChartAxis::AXIS_TYPE_' . $value)){
+			$this->axis_type = $value;
+		} else {
+			throw new WidgetPropertyInvalidValueError($this, 'Invalid axis type "' . $value . '". Only TIME, TEXT or NUMBER allowed!', '6TA2Y6A');
+		}
+		return $this;
 	} 
 	
 	public function get_dimension() {

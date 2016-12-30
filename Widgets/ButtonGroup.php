@@ -1,9 +1,18 @@
 <?php
 namespace exface\Core\Widgets;
+
 use exface\Core\Interfaces\Widgets\iHaveButtons;
 use exface\Core\Interfaces\Widgets\iHaveIcon;
-use exface\Core\Factories\WidgetFactory;
 use exface\Core\CommonLogic\UxonObject;
+
+/**
+ * A group of button widgets with a mutual input widget. 
+ * 
+ * Depending on the template, a ButtonGroup can be displayed as a list of buttons or even transformed to a menu.
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
 class ButtonGroup extends AbstractWidget implements iHaveButtons, iHaveIcon {
 	private $buttons =  array();
 	private $icon_name = null;
@@ -18,6 +27,11 @@ class ButtonGroup extends AbstractWidget implements iHaveButtons, iHaveIcon {
 	}
 	
 	/**
+	 * Defines the contained buttons via array of button definitions.
+	 * 
+	 * @uxon-property buttons
+	 * @uxon-type Button[]
+	 * 
 	 * (non-PHPdoc)
 	 * @see \exface\Core\Interfaces\Widgets\iHaveButtons::set_buttons()
 	 */
@@ -49,7 +63,12 @@ class ButtonGroup extends AbstractWidget implements iHaveButtons, iHaveIcon {
 	}
 	
 	/**
-	 * (non-PHPdoc)
+	 * Sets the icon for the button group. Use one of the generic icon names or any notation supported by the template.
+	 * 
+	 * @uxon-property icon_name
+	 * @uxon-type string
+	 * 
+	 * 
 	 * @see \exface\Core\Interfaces\Widgets\iHaveIcon::set_icon_name()
 	 */
 	public function set_icon_name($value) {
