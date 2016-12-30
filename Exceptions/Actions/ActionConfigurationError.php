@@ -1,10 +1,10 @@
 <?php namespace exface\Core\Exceptions\Actions;
 
-use exface\Core\Exceptions\DataSources\ActionExceptionInterface;
 use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;
 use exface\Core\Exceptions\Actions\ActionExceptionTrait;
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Interfaces\Actions\ActionInterface;
+use exface\Core\Interfaces\Exceptions\ActionExceptionInterface;
 
 class ActionConfigurationError extends UnexpectedValueException implements ActionExceptionInterface, ErrorExceptionInterface {
 	

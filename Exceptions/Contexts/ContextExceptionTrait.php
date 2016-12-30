@@ -33,7 +33,7 @@ trait ContextExceptionTrait {
 	/**
 	 *
 	 * {@inheritDoc}
-	 * @see @see \exface\Core\Interfaces\Exceptions\ContextExceptionInterface::set_context()
+	 * @see\exface\Core\Interfaces\Exceptions\ContextExceptionInterface::set_context()
 	 */
 	public function set_context(ContextInterface $value){
 		$this->context = $value;

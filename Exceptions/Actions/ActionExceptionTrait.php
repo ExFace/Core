@@ -33,7 +33,7 @@ trait ActionExceptionTrait {
 	/**
 	 *
 	 * {@inheritDoc}
-	 * @see @see \exface\Core\Interfaces\Exceptions\ActionExceptionInterface::set_action()
+	 * @see \exface\Core\Interfaces\Exceptions\ActionExceptionInterface::set_action()
 	 */
 	public function set_action(ActionInterface $value){
 		$this->action = $value;

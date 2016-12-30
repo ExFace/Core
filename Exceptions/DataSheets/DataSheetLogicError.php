@@ -1,10 +1,10 @@
 <?php namespace exface\Core\Exceptions\DataSheets;
 
-use exface\Core\Exceptions\DataSources\DataSheetExceptionInterface;
 use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;
 use exface\Core\Exceptions\DataSheets\DataSheetExceptionTrait;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Exceptions\LogicException;
+use exface\Core\Interfaces\Exceptions\DataSheetExceptionInterface;
 
 class DataSheetLogicError extends LogicException implements DataSheetExceptionInterface, ErrorExceptionInterface {
 	

@@ -1,7 +1,7 @@
 <?php namespace exface\Core\Exceptions\Widgets;
 
-use exface\Core\Exceptions\DataSources\WidgetExceptionInterface;
 use exface\Core\Exceptions\UnexpectedValueException;
+use exface\Core\Interfaces\Exceptions\WidgetExceptionInterface;
 
 /**
  * Exception thrown if a widget property is being set to an invalid value. 

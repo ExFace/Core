@@ -1,5 +1,5 @@
 <?php
-namespace exface\Core\Exceptions\DataSources;
+namespace exface\Core\Interfaces\Exceptions;
 
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 

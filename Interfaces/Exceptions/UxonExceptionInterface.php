@@ -1,5 +1,4 @@
-<?php
-namespace exface\Core\Exceptions\DataSources;
+<?php namespace exface\Core\Interfaces\Exceptions;
 
 use exface\Core\CommonLogic\UxonObject;
 
