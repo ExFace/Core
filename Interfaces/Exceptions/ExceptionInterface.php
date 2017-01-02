@@ -31,5 +31,17 @@ interface ExceptionInterface extends iCanBeConvertedToUxon {
 	 * 
 	 * @return string
 	 */
-	public static function get_default_code();
+	public static function get_default_alias();
+	
+	/**
+	 * @return string
+	 */
+	public function get_alias();
+	
+	/**
+	 * 
+	 * @param string $string
+	 * @return ExceptionInterface
+	 */
+	public function set_alias($string);
 }
