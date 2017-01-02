@@ -14,11 +14,12 @@ class DataConnectorError extends RuntimeException implements ErrorExceptionInter
 	 *
 	 * @param DataConnectionInterface $connector
 	 * @param string $message
-	 * @param string $code
+	 * @param string $alias
 	 * @param \Throwable $previous
 	 */
-	public function __construct (DataConnectionInterface $connector, $message, $code = null, $previous = null) {
-		parent::__construct($message, ($code ? $code : static::get_default_code()), $previous);
+	public function __construct (DataConnectionInterface $connector, $message, $alias = null, $previous = null) {
+		parent::__construct($message, null, $previous);
+		$this->set_alias($alias);
 		$this->set_connector($connector);
 	}
 	

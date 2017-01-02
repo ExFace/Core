@@ -11,8 +11,9 @@ trait WidgetExceptionTrait {
 
 	private $widget = null;
 
-	public function __construct (WidgetInterface $widget, $message, $code = null, $previous = null) {
-		parent::__construct($message, ($code ? $code : static::get_default_code()), $previous);
+	public function __construct (WidgetInterface $widget, $message, $alias = null, $previous = null) {
+		parent::__construct($message, null, $previous);
+		$this->set_alias($alias);
 		$this->set_widget($widget);
 	}
 

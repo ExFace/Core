@@ -15,8 +15,9 @@ class ActionOutputTypeError extends DomainException implements ActionExceptionIn
 	 * {@inheritDoc}
 	 * @see \exface\Core\Interfaces\Exceptions\ActionExceptionInterface::__construct()
 	 */
-	public function __construct (ActionInterface $action, $message, $code = null, $previous = null) {
-		parent::__construct($message, ($code ? $code : static::get_default_code()), $previous);
+	public function __construct (ActionInterface $action, $message, $alias = null, $previous = null) {
+		parent::__construct($message, null, $previous);
+		$this->set_alias($alias);
 		$this->set_action($action);
 	}
 	

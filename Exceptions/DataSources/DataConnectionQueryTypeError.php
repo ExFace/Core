@@ -9,7 +9,7 @@ class DataConnectionQueryTypeError extends InvalidArgumentException implements D
 	
 	use DataConnectorExceptionTrait;
 	
-	public static function get_default_code(){
+	public static function get_default_alias(){
 		return '6T5W75J';
 	}
 	

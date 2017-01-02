@@ -10,6 +10,13 @@ use exface\Core\Widgets\ErrorMessage;
 
 trait ExceptionTrait {
 	
+	private $alias = null;
+	
+	public function __construct ($message, $alias = null, $previous = null) {
+		parent::__construct($message, null, $previous);
+		$this->set_alias($alias);
+	}
+	
 	public function export_uxon_object(){
 		return new UxonObject();
 	}
@@ -75,10 +82,19 @@ trait ExceptionTrait {
 	/**
 	 *
 	 * {@inheritDoc}
-	 * @see \exface\Core\Interfaces\Exceptions\ExceptionInterface::get_default_code()
+	 * @see \exface\Core\Interfaces\Exceptions\ExceptionInterface::get_default_alias()
 	 */
-	public static function get_default_code(){
+	public static function get_default_alias(){
 		return '';
+	}
+	
+	public function get_alias(){
+		return $this->alias;
+	}
+	
+	public function set_alias($alias){
+		$this->alias = $alias;
+		return $this;
 	}
 }
 ?>
