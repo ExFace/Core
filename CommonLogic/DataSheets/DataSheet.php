@@ -271,8 +271,11 @@ class DataSheet implements DataSheetInterface {
 	protected function get_data_for_column(DataColumnInterface $col, \exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder &$query){
 		// add the required attributes
 		foreach ($col->get_expression_obj()->get_required_attributes() as $attr){
-			$attribute = $this->get_meta_object()->get_attribute($attr);
-			if (!$attribute) continue;
+			try {
+				$attribute = $this->get_meta_object()->get_attribute($attr);
+			} catch (MetaAttributeNotFoundError $e) {
+				continue;
+			}
 			// if the attributes data source is the same, as the one of the main object, add the attribute to the query
 			if ($attribute->get_object()->get_data_source_id() == $this->get_meta_object()->get_data_source_id()){
 				// if a formula is applied to the attribute, get all attributes required for the formula
@@ -526,7 +529,7 @@ class DataSheet implements DataSheetInterface {
 		$processed_relations = array();
 		foreach ($this->get_columns() as $col){
 			if (!$col->get_attribute()){
-				//throw new MetaAttributeNotFoundError('Cannot find attribute for data sheet column "' . $col->get_name() . '"!');
+				//throw new MetaAttributeNotFoundError($this->get_meta_object(), 'Cannot find attribute for data sheet column "' . $col->get_name() . '"!');
 				continue;
 			}
 			// Fetch all attributes with fixed values and add them to the sheet if not already there
@@ -567,7 +570,7 @@ class DataSheet implements DataSheetInterface {
 			} elseif (!$column->get_attribute()) {
 				// Skip columns, that reference non existing attributes
 				// TODO Is throwing an exception appropriate here?
-				throw new MetaAttributeNotFoundError('Attribute "' . $column->get_expression_obj()->to_string() . '" of object "' . $this->get_meta_object()->get_alias_with_namespace() . '" not found!');
+				throw new MetaAttributeNotFoundError($this->get_meta_object(), 'Attribute "' . $column->get_expression_obj()->to_string() . '" of object "' . $this->get_meta_object()->get_alias_with_namespace() . '" not found!');
 			} elseif (DataAggregator::get_aggregate_function_from_alias($column->get_expression_obj()->to_string())) {
 				// Skip columns with aggregate functions
 				continue;
@@ -758,7 +761,7 @@ class DataSheet implements DataSheetInterface {
 			if (!$column->get_expression_obj()->is_meta_attribute()) continue;
 			// Check if the meta attribute really exists
 			if (!$column->get_attribute()){
-				throw new MetaAttributeNotFoundError('Cannot find attribute for data sheet column "' . $column->get_name() . '"!');
+				throw new MetaAttributeNotFoundError($this->get_meta_object(), 'Cannot find attribute for data sheet column "' . $column->get_name() . '"!');
 				continue;
 			}
 				

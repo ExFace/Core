@@ -16,6 +16,7 @@ use exface\Core\CommonLogic\Model\Object;
 use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 use exface\Core\Factories\WidgetLinkFactory;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
+use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 
 /**
  * 
@@ -463,8 +464,11 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 	public function create_filter_widget($attribute_alias, \stdClass $uxon_object = null){
 		// a filter can only be applied, if the attribute alias is specified and the attribute exists
 		if (!$attribute_alias) throw new WidgetPropertyInvalidValueError($this, 'Cannot create a filter for an empty attribute alias in widget "' . $this->get_id() . '"!', '6T91AR9');
-		if (!$attr = $this->get_meta_object()->get_attribute($attribute_alias)) throw new WidgetPropertyInvalidValueError($this, 'Cannot create a filter for attribute alias "' . $attribute_alias . '" in widget "' . $this->get_id() . '": attribute not found for object "' . $this->get_meta_object()->get_alias_with_namespace() . '"!', '6T91AR9');
-			
+		try {
+			$attr = $this->get_meta_object()->get_attribute($attribute_alias);
+		} catch (MetaAttributeNotFoundError $e) {
+			throw new WidgetPropertyInvalidValueError($this, 'Cannot create a filter for attribute alias "' . $attribute_alias . '" in widget "' . $this->get_id() . '": attribute not found for object "' . $this->get_meta_object()->get_alias_with_namespace() . '"!', '6T91AR9', $e);
+		}	
 		// determine the widget for the filte
 		$uxon = $attr->get_default_widget_uxon()->copy();
 		if ($uxon_object){
