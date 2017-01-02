@@ -16,7 +16,7 @@ class UxonParserError extends RuntimeException implements UxonExceptionInterface
 	private $uxon = null;
 	
 	public function __construct (UxonObject $uxon, $message, $code = null, $previous = null) {
-		parent::__construct($message, ($code ? $code : static::get_default_code()), $previous);
+		parent::__construct($message, null, $previous);
 		$this->set_uxon($uxon);
 	}
 	

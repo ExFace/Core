@@ -20,7 +20,7 @@ trait DataConnectorExceptionTrait {
 	 * @param \Throwable $previous
 	 */
 	public function __construct (DataConnectionInterface $connector, $message, $code = null, $previous = null) {
-		parent::__construct($message, ($code ? $code : static::get_default_code()), $previous);
+		parent::__construct($message, null, $previous);
 		$this->set_connector($connector);
 	}
 	
