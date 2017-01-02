@@ -12,7 +12,7 @@ trait MetaObjectExceptionTrait {
 	private $meta_object = null;
 	
 	public function __construct (Object $meta_object, $message, $code = null, $previous = null) {
-		parent::__construct($message, ($code ? $code : static::get_default_code()), $previous);
+		parent::__construct($message, null, $previous);
 		$this->set_meta_object($meta_object);
 	}
 	
