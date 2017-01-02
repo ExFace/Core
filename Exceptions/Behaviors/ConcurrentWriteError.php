@@ -3,7 +3,7 @@
 use exface\Core\Exceptions\DataSheets\DataSheetWriteError;
 
 class ConcurrentWriteError extends DataSheetWriteError {
-	public static function get_default_code(){
+	public static function get_default_alias(){
 		return '6T6HZLF';
 	}
 }

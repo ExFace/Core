@@ -15,8 +15,9 @@ class ContextRuntimeError extends RuntimeException implements ContextExceptionIn
 	 * {@inheritDoc}
 	 * @see \exface\Core\Interfaces\Exceptions\ContextExceptionInterface::__construct()
 	 */
-	public function __construct (ContextInterface $context, $message, $code = null, $previous = null) {
+	public function __construct (ContextInterface $context, $message, $alias = null, $previous = null) {
 		parent::__construct($message, null, $previous);
+		$this->set_alias($alias);
 		$this->set_context($context);
 	}
 	

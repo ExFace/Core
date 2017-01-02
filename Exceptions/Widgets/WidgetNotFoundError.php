@@ -10,7 +10,7 @@ use exface\Core\Exceptions\RuntimeException;
  */
 class WidgetNotFoundError extends RuntimeException {
 	
-	public static function get_default_code(){
+	public static function get_default_alias(){
 		return '6T91E4Q';
 	}
 }

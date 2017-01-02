@@ -1,7 +1,7 @@
 <?php
 namespace exface\Core\Exceptions;
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\Exceptions\DataSources\UxonExceptionInterface;
+use exface\Core\Interfaces\Exceptions\UxonExceptionInterface;
 
 /**
  * Exception thrown if the entity (widget, action, etc.) represented by a UXON description cannot be instantiated due to invalid or missing properties.
@@ -15,8 +15,9 @@ use exface\Core\Exceptions\DataSources\UxonExceptionInterface;
 class UxonParserError extends RuntimeException implements UxonExceptionInterface {
 	private $uxon = null;
 	
-	public function __construct (UxonObject $uxon, $message, $code = null, $previous = null) {
+	public function __construct (UxonObject $uxon, $message, $alias = null, $previous = null) {
 		parent::__construct($message, null, $previous);
+		$this->set_alias($alias);
 		$this->set_uxon($uxon);
 	}
 	

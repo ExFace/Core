@@ -10,8 +10,9 @@ class DataQueryFailedError extends RuntimeException implements ErrorExceptionInt
 	
 	use DataQueryExceptionTrait;
 	
-	public function __construct (DataQueryInterface $query, $message, $code = null, $previous = null) {
+	public function __construct (DataQueryInterface $query, $message, $alias = null, $previous = null) {
 		parent::__construct($message, null, $previous);
+		$this->set_alias($alias);
 		$this->set_query($query);
 	}
 	

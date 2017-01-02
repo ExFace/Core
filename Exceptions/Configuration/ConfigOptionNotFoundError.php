@@ -9,8 +9,9 @@ class ConfigOptionNotFoundError extends OutOfRangeException implements Configura
 	
 	use ConfigurationExceptionTrait;
 	
-	public function __construct (ConfigurationInterface $configuration, $message, $code = null, $previous = null) {
+	public function __construct (ConfigurationInterface $configuration, $message, $alias = null, $previous = null) {
 		parent::__construct($message, null, $previous);
+		$this->set_alias($alias);
 		$this->set_configuration($configuration);
 	}
 	

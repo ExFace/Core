@@ -14,8 +14,9 @@ class ActionNotImplementedError extends NotImplementedError implements ActionExc
 	 * {@inheritDoc}
 	 * @see \exface\Core\Interfaces\Exceptions\ActionExceptionInterface::__construct()
 	 */
-	public function __construct (ActionInterface $action, $message, $code = null, $previous = null) {
+	public function __construct (ActionInterface $action, $message, $alias = null, $previous = null) {
 		parent::__construct($message, null, $previous);
+		$this->set_alias($alias);
 		$this->set_action($action);
 	}
 	
