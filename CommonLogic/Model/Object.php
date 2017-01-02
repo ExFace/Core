@@ -280,7 +280,8 @@ class Object implements ExfaceClassInterface, AliasInterface {
 	function add_relation(Relation $relation){
 		// If there already is a relation with this alias, add another one, making it an array of relations
 		// Make sure, this only happens to reverse relation!!! Direct relation MUST have different aliases!
-		if ($relation->is_reverse_relation() && $duplicate = $this->get_relation($relation->get_alias())){
+		if ($relation->is_reverse_relation() && $this->has_relation($relation->get_alias())){
+			$duplicate = $this->get_relation($relation->get_alias());
 			// Create an array for the alias or just add the relation to the array if there already is one
 			if (is_array($duplicate)){
 				$this->relations[$relation->get_alias()][] = $relation;
