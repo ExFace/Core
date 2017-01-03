@@ -173,7 +173,8 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns {
 
 			// Set the caption to the attribute name or the relation name, if the attribute is the label of a related object.
 			// This preset caption will get overwritten by one specified in UXON once the UXON object is overloaded
-			if (!$c->caption && $attr = $this->get_meta_object()->get_attribute($c->attribute_alias)){
+			if (!$c->caption && $this->get_meta_object()->has_attribute($c->attribute_alias)){
+				$attr = $this->get_meta_object()->get_attribute($c->attribute_alias);
 				if ($attr->is_label() && $attr->get_relation_path()->to_string()){
 					$caption = $this->get_meta_object()->get_relation($attr->get_relation_path()->to_string())->get_name();
 				} else {

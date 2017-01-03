@@ -165,6 +165,9 @@ class Text extends AbstractWidget implements iShowSingleAttribute, iHaveValue, i
 	 * @see \exface\Core\Interfaces\Widgets\iShowSingleAttribute::get_attribute()
 	 */
 	public function get_attribute(){
+		if (!$this->get_attribute_alias()){
+			return null;
+		}
 		return $this->get_meta_object()->get_attribute($this->get_attribute_alias());
 	}	
 	

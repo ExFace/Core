@@ -461,9 +461,12 @@ class Object implements ExfaceClassInterface, AliasInterface {
 	
 	/**
 	 * Returns the meta attribute with the label of the object
-	 * @return \exface\Core\CommonLogic\Model\attribute
+	 * @return Attribute
 	 */
 	public function get_label_attribute(){
+		if (!$this->get_label_alias()){
+			return null;
+		}
 		return $this->get_attribute($this->get_label_alias());
 	}
 	
