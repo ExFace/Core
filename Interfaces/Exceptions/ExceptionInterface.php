@@ -34,6 +34,13 @@ interface ExceptionInterface extends iCanBeConvertedToUxon {
 	public static function get_default_alias();
 	
 	/**
+	 * Returns the HTTP status code appropriate for this exception
+	 * 
+	 * @return integer
+	 */
+	public function get_status_code();
+	
+	/**
 	 * @return string
 	 */
 	public function get_alias();
@@ -44,4 +51,5 @@ interface ExceptionInterface extends iCanBeConvertedToUxon {
 	 * @return ExceptionInterface
 	 */
 	public function set_alias($string);
+
 }
