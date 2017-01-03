@@ -73,7 +73,7 @@ class Text extends AbstractWidget implements iShowSingleAttribute, iHaveValue, i
 					foreach ($rel_parts as $rel_nr => $rel_part){
 						$related_obj = $related_obj->get_related_object($rel_part);
 						unset($rel_parts[$rel_nr]);
-						if ($related_obj->get_id() == $data_sheet->get_meta_object()->get_id()){
+						if ($related_obj->is_exactly($data_sheet->get_meta_object())){
 							$attr_path = implode(RelationPath::RELATION_SEPARATOR, $rel_parts);
 							$attr = ($attr_path ? $attr_path . RelationPath::RELATION_SEPARATOR : '') . $this->get_attribute()->get_alias();
 							$data_sheet->get_columns()->add_from_expression($attr);

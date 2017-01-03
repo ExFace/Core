@@ -208,12 +208,11 @@ class Object implements ExfaceClassInterface, AliasInterface {
 		// path. The last object in the relation path must deal with the actual attribute then.
 		if ($rel_parts = RelationPath::relation_path_parse($alias, 1)){
 			try {
-				if ($rel_attr = $this->get_related_object($rel_parts[0])->get_attribute($rel_parts[1])){
-					$attr = $rel_attr->copy();
-					$rel = $this->get_relation($rel_parts[0]);
-					$attr->get_relation_path()->prepend_relation($rel);
-					return $attr;
-				} 
+				$rel_attr = $this->get_related_object($rel_parts[0])->get_attribute($rel_parts[1]);
+				$attr = $rel_attr->copy();
+				$rel = $this->get_relation($rel_parts[0]);
+				$attr->get_relation_path()->prepend_relation($rel);
+				return $attr;
 			} catch (MetaRelationNotFoundError $e){
 				throw new MetaAttributeNotFoundError($this, 'Attribute "' . $alias . '" not found for object "' . $this->get_alias_with_namespace() . '"!', null, $e);
 			}

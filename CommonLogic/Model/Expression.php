@@ -4,6 +4,8 @@ use exface\Core\Exceptions\FormulaError;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Factories\FormulaFactory;
 use exface\Core\Factories\WidgetLinkFactory;
+use exface\Core\Exceptions\Model\MetaRelationNotFoundError;
+use exface\Core\Exceptions\Model\ExpressionRebaseImpossibleError;
 
 class Expression {
 	// Expression types
@@ -282,17 +284,19 @@ class Expression {
 	 * E.g. "ORDER->POSITION->PRODUCT->ID" will become "PRODUCT->ID" after calling rebase(ORDER->POSITION) on it.
 	 *
 	 * @param string $relation_path_to_new_base_object
-	 * @return expression|boolean
+	 * @return expression
 	 */
 	public function rebase($relation_path_to_new_base_object){
 		if ($this->is_formula()){
 			// TODO Implement rebasing formulas. It should be possible via recursion.
 			return $this;
 		} elseif ($this->is_meta_attribute()){
-			// If the given relation path does not lead anywhere, return FALSE!
-			if (!$rel = $this->get_meta_object()->get_relation($relation_path_to_new_base_object)){
-				return false;
+			try {
+				$rel = $this->get_meta_object()->get_relation($relation_path_to_new_base_object);
+			} catch (MetaRelationNotFoundError $e){
+				throw new ExpressionRebaseImpossibleError('Cannot rebase expression "' . $this->to_string() . '" relative to "' . $relation_path_to_new_base_object . '" - invalid relation path given!', '6TBX1V2');
 			}
+			
 			if (strpos($this->to_string(), $relation_path_to_new_base_object) === 0){
 				// If the realtion path to the new object is just part of the expression, cut it off, returning whatever is left
 				$new_expression_string = RelationPath::relaton_path_cut($this->to_string(), $relation_path_to_new_base_object);

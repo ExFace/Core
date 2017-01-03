@@ -4,6 +4,8 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\ConditionFactory;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Factories\ConditionGroupFactory;
+use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;
+use exface\Core\Exceptions\Model\ExpressionRebaseImpossibleError;
 
 /**
  * A condition group contains one or more conditions and/or other (nested) condition groups combined by one logical operator, 
@@ -168,11 +170,14 @@ class ConditionGroup implements iCanBeConvertedToUxon {
 			}
 			
 			// Rebase the expression behind the condition and create a new condition from it
-			$new_expression = $condition->get_expression()->rebase($relation_path_to_new_base_object);
-			if ($new_expression){
-				$new_condition = ConditionFactory::create_from_expression($this->exface, $new_expression, $condition->get_value(), $condition->get_comparator());
-				$result->add_condition($new_condition);
+			try {
+				$new_expression = $condition->get_expression()->rebase($relation_path_to_new_base_object);
+			} catch (ExpressionRebaseImpossibleError $e){
+				// Silently omit conditions, that cannot be rebased
+				continue;
 			}
+			$new_condition = ConditionFactory::create_from_expression($this->exface, $new_expression, $condition->get_value(), $condition->get_comparator());
+			$result->add_condition($new_condition);
 		}
 	
 		foreach ($this->get_nested_groups() as $group){

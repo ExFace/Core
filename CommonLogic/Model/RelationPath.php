@@ -1,6 +1,7 @@
 <?php namespace exface\Core\CommonLogic\Model;
 
 use exface\Core\Factories\RelationPathFactory;
+use exface\Core\Exceptions\Model\MetaRelationNotFoundError;
 
 /**
  * The relation path object holds all relations needed to reach the end object from the start object. If attributes
@@ -58,20 +59,23 @@ class RelationPath implements \IteratorAggregate {
 	 * Adds all relations from the given path string to the left end of the path. Use with caution as ambiguos
 	 * reverse relation may cause trouble. Prefer append_relation() insted, because it always explicitly specifies
 	 * each relation!
+	 * 
 	 * @param string $relation_path_string
 	 * @return RelationPath
 	 */
 	public function append_relations_from_string_path($relation_path_string){
 		$first_rel = self::get_first_relation_from_string_path($relation_path_string);
-		if ($rel = $this->get_end_object()->get_relation($first_rel)){
+		try {
+			$rel = $this->get_end_object()->get_relation($first_rel);
 			if (is_array($rel)){
 				// TODO what if it is a ambiguous reverse relation?
 			} else {
 				$this->append_relation($rel);
 			}
-		} else {
+		} catch (MetaRelationNotFoundError $e){
 			// Do nothing, if it is not a relation (it's probably an attribute than)
 			// IDEA Maybe check, to see if it really is an attribute and throw an error otherwise???
+			$rel = false;
 		}
 		
 		if ($first_rel != $relation_path_string){
@@ -220,9 +224,12 @@ class RelationPath implements \IteratorAggregate {
 		$reverse_aliases = array();
 		foreach ($relations as $rel_alias){
 			/* @var $rel \exface\Core\CommonLogic\Model\relation */
-			$rel = $current_object->get_relation($rel_alias);
-			// Skip non-relations (will ignore regular attributes at the end of the chain)
-			if (!$rel) continue;
+			try {
+				$rel = $current_object->get_relation($rel_alias);
+			} catch (MetaRelationNotFoundError $e){
+				// Skip non-relations (will ignore regular attributes at the end of the chain)
+				continue;
+			}
 				
 			$reverse_aliases[] = $rel->get_reversed_relation()->get_alias();
 			$current_object = $rel->get_related_object();
