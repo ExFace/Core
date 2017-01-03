@@ -607,10 +607,9 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 		$result = array();
 		foreach ($this->get_filters() as $filter_widget){
 			$filter_object = $this->get_meta_object()->get_attribute($filter_widget->get_attribute_alias())->get_object();
-			$filter_relation = $filter_widget->get_attribute()->get_relation();
 			if ($object->is($filter_object)){
 				$result[] = $filter_widget;
-			} elseif ($filter_relation && $object->is($filter_relation->get_related_object())){
+			} elseif ($filter_widget->get_attribute()->is_relation() && $object->is($filter_widget->get_attribute()->get_relation()->get_related_object())){
 				$result[] = $filter_widget;
 			}
 		}
