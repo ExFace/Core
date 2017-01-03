@@ -2,8 +2,6 @@
 
 use exface\Core\CommonLogic\AbstractBehavior;
 use exface\Core\Events\WidgetEvent;
-use exface\Core\Widgets\Dialog;
-use exface\Core\Widgets\Container;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\StateMachineConfigError;
 
@@ -106,6 +104,7 @@ class StateMachineBehavior extends AbstractBehavior {
 	public function get_state_buttons($state_id) {
 		if ($this->is_disabled() || !$this->get_smstates()) return [];
 		$smstate = $this->get_smstate($state_id);
+		if (!$smstate) { $smstate = $this->get_smstate($this::DEFAULT_STATE); }
 		return $smstate instanceof StateMachineState ? $smstate->get_buttons() : [];
 	}
 	

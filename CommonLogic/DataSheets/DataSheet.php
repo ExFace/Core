@@ -156,8 +156,14 @@ class DataSheet implements DataSheetInterface {
 				continue;
 			}
 			if ($other_col = $other_sheet->get_column($this_col->get_name())){
-				if (count($this_col->get_values(false)) > 0 && count($this_col->get_values(false)) !== count($other_col->get_values(false))){
-					throw new DataSheetException('Cannot replace rows of column "' . $this_col->get_name() . '": source and target columns have different amount of rows!');
+				$this_no = count($this_col->get_values(false));
+				$other_no = count($other_col->get_values(false));
+				if ($this_no != $other_no) {
+					if ($this_no > 1 && $other_no == 1) {
+						$other_col->set_values(array_fill(0, $this_no, $other_col->get_cell_value(0)));
+					} else {
+						throw new DataSheetException('Cannot replace rows of column "' . $this_col->get_name() . '": source and target columns have different amount of rows!');
+					}
 				}
 				$this_col->set_values($other_col->get_values(false));
 			}
@@ -166,26 +172,6 @@ class DataSheet implements DataSheetInterface {
 		foreach ($columns_with_formulas as $name){
 			$this->get_column($name)->set_values_by_expression($this->get_column($name)->get_formula());
 		}
-		return $this;
-	}
-	
-	/**
-	 * Existing columns are kept and new columns are added.
-	 * @param DataSheetInterface $other_sheet
-	 * @throws DataSheetException
-	 * @return \exface\Core\CommonLogic\DataSheets\DataSheet
-	 */
-	public function import_rows_add_no_replace(DataSheetInterface $other_sheet){
-		if (!$this->get_meta_object()->is_exactly($other_sheet->get_meta_object()->get_alias_with_namespace())){
-			throw new DataSheetException('Cannot replace rows for object "' . $this->get_meta_object()->get_alias_with_namespace() . '" with rows from "' . $other_sheet->get_meta_object()->get_alias_with_namespace() . '": replacing rows only possible for identical objects!');
-		}
-		
-		foreach ($other_sheet->get_columns() as $other_col) {
-			if (!$this_col = $this->get_column($other_col->get_name())) {
-				$this->get_columns()->add($other_col->copy());
-			}
-		}
-		
 		return $this;
 	}
 	

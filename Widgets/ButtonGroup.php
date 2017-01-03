@@ -69,7 +69,7 @@ class ButtonGroup extends AbstractWidget implements iHaveButtons, iHaveIcon {
 	 * need to travel up all the group hierarchy to the first parent, which is not a button group and
 	 * thus contains all the buttons (or would contain them if there were no groups).
 	 */
-	protected function get_input_widget(){
+	public function get_input_widget(){
 		if (!$this->input_widget){
 			$parent = $this;
 			while (!$parent instanceof Dialog && !$parent instanceof DataTable && !is_null($parent->get_parent())) {
