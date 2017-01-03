@@ -13,7 +13,7 @@ class Debugger implements DebuggerInterface {
 	public function print_exception(\Throwable $exception, $use_html = true){
 		$handler = new ExceptionHandler();
 		$flattened_exception = FlattenException::create($exception);
-		$output = "<style>" . $handler->getStylesheet($flattened_exception) . " #sf-resetcontent {padding: 20px 10px 0 10px;} #sf-resetcontent h1 {display: none;} h2.block_exception.clear_fix {margin: 0}</style>" . $handler->getContent($flattened_exception);
+		$output = "<style>" . $handler->getStylesheet($flattened_exception) . $this->build_css() . "</style>" . $handler->getContent($flattened_exception);
 		return $output;
 	}
 	
@@ -33,6 +33,15 @@ class Debugger implements DebuggerInterface {
 		//Debug::enable(E_ALL & ~E_NOTICE);
 		ExceptionHandler::register();
 		ErrorHandler::register();
+	}
+	
+	protected function build_css(){
+		$output = <<<CSS
+	#sf-resetcontent {padding: 20px 10px 0 10px;} 
+	#sf-resetcontent h1 {display: none;} 
+	h2.block_exception.clear_fix {margin: 0}
+CSS;
+		return $output;
 	}
 	  
 }
