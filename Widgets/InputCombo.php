@@ -84,13 +84,21 @@ class InputCombo extends InputSelect implements iSupportLazyLoading {
 	
 	public function get_text_attribute_alias() {
 		if (is_null($this->text_attribute_alias)){
-			if ($this->get_table_object()->get_attribute($this->get_table_object()->get_label_alias())){
-				$this->text_attribute_alias = $this->get_table_object()->get_label_alias();
+			if ($this->get_data_object()->get_label_attribute()){
+				$this->text_attribute_alias = $this->get_data_object()->get_label_alias();
 			} else {
-				$this->text_attribute_alias = $this->get_table_object()->get_uid_alias();
+				$this->text_attribute_alias = $this->get_data_object()->get_uid_alias();
 			}
 		}
 		return $this->text_attribute_alias;
+	}
+	
+	/**
+	 * Returns the meta object, which the autosuggest data is based on
+	 * @return \exface\Core\CommonLogic\Model\Object
+	 */
+	protected function get_data_object(){
+		return $this->get_meta_object();
 	}
 	
 	/**

@@ -198,8 +198,8 @@ class ComboTable extends InputCombo implements iHaveChildren {
 				// corresponding text by itself (e.g. via lazy loading), so it is not a real problem.
 				if ($this->get_attribute()->is_relation()){
 					$text_column_name = RelationPath::relation_path_add($this->get_relation()->get_alias(), $this->get_text_column()->get_attribute_alias());
-				} elseif ($this->get_meta_object_id() == $this->get_table()->get_meta_object_id()) {
-					$text_column_name = $this->get_text_column_id();
+				} elseif ($this->get_meta_object()->is_exactly($this->get_table()->get_meta_object())) {
+					$text_column_name = $this->get_text_column()->get_data_column_name();
 				} else {
 					unset($text_column_name);
 				}
@@ -250,21 +250,21 @@ class ComboTable extends InputCombo implements iHaveChildren {
 				
 			// Be carefull with the value text. If the combo stands for a relation, it can be retrieved from the prefill data,
 			// but if the text comes from an unrelated object, it cannot be part of the prefill data and thus we can not
-			// set it here. In most templates, setting merely the value of the combo well make the template load the
+			// set it here. In most templates, setting merely the value of the combo will make the template load the
 			// corresponding text by itself (e.g. via lazy loading), so it is not a real problem.
-			if ($this->get_attribute()->is_relation()){
+			if ($this->get_attribute() && $this->get_attribute()->is_relation()){
 				$text_column_name = RelationPath::relation_path_add($this->get_relation()->get_alias(), $this->get_text_column()->get_attribute_alias());
-			} elseif ($this->get_meta_object_id() == $this->get_table()->get_meta_object_id()) {
-				$text_column_name = $this->get_text_column_id();
+			} elseif ($this->get_meta_object()->is_exactly($this->get_table()->get_meta_object())) {
+				$text_column_name = $this->get_text_column()->get_data_column_name();
 			} else {
 				unset($text_column_name);
 			}
 			if ($text_column_name){
-				$data_sheet->get_columns()->add_from_expression($text_column_name);
+				$data_sheet->get_columns()->add_from_expression($text_column_name, $this->get_text_column()->get_data_column_name());
 			}
 		} elseif ($this->get_relation() && $this->get_relation()->get_related_object()->is($data_sheet->get_meta_object())){
 			$data_sheet->get_columns()->add_from_expression($this->get_relation()->get_related_object_key_alias());
-			$data_sheet->get_columns()->add_from_expression($this->get_text_column()->get_attribute_alias(), $this->get_text_column_id());
+			$data_sheet->get_columns()->add_from_expression($this->get_text_column()->get_attribute_alias(), $this->get_text_column()->get_data_column_name());
 		} else {
 			// TODO what if the prefill object is not the one at the end of the current relation?
 		}
@@ -322,6 +322,15 @@ class ComboTable extends InputCombo implements iHaveChildren {
 			}
 		}
 		return $this->table_object;
+	}
+	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Widgets\InputCombo::get_data_object()
+	 */
+	protected function get_data_object(){
+		return $this->get_table_object();
 	}
 }
 ?>
