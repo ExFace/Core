@@ -212,7 +212,7 @@ class ComboTable extends InputCombo implements iHaveChildren {
 					// If the sheet is based upon the object, that is being selected by this Combo, we can use the prefill sheet
 					// values directly
 					$this->set_value($data_sheet->get_cell_value($this->get_relation()->get_related_object_key_alias(), 0));
-					$this->set_value_text($data_sheet->get_cell_value($this->get_text_column_id(), 0));
+					$this->set_value_text($data_sheet->get_cell_value($this->get_text_column()->get_data_column_name(), 0));
 				} elseif ($this->get_relation()) {
 					// If it is not the object selected within the combo, than we still can look for columns in the sheet, that
 					// contain selectors (UIDs) of that object. This means, we need to look for data columns showing relations
