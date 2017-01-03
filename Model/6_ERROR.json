@@ -876,6 +876,30 @@
             "ERROR_CODE": "6T91S9G",
             "ERROR_TEXT": "Invalid configuration of InputSelect widget",
             "LABEL": "exface.Core.6T91S9G"
+        },
+        {
+            "CREATED_ON": "2016-12-30 16:18:08",
+            "MODIFIED_ON": "2016-12-30 16:17:51",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e6ceab77637e5d93cce4b318306b9a",
+            "FULL_ERROR_CODE": "exface.Core.6TA2Y6A",
+            "APP": "0x31000000000000000000000000000000",
+            "ERROR_CODE": "6TA2Y6A",
+            "ERROR_TEXT": "Invalid chart axis configuration",
+            "LABEL": "exface.Core.6TA2Y6A"
+        },
+        {
+            "CREATED_ON": "2017-01-03 05:58:15",
+            "MODIFIED_ON": "2017-01-03 05:58:15",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e6d17982a350ca93cce4b318306b9a",
+            "FULL_ERROR_CODE": "exface.Core.6TBX1V2",
+            "APP": "0x31000000000000000000000000000000",
+            "ERROR_CODE": "6TBX1V2",
+            "ERROR_TEXT": "Cannot rebase expression",
+            "LABEL": "exface.Core.6TBX1V2"
         }
     ],
     "totals_rows": [],

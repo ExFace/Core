@@ -15,13 +15,13 @@ Interface UxonExceptionInterface {
 	
 	/**
 	 * 
-	 * @return UxonInterface
+	 * @return UxonObject
 	 */
 	public function get_uxon();
 	
 	/**
 	 * 
-	 * @param UxonInterface $sheet
+	 * @param UxonInterface $uxon
 	 * @return UxonExceptionInterface
 	 */
 	public function set_uxon(UxonObject $uxon);

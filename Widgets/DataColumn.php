@@ -9,6 +9,7 @@ use exface\Core\CommonLogic\Model\Expression;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Widgets\iShowDataColumn;
+use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 
 class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleAttribute, iShowText {
 	private $attribute_alias = null;
@@ -136,9 +137,10 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
 	}
 	
 	function get_attribute(){
-		if ($attr = $this->get_meta_object()->get_attribute($this->get_attribute_alias())) {
+		try {
+			$attr = $this->get_meta_object()->get_attribute($this->get_attribute_alias());
 			return $attr;
-		} else {
+		} catch (MetaAttributeNotFoundError $e) {
 			return false;
 		}
 	}
@@ -202,11 +204,14 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
 	 */
 	public function get_caption(){
 		if (!parent::get_caption()){
-			if (!$attr = $this->get_attribute()){
+			try {
+				$attr = $this->get_attribute();
+			} catch (MetaAttributeNotFoundError $e){
 				if ($this->get_expression()->is_formula()){
 					$attr = $this->get_meta_object()->get_attribute($this->get_expression()->get_required_attributes()[0]);
 				}
 			}
+				
 			if ($attr){
 				$this->set_caption($attr->get_name());
 			}

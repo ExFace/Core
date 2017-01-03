@@ -5,6 +5,7 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
+use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 
 /**
  * Widget to display diagrams like planograms, entity-relationships, organigrams, etc.
@@ -164,8 +165,11 @@ class Diagram extends Container implements iSupportLazyLoading {
 		$data_sheet = parent::prepare_data_sheet_to_prefill($data_sheet);
 		if ($data_sheet->get_meta_object()->is($this->get_meta_object())){
 			
-			if ($attr = $this->get_meta_object()->get_attribute($this->get_background_image_attribute_alias())){
+			try {
+				$attr = $this->get_meta_object()->get_attribute($this->get_background_image_attribute_alias());
 				$data_sheet->get_columns()->add_from_attribute($attr);
+			} catch (MetaAttributeNotFoundError $e){
+				// Nothing to prefill if it's not an attribute
 			}
 		}
 		return $data_sheet;

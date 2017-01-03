@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Widgets;
 use exface\Core\Interfaces\Widgets\iTakeInput;
+use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 
 class Input extends Text implements iTakeInput {
 	private $required = null;
@@ -48,10 +49,14 @@ class Input extends Text implements iTakeInput {
 	public function is_disabled(){
 		$disabled = parent::is_disabled();
 		if (is_null($disabled)){
-			if ($this->get_attribute() && !$this->get_attribute()->is_editable()){
-				$disabled = true;
-			} else {
-				$disabled = false;
+			try {
+				if (!$this->get_attribute()->is_editable()){
+					$disabled = true;
+				} else {
+					$disabled = false;
+				}
+			} catch (MetaAttributeNotFoundError $e){
+				// Ignore invalid attributes
 			}
 		}
 		return $disabled;

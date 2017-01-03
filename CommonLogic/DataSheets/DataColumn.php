@@ -13,6 +13,7 @@ use exface\Core\Factories\DataColumnTotalsFactory;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\DataSheets\DataSheetDiffError;
 use exface\Core\Exceptions\DataSheets\DataSheetRuntimeError;
+use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 
 class DataColumn implements DataColumnInterface {
 	private $name = null;
@@ -73,8 +74,11 @@ class DataColumn implements DataColumnInterface {
 		if ($expression->is_meta_attribute()){
 			$attribute_alias = $expression->get_required_attributes()[0];
 			$this->set_attribute_alias($attribute_alias);
-			if ($attr = $this->get_data_sheet()->get_meta_object()->get_attribute($attribute_alias)){
+			try {
+				$attr = $this->get_data_sheet()->get_meta_object()->get_attribute($attribute_alias);
 				$this->set_data_type($attr->get_data_type());
+			} catch (MetaAttributeNotFoundError $e){
+				// ignore expressions with invalid attribute aliases
 			}
 		}
 	}

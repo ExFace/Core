@@ -11,7 +11,7 @@ use exface\Core\Factories\EntityListFactory;
 use exface\Core\Interfaces\ExfaceClassInterface;
 use exface\Core\Interfaces\AliasInterface;
 use exface\Core\Exceptions\Model\MetaRelationNotFoundError;
-use exface\Core\Exceptions\UnexpectedValueException;
+use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 
 class Object implements ExfaceClassInterface, AliasInterface {
 	private $id;
@@ -98,9 +98,10 @@ class Object implements ExfaceClassInterface, AliasInterface {
 	 * 
 	 * @param string $alias
 	 * @param string $foreign_key_alias
-	 * @return relation|boolean
+	 * @throws MetaRelationNotFoundError if no matching relation found
+	 * @return Relation
 	 */
-	function get_relation($alias, $foreign_key_alias = ''){
+	public function get_relation($alias, $foreign_key_alias = ''){
 		
 		if ($rel = RelationPath::relation_path_parse($alias, 1)){
 			$relation = $this->get_related_object($rel[0])->get_relation($rel[1]);
@@ -113,12 +114,12 @@ class Object implements ExfaceClassInterface, AliasInterface {
 			// Check, if a foreign key is specified in the alias (e.g. ADDRESS->COMPANY[SHIPPING_ADDRESS])
 			// If so, extract it and call get_relation() again using the separated alias and foreign_key_alias
 			if ($start = strpos($alias, '[')){
-				if (!$end = strpos($alias, ']')) throw new UnexpectedValueException('Missing "]" in relation alias "' . $alias . '"', '6T91HJK');
+				if (!$end = strpos($alias, ']')) throw new MetaRelationNotFoundError($this, 'Missing "]" in relation alias "' . $alias . '"', '6T91HJK');
 				$foreign_key_alias = substr($alias, $start+1, $end-$start-1);
 				$alias = substr($alias, 0, $start);
 				return $this->get_relation($alias, $foreign_key_alias);
 			} else {
-				return false; 
+				throw new MetaRelationNotFoundError($this, 'Relation "' . $alias . ($foreign_key_alias ? '[' . $foreign_key_alias . ']' : '') . '" not found for object "' . $this->get_alias_with_namespace() . '"!');
 			}
 		}
 		
@@ -146,7 +147,24 @@ class Object implements ExfaceClassInterface, AliasInterface {
 			}
 			return $first_rel;
 		}
-		return false;
+		throw new MetaRelationNotFoundError($this, 'Relation "' . $alias . ($foreign_key_alias ? '[' . $foreign_key_alias . ']' : '') . '" not found for object "' . $this->get_alias_with_namespace() . '"!');
+	}
+	
+	/**
+	 * Returns TRUE if the object has a relation matching the given alias and FALSE otherwise. The alias may include a relation path
+	 * @see get_relation()
+	 * 
+	 * @param string $alias
+	 * @param string $foreign_key_alias
+	 * @return boolean
+	 */
+	public function has_relation($alias, $foreign_key_alias = ''){
+		try {
+			$this->get_relation($alias, $foreign_key_alias);
+		} catch (MetaRelationNotFoundError $e){
+			return false;
+		}
+		return true;
 	}
 	
 	/**
@@ -161,17 +179,21 @@ class Object implements ExfaceClassInterface, AliasInterface {
 	 * Returns an attribute matching the given attribute alias. Supports aliases with relations (e.g. CUSTOMER__CUSTOMER_GROUP__LABEL). 
 	 * If an attribute of a related object is requested, it will have a non-empty relation path holding all relations needed to reach 
 	 * the related object (e.g. CUSTOMER__CUSTOMER_GROUP for CUSTOMER__CUSTOMER_GROUP__NAME): @see Attribute::get_relation_path()
-	 * @param string attribute alias
+	 * 
+	 * @param string $alias
+	 * @throws MetaAttributeNotFoundError if no matching attribute could be found
 	 * @return Attribute
 	 */
-	function get_attribute($alias){
+	public function get_attribute($alias){
 		// First of all check, if it is a direct attribute. This is the simplest case and the fastets one too
-		if ($this->get_attributes()->get($alias)){
-			return $this->get_attributes()->get($alias);
+		if ($attr = $this->get_attributes()->get($alias)){
+			return $attr;
 		}
 		
-		// Return false if the $alias starts with = and thus is a formula and not an alias!
-		if (substr($alias, 0, 1) == '=') return false;
+		// Check if the $alias starts with = and thus is a formula and not an alias!
+		if (substr($alias, 0, 1) == '='){ 
+			throw new MetaAttributeNotFoundError($this, 'Attribute aliases cannot start with "=" ("' . $alias . '")! The "=" is reserved for formulas!');
+		}
 		
 		// check for aggregate functions and remove them
 		if ($aggr = DataAggregator::get_aggregate_function_from_alias($alias)){
@@ -185,28 +207,48 @@ class Object implements ExfaceClassInterface, AliasInterface {
 		// If the attribute has a relation path, delegate to the next related object and so on for every relation in the
 		// path. The last object in the relation path must deal with the actual attribute then.
 		if ($rel_parts = RelationPath::relation_path_parse($alias, 1)){
-			if ($rel_attr = $this->get_related_object($rel_parts[0])->get_attribute($rel_parts[1])){
+			try {
+				$rel_attr = $this->get_related_object($rel_parts[0])->get_attribute($rel_parts[1]);
 				$attr = $rel_attr->copy();
-				if (!$rel = $this->get_relation($rel_parts[0])){
-					throw new MetaRelationNotFoundError('Relation "' . $alias . '" not found for object "' . $this->get_alias_with_namespace() . '"!');
-				}
+				$rel = $this->get_relation($rel_parts[0]);
 				$attr->get_relation_path()->prepend_relation($rel);
 				return $attr;
-			} 
+			} catch (MetaRelationNotFoundError $e){
+				throw new MetaAttributeNotFoundError($this, 'Attribute "' . $alias . '" not found for object "' . $this->get_alias_with_namespace() . '"!', null, $e);
+			}
 		}
 		
 		// At this point only two possibilities are left: it's either a reverse relation or an error
-		if ($rev_rel = $this->get_relation($alias)){
+		if ($this->has_relation($alias)){
+			$rev_rel = $this->get_relation($alias);
 			if ($rev_rel->get_type() == '1n'){
-				if ($rel_attr = $rev_rel->get_related_object()->get_attribute($rev_rel->get_foreign_key_alias())){
+				try {
+					$rel_attr = $rev_rel->get_related_object()->get_attribute($rev_rel->get_foreign_key_alias());
 					$attr = $rel_attr->copy();
 					$attr->get_relation_path()->prepend_relation($rev_rel);
 					return $attr;
+				} catch (MetaAttributeNotFoundError $e){
+					throw new MetaAttributeNotFoundError($this, 'Attribute "' . $alias . '" not found for object "' . $this->get_alias_with_namespace() . '"!', null, $e);
 				}
 			}
 		}
 		
-		return false;
+		throw new MetaAttributeNotFoundError($this, 'Attribute "' . $alias . '" not found for object "' . $this->get_alias_with_namespace() . '"!');
+	}
+	
+	/**
+	 * Returns TRUE if the object has an attribute matching the given alias and FALSE otherwise. The alias may contain a relation path.
+	 * 
+	 * @param string $alias
+	 * @return boolean
+	 */
+	public function has_attribute($alias){
+		try {
+			$this->get_attribute($alias);
+		} catch (MetaAttributeNotFoundError $e){
+			return false;
+		}
+		return true;
 	}
 	
 	/**
@@ -237,7 +279,8 @@ class Object implements ExfaceClassInterface, AliasInterface {
 	function add_relation(Relation $relation){
 		// If there already is a relation with this alias, add another one, making it an array of relations
 		// Make sure, this only happens to reverse relation!!! Direct relation MUST have different aliases!
-		if ($relation->is_reverse_relation() && $duplicate = $this->get_relation($relation->get_alias())){
+		if ($relation->is_reverse_relation() && $this->has_relation($relation->get_alias())){
+			$duplicate = $this->get_relation($relation->get_alias());
 			// Create an array for the alias or just add the relation to the array if there already is one
 			if (is_array($duplicate)){
 				$this->relations[$relation->get_alias()][] = $relation;
@@ -418,9 +461,12 @@ class Object implements ExfaceClassInterface, AliasInterface {
 	
 	/**
 	 * Returns the meta attribute with the label of the object
-	 * @return \exface\Core\CommonLogic\Model\attribute
+	 * @return Attribute
 	 */
 	public function get_label_attribute(){
+		if (!$this->get_label_alias()){
+			return null;
+		}
 		return $this->get_attribute($this->get_label_alias());
 	}
 	
@@ -769,5 +815,6 @@ class Object implements ExfaceClassInterface, AliasInterface {
 	public function get_behaviors(){
 		return $this->behaviors;
 	}
+	
 }
 ?>

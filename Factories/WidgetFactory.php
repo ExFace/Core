@@ -74,8 +74,11 @@ abstract class WidgetFactory extends AbstractFactory {
 	
 			// Now, that we have an object, see if the widget should show an attribute. If so, get the default widget for the attribute
 			if ($uxon_object->attribute_alias){
-				$attr = $obj->get_attribute($uxon_object->attribute_alias);
-				if (!$attr) throw new MetaAttributeNotFoundError('Cannot create an editor widget for attribute "' . $uxon_object->attribute_alias . '" of object "' . $obj->get_alias() . '". Attribute not found!');
+				try {
+					$attr = $obj->get_attribute($uxon_object->attribute_alias);
+				} catch (MetaAttributeNotFoundError $e){
+					throw new MetaAttributeNotFoundError($obj, 'Cannot create an editor widget for attribute "' . $uxon_object->attribute_alias . '" of object "' . $obj->get_alias() . '". Attribute not found!', null, $e);
+				}
 				$uxon_object = $attr->get_default_widget_uxon()->extend($uxon_object);
 				$widget_type = $uxon_object->get_property('widget_type');
 			}

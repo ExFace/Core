@@ -46,9 +46,6 @@ class ShowObjectDialog extends ShowDialog {
 	
 	function create_widget_from_attribute($obj, $attribute_alias, $parent_widget){		
 		$attr = $obj->get_attribute($attribute_alias);
-		if (!$attr){
-			throw new MetaAttributeNotFoundError('Requested attribute "' . $attribute_alias . '" not found in object "' . $obj->get_alias() . '"');
-		}
 		$page = $this->get_called_on_ui_page();
 		$widget = WidgetFactory::create_from_uxon($page, $attr->get_default_widget_uxon(), $parent_widget);
 		$widget->set_attribute_alias($attribute_alias);

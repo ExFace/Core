@@ -88,13 +88,32 @@ trait ExceptionTrait {
 		return '';
 	}
 	
+	/**
+	 *
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\Exceptions\ExceptionInterface::get_alias()
+	 */
 	public function get_alias(){
 		return $this->alias;
 	}
 	
+	/**
+	 *
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\Exceptions\ExceptionInterface::set_alias()
+	 */
 	public function set_alias($alias){
 		$this->alias = $alias;
 		return $this;
+	}
+	
+	/**
+	 *
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\Exceptions\ExceptionInterface::get_status_code()
+	 */
+	public function get_status_code(){
+		return 500;
 	}
 }
 ?>
