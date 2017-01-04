@@ -91,6 +91,12 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren {
 	 * @see \exface\Core\Interfaces\WidgetInterface::import_uxon_object()
 	 */
 	function import_uxon_object(\stdClass $source){
+		// First look for an object alias. It must be assigned before the rest because many other properties depend on having the right object
+		if ($source->object_alias){
+			$this->set_meta_object($this->get_workbench()->model()->get_object($source->object_alias));
+		}
+		
+		// Now loop through the UXON and process all remaining properties
 		$vars = get_object_vars($source);
 		foreach ($vars as $var => $val){
 			if (method_exists($this, 'set_'.$var)){
@@ -340,7 +346,7 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren {
 			$this->id_specified = $value;
 			$this->get_page()->add_widget($this);
 			if ($old_id){
-				$this->get_page()->remove_widget($this->id_specified);
+				$this->get_page()->remove_widget_by_id($this->id_specified);
 			}
 		} catch (WidgetIdConflictError $e){
 			$this->id_specified = $old_id;
