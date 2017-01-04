@@ -53,8 +53,8 @@ class Tab extends Panel {
 		return $this;
 	}
 	
-	public function prefill(DataSheetInterface $data_sheet){
-		parent::prefill($data_sheet);
+	protected function do_prefill(DataSheetInterface $data_sheet){
+		parent::do_prefill($data_sheet);
 		if ($this->get_badge_attribute_alias()){
 			if ($this->get_meta_object_id() == $data_sheet->get_meta_object()->get_id()){
 				$this->set_badge_value($data_sheet->get_cell_value($this->get_badge_attribute_alias(), 0));

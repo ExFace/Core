@@ -122,8 +122,8 @@ class Text extends AbstractWidget implements iShowSingleAttribute, iHaveValue, i
 	 * Prefills the input with a value taken from the corresponding column of a given data sheet
 	 * @see \exface\Core\Widgets\AbstractWidget::prefill()
 	 */
-	public function prefill(\exface\Core\Interfaces\DataSheets\DataSheetInterface $data_sheet){
-		parent::prefill($data_sheet);
+	protected function do_prefill(\exface\Core\Interfaces\DataSheets\DataSheetInterface $data_sheet){
+		parent::do_prefill($data_sheet);
 		// Do not do anything, if the value is already set explicitly (e.g. a fixed value)
 		if ($this->get_value()){
 			return;

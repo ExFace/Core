@@ -52,7 +52,7 @@ class Panel extends Container implements iSupportLazyLoading, iHaveButtons, iHav
 	 * (non-PHPdoc)
 	 * @see \exface\Core\Interfaces\Widgets\iHaveButtons::add_button()
 	 */
-	public function add_button($button_widget){
+	public function add_button(Button $button_widget){
 		$button_widget->set_parent($this);
 		$button_widget->set_meta_object_id($this->get_meta_object()->get_id());
 		

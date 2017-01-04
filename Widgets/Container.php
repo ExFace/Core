@@ -22,8 +22,8 @@ use exface\Core\Interfaces\Widgets\iFillEntireContainer;
 class Container extends AbstractWidget implements iContainOtherWidgets {
 	private $widgets = array();
 	
-	public function prefill (\exface\Core\Interfaces\DataSheets\DataSheetInterface $data_sheet){
-		$result = parent::prefill($data_sheet);
+	protected function do_prefill(\exface\Core\Interfaces\DataSheets\DataSheetInterface $data_sheet){
+		$result = parent::do_prefill($data_sheet);
 		foreach ($this->get_children() as $widget){
 			$widget->prefill($data_sheet);
 		}

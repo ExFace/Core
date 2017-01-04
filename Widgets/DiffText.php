@@ -51,8 +51,8 @@ class DiffText extends AbstractWidget {
 		return $this;
 	}
 	
-	public function prefill(DataSheetInterface $data_sheet){
-		parent::prefill($data_sheet);
+	protected function do_prefill(DataSheetInterface $data_sheet){
+		parent::do_prefill($data_sheet);
 		
 		// Do not do anything, if the values are already set explicitly (e.g. a fixed value)
 		if ($this->get_left_value() && $this->get_right_value()){

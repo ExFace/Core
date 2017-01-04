@@ -403,9 +403,9 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveButtons, iHaveT
 	 * 
 	 * @see \exface\Core\Widgets\Data::prefill()
 	 */
-	public function prefill(DataSheetInterface $data_sheet){
+	protected function do_prefill(DataSheetInterface $data_sheet){
 		if ($this->get_data_widget_link()){
-			return parent::prefill($data_sheet);
+			return parent::do_prefill($data_sheet);
 		} else {
 			return $this->get_data()->prefill($data_sheet);
 		}

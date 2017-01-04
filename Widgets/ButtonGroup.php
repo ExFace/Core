@@ -107,8 +107,8 @@ class ButtonGroup extends AbstractWidget implements iHaveButtons, iHaveIcon {
 			if ($this->input_widget_id){
 				$this->input_widget = $this->get_ui()->get_widget($this->input_widget_id, $this->get_page_id());
 			} else {
-				$parent = $this->parent();
-				while (!($parent instanceof iHaveButtons) || ($parent instanceof ButtonGroup) || !is_null($parent)) {
+				$parent = $this->get_parent();
+				while ((!($parent instanceof iHaveButtons) || ($parent instanceof ButtonGroup)) && !is_null($parent->get_parent())) {
 					$parent = $parent->get_parent();
 				}
 				$this->input_widget = $parent;

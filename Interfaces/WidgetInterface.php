@@ -22,7 +22,12 @@ interface WidgetInterface extends ExfaceClassInterface {
 	
 	/**
 	 * Prefills the widget with values of a data sheet
+	 * 
+	 * @triggers \exface\Core\Events\WidgetEvent [object_alias].Widget.Prefill.Before
+	 * @triggers \exface\Core\Events\WidgetEvent [object_alias].Widget.Prefill.After
+	 * 
 	 * @param \exface\Core\Interfaces\DataSheets\DataSheetInterface $data_sheet
+	 * @return void
 	 */
 	function prefill(DataSheetInterface $data_sheet);
 	
