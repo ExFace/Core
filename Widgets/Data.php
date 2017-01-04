@@ -396,6 +396,18 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 		$button_widget->set_meta_object_id($this->get_meta_object()->get_id());
 		$this->buttons[] = $button_widget;
 	}
+	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\Widgets\iHaveButtons::remove_button()
+	 */
+	public function remove_button(Button $button_widget){
+		if(($key = array_search($button_widget, $this->buttons)) !== false) {
+			unset($this->buttons[$key]);
+		}
+		return $this;
+	}
 
 	/**
 	 * Returns an array with all filter widgets.

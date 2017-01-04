@@ -5,10 +5,18 @@ use exface\Core\Widgets\Button;
 interface iHaveButtons extends iHaveChildren {
 	
 	/**
-	 * Adds a button to the table
+	 * Adds a button to the widget
+	 * 
 	 * @param \exface\Core\Widgets\Button $button_widget
 	 */
-	public function add_button(\exface\Core\Widgets\Button $button_widget);
+	public function add_button(Button $button_widget);
+	
+	/**
+	 * Removes a button from the widget
+	 * 
+	 * @param Button $button_widget
+	 */
+	public function remove_button(Button $button_widget);
 	
 	/**
 	 * Returs an array of button widgets

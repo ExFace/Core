@@ -78,6 +78,18 @@ class Panel extends Container implements iSupportLazyLoading, iHaveButtons, iHav
 	}
 	
 	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\Widgets\iHaveButtons::remove_button()
+	 */
+	public function remove_button(Button $button_widget){
+		if(($key = array_search($button_widget, $this->buttons)) !== false) {
+			unset($this->buttons[$key]);
+		}
+		return $this;
+	}
+	
+	/**
 	 * (non-PHPdoc)
 	 * @see \exface\Core\Interfaces\Widgets\iHaveIcon::get_icon_name()
 	 */

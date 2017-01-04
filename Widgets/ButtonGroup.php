@@ -52,6 +52,18 @@ class ButtonGroup extends AbstractWidget implements iHaveButtons, iHaveIcon {
 		$button_widget->set_input_widget($this->get_input_widget());
 		$button_widget->set_input_widget($this->get_input_widget());
 		$this->buttons[] = $button_widget;
+		return $this;
+	}
+	
+	/**
+	 * Removes a button from the group
+	 * @see \exface\Core\Interfaces\Widgets\iHaveButtons::remove_button()
+	 */
+	public function remove_button(Button $button_widget){
+		if(($key = array_search($button_widget, $this->buttons)) !== false) {
+			unset($this->buttons[$key]);
+		}
+		return $this;
 	}
 	
 	/**

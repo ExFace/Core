@@ -477,6 +477,18 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveButtons, iHaveT
 	/**
 	 * 
 	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\Widgets\iHaveButtons::remove_button()
+	 */
+	public function remove_button(Button $button_widget){
+		if(($key = array_search($button_widget, $this->buttons)) !== false) {
+			unset($this->buttons[$key]);
+		}
+		return $this;
+	}
+	
+	/**
+	 * 
+	 * {@inheritDoc}
 	 * @see \exface\Core\Interfaces\Widgets\iHaveButtons::has_buttons()
 	 */
 	public function has_buttons() {
