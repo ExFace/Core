@@ -22,8 +22,8 @@ trait DataQueryExceptionTrait {
 	
 	/**
 	 *
-	 * {@inheritDoc}
 	 * @see \exface\Core\Interfaces\Exceptions\DataConnectorExceptionInterface::get_query()
+	 * @return DataQueryInterface
 	 */
 	public function get_query(){
 		return $this->query;
