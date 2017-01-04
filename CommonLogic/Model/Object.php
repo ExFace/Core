@@ -364,7 +364,9 @@ class Object implements ExfaceClassInterface, AliasInterface {
 	public function find_relation(Object $related_object, $prefer_direct_relations = false){
 		$first_relation = false;
 		foreach ($this->get_relations() as $rel){
-			if ($related_object->is($rel->get_related_object())) {
+			// It is important to compare the ids only, because otherwise the related object will need to be loaded.
+			// Don't call get_related_object() here to loading half the model just to look through relations.
+			if ($related_object->is($rel->get_related_object_id())) {
 				if (!$rel->is_inherited() || !$prefer_direct_relations){
 					return $rel;
 				} else {
@@ -784,7 +786,7 @@ class Object implements ExfaceClassInterface, AliasInterface {
 			if ($object_or_alias_or_id->get_id() == $this->get_id()){
 				return true;
 			} 
-		} elseif (mb_stripos($object_or_alias_or_id, '0x')) {
+		} elseif (mb_stripos($object_or_alias_or_id, '0x') === 0) {
 			if ($this->get_id() == $object_or_alias_or_id){
 				return true;
 			} 
