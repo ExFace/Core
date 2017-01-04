@@ -2,10 +2,8 @@
 
 use exface\Core\CommonLogic\AbstractBehavior;
 use exface\Core\Events\WidgetEvent;
-use exface\Core\Widgets\Dialog;
-use exface\Core\Widgets\Container;
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\Exceptions\StateMachineConfigError;
+use exface\Core\Exceptions\Model\BehaviorError;
 
 /**
  * 
@@ -33,15 +31,19 @@ class StateMachineBehavior extends AbstractBehavior {
 	
 	/**
 	 * 
-	 * @return unknown
+	 * @return string
 	 */
 	public function get_state_attribute_alias() {
 		return $this->state_attribute_alias;
 	}
 	
 	/**
+	 * Defines the attribute alias, that holds the state id.
 	 * 
-	 * @param unknown $value
+	 * @uxon-property state_attribute_alias
+	 * @uxon-type string
+	 * 
+	 * @param string $value
 	 * @return \exface\Core\Behaviors\StateMachineBehavior
 	 */
 	public function set_state_attribute_alias($value) {
@@ -58,9 +60,15 @@ class StateMachineBehavior extends AbstractBehavior {
 	}
 	
 	/**
+	 * Defines the states of the state machine.
+	 * 
+	 * The states are set by a JSON object or array with state ids for keys and an objects describing the state for values.
+	 * 
+	 * @uxon-property states
+	 * @uxon-type object
 	 * 
 	 * @param unknown $value
-	 * @throws StateMachineConfigError
+	 * @throws BehaviorError
 	 * @return \exface\Core\Behaviors\StateMachineBehavior
 	 */
 	public function set_states($value) {
@@ -74,7 +82,7 @@ class StateMachineBehavior extends AbstractBehavior {
 				if (method_exists($smstate, 'set_'.$var)){
 					call_user_func(array($smstate, 'set_'.$var), $val);
 				} else {
-					throw new StateMachineConfigError('Property "' . $var . '" of StateMachineState cannot be set: setter function not found!');
+					throw new BehaviorError('Property "' . $var . '" of StateMachineState cannot be set: setter function not found!');
 				}
 			}
 			$this->smstates[$state] = $smstate;
