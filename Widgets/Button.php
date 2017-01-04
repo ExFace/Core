@@ -10,6 +10,7 @@ use exface\Core\Factories\WidgetLinkFactory;
 use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
+use exface\Core\Interfaces\Widgets\iHaveButtons;
 
 /**
  * A Button is the primary widget for triggering actions. 
@@ -129,7 +130,11 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iHaveC
 			if ($this->input_widget_id){
 				$this->input_widget = $this->get_ui()->get_widget($this->input_widget_id, $this->get_page_id());
 			} else {
-				$this->input_widget = $this->get_parent();
+				$parent = $this->parent();
+				while (!($parent instanceof iHaveButtons) || ($parent instanceof ButtonGroup) || !is_null($parent)) {
+					$parent = $parent->get_parent();
+				}
+				$this->input_widget = $parent;
 			}
 		}
 		return $this->input_widget;

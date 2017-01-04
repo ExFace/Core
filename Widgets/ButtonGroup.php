@@ -17,6 +17,7 @@ class ButtonGroup extends AbstractWidget implements iHaveButtons, iHaveIcon {
 	private $buttons =  array();
 	private $icon_name = null;
 	private $input_widget = null;
+	private $input_widget_id = null;
 	
 	/**
 	 * (non-PHPdoc)
@@ -103,10 +104,15 @@ class ButtonGroup extends AbstractWidget implements iHaveButtons, iHaveIcon {
 	 */
 	protected function get_input_widget(){
 		if (!$this->input_widget){
-			do {
-				$parent = $this->get_parent();
-			} while ($parent instanceof ButtonGroup);
-			$this->input_widget = $parent;
+			if ($this->input_widget_id){
+				$this->input_widget = $this->get_ui()->get_widget($this->input_widget_id, $this->get_page_id());
+			} else {
+				$parent = $this->parent();
+				while (!($parent instanceof iHaveButtons) || ($parent instanceof ButtonGroup) || !is_null($parent)) {
+					$parent = $parent->get_parent();
+				}
+				$this->input_widget = $parent;
+			}
 		}
 		return $this->input_widget;
 	}
@@ -120,5 +126,14 @@ class ButtonGroup extends AbstractWidget implements iHaveButtons, iHaveIcon {
 		if (count($this->buttons)) return true;
 		else return false;
 	}
+	
+	public function get_input_widget_id() {
+		return $this->input_widget_id;
+	}
+	
+	public function set_input_widget_id($value) {
+		$this->input_widget_id = $value;
+		return $this;
+	}  
 }
 ?>

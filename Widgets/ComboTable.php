@@ -179,7 +179,7 @@ class ComboTable extends InputCombo implements iHaveChildren {
 	 * Prefills a ComboTable with the value it represents and the corresponding text. 
 	 * @see \exface\Core\Widgets\Text::prefill()
 	 */
-	public function prefill(\exface\Core\Interfaces\DataSheets\DataSheetInterface $data_sheet, $relation_path_to_prefill_object=''){
+	protected function do_prefill(DataSheetInterface $data_sheet){
 		// Do not do anything, if the value is already set explicitly (e.g. a fixed value)
 		if ($this->get_value()){
 			return;

@@ -17,6 +17,7 @@ use exface\Core\Exceptions\Widgets\WidgetIdConflictError;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Exceptions\Widgets\WidgetPropertyUnknownError;
+use exface\Core\Factories\EventFactory;
 
 /**
  * Basic ExFace widget
@@ -112,7 +113,13 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren {
 	 * {@inheritDoc}
 	 * @see \exface\Core\Interfaces\WidgetInterface::prefill()
 	 */
-	function prefill(\exface\Core\Interfaces\DataSheets\DataSheetInterface $data_sheet){
+	public final function prefill(DataSheetInterface $data_sheet){
+		$this->get_workbench()->event_manager()->dispatch(EventFactory::create_widget_event($this, 'Prefill.Before'));
+		$this->do_prefill($data_sheet);
+		$this->get_workbench()->event_manager()->dispatch(EventFactory::create_widget_event($this, 'Prefill.After'));
+	}
+	
+	protected function do_prefill(DataSheetInterface $data_sheet){
 		$this->set_prefill_data($data_sheet);
 	}
 	

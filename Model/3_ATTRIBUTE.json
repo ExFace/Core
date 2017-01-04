@@ -2263,9 +2263,9 @@
         },
         {
             "CREATED_ON": "2016-04-25 13:20:02",
-            "MODIFIED_ON": "2016-04-25 13:20:53",
+            "MODIFIED_ON": "2016-12-19 09:07:32",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
-            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "",
             "UID": "0x11e60ad7619d5ab089840050568905af",
             "SORTABLEFLAG": "1",
             "FILTERABLEFLAG": "1",
@@ -2291,7 +2291,7 @@
             "DATA_ADDRESS_PROPS": "{}",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "DEFAULT_EDITOR_UXON": "{}"
+            "DEFAULT_EDITOR_UXON": "{\"height\":10}"
         },
         {
             "CREATED_ON": "2016-04-25 13:21:46",
