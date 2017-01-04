@@ -382,7 +382,18 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 	public function set_buttons(array $buttons_array) {
 		if (!is_array($buttons_array)) return false;
 		foreach ($buttons_array as $b){
-			$button = $this->get_page()->create_widget('DataButton', $this, UxonObject::from_anything($b));
+			// FIXME Separating DataButton from Button does not work with MenuButton and ButtonGroup. Not sure, what to do,
+			// because the DataButton can be bound to click events while the others can't - thus there is quite a differece.
+			// For now, setting the widget type for the button explicitly will allow the user to create non-DataButtons - thus
+			// loosing the possibility to use mouse events (which may even be okay, since MenuButtons do not trigger actions
+			// by themselves.
+			// $button = $this->get_page()->create_widget('DataButton', $this, UxonObject::from_anything($b));
+			$button_uxon = UxonObject::from_anything($b);
+			if (!$button_uxon->widget_type) {
+				$button = $this->get_page()->create_widget('DataButton', $this, $button_uxon);
+			} else {
+				$button = $this->get_page()->create_widget($button_uxon->widget_type, $this, $button_uxon);
+			}
 			$this->add_button($button);
 		}
 	}
