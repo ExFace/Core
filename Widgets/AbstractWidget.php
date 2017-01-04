@@ -93,7 +93,7 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren {
 	function import_uxon_object(\stdClass $source){
 		// First look for an object alias. It must be assigned before the rest because many other properties depend on having the right object
 		if ($source->object_alias){
-			$this->set_meta_object($this->get_workbench()->model()->get_object($source->object_alias));
+			$this->set_object_alias($source->object_alias);
 		}
 		
 		// Now loop through the UXON and process all remaining properties
