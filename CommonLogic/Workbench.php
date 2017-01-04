@@ -54,7 +54,7 @@ class Workbench {
 		// Start the error handler
 		$dbg = new Debugger();
 		$this->set_debugger($dbg);
-		if ($this->get_config()->get_option('PRETTIFY_ERRORS')){
+		if ($this->get_config()->get_option('DEBUG.PRETTIFY_ERRORS')){
 			$dbg->set_prettify_errors(true);
 		}
 		

@@ -21,4 +21,11 @@ interface DebuggerInterface {
 	 */
 	public function set_prettify_errors($value);
 	
+	/**
+	 * Returns a human-readable string dump of the given variable (similar to var_dump(), but returning a string)
+	 * @param mixed $anything
+	 * @return string
+	 */
+	public function print_variable($anything);
+	
 }

@@ -76,6 +76,16 @@ trait ExceptionTrait {
 		$error_widget->set_value($page->get_workbench()->get_debugger()->print_exception($this));
 		$debug_message->add_tab($error_tab);
 		
+		// Add a tab with the request printout
+		if ($page->get_workbench()->get_config()->get_option('DEBUG.SHOW_REQUEST_DUMP')){
+			$error_tab = $debug_message->create_tab();
+			$error_tab->set_caption($page->get_workbench()->get_core_app()->get_translator()->translate('ERROR.REQUEST_CAPTION'));
+			$error_widget = WidgetFactory::create($page, 'Html');
+			$error_tab->add_widget($error_widget);
+			$error_widget->set_value('<pre>' . $page->get_workbench()->get_debugger()->print_variable($_REQUEST) . '</pre>');
+			$debug_message->add_tab($error_tab);
+		}
+		
 		return $debug_message;
 	}
 	

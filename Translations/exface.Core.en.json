@@ -53,6 +53,7 @@
 	"WIDGET.SELECT_NONE": "-",
 	
 	"ERROR.CAPTION": "Error",
+	"ERROR.REQUEST_CAPTION": "Request",
 	"WARNING.CAPTION": "Warning"
 	
 }

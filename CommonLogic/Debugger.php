@@ -5,11 +5,19 @@ use Symfony\Component\Debug\Debug;
 use Symfony\Component\Debug\ExceptionHandler;
 use Symfony\Component\Debug\Exception\FlattenException;
 use Symfony\Component\Debug\ErrorHandler;
+use Symfony\Component\VarDumper\VarDumper;
+use Symfony\Component\VarDumper\Dumper\HtmlDumper;
+use Symfony\Component\VarDumper\Cloner\VarCloner;
 
 class Debugger implements DebuggerInterface {
 	
 	private $prettify_errors = false;
 	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\DebuggerInterface::print_exception()
+	 */
 	public function print_exception(\Throwable $exception, $use_html = true){
 		$handler = new ExceptionHandler();
 		$flattened_exception = FlattenException::create($exception);
@@ -17,10 +25,20 @@ class Debugger implements DebuggerInterface {
 		return $output;
 	}
 	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\DebuggerInterface::get_prettify_errors()
+	 */
 	public function get_prettify_errors() {
 		return $this->prettify_errors;
 	}
 	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\DebuggerInterface::set_prettify_errors()
+	 */
 	public function set_prettify_errors($value) {
 		$this->prettify_errors = $value ? true : false;
 		if ($this->prettify_errors){
@@ -33,6 +51,15 @@ class Debugger implements DebuggerInterface {
 		//Debug::enable(E_ALL & ~E_NOTICE);
 		ExceptionHandler::register();
 		ErrorHandler::register();
+	}
+	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\DebuggerInterface::print_variable()
+	 */
+	public function print_variable($anything){
+		return print_r($anything, true);
 	}
 	  
 }
