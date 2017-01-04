@@ -7,6 +7,9 @@ use exface\Core\Factories\AttributeListFactory;
  * 
  * @author Andrej Kabachnik
  * 
+ * @method Attribute[] get_all()
+ * @method Attribute[] getIterator()
+ * 
  */
 class AttributeList extends EntityList {
 	
@@ -38,13 +41,6 @@ class AttributeList extends EntityList {
 	public function set_meta_object(Object &$meta_object) {
 		return $this->set_parent($meta_object);
 	}	
-	
-	/**
-	 * @return Attribute[]
-	 */
-	public function get_all(){
-		return parent::get_all();
-	}
 	
 	/**
 	 * Returns the attribute matching the given alias or FALSE if no such attribute is found
