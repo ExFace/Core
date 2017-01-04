@@ -711,6 +711,7 @@ class Object implements ExfaceClassInterface, AliasInterface {
 	 * @return Object
 	 */
 	public function set_default_editor_uxon(UxonObject $value){
+		$value->set_property('object_alias', $this->get_alias_with_namespace());
 		$this->default_editor_uxon = $value;
 		return $this;
 	}
