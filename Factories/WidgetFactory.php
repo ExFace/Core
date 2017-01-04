@@ -82,7 +82,6 @@ abstract class WidgetFactory extends AbstractFactory {
 				$uxon_object = $attr->get_default_widget_uxon()->extend($uxon_object);
 				$widget_type = $uxon_object->get_property('widget_type');
 			}
-			// TODO get widget type from meta object (as soon as the new fields default_display_widget and default_editor_widget are ready)
 		}
 		$widget = static::create($page, $widget_type, $parent_widget);
 		if ($id = $uxon_object->get_property('id')){
