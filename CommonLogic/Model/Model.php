@@ -124,7 +124,11 @@ class Model {
 	 * @return string
 	 */
 	public function get_object_alias_from_qualified_alias($qualified_alias_with_app){
-		return substr($qualified_alias_with_app, strrpos($qualified_alias_with_app, NameResolver::NAMESPACE_SEPARATOR)+1);
+		if ($sep = strrpos($qualified_alias_with_app, NameResolver::NAMESPACE_SEPARATOR)){
+			return substr($qualified_alias_with_app, $sep+1);
+		} else {
+			return $qualified_alias_with_app;
+		}
 	}
 	
 	/**

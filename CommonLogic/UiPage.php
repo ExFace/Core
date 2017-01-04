@@ -48,6 +48,15 @@ class UiPage implements UiPageInterface {
 	
 	/**
 	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\UiPageInterface::remove_widget()
+	 */
+	public function remove_widget(WidgetInterface $widget){
+		return $this->remove_widget_by_id($widget->get_id());
+	}
+	
+	/**
+	 * 
 	 * @return \exface\Core\Interfaces\WidgetInterface
 	 */
 	public function get_widget_root(){
@@ -169,7 +178,7 @@ class UiPage implements UiPageInterface {
 	 * @param string $widget_id
 	 * @return \exface\Core\CommonLogic\UiPage
 	 */
-	public function remove_widget($widget_id){
+	public function remove_widget_by_id($widget_id){
 		unset($this->widgets[$widget_id]);
 		return $this;
 	}

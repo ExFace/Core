@@ -19,6 +19,20 @@ class UiPageFactory extends AbstractFactory {
 	}
 	
 	/**
+	 * Creates an empty page with a simple root container without any meta object
+	 * 
+	 * @param UiManagerInterface $ui
+	 * @param number $page_id
+	 * @return \exface\Core\CommonLogic\UiPage
+	 */
+	public static function create_empty(UiManagerInterface &$ui, $page_id = 0){
+		$page = static::create($ui, $page_id);
+		$root_container = WidgetFactory::create($page, 'Container');
+		$page->add_widget($root_container);
+		return $page;
+	}
+	
+	/**
 	 * 
 	 * @param TemplateInterface $template
 	 * @param string $page_id

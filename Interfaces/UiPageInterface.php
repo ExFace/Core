@@ -43,7 +43,15 @@ interface UiPageInterface extends ExfaceClassInterface {
 	 * @param string $widget_id
 	 * @return \exface\Core\CommonLogic\UiPage
 	 */
-	public function remove_widget($widget_id);
+	public function remove_widget_by_id($widget_id);
+	
+	/**
+	 * Removes a widget from the page
+	 *
+	 * @param WidgetInterface $widget
+	 * @return UiPageInterface
+	 */
+	public function remove_widget(WidgetInterface $widget);
 	
 	/**
 	 * @return UiManagerInterface

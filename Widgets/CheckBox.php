@@ -5,7 +5,7 @@ class CheckBox extends Input {
 	public function transform_into_select(){
 		$parent = $this->get_parent();
 		$select = $this->get_page()->create_widget('InputSelect', $parent);
-		$this->get_page()->remove_widget($this->get_id());
+		$this->get_page()->remove_widget($this);
 		$select->set_id($this->get_id());
 		$select->set_attribute_alias($this->get_attribute_alias());
 		$select->set_value($this->get_value());
