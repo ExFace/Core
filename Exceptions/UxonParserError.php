@@ -15,6 +15,13 @@ use exface\Core\Interfaces\Exceptions\UxonExceptionInterface;
 class UxonParserError extends RuntimeException implements UxonExceptionInterface {
 	private $uxon = null;
 	
+	/**
+	 * 
+	 * @param UxonObject $uxon
+	 * @param string $message
+	 * @param string $alias
+	 * @param \Throwable $previous
+	 */
 	public function __construct (UxonObject $uxon, $message, $alias = null, $previous = null) {
 		parent::__construct($message, null, $previous);
 		$this->set_alias($alias);

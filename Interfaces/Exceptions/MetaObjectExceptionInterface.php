@@ -11,7 +11,7 @@ Interface MetaObjectExceptionInterface extends ExceptionInterface {
 	 * @param string $code
 	 * @param \Throwable $previous
 	 */
-	public function __construct (Object $object, $message, $code, $previous = null);
+	public function __construct (Object $object, $message, $code = null, $previous = null);
 	
 	/**
 	 * 

@@ -15,7 +15,7 @@ class DataSheetLogicError extends LogicException implements DataSheetExceptionIn
 	 * @param DataSheetInterface $data_sheet
 	 * @param string $message
 	 * @param string $alias
-	 * @param string $previous
+	 * @param \Throwable $previous
 	 */
 	public function __construct (DataSheetInterface $data_sheet, $message, $alias = null, $previous = null) {
 		parent::__construct($message, null, $previous);

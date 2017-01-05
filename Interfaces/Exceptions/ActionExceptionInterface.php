@@ -12,7 +12,7 @@ Interface ActionExceptionInterface {
 	 * @param string $code
 	 * @param \Throwable $previous
 	 */
-	public function __construct (ActionInterface $action, $message, $code, $previous = null);
+	public function __construct (ActionInterface $action, $message, $code = null, $previous = null);
 	
 	/**
 	 * 

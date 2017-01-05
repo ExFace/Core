@@ -11,7 +11,7 @@ Interface UxonExceptionInterface {
 	 * @param string $code
 	 * @param \Throwable $previous
 	 */
-	public function __construct (UxonObject $uxon, $message, $code, $previous = null);
+	public function __construct (UxonObject $uxon, $message, $code = null, $previous = null);
 	
 	/**
 	 * 
