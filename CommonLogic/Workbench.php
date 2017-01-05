@@ -35,6 +35,10 @@ class Workbench {
 	private $request_params = array();
 	
 	function __construct(){
+		if (substr(phpversion(), 0, 1) == 5){
+			require_once 'Php5Compatibility.php';
+		}
+		
 		// Determine the absolute path to the vendor folder
 		$this->vendor_dir_path = dirname(__FILE__) . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..';
 		

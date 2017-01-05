@@ -9,7 +9,7 @@ use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;
  * @author Andrej Kabachnik
  *
  */
-class DomainException extends \DomainException implements ErrorExceptionInterface {
+class DomainException extends \DomainException implements ErrorExceptionInterface, \Throwable {
 	
 	use ExceptionTrait;
 	

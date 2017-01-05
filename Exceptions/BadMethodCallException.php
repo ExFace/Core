@@ -9,7 +9,7 @@ use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;
  * @author Andrej Kabachnik
  *
  */
-class BadMethodCallException extends \BadMethodCallException implements ErrorExceptionInterface {
+class BadMethodCallException extends \BadMethodCallException implements ErrorExceptionInterface, \Throwable {
 	
 	use ExceptionTrait;
 	

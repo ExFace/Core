@@ -9,7 +9,7 @@ use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;
  * @author Andrej Kabachnik
  *
  */
-class InvalidArgumentException extends \InvalidArgumentException implements ErrorExceptionInterface {
+class InvalidArgumentException extends \InvalidArgumentException implements ErrorExceptionInterface, \Throwable {
 	
 	use ExceptionTrait;
 	

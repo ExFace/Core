@@ -9,7 +9,7 @@ use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;
  * @author Andrej Kabachnik
  *
  */
-class LengthException extends \LengthException implements ErrorExceptionInterface {
+class LengthException extends \LengthException implements ErrorExceptionInterface, \Throwable {
 	
 	use ExceptionTrait;
 	

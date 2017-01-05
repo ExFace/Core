@@ -11,7 +11,7 @@ use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;
  * @author Andrej Kabachnik
  *
  */
-class UnexpectedValueException extends \UnexpectedValueException implements ErrorExceptionInterface {
+class UnexpectedValueException extends \UnexpectedValueException implements ErrorExceptionInterface, \Throwable {
 	
 	use ExceptionTrait;
 	

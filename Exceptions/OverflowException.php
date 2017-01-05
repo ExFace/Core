@@ -9,7 +9,7 @@ use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;
  * @author Andrej Kabachnik
  *
  */
-class OverflowException extends \OverflowException implements ErrorExceptionInterface {
+class OverflowException extends \OverflowException implements ErrorExceptionInterface, \Throwable {
 	
 	use ExceptionTrait;
 	

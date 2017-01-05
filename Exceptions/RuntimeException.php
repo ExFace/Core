@@ -9,7 +9,7 @@ use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;
  * @author Andrej Kabachnik
  *
  */
-class RuntimeException extends \RuntimeException implements ErrorExceptionInterface {
+class RuntimeException extends \RuntimeException implements ErrorExceptionInterface, \Throwable {
 	
 	use ExceptionTrait;
 	

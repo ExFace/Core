@@ -9,7 +9,7 @@ use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;
  * @author Andrej Kabachnik
  *
  */
-class OutOfBoundsException extends \OutOfBoundsException implements ErrorExceptionInterface {
+class OutOfBoundsException extends \OutOfBoundsException implements ErrorExceptionInterface, \Throwable {
 	
 	use ExceptionTrait;
 	

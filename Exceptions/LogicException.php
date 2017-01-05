@@ -9,7 +9,7 @@ use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;
  * @author Andrej Kabachnik
  *
  */
-class LogicException extends \LogicException implements ErrorExceptionInterface {
+class LogicException extends \LogicException implements ErrorExceptionInterface, \Throwable {
 	
 	use ExceptionTrait;
 	

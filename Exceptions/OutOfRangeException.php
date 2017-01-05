@@ -9,7 +9,7 @@ use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;
  * @author Andrej Kabachnik
  *
  */
-class OutOfRangeException extends \OutOfRangeException implements ErrorExceptionInterface {
+class OutOfRangeException extends \OutOfRangeException implements ErrorExceptionInterface, \Throwable {
 	
 	use ExceptionTrait;
 	

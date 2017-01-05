@@ -9,7 +9,7 @@ use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;
  * @author Andrej Kabachnik
  *
  */
-class UnderflowException extends \UnderflowException implements ErrorExceptionInterface {
+class UnderflowException extends \UnderflowException implements ErrorExceptionInterface, \Throwable {
 	
 	use ExceptionTrait;
 	

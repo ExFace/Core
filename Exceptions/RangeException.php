@@ -10,7 +10,7 @@ use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;
  * @author Andrej Kabachik
  *
  */
-class RangeException extends \RangeException implements ErrorExceptionInterface {
+class RangeException extends \RangeException implements ErrorExceptionInterface, \Throwable {
 	
 	use ExceptionTrait;
 	
