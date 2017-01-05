@@ -7,9 +7,10 @@ use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 
 /**
- * A ComboTable is an InputCombo, which uses a DataTable to show the autosuggest values. Thus, the user can see more
- * information about every suggested object. The ComboTable is very often used with relations, where the related object may
- * have many more data, then merely it's id (which is the value of the relation attribute).
+ * A ComboTable is similar to InputCombo, but it uses a DataTable to show the autosuggest values. 
+ * 
+ * Thus, the user can see more information about every suggested object. The ComboTable is very often used with relations, 
+ * where the related object may have many more data, then merely it's id (which is the value of the relation attribute).
  * 
  * The DataTable for autosuggests can either be genreated automatically based on the meta object, or specified by the user via
  * UXON or even extended from any other ready-made DataTable!
@@ -18,36 +19,15 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
  * showing more data about a selectable object in the autosuggest. Mobile templates might use cards like in Googles material design,
  * for example.
  * 
- * @author PATRIOT
+ * @author Andrej Kabachnik
+ * 
  */
 class ComboTable extends InputCombo implements iHaveChildren { 	
-	/**
-	 * @uxon text_column_id Id of the data column to be used as the displayed value (text) of the combo. 
-	 * 
-	 * If not set, text_attribute_alias will be used.
-	 *  
-	 * @var string
-	 */
+	
 	private $text_column_id = null;
-	/**
-	 * @uxon value_column_id Id of the data column to be used as the internal value of the combo. If not set, value_attribute_alias will be used.
-	 * @var string
-	 */
 	private $value_column_id = null;
-	/**
-	 * @uxon table 
-	 * @var DataTable
-	 */
 	private $data_table = null;
 	private $paginate = true;
-	/**
-	 * @uxon table_object_alias Alias of the meta object to be displayed in the table of the combo. 
-	 * 
-	 * By default it is the object of the ComboTable itself, but another object can be specified as well. This way combo tables
-	 * can be easily used to select values from attributes of unrelated objects.
-	 * 
-	 * @var string
-	 */
 	private $table_object_alias = null;
 	private $table_object = null;
 	
@@ -141,11 +121,21 @@ class ComboTable extends InputCombo implements iHaveChildren {
 		}
 		return $this;
 	}
-	 
+	
 	public function get_text_column_id() { 	
 		return $this->text_column_id;
 	}
-	 
+	
+	/**
+	 * Makes the displayed value (text) shown in the Combo come from a specific column of the data widget
+	 *
+	 * If not set, text_attribute_alias will be used, just like in a regular InputCombo
+	 *
+	 * @uxon-property text_column_id
+	 * @uxon-type string
+	 *
+	 * @var string
+	 */
 	public function set_text_column_id($value) {
 		$this->text_column_id = $value;
 	}
@@ -162,6 +152,16 @@ class ComboTable extends InputCombo implements iHaveChildren {
 		return $this->value_column_id;
 	}
 	
+	/**
+	 * Makes the internal value (mostyl invisible) of the Combo come from a specific column of the data widget
+	 *
+	 * If not set, value_attribute_alias will be used, just like in a regular InputCombo
+	 *
+	 * @uxon-property value_column_id
+	 * @uxon-type string
+	 *
+	 * @var string
+	 */
 	public function set_value_column_id($value) {
 		$this->value_column_id = $value;
 		return $this;
@@ -284,6 +284,15 @@ class ComboTable extends InputCombo implements iHaveChildren {
 		return $this->paginate;
 	}
 	
+	/**
+	 * Set to FALSE to disable pagination in the autosuggest-table. Defaults to TRUE.
+	 * 
+	 * @uxon-property paginate
+	 * @uxon-type boolean
+	 * 
+	 * @param boolean $value
+	 * @return ComboTable
+	 */
 	public function set_paginate($value) {
 		$this->paginate = $value;
 		return $this;
@@ -300,6 +309,17 @@ class ComboTable extends InputCombo implements iHaveChildren {
 		return $this->table_object_alias;
 	}
 	
+	/**
+	 * Makes the autosuggest-table use a different meta object than the input.
+	 * 
+	 * Use with case! Using a different object normally requires custom value_column_id and text_column_id.
+	 * 
+	 * @uxon-property table_object_alias
+	 * @uxon-type string
+	 * 
+	 * @param string $value
+	 * @return \exface\Core\Widgets\ComboTable
+	 */
 	public function set_table_object_alias($value) {
 		$this->table_object_alias = $value;
 		$this->table_object = null;

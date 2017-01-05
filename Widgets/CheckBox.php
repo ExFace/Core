@@ -1,5 +1,12 @@
 <?php
 namespace exface\Core\Widgets;
+
+/**
+ * This widget represents a two-state-switch mostly displayed as a checkbox.
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
 class CheckBox extends Input {
 	
 	public function transform_into_select(){

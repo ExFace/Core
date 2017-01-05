@@ -2,6 +2,19 @@
 
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 
+/**
+ * The ChartSeries represents a single series in a chart (e.g. line of a line chart). 
+ * 
+ * Most important options of ChartSeries are the chart type (line, bars, columns, etc.) and the data_column_id to fetch the values from.
+ * 
+ * For simple charts, you do not need to specify each series separately - simply add the desired "chart_type" to the axis
+ * with the corresponding data_column_id.
+ * 
+ * The ChartSeries widget can only be used within a Chart.
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
 class ChartSeries extends AbstractWidget {
 	const CHART_TYPE_LINE = 'line';
 	const CHART_TYPE_BARS = 'bars';
@@ -43,6 +56,15 @@ class ChartSeries extends AbstractWidget {
 		return $this->chart_type;
 	}
 	
+	/**
+	 * Sets the visualization type for this series: line, bars, columns, pie or area.
+	 * 
+	 * @uxon-property chart_type
+	 * @uxon-type string
+	 * 
+	 * @param string $value
+	 * @return \exface\Core\Widgets\ChartSeries
+	 */
 	public function set_chart_type($value) {
 		$this->chart_type = strtolower($value);
 		return $this;
@@ -52,6 +74,15 @@ class ChartSeries extends AbstractWidget {
 		return $this->data_column_id;
 	}
 	
+	/**
+	 * Defines the column in the chart's data, that will provide the values of this series.
+	 * 
+	 * @uxon-property data_column_id
+	 * @uxon-type string
+	 * 
+	 * @param string $value
+	 * @return ChartSeries
+	 */
 	public function set_data_column_id($value) {
 		$this->data_column_id = $value;
 		return $this;
@@ -82,6 +113,15 @@ class ChartSeries extends AbstractWidget {
 		return $this->axis_x_number;
 	}
 	
+	/**
+	 * Makes the series use the specified X-axis: e.g. axis_x_number = 2 will make the X-values appear on the second X-axis.
+	 * 
+	 * @uxon-property axis_x_number
+	 * @uxon-type string
+	 * 
+	 * @param integer $number
+	 * @return \exface\Core\Widgets\ChartSeries
+	 */
 	public function set_axis_x_number($number) {
 		$this->axis_x_number = $number;
 		return $this;
@@ -113,13 +153,26 @@ class ChartSeries extends AbstractWidget {
 		return $this->axis_y_number;
 	}
 	
+	/**
+	 * Makes the series use the specified Y-axis: e.g. axis_x_number = 2 will make the Y-values appear on the second Y-axis.
+	 *
+	 * @uxon-property axis_y_number
+	 * @uxon-type string
+	 *
+	 * @param integer $number
+	 * @return \exface\Core\Widgets\ChartSeries
+	 */
 	public function set_axis_y_number($number) {
 		$this->axis_y_number = $number;
 		return $this;
 	}
 	
 	/**
-	 * The caption for a series can either be set directly, or will be inherited from the used data column
+	 * The caption for a series can either be set directly, or will be inherited from the used data column.
+	 * 
+	 * @uxon-property caption
+	 * @uxon-type string
+	 * 
 	 * {@inheritDoc}
 	 * @see \exface\Core\Widgets\AbstractWidget::get_caption()
 	 */

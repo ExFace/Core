@@ -2,6 +2,17 @@
 namespace exface\Core\Widgets;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 
+/**
+ * The ChartAxis represents the X or Y axis of a chart.
+ * 
+ * Most important properties of a ChartAxis are it's caption, type (time, text, numbers, etc.), position and 
+ * min/max values. An axis can also be hidden.
+ * 
+ * The ChartSeries widget can only be used within a Chart.
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
 class ChartAxis extends AbstractWidget {
 	private $number = null;
 	private $dimension = null;
@@ -139,7 +150,7 @@ class ChartAxis extends AbstractWidget {
 	/**
 	 * Sets the type of the axis: TIME, TEXT or NUMBER.
 	 * 
-	 * @uxon-property chart_type
+	 * @uxon-property axis_type
 	 * @uxon-type string
 	 * 
 	 * @param string $value

@@ -52,7 +52,7 @@ class InputSelect extends Input implements iSupportMultiSelect {
 	/**
 	 * Sets the possible options of the select widget. Options can either be given as a assotiative array ([ key => label ]) or two
 	 * separate arrays with equal length: one for keys and one for the labels.
-	 * @param array | stdClass $array_or_object
+	 * @param array|stdClass $array_or_object
 	 * @param array $options_texts_array
 	 * @throws WidgetPropertyInvalidValueError
 	 */
