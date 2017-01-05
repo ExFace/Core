@@ -7,11 +7,14 @@ use exface\Core\Factories\WidgetFactory;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 
 class ShowObjectDialog extends ShowDialog {
+
+	private $show_only_editable_attributes = null;
 	
 	protected function init(){
 		$this->set_input_rows_min(1);
 		$this->set_input_rows_max(1);
 		$this->set_icon_name('info');
+		$this->set_show_only_editable_attributes(false);
 		// Disable prefilling the widget from contexts as we only whant to fill in data that actually comes from the data source
 		$this->set_prefill_with_filter_context(false);
 	}
@@ -81,5 +84,18 @@ class ShowObjectDialog extends ShowDialog {
 	public function set_dialog_widget(AbstractWidget $widget){
 		$this->dialog_widget = $widget;
 	}  
+	
+	/**
+	 * Returns TRUE if only widgets for editable attributes should be shown or FALSE, if all visible widgets should appear (some being disabled).
+	 * @return boolean
+	 */
+	public function get_show_only_editable_attributes() {
+		return $this->show_only_editable_attributes;
+	}
+	
+	public function set_show_only_editable_attributes($value) {
+		$this->show_only_editable_attributes = $value;
+		return $this;
+	}
 }
 ?>

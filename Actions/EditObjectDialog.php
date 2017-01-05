@@ -7,12 +7,12 @@ use exface\Core\Widgets\Button;
 
 class EditObjectDialog extends ShowObjectDialog {
 	private $save_action_alias = null;
-	private $show_only_editable_attributes = true;
 	
 	protected function init(){
 		parent::init();
 		$this->set_icon_name('edit');
 		$this->set_save_action_alias('exface.Core.UpdateData');
+		$this->set_show_only_editable_attributes(true);
 	}
 	
 	/**
@@ -58,17 +58,5 @@ class EditObjectDialog extends ShowObjectDialog {
 		$this->save_action_alias = $value;
 	} 
 	
-	/**
-	 * Returns TRUE if only widgets for editable attributes should be shown or FALSE, if all visible widgets should appear (some being disabled).
-	 * @return boolean
-	 */
-	public function get_show_only_editable_attributes() {
-		return $this->show_only_editable_attributes;
-	}
-	
-	public function set_show_only_editable_attributes($value) {
-		$this->show_only_editable_attributes = $value;
-		return $this;
-	}  
 }
 ?>
