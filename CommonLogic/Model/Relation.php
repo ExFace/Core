@@ -139,8 +139,20 @@ class Relation implements ExfaceClassInterface {
     	$this->related_object_key_alias = $value;
     }
     
+    /**
+     * Returns the foreign key attribute or NULL if there is no key attribute
+     * 
+     * FIXME Fix Reverse relations key bug. For some reason, the foreign key is set incorrectly: e.g. for exface.Core.WIDGET__PHP_ANNOTATION the
+     * foreign key is FILE, but there is no FILE attribute in the WIDGET object (the UID is PATHNAME_RELATIVE).
+     * 
+     * @return \exface\Core\CommonLogic\Model\Attribute
+     */
     public function get_main_object_key_attribute(){
-    	return $this->get_main_object()->get_attribute($this->get_foreign_key_alias());
+    	try {
+    		return $this->get_main_object()->get_attribute($this->get_foreign_key_alias());
+    	} catch (\exface\Core\Exceptions\Model\MetaAttributeNotFoundError $e){
+    		return null;
+    	}
     }
     
     public function get_related_object_key_attribute(){

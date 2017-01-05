@@ -308,17 +308,28 @@ class Object implements ExfaceClassInterface, AliasInterface {
 	public function extend_from_object_id($parent_object_id){
 		// Do nothing, if trying to extend itself
 		if ($parent_object_id == $this->get_id()) return;
+		
 		// Otherwise clone all attributes and relations of the parent and add them to this object
 		$parent = $this->get_model()->get_object($parent_object_id);
 		$this->add_parent_object_id($parent_object_id);
+		
 		// Inherit object properties
 		$this->set_data_address_properties($parent->get_data_address_properties());
-		$this->set_default_editor_uxon($parent->get_default_editor_uxon());
+		
+		// Inherit default editor
+		$default_editor_uxon = $parent->get_default_editor_uxon()->copy();
+		// If the default editor is explicitly based on the object, we are inheriting from, replace that object with this one.
+		if ($default_editor_uxon->get_property('object_alias') && $parent->is($default_editor_uxon->get_property('object_alias'))){
+			$default_editor_uxon->set_property('object_alias', $this->get_alias_with_namespace());
+		}
+		$this->set_default_editor_uxon($default_editor_uxon);
+		
 		// Inherit some object properties originating from attributes
 		$this->set_uid_alias($parent->get_uid_alias());
 		$this->set_label_alias($parent->get_label_alias());
+		
 		// Inherit attributes
-		foreach ($parent->get_attributes() as $alias => $attr){
+		foreach ($parent->get_attributes() as $attr){
 			$attr_clone = $attr->copy();
 			// Save the parent's id, if there isn't one already (that would mean, that the parent inherited the attribute too)
 			if(is_null($attr->get_inherited_from_object_id())){
@@ -329,6 +340,7 @@ class Object implements ExfaceClassInterface, AliasInterface {
 			}
 			$this->get_attributes()->add($attr_clone);
 		}
+		
 		// Inherit Relations
 		foreach ($parent->get_relations_array() as $rel){
 			$rel_clone = clone $rel;
@@ -338,11 +350,13 @@ class Object implements ExfaceClassInterface, AliasInterface {
 			}
 			$this->add_relation($rel_clone);
 		}
+		
 		// Inherit behaviors
 		foreach ($parent->get_behaviors()->get_all() as $key => $behavior){
 			$copy = $behavior->copy()->set_object($this);
 			$this->get_behaviors()->add($copy, $key);
 		}
+		
 		// TODO Inherit actions here as soon as actions can be defined in the model
 	}
 	
