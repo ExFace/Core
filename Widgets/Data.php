@@ -369,7 +369,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 	public function get_buttons_bound_to_mouse_action($mouse_action){
 		$result = array();
 		foreach ($this->get_buttons() as $btn){
-			if ($btn->get_bind_to_mouse_action() == $mouse_action){
+			if (method_exists($btn, 'get_bind_to_mouse_action') && $btn->get_bind_to_mouse_action() == $mouse_action){
 				$result[] = $btn;
 			}
 		}
@@ -402,7 +402,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 	 * (non-PHPdoc)
 	 * @see \exface\Core\Interfaces\Widgets\iHaveButtons::add_button()
 	 */
-	public function add_button(Button $button_widget){
+	public function add_button($button_widget){
 		$button_widget->set_parent($this);
 		$button_widget->set_meta_object_id($this->get_meta_object()->get_id());
 		$this->buttons[] = $button_widget;
@@ -413,7 +413,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 	 * {@inheritDoc}
 	 * @see \exface\Core\Interfaces\Widgets\iHaveButtons::remove_button()
 	 */
-	public function remove_button(Button $button_widget){
+	public function remove_button($button_widget){
 		if(($key = array_search($button_widget, $this->buttons)) !== false) {
 			unset($this->buttons[$key]);
 		}
