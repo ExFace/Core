@@ -2359,7 +2359,7 @@
         },
         {
             "CREATED_ON": "2016-12-05 13:39:20",
-            "MODIFIED_ON": "2016-12-08 11:45:12",
+            "MODIFIED_ON": "2017-01-05 09:43:37",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6baf03981a3129ee0e4b318306b9a",
@@ -2375,7 +2375,7 @@
             "FORMATTER": "",
             "DISPLAYORDER": null,
             "LABELFLAG": "1",
-            "UIDFLAG": "1",
+            "UIDFLAG": "0",
             "HIDDENFLAG": "0",
             "EDITABLEFLAG": "0",
             "REQUIREDFLAG": "0",
