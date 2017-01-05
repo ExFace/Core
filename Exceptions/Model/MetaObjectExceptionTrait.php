@@ -8,6 +8,12 @@ use exface\Core\Interfaces\Widgets\iHaveButtons;
 use exface\Core\Factories\UiPageFactory;
 use exface\Core\Interfaces\Widgets\iSupportLazyLoading;
 
+/**
+ * This trait enables an exception to output meta object specific debug information: properties, attributes, behaviors, etc.
+ *
+ * @author Andrej Kabachnik
+ *
+ */
 trait MetaObjectExceptionTrait {
 	
 	use ExceptionTrait {

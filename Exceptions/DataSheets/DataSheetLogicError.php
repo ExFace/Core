@@ -6,6 +6,15 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Exceptions\LogicException;
 use exface\Core\Interfaces\Exceptions\DataSheetExceptionInterface;
 
+/**
+ * This exception should be used in data sheets instead of the regular LogicException in order to provied more
+ * detailed debug information like the data sheet contents, etc..
+ * 
+ * @see LogicException
+ *
+ * @author Andrej Kabachnik
+ *
+ */
 class DataSheetLogicError extends LogicException implements DataSheetExceptionInterface, ErrorExceptionInterface {
 	
 	use DataSheetExceptionTrait;

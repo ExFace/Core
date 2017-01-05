@@ -7,8 +7,8 @@ use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Interfaces\UiPageInterface;
 use exface\Core\Interfaces\TemplateInterface;
-use exface\Core\Exceptions\Actions\ActionInputTypeError;
 use exface\Core\Exceptions\Actions\ActionObjectNotSpecifiedError;
+use exface\Core\Exceptions\Actions\ActionInputError;
 
 interface ActionInterface extends ExfaceClassInterface, AliasInterface {
 	
@@ -114,7 +114,7 @@ interface ActionInterface extends ExfaceClassInterface, AliasInterface {
 	/**
 	 * Sets the data sheet, the action is supposed to be performed upon.
 	 * @param DataSheet || UxonObject || string $data_sheet_or_uxon
-	 * @throws ActionInputTypeError if the passed input data is of an unsupported type
+	 * @throws ActionInputError if the passed input data is of an unsupported type
 	 * @return \exface\Core\Interfaces\Actions\ActionInterface
 	 */
 	public function set_input_data_sheet($data_sheet_or_uxon);

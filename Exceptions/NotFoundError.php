@@ -3,7 +3,15 @@ namespace exface\Core\Exceptions;
 
 use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;
 
-class NotFoundError extends RuntimeException implements ErrorExceptionInterface {
+/**
+ * Base class for all kinds of not-found-errors:
+ * @see FileNotFoundError
+ * @see DirectoryNotFoundError
+ *
+ * @author Andrej Kabachnik
+ *
+ */
+abstract class NotFoundError extends RuntimeException implements ErrorExceptionInterface {
 	
 }
 ?>

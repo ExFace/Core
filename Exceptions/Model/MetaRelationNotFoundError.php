@@ -5,6 +5,13 @@ use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Interfaces\Exceptions\MetaObjectExceptionInterface;
 use exface\Core\CommonLogic\Model\Object;
 
+/**
+ * Exception thrown if a requested relation cannot be found for the given meta object. This will mostly happen if 
+ * a relation path is misspelled in UXON.
+ *
+ * @author Andrej Kabachnik
+ *
+ */
 class MetaRelationNotFoundError extends UnexpectedValueException implements MetaObjectExceptionInterface {
 	
 	use MetaObjectExceptionTrait;

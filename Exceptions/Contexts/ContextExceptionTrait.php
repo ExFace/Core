@@ -3,6 +3,12 @@
 use exface\Core\Interfaces\Contexts\ContextInterface;
 use exface\Core\Exceptions\ExceptionTrait;
 
+/**
+ * This trait enables an exception to output context specific debug information.
+ *
+ * @author Andrej Kabachnik
+ *
+ */
 trait ContextExceptionTrait {
 	
 	use ExceptionTrait {

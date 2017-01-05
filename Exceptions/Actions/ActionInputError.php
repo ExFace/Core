@@ -6,6 +6,16 @@ use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\Exceptions\ActionExceptionInterface;
 
+/**
+ * Exception thrown if an action receives unexpected input values (e.g. in the input data sheet).
+ * 
+ * It's the base class for more specific excpetions:
+ * @see ActionInputInvalidObjectError
+ * @see ActionInputMissingError
+ *
+ * @author Andrej Kabachnik
+ *
+ */
 class ActionInputError extends UnexpectedValueException implements ActionExceptionInterface, ErrorExceptionInterface {
 	
 	use ActionExceptionTrait;

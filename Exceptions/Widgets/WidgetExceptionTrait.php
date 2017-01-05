@@ -3,6 +3,12 @@
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Exceptions\ExceptionTrait;
 
+/**
+ * This trait enables an exception to output widget specific debug information.
+ *
+ * @author Andrej Kabachnik
+ *
+ */
 trait WidgetExceptionTrait {
 
 	use ExceptionTrait {

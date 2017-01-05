@@ -1,8 +1,10 @@
 <?php
-namespace exface\Core\Exceptions\Model;
+namespace exface\Core\Exceptions\Behaviors;
+
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Interfaces\Exceptions\MetaObjectExceptionInterface;
 use exface\Core\CommonLogic\Model\Object;
+use exface\Core\Exceptions\Model\MetaObjectExceptionTrait;
 
 /**
  * Exception thrown if an object's behavior could not be loaded (i.e. class not found)

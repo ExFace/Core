@@ -8,6 +8,13 @@ use exface\Core\Interfaces\UiPageInterface;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Widgets\ErrorMessage;
 
+/**
+ * This trait enables an exception to output more usefull specific debug information. It is used by all
+ * ExFace-specific exceptions!
+ *
+ * @author Andrej Kabachnik
+ *
+ */
 trait ExceptionTrait {
 	
 	private $alias = null;

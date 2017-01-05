@@ -5,7 +5,7 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\Model\Object;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Interfaces\NameResolverInterface;
-use exface\Core\Exceptions\Model\BehaviorNotFoundError;
+use exface\Core\Exceptions\Behaviors\BehaviorNotFoundError;
 
 abstract class BehaviorFactory extends AbstractNameResolverFactory {
 	

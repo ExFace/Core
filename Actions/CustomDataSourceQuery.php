@@ -5,8 +5,8 @@ use exface\Core\Interfaces\Actions\iRunDataSourceQuery;
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 use exface\Core\CommonLogic\Model\Object;
 use exface\Core\CommonLogic\DataSheets\DataColumn;
-use exface\Core\Exceptions\Actions\ActionInputTypeError;
 use exface\Core\Exceptions\Actions\ActionInputMissingError;
+use exface\Core\Exceptions\Actions\ActionInputInvalidObjectError;
 
 class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuery {
 	private $queries = array();
@@ -73,7 +73,7 @@ class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuer
 		// Check if the action is aplicable to the input object
 		if ($this->get_aplicable_to_object_alias()){
 			if (!$data_sheet->get_meta_object()->is($this->get_aplicable_to_object_alias())){
-				throw new ActionInputTypeError($this, 'Cannot perform action "' . $this->get_alias_with_namespace() . '" on object "' . $data_sheet->get_meta_object()->get_alias_with_namespace() . '": action only aplicable to "' . $this->get_aplicable_to_object_alias() . '"!', '6T5DMU');
+				throw new ActionInputInvalidObjectError($this, 'Cannot perform action "' . $this->get_alias_with_namespace() . '" on object "' . $data_sheet->get_meta_object()->get_alias_with_namespace() . '": action only aplicable to "' . $this->get_aplicable_to_object_alias() . '"!', '6T5DMU');
 			}
 		}
 		

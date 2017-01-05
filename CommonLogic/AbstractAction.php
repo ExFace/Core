@@ -13,7 +13,7 @@ use exface\Core\Events\ActionEvent;
 use exface\Core\Factories\WidgetLinkFactory;
 use exface\Core\Exceptions\Actions\ActionConfigurationError;
 use exface\Core\Exceptions\Model\MetaObjectNotFoundError;
-use exface\Core\Exceptions\Actions\ActionOutputTypeError;
+use exface\Core\Exceptions\Actions\ActionOutputError;
 use exface\Core\Exceptions\Actions\ActionObjectNotSpecifiedError;
 
 /**
@@ -306,7 +306,7 @@ abstract class AbstractAction implements ActionInterface {
 		} elseif (!is_object($result)){
 			return $result;
 		} else {
-			throw new ActionOutputTypeError($this, 'Cannot convert result object of type "' . get_class($result) . '" to string for action "' . $this->get_alias_with_namespace() . '"', '6T5DUT1');
+			throw new ActionOutputError($this, 'Cannot convert result object of type "' . get_class($result) . '" to string for action "' . $this->get_alias_with_namespace() . '"', '6T5DUT1');
 		}
 	}
 	
@@ -324,7 +324,7 @@ abstract class AbstractAction implements ActionInterface {
 		} elseif (!is_object($result)){
 			return $result;
 		} else {
-			throw new ActionOutputTypeError($this, 'Cannot render output for unknown result object type "' . gettype($result) . '" of action "' . $this->get_alias_with_namespace() . '"', '6T5DUT1');
+			throw new ActionOutputError($this, 'Cannot render output for unknown result object type "' . gettype($result) . '" of action "' . $this->get_alias_with_namespace() . '"', '6T5DUT1');
 		}
 	}
 	

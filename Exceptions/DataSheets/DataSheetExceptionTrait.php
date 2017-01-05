@@ -3,6 +3,12 @@
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Exceptions\ExceptionTrait;
 
+/**
+ * This trait enables an exception to output data sheet specific debug information.
+ *
+ * @author Andrej Kabachnik
+ *
+ */
 trait DataSheetExceptionTrait {
 	
 	use ExceptionTrait {

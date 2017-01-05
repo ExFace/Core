@@ -6,7 +6,17 @@ use exface\Core\Interfaces\Exceptions\DataConnectorExceptionInterface;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 
-class DataConnectorError extends RuntimeException implements ErrorExceptionInterface, DataConnectorExceptionInterface {
+/**
+ * This is the base class for all sorts of data source access errors like
+ * @see DataConnectionFailedError
+ * @see DataConnectionCommitFailedError
+ * @see DataConnectionRollbackFailedError
+ * @see DataConnectionTransactionStartError
+ *
+ * @author Andrej Kabachnik
+ *
+ */
+abstract class DataConnectorError extends RuntimeException implements ErrorExceptionInterface, DataConnectorExceptionInterface {
 	
 	use DataConnectorExceptionTrait;
 	

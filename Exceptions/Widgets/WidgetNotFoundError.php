@@ -3,7 +3,7 @@
 use exface\Core\Exceptions\RuntimeException;
 
 /**
- * Exception thrown if a widget was unexpectedly not found in a page or a widget link is unresolvable
+ * Exception thrown if a widget was unexpectedly not found in a page or a widget link is unresolvable.
  * 
  * @author Andrej Kabachnik
  *

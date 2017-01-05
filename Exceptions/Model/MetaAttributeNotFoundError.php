@@ -1,9 +1,17 @@
 <?php
 namespace exface\Core\Exceptions\Model;
+
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Interfaces\Exceptions\MetaObjectExceptionInterface;
 use exface\Core\CommonLogic\Model\Object;
 
+/**
+ * Exception thrown if a requested attribute cannot be found for the given object. This will mostly happen if 
+ * an attribute alias is misspelled in UXON.
+ *
+ * @author Andrej Kabachnik
+ *
+ */
 class MetaAttributeNotFoundError extends UnexpectedValueException implements MetaObjectExceptionInterface {
 	
 	use MetaObjectExceptionTrait;

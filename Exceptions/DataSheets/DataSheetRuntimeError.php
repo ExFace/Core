@@ -6,6 +6,13 @@ use exface\Core\Exceptions\DataSheets\DataSheetExceptionTrait;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Exceptions\DataSheetExceptionInterface;
 
+/**
+ * This exception should be used in data sheets instead of the regular RuntimeException to provide more debug information
+ * like the sheet's content, etc.
+ *
+ * @author Andrej Kabachnik
+ *
+ */
 class DataSheetRuntimeError extends RuntimeException implements DataSheetExceptionInterface, ErrorExceptionInterface {
 	
 	use DataSheetExceptionTrait;

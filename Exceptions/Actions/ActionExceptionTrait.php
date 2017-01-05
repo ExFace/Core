@@ -3,6 +3,12 @@
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Exceptions\ExceptionTrait;
 
+/**
+ * This trait enables an exception to output action specific debug information. 
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
 trait ActionExceptionTrait {
 	
 	use ExceptionTrait {

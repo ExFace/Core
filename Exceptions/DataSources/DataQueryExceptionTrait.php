@@ -6,6 +6,12 @@ use exface\Core\Interfaces\UiPageInterface;
 use exface\Core\Exceptions\ExceptionTrait;
 use exface\Core\Widgets\ErrorMessage;
 
+/**
+ * This trait enables an exception to output data query specific debug information.
+ *
+ * @author Andrej Kabachnik
+ *
+ */
 trait DataQueryExceptionTrait {
 	
 	use ExceptionTrait {

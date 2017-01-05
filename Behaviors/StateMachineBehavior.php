@@ -3,7 +3,7 @@
 use exface\Core\CommonLogic\AbstractBehavior;
 use exface\Core\Events\WidgetEvent;
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\Exceptions\Model\BehaviorError;
+use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
 
 /**
  * 
@@ -68,7 +68,7 @@ class StateMachineBehavior extends AbstractBehavior {
 	 * @uxon-type object
 	 * 
 	 * @param unknown $value
-	 * @throws BehaviorError
+	 * @throws BehaviorConfigurationError
 	 * @return \exface\Core\Behaviors\StateMachineBehavior
 	 */
 	public function set_states($value) {
@@ -82,7 +82,7 @@ class StateMachineBehavior extends AbstractBehavior {
 				if (method_exists($smstate, 'set_'.$var)){
 					call_user_func(array($smstate, 'set_'.$var), $val);
 				} else {
-					throw new BehaviorError('Property "' . $var . '" of StateMachineState cannot be set: setter function not found!');
+					throw new BehaviorConfigurationError('Property "' . $var . '" of StateMachineState cannot be set: setter function not found!');
 				}
 			}
 			$this->smstates[$state] = $smstate;

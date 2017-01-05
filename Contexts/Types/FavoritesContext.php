@@ -2,7 +2,7 @@
 
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\Model\Object;
-use exface\Core\Exceptions\Contexts\ContextInvalidKeyError;
+use exface\Core\Exceptions\Contexts\ContextOutOfBoundsError;
 
 /**
  * The FavoritesContext provides a unified interface to store links to selected instances of meta objects in any context scope.
@@ -86,7 +86,7 @@ class FavoritesContext extends AbstractContext {
 	/**
 	 * 
 	 * @param string $alias_with_namespace
-	 * @throws ContextInvalidKeyError
+	 * @throws ContextOutOfBoundsError
 	 * @return FavoritesInstanceList
 	 */
 	public function get_favorites_by_object_alias($alias_with_namespace){
@@ -94,7 +94,7 @@ class FavoritesContext extends AbstractContext {
 		if ($object){
 			return $this->get_favorites_by_object_id($object->get_id());
 		} else {
-			throw new ContextInvalidKeyError($this, 'Favorites requested for non-existant object alias "' . $alias_with_namespace . '"!', '6T5E5VY');
+			throw new ContextOutOfBoundsError($this, 'Favorites requested for non-existant object alias "' . $alias_with_namespace . '"!', '6T5E5VY');
 		}
 	}
 	

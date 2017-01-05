@@ -6,6 +6,13 @@ use exface\Core\Exceptions\Contexts\ContextExceptionTrait;
 use exface\Core\Interfaces\Contexts\ContextInterface;
 use exface\Core\Interfaces\Exceptions\ContextExceptionInterface;
 
+/**
+ * Exception should be used in contexts instead of a regular RuntimeException to enrich the debug output with
+ * context specific information like the context scope and current data.
+ *
+ * @author Andrej Kabachnik
+ *
+ */
 class ContextRuntimeError extends RuntimeException implements ContextExceptionInterface, ErrorExceptionInterface {
 	
 	use ContextExceptionTrait;

@@ -4,8 +4,6 @@ use exface\Core\CommonLogic\AbstractBehavior;
 use exface\Core\CommonLogic\Model\Attribute;
 use exface\Core\Events\DataSheetEvent;
 use exface\Core\Interfaces\Actions\iUndoActions;
-use exface\Core\Exceptions\Model\TimeStampingBehaviorError;
-use exface\Core\Exceptions\TimeStampingMassupdateException;
 use exface\Core\CommonLogic\DataSheets\DataColumn;
 use exface\Core\Exceptions\Behaviors\ConcurrentWriteError;
 use exface\Core\Exceptions\Behaviors\ConcurrentWritesCannotBePreventedWarning;

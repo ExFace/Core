@@ -4,6 +4,12 @@ namespace exface\Core\Exceptions\DataSources;
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 use exface\Core\Exceptions\ExceptionTrait;
 
+/**
+ * This trait enables an exception to output data connectior specific debug information.
+ *
+ * @author Andrej Kabachnik
+ *
+ */
 trait DataConnectorExceptionTrait {
 	
 	use ExceptionTrait {

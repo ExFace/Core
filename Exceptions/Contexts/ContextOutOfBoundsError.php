@@ -6,7 +6,17 @@ use exface\Core\Exceptions\OutOfBoundsException;
 use exface\Core\Interfaces\Exceptions\ContextExceptionInterface;
 use exface\Core\Interfaces\Contexts\ContextInterface;
 
-class ContextInvalidKeyError extends OutOfBoundsException implements ContextExceptionInterface, ErrorExceptionInterface {
+/**
+ * Exception thrown requested context data cannot be found. In contrast to the regular OutOfBoundsException, it's
+ * context-specific version will output more usefull debug information like the context scope, data etc.
+ * 
+ * Typical use-cases are trying to fetch an action from history, which is not there, or requesting a favorited instance,
+ * that cannot be found in the favorites. 
+ *
+ * @author Andrej Kabachnik
+ *
+ */
+class ContextOutOfBoundsError extends OutOfBoundsException implements ContextExceptionInterface, ErrorExceptionInterface {
 	
 	use ContextExceptionTrait;
 	

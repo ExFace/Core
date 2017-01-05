@@ -6,6 +6,16 @@ use exface\Core\Exceptions\LogicException;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\Exceptions\ActionExceptionInterface;
 
+/**
+ * Exception should be used in actions instead of a simple LogicException, because it will output/log
+ * much more usefull information about the error including the actions UXON representation, input data,
+ * etc.
+ * 
+ * @see LogicException
+ *
+ * @author Andrej Kabachnik
+ *
+ */
 class ActionLogicError extends LogicException implements ActionExceptionInterface, ErrorExceptionInterface {
 	
 	use ActionExceptionTrait;

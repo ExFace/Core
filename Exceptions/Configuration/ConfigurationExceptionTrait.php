@@ -3,6 +3,12 @@
 use exface\Core\Interfaces\ConfigurationInterface;
 use exface\Core\Exceptions\ExceptionTrait;
 
+/**
+ * This trait enables an exception to output configuration specific debug information.
+ *
+ * @author Andrej Kabachnik
+ *
+ */
 trait ConfigurationExceptionTrait {
 	
 	use ExceptionTrait {
