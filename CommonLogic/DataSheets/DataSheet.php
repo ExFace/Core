@@ -435,7 +435,6 @@ class DataSheet implements DataSheetInterface {
 				$foreign_keys = $this->get_column_values($rel_path);
 				$subsheet->add_filter_from_string($this->get_meta_object()->get_relation($rel_path)->get_related_object_key_alias(), implode(',', array_unique($foreign_keys)), EXF_COMPARATOR_IN);
 			} else {
-				var_dump($this->get_meta_object()->get_alias_with_namespace(), $this->get_meta_object()->get_relation($rel_path)->get_alias());
 				if ($this->get_meta_object()->get_relation($rel_path)->get_main_object_key_attribute()){
 					throw new DataSheetJoinError($this, 'Joining subsheets via reverse relations with explicitly specified foreign keys, not implemented yet!', '6T5V36I');
 				} else {
