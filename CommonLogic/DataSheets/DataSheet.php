@@ -434,17 +434,23 @@ class DataSheet implements DataSheetInterface {
 			if (!$this->get_meta_object()->get_relation($rel_path)->is_reverse_relation()){
 				$foreign_keys = $this->get_column_values($rel_path);
 				$subsheet->add_filter_from_string($this->get_meta_object()->get_relation($rel_path)->get_related_object_key_alias(), implode(',', array_unique($foreign_keys)), EXF_COMPARATOR_IN);
+				$left_key_column = $rel_path;
+				$right_key_column = $this->get_meta_object()->get_relation($rel_path)->get_related_object_key_alias();
 			} else {
 				if ($this->get_meta_object()->get_relation($rel_path)->get_main_object_key_attribute()){
 					throw new DataSheetJoinError($this, 'Joining subsheets via reverse relations with explicitly specified foreign keys, not implemented yet!', '6T5V36I');
 				} else {
-					$foreign_keys = $this->get_uid_column()->get_values();					
+					$foreign_keys = $this->get_uid_column()->get_values();
 					$subsheet->add_filter_from_string($this->get_meta_object()->get_relation($rel_path)->get_foreign_key_alias(), implode(',', array_unique($foreign_keys)), EXF_COMPARATOR_IN);
+					// FIXME Fix Reverse relations key bug. Getting the left key column from the reversed relation here is a crude hack, but 
+					// the get_main_object_key_alias() strangely does not work for reverse relations
+					$left_key_column = $this->get_meta_object()->get_relation($rel_path)->get_reversed_relation()->get_related_object_key_alias();
+					$right_key_column = $this->get_meta_object()->get_relation($rel_path)->get_foreign_key_alias();
 				}				
 			}
 			$subsheet->data_read();
 			// add the columns from the sub-sheets, but prefix their names with the relation alias, because they came from this relation!
-			$this->join_left($subsheet, $rel_path, $this->get_meta_object()->get_relation($rel_path)->get_related_object_key_alias(), $rel_path);
+			$this->join_left($subsheet, $left_key_column, $right_key_column, $rel_path);
 		}
 		
 		foreach ($this->get_columns() as $name => $col){
@@ -461,7 +467,6 @@ class DataSheet implements DataSheetInterface {
 			}
 			$this->set_column_values($name, $vals, $totals);
 		}
-	
 		return $result;
 	}
 	

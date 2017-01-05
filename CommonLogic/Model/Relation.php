@@ -9,10 +9,9 @@ class Relation implements ExfaceClassInterface {
 	const RELATION_TYPE_REVERSE = '1n';
 	const RELATION_TYPE_ONE_TO_ONE = '11';
 	
-	// TODO Make all private
-	public $id;
-	public $alias;
-	public $name;
+	private $id;
+	private $alias;
+	private $name;
 	private $main_object_id;
 	private $related_object_id;
 	private $related_object_key_attribute_id;
