@@ -7,6 +7,7 @@ use exface\Core\Interfaces\Actions\iUndoActions;
 use exface\Core\CommonLogic\DataSheets\DataColumn;
 use exface\Core\Exceptions\Behaviors\ConcurrentWriteError;
 use exface\Core\Exceptions\Behaviors\ConcurrentWritesCannotBePreventedWarning;
+use exface\Core\Exceptions\DataSheets\DataSheetColumnNotFoundError;
 
 class TimeStampingBehavior extends AbstractBehavior {
 	private $created_on_attribute_alias = null;
@@ -90,7 +91,7 @@ class TimeStampingBehavior extends AbstractBehavior {
 		// Check if the updated_on column is present in the sheet
 		$updated_column = $data_sheet->get_columns()->get_by_attribute($this->get_updated_on_attribute());
 		if (!$updated_column){
-			throw new MetaModelBehaviorException('Cannot check for potential update conflicts in TimeStamping behavior: column "' . $this->get_updated_on_attribute_alias() . '" not found in given data sheet!');
+			throw new DataSheetColumnNotFoundError($data_sheet, 'Cannot check for potential update conflicts in TimeStamping behavior: column "' . $this->get_updated_on_attribute_alias() . '" not found in given data sheet!');
 		}
 		$update_nr = count($updated_column->get_values());
 		

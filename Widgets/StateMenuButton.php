@@ -20,12 +20,23 @@ class StateMenuButton extends MenuButton {
 				if ((($data_sheet = $this->get_prefill_data()) || ($data_sheet = $template->get_data_sheet_from_request($template->get_request_object_id())))
 						&& ($state_column = $data_sheet->get_column_values($smb->get_state_attribute_alias()))) {
 					$current_state = $state_column[0];
+				} else {
+					$current_state = $smb::DEFAULT_STATE;
+				}
+				
+				$input_widget = $this->get_input_widget();
+				if ($input_widget instanceof Dialog) {
+					$button_widget = 'DialogButton';
+				} else if ($input_widget instanceof DataTable) {
+					$button_widget = 'DataButton';
+				} else {
+					$button_widget = 'Button';
 				}
 				
 				foreach ($smb->get_state_buttons($current_state) as $smb_button) {
-					$button = $this->get_page()->create_widget('DialogButton', $this, UxonObject::from_anything($smb_button));
+					$button = $this->get_page()->create_widget($button_widget, $this, UxonObject::from_anything($smb_button));
 					$button->set_parent($this);
-					$button->set_input_widget($this->get_input_widget());
+					$button->set_input_widget($input_widget);
 					$this->smb_buttons[] = $button;
 				}
 			} else {
