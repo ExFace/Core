@@ -8,6 +8,7 @@ use Symfony\Component\Debug\ErrorHandler;
 use Symfony\Component\VarDumper\VarDumper;
 use Symfony\Component\VarDumper\Dumper\HtmlDumper;
 use Symfony\Component\VarDumper\Cloner\VarCloner;
+use Symfony\Component\VarDumper\Dumper\CliDumper;
 
 class Debugger implements DebuggerInterface {
 	
@@ -58,8 +59,15 @@ class Debugger implements DebuggerInterface {
 	 * {@inheritDoc}
 	 * @see \exface\Core\Interfaces\DebuggerInterface::print_variable()
 	 */
-	public function print_variable($anything){
-		return print_r($anything, true);
+	public function print_variable($anything, $use_html = true){
+		$cloner = new VarCloner();
+		if ($use_html){
+			$dumper = new HtmlDumper();
+			$dumper->setDisplayOptions(array('maxDepth' => 5));
+		} else {
+			$dumper = new CliDumper();
+		}
+		return $dumper->dump($cloner->cloneVar($anything), true);
 	}
 	  
 }
