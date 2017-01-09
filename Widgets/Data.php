@@ -369,7 +369,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 	public function get_buttons_bound_to_mouse_action($mouse_action){
 		$result = array();
 		foreach ($this->get_buttons() as $btn){
-			if ($btn->get_bind_to_mouse_action() == $mouse_action){
+			if ($btn instanceof DataButton && $btn->get_bind_to_mouse_action() == $mouse_action){
 				$result[] = $btn;
 			}
 		}
