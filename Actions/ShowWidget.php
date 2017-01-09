@@ -69,7 +69,6 @@ class ShowWidget extends AbstractAction implements iShowWidget, iUsePrefillData 
 		} else {
 			throw new ActionConfigurationError($this, 'Action "' . $this->get_alias() . '" expects the parameter "widget" to be either an instantiated widget or a valid UXON widget description object!', '6T91H2S');
 		}
-		
 		$this->widget = $widget;
 		return $this;
 	}

@@ -4,8 +4,33 @@ use exface\Core\Widgets\AbstractWidget;
 use exface\Core\Widgets\Dialog;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Factories\WidgetFactory;
-use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 
+/**
+ * This action will show a dialog displaying the default editor of a meta object in read-only mode.
+ * 
+ * Dialogs that show meta objects, will use the default editor description from the object's model, if specified.
+ * If not, the action will generate a generic editor listing all widgets with their default editors or respective
+ * generic editors of the corresponding data types.
+ * 
+ * If you do not specify a widget type in the object's default editor or set it to "Dialog", the UXON of the default
+ * editor will be directly applied to the Dialog. If another widget type is specified, it will be treated as a separate
+ * widget and added to the dialog as a child widget. Thus, if the default editor is 
+ * 
+ * {"widgets": [{...}, {...}], "caption": "My caption"}
+ * 
+ * the caption of the dialog will be set to "My caption" and all the widgets will get appended to the dialog. On the
+ * other hand, the following default editor will produce a single tabs widget, which will be appended to the generic
+ * dialog:
+ * 
+ * {"widget_type": "Tabs", "tabs": [...]}
+ * 
+ * If you choose to customize the dialog directly (first example), you can ommit the "widgets" array completely. This
+ * will case the default editor widgets to get generated and appended to your custom dialog. This is an easy way to
+ * add custom buttons, captions, etc. to generic dialogs.
+ *
+ * @author Andrej Kabachnik
+ *
+ */
 class ShowObjectDialog extends ShowDialog {
 
 	private $show_only_editable_attributes = null;
@@ -58,16 +83,24 @@ class ShowObjectDialog extends ShowDialog {
 	}
 	
 	/**
-	 * Creates the dialog widget. Just the dialog itself, no contents!
-	 * @return \exface\Core\Widgets\exfDialog
+	 * {@inheritDoc} 
+	 * @see \exface\Core\Actions\ShowDialog::create_dialog_widget()
 	 */
 	protected function create_dialog_widget(AbstractWidget $contained_widget = NULL){
 		$dialog = parent::create_dialog_widget();
 		$page = $this->get_called_on_ui_page();
-		if ($dialog->get_meta_object()->get_default_editor_uxon() && !$dialog->get_meta_object()->get_default_editor_uxon()->is_empty()){
+		$default_editor_uxon = $dialog->get_meta_object()->get_default_editor_uxon();
+		if ($default_editor_uxon && !$default_editor_uxon->is_empty()){
 			// If there is a default editor for an object, use it
-			$default_editor = WidgetFactory::create_from_uxon($page, $dialog->get_meta_object()->get_default_editor_uxon(), $dialog);
-			$dialog->add_widget($default_editor);
+			if (!$default_editor_uxon->get_property('widget_type') || $default_editor_uxon->get_property('widget_type') == 'Dialog'){
+				$dialog->import_uxon_object($default_editor_uxon);
+				if ($dialog->count_widgets() == 0){
+					$dialog->add_widgets($this->create_widgets_for_attributes($dialog));
+				}
+			} else {
+				$default_editor = WidgetFactory::create_from_uxon($page, $default_editor_uxon, $dialog);
+				$dialog->add_widget($default_editor);
+			}
 		} else {
 			// If there is no editor defined, create one: Add a panel to the dialog and generate editors for all attributes
 			// of the object in that panel.
