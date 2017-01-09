@@ -5,7 +5,6 @@ use Symfony\Component\Debug\Debug;
 use Symfony\Component\Debug\ExceptionHandler;
 use Symfony\Component\Debug\Exception\FlattenException;
 use Symfony\Component\Debug\ErrorHandler;
-use Symfony\Component\VarDumper\VarDumper;
 use Symfony\Component\VarDumper\Dumper\HtmlDumper;
 use Symfony\Component\VarDumper\Cloner\VarCloner;
 use Symfony\Component\VarDumper\Dumper\CliDumper;
