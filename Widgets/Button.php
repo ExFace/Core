@@ -126,7 +126,7 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iHaveC
 	}
 	
 	public function get_input_widget() {
-		if (!$this->input_widget){
+		if (is_null($this->input_widget)){
 			if ($this->input_widget_id){
 				$this->input_widget = $this->get_ui()->get_widget($this->input_widget_id, $this->get_page_id());
 			} else {
