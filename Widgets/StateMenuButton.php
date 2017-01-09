@@ -40,5 +40,13 @@ class StateMenuButton extends MenuButton {
 		
 		return parent::get_buttons();
 	}
+	
+	public function get_caption(){
+		$caption = parent::get_caption();
+		if (!$caption && !$this->get_hide_caption()){
+			$caption = $this->get_workbench()->get_core_app()->get_translator()->translate('WIDGET.STATEMENUBUTTON.CAPTION');		
+		}
+		return $caption;
+	}
 }
 ?>
