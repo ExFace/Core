@@ -4,7 +4,7 @@ use exface\Core\Interfaces\Widgets\iAmClosable;
 use exface\Core\Interfaces\Widgets\iFillEntireContainer;
 use exface\Core\CommonLogic\Model\Attribute;
 
-class Dialog extends Panel implements iAmClosable {
+class Dialog extends Form implements iAmClosable {
 	private $hide_close_button = false;
 	private $close_button = null;
 	private $maximizable = true;

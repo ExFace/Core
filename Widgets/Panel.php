@@ -1,93 +1,52 @@
 <?php namespace exface\Core\Widgets;
 
-use exface\Core\Interfaces\Widgets\iHaveButtons;
-use exface\Core\Interfaces\Widgets\iCollapsible;
 use exface\Core\Interfaces\Widgets\iHaveIcon;
 use exface\Core\Interfaces\Widgets\iSupportLazyLoading;
-use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Widgets\iFillEntireContainer;
+use exface\Core\Interfaces\Widgets\iLayoutWidgets;
+use exface\Core\Interfaces\Widgets\iAmCollapsible;
 
-class Panel extends Container implements iSupportLazyLoading, iHaveButtons, iHaveIcon, iCollapsible, iFillEntireContainer {
+/**
+ * A panel is a visible container with a configurable layout, support for lazy-loading of content.
+ * 
+ * The panel is the base widget for many containers, that show multiple smaller widgets in a column-based 
+ * (newspaper-like) layout.
+ * 
+ * @see Form - Panel with buttons
+ * @see InputGroup - Small panel to easily group input widgets
+ * @see SplitPanel - Special resizable panel to be used in SplitVertical and SplitHorizontal widgets
+ * @see Tab - Special panel to be used in the Tabs widget
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
+class Panel extends Container implements iLayoutWidgets, iSupportLazyLoading, iHaveIcon, iAmCollapsible, iFillEntireContainer {
 	
 	private $lazy_loading = false; // A panel will not be loaded via AJAX by default
 	private $lazy_loading_action = 'exface.Core.ShowWidget';
-	private $button_widget_type = 'Button'; // Which type of Buttons should be used. Can be overridden by inheriting widgets
 	private $collapsible = false;
-	private $buttons =  array();
 	private $icon_name = null;
 	private $column_number = null;
 	private $column_stack_on_smartphones = null;
 	private $column_stack_on_tablets = null;
 	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\Widgets\iAmCollapsible::get_collapsible()
+	 */
 	public function get_collapsible() {
 		return $this->collapsible;
-	}
-	
-	public function set_collapsible($value) {
-		$this->collapsible = $value;
-	}    
-	
-	/**
-	 * (non-PHPdoc)
-	 * @see \exface\Core\Interfaces\Widgets\iHaveButtons::get_buttons()
-	 * @return Button[]
-	 */
-	public function get_buttons() {
-		return $this->buttons;
-	}
-	
-	/**
-	 * (non-PHPdoc)
-	 * @see \exface\Core\Interfaces\Widgets\iHaveButtons::set_buttons()
-	 */
-	public function set_buttons(array $buttons_array) {
-		if (!is_array($buttons_array)) return false;
-		foreach ($buttons_array as $b){
-			$button = $this->get_page()->create_widget($this->get_button_widget_type(), $this, UxonObject::from_anything($b));
-			$this->add_button($button);
-		}
-	}
-	
-	/**
-	 * (non-PHPdoc)
-	 * @see \exface\Core\Interfaces\Widgets\iHaveButtons::add_button()
-	 */
-	public function add_button(Button $button_widget){
-		$button_widget->set_parent($this);
-		$button_widget->set_meta_object_id($this->get_meta_object()->get_id());
-		
-		// If the button has an action, that is supposed to modify data, we need to make sure, that the panel
-		// contains alls system attributes of the base object, because they may be needed by the business logic
-		if ($button_widget->get_action() && $button_widget->get_action()->implements_interface('iModifyData')){
-			/* @var $attr \exface\Core\CommonLogic\Model\Attribute */
-			foreach ($this->get_meta_object()->get_attributes()->get_system() as $attr){
-				if (count($this->find_children_by_attribute($attr)) <= 0){
-					$widget = $this->get_page()->create_widget('InputHidden', $this);
-					$widget->set_attribute_alias($attr->get_alias());
-					if ($attr->is_uid_for_object()){
-						$widget->set_aggregate_function(EXF_AGGREGATOR_LIST);
-					} else {
-						$widget->set_aggregate_function($attr->get_default_aggregate_function());
-					}
-					$this->add_widget($widget);
-				}
-			}
-		}
-		
-		$this->buttons[] = $button_widget;
 	}
 	
 	/**
 	 * 
 	 * {@inheritDoc}
-	 * @see \exface\Core\Interfaces\Widgets\iHaveButtons::remove_button()
+	 * @see \exface\Core\Interfaces\Widgets\iAmCollapsible::set_collapsible()
 	 */
-	public function remove_button(Button $button_widget){
-		if(($key = array_search($button_widget, $this->buttons)) !== false) {
-			unset($this->buttons[$key]);
-		}
-		return $this;
-	}
+	public function set_collapsible($value) {
+		$this->collapsible = $value;
+	}    
 	
 	/**
 	 * (non-PHPdoc)
@@ -138,36 +97,6 @@ class Panel extends Container implements iSupportLazyLoading, iHaveButtons, iHav
 		return $this;
 	} 
 	
-	/**
-	 * Returns the class of the used buttons. Regular panels and forms use ordinarz buttons, but
-	 * Dialogs use special DialogButtons capable of closing the Dialog, etc. This special getter
-	 * function allows all the logic to be inherited from the panel while just replacing the
-	 * button class.
-	 * @return string
-	 */
-	public function get_button_widget_type(){
-		return $this->button_widget_type;
-	}
-	
-	/**
-	 * 
-	 * @param string $string
-	 * @return \exface\Core\Widgets\Panel
-	 */
-	public function set_button_widget_type($string){
-		$this->button_widget_type = $string;
-		return $this;
-	}
-	
-	/**
-	 * 
-	 * {@inheritDoc}
-	 * @see \exface\Core\Widgets\Container::get_children()
-	 */
-	public function get_children(){		
-		return array_merge(parent::get_children(), $this->get_buttons());
-	}
-	
 	public function get_column_number() {
 		return $this->column_number;
 	}
@@ -214,16 +143,6 @@ class Panel extends Container implements iSupportLazyLoading, iHaveButtons, iHav
 		$this->column_stack_on_tablets = $value;
 		return $this;
 	} 
-	
-	/**
-	 * 
-	 * {@inheritDoc}
-	 * @see \exface\Core\Interfaces\Widgets\iHaveButtons::has_buttons()
-	 */
-	public function has_buttons() {
-		if (count($this->buttons)) return true;
-		else return false;
-	}
 	
 	/**
 	 * {@inheritDoc}

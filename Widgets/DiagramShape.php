@@ -18,7 +18,7 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
  * @author Andrej Kabachnik
  *
  */
-class DiagramShape extends Panel implements iShowDataSet, iHaveBorders {
+class DiagramShape extends Form implements iShowDataSet, iHaveBorders {
 	const SHAPE_TYPE_POLYGON = 'polygon';
 	const SHAPE_CIRCLE = 'circle';
 	const SHAPE_DONUT = 'donut';
