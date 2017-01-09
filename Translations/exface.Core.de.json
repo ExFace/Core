@@ -51,6 +51,7 @@
 	"WIDGET.SELECT_YES": "Ja",
 	"WIDGET.SELECT_NO": "Nein",
 	"WIDGET.SELECT_NONE": "-",
+	"WIDGET.STATEMENUBUTTON.CAPTION": "Status ändern",
 	
 	"ERROR.CAPTION": "Fehler",
 	"ERROR.REQUEST_CAPTION": "Request",
