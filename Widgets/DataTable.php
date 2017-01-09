@@ -5,9 +5,8 @@ use exface\Core\Interfaces\Widgets\iHaveBottomToolbar;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Widgets\iFillEntireContainer;
 use exface\Core\Interfaces\Widgets\iSupportMultiSelect;
-use exface\Core\Interfaces\Widgets\iProvideData;
 
-class DataTable extends Data implements iHaveTopToolbar, iHaveBottomToolbar, iFillEntireContainer, iSupportMultiSelect, iProvideData {
+class DataTable extends Data implements iHaveTopToolbar, iHaveBottomToolbar, iFillEntireContainer, iSupportMultiSelect {
 	
 	private $show_filter_row = false;
 	private $show_row_numbers = false;

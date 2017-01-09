@@ -4,7 +4,6 @@ namespace exface\Core\Widgets;
 use exface\Core\Interfaces\Widgets\iHaveButtons;
 use exface\Core\Interfaces\Widgets\iHaveIcon;
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\Interfaces\Widgets\iProvideData;
 
 /**
  * A group of button widgets with a mutual input widget. 
@@ -49,7 +48,7 @@ class ButtonGroup extends AbstractWidget implements iHaveButtons, iHaveIcon {
 	 * Adds a button to the group
 	 * @see \exface\Core\Interfaces\Widgets\iHaveButtons::add_button()
 	 */
-	public function add_button($button_widget){
+	public function add_button(Button $button_widget){
 		$button_widget->set_parent($this);
 		$button_widget->set_input_widget($this->get_input_widget());
 		$button_widget->set_input_widget($this->get_input_widget());
@@ -61,7 +60,7 @@ class ButtonGroup extends AbstractWidget implements iHaveButtons, iHaveIcon {
 	 * Removes a button from the group
 	 * @see \exface\Core\Interfaces\Widgets\iHaveButtons::remove_button()
 	 */
-	public function remove_button($button_widget){
+	public function remove_button(Button $button_widget){
 		if(($key = array_search($button_widget, $this->buttons)) !== false) {
 			unset($this->buttons[$key]);
 		}
@@ -103,13 +102,13 @@ class ButtonGroup extends AbstractWidget implements iHaveButtons, iHaveIcon {
 	 * need to travel up all the group hierarchy to the first parent, which is not a button group and
 	 * thus contains all the buttons (or would contain them if there were no groups).
 	 */
-	public function get_input_widget(){
+	protected function get_input_widget(){
 		if (!$this->input_widget){
 			if ($this->input_widget_id){
 				$this->input_widget = $this->get_ui()->get_widget($this->input_widget_id, $this->get_page_id());
 			} else {
 				$parent = $this->get_parent();
-				while (!($parent instanceof iProvideData) && !is_null($parent->get_parent())) {
+				while ((!($parent instanceof iHaveButtons) || ($parent instanceof ButtonGroup)) && !is_null($parent->get_parent())) {
 					$parent = $parent->get_parent();
 				}
 				$this->input_widget = $parent;

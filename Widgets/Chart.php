@@ -11,7 +11,6 @@ use exface\Core\Interfaces\Widgets\iSupportLazyLoading;
 use exface\Core\Interfaces\Widgets\iShowDataSet;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
-use exface\Core\Interfaces\Widgets\iProvideData;
 
 /**
  * A Button is the primary widget for triggering actions. In addition to the general widget attributes it can have
@@ -20,7 +19,7 @@ use exface\Core\Interfaces\Widgets\iProvideData;
  * @author Andrej Kabachnik
  *
  */
-class Chart extends AbstractWidget implements iShowDataSet, iHaveButtons, iHaveTopToolbar, iHaveBottomToolbar, iSupportLazyLoading, iProvideData {
+class Chart extends AbstractWidget implements iShowDataSet, iHaveButtons, iHaveTopToolbar, iHaveBottomToolbar, iSupportLazyLoading {
 	/**
 	 * @var ChartAxis[]
 	 */
@@ -469,7 +468,7 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveButtons, iHaveT
 	 * (non-PHPdoc)
 	 * @see \exface\Core\Interfaces\Widgets\iHaveButtons::add_button()
 	 */
-	public function add_button($button_widget){
+	public function add_button(Button $button_widget){
 		$button_widget->set_parent($this);
 		$button_widget->set_meta_object_id($this->get_meta_object()->get_id());
 		$this->buttons[] = $button_widget;
@@ -480,7 +479,7 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveButtons, iHaveT
 	 * {@inheritDoc}
 	 * @see \exface\Core\Interfaces\Widgets\iHaveButtons::remove_button()
 	 */
-	public function remove_button($button_widget){
+	public function remove_button(Button $button_widget){
 		if(($key = array_search($button_widget, $this->buttons)) !== false) {
 			unset($this->buttons[$key]);
 		}

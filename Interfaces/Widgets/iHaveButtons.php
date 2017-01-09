@@ -9,14 +9,14 @@ interface iHaveButtons extends iHaveChildren {
 	 * 
 	 * @param \exface\Core\Widgets\Button $button_widget
 	 */
-	public function add_button($button_widget);
+	public function add_button(Button $button_widget);
 	
 	/**
 	 * Removes a button from the widget
 	 * 
 	 * @param Button $button_widget
 	 */
-	public function remove_button($button_widget);
+	public function remove_button(Button $button_widget);
 	
 	/**
 	 * Returs an array of button widgets
