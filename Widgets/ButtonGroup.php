@@ -73,6 +73,15 @@ class ButtonGroup extends Button implements iHaveButtons {
 	/**
 	 * 
 	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\Widgets\iHaveButtons::get_button_widget_type()
+	 */
+	public function get_button_widget_type(){
+		return 'Button';
+	}
+	
+	/**
+	 * 
+	 * {@inheritDoc}
 	 * @see \exface\Core\Interfaces\Widgets\iHaveButtons::has_buttons()
 	 */
 	public function has_buttons() {

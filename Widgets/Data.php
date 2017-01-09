@@ -941,6 +941,15 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 		}
 		return $this;
 	}	
+	
+	/**
+	 *
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\Widgets\iHaveButtons::get_button_widget_type()
+	 */
+	public function get_button_widget_type(){
+		return 'DataButton';
+	}
 }
 
 ?>
