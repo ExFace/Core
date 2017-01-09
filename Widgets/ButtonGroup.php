@@ -2,7 +2,6 @@
 namespace exface\Core\Widgets;
 
 use exface\Core\Interfaces\Widgets\iHaveButtons;
-use exface\Core\Interfaces\Widgets\iHaveIcon;
 use exface\Core\CommonLogic\UxonObject;
 
 /**
@@ -13,11 +12,8 @@ use exface\Core\CommonLogic\UxonObject;
  * @author Andrej Kabachnik
  *
  */
-class ButtonGroup extends AbstractWidget implements iHaveButtons, iHaveIcon {
+class ButtonGroup extends Button implements iHaveButtons {
 	private $buttons =  array();
-	private $icon_name = null;
-	private $input_widget = null;
-	private $input_widget_id = null;
 	
 	/**
 	 * (non-PHPdoc)
@@ -51,7 +47,6 @@ class ButtonGroup extends AbstractWidget implements iHaveButtons, iHaveIcon {
 	public function add_button(Button $button_widget){
 		$button_widget->set_parent($this);
 		$button_widget->set_input_widget($this->get_input_widget());
-		$button_widget->set_input_widget($this->get_input_widget());
 		$this->buttons[] = $button_widget;
 		return $this;
 	}
@@ -69,52 +64,10 @@ class ButtonGroup extends AbstractWidget implements iHaveButtons, iHaveIcon {
 	
 	/**
 	 * (non-PHPdoc)
-	 * @see \exface\Core\Interfaces\Widgets\iHaveIcon::get_icon_name()
-	 */
-	public function get_icon_name() {
-		return $this->icon_name;
-	}
-	
-	/**
-	 * Sets the icon for the button group. Use one of the generic icon names or any notation supported by the template.
-	 * 
-	 * @uxon-property icon_name
-	 * @uxon-type string
-	 * 
-	 * 
-	 * @see \exface\Core\Interfaces\Widgets\iHaveIcon::set_icon_name()
-	 */
-	public function set_icon_name($value) {
-		$this->icon_name = $value;
-	}
-	
-	/**
-	 * (non-PHPdoc)
 	 * @see \exface\Core\Widgets\AbstractWidget::get_children()
 	 */
 	public function get_children() {
-		return $this->get_buttons();
-	}
-	
-	/**
-	 * Returns the input widget for buttons in this group. That is the widget, that holds the data,
-	 * the button's actions are supposed to be performed upon. Since button groups can be nested, we
-	 * need to travel up all the group hierarchy to the first parent, which is not a button group and
-	 * thus contains all the buttons (or would contain them if there were no groups).
-	 */
-	protected function get_input_widget(){
-		if (!$this->input_widget){
-			if ($this->input_widget_id){
-				$this->input_widget = $this->get_ui()->get_widget($this->input_widget_id, $this->get_page_id());
-			} else {
-				$parent = $this->get_parent();
-				while ((!($parent instanceof iHaveButtons) || ($parent instanceof ButtonGroup)) && !is_null($parent->get_parent())) {
-					$parent = $parent->get_parent();
-				}
-				$this->input_widget = $parent;
-			}
-		}
-		return $this->input_widget;
+		return array_merge(parent::get_children(), $this->get_buttons());
 	}
 	
 	/**
@@ -126,14 +79,5 @@ class ButtonGroup extends AbstractWidget implements iHaveButtons, iHaveIcon {
 		if (count($this->buttons)) return true;
 		else return false;
 	}
-	
-	public function get_input_widget_id() {
-		return $this->input_widget_id;
-	}
-	
-	public function set_input_widget_id($value) {
-		$this->input_widget_id = $value;
-		return $this;
-	}  
 }
 ?>
