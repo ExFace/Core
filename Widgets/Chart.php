@@ -538,5 +538,14 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveButtons, iHaveT
 	public function set_lazy_loading_action($value) {
 		return $this->get_data()->set_lazy_loading_action($value);
 	}
+	
+	/**
+	 *
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\Widgets\iHaveButtons::get_button_widget_type()
+	 */
+	public function get_button_widget_type(){
+		return 'DataButton';
+	}
 }
 ?>

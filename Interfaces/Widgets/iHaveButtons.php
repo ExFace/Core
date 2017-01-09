@@ -35,5 +35,15 @@ interface iHaveButtons extends iHaveChildren {
 	 * @return boolean
 	 */
 	public function has_buttons();
+	
+	/**
+	 * Returns the class of the used buttons. Regular panels and forms use ordinarz buttons, but
+	 * Dialogs use special DialogButtons capable of closing the Dialog, etc. This special getter
+	 * function allows all the logic to be inherited from the panel while just replacing the
+	 * button class.
+	 *
+	 * @return string
+	 */
+	public function get_button_widget_type();
 	  
 }
