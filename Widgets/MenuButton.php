@@ -112,5 +112,14 @@ class MenuButton extends Button	implements iHaveMenu, iHaveButtons {
 		}
 		return false;
 	}
+	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\Widgets\iHaveButtons::get_button_widget_type()
+	 */
+	public function get_button_widget_type() {
+		return $this->get_menu()->get_button_widget_type();
+	}
 }
 ?>
