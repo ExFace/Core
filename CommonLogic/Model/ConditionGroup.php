@@ -78,19 +78,19 @@ class ConditionGroup implements iCanBeConvertedToUxon {
 				$comparator = EXF_COMPARATOR_IN;
 			}
 			// if a numeric attribute has a value with commas, it is actually an IN-statement
-			elseif (strpos($expression_string, ',') === false
+			elseif (strpos($expression_string, EXF_LIST_SEPARATOR) === false
 					&& $base_object->get_attribute($expression_string)
 					&&($base_object->get_attribute($expression_string)->get_data_type()->is(EXF_DATA_TYPE_NUMBER)
 							|| $base_object->get_attribute($expression_string)->get_data_type()->is(EXF_DATA_TYPE_RELATION)
 							)
-					&& strpos($value, ',') !== false){
+					&& strpos($value, EXF_LIST_SEPARATOR) !== false){
 						$comparator = EXF_COMPARATOR_IN;
 			}
 		}
 			
 		// Another special feature is the possibility to specify a comma separated list of attributes in one  element
 		// of the filters array, wich means that at least one of the attributes should match the value
-		$expression_strings = explode(',', $expression_string);
+		$expression_strings = explode(EXF_LIST_SEPARATOR, $expression_string);
 		if (count($expression_strings) > 1){
 			$group = ConditionGroupFactory::create_empty($this->exface, EXF_LOGICAL_OR);
 			foreach ($expression_strings as $f){

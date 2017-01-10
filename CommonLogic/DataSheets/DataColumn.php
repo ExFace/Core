@@ -14,6 +14,8 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\DataSheets\DataSheetDiffError;
 use exface\Core\Exceptions\DataSheets\DataSheetRuntimeError;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
+use exface\Core\Exceptions\InvalidArgumentException;
+use exface\Core\Exceptions\UnexpectedValueException;
 
 class DataColumn implements DataColumnInterface {
 	private $name = null;
@@ -541,22 +543,10 @@ class DataColumn implements DataColumnInterface {
 	public function aggregate($aggregate_function_name){
 		$result = '';
 		$values = $this->get_values(false);
-		switch (mb_strtoupper($aggregate_function_name)){
-			case EXF_AGGREGATOR_SUM: $result = array_sum($values); break;
-			case EXF_AGGREGATOR_AVERAGE:
-			case EXF_AGGREGATOR_AVG: 
-				if (count($values) > 0){
-					$result = array_sum($values) / count($values);
-				} else {
-					$result = 0;
-				}
-				break;
-			case EXF_AGGREGATOR_MIN: $result = count($values) > 0 ? min($values) : 0; break;
-			case EXF_AGGREGATOR_MAX: $result = count($values) > 0 ? max($values) : 0; break;
-			case EXF_AGGREGATOR_LIST: $result = implode(',', $values); break;
-			case EXF_AGGREGATOR_LIST_DISTINCT: $result = implode(',', array_unique($values)); break;
-			default:
-				throw new DataSheetRuntimeError($this->get_data_sheet(), 'Cannot aggregate over column "' . $this->get_name() . '" of a data sheet of "' . $this->get_data_sheet()->get_meta_object()->get_alias_with_namespace() . '": unknown aggregator function "' . $aggregate_function_name . '"!', '6T5UXLD');
+		try {
+			$result = static::aggregate_values($values, $aggregate_function_name);
+		} catch (\Throwable $e){
+			throw new DataSheetRuntimeError($this->get_data_sheet(), 'Cannot aggregate over column "' . $this->get_name() . '" of a data sheet of "' . $this->get_data_sheet()->get_meta_object()->get_alias_with_namespace() . '": unknown aggregator function "' . $aggregate_function_name . '"!', '6T5UXLD', $e);
 		}
 		return $result;
 	}
@@ -579,17 +569,16 @@ class DataColumn implements DataColumnInterface {
 		}
 	
 		$output = '';
-		switch ($func) {
-			// TODO replace by constants EXF_AGGREGATOR_SUM etc.
-			case EXF_AGGREGATOR_LIST: $output = implode(', ', $row_array); break;
-			case EXF_AGGREGATOR_LIST_DISTINCT: $output = implode(', ', array_unique($row_array)); break;
-			case EXF_AGGREGATOR_MIN: $output = min($row_array); break;
-			case EXF_AGGREGATOR_MAX: $output = max($row_array); break;
+		switch (mb_strtoupper($func)) {
+			case EXF_AGGREGATOR_LIST: $output = implode(($args[0] ? $args[0] : ', '), $row_array); break;
+			case EXF_AGGREGATOR_LIST_DISTINCT: $output = implode(($args[0] ? $args[0] : ', '), array_unique($row_array)); break;
+			case EXF_AGGREGATOR_MIN: $output = count($row_array) > 0 ? min($row_array) : 0; break;
+			case EXF_AGGREGATOR_MAX: $output = count($row_array) > 0 ? max($row_array) : 0; break;
 			case EXF_AGGREGATOR_COUNT: $output = count($row_array); break;
 			case EXF_AGGREGATOR_COUNT_DISTINCT: $output = count(array_unique($row_array)); break;
 			case EXF_AGGREGATOR_SUM: $output = array_sum($row_array); break;
-			case EXF_AGGREGATOR_AVG: $output = array_sum($row_array)/count($row_array); break;
-			default: $output = reset($row_array);
+			case EXF_AGGREGATOR_AVG: $output = count($row_array) > 0 ? array_sum($row_array)/count($row_array) : 0; break;
+			default: throw new UnexpectedValueException('Invalid aggregator function "' . $group_function . '"!');
 		}
 		return $output;
 	}

@@ -10,7 +10,7 @@ class MicroChart extends \exface\Core\CommonLogic\Model\Formula {
 	
 	function run($data, $chart_type = 'line'){
 		$id = str_replace('.', '', uniqid(null, true));
-		$vals = explode(',', $data);
+		$vals = explode(EXF_LIST_SEPARATOR, $data);
 		foreach ($vals as $val){
 			$val = intval(trim($val));
 			if ($val > $this->range_max) $this->range_max = $val;

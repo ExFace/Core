@@ -14,7 +14,7 @@ class RowDataArrayFilter {
 					case EXF_COMPARATOR_IN:
 						$match = false;
 						$row_val = $row[$filter['key']];
-						foreach (explode(',', $filter['value']) as $val){
+						foreach (explode(EXF_LIST_SEPARATOR, $filter['value']) as $val){
 							$val = trim($val);
 							if (strcasecmp($row_val, $val) === 0) {
 								$match = true;

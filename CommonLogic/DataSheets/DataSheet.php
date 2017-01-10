@@ -433,7 +433,7 @@ class DataSheet implements DataSheetInterface {
 		foreach ($this->get_subsheets() as $rel_path => $subsheet){
 			if (!$this->get_meta_object()->get_relation($rel_path)->is_reverse_relation()){
 				$foreign_keys = $this->get_column_values($rel_path);
-				$subsheet->add_filter_from_string($this->get_meta_object()->get_relation($rel_path)->get_related_object_key_alias(), implode(',', array_unique($foreign_keys)), EXF_COMPARATOR_IN);
+				$subsheet->add_filter_from_string($this->get_meta_object()->get_relation($rel_path)->get_related_object_key_alias(), implode(EXF_LIST_SEPARATOR, array_unique($foreign_keys)), EXF_COMPARATOR_IN);
 				$left_key_column = $rel_path;
 				$right_key_column = $this->get_meta_object()->get_relation($rel_path)->get_related_object_key_alias();
 			} else {
@@ -441,7 +441,7 @@ class DataSheet implements DataSheetInterface {
 					throw new DataSheetJoinError($this, 'Joining subsheets via reverse relations with explicitly specified foreign keys, not implemented yet!', '6T5V36I');
 				} else {
 					$foreign_keys = $this->get_uid_column()->get_values();
-					$subsheet->add_filter_from_string($this->get_meta_object()->get_relation($rel_path)->get_foreign_key_alias(), implode(',', array_unique($foreign_keys)), EXF_COMPARATOR_IN);
+					$subsheet->add_filter_from_string($this->get_meta_object()->get_relation($rel_path)->get_foreign_key_alias(), implode(EXF_LIST_SEPARATOR, array_unique($foreign_keys)), EXF_COMPARATOR_IN);
 					// FIXME Fix Reverse relations key bug. Getting the left key column from the reversed relation here is a crude hack, but 
 					// the get_main_object_key_alias() strangely does not work for reverse relations
 					$left_key_column = $this->get_meta_object()->get_relation($rel_path)->get_reversed_relation()->get_related_object_key_alias();
@@ -583,7 +583,7 @@ class DataSheet implements DataSheetInterface {
 			
 			// Use the UID column as a filter to make sure, only these rows are affected
 			if ($column->get_attribute()->get_alias_with_relation_path() == $this->get_meta_object()->get_uid_alias()){
-				$query->add_filter_from_string($this->get_meta_object()->get_uid_alias(), implode(',', array_unique($column->get_values(false))), EXF_COMPARATOR_IN);
+				$query->add_filter_from_string($this->get_meta_object()->get_uid_alias(), implode(EXF_LIST_SEPARATOR, array_unique($column->get_values(false))), EXF_COMPARATOR_IN);
 			} else {
 				// Add all other columns to values
 				
@@ -613,7 +613,7 @@ class DataSheet implements DataSheetInterface {
 						$uid_data_sheet->get_columns()->remove_all();
 						$uid_data_sheet->get_columns()->add_from_expression($this->get_meta_object()->get_uid_alias());
 						$uid_data_sheet->get_columns()->add_from_expression($uid_column_alias);
-						$uid_data_sheet->add_filter_from_string($this->get_meta_object()->get_uid_alias(), implode($this->get_uid_column()->get_values(), ','), EXF_COMPARATOR_IN);
+						$uid_data_sheet->add_filter_from_string($this->get_meta_object()->get_uid_alias(), implode($this->get_uid_column()->get_values(), EXF_LIST_SEPARATOR), EXF_COMPARATOR_IN);
 						$uid_data_sheet->data_read();
 						$uid_column = $uid_data_sheet->get_column($uid_column_alias);	
 					}
@@ -830,7 +830,7 @@ class DataSheet implements DataSheetInterface {
 		$query->set_filters_condition_group($this->get_filters());
 		if ($this->get_uid_column()){
 			if ($uids = $this->get_uid_column()->get_values(false)){
-				$query->add_filter_condition(ConditionFactory::create_from_expression($this->exface, $this->get_uid_column()->get_expression_obj(), implode(',', $uids), EXF_COMPARATOR_IN));
+				$query->add_filter_condition(ConditionFactory::create_from_expression($this->exface, $this->get_uid_column()->get_expression_obj(), implode(EXF_LIST_SEPARATOR, $uids), EXF_COMPARATOR_IN));
 			}
 		} 
 		
@@ -932,7 +932,7 @@ class DataSheet implements DataSheetInterface {
 	 */
 	function add_filter_in_from_string($column, $value_list){
 		if (is_array($value_list)){
-			$value = implode(',', $value_list);
+			$value = implode(EXF_LIST_SEPARATOR, $value_list);
 		} else {
 			$value = $value_list;
 		}
@@ -948,7 +948,7 @@ class DataSheet implements DataSheetInterface {
 	 */
 	function add_filter_is_from_string($column, $value_list){
 		if (is_array($value_list)){
-			$value = implode(',', $value_list);
+			$value = implode(EXF_LIST_SEPARATOR, $value_list);
 		} else {
 			$value = $value_list;
 		}
@@ -1257,7 +1257,7 @@ class DataSheet implements DataSheetInterface {
 	}
 	
 	public function add_filter_from_column_values(DataColumnInterface $column){
-		$this->add_filter_from_string($column->get_expression_obj()->to_string(), implode(',', array_unique($column->get_values(false))), EXF_COMPARATOR_IN);
+		$this->add_filter_from_string($column->get_expression_obj()->to_string(), implode(EXF_LIST_SEPARATOR, array_unique($column->get_values(false))), EXF_COMPARATOR_IN);
 		return $this;
 	}
 	
