@@ -226,4 +226,16 @@ class UxonObject extends \stdClass implements \IteratorAggregate {
 		unset($this->$name);
 		return $this;
 	}
+	
+	public function to_array(){
+		$array = array();
+		foreach ($this->get_properties_all() as $key => $prop){
+			if ($prop instanceof UxonObject){
+				$array[$key] = $prop->to_array();
+			} else {
+				$array[$key] = $prop;
+			}
+		}
+		return $array;
+	}
 }

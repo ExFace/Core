@@ -3,8 +3,9 @@
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Interfaces\UiPageInterface;
 use exface\Core\Widgets\ErrorMessage;
+use exface\Core\Interfaces\iCanGenerateDebugWidgets;
 
-interface ExceptionInterface extends iCanBeConvertedToUxon {
+interface ExceptionInterface extends iCanBeConvertedToUxon, iCanGenerateDebugWidgets {
 	/**
 	 * Returns TRUE if this exception is a warning and FALSE otherwise
 	 * @return boolean
@@ -18,13 +19,13 @@ interface ExceptionInterface extends iCanBeConvertedToUxon {
 	public function is_error();
 	
 	/**
-	 * Creates a widget with detailed information about this exception. 
+	 * Creates a blawidget with detailed information about this exception.
 	 * 
 	 * @param UiPageInterface $page
 	 * @return ErrorMessage
 	 */
 	public function create_widget(UiPageInterface $page);
-	
+		
 	/**
 	 * Returns the default error code for this type of exception. If no error code is given in the constructor, the default
 	 * will be used to generate a link to the help, etc.
@@ -51,5 +52,11 @@ interface ExceptionInterface extends iCanBeConvertedToUxon {
 	 * @return ExceptionInterface
 	 */
 	public function set_alias($string);
+	
+	/**
+	 * Returns the unique identifier of this exception (exceptions thrown at the same line a different times will have differnt ids!)
+	 * @return string
+	 */
+	public function get_id();
 
 }

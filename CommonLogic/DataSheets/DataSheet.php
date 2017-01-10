@@ -29,6 +29,7 @@ use exface\Core\Exceptions\DataSheets\DataSheetColumnNotFoundError;
 use exface\Core\Exceptions\DataSheets\DataSheetRuntimeError;
 use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
+use exface\Core\Exceptions\DataSheets\DataSheetReadError;
 
 /**
  * Internal data respresentation object in exface. Similar to an Excel-table:
@@ -421,8 +422,12 @@ class DataSheet implements DataSheetInterface {
 		if ($limit > 0){
 			$query->set_limit($limit, $offset);
 		}
-	
-		$result = $query->read($this->get_meta_object()->get_data_connection());
+		
+		try {
+			$result = $query->read($this->get_meta_object()->get_data_connection());
+		} catch (\Throwable $e){
+			throw new DataSheetReadError($this, $e->getMessage(), null, $e);
+		}
 
 		$this->add_rows($query->get_result_rows());
 		$this->totals_rows = $query->get_result_totals();
@@ -631,10 +636,10 @@ class DataSheet implements DataSheetInterface {
 		$transaction->add_data_connection($connection);
 		try {
 			$counter += $query->update($connection);
-		} catch (ErrorExceptionInterface $e){
+		} catch (\Throwable $e){
 			$transaction->rollback();
 			$commit = false;
-			throw new DataSheetWriteError($this, 'Data source error. ' . $e->getMessage(), $e->getCode(), $e);
+			throw new DataSheetWriteError($this, 'Data source error. ' . $e->getMessage(), null, $e);
 		}
 		
 		if ($commit  && !$transaction->is_rolled_back()){
@@ -784,10 +789,10 @@ class DataSheet implements DataSheetInterface {
 		$transaction->add_data_connection($connection);
 		try {
 			$new_uids = $query->create($connection);
-		} catch (ErrorExceptionInterface $e) {
+		} catch (\Throwable $e) {
 			$transaction->rollback();
 			$commit = false;
-			throw $e;
+			throw new DataSheetWriteError($this, $e->getMessage(), null, $e);
 		}
 		
 		if ($commit  && !$transaction->is_rolled_back()){
@@ -854,9 +859,9 @@ class DataSheet implements DataSheetInterface {
 		$transaction->add_data_connection($connection);
 		try {
 			$affected_rows += $query->delete($connection);
-		} catch (ErrorExceptionInterface $e){
+		} catch (\Throwable $e){
 			$transaction->rollback();
-			throw new DataSheetWriteError($this, 'Data source error. ' . $e->getMessage(), $e->getCode(), $e);
+			throw new DataSheetWriteError($this, 'Data source error. ' . $e->getMessage(), null, $e);
 		}
 		
 		if ($commit && !$transaction->is_rolled_back()){
