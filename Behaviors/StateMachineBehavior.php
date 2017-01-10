@@ -55,6 +55,14 @@ class StateMachineBehavior extends AbstractBehavior {
 	
 	/**
 	 * 
+	 * @return \exface\Core\CommonLogic\Model\Attribute
+	 */
+	public function get_state_attribute() {
+		return $this->get_object()->get_attribute($this->get_state_attribute_alias());
+	}
+		
+	/**
+	 * 
 	 * @return unknown
 	 */
 	public function get_default_state() {
@@ -193,43 +201,38 @@ class StateMachineBehavior extends AbstractBehavior {
 		// extended from it.
 		if (!$data_sheet->get_meta_object()->is($this->get_object())) return;
 		
-		//
-		$check_sheet = DataSheetFactory::create_from_object($data_sheet->get_meta_object());
+		// Read the unchanged object from the database
+		$check_sheet = DataSheetFactory::create_from_object($this->get_object());
+		//$check_sheet = $this->get_workbench()->data()->create_data_sheet($this->get_object());
+		foreach ($this->get_object()->get_attributes() as $attr) {
+			$check_sheet->get_columns()->add_from_attribute($attr);
+		}
+		//$check_sheet->get_columns()->add($data_sheet->get_uid_column()->copy());
 		$check_sheet->add_filter_from_column_values($data_sheet->get_uid_column());
 		$check_sheet->data_read();
-		$check_column = $check_sheet->get_columns()->get_by_attribute($this->get_state_attribute_alias());
+		$check_column = $check_sheet->get_columns()->get_by_attribute($this->get_state_attribute());
 		$check_nr = count($check_column->get_values());
 		
 		// Check all the updated attributes for disabled attributes, if a disabled attribute
 		// is changed throw an error
-		$conflict_rows = array();
-		
 		foreach ($check_column->get_values() as $row_nr => $check_val) {
 			$disabled_attributes = $this->get_smstate($check_val)->get_disabled_attributes();
 			foreach ($data_sheet->get_columns() as $col) {
 				if (in_array($col->get_attribute_alias(), $disabled_attributes)) {
-					$conflict_rows[] = $row_nr;
+					$updated_val = $col->get_cell_value($data_sheet->get_uid_column()->find_row_by_value($check_sheet->get_uid_column()->get_cell_value($row_nr)));
+					$check_val = $check_sheet->get_cell_value($col->get_attribute_alias(), $row_nr);
+					if ($updated_val != $check_val) {
+						$data_sheet->data_mark_invalid();
+						throw new StateMachineUpdateException($data_sheet, 'Cannot update data in data sheet with "' . $data_sheet->get_meta_object()->get_alias_with_namespace() . '": attribute '.$col->get_attribute_alias().' is disabled in the current state ('.$check_val.')!');
+					}
 				}
 			}
 		}
 		
-		if (count($conflict_rows) > 0){
-			$data_sheet->data_mark_invalid();
-			throw new StateMachineUpdateException($data_sheet, 'Cannot update data in data sheet with "' . $data_sheet->get_meta_object()->get_alias_with_namespace() . '": row(s) ' . implode(',', $conflict_rows) . ' change attributes, which are disabled in the current state!');
-		}
-		
 		// Check if the state column is present in the sheet, if so get the old value and check
 		// if the transition is allowed, throw an error if not
-		if ($updated_column = $data_sheet->get_columns()->get_by_attribute($this->get_state_attribute_alias())) {
-			$updated_nr = count($updated_column->get_values());
-			
-			$check_sheet =  $data_sheet->copy()->remove_rows();
-			$check_sheet->add_filter_from_column_values($data_sheet->get_uid_column());
-			$check_sheet->data_read();
-			$check_column = $check_sheet->get_columns()->get_by_attribute($this->get_state_attribute_alias());
-			$check_nr = count($check_column->get_values());
-			
-			$conflict_rows = array();
+		if ($updated_column = $data_sheet->get_columns()->get_by_attribute($this->get_state_attribute())) {
+			$update_nr = count($updated_column->get_values());
 			
 			if ($check_nr == $update_nr) {
 				//beim Bearbeiten eines einzelnen Objektes ueber einfaches Bearbeiten, Massenupdate in Tabelle, Massenupdate
@@ -239,7 +242,8 @@ class StateMachineBehavior extends AbstractBehavior {
 					$check_val = $check_column->get_cell_value($check_sheet->get_uid_column()->find_row_by_value($data_sheet->get_uid_column()->get_cell_value($row_nr)));
 					$allowed_transitions = $this->get_smstate($check_val)->get_transitions();
 					if (!in_array($updated_val, $allowed_transitions)) {
-						$conflict_rows[] = $row_nr;
+						$data_sheet->data_mark_invalid();
+						throw new StateMachineUpdateException($data_sheet, 'Cannot update data in data sheet with "' . $data_sheet->get_meta_object()->get_alias_with_namespace() . '": state transition from '.$check_val.' to '.$updated_val.' is not allowed!');
 					}
 				}
 				
@@ -250,14 +254,10 @@ class StateMachineBehavior extends AbstractBehavior {
 				foreach ($check_column->get_values() as $row_nr => $check_val) {
 					$allowed_transitions = $this->get_smstate($check_val)->get_transitions();
 					if (!in_array($updated_val, $allowed_transitions)) {
-						$conflict_rows[] = $row_nr;
+						$data_sheet->data_mark_invalid();
+						throw new StateMachineUpdateException($data_sheet, 'Cannot update data in data sheet with "' . $data_sheet->get_meta_object()->get_alias_with_namespace() . '": state transition from '.$check_val.' to '.$updated_val.' is not allowed!');
 					}
 				}
-			}
-			
-			if (count($conflict_rows) > 0){
-				$data_sheet->data_mark_invalid();
-				throw new StateMachineUpdateException($data_sheet, 'Cannot update data in data sheet with "' . $data_sheet->get_meta_object()->get_alias_with_namespace() . '": row(s) ' . implode(',', $conflict_rows) . ' have forbidden state transitions!');
 			}
 		}
 	}
