@@ -36,7 +36,9 @@ class Form extends Panel implements iHaveButtons {
 	public function set_buttons(array $buttons_array) {
 		if (!is_array($buttons_array)) return false;
 		foreach ($buttons_array as $b){
-			$button = $this->get_page()->create_widget($this->get_button_widget_type(), $this, UxonObject::from_anything($b));
+			// Otherwise every button is added as an DialogButton.
+			$button_widget_type = property_exists($b, 'widget_type') ? $b->widget_type : $this->get_button_widget_type();
+			$button = $this->get_page()->create_widget($button_widget_type, $this, UxonObject::from_anything($b));
 			$this->add_button($button);
 		}
 	}
