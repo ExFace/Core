@@ -55,6 +55,12 @@ abstract class AbstractTemplate implements TemplateInterface {
 		return $this->alias;
 	}
 	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\ExfaceClassInterface::get_workbench()
+	 * @return Workbench
+	 */
 	public function get_workbench(){
 		return $this->exface;
 	}
@@ -69,9 +75,13 @@ abstract class AbstractTemplate implements TemplateInterface {
 	
 	/**
 	 * Processes the current HTTP request, assuming it was made from a UI using this template
+	 * @param string $page_id
+	 * @param string $widget_id
+	 * @param string $action_alias
+	 * @param boolean $disable_error_handling
 	 * @return string
 	 */
-	abstract function process_request();  
+	abstract function process_request($page_id=NULL, $widget_id=NULL, $action_alias=NULL, $disable_error_handling=false);  
 	
 	public function is($template_alias){
 		if (strcasecmp($this->get_alias(), $template_alias) == 0){

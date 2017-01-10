@@ -168,5 +168,15 @@ class Filemanager extends Filesystem implements ExfaceClassInterface {
 		return Path::join($paths);
 	}
 	
+	/**
+	 * Returns the longest common base path for all given paths or NULL if there is no common base.
+	 * 
+	 * @param array $paths
+	 * @return string|NULL
+	 */
+	public static function path_get_common_base(array $paths){
+		return Path::getLongestCommonBasePath($paths);
+	}
+	
 }
 ?>

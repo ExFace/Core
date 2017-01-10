@@ -6,6 +6,7 @@ use exface\Core\DataTypes\AbstractDataType;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Exceptions\RangeException;
+use exface\Core\Exceptions\UnexpectedValueException;
 /**
  * . Thus, a condition is basically
  * something like "expr = a" or "date > 01.01.1970", etc, while a ConditionGroup can be used to combine multiple conditions using
@@ -21,11 +22,8 @@ class Condition implements iCanBeConvertedToUxon {
 	private $data_type = NULL;
 	
 	/**
-	 * 
+	 * @deprecated use ConditionFactory instead!
 	 * @param \exface\Core\CommonLogic\Workbench $exface
-	 * @param string|\exface\Core\CommonLogic\Model\Expression $string_or_expression
-	 * @param string $value
-	 * @param string $comparator
 	 */
 	public function __construct(\exface\Core\CommonLogic\Workbench &$exface){
 		$this->exface = $exface;
@@ -33,20 +31,33 @@ class Condition implements iCanBeConvertedToUxon {
 	
 	/**
 	 * Returns the expression to filter
-	 * @return expression
+	 * @return Expression
 	 */
 	public function get_expression() {
 		return $this->expression;
 	}
 	
+	/**
+	 * Sets the expression that will be compared to the value
+	 * @param Expression $expression
+	 */
 	public function set_expression(Expression $expression) {
 		$this->expression = $expression;
 	}
 	
+	/**
+	 * Returns the value to compare to
+	 * @return mixed
+	 */
 	public function get_value() {
 		return $this->value;
 	}
 	
+	/**
+	 * Sets the value to compare to
+	 * @param mixed $value
+	 * @throws RangeException
+	 */
 	public function set_value($value) {
 		try {
 			$value = $this->get_data_type()->parse($value);
@@ -57,12 +68,38 @@ class Condition implements iCanBeConvertedToUxon {
 		$this->value = $value;
 	}
 	
+	/**
+	 * Returns the comparison operator from this condition. Normally it is one of the EXF_COMPARATOR_xxx constants.
+	 * @return string
+	 */
 	public function get_comparator() {
 		return $this->comparator;
 	}
 	
+	/**
+	 * Sets the comparison operator for this condition. Use one of the EXF_COMPARATOR_xxx constants.
+	 * 
+	 * @param string $value
+	 * @throws UnexpectedValueException if the value does not match one of the EXF_COMPARATOR_xxx constants
+	 * @return Condition
+	 */
 	public function set_comparator($value) {
+		$validated = false;
+		foreach (get_defined_constants(true)['user'] as $constant => $comparator){
+			if (substr($constant, 0, 15) === 'EXF_COMPARATOR_'){
+				if (strcasecmp($value, $comparator) === 0){
+					$validated = true;
+					$value = $comparator;
+					break;
+				}
+			}
+		}
 		$this->comparator = $value;
+		
+		if (!$validated){
+			throw new UnexpectedValueException('Invalid comparator value in condition "' . $this->get_expression()->to_string() . ' ' . $value . ' ' . $this->get_value() . '"!');
+		}
+		return $this;
 	}
 	
 	/**
@@ -97,6 +134,10 @@ class Condition implements iCanBeConvertedToUxon {
 	
 	public function to_string(){
 		return $this->get_expression()->to_string() . ' ' . $this->get_comparator() . ' ' . $this->get_value();
+	}
+	
+	public function __toString(){
+		return $this->to_string();
 	}
 	
 	public function export_uxon_object(){

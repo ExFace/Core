@@ -41,6 +41,9 @@ const EXF_COMPARATOR_LESS_THAN_OR_EQUALS = '<=';
 const EXF_COMPARATOR_GREATER_THAN = '>';
 const EXF_COMPARATOR_GREATER_THAN_OR_EQUALS = '>=';
 
+// Lists
+const EXF_LIST_SEPARATOR = ',';
+
 // Logical operators
 const EXF_LOGICAL_AND = 'AND';
 const EXF_LOGICAL_OR = 'OR';

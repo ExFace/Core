@@ -14,6 +14,8 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\DataSheets\DataSheetDiffError;
 use exface\Core\Exceptions\DataSheets\DataSheetRuntimeError;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
+use exface\Core\Exceptions\InvalidArgumentException;
+use exface\Core\Exceptions\UnexpectedValueException;
 
 class DataColumn implements DataColumnInterface {
 	private $name = null;
@@ -47,13 +49,13 @@ class DataColumn implements DataColumnInterface {
 		if (is_null($this->expression) || $this->expression->is_empty()){
 			if ($this->attribute_alias){
 				$exface = $this->get_workbench();
-				$this->expression = ExpressionFactory::create_from_string($exface, $this->get_attribute_alias(), $this->get_data_sheet()->get_meta_object());
+				$this->expression = ExpressionFactory::create_from_string($exface, $this->get_attribute_alias(), $this->get_meta_object());
 			}
 		}
 		// Make sure, there is always a meta object in the expression. For some reason, this is not always the case.
 		// IDEA this check can be removed, once meta object have become mandatory for expressions (planned in distant future)
 		if (!$this->expression->get_meta_object()){
-			$this->expression->set_meta_object($this->get_data_sheet()->get_meta_object());
+			$this->expression->set_meta_object($this->get_meta_object());
 		}
 		return $this->expression;
 	}
@@ -66,7 +68,7 @@ class DataColumn implements DataColumnInterface {
 	public function set_expression($expression_or_string) {
 		if (!($expression_or_string instanceof Expression)){
 			$exface = $this->get_workbench();
-			$expression = ExpressionFactory::create_from_string($exface, $expression_or_string);
+			$expression = ExpressionFactory::create_from_string($exface, $expression_or_string, $this->get_meta_object());
 		} else {
 			$expression = $expression_or_string;
 		}
@@ -75,7 +77,7 @@ class DataColumn implements DataColumnInterface {
 			$attribute_alias = $expression->get_required_attributes()[0];
 			$this->set_attribute_alias($attribute_alias);
 			try {
-				$attr = $this->get_data_sheet()->get_meta_object()->get_attribute($attribute_alias);
+				$attr = $this->get_meta_object()->get_attribute($attribute_alias);
 				$this->set_data_type($attr->get_data_type());
 			} catch (MetaAttributeNotFoundError $e){
 				// ignore expressions with invalid attribute aliases
@@ -204,7 +206,7 @@ class DataColumn implements DataColumnInterface {
 	 */
 	public function get_attribute(){
 		if ($this->get_attribute_alias()){
-			return $this->get_data_sheet()->get_meta_object()->get_attribute($this->get_attribute_alias());
+			return $this->get_meta_object()->get_attribute($this->get_attribute_alias());
 		} else {
 			return false;
 		}
@@ -488,7 +490,7 @@ class DataColumn implements DataColumnInterface {
 				} elseif ($attr->get_default_value()){
 					$this->set_value($row_id, $attr->get_default_value()->evaluate($this->get_data_sheet(), $this->get_name(), $row_id));
 				} else {
-					throw new DataSheetRuntimeError($this->get_data_sheet(), 'Cannot fill column with default values ' . $this->get_data_sheet()->get_meta_object()->get_name() . ': attribute ' . $attr->get_name() . ' not set in row ' . $row_id . '!', '6T5UX3Q');
+					throw new DataSheetRuntimeError($this->get_data_sheet(), 'Cannot fill column with default values ' . $this->get_meta_object()->get_name() . ': attribute ' . $attr->get_name() . ' not set in row ' . $row_id . '!', '6T5UX3Q');
 				}
 			}
 		}
@@ -541,22 +543,10 @@ class DataColumn implements DataColumnInterface {
 	public function aggregate($aggregate_function_name){
 		$result = '';
 		$values = $this->get_values(false);
-		switch (mb_strtoupper($aggregate_function_name)){
-			case EXF_AGGREGATOR_SUM: $result = array_sum($values); break;
-			case EXF_AGGREGATOR_AVERAGE:
-			case EXF_AGGREGATOR_AVG: 
-				if (count($values) > 0){
-					$result = array_sum($values) / count($values);
-				} else {
-					$result = 0;
-				}
-				break;
-			case EXF_AGGREGATOR_MIN: $result = count($values) > 0 ? min($values) : 0; break;
-			case EXF_AGGREGATOR_MAX: $result = count($values) > 0 ? max($values) : 0; break;
-			case EXF_AGGREGATOR_LIST: $result = implode(',', $values); break;
-			case EXF_AGGREGATOR_LIST_DISTINCT: $result = implode(',', array_unique($values)); break;
-			default:
-				throw new DataSheetRuntimeError($this->get_data_sheet(), 'Cannot aggregate over column "' . $this->get_name() . '" of a data sheet of "' . $this->get_data_sheet()->get_meta_object()->get_alias_with_namespace() . '": unknown aggregator function "' . $aggregate_function_name . '"!', '6T5UXLD');
+		try {
+			$result = static::aggregate_values($values, $aggregate_function_name);
+		} catch (\Throwable $e){
+			throw new DataSheetRuntimeError($this->get_data_sheet(), 'Cannot aggregate over column "' . $this->get_name() . '" of a data sheet of "' . $this->get_meta_object()->get_alias_with_namespace() . '": unknown aggregator function "' . $aggregate_function_name . '"!', '6T5UXLD', $e);
 		}
 		return $result;
 	}
@@ -579,19 +569,27 @@ class DataColumn implements DataColumnInterface {
 		}
 	
 		$output = '';
-		switch ($func) {
-			// TODO replace by constants EXF_AGGREGATOR_SUM etc.
-			case EXF_AGGREGATOR_LIST: $output = implode(', ', $row_array); break;
-			case EXF_AGGREGATOR_LIST_DISTINCT: $output = implode(', ', array_unique($row_array)); break;
-			case EXF_AGGREGATOR_MIN: $output = min($row_array); break;
-			case EXF_AGGREGATOR_MAX: $output = max($row_array); break;
+		switch (mb_strtoupper($func)) {
+			case EXF_AGGREGATOR_LIST: $output = implode(($args[0] ? $args[0] : ', '), $row_array); break;
+			case EXF_AGGREGATOR_LIST_DISTINCT: $output = implode(($args[0] ? $args[0] : ', '), array_unique($row_array)); break;
+			case EXF_AGGREGATOR_MIN: $output = count($row_array) > 0 ? min($row_array) : 0; break;
+			case EXF_AGGREGATOR_MAX: $output = count($row_array) > 0 ? max($row_array) : 0; break;
 			case EXF_AGGREGATOR_COUNT: $output = count($row_array); break;
 			case EXF_AGGREGATOR_COUNT_DISTINCT: $output = count(array_unique($row_array)); break;
 			case EXF_AGGREGATOR_SUM: $output = array_sum($row_array); break;
-			case EXF_AGGREGATOR_AVG: $output = array_sum($row_array)/count($row_array); break;
-			default: $output = reset($row_array);
+			case EXF_AGGREGATOR_AVG: $output = count($row_array) > 0 ? array_sum($row_array)/count($row_array) : 0; break;
+			default: throw new UnexpectedValueException('Invalid aggregator function "' . $group_function . '"!');
 		}
 		return $output;
+	}
+	
+	/**
+	 * Returns the meta object of this data column 
+	 * 
+	 * @return \exface\Core\CommonLogic\Model\Object
+	 */
+	public function get_meta_object(){
+		return $this->get_data_sheet()->get_meta_object();
 	}
  
 }

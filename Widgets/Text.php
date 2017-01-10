@@ -6,6 +6,7 @@ use exface\Core\Interfaces\Widgets\iShowText;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Factories\DataTypeFactory;
+use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 
 /**
  * The text widget simply shows text with an optional title created from the caption of the widget
@@ -204,7 +205,11 @@ class Text extends AbstractWidget implements iShowSingleAttribute, iHaveValue, i
 	}
 	
 	public function set_align($value) {
-		$this->align = $value;
+		if (!defined('EXF_ALIGN_' . mb_strtoupper($value))){
+			throw new WidgetPropertyInvalidValueError($this, 'Invalid alignment value "' . $value . '": use "left", "rigth" or "center"!');
+		}
+		$this->align = constant('EXF_ALIGN_' . mb_strtoupper($value));
+		return $this;
 	}
 	
 	/**

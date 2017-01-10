@@ -26,6 +26,6 @@ interface DebuggerInterface {
 	 * @param mixed $anything
 	 * @return string
 	 */
-	public function print_variable($anything);
+	public function print_variable($anything, $use_html = true);
 	
 }

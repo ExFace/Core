@@ -43,7 +43,7 @@ class DataAggregator implements iCanBeConvertedToUxon {
 	}
 	
 	/**
-	 * PRODUCT->SIZE:CONCAT(',') --> CONCAT(',')
+	 * PRODUCT->SIZE:CONCAT(',') --> CONCAT(EXF_LIST_SEPARATOR)
 	 * @param string $attribute_alias
 	 * @return string|boolean
 	 */

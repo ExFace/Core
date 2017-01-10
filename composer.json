@@ -20,6 +20,7 @@
         "symfony/translation": "~2.8 || ~3.1",
         "symfony/config": "~2.8 || ~3.1",
         "symfony/debug": "~2.8 || ~3.1",
+        "symfony/var-dumper": "~3.2",
         "jmikola/Wildcard-Event-Dispatcher": "~1.1.0",
         "myclabs/Deep-Copy": "1.*",
         "webmozart/path-util": "~2.3.0"
@@ -28,8 +29,8 @@
         "app": {
             "app_uid": "0x31000000000000000000000000000000",
             "app_alias": "exface.Core",
-            "model_md5": "b5c239b5b05d9b9a5f2e7a6a059b6a5d",
-            "model_timestamp": "2017-01-05 13:15:46"
+            "model_md5": "80ad800551fa77454722fe85c52beb7a",
+            "model_timestamp": "2017-01-09 16:22:06"
         }
     }
 }

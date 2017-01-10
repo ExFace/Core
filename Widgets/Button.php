@@ -11,6 +11,7 @@ use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\Interfaces\Widgets\iHaveButtons;
+use exface\Core\Interfaces\Widgets\iCanBeAligned;
 
 /**
  * A Button is the primary widget for triggering actions. 
@@ -20,7 +21,7 @@ use exface\Core\Interfaces\Widgets\iHaveButtons;
  * @author Andrej Kabachnik
  *
  */
-class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iHaveChildren {
+class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iHaveChildren, iCanBeAligned {
 	private $action_alias = null;
 	private $action = null;
 	private $active_condition = null;
@@ -333,5 +334,27 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iHaveC
 		}
 		return $this;
 	}  
+	
+	
+	public function get_align() {
+		return $this->align;
+	}
+	
+	/**
+	 * Sets the alignment of the button: left, right, center. 
+	 * If not set, the alignment depends on the specific implementation of the current template.
+	 * 
+	 * @uxon-property align
+	 * @uxon-type string
+	 * 
+	 * @see \exface\Core\Interfaces\Widgets\iCanBeAligned::set_align()
+	 */
+	public function set_align($value) {
+		if (!defined('EXF_ALIGN_' . mb_strtoupper($value))){
+			throw new WidgetPropertyInvalidValueError($this, 'Invalid alignment value "' . $value . '": use "left", "rigth" or "center"!');
+		}
+		$this->align = constant('EXF_ALIGN_' . mb_strtoupper($value));
+		return $this;
+	}
 }
 ?>

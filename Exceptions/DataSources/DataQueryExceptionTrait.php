@@ -2,9 +2,9 @@
 namespace exface\Core\Exceptions\DataSources;
 
 use exface\Core\Interfaces\DataSources\DataQueryInterface;
-use exface\Core\Interfaces\UiPageInterface;
 use exface\Core\Exceptions\ExceptionTrait;
 use exface\Core\Widgets\ErrorMessage;
+use exface\Core\Widgets\DebugMessage;
 
 /**
  * This trait enables an exception to output data query specific debug information.
@@ -15,7 +15,7 @@ use exface\Core\Widgets\ErrorMessage;
 trait DataQueryExceptionTrait {
 	
 	use ExceptionTrait {
-		create_widget as create_parent_widget;
+		create_debug_widget as parent_create_debug_widget;
 	}
 	
 	private $query = null;
@@ -49,13 +49,13 @@ trait DataQueryExceptionTrait {
 	 * Exceptions for data queries can add extra tabs (e.g. an SQL-tab). Which tabs will be added depends on the implementation of
 	 * the data query.
 	 * 
-	 * @see \exface\Core\Interfaces\Exceptions\ExceptionInterface::create_widget()
+	 * @see \exface\Core\Interfaces\Exceptions\ExceptionInterface::create_debug_widget()
 	 * 
-	 * @param UiPageInterface $page
+	 * @param ErrorMessage
 	 * @return ErrorMessage
 	 */
-	public function create_widget(UiPageInterface $page){
-		$error_message = $this->create_parent_widget($page);
+	public function create_debug_widget(DebugMessage $error_message){
+		$error_message = $this->parent_create_debug_widget($error_message);
 		return $this->get_query()->create_debug_widget($error_message);
 	}
 	

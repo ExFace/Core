@@ -5,9 +5,9 @@ use Symfony\Component\Debug\Debug;
 use Symfony\Component\Debug\ExceptionHandler;
 use Symfony\Component\Debug\Exception\FlattenException;
 use Symfony\Component\Debug\ErrorHandler;
-use Symfony\Component\VarDumper\VarDumper;
 use Symfony\Component\VarDumper\Dumper\HtmlDumper;
 use Symfony\Component\VarDumper\Cloner\VarCloner;
+use Symfony\Component\VarDumper\Dumper\CliDumper;
 
 class Debugger implements DebuggerInterface {
 	
@@ -21,7 +21,11 @@ class Debugger implements DebuggerInterface {
 	public function print_exception(\Throwable $exception, $use_html = true){
 		$handler = new ExceptionHandler();
 		$flattened_exception = FlattenException::create($exception);
-		$output = "<style>" . $handler->getStylesheet($flattened_exception) . "</style>" . $handler->getContent($flattened_exception);
+		if ($use_html){
+			$output = "<style>" . $handler->getStylesheet($flattened_exception) . "</style>" . $handler->getContent($flattened_exception);
+		} else {
+			$output = strip_tags($handler->getContent($flattened_exception));
+		}
 		return $output;
 	}
 	
@@ -58,8 +62,15 @@ class Debugger implements DebuggerInterface {
 	 * {@inheritDoc}
 	 * @see \exface\Core\Interfaces\DebuggerInterface::print_variable()
 	 */
-	public function print_variable($anything){
-		return print_r($anything, true);
+	public function print_variable($anything, $use_html = true){
+		$cloner = new VarCloner();
+		if ($use_html){
+			$dumper = new HtmlDumper();
+			$dumper->setDisplayOptions(array('maxDepth' => 5));
+		} else {
+			$dumper = new CliDumper();
+		}
+		return $dumper->dump($cloner->cloneVar($anything), true);
 	}
 	  
 }

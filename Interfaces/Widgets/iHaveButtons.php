@@ -37,10 +37,10 @@ interface iHaveButtons extends iHaveChildren {
 	public function has_buttons();
 	
 	/**
-	 * Returns the class of the used buttons. Regular panels and forms use ordinarz buttons, but
-	 * Dialogs use special DialogButtons capable of closing the Dialog, etc. This special getter
-	 * function allows all the logic to be inherited from the panel while just replacing the
-	 * button class.
+	 * Returns the widget type to be used for buttons in this widget. Regular forms use ordinary buttons, but Dialogs 
+	 * use special DialogButtons capable of closing the Dialog, Data widgets use DataButtons, that can be bound to
+	 * mouse clicks on the data, etc. This special getter function allows all the logic to be inherited while just 
+	 * replacing the button class.
 	 *
 	 * @return string
 	 */
