@@ -21,7 +21,11 @@ class Debugger implements DebuggerInterface {
 	public function print_exception(\Throwable $exception, $use_html = true){
 		$handler = new ExceptionHandler();
 		$flattened_exception = FlattenException::create($exception);
-		$output = "<style>" . $handler->getStylesheet($flattened_exception) . "</style>" . $handler->getContent($flattened_exception);
+		if ($use_html){
+			$output = "<style>" . $handler->getStylesheet($flattened_exception) . "</style>" . $handler->getContent($flattened_exception);
+		} else {
+			$output = strip_tags($handler->getContent($flattened_exception));
+		}
 		return $output;
 	}
 	
