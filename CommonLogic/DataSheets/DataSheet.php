@@ -393,10 +393,18 @@ class DataSheet implements DataSheetInterface {
 			}
 		}
 	
-		// ensure, the columns with system attributes are always in the select
+		// Ensure, the columns with system attributes are always in the select
+		// FIXME With growing numbers of behaviors and system attributes, this becomes a pain, as more and more possibly
+		// aggregated columns are added automatically - even if the sheet is only meant for reading. Maybe we should let
+		// the code creating the sheet add the system columns. The behaviors will prduce errors if this does not happen anyway.
 		foreach ($this->get_meta_object()->get_attributes()->get_system()->get_all() as $attr){
 			if (!$this->get_columns()->get_by_attribute($attr)){
-				$col = $this->get_columns()->add_from_attribute($attr);
+				// Check if the system attribute has a default aggregator if the data sheet is being aggregated
+				if ($this->has_aggregators() && $attr->get_default_aggregate_function()){
+					$col = $this->get_columns()->add_from_expression($attr->get_alias() . ':' . $attr->get_default_aggregate_function());
+				} else {
+					$col = $this->get_columns()->add_from_attribute($attr);
+				}
 				$this->get_data_for_column($col, $query);
 			}
 		}

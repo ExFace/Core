@@ -51,7 +51,7 @@ class Form extends Panel implements iHaveButtons {
 	
 		// If the button has an action, that is supposed to modify data, we need to make sure, that the panel
 		// contains alls system attributes of the base object, because they may be needed by the business logic
-		if ($button_widget->get_action() && $button_widget->get_action()->implements_interface('iModifyData')){
+		if ($button_widget->get_action() && $button_widget->get_action()->get_meta_object()->is($this->get_meta_object()) && $button_widget->get_action()->implements_interface('iModifyData')){
 			/* @var $attr \exface\Core\CommonLogic\Model\Attribute */
 			foreach ($this->get_meta_object()->get_attributes()->get_system() as $attr){
 				if (count($this->find_children_by_attribute($attr)) <= 0){
