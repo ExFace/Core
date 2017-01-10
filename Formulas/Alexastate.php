@@ -9,9 +9,9 @@ class alexastate extends \exface\Core\CommonLogic\Model\Formula {
 
 	function run($state, $substate, $object){
 		if (!$state) return '';
-		$return = '<div style="width:90px;border:1px solid #ccc;position:relative;color:transparent;padding-left:3px;height:20px;">' . $this->get_state_description($state, $substate, $object) .
-		'<div style="position:absolute; left:0; top:0; z-index:100; width:' . ($state ? $state / 99 * 100 : 0) . '%; height:100%;' . $this->get_style($state, $substate, $object) . '">&nbsp;</div>' .
-		'<div style="position:absolute; left:0; top:0; z-index:101; color:black; width:100%; height:100%; white-space:nowrap; overflow:hidden;">' . $this->get_state_description($state, $substate, $object) . '</div>' .
+		$return = '<div style="width:90px;border:1px solid #ccc;position:relative;color:transparent;padding-left:3px;white-space:nowrap;">' . $this->get_state_description($state, $substate, $object) .
+		'<div style="position:absolute; left:0; top:0; z-index:100; width:' . ($state ? $state / 99 * 100 : 0) . '%;' . $this->get_style($state, $substate, $object) . '">&nbsp;</div>' .
+		'<div style="position:absolute; left:0; top:0; z-index:101; color:black; width:100%; white-space:nowrap; overflow:hidden;">' . $this->get_state_description($state, $substate, $object) . '</div>' .
 		'</div>';
 		return $return;
 	}

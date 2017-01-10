@@ -4,6 +4,9 @@ use exface\Core\CommonLogic\AbstractBehavior;
 use exface\Core\Events\WidgetEvent;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
+use exface\Core\Events\DataSheetEvent;
+use exface\Core\Exceptions\Behaviors\StateMachineUpdateException;
+use exface\Core\Factories\DataSheetFactory;
 
 /**
  * 
@@ -13,11 +16,9 @@ use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
 class StateMachineBehavior extends AbstractBehavior {
 	
 	private $state_attribute_alias = null;
+	private $default_state = null;
 	private $states = null;
-	
 	private $smstates = null;
-	
-	const DEFAULT_STATE = 10;
 	
 	/**
 	 * 
@@ -26,6 +27,7 @@ class StateMachineBehavior extends AbstractBehavior {
 	 */
 	public function register(){
 		$this->get_workbench()->event_manager()->add_listener($this->get_object()->get_alias_with_namespace() . '.Widget.Prefill.After', array($this, 'set_widget_states'));
+		$this->get_workbench()->event_manager()->add_listener($this->get_object()->get_alias_with_namespace() . '.DataSheet.UpdateData.Before', array($this, 'check_for_conflicts_on_update'));
 		$this->set_registered(true);
 	}
 	
@@ -49,6 +51,25 @@ class StateMachineBehavior extends AbstractBehavior {
 	public function set_state_attribute_alias($value) {
 		$this->state_attribute_alias = $value;
 		return $this;
+	}
+	
+	/**
+	 * 
+	 * @return unknown
+	 */
+	public function get_default_state() {
+		if (is_null($this->default_state)) {
+			throw new BehaviorConfigurationError('Property default_state of StateMachineBehavior is undefined!');
+		}
+		return $this->default_state;
+	}
+	
+	/**
+	 * 
+	 * @param unknown $value
+	 */
+	public function set_default_state($value) {
+		$this->default_state = $value;
 	}
 	
 	/**
@@ -114,7 +135,7 @@ class StateMachineBehavior extends AbstractBehavior {
 	public function get_state_buttons($state_id) {
 		if ($this->is_disabled() || !$this->get_smstates()) return [];
 		$smstate = $this->get_smstate($state_id);
-		if (!$smstate) { $smstate = $this->get_smstate($this::DEFAULT_STATE); }
+		if (!$smstate) { $smstate = $this->get_smstate($this->get_default_state()); }
 		return $smstate instanceof StateMachineState ? $smstate->get_buttons() : [];
 	}
 	
@@ -148,13 +169,96 @@ class StateMachineBehavior extends AbstractBehavior {
 				($state_column = $prefill_data->get_column_values($this->get_state_attribute_alias()))) {
 			$current_state = $state_column[0];
 		} else {
-			$current_state = DEFAULT_STATE;
+			$current_state = $this->get_default_state();
 		}
 		
 		if (method_exists($widget, 'get_attribute_alias')
 				&& ($disabled_attributes = $this->get_smstate($current_state)->get_disabled_attributes())
 				&& in_array($widget->get_attribute_alias(), $disabled_attributes)) {
 			$widget->set_disabled(true);
+		}
+	}
+	
+	/**
+	 * 
+	 * @param DataSheetEvent $event
+	 */
+	public function check_for_conflicts_on_update(DataSheetEvent $event) {
+		if ($this->is_disabled()) return;
+		if (!$this->get_state_attribute_alias() || !$this->get_states()) return;
+		
+		$data_sheet = $event->get_data_sheet();
+		
+		// Do not do anything, if the base object of the widget is not the object with the behavior and is not
+		// extended from it.
+		if (!$data_sheet->get_meta_object()->is($this->get_object())) return;
+		
+		//
+		$check_sheet = DataSheetFactory::create_from_object($data_sheet->get_meta_object());
+		$check_sheet->add_filter_from_column_values($data_sheet->get_uid_column());
+		$check_sheet->data_read();
+		$check_column = $check_sheet->get_columns()->get_by_attribute($this->get_state_attribute_alias());
+		$check_nr = count($check_column->get_values());
+		
+		// Check all the updated attributes for disabled attributes, if a disabled attribute
+		// is changed throw an error
+		$conflict_rows = array();
+		
+		foreach ($check_column->get_values() as $row_nr => $check_val) {
+			$disabled_attributes = $this->get_smstate($check_val)->get_disabled_attributes();
+			foreach ($data_sheet->get_columns() as $col) {
+				if (in_array($col->get_attribute_alias(), $disabled_attributes)) {
+					$conflict_rows[] = $row_nr;
+				}
+			}
+		}
+		
+		if (count($conflict_rows) > 0){
+			$data_sheet->data_mark_invalid();
+			throw new StateMachineUpdateException($data_sheet, 'Cannot update data in data sheet with "' . $data_sheet->get_meta_object()->get_alias_with_namespace() . '": row(s) ' . implode(',', $conflict_rows) . ' change attributes, which are disabled in the current state!');
+		}
+		
+		// Check if the state column is present in the sheet, if so get the old value and check
+		// if the transition is allowed, throw an error if not
+		if ($updated_column = $data_sheet->get_columns()->get_by_attribute($this->get_state_attribute_alias())) {
+			$updated_nr = count($updated_column->get_values());
+			
+			$check_sheet =  $data_sheet->copy()->remove_rows();
+			$check_sheet->add_filter_from_column_values($data_sheet->get_uid_column());
+			$check_sheet->data_read();
+			$check_column = $check_sheet->get_columns()->get_by_attribute($this->get_state_attribute_alias());
+			$check_nr = count($check_column->get_values());
+			
+			$conflict_rows = array();
+			
+			if ($check_nr == $update_nr) {
+				//beim Bearbeiten eines einzelnen Objektes ueber einfaches Bearbeiten, Massenupdate in Tabelle, Massenupdate
+				//	ueber Knopf $check_nr == 1, $update_nr == 1
+				//beim Bearbeiten mehrerer Objekte ueber Massenupdate in Tabelle $check_nr == $update_nr > 1
+				foreach ($updated_column->get_values() as $row_nr => $updated_val) {
+					$check_val = $check_column->get_cell_value($check_sheet->get_uid_column()->find_row_by_value($data_sheet->get_uid_column()->get_cell_value($row_nr)));
+					$allowed_transitions = $this->get_smstate($check_val)->get_transitions();
+					if (!in_array($updated_val, $allowed_transitions)) {
+						$conflict_rows[] = $row_nr;
+					}
+				}
+				
+			} else if ($check_nr > 1 && $update_nr == 1) {
+				//beim Bearbeiten mehrerer Objekte ueber Massenupdate ueber Knopf, Massenupdate ueber Knopf mit Filtern
+				//	$check_nr > 1, $update_nr == 1
+				$updated_val = $updated_column->get_values()[0];
+				foreach ($check_column->get_values() as $row_nr => $check_val) {
+					$allowed_transitions = $this->get_smstate($check_val)->get_transitions();
+					if (!in_array($updated_val, $allowed_transitions)) {
+						$conflict_rows[] = $row_nr;
+					}
+				}
+			}
+			
+			if (count($conflict_rows) > 0){
+				$data_sheet->data_mark_invalid();
+				throw new StateMachineUpdateException($data_sheet, 'Cannot update data in data sheet with "' . $data_sheet->get_meta_object()->get_alias_with_namespace() . '": row(s) ' . implode(',', $conflict_rows) . ' have forbidden state transitions!');
+			}
 		}
 	}
 }

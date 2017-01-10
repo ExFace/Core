@@ -10,6 +10,7 @@ class StateMachineState {
 	private $state_id = null;
 	private $buttons = [];
 	private $disabled_attributes = [];
+	private $transitions = [];
 	
 	/**
 	 * 
@@ -62,6 +63,24 @@ class StateMachineState {
 	 */
 	public function set_disabled_attributes($value) {
 		$this->disabled_attributes = $value;
+		return $this;
+	}
+	
+	/**
+	 * 
+	 * @return unknown
+	 */
+	public function get_transitions() {
+		return $this->transitions;
+	}
+	
+	/**
+	 * 
+	 * @param unknown $value
+	 * @return \exface\Core\Behaviors\StateMachineState
+	 */
+	public function set_transitions($value) {
+		$this->transitions = $value;
 		return $this;
 	}
 }
