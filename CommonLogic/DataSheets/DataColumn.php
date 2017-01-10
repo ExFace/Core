@@ -49,13 +49,13 @@ class DataColumn implements DataColumnInterface {
 		if (is_null($this->expression) || $this->expression->is_empty()){
 			if ($this->attribute_alias){
 				$exface = $this->get_workbench();
-				$this->expression = ExpressionFactory::create_from_string($exface, $this->get_attribute_alias(), $this->get_data_sheet()->get_meta_object());
+				$this->expression = ExpressionFactory::create_from_string($exface, $this->get_attribute_alias(), $this->get_meta_object());
 			}
 		}
 		// Make sure, there is always a meta object in the expression. For some reason, this is not always the case.
 		// IDEA this check can be removed, once meta object have become mandatory for expressions (planned in distant future)
 		if (!$this->expression->get_meta_object()){
-			$this->expression->set_meta_object($this->get_data_sheet()->get_meta_object());
+			$this->expression->set_meta_object($this->get_meta_object());
 		}
 		return $this->expression;
 	}
@@ -68,7 +68,7 @@ class DataColumn implements DataColumnInterface {
 	public function set_expression($expression_or_string) {
 		if (!($expression_or_string instanceof Expression)){
 			$exface = $this->get_workbench();
-			$expression = ExpressionFactory::create_from_string($exface, $expression_or_string, $this->get_data_sheet()->get_meta_object());
+			$expression = ExpressionFactory::create_from_string($exface, $expression_or_string, $this->get_meta_object());
 		} else {
 			$expression = $expression_or_string;
 		}
@@ -77,7 +77,7 @@ class DataColumn implements DataColumnInterface {
 			$attribute_alias = $expression->get_required_attributes()[0];
 			$this->set_attribute_alias($attribute_alias);
 			try {
-				$attr = $this->get_data_sheet()->get_meta_object()->get_attribute($attribute_alias);
+				$attr = $this->get_meta_object()->get_attribute($attribute_alias);
 				$this->set_data_type($attr->get_data_type());
 			} catch (MetaAttributeNotFoundError $e){
 				// ignore expressions with invalid attribute aliases
@@ -206,7 +206,7 @@ class DataColumn implements DataColumnInterface {
 	 */
 	public function get_attribute(){
 		if ($this->get_attribute_alias()){
-			return $this->get_data_sheet()->get_meta_object()->get_attribute($this->get_attribute_alias());
+			return $this->get_meta_object()->get_attribute($this->get_attribute_alias());
 		} else {
 			return false;
 		}
@@ -490,7 +490,7 @@ class DataColumn implements DataColumnInterface {
 				} elseif ($attr->get_default_value()){
 					$this->set_value($row_id, $attr->get_default_value()->evaluate($this->get_data_sheet(), $this->get_name(), $row_id));
 				} else {
-					throw new DataSheetRuntimeError($this->get_data_sheet(), 'Cannot fill column with default values ' . $this->get_data_sheet()->get_meta_object()->get_name() . ': attribute ' . $attr->get_name() . ' not set in row ' . $row_id . '!', '6T5UX3Q');
+					throw new DataSheetRuntimeError($this->get_data_sheet(), 'Cannot fill column with default values ' . $this->get_meta_object()->get_name() . ': attribute ' . $attr->get_name() . ' not set in row ' . $row_id . '!', '6T5UX3Q');
 				}
 			}
 		}
@@ -546,7 +546,7 @@ class DataColumn implements DataColumnInterface {
 		try {
 			$result = static::aggregate_values($values, $aggregate_function_name);
 		} catch (\Throwable $e){
-			throw new DataSheetRuntimeError($this->get_data_sheet(), 'Cannot aggregate over column "' . $this->get_name() . '" of a data sheet of "' . $this->get_data_sheet()->get_meta_object()->get_alias_with_namespace() . '": unknown aggregator function "' . $aggregate_function_name . '"!', '6T5UXLD', $e);
+			throw new DataSheetRuntimeError($this->get_data_sheet(), 'Cannot aggregate over column "' . $this->get_name() . '" of a data sheet of "' . $this->get_meta_object()->get_alias_with_namespace() . '": unknown aggregator function "' . $aggregate_function_name . '"!', '6T5UXLD', $e);
 		}
 		return $result;
 	}
@@ -581,6 +581,15 @@ class DataColumn implements DataColumnInterface {
 			default: throw new UnexpectedValueException('Invalid aggregator function "' . $group_function . '"!');
 		}
 		return $output;
+	}
+	
+	/**
+	 * Returns the meta object of this data column 
+	 * 
+	 * @return \exface\Core\CommonLogic\Model\Object
+	 */
+	public function get_meta_object(){
+		return $this->get_data_sheet()->get_meta_object();
 	}
  
 }
