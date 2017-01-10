@@ -9,9 +9,9 @@ use exface\Core\Exceptions\Behaviors\StateMachineUpdateException;
 use exface\Core\Factories\DataSheetFactory;
 
 /**
+ * A behavior that defines states and transitions between these states for an objects.
  * 
  * @author SFL
- *
  */
 class StateMachineBehavior extends AbstractBehavior {
 	
@@ -32,6 +32,7 @@ class StateMachineBehavior extends AbstractBehavior {
 	}
 	
 	/**
+	 * Returns the state attribute alias.
 	 * 
 	 * @return string
 	 */
@@ -54,6 +55,8 @@ class StateMachineBehavior extends AbstractBehavior {
 	}
 	
 	/**
+	 * Determines the state attribute from the alias and the attached object and
+	 * returns it.
 	 * 
 	 * @return \exface\Core\CommonLogic\Model\Attribute
 	 */
@@ -62,6 +65,7 @@ class StateMachineBehavior extends AbstractBehavior {
 	}
 		
 	/**
+	 * Returns the default state.
 	 * 
 	 * @return unknown
 	 */
@@ -73,14 +77,22 @@ class StateMachineBehavior extends AbstractBehavior {
 	}
 	
 	/**
+	 * Defines the default state, which is used if no object state can be determined
+	 * (e.g. to determine possible values for the StateMenuButton).
 	 * 
-	 * @param unknown $value
+	 * @uxon-property default_state
+	 * @uxon-type number
+	 * 
+	 * @param integer $value
+	 * @return \exface\Core\Behaviors\StateMachineBehavior
 	 */
 	public function set_default_state($value) {
 		$this->default_state = $value;
+		return $this;
 	}
 	
 	/**
+	 * Returns the states of the state machine.
 	 * 
 	 * @return \exface\Core\CommonLogic\UxonObject
 	 */
@@ -92,6 +104,45 @@ class StateMachineBehavior extends AbstractBehavior {
 	 * Defines the states of the state machine.
 	 * 
 	 * The states are set by a JSON object or array with state ids for keys and an objects describing the state for values.
+	 * 
+	 * Example:
+	 * "states": {
+	 *	    "10": {
+	 *	      "buttons": [
+	 *	        {
+	 *	          "caption": "20 Annahme bestätigen",
+	 *	          "action": {
+	 *	            "alias": "exface.Core.UpdateData",
+	 *	            "input_data_sheet": {
+	 *	              "object_alias": "alexa.RMS.CUSTOMER_COMPLAINT",
+	 *	              "columns": [
+	 *	                {
+	 *	                  "attribute_alias": "STATE_ID",
+	 *	                  "formula": "=NumberValue('20')"
+	 *	                },
+	 *	                {
+	 *	                  "attribute_alias": "TS_UPDATE"
+	 *	                }
+	 *	              ]
+	 *	            }
+	 *	          }
+	 *	        }
+	 *	      ],
+	 *	      "disabled_attributes": [
+	 *	        "COMPLAINT_NO"
+	 *	      ],
+	 *	      "transitions": [
+	 *	        10,
+	 *	        20,
+	 *	        30,
+	 *	        50,
+	 *	        60,
+	 *	        70,
+	 *	        90,
+	 *	        99
+	 *	      ]
+	 *	    }
+	 * }
 	 * 
 	 * @uxon-property states
 	 * @uxon-type object
@@ -120,25 +171,30 @@ class StateMachineBehavior extends AbstractBehavior {
 	}
 	
 	/**
+	 * Returns an array of StateMachineState objects.
 	 * 
+	 * @return array of StateMachineState
 	 */
 	public function get_smstates() {
 		return $this->smstates;
 	}
 	
 	/**
+	 * Returns the StateMachineState object belonging to the passed state id.
 	 * 
-	 * @param unknown $state_id
-	 * @return mixed
+	 * @param integer $state_id
+	 * @return StateMachineState
 	 */
 	public function get_smstate($state_id) {
 		return $this->smstates[$state_id];
 	}
 	
 	/**
+	 * Returns an array of buttons belonging to the StateMachineState with the
+	 * passed state id.
 	 * 
-	 * @param unknown $state_id
-	 * @return unknown
+	 * @param integer $state_id
+	 * @return array of UxonObject
 	 */
 	public function get_state_buttons($state_id) {
 		if ($this->is_disabled() || !$this->get_smstates()) return [];
@@ -155,11 +211,15 @@ class StateMachineBehavior extends AbstractBehavior {
 	public function export_uxon_object(){
 		$uxon = parent::export_uxon_object();
 		$uxon->set_property('state_attribute_alias', $this->get_state_attribute_alias());
+		$uxon->set_property('default_state', $this->get_default_state());
 		$uxon->set_property('states', $this->get_states());
 		return $uxon;
 	}
 	
 	/**
+	 * This method is called when a widget belonging to an object with this event
+	 * attached is being prefilled. It is checked if this widget belongs to a dis-
+	 * abled attribute. If so the widget gets also disabled.
 	 * 
 	 * @param WidgetEvent $event
 	 */
@@ -188,8 +248,13 @@ class StateMachineBehavior extends AbstractBehavior {
 	}
 	
 	/**
+	 * This method is called when an object with this event attached is being updated.
+	 * Here it is checked the object changes the state and if so if the state-transition
+	 * is allowed. It is also checked if attributes, which are disabled at the current
+	 * state are changed. If a disallowed behavior is detected an error is thrown.
 	 * 
 	 * @param DataSheetEvent $event
+	 * @throws StateMachineUpdateException
 	 */
 	public function check_for_conflicts_on_update(DataSheetEvent $event) {
 		if ($this->is_disabled()) return;
@@ -203,11 +268,9 @@ class StateMachineBehavior extends AbstractBehavior {
 		
 		// Read the unchanged object from the database
 		$check_sheet = DataSheetFactory::create_from_object($this->get_object());
-		//$check_sheet = $this->get_workbench()->data()->create_data_sheet($this->get_object());
 		foreach ($this->get_object()->get_attributes() as $attr) {
 			$check_sheet->get_columns()->add_from_attribute($attr);
 		}
-		//$check_sheet->get_columns()->add($data_sheet->get_uid_column()->copy());
 		$check_sheet->add_filter_from_column_values($data_sheet->get_uid_column());
 		$check_sheet->data_read();
 		$check_column = $check_sheet->get_columns()->get_by_attribute($this->get_state_attribute());

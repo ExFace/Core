@@ -8,8 +8,9 @@ class StateMenuButton extends MenuButton {
 	private $smb_buttons_set = false;
 	
 	/**
-	 * (non-PHPdoc)
-	 * @see \exface\Core\Interfaces\Widgets\iHaveButtons::get_buttons()
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Widgets\MenuButton::get_buttons()
 	 */
 	public function get_buttons() {
 		//Falls am Objekt ein StateMachineBehavior haengt wird versucht den momentanen Status aus
@@ -38,6 +39,11 @@ class StateMenuButton extends MenuButton {
 		return parent::get_buttons();
 	}
 	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Widgets\Button::get_caption()
+	 */
 	public function get_caption(){
 		$caption = parent::get_caption();
 		if (!$caption && !$this->get_hide_caption()){

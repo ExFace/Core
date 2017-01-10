@@ -1,9 +1,11 @@
 <?php namespace exface\Core\Behaviors;
 
+use exface\Core\CommonLogic\UxonObject;
+
 /**
+ * Defines a state for the StateMachineBehavior.
  * 
  * @author SFL
- *
  */
 class StateMachineState {
 	
@@ -13,16 +15,18 @@ class StateMachineState {
 	private $transitions = [];
 	
 	/**
+	 * Returns the state id.
 	 * 
-	 * @return unknown
+	 * @return integer
 	 */
 	public function get_state_id() {
 		return $this->state_id;
 	}
 	
 	/**
+	 * Defines the state id.
 	 * 
-	 * @param unknown $value
+	 * @param integer $value
 	 * @return \exface\Core\Behaviors\StateMachineState
 	 */
 	public function set_state_id($value) {
@@ -31,16 +35,40 @@ class StateMachineState {
 	}
 	
 	/**
+	 * Returns the buttons for the state.
 	 * 
-	 * @return unknown
+	 * @return array of UxonObject
 	 */
 	public function get_buttons() {
 		return $this->buttons;
 	}
 	
 	/**
+	 * Defines the buttons for the state.
 	 * 
-	 * @param unknown $value
+	 * Example:
+	 *        [
+	 *	        {
+	 *	          "caption": "20 Annahme bestätigen",
+	 *	          "action": {
+	 *	            "alias": "exface.Core.UpdateData",
+	 *	            "input_data_sheet": {
+	 *	              "object_alias": "alexa.RMS.CUSTOMER_COMPLAINT",
+	 *	              "columns": [
+	 *	                {
+	 *	                  "attribute_alias": "STATE_ID",
+	 *	                  "formula": "=NumberValue('20')"
+	 *	                },
+	 *	                {
+	 *	                  "attribute_alias": "TS_UPDATE"
+	 *	                }
+	 *	              ]
+	 *	            }
+	 *	          }
+	 *	        }
+	 *	      ]
+	 * 
+	 * @param array of UxonObject $value
 	 * @return \exface\Core\Behaviors\StateMachineState
 	 */
 	public function set_buttons($value) {
@@ -49,16 +77,23 @@ class StateMachineState {
 	}
 	
 	/**
+	 * Returns the disabled attributes for the state.
 	 * 
-	 * @return unknown
+	 * @return array of string
 	 */
 	public function get_disabled_attributes() {
 		return $this->disabled_attributes;
 	}
 	
 	/**
+	 * Defines the disabled attributes for the state.
 	 * 
-	 * @param unknown $value
+	 * Example:
+	 *        [
+	 *	        "COMPLAINT_NO"
+	 *	      ]
+	 * 
+	 * @param array of string $value
 	 * @return \exface\Core\Behaviors\StateMachineState
 	 */
 	public function set_disabled_attributes($value) {
@@ -67,16 +102,30 @@ class StateMachineState {
 	}
 	
 	/**
+	 * Returns the allowed transitions for the state.
 	 * 
-	 * @return unknown
+	 * @return array of integer
 	 */
 	public function get_transitions() {
 		return $this->transitions;
 	}
 	
 	/**
+	 * Defines the allowed transitions for the state.
 	 * 
-	 * @param unknown $value
+	 * Example:
+	 *        [
+	 *	        10,
+	 *	        20,
+	 *	        30,
+	 *	        50,
+	 *	        60,
+	 *	        70,
+	 *	        90,
+	 *	        99
+	 *	      ]
+	 * 
+	 * @param array of integer $value
 	 * @return \exface\Core\Behaviors\StateMachineState
 	 */
 	public function set_transitions($value) {
