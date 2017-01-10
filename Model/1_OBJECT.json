@@ -416,7 +416,7 @@
         },
         {
             "CREATED_ON": "2016-12-09 12:27:33",
-            "MODIFIED_ON": "2017-01-05 13:15:46",
+            "MODIFIED_ON": "2017-01-09 16:22:06",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6be0ad5666af88ddee4b318306b9a",
@@ -426,7 +426,7 @@
             "SHORT_DESCRIPTION": "",
             "PARENT_OBJECT": "",
             "DATA_ADDRESS_PROPS": "{}",
-            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Tabs\",\"object_alias\":\"exface.Core.UXON_ENTITY_ANNOTATION\",\"tabs\":[{\"caption\":\"General\",\"widgets\":[{\"attribute_alias\":\"CLASS\",\"width\":2},{\"attribute_alias\":\"FULL_DESCRIPTION\",\"width\":2,\"height\":10}]},{\"caption\":\"Properties\",\"widgets\":[{\"object_alias\":\"exface.core.UXON_PROPERTY_ANNOTATION\",\"widget_type\":\"DataTable\",\"filters\":[{\"attribute_alias\":\"FILE\"},{\"attribute_alias\":\"PROPERTY\"}],\"columns\":[{\"attribute_alias\":\"PROPERTY\"},{\"attribute_alias\":\"TITLE\"},{\"attribute_alias\":\"TYPE\"}],\"sorters\":[{\"attribute_alias\":\"PROPERTY\",\"direction\":\"desc\"}],\"buttons\":[{\"action_alias\":\"exface.Core.ShowObjectDialog\"}]}]}]}",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Tabs\",\"object_alias\":\"exface.Core.UXON_ENTITY_ANNOTATION\",\"tabs\":[{\"caption\":\"General\",\"widgets\":[{\"attribute_alias\":\"CLASS\",\"width\":2},{\"attribute_alias\":\"FULL_DESCRIPTION\",\"width\":2,\"height\":10}]},{\"caption\":\"Properties\",\"widgets\":[{\"object_alias\":\"exface.core.UXON_PROPERTY_ANNOTATION\",\"widget_type\":\"DataTable\",\"filters\":[{\"attribute_alias\":\"FILE\"},{\"attribute_alias\":\"PROPERTY\"}],\"columns\":[{\"attribute_alias\":\"PROPERTY\"},{\"attribute_alias\":\"TITLE\"},{\"attribute_alias\":\"TYPE\"}],\"sorters\":[{\"attribute_alias\":\"PROPERTY\",\"direction\":\"desc\"}],\"buttons\":[{\"action_alias\":\"exface.Core.ShowObjectDialog\",\"bind_to_double_click\":true}]}]}]}",
             "LABEL": "UXON entity PHP-file",
             "ALIAS": "UXON_ENTITY_PHP_FILE",
             "DATA_ADDRESS": ""
