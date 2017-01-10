@@ -53,9 +53,14 @@ class Expression {
 				$this->widget_link = WidgetLinkFactory::create_from_anything($this->exface, substr($expression,1));
 			}
 		} else { // attribute_alias
-			$this->type = 'attribute_alias';
-			$this->attribute_alias = $expression;
-			$this->attributes[] = $expression;
+			if (!$this->get_meta_object() || ($this->get_meta_object() && $this->get_meta_object()->has_attribute($expression))){
+				$this->type = 'attribute_alias';
+				$this->attribute_alias = $expression;
+				$this->attributes[] = $expression;
+			} else {
+				$this->type = 'string';
+				$this->value = $str;
+			}
 		}
 		
 		return $this->get_type();

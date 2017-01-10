@@ -68,7 +68,7 @@ class DataColumn implements DataColumnInterface {
 	public function set_expression($expression_or_string) {
 		if (!($expression_or_string instanceof Expression)){
 			$exface = $this->get_workbench();
-			$expression = ExpressionFactory::create_from_string($exface, $expression_or_string);
+			$expression = ExpressionFactory::create_from_string($exface, $expression_or_string, $this->get_data_sheet()->get_meta_object());
 		} else {
 			$expression = $expression_or_string;
 		}
