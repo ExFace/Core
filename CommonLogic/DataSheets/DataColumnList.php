@@ -29,11 +29,11 @@ class DataColumnList extends EntityList implements DataColumnListInterface {
 				$col = $column;
 			}
 			// Mark the data as outdated if new columns are added because the values for these columns should be fetched now
-			$col->set_up_to_date(false);
+			$col->set_fresh(false);
 			$result = parent::add($col, (is_null($key) && $col->get_name() ? $col->get_name() : $key));
 		}
 		
-		if ($overwrite_values && $column->is_up_to_date()){
+		if ($overwrite_values && $column->is_fresh()){
 			$data_sheet->set_column_values($column->get_name(), $column->get_values());
 		}
 		

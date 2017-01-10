@@ -26,7 +26,7 @@ class DataColumn implements DataColumnInterface {
 	private $hidden = false;
 	private $formatter = null;
 	private $data_type = null;
-	private $up_to_date = false;
+	private $fresh = false;
 	private $totals = array();
 	private $ignore_fixed_values = false;
 	
@@ -261,19 +261,19 @@ class DataColumn implements DataColumnInterface {
 	/**
 	 * 
 	 * {@inheritDoc}
-	 * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::is_up_to_date()
+	 * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::is_fresh()
 	 */
-	public function is_up_to_date() {
-		return $this->up_to_date;
+	public function is_fresh() {
+		return $this->fresh;
 	}
 	
 	/**
 	 * 
 	 * {@inheritDoc}
-	 * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::set_up_to_date()
+	 * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::set_fresh()
 	 */
-	public function set_up_to_date($value) {
-		$this->up_to_date = $value;
+	public function set_fresh($value) {
+		$this->fresh = $value;
 		return $this;
 	}	
 	

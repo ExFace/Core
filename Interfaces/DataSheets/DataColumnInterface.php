@@ -123,13 +123,13 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied {
 	/**
 	 * @return boolean
 	 */
-	public function is_up_to_date();
+	public function is_fresh();
 	
 	/**
 	 * 
 	 * @param boolean $value
 	 */
-	public function set_up_to_date($value);
+	public function set_fresh($value);
 	
 	/**
 	 * Clones the column and returns the new copy

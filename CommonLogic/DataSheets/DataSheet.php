@@ -27,7 +27,6 @@ use exface\Core\Exceptions\DataSheets\DataSheetUidColumnNotFoundError;
 use exface\Core\Exceptions\DataSheets\DataSheetWriteError;
 use exface\Core\Exceptions\DataSheets\DataSheetColumnNotFoundError;
 use exface\Core\Exceptions\DataSheets\DataSheetRuntimeError;
-use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\Exceptions\DataSheets\DataSheetReadError;
 
@@ -98,7 +97,7 @@ class DataSheet implements DataSheetInterface {
 			$this->rows[] = $row;
 			// ensure, that all columns used in the rows are present in the data sheet
 			$this->get_columns()->add_multiple(array_keys((array)$row));
-			$this->set_up_to_date(true);
+			$this->set_fresh(true);
 		}
 		return $this;
 	}
@@ -217,7 +216,7 @@ class DataSheet implements DataSheetInterface {
 		}
 		
 		// Mark the column as up to date
-		$this->get_column($column_name)->set_up_to_date(true);
+		$this->get_column($column_name)->set_fresh(true);
 		return $this;
 	}
 	
@@ -1287,16 +1286,16 @@ class DataSheet implements DataSheetInterface {
 		}
 	}
 	
-	protected function set_up_to_date($value){
+	protected function set_fresh($value){
 		foreach ($this->get_columns() as $col){
-			$col->set_up_to_date($value);
+			$col->set_fresh($value);
 		}
 		return $this;
 	}
 	
-	public function is_up_to_date(){
+	public function is_fresh(){
 		foreach ($this->get_columns() as $col){
-			if ($col->is_up_to_date() === false){
+			if ($col->is_fresh() === false){
 				return false;
 			}
 		}

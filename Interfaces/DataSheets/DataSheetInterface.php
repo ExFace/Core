@@ -270,7 +270,7 @@ interface DataSheetInterface extends ExfaceClassInterface, iCanBeCopied, iCanBeC
 	 * Returns TRUE if the data in the sheet is up to date and FALSE otherwise (= if the data needs to be loaded)
 	 * @return boolean
 	 */
-	public function is_up_to_date();
+	public function is_fresh();
 	
 	/**
 	 * Returns true if the data sheet will load all available data when performing data_read(). In general this is the case, 

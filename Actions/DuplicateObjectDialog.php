@@ -21,7 +21,7 @@ class DuplicateObjectDialog extends EditObjectDialog {
 		
 		if ($data_sheet->get_uid_column()){
 			$data_sheet = $this->get_widget()->prepare_data_sheet_to_prefill($data_sheet);
-			if (!$data_sheet->is_up_to_date()){
+			if (!$data_sheet->is_fresh()){
 				$data_sheet->add_filter_from_column_values($data_sheet->get_uid_column());
 				$data_sheet->data_read();
 			}
