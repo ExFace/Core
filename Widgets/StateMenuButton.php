@@ -25,11 +25,12 @@ class StateMenuButton extends MenuButton {
 					$current_state = $smb->get_default_state();
 				}
 				
+				$button_widget = $this->get_input_widget()->get_button_widget_type();
 				foreach ($smb->get_state_buttons($current_state) as $smb_button) {
-					$button_widget = $this->get_input_widget()->get_button_widget_type();
 					$button = $this->get_page()->create_widget($button_widget, $this, UxonObject::from_anything($smb_button));
 					$this->add_button($button);
 				}
+				
 				$this->smb_buttons_set = true;
 			} else {
 				throw new MetaModelBehaviorException('StateMenuButton: The object '.$this->get_meta_object()->get_alias_with_namespace().' has no StateMachineBehavior attached.');
