@@ -17,8 +17,8 @@ class StateMachineBehavior extends AbstractBehavior {
 	
 	private $state_attribute_alias = null;
 	private $default_state = null;
+	private $uxon_states = null;
 	private $states = null;
-	private $smstates = null;
 	
 	/**
 	 * 
@@ -34,6 +34,7 @@ class StateMachineBehavior extends AbstractBehavior {
 	/**
 	 * Returns the state attribute alias.
 	 * 
+	 * @throws BehaviorConfigurationError
 	 * @return string
 	 */
 	public function get_state_attribute_alias() {
@@ -68,13 +69,48 @@ class StateMachineBehavior extends AbstractBehavior {
 	}
 		
 	/**
-	 * Returns the default state id.
+	 * Returns the default state.
 	 * 
-	 * @return string
+	 * @return StateMachineState
 	 */
 	public function get_default_state() {
+		return $this->get_state($this->get_default_state_id());
+	}
+	
+	/**
+	 * Defines the default state id, which is to be used if no object state can be determined
+	 * (e.g. to determine possible values for the StateMenuButton).
+	 * 
+	 * @uxon-property default_state
+	 * @uxon-type number
+	 * 
+	 * @param integer|StateMachineState $value
+	 * @return \exface\Core\Behaviors\StateMachineBehavior
+	 */
+	public function set_default_state($value) {
+		if ($value instanceof StateMachineState) {
+			if (!array_key_exists($value->get_state_id(), $this->get_states())) {
+				$this->add_state($value);
+			}
+			$this->default_state = $value->get_state_id();
+		} elseif (is_int($value)) {
+			$this->default_state = $value;
+		} else {
+			throw new BehaviorConfigurationError($this->get_object(), 'Can not set default state for "' . $this->get_object()->get_alias_with_namespace() . '": the argument passed to set_default_state() is neither a StateMachineState nor an integer!');
+		}
+		
+		return $this;
+	}
+	
+	/**
+	 * Returns the default state id.
+	 *
+	 * @throws BehaviorConfigurationError
+	 * @return integer
+	 */
+	public function get_default_state_id() {
 		if (is_null($this->default_state)) {
-			if (count($states = $this->get_smstates()) > 0){
+			if (count($states = $this->get_states()) > 0){
 				$this->default_state = reset($states)->get_state_id();
 			} else {
 				throw new BehaviorConfigurationError($this->get_object(), 'The default state cannot be determined for "' . $this->get_object()->get_alias_with_namespace() . '": neither state definitions nor a default state are set!', '6TG2ZFI');
@@ -84,24 +120,9 @@ class StateMachineBehavior extends AbstractBehavior {
 	}
 	
 	/**
-	 * Defines the default state id, which is to be used if no object state can be determined
-	 * (e.g. to determine possible values for the StateMenuButton).
-	 * 
-	 * @uxon-property default_state
-	 * @uxon-type string
-	 * 
-	 * @param string $value
-	 * @return \exface\Core\Behaviors\StateMachineBehavior
-	 */
-	public function set_default_state($value) {
-		$this->default_state = $value;
-		return $this;
-	}
-	
-	/**
-	 * Returns the states of the state machine.
-	 * 
-	 * @return \exface\Core\CommonLogic\UxonObject
+	 * Returns an array of StateMachineState objects.
+	 *
+	 * @return StateMachineState[]
 	 */
 	public function get_states() {
 		return $this->states;
@@ -117,7 +138,7 @@ class StateMachineBehavior extends AbstractBehavior {
 	 *	    "10": {
 	 *	      "buttons": [
 	 *	        {
-	 *	          "caption": "20 Annahme bestätigen",
+	 *	          "caption": "20 Annahme bestï¿½tigen",
 	 *	          "action": {
 	 *	            "alias": "exface.Core.UpdateData",
 	 *	            "input_data_sheet": {
@@ -135,7 +156,7 @@ class StateMachineBehavior extends AbstractBehavior {
 	 *	          }
 	 *	        }
 	 *	      ],
-	 *	      "disabled_attributes": [
+	 *	      "disabled_attributes_aliases": [
 	 *	        "COMPLAINT_NO"
 	 *	      ],
 	 *	      "transitions": [
@@ -154,38 +175,37 @@ class StateMachineBehavior extends AbstractBehavior {
 	 * @uxon-property states
 	 * @uxon-type object
 	 * 
-	 * @param unknown $value
+	 * @param UxonObject|StateMachineBehavior[] $value
 	 * @throws BehaviorConfigurationError
 	 * @return \exface\Core\Behaviors\StateMachineBehavior
 	 */
 	public function set_states($value) {
-		$this->states = UxonObject::from_anything($value);
-		$this->smstates = [];
-		$states = get_object_vars($this->states);
-		foreach ($states as $state => $uxon_smstate){
-			$smstate = new StateMachineState();
-			$smstate->set_state_id($state);
-			if ($uxon_smstate){
-				foreach ($uxon_smstate as $var => $val) {
-					if (method_exists($smstate, 'set_'.$var)){
-						call_user_func(array($smstate, 'set_'.$var), $val);
-					} else {
-						throw new BehaviorConfigurationError($this->get_object(), 'Property "' . $var . '" of StateMachineState cannot be set: setter function not found!');
+		$this->uxon_states = UxonObject::from_anything($value);
+		
+		if ($value instanceof UxonObject) {
+			$this->states = [];
+			$states = get_object_vars($this->uxon_states);
+			foreach ($states as $state => $uxon_smstate){
+				$smstate = new StateMachineState();
+				$smstate->set_state_id($state);
+				if ($uxon_smstate){
+					foreach ($uxon_smstate as $var => $val) {
+						if (method_exists($smstate, 'set_'.$var)){
+							call_user_func(array($smstate, 'set_'.$var), $val);
+						} else {
+							throw new BehaviorConfigurationError($this->get_object(), 'Property "' . $var . '" of StateMachineState cannot be set: setter function not found!');
+						}
 					}
 				}
+				$this->add_state($smstate);
 			}
-			$this->smstates[$state] = $smstate;
+		} elseif (is_array($value)) {
+			$this->states = $value;
+		} else {
+			throw new BehaviorConfigurationError($this->get_object(), 'Can not set states for "' . $this->get_object()->get_alias_with_namespace() . '": the argument passed to set_states() is neither an UxonObject nor an array!');
 		}
+		
 		return $this;
-	}
-	
-	/**
-	 * Returns an array of StateMachineState objects.
-	 * 
-	 * @return StateMachineState[]
-	 */
-	public function get_smstates() {
-		return $this->smstates;
 	}
 	
 	/**
@@ -194,8 +214,26 @@ class StateMachineBehavior extends AbstractBehavior {
 	 * @param integer $state_id
 	 * @return StateMachineState
 	 */
-	public function get_smstate($state_id) {
-		return $this->smstates[$state_id];
+	public function get_state($state_id) {
+		return $this->states[$state_id];
+	}
+	
+	/**
+	 * Adds a StateMachineState to the Behavior.
+	 * 
+	 * @param StateMachineState $state
+	 */
+	public function add_state($state) {
+		$this->states[$state->get_state_id()] = $state;
+	}
+	
+	/**
+	 * Returns the states of the state machine.
+	 *
+	 * @return \exface\Core\CommonLogic\UxonObject
+	 */
+	public function get_uxon_states() {
+		return $this->uxon_states;
 	}
 	
 	/**
@@ -203,12 +241,12 @@ class StateMachineBehavior extends AbstractBehavior {
 	 * passed state id.
 	 * 
 	 * @param integer $state_id
-	 * @return array of UxonObject
+	 * @return UxonObject[]
 	 */
 	public function get_state_buttons($state_id) {
-		if ($this->is_disabled() || !$this->get_smstates()) return [];
-		$smstate = $this->get_smstate($state_id);
-		if (!$smstate) { $smstate = $this->get_smstate($this->get_default_state()); }
+		if ($this->is_disabled() || !$this->get_states()) return [];
+		$smstate = $this->get_state($state_id);
+		if (!$smstate) { $smstate = $this->get_default_state(); }
 		return $smstate instanceof StateMachineState ? $smstate->get_buttons() : [];
 	}
 	
@@ -220,7 +258,7 @@ class StateMachineBehavior extends AbstractBehavior {
 	public function export_uxon_object(){
 		$uxon = parent::export_uxon_object();
 		$uxon->set_property('state_attribute_alias', $this->get_state_attribute_alias());
-		$uxon->set_property('default_state', $this->get_default_state());
+		$uxon->set_property('default_state', $this->get_default_state_id());
 		$uxon->set_property('states', $this->get_states());
 		return $uxon;
 	}
@@ -246,11 +284,11 @@ class StateMachineBehavior extends AbstractBehavior {
 				($state_column = $prefill_data->get_column_values($this->get_state_attribute_alias()))) {
 			$current_state = $state_column[0];
 		} else {
-			$current_state = $this->get_default_state();
+			$current_state = $this->get_default_state_id();
 		}
 		
 		if (method_exists($widget, 'get_attribute_alias')
-				&& ($disabled_attributes = $this->get_smstate($current_state)->get_disabled_attributes())
+				&& ($disabled_attributes = $this->get_state($current_state)->get_disabled_attributes_aliases())
 				&& in_array($widget->get_attribute_alias(), $disabled_attributes)) {
 			$widget->set_disabled(true);
 		}
@@ -288,7 +326,7 @@ class StateMachineBehavior extends AbstractBehavior {
 		// Check all the updated attributes for disabled attributes, if a disabled attribute
 		// is changed throw an error
 		foreach ($check_column->get_values() as $row_nr => $check_val) {
-			$disabled_attributes = $this->get_smstate($check_val)->get_disabled_attributes();
+			$disabled_attributes = $this->get_state($check_val)->get_disabled_attributes_aliases();
 			foreach ($data_sheet->get_columns() as $col) {
 				if (in_array($col->get_attribute_alias(), $disabled_attributes)) {
 					$updated_val = $col->get_cell_value($data_sheet->get_uid_column()->find_row_by_value($check_sheet->get_uid_column()->get_cell_value($row_nr)));
@@ -312,7 +350,7 @@ class StateMachineBehavior extends AbstractBehavior {
 				//beim Bearbeiten mehrerer Objekte ueber Massenupdate in Tabelle $check_nr == $update_nr > 1
 				foreach ($updated_column->get_values() as $row_nr => $updated_val) {
 					$check_val = $check_column->get_cell_value($check_sheet->get_uid_column()->find_row_by_value($data_sheet->get_uid_column()->get_cell_value($row_nr)));
-					$allowed_transitions = $this->get_smstate($check_val)->get_transitions();
+					$allowed_transitions = $this->get_state($check_val)->get_transitions();
 					if (!in_array($updated_val, $allowed_transitions)) {
 						$data_sheet->data_mark_invalid();
 						throw new StateMachineUpdateException($data_sheet, 'Cannot update data in data sheet with "' . $data_sheet->get_meta_object()->get_alias_with_namespace() . '": state transition from '.$check_val.' to '.$updated_val.' is not allowed!');
@@ -324,7 +362,7 @@ class StateMachineBehavior extends AbstractBehavior {
 				//	$check_nr > 1, $update_nr == 1
 				$updated_val = $updated_column->get_values()[0];
 				foreach ($check_column->get_values() as $row_nr => $check_val) {
-					$allowed_transitions = $this->get_smstate($check_val)->get_transitions();
+					$allowed_transitions = $this->get_state($check_val)->get_transitions();
 					if (!in_array($updated_val, $allowed_transitions)) {
 						$data_sheet->data_mark_invalid();
 						throw new StateMachineUpdateException($data_sheet, 'Cannot update data in data sheet with "' . $data_sheet->get_meta_object()->get_alias_with_namespace() . '": state transition from '.$check_val.' to '.$updated_val.' is not allowed!');

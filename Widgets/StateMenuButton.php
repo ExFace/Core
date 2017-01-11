@@ -22,7 +22,7 @@ class StateMenuButton extends MenuButton {
 						&& ($state_column = $data_sheet->get_column_values($smb->get_state_attribute_alias()))) {
 					$current_state = $state_column[0];
 				} else {
-					$current_state = $smb->get_default_state();
+					$current_state = $smb->get_default_state_id();
 				}
 				
 				$button_widget = $this->get_input_widget()->get_button_widget_type();
