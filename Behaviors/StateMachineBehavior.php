@@ -77,7 +77,7 @@ class StateMachineBehavior extends AbstractBehavior {
 			if (count($states = $this->get_smstates()) > 0){
 				$this->default_state = reset($states)->get_state_id();
 			} else {
-				throw new BehaviorConfigurationError($this->get_object(), 'The default state cannot be determined for "' . $this->get_object()->get_alias_with_namespace() . '": neither state definitions nor a default state are set!');
+				throw new BehaviorConfigurationError($this->get_object(), 'The default state cannot be determined for "' . $this->get_object()->get_alias_with_namespace() . '": neither state definitions nor a default state are set!', '6TG2ZFI');
 			}
 		}
 		return $this->default_state;

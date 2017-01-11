@@ -900,6 +900,18 @@
             "ERROR_CODE": "6TBX1V2",
             "ERROR_TEXT": "Cannot rebase expression",
             "LABEL": "exface.Core.6TBX1V2"
+        },
+        {
+            "CREATED_ON": "2017-01-11 08:17:00",
+            "MODIFIED_ON": "2017-01-11 08:17:00",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e6d7d65414e0b4804b0205857feb80",
+            "FULL_ERROR_CODE": "exface.Core.6TG2ZFI",
+            "APP": "0x31000000000000000000000000000000",
+            "ERROR_CODE": "6TG2ZFI",
+            "ERROR_TEXT": "Invalid configuration for StateMachineBehavior",
+            "LABEL": "exface.Core.6TG2ZFI"
         }
     ],
     "totals_rows": [],
