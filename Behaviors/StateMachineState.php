@@ -11,7 +11,7 @@ class StateMachineState {
 	
 	private $state_id = null;
 	private $buttons = [];
-	private $disabled_attributes = [];
+	private $disabled_attributes_aliases = [];
 	private $transitions = [];
 	
 	/**
@@ -49,7 +49,7 @@ class StateMachineState {
 	 * Example:
 	 *        [
 	 *	        {
-	 *	          "caption": "20 Annahme bestätigen",
+	 *	          "caption": "20 Annahme bestï¿½tigen",
 	 *	          "action": {
 	 *	            "alias": "exface.Core.UpdateData",
 	 *	            "input_data_sheet": {
@@ -68,7 +68,7 @@ class StateMachineState {
 	 *	        }
 	 *	      ]
 	 * 
-	 * @param array of UxonObject $value
+	 * @param UxonObject[] $value
 	 * @return \exface\Core\Behaviors\StateMachineState
 	 */
 	public function set_buttons($value) {
@@ -77,28 +77,28 @@ class StateMachineState {
 	}
 	
 	/**
-	 * Returns the disabled attributes for the state.
-	 * 
-	 * @return string[]
-	 */
-	public function get_disabled_attributes() {
-		return $this->disabled_attributes;
-	}
-	
-	/**
-	 * Defines the disabled attributes for the state.
+	 * Defines the disabled attributes aliases for the state.
 	 * 
 	 * Example:
 	 *        [
 	 *	        "COMPLAINT_NO"
 	 *	      ]
 	 * 
-	 * @param array of string $value
+	 * @param string[] $value
 	 * @return \exface\Core\Behaviors\StateMachineState
 	 */
-	public function set_disabled_attributes($value) {
-		$this->disabled_attributes = $value;
+	public function set_disabled_attributes_aliases($value) {
+		$this->disabled_attributes_aliases = $value;
 		return $this;
+	}
+	
+	/**
+	 * Returns the disabled attributes aliases for the state.
+	 * 
+	 * @return string[]
+	 */
+	public function get_disabled_attributes_aliases() {
+		return $this->disabled_attributes_aliases;
 	}
 	
 	/**
@@ -125,7 +125,7 @@ class StateMachineState {
 	 *	        99
 	 *	      ]
 	 * 
-	 * @param array of integer $value
+	 * @param integer[] $value
 	 * @return \exface\Core\Behaviors\StateMachineState
 	 */
 	public function set_transitions($value) {
