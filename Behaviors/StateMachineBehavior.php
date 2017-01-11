@@ -37,6 +37,9 @@ class StateMachineBehavior extends AbstractBehavior {
 	 * @return string
 	 */
 	public function get_state_attribute_alias() {
+		if (is_null($this->state_attribute_alias)){
+			throw new BehaviorConfigurationError($this->get_object(), 'Cannot initialize StateMachineBehavior for "' . $this->get_object()->get_alias_with_namespace() . '": state_attribute_alias not set in behavior configuration!', '6TG2ZFI');
+		}
 		return $this->state_attribute_alias;
 	}
 	
@@ -65,25 +68,29 @@ class StateMachineBehavior extends AbstractBehavior {
 	}
 		
 	/**
-	 * Returns the default state.
+	 * Returns the default state id.
 	 * 
-	 * @return unknown
+	 * @return string
 	 */
 	public function get_default_state() {
 		if (is_null($this->default_state)) {
-			throw new BehaviorConfigurationError('Property default_state of StateMachineBehavior is undefined!');
+			if (count($states = $this->get_smstates()) > 0){
+				$this->default_state = reset($states)->get_state_id();
+			} else {
+				throw new BehaviorConfigurationError($this->get_object(), 'The default state cannot be determined for "' . $this->get_object()->get_alias_with_namespace() . '": neither state definitions nor a default state are set!');
+			}
 		}
 		return $this->default_state;
 	}
 	
 	/**
-	 * Defines the default state, which is used if no object state can be determined
+	 * Defines the default state id, which is to be used if no object state can be determined
 	 * (e.g. to determine possible values for the StateMenuButton).
 	 * 
 	 * @uxon-property default_state
-	 * @uxon-type number
+	 * @uxon-type string
 	 * 
-	 * @param integer $value
+	 * @param string $value
 	 * @return \exface\Core\Behaviors\StateMachineBehavior
 	 */
 	public function set_default_state($value) {
@@ -106,7 +113,7 @@ class StateMachineBehavior extends AbstractBehavior {
 	 * The states are set by a JSON object or array with state ids for keys and an objects describing the state for values.
 	 * 
 	 * Example:
-	 * "states": {
+	 * 	"states": {
 	 *	    "10": {
 	 *	      "buttons": [
 	 *	        {
@@ -142,7 +149,7 @@ class StateMachineBehavior extends AbstractBehavior {
 	 *	        99
 	 *	      ]
 	 *	    }
-	 * }
+	 * 	}
 	 * 
 	 * @uxon-property states
 	 * @uxon-type object
@@ -158,11 +165,13 @@ class StateMachineBehavior extends AbstractBehavior {
 		foreach ($states as $state => $uxon_smstate){
 			$smstate = new StateMachineState();
 			$smstate->set_state_id($state);
-			foreach ($uxon_smstate as $var => $val) {
-				if (method_exists($smstate, 'set_'.$var)){
-					call_user_func(array($smstate, 'set_'.$var), $val);
-				} else {
-					throw new BehaviorConfigurationError('Property "' . $var . '" of StateMachineState cannot be set: setter function not found!');
+			if ($uxon_smstate){
+				foreach ($uxon_smstate as $var => $val) {
+					if (method_exists($smstate, 'set_'.$var)){
+						call_user_func(array($smstate, 'set_'.$var), $val);
+					} else {
+						throw new BehaviorConfigurationError($this->get_object(), 'Property "' . $var . '" of StateMachineState cannot be set: setter function not found!');
+					}
 				}
 			}
 			$this->smstates[$state] = $smstate;
@@ -173,7 +182,7 @@ class StateMachineBehavior extends AbstractBehavior {
 	/**
 	 * Returns an array of StateMachineState objects.
 	 * 
-	 * @return array of StateMachineState
+	 * @return StateMachineState[]
 	 */
 	public function get_smstates() {
 		return $this->smstates;

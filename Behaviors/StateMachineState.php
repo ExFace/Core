@@ -17,7 +17,7 @@ class StateMachineState {
 	/**
 	 * Returns the state id.
 	 * 
-	 * @return integer
+	 * @return string
 	 */
 	public function get_state_id() {
 		return $this->state_id;
@@ -26,7 +26,7 @@ class StateMachineState {
 	/**
 	 * Defines the state id.
 	 * 
-	 * @param integer $value
+	 * @param string $value
 	 * @return \exface\Core\Behaviors\StateMachineState
 	 */
 	public function set_state_id($value) {
@@ -37,7 +37,7 @@ class StateMachineState {
 	/**
 	 * Returns the buttons for the state.
 	 * 
-	 * @return array of UxonObject
+	 * @return UxonObject[]
 	 */
 	public function get_buttons() {
 		return $this->buttons;
@@ -79,7 +79,7 @@ class StateMachineState {
 	/**
 	 * Returns the disabled attributes for the state.
 	 * 
-	 * @return array of string
+	 * @return string[]
 	 */
 	public function get_disabled_attributes() {
 		return $this->disabled_attributes;
@@ -104,7 +104,7 @@ class StateMachineState {
 	/**
 	 * Returns the allowed transitions for the state.
 	 * 
-	 * @return array of integer
+	 * @return integer[]
 	 */
 	public function get_transitions() {
 		return $this->transitions;
