@@ -18,8 +18,7 @@ class StateMenuButton extends MenuButton {
 		if (!$this->smb_buttons_set) {
 			if ($smb = $this->get_meta_object()->get_behaviors()->get_by_alias('exface.Core.Behaviors.StateMachineBehavior')) {
 				$template = $this->get_ui()->get_template_from_request();
-				if ((($data_sheet = $this->get_prefill_data()) || ($data_sheet = $template->get_data_sheet_from_request($template->get_request_object_id())))
-						&& ($state_column = $data_sheet->get_column_values($smb->get_state_attribute_alias()))) {
+				if (($data_sheet = $this->get_prefill_data()) && ($state_column = $data_sheet->get_column_values($smb->get_state_attribute_alias()))) {
 					$current_state = $state_column[0];
 				} else {
 					$current_state = $smb->get_default_state_id();
