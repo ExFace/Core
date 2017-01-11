@@ -98,7 +98,7 @@ class UxonObject extends \stdClass implements \IteratorAggregate {
 			return $string_or_array_or_object;
 		} elseif (is_array($string_or_array_or_object)){
 			return self::from_array($string_or_array_or_object);
-		} elseif (is_object($string_or_array_or_object)){
+		} elseif ($string_or_array_or_object instanceof \stdClass){
 			return self::from_stdClass($string_or_array_or_object);
 		} else {
 			return self::from_json($string_or_array_or_object);
