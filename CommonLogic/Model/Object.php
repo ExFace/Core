@@ -313,7 +313,8 @@ class Object implements ExfaceClassInterface, AliasInterface {
 		$parent = $this->get_model()->get_object($parent_object_id);
 		$this->add_parent_object_id($parent_object_id);
 		
-		// Inherit object properties
+		// Inherit data address
+		$this->set_data_address($parent->get_data_address());
 		$this->set_data_address_properties($parent->get_data_address_properties());
 		
 		// Inherit default editor
@@ -327,6 +328,9 @@ class Object implements ExfaceClassInterface, AliasInterface {
 		// Inherit some object properties originating from attributes
 		$this->set_uid_alias($parent->get_uid_alias());
 		$this->set_label_alias($parent->get_label_alias());
+		
+		// Inherit description
+		$this->set_short_description($parent->get_short_description());
 		
 		// Inherit attributes
 		foreach ($parent->get_attributes() as $attr){
