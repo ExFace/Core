@@ -17,6 +17,9 @@ use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 use exface\Core\Factories\WidgetLinkFactory;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
+use exface\Core\Exceptions\DataSheets\DataSheetImportRowError;
+use exface\Core\Interfaces\Widgets\iShowDataSet;
+use exface\Core\Interfaces\WidgetInterface;
 
 /**
  * 
@@ -49,6 +52,8 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 	
 	/** @var WidgetLinkInterface */
 	private $refresh_with_widget = null;
+	
+	private $values_data_sheet = null;
 	
 	/**
 	 * @uxon text_empty The text to be displayed, if there are no data records
@@ -121,6 +126,17 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 		// Aggregations
 		foreach ($this->get_aggregations() as $attr){
 			$data_sheet->get_aggregators()->add_from_string($attr);
+		}
+		
+		// Filters and sorters only if lazy loading is disabled!
+		if (!$this->get_lazy_loading()){
+			// Add filters if they have values
+			foreach ($this->get_filters() as $filter_widget){
+				if ($filter_widget->get_value()){
+					$data_sheet->add_filter_from_string($filter_widget->get_attribute_alias(), $filter_widget->get_value(), $filter_widget->get_comparator());
+				}
+			}
+			// Add sorters
 		}
 		
 		return $data_sheet;
@@ -546,7 +562,11 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 						$attribute_filters[0]->set_value($condition->get_value());
 					}
 				}
-			}		
+			}
+			// If the data should not be loaded layzily, and the prefill has data, use it as value
+			if (!$this->get_lazy_loading() && !$data_sheet->is_empty()){
+				$this->set_values_data_sheet($data_sheet);
+			}
 		} else {
 			// if the prefill contains data for another object, than this data set contains, see if we try to find a relation to
 			// the prefill-object. If so, show only data related to the prefill (= add the prefill object as a filter)
@@ -646,18 +666,29 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 	 * @param boolean $include_in_quick_search 
 	 * @see \exface\Core\Interfaces\Widgets\iHaveFilters::add_filter()
 	 */
-	public function add_filter(\exface\Core\Widgets\AbstractWidget $filter_widget, $include_in_quick_search = false){
-		if ($filter_widget instanceof \exface\Core\Widgets\Filter){
+	public function add_filter(AbstractWidget $filter_widget, $include_in_quick_search = false){
+		if ($filter_widget instanceof Filter){
 			$filter = $filter_widget;
 		} else {
 			$filter = $this->get_page()->create_widget('Filter', $this);
 			$filter->set_widget($filter_widget);
 		}
+		
+		$this->set_lazy_loading_for_filter($filter);
+		
 		$this->filters[] = $filter;
 		if ($include_in_quick_search){
 			$this->add_quick_search_filter($filter);
 		}
 		return $this;
+	}
+	
+	protected function set_lazy_loading_for_filter(Filter $filter_widget){
+		// Disable filters on Relations if lazy loading is disabled
+		if (!$this->get_lazy_loading() && $filter_widget->get_attribute() && $filter_widget->get_attribute()->is_relation() && $filter_widget->get_widget()->is('ComboTable')){
+			$filter_widget->set_disabled(true);
+		}
+		return $filter_widget;
 	}
 	
 	protected function add_required_filters(){
@@ -825,6 +856,11 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 	 */
 	public function set_lazy_loading($value) {
 		$this->lazy_loading = $value;
+		
+		foreach ($this->get_filters() as $filter){
+			$this->set_lazy_loading_for_filter($filter);
+		}
+		return $this;
 	}
 	
 	/**
@@ -949,6 +985,15 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 	 */
 	public function get_button_widget_type(){
 		return 'DataButton';
+	}
+	
+	public function get_values_data_sheet(){
+		return $this->values_data_sheet;
+	}
+	
+	public function set_values_data_sheet(DataSheetInterface $data_sheet){
+		$this->values_data_sheet = $data_sheet;
+		return $this;
 	}
 }
 
