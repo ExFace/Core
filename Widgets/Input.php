@@ -6,6 +6,7 @@ use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 class Input extends Text implements iTakeInput {
 	private $required = null;
 	private $validator = null;
+	private $readonly = false;
 	
 	public function get_validator() {
 		return $this->validator;
@@ -47,6 +48,10 @@ class Input extends Text implements iTakeInput {
 	 * @see \exface\Core\Widgets\AbstractWidget::is_disabled()
 	 */
 	public function is_disabled(){
+		if ($this->is_readonly()){
+			return true;
+		}
+		
 		$disabled = parent::is_disabled();
 		if (is_null($disabled)){
 			try {
@@ -61,5 +66,25 @@ class Input extends Text implements iTakeInput {
 		}
 		return $disabled;
 	}
+	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\Widgets\iTakeInput::is_readonly()
+	 */
+	public function is_readonly() {
+		return $this->readonly;
+	}
+	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\Widgets\iTakeInput::set_readonly()
+	 */
+	public function set_readonly($value) {
+		$this->readonly = $value ? true : false;
+		return $this;
+	}
+  
 }
 ?>
