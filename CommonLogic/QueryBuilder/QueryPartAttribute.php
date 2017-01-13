@@ -94,7 +94,6 @@ class QueryPartAttribute extends QueryPart {
 	}
 	
 	public function rebase(AbstractQueryBuilder $new_query, $relation_path_to_new_base_object){
-		// FIXME use deep copy here instead of clone
 		$qpart = clone $this;
 		$qpart->set_query($new_query);
 		$new_expression = $this->get_expression()->rebase($relation_path_to_new_base_object);
