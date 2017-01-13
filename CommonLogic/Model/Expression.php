@@ -25,7 +25,7 @@ class Expression {
 	private $exface;
 	private $meta_object = NULL;
 	
-	function __construct(\exface\Core\CommonLogic\Workbench &$exface, $string, $meta_object = null){
+	function __construct(\exface\Core\CommonLogic\Workbench $exface, $string, $meta_object = null){
 		$this->exface = $exface;
 		$this->meta_object = $meta_object;
 		$this->parse($string);

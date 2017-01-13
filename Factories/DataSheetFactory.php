@@ -15,7 +15,7 @@ abstract class DataSheetFactory extends AbstractUxonFactory {
 	 * @param Object|string $meta_object_or_alias
 	 * @return DataSheetInterface
 	 */
-	public static function create_from_object_id_or_alias(Workbench &$exface, $meta_object_or_alias = null){
+	public static function create_from_object_id_or_alias(Workbench $exface, $meta_object_or_alias = null){
 		if ($meta_object_or_alias instanceof Object){
 			$meta_object = $meta_object_or_alias;
 		} else {
@@ -29,7 +29,7 @@ abstract class DataSheetFactory extends AbstractUxonFactory {
 	 * @param exface $exface
 	 * @return DataSheetInterface
 	 */
-	public static function create_empty(Workbench &$exface){
+	public static function create_empty(Workbench $exface){
 		return static::create_from_object_id_or_alias($exface);
 	}
 	
@@ -49,7 +49,7 @@ abstract class DataSheetFactory extends AbstractUxonFactory {
 	 * @param UxonObject $uxon
 	 * @return DataSheetInterface
 	 */
-	public static function create_from_uxon(Workbench &$exface, UxonObject $uxon){
+	public static function create_from_uxon(Workbench $exface, UxonObject $uxon){
 		$object_alias = $uxon->get_property('object_alias') ? $uxon->get_property('object_alias') : $uxon->get_property('meta_object_alias');
 		$meta_object = $exface->model()->get_object($object_alias ? $object_alias : $uxon->meta_object_id);
 		$data_sheet = self::create_from_object($meta_object);
@@ -64,7 +64,7 @@ abstract class DataSheetFactory extends AbstractUxonFactory {
 	 * @throws InvalidArgumentException
 	 * @return DataSheetInterface
 	 */
-	public static function create_from_anything(Workbench &$exface, $data_sheet_or_uxon){
+	public static function create_from_anything(Workbench $exface, $data_sheet_or_uxon){
 		if ($data_sheet_or_uxon instanceof DataSheetInterface){
 			return $data_sheet_or_uxon;
 		} elseif ($data_sheet_or_uxon instanceof \stdClass){

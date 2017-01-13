@@ -18,7 +18,7 @@ class RelationList extends EntityList {
 	 * @see \exface\Core\CommonLogic\EntityList::add()
 	 * @param Relation $attribute
 	 */
-	public function add(&$relaion, $key = null){
+	public function add($relaion, $key = null){
 		if (is_null($key)){
 			$key = $relaion->get_alias_with_relation_path();
 		} 
@@ -39,7 +39,7 @@ class RelationList extends EntityList {
 		return $this->get_parent();
 	}
 	
-	public function set_meta_object(Object &$meta_object) {
+	public function set_meta_object(Object $meta_object) {
 		return $this->set_parent($meta_object);
 	}	
 	

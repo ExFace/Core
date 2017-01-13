@@ -32,7 +32,7 @@ interface EntityListInterface extends iCanBeConvertedToUxon, \IteratorAggregate 
 	 * @param mixed $key
 	 * @return UxonObjectList
 	 */
-	public function add(&$entity, $key = null);
+	public function add($entity, $key = null);
 	
 	/**
 	 * Removes the given entity from the list
@@ -80,7 +80,7 @@ interface EntityListInterface extends iCanBeConvertedToUxon, \IteratorAggregate 
 	 * Sets the lists parent object 
 	 * @param mixed $parent_object
 	 */
-	public function set_parent(&$parent_object);
+	public function set_parent($parent_object);
 	
 	/**
 	 * Returns the current number of entities in the list.

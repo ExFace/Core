@@ -18,7 +18,7 @@ abstract class AbstractBehavior implements BehaviorInterface {
 	private $registered = false;
 	private $name_resolver = false;
 	
-	public function __construct(Object &$object){
+	public function __construct(Object $object){
 		$this->set_object($object);
 	}
 	
@@ -55,7 +55,7 @@ abstract class AbstractBehavior implements BehaviorInterface {
 		return $this->object;
 	}
 	
-	public function set_object(Object &$value) {
+	public function set_object(Object $value) {
 		$this->object = $value;
 		return $this;
 	}  

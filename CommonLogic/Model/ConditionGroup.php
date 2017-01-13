@@ -23,7 +23,7 @@ class ConditionGroup implements iCanBeConvertedToUxon, iCanBeCopied {
 	// Properties NOT to be dublicated on copy()
 	private $exface = NULL;
 	
-	function __construct(\exface\Core\CommonLogic\Workbench &$exface, $operator = EXF_LOGICAL_AND){
+	function __construct(\exface\Core\CommonLogic\Workbench $exface, $operator = EXF_LOGICAL_AND){
 		$this->exface = $exface;
 		$this->set_operator($operator);
 	}
@@ -62,7 +62,7 @@ class ConditionGroup implements iCanBeConvertedToUxon, iCanBeCopied {
 	 * @param string $comparator
 	 * @return ConditionGroup
 	 */
-	function add_conditions_from_string(Object &$base_object, $expression_string, $value, $comparator = null){
+	function add_conditions_from_string(Object $base_object, $expression_string, $value, $comparator = null){
 		// Determine the comparator if it is not given directly.
 		// It can be derived from the value or set to a default value
 		if (is_null($comparator)){

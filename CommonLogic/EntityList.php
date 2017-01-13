@@ -32,7 +32,7 @@ class EntityList extends AbstractExfaceClass implements EntityListInterface {
 	 * @param exface $exface
 	 * @param mixed $parent_object
 	 */
-	public function __construct(Workbench &$exface, &$parent_object){
+	public function __construct(Workbench $exface, $parent_object){
 		parent::__construct($exface);
 		$this->set_parent($parent_object);
 	}
@@ -117,7 +117,7 @@ class EntityList extends AbstractExfaceClass implements EntityListInterface {
 	 * @param mixed $key
 	 * @return UxonObjectList
 	 */
-	public function add(&$entity, $key = null){
+	public function add($entity, $key = null){
 		if (is_null($key)){
 			$this->content_array[] = $entity;
 		} else {
@@ -218,7 +218,7 @@ class EntityList extends AbstractExfaceClass implements EntityListInterface {
 	 * Sets the lists parent object 
 	 * @param mixed $parent_object
 	 */
-	public function set_parent(&$parent_object) {
+	public function set_parent($parent_object) {
 		$this->parent_sheet = $parent_object;
 		return $this;
 	}  

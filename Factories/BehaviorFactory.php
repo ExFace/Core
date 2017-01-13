@@ -14,7 +14,7 @@ abstract class BehaviorFactory extends AbstractNameResolverFactory {
 	 * @param NameResolverInterface $name_resolver
 	 * @return BehaviorInterface
 	 */
-	public static function create(NameResolverInterface $name_resolver, Object &$object = null){
+	public static function create(NameResolverInterface $name_resolver, Object $object = null){
 		$class = $name_resolver->get_class_name_with_namespace();
 		$instance = new $class($object);
 		return $instance;
@@ -27,7 +27,7 @@ abstract class BehaviorFactory extends AbstractNameResolverFactory {
 	 * @param UxonObject $uxon
 	 * @return BehaviorInterface
 	 */
-	public static function create_from_uxon(Object &$object, $behavior_name, UxonObject $uxon){
+	public static function create_from_uxon(Object $object, $behavior_name, UxonObject $uxon){
 		$exface = $object->get_workbench();
 		$name_resolver = NameResolver::create_from_string($behavior_name, NameResolver::OBJECT_TYPE_BEHAVIOR, $exface);
 		if (!$name_resolver->class_exists()){

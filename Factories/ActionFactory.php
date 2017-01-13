@@ -37,7 +37,7 @@ abstract class ActionFactory extends AbstractNameResolverFactory {
 	 * @throws UnexpectedValueException
 	 * @return ActionInterface
 	 */
-	public static function create_from_uxon(Workbench &$exface, \stdClass $uxon_description, AbstractWidget $called_by_widget = null){
+	public static function create_from_uxon(Workbench $exface, \stdClass $uxon_description, AbstractWidget $called_by_widget = null){
 		if ($action_alias = $uxon_description->alias){
 			unset($uxon_description->alias);
 		} else {
@@ -55,7 +55,7 @@ abstract class ActionFactory extends AbstractNameResolverFactory {
 	 * @param UxonParserError $called_by_widget
 	 * @return ActionInterface
 	 */
-	public static function create_from_string(Workbench &$exface, $qualified_action_alias, AbstractWidget $called_by_widget = null){
+	public static function create_from_string(Workbench $exface, $qualified_action_alias, AbstractWidget $called_by_widget = null){
 		$name_resolver = $exface->create_name_resolver($qualified_action_alias, NameResolver::OBJECT_TYPE_ACTION);
 		return static::create($name_resolver, $called_by_widget);
 	}

@@ -69,7 +69,7 @@ class DataSheet implements DataSheetInterface {
 	private $exface;
 	private $meta_object;
 	
-	public function __construct(\exface\Core\CommonLogic\Model\Object &$meta_object){
+	public function __construct(\exface\Core\CommonLogic\Model\Object $meta_object){
 		$this->exface = $meta_object->get_model()->get_workbench();
 		$this->meta_object = $meta_object;
 		$this->filters = ConditionGroupFactory::create_empty($this->exface, EXF_LOGICAL_AND);
@@ -272,7 +272,7 @@ class DataSheet implements DataSheetInterface {
 	 * @param DataColumnInterface $col
 	 * @param \exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder $query
 	 */
-	protected function get_data_for_column(DataColumnInterface $col, \exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder &$query){
+	protected function get_data_for_column(DataColumnInterface $col, \exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder $query){
 		// add the required attributes
 		foreach ($col->get_expression_obj()->get_required_attributes() as $attr){
 			try {

@@ -12,7 +12,7 @@ class DataSource implements DataSourceInterface {
 	private $connection_config = array();
 	private $read_only = false;
 	
-	function __construct(Model &$model){
+	function __construct(Model $model){
 		$this->model = $model;
 	}
 	

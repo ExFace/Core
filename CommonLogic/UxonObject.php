@@ -205,7 +205,7 @@ class UxonObject extends \stdClass implements \IteratorAggregate {
 	 * @throws UnexpectedValueException
 	 * @return UxonObject
 	 */
-	public function import_to_instance(iCanBeConvertedToUxon &$instance, $exclue_properties = array()){
+	public function import_to_instance(iCanBeConvertedToUxon $instance, $exclue_properties = array()){
 		$vars = array_diff_key($this->get_properties_all(), array_flip($exclue_properties));
 		foreach ($vars as $var => $val){
 			if (method_exists($instance, 'set_'.$var)){

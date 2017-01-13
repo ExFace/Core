@@ -7,7 +7,7 @@ use exface\Core\Exceptions\UnexpectedValueException;
 
 abstract class ConditionFactory extends AbstractUxonFactory {
 	
-	public static function create_empty(Workbench &$exface){
+	public static function create_empty(Workbench $exface){
 		return new Condition($exface);
 	}
 	
@@ -20,7 +20,7 @@ abstract class ConditionFactory extends AbstractUxonFactory {
 	 * @param string $comparator 
 	 * @return Condition
 	 */
-	public static function create_from_expression(Workbench &$exface, Expression $expression=NULL, $value=NULL, $comparator=EXF_COMPARATOR_IS){
+	public static function create_from_expression(Workbench $exface, Expression $expression=NULL, $value=NULL, $comparator=EXF_COMPARATOR_IS){
 		$condition = static::create_empty($exface);
 		if ($expression){
 			$condition->set_expression($expression);
@@ -36,7 +36,7 @@ abstract class ConditionFactory extends AbstractUxonFactory {
 	 * @param array $array_notation
 	 * @return Condition
 	 */
-	public static function create_from_array(Workbench &$exface, array $array_notation){
+	public static function create_from_array(Workbench $exface, array $array_notation){
 		$condition = self::create($exface);
 		$condition->set_expression($exface->model()->parse_expression($array_notation[1], $exface->model()->get_object($array_notation[0])));
 		$condition->set_comparator($array_notation[2]);
@@ -51,7 +51,7 @@ abstract class ConditionFactory extends AbstractUxonFactory {
 	 * @throws UnexpectedValueException
 	 * @return Condition
 	 */
-	public static function create_from_object_or_array(Workbench &$exface, $uxon_or_array){
+	public static function create_from_object_or_array(Workbench $exface, $uxon_or_array){
 		if ($uxon_or_array instanceof \stdClass){
 			return self::create_from_stdClass($exface, $uxon_or_array);
 		} elseif (is_array($uxon_or_array)){

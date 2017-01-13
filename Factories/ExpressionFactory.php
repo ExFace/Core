@@ -15,7 +15,7 @@ abstract class ExpressionFactory {
 	 * @param object $object
 	 * @return Expression
 	 */
-	public static function create_from_string(Workbench &$exface, $string, $meta_object = null){
+	public static function create_from_string(Workbench $exface, $string, $meta_object = null){
 		return new Expression($exface, $string, $meta_object);
 	}
 	

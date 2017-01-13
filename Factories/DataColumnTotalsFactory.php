@@ -13,7 +13,7 @@ abstract class DataColumnTotalsFactory extends AbstractFactory {
 	 * @param DataColumnInterface $data_column
 	 * @return DataColumnTotalInterface
 	 */
-	public static function create_empty(DataColumnInterface &$data_column){
+	public static function create_empty(DataColumnInterface $data_column){
 		$result = new DataColumnTotal($data_column);
 		return $result;
 	}
@@ -24,7 +24,7 @@ abstract class DataColumnTotalsFactory extends AbstractFactory {
 	 * @param string $function_name
 	 * @return DataColumnTotalInterface
 	 */
-	public static function create_from_string(DataColumnInterface &$data_column, $function_name){
+	public static function create_from_string(DataColumnInterface $data_column, $function_name){
 		$result = static::create_empty($data_column);
 		$result->set_function($function_name);
 		return $result;
@@ -36,7 +36,7 @@ abstract class DataColumnTotalsFactory extends AbstractFactory {
 	 * @param UxonObject $uxon
 	 * @return DataColumnTotalInterface
 	 */
-	public static function create_from_uxon(DataColumnInterface &$data_column, UxonObject $uxon){
+	public static function create_from_uxon(DataColumnInterface $data_column, UxonObject $uxon){
 		$result = static::create_empty($data_column);
 		$result->import_uxon_object($uxon);
 		return $result;

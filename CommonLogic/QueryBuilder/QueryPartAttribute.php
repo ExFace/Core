@@ -7,7 +7,7 @@ class QueryPartAttribute extends QueryPart {
 	private $aggregate_function;
 	private $used_relations = null;
 
-	function __construct($alias, AbstractQueryBuilder &$query){
+	function __construct($alias, AbstractQueryBuilder $query){
 		parent::__construct($alias, $query);
 		
 		if (!$attr = $query->get_main_object()->get_attribute($alias)){
@@ -93,7 +93,7 @@ class QueryPartAttribute extends QueryPart {
 		return $this->get_workbench()->model()->parse_expression($this->get_alias(), $this->get_query()->get_main_object());
 	}
 	
-	public function rebase(AbstractQueryBuilder &$new_query, $relation_path_to_new_base_object){
+	public function rebase(AbstractQueryBuilder $new_query, $relation_path_to_new_base_object){
 		// FIXME use deep copy here instead of clone
 		$qpart = clone $this;
 		$qpart->set_query($new_query);

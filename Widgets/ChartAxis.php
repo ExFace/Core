@@ -48,7 +48,7 @@ class ChartAxis extends AbstractWidget {
 		return $this->get_parent();
 	}
 	
-	public function set_chart(Chart &$widget) {
+	public function set_chart(Chart $widget) {
 		$this->chart = $this->set_parent($widget);
 	}
 	

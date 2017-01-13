@@ -11,7 +11,7 @@ class DataColumnTotal implements iCanBeConvertedToUxon, ExfaceClassInterface {
 	private $function = null;
 	private $data_column = null;
 	
-	function __construct(DataColumnInterface &$column, $function_name = null){
+	function __construct(DataColumnInterface $column, $function_name = null){
 		$this->set_column($column);
 		if (!is_null($function_name)){
 			$this->set_function($function_name);
@@ -25,7 +25,7 @@ class DataColumnTotal implements iCanBeConvertedToUxon, ExfaceClassInterface {
 		return $this->data_column;
 	}
 	
-	public function set_column(DataColumnInterface &$value) {
+	public function set_column(DataColumnInterface $value) {
 		$this->data_column = $value;
 		return $this;
 	} 

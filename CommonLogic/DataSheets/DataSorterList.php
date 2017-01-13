@@ -19,7 +19,7 @@ class DataSorterList extends EntityList implements DataSorterListInterface {
 	 * {@inheritDoc}
 	 * @see \exface\Core\CommonLogic\EntityList::set_parent()
 	 */
-	public function set_parent(&$data_sheet){
+	public function set_parent($data_sheet){
 		$result = parent::set_parent($data_sheet);
 		foreach ($this->get_all() as $sorter){
 			$sorter->set_data_sheet($data_sheet);

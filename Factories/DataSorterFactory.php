@@ -9,7 +9,7 @@ use exface\Core\Exceptions\UnexpectedValueException;
 
 abstract class DataSorterFactory extends AbstractFactory {
 	
-	public static function create_empty(Workbench &$exface){
+	public static function create_empty(Workbench $exface){
 		return new DataSorter($exface);
 	}
 	
@@ -18,7 +18,7 @@ abstract class DataSorterFactory extends AbstractFactory {
 	 * @param DataSheet $data_sheet
 	 * @return DataSorterInterface
 	 */
-	public static function create_for_data_sheet(DataSheetInterface &$data_sheet){
+	public static function create_for_data_sheet(DataSheetInterface $data_sheet){
 		$exface = $data_sheet->get_workbench();
 		$instance = new DataSorter($exface);
 		$instance->set_data_sheet($data_sheet);
@@ -31,7 +31,7 @@ abstract class DataSorterFactory extends AbstractFactory {
 	 * @param UxonObject $uxon
 	 * @return DataSorterInterface
 	 */
-	public static function create_from_uxon(DataSheetInterface &$data_sheet, UxonObject $uxon){
+	public static function create_from_uxon(DataSheetInterface $data_sheet, UxonObject $uxon){
 		$sorter = self::create_for_data_sheet($data_sheet);
 		$sorter->import_uxon_object($uxon);
 		return $sorter;
@@ -44,7 +44,7 @@ abstract class DataSorterFactory extends AbstractFactory {
 	 * @throws UnexpectedValueException
 	 * @return DataSorterInterface
 	 */
-	public function create_from_anything(DataSheetInterface &$data_sheet, $sorter_or_string_or_uxon){
+	public function create_from_anything(DataSheetInterface $data_sheet, $sorter_or_string_or_uxon){
 		if ($sorter_or_string_or_uxon instanceof UxonObject){
 			$result = static::create_from_uxon($this, $sorter_or_string_or_uxon);
 		} elseif ($sorter_or_string_or_uxon instanceof DataSorter){

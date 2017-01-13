@@ -10,7 +10,7 @@ abstract class WidgetDimensionFactory extends AbstractFactory {
 	 * @param exface $exface
 	 * @return WidgetDimension
 	 */
-	public static function create_empty(Workbench &$exface){
+	public static function create_empty(Workbench $exface){
 		return new WidgetDimension($exface);
 	}
 	
@@ -20,7 +20,7 @@ abstract class WidgetDimensionFactory extends AbstractFactory {
 	 * @param string $string
 	 * @return WidgetDimension
 	 */
-	public static function create_from_string(Workbench &$exface, $string){
+	public static function create_from_string(Workbench $exface, $string){
 		$d = static::create_empty($exface);
 		$d->parse_dimension($string);
 		return $d;
@@ -32,7 +32,7 @@ abstract class WidgetDimensionFactory extends AbstractFactory {
 	 * @param string|WidgetDimension $string_or_dimension
 	 * @return \exface\Core\CommonLogic\WidgetDimension
 	 */
-	public static function create_from_anything(Workbench &$exface, $string_or_dimension){
+	public static function create_from_anything(Workbench $exface, $string_or_dimension){
 		if ($string_or_dimension instanceof WidgetDimension){
 			return $string_or_dimension;
 		} else {

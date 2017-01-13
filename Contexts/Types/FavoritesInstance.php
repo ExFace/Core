@@ -16,7 +16,7 @@ class FavoritesInstance implements ExfaceClassInterface, iCanBeConvertedToUxon {
 	 * @param Object $meta_object
 	 * @param string $instance_uid
 	 */
-	public function __construct(Object &$meta_object, $instance_uid){
+	public function __construct(Object $meta_object, $instance_uid){
 		$exface = $meta_object->get_workbench();
 		$this->exface = $exface;
 		$this->meta_object = $meta_object;

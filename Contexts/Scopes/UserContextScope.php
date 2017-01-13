@@ -35,7 +35,7 @@ class UserContextScope extends AbstractContextScope {
 	 * TODO
 	 * @see \exface\Core\Contexts\Scopes\AbstractContextScope::load_context_data()
 	 */
-	public function load_context_data(ContextInterface &$context){
+	public function load_context_data(ContextInterface $context){
 		
 	}
 	

@@ -35,7 +35,7 @@ class Relation implements ExfaceClassInterface {
 	 * @param unknown $related_object_id
 	 * @param string $type 1n n1 or 11
 	 */
-	function __construct(Workbench &$workbench, $relation_id, $alias, $name, $main_object_id, $foreign_key_alias, $related_object_id, $related_object_key_attribute_id = null, $type = 'n1'){
+	function __construct(Workbench $workbench, $relation_id, $alias, $name, $main_object_id, $foreign_key_alias, $related_object_id, $related_object_key_attribute_id = null, $type = 'n1'){
 		$this->exface = $workbench;
 		$this->id = $relation_id;
 		$this->alias = $alias;

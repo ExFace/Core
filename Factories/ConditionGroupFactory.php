@@ -13,7 +13,7 @@ abstract class ConditionGroupFactory extends AbstractUxonFactory {
 	 * @param string $group_operator
 	 * @return ConditionGroup
 	 */
-	public static function create_empty(Workbench &$exface, $group_operator = null){
+	public static function create_empty(Workbench $exface, $group_operator = null){
 		$group = new ConditionGroup($exface, $group_operator);
 		return $group;
 	}
@@ -25,7 +25,7 @@ abstract class ConditionGroupFactory extends AbstractUxonFactory {
 	 * @param array $array_notation
 	 * @return ConditionGroup
 	 */
-	public static function create_from_array(Workbench &$exface, array $array_notation){
+	public static function create_from_array(Workbench $exface, array $array_notation){
 		$group = self::create($exface);
 		// Short notation
 		foreach ($array_notation as $nr => $part){
@@ -56,7 +56,7 @@ abstract class ConditionGroupFactory extends AbstractUxonFactory {
 	 * @throws UnexpectedValueException
 	 * @return ConditionGroup
 	 */
-	public static function create_from_object_or_array(Workbench &$exface, $uxon_or_array){
+	public static function create_from_object_or_array(Workbench $exface, $uxon_or_array){
 		if ($uxon_or_array instanceof \stdClass){
 			return self::create_from_stdClass($exface, $uxon_or_array);
 		} elseif (is_array($uxon_or_array)){

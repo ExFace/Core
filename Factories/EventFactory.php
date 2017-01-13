@@ -29,7 +29,7 @@ abstract class EventFactory extends AbstractNameResolverFactory {
 	 * @param exface $exface
 	 * @return ExFaceEvent
 	 */
-	public static function create_basic_event(Workbench &$exface, $event_name){
+	public static function create_basic_event(Workbench $exface, $event_name){
 		$instance = new ExFaceEvent($exface);
 		$instance->set_name($event_name);
 		return $instance;
@@ -40,7 +40,7 @@ abstract class EventFactory extends AbstractNameResolverFactory {
 	 * @param DataConnectionInterface $connection
 	 * @return DataConnectionEvent
 	 */
-	public static function create_data_connection_event(DataConnectionInterface &$connection, $event_name, $current_query = null){
+	public static function create_data_connection_event(DataConnectionInterface $connection, $event_name, $current_query = null){
 		$exface = $connection->get_workbench();
 		$instance = new DataConnectionEvent($exface);
 		$instance->set_name($event_name);
@@ -54,7 +54,7 @@ abstract class EventFactory extends AbstractNameResolverFactory {
 	 * @param ActionInterface $action
 	 * @return ActionEvent
 	 */
-	public static function create_action_event(ActionInterface &$action, $event_name){
+	public static function create_action_event(ActionInterface $action, $event_name){
 		$exface = $action->get_workbench();
 		$instance = new ActionEvent($exface);
 		$instance->set_name($event_name);
@@ -62,7 +62,7 @@ abstract class EventFactory extends AbstractNameResolverFactory {
 		return $instance;
 	}
 	
-	public static function create_data_sheet_event(DataSheetInterface &$data_sheet, $event_name){
+	public static function create_data_sheet_event(DataSheetInterface $data_sheet, $event_name){
 		$exface = $data_sheet->get_workbench();
 		$instance = new DataSheetEvent($exface);
 		$instance->set_data_sheet($data_sheet);
@@ -70,7 +70,7 @@ abstract class EventFactory extends AbstractNameResolverFactory {
 		return $instance;
 	}
 	
-	public static function create_widget_event(WidgetInterface &$widget, $event_name) {
+	public static function create_widget_event(WidgetInterface $widget, $event_name) {
 		$exface = $widget->get_workbench();
 		$instance = new WidgetEvent($exface);
 		$instance->set_name($event_name);

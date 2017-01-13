@@ -7,7 +7,7 @@ use exface\Core\Contexts\Types\DataContext;
 
 interface AppInterface extends ExfaceClassInterface, AliasInterface {
 	
-	public function __construct(Workbench &$exface);
+	public function __construct(Workbench $exface);
 	
 	/**
 	 * Returns an action object

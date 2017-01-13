@@ -16,7 +16,7 @@ class Filemanager extends Filesystem implements ExfaceClassInterface {
 	private $path_to_config_folder = null;
 	private $path_to_user_data_folder = null;
 	
-	public function __construct(Workbench &$exface){
+	public function __construct(Workbench $exface){
 		$this->exface = $exface;
 	}
 	

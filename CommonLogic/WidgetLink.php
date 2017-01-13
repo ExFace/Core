@@ -12,7 +12,7 @@ class WidgetLink implements WidgetLinkInterface {
 	private $column_id;
 	private $row_number;
 	
-	function __construct(\exface\Core\CommonLogic\Workbench &$exface){
+	function __construct(\exface\Core\CommonLogic\Workbench $exface){
 		$this->exface = $exface;
 	}
 	

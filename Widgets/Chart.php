@@ -142,7 +142,7 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveButtons, iHaveT
 		return $this;
 	}
 	
-	public function add_axis($x_or_y, ChartAxis &$axis){
+	public function add_axis($x_or_y, ChartAxis $axis){
 		$axis->set_chart($this);
 		$axis->set_dimension($x_or_y);
 		if (!$axis->get_position()){
@@ -281,7 +281,7 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveButtons, iHaveT
 		return $series;
 	}
 	
-	public function add_series(ChartSeries &$series){
+	public function add_series(ChartSeries $series){
 		$series->set_chart($this);
 		$this->series[] = $series;
 		return $this;

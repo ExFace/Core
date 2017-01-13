@@ -12,7 +12,7 @@ class DataAggregatorList extends EntityList implements DataAggregatorListInterfa
 	 * {@inheritDoc}
 	 * @see \exface\Core\CommonLogic\EntityList::set_parent()
 	 */
-	public function set_parent(&$data_sheet){
+	public function set_parent($data_sheet){
 		$result = parent::set_parent($data_sheet);
 		foreach ($this->get_all() as $aggr){
 			$aggr->set_data_sheet($data_sheet);

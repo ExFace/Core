@@ -15,7 +15,7 @@ class WidgetEvent extends ExFaceEvent {
 		return $this->widget;
 	}
 
-	public function set_widget(WidgetInterface &$widget) {
+	public function set_widget(WidgetInterface $widget) {
 		$this->widget = $widget;
 		return $this;
 	}

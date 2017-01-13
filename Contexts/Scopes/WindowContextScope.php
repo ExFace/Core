@@ -29,7 +29,7 @@ class WindowContextScope extends AbstractContextScope {
 	 * The window scope currently just delegates to the session scope, which actually takes care of saving and loading data
 	 * @see \exface\Core\Contexts\Scopes\AbstractContextScope::load_context_data()
 	 */
-	public function load_context_data(ContextInterface &$context){
+	public function load_context_data(ContextInterface $context){
 		// Do nothing untill the windows scope is separated from the session scope
 	}
 	

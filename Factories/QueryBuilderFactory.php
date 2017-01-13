@@ -25,7 +25,7 @@ abstract class QueryBuilderFactory extends AbstractNameResolverFactory {
 	 * @param string $alias_with_namespace
 	 * @return AbstractQueryBuilder
 	 */
-	public static function create_from_alias(exface\Core\CommonLogic\Workbench &$exface, $path_or_qualified_alias){
+	public static function create_from_alias(exface\Core\CommonLogic\Workbench $exface, $path_or_qualified_alias){
 		$name_resolver = $exface->create_name_resolver($path_or_qualified_alias, NameResolver::OBJECT_TYPE_QUERY_BUILDER);
 		return static::create($name_resolver);
 	}

@@ -24,7 +24,7 @@ class DataConnectionEvent extends ExFaceEvent {
 	 * 
 	 * @param DataConnectionInterface $connection
 	 */
-	public function set_data_connection(DataConnectionInterface &$connection) {
+	public function set_data_connection(DataConnectionInterface $connection) {
 		$this->data_connection = $connection;
 		return $this;
 	} 

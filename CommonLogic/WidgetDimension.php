@@ -4,7 +4,7 @@ class WidgetDimension {
 	private $exface;
 	private $value = NULL;
 	
-	function __construct(\exface\Core\CommonLogic\Workbench &$exface){
+	function __construct(\exface\Core\CommonLogic\Workbench $exface){
 		$this->exface = $exface;
 	}
 	

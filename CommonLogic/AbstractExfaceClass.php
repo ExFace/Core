@@ -5,7 +5,7 @@ use exface\Core\CommonLogic\Workbench;
 abstract class AbstractExfaceClass {
 	private $exface = null;
 	
-	public function __construct(Workbench &$exface) {
+	public function __construct(Workbench $exface) {
 		$this->exface = $exface;
 	}
 	

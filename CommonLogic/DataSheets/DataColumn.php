@@ -32,7 +32,7 @@ class DataColumn implements DataColumnInterface {
 	
 	const COLUMN_NAME_VALIDATOR = '[^A-Za-z0-9_\.]';
 	
-	function __construct($expression, $name='', DataSheetInterface &$data_sheet){
+	function __construct($expression, $name='', DataSheetInterface $data_sheet){
 		$exface = $data_sheet->get_workbench();
 		$this->data_sheet = $data_sheet;
 		$this->set_expression($expression);
@@ -108,7 +108,7 @@ class DataColumn implements DataColumnInterface {
 	 * {@inheritDoc}
 	 * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::set_data_sheet()
 	 */
-	public function set_data_sheet(DataSheetInterface &$data_sheet){
+	public function set_data_sheet(DataSheetInterface $data_sheet){
 		$this->data_sheet = $data_sheet;
 	}
 	

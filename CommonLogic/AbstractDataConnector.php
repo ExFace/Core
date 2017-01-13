@@ -14,7 +14,7 @@ abstract class AbstractDataConnector implements DataConnectionInterface {
 	/**
 	 * @deprecated Use DataConnectorFactory instead!
 	 */
-	function __construct(Workbench &$exface, array $config = null) {
+	function __construct(Workbench $exface, array $config = null) {
 		$this->exface = $exface;
 		if ($config){
 			$this->import_uxon_object(UxonObject::from_array($config));

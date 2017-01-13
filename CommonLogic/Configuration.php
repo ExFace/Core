@@ -13,7 +13,7 @@ class Configuration implements ConfigurationInterface {
 	 * @deprecated use ConfigurationFactory instead!
 	 * @param Workbench $workbench
 	 */
-	public function __construct(Workbench &$workbench){
+	public function __construct(Workbench $workbench){
 		$this->exface = $workbench;
 	}
 	

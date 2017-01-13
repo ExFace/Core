@@ -31,7 +31,7 @@ abstract class DataConnectorFactory extends AbstractNameResolverFactory {
 	 * @param array $config
 	 * @return AbstractDataConnector
 	 */
-	public static function create_from_alias(exface\Core\CommonLogic\Workbench &$exface, $path_or_qualified_alias, array $config = null){
+	public static function create_from_alias(exface\Core\CommonLogic\Workbench $exface, $path_or_qualified_alias, array $config = null){
 		$name_resolver = $exface->create_name_resolver($path_or_qualified_alias, NameResolver::OBJECT_TYPE_DATA_CONNECTOR);
 		return static::create($name_resolver, $config);
 	}

@@ -12,7 +12,7 @@ class DataSheetList extends EntityList {
 	 * @param mixed $key
 	 * @return DataSheetList
 	 */
-	public function add(&$sheet, $key = null){
+	public function add($sheet, $key = null){
 		if ($sheet instanceof DataSheetSubsheet) {
 			$result = parent::add($sheet, $key);
 		} else {

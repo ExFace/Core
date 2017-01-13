@@ -10,7 +10,7 @@ interface DataTypeInterface extends \exface\Core\Interfaces\ExfaceClassInterface
 	 * Constructuro
 	 * @param Workbench $exface
 	 */
-	public function __construct(Workbench &$exface);
+	public function __construct(Workbench $exface);
 	
 	/**
 	 * @return Model

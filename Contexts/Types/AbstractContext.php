@@ -9,7 +9,7 @@ abstract class AbstractContext implements ContextInterface {
 	private $scope = null;
 	private $alias = NULL;
 	
-	public function __construct(\exface\Core\CommonLogic\Workbench &$exface){
+	public function __construct(\exface\Core\CommonLogic\Workbench $exface){
 		$this->exface = $exface;
 	}
 	
@@ -26,7 +26,7 @@ abstract class AbstractContext implements ContextInterface {
 	 * @param AbstractContextScope $context_scope
 	 * @return AbstractContext
 	 */
-	public function set_scope(ContextScopeInterface &$context_scope) {
+	public function set_scope(ContextScopeInterface $context_scope) {
 		$this->scope = $context_scope;
 		return $this;
 	}  

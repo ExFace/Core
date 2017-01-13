@@ -10,7 +10,7 @@ class DataAggregator implements iCanBeConvertedToUxon {
 	private $attribute_alias = null;
 	private $data_sheet = null;
 	
-	function __construct(DataSheetInterface &$data_sheet){
+	function __construct(DataSheetInterface $data_sheet){
 		$this->data_sheet = $data_sheet;
 	}
 	
@@ -27,7 +27,7 @@ class DataAggregator implements iCanBeConvertedToUxon {
 		return $this->data_sheet;
 	}
 	
-	public function set_data_sheet(DataSheetInterface &$data_sheet) {
+	public function set_data_sheet(DataSheetInterface $data_sheet) {
 		$this->data_sheet = $data_sheet;
 		return $this;
 	}

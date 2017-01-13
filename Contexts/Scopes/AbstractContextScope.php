@@ -13,7 +13,7 @@ abstract class AbstractContextScope implements ContextScopeInterface {
 	private $exface = NULL;
 	private $name = null;
 	
-	public function __construct(Workbench &$exface){
+	public function __construct(Workbench $exface){
 		$this->exface = $exface;
 		$this->init();
 		$this->name = substr(get_class($this), (strrpos(get_class($this), '\\')+1));
@@ -79,7 +79,7 @@ abstract class AbstractContextScope implements ContextScopeInterface {
 	 * Loads data saved in the current context scope into the given context object
 	 * @return AbstractContextScope
 	 */
-	abstract public function load_context_data(ContextInterface &$context);
+	abstract public function load_context_data(ContextInterface $context);
 
 	/**
 	 * Saves data of all contexts in the current scope to the scopes storage

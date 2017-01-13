@@ -20,7 +20,7 @@ abstract class WidgetFactory extends AbstractFactory {
 	 * @throws UnexpectedValueException
 	 * @return WidgetInterface
 	 */
-	public static function create(UiPageInterface &$page, $widget_type, WidgetInterface &$parent_widget = null){
+	public static function create(UiPageInterface $page, $widget_type, WidgetInterface $parent_widget = null){
 		if (is_null($widget_type)){
 			throw new UnexpectedValueException('Cannot create widget "' . $widget_type . '": invalid widget type!');
 		}
@@ -42,7 +42,7 @@ abstract class WidgetFactory extends AbstractFactory {
 	 * @throws UxonParserError
 	 * @return WidgetInterface
 	 */
-	public static function create_from_uxon(UiPageInterface &$page, UxonObject $uxon_object, WidgetInterface &$parent_widget = null){
+	public static function create_from_uxon(UiPageInterface $page, UxonObject $uxon_object, WidgetInterface $parent_widget = null){
 
 		// If the widget is supposed to be extended from another one, merge the uxon descriptions before doing anything else
 		if ($uxon_object->extend_widget){
@@ -111,7 +111,7 @@ abstract class WidgetFactory extends AbstractFactory {
 		return '\\exface\\Core\\Widgets\\' . ucfirst($widget_type);
 	}
 	
-	public static function create_from_anything(UiPage &$page, $widget_or_uxon_object, WidgetInterface $parent_widget = null){
+	public static function create_from_anything(UiPage $page, $widget_or_uxon_object, WidgetInterface $parent_widget = null){
 		if ($widget_or_uxon_object instanceof WidgetInterface){
 			return $widget_or_uxon_object;
 		} elseif ($widget_or_uxon_object instanceof \stdClass){

@@ -10,7 +10,7 @@ class ExFaceEvent extends Event implements EventInterface {
 	private $name = null;
 	private $namespace = null;
 	
-	public function __construct(Workbench &$exface){
+	public function __construct(Workbench $exface){
 		$this->exface = $exface;
 	}
 	

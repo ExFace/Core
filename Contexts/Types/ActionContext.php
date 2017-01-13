@@ -32,7 +32,7 @@ class ActionContext extends AbstractContext {
 	 * @param ActionInterface $action
 	 * @return \exface\Core\Contexts\Types\ActionContext
 	 */
-	public function add_action(ActionInterface &$action){
+	public function add_action(ActionInterface $action){
 		$this->current_actions[] = $action;
 		return $this;
 	}

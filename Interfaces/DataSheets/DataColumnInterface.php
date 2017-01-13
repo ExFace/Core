@@ -16,7 +16,7 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied {
 	 * @param string $name
 	 * @param DataSheetInterface $data_sheet
 	 */
-	function __construct($expression, $name='', DataSheetInterface &$data_sheet);
+	function __construct($expression, $name='', DataSheetInterface $data_sheet);
 	
 	/**
 	 * 
@@ -40,7 +40,7 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied {
 	 * Updates the parent data sheet by the given one. This can be used to copy columns back and forth, but must be handeld with CAUTION, because it only copies the column, not the values!!!
 	 * @param DataSheet $data_sheet
 	 */
-	public function set_data_sheet(DataSheetInterface &$data_sheet);
+	public function set_data_sheet(DataSheetInterface $data_sheet);
 	
 	/**
 	 * 

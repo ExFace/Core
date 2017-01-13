@@ -16,7 +16,7 @@ class ActionEvent extends ExFaceEvent {
 		return $this->action;
 	}
 	
-	public function set_action(ActionInterface &$action) {
+	public function set_action(ActionInterface $action) {
 		$this->action = $action;
 		return $this;
 	}  

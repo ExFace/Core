@@ -20,7 +20,7 @@ class AttributeList extends EntityList {
 	 * @see \exface\Core\CommonLogic\EntityList::add()
 	 * @param Attribute $attribute
 	 */
-	public function add(&$attribute, $key = null){
+	public function add($attribute, $key = null){
 		if (is_null($key)){
 			$key = $attribute->get_alias_with_relation_path();
 		} 
@@ -38,7 +38,7 @@ class AttributeList extends EntityList {
 		return $this->get_parent();
 	}
 	
-	public function set_meta_object(Object &$meta_object) {
+	public function set_meta_object(Object $meta_object) {
 		return $this->set_parent($meta_object);
 	}	
 	

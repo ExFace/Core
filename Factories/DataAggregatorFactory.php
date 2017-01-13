@@ -13,7 +13,7 @@ abstract class DataAggregatorFactory extends AbstractFactory {
 	 * @param DataSheetInterface $data_sheet
 	 * @return DataAggregatorInterface
 	 */
-	public static function create_for_data_sheet(DataSheetInterface &$data_sheet){
+	public static function create_for_data_sheet(DataSheetInterface $data_sheet){
 		return new DataAggregator($data_sheet);
 	}
 	
@@ -23,7 +23,7 @@ abstract class DataAggregatorFactory extends AbstractFactory {
 	 * @param UxonObject $uxon
 	 * @return DataAggregatorInterface
 	 */
-	public static function create_from_uxon(DataSheetInterface &$data_sheet, UxonObject $uxon){
+	public static function create_from_uxon(DataSheetInterface $data_sheet, UxonObject $uxon){
 		$result = self::create_for_data_sheet($data_sheet);
 		$result->import_uxon_object($uxon);
 		return $result;
@@ -36,7 +36,7 @@ abstract class DataAggregatorFactory extends AbstractFactory {
 	 * @throws UnexpectedValueException
 	 * @return DataAggregatorInterface
 	 */
-	public function create_from_anything(DataSheetInterface &$data_sheet, $aggregator_or_string_or_uxon){
+	public function create_from_anything(DataSheetInterface $data_sheet, $aggregator_or_string_or_uxon){
 		if ($aggregator_or_string_or_uxon instanceof UxonObject){
 			$result = static::create_from_uxon($this, $aggregator_or_string_or_uxon);
 		} elseif ($aggregator_or_string_or_uxon instanceof DataAggregator){

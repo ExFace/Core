@@ -19,7 +19,7 @@ abstract class Formula implements ExfaceClassInterface {
 	private $data_type = NULL;
 	private $exface = null;
 	
-	public function __construct(Workbench &$workbench){
+	public function __construct(Workbench $workbench){
 		$this->exface = $workbench;
 	}
 	

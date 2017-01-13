@@ -31,7 +31,7 @@ interface ModelLoaderInterface {
 	 * @param DataConnectionInterface $connection
 	 * @return ModelLoaderInterface
 	 */
-	public function set_data_connection(DataConnectionInterface &$connection);
+	public function set_data_connection(DataConnectionInterface $connection);
 	
 }
 ?>

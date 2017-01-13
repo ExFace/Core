@@ -57,7 +57,7 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren {
 	 * @param WidgetInterface $parent_widget
 	 * @param string $fixed_widget_id
 	 */
-	function __construct(UiPageInterface &$page, WidgetInterface $parent_widget = null, $fixed_widget_id = null){
+	function __construct(UiPageInterface $page, WidgetInterface $parent_widget = null, $fixed_widget_id = null){
 		$this->page = $page;
 		$this->widget_type = static::get_widget_type_from_class(get_class($this));
 		// Set the parent widget if known
@@ -679,7 +679,7 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren {
 	 * {@inheritDoc}
 	 * @see \exface\Core\Interfaces\WidgetInterface::set_parent()
 	 */
-	public function set_parent(WidgetInterface &$widget) {
+	public function set_parent(WidgetInterface $widget) {
 		$this->parent = $widget;
 	}  
 	

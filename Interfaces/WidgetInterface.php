@@ -239,7 +239,7 @@ interface WidgetInterface extends ExfaceClassInterface {
 	 * Sets the parent widget
 	 * @param WidgetInterface $widget
 	 */
-	public function set_parent(WidgetInterface &$widget); 
+	public function set_parent(WidgetInterface $widget); 
 	
 	/**
 	 * Returns the UI manager

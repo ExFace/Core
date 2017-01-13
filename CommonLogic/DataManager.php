@@ -15,7 +15,7 @@ class DataManager implements DataManagerInterface {
 	 * 
 	 * @param \exface\Core\CommonLogic\Workbench $exface
 	 */
-	function __construct(\exface\Core\CommonLogic\Workbench &$exface){
+	function __construct(\exface\Core\CommonLogic\Workbench $exface){
 		$this->exface = $exface;
 		$this->active_sources = array();
 		$this->active_connections = array();		

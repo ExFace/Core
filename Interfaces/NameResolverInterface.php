@@ -5,7 +5,7 @@ use exface\Core\Exceptions\NameResolverError;
 
 interface NameResolverInterface extends ExfaceClassInterface {
 	
-	public static function create_from_string($string, $object_type, Workbench &$exface);
+	public static function create_from_string($string, $object_type, Workbench $exface);
 	
 	public function get_object_type();
 	

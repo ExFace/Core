@@ -16,7 +16,7 @@ interface ContextInterface extends iCanBeConvertedToUxon, ExfaceClassInterface {
 	 * @param AbstractContextScope $context_scope
 	 * @return AbstractContext
 	 */
-	public function set_scope(ContextScopeInterface &$context_scope);
+	public function set_scope(ContextScopeInterface $context_scope);
 	
 	/**
 	 * Returns the default scope for this type of context.

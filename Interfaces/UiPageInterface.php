@@ -10,7 +10,7 @@ interface UiPageInterface extends ExfaceClassInterface {
 	 * @param string $widget_id
 	 * @return WidgetInterface
 	 */
-	public function create_widget($widget_type, WidgetInterface &$parent_widget = null, UxonObject $uxon = null);
+	public function create_widget($widget_type, WidgetInterface $parent_widget = null, UxonObject $uxon = null);
 	
 	/**
 	 *

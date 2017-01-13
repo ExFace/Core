@@ -8,7 +8,7 @@ abstract class AbstractDataType implements DataTypeInterface {
 	private $exface = null;
 	private $name = null;
 	
-	public function __construct(Workbench &$exface){
+	public function __construct(Workbench $exface){
 		$this->exface = $exface;
 	}
 	

@@ -25,7 +25,7 @@ class Condition implements iCanBeConvertedToUxon {
 	 * @deprecated use ConditionFactory instead!
 	 * @param \exface\Core\CommonLogic\Workbench $exface
 	 */
-	public function __construct(\exface\Core\CommonLogic\Workbench &$exface){
+	public function __construct(\exface\Core\CommonLogic\Workbench $exface){
 		$this->exface = $exface;
 	}
 	

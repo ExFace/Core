@@ -11,7 +11,7 @@ class ConfigurationFactory extends AbstractFactory {
 	 * @param AppInterface $app
 	 * @return ConfigurationInterface
 	 */
-	public static function create_from_app(AppInterface &$app){
+	public static function create_from_app(AppInterface $app){
 		$workbench = $app->get_workbench();
 		return static::create($workbench);
 	}
@@ -21,7 +21,7 @@ class ConfigurationFactory extends AbstractFactory {
 	 * @param Workbench $workbench
 	 * @return ConfigurationInterface
 	 */
-	public static function create(Workbench &$workbench){
+	public static function create(Workbench $workbench){
 		return new \exface\Core\CommonLogic\Configuration($workbench);
 	}
 	

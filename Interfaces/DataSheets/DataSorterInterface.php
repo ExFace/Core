@@ -7,7 +7,7 @@ use exface\Core\Exceptions\InvalidArgumentException;
 
 interface DataSorterInterface extends iCanBeConvertedToUxon, iCanBeCopied {
 	
-	function __construct(DataSheetInterface &$data_sheet);
+	function __construct(DataSheetInterface $data_sheet);
 	
 	/**
 	 * @return string
@@ -44,6 +44,6 @@ interface DataSorterInterface extends iCanBeConvertedToUxon, iCanBeCopied {
 	 * @param DataSheetInterface $data_sheet
 	 * @return DataSorterInterface
 	 */
-	public function set_data_sheet(DataSheetInterface &$data_sheet) ;
+	public function set_data_sheet(DataSheetInterface $data_sheet) ;
 	
 }

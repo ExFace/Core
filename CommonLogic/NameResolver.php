@@ -76,7 +76,7 @@ class NameResolver extends AbstractExfaceClass implements NameResolverInterface 
 		}
 	}
 	
-	public static function create_from_string($string, $object_type, Workbench &$exface){
+	public static function create_from_string($string, $object_type, Workbench $exface){
 		$instance = new self($exface);
 		$instance->set_object_type($object_type);
 		if ((mb_strpos($string, DIRECTORY_SEPARATOR) > 0 || mb_strpos($string, self::NORMALIZED_DIRECTORY_SEPARATOR) !== false) 

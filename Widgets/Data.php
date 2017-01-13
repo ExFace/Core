@@ -1005,7 +1005,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 	 * retular filters.
 	 * @param Filter $widget
 	 */
-	public function add_quick_search_filter(Filter &$widget){
+	public function add_quick_search_filter(Filter $widget){
 		$this->quick_search_filters[] = $widget;
 	}
 	  

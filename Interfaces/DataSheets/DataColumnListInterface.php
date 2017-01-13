@@ -30,7 +30,7 @@ interface DataColumnListInterface extends EntityListInterface {
 	 * @param mixed $key
 	 * @return DataColumnListInterface
 	 */
-	public function add(&$entity, $key = null);
+	public function add($entity, $key = null);
 	
 	
 	/**
@@ -79,7 +79,7 @@ interface DataColumnListInterface extends EntityListInterface {
 	 * Sets the lists parent object
 	 * @param DataSheetInterface $parent_object
 	 */
-	public function set_parent(&$parent_object);
+	public function set_parent($parent_object);
 	
 	/**
 	 * Returns the first data column matching the given expression or FALSE if no matching column is found.

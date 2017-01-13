@@ -7,7 +7,7 @@ class QueryPart {
 	private $attribute = NULL;
 	private $alias = NULL;
 
-	function __construct($alias, AbstractQueryBuilder &$query){
+	function __construct($alias, AbstractQueryBuilder $query){
 		$this->set_alias($alias);
 		$this->set_query($query);
 	}
@@ -19,7 +19,7 @@ class QueryPart {
 		return $this->query;
 	}
 
-	public function set_query(AbstractQueryBuilder &$value) {
+	public function set_query(AbstractQueryBuilder $value) {
 		$this->query = $value;
 	}
 

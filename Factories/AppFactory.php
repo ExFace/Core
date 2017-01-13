@@ -31,7 +31,7 @@ abstract class AppFactory extends AbstractNameResolverFactory {
 	 * @param Workbench $exface
 	 * @return AppInterface
 	 */
-	public static function create_from_alias($alias_with_namespace, Workbench &$exface){
+	public static function create_from_alias($alias_with_namespace, Workbench $exface){
 		$name_resolver = NameResolver::create_from_string($alias_with_namespace, NameResolver::OBJECT_TYPE_APP, $exface);
 		return static::create($name_resolver);
 	}

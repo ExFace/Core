@@ -14,7 +14,7 @@ class QueryPartFilter extends QueryPartAttribute {
 	private $condition = NULL;
 	private $apply_after_reading = false;
 	
-	function __construct($alias, AbstractQueryBuilder &$query){
+	function __construct($alias, AbstractQueryBuilder $query){
 		parent::__construct($alias, $query);
 		// If we filter over an attribute, which actually is a reverse relation, we need to explicitly tell the query, that
 		// it is a relation and not a direct attribute. Concider the case of CUSTOMER<-CUSTOMER_CARD. If we filter CUSTOMERs over 

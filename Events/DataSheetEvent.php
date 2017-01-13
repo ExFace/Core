@@ -24,7 +24,7 @@ class DataSheetEvent extends ExFaceEvent {
 	 * @param DataSheetInterface $value
 	 * @return DataSheetEvent
 	 */
-	public function set_data_sheet(DataSheetInterface &$value) {
+	public function set_data_sheet(DataSheetInterface $value) {
 		$this->data_sheet = $value;
 		return $this;
 	}  

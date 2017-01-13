@@ -17,7 +17,7 @@ class ObjectBehaviorList extends EntityList implements BehaviorListInterface {
 	 * @see \exface\Core\CommonLogic\EntityList::add()
 	 * @param BehaviorInterface $behavior
 	 */
-	public function add(&$behavior, $key = null){
+	public function add($behavior, $key = null){
 		if (!$behavior->get_object()->is_exactly($this->get_parent())){
 			$behavior->set_object($this->get_parent());
 		}
@@ -65,7 +65,7 @@ class ObjectBehaviorList extends EntityList implements BehaviorListInterface {
 	 * @see \exface\Core\CommonLogic\EntityList::set_parent()
 	 * @param Object
 	 */
-	public function set_parent(&$object){
+	public function set_parent($object){
 		$result = parent::set_parent($object);
 		foreach ($this->get_all() as $behavior){
 			$behavior->set_object($object);

@@ -12,7 +12,7 @@ abstract class DataSourceFactory extends AbstractFactory {
 	 * @param Model $model
 	 * @return DataSourceInterface
 	 */
-	public static function create_for_model(Model &$model){
+	public static function create_for_model(Model $model){
 		return new DataSource($model);
 	}
 	
@@ -22,7 +22,7 @@ abstract class DataSourceFactory extends AbstractFactory {
 	 * @param string $data_source_id
 	 * @return DataSourceInterface
 	 */
-	public static function create_from_id(Model &$model, $data_source_id){
+	public static function create_from_id(Model $model, $data_source_id){
 		$instance = static::create_for_model($model);
 		$instance->set_id($data_source_id);
 		return $instance;
@@ -35,7 +35,7 @@ abstract class DataSourceFactory extends AbstractFactory {
 	 * @param string $data_connection_id_or_alias
 	 * @return DataSourceInterface
 	 */
-	public static function create_for_data_connection(Model &$model, $data_source_id, $data_connection_id_or_alias){
+	public static function create_for_data_connection(Model $model, $data_source_id, $data_connection_id_or_alias){
 		$instance = static::create_from_id($model, $data_source_id);
 		$instance = $model->get_model_loader()->load_data_source($instance, $data_connection_id_or_alias);
 		return $instance;

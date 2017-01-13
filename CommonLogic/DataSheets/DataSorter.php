@@ -17,7 +17,7 @@ class DataSorter implements iCanBeConvertedToUxon, ExfaceClassInterface {
 	private $direction = null;
 	private $data_sheet = null;
 	
-	function __construct(Workbench &$exface){
+	function __construct(Workbench $exface){
 		$this->exface = $exface;
 	}
 	
@@ -49,7 +49,7 @@ class DataSorter implements iCanBeConvertedToUxon, ExfaceClassInterface {
 		return $this->data_sheet;
 	}
 	
-	public function set_data_sheet(DataSheetInterface &$data_sheet) {
+	public function set_data_sheet(DataSheetInterface $data_sheet) {
 		$this->data_sheet = $data_sheet;
 		return $this;
 	}

@@ -18,7 +18,7 @@ interface BehaviorInterface extends ExfaceClassInterface, iCanBeConvertedToUxon,
 	 * @param Object $value
 	 * @return BehaviorInterface
 	 */
-	public function set_object(Object &$value);
+	public function set_object(Object $value);
 	
 	/**
 	 * @return BehaviorInterface

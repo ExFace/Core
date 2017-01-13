@@ -7,7 +7,7 @@ use exface\Core\CommonLogic\UxonObject;
 
 interface DataAggregatorInterface extends iCanBeConvertedToUxon, iCanBeCopied {
 	
-	function __construct(DataSheetInterface &$data_sheet);
+	function __construct(DataSheetInterface $data_sheet);
 	
 	public function get_attribute_alias();
 	
@@ -15,7 +15,7 @@ interface DataAggregatorInterface extends iCanBeConvertedToUxon, iCanBeCopied {
 	
 	public function get_data_sheet();
 	
-	public function set_data_sheet(DataSheetInterface &$data_sheet);
+	public function set_data_sheet(DataSheetInterface $data_sheet);
 	
 	public function export_uxon_object();
 	

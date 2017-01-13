@@ -14,7 +14,7 @@ class Model {
 	private $default_namespace;
 	private $model_loader;
 	
-	function __construct(\exface\Core\CommonLogic\Workbench &$exface){
+	function __construct(\exface\Core\CommonLogic\Workbench $exface){
 		$this->exface = $exface;
 	}
 	

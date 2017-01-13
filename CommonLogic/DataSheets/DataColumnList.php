@@ -16,7 +16,7 @@ class DataColumnList extends EntityList implements DataColumnListInterface {
 	 * @param mixed $key
 	 * @return DataColumnListInterface
 	 */
-	public function add(&$column, $key = null, $overwrite_values = true){
+	public function add($column, $key = null, $overwrite_values = true){
 		if (!($column instanceof DataColumn)){
 			throw new InvalidArgumentException('Cannot add column to data sheet: only DataColumns can be added to the column list of a datasheet, "' . get_class($column) . '" given instead!');
 		}
@@ -176,7 +176,7 @@ class DataColumnList extends EntityList implements DataColumnListInterface {
 	 * @see \exface\Core\CommonLogic\EntityList::set_parent()
 	 * @param DataSheetInterface $data_sheet
 	 */
-	public function set_parent(&$data_sheet){
+	public function set_parent($data_sheet){
 		$result = parent::set_parent($data_sheet);
 		foreach ($this->get_all() as $column){
 			$column->set_data_sheet($data_sheet);

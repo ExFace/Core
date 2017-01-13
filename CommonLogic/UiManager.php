@@ -17,7 +17,7 @@ class UiManager implements UiManagerInterface {
 	private $exface = null;
 	private $base_template = null;
 	
-	function __construct(\exface\Core\CommonLogic\Workbench &$exface){
+	function __construct(\exface\Core\CommonLogic\Workbench $exface){
 		$this->exface = $exface;
 	}
 	

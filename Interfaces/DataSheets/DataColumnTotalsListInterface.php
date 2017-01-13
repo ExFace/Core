@@ -29,7 +29,7 @@ interface DataColumnTotalsListInterface extends EntityListInterface {
 	 * @param mixed $key
 	 * @return DataColumnTotalsListInterface
 	 */
-	public function add(&$entity, $key = null);
+	public function add($entity, $key = null);
 	
 	/**
 	 * Removes the given entity from the list
@@ -62,7 +62,7 @@ interface DataColumnTotalsListInterface extends EntityListInterface {
 	 * Sets the lists parent object
 	 * @param DataSheetInterface $parent_object
 	 */
-	public function set_parent(&$parent_object);
+	public function set_parent($parent_object);
 	
 }
 ?>

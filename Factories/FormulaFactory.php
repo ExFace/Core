@@ -28,7 +28,7 @@ abstract class FormulaFactory extends AbstractNameResolverFactory {
 	 * @param array $arguments
 	 * @return Formula
 	 */
-	public static function create_from_string(Workbench &$exface, $function_name, array $arguments = array()){
+	public static function create_from_string(Workbench $exface, $function_name, array $arguments = array()){
 		$name_resolver = $exface->create_name_resolver($function_name, NameResolver::OBJECT_TYPE_FORMULA);
 		return static::create($name_resolver, $arguments);
 	}

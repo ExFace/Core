@@ -46,7 +46,7 @@ class SessionContextScope extends AbstractContextScope {
 	 * of the contexts array in the $_SESSION variable and tries to parse it as a UXON object.
 	 * @see \exface\Core\Contexts\Scopes\AbstractContextScope::load_context_data()
 	 */
-	public function load_context_data(ContextInterface &$context){
+	public function load_context_data(ContextInterface $context){
 		// Check to see if the session had been started by some other code (e.g. the CMS, etc.)
 		// If not, start it here!
 	

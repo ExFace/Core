@@ -81,7 +81,7 @@ abstract class AbstractAction implements ActionInterface {
 	 */
 	private $meta_object = null;
 	
-	function __construct(\exface\Core\CommonLogic\AbstractApp &$app){
+	function __construct(\exface\Core\CommonLogic\AbstractApp $app){
 		$this->app = $app;
 		$this->exface = $app->get_workbench();
 		// TODO read action config from DB here

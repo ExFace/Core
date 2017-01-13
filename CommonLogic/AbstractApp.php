@@ -31,7 +31,7 @@ abstract class AbstractApp implements AppInterface {
 	 * @param \exface\Core\CommonLogic\Workbench $exface
 	 * @deprecated use AppFactory instead!
 	 */
-	public function __construct(\exface\Core\CommonLogic\Workbench &$exface){
+	public function __construct(\exface\Core\CommonLogic\Workbench $exface){
 		$this->exface = $exface;
 		// Create an alias from the class (e.g. "exface.core" from "exface\Core\Core\CoreApp")
 		$this->alias_with_namespace = str_replace(NameResolver::CLASS_NAMESPACE_SEPARATOR, NameResolver::NAMESPACE_SEPARATOR, substr(get_class($this), 0, strrpos(get_class($this), NameResolver::CLASS_NAMESPACE_SEPARATOR)));

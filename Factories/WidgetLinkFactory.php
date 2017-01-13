@@ -12,7 +12,7 @@ abstract class WidgetLinkFactory extends AbstractUxonFactory {
 	 * @param exface $exface
 	 * @return WidgetLinkInterface
 	 */
-	public static function create_empty(Workbench &$exface){
+	public static function create_empty(Workbench $exface){
 		return new WidgetLink($exface);
 	}
 	
@@ -21,7 +21,7 @@ abstract class WidgetLinkFactory extends AbstractUxonFactory {
 	 * @param string|\stdClass|UxonObject $string_or_object
 	 * @return WidgetLinkInterface
 	 */
-	public static function create_from_anything(Workbench &$exface, $string_or_object){
+	public static function create_from_anything(Workbench $exface, $string_or_object){
 		if ($string_or_object instanceof WidgetLinkInterface){
 			return $string_or_object;
 		}

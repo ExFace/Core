@@ -14,7 +14,7 @@ abstract class DataSheetSubsheetFactory {
 	 * @param DataSheet $parent_sheet
 	 * @return \exface\Core\Interfaces\DataSheets\DataSheetSubsheetInterface
 	 */
-	public static function create_for_object(Object &$meta_object, DataSheetInterface &$parent_sheet){
+	public static function create_for_object(Object $meta_object, DataSheetInterface $parent_sheet){
 		$result = new DataSheetSubsheet($meta_object);
 		$result->set_parent_sheet($parent_sheet);
 		return $result;
@@ -26,7 +26,7 @@ abstract class DataSheetSubsheetFactory {
 	 * @param DataSheet $parent_sheet
 	 * @return \exface\Core\Interfaces\DataSheets\DataSheetSubsheetInterface
 	 */
-	public static function create_from_data_sheet(DataSheetInterface $data_sheet, DataSheetInterface &$parent_sheet){
+	public static function create_from_data_sheet(DataSheetInterface $data_sheet, DataSheetInterface $parent_sheet){
 		$meta_object = $data_sheet->get_meta_object();
 		$result = self::create_for_object($meta_object, $parent_sheet);
 		$result->import_uxon_object($data_sheet->export_uxon_object());

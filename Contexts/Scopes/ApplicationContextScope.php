@@ -8,7 +8,7 @@ class ApplicationContextScope extends AbstractContextScope {
 	 * TODO
 	 * @see \exface\Core\Contexts\Scopes\AbstractContextScope::load_contexts()
 	 */
-	public function load_context_data(ContextInterface &$context){
+	public function load_context_data(ContextInterface $context){
 		
 	}
 	

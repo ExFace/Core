@@ -12,7 +12,7 @@ abstract class AbstractUxonFactory extends AbstractFactory {
 	 * @param exface $exface
 	 * @param \stdClass $json_object
 	 */
-	public static function create_from_stdClass(Workbench &$exface, \stdClass $json_object){
+	public static function create_from_stdClass(Workbench $exface, \stdClass $json_object){
 		if ($json_object instanceof UxonObject){
 			$uxon = $json_object;
 		} else {
@@ -28,7 +28,7 @@ abstract class AbstractUxonFactory extends AbstractFactory {
 	 * @param UxonObject $uxon
 	 * @throws UnexpectedValueException
 	 */
-	public static function create_from_uxon(Workbench &$exface, UxonObject $uxon){
+	public static function create_from_uxon(Workbench $exface, UxonObject $uxon){
 		$result = static::create_empty($exface);
 		if ($result instanceof iCanBeConvertedToUxon){
 			$result->import_uxon_object($uxon);

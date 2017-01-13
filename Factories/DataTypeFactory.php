@@ -23,7 +23,7 @@ abstract class DataTypeFactory extends AbstractNameResolverFactory {
 	 * @param string $data_type_alias
 	 * @return AbstractDataType
 	 */
-	public static function create_from_alias(Workbench &$exface, $data_type_alias){
+	public static function create_from_alias(Workbench $exface, $data_type_alias){
 		$class = 'exface\\Core\\DataTypes\\' . $data_type_alias . 'DataType';
 		return new $class($exface);
 	}

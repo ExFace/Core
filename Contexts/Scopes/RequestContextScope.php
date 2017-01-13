@@ -11,7 +11,7 @@ class RequestContextScope extends AbstractContextScope {
 	 * There is nothing to load in the request context scope, as it only lives for one request
 	 * @see \exface\Core\Contexts\Scopes\AbstractContextScope::load_contexts()
 	 */
-	public function load_context_data(ContextInterface &$context){
+	public function load_context_data(ContextInterface $context){
 		
 	}
 	

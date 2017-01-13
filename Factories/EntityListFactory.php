@@ -17,7 +17,7 @@ abstract class EntityListFactory extends AbstractUxonFactory {
 	 * @param Object|string $meta_object_or_alias
 	 * @return EntityList
 	 */
-	public static function create_empty(Workbench &$exface, &$parent_object = null){
+	public static function create_empty(Workbench $exface, $parent_object = null){
 		$result = new EntityList($exface, $parent_object);
 		return $result;
 	}
@@ -30,7 +30,7 @@ abstract class EntityListFactory extends AbstractUxonFactory {
 	 * @param NameResolverInterface $entity_name_resolver
 	 * @return EntityList
 	 */
-	public static function create_with_entity_name_resolver(Workbench &$exface, &$parent_object = null, NameResolverInterface $entity_name_resolver = null){
+	public static function create_with_entity_name_resolver(Workbench $exface, $parent_object = null, NameResolverInterface $entity_name_resolver = null){
 		$result = static::create_empty($exface, $parent_object);
 		if ($entity_name_resolver){
 			$result->set_entity_name_resolver($entity_name_resolver);
@@ -47,7 +47,7 @@ abstract class EntityListFactory extends AbstractUxonFactory {
 	 * @param string $factory_class_name
 	 * @return EntityList
 	 */
-	public static function create_with_entity_factory(Workbench &$exface, &$parent_object = null, $factory_class_name = null){
+	public static function create_with_entity_factory(Workbench $exface, $parent_object = null, $factory_class_name = null){
 		$result = static::create_empty($exface, $parent_object);
 		if ($factory_class_name){
 			if (mb_strpos(NameResolver::CLASS_NAMESPACE_SEPARATOR, $factory_class_name)){

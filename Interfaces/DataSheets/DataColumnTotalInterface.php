@@ -7,7 +7,7 @@ use exface\Core\Exceptions\InvalidArgumentException;
 
 interface DataColumnTotalInterface extends iCanBeConvertedToUxon {
 		
-	function __construct(DataColumnInterface &$column, $function_name = null);
+	function __construct(DataColumnInterface $column, $function_name = null);
 	
 	/**
 	 * @return DataColumnInterface
@@ -18,7 +18,7 @@ interface DataColumnTotalInterface extends iCanBeConvertedToUxon {
 	 * 
 	 * @param DataColumnInterface $value
 	 */
-	public function set_column(DataColumnInterface &$value); 
+	public function set_column(DataColumnInterface $value); 
 	
 	/**
 	 * @return string

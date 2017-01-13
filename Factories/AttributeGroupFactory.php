@@ -11,7 +11,7 @@ abstract class AttributeGroupFactory extends AbstractFactory {
 	 * @param string $alias
 	 * @return AttributeGroup
 	 */
-	public static function create_for_object(Object &$object, $alias = null){
+	public static function create_for_object(Object $object, $alias = null){
 		$exface = $object->get_workbench();
 		$group = new AttributeGroup($exface, $object);
 		$group->set_alias($alias);
