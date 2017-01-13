@@ -1,6 +1,5 @@
 <?php namespace exface\Core\Factories;
 
-use exface\Core\CommonLogic\Workbench;
 use exface\Core\CommonLogic\Model\Object;
 use exface\Core\CommonLogic\Model\RelationPath;
 

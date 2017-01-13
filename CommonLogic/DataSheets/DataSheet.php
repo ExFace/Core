@@ -50,20 +50,24 @@ use exface\Core\Exceptions\DataSheets\DataSheetReadError;
  *
  */
 class DataSheet implements DataSheetInterface {
-	private $exface;
+	
+	// properties to be copied on copy()
 	private $cols = array();
 	private $rows = array();
 	private $totals_rows = array();
 	private $filters = null;
 	private $sorters = array();
 	private $total_row_count = 0;
-	private $meta_object;
 	private $subsheets = array();
 	private $aggregators = array();
 	private $rows_on_page = NULL;
 	private $row_offset = 0;
 	private $uid_column_name = null;
 	private $invalid_data_flag = false;
+	
+	// properties NOT to be copied on copy()
+	private $exface;
+	private $meta_object;
 	
 	public function __construct(\exface\Core\CommonLogic\Model\Object &$meta_object){
 		$this->exface = $meta_object->get_model()->get_workbench();
@@ -1365,14 +1369,12 @@ class DataSheet implements DataSheetInterface {
 	
 	/**
 	 * Clones the data sheet and returns the new copy. The copy will point to the same meta object, but will
-	 * have separate columns, filters, aggregations, etc.
+	 * have it's own columns, filters, aggregations, etc.
 	 * @return DataSheetInterface
 	 */
 	public function copy(){
-		/* @var $copy DataSheet */
-		$copy = $this->exface->utils()->deep_copy($this, array('cols', 'meta_object', 'exface'));
-		$copy->set_columns($this->get_columns()->copy());
-		return $copy;
+		$exface = $this->get_workbench();
+		return DataSheetFactory::create_from_uxon($exface, $this->export_uxon_object());
 	}
 
 	/**

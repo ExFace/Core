@@ -9,6 +9,7 @@ class Relation implements ExfaceClassInterface {
 	const RELATION_TYPE_REVERSE = '1n';
 	const RELATION_TYPE_ONE_TO_ONE = '11';
 	
+	// Properties to be dublicated on copy()
 	private $id;
 	private $alias;
 	private $name;
@@ -18,8 +19,10 @@ class Relation implements ExfaceClassInterface {
 	private $related_object_key_alias;
 	private $join_type = 'LEFT';
 	private $foreign_key_alias;
-	private $type = 'n1';
+	private $type = self::RELATION_TYPE_FORWARD;
 	private $inherited_from_object_id = null;
+	
+	// Properties NOT to be dublicated on copy()
 	private $exface = null;
 	
 	/**
@@ -218,25 +221,47 @@ class Relation implements ExfaceClassInterface {
      * @return Relation
      */
     public function copy(){
-    	return $this->get_main_object()->get_workbench()->utils()->deep_copy($this, array('exface'));
+    	return clone $this;
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\ExfaceClassInterface::get_workbench()
+     */
     public function get_workbench(){
     	return $this->exface;
     }
     
+    /**
+     * 
+     * @return \exface\Core\CommonLogic\Model\Model
+     */
     public function get_model(){
     	return $this->get_workbench()->model();
     }
     
+    /**
+     * Returns TRUE if this is a reverse relation and FALSE otherwise
+     * @return boolean
+     */
     public function is_reverse_relation(){
     	return $this->get_type() == self::RELATION_TYPE_REVERSE ? true : false;
     }
     
+    /**
+     * Returns TRUE if this is a regular (forward) relation and FALSE otherwise
+     * 
+     * @return boolean
+     */
     public function is_forward_relation(){
     	return $this->get_type() == self::RELATION_TYPE_FORWARD ? true : false;
     }
     
+    /**
+     * Returns TRUE if this is a one-to-one relation and FALSE otherwise
+     * @return boolean
+     */
     public function is_one_to_one_relation(){
     	return $this->get_type() == self::RELATION_TYPE_ONE_TO_ONE ? true : false;
     }

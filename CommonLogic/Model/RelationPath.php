@@ -20,7 +20,10 @@ use exface\Core\Exceptions\Model\MetaRelationNotFoundError;
 class RelationPath implements \IteratorAggregate {
 	const RELATION_SEPARATOR = '__';
 	
+	/* Properties to be dublicated on copy() */
 	private $relations = array();
+	
+	/* Properties NOT to be dublicated on copy() */
 	private $start_object = null;
 	
 	public function __construct(Object $start_object){
@@ -308,10 +311,16 @@ class RelationPath implements \IteratorAggregate {
 	}
 	
 	/**
-	 * Clones the attribute keeping the model and object
+	 * Copies the relation path keeping the start object, but copying all relations
+	 * 
+	 * @return RelationPath
 	 */
 	public function copy(){
-		return $this->get_workbench()->utils()->deep_copy($this, array('start_object', 'relations'));
+		$copy = RelationPathFactory::create_for_object($this->get_start_object());
+		foreach ($this->get_relations() as $rel){
+			$copy->append_relation($rel->copy());
+		}
+		return $copy;
 	}
 	
 	/**

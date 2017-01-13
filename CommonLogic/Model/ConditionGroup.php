@@ -6,6 +6,7 @@ use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;
 use exface\Core\Exceptions\Model\ExpressionRebaseImpossibleError;
+use exface\Core\Interfaces\iCanBeCopied;
 
 /**
  * A condition group contains one or more conditions and/or other (nested) condition groups combined by one logical operator, 
@@ -13,11 +14,15 @@ use exface\Core\Exceptions\Model\ExpressionRebaseImpossibleError;
  * @author Andrej Kabachnik
  *
  */
-class ConditionGroup implements iCanBeConvertedToUxon {
-	private $exface = NULL;
+class ConditionGroup implements iCanBeConvertedToUxon, iCanBeCopied {
+	
+	// Properties to be duplicated on copy()
 	private $operator = NULL;
 	private $conditions = array();
 	private $nested_groups = array();
+	
+	// Properties NOT to be dublicated on copy()
+	private $exface = NULL;
 	
 	function __construct(\exface\Core\CommonLogic\Workbench &$exface, $operator = EXF_LOGICAL_AND){
 		$this->exface = $exface;
@@ -260,6 +265,16 @@ class ConditionGroup implements iCanBeConvertedToUxon {
 		$this->conditions = array();
 		$this->nested_groups = array();
 		return $this;
+	}
+	
+	/**
+	 * 
+	 * @return ConditionGroup
+	 */
+	public function copy(){
+		$exface = $this->get_workbench();
+		$copy = ConditionGroupFactory::create_from_uxon($exface, $this->export_uxon_object());
+		return $copy;
 	}
 }
 ?>

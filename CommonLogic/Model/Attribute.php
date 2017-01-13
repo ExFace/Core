@@ -10,7 +10,7 @@ use exface\Core\Interfaces\iCanBeCopied;
 
 class Attribute implements ExfaceClassInterface, iCanBeCopied {
 	
-	// TODO make all private
+	// Properties to be dublicated on copy()
 	private $id;
 	private $object_id;
 	private $inherited_from_object_id = null;
@@ -18,23 +18,28 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied {
 	private $name;
 	private $data;
 	private $data_address_properties;
-	private $formatter;
 	private $data_type;
+	private $formatter;
 	private $required = false;
 	private $hidden = false;
 	private $editable = false;
 	private $system = false;
 	private $default_display_order;
 	private $is_relation;
-	private $relation_path; // relation prefix (e.g. CUSTOMER__CUSTOMER_GROUP__) if attribute requested out of a related object (e.g. get_attribute(CUSTOMER__CUSTOMER_GROUP__NAME))
-	private $default_widget_uxon;
 	private $formula;
 	private $default_value;
 	private $fixed_value;
 	private $default_sorter_dir = 'ASC';
-	private $model;
 	private $short_description;
 	private $defaul_aggregate_function = null;
+	/** @var UxonObject */
+	private $default_widget_uxon;
+	/** @var RelationPath */
+	private $relation_path; 
+	
+	// Properties NOT to be dublicated on copy()
+	/** @var Model */
+	private $model;
 	
 	public function __construct(Model &$model){
 		$this->model = $model;
@@ -126,10 +131,18 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied {
 		$this->editable = $value;
 	}
 	
+	/**
+	 * 
+	 * @return unknown
+	 */
 	public function get_formatter() {
 		return $this->formatter;
 	}
 	
+	/**
+	 * 
+	 * @param unknown $value
+	 */
 	public function set_formatter($value) {
 		$this->formatter = $value;
 	}
@@ -382,16 +395,18 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied {
 	 * @return Attribute
 	 */
 	public function copy(){
-		$copy = $this->get_object()->get_workbench()->utils()->deep_copy($this, array('model', 'relation_path'));
-		// Set the relation path explicitly because if we deep copy it, it will also copy the mode referenced
-		// in the path object.
+		$copy = clone $this;
+		
+		// Explicitly copy properties, that are objects themselves
 		$copy->set_relation_path($this->get_relation_path()->copy());
+		$copy->set_default_widget_uxon($this->get_default_widget_uxon()->copy());
 		return $copy;
 	}
 	
 	/**
 	 * Returns TRUE if this attribute is a system attribute. System attributes are required by the internal logic 
 	 * (like the UID attribute) an will be loaded by default in all data sheets
+	 * 
 	 * @return boolean
 	 */
 	public function is_system() {
@@ -402,25 +417,35 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied {
 	 * Marks the attribute as system (TRUE) or non-system (FALSE). 
 	 * System attributes are required by the internal logic (like the UID attribute) an will be loaded by default 
 	 * in all data sheets
+	 * 
 	 * @param boolean $value
 	 * @return Attribute
 	 */
 	public function set_system($value) {
-		$this->system = $value;
+		$this->system = $value ? true : false;
 		return $this;
 	}
 	
 	/**
-	 * @return exface
+	 * @return Workbench
 	 */
 	public function get_workbench(){
 		return $this->get_model()->get_workbench();
 	}
 	
+	/**
+	 * 
+	 * @return string
+	 */
 	public function get_default_aggregate_function() {
 		return $this->default_aggregate_function;
 	}
 	
+	/**
+	 * 
+	 * @param string $value
+	 * @return \exface\Core\CommonLogic\Model\Attribute
+	 */
 	public function set_default_aggregate_function($value) {
 		$this->default_aggregate_function = $value;
 		return $this;
