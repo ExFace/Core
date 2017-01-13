@@ -4,7 +4,6 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\ConditionFactory;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Factories\ConditionGroupFactory;
-use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;
 use exface\Core\Exceptions\Model\ExpressionRebaseImpossibleError;
 use exface\Core\Interfaces\iCanBeCopied;
 
