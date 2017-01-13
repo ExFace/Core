@@ -83,10 +83,19 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns {
 	}
 	
 	/**
-	 * Sets the id of the column to be used as UID for each data row
+	 * Sets the id of the column to be used as UID for each data row in this column group.
+	 * 
+	 * This can be usefull if the column group is based on a meta object not directly related to
+	 * the the object of the parent Data widet. In this case, you can specify which column of the
+	 * group to use, to join rows to the main data.
+	 * 
+	 * @uxon-property uid_column_id
+	 * @uxon-type string
+	 * 
 	 * @param string $value
+	 * @return DataColumnGroup
 	 */
-	function set_uid_column_id($value){
+	public function set_uid_column_id($value){
 		$this->uid_column_id = $value;
 		return $this;
 	}
@@ -158,6 +167,11 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns {
 	}
 	
 	/**
+	 * Defines the DataColumns within this group: an array of respecitve UXON objects.
+	 * 
+	 * @uxon-property columns
+	 * @uxon-type DataColumn[]
+	 * 
 	 * @see \exface\Core\Interfaces\Widgets\iHaveColumns::set_columns()
 	 */
 	public function set_columns(array $columns) {

@@ -84,5 +84,6 @@ const EXF_TEXT_STYLE_BOLD = 'bold';
 const EXF_TEXT_STYLE_NORMAL = 'normal';
 const EXF_TEXT_STYLE_STRIKETHROUGH = 'strikethrough';
 const EXF_TEXT_STYLE_UNDERLINE = 'underline';
+const EXF_TEXT_STYLE_ITALIC = 'italic';
 
 ?>

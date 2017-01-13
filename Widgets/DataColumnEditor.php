@@ -5,8 +5,10 @@ use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 /**
  * The DataColumnEditor is a wrapper widget for inputs and other widget types, that enables them to be used as in-table-editors. It encapsulates
  * special logic additionally needed for in-table-editing and also holds some parameters, that these widgets would not need if used stan alone
+ * 
  * IDEA: This widget is work-in-progress and currently no used. I like the idea, but for now, I do not see any "special parameters". Perhaps I will
  * come back to it, after implementing the filter widget, which is similar.
+ * 
  * @author Andrej Kabachnik
  *
  */
