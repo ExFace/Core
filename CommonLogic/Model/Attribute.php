@@ -32,6 +32,9 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied {
 	private $default_sorter_dir = 'ASC';
 	private $short_description;
 	private $defaul_aggregate_function = null;
+	private $sortable;
+	private $filterable;
+	private $aggregatable;
 	/** @var UxonObject */
 	private $default_widget_uxon;
 	/** @var RelationPath */
@@ -450,5 +453,61 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied {
 		$this->default_aggregate_function = $value;
 		return $this;
 	}  
+	
+	/**
+	 * 
+	 * @return boolean
+	 */
+	public function is_sortable() {
+		return $this->sortable;
+	}
+	
+	/**
+	 * 
+	 * @param boolean $value
+	 * @return \exface\Core\CommonLogic\Model\Attribute
+	 */
+	public function set_sortable($value) {
+		$this->sortable = $value ? true : false;
+		return $this;
+	}
+	
+	/**
+	 * 
+	 * @return boolean
+	 */
+	public function is_filterable() {
+		return $this->filterable;
+	}
+	
+	/**
+	 * 
+	 * @param boolean $value
+	 * @return \exface\Core\CommonLogic\Model\Attribute
+	 */
+	public function set_filterable($value) {
+		$this->filterable = $value ? true : false;
+		return $this;
+	}
+	
+	/**
+	 * 
+	 * @return boolean
+	 */
+	public function is_aggregatable() {
+		return $this->aggregatable;
+	}
+	
+	/**
+	 * 
+	 * @param boolean $value
+	 * @return \exface\Core\CommonLogic\Model\Attribute
+	 */
+	public function set_aggregatable($value) {
+		$this->aggregatable = $value ? true : false;
+		return $this;
+	}
+	
+	      
 }
 ?>
