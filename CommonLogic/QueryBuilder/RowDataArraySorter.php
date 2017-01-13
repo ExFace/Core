@@ -11,7 +11,7 @@ class RowDataArraySorter {
 			$arguments[] = $this->extractColumnData($array_of_rows, $citeria[0]);
 			$arguments[] = $citeria[1];
 		}
-		$arguments[] = $array_of_rows;
+		$arguments[] = &$array_of_rows;
 		call_user_func_array('array_multisort', $arguments);
 		return $array_of_rows;
 	}
