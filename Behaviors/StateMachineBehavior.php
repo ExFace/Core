@@ -138,7 +138,7 @@ class StateMachineBehavior extends AbstractBehavior {
 	 *	    "10": {
 	 *	      "buttons": [
 	 *	        {
-	 *	          "caption": "20 Annahme best�tigen",
+	 *	          "caption": "20 Annahme bestätigen",
 	 *	          "action": {
 	 *	            "alias": "exface.Core.UpdateData",
 	 *	            "input_data_sheet": {

@@ -22,6 +22,10 @@ use exface\Core\Interfaces\Widgets\iShowDataSet;
 use exface\Core\Interfaces\WidgetInterface;
 
 /**
+ * Data is the base for all widgets displaying tabular data.
+ * 
+ * Many widgets like Chart, ComboTable, etc. contain internal Data sub-widgets, that define the data set used
+ * by these widgets. Datas are much like tables: you can define columns, sorters, filters, pagination rules, etc.
  * 
  * @author Andrej Kabachnik
  *
@@ -73,7 +77,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 		return $this;
 	}
 	
-	function create_column_from_attribute(Attribute $attribute, $caption=null, $hidden=null){
+	public function create_column_from_attribute(Attribute $attribute, $caption=null, $hidden=null){
 		return $this->get_column_group_main()->create_column_from_attribute($attribute, $caption, $hidden);
 	}
 	
@@ -82,19 +86,27 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 	 * the meta object displayed in by the data widget, but this can be changed in the UXON description if required.
 	 * @return string
 	 */
-	function get_uid_column_id(){
+	public function get_uid_column_id(){
 		return $this->get_column_group_main()->get_uid_column_id();
 	}
 	
 	/**
 	 * Sets the id of the column to be used as UID for each data row
+	 * 
+	 * @uxon-property uid_column_id
+	 * @uxon-type string
+	 * 
 	 * @param string $value
 	 */
-	function set_uid_column_id($value){
+	public function set_uid_column_id($value){
 		$this->get_column_group_main()->set_uid_column_id($value);
 		return $this;
 	}
 	
+	/**
+	 * Returns the UID column as DataColumn
+	 * @return \exface\Core\Widgets\DataColumn
+	 */
 	public function get_uid_column(){
 		return $this->get_column_group_main()->get_uid_column();
 	}
@@ -197,7 +209,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 	 * IDEA Separate DataColumnFooter widget??
 	 * @return NULL[]
 	 */
-	function get_totals() {
+	public function get_totals() {
 		$totals = array();
 		foreach ($this->columns as $col) {
 			if ($col->has_footer()) {
@@ -279,6 +291,11 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 		return false;
 	}
 	
+	/**
+	 * 
+	 * @param string $data_sheet_column_name
+	 * @return \exface\Core\Widgets\DataColumn|boolean
+	 */
 	public function get_column_by_data_column_name($data_sheet_column_name){
 		foreach ($this->get_columns() as $col){
 			if ($col->get_attribute_alias() === $data_sheet_column_name){
@@ -292,7 +309,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 	 * Returns an array with columns containing system attributes
 	 * @return \exface\Core\Widgets\DataColumn[]
 	 */
-	function get_columns_with_system_attributes(){
+	public function get_columns_with_system_attributes(){
 		$result = array();
 		foreach ($this->get_columns() as $col){
 			if ($col->get_attribute() && $col->get_attribute()->is_system()){
@@ -303,19 +320,61 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 	}
 	
 	/**
-	 * The columns array of a data widget can contain columns or column groups or a mixture of those. 
-	 * At this point, we must sort them apart
-	 * and make sure, all columns get wrappen in groups. Directly specified columns will get a generated
-	 * group, which won't have anything but the column list. If we have a user specified column group
-	 * somewhere in the middle, there will be two generated groups left and right of it. This makes sure,
-	 * that the get_columns() method, which lists all columns from all groups will list them in exact the
-	 * same order as the user had specified!
-	 * 			
+	 * Defines the columns of data: each element of the array can be a DataColumn or a DataColumnGroup widget.
+	 * 
+	 * To create a column showing an attribute of the Data's meta object, it is sufficient to only set 
+	 * the attribute_alias for each column object. Other properties like caption, align, editor, etc. 
+	 * are optional. If not set, they will be determined from the properties of the attribute.
+	 * 
+	 * The widget type (DataColumn or DataColumnGroup) can be omitted: it can be determined automatically:
+	 * E.g. adding {"attribute_group_alias": "~VISIBLE"} as a column is enough to generate a column group
+	 * with all visible attributes of the object.
+	 * 
+	 * Column groups with captions will produce grouped columns with mutual headings (s. example below).
+	 * 
+	 * Example:
+	 * 	"columns": [
+	 * 		{
+	 * 			"attribute_alias": "PRODUCT__LABEL", 
+	 * 			"caption": "Product"
+	 * 		},
+	 * 		{
+	 * 			"attribute_alias": "PRODUCT__BRAND__LABEL"
+	 * 		},
+	 * 		{
+	 * 			"caption": "Sales",
+	 * 			"columns": [
+	 * 				{
+	 * 					"attribute_alias": "QUANTITY:SUM",
+	 *					"caption": "Qty."
+	 * 				},
+	 * 				{
+	 * 					"attribute_alias": "VALUE:SUM",
+	 * 					"caption": "Sum"
+	 * 				}
+	 * 			]
+	 * 		}
+	 * 	]
+	 * 
+	 * @uxon-property columns
+	 * @uxon-type DataColumn[]|DataColumnGroup[]	 * 
+	 * 		
 	 * @see \exface\Core\Interfaces\Widgets\iHaveColumns::set_columns()
 	 */
 	public function set_columns(array $columns) {
 		$column_groups = array();
 		$last_element_was_a_column_group = false;
+		
+		/*
+		 * The columns array of a data widget can contain columns or column groups or a mixture of those. 
+		 * At this point, we must sort them apart
+		 * and make sure, all columns get wrappen in groups. Directly specified columns will get a generated
+		 * group, which won't have anything but the column list. If we have a user specified column group
+		 * somewhere in the middle, there will be two generated groups left and right of it. This makes sure,
+		 * that the get_columns() method, which lists all columns from all groups will list them in exact the
+		 * same order as the user had specified!
+		 */
+		
 		// Loop through all uxon elements in the columns array and separate columns and column groups
 		// This is nesseccary because column groups can be created in short notation (just like a regular
 		// column with a nested column list and an optional caption). 
@@ -393,6 +452,29 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 	}
 	
 	/**
+	 * Defines the buttons for interaction with data elements (e.g. rows in the table, points on a chart, etc.)
+	 * 
+	 * The array must contain widget objects with widget_type Button or any derivatives. The widget_type can
+	 * also be ommitted. It is a good idea to only specify an explicit widget type if a special button
+	 * (e.g. MenuButton) is required. For regular buttons it is advisable to let ExFache choose the right type.
+	 * 
+	 * Example:
+	 * 	"buttons": [
+	 * 		{
+	 * 			"action_alias": "exface.CreateObjectDialog"
+	 * 		},
+	 * 		{
+	 * 			"widget_type": "MenuButton",
+	 * 			"caption": "My menu",
+	 * 			"buttons": [
+	 * 				...
+	 * 			]
+	 * 		}
+	 * 	]
+	 * 
+	 * @uxon-property buttons
+	 * @uxon-type Button[]
+	 * 
 	 * @see \exface\Core\Interfaces\Widgets\iHaveButtons::set_buttons()
 	 */
 	public function set_buttons(array $buttons_array) {
@@ -475,10 +557,46 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 	}
 
 	/**
-	 * Creates widgets for filters. The filter object is treated as a new input widget for the attribute,
-	 * specified in the "attribute_alias" property. Hence all the normal widget options can be applied to
-	 * filters too. If the widget type for the filter is not explicitly defined, it is determined from the
-	 * data type of the attribute, we use to filter.
+	 * Defines filters to be used in this data widget: each being a Filter widget.
+	 * 
+	 * The simples filter only needs to contain an attribute_alias. ExFace will generate a suitable widget
+	 * automatically. However, the filter can easily be customized by adding any properties applicable to 
+	 * the respective widget type. You can also override the widget type.
+	 * 
+	 * Relations and aggregations are fully supported by filters
+	 * 
+	 * Note, that ComboTable widgets will be automatically generated for related objects if the corresponding
+	 * filter is defined by the attribute, representing the relation: e.g. for a table of ORDER_POSITIONS,
+	 * adding the filter ORDER (relation to the order) will give you a ComboTable, while the filter ORDER__NUMBER
+	 * will yield a numeric input field, because it filter over a number, even thoug a related one.
+	 * 
+	 * Advanced users can also instantiate a Filter widget manually (widget_type = Filter) gaining control
+	 * over comparators, etc. The widget displayed can then be defined in the widget-property of the Filter.
+	 * 
+	 * A good way to start is to copy the columns array and rename it to filters. This will give you filters
+	 * for all columns.
+	 * 
+	 * Example:
+	 * 	"object_alias": "ORDER_POSITION"
+	 * 	"filters": [
+	 * 		{
+	 * 			"attribute_alias": "ORDER"
+	 * 		},
+	 * 		{
+	 * 			"attribute_alias": "CUSTOMER__CLASS"
+	 * 		},
+	 * 		{
+	 * 			"attribute_alias": "ORDER__ORDER_POSITION__VALUE:SUM",
+	 * 		"caption": "Order total"
+	 * 		},
+	 * 		{
+	 * 			"attribute_alias": "VALUE",
+	 * 			"widget_type": "InputNumberSlider"
+	 * 		}
+	 * 	]
+	 * 
+	 * @uxon-property filters
+	 * @uxon-type Filter[]
 	 * 
 	 * @param array $filters_array
 	 * @return boolean
@@ -715,7 +833,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 		return $this;
 	}
 	
-	function has_filters(){
+	public function has_filters(){
 		if (count($this->filters) == 0){
 			$this->add_required_filters();
 		}
@@ -727,7 +845,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 	 * 
 	 * @return boolean
 	 */
-	function has_buttons() {
+	public function has_buttons() {
 		if (count($this->buttons)) return true;
 		else return false;
 	}
@@ -741,24 +859,57 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 		return $this->paginate;
 	}
 	
+	/**
+	 * Set to FALSE to disable pagination
+	 * 
+	 * @uxon-property paginate
+	 * @uxon-type boolean
+	 * 
+	 * @param boolean $value
+	 */
 	public function set_paginate($value) {
-		$this->paginate = $value;
+		$this->paginate = $value ? true : false;
+		return $this;
 	}
 	
+	/**
+	 * 
+	 * @return integer
+	 */
 	public function get_paginate_default_page_size() {
 		return $this->paginate_default_page_size;
 	}
 	
+	/**
+	 * Sets the number of rows to show on one page by default (only if pagination is enabled).
+	 * 
+	 * @uxon-property paginate_default_page_size
+	 * @uxon-type number
+	 * 
+	 * @param integer $value
+	 * @return Data
+	 */
 	public function set_paginate_default_page_size($value) {
 		$this->paginate_default_page_size = $value;
+		return $this;
 	}
 	
 	public function get_paginate_page_sizes() {
 		return $this->paginate_page_sizes;
 	}
 	
+	/**
+	 * Defines the available page size, the user can choose from via array of numbers.
+	 * 
+	 * @uxon-property paginate_page_sizes
+	 * @uxon-type number[]
+	 * 
+	 * @param integer[] $value
+	 * @return \exface\Core\Widgets\Data
+	 */
 	public function set_paginate_page_sizes(array $value) {
 		$this->paginate_page_sizes = $value;
+		return $this;
 	}
 	
 	/**
@@ -769,6 +920,25 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 		return $this->sorters;
 	}
 	
+	/**
+	 * Defines sorters for the data via array of sorter objects.
+	 * 
+	 * Example:
+	 * |"sorters": [
+	 * |	{
+	 * |		"attribute_alias": "MY_ALIAS",
+	 * |		"direction": "ASC"
+	 * |	},
+	 * |	{
+	 * |		...
+	 * |	}
+	 * |]
+	 * 
+	 * @uxon-property sorters
+	 * @uxon-type Object[]
+	 * 
+	 * @param array $sorters
+	 */
 	public function set_sorters(array $sorters) {
 		$this->sorters = $sorters;
 	}	  
@@ -777,8 +947,20 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 		return $this->aggregate_by_attribute_alias;
 	}
 	
+	/**
+	 * Makes the data get aggregated by the given attribute (i.e. GROUP BY attribute_alias in SQL).
+	 * 
+	 * Multiple attiribute_alias can be passed separated by commas.
+	 * 
+	 * @uxon-property aggregate_by_attribute_alias
+	 * @uxon-type string
+	 * 
+	 * @param string $value
+	 * @return \exface\Core\Widgets\Data
+	 */
 	public function set_aggregate_by_attribute_alias($value) {
 		$this->aggregate_by_attribute_alias = str_replace(', ', ',', $value);
+		return $this;
 	} 
 	
 	/**
@@ -851,7 +1033,11 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 	}
 	
 	/**
-	 * (non-PHPdoc)
+	 * Makes data values get loaded asynchronously in background if the template supports it (i.e. via AJAX).
+	 * 
+	 * @uxon-property lazy_loading
+	 * @uxon-type boolean
+	 * 
 	 * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::set_lazy_loading()
 	 */
 	public function set_lazy_loading($value) {
@@ -864,7 +1050,8 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 	}
 	
 	/**
-	 * (non-PHPdoc)
+	 * 
+	 * {@inheritDoc}
 	 * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::get_lazy_loading_action()
 	 */
 	public function get_lazy_loading_action() {
@@ -872,7 +1059,15 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 	}
 	
 	/**
-	 * (non-PHPdoc)
+	 * Sets a custom action for lazy data loading. 
+	 * 
+	 * By default, it is the ReadData action, but it can be substituted by any compatible action. Compatible
+	 * means in this case, that it should fill a given data sheet with data and output the data in a format
+	 * compatible with the template (e.g. via AbstractAjaxTemplate::encode_data()).
+	 * 
+	 * @uxon-property lazy_loading_action
+	 * @uxon-type string
+	 * 
 	 * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::set_lazy_loading_action()
 	 */
 	public function set_lazy_loading_action($value) {
@@ -897,11 +1092,22 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 	
 	public function get_text_empty() {
 		if (!$this->text_empty){
-			$this->text_empty = 'No data could be found for the current set of filters!';
+			$this->text_empty = $this->translate('WIDGET.DATA.NO_DATA_FOUND');
 		}
 		return $this->text_empty;
 	}
 	
+	/**
+	 * Sets a custom text to be displayed in the Data widget, if not data is found.
+	 * 
+	 * The text may contain any template-specific formatting: e.g. HTML for HTML-templates.
+	 * 
+	 * @uxon-property text_empty
+	 * @uxon-type boolean
+	 * 
+	 * @param string $value
+	 * @return Data
+	 */
 	public function set_text_empty($value) {
 		$this->text_empty = $value;
 		return $this;
@@ -914,10 +1120,18 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 		return $this->column_groups;
 	}
 	
+	/**
+	 * 
+	 * @return \exface\Core\Widgets\DataColumnGroup
+	 */
 	public function get_column_group_main(){
 		return $this->get_column_groups()[0];
 	}
 	
+	/**
+	 * @param DataColumnGroup $column_group
+	 * @return Data
+	 */
 	public function add_column_group(DataColumnGroup $column_group){
 		$this->column_groups[] = $column_group;
 		return $this;
@@ -926,7 +1140,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 	/**
 	 * Adds columns with system attributes of the main object or any related object. This is very usefull for editable tables as
 	 * system attributes are needed to save the data.
-	 * @param unknown $relation_path
+	 * @param string $relation_path
 	 */
 	public function add_columns_for_system_attributes($relation_path = null){
 		$object = $relation_path ? $this->get_meta_object()->get_related_object($relation_path) : $this->get_meta_object();
@@ -952,8 +1166,16 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 		return $this->is_editable;
 	}
 	
-	public function set_editable(){
-		$this->editable = true;
+	/**
+	 * Set to TRUE to make the table editable or add a column with an editor. FALSE by default.
+	 * 
+	 * @uxon-property editable
+	 * @uxon-type boolean
+	 * 
+	 * @return \exface\Core\Widgets\Data
+	 */
+	public function set_editable($value = true){
+		$this->editable = $value ? true : false;
 		return $this;
 	}
 	
@@ -966,6 +1188,10 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 	}
 	
 	/**
+	 * Makes the Data get refreshed after the value of the linked widget changes. Accepts widget links as strings or objects.
+	 * 
+	 * @uxon-property refresh_with_widget
+	 * @uxon-type \exface\Core\CommonLogic\WidgetLink
 	 * 
 	 * @param WidgetLinkInterface|UxonObject|string $value
 	 * @return \exface\Core\Widgets\Data

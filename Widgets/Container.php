@@ -114,8 +114,13 @@ class Container extends AbstractWidget implements iContainOtherWidgets {
 	}
 	
 	/**
+	 * Array of widgets in the container: each one is defined as a regular widget object.
 	 * 
-	 * {@inheritDoc}
+	 * Widgets will be displayed in the order of definition. By default all widgets will inherit the container's meta object. 
+	 * 
+	 * @uxon-property disabled
+	 * @uxon-type boolean
+	 * 
 	 * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::set_widgets()
 	 */
 	public function set_widgets(array $widget_or_uxon_array){
@@ -133,7 +138,11 @@ class Container extends AbstractWidget implements iContainOtherWidgets {
 	}	 
 
 	/**
-	 * If a container is disabled, all children widgets will be disabled too
+	 * If a container is disabled, all children widgets will be disabled too.
+	 * 
+	 * @uxon-property disabled
+	 * @uxon-type boolean
+	 * 
 	 * @see \exface\Core\Widgets\AbstractWidget::set_disabled()
 	 */
 	public function set_disabled($value){

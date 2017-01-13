@@ -52,6 +52,7 @@
 	"WIDGET.SELECT_NO": "No",
 	"WIDGET.SELECT_NONE": "-",
 	"WIDGET.STATEMENUBUTTON.CAPTION": "Change state",
+	"WIDGET.DATA.NO_DATA_FOUND": "No data could be found for the current set of filters!",
 	
 	"ERROR.CAPTION": "Error",
 	"ERROR.REQUEST_CAPTION": "Request",

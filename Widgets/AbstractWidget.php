@@ -927,9 +927,9 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren {
 	public function translate($message_id, array $placeholders = null, $number_for_plurification = null){
 		$message_id = trim($message_id);
 		if (!is_null($number_for_plurification)){
-			return $this->get_workbench()->get_app('exface.Core')->get_translator()->translate_plural($message_id, $number_for_plurification, $placeholders);
+			return $this->get_workbench()->get_core_app()->get_translator()->translate_plural($message_id, $number_for_plurification, $placeholders);
 		} else {
-			return $this->get_workbench()->get_app('exface.Core')->get_translator()->translate($message_id, $placeholders);
+			return $this->get_workbench()->get_core_app()->get_translator()->translate($message_id, $placeholders);
 		}
 	}
 }
