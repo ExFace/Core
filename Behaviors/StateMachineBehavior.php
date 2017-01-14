@@ -84,7 +84,7 @@ class StateMachineBehavior extends AbstractBehavior {
 	 * @uxon-property default_state
 	 * @uxon-type number
 	 * 
-	 * @param integer|StateMachineState $value
+	 * @param integer|string|StateMachineState $value
 	 * @return \exface\Core\Behaviors\StateMachineBehavior
 	 */
 	public function set_default_state($value) {
@@ -93,10 +93,10 @@ class StateMachineBehavior extends AbstractBehavior {
 				$this->add_state($value);
 			}
 			$this->default_state = $value->get_state_id();
-		} elseif (is_int($value)) {
+		} elseif (is_int($value) || is_string($value)) {
 			$this->default_state = $value;
 		} else {
-			throw new BehaviorConfigurationError($this->get_object(), 'Can not set default state for "' . $this->get_object()->get_alias_with_namespace() . '": the argument passed to set_default_state() is neither a StateMachineState nor an integer!');
+			throw new BehaviorConfigurationError($this->get_object(), 'Can not set default state for "' . $this->get_object()->get_alias_with_namespace() . '": the argument passed to set_default_state() is neither a StateMachineState nor an integer nor a string!');
 		}
 		
 		return $this;
@@ -106,7 +106,7 @@ class StateMachineBehavior extends AbstractBehavior {
 	 * Returns the default state id.
 	 *
 	 * @throws BehaviorConfigurationError
-	 * @return integer
+	 * @return integer|string
 	 */
 	public function get_default_state_id() {
 		if (is_null($this->default_state)) {
@@ -211,7 +211,7 @@ class StateMachineBehavior extends AbstractBehavior {
 	/**
 	 * Returns the StateMachineState object belonging to the passed state id.
 	 * 
-	 * @param integer $state_id
+	 * @param integer|string $state_id
 	 * @return StateMachineState
 	 */
 	public function get_state($state_id) {
@@ -240,7 +240,7 @@ class StateMachineBehavior extends AbstractBehavior {
 	 * Returns an array of buttons belonging to the StateMachineState with the
 	 * passed state id.
 	 * 
-	 * @param integer $state_id
+	 * @param integer|string $state_id
 	 * @return UxonObject[]
 	 */
 	public function get_state_buttons($state_id) {
