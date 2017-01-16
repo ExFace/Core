@@ -134,38 +134,38 @@ class ShowWidget extends AbstractAction implements iShowWidget, iUsePrefillData 
 			}
 		}
 		
-		// Prefill widget using the filter contexts if the widget does not have any prefill data yet
-		
-		// TODO Currently we fetch context filters for the object of the action. If data sheet has another object, we ignore the context filters.
-		// Wouldn't it be better to add the context filters to the data sheet or maybe even to the data sheet and the prefill data separately?
-		
+		// Prefill widget using the filter contexts if the widget does not have any prefill data yet		
 		// TODO Use the context prefill even if the widget already has other prefill data: use DataSheet::merge()!
 		if ($this->get_prefill_with_filter_context() 
 		&& $this->get_widget() 
-		&& $this->get_meta_object()->is($data_sheet->get_meta_object())
 		&& $context_conditions = $this->get_app()->get_workbench()->context()->get_scope_window()->get_filter_context()->get_conditions($this->get_widget()->get_meta_object())){
 			if (!$data_sheet || $data_sheet->is_empty()){
 				$data_sheet = DataSheetFactory::create_from_object($this->get_widget()->get_meta_object());
 			}
 			
-			/* @var $condition \exface\Core\CommonLogic\Model\Condition */
-			foreach($context_conditions as $condition){
-				/*if ($this->get_widget() && $condition->get_expression()->get_meta_object()->get_id() == $this->get_widget()->get_meta_object_id()){
-				 // If the expressions belong to the same object, as the one being displayed, use them as filters
-				 // TODO Building the prefill sheet from context in different ways depending on the object of the top widget
-				 // is somewhat ugly (shouldn't the children widgets get the chance, to decide themselves, what they do with the prefill)
-				 $data_sheet->get_filters()->add_condition($condition);
-				 } else*/
-				if ($condition->get_comparator() == EXF_COMPARATOR_IS 
-				|| $condition->get_comparator() == EXF_COMPARATOR_EQUALS 
-				|| $condition->get_comparator() == EXF_COMPARATOR_IN){
-					// If it is not the same object, as the one displayed, add the context values as filters
-					try {
-						$col = $data_sheet->get_columns()->add_from_expression($condition->get_expression());
-						$col->set_values(array($condition->get_value()));
-					} catch (\Exception $e){
-						// Do nothing if anything goes wrong. After all the context prefills are just an attempt the help
-						// the user. It's not a good Idea to throw a real error here!
+			// Make sure, the context object fits the data sheet object.
+			// TODO Currently we fetch context filters for the object of the action. If data sheet has another object, we ignore the context filters.
+			// Wouldn't it be better to add the context filters to the data sheet or maybe even to the data sheet and the prefill data separately?
+			if ($this->get_meta_object()->is($data_sheet->get_meta_object())){
+				/* @var $condition \exface\Core\CommonLogic\Model\Condition */
+				foreach($context_conditions as $condition){
+					/*if ($this->get_widget() && $condition->get_expression()->get_meta_object()->get_id() == $this->get_widget()->get_meta_object_id()){
+					 // If the expressions belong to the same object, as the one being displayed, use them as filters
+					 // TODO Building the prefill sheet from context in different ways depending on the object of the top widget
+					 // is somewhat ugly (shouldn't the children widgets get the chance, to decide themselves, what they do with the prefill)
+					 $data_sheet->get_filters()->add_condition($condition);
+					 } else*/
+					if ($condition->get_comparator() == EXF_COMPARATOR_IS 
+					|| $condition->get_comparator() == EXF_COMPARATOR_EQUALS 
+					|| $condition->get_comparator() == EXF_COMPARATOR_IN){
+						// If it is not the same object, as the one displayed, add the context values as filters
+						try {
+							$col = $data_sheet->get_columns()->add_from_expression($condition->get_expression());
+							$col->set_values(array($condition->get_value()));
+						} catch (\Exception $e){
+							// Do nothing if anything goes wrong. After all the context prefills are just an attempt the help
+							// the user. It's not a good Idea to throw a real error here!
+						}
 					}
 				}
 			}
