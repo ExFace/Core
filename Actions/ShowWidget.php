@@ -73,11 +73,27 @@ class ShowWidget extends AbstractAction implements iShowWidget, iUsePrefillData 
 		return $this;
 	}
 	
+	/**
+	 * Prefills the widget of this action with any available data: the action's input data, prefill data from the request and filter contexts.
+	 * 
+	 * Technically, the method will attempt to create a data sheet from all those sources by merging them, read data for this sheet and perform
+	 * a $this->get_widget()->prefill(). If the different sources for prefill data cannot be combined into a single data sheet, the widget will
+	 * first get prefilled by input data and then by prefill data separately. If the context data cannot be combined with the input data, it will
+	 * be ignored.
+	 * 
+	 * IDEA The idea of merging all into a single data sheet should save read operations. It makes things less transparent, however. Is it 
+	 * worth it? Maybe do prefills sequentially instead starting with the leas significant data (context) and overwriting it with prefill data
+	 * and input data subsequently?
+	 * 
+	 * @return void;
+	 */
 	protected function prefill_widget(){
+		// Start with the prefill data already stored in the widget
 		if ($this->get_widget()){
 			$data_sheet = $this->get_widget()->get_prefill_data();
 		}
 		
+		// Prefill with input data if not turned off
 		if ($this->get_prefill_with_input_data() && $input_data = $this->get_input_data_sheet()){
 			if (!$data_sheet || $data_sheet->is_empty()){
 				$data_sheet = $input_data->copy();
@@ -92,7 +108,10 @@ class ShowWidget extends AbstractAction implements iShowWidget, iUsePrefillData 
 			}
 		}
 		
+		// Now prefill with prefill data.
 		if ($prefill_data = $this->get_prefill_data_sheet()){
+			// Try to merge prefill data and any data already gathered. If the merge does not work, ignore the prefill data
+			// for now and use it for a secondary prefill later.
 			$prefill_data_merge_failed = false;
 			if (!$data_sheet || $data_sheet->is_empty()){
 				$data_sheet = $prefill_data->copy();
@@ -116,9 +135,14 @@ class ShowWidget extends AbstractAction implements iShowWidget, iUsePrefillData 
 		}
 		
 		// Prefill widget using the filter contexts if the widget does not have any prefill data yet
+		
+		// TODO Currently we fetch context filters for the object of the action. If data sheet has another object, we ignore the context filters.
+		// Wouldn't it be better to add the context filters to the data sheet or maybe even to the data sheet and the prefill data separately?
+		
 		// TODO Use the context prefill even if the widget already has other prefill data: use DataSheet::merge()!
 		if ($this->get_prefill_with_filter_context() 
 		&& $this->get_widget() 
+		&& $this->get_meta_object()->is($data_sheet->get_meta_object())
 		&& $context_conditions = $this->get_app()->get_workbench()->context()->get_scope_window()->get_filter_context()->get_conditions($this->get_widget()->get_meta_object())){
 			if (!$data_sheet || $data_sheet->is_empty()){
 				$data_sheet = DataSheetFactory::create_from_object($this->get_widget()->get_meta_object());

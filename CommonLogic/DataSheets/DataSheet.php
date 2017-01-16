@@ -1327,6 +1327,7 @@ class DataSheet implements DataSheetInterface {
 	/**
 	 * Merges the current data sheet with another one. Values of the other sheet will overwrite values of identical columns of the current one!
 	 * @param DataSheet $other_sheet
+	 * @return DataSheet
 	 */
 	public function merge(DataSheetInterface $other_sheet){
 		// Ignore empty other sheets
