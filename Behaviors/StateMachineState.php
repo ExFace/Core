@@ -17,7 +17,7 @@ class StateMachineState {
 	/**
 	 * Returns the state id.
 	 * 
-	 * @return string
+	 * @return integer|string
 	 */
 	public function get_state_id() {
 		return $this->state_id;
@@ -26,7 +26,7 @@ class StateMachineState {
 	/**
 	 * Defines the state id.
 	 * 
-	 * @param string $value
+	 * @param integer|string $value
 	 * @return \exface\Core\Behaviors\StateMachineState
 	 */
 	public function set_state_id($value) {
