@@ -97,8 +97,8 @@ class Text extends AbstractWidget implements iShowSingleAttribute, iHaveValue, i
 					// TODO currently we use the first relation found. However, this does not work well if that relation
 					// is an attribute of an inherited object. Perhaps it would be better to prefer direct attributes. But how?
 					$rel_path = RelationPath::relation_path_add($rel->get_alias(), $this->get_attribute()->get_alias());
-					if ($rel_attr = $data_sheet->get_meta_object()->get_attribute($rel_path)){
-						$data_sheet->get_columns()->add_from_attribute($rel_attr);
+					if ($data_sheet->get_meta_object()->has_attribute($rel_path)){
+						$data_sheet->get_columns()->add_from_attribute($data_sheet->get_meta_object()->get_attribute($rel_path));
 					}
 				} 
 			}
