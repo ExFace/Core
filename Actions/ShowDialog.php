@@ -86,21 +86,7 @@ class ShowDialog extends ShowWidget implements iShowDialog {
 	public function get_result_output(){
 		$dialog = $this->get_result();
 		if ($dialog->get_lazy_loading()){
-			$dialog_contents = $dialog->get_contents();
-			$code = '';
-			// If the dialog has multiple widgets, we need to put them in a container here, so we cann draw the whole thing
-			// If we draw each widget individually, the respective template elements will get instantiated one after another,
-			// so those instatiated first, can't access the ones instantiated later on. Putting everything in a container 
-			// makes the template instatiate all elements before actually drawing them!
-			if (is_array($dialog_contents)){
-				$container = $dialog->get_page()->create_widget('Container', $dialog);
-				foreach ($dialog_contents as $w){
-					$container->add_widget($w);
-				}
-				$code = $this->get_app()->get_workbench()->ui()->draw($container);
-			} else {
-				$code = $this->get_app()->get_workbench()->ui()->draw($dialog_contents);
-			}
+			$code = $this->get_app()->get_workbench()->ui()->draw($dialog->get_contents_container());
 		} else {
 			$code = parent::get_result_output();
 		}
