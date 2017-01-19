@@ -8,6 +8,10 @@ use exface\Core\Interfaces\ConfigurationInterface;
 use exface\Core\Interfaces\Contexts\ContextManagerInterface;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\TranslationInterface;
+use exface\Core\Interfaces\InstallerInterface;
+use exface\Core\Interfaces\AppInstallerInterface;
+use exface\Core\Interfaces\NameResolverInstallerInterface;
+use exface\Core\Exceptions\InvalidArgumentException;
 
 abstract class AbstractApp implements AppInterface {
 	const CONFIG_FOLDER_IN_APP = 'Config';
@@ -165,7 +169,7 @@ abstract class AbstractApp implements AppInterface {
 	 * @param string $file_suffix
 	 * @return string
 	 */
-	protected function get_config_file_name($file_suffix = 'config'){
+	public function get_config_file_name($file_suffix = 'config'){
 		if (is_null($file_suffix)){
 			$file_suffix = static::CONFIG_FILE_SUFFIX;
 		}
@@ -204,24 +208,6 @@ abstract class AbstractApp implements AppInterface {
 		$this->name_resolver = $value;
 		return $this;
 	}	
-	
-	/**
-	 * 
-	 * {@inheritDoc}
-	 * @see \exface\Core\Interfaces\AppInterface::install()
-	 */
-	public function install(){
-		return '';
-	}
-	
-	/**
-	 * 
-	 * {@inheritDoc}
-	 * @see \exface\Core\Interfaces\AppInterface::uninstall()
-	 */
-	public function uninstall(){
-		return '';
-	}
 	
 	/**
 	 * 
@@ -318,6 +304,33 @@ abstract class AbstractApp implements AppInterface {
 	
 	protected function get_translations_folder(){
 		return $this->get_workbench()->filemanager()->get_path_to_vendor_folder() . DIRECTORY_SEPARATOR . $this->get_directory() . DIRECTORY_SEPARATOR . static::TRANSLATIONS_FOLDER_IN_APP;
+	}
+	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\AppInterface::get_installer()
+	 * @return AppInstaller
+	 */
+	public function get_installer(InstallerInterface $injected_installer = null){
+		$app_installer = new AppInstaller($this);
+		// Add the injected installer
+		if ($injected_installer){
+			$app_installer->add_installer($injected_installer);
+		}
+		// See if there is a custom installer for this app named [AppAlias]Installer in the same namespace. If so, add it here
+		$class = get_class($this);
+		if (substr($class, -3) == 'App'){
+			$installer_class = substr($class, 0, -3) . 'Installer';
+			if (class_exists($installer_class)){
+				$installer = new $installer_class($this->get_name_resolver());
+				if (!(($installer instanceof NameResolverInstallerInterface) || ($installer instanceof AppInstallerInterface))){
+					throw new InvalidArgumentException('The app installer "' . $installer_class . '" must implement the NameResolverInstallerInterface or the AppInstallerInterface!');
+				}
+				$app_installer->add_installer($installer);
+			}
+		}
+		return $app_installer;
 	}
 }
 ?>
