@@ -1058,8 +1058,9 @@ class DataSheet implements DataSheetInterface {
 	}
 	
 	/**
-	 * Returns an array of DataColumns
-	 * @return DataColumnList
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::get_columns()
 	 */
 	public function get_columns() {
 		return $this->cols;
@@ -1375,7 +1376,14 @@ class DataSheet implements DataSheetInterface {
 	 */
 	public function copy(){
 		$exface = $this->get_workbench();
-		return DataSheetFactory::create_from_uxon($exface, $this->export_uxon_object());
+		$copy = DataSheetFactory::create_from_uxon($exface, $this->export_uxon_object());
+		// Copy internal properties, that do not get exported to UXON
+		foreach ($this->get_columns() as $key => $col){
+			if ($col->get_ignore_fixed_values()){
+				$copy->get_columns()->get($key)->set_ignore_fixed_values($col->get_ignore_fixed_values());
+			}
+		}
+		return $copy;
 	}
 
 	/**

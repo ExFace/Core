@@ -8,6 +8,16 @@ use exface\Core\CommonLogic\Model\Attribute;
 use exface\Core\CommonLogic\EntityList;
 use exface\Core\Exceptions\InvalidArgumentException;
 
+/**
+ * 
+ * @method DataColumnInterface[] get_all()
+ * @method DataColumnInterface get(mixed $key)
+ * @method DataColumnInterface get_first()
+ * @method DataColumnInterface get_last()
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
 class DataColumnList extends EntityList implements DataColumnListInterface {
 	
 	/**
@@ -184,13 +194,5 @@ class DataColumnList extends EntityList implements DataColumnListInterface {
 		return $result;
 	}
 	
-	/**
-	 * {@inheritDoc}
-	 * @see \exface\Core\CommonLogic\EntityList::get_all()
-	 * @return DataColumnInterface[]
-	 */
-	public function get_all(){
-		return parent::get_all();
-	}
 }
 ?>

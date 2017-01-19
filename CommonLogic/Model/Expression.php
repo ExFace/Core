@@ -6,8 +6,10 @@ use exface\Core\Factories\FormulaFactory;
 use exface\Core\Factories\WidgetLinkFactory;
 use exface\Core\Exceptions\Model\MetaRelationNotFoundError;
 use exface\Core\Exceptions\Model\ExpressionRebaseImpossibleError;
+use exface\Core\Interfaces\ExfaceClassInterface;
+use exface\Core\Interfaces\iCanBeCopied;
 
-class Expression {
+class Expression implements ExfaceClassInterface, iCanBeCopied {
 	// Expression types
 	// const FORMULA = 'formula';
 	// const ATTRIBUTE = 'attribute';
@@ -354,6 +356,12 @@ class Expression {
 	
 	public function get_widget_link(){
 		return $this->widget_link;
+	}
+	
+	public function copy(){
+		$copy = clone $this;
+		$copy->parse($this->to_string());
+		return $copy;
 	}
 }
 ?>

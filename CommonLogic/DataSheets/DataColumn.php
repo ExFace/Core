@@ -14,23 +14,29 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\DataSheets\DataSheetDiffError;
 use exface\Core\Exceptions\DataSheets\DataSheetRuntimeError;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
-use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Exceptions\UnexpectedValueException;
 
 class DataColumn implements DataColumnInterface {
-	private $name = null;
-	private $expression = null;
-	private $attribute_alias = null;
-	private $formula = null;
+	
+	const COLUMN_NAME_VALIDATOR = '[^A-Za-z0-9_\.]';
+	
+	// Properties, _not_ to be dublicated on copy()
 	private $data_sheet = null;
+	
+	// Properties, to be dublicated on copy()
+	private $name = null;
+	private $attribute_alias = null;
 	private $hidden = false;
-	private $formatter = null;
 	private $data_type = null;
 	private $fresh = false;
 	private $totals = array();
 	private $ignore_fixed_values = false;
-	
-	const COLUMN_NAME_VALIDATOR = '[^A-Za-z0-9_\.]';
+	/** @var Expression */
+	private $expression = null;
+	/** @var Formula */
+	private $formula = null;
+	/** @var Expression */
+	private $formatter = null;
 	
 	function __construct($expression, $name='', DataSheetInterface $data_sheet){
 		$exface = $data_sheet->get_workbench();
@@ -283,7 +289,14 @@ class DataColumn implements DataColumnInterface {
 	 * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::copy()
 	 */
 	public function copy(){
-		return clone $this;
+		$copy = clone $this;
+		if ($this->get_expression_obj()){
+			$copy->set_expression($this->get_expression_obj()->copy());
+		}
+		if ($this->get_formula()){
+			$copy->set_formula($this->get_formula()->copy());
+		}
+		return $copy;
 	}
 	
 	/**
