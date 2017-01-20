@@ -6,6 +6,7 @@ use exface\Core\Exceptions\MetaModelBehaviorException;
 class StateMenuButton extends MenuButton {
 	
 	private $smb_buttons_set = false;
+	private $show_states = [];
 	
 	/**
 	 * 
@@ -13,8 +14,8 @@ class StateMenuButton extends MenuButton {
 	 * @see \exface\Core\Widgets\MenuButton::get_buttons()
 	 */
 	public function get_buttons() {
-		//Falls am Objekt ein StateMachineBehavior haengt wird versucht den momentanen Status aus
-		//dem Objekt auszulesen und die entsprechenden Buttons aus dem Behavior hinzuzufuegen
+		// Falls am Objekt ein StateMachineBehavior haengt wird versucht den momentanen Status aus
+		// dem Objekt auszulesen und die entsprechenden Buttons aus dem Behavior hinzuzufuegen.
 		if (!$this->smb_buttons_set) {
 			if ($smb = $this->get_meta_object()->get_behaviors()->get_by_alias('exface.Core.Behaviors.StateMachineBehavior')) {
 				$template = $this->get_ui()->get_template_from_request();
@@ -25,9 +26,16 @@ class StateMenuButton extends MenuButton {
 				}
 				
 				$button_widget = $this->get_input_widget()->get_button_widget_type();
-				foreach ($smb->get_state_buttons($current_state) as $smb_button) {
-					$button = $this->get_page()->create_widget($button_widget, $this, UxonObject::from_anything($smb_button));
-					$this->add_button($button);
+				$action_alias = $this->get_action_alias();
+				foreach ($smb->get_state_buttons($current_state) as $target_state => $smb_button) {
+					// Ist eine Action fuer den StateMenuButton definiert, so wird sie fuer die einzelnen Knoepfe
+					// uebernommen.
+					if (!is_null($action_alias)) { $smb_button->action->alias = $action_alias; }
+					// Nur diejenigen Buttons hinzufuegen, welche in show_states definiert sind.
+					if (empty($this->get_show_states()) || in_array($target_state, $this->get_show_states())) {
+						$button = $this->get_page()->create_widget($button_widget, $this, UxonObject::from_anything($smb_button));
+						$this->add_button($button);
+					}
 				}
 				
 				$this->smb_buttons_set = true;
@@ -60,6 +68,24 @@ class StateMenuButton extends MenuButton {
 	public function get_children() {
 		if (!$this->smb_buttons_set) { $this->get_buttons(); }
 		return parent::get_children();
+	}
+	
+	/**
+	 *
+	 * @return integer[]|string[]
+	 */
+	public function get_show_states() {
+		return $this->show_states;
+	}
+	
+	/**
+	 *
+	 * @param integer[]|string[] $value
+	 * @return \exface\Core\Widgets\StateMenuButton
+	 */
+	public function set_show_states($value) {
+		$this->show_states = $value;
+		return $this;
 	}
 }
 ?>
