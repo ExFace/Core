@@ -3,7 +3,6 @@ namespace exface\Core\Widgets;
 use exface\Core\Interfaces\Widgets\iTakeInput;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\Interfaces\Widgets\iHaveDefaultValue;
-use exface\Core\CommonLogic\DataSheets\DataColumn;
 
 class Input extends Text implements iTakeInput, iHaveDefaultValue {
 	private $required = null;
@@ -96,7 +95,7 @@ class Input extends Text implements iTakeInput, iHaveDefaultValue {
 	public function get_default_value(){
 		if (!$this->get_ignore_default_value() && $default_expr = $this->get_default_value_expression()){
 			if ($data_sheet = $this->get_prefill_data()){
-				$value = $default_expr->evaluate($data_sheet, DataColumn::sanitize_column_name($this->get_attribute()->get_alias()), 0);
+				$value = $default_expr->evaluate($data_sheet, \exface\Core\CommonLogic\DataSheets\DataColumn::sanitize_column_name($this->get_attribute()->get_alias()), 0);
 			} elseif ($default_expr->is_string()){
 				$value = $default_expr->get_raw_value();
 			}
