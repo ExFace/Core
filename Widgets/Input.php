@@ -3,6 +3,7 @@ namespace exface\Core\Widgets;
 use exface\Core\Interfaces\Widgets\iTakeInput;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\Interfaces\Widgets\iHaveDefaultValue;
+use exface\Core\CommonLogic\DataSheets\DataColumn;
 
 class Input extends Text implements iTakeInput, iHaveDefaultValue {
 	private $required = null;
