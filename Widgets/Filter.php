@@ -3,13 +3,16 @@
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\CommonLogic\Model\Attribute;
 use exface\Core\Interfaces\Widgets\iCanBeRequired;
+use exface\Core\Interfaces\Widgets\iHaveValue;
 
 /**
  * A filter is a wrapper widget, which typically consist of one or more input widgets. The purpose of filters is to enable the user to
  * input conditions.
+ * 
  * TODO Add an optional operator menu to the filter. That would be a drowdown populated with suitable comparison operators for the data
  * type of the value widget.
  * IDEA Should one filter also be able to create condition groups? Or should there be a FilterGroup widget?
+ * 
  * @author Andrej Kabachnik
  *
  */
@@ -59,6 +62,14 @@ class Filter extends Container implements iCanBeRequired {
 		// marked required by default: this should not be the case for filters, however!
 		if ($this->widget instanceof iCanBeRequired){
 			$this->widget->set_required(false);
+		}
+		
+		// Filters do not have default values, because they are empty if nothing has been entered. It is important
+		// to tell the underlying widget to ignore defaults as it will use the default value of the meta attribute
+		// otherwise. You can still set the value of the filter. This only prevents filling the value automatically
+		// via the meta model defaults.
+		if ($this->widget instanceof iHaveValue){
+			$this->widget->set_ignore_default_value(true);
 		}
 		
 		// The filter should be enabled all the time, except for the case, when it is diabled explicitly

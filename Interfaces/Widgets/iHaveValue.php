@@ -20,4 +20,5 @@ interface iHaveValue {
 	 * @return Expression
 	 */
 	public function get_value_expression();
+	
 }

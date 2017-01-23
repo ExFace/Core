@@ -7,6 +7,7 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
+use exface\Core\CommonLogic\DataSheets\DataColumn;
 
 /**
  * The text widget simply shows text with an optional title created from the caption of the widget
@@ -21,6 +22,7 @@ class Text extends AbstractWidget implements iShowSingleAttribute, iHaveValue, i
 	private $size = null;
 	private $style = null;
 	private $aggregate_function = null;
+	private $ignore_default_value = null;
 	
 	public function get_text() {
 		if (is_null($this->text)){
@@ -229,7 +231,7 @@ class Text extends AbstractWidget implements iShowSingleAttribute, iHaveValue, i
 			$exface = $this->get_workbench();
 			return DataTypeFactory::create_from_alias($exface, EXF_DATA_TYPE_STRING);
 		}
-	}
+	}	  
 	  
 }
 ?>
