@@ -4,6 +4,7 @@ use exface\Core\Contexts\Types\ObjectBasketContext;
 use exface\Core\Exceptions\Actions\ActionInputMissingError;
 
 /**
+ * Adds the input rows to the object basket in a specified context_scope (by default, the window scope)
  * 
  * @method ObjectBasketContext get_context()
  * 

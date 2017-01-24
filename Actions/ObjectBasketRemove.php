@@ -1,8 +1,7 @@
 <?php namespace exface\Core\Actions;
 
-use exface\Core\Contexts\Types\ObjectBasketContext;
-
 /**
+ * Removes meta object instances matching the input data from the object basket in the given context scope (window scope by default)
  * 
  * @author Andrej Kabachnik
  *
@@ -13,15 +12,7 @@ class ObjectBasketRemove extends ObjectBasketFetch {
 		parent::init();
 		$this->set_input_rows_min(1);
 		$this->set_input_rows_max(null);
-		$this->set_icon_name('star');
-		$this->set_context_type('ObjectBasket');
-	}	
-
-	public function get_scope(){
-		if (!parent::get_scope()){
-			$this->set_scope('Window');
-		}
-		return parent::get_scope();
+		$this->set_icon_name('remove');
 	}
 	
 	protected function perform(){
@@ -34,16 +25,6 @@ class ObjectBasketRemove extends ObjectBasketFetch {
 			// TODO remove single instances
 		}
 		$this->set_result($this->get_favorites_json());
-	}
-	
-	/**
-	 * 
-	 * {@inheritDoc}
-	 * @see \exface\Core\Actions\SetContext::get_context()
-	 * @return ObjectBasketContext
-	 */
-	public function get_context(){
-		return parent::get_context();
 	}
 }
 ?>
