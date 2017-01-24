@@ -67,39 +67,48 @@ class Text extends AbstractWidget implements iShowSingleAttribute, iHaveValue, i
 			// If we are looking for attributes of the object of this widget, then just return the attribute_alias
 			$data_sheet->get_columns()->add_from_expression($this->get_attribute_alias());
 		} else {
-			// If not...
-			if ($this->get_attribute() && $rel_path = $this->get_attribute()->get_relation_path()->to_string()){
-				$rel_parts = RelationPath::relation_path_parse($rel_path);
-				if (is_array($rel_parts)){
-					$related_obj = $this->get_meta_object();
-					foreach ($rel_parts as $rel_nr => $rel_part){
-						$related_obj = $related_obj->get_related_object($rel_part);
-						unset($rel_parts[$rel_nr]);
-						if ($related_obj->is_exactly($data_sheet->get_meta_object())){
-							$attr_path = implode(RelationPath::RELATION_SEPARATOR, $rel_parts);
-							$attr = ($attr_path ? $attr_path . RelationPath::RELATION_SEPARATOR : '') . $this->get_attribute()->get_alias();
-							$data_sheet->get_columns()->add_from_expression($attr);
+			// If not, we are dealing with a prefill with data of another object. It only makes sense to try to prefill here,
+			// if the widgets shows an attribute, because then we have a chance to find a relation between the widget's object
+			// and the prefill object
+			if ($this->get_attribute()){
+				if ($rel_path = $this->get_attribute()->get_relation_path()->to_string()){
+					// If the widget shows an attribute with a relation path, try to rebase that attribute relative to the
+					// prefill object (this is possible, if the prefill object sits somewhere along the relation path. So, 
+					// traverse up this path to see if it includes the prefill object. If so, add a column to the prefill 
+					// sheet, that contains the widget's attribute with a relation path relative to the prefill object.
+					$rel_parts = RelationPath::relation_path_parse($rel_path);
+					if (is_array($rel_parts)){
+						$related_obj = $this->get_meta_object();
+						foreach ($rel_parts as $rel_nr => $rel_part){
+							$related_obj = $related_obj->get_related_object($rel_part);
+							unset($rel_parts[$rel_nr]);
+							if ($related_obj->is_exactly($data_sheet->get_meta_object())){
+								$attr_path = implode(RelationPath::RELATION_SEPARATOR, $rel_parts);
+								$attr = RelationPath::relation_path_add($attr_path, $this->get_attribute()->get_alias());
+								$data_sheet->get_columns()->add_from_expression($attr);
+							}
 						}
 					}
-				}
-			}
-			
-			// Otherwise we are looking for attributes relative to another object
-			// So try to find a relation from this widgets object to the data sheet object and vice versa
-			if ($this->get_attribute()){
-				if ($this->get_attribute()->is_relation() && $this->get_attribute()->get_relation()->get_related_object()->is($data_sheet->get_meta_object())){
+					// If the prefill object is not in the widget's relation path, try to find a relation from this widget's 
+					// object to the data sheet object and vice versa
+				} elseif ($this->get_attribute()->is_relation() && $this->get_attribute()->get_relation()->get_related_object()->is($data_sheet->get_meta_object())){
 					// If this widget represents the direct relation attribute, the attribute to display would be the UID of the
 					// of the related object (e.g. trying to fill the order positions attribute "ORDER" relative to the object
 					// "ORDER" should result in the attribute UID of ORDER because it holds the same value)
 					$data_sheet->get_columns()->add_from_expression($this->get_attribute()->get_relation()->get_related_object_key_alias());
 				} elseif ($rel = $data_sheet->get_meta_object()->find_relation($this->get_meta_object(), true)){
-					// If the attribute is not a relation, we still can use it for prefills if we find a relation to access
+					// If the attribute is not a relation itself, we still can use it for prefills if we find a relation to access
 					// it from the $data_sheet's object.
 					// TODO currently we use the first relation found. However, this does not work well if that relation
 					// is an attribute of an inherited object. Perhaps it would be better to prefer direct attributes. But how?
-					$rel_path = RelationPath::relation_path_add($rel->get_alias(), $this->get_attribute()->get_alias());
-					if ($data_sheet->get_meta_object()->has_attribute($rel_path)){
-						$data_sheet->get_columns()->add_from_attribute($data_sheet->get_meta_object()->get_attribute($rel_path));
+					
+					// It does not make sense to use reverse relations because the corresponding values would need to get aggregated
+					// in the prefill sheet in most cases and we don't have a meaningfull aggregator at hand at this time.
+					if (!$rel->is_reverse_relation()){
+						$rel_path = RelationPath::relation_path_add($rel->get_alias(), $this->get_attribute()->get_alias());
+						if ($data_sheet->get_meta_object()->has_attribute($rel_path)){
+							$data_sheet->get_columns()->add_from_attribute($data_sheet->get_meta_object()->get_attribute($rel_path));
+						}
 					}
 				} 
 			}
