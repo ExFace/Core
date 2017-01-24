@@ -2,8 +2,9 @@
 namespace exface\Core\Widgets;
 use exface\Core\Interfaces\Widgets\iTakeInput;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
+use exface\Core\Interfaces\Widgets\iHaveDefaultValue;
 
-class Input extends Text implements iTakeInput {
+class Input extends Text implements iTakeInput, iHaveDefaultValue {
 	private $required = null;
 	private $validator = null;
 	private $readonly = false;
@@ -83,6 +84,55 @@ class Input extends Text implements iTakeInput {
 	 */
 	public function set_readonly($value) {
 		$this->readonly = $value ? true : false;
+		return $this;
+	}
+	
+	/**
+	 *
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\Widgets\iHaveValue::get_default_value()
+	 */
+	public function get_default_value(){
+		if (!$this->get_ignore_default_value() && $default_expr = $this->get_default_value_expression()){
+			if ($data_sheet = $this->get_prefill_data()){
+				$value = $default_expr->evaluate($data_sheet, \exface\Core\CommonLogic\DataSheets\DataColumn::sanitize_column_name($this->get_attribute()->get_alias()), 0);
+			} elseif ($default_expr->is_string()){
+				$value = $default_expr->get_raw_value();
+			}
+		}
+		return $value;
+	}
+	
+	/**
+	 *
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\Widgets\iHaveValue::get_default_value_expression()
+	 */
+	public function get_default_value_expression(){
+		if ($attr = $this->get_attribute()){
+			if (!$default_expr = $attr->get_fixed_value()){
+				$default_expr = $attr->get_default_value();
+			}
+		}
+		return $default_expr;
+	}
+	
+	/**
+	 *
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\Widgets\iHaveValue::get_ignore_default_value()
+	 */
+	public function get_ignore_default_value() {
+		return $this->ignore_default_value;
+	}
+	
+	/**
+	 *
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\Widgets\iHaveValue::set_ignore_default_value()
+	 */
+	public function set_ignore_default_value($value) {
+		$this->ignore_default_value = $value ? true : false;
 		return $this;
 	}
   

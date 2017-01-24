@@ -33,9 +33,9 @@ class InputSelect extends Input implements iSupportMultiSelect {
 	} 
 	
 	public function get_selectable_options() {
-		// If there are no selectable options set explicitly, try to determine them from the data type. Otherwise the select box would be empty.
-		if (empty($this->selectable_options)){
-			if($this->get_attribute()->get_data_type()->is(EXF_DATA_TYPE_BOOLEAN)){
+		// If there are no selectable options set explicitly, try to determine them from the meta model. Otherwise the select box would be empty.
+		if (empty($this->selectable_options) && $this->get_attribute()){
+			if ($this->get_attribute()->get_data_type()->is(EXF_DATA_TYPE_BOOLEAN)){
 				$this->set_selectable_options(array(1,0), array($this->translate('WIDGET.SELECT_YES'), $this->translate('WIDGET.SELECT_NO')));
 			}
 		}

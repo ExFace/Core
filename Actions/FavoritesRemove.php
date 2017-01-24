@@ -1,49 +1,31 @@
 <?php namespace exface\Core\Actions;
 
-use exface\Core\Contexts\Types\FavoritesContext;
-
 /**
+ * Adds instances from the input data to the favorites basket of the current user.
+ * 
+ * This action is similar to ObjectBasketRemove except that it removes items from Favorites (= object basket in 
+ * the user context scope).
  * 
  * @author Andrej Kabachnik
  *
  */
-class FavoritesRemove extends FavoritesFetch {
+class FavoritesRemove extends ObjectBasketRemove {
 	
 	protected function init(){
 		parent::init();
-		$this->set_input_rows_min(1);
-		$this->set_input_rows_max(null);
 		$this->set_icon_name('star');
-		$this->set_context_type('Favorites');
-	}	
-
-	public function get_scope(){
-		if (!parent::get_scope()){
-			$this->set_scope('Window');
-		}
-		return parent::get_scope();
-	}
-	
-	protected function perform(){
-		$counter = 0;
-		$input = $this->get_input_data_sheet();
-		$object = $input->get_meta_object();
-		if ($input->is_empty()){
-			$this->get_context()->remove_instances_for_object_id($object->get_id());
-		} else {
-			// TODO remove single instances
-		}
-		$this->set_result($this->get_favorites_json());
 	}
 	
 	/**
-	 * 
+	 * In constrast to the generic object basket, favorites are always stored in the user context scope.
+	 *
 	 * {@inheritDoc}
-	 * @see \exface\Core\Actions\SetContext::get_context()
-	 * @return FavoritesContext
+	 * @see \exface\Core\Actions\ObjectBasketAdd::get_scope()
 	 */
-	public function get_context(){
-		return parent::get_context();
+	public function get_scope(){
+		$this->set_scope('User');
+		return parent::get_scope();
 	}
+	
 }
 ?>

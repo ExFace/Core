@@ -3,17 +3,17 @@
 use exface\Core\CommonLogic\EntityList;
 use exface\Core\CommonLogic\Model\Object;
 
-class FavoritesInstanceList extends EntityList {
+class ObjectBasketInstanceList extends EntityList {
 	
 	/**
 	 * 
 	 * @param string $uid
 	 * @param string $label
-	 * @return FavoritesInstanceList
+	 * @return ObjectBasketInstanceList
 	 */
 	public function add_instance($uid, $label = null){
 		$object = $this->get_parent();
-		$instance = new FavoritesInstance($object, $uid);
+		$instance = new ObjectBasketInstance($object, $uid);
 		$instance->set_label($label);
 		return parent::add($instance, $uid);
 	}
@@ -30,7 +30,7 @@ class FavoritesInstanceList extends EntityList {
 	 * 
 	 * {@inheritDoc}
 	 * @see \exface\Core\CommonLogic\EntityList::get()
-	 * @return FavoritesInstance
+	 * @return ObjectBasketInstance
 	 */
 	public function get($instance_uid){
 		return parent::get($instance_uid);

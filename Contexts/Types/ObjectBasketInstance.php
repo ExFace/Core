@@ -5,7 +5,7 @@ use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\CommonLogic\Model\Object;
 use exface\Core\CommonLogic\UxonObject;
 
-class FavoritesInstance implements ExfaceClassInterface, iCanBeConvertedToUxon {
+class ObjectBasketInstance implements ExfaceClassInterface, iCanBeConvertedToUxon {
 	private $exface = null;
 	private $meta_object = null;
 	private $instance_uid = null;
@@ -80,7 +80,7 @@ class FavoritesInstance implements ExfaceClassInterface, iCanBeConvertedToUxon {
 	/**
 	 * 
 	 * @param string $value
-	 * @return \exface\Core\Contexts\Types\FavoritesInstance
+	 * @return \exface\Core\Contexts\Types\ObjectBasketInstance
 	 */
 	public function set_label($value) {
 		$this->label = $value;

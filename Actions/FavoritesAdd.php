@@ -1,53 +1,31 @@
 <?php namespace exface\Core\Actions;
 
-use exface\Core\Contexts\Types\FavoritesContext;
-
 /**
+ * Adds instances from the input data to the favorites basket of the current user.
+ * 
+ * This action is similar to ObjectBasketAdd except that it saves things for longer use. Favorites are attached to a 
+ * specific user and are the same in all windows/sessions of this user. They get restored once the user logs on.
  * 
  * @author Andrej Kabachnik
  *
  */
-class FavoritesAdd extends SetContext {
+class FavoritesAdd extends ObjectBasketAdd {
 	
 	protected function init(){
 		parent::init();
-		$this->set_input_rows_min(1);
-		$this->set_input_rows_max(null);
-		$this->set_icon_name('pin');
-		$this->set_context_type('Favorites');
-	}	
-
-	public function get_scope(){
-		if (!parent::get_scope()){
-			$this->set_scope('Window');
-		}
-		return parent::get_scope();
-	}
-	
-	protected function perform(){
-		$counter = 0;
-		$input = $this->get_input_data_sheet();
-		$object = $input->get_meta_object();
-		foreach ($input->get_rows() as $row){
-			$uid = $row[$object->get_uid_alias()];
-			$label = $row[$object->get_label_alias()];
-			if (!$label){
-				// TODO fetch label from data source with a simple data sheet
-			}
-			$this->get_context()->add_instance($object->get_id(), $uid, $label);
-			$counter++;
-		}
-		$this->set_result_message($this->translate('RESULT', array('%number%' => $counter), $counter));
+		$this->set_icon_name('star');
 	}
 	
 	/**
+	 * In constrast to the generic object basket, favorites are always stored in the user context scope.
 	 * 
 	 * {@inheritDoc}
-	 * @see \exface\Core\Actions\SetContext::get_context()
-	 * @return FavoritesContext
+	 * @see \exface\Core\Actions\ObjectBasketAdd::get_scope()
 	 */
-	public function get_context(){
-		return parent::get_context();
+	public function get_scope(){
+		$this->set_scope('User');
+		return parent::get_scope();
 	}
+
 }
 ?>
