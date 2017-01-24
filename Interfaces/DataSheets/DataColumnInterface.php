@@ -50,8 +50,9 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied {
 	/**
 	 * 
 	 * @param string $value
+	 * @param boolean $keep_values
 	 */
-	public function set_name($value);
+	public function set_name($value, $keep_values = false);
 	
 	public function get_hidden();
 	

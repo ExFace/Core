@@ -132,8 +132,22 @@ class DataColumn implements DataColumnInterface {
 	 * {@inheritDoc}
 	 * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::set_name()
 	 */
-	public function set_name($value) {
+	public function set_name($value, $keep_values = false) {
+		// If we need to keep values and the column is being renamed (in contrast to being created the first time),
+		// remember the current values a clear them from the data sheet
+		if ($keep_values && !is_null($this->name)){
+			$old_values = $this->get_values(false);
+			$this->remove_rows();
+		}
+		
+		// Set the new column name
 		$this->name = static::sanitize_column_name($value);
+		
+		// If we need to keep values and the column had some previously, restore them.
+		if ($keep_values && count($old_values) > 0){
+			$this->set_values($old_values);
+		}
+		return $this;
 	}
 	
 	/**

@@ -7,6 +7,7 @@ use exface\Core\Interfaces\DataSheets\DataColumnInterface;
 use exface\Core\CommonLogic\Model\Attribute;
 use exface\Core\CommonLogic\EntityList;
 use exface\Core\Exceptions\InvalidArgumentException;
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 
 /**
  * 
@@ -24,26 +25,29 @@ class DataColumnList extends EntityList implements DataColumnListInterface {
 	 * Adds a data sheet
 	 * @param DataColumn $column
 	 * @param mixed $key
+	 * @param boolean $overwrite_values
 	 * @return DataColumnListInterface
 	 */
 	public function add($column, $key = null, $overwrite_values = true){
 		if (!($column instanceof DataColumn)){
 			throw new InvalidArgumentException('Cannot add column to data sheet: only DataColumns can be added to the column list of a datasheet, "' . get_class($column) . '" given instead!');
 		}
+		
 		$data_sheet = $this->get_data_sheet();
 		if (!$this->get($column->get_name())){
 			if ($column->get_data_sheet() !== $data_sheet){
-				$col = $column->copy();
-				$col->set_data_sheet($data_sheet);
-			} else {
-				$col = $column;
-			}
+				$column_original = $column;
+				$column = $column_original->copy();
+				$column->set_data_sheet($data_sheet);
+			} 
 			// Mark the data as outdated if new columns are added because the values for these columns should be fetched now
-			$col->set_fresh(false);
-			$result = parent::add($col, (is_null($key) && $col->get_name() ? $col->get_name() : $key));
+			$column->set_fresh(false);
+			$result = parent::add($column, (is_null($key) && $column->get_name() ? $column->get_name() : $key));
 		}
 		
-		if ($overwrite_values && $column->is_fresh()){
+		// If the original column had values, use them to overwrite the values in the newly added column
+		// IDEA When is this used??? It seems, it can only happen when addin a foreign column? Shouldn't it then be moved to the IF above?
+		if ($overwrite_values && $column_original && $column_original->is_fresh()){
 			$data_sheet->set_column_values($column->get_name(), $column->get_values());
 		}
 		
@@ -62,8 +66,8 @@ class DataColumnList extends EntityList implements DataColumnListInterface {
 				$col_name = $relation_path ? RelationPath::relation_path_add($relation_path, $col->get_name()) : $col->get_name();
 				if (!$this->get($col_name)){
 					// Change the column name so it does not overwrite any existing columns
-					$col->set_name($col_name);
-					// Add the column (this will change the column's data sheet
+					$col->set_name($col_name);	
+					// Add the column (this will change the column's data sheet, etc.)
 					$this->add($col);
 					// Modify the column's expression and overwrite the old one. Overwriting explicitly is important because
 					// it will also update the attribute alias, etc.
