@@ -5,7 +5,7 @@ use exface\Core\CommonLogic\Model\Object;
 use exface\Core\Exceptions\Contexts\ContextOutOfBoundsError;
 
 /**
- * The FavoritesContext provides a unified interface to store links to selected instances of meta objects in any context scope.
+ * The ObjectBasketContext provides a unified interface to store links to selected instances of meta objects in any context scope.
  * If used in the WindowScope it can represent "pinned" objects, while in the UserScope it can be used to create favorites for this
  * user.
  * 
@@ -14,7 +14,7 @@ use exface\Core\Exceptions\Contexts\ContextOutOfBoundsError;
  * @author Andrej Kabachnik
  *
  */
-class FavoritesContext extends AbstractContext {
+class ObjectBasketContext extends AbstractContext {
 	private $favorites = array();
 	
 	protected function get_object_from_input($meta_object_or_alias_or_id){
@@ -54,7 +54,7 @@ class FavoritesContext extends AbstractContext {
 	}
 	
 	/**
-	 * @return FavoritesInstanceList[]
+	 * @return ObjectBasketInstanceList[]
 	 */
 	public function get_favorites_all(){
 		return $this->favorites;
@@ -63,13 +63,13 @@ class FavoritesContext extends AbstractContext {
 	/**
 	 * 
 	 * @param string $object_id
-	 * @return FavoritesInstanceList
+	 * @return ObjectBasketInstanceList
 	 */
 	public function get_favorites_by_object_id($object_id){
-		if (!($this->favorites[$object_id] instanceof FavoritesInstanceList)){
+		if (!($this->favorites[$object_id] instanceof ObjectBasketInstanceList)){
 			$exface = $this->get_workbench();
 			$object = $exface->model()->get_object_by_id($object_id);
-			$this->favorites[$object_id] = new FavoritesInstanceList($exface, $object);
+			$this->favorites[$object_id] = new ObjectBasketInstanceList($exface, $object);
 		}
 		return $this->favorites[$object_id];
 	}
@@ -77,7 +77,7 @@ class FavoritesContext extends AbstractContext {
 	/**
 	 * 
 	 * @param Object $object
-	 * @return FavoritesInstanceList
+	 * @return ObjectBasketInstanceList
 	 */
 	public function get_favorites_by_object(Object $object){
 		return $this->get_favorites_by_object_id($object->get_id());
@@ -87,14 +87,14 @@ class FavoritesContext extends AbstractContext {
 	 * 
 	 * @param string $alias_with_namespace
 	 * @throws ContextOutOfBoundsError
-	 * @return FavoritesInstanceList
+	 * @return ObjectBasketInstanceList
 	 */
 	public function get_favorites_by_object_alias($alias_with_namespace){
 		$object = $this->get_workbench()->model()->get_object_by_alias($alias_with_namespace);
 		if ($object){
 			return $this->get_favorites_by_object_id($object->get_id());
 		} else {
-			throw new ContextOutOfBoundsError($this, 'Favorites requested for non-existant object alias "' . $alias_with_namespace . '"!', '6T5E5VY');
+			throw new ContextOutOfBoundsError($this, 'ObjectBasket requested for non-existant object alias "' . $alias_with_namespace . '"!', '6T5E5VY');
 		}
 	}
 	
@@ -146,7 +146,7 @@ class FavoritesContext extends AbstractContext {
 	/**
 	 * 
 	 * @param string $object_id
-	 * @return \exface\Core\Contexts\Types\FavoritesContext
+	 * @return \exface\Core\Contexts\Types\ObjectBasketContext
 	 */
 	public function remove_instances_for_object_id($object_id){
 		unset($this->favorites[$object_id]);

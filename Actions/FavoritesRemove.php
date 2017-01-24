@@ -1,28 +1,11 @@
 <?php namespace exface\Core\Actions;
 
-use exface\Core\Contexts\Types\FavoritesContext;
-
 /**
  * 
  * @author Andrej Kabachnik
  *
  */
 class FavoritesRemove extends FavoritesFetch {
-	
-	protected function init(){
-		parent::init();
-		$this->set_input_rows_min(1);
-		$this->set_input_rows_max(null);
-		$this->set_icon_name('star');
-		$this->set_context_type('Favorites');
-	}	
-
-	public function get_scope(){
-		if (!parent::get_scope()){
-			$this->set_scope('Window');
-		}
-		return parent::get_scope();
-	}
 	
 	protected function perform(){
 		$counter = 0;
@@ -36,14 +19,5 @@ class FavoritesRemove extends FavoritesFetch {
 		$this->set_result($this->get_favorites_json());
 	}
 	
-	/**
-	 * 
-	 * {@inheritDoc}
-	 * @see \exface\Core\Actions\SetContext::get_context()
-	 * @return FavoritesContext
-	 */
-	public function get_context(){
-		return parent::get_context();
-	}
 }
 ?>

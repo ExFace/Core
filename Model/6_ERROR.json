@@ -291,14 +291,14 @@
         },
         {
             "CREATED_ON": "2016-12-21 13:33:21",
-            "MODIFIED_ON": "2016-12-21 13:31:28",
+            "MODIFIED_ON": "2017-01-24 07:00:57",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6c7820a1e867793cce4b318306b9a",
             "FULL_ERROR_CODE": "exface.Core.6T5E5VY",
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6T5E5VY",
-            "ERROR_TEXT": "Favorites or pinned objects requested for non-existant meta object",
+            "ERROR_TEXT": "Object basket context requested for non-existant meta object",
             "LABEL": "exface.Core.6T5E5VY"
         },
         {
@@ -912,6 +912,18 @@
             "ERROR_CODE": "6TG2ZFI",
             "ERROR_TEXT": "Invalid configuration for StateMachineBehavior",
             "LABEL": "exface.Core.6TG2ZFI"
+        },
+        {
+            "CREATED_ON": "2017-01-24 07:01:32",
+            "MODIFIED_ON": "2017-01-24 07:01:32",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e6e202edf6f2a7a3d9e4b318306b9a",
+            "FULL_ERROR_CODE": "exface.Core.6TMQR5N",
+            "APP": "0x31000000000000000000000000000000",
+            "ERROR_CODE": "6TMQR5N",
+            "ERROR_TEXT": "Cannot add instance to object basket",
+            "LABEL": "exface.Core.6TMQR5N"
         }
     ],
     "totals_rows": [],

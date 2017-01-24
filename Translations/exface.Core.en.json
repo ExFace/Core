@@ -15,10 +15,10 @@
 	"ACTION.EDITOBJECTDIALOG.SAVE_BUTTON": "Save",
 	"ACTION.EDITOBJECTDIALOG.NAME": "Edit",
 	
-	"ACTION.FAVORITESADD.NAME": "Add to favorites",
-	"ACTION.FAVORITESADD.RESULT": "%number% objects added to favorites.",
-	"ACTION.FAVORITESFETCH.NAME": "Load favorites",
-	"ACTION.FAVORITESREMOVE.NAME": "Remove from favorites",
+	"ACTION.OBJECTBASKETADD.NAME": "Add to favorites",
+	"ACTION.OBJECTBASKETADD.RESULT": "%number% objects added to favorites.",
+	"ACTION.OBJECTBASKETFETCH.NAME": "Load favorites",
+	"ACTION.OBJECTBASKETREMOVE.NAME": "Remove from favorites",
 	
 	"ACTION.GOBACK.NAME": "Back",
 	"ACTION.GOTOURL.NAME": "Visit URL",
