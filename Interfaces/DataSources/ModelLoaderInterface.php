@@ -1,6 +1,5 @@
 <?php namespace exface\Core\Interfaces\DataSources;
 
-use exface\Core\CommonLogic\Workbench;
 use exface\Core\CommonLogic\Model\Object;
 
 interface ModelLoaderInterface {
@@ -32,6 +31,14 @@ interface ModelLoaderInterface {
 	 * @return ModelLoaderInterface
 	 */
 	public function set_data_connection(DataConnectionInterface $connection);
+	
+	/**
+	 * Loads the object specific action definitions into the given meta object.
+	 * 
+	 * @param Object $object
+	 * @return ModelLoaderInterface
+	 */
+	public function load_object_actions(Object $object);
 	
 }
 ?>

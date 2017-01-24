@@ -8,7 +8,7 @@ use exface\Core\Factories\AttributeListFactory;
  * @author Andrej Kabachnik
  * 
  * @method Attribute[] get_all()
- * @method Attribute[] getIterator()
+ * @method AttributeList|Attribute[] getIterator()
  * 
  */
 class AttributeList extends EntityList {

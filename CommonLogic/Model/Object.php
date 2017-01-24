@@ -12,6 +12,7 @@ use exface\Core\Interfaces\ExfaceClassInterface;
 use exface\Core\Interfaces\AliasInterface;
 use exface\Core\Exceptions\Model\MetaRelationNotFoundError;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
+use exface\Core\CommonLogic\Workbench;
 
 class Object implements ExfaceClassInterface, AliasInterface {
 	private $id;
@@ -34,6 +35,7 @@ class Object implements ExfaceClassInterface, AliasInterface {
 	private $default_editor_uxon = null;
 	private $attribute_groups = array();
 	private $behaviors = array();
+	private $actions = array();
 	
 	function __construct(\exface\Core\CommonLogic\Model\Model $model){
 		$exface = $model->get_workbench();
@@ -752,6 +754,12 @@ class Object implements ExfaceClassInterface, AliasInterface {
 		return $this->get_model()->get_workbench()->utils()->find_placeholders_in_string($this->get_data_address());
 	}
 	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\ExfaceClassInterface::get_workbench()
+	 * @return Workbench
+	 */
 	public function get_workbench(){
 		return $this->get_model()->get_workbench();
 	}
@@ -837,6 +845,20 @@ class Object implements ExfaceClassInterface, AliasInterface {
 	
 	public function get_behaviors(){
 		return $this->behaviors;
+	}
+	
+	/**
+	 * @return ObjectActionList|ObjectAction[]
+	 */
+	public function get_actions(){
+		if (!($this->actions instanceof ObjectActionList)){
+			$this->get_model()->get_model_loader()->load_object_actions($this);
+		}
+		return $this->actions;
+	}
+	
+	public function set_actions(ObjectActionList $action_list){
+		$this->actions = $action_list;
 	}
 	
 }

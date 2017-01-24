@@ -52,13 +52,20 @@ class NameResolver extends AbstractExfaceClass implements NameResolverInterface 
 	 * @param exface $exface
 	 * @return string
 	 */
-	protected static function get_namespace_from_string($string, $separator = self::NAMESPACE_SEPARATOR){
+	protected static function get_namespace_from_string($string, $separator = self::NAMESPACE_SEPARATOR, $object_type = null){
+		$result = '';
 		$pos = strripos($string, $separator);
 		if ($pos !== false){
-			return str_replace($separator, self::NAMESPACE_SEPARATOR, substr($string, 0, $pos));
-		} else {
-			return '';
+			$result = str_replace($separator, self::NAMESPACE_SEPARATOR, substr($string, 0, $pos));
+		} 
+		
+		// Some object types have their own folders, that are not present in the internal namespace. We need to strip
+		// those folders
+		switch ($object_type){
+			case self::OBJECT_TYPE_ACTION: $result = str_replace(self::NAMESPACE_SEPARATOR . self::OBJECT_TYPE_ACTION, '', $result); break;
 		}
+		
+		return $result;
 	}
 	
 	/**
@@ -87,7 +94,7 @@ class NameResolver extends AbstractExfaceClass implements NameResolverInterface 
 			$string = str_replace(array('.php', self::APPS_DIRECTORY . DIRECTORY_SEPARATOR), '', $string);
 			$string = str_replace(self::NORMALIZED_DIRECTORY_SEPARATOR, DIRECTORY_SEPARATOR, $string);
 			$instance->set_alias(self::get_alias_from_string($string, DIRECTORY_SEPARATOR));
-			$instance->set_namespace(self::get_namespace_from_string($string, DIRECTORY_SEPARATOR));
+			$instance->set_namespace(self::get_namespace_from_string($string, DIRECTORY_SEPARATOR, $object_type));
 		} elseif (mb_strpos($string, self::CLASS_NAMESPACE_SEPARATOR) === 0){
 			// If the first character of the string is "\" - it is a class name with a namespace
 			// TODO
@@ -237,6 +244,5 @@ class NameResolver extends AbstractExfaceClass implements NameResolverInterface 
 			throw new NameResolverError('Cannot locate ' . $this->get_object_type() . ' "' . $this->get_alias_with_namespace() . '" : class "' . $this->get_class_name_with_namespace() . '" not found!');
 		}
 		return $this;
-	}
-	
+	}	
 }

@@ -55,10 +55,9 @@ abstract class ActionFactory extends AbstractNameResolverFactory {
 	 * @param UxonParserError $called_by_widget
 	 * @return ActionInterface
 	 */
-	public static function create_from_string(Workbench $exface, $qualified_action_alias, AbstractWidget $called_by_widget = null){
-		$name_resolver = $exface->create_name_resolver($qualified_action_alias, NameResolver::OBJECT_TYPE_ACTION);
+	public static function create_from_string(Workbench $exface, $qualified_alias_or_class_or_file, AbstractWidget $called_by_widget = null){
+		$name_resolver = $exface->create_name_resolver($qualified_alias_or_class_or_file, NameResolver::OBJECT_TYPE_ACTION);
 		return static::create($name_resolver, $called_by_widget);
-	}
-	
+	}	
 }
 ?>
