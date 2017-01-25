@@ -77,7 +77,8 @@ class StateMenuButton extends MenuButton {
 	}
 	
 	/**
-	 *
+	 * Returns the states that are shown.
+	 * 
 	 * @return integer[]|string[]
 	 */
 	public function get_show_states() {
@@ -85,7 +86,9 @@ class StateMenuButton extends MenuButton {
 	}
 	
 	/**
-	 *
+	 * Defines a number of states for which transition buttons are shown.
+	 * By default all buttons defined for the current state are shown.
+	 * 
 	 * @param integer[]|string[] $value
 	 * @return \exface\Core\Widgets\StateMenuButton
 	 */

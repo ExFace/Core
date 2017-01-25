@@ -136,8 +136,8 @@ class StateMachineBehavior extends AbstractBehavior {
 	 * Example:
 	 * 	"states": {
 	 *	    "10": {
-	 *	      "buttons": [
-	 *	        {
+	 *	      "buttons": {
+	 *	        "10": {
 	 *	          "caption": "20 Annahme bestätigen",
 	 *	          "action": {
 	 *	            "alias": "exface.Core.UpdateData",
@@ -155,7 +155,7 @@ class StateMachineBehavior extends AbstractBehavior {
 	 *	            }
 	 *	          }
 	 *	        }
-	 *	      ],
+	 *	      },
 	 *	      "disabled_attributes_aliases": [
 	 *	        "COMPLAINT_NO"
 	 *	      ],
@@ -175,7 +175,7 @@ class StateMachineBehavior extends AbstractBehavior {
 	 * @uxon-property states
 	 * @uxon-type object
 	 * 
-	 * @param UxonObject|StateMachineBehavior[] $value
+	 * @param UxonObject|StateMachineState[] $value
 	 * @throws BehaviorConfigurationError
 	 * @return \exface\Core\Behaviors\StateMachineBehavior
 	 */

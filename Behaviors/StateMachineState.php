@@ -37,7 +37,7 @@ class StateMachineState {
 	/**
 	 * Returns the buttons for the state.
 	 * 
-	 * @return UxonObject[]
+	 * @return UxonObject
 	 */
 	public function get_buttons() {
 		return $this->buttons;
@@ -47,8 +47,8 @@ class StateMachineState {
 	 * Defines the buttons for the state.
 	 * 
 	 * Example:
-	 *        [
-	 *	        {
+	 *        {
+	 *	        "20": {
 	 *	          "caption": "20 Annahme best�tigen",
 	 *	          "action": {
 	 *	            "alias": "exface.Core.UpdateData",
@@ -66,9 +66,9 @@ class StateMachineState {
 	 *	            }
 	 *	          }
 	 *	        }
-	 *	      ]
+	 *	      }
 	 * 
-	 * @param UxonObject[] $value
+	 * @param UxonObject $value
 	 * @return \exface\Core\Behaviors\StateMachineState
 	 */
 	public function set_buttons($value) {
