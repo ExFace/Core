@@ -557,7 +557,7 @@ class DataSheet implements DataSheetInterface {
 			// Fetch all attributes with fixed values and add them to the sheet if not already there
 			$rel_path = $col->get_attribute()->get_relation_path()->to_string();
 			if ($processed_relations[$rel_path]) continue;
-			/* @var $attr \exface\Core\CommonLogic\Model\attribute */
+			/* @var $attr \exface\Core\CommonLogic\Model\Attribute */
 			foreach ($col->get_attribute()->get_object()->get_attributes() as $attr){
 				if ($expr = $attr->get_fixed_value()){
 					$alias_with_relation_path = RelationPath::relation_path_add($rel_path, $attr->get_alias());

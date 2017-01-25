@@ -63,7 +63,7 @@ class QueryPart {
 	
 	/**
 	 *
-	 * @return \exface\Core\CommonLogic\Model\attribute
+	 * @return \exface\Core\CommonLogic\Model\Attribute
 	 */
 	public function get_attribute() {
 		return $this->attribute;
@@ -71,7 +71,7 @@ class QueryPart {
 	
 	/**
 	 *
-	 * @param \exface\Core\CommonLogic\Model\attribute $value
+	 * @param \exface\Core\CommonLogic\Model\Attribute $value
 	 */
 	public function set_attribute(Attribute $value) {
 		$this->attribute = $value;

@@ -468,7 +468,7 @@ class Object implements ExfaceClassInterface, AliasInterface {
 	
 	/**
 	 * Returns the meta attribute with the unique ID of the object
-	 * @return \exface\Core\CommonLogic\Model\attribute
+	 * @return \exface\Core\CommonLogic\Model\Attribute
 	 */
 	public function get_uid_attribute(){
 		return $this->get_attribute($this->get_uid_alias());

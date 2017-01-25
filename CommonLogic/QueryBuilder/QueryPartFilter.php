@@ -26,36 +26,74 @@ class QueryPartFilter extends QueryPartAttribute {
 		}
 	}
 	
+	/**
+	 * 
+	 * @return string|mixed|NULL
+	 */
 	public function get_compare_value() {
 		if (!$this->compare_value) $this->compare_value = $this->get_condition()->get_value();
 		return $this->compare_value;
 	}
 	
+	/**
+	 * 
+	 * @param mixed $value
+	 */
 	public function set_compare_value($value) {
 		$this->compare_value = trim($value);
 	}
 	
+	/**
+	 * Returns the comparator - one of the EXF_COMPARATOR_xxx constants
+	 * 
+	 * @return string
+	 */
 	public function get_comparator() {
 		if (!$this->comparator) $this->comparator = $this->get_condition()->get_comparator();
 		return $this->comparator;
 	}
 	
+	/**
+	 * Sets the comparator - one of the EXF_COMPARATOR_xxx constants
+	 * 
+	 * @param string $value
+	 * @return QueryPartFilter
+	 */
 	public function set_comparator($value) {
 		$this->comparator = $value;
+		return $this;
 	}
-
+	
+	/**
+	 * 
+	 * @return \exface\Core\CommonLogic\Model\Condition
+	 */
 	public function get_condition() {
 		return $this->condition;
 	}
 	
+	/**
+	 * 
+	 * @param Condition $condition
+	 */
 	public function set_condition(Condition $condition) {
 		$this->condition = $condition;
+		return $this;
 	}  
 	
+	/**
+	 * 
+	 * @return boolean
+	 */
 	public function get_apply_after_reading() {
 		return $this->apply_after_reading;
 	}
 	
+	/**
+	 * 
+	 * @param boolean $value
+	 * @return \exface\Core\CommonLogic\QueryBuilder\QueryPartFilter
+	 */
 	public function set_apply_after_reading($value) {
 		$this->apply_after_reading = $value ? true : false;
 		return $this;

@@ -191,7 +191,7 @@ class Relation implements ExfaceClassInterface {
      * Returns a related attribute as if it was queried via $object->get_attribute("this_relation_alias->attribute_alias").
      * An attribute returned by this function has a relation path relative to the main object of this relation!
      * @param string $attribute_alias
-     * @return \exface\Core\CommonLogic\Model\attribute
+     * @return \exface\Core\CommonLogic\Model\Attribute
      */
     public function get_related_attribute($attribute_alias){
     	return $this->get_main_object()->get_attribute(RelationPath::relation_path_add($this->get_alias(), $attribute_alias));
