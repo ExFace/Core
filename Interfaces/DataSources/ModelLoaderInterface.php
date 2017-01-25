@@ -1,6 +1,10 @@
 <?php namespace exface\Core\Interfaces\DataSources;
 
 use exface\Core\CommonLogic\Model\Object;
+use exface\Core\CommonLogic\Model\AppActionList;
+use exface\Core\Interfaces\AppInterface;
+use exface\Core\Interfaces\Actions\ActionInterface;
+use exface\Core\CommonLogic\Model\ObjectActionList;
 
 interface ModelLoaderInterface {
 	
@@ -35,10 +39,27 @@ interface ModelLoaderInterface {
 	/**
 	 * Loads the object specific action definitions into the given meta object.
 	 * 
-	 * @param Object $object
-	 * @return ModelLoaderInterface
+	 * @param ObjectActionList $empty_list
+	 * @return ObjectActionList
 	 */
-	public function load_object_actions(Object $object);
+	public function load_object_actions(ObjectActionList $empty_list);
+	
+	/**
+	 * Loads the object specific action definitions into the action list.
+	 *
+	 * @param AppActionList $empty_list
+	 * @return AppActionList
+	 */
+	public function load_app_actions(AppActionList $empty_list);
+	
+	/**
+	 * Loads an action defined in the meta model. Returns NULL if the action is not found
+	 * 
+	 * @param AppInterface $app
+	 * @param string $action_alias
+	 * @return ActionInterface
+	 */
+	public function load_action(AppInterface $app, $action_alias);
 	
 }
 ?>

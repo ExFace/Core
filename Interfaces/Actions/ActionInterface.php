@@ -9,8 +9,9 @@ use exface\Core\Interfaces\UiPageInterface;
 use exface\Core\Interfaces\TemplateInterface;
 use exface\Core\Exceptions\Actions\ActionObjectNotSpecifiedError;
 use exface\Core\Exceptions\Actions\ActionInputError;
+use exface\Core\Interfaces\iCanBeCopied;
 
-interface ActionInterface extends ExfaceClassInterface, AliasInterface {
+interface ActionInterface extends ExfaceClassInterface, AliasInterface, iCanBeCopied {
 	
 	/**
 	 * @return string
@@ -33,6 +34,14 @@ interface ActionInterface extends ExfaceClassInterface, AliasInterface {
 	 * @return ActionInterface
 	 */
 	public function set_icon_name($value);
+	
+	/**
+	 * Sets the alias of the action. The alias must be unique within the app!
+	 * 
+	 * @param string $value
+	 * @return ActionInterface
+	 */
+	public function set_alias($value);
 	
 	/**
 	 * Returns the widget, that called the action (typically a button) or null, if the action was called internally or via AJAX.
@@ -251,6 +260,13 @@ interface ActionInterface extends ExfaceClassInterface, AliasInterface {
 	 * @return string
 	 */
 	public function get_name();
+	
+	/**
+	 * 
+	 * @param string $value
+	 * @return ActionInterface
+	 */
+	public function set_name($value);
 }
 
 ?>

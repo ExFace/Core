@@ -13,6 +13,7 @@ use exface\Core\Interfaces\AliasInterface;
 use exface\Core\Exceptions\Model\MetaRelationNotFoundError;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\CommonLogic\Workbench;
+use exface\Core\Interfaces\Actions\ActionInterface;
 
 class Object implements ExfaceClassInterface, AliasInterface {
 	private $id;
@@ -848,18 +849,14 @@ class Object implements ExfaceClassInterface, AliasInterface {
 	}
 	
 	/**
-	 * @return ObjectActionList|ObjectAction[]
+	 * @return ObjectActionList|ActionInterface[]
 	 */
 	public function get_actions(){
 		if (!($this->actions instanceof ObjectActionList)){
-			$this->get_model()->get_model_loader()->load_object_actions($this);
+			$this->actions = $this->get_model()->get_model_loader()->load_object_actions(new ObjectActionList($this->get_workbench(), $this));
 		}
 		return $this->actions;
 	}
-	
-	public function set_actions(ObjectActionList $action_list){
-		$this->actions = $action_list;
-	}
-	
+	  
 }
 ?>

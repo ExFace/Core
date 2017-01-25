@@ -1,7 +1,6 @@
 <?php namespace exface\Core\CommonLogic;
 
 use exface\Core\Interfaces\AppInterface;
-use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Factories\ActionFactory;
 use exface\Core\Factories\ConfigurationFactory;
 use exface\Core\Interfaces\ConfigurationInterface;
@@ -12,6 +11,7 @@ use exface\Core\Interfaces\InstallerInterface;
 use exface\Core\Interfaces\AppInstallerInterface;
 use exface\Core\Interfaces\NameResolverInstallerInterface;
 use exface\Core\Exceptions\InvalidArgumentException;
+use exface\Core\Exceptions\Actions\ActionNotFoundError;
 
 abstract class AbstractApp implements AppInterface {
 	const CONFIG_FOLDER_IN_APP = 'Config';
@@ -52,24 +52,35 @@ abstract class AbstractApp implements AppInterface {
 	}
 	
 	/**
-	 * Returns an action object
-	 * @param string $action_alias
-	 * @return ActionInterface
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\AppInterface::get_action()
 	 */
 	public function get_action($action_alias, \exface\Core\Widgets\AbstractWidget $called_by_widget = null, \stdClass $uxon_description = null){
-		if (!$action_alias) return false;
-		$exface = $this->get_workbench();
-		$action = ActionFactory::create_from_string($exface, $this->get_alias_with_namespace() . NameResolver::NAMESPACE_SEPARATOR . $action_alias, $called_by_widget);
+		if (!$action_alias){
+			throw new ActionNotFoundError('Cannot find action with alias "' . $action_alias . '" in app "' . $this->get_alias_with_namespace . '"!');
+		}
+		$action = ActionFactory::create_from_string($this->get_workbench(), $this->get_alias_with_namespace() . NameResolver::NAMESPACE_SEPARATOR . $action_alias, $called_by_widget);
 		if ($uxon_description instanceof \stdClass){
 			$action->import_uxon_object($uxon_description);
 		}
 		return $action;
 	}
 	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\AliasInterface::get_alias_with_namespace()
+	 */
 	public function get_alias_with_namespace(){
 		return $this->alias_with_namespace;
 	}
 	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\AliasInterface::get_alias()
+	 */
 	public function get_alias(){
 		if (is_null($this->alias)){
 			$this->alias = str_replace($this->get_vendor() . DIRECTORY_SEPARATOR, '', $this->get_alias_with_namespace());

@@ -4,6 +4,7 @@ use exface\Core\CommonLogic\Workbench;
 use exface\Core\Widgets\AbstractWidget;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Contexts\Types\DataContext;
+use exface\Core\Exceptions\Actions\ActionNotFoundError;
 
 interface AppInterface extends ExfaceClassInterface, AliasInterface {
 	
@@ -11,7 +12,9 @@ interface AppInterface extends ExfaceClassInterface, AliasInterface {
 	
 	/**
 	 * Returns an action object
-	 * @param unknown $action_alias
+	 * 
+	 * @param string $action_alias
+	 * @throws ActionNotFoundError if the alias cannot be resolved
 	 * @return ActionInterface
 	 */
 	public function get_action($action_alias, AbstractWidget $called_by_widget = null, \stdClass $uxon_description = null);

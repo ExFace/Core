@@ -32,6 +32,8 @@ use exface\Core\Exceptions\Actions\ActionObjectNotSpecifiedError;
  */
 abstract class AbstractAction implements ActionInterface {
 	private $id = null;
+	private $alias = null;
+	private $name = null;
 	private $exface = null;
 	private $app = null;
 	/** @var WidgetInterface widget, that called this action */
@@ -99,8 +101,16 @@ abstract class AbstractAction implements ActionInterface {
 	 * @see \exface\Core\Interfaces\AliasInterface::get_alias()
 	 */
 	public function get_alias(){
-		$class = explode('\\', get_class($this));
-		return end($class);
+		if (is_null($this->alias)){
+			$class = explode('\\', get_class($this));
+			$this->alias = end($class);
+		}
+		return $this->alias;
+	}
+	
+	public function set_alias($value){
+		$this->alias = $value;
+		return $this;
 	}
 	
 	/**
@@ -666,7 +676,24 @@ abstract class AbstractAction implements ActionInterface {
 	 * @see \exface\Core\Interfaces\Actions\ActionInterface::get_name()
 	 */
 	public function get_name(){
-		return $this->translate('NAME');
+		if (is_null($this->name)){
+			$this->name = $this->translate('NAME');
+		}
+		return $this->name;
+	}
+	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\Actions\ActionInterface::set_name()
+	 */
+	public function set_name($value){
+		$this->name = $value;
+		return $this;
+	}
+	
+	public function copy(){
+		return clone $this;
 	}
 }
 ?>

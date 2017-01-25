@@ -37,7 +37,7 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iHaveC
 	public function get_action() {
 		if (!$this->action){
 			if ($this->get_action_alias()){
-				$this->action = ActionFactory::create($this->get_workbench()->create_name_resolver($this->get_action_alias(), NameResolver::OBJECT_TYPE_ACTION), $this);
+				$this->action = ActionFactory::create_from_string($this->get_workbench(), $this->get_action_alias(), $this);
 			}
 		}
 		return $this->action;
