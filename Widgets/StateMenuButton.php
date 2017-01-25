@@ -6,6 +6,7 @@ use exface\Core\Exceptions\MetaModelBehaviorException;
 class StateMenuButton extends MenuButton {
 	
 	private $smb_buttons_set = false;
+	private $show_states = [];
 	
 	/**
 	 * 
@@ -13,27 +14,40 @@ class StateMenuButton extends MenuButton {
 	 * @see \exface\Core\Widgets\MenuButton::get_buttons()
 	 */
 	public function get_buttons() {
-		//Falls am Objekt ein StateMachineBehavior haengt wird versucht den momentanen Status aus
-		//dem Objekt auszulesen und die entsprechenden Buttons aus dem Behavior hinzuzufuegen
+		// Falls am Objekt ein StateMachineBehavior haengt wird versucht den momentanen Status aus
+		// dem Objekt auszulesen und die entsprechenden Buttons aus dem Behavior hinzuzufuegen.
 		if (!$this->smb_buttons_set) {
-			if ($smb = $this->get_meta_object()->get_behaviors()->get_by_alias('exface.Core.Behaviors.StateMachineBehavior')) {
-				$template = $this->get_ui()->get_template_from_request();
-				if (($data_sheet = $this->get_prefill_data()) && ($state_column = $data_sheet->get_column_values($smb->get_state_attribute_alias()))) {
-					$current_state = $state_column[0];
-				} else {
-					$current_state = $smb->get_default_state_id();
-				}
-				
-				$button_widget = $this->get_input_widget()->get_button_widget_type();
-				foreach ($smb->get_state_buttons($current_state) as $smb_button) {
-					$button = $this->get_page()->create_widget($button_widget, $this, UxonObject::from_anything($smb_button));
-					$this->add_button($button);
-				}
-				
-				$this->smb_buttons_set = true;
-			} else {
+			if (is_null($smb = $this->get_meta_object()->get_behaviors()->get_by_alias('exface.Core.Behaviors.StateMachineBehavior'))) {
 				throw new MetaModelBehaviorException('StateMenuButton: The object '.$this->get_meta_object()->get_alias_with_namespace().' has no StateMachineBehavior attached.');
 			}
+			
+			if (($data_sheet = $this->get_prefill_data()) && ($state_column = $data_sheet->get_column_values($smb->get_state_attribute_alias()))) {
+				$current_state = $state_column[0];
+			} else {
+				$current_state = $smb->get_default_state_id();
+			}
+			
+			$button_widget = $this->get_input_widget()->get_button_widget_type();
+			foreach ($smb->get_state_buttons($current_state) as $target_state => $smb_button) {
+				// Ist show_states leer werden alle Buttons hinzugefuegt (default)
+				// sonst wird der Knopf nur hinzugefuegt wenn er in show_states enthalten ist.
+				if (empty($this->get_show_states()) || in_array($target_state, $this->get_show_states())) {
+					// Die Action des StateMenuButtons wird fuer die einzelnen Buttons uebernommen.
+					// Das UxonObject wird weiter im urspruenglichen Zustand benoetigt, daher wird
+					// der Action-Alias nur temporaer gesetzt.
+					if (!is_null($this->get_action_alias())) {
+						$action_alias_temp = $smb_button->action->alias;
+						$smb_button->action->alias = $this->get_action_alias();
+						$button = $this->get_page()->create_widget($button_widget, $this, UxonObject::from_anything($smb_button));
+						$smb_button->action->alias = $action_alias_temp;
+					} else {
+						$button = $this->get_page()->create_widget($button_widget, $this, UxonObject::from_anything($smb_button));
+					}
+					$this->add_button($button);
+				}
+			}
+			
+			$this->smb_buttons_set = true;
 		}
 		
 		return parent::get_buttons();
@@ -60,6 +74,27 @@ class StateMenuButton extends MenuButton {
 	public function get_children() {
 		if (!$this->smb_buttons_set) { $this->get_buttons(); }
 		return parent::get_children();
+	}
+	
+	/**
+	 * Returns the states that are shown.
+	 * 
+	 * @return integer[]|string[]
+	 */
+	public function get_show_states() {
+		return $this->show_states;
+	}
+	
+	/**
+	 * Defines a number of states for which transition buttons are shown.
+	 * By default all buttons defined for the current state are shown.
+	 * 
+	 * @param integer[]|string[] $value
+	 * @return \exface\Core\Widgets\StateMenuButton
+	 */
+	public function set_show_states($value) {
+		$this->show_states = $value;
+		return $this;
 	}
 }
 ?>
