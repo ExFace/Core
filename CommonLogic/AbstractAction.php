@@ -553,7 +553,9 @@ abstract class AbstractAction implements ActionInterface {
 	public function export_uxon_object(){
 		$uxon = $this->get_workbench()->create_uxon_object();
 		$uxon->alias = $this->get_alias_with_namespace();
-		$uxon->called_by_widget = $this->get_called_by_widget()->create_widget_link()->export_uxon_object();
+		if ($this->get_called_by_widget()){
+			$uxon->called_by_widget = $this->get_called_by_widget()->create_widget_link()->export_uxon_object();
+		}
 		$uxon->template_alias = $this->get_template_alias();
 		$uxon->input_data_sheet = $this->get_input_data_sheet()->export_uxon_object();
 		$uxon->disabled_behaviors = UxonObject::from_array($this->get_disabled_behaviors());
@@ -569,6 +571,7 @@ abstract class AbstractAction implements ActionInterface {
 	 * 
 	 * {@inheritDoc}
 	 * @see \exface\Core\Interfaces\ExfaceClassInterface::exface()
+	 * @return Workbench
 	 */
 	public function get_workbench(){
 		return $this->exface;
