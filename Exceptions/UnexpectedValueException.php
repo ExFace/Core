@@ -8,7 +8,7 @@ use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;
  * 
  * Typically this happens when a function calls another function and expects the return value to 
  * be of a certain type or value not including arithmetic or buffer related errors. For example, 
- * if you have a list of const‘s, and a value must be one of them.
+ * if you have a list of constï¿½s, and a value must be one of them.
  * 
  * @see RuntimeException
  * 
