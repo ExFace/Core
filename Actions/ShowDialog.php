@@ -3,6 +3,7 @@
 use exface\Core\Interfaces\Actions\iShowDialog;
 use exface\Core\Widgets\AbstractWidget;
 use exface\Core\Widgets\Dialog;
+use exface\Core\Interfaces\Widgets\iHaveIcon;
 
 class ShowDialog extends ShowWidget implements iShowDialog {
 	private $dialog_widget = null;
@@ -37,7 +38,7 @@ class ShowDialog extends ShowWidget implements iShowDialog {
 		
 		// If the widget calling the action (typically a button) is known, inherit some of it's attributes
 		if ($this->get_called_by_widget()){
-			if (!$dialog->get_icon_name()){
+			if (!$dialog->get_icon_name() && ($this->get_called_by_widget() instanceof iHaveIcon)){
 				$dialog->set_icon_name($this->get_called_by_widget()->get_icon_name());
 			}
 			if (!$dialog->get_caption()){
