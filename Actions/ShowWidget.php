@@ -21,6 +21,7 @@ use exface\Core\Exceptions\Actions\ActionConfigurationError;
  */
 class ShowWidget extends AbstractAction implements iShowWidget, iUsePrefillData {
 	private $widget = null;
+	private $widget_uxon = null;
 	private $widget_id = null;
 	private $prefill_with_filter_context = true;
 	private $prefill_with_input_data = true;
@@ -43,8 +44,10 @@ class ShowWidget extends AbstractAction implements iShowWidget, iUsePrefillData 
 	}
 	
 	public function get_widget() {
-		if (!$this->widget){
-			if ($this->widget_id && !$this->page_id){
+		if (is_null($this->widget)){
+			if ($this->get_widget_uxon()){
+				$this->widget = WidgetFactory::create_from_uxon($this->get_called_on_ui_page(), $this->get_widget_uxon(), $this->get_called_by_widget());
+			} elseif ($this->widget_id && !$this->page_id){
 				// TODO
 			} elseif ($this->page_id && !$this->widget_id){
 				// TODO
@@ -64,8 +67,8 @@ class ShowWidget extends AbstractAction implements iShowWidget, iUsePrefillData 
 		if ($widget_or_uxon_object instanceof WidgetInterface){
 			$widget = $widget_or_uxon_object;
 		} elseif ($widget_or_uxon_object instanceof \stdClass){
-			$page = $this->get_called_on_ui_page();
-			$widget = WidgetFactory::create_from_anything($page, $widget_or_uxon_object, $this->get_called_by_widget());
+			$this->set_widget_uxon($widget_or_uxon_object);
+			$widget = null;
 		} else {
 			throw new ActionConfigurationError($this, 'Action "' . $this->get_alias() . '" expects the parameter "widget" to be either an instantiated widget or a valid UXON widget description object!', '6T91H2S');
 		}
@@ -312,6 +315,15 @@ class ShowWidget extends AbstractAction implements iShowWidget, iUsePrefillData 
 			$this->prefill_with_data_from_widget_link = WidgetLinkFactory::create_from_anything($exface, $string_or_widget_link);
 		}
 		return $this;
-	}	
+	}
+	
+	protected function set_widget_uxon($uxon_object_or_string){
+		$this->widget_uxon = UxonObject::from_anything($uxon_object_or_string);
+		return $this;
+	}
+	
+	protected function get_widget_uxon(){
+		return $this->widget_uxon;
+	}
 }
 ?>
