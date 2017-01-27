@@ -161,14 +161,18 @@ abstract class AbstractAction implements ActionInterface {
 			// Skip alias property if found because it was processed already to instantiate the right action class.
 			// Setting the alias after instantiation is currently not possible beacuase it would mean recreating
 			// the entire action.
-			if ($var == 'alias') continue;
-			if (method_exists($this, 'set_'.$var)){
+			if (strcasecmp($var, 'alias') === 0) continue;
+			if ($this->has_property($var)){
 				call_user_func(array($this, 'set_'.$var), $val);
 			} else {
 				throw new ActionConfigurationError($this, 'Property "' . $var . '" of action "' . $this->get_alias() . '" cannot be set: setter function not found!', '6T5DI5E');
 			}
 		}
 		return true;
+	}
+	
+	public function has_property($name){
+		return method_exists($this, 'set_'.$name);
 	}
 	
 	/**
