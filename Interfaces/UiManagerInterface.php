@@ -36,6 +36,18 @@ interface UiManagerInterface extends ExfaceClassInterface {
 	 */
 	public function get_template_from_request();
 	
+	/**
+	 * @return string
+	 */
+	public function get_page_id_current();
+	
+	/**
+	 * 
+	 * @param string $value
+	 * @return \exface\Core\Interfaces\UiManagerInterface
+	 */
+	public function set_page_id_current($value);
+	
 }
 
 ?>

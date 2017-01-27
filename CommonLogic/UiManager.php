@@ -7,6 +7,7 @@ use exface\Core\Interfaces\TemplateInterface;
 use exface\Core\Interfaces\UiPageInterface;
 use exface\Core\Interfaces\UiManagerInterface;
 use exface\Core\Factories\TemplateFactory;
+use exface\Core\Exceptions\UiPageFoundError;
 
 class UiManager implements UiManagerInterface {
 	private $widget_id_forbidden_chars_regex = '[^A-Za-z0-9_\.]';
@@ -16,6 +17,7 @@ class UiManager implements UiManagerInterface {
 	private $pages = array();
 	private $exface = null;
 	private $base_template = null;
+	private $page_id_current = null;
 	
 	function __construct(\exface\Core\CommonLogic\Workbench $exface){
 		$this->exface = $exface;
@@ -100,7 +102,7 @@ class UiManager implements UiManagerInterface {
 	 * @return \exface\Core\Interfaces\UiPageInterface
 	 */
 	public function get_page_current(){
-		return $this->get_page($this->get_workbench()->cms()->get_page_id());
+		return $this->get_page($this->get_page_id_current());
 	}
 	
 	public function get_template_from_request() {
@@ -115,6 +117,19 @@ class UiManager implements UiManagerInterface {
 		$this->base_template = $qualified_alias;
 		return $this;
 	}  
+	
+	public function get_page_id_current() {
+		if (is_null($this->page_id_current)){
+			$this->page_id_current = $this->get_workbench()->cms()->get_page_id();
+		}
+		return $this->page_id_current;
+	}
+	
+	public function set_page_id_current($value) {
+		$this->page_id_current = $value;
+		return $this;
+	}
+	
 }
 
 ?>
