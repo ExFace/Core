@@ -3,6 +3,7 @@ namespace exface\Core\Widgets;
 
 use exface\Core\Interfaces\Widgets\iSupportMultiSelect;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 
 /**
  * Dropdown menu to select from. Each menu item has a value and a text. One or more items can be selected.
@@ -16,20 +17,38 @@ class InputSelect extends Input implements iSupportMultiSelect {
 	private $multi_select = false;
 	private $selectable_options = array();
 	
+	/**
+	 * 
+	 * @return string
+	 */
 	public function get_value_text() {
 		return $this->value_text;
 	}
 	
+	/**
+	 * 
+	 * @param string $value
+	 */
 	public function set_value_text($value) {
 		$this->value_text = $value;
 	}  	
 	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\Widgets\iSupportMultiSelect::get_multi_select()
+	 */
 	public function get_multi_select() {
 		return $this->multi_select;
 	}
 	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\Widgets\iSupportMultiSelect::set_multi_select()
+	 */
 	public function set_multi_select($value) {
-		$this->multi_select = $value;
+		$this->multi_select = $value ? true : false;
 	} 
 	
 	public function get_selectable_options() {
@@ -41,7 +60,9 @@ class InputSelect extends Input implements iSupportMultiSelect {
 		}
 		
 		// Add unselected uption
-		if (!$this->is_required() && !array_key_exists('', $this->selectable_options)){
+		if (!$this->is_required() 
+		&& !array_key_exists('', $this->selectable_options)
+		&& !($this->is_disabled() && $this->get_value())){
 			$options = array_merge(array('' => $this->translate('WIDGET.SELECT_NONE')), $this->selectable_options);
 		} else {
 			$options = $this->selectable_options;
@@ -79,6 +100,28 @@ class InputSelect extends Input implements iSupportMultiSelect {
 		}
 		$this->selectable_options = $options;
 		return $this;
+	}
+	
+	/**
+	 * Returns the current number of selectable options
+	 * 
+	 * @return integer
+	 */
+	public function count_selectable_options(){
+		$number = count($this->get_selectable_options());
+		if (array_key_exists('', $this->get_selectable_options())){
+			$number--;
+		}
+		return $number;
+	}
+	
+	protected function do_prefill(DataSheetInterface $data_sheet){
+		parent::do_prefill($data_sheet);
+		if ($this->get_attribute() && !$this->count_selectable_options()){
+			if ($data_sheet->get_meta_object()->is($this->get_meta_object()) && $col = $data_sheet->get_columns()->get_by_attribute($this->get_attribute())){
+				$this->set_selectable_options($col->get_values(false));
+			}
+		}
 	}
 }
 ?>
