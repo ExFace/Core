@@ -26,8 +26,6 @@ class ObjectBasketCallAction extends AbstractAction {
 	public function get_action() {
 		if (is_null($this->action)){
 			$action = ActionFactory::create_from_string($this->get_workbench(), $this->get_action_alias(), $this->get_called_by_widget());
-			$action->set_input_data_sheet($this->get_input_data_sheet());
-			$action->set_template_alias($this->get_template_alias());
 			$this->validate_action($action);
 			$this->action = $action;
 		}
@@ -100,4 +98,50 @@ class ObjectBasketCallAction extends AbstractAction {
 		return $this;
 	}  
 	
+	public function has_property($name){
+		if (parent::has_property($name)){
+			return true;
+		} elseif ($this->get_action() && $this->get_action()->has_property($name)){
+			return true;
+		}
+		return false;
+	}
+	
+	/**
+	 * 
+	 * @param string $method
+	 * @param array $arguments
+	 * @return mixed
+	 */
+	public function __call($method, $arguments){
+		return call_user_func_array(array($this->get_action(), $method), $arguments);
+	}
+	
+	public function set_input_data_sheet($data_sheet_or_uxon){
+		return $this->get_action()->set_input_data_sheet($data_sheet_or_uxon);
+	}
+	
+	public function get_input_data_sheet(){
+		return $this->get_action()->get_input_data_sheet();
+	}
+	
+	public function get_input_rows_max() {
+		return $this->get_action()->get_input_rows_max();
+	}
+	
+	public function set_input_rows_max($value) {
+		$this->get_action()->set_input_rows_max($value);
+		return $this;
+	}
+	
+	public function get_input_rows_min() {
+		return $this->get_action()->get_input_rows_min();
+	}
+	
+	public function set_input_rows_min($value) {
+		$this->get_action()->set_input_rows_min($value);
+		return $this;
+	}
+	
+	  
 }
