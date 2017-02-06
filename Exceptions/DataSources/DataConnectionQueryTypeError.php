@@ -3,7 +3,7 @@ namespace exface\Core\Exceptions\DataSources;
 
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\Exceptions\DataConnectorExceptionInterface;
-use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;
+use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 
 /**
  * Exception thrown if an unsupported DataQuery type was passed to the DataConnecto::query() method.
@@ -15,9 +15,22 @@ use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;
  * @author Andrej Kabachnik
  *
  */
-class DataConnectionQueryTypeError extends InvalidArgumentException implements DataConnectorExceptionInterface, ErrorExceptionInterface {
+class DataConnectionQueryTypeError extends InvalidArgumentException implements DataConnectorExceptionInterface {
 	
 	use DataConnectorExceptionTrait;
+	
+	/**
+	 *
+	 * @param DataConnectionInterface $connector
+	 * @param string $message
+	 * @param string $alias
+	 * @param \Throwable $previous
+	 */
+	public function __construct (DataConnectionInterface $connector, $message, $alias = null, $previous = null) {
+		parent::__construct($message, null, $previous);
+		$this->set_alias($alias);
+		$this->set_connector($connector);
+	}
 	
 	public static function get_default_alias(){
 		return '6T5W75J';
