@@ -1,6 +1,6 @@
 <?php
 namespace exface\Core\Widgets;
-class FileUploader extends AbstractWidget {
+class FileUploader extends Input {
 	private $default_file_description = 'Upload';
 	/**
 	 * @uxon allowed_extensions Comma separated list of allowed file extensions (case insensitive) - all by default
