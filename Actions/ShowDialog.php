@@ -82,13 +82,17 @@ class ShowDialog extends ShowWidget implements iShowDialog {
 	/**
 	 * The output for action showing dialogs is either the rendered contents of the dialog (if lazy loading is enabled) 
 	 * or the rendered dialog itself.
+	 * 
+	 * FIXME Remove outputting only the content of the dialog for ajax requests once all templates moved to fetching entire dialogs!
+	 * 
 	 * @see \exface\Core\Actions\ShowWidget::get_result_output()
 	 */
 	public function get_result_output(){
 		$dialog = $this->get_result();
-		if ($dialog->get_lazy_loading()){
+		if ($dialog->get_lazy_loading() && !$this->get_template()->is('exface.AdminLteTemplate')){
 			$code = $this->get_app()->get_workbench()->ui()->draw($dialog->get_contents_container());
 		} else {
+			$this->get_result()->set_lazy_loading(false);
 			$code = parent::get_result_output();
 		}
 		return $code;

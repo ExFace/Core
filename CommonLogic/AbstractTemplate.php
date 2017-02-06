@@ -84,7 +84,7 @@ abstract class AbstractTemplate implements TemplateInterface {
 	abstract function process_request($page_id=NULL, $widget_id=NULL, $action_alias=NULL, $disable_error_handling=false);  
 	
 	public function is($template_alias){
-		if (strcasecmp($this->get_alias(), $template_alias) == 0){
+		if (strcasecmp($this->get_alias(), $template_alias) === 0 || strcasecmp($this->get_alias_with_namespace(), $template_alias) === 0){
 			return true;
 		} else {
 			return false;
