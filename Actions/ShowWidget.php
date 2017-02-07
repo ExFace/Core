@@ -149,7 +149,7 @@ class ShowWidget extends AbstractAction implements iShowWidget, iUsePrefillData 
 			// Make sure, the context object fits the data sheet object.
 			// TODO Currently we fetch context filters for the object of the action. If data sheet has another object, we ignore the context filters.
 			// Wouldn't it be better to add the context filters to the data sheet or maybe even to the data sheet and the prefill data separately?
-			if ($this->get_meta_object()->is($data_sheet->get_meta_object())){
+			if ($this->get_widget()->get_meta_object()->is($data_sheet->get_meta_object())){
 				/* @var $condition \exface\Core\CommonLogic\Model\Condition */
 				foreach($context_conditions as $condition){
 					/*if ($this->get_widget() && $condition->get_expression()->get_meta_object()->get_id() == $this->get_widget()->get_meta_object_id()){
