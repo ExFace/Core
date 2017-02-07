@@ -10,6 +10,16 @@ class ObjectActionList extends ActionList {
 	private $object_basket_action_aliases = array();
 	
 	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\CommonLogic\Model\ActionList::add()
+	 */
+	public function add($action, $key = null){
+		$action->set_meta_object($this->get_meta_object());
+		return parent::add($action, $key);
+	}
+	
+	/**
 	 * @return model
 	 */
 	public function get_model(){
