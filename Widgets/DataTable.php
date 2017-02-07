@@ -426,5 +426,38 @@ class DataTable extends Data implements iHaveTopToolbar, iHaveBottomToolbar, iFi
 	public function get_alternative_container_for_orphaned_siblings(){
 		return null;
 	}
+	
+	/**
+	 *
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\Widgets\iHaveValues::get_values()
+	 */
+	public function get_values(){
+		// TODO set selected table rows programmatically
+		/*
+		if ($this->get_value()){
+			return explode(EXF_LIST_SEPARATOR, $this->get_value());
+		} */
+		return array();
+	}
+	
+	/**
+	 *
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\Widgets\iHaveValues::set_values()
+	 */
+	public function set_values($expression_or_delimited_list){
+		// TODO set selected table rows programmatically
+	}
+	
+	/**
+	 *
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\Widgets\iHaveValues::set_values_from_array()
+	 */
+	public function set_values_from_array(array $values){
+		$this->set_value(implode(EXF_LIST_SEPARATOR, $values));
+		return $this;
+	}
 }
 ?>

@@ -5,7 +5,7 @@
  * @author Andrej Kabachnik
  *
  */
-interface iSupportMultiSelect extends iHaveValue {
+interface iSupportMultiSelect extends iHaveValues {
 	
 	/**
 	 * Returns TRUE if multiselect is enabled for this widget and FALSE otherwise

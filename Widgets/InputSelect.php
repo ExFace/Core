@@ -120,8 +120,42 @@ class InputSelect extends Input implements iSupportMultiSelect {
 		if ($this->get_attribute() && !$this->count_selectable_options()){
 			if ($data_sheet->get_meta_object()->is($this->get_meta_object()) && $col = $data_sheet->get_columns()->get_by_attribute($this->get_attribute())){
 				$this->set_selectable_options($col->get_values(false));
+				$this->set_values_from_array($col->get_values(false));
 			}
 		}
+	}
+	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\Widgets\iHaveValues::get_values()
+	 */
+	public function get_values(){
+		if ($this->get_value()){
+			return explode(EXF_LIST_SEPARATOR, $this->get_value());
+		} else {
+			return array();
+		}
+	}
+	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\Widgets\iHaveValues::set_values()
+	 */
+	public function set_values($expression_or_delimited_list){
+		$this->set_value($expression_or_delimited_list);
+		return $this;
+	}
+	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\Widgets\iHaveValues::set_values_from_array()
+	 */
+	public function set_values_from_array(array $values){
+		$this->set_value(implode(EXF_LIST_SEPARATOR, $values));
+		return $this;
 	}
 }
 ?>
