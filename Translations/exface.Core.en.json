@@ -15,10 +15,11 @@
 	"ACTION.EDITOBJECTDIALOG.SAVE_BUTTON": "Save",
 	"ACTION.EDITOBJECTDIALOG.NAME": "Edit",
 	
-	"ACTION.OBJECTBASKETADD.NAME": "Add to favorites",
-	"ACTION.OBJECTBASKETADD.RESULT": "%number% objects added to favorites.",
-	"ACTION.OBJECTBASKETFETCH.NAME": "Load favorites",
-	"ACTION.OBJECTBASKETREMOVE.NAME": "Remove from favorites",
+	"ACTION.OBJECTBASKET": "Object basket",
+	"ACTION.OBJECTBASKETADD.NAME": "Add to object basket",
+	"ACTION.OBJECTBASKETADD.RESULT": "%number% objects added to object basket.",
+	"ACTION.OBJECTBASKETFETCH.NAME": "Show object basket",
+	"ACTION.OBJECTBASKETREMOVE.NAME": "Remove from object basket",
 	
 	"ACTION.GOBACK.NAME": "Back",
 	"ACTION.GOTOURL.NAME": "Visit URL",
@@ -53,6 +54,7 @@
 	"WIDGET.SELECT_NONE": "-",
 	"WIDGET.STATEMENUBUTTON.CAPTION": "Change state",
 	"WIDGET.DATA.NO_DATA_FOUND": "No data could be found for the current set of filters!",
+	"WIDGET.DIALOG.CLOSE_BUTTON_CAPTION": "Cancel",
 	
 	"ERROR.CAPTION": "Error",
 	"ERROR.REQUEST_CAPTION": "Request",

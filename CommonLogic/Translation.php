@@ -62,12 +62,12 @@ class Translation implements TranslationInterface {
 	 * {@inheritDoc}
 	 * @see \exface\Core\Interfaces\TranslationInterface::translate()
 	 */
-	public function translate($message, array $placeholder_values = null){
-		return $this->get_translator()->trans($message, is_null($placeholder_values) ? array() : $placeholder_values);
-	}
-	
-	public function translate_plural($message_id, $number, array $placeholder_values = null){
-		return $this->get_translator()->transChoice($message_id, $number, $placeholder_values);
+	public function translate($message_id, array $placeholder_values = null, $plural_number = null){
+		if (is_null($plural_number)){
+			return $this->get_translator()->trans($message_id, is_null($placeholder_values) ? array() : $placeholder_values);
+		} else {
+			return $this->get_translator()->transChoice($message_id, $plural_number, is_null($placeholder_values) ? array() : $placeholder_values);
+		}
 	}
 	
 	/**
@@ -75,6 +75,15 @@ class Translation implements TranslationInterface {
 	 */
 	protected function get_translator(){
 		return $this->translator;
+	}
+	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\TranslationInterface::has_translation()
+	 */
+	public function has_translation($message_id){
+		return $this->tranlate($message_id) === $message_id ? false : true;
 	}
 	
 }

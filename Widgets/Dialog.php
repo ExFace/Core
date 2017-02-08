@@ -37,15 +37,6 @@ class Dialog extends Form implements iAmClosable {
 	}
 	
 	/**
-	 * Sets the caption of the close button. A dialog always has a close button, but it can
-	 * be renamed dependig on the context of the dialog.
-	 * @param string $value
-	 */
-	public function set_close_button_caption($value){
-		$this->get_close_button()->set_caption($value);
-	}
-	
-	/**
 	 * If TRUE, the automatically generated close button for the dialog is not shown
 	 * @return boolean
 	 */
@@ -72,6 +63,7 @@ class Dialog extends Form implements iAmClosable {
 			$btn->set_close_dialog_after_action_succeeds(true);
 			$btn->set_refresh_input(false);
 			$btn->set_icon_name('cancel');
+			$btn->set_caption($this->translate('WIDGET.DIALOG.CLOSE_BUTTON_CAPTION'));
 			if ($this->get_hide_close_button()) $btn->set_hidden(true);
 			$this->close_button = $btn;
 		}

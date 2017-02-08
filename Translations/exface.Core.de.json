@@ -14,11 +14,12 @@
 	
 	"ACTION.EDITOBJECTDIALOG.SAVE_BUTTON": "Speichern",
 	"ACTION.EDITOBJECTDIALOG.NAME": "Bearbeiten",
-	
-	"ACTION.OBJECTBASKETADD.NAME": "Add to favorites",
-	"ACTION.OBJECTBASKETADD.RESULT": "%number% objects added to favorites.",
-	"ACTION.OBJECTBASKETFETCH.NAME": "Load favorites",
-	"ACTION.OBJECTBASKETREMOVE.NAME": "Remove from favorites",
+		
+	"ACTION.OBJECTBASKET": "Objektkorb",
+	"ACTION.OBJECTBASKETADD.NAME": "In den Objektkorb legen",
+	"ACTION.OBJECTBASKETADD.RESULT": "%number% Objekte hinzugefügt.",
+	"ACTION.OBJECTBASKETFETCH.NAME": "Objektkorb anzeigen",
+	"ACTION.OBJECTBASKETREMOVE.NAME": "Aus dem Objektkorb entfernen",
 	
 	"ACTION.GOBACK.NAME": "Back",
 	"ACTION.GOTOURL.NAME": "Visit URL",
@@ -53,6 +54,7 @@
 	"WIDGET.SELECT_NONE": "-",
 	"WIDGET.STATEMENUBUTTON.CAPTION": "Status ändern",
 	"WIDGET.DATA.NO_DATA_FOUND": "Keine Daten gefunden, die zu aktuellen Filtern passen!",
+	"WIDGET.DIALOG.CLOSE_BUTTON_CAPTION": "Abbrechen",
 	
 	"ERROR.CAPTION": "Fehler",
 	"ERROR.REQUEST_CAPTION": "Request",

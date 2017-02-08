@@ -657,7 +657,6 @@ abstract class AbstractAction implements ActionInterface {
 	 * $action->get_app()->get_translator()->translate('ACTION.ALIAS.SOME_MESSAGE')
 	 * 
 	 * @see Translation::translate()
-	 * @see Translation::translate_plural()
 	 * 
 	 * @param string $message_id
 	 * @param array $placeholders
@@ -670,11 +669,7 @@ abstract class AbstractAction implements ActionInterface {
 		if (mb_strpos($message_id, $key_prefix) !== 0){
 			$message_id = $key_prefix . $message_id;
 		}
-		if (!is_null($number_for_plurification)){
-			return $this->get_app()->get_translator()->translate_plural($message_id, $number_for_plurification, $placeholders);
-		} else {
-			return $this->get_app()->get_translator()->translate($message_id, $placeholders);
-		}
+		return $this->get_app()->get_translator()->translate($message_id, $placeholders, $number_for_plurification);
 	}
 	
 	/**

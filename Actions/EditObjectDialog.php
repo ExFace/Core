@@ -34,7 +34,7 @@ class EditObjectDialog extends ShowObjectDialog {
 		/* @var $save_button \exface\Core\Widgets\Button */
 		$save_button = $page->create_widget('DialogButton', $dialog);
 		$save_button->set_action_alias($this->get_save_action_alias());
-		$save_button->set_caption($this->get_app()->get_translator()->translate("ACTION.EDITOBJECTDIALOG.SAVE_BUTTON"));
+		$save_button->set_caption($this->get_workbench()->get_core_app()->get_translator()->translate("ACTION.EDITOBJECTDIALOG.SAVE_BUTTON"));
 		$save_button->set_visibility(EXF_WIDGET_VISIBILITY_PROMOTED);
 		// Make the save button refresh the same widget as the Button showing the dialog would do
 		if ($this->get_called_by_widget() instanceof Button){

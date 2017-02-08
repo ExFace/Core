@@ -6,18 +6,10 @@ interface TranslationInterface {
 	 *
 	 * @param string $message_id
 	 * @param array $placeholder_values
+	 * @param float $plural_number
 	 * @return string
 	 */
-	public function translate($message_id, array $placeholder_values = null);
-
-	/**
-	 *
-	 * @param string $message_id
-	 * @param number $number
-	 * @param array $placeholder_values
-	 * @return string
-	 */
-	public function translate_plural($message_id, $number, array $placeholder_values = null);
+	public function translate($message_id, array $placeholder_values = null, $plural_number = null);
 
 	/**
 	 * @return string
@@ -50,6 +42,7 @@ interface TranslationInterface {
 	/**
 	 * Replaces the fallback locale list with the given array. In case of a fallback, the array will be searched starting
 	 * from the first locale: the first translation found will be returned.
+	 * 
 	 * @param array $locale_strings
 	 * @return TranslationInterface
 	 */
@@ -59,8 +52,17 @@ interface TranslationInterface {
 	 *
 	 * @param string $absolute_path
 	 * @param string $locale
+	 * @return TranslationInterface
 	 */
 	public function add_dictionary_from_file($absolute_path, $locale);
+	
+	/**
+	 * Returns TRUE if there is a translation for the given message id and FALSE otherwise.
+	 * 
+	 * @param string $message_id
+	 * @return boolean
+	 */
+	public function has_translation($message_id);
 
 }
 
