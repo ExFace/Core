@@ -23,10 +23,21 @@ interface iContainOtherWidgets extends iHaveChildren {
 	public function add_widgets(array $widgets);
 
 	/**
-	 * Returns all widgets the panel contains as an array
+	 * Returns all widgets in this container as an array
 	 * @return WidgetInterface[]
 	 */
 	public function get_widgets();
+	
+	/**
+	 * Returns all widgets in this container and subcontainers, that take user input.
+	 * 
+	 * By default all input widgets are collected recursively from all subcontainers, but the recursion depth can be restricted 
+	 * via $depth: e.g. get_input_widgets(1) will return only the direct children of the container.
+	 * 
+	 * @param integer $depth
+	 * @return WidgetInterface[]
+	 */
+	public function get_input_widgets($depth = null);
 	
 	/**
 	 * Removes all widgets from the container

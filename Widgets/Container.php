@@ -7,6 +7,7 @@ use exface\Core\Factories\WidgetFactory;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 use exface\Core\Interfaces\Widgets\iFillEntireContainer;
+use exface\Core\Interfaces\Widgets\iTakeInput;
 
 /**
  * The Container is a basic widget, that contains other widgets - typically simple ones like inputs. The conainer itself is mostly invisible - it
@@ -175,6 +176,27 @@ class Container extends AbstractWidget implements iContainOtherWidgets {
 			}
 		}
 		
+		return $result;
+	}
+	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::get_input_widgets()
+	 */
+	public function get_input_widgets($depth = null){
+		$result = array();
+		foreach ($this->get_widgets() as $widget){
+			if (($widget instanceof iTakeInput) && !$widget->is_readonly()){
+				$result[] = $widget;
+			}
+			if ($widget instanceof iContainOtherWidgets){
+				if ($depth === 1){
+					continue;
+				}
+				$result = array_merge($result, $widget->get_input_widgets($depth ? $depth-1 : null));
+			}
+		}
 		return $result;
 	}
 }
