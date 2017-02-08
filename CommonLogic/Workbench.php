@@ -15,7 +15,7 @@ use exface\Core\Interfaces\Events\EventManagerInterface;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Interfaces\ConfigurationInterface;
 use exface\Core\Interfaces\DebuggerInterface;
-use exface\Core\coreApp;
+use exface\Core\CoreApp;
 use exface\Core\Exceptions\InvalidArgumentException;
 
 class Workbench {
@@ -171,7 +171,7 @@ class Workbench {
 	
 	/**
 	 * Returns the core app
-	 * @return coreApp
+	 * @return CoreApp
 	 */
 	public function get_core_app(){
 		return $this->get_app('exface.Core');

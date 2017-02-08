@@ -2,7 +2,7 @@
 namespace exface\Core;
 use exface\Core\CommonLogic\AbstractApp;
 
-class coreApp extends AbstractApp {
+class CoreApp extends AbstractApp {
 	
 }
 ?>
