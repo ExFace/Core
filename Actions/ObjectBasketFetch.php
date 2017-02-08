@@ -34,7 +34,6 @@ class ObjectBasketFetch extends ObjectBasketAdd {
 			$result[] = array(
 					'object_id' => $fav_list->get_meta_object()->get_id(),
 					'object_name' => $fav_list->get_meta_object()->get_name(),
-					'object_actions' => $this->build_json_actions($fav_list->get_meta_object()),
 					'instances' => $fav_list->export_uxon_object()
 			);
 			
@@ -42,23 +41,12 @@ class ObjectBasketFetch extends ObjectBasketAdd {
 		return json_encode($result);
 	}
 	
-	protected function build_json_actions(Object $object){
-		$result = array();
-		foreach($object->get_actions()->get_used_in_object_basket() as $a){
-			$result[] = array(
-				'name' => $a->get_name(),
-				'alias' => $a->get_alias_with_namespace()
-			);
-		}
-		return $result;
-	}
-	
 	protected function build_dialog(Object $meta_object){
 		/* @var $dialog \exface\Core\Widgets\Dialog */
 		$dialog = WidgetFactory::create($this->get_called_on_ui_page(), 'Dialog');
 		$dialog->set_id('object_basket');
 		$dialog->set_meta_object($meta_object);
-		$dialog->set_caption('Object basket');
+		$dialog->set_caption($this->get_workbench()->get_core_app()->get_translator()->translate('ACTION.OBJECTBASKET'));
 		$dialog->set_lazy_loading(false);
 		
 		/* @var $table \exface\Core\Widgets\DataTable */

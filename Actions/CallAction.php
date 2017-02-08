@@ -7,7 +7,17 @@ use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\Actions\iRunTemplateScript;
 use exface\Core\Exceptions\Actions\ActionInputError;
 
-class ObjectBasketCallAction extends AbstractAction {
+/**
+ * This action performs another action specified in the action_alias property or via request parameter "call=your_action_alias".
+ * 
+ * This action behaves exactly as the action to be called, but offers a universal interface for multiple action types. Thus, if you
+ * need a custom server call somewhere in a template, but you do not know, which action will be called in advance, you can request
+ * this action an pass the actually desired one as a request parameter.
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
+class CallAction extends AbstractAction {
 	private $action = null;
 	private $action_alias = null;
 	
@@ -82,7 +92,7 @@ class ObjectBasketCallAction extends AbstractAction {
 	 */
 	public function get_action_alias() {
 		if (is_null($this->action_alias)){
-			$this->action_alias = $this->get_workbench()->get_request_param('basketAction');
+			$this->action_alias = $this->get_workbench()->get_request_param('call');
 		}
 		return $this->action_alias;
 	}
