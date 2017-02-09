@@ -5,6 +5,7 @@ use exface\Core\CommonLogic\Model\Object;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
+use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 
 /**
  * A ComboTable is similar to InputCombo, but it uses a DataTable to show the autosuggest values. 
@@ -28,7 +29,6 @@ class ComboTable extends InputCombo implements iHaveChildren {
 	private $value_column_id = null;
 	private $data_table = null;
 	private $paginate = true;
-	private $table_object_alias = null;
 	private $table_object = null;
 	
 	/**
@@ -105,8 +105,9 @@ class ComboTable extends InputCombo implements iHaveChildren {
 				// wants to see - they will probably already contain the label data, but, perhaps, split into multiple columns.
 				$text_column = $table->create_column_from_attribute($table_meta_object->get_attribute($this->get_text_attribute_alias()));
 				$text_column->set_hidden(true);
-				$this->set_text_column_id($text_column->get_id());
 				$table->add_column($text_column);
+				$this->set_text_column_id($text_column->get_id());
+				
 			}
 		}
 		
@@ -115,9 +116,10 @@ class ComboTable extends InputCombo implements iHaveChildren {
 				$this->set_value_column_id($value_column->get_id());
 			} else {
 				$value_column = $table->create_column_from_attribute($table_meta_object->get_attribute($this->get_value_attribute_alias()), null, true);
-				$this->set_value_column_id($value_column->get_id());
 				$table->add_column($value_column);
-			}
+				$this->set_value_column_id($value_column->get_id());
+				}
+			
 		}
 		return $this;
 	}
@@ -134,10 +136,16 @@ class ComboTable extends InputCombo implements iHaveChildren {
 	 * @uxon-property text_column_id
 	 * @uxon-type string
 	 *
-	 * @var string
+	 * @param string $value
 	 */
 	public function set_text_column_id($value) {
 		$this->text_column_id = $value;
+		if ($this->get_text_column()){
+			$this->set_text_attribute_alias($this->get_text_column()->get_attribute_alias());
+		} else {
+			throw new WidgetPropertyInvalidValueError($this, 'Invalid text_column_id "' . $value . '" specified: no matching column found in the autosuggest table!', '6TV1LBR');
+		}
+		return $this;
 	}
 	
 	/**
@@ -160,10 +168,17 @@ class ComboTable extends InputCombo implements iHaveChildren {
 	 * @uxon-property value_column_id
 	 * @uxon-type string
 	 *
-	 * @var string
+	 * @param string $value
 	 */
 	public function set_value_column_id($value) {
 		$this->value_column_id = $value;
+		$this->get_table()->set_uid_column_id($value);
+		
+		if ($this->get_value_column()){
+			$this->set_value_attribute_alias($this->get_value_column()->get_attribute_alias());
+		} else {
+			throw new WidgetPropertyInvalidValueError($this, 'Invalid value_column_id "' . $value . '" specified: no matching column found in the autosuggest table!', '6TV1LBR');
+		}
 		return $this;
 	}
 	
@@ -306,7 +321,7 @@ class ComboTable extends InputCombo implements iHaveChildren {
 	}  
 	
 	public function get_table_object_alias() {
-		return $this->table_object_alias;
+		return $this->get_options_object_alias();
 	}
 	
 	/**
@@ -321,9 +336,8 @@ class ComboTable extends InputCombo implements iHaveChildren {
 	 * @return \exface\Core\Widgets\ComboTable
 	 */
 	public function set_table_object_alias($value) {
-		$this->table_object_alias = $value;
 		$this->table_object = null;
-		return $this;
+		return $this->set_options_object_alias($value);
 	}  
 	
 	/**
@@ -332,25 +346,14 @@ class ComboTable extends InputCombo implements iHaveChildren {
 	 * @return object
 	 */
 	public function get_table_object(){
-		if (!$this->table_object){
-			if ($this->get_table_object_alias()){
-				$this->table_object = $this->get_workbench()->model()->get_object($this->get_table_object_alias());
-			} elseif($this->get_attribute()->is_relation()) {
-				$this->table_object = $this->get_meta_object()->get_relation($this->get_attribute_alias())->get_related_object();
+		if (!$this->has_custom_options_object()) {
+			if ($this->get_attribute()->is_relation()){
+				$this->set_options_object($this->get_meta_object()->get_relation($this->get_attribute_alias())->get_related_object());
 			} else {
 				throw new WidgetConfigurationError($this, 'Cannot use a ComboTable for the attribute "' . $this->get_attribute_alias() . '" of object "' . $this->get_meta_object()->get_alias() . '": it is neither a relation nor is the table object specified directly!', '6T91QQ8');
 			}
 		}
-		return $this->table_object;
-	}
-	
-	/**
-	 * 
-	 * {@inheritDoc}
-	 * @see \exface\Core\Widgets\InputCombo::get_data_object()
-	 */
-	protected function get_data_object(){
-		return $this->get_table_object();
+		return $this->get_options_object();
 	}
 }
 ?>
