@@ -334,7 +334,7 @@ abstract class AbstractAction implements ActionInterface {
 		if ($result instanceof DataSheetInterface){
 			return $result->to_uxon();
 		} elseif ($result instanceof WidgetInterface){
-			return $this->get_template()->draw($this->get_widget());
+			return $this->get_template()->draw($result);
 		} elseif (!is_object($result)){
 			return $result;
 		} else {

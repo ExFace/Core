@@ -71,7 +71,13 @@ class ObjectBasketFetch extends ObjectBasketAdd {
 			$dialog->add_button($button);
 		}
 		
-		return $this->get_template()->draw($dialog);
+		/* IDEA delegate dialog rendering to ShowDialog action. Probably need to override get_result_output in this case...
+		$action = $this->get_app()->get_action('ShowDialog');
+		$action->set_template_alias($this->get_template()->get_alias_with_namespace());
+		$action->set_widget($dialog);
+		return $action->get_result();*/
+		
+		return $this->get_template()->draw_headers($dialog) . $this->get_template()->draw($dialog);
 	}
 	
 	public function get_output_type() {
