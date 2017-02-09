@@ -347,8 +347,12 @@ class InputSelect extends Input implements iSupportMultiSelect {
 	}  
 	
 	public function get_value_attribute_alias() {
+		// If the not set explicitly, try to determine the value attribute automatically
 		if (is_null($this->value_attribute_alias)){
-			if ($this->get_options_object()->is_exactly($this->get_meta_object())){
+			// If options are taken from the same object, than they are probably values of the referenced attribute,
+			// unless it is a self-reference-relation, which should be treated just like a relation to other objects
+			if ($this->get_options_object()->is_exactly($this->get_meta_object())
+			&& !($this->get_attribute() && $this->get_attribute()->is_relation())){
 				$this->value_attribute_alias = $this->get_attribute_alias();
 			} else {
 				$this->value_attribute_alias = $this->get_options_object()->get_uid_alias();

@@ -107,7 +107,6 @@ class ComboTable extends InputCombo implements iHaveChildren {
 				$text_column->set_hidden(true);
 				$table->add_column($text_column);
 				$this->set_text_column_id($text_column->get_id());
-				
 			}
 		}
 		
@@ -118,8 +117,7 @@ class ComboTable extends InputCombo implements iHaveChildren {
 				$value_column = $table->create_column_from_attribute($table_meta_object->get_attribute($this->get_value_attribute_alias()), null, true);
 				$table->add_column($value_column);
 				$this->set_value_column_id($value_column->get_id());
-				}
-			
+			}
 		}
 		return $this;
 	}
