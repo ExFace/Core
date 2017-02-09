@@ -8,6 +8,7 @@ use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\Factories\DataSheetFactory;
+use exface\Core\CommonLogic\Model\Relation;
 
 /**
  * The text widget simply shows text with an optional title created from the caption of the widget
@@ -97,21 +98,39 @@ class Text extends AbstractWidget implements iShowSingleAttribute, iHaveValue, i
 					// of the related object (e.g. trying to fill the order positions attribute "ORDER" relative to the object
 					// "ORDER" should result in the attribute UID of ORDER because it holds the same value)
 					$data_sheet->get_columns()->add_from_expression($this->get_attribute()->get_relation()->get_related_object_key_alias());
-				} elseif ($rel = $data_sheet->get_meta_object()->find_relation($this->get_meta_object(), true)){
+				} else {
 					// If the attribute is not a relation itself, we still can use it for prefills if we find a relation to access
-					// it from the $data_sheet's object.
-					// TODO currently we use the first relation found. However, this does not work well if that relation
-					// is an attribute of an inherited object. Perhaps it would be better to prefer direct attributes. But how?
+					// it from the $data_sheet's object. In order to do this, we need to find relations from the prefill object to
+					// the object of this widget. However, it does not make sense to use reverse relations because the corresponding 
+					// values would need to get aggregated in the prefill sheet in most cases and we don't have a meaningfull 
+					// aggregator at hand at this time. Direct (not inherited) relations should be preffered. That is, a relation from
+					// the prefill object to an object, this widget's object extends, can still be used in most cases, but a direct
+					// relation is safer. Not sure, if inherited relations will work if the extending object has a different data address...
 					
-					// It does not make sense to use reverse relations because the corresponding values would need to get aggregated
-					// in the prefill sheet in most cases and we don't have a meaningfull aggregator at hand at this time.
-					if (!$rel->is_reverse_relation()){
+					// Iterate over all forward relations
+					$inherited_rel = null;
+					$direct_rel = null;
+					foreach ($data_sheet->get_meta_object()->find_relations($this->get_meta_object(), Relation::RELATION_TYPE_FORWARD) as $rel){						
+						if ($rel->is_inherited() && !$inherited_rel){
+							// Remember the first inherited relation in case there will be no direct relations 
+							$inherited_rel = $rel;
+						} else {
+							// Break on the first direct relation
+							$direct_rel = $rel;
+						}
+					}
+					// If there is no direct relation, but an inherited one, use the latter
+					if (!$direct_rel && $inherited_rel){
+						$direct_rel = $inherited_rel;
+					}
+					// If we found a relation to use, add the attribute prefixed with it's relation path to the data sheet
+					if ($direct_rel){
 						$rel_path = RelationPath::relation_path_add($rel->get_alias(), $this->get_attribute()->get_alias());
 						if ($data_sheet->get_meta_object()->has_attribute($rel_path)){
 							$data_sheet->get_columns()->add_from_attribute($data_sheet->get_meta_object()->get_attribute($rel_path));
 						}
 					}
-				} 
+				}
 			}
 		}
 		

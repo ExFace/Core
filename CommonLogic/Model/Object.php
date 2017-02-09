@@ -399,14 +399,21 @@ class Object implements ExfaceClassInterface, AliasInterface {
 	}
 	
 	/**
-	 * Finds all relations to the specified object. Regular and reverse relations will be returned in one array.
+	 * Finds all relations to the specified object including those targeting objects it inherits from. If the relation
+	 * type is not set, all relations will be returned in one array (forward and reverse ones).
+	 * 
+	 * Example for inheritance handling: concider the object PHP_FILE, which extends FILE and the object FILE_CONTENTS,
+	 * that has a forward relation to the FILE. FILE_CONTENTS->find_relations(PHP_FILE) will find the relation to the
+	 * FILE-object because PHP_FILE extends FILE.
+	 * 
 	 * @param string $related_object_id
+	 * @param string $relation_type one of the Relation::RELATION_TYPE_xxx constants
 	 * @return Relation[]
 	 */
 	public function find_relations($related_object_id, $relation_type = null){
 		$rels = array();
 		foreach ($this->get_relations() as $rel){
-			if ($rel->get_related_object_id() == $related_object_id && ($relation_type == null || $relation_type == $rel->get_type())) $rels[] = $rel;
+			if ($rel->get_related_object()->is($related_object_id) && ($relation_type == null || $relation_type == $rel->get_type())) $rels[] = $rel;
 		}
 		return $rels;
 	}
