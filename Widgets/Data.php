@@ -654,9 +654,6 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 	 * @see \exface\Core\Widgets\AbstractWidget::prefill()
 	 */
 	protected function do_prefill(\exface\Core\Interfaces\DataSheets\DataSheetInterface $data_sheet){
-		// First, take care of basic stuff like set_prefill_data()
-		parent::do_prefill($data_sheet);
-		// Now do the widget specific prefill
 		if ($data_sheet->get_meta_object()->is_exactly($this->get_meta_object())){
 			// If the prefill data is based on the same object as the widget, inherit the filter conditions from the prefill
 			foreach ($data_sheet->get_filters()->get_conditions() as $condition){

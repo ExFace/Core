@@ -7,6 +7,7 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
+use exface\Core\Factories\DataSheetFactory;
 
 /**
  * The text widget simply shows text with an optional title created from the caption of the widget
@@ -134,7 +135,6 @@ class Text extends AbstractWidget implements iShowSingleAttribute, iHaveValue, i
 	 * @see \exface\Core\Widgets\AbstractWidget::prefill()
 	 */
 	protected function do_prefill(\exface\Core\Interfaces\DataSheets\DataSheetInterface $data_sheet){
-		parent::do_prefill($data_sheet);
 		// Do not do anything, if the value is already set explicitly (e.g. a fixed value)
 		if ($this->get_value()){
 			return;
@@ -142,7 +142,7 @@ class Text extends AbstractWidget implements iShowSingleAttribute, iHaveValue, i
 		// To figure out, which attributes we need from the data sheet, we just run prepare_data_sheet_to_prefill()
 		// Since an Input only needs one value, we take the first one from the returned array, fetch it from the data sheet
 		// and set it as the value of our input.
-		$prefill_columns = $this->prepare_data_sheet_to_prefill($this->get_workbench()->data()->create_data_sheet($data_sheet->get_meta_object()))->get_columns();
+		$prefill_columns = $this->prepare_data_sheet_to_prefill(DataSheetFactory::create_from_object($data_sheet->get_meta_object()))->get_columns();
 		if ($col = $prefill_columns->get_first()){
 			if (count($data_sheet->get_column_values($col->get_name(false))) > 1 && $this->get_aggregate_function()){
 				$this->set_value(\exface\Core\CommonLogic\DataSheets\DataColumn::aggregate_values($data_sheet->get_column_values($col->get_name(false)), $this->get_aggregate_function()));
