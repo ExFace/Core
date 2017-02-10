@@ -96,6 +96,11 @@ abstract class AbstractQueryBuilder {
 		return $this->attributes;
 	}
 	
+	/**
+	 * 
+	 * @param string $alias
+	 * @return QueryPartSelect
+	 */
 	protected function get_attribute($alias){
 		return $this->attributes[$alias];
 	}
