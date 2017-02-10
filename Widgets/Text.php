@@ -22,6 +22,7 @@ class Text extends AbstractWidget implements iShowSingleAttribute, iHaveValue, i
 	private $style = null;
 	private $aggregate_function = null;
 	private $ignore_default_value = null;
+	private $empty_text = false;
 	
 	public function get_text() {
 		if (is_null($this->text)){
@@ -240,6 +241,30 @@ class Text extends AbstractWidget implements iShowSingleAttribute, iHaveValue, i
 			return DataTypeFactory::create_from_alias($exface, EXF_DATA_TYPE_STRING);
 		}
 	}	  
-	  
+	
+	/**
+	 * If false a place-holder is shown if the text is empty (determined by WIDGET.TEXT.EMPTY_TEXT)
+	 * in the translation files. If true nothing is shown. (default: false)
+	 * 
+	 * @return boolean
+	 */
+	public function get_empty_text() {
+		return $this->empty_text;
+	}
+	
+	/**
+	 * If false a place-holder is shown if the text is empty (determined by WIDGET.TEXT.EMPTY_TEXT)
+	 * in the translation files. If true nothing is shown. (default: false)
+	 * 
+	 * @uxon-property empty_text
+	 * @uxon-type boolean
+	 * 
+	 * @param boolean $value
+	 * @return \exface\Core\Widgets\Text
+	 */
+	public function set_empty_text($value) {
+		$this->empty_text = $value;
+		return $this;
+	}
 }
 ?>
