@@ -39,7 +39,6 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren {
 	private $disabled = NULL;
 	private $width = null;
 	private $height = null;
-	private $hidden = false;
 	private $visibility = null;
 	/** @var \exface\Core\Widgets\AbstractWidget the parent widget */
 	private $parent = null;
@@ -724,11 +723,13 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren {
 	 * @see \exface\Core\Interfaces\WidgetInterface::is_hidden()
 	 */
 	public function is_hidden() {
-		return $this->hidden;
+		return $this->get_visibility() == EXF_WIDGET_VISIBILITY_HIDDEN ? true : false;
 	}
 	
 	/**
-	 * Set to TRUE to hide the widget. The same effect can be achieved by setting "visibility: hidden"
+	 * Set to TRUE to hide the widget. The same effect can be achieved by setting "visibility: hidden".
+	 * 
+	 * Setting "hidden: false" will revert visibility to normal - just like "visibility: normal".
 	 * 
 	 * @uxon-property hidden
 	 * @uxon-type boolean 
@@ -737,9 +738,10 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren {
 	 * @see \exface\Core\Interfaces\WidgetInterface::set_hidden()
 	 */
 	public function set_hidden($value) {
-		$this->hidden = $value;
-		if ($value == true && $this->get_visibility() != EXF_WIDGET_VISIBILITY_HIDDEN){
+		if ($value){
 			$this->set_visibility(EXF_WIDGET_VISIBILITY_HIDDEN);
+		} else {
+			$this->set_visibility(EXF_WIDGET_VISIBILITY_NORMAL);
 		}
 	}	
 	
@@ -763,6 +765,7 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren {
 	 * @see \exface\Core\Interfaces\WidgetInterface::set_visibility()
 	 */
 	public function set_visibility($value) {
+		$value = mb_strtolower($value);
 		if ($value != EXF_WIDGET_VISIBILITY_HIDDEN
 		&& $value != EXF_WIDGET_VISIBILITY_NORMAL
 		&& $value != EXF_WIDGET_VISIBILITY_OPTIONAL
@@ -771,12 +774,7 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren {
 			return;
 		}
 		$this->visibility = $value;
-		
-		if ($value == EXF_WIDGET_VISIBILITY_HIDDEN && !$this->is_hidden()){
-			$this->set_hidden(true);
-		} else {
-			$this->set_hidden(false);
-		}
+		return $this;
 	}
 	
 	/**
