@@ -35,11 +35,18 @@ class StateMenuButton extends MenuButton {
 					// Die Action des StateMenuButtons wird fuer die einzelnen Buttons uebernommen.
 					// Das UxonObject wird weiter im urspruenglichen Zustand benoetigt, daher wird
 					// der Action-Alias nur temporaer gesetzt.
+					// TODO: Das UxonObject sollte besser vor der Aktion kopiert und mit der Kopie
+					// gearbeitet werden. Das Problem ist dass die referenzierten Objekte der
+					// Kopie die selben wie beim Orginal sind, daher das Orginal verändert wird
+					// wenn man mit der Kopie arbeitet.
 					if (!is_null($this->get_action_alias())) {
 						$action_alias_temp = $smb_button->action->alias;
+						$refresh_widget_link_temp = $smb_button->refresh_widget_link;
 						$smb_button->action->alias = $this->get_action_alias();
+						$smb_button->refresh_widget_link = $this->get_refresh_widget_link();
 						$button = $this->get_page()->create_widget($button_widget, $this, UxonObject::from_anything($smb_button));
 						$smb_button->action->alias = $action_alias_temp;
+						$smb_button->refresh_widget_link = $refresh_widget_link_temp;
 					} else {
 						$button = $this->get_page()->create_widget($button_widget, $this, UxonObject::from_anything($smb_button));
 					}
