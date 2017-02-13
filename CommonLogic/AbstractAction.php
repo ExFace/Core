@@ -15,6 +15,7 @@ use exface\Core\Exceptions\Actions\ActionConfigurationError;
 use exface\Core\Exceptions\Model\MetaObjectNotFoundError;
 use exface\Core\Exceptions\Actions\ActionOutputError;
 use exface\Core\Exceptions\Actions\ActionObjectNotSpecifiedError;
+use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 
 /**
  * The abstract action is the base ActionInterface implementation, that simplifies the creation of custom actions. All core
@@ -46,6 +47,8 @@ abstract class AbstractAction implements ActionInterface {
 	private $performed = false;
 	private $is_undoable = null;
 	private $is_data_modified = null;
+	/** @var DataTransactionInterface */
+	private $transaction = null;
 	
 	/**
 	 * @uxon
@@ -82,6 +85,8 @@ abstract class AbstractAction implements ActionInterface {
 	 * @var string
 	 */
 	private $meta_object = null;
+	
+	private $autocommit = true;
 	
 	function __construct(\exface\Core\CommonLogic\AbstractApp $app){
 		$this->app = $app;
@@ -264,6 +269,9 @@ abstract class AbstractAction implements ActionInterface {
 		$this->set_performed();
 		$this->perform();
 		$this->dispatch_event('Perform.After');
+		if ($this->get_autocommit() && $this->is_data_modified()){
+			$this->get_transaction()->commit();
+		}
 		return $this;
 	}
 	
@@ -696,6 +704,35 @@ abstract class AbstractAction implements ActionInterface {
 	
 	public function copy(){
 		return clone $this;
+	}
+	
+	/**
+	 * 
+	 * @return \exface\Core\Interfaces\DataSources\DataTransactionInterface
+	 */
+	public function get_transaction(){
+		if (is_null($this->transaction)){
+			$this->transaction = $this->get_workbench()->data()->start_transaction();
+		}
+		return $this->transaction;
+	}
+	
+	/**
+	 * 
+	 * @param DataTransactionInterface $transaction
+	 */
+	public function set_transaction(DataTransactionInterface $transaction){
+		$this->transaction = $transaction;
+		return $this;
+	}
+	
+	public function get_autocommit(){
+		return $this->autocommit;
+	}
+	
+	public function set_autocommit($true_or_false){
+		$this->autocommit = $true_or_false ? true : false;
+		return $this;
 	}
 }
 ?>

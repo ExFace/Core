@@ -3,6 +3,7 @@
 use exface\Core\Interfaces\Actions\iUpdateData;
 use exface\Core\Interfaces\Actions\iCanBeUndone;
 use exface\Core\Exceptions\Actions\ActionUndoFailedError;
+use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 
 class UpdateData extends SaveData implements iUpdateData, iCanBeUndone {
 	private $use_context_filters = false;
@@ -33,17 +34,17 @@ class UpdateData extends SaveData implements iUpdateData, iCanBeUndone {
 			$this->set_undoable(false);
 		}
 		
-		$this->set_affected_rows($data_sheet->data_update());
+		$this->set_affected_rows($data_sheet->data_update(false, $this->get_transaction()));
 		$this->set_result('');
 		$this->set_result_data_sheet($data_sheet);
 		$this->set_result_message($this->get_workbench()->get_core_app()->get_translator()->translate('ACTION.UPDATEDATA.RESULT', array('%number%' => $this->get_affected_rows()), $this->get_affected_rows()));
 	}
 	
-	public function undo(){
+	public function undo(DataTransactionInterface $transaction = null){
 		if (!$data_sheet = $this->get_undo_data_sheet()){
 			throw new ActionUndoFailedError($this, 'Cannot undo action "' . $this->get_alias() . '": Failed to load history for this action!', '6T5DLGN');
 		}
-		$data_sheet->data_update();
+		$data_sheet->data_update($transaction ? $transaction : $this->get_transaction());
 		return $data_sheet;
 	}
 	

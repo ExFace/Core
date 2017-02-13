@@ -7,6 +7,7 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\CommonLogic\AbstractAction;
 use exface\Core\Exceptions\Actions\ActionUndoFailedError;
+use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 
 class SaveData extends AbstractAction implements iModifyData, iCanBeUndone {
 	private $affected_rows = 0;
@@ -20,7 +21,7 @@ class SaveData extends AbstractAction implements iModifyData, iCanBeUndone {
 	
 	protected function perform(){
 		$data_sheet = $this->get_input_data_sheet()->copy();
-		$this->set_affected_rows($data_sheet->data_save());
+		$this->set_affected_rows($data_sheet->data_save($this->get_transaction()));
 		$this->set_result_data_sheet($data_sheet);
 		$this->set_result('');
 		$this->set_result_message($this->get_workbench()->get_core_app()->get_translator()->translate('ACTION.SAVEDATA.RESULT', array('%number%' => $this->get_affected_rows()), $this->get_affected_rows()));
@@ -62,7 +63,7 @@ class SaveData extends AbstractAction implements iModifyData, iCanBeUndone {
 		$this->undo_data_sheet = DataSheetFactory::create_from_stdClass($exface, $uxon_object);
 	}
 	
-	public function undo(){
+	public function undo(DataTransactionInterface $transaction = null){
 		throw new ActionUndoFailedError($this, 'Undo functionality not implemented yet for action "' . $this->get_alias() . '"!', '6T5DS00');
 	}
 }

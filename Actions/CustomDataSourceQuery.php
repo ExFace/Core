@@ -78,7 +78,7 @@ class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuer
 		}
 		
 		// Start transaction
-		$transaction = $this->get_workbench()->data()->start_transaction();
+		$transaction = $this->get_transaction();
 		$transaction->add_data_connection($this->get_data_connection());
 		
 		// Build and perform all queries. Rollback if anything fails

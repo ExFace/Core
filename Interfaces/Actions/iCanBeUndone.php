@@ -2,13 +2,14 @@
 namespace exface\Core\Interfaces\Actions;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Actions\ActionInterface;
+use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 interface iCanBeUndone {
 	/**
 	 * Performs the actual undo operation. One can say, it is the opposite of perform().
 	 * In most cases undo() will use undo data from the context history.
 	 * @return DataSheetInterface
 	 */
-	public function undo();
+	public function undo(DataTransactionInterface $transaction = null);
 	
 	/**
 	 * Returns a serializable UXON object with all the data neede to perform an undo operation later.
