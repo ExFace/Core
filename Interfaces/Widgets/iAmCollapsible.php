@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\Interfaces\Widgets;
-interface iAmCollapsible {
+use exface\Core\Interfaces\WidgetInterface;
+
+interface iAmCollapsible extends WidgetInterface {
 	
 	/**
 	 * Returs TRUE if the widget is collapsible, FALSE otherwise

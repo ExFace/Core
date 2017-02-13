@@ -7,6 +7,7 @@ use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Interfaces\DataSheets\DataColumnTotalsListInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\iCanBeCopied;
+use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 
 interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied {
 	
@@ -88,7 +89,8 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied {
 	 * Returns the attribute in this column if the column represents a single attribute. Returns FALSE if the column
 	 * represents anything else, like a forumula, a constant, etc.
 	 * 
-	 * @return Attribute|boolean
+	 * @throws MetaAttributeNotFoundError if it is expected to be an attribute, but is not found for the object of the column
+	 * @return Attribute
 	 */
 	public function get_attribute();   
 	

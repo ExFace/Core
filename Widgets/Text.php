@@ -262,23 +262,26 @@ class Text extends AbstractWidget implements iShowSingleAttribute, iHaveValue, i
 	}	  
 	
 	/**
-	 * If false a place-holder is shown if the text is empty (determined by WIDGET.TEXT.EMPTY_TEXT)
-	 * in the translation files. If true nothing is shown. (default: false)
+	 * Returns the placeholder text to be used by templates if the widget has no value.
 	 * 
-	 * @return boolean
+	 * @return string
 	 */
 	public function get_empty_text() {
+		if (is_null($this->empty_text)){
+			$this->empty_text = $this->translate('WIDGET.TEXT.EMPTY_TEXT');
+		}
 		return $this->empty_text;
 	}
 	
 	/**
-	 * If false a place-holder is shown if the text is empty (determined by WIDGET.TEXT.EMPTY_TEXT)
-	 * in the translation files. If true nothing is shown. (default: false)
+	 * Defines the placeholder text to be used if the widget has no value. Set to blank string to remove the placeholder.
+	 * 
+	 * The default placeholder is defined by the core translation of WIDGET.TEXT.EMPTY_TEXT.
 	 * 
 	 * @uxon-property empty_text
 	 * @uxon-type boolean
 	 * 
-	 * @param boolean $value
+	 * @param string $value
 	 * @return \exface\Core\Widgets\Text
 	 */
 	public function set_empty_text($value) {

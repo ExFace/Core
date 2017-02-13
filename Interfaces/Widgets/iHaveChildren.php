@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\Interfaces\Widgets;
-interface iHaveChildren {
+use exface\Core\Interfaces\WidgetInterface;
+
+interface iHaveChildren extends WidgetInterface {
 	
 	/**
 	 * Returns all direct children of the current widget or an empty array, if the widget has no children

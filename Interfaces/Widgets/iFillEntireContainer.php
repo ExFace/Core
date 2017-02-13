@@ -1,6 +1,8 @@
 <?php namespace exface\Core\Interfaces\Widgets;
 
-interface iFillEntireContainer {
+use exface\Core\Interfaces\WidgetInterface;
+
+interface iFillEntireContainer extends WidgetInterface {
 	
 	/**
 	 * 

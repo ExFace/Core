@@ -55,6 +55,8 @@
 	"WIDGET.STATEMENUBUTTON.CAPTION": "Change state",
 	"WIDGET.DATA.NO_DATA_FOUND": "No data could be found for the current set of filters!",
 	"WIDGET.DIALOG.CLOSE_BUTTON_CAPTION": "Cancel",
+	"WIDGET.TEXT.EMPTY_TEXT": "-",
+	"WIDGET.INPUT.EMPTY_TEXT": "",
 	
 	"ERROR.CAPTION": "Error",
 	"ERROR.REQUEST_CAPTION": "Request",

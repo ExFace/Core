@@ -3,7 +3,8 @@ namespace exface\Core\Interfaces\Widgets;
 use exface\Core\Widgets\AbstractWidget;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
-interface iTriggerAction {
+use exface\Core\Interfaces\WidgetInterface;
+interface iTriggerAction extends WidgetInterface {
 	/**
 	 * Returns the action object
 	 * @return ActionInterface

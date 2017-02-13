@@ -1,8 +1,9 @@
 <?php
 namespace exface\Core\Interfaces\Widgets;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
+use exface\Core\Interfaces\WidgetInterface;
 
-interface iCanBeAligned {
+interface iCanBeAligned extends WidgetInterface {
 	
 	/**
 	 * Returns the alignment used in this widget (one of the EXF_ALIGN_xxx constants).
