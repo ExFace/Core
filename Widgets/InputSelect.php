@@ -6,6 +6,11 @@ use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\CommonLogic\Model\Object;
+use exface\Core\CommonLogic\Model\Condition;
+use exface\Core\Factories\ConditionFactory;
+use exface\Core\CommonLogic\UxonObject;
+use exface\Core\CommonLogic\DataSheets\DataSorter;
+use exface\Core\Factories\DataSorterFactory;
 
 /**
  * A dropdown menu to select from. Each menu item has a value and a text. Optional support for selecting multiple items.
@@ -57,6 +62,7 @@ class InputSelect extends Input implements iSupportMultiSelect {
 	private $custom_text_attribute_flag = false;
 	private $options_object = null;
 	private $options_object_alias = null;
+	private $options_data_sheet = null;
 	private $use_prefill_to_filter_options = true;
 	private $use_prefill_values_as_options = false;
 	
@@ -112,6 +118,11 @@ class InputSelect extends Input implements iSupportMultiSelect {
 			if ($this->get_attribute()->get_data_type()->is(EXF_DATA_TYPE_BOOLEAN)){
 				$this->set_selectable_options(array(1,0), array($this->translate('WIDGET.SELECT_YES'), $this->translate('WIDGET.SELECT_NO')));
 			}
+		}
+		
+		// If there are no selectable options set explicitly, try to determine them from the meta model. Otherwise the select box would be empty.
+		if (empty($this->selectable_options) && !$this->get_options_data_sheet()->is_blank()){
+			$this->set_options_from_data_sheet($this->get_options_data_sheet());
 		}
 		
 		// Add unselected uption
@@ -201,9 +212,7 @@ class InputSelect extends Input implements iSupportMultiSelect {
 				// relation to it can be found, use this relation as filter to query the data source for selectable options
 				elseif ($rel = $this->get_options_object()->find_relation($data_sheet->get_meta_object(), true)) {
 					if ($col = $data_sheet->get_columns()->get_by_expression($rel->get_related_object_key_alias())){
-						$ds = DataSheetFactory::create_from_object($this->get_options_object());
-						$ds->add_filter_in_from_string($rel->get_alias(), $col->get_values(false));
-						$this->set_options_from_data_sheet($ds);
+						$this->get_options_data_sheet()->add_filter_in_from_string($rel->get_alias(), $col->get_values(false));
 					}
 				}
 			}
@@ -417,5 +426,90 @@ class InputSelect extends Input implements iSupportMultiSelect {
 		$this->use_prefill_values_as_options = $value ? true : false;
 		return $this;
 	}  
+	
+	public function get_options_data_sheet(){
+		if (is_null($this->options_data_sheet)){
+			$this->options_data_sheet = DataSheetFactory::create_from_object($this->get_options_object());
+		}
+		return $this->options_data_sheet;
+	}
+	
+	public function set_options_data_sheet(DataSheetInterface $data_sheet){
+		if (!$this->get_options_object()->is_exactly($data_sheet->get_meta_object())){
+			throw new WidgetPropertyInvalidValueError($this, 'Cannot set options data sheet for ' . $this->get_widget_type() . ': meta object "' . $this->get_options_object()->get_alias_with_namespace() . '", but "' . $data_sheet->get_meta_object()->get_alias_with_namespace() . '" given instead!');
+		}
+		$this->options_data_sheet = $data_sheet;
+		return $this;
+	}
+	
+	/**
+	 * Sets an optional array of filter-objects to be used when fetching selectable options from a data source. 
+	 * 
+	 * For example, if we have a select for values of attributes of a meta object, but we only wish to show
+	 * values of active instances (assuming our object has the attribute "ACTIVE"), we would need the following
+	 * select:
+	 * {
+	 * 	"options_object_alias": "my.app.myobject",
+	 * 	"value_attribute_alias": "VALUE",
+	 * 	"text_attribute_alias": "NAME",
+	 * 	"filters":
+	 * 	[
+	 * 		{"attribute_alias": "ACTIVE", "value": "1", "comparator": "="}
+	 * 	]
+	 * }
+	 * 
+	 * @uxon-property filters
+	 * @uxon-type \exface\Core\CommonLogic\Model\Condition
+	 * 
+	 * @param Condition[]|UxonObject[] $conditions_or_uxon_objects
+	 * @return \exface\Core\Widgets\InputSelect
+	 */
+	public function set_filters(array $conditions_or_uxon_objects){
+		foreach ($conditions_or_uxon_objects as $condition_or_uxon_object){
+			if ($condition_or_uxon_object instanceof Condition){
+				$this->get_options_data_sheet()->get_filters()->add_condition($condition_or_uxon_object);
+			} elseif ($condition_or_uxon_object instanceof \stdClass) {
+				$uxon = UxonObject::from_anything($condition_or_uxon_object);
+				if (!$uxon->has_property('object_alias')){
+					$uxon->set_property('object_alias', $this->get_meta_object()->get_alias_with_namespace());
+				}
+				$this->get_options_data_sheet()->get_filters()->add_condition(ConditionFactory::create_from_uxon($this->get_workbench(), $uxon));
+			}
+		}
+		return $this;
+	}
+	
+	/**
+	 * Sets an optional array of sorter-objects to be used when fetching selectable options from a data source.
+	 *
+	 * For example, if we have a select for sizes of a product and we only wish to show sort the ascendingly,
+	 * we would need the following config:
+	 * {
+	 * 	"options_object_alias": "my.app.product",
+	 * 	"value_attribute_alias": "SIZE_ID",
+	 * 	"text_attribute_alias": "SIZE_TEXT",
+	 * 	"sorters":
+	 * 	[
+	 * 		{"attribute_alias": "SIZE_TEXT", "direction": "ASC"}
+	 * 	]
+	 * }
+	 *
+	 * @uxon-property sorters
+	 * @uxon-type \exface\Core\CommonLogic\DataSheets\DataSorter
+	 *
+	 * @param DataSorter[]|UxonObject[] $data_sorters_or_uxon_objects
+	 * @return \exface\Core\Widgets\InputSelect
+	 */
+	public function set_sorters(array $data_sorters_or_uxon_objects){
+		foreach ($data_sorters_or_uxon_objects as $sorter_or_uxon){
+			if ($sorter_or_uxon instanceof DataSorter){
+				$this->get_options_data_sheet()->get_sorters()->add($sorter_or_uxon);
+			} elseif ($sorter_or_uxon instanceof \stdClass) {
+				$uxon = UxonObject::from_anything($sorter_or_uxon);
+				$this->get_options_data_sheet()->get_sorters()->add(DataSorterFactory::create_from_uxon($this->get_options_data_sheet(), $uxon));
+			}
+		}
+		return $this;
+	}
 }
 ?>

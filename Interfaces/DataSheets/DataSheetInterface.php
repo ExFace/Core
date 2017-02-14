@@ -281,6 +281,21 @@ interface DataSheetInterface extends ExfaceClassInterface, iCanBeCopied, iCanBeC
 	 */
 	public function is_unfiltered();
 	
+	/**
+	 * Returns TRUE if the data sheet has neither content nor filters (and thus will not contain any meaningfull data if read) 
+	 * and FALSE otherwise. 
+	 * 
+	 * @return boolean
+	 */
+	public function is_blank();
+	
+	/**
+	 * Returns TRUE if the data sheet has no sorters and FALSE otherwise.
+	 * 
+	 * @return boolean
+	 */
+	public function is_unsorted();
+	
 	public function get_rows_on_page();
 	
 	public function set_rows_on_page($value);

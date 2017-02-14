@@ -1292,6 +1292,17 @@ class DataSheet implements DataSheetInterface {
 		}
 	}
 	
+	public function is_blank(){
+		if ($this->is_unfiltered() && $this->is_empty()){
+			return true;
+		}
+		return false;
+	}
+	
+	public function is_unsorted(){
+		return $this->get_sorters()->is_empty() ? true : false;
+	}
+	
 	protected function set_fresh($value){
 		foreach ($this->get_columns() as $col){
 			$col->set_fresh($value);
