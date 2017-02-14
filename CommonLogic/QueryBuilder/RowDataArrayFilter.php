@@ -36,12 +36,12 @@ class RowDataArrayFilter {
 						}
 						break;
 					case EXF_COMPARATOR_IS:
-						if (stripos($row[$filter['key']], $filter['value']) === false) {
+						if (stripos($row[$filter['key']], (string)$filter['value']) === false) {
 							unset($array_of_rows[$rownr]);
 						}
 						break;
 					case EXF_COMPARATOR_IS_NOT:
-						if (stripos($row[$filter['key']], $filter['value']) !== false) {
+						if (stripos($row[$filter['key']], (string)$filter['value']) !== false) {
 							unset($array_of_rows[$rownr]);
 						}
 						break;

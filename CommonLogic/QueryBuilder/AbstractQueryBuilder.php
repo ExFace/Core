@@ -420,6 +420,7 @@ abstract class AbstractQueryBuilder {
 		}
 		$sorter = new RowDataArraySorter();
 		foreach ($this->get_sorters() as $qpart){
+			if (!$qpart->get_apply_after_reading()) continue;
 			$sorter->addCriteria($qpart->get_alias(), $qpart->get_order());
 		}
 		return $sorter->sort($row_array);
