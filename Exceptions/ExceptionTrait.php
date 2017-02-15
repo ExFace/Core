@@ -86,7 +86,7 @@ trait ExceptionTrait {
 		$error_tab->set_caption($debug_widget->get_workbench()->get_core_app()->get_translator()->translate('ERROR.CAPTION'));
 		$error_widget = WidgetFactory::create($page, 'Html');
 		$error_tab->add_widget($error_widget);
-		$error_widget->set_value($page->get_workbench()->get_debugger()->print_exception($this));
+		$error_widget->set_value($page->get_workbench()->CMS()->sanitize_error_output($page->get_workbench()->get_debugger()->print_exception($this)));
 		$debug_widget->add_tab($error_tab);
 		
 		// Add a tab with the request printout
