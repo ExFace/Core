@@ -273,7 +273,14 @@ class InputSelect extends Input implements iSupportMultiSelect {
 	}
 	
 	/**
-	 * Defines the alias of the attribute to be displayed as the text of the combo. If not set, the label of the options object will be used
+	 * Defines the alias of the attribute to be displayed for every value. If not set, the system will try to determine one automatically.
+	 * 
+	 * If the text_attribute_alias was not set explicitly (e.g. via UXON), it will be determined as follows:
+	 * - If an option object was specified explicitly, it's label will be used (or it's UID if no label is defined)
+	 * - If the widget represents a relation, the related object's label will be used
+	 * - If the widget represents the UID of it's object, than the label of this object will be used
+	 * - If the widget represents any other attribute and there is no explicit options_object, this attribute
+	 * will be used for values as well as for the displayed text.
 	 *
 	 * @uxon-property text_attribute_alias
 	 * @uxon-type string
@@ -287,12 +294,25 @@ class InputSelect extends Input implements iSupportMultiSelect {
 		return $this;
 	}
 	
+	/**
+	 * Returns the alias of the attribute to be displayed, when a value is selected.
+	 * 
+	 * If the text_attribute_alias was not set explicitly (e.g. via UXON), it will be determined as follows:
+	 * - If an option object was specified explicitly, it's label will be used (or it's UID if no label is defined)
+	 * - If the widget represents a relation, the related object's label will be used
+	 * - If the widget represents the UID of it's object, than the label of this object will be used
+	 * - If the widget represents any other attribute and there is no explicit options_object, this attribute
+	 * will be used for values as well as for the displayed text.
+	 * 
+	 * @return string
+	 */
 	public function get_text_attribute_alias() {
 		if (is_null($this->text_attribute_alias)){
 			// If options are taken from the same object, than they are probably values of the referenced attribute,
-			// unless it is a self-reference-relation, which should be treated just like a relation to other objects
+			// unless it is a self-reference-relation (which should be treated just like a relation to other objects)
+			// or the UID (which should get the label as text).
 			if ($this->get_options_object()->is_exactly($this->get_meta_object())
-			&& !($this->get_attribute() && $this->get_attribute()->is_relation())){
+			&& !($this->get_attribute() && ($this->get_attribute()->is_relation() || $this->get_attribute()->is_uid_for_object()))){
 				$this->text_attribute_alias = $this->get_attribute_alias();
 			} else {
 				if ($this->get_options_object()->get_label_attribute()){

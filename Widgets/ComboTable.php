@@ -347,9 +347,7 @@ class ComboTable extends InputCombo implements iHaveChildren {
 		if (!$this->has_custom_options_object()) {
 			if ($this->get_attribute()->is_relation()){
 				$this->set_options_object($this->get_meta_object()->get_relation($this->get_attribute_alias())->get_related_object());
-			} else {
-				throw new WidgetConfigurationError($this, 'Cannot use a ComboTable for the attribute "' . $this->get_attribute_alias() . '" of object "' . $this->get_meta_object()->get_alias() . '": it is neither a relation nor is the table object specified directly!', '6T91QQ8');
-			}
+			} 
 		}
 		return $this->get_options_object();
 	}
