@@ -19,6 +19,7 @@ use exface\Core\CoreApp;
 use exface\Core\Exceptions\InvalidArgumentException;
 
 class Workbench {
+	private $started = false;
 	private $data;
 	private $cms;
 	private $mm;
@@ -34,7 +35,7 @@ class Workbench {
 	
 	private $request_params = array();
 	
-	function __construct(){
+	public function __construct(){
 		if (substr(phpversion(), 0, 1) == 5){
 			require_once 'Php5Compatibility.php';
 		}
@@ -54,7 +55,11 @@ class Workbench {
 		require_once('Constants.php');
 	}
 	
-	function start(){
+	public function __destruct(){
+		$this->stop();
+	}
+	
+	public function start(){
 		// Start the error handler
 		$dbg = new Debugger();
 		$this->set_debugger($dbg);
@@ -92,6 +97,7 @@ class Workbench {
 		// load the ui
 		$this->ui = new \exface\Core\CommonLogic\UiManager($this);
 		
+		$this->started = true;
 	}
 	
 	/**
@@ -102,6 +108,15 @@ class Workbench {
 		$instance = new self();
 		$instance->start();
 		return $instance;
+	}
+	
+	/**
+	 * Returns TRUE if start() was successfully called on this workbench instance and FALSE otherwise.
+	 * 
+	 * @return boolean
+	 */
+	public function is_started(){
+		return $this->started;
 	}
 	
 	/**
@@ -195,9 +210,11 @@ class Workbench {
 	}
 
 	public function stop(){
-		$this->context()->save_contexts();
-		$this->data()->disconnect_all();
-		$this->event_manager()->dispatch(EventFactory::create_basic_event($this, 'Stop'));
+		if ($this->is_started()){
+			$this->context()->save_contexts();
+			$this->data()->disconnect_all();
+			$this->event_manager()->dispatch(EventFactory::create_basic_event($this, 'Stop'));
+		}
 	}
 	
 	public function process_request(){
@@ -211,7 +228,6 @@ class Workbench {
 		if ($template_alias){
 			$this->ui()->set_base_template_alias($template_alias);
 			echo $this->ui()->get_template($template_alias)->process_request();
-			$this->stop();
 		} else {
 			// If template alias not given - it's not an AJAX request, so do not do anything here, wait for the CMS to call request processing
 			// The reason for this is, that the CMS will select the template.
