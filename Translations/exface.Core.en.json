@@ -62,6 +62,7 @@
 	
 	"ERROR.CAPTION": "Error",
 	"ERROR.REQUEST_CAPTION": "Request",
+	"ERROR.STACKTRACE_CAPTION": "Stacktrace",
 	"WARNING.CAPTION": "Warning"
 	
 }

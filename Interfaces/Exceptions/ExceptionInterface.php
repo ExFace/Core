@@ -54,7 +54,7 @@ interface ExceptionInterface extends iCanBeConvertedToUxon, iCanGenerateDebugWid
 	public function set_alias($string);
 	
 	/**
-	 * Returns the unique identifier of this exception (exceptions thrown at the same line a different times will have differnt ids!)
+	 * Returns the unique identifier of this exception (exceptions thrown at the same line at different times will have differnt ids!)
 	 * @return string
 	 */
 	public function get_id();

@@ -49,6 +49,7 @@ class Text extends AbstractWidget implements iShowSingleAttribute, iHaveValue, i
 	
 	public function set_attribute_alias($value) {
 		$this->attribute_alias = $value;
+		return $this;
 	}
 	
 	/**

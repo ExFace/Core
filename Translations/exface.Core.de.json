@@ -61,6 +61,7 @@
 	"WIDGET.INPUT.EMPTY_TEXT": "",
 	
 	"ERROR.CAPTION": "Fehler",
+	"ERROR.STACKTRACE_CAPTION": "Stacktrace",
 	"ERROR.REQUEST_CAPTION": "Request",
 	"WARNING.CAPTION": "Warnung"
 }
