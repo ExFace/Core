@@ -153,5 +153,16 @@ class ObjectBasketContext extends AbstractContext {
 		return $this;
 	}
 	
+	/**
+	 * 
+	 * @param string $object_id
+	 * @param string $uid
+	 * @return \exface\Core\Contexts\Types\ObjectBasketContext
+	 */
+	public function remove_instance($object_id, $uid){
+		$this->get_favorites_by_object_id($object_id)->remove_by_key($uid);
+		return $this;
+	}
+	
 }
 ?>

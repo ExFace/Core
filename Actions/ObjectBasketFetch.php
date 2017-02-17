@@ -62,14 +62,22 @@ class ObjectBasketFetch extends ObjectBasketAdd {
 		$table->prefill($prefill_sheet);
 		$dialog->add_widget($table);
 		
+		// Add action buttons
 		foreach($meta_object->get_actions()->get_used_in_object_basket() as $a){
 			/* @var $button \exface\Core\Widgets\Button */
-			$button = WidgetFactory::create($dialog->get_page(), 'Button', $dialog);
+			$button = WidgetFactory::create($dialog->get_page(), 'DialogButton', $dialog);
 			$button->set_action($a);
 			$button->set_align(EXF_ALIGN_LEFT);
 			$button->set_input_widget($table);
 			$dialog->add_button($button);
 		}
+		
+		// Add remove button
+		$button = WidgetFactory::create($dialog->get_page(), 'DialogButton', $dialog);
+		$button->set_action_alias('exface.Core.ObjectBasketRemove');
+		$button->set_input_widget($table);
+		$button->set_align(EXF_ALIGN_LEFT);
+		$dialog->add_button($button);
 		
 		/* IDEA delegate dialog rendering to ShowDialog action. Probably need to override get_result_output in this case...
 		$action = $this->get_app()->get_action('ShowDialog');

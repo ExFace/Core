@@ -19,7 +19,9 @@
 	"ACTION.OBJECTBASKETADD.NAME": "In den Objektkorb legen",
 	"ACTION.OBJECTBASKETADD.RESULT": "%number% Objekte hinzugefügt.",
 	"ACTION.OBJECTBASKETFETCH.NAME": "Objektkorb anzeigen",
-	"ACTION.OBJECTBASKETREMOVE.NAME": "Aus dem Objektkorb entfernen",
+	"ACTION.OBJECTBASKETREMOVE.NAME": "Entfernen",
+	"ACTION.OBJECTBASKETREMOVE.RESULT": "%number%x %object_name% entfernt.",
+	"ACTION.OBJECTBASKETREMOVE.RESULT_ALL": "Alle Objekte vom Typ %object_name% entfernt.",
 	
 	"ACTION.GOBACK.NAME": "Back",
 	"ACTION.GOTOURL.NAME": "Visit URL",

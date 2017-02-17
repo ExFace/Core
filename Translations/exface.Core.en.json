@@ -19,7 +19,9 @@
 	"ACTION.OBJECTBASKETADD.NAME": "Add to object basket",
 	"ACTION.OBJECTBASKETADD.RESULT": "%number% objects added to object basket.",
 	"ACTION.OBJECTBASKETFETCH.NAME": "Show object basket",
-	"ACTION.OBJECTBASKETREMOVE.NAME": "Remove from object basket",
+	"ACTION.OBJECTBASKETREMOVE.NAME": "Remove",
+	"ACTION.OBJECTBASKETREMOVE.RESULT": "%number%x %object_name% removed.",
+	"ACTION.OBJECTBASKETREMOVE.RESULT_ALL": "All objects of type %object_name% removed.",
 	
 	"ACTION.GOBACK.NAME": "Back",
 	"ACTION.GOTOURL.NAME": "Visit URL",
