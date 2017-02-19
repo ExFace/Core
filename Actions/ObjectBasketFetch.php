@@ -30,11 +30,11 @@ class ObjectBasketFetch extends ObjectBasketAdd {
 	
 	protected function get_favorites_json(){
 		$result = array();
-		foreach ($this->get_context()->get_favorites_all() as $fav_list){
+		foreach ($this->get_context()->get_favorites_all() as $data_sheet){
 			$result[] = array(
-					'object_id' => $fav_list->get_meta_object()->get_id(),
-					'object_name' => $fav_list->get_meta_object()->get_name(),
-					'instances' => $fav_list->export_uxon_object()
+					'object_id' => $data_sheet->get_meta_object()->get_id(),
+					'object_name' => $data_sheet->get_meta_object()->get_name(),
+					'instance_counter' => $data_sheet->count_rows()
 			);
 			
 		}
@@ -55,11 +55,7 @@ class ObjectBasketFetch extends ObjectBasketAdd {
 		$table->set_paginate(false);
 		$table->set_hide_toolbar_bottom(true);
 		$table->set_multi_select(true);
-		$prefill_sheet = DataSheetFactory::create_from_object($meta_object);
-		foreach ($this->get_context()->get_favorites_by_object($meta_object)->get_all() as $instance){
-			$prefill_sheet->add_row($instance->export_uxon_object()->to_array());
-		}
-		$table->prefill($prefill_sheet);
+		$table->prefill($this->get_context()->get_favorites_by_object($meta_object));
 		$dialog->add_widget($table);
 		
 		// Add action buttons

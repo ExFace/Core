@@ -3,19 +3,47 @@
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\Model\Object;
 use exface\Core\Exceptions\Contexts\ContextOutOfBoundsError;
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\Factories\DataSheetFactory;
+use exface\Core\Exceptions\Contexts\ContextRuntimeError;
 
 /**
  * The ObjectBasketContext provides a unified interface to store links to selected instances of meta objects in any context scope.
  * If used in the WindowScope it can represent "pinned" objects, while in the UserScope it can be used to create favorites for this
  * user.
  * 
- * It is a bit similar to the DataContext, but it is specific to meta object instances.
+ * Technically it stores a data sheet with instances for each object in the basket. Regardless of the input, this sheet will always
+ * contain the default display columns.
  * 
  * @author Andrej Kabachnik
  *
  */
 class ObjectBasketContext extends AbstractContext {
 	private $favorites = array();
+	
+	public function add(DataSheetInterface $data_sheet){
+		if (!$data_sheet->get_uid_column()){
+			throw new ContextRuntimeError($this, 'Cannot add object "' . $this->get_input_data_sheet()->get_meta_object()->get_alias_with_namespace() . '" to object basket: missing UID-column "' . $this->get_input_data_sheet()->get_meta_object()->get_uid_alias() . '"!', '6TMQR5N');
+		}
+		
+		$basket_data = $this->create_basket_sheet($data_sheet->get_meta_object());
+		$basket_data->import_rows($data_sheet);
+		if (!$basket_data->is_fresh()){
+			$basket_data->add_filter_in_from_string($data_sheet->get_uid_column()->get_name(), $data_sheet->get_uid_column()->get_values(false));
+			$basket_data->data_read();
+		}
+		
+		$this->get_favorites_by_object_id($data_sheet->get_meta_object()->get_id())->add_rows($basket_data->get_rows(), true);
+		return $this;
+	}
+	
+	protected function create_basket_sheet(Object $object){
+		$ds = DataSheetFactory::create_from_object($object);
+		foreach ($object->get_attributes()->get_default_display_list() as $attr){
+			$ds->get_columns()->add_from_attribute($attr);
+		}
+		return $ds;
+	}
 	
 	protected function get_object_from_input($meta_object_or_alias_or_id){
 		if ($meta_object_or_alias_or_id instanceof Object){
@@ -26,35 +54,8 @@ class ObjectBasketContext extends AbstractContext {
 		return $object;
 	}
 	
-	public function add_instance($object_id, $uid, $label = null){
-		$this->get_favorites_by_object_id($object_id)->add_instance($uid, $label);
-		/*$object = $this->get_object_from_input($meta_object_or_alias_or_id);
-		$this->favorites[$object->get_id()][$uid] = array(
-				$object->get_uid_alias() => $uid,
-				$object->get_label_alias() => $label,
-				$this->get_workbench()->get_config()->get_option('OBJECT_LABEL_ALIAS') => $label
-				
-		);*/
-		return $this;
-	}
-	
-	public function add_instances($object_id, array $instances){
-		$object = $this->get_workbench()->model()->get_object_by_id($object_id);
-		foreach ($instances as $instance){
-			if (is_array($instance) || $instance instanceof \stdClass){
-				$instance = (array) $instance;
-				$uid = $instance[$object->get_uid_alias()];
-				$label = $instance[$object->get_label_alias()];
-			} else {
-				$uid = $instance;
-			}
-			$this->add_instance($object_id, $uid, $label);
-		}
-		return $this;
-	}
-	
 	/**
-	 * @return ObjectBasketInstanceList[]
+	 * @return DataSheetInterface[]
 	 */
 	public function get_favorites_all(){
 		return $this->favorites;
@@ -63,13 +64,13 @@ class ObjectBasketContext extends AbstractContext {
 	/**
 	 * 
 	 * @param string $object_id
-	 * @return ObjectBasketInstanceList
+	 * @return DataSheetInterface
 	 */
 	public function get_favorites_by_object_id($object_id){
-		if (!($this->favorites[$object_id] instanceof ObjectBasketInstanceList)){
-			$exface = $this->get_workbench();
-			$object = $exface->model()->get_object_by_id($object_id);
-			$this->favorites[$object_id] = new ObjectBasketInstanceList($exface, $object);
+		if (!$this->favorites[$object_id]){
+			$this->favorites[$object_id] = DataSheetFactory::create_from_object_id_or_alias($this->get_workbench(), $object_id);
+		} elseif (($this->favorites[$object_id] instanceof \stdClass) || is_array($this->favorites[$object_id])){
+			$this->favorites[$object_id] = DataSheetFactory::create_from_anything($this->get_workbench(), $this->favorites[$object_id]);
 		}
 		return $this->favorites[$object_id];
 	}
@@ -77,7 +78,7 @@ class ObjectBasketContext extends AbstractContext {
 	/**
 	 * 
 	 * @param Object $object
-	 * @return ObjectBasketInstanceList
+	 * @return DataSheetInterface
 	 */
 	public function get_favorites_by_object(Object $object){
 		return $this->get_favorites_by_object_id($object->get_id());
@@ -87,7 +88,7 @@ class ObjectBasketContext extends AbstractContext {
 	 * 
 	 * @param string $alias_with_namespace
 	 * @throws ContextOutOfBoundsError
-	 * @return ObjectBasketInstanceList
+	 * @return DataSheetInterface
 	 */
 	public function get_favorites_by_object_alias($alias_with_namespace){
 		$object = $this->get_workbench()->model()->get_object_by_alias($alias_with_namespace);
@@ -113,8 +114,8 @@ class ObjectBasketContext extends AbstractContext {
 	 * @see \exface\Core\Contexts\Types\AbstractContext::import_uxon_object()
 	 */
 	public function import_uxon_object(UxonObject $uxon){
-		foreach ((array) $uxon as $object_id => $instances){
-			$this->add_instances($object_id, (array) $instances);
+		foreach ((array) $uxon as $object_id => $data_uxon){
+			$this->favorites[$object_id] = DataSheetFactory::create_from_uxon($this->get_workbench(), $data_uxon);
 		}
 	}
 	
@@ -122,11 +123,9 @@ class ObjectBasketContext extends AbstractContext {
 	 * The favorites context is exported to the following UXON structure:
 	 * {
 	 * 		object_id1: { 
-	 * 			uid1: {
-	 * 				UID_attribute_alias: uid1,
-	 * 				LABEL_attribute_alias: label1
-	 * 			},
-	 * 			uid2: {...}
+	 * 			uid1: { data sheet },
+	 * 			uid2: { data sheet },
+	 * 			...
 	 * 		}
 	 * 		object_id2: ...
 	 * }
@@ -135,9 +134,9 @@ class ObjectBasketContext extends AbstractContext {
 	 */
 	public function export_uxon_object(){
 		$uxon = $this->get_workbench()->create_uxon_object();
-		foreach ($this->get_favorites_all() as $object_id => $favorites){
-			if (!$favorites->is_empty()) {
-				$uxon->set_property($object_id, $favorites->export_uxon_object());
+		foreach ($this->get_favorites_all() as $object_id => $data_sheet){
+			if (!$data_sheet->is_empty()) {
+				$uxon->set_property($object_id, $data_sheet->export_uxon_object());
 			}
 		}
 		return $uxon;
@@ -160,7 +159,7 @@ class ObjectBasketContext extends AbstractContext {
 	 * @return \exface\Core\Contexts\Types\ObjectBasketContext
 	 */
 	public function remove_instance($object_id, $uid){
-		$this->get_favorites_by_object_id($object_id)->remove_by_key($uid);
+		$this->get_favorites_by_object_id($object_id)->remove_rows_by_uid($uid);
 		return $this;
 	}
 	

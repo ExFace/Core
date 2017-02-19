@@ -141,12 +141,30 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied {
 	public function copy();
 	
 	/**
-	 * Returns the sequential number of the row, that contains the given value or FALSE if none of the cells of this column match the value.
+	 * Returns the sequential number of the first row, that contains the given value or FALSE if none of the 
+	 * cells of this column match the value. It's a shortcut to getting the first element of find_rows_by_value(),
+	 * which is very handy for searching the UID column (which should not contain multiple rows with the same value).
+	 * 
 	 * @param string $cell_value
 	 * @param boolean $case_sensitive
 	 * @return integer
 	 */
 	public function find_row_by_value($cell_value, $case_sensitive = false);
+	
+	/**
+	 * Returns an array of sequential numbers of all rows, that contain the given value. If the value could not be
+	 * found, the returned array will be empty.
+	 * 
+	 * If a single matching row is expected, find_row_by_value() is a better choice. It will return the row number
+	 * of the first match right away instead of an array.
+	 * 
+	 * @see find_row_by_value()
+	 *
+	 * @param string $cell_value
+	 * @param boolean $case_sensitive
+	 * @return integer[]
+	 */
+	public function find_rows_by_value($cell_value, $case_sensitive = false);
 	
 	/**
 	 * Returns an array with all values of this column, which are not present in another one. It does not matter,
