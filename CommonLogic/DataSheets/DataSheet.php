@@ -29,6 +29,7 @@ use exface\Core\Exceptions\DataSheets\DataSheetColumnNotFoundError;
 use exface\Core\Exceptions\DataSheets\DataSheetRuntimeError;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\Exceptions\DataSheets\DataSheetReadError;
+use exface\Core\Exceptions\DataSheets\DataSheetMissingRequiredValueError;
 
 /**
  * Internal data respresentation object in exface. Similar to an Excel-table:
@@ -480,6 +481,7 @@ class DataSheet implements DataSheetInterface {
 			}
 		}
 		
+		// IDEA do we always need to to evaluate expressions of each column? Maybe do it only if the expression is a formula?
 		foreach ($this->get_columns() as $name => $col){
 			$vals = $col->get_expression_obj()->evaluate($this, $name);
 			if (is_array($vals)){
@@ -783,7 +785,11 @@ class DataSheet implements DataSheetInterface {
 					}
 				}
 			} else {
-				$req_col->set_values_from_defaults();
+				try {
+					$req_col->set_values_from_defaults();
+				} catch (DataSheetRuntimeError $e){
+					throw new DataSheetMissingRequiredValueError($this, 'Required attribute "' . $req->get_name() . '" (alias "' . $req->get_alias() . '") not set in at least one row!', null, $e);
+				}
 			}
 		}
 		
