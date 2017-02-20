@@ -63,6 +63,7 @@ class DataTable extends Data implements iHaveTopToolbar, iHaveBottomToolbar, iFi
 	private $show_filter_row = false;
 	private $show_row_numbers = false;
 	private $multi_select = false;
+	private $multi_select_all_initially = false;
 	private $striped = true;
 	private $nowrap = true;
 	private $auto_row_height = true;
@@ -457,6 +458,28 @@ class DataTable extends Data implements iHaveTopToolbar, iHaveBottomToolbar, iFi
 	 */
 	public function set_values_from_array(array $values){
 		$this->set_value(implode(EXF_LIST_SEPARATOR, $values));
+		return $this;
+	}
+	
+	/**
+	 * Returns TRUE all rows should be selected initially and FALSE otherwise. This only works with multi_select=true and no lazy loading.
+	 * @return boolean
+	 */
+	public function get_multi_select_all_initially(){
+		return $this->get_multi_select() && !$this->get_lazy_loading() ? $this->multi_select_all_initially : false;
+	}
+	
+	/**
+	 * Set to TRUE to make all rows be selected initially. This only works with multi_select=true and no lazy loading!
+	 * 
+	 * @uxon-property multi_select_all_initially
+	 * @uxon-type boolean
+	 * 
+	 * @param boolean $true_or_false
+	 * @return DataTable
+	 */
+	public function set_multi_select_all_initially($true_or_false){
+		$this->multi_select_all_initially = $true_or_false ? true : false;
 		return $this;
 	}
 }
