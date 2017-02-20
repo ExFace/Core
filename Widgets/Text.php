@@ -24,7 +24,7 @@ class Text extends AbstractWidget implements iShowSingleAttribute, iHaveValue, i
 	private $style = null;
 	private $aggregate_function = null;
 	private $ignore_default_value = null;
-	private $empty_text = false;
+	private $empty_text = null;
 	
 	public function get_text() {
 		if (is_null($this->text)){
