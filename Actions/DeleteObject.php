@@ -23,7 +23,7 @@ class DeleteObject extends AbstractAction implements iDeleteData {
 
 		if (count($instances) > 0){
 			$ds->add_filter_in_from_string($obj->get_uid_alias(), $instances);
-			$this->set_affected_rows($this->get_affected_rows() + $ds->data_delete());
+			$this->set_affected_rows($this->get_affected_rows() + $ds->data_delete($this->get_transaction()));
 		}
 		$this->set_result('');
 		$this->set_result_message($this->translate('RESULT', array('%number%' => $this->get_affected_rows()), $this->get_affected_rows()));

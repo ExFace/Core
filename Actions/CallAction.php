@@ -153,5 +153,13 @@ class CallAction extends AbstractAction {
 		return $this;
 	}
 	
+	public function get_transaction(){
+		return $this->get_action()->get_transaction();
+	}
+	
+	public function set_transaction($transaction){
+		$this->get_action()->set_transaction($transaction);
+		return $this;
+	}
 	  
 }

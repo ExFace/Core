@@ -4,6 +4,7 @@ use exface\Core\Factories\WidgetFactory;
 use exface\Core\CommonLogic\Model\Attribute;
 use exface\Core\Interfaces\Widgets\iCanBeRequired;
 use exface\Core\Interfaces\Widgets\iHaveValue;
+use exface\Core\Interfaces\Widgets\iTakeInput;
 
 /**
  * A filter is a wrapper widget, which typically consist of one or more input widgets. The purpose of filters is to enable the user to
@@ -23,7 +24,7 @@ class Filter extends Container implements iCanBeRequired {
 	
 	/**
 	 * Returns the widget used to interact with the filter (typically some kind of input widget)
-	 * @return \exface\Core\Widgets\AbstractWidget
+	 * @return iTakeInput
 	 */
 	public function get_widget() {
 		if (!$this->widget){
@@ -34,7 +35,7 @@ class Filter extends Container implements iCanBeRequired {
 	
 	/**
 	 * Sets the widget used to interact with the filter (typically some kind of input widget)
-	 * @param \exface\widget\AbstractWidget || \stdClass $widget_or_uxon_object
+	 * @param iTakeInput||\stdClass $widget_or_uxon_object
 	 * @return \exface\Core\Widgets\Filter
 	 */
 	public function set_widget($widget_or_uxon_object) {
@@ -163,6 +164,24 @@ class Filter extends Container implements iCanBeRequired {
 		}
 		return parent::set_disabled($value);
 	}  
-	  
+	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\Widgets\iHaveValue::get_empty_text()
+	 */
+	public function get_empty_text(){
+		return $this->get_widget()->get_empty_text();
+	}
+	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\Widgets\iHaveValue::set_empty_text()
+	 */
+	public function set_empty_text($value){
+		$this->get_widget()->set_empty_text($value);
+		return $this;
+	}
 }
 ?>

@@ -94,7 +94,7 @@ class DataColumn implements DataColumnInterface {
 	/**
 	 * 
 	 * {@inheritDoc}
-	 * @see \exface\Core\Interfaces\ExfaceClassInterface::exface()
+	 * @see \exface\Core\Interfaces\ExfaceClassInterface::get_workbench()
 	 */
 	public function get_workbench(){
 		return $this->get_data_sheet()->get_workbench();
@@ -367,6 +367,26 @@ class DataColumn implements DataColumnInterface {
 			foreach ($this->get_values(false) as $row_nr => $row_val){
 				if (strcasecmp($cell_value, $row_val) === 0){
 					$result = $row_nr;
+					break;
+				}
+			}
+		}
+		return $result;
+	}
+	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::find_rows_by_value()
+	 */
+	public function find_rows_by_value($cell_value, $case_sensitive = false){
+		$result = array();
+		if ($case_sensitive){
+			$result = array_keys($this->get_values(false), $cell_value);
+		} else {
+			foreach ($this->get_values(false) as $row_nr => $row_val){
+				if (strcasecmp($cell_value, $row_val) === 0){
+					$result[] = $row_nr;
 				}
 			}
 		}

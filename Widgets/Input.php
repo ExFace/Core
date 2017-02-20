@@ -135,6 +135,20 @@ class Input extends Text implements iTakeInput, iHaveDefaultValue {
 		$this->ignore_default_value = $value ? true : false;
 		return $this;
 	}
+	
+	/**
+	 * Inputs have a separate default placeholder value (mostly none). Placeholders should be specified manually for each
+	 * widget to give the user a helpful hint.
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Widgets\Text::get_empty_text()
+	 */
+	public function get_empty_text(){
+		if (parent::get_empty_text() == $this->translate('WIDGET.TEXT.EMPTY_TEXT')){
+			parent::set_empty_text($this->translate('WIDGET.INPUT.EMPTY_TEXT'));
+		}
+		return parent::get_empty_text();
+	}
   
 }
 ?>

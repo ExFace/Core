@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\Interfaces\Widgets;
-interface iHaveTopToolbar {
+use exface\Core\Interfaces\WidgetInterface;
+
+interface iHaveTopToolbar extends WidgetInterface {
 	function get_hide_toolbar_top();
 	function set_hide_toolbar_top($boolean);
 	function get_hide_toolbars();

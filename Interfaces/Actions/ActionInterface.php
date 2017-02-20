@@ -10,6 +10,7 @@ use exface\Core\Interfaces\TemplateInterface;
 use exface\Core\Exceptions\Actions\ActionObjectNotSpecifiedError;
 use exface\Core\Exceptions\Actions\ActionInputError;
 use exface\Core\Interfaces\iCanBeCopied;
+use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 
 interface ActionInterface extends ExfaceClassInterface, AliasInterface, iCanBeCopied {
 	
@@ -267,6 +268,39 @@ interface ActionInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
 	 * @return ActionInterface
 	 */
 	public function set_name($value);
+	
+	/**
+	 * Returns the data transaction, the action runs in. Most action should run in a single transactions, so it is a good
+	 * practice to use the action's transaction for all data source operations. If not transaction was set explicitly
+	 * via set_transaction(), a new transaction will be started automatically.
+	 * 
+	 * @return DataTransactionInterface
+	 */
+	public function get_transaction();
+	
+	/**
+	 * Sets the main data transaction used in this action.
+	 * 
+	 * @param DataTransactionInterface $transaction
+	 * @return ActionInterface
+	 */
+	public function set_transaction(DataTransactionInterface $transaction);
+	
+	/**
+	 * Returns TRUE if the action will perform a commit on it's data transaction after it was performed and if data was modified.
+	 * 
+	 * @return boolean
+	 */
+	public function get_autocommit();
+	
+	/**
+	 * Set to FALSE to force the action not to perform a commit on it's data transaction after the action had been performed.
+	 * By default, the action will commit the transaction automatically.
+	 * 
+	 * @param boolean $true_or_false
+	 * @return ActionInterface
+	 */
+	public function set_autocommit($true_or_false);
 }
 
 ?>

@@ -78,7 +78,7 @@ class AttributeList extends EntityList {
 	/**
 	 * Returns a new attribute list with all attributes of the given data type
 	 * @param string $data_type_alias
-	 * @return AttributeList
+	 * @return AttributeList|Attribute[]
 	 */
 	public function get_by_data_type_alias($data_type_alias){
 		$object = $this->get_meta_object();
@@ -93,7 +93,7 @@ class AttributeList extends EntityList {
 	
 	/**
 	 * Returns a new attribute list containig only attributes marked as required
-	 * @return AttributeList
+	 * @return AttributeList|Attribute[]
 	 */
 	function get_required(){
 		$object = $this->get_meta_object();
@@ -107,8 +107,9 @@ class AttributeList extends EntityList {
 	}
 	
 	/**
+	 * Returns system attributes.
 	 * 
-	 * @return \exface\Core\CommonLogic\Model\AttributeList
+	 * @return AttributeList|Attribute[]
 	 */
 	public function get_system(){
 		$object = $this->get_meta_object();
@@ -125,7 +126,8 @@ class AttributeList extends EntityList {
 	 * Returns a list with all attributes, marked for the default display of the object sorted by default_display_order
 	 * The list can then be easily used to create widgets to display the object without the user having to
 	 * specify which particular attributes to display.
-	 * @return AttributeList
+	 * 
+	 * @return AttributeList|Attribute[]
 	 */
 	function get_default_display_list(){
 		$object = $this->get_meta_object();

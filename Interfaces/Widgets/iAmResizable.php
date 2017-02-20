@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\Interfaces\Widgets;
-interface iAmResizable {
+use exface\Core\Interfaces\WidgetInterface;
+
+interface iAmResizable extends WidgetInterface {
 	
 	/**
 	 * Returs TRUE if the widget is resizable, FALSE otherwise

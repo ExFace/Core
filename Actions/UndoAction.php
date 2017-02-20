@@ -31,7 +31,7 @@ class UndoAction extends AbstractAction implements iUndoActions {
 			if ($undo_action->is_undoable()){
 				// IDEA To make the undo itself undoable, we need to instantiate and perform an undo action for every step. In this case,
 				// we could again undo the undos in the same order.
-				$result = $undo_action->undo();
+				$result = $undo_action->undo($this->get_transaction());
 				$this->undone_actions++;
 			} else {
 				throw new ActionUndoFailedError($this, 'Cannot undo action "' . $undo_action->get_alias_with_namespace() . '". This type of action cannot be undone!', '6T5DT14');

@@ -215,17 +215,17 @@ class ConditionGroup implements iCanBeConvertedToUxon, iCanBeCopied {
 			$uxon->conditions[] = $cond->export_uxon_object();
 		}
 		foreach ($this->get_nested_groups() as $group){
-			$uxon->nested_groups = $group->export_uxon_object();
+			$uxon->nested_groups[] = $group->export_uxon_object();
 		}
 		return $uxon;
 	}
 	
 	public function import_uxon_object(UxonObject $uxon){
-		$this->set_operator($uxon->operator);
-		foreach ($uxon->conditions as $cond){
+		$this->set_operator($uxon->get_property('operator'));
+		foreach ($uxon->get_property('conditions') as $cond){
 			$this->add_condition(ConditionFactory::create_from_object_or_array($this->exface, $cond));
 		}
-		foreach ($uxon->nested_groups as $group){
+		foreach ($uxon->get_property('nested_groups') as $group){
 			$this->add_nested_group(ConditionGroupFactory::create_from_object_or_array($this->exface, $group));
 		}
 	}

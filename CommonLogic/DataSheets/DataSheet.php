@@ -85,10 +85,11 @@ class DataSheet implements DataSheetInterface {
 	 * {@inheritDoc}
 	 * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::add_rows($rows)
 	 */
-	public function add_rows(array $rows){
+	public function add_rows(array $rows, $merge_uid_dublicates = false){
 		foreach ($rows as $row){
-			$this->add_row((array)$row);
+			$this->add_row((array)$row, $merge_uid_dublicates);
 		}
+		return $this;
 	}
 	
 	/**
@@ -96,9 +97,18 @@ class DataSheet implements DataSheetInterface {
 	 * {@inheritDoc}
 	 * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::add_row()
 	 */
-	public function add_row(array $row){
+	public function add_row(array $row, $merge_uid_dublicates = false){
 		if (count($row) > 0){
-			$this->rows[] = $row;
+			if ($merge_uid_dublicates && $this->get_uid_column() && $uid = $row[$this->get_uid_column()->get_name()]){
+				$uid_row_nr = $this->get_uid_column()->find_row_by_value($uid);
+				if ($uid_row_nr !== false){
+					$this->rows[$uid_row_nr] = array_merge($this->rows[$uid_row_nr], $row);
+				} else {
+					$this->rows[] = $row;
+				}
+			} else {
+				$this->rows[] = $row;
+			}
 			// ensure, that all columns used in the rows are present in the data sheet
 			$this->get_columns()->add_multiple(array_keys((array)$row));
 			$this->set_fresh(true);
@@ -1080,7 +1090,7 @@ class DataSheet implements DataSheetInterface {
 	}
 	
 	public function remove_rows_for_column($column_name){
-		foreach ($this->get_rows() as $id => $row){
+		foreach (array_keys($this->get_rows()) as $id){
 			unset($this->rows[$id][$column_name]);
 			if (count($this->rows[$id]) == 0){
 				$this->remove_row($id);
@@ -1198,8 +1208,8 @@ class DataSheet implements DataSheetInterface {
 	public function import_uxon_object(UxonObject $uxon){
 		
 		// Columns
-		if (is_array($uxon->columns)){
-			foreach ($uxon->columns as $col){
+		if (is_array($uxon->get_property('columns'))){
+			foreach ($uxon->get_property('columns') as $col){
 				if ($col instanceof UxonObject){
 					$column = DataColumnFactory::create_from_uxon($this, $col);
 					$this->get_columns()->add($column);
@@ -1210,15 +1220,17 @@ class DataSheet implements DataSheetInterface {
 		}
 		
 		// Rows
-		if (is_array($uxon->rows)){
-			$this->add_rows($uxon->rows);
+		if ($rows = $uxon->get_property('rows')){
+			if (is_array($rows) || ($rows instanceof UxonObject && !$rows->is_empty())){
+				$this->add_rows((array) $rows);
+			}
 		}
 		
 		// Totals - ony for backwards compatibilty for times, where the totals functions were 
 		// defined outside the column definition.
 		// IMPORTANT: This must happen AFTER columns and row were created, since totals are added to existing columns!
-		if (is_array($uxon->totals_functions) || $uxon->totals_functions instanceof \stdClass){
-			foreach ((array) $uxon->totals_functions as $column_name => $functions){
+		if (is_array($uxon->get_property('totals_functions')) || $uxon->get_property('totals_functions') instanceof \stdClass){
+			foreach ((array) $uxon->get_property('totals_functions') as $column_name => $functions){
 				if (!$column = $this->get_columns()->get($column_name)){
 					$column = $this->get_columns()->add_from_expression($column_name);
 				}
@@ -1234,23 +1246,23 @@ class DataSheet implements DataSheetInterface {
 			}
 		}
 	
-		if ($uxon->filters){
-			$this->set_filters(ConditionGroupFactory::create_from_object_or_array($this->exface, $uxon->filters));
+		if ($uxon->has_property('filters')){
+			$this->set_filters(ConditionGroupFactory::create_from_object_or_array($this->exface, $uxon->get_property('filters')));
 		}
 		
-		if (isset($uxon->rows_on_page)){
-			$this->set_rows_on_page($uxon->rows_on_page);
+		if ($uxon->has_property('rows_on_page')){
+			$this->set_rows_on_page($uxon->get_property('rows_on_page'));
 		}
 		
-		if (isset($uxon->row_offset)){
-			$this->set_row_offset($uxon->row_offset);
+		if ($uxon->has_property('row_offset')){
+			$this->set_row_offset($uxon->get_property('row_offset'));
 		}
 		
-		if (is_array($uxon->sorters)){
-			$this->get_sorters()->import_uxon_array($uxon->sorters);
+		if (is_array($uxon->get_property('sorters'))){
+			$this->get_sorters()->import_uxon_array($uxon->get_property('sorters'));
 		}
-		if (is_array($uxon->aggregators)){
-			$this->get_aggregators()->import_uxon_array($uxon->aggregators);
+		if (is_array($uxon->get_property('aggregators'))){
+			$this->get_aggregators()->import_uxon_array($uxon->get_property('aggregators'));
 		}
 	}
 	
@@ -1274,6 +1286,22 @@ class DataSheet implements DataSheetInterface {
 		return $this;
 	}
 	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::remove_rows_by_uid()
+	 */
+	public function remove_rows_by_uid($uid){
+		// Do nothing if there is no UID column
+		if (!$this->get_uid_column()){
+			return $this;
+		}
+		foreach ($this->get_uid_column()->find_rows_by_value($uid) as $row_number){
+			$this->remove_row($row_number);
+		}
+		return $this;
+	}
+	
 	public function add_filter_from_column_values(DataColumnInterface $column){
 		$this->add_filter_from_string($column->get_expression_obj()->to_string(), implode(EXF_LIST_SEPARATOR, array_unique($column->get_values(false))), EXF_COMPARATOR_IN);
 		return $this;
@@ -1290,6 +1318,17 @@ class DataSheet implements DataSheetInterface {
 		} else {
 			return false;
 		}
+	}
+	
+	public function is_blank(){
+		if ($this->is_unfiltered() && $this->is_empty()){
+			return true;
+		}
+		return false;
+	}
+	
+	public function is_unsorted(){
+		return $this->get_sorters()->is_empty() ? true : false;
 	}
 	
 	protected function set_fresh($value){

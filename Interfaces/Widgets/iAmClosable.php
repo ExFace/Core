@@ -1,5 +1,7 @@
 <?php
 namespace exface\Core\Interfaces\Widgets;
-interface iAmClosable {
+use exface\Core\Interfaces\WidgetInterface;
+
+interface iAmClosable extends WidgetInterface {
 	  
 }

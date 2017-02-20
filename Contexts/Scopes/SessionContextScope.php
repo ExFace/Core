@@ -3,6 +3,7 @@
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Contexts\ContextInterface;
 use exface\Core\Exceptions\Contexts\ContextNotFoundError;
+use exface\Core\Exceptions\RuntimeException;
 
 /**
  * The session context scope represents the PHP session (on server side). Contexts in this scope live as long as
@@ -134,14 +135,29 @@ class SessionContextScope extends AbstractContextScope {
 	
 	/**
 	 * Opens the curernt session for writing. Creates a new session, if there is no session yet
-	 * @return WindowContextScope
+	 * @return SessionContextScope
 	 */
 	protected function session_open(){
 		if (!$this->session_is_open()){
-			if ($this->session_id){
-				session_name($this->session_id);
+			// If there is a session id saved in the context, this session was already loaded into it, so the next time
+			// we need to open exactly the same session!
+			if ($this->get_session_id()){
+				session_id($this->get_session_id());
 			}
-			session_start();
+			
+			// It is important to wrap session_start() in a try-catch-block because it can produce warnings on certain
+			// occasions (e.g. if the session uses cookies and the headers were already sent at this point), that may be
+			// converted to exceptions if a corresponding error handler is being used. Exceptions would prevent the
+			// rest of the code from being executed and, thus, the purpose of opening the session will not be fulfilled.
+			// To prevent this, we simply catch any exception and check if the session is really open afterwards - if not,
+			// a meaningfull exception is thrown.
+			try {
+				session_start();
+			} catch (\Throwable $e){
+				if (!$this->session_is_open()){
+					throw new RuntimeException('Opening the session for the session context scope failed: ' . $e->getMessage(), null, $e);
+				}
+			}
 		} else {
 			$this->set_session_id(session_id());
 		}
@@ -151,10 +167,10 @@ class SessionContextScope extends AbstractContextScope {
 	/**
 	 * Closes the session, but does not empty the context data. This way, the session is not locked any more and can be used by
 	 * other threads/processes
-	 * @return WindowContextScope
+	 * @return SessionContextScope
 	 */
 	protected function session_close(){
-		if (!$this->session_id){
+		if (!$this->get_session_id()){
 			$this->set_session_id(session_id());
 		}
 		session_write_close();

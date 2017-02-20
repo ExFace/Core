@@ -18,7 +18,7 @@ class Condition implements iCanBeConvertedToUxon {
 	private $exface = NULL;
 	private $expression = NULL;
 	private $value = NULL;
-	private $comparator = NULL;
+	private $comparator = EXF_COMPARATOR_IS;
 	private $data_type = NULL;
 	
 	/**
@@ -73,6 +73,9 @@ class Condition implements iCanBeConvertedToUxon {
 	 * @return string
 	 */
 	public function get_comparator() {
+		if (is_null($this->comparator)){
+			$this->comparator = EXF_COMPARATOR_IS;
+		}
 		return $this->comparator;
 	}
 	
@@ -154,9 +157,16 @@ class Condition implements iCanBeConvertedToUxon {
 	 * @param UxonObject $uxon_object
 	 */
 	public function import_uxon_object(UxonObject $uxon_object){
-		$this->set_expression($this->exface->model()->parse_expression($uxon_object->expression, $this->exface->model()->get_object($uxon_object->object_alias)));
-		$this->set_comparator($uxon_object->comparator);
-		$this->set_value($uxon_object->value);
+		if ($uxon_object->has_property('expression')){
+			$expression = $uxon_object->get_property('expression');
+		} elseif ($uxon_object->has_property('attribute_alias')){
+			$expression = $uxon_object->get_property('attribute_alias');
+		}
+		$this->set_expression($this->exface->model()->parse_expression($expression, $this->exface->model()->get_object($uxon_object->get_property('object_alias'))));
+		if ($uxon_object->has_property('comparator')){
+			$this->set_comparator($uxon_object->get_property('comparator'));
+		} 
+		$this->set_value($uxon_object->get_property('value'));
 	}
 	
 	public function get_model(){

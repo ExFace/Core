@@ -60,10 +60,10 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 	private $values_data_sheet = null;
 	
 	/**
-	 * @uxon text_empty The text to be displayed, if there are no data records
+	 * @uxon empty_text The text to be displayed, if there are no data records
 	 * @var string
 	 */
-	private $text_empty = null;
+	private $empty_text = null;
 	
 	protected function init(){
 		parent::init();
@@ -654,9 +654,6 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 	 * @see \exface\Core\Widgets\AbstractWidget::prefill()
 	 */
 	protected function do_prefill(\exface\Core\Interfaces\DataSheets\DataSheetInterface $data_sheet){
-		// First, take care of basic stuff like set_prefill_data()
-		parent::do_prefill($data_sheet);
-		// Now do the widget specific prefill
 		if ($data_sheet->get_meta_object()->is_exactly($this->get_meta_object())){
 			// If the prefill data is based on the same object as the widget, inherit the filter conditions from the prefill
 			foreach ($data_sheet->get_filters()->get_conditions() as $condition){
@@ -1090,11 +1087,11 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 		return $result;
 	}
 	
-	public function get_text_empty() {
-		if (!$this->text_empty){
-			$this->text_empty = $this->translate('WIDGET.DATA.NO_DATA_FOUND');
+	public function get_empty_text() {
+		if (!$this->empty_text){
+			$this->empty_text = $this->translate('WIDGET.DATA.NO_DATA_FOUND');
 		}
-		return $this->text_empty;
+		return $this->empty_text;
 	}
 	
 	/**
@@ -1102,14 +1099,14 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 	 * 
 	 * The text may contain any template-specific formatting: e.g. HTML for HTML-templates.
 	 * 
-	 * @uxon-property text_empty
+	 * @uxon-property empty_text
 	 * @uxon-type boolean
 	 * 
 	 * @param string $value
 	 * @return Data
 	 */
-	public function set_text_empty($value) {
-		$this->text_empty = $value;
+	public function set_empty_text($value) {
+		$this->empty_text = $value;
 		return $this;
 	}
 	

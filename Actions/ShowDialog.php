@@ -6,6 +6,7 @@ use exface\Core\Widgets\Dialog;
 use exface\Core\Interfaces\Widgets\iHaveIcon;
 
 class ShowDialog extends ShowWidget implements iShowDialog {
+	private $include_headers = true;
 	private $dialog_widget = null;
 	private $widget_was_enhanced = false;
 	
@@ -103,9 +104,23 @@ class ShowDialog extends ShowWidget implements iShowDialog {
 			$code = $this->get_app()->get_workbench()->ui()->draw($dialog->get_contents_container());
 		} else {
 			$this->get_result()->set_lazy_loading(false);
-			$code = parent::get_result_output();
+			if ($this->get_include_headers()){
+				$code = $this->get_template()->draw_headers($this->get_result());
+			}
+			$code .= parent::get_result_output();
 		}
 		return $code;
 	} 
+	
+	public function get_include_headers() {
+		return $this->include_headers;
+	}
+	
+	public function set_include_headers($value) {
+		$this->include_headers = $value ? true : false;
+		return $this;
+	}
+	
+	  
 }
 ?>

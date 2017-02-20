@@ -30,11 +30,11 @@ class ObjectBasketFetch extends ObjectBasketAdd {
 	
 	protected function get_favorites_json(){
 		$result = array();
-		foreach ($this->get_context()->get_favorites_all() as $fav_list){
+		foreach ($this->get_context()->get_favorites_all() as $data_sheet){
 			$result[] = array(
-					'object_id' => $fav_list->get_meta_object()->get_id(),
-					'object_name' => $fav_list->get_meta_object()->get_name(),
-					'instances' => $fav_list->export_uxon_object()
+					'object_id' => $data_sheet->get_meta_object()->get_id(),
+					'object_name' => $data_sheet->get_meta_object()->get_name(),
+					'instance_counter' => $data_sheet->count_rows()
 			);
 			
 		}
@@ -55,23 +55,33 @@ class ObjectBasketFetch extends ObjectBasketAdd {
 		$table->set_paginate(false);
 		$table->set_hide_toolbar_bottom(true);
 		$table->set_multi_select(true);
-		$prefill_sheet = DataSheetFactory::create_from_object($meta_object);
-		foreach ($this->get_context()->get_favorites_by_object($meta_object)->get_all() as $instance){
-			$prefill_sheet->add_row($instance->export_uxon_object()->to_array());
-		}
-		$table->prefill($prefill_sheet);
+		$table->prefill($this->get_context()->get_favorites_by_object($meta_object));
 		$dialog->add_widget($table);
 		
+		// Add action buttons
 		foreach($meta_object->get_actions()->get_used_in_object_basket() as $a){
 			/* @var $button \exface\Core\Widgets\Button */
-			$button = WidgetFactory::create($dialog->get_page(), 'Button', $dialog);
+			$button = WidgetFactory::create($dialog->get_page(), 'DialogButton', $dialog);
 			$button->set_action($a);
 			$button->set_align(EXF_ALIGN_LEFT);
 			$button->set_input_widget($table);
 			$dialog->add_button($button);
 		}
 		
-		return $this->get_template()->draw($dialog);
+		// Add remove button
+		$button = WidgetFactory::create($dialog->get_page(), 'DialogButton', $dialog);
+		$button->set_action_alias('exface.Core.ObjectBasketRemove');
+		$button->set_input_widget($table);
+		$button->set_align(EXF_ALIGN_LEFT);
+		$dialog->add_button($button);
+		
+		/* IDEA delegate dialog rendering to ShowDialog action. Probably need to override get_result_output in this case...
+		$action = $this->get_app()->get_action('ShowDialog');
+		$action->set_template_alias($this->get_template()->get_alias_with_namespace());
+		$action->set_widget($dialog);
+		return $action->get_result();*/
+		
+		return $this->get_template()->draw_headers($dialog) . $this->get_template()->draw($dialog);
 	}
 	
 	public function get_output_type() {

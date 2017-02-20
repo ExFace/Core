@@ -8,6 +8,7 @@ use exface\Core\CommonLogic\WidgetDimension;
 use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
+use exface\Core\CommonLogic\UxonObject;
 
 interface WidgetInterface extends ExfaceClassInterface {
 	
@@ -18,7 +19,15 @@ interface WidgetInterface extends ExfaceClassInterface {
 	 * setters.
 	 * @param \stdClass $source
 	 */
-	function import_uxon_object(\stdClass $source);
+	public function import_uxon_object(\stdClass $source);
+	
+	/**
+	 * Returns the UXON description of the widget. If the widget was described by a user, the original description
+	 * is returned. If the widget was built via API, a description is automatically generated.
+	 * 
+	 * @return UxonObject
+	 */
+	public function export_uxon_object();
 	
 	/**
 	 * Prefills the widget with values of a data sheet

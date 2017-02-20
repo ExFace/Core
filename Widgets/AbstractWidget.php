@@ -18,6 +18,7 @@ use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Exceptions\Widgets\WidgetPropertyUnknownError;
 use exface\Core\Factories\EventFactory;
+use exface\Core\CommonLogic\UxonObject;
 
 /**
  * Basic ExFace widget
@@ -91,6 +92,7 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren {
 	 * @see \exface\Core\Interfaces\WidgetInterface::import_uxon_object()
 	 */
 	function import_uxon_object(\stdClass $source){
+		$this->uxon = UxonObject::from_anything($source);
 		// First look for an object alias. It must be assigned before the rest because many other properties depend on having the right object
 		if ($source->object_alias){
 			$this->set_object_alias($source->object_alias);
@@ -105,6 +107,10 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren {
 				throw new WidgetPropertyUnknownError($this, 'Property "' . $var . '" of widget "' . $this->get_widget_type() . '" cannot be set: setter method not found!');
 			}
 		}
+	}
+	
+	public function export_uxon_object(){
+		return $this->uxon;
 	}
 	
 	/**
@@ -161,6 +167,7 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren {
 	 */
 	protected function set_widget_type($value){
 		if ($value) $this->widget_type = $value;
+		return $this;
 	}
 	
 	/**
@@ -174,6 +181,7 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren {
 	 */
 	function set_caption($caption){
 		$this->caption = $caption;
+		return $this;
 	}
 	
 	/**
@@ -193,6 +201,7 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren {
 	 */
 	function set_meta_object_id($id){
 		$this->meta_object_id = $id;
+		return $this;
 	}
 	
 	/**
@@ -537,6 +546,7 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren {
 			$this->object_alias = $full_or_object_alias;
 			$this->object_qualified_alias = $app . NameResolver::NAMESPACE_SEPARATOR . $this->object_alias;
 		}
+		return $this;
 	}
 	
 	/**
@@ -681,6 +691,7 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren {
 	 */
 	public function set_parent(WidgetInterface $widget) {
 		$this->parent = $widget;
+		return $this;
 	}  
 	
 	/**
@@ -715,6 +726,7 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren {
 	 */
 	public function set_hint($value) {
 		$this->hint = $value;
+		return $this;
 	}
 	
 	/**
@@ -743,6 +755,7 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren {
 		} else {
 			$this->set_visibility(EXF_WIDGET_VISIBILITY_NORMAL);
 		}
+		return $this;
 	}	
 	
 	/**
@@ -793,6 +806,7 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren {
 	 */
 	public function set_prefill_data(DataSheetInterface $data_sheet) {
 		$this->prefill_data = $data_sheet;
+		return $this;
 	}
 	
 	/**

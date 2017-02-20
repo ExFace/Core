@@ -24,11 +24,9 @@ class Container extends AbstractWidget implements iContainOtherWidgets {
 	private $widgets = array();
 	
 	protected function do_prefill(\exface\Core\Interfaces\DataSheets\DataSheetInterface $data_sheet){
-		$result = parent::do_prefill($data_sheet);
 		foreach ($this->get_children() as $widget){
 			$widget->prefill($data_sheet);
 		}
-		return $result;
 	}
 	
 	/**

@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\Interfaces\Widgets;
-interface iHaveIcon {
+use exface\Core\Interfaces\WidgetInterface;
+
+interface iHaveIcon extends WidgetInterface {
 	
 	/**
 	 * Returs the name of the icon to be used

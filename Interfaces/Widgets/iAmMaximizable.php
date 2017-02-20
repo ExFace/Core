@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\Interfaces\Widgets;
-interface iAmMaximizable {
+use exface\Core\Interfaces\WidgetInterface;
+
+interface iAmMaximizable extends WidgetInterface {
 	function set_maximizable($value);
 	function get_maximizable();
 	function set_maximized();

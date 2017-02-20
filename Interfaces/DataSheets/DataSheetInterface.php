@@ -16,16 +16,27 @@ interface DataSheetInterface extends ExfaceClassInterface, iCanBeCopied, iCanBeC
 	
 	/**
 	 * Adds an array of rows to the data sheet. Each row must be an assotiative array [ column_id => value ].
+	 * Missing columns will be automatically created. If $merge_uid_dublicates is TRUE, given rows with UIDs
+	 * already present in the sheet, will overwrite old rows instead of being added at the end of the sheet.
+	 * 
+	 * @see import_rows() for an easy way of adding rows from another data sheet
+	 * 
 	 * @param array $rows
+	 * @param boolean $merge_uid_dublicates
+	 * @return DataSheetInterface
 	 */
-	function add_rows(array $rows);
+	public function add_rows(array $rows, $merge_uid_dublicates = false);
 	
 	/**
 	 * Adds a new row to the data sheet. The row must be a non-empty assotiative array [ column_id => value ].
+	 * Missing columns will be automatically created. If $merge_uid_dublicates is TRUE, given rows with UIDs
+	 * already present in the sheet, will overwrite old rows instead of being added at the end of the sheet.
+	 * 
 	 * @param array $row
+	 * @param boolean $merge_uid_dublicates
 	 * @return \exface\Core\Interfaces\DataSheets\DataSheetInterface
 	 */
-	public function add_row(array $row);
+	public function add_row(array $row, $merge_uid_dublicates = false);
 	
 	/**
 	 * Makes this data sheet LEFT JOIN the other data sheet ON $this.$left_key_column = $data_sheet.right_key_column
@@ -42,6 +53,14 @@ interface DataSheetInterface extends ExfaceClassInterface, iCanBeCopied, iCanBeC
 	 */
 	public function join_left(\exface\Core\Interfaces\DataSheets\DataSheetInterface $data_sheet, $left_key_column = null, $right_key_column = null, $relation_path = '');
 	
+	/**
+	 * Imports data from matching columns of the given sheet. If the given sheet has the same columns, as this one, their 
+	 * values will be copied to this sheet. If this sheet has columns with formulas, they will automatically get calculated
+	 * for the imported rows.
+	 * 
+	 * @param DataSheetInterface $other_sheet
+	 * @return DataSheetInterface
+	 */
 	public function import_rows(DataSheetInterface $other_sheet);
 	
 	/**
@@ -254,6 +273,14 @@ interface DataSheetInterface extends ExfaceClassInterface, iCanBeCopied, iCanBeC
 	public function remove_row($row_number);
 	
 	/**
+	 * Removes all rows with the given value in the UID column
+	 * 
+	 * @param string $instance_uid
+	 * return DataSheetInterface
+	 */
+	public function remove_rows_by_uid($uid);
+	
+	/**
 	 * Removes all rows from the specified column. If it is the only column in the row, the entire row will be removed.
 	 * @param string $column_name
 	 * @return DataSheetInterface
@@ -280,6 +307,21 @@ interface DataSheetInterface extends ExfaceClassInterface, iCanBeCopied, iCanBeC
 	 * @return boolean
 	 */
 	public function is_unfiltered();
+	
+	/**
+	 * Returns TRUE if the data sheet has neither content nor filters (and thus will not contain any meaningfull data if read) 
+	 * and FALSE otherwise. 
+	 * 
+	 * @return boolean
+	 */
+	public function is_blank();
+	
+	/**
+	 * Returns TRUE if the data sheet has no sorters and FALSE otherwise.
+	 * 
+	 * @return boolean
+	 */
+	public function is_unsorted();
 	
 	public function get_rows_on_page();
 	
