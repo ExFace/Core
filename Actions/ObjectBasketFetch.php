@@ -55,7 +55,7 @@ class ObjectBasketFetch extends ObjectBasketAdd {
 		$table->set_paginate(false);
 		$table->set_hide_toolbar_bottom(true);
 		$table->set_multi_select(true);
-		$table->set_multi_select_all_initially(true);
+		$table->set_multi_select_all_selected(true);
 		$table->prefill($this->get_context()->get_favorites_by_object($meta_object));
 		$dialog->add_widget($table);
 		
