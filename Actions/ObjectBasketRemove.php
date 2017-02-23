@@ -17,7 +17,6 @@ class ObjectBasketRemove extends ObjectBasketFetch {
 	}
 	
 	protected function perform(){
-		$counter = 0;
 		$input = $this->get_input_data_sheet();
 		$object = $input->get_meta_object();
 		if ($input->is_empty()){
