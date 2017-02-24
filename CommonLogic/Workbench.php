@@ -17,6 +17,7 @@ use exface\Core\Interfaces\ConfigurationInterface;
 use exface\Core\Interfaces\DebuggerInterface;
 use exface\Core\CoreApp;
 use exface\Core\Exceptions\InvalidArgumentException;
+use exface\Core\Interfaces\NameResolverInterface;
 
 class Workbench {
 	private $started = false;
@@ -203,7 +204,7 @@ class Workbench {
 	 * - A path to the desired PHP class
 	 * @param string $object_type One of the NameResolver::OBJECT_TYPE_xxx constants
 	 * 
-	 * @return \Workbench\Core\NameResolver
+	 * @return NameResolverInterface
 	 */
 	public function create_name_resolver($qualified_alias, $object_type){
 		return NameResolver::create_from_string($qualified_alias, $object_type, $this);

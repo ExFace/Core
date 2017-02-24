@@ -5,7 +5,7 @@ use exface\Core\CommonLogic\Workbench;
 use exface\Core\Interfaces\Events\EventInterface;
 use exface\Core\CommonLogic\NameResolver;
 
-class ExFaceEvent extends Event implements EventInterface {
+class ExfaceEvent extends Event implements EventInterface {
 	private $exface = null;
 	private $name = null;
 	private $namespace = null;

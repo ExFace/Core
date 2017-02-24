@@ -9,7 +9,7 @@ use exface\Core\CommonLogic\NameResolver;
  * @author Andrej Kabachnik
  *
  */
-class ActionEvent extends ExFaceEvent {
+class ActionEvent extends ExfaceEvent {
 	private $action = null;
 	
 	public function get_action() {
@@ -24,7 +24,7 @@ class ActionEvent extends ExFaceEvent {
 	/**
 	 * 
 	 * {@inheritDoc}
-	 * @see \exface\Core\Events\ExFaceEvent::get_namespace()
+	 * @see \exface\Core\Events\ExfaceEvent::get_namespace()
 	 */
 	public function get_namespace(){
 		return $this->get_action()->get_alias_with_namespace() . NameResolver::NAMESPACE_SEPARATOR . 'Action';

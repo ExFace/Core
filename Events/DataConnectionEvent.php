@@ -9,7 +9,7 @@ use exface\Core\CommonLogic\NameResolver;
  * @author Andrej Kabachnik
  *
  */
-class DataConnectionEvent extends ExFaceEvent {
+class DataConnectionEvent extends ExfaceEvent {
 	private $data_connection = null;
 	private $current_query = null;
 	
@@ -48,7 +48,7 @@ class DataConnectionEvent extends ExFaceEvent {
 	/**
 	 * 
 	 * {@inheritDoc}
-	 * @see \exface\Core\Events\ExFaceEvent::get_namespace()
+	 * @see \exface\Core\Events\ExfaceEvent::get_namespace()
 	 */
 	public function get_namespace(){
 		return $this->get_data_connection()->get_alias_with_namespace() . NameResolver::NAMESPACE_SEPARATOR . 'DataConnection';

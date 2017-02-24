@@ -37,7 +37,7 @@ abstract class AbstractDataType implements DataTypeInterface {
 	 */
 	public function get_name(){
 		if (is_null($this->name)){
-			$name = substr(get_class($this), (strrpos(get_class($this), DIRECTORY_SEPARATOR)+1));
+			$name = substr(get_class($this), (strrpos(get_class($this), "\\")+1));
 			$name = str_replace('DataType', '', $name);
 			$this->name = $name;
 		}

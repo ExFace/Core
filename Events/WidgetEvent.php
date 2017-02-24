@@ -8,7 +8,7 @@ use exface\Core\Interfaces\WidgetInterface;
  * e.g. ..., etc.
  * @author Andrej Kabachnik
  */
-class WidgetEvent extends ExFaceEvent {
+class WidgetEvent extends ExfaceEvent {
 	private $widget = null;
 
 	public function get_widget() {
@@ -23,7 +23,7 @@ class WidgetEvent extends ExFaceEvent {
 	/**
 	 *
 	 * {@inheritDoc}
-	 * @see \exface\Core\Events\ExFaceEvent::get_namespace()
+	 * @see \exface\Core\Events\ExfaceEvent::get_namespace()
 	 */
 	public function get_namespace(){
 		return $this->get_widget()->get_meta_object()->get_alias_with_namespace() . NameResolver::NAMESPACE_SEPARATOR . 'Widget';

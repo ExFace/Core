@@ -4,7 +4,7 @@ use exface\Core\CommonLogic\Workbench;
 use exface\Core\CommonLogic\NameResolver;
 use exface\Core\Interfaces\NameResolverInterface;
 use exface\Core\Interfaces\Actions\ActionInterface;
-use exface\Core\Events\ExFaceEvent;
+use exface\Core\Events\ExfaceEvent;
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 use exface\Core\Events\DataConnectionEvent;
 use exface\Core\Events\ActionEvent;
@@ -27,10 +27,10 @@ abstract class EventFactory extends AbstractNameResolverFactory {
 	/**
 	 * 
 	 * @param exface $exface
-	 * @return ExFaceEvent
+	 * @return ExfaceEvent
 	 */
 	public static function create_basic_event(Workbench $exface, $event_name){
-		$instance = new ExFaceEvent($exface);
+		$instance = new ExfaceEvent($exface);
 		$instance->set_name($event_name);
 		return $instance;
 	}
