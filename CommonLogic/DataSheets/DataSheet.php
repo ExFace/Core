@@ -794,6 +794,7 @@ class DataSheet implements DataSheetInterface {
 		}
 		
 		// Add values
+		$values_found = false;
 		foreach ($this->get_columns() as $column){
 			// Skip columns, that do not represent a meta attribute
 			if (!$column->get_expression_obj()->is_meta_attribute()) continue;
@@ -807,9 +808,17 @@ class DataSheet implements DataSheetInterface {
 			if ($column->get_attribute()->get_alias() == $this->get_meta_object()->get_uid_alias() && $update_if_uid_found){
 				// TODO
 			} else {
+				// If at least one column has values, remember this.
+				if (count($column->get_values(false)) > 0){
+					$values_found = true;
+				}
 				// Add all other columns to values
 				$query->add_values($column->get_expression_obj()->to_string(), $column->get_values(false));
 			}
+		}
+		
+		if (!$values_found){
+			throw new DataSheetWriteError($this, 'Cannot create data in data source: no values found to save!');
 		}
 		
 		// Run the query
