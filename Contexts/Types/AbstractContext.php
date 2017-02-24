@@ -74,7 +74,7 @@ abstract class AbstractContext implements ContextInterface {
 	 */
 	public function get_alias(){
 		if (!$this->alias){
-			$this->alias = substr(get_class($this), (strrpos(get_class($this), DIRECTORY_SEPARATOR)+1), -7);	
+			$this->alias = substr(get_class($this), (strrpos(get_class($this), "\\")+1), -7);	
 		}
 		return $this->alias;
 	}

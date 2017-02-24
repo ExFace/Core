@@ -62,17 +62,25 @@ abstract class AbstractContextScope implements ContextScopeInterface {
 	public function get_context($alias){
 		// If no context matching the alias exists, try to create one
 		if (!$this->active_contexts[$alias]){
-			$context_class = '\\exface\\Core\\Contexts\\Types\\' . ucfirst(strtolower($alias)) . 'Context';
+			$context_class = $this->get_class_from_alias($alias);
 			if (class_exists($context_class)){
 				$context = new $context_class($this->exface);
 				$context->set_scope($this);
 				$this->load_context_data($context);
 				$this->active_contexts[$alias] = $context;
 			} else {
-				throw new ContextNotFoundError('Cannot create context "' . $alias . '": class not found!', '6T5E24E');
+				throw new ContextNotFoundError('Cannot create context "' . $alias . '": class "' . $context_class . '" not found!', '6T5E24E');
 			}
 		}
 		return $this->active_contexts[$alias];
+	}
+	
+	protected function get_class_from_alias($context_alias){
+		$context_class = '\\exface\\Core\\Contexts\\Types\\' . $context_alias . 'Context';
+		if (!class_exists($context_class)){
+			$context_class = '\\exface\\Core\\Contexts\\Types\\' . ucfirst(strtolower($context_alias)) . 'Context';
+		}
+		return $context_class;
 	}
 	
 	/**

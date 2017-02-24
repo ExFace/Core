@@ -62,7 +62,6 @@ class SessionContextScope extends AbstractContextScope {
 	 * @return \exface\Core\CommonLogic\UxonObject
 	 */
 	public function get_saved_contexts($context_alias = null){
-	
 		if ($context_alias){
 			$obj = $this->get_session_data()[$context_alias];
 		} else {
