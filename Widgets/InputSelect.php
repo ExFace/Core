@@ -154,7 +154,7 @@ class InputSelect extends Input implements iSupportMultiSelect {
 				
 		// Add the specified options
 		if ($array_or_object instanceof \stdClass){
-			$options = array_merge($options, (array) $array_or_object);
+			$options = (array) $array_or_object;
 		} elseif(is_array($array_or_object)) {
 			if (is_array($options_texts_array)){
 				if (count($array_or_object) != count($options_texts_array)){
@@ -165,7 +165,7 @@ class InputSelect extends Input implements iSupportMultiSelect {
 					}
 				}
 			} else {
-				$options = array_merge($options, array_combine($array_or_object, $array_or_object));
+				$options = array_combine($array_or_object, $array_or_object);
 			}
 		} else {
 			throw new WidgetPropertyInvalidValueError($this, 'Wrong data type for possible values of ' . $this->get_widget_type() . '! Expecting array or object, ' . gettype($array_or_object) . ' given.', '6T91S9G');

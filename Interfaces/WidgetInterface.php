@@ -369,5 +369,12 @@ interface WidgetInterface extends ExfaceClassInterface {
 	 */
 	public function get_page_id();
 	
+	/**
+	 * Returns the orignal UXON description of this widget specified by the user, that is without any automatic enhancements
+	 *
+	 * @return \exface\Core\CommonLogic\UxonObject|\exface\Core\CommonLogic\UxonObject
+	 */
+	public function get_original_uxon_object();
+	
 }
 ?>

@@ -55,6 +55,7 @@ class ObjectBasketFetch extends ObjectBasketAdd {
 		$table->set_paginate(false);
 		$table->set_hide_toolbar_bottom(true);
 		$table->set_multi_select(true);
+		$table->set_multi_select_all_selected(true);
 		$table->prefill($this->get_context()->get_favorites_by_object($meta_object));
 		$dialog->add_widget($table);
 		
@@ -73,6 +74,7 @@ class ObjectBasketFetch extends ObjectBasketAdd {
 		$button->set_action_alias('exface.Core.ObjectBasketRemove');
 		$button->set_input_widget($table);
 		$button->set_align(EXF_ALIGN_LEFT);
+		$button->get_action()->set_return_basket_content(true);
 		$dialog->add_button($button);
 		
 		/* IDEA delegate dialog rendering to ShowDialog action. Probably need to override get_result_output in this case...

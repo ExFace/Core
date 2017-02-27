@@ -148,6 +148,11 @@ abstract class AbstractAction implements ActionInterface {
 		return $this->id;
 	}
 	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\Actions\ActionInterface::get_app()
+	 */
 	public function get_app(){
 		return $this->app;
 	}

@@ -24,8 +24,16 @@ abstract class DataTypeFactory extends AbstractNameResolverFactory {
 	 * @return AbstractDataType
 	 */
 	public static function create_from_alias(Workbench $exface, $data_type_alias){
-		$class = 'exface\\Core\\DataTypes\\' . $data_type_alias . 'DataType';
+		$class = static::get_class_name_from_alias($data_type_alias);
+		if (!class_exists($class)){
+			$data_type_alias = ucfirst(mb_strtolower($data_type_alias));
+			$class = static::get_class_name_from_alias($data_type_alias);
+		}
 		return new $class($exface);
+	}
+	
+	protected static function get_class_name_from_alias($data_type_alias){
+		return 'exface\\Core\\DataTypes\\' . $data_type_alias . 'DataType';
 	}
 	
 }

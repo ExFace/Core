@@ -29,6 +29,7 @@ use exface\Core\Exceptions\DataSheets\DataSheetColumnNotFoundError;
 use exface\Core\Exceptions\DataSheets\DataSheetRuntimeError;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\Exceptions\DataSheets\DataSheetReadError;
+use exface\Core\Exceptions\DataSheets\DataSheetMissingRequiredValueError;
 
 /**
  * Internal data respresentation object in exface. Similar to an Excel-table:
@@ -194,8 +195,8 @@ class DataSheet implements DataSheetInterface {
 	public function get_column_values($column_name, $include_totals=false){
 		$col = array();
 		$rows = $include_totals ? $this->rows + $this->totals_rows : $this->rows;
-		foreach ($rows as $row){
-			$col[] = $row[$column_name];
+		foreach ($rows as $row_nr => $row){
+			$col[$row_nr] = $row[$column_name];
 		}
 		return $col;
 	}
@@ -480,6 +481,7 @@ class DataSheet implements DataSheetInterface {
 			}
 		}
 		
+		// IDEA do we always need to to evaluate expressions of each column? Maybe do it only if the expression is a formula?
 		foreach ($this->get_columns() as $name => $col){
 			$vals = $col->get_expression_obj()->evaluate($this, $name);
 			if (is_array($vals)){
@@ -783,11 +785,16 @@ class DataSheet implements DataSheetInterface {
 					}
 				}
 			} else {
-				$req_col->set_values_from_defaults();
+				try {
+					$req_col->set_values_from_defaults();
+				} catch (DataSheetRuntimeError $e){
+					throw new DataSheetMissingRequiredValueError($this, 'Required attribute "' . $req->get_name() . '" (alias "' . $req->get_alias() . '") not set in at least one row!', null, $e);
+				}
 			}
 		}
 		
 		// Add values
+		$values_found = false;
 		foreach ($this->get_columns() as $column){
 			// Skip columns, that do not represent a meta attribute
 			if (!$column->get_expression_obj()->is_meta_attribute()) continue;
@@ -801,9 +808,17 @@ class DataSheet implements DataSheetInterface {
 			if ($column->get_attribute()->get_alias() == $this->get_meta_object()->get_uid_alias() && $update_if_uid_found){
 				// TODO
 			} else {
+				// If at least one column has values, remember this.
+				if (count($column->get_values(false)) > 0){
+					$values_found = true;
+				}
 				// Add all other columns to values
 				$query->add_values($column->get_expression_obj()->to_string(), $column->get_values(false));
 			}
+		}
+		
+		if (!$values_found){
+			throw new DataSheetWriteError($this, 'Cannot create data in data source: no values found to save!');
 		}
 		
 		// Run the query

@@ -9,7 +9,7 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
  * @author Andrej Kabachnik
  *
  */
-class DataSheetEvent extends ExFaceEvent {
+class DataSheetEvent extends ExfaceEvent {
 	private $data_sheet = null;
 	
 	/**
@@ -32,7 +32,7 @@ class DataSheetEvent extends ExFaceEvent {
 	/**
 	 * 
 	 * {@inheritDoc}
-	 * @see \exface\Core\Events\ExFaceEvent::get_namespace()
+	 * @see \exface\Core\Events\ExfaceEvent::get_namespace()
 	 */
 	public function get_namespace(){
 		return $this->get_data_sheet()->get_meta_object()->get_alias_with_namespace() . NameResolver::NAMESPACE_SEPARATOR . 'DataSheet';

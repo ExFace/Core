@@ -112,6 +112,10 @@ class Filter extends Container implements iCanBeRequired {
 		return $this->get_widget()->get_value();
 	}
 	
+	public function get_value_expression(){
+		return $this->get_widget()->get_value_expression();
+	}
+	
 	public function set_value($value){
 		return $this->get_widget()->set_value($value);
 	}

@@ -30,6 +30,13 @@ abstract class FormulaFactory extends AbstractNameResolverFactory {
 	 */
 	public static function create_from_string(Workbench $exface, $function_name, array $arguments = array()){
 		$name_resolver = $exface->create_name_resolver($function_name, NameResolver::OBJECT_TYPE_FORMULA);
+		// TODO on linux we have many problems with case sensitivity of file names while formula names are (and should)
+		// not be case sensitive - mainly to allow Excel-like notation. Since most parts of UXON are case-insensitive,
+		// some sort of dictionary-cache should be built for alias-filename mappings with different case - perhaps in the
+		// name resolver. In the specific case of formulas, here is an attempt to guess the class name. 
+		if (!$name_resolver->class_exists()){
+			$name_resolver->set_alias(ucfirst(mb_strtolower($name_resolver->get_alias())));
+		}
 		return static::create($name_resolver, $arguments);
 	}
 	

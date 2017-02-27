@@ -1,5 +1,5 @@
 {
-    "name": "ExFace/Core",
+    "name": "exface/Core",
     "description": "Business web application plattform",
     "type": "project",
     "license": "GPL-3.0+",
@@ -28,8 +28,8 @@
         "app": {
             "app_uid": "0x31000000000000000000000000000000",
             "app_alias": "exface.Core",
-            "model_md5": "9c9b1633fee48dc50c0a813a8403600d",
-            "model_timestamp": "2017-02-09 16:51:43"
+            "model_md5": "dd287d8bcc0155ebca443dc0ae84fe2c",
+            "model_timestamp": "2017-02-17 15:22:48"
         }
     }
 }
