@@ -116,6 +116,19 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren {
 	/**
 	 * 
 	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\WidgetInterface::get_original_uxon_object()
+	 */
+	public function get_original_uxon_object(){
+		if ($this->uxon instanceof UxonObject){
+			return $this->uxon;
+		} else {
+			return new UxonObject();
+		}
+	}
+	
+	/**
+	 * 
+	 * {@inheritDoc}
 	 * @see \exface\Core\Interfaces\WidgetInterface::prefill()
 	 */
 	public final function prefill(DataSheetInterface $data_sheet){
