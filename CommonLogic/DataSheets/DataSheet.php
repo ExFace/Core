@@ -194,7 +194,7 @@ class DataSheet implements DataSheetInterface {
 	 */
 	public function get_column_values($column_name, $include_totals=false){
 		$col = array();
-		$rows = $include_totals ? $this->rows + $this->totals_rows : $this->rows;
+		$rows = $include_totals ? array_merge($this->rows, $this->totals_rows) : $this->rows;
 		foreach ($rows as $row_nr => $row){
 			$col[$row_nr] = $row[$column_name];
 		}
