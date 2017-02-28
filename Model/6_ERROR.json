@@ -90,7 +90,7 @@
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6T4F41P",
             "ERROR_TEXT": "Invalid data connector configuration option",
-            "DESCRIPTION": null,
+            "DESCRIPTION": "",
             "LABEL": "exface.Core.6T4F41P"
         },
         {
@@ -103,7 +103,7 @@
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6T4R8UM",
             "ERROR_TEXT": "Multiple user credentials found for data connection",
-            "DESCRIPTION": null,
+            "DESCRIPTION": "",
             "LABEL": "exface.Core.6T4R8UM"
         },
         {
@@ -116,7 +116,7 @@
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6T4R97R",
             "ERROR_TEXT": "Data connection not found in model",
-            "DESCRIPTION": null,
+            "DESCRIPTION": "",
             "LABEL": "exface.Core.6T4R97R"
         },
         {
@@ -129,7 +129,7 @@
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6T5DI5E",
             "ERROR_TEXT": "Action property cannot be set",
-            "DESCRIPTION": null,
+            "DESCRIPTION": "",
             "LABEL": "exface.Core.6T5DI5E"
         },
         {
@@ -142,7 +142,7 @@
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6T5DJPP",
             "ERROR_TEXT": "Cannot find object for action",
-            "DESCRIPTION": null,
+            "DESCRIPTION": "",
             "LABEL": "exface.Core.6T5DJPP"
         },
         {
@@ -155,7 +155,7 @@
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6T5DLGN",
             "ERROR_TEXT": "Cannot undo action: action not found in history",
-            "DESCRIPTION": null,
+            "DESCRIPTION": "",
             "LABEL": "exface.Core.6T5DLGN"
         },
         {
@@ -168,7 +168,7 @@
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6T5DMUS",
             "ERROR_TEXT": "Action not aplicable to input object",
-            "DESCRIPTION": null,
+            "DESCRIPTION": "",
             "LABEL": "exface.Core.6T5DMUS"
         },
         {
@@ -181,7 +181,7 @@
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6T5DNWE",
             "ERROR_TEXT": "Cannot find placeholder value in input data of action",
-            "DESCRIPTION": null,
+            "DESCRIPTION": "",
             "LABEL": "exface.Core.6T5DNWE"
         },
         {
@@ -194,7 +194,7 @@
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6T5DOSV",
             "ERROR_TEXT": "Not allowed to read data without knowing which widget called the read action",
-            "DESCRIPTION": null,
+            "DESCRIPTION": "",
             "LABEL": "exface.Core.6T5DOSV"
         },
         {
@@ -207,7 +207,7 @@
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6T5DS00",
             "ERROR_TEXT": "Undo-functionality not implemented for action",
-            "DESCRIPTION": null,
+            "DESCRIPTION": "",
             "LABEL": "exface.Core.6T5DS00"
         },
         {
@@ -220,7 +220,7 @@
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6T5DT14",
             "ERROR_TEXT": "Action cannot be undone in principle",
-            "DESCRIPTION": null,
+            "DESCRIPTION": "",
             "LABEL": "exface.Core.6T5DT14"
         },
         {
@@ -233,7 +233,7 @@
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6T5DUT1",
             "ERROR_TEXT": "Unexpected type of action output",
-            "DESCRIPTION": null,
+            "DESCRIPTION": "",
             "LABEL": "exface.Core.6T5DUT1"
         },
         {
@@ -246,7 +246,7 @@
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6T5DXWP",
             "ERROR_TEXT": "App not found",
-            "DESCRIPTION": null,
+            "DESCRIPTION": "",
             "LABEL": "exface.Core.6T5DXWP"
         },
         {
@@ -259,7 +259,7 @@
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6T5DZN2",
             "ERROR_TEXT": "Configuration key not found",
-            "DESCRIPTION": null,
+            "DESCRIPTION": "",
             "LABEL": "exface.Core.6T5DZN2"
         },
         {
@@ -272,7 +272,7 @@
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6T5E14B",
             "ERROR_TEXT": "Context scope not found",
-            "DESCRIPTION": null,
+            "DESCRIPTION": "",
             "LABEL": "exface.Core.6T5E14B"
         },
         {
@@ -285,7 +285,7 @@
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6T5E24E",
             "ERROR_TEXT": "Context class not found",
-            "DESCRIPTION": null,
+            "DESCRIPTION": "",
             "LABEL": "exface.Core.6T5E24E"
         },
         {
@@ -298,7 +298,7 @@
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6T5E3ID",
             "ERROR_TEXT": "Context data cannot be saved",
-            "DESCRIPTION": null,
+            "DESCRIPTION": "",
             "LABEL": "exface.Core.6T5E3ID"
         },
         {
@@ -311,7 +311,7 @@
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6T5E400",
             "ERROR_TEXT": "Cannot load context",
-            "DESCRIPTION": null,
+            "DESCRIPTION": "",
             "LABEL": "exface.Core.6T5E400"
         },
         {
@@ -324,7 +324,7 @@
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6T5E5VY",
             "ERROR_TEXT": "Object basket context requested for non-existant meta object",
-            "DESCRIPTION": null,
+            "DESCRIPTION": "",
             "LABEL": "exface.Core.6T5E5VY"
         },
         {
@@ -337,7 +337,7 @@
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6T5E849",
             "ERROR_TEXT": "Cannot find right key column for a left join",
-            "DESCRIPTION": null,
+            "DESCRIPTION": "",
             "LABEL": "exface.Core.6T5E849"
         },
         {
@@ -350,7 +350,7 @@
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6T5E8GM",
             "ERROR_TEXT": "Cannot merge non-empty data sheets for different objects",
-            "DESCRIPTION": null,
+            "DESCRIPTION": "",
             "LABEL": "exface.Core.6T5E8GM"
         },
         {
@@ -363,7 +363,7 @@
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6T5E8Q6",
             "ERROR_TEXT": "Cannot merge data sheets without UID columns",
-            "DESCRIPTION": null,
+            "DESCRIPTION": "",
             "LABEL": "exface.Core.6T5E8Q6"
         },
         {
@@ -376,7 +376,7 @@
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6T5UUOI",
             "ERROR_TEXT": "Cannot diff columns by UID if one of the data sheets does not have a UID-column or that column is empty",
-            "DESCRIPTION": null,
+            "DESCRIPTION": "",
             "LABEL": "exface.Core.6T5UUOI"
         },
         {
@@ -389,7 +389,7 @@
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6T5UW0E",
             "ERROR_TEXT": "Invalid formula in data sheet column",
-            "DESCRIPTION": null,
+            "DESCRIPTION": "",
             "LABEL": "exface.Core.6T5UW0E"
         },
         {
@@ -402,7 +402,7 @@
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6T5UX3Q",
             "ERROR_TEXT": "Cannot fill column with default values",
-            "DESCRIPTION": null,
+            "DESCRIPTION": "",
             "LABEL": "exface.Core.6T5UX3Q"
         },
         {
@@ -415,7 +415,7 @@
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6T5UXLD",
             "ERROR_TEXT": "Unknown aggregator function",
-            "DESCRIPTION": null,
+            "DESCRIPTION": "",
             "LABEL": "exface.Core.6T5UXLD"
         },
         {
@@ -428,7 +428,7 @@
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6T5V0GU",
             "ERROR_TEXT": "Cannot join data sheets if one of the key columns is not specified",
-            "DESCRIPTION": null,
+            "DESCRIPTION": "",
             "LABEL": "exface.Core.6T5V0GU"
         },
         {
@@ -441,7 +441,7 @@
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6T5V1DR",
             "ERROR_TEXT": "Importing rows from another sheet is only possible if both sheets are base on the same object",
-            "DESCRIPTION": null,
+            "DESCRIPTION": "",
             "LABEL": "exface.Core.6T5V1DR"
         },
         {
@@ -454,7 +454,7 @@
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6T5V1XX",
             "ERROR_TEXT": "Cannot import rows from another sheet if sheets have different amounts of rows",
-            "DESCRIPTION": null,
+            "DESCRIPTION": "",
             "LABEL": "exface.Core.6T5V1XX"
         },
         {
@@ -467,7 +467,7 @@
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6T5V2Q8",
             "ERROR_TEXT": "UID column not found",
-            "DESCRIPTION": null,
+            "DESCRIPTION": "",
             "LABEL": "exface.Core.6T5V2Q8"
         },
         {
@@ -480,7 +480,7 @@
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6T5V36I",
             "ERROR_TEXT": "Joining subsheets via reverse relations the explicitly specified foreign keys, not implemented yet!",
-            "DESCRIPTION": null,
+            "DESCRIPTION": "",
             "LABEL": "exface.Core.6T5V36I"
         },
         {
@@ -493,7 +493,7 @@
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6T5V4HW",
             "ERROR_TEXT": "Updating attributes from reverse relations is not possible",
-            "DESCRIPTION": null,
+            "DESCRIPTION": "",
             "LABEL": "exface.Core.6T5V4HW"
         },
         {
@@ -506,7 +506,7 @@
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6T5V4TS",
             "ERROR_TEXT": "Cannot delete redundant rows while replacing data if no filter are defined!",
-            "DESCRIPTION": null,
+            "DESCRIPTION": "",
             "LABEL": "exface.Core.6T5V4TS"
         },
         {
@@ -519,7 +519,7 @@
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6T5V5EB",
             "ERROR_TEXT": "Cannot delete redundant rows if no UID column is present in the data sheet",
-            "DESCRIPTION": null,
+            "DESCRIPTION": "",
             "LABEL": "exface.Core.6T5V5EB"
         },
         {
@@ -532,7 +532,7 @@
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6T5V6WE",
             "ERROR_TEXT": "Data sheet column not found",
-            "DESCRIPTION": null,
+            "DESCRIPTION": "",
             "LABEL": "exface.Core.6T5V6WE"
         },
         {
@@ -545,7 +545,7 @@
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6T5V9KS",
             "ERROR_TEXT": "Invalid sort direction. Only ASC and DESC are allowed!",
-            "DESCRIPTION": null,
+            "DESCRIPTION": "",
             "LABEL": "exface.Core.6T5V9KS"
         },
         {
@@ -558,7 +558,7 @@
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6T5VBHF",
             "ERROR_TEXT": "Creating rows from an update statement without a UID-column not supported yet!",
-            "DESCRIPTION": null,
+            "DESCRIPTION": "",
             "LABEL": "exface.Core.6T5VBHF"
         },
         {
@@ -571,7 +571,7 @@
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6T5VCA6",
             "ERROR_TEXT": "Cannot delete all instances. Forbidden operation!",
-            "DESCRIPTION": null,
+            "DESCRIPTION": "",
             "LABEL": "exface.Core.6T5VCA6"
         },
         {
@@ -584,7 +584,7 @@
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6T5VG46",
             "ERROR_TEXT": "Connection to data source failed",
-            "DESCRIPTION": null,
+            "DESCRIPTION": "",
             "LABEL": "exface.Core.6T5VG46"
         },
         {
@@ -597,7 +597,7 @@
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6T5VIIA",
             "ERROR_TEXT": "Cannot commit a transaction, that has already been rolled back!",
-            "DESCRIPTION": null,
+            "DESCRIPTION": "",
             "LABEL": "exface.Core.6T5VIIA"
         },
         {
@@ -610,7 +610,7 @@
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6T5VIT8",
             "ERROR_TEXT": "Cannot roll back a transaction, that has already been committed!",
-            "DESCRIPTION": null,
+            "DESCRIPTION": "",
             "LABEL": "exface.Core.6T5VIT8"
         },
         {
@@ -623,7 +623,7 @@
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6T5VJD3",
             "ERROR_TEXT": "Transaction rollback failed",
-            "DESCRIPTION": null,
+            "DESCRIPTION": "",
             "LABEL": "exface.Core.6T5VJD3"
         },
         {
@@ -636,7 +636,7 @@
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6T5VJPV",
             "ERROR_TEXT": "Transaction commit failed",
-            "DESCRIPTION": null,
+            "DESCRIPTION": "",
             "LABEL": "exface.Core.6T5VJPV"
         },
         {
@@ -649,7 +649,7 @@
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6T5VK2M",
             "ERROR_TEXT": "Transaction could not be started",
-            "DESCRIPTION": null,
+            "DESCRIPTION": "",
             "LABEL": "exface.Core.6T5VK2M"
         },
         {
@@ -662,7 +662,7 @@
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6T5W75J",
             "ERROR_TEXT": "Invalid query type passed to data connector",
-            "DESCRIPTION": null,
+            "DESCRIPTION": "",
             "LABEL": "exface.Core.6T5W75J"
         },
         {
@@ -675,7 +675,7 @@
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6T5WBNB",
             "ERROR_TEXT": "Illegal filter value",
-            "DESCRIPTION": null,
+            "DESCRIPTION": "",
             "LABEL": "exface.Core.6T5WBNB"
         },
         {
@@ -688,7 +688,7 @@
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6T6HSAO",
             "ERROR_TEXT": "Action not specified in request",
-            "DESCRIPTION": null,
+            "DESCRIPTION": "",
             "LABEL": "exface.Core.6T6HSAO"
         },
         {
@@ -701,7 +701,7 @@
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6T6HSL4",
             "ERROR_TEXT": "Cannot perform quick search on object",
-            "DESCRIPTION": null,
+            "DESCRIPTION": "",
             "LABEL": "exface.Core.6T6HSL4"
         },
         {
@@ -714,7 +714,7 @@
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6T6HZLF",
             "ERROR_TEXT": "Data modified by another user",
-            "DESCRIPTION": null,
+            "DESCRIPTION": "",
             "LABEL": "exface.Core.6T6HZLF"
         },
         {
@@ -727,7 +727,7 @@
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6T6I04D",
             "ERROR_TEXT": "Cannot check for concurrent writes on mass updates via filters",
-            "DESCRIPTION": null,
+            "DESCRIPTION": "",
             "LABEL": "exface.Core.6T6I04D"
         },
         {
@@ -740,7 +740,7 @@
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6T6I51G",
             "ERROR_TEXT": "Widget id conflict",
-            "DESCRIPTION": null,
+            "DESCRIPTION": "",
             "LABEL": "exface.Core.6T6I51G"
         },
         {
@@ -753,7 +753,7 @@
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6T90UH3",
             "ERROR_TEXT": "Invalid widget visibility error",
-            "DESCRIPTION": null,
+            "DESCRIPTION": "",
             "LABEL": "exface.Core.6T90UH3"
         },
         {
@@ -766,7 +766,7 @@
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6T90UV9",
             "ERROR_TEXT": "Invalid or missing chart widget configuration",
-            "DESCRIPTION": null,
+            "DESCRIPTION": "",
             "LABEL": "exface.Core.6T90UV9"
         },
         {
@@ -779,7 +779,7 @@
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6T90WFX",
             "ERROR_TEXT": "Missing data configuration for data-visualization widget",
-            "DESCRIPTION": null,
+            "DESCRIPTION": "",
             "LABEL": "exface.Core.6T90WFX"
         },
         {
@@ -792,7 +792,7 @@
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6T910B6",
             "ERROR_TEXT": "Invalid or missing diagram widget configuration",
-            "DESCRIPTION": null,
+            "DESCRIPTION": "",
             "LABEL": "exface.Core.6T910B6"
         },
         {
@@ -805,7 +805,7 @@
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6T911YV",
             "ERROR_TEXT": "Tabs widget: Invalid position for tab ribbon",
-            "DESCRIPTION": null,
+            "DESCRIPTION": "",
             "LABEL": "exface.Core.6T911YV"
         },
         {
@@ -818,7 +818,7 @@
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6T9137Y",
             "ERROR_TEXT": "A widget must have either an object_id, an object_alias or a parent widget with an object reference!",
-            "DESCRIPTION": null,
+            "DESCRIPTION": "",
             "LABEL": "exface.Core.6T9137Y"
         },
         {
@@ -831,7 +831,7 @@
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6T919D5",
             "ERROR_TEXT": "Invalid or missing button action configuration",
-            "DESCRIPTION": null,
+            "DESCRIPTION": "",
             "LABEL": "exface.Core.6T919D5"
         },
         {
@@ -844,7 +844,7 @@
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6T91AR9",
             "ERROR_TEXT": "Invalid data filter widget configuration",
-            "DESCRIPTION": null,
+            "DESCRIPTION": "",
             "LABEL": "exface.Core.6T91AR9"
         },
         {
@@ -857,7 +857,7 @@
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6T91BRG",
             "ERROR_TEXT": "Invalid tree widget configuration",
-            "DESCRIPTION": null,
+            "DESCRIPTION": "",
             "LABEL": "exface.Core.6T91BRG"
         },
         {
@@ -870,7 +870,7 @@
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6T91E4Q",
             "ERROR_TEXT": "Widget not found",
-            "DESCRIPTION": null,
+            "DESCRIPTION": "",
             "LABEL": "exface.Core.6T91E4Q"
         },
         {
@@ -883,7 +883,7 @@
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6T91H2S",
             "ERROR_TEXT": "Invalid widget configuration for action",
-            "DESCRIPTION": null,
+            "DESCRIPTION": "",
             "LABEL": "exface.Core.6T91H2S"
         },
         {
@@ -896,7 +896,7 @@
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6T91HJK",
             "ERROR_TEXT": "Malformed relation path",
-            "DESCRIPTION": null,
+            "DESCRIPTION": "",
             "LABEL": "exface.Core.6T91HJK"
         },
         {
@@ -909,7 +909,7 @@
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6T91IGZ",
             "ERROR_TEXT": "Malformed widget link",
-            "DESCRIPTION": null,
+            "DESCRIPTION": "",
             "LABEL": "exface.Core.6T91IGZ"
         },
         {
@@ -922,7 +922,7 @@
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6T91QQ8",
             "ERROR_TEXT": "Invalid ComboTable widget configuration",
-            "DESCRIPTION": null,
+            "DESCRIPTION": "",
             "LABEL": "exface.Core.6T91QQ8"
         },
         {
@@ -935,7 +935,7 @@
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6T91RQ5",
             "ERROR_TEXT": "Invalid column configuration for data widget",
-            "DESCRIPTION": null,
+            "DESCRIPTION": "",
             "LABEL": "exface.Core.6T91RQ5"
         },
         {
@@ -948,7 +948,7 @@
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6T91S9G",
             "ERROR_TEXT": "Invalid configuration of InputSelect widget",
-            "DESCRIPTION": null,
+            "DESCRIPTION": "",
             "LABEL": "exface.Core.6T91S9G"
         },
         {
@@ -961,7 +961,7 @@
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6TA2Y6A",
             "ERROR_TEXT": "Invalid chart axis configuration",
-            "DESCRIPTION": null,
+            "DESCRIPTION": "",
             "LABEL": "exface.Core.6TA2Y6A"
         },
         {
@@ -974,7 +974,7 @@
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6TBX1V2",
             "ERROR_TEXT": "Cannot rebase expression",
-            "DESCRIPTION": null,
+            "DESCRIPTION": "",
             "LABEL": "exface.Core.6TBX1V2"
         },
         {
@@ -987,7 +987,7 @@
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6TG2ZFI",
             "ERROR_TEXT": "Invalid configuration for StateMachineBehavior",
-            "DESCRIPTION": null,
+            "DESCRIPTION": "",
             "LABEL": "exface.Core.6TG2ZFI"
         },
         {
@@ -1000,7 +1000,7 @@
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6TMQR5N",
             "ERROR_TEXT": "Cannot add instance to object basket",
-            "DESCRIPTION": null,
+            "DESCRIPTION": "",
             "LABEL": "exface.Core.6TMQR5N"
         },
         {
@@ -1013,7 +1013,7 @@
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6TV1LBR",
             "ERROR_TEXT": "Invalid text\/value configuration for ComboTable widget",
-            "DESCRIPTION": null,
+            "DESCRIPTION": "",
             "LABEL": "exface.Core.6TV1LBR"
         }
     ],
