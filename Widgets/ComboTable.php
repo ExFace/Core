@@ -423,7 +423,7 @@ class ComboTable extends InputCombo implements iHaveChildren {
 			if ($condition_or_uxon_object instanceof Condition){
 				// TODO
 			} elseif ($condition_or_uxon_object instanceof \stdClass) {
-				$this->get_table_uxon()->get_properties('filters')[] = $condition_or_uxon_object;
+				$this->get_table_uxon()->get_property('filters')[] = $condition_or_uxon_object;
 			}
 		}
 		return $this;
