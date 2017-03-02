@@ -30,6 +30,7 @@ class ObjectBasketAdd extends SetContext {
 	protected function perform(){
 		$this->get_context()->add($this->get_input_data_sheet());
 		$this->set_result_message($this->translate('RESULT', array('%number%' => $this->get_input_data_sheet()->count_rows()), $this->get_input_data_sheet()->count_rows()));
+		$this->set_result('');
 	}
 }
 ?>
