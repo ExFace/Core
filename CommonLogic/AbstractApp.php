@@ -168,7 +168,12 @@ abstract class AbstractApp implements AppInterface {
 		// Load the installation config of the app
 		$config->load_config_file($this->get_workbench()->filemanager()->get_path_to_config_folder() . DIRECTORY_SEPARATOR . $this->get_config_file_name());
 
-		// IDEA Enable user specific configurations by looking into config files in the UserData folder here
+		// Load the user config if there is one
+		// IDEA Enable user-configs for the core app too: currently custom configs are not possible for the core app, 
+		// because it's config is loaded before the context.
+		if ($this->get_workbench()->context()){
+			$config->load_config_file($this->get_workbench()->context()->get_scope_user()->get_user_data_folder_absolute_path() . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . $this->get_config_file_name());
+		}
 		
 		return $config;		
 	}
