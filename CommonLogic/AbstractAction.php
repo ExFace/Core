@@ -462,7 +462,7 @@ abstract class AbstractAction implements ActionInterface {
 			} elseif ($this->get_called_by_widget()){
 				$this->meta_object = $this->get_called_by_widget()->get_meta_object();
 			} else {
-				throw new ActionObjectNotSpecifiedError('Cannot determine the meta object, the action is performed upon! An action must either have an input data sheet or a reference to the widget, that called it, or an explicitly specified object_alias option to determine the meta object.');
+				throw new ActionObjectNotSpecifiedError($this, 'Cannot determine the meta object, the action is performed upon! An action must either have an input data sheet or a reference to the widget, that called it, or an explicitly specified object_alias option to determine the meta object.');
 			}
 		}
 		return $this->meta_object;
@@ -484,7 +484,7 @@ abstract class AbstractAction implements ActionInterface {
 	 */
 	public function set_object_alias($qualified_alias){
 		if ($object = $this->get_workbench()->model()->get_object($qualified_alias)){
-			$this->meta_object = $object;
+			$this->set_meta_object($object);
 		} else {
 			throw new MetaObjectNotFoundError('Cannot load object "' . $qualified_alias . '" for action "' . $this->get_alias_with_namespace() . '"!', '6T5DJPP');
 		}
