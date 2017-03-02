@@ -281,7 +281,10 @@ abstract class AbstractAction implements ActionInterface {
 	}
 	
 	/**
-	 * Returns the resulting data sheet. Performs the action if it had not been performed yet.
+	 * Returns the resulting data sheet. Performs the action if it had not been performed yet. If the action does not explicitly
+	 * produce a result data sheet (e.g. by calling $this->set_result_data_sheet() somewhere within the perform() method), the
+	 * input data sheet will be passed through without changes. This ensures easy chainability of actions.
+	 * 
 	 * @return DataSheetInterface
 	 */
 	final public function get_result_data_sheet(){
@@ -290,8 +293,9 @@ abstract class AbstractAction implements ActionInterface {
 			$this->prepare_result();
 		}	
 		
+		// Pass through the input data if no result data is set by the perform() method
 		if (!$this->result_data_sheet){
-			// FIXME what to we do here?
+			$this->result_data_sheet = $this->get_input_data_sheet();
 		}
 		return $this->result_data_sheet;
 	}
@@ -695,6 +699,11 @@ abstract class AbstractAction implements ActionInterface {
 			$this->name = $this->translate('NAME');
 		}
 		return $this->name;
+	}
+	
+	
+	public function has_name(){
+		return !$this->name || substr($this->name, -5) == '.NAME' ? false : true;
 	}
 	
 	/**

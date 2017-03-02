@@ -270,6 +270,12 @@ interface ActionInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
 	public function set_name($value);
 	
 	/**
+	 * Returns TRUE if the action has a name or a name translation key translatable in the current language and FALSE otherwise
+	 * @return boolean
+	 */
+	public function has_name();
+	
+	/**
 	 * Returns the data transaction, the action runs in. Most action should run in a single transactions, so it is a good
 	 * practice to use the action's transaction for all data source operations. If not transaction was set explicitly
 	 * via set_transaction(), a new transaction will be started automatically.

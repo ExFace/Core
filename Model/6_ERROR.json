@@ -1015,6 +1015,19 @@
             "ERROR_TEXT": "Invalid text\/value configuration for ComboTable widget",
             "DESCRIPTION": "",
             "LABEL": "exface.Core.6TV1LBR"
+        },
+        {
+            "CREATED_ON": "2017-03-02 09:23:18",
+            "MODIFIED_ON": "2017-03-02 09:23:18",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e6ff299ec59ab48bfae4b318306b9a",
+            "FULL_ERROR_CODE": "exface.Core.6U5TRGK",
+            "APP": "0x31000000000000000000000000000000",
+            "ERROR_CODE": "6U5TRGK",
+            "ERROR_TEXT": "Invalid chained action configuration",
+            "DESCRIPTION": "",
+            "LABEL": "exface.Core.6U5TRGK"
         }
     ],
     "totals_rows": [],
