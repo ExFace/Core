@@ -2,9 +2,15 @@
 
 class Timestamp extends \exface\Core\CommonLogic\Model\Formula {
 	
-	function run($date){
-		if (!$date) return;
-		return strtotime($date);
+	/**
+	 *  
+	 * @param string $date
+	 * @param number $multiplier
+	 * @return number
+	 */
+	function run($date, $multiplier = 1000){
+		if (!$date) return 0;
+		return strtotime($date)*$multiplier;
 	}
 }
 ?>
