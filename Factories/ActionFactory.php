@@ -10,6 +10,7 @@ use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Exceptions\UxonParserError;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Exceptions\Actions\ActionNotFoundError;
+use exface\Core\CommonLogic\Model\Object;
 
 abstract class ActionFactory extends AbstractNameResolverFactory {
 	
@@ -93,14 +94,16 @@ abstract class ActionFactory extends AbstractNameResolverFactory {
 	 * @param string $base_action_alias_or_class_or_file
 	 * @param string $action_alias
 	 * @param AppInterface $app
+	 * @param Object $object
 	 * @param UxonObject $uxon_description
 	 * @throws ActionNotFoundError if the class name of the base action cannot be resolved
 	 * @return \exface\Core\Interfaces\Actions\ActionInterface
 	 */
-	public static function create_from_model($base_action_alias_or_class_or_file, $action_alias, AppInterface $app, UxonObject $uxon_description = null){
+	public static function create_from_model($base_action_alias_or_class_or_file, $action_alias, AppInterface $app, Object $object, UxonObject $uxon_description = null){
 		$name_resolver = static::get_name_resolver_from_string($app->get_workbench(), $base_action_alias_or_class_or_file);
 		$action = static::create_empty($name_resolver, $app);
 		$action->set_alias($action_alias);
+		$action->set_meta_object($object);
 		if (!is_null($uxon_description)){
 			$action->import_uxon_object($uxon_description);
 		}

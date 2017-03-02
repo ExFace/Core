@@ -281,7 +281,10 @@ abstract class AbstractAction implements ActionInterface {
 	}
 	
 	/**
-	 * Returns the resulting data sheet. Performs the action if it had not been performed yet.
+	 * Returns the resulting data sheet. Performs the action if it had not been performed yet. If the action does not explicitly
+	 * produce a result data sheet (e.g. by calling $this->set_result_data_sheet() somewhere within the perform() method), the
+	 * input data sheet will be passed through without changes. This ensures easy chainability of actions.
+	 * 
 	 * @return DataSheetInterface
 	 */
 	final public function get_result_data_sheet(){
@@ -290,8 +293,9 @@ abstract class AbstractAction implements ActionInterface {
 			$this->prepare_result();
 		}	
 		
+		// Pass through the input data if no result data is set by the perform() method
 		if (!$this->result_data_sheet){
-			// FIXME what to we do here?
+			$this->result_data_sheet = $this->get_input_data_sheet();
 		}
 		return $this->result_data_sheet;
 	}
@@ -462,7 +466,7 @@ abstract class AbstractAction implements ActionInterface {
 			} elseif ($this->get_called_by_widget()){
 				$this->meta_object = $this->get_called_by_widget()->get_meta_object();
 			} else {
-				throw new ActionObjectNotSpecifiedError('Cannot determine the meta object, the action is performed upon! An action must either have an input data sheet or a reference to the widget, that called it, or an explicitly specified object_alias option to determine the meta object.');
+				throw new ActionObjectNotSpecifiedError($this, 'Cannot determine the meta object, the action is performed upon! An action must either have an input data sheet or a reference to the widget, that called it, or an explicitly specified object_alias option to determine the meta object.');
 			}
 		}
 		return $this->meta_object;
@@ -484,7 +488,7 @@ abstract class AbstractAction implements ActionInterface {
 	 */
 	public function set_object_alias($qualified_alias){
 		if ($object = $this->get_workbench()->model()->get_object($qualified_alias)){
-			$this->meta_object = $object;
+			$this->set_meta_object($object);
 		} else {
 			throw new MetaObjectNotFoundError('Cannot load object "' . $qualified_alias . '" for action "' . $this->get_alias_with_namespace() . '"!', '6T5DJPP');
 		}
@@ -695,6 +699,11 @@ abstract class AbstractAction implements ActionInterface {
 			$this->name = $this->translate('NAME');
 		}
 		return $this->name;
+	}
+	
+	
+	public function has_name(){
+		return !$this->name || substr($this->name, -5) == '.NAME' ? false : true;
 	}
 	
 	/**

@@ -194,7 +194,7 @@ class DataSheet implements DataSheetInterface {
 	 */
 	public function get_column_values($column_name, $include_totals=false){
 		$col = array();
-		$rows = $include_totals ? $this->rows + $this->totals_rows : $this->rows;
+		$rows = $include_totals ? array_merge($this->rows, $this->totals_rows) : $this->rows;
 		foreach ($rows as $row_nr => $row){
 			$col[$row_nr] = $row[$column_name];
 		}
@@ -481,7 +481,11 @@ class DataSheet implements DataSheetInterface {
 			}
 		}
 		
-		// IDEA do we always need to to evaluate expressions of each column? Maybe do it only if the expression is a formula?
+		// FIXME This foreach calculates the expressions in all columns, which is not a good idea, because most columns are simple attributes
+		// and already have their values. However, if the column name has special characters like ":", the column name is not the same, as the
+		// the attribute alias, that is the key in the rows. So, this foreach here actually doubles all columns with special characters: e.g. copying
+		// row values with the key SOME_ATTRIBUTE:SUM to a key SOME_ATTRIBUTE_SUM. This leads to useless increase of memory consumption, but I'm
+		// not sure, how to fix this.
 		foreach ($this->get_columns() as $name => $col){
 			$vals = $col->get_expression_obj()->evaluate($this, $name);
 			if (is_array($vals)){
