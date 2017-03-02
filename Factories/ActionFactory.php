@@ -11,6 +11,7 @@ use exface\Core\Exceptions\UxonParserError;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Exceptions\Actions\ActionNotFoundError;
 use exface\Core\CommonLogic\Model\Object;
+use exface\Core\Interfaces\WidgetInterface;
 
 abstract class ActionFactory extends AbstractNameResolverFactory {
 	
@@ -22,15 +23,12 @@ abstract class ActionFactory extends AbstractNameResolverFactory {
 	public static function create(NameResolverInterface $name_resolver, AbstractWidget $called_by_widget = null, \stdClass $uxon_description = null){
 		$app = $name_resolver->get_workbench()->get_app($name_resolver->get_namespace());
 		if ($name_resolver->class_exists()){
-			$action = static::create_empty($name_resolver, $app);
+			$action = static::create_empty($name_resolver, $app, $called_by_widget);
 		} else {
-			$action = $name_resolver->get_workbench()->model()->get_model_loader()->load_action($app, $name_resolver->get_alias());
+			$action = $name_resolver->get_workbench()->model()->get_model_loader()->load_action($app, $name_resolver->get_alias(), $called_by_widget);
 			if (!$action){
 				throw new ActionNotFoundError('Cannot find action "' . $name_resolver->get_alias_with_namespace() . '"!');
 			}
-		}
-		if ($called_by_widget){
-			$action->set_called_by_widget($called_by_widget);
 		}
 		if ($uxon_description instanceof \stdClass){
 			$action->import_uxon_object($uxon_description);
@@ -80,13 +78,13 @@ abstract class ActionFactory extends AbstractNameResolverFactory {
 	 * @throws ActionNotFoundError if the class name cannot be resolved
 	 * @return ActionInterface
 	 */
-	public static function create_empty(NameResolverInterface $name_resolver, AppInterface $app = null){
+	public static function create_empty(NameResolverInterface $name_resolver, AppInterface $app = null, WidgetInterface $called_by_widget = null){
 		$app = $app ? $app : $name_resolver->get_workbench()->get_app($name_resolver->get_namespace());
 		if (!$name_resolver->class_exists()){
 			throw new ActionNotFoundError('Cannot find action "' . $name_resolver->get_alias_with_namespace() . '": class "' . $name_resolver->get_class_name_with_namespace() . '" not found!');
 		}
 		$class = $name_resolver->get_class_name_with_namespace();
-		return new $class($app);
+		return new $class($app, $called_by_widget);
 	}
 	
 	/**
@@ -99,9 +97,9 @@ abstract class ActionFactory extends AbstractNameResolverFactory {
 	 * @throws ActionNotFoundError if the class name of the base action cannot be resolved
 	 * @return \exface\Core\Interfaces\Actions\ActionInterface
 	 */
-	public static function create_from_model($base_action_alias_or_class_or_file, $action_alias, AppInterface $app, Object $object, UxonObject $uxon_description = null){
+	public static function create_from_model($base_action_alias_or_class_or_file, $action_alias, AppInterface $app, Object $object, UxonObject $uxon_description = null, WidgetInterface $called_by_widget = null){
 		$name_resolver = static::get_name_resolver_from_string($app->get_workbench(), $base_action_alias_or_class_or_file);
-		$action = static::create_empty($name_resolver, $app);
+		$action = static::create_empty($name_resolver, $app, $called_by_widget);
 		$action->set_alias($action_alias);
 		$action->set_meta_object($object);
 		if (!is_null($uxon_description)){
