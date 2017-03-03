@@ -88,11 +88,17 @@ abstract class AbstractAction implements ActionInterface {
 	
 	private $autocommit = true;
 	
-	function __construct(\exface\Core\CommonLogic\AbstractApp $app){
+	/**
+	 * @deprecated use ActionFactory instead
+	 * @param \exface\Core\CommonLogic\AbstractApp $app
+	 * @param WidgetInterface $called_by_widget
+	 */
+	function __construct(\exface\Core\CommonLogic\AbstractApp $app, WidgetInterface $called_by_widget = null){
 		$this->app = $app;
 		$this->exface = $app->get_workbench();
-		// TODO read action config from DB here
-		// call init method of concrete implementation to enable some additional processing like auto install, validity checks, etc.
+		if ($called_by_widget){
+			$this->set_called_by_widget($called_by_widget);
+		}
 		$this->init();
 	}
 	

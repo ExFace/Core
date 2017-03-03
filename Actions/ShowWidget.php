@@ -43,6 +43,11 @@ class ShowWidget extends AbstractAction implements iShowWidget, iUsePrefillData 
 		$this->set_result($this->get_widget());
 	}
 	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\Actions\iShowWidget::get_widget()
+	 */
 	public function get_widget() {
 		if (is_null($this->widget)){
 			if ($this->get_widget_uxon()){

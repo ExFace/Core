@@ -13,13 +13,19 @@ class ShowDialog extends ShowWidget implements iShowDialog {
 	/**
 	 * Creates the dialog widget. If not contents is passed, an empty dialog widget will be returned.
 	 * 
+	 * This method is called if there is no widget passed to the action or the passed widget is not a dialog.
+	 * It creates a basic dialog and optionally fills it with the given content. By overriding this method,
+	 * you can change the way non-dialog widgets are handled. To fill a dialog with default widgets, add
+	 * buttons, etc. override enhance_dialog_widget() instead.
+	 * 
+	 * @see enhance_dialog_widget()
 	 * @return \exface\Core\Widgets\Dialog
 	 */
 	protected function create_dialog_widget(AbstractWidget $contained_widget = NULL){
 		/* @var $dialog \exface\Core\Widgets\Dialog */
 		$parent_widget = $this->get_called_by_widget();
 		$dialog = $this->get_called_on_ui_page()->create_widget('Dialog', $parent_widget);
-		$dialog->set_meta_object_id($this->get_meta_object()->get_id());
+		$dialog->set_meta_object($this->get_meta_object());
 		
 		if ($contained_widget){
 			$dialog->add_widget($contained_widget);
@@ -29,8 +35,16 @@ class ShowDialog extends ShowWidget implements iShowDialog {
 	}
 	
 	/**
-	 * Add some default attributes to a given dialog, that can be derived from the specifics of the action: the dialog caption, icon, etc.
-	 * These attributes can thus be ommited, when manually defining a dialog for the action.
+	 * Adds some default attributes to a given dialog, that can be derived from the specifics of the action: 
+	 * the dialog caption, icon, etc. These attributes can thus be ommited, when manually defining a dialog 
+	 * for the action.
+	 * 
+	 * This method is called after the dialog widget had been instantiated - no matter how: from a UXON
+	 * description passed to the action or automatically using create_dialog_widget(). This is the main
+	 * difference to create_dialog_widget(), which is only called if no dialog was given.
+	 * 
+	 * Override this method to enhance the dialog even further: add widgets, buttons, etc.
+	 * 
 	 * @param Dialog $dialog
 	 * @return \exface\Core\Widgets\Dialog
 	 */
@@ -45,7 +59,6 @@ class ShowDialog extends ShowWidget implements iShowDialog {
 			if(!$dialog->get_icon_name()){
 				$dialog->set_icon_name($this->get_icon_name());
 			}
-			// TODO get some default action attributes from the meta model once the actions have one
 		}
 		
 		if (!$dialog->get_caption()){
