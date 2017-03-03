@@ -217,7 +217,7 @@ class DataTable extends Data implements iHaveTopToolbar, iHaveBottomToolbar, iFi
 	 * @return DataTable
 	 */
 	public function set_context_menu_enabled($value) {
-		$this->context_menu_enabled = $value ? true : false;
+		$this->context_menu_enabled = filter_var($value, FILTER_VALIDATE_BOOLEAN);
 		return $this;
 	}
 
@@ -237,7 +237,7 @@ class DataTable extends Data implements iHaveTopToolbar, iHaveBottomToolbar, iFi
 	 * @return DataTable
 	 */
 	public function set_show_filter_row($value) {
-		$this->show_filter_row = $value ? true : false;
+		$this->show_filter_row = filter_var($value, FILTER_VALIDATE_BOOLEAN);
 		return $this;
 	} 
 
@@ -255,7 +255,7 @@ class DataTable extends Data implements iHaveTopToolbar, iHaveBottomToolbar, iFi
 	 * @return DataTable
 	 */
 	public function set_header_sort_multiple($value) {
-		$this->header_sort_multiple = $value ? true : false;
+		$this->header_sort_multiple = filter_var($value, FILTER_VALIDATE_BOOLEAN);
 		return $this;
 	}  
 	
@@ -288,7 +288,7 @@ class DataTable extends Data implements iHaveTopToolbar, iHaveBottomToolbar, iFi
 	 * @see \exface\Core\Interfaces\Widgets\iHaveTopToolbar::set_hide_toolbar_top()
 	 */
 	public function set_hide_toolbar_top($value) {
-		$this->hide_toolbar_top = $value ? true : false;
+		$this->hide_toolbar_top = filter_var($value, FILTER_VALIDATE_BOOLEAN);
 		return $this;
 	}
 	
@@ -305,7 +305,7 @@ class DataTable extends Data implements iHaveTopToolbar, iHaveBottomToolbar, iFi
 	 * @see \exface\Core\Interfaces\Widgets\iHaveTopToolbar::set_hide_toolbar_top()
 	 */
 	public function set_hide_toolbar_bottom($value) {
-		$this->hide_toolbar_bottom = $value ? true : false;
+		$this->hide_toolbar_bottom = filter_var($value, FILTER_VALIDATE_BOOLEAN);
 		return $this;
 	}
 	
@@ -359,7 +359,7 @@ class DataTable extends Data implements iHaveTopToolbar, iHaveBottomToolbar, iFi
 	 * @return \exface\Core\Widgets\DataTable
 	 */
 	public function set_nowrap($value) {
-		$this->nowrap = $value ? true : false;
+		$this->nowrap = filter_var($value, FILTER_VALIDATE_BOOLEAN);
 		return $this;
 	}
 	
@@ -377,7 +377,7 @@ class DataTable extends Data implements iHaveTopToolbar, iHaveBottomToolbar, iFi
 	 * @return \exface\Core\Widgets\DataTable
 	 */
 	public function set_striped($value) {
-		$this->striped = $value ? true : false;
+		$this->striped = filter_var($value, FILTER_VALIDATE_BOOLEAN);
 		return $this;
 	}
 	
@@ -399,7 +399,7 @@ class DataTable extends Data implements iHaveTopToolbar, iHaveBottomToolbar, iFi
 	 * @return \exface\Core\Widgets\DataTable
 	 */
 	public function set_auto_row_height($value) {
-		$this->auto_row_height = $value ? true : false;
+		$this->auto_row_height = filter_var($value, FILTER_VALIDATE_BOOLEAN);
 		return $this;
 	}
 	

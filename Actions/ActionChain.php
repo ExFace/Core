@@ -131,7 +131,7 @@ class ActionChain extends AbstractAction {
 	}
 	
 	public function set_use_single_transaction($value) {
-		$this->use_single_transaction = $value ? true : false;
+		$this->use_single_transaction = filter_var($value, FILTER_VALIDATE_BOOLEAN);
 		return $this;
 	}
 	

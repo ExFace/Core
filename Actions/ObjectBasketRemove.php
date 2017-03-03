@@ -45,7 +45,7 @@ class ObjectBasketRemove extends ObjectBasketFetch {
 	}
 	
 	public function set_return_basket_content($value){
-		$this->return_basket_content = $value ? true : false;
+		$this->return_basket_content = filter_var($value, FILTER_VALIDATE_BOOLEAN);
 		return $this;
 	}
 }

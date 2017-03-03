@@ -32,7 +32,7 @@ class DataList extends Data implements iHaveTopToolbar, iHaveBottomToolbar, iFil
 	 * @see \exface\Core\Interfaces\Widgets\iHaveTopToolbar::set_hide_toolbar_top()
 	 */
 	public function set_hide_toolbar_top($value) {
-		$this->hide_toolbar_top = $value ? true : false;
+		$this->hide_toolbar_top = filter_var($value, FILTER_VALIDATE_BOOLEAN);
 		return $this;
 	}
 	
@@ -49,7 +49,7 @@ class DataList extends Data implements iHaveTopToolbar, iHaveBottomToolbar, iFil
 	 * @see \exface\Core\Interfaces\Widgets\iHaveTopToolbar::set_hide_toolbar_top()
 	 */
 	public function set_hide_toolbar_bottom($value) {
-		$this->hide_toolbar_bottom = $value ? true : false;
+		$this->hide_toolbar_bottom = filter_var($value, FILTER_VALIDATE_BOOLEAN);
 		return $this;
 	}
 	
@@ -100,7 +100,7 @@ class DataList extends Data implements iHaveTopToolbar, iHaveBottomToolbar, iFil
 	 * @see \exface\Core\Interfaces\Widgets\iSupportMultiSelect::set_multi_select()
 	 */
 	public function set_multi_select($value) {
-		$this->multi_select = $value ? true : false;
+		$this->multi_select = filter_var($value, FILTER_VALIDATE_BOOLEAN);
 		return $this;
 	}	  
 	

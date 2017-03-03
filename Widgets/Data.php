@@ -865,7 +865,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 	 * @param boolean $value
 	 */
 	public function set_paginate($value) {
-		$this->paginate = $value ? true : false;
+		$this->paginate = filter_var($value, FILTER_VALIDATE_BOOLEAN);
 		return $this;
 	}
 	
@@ -1172,7 +1172,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 	 * @return \exface\Core\Widgets\Data
 	 */
 	public function set_editable($value = true){
-		$this->editable = $value ? true : false;
+		$this->editable = filter_var($value, FILTER_VALIDATE_BOOLEAN);
 		return $this;
 	}
 	

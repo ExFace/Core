@@ -95,7 +95,7 @@ class QueryPartFilter extends QueryPartAttribute {
 	 * @return \exface\Core\CommonLogic\QueryBuilder\QueryPartFilter
 	 */
 	public function set_apply_after_reading($value) {
-		$this->apply_after_reading = $value ? true : false;
+		$this->apply_after_reading = filter_var($value, FILTER_VALIDATE_BOOLEAN);
 		return $this;
 	} 
 }

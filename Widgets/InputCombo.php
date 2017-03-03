@@ -73,7 +73,7 @@ class InputCombo extends InputSelect implements iSupportLazyLoading {
 	 * @return \exface\Core\Widgets\InputCombo
 	 */
 	public function set_allow_new_values($value) {
-		$this->allow_new_values = $value ? true : false;
+		$this->allow_new_values = filter_var($value, FILTER_VALIDATE_BOOLEAN);
 		return $this;
 	}
 	

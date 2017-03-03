@@ -83,7 +83,7 @@ class Input extends Text implements iTakeInput, iHaveDefaultValue {
 	 * @see \exface\Core\Interfaces\Widgets\iTakeInput::set_readonly()
 	 */
 	public function set_readonly($value) {
-		$this->readonly = $value ? true : false;
+		$this->readonly = filter_var($value, FILTER_VALIDATE_BOOLEAN);
 		return $this;
 	}
 	
@@ -132,7 +132,7 @@ class Input extends Text implements iTakeInput, iHaveDefaultValue {
 	 * @see \exface\Core\Interfaces\Widgets\iHaveValue::set_ignore_default_value()
 	 */
 	public function set_ignore_default_value($value) {
-		$this->ignore_default_value = $value ? true : false;
+		$this->ignore_default_value = filter_var($value, FILTER_VALIDATE_BOOLEAN);
 		return $this;
 	}
 	

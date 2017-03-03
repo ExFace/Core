@@ -460,7 +460,7 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren {
 	 * @see \exface\Core\Interfaces\WidgetInterface::set_disabled()
 	 */
 	public function set_disabled($value) {
-		$this->disabled = $value ? true : false;
+		$this->disabled = filter_var($value, FILTER_VALIDATE_BOOLEAN);
 		return $this;
 	}
 	
