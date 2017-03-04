@@ -105,7 +105,7 @@ class InputSelect extends Input implements iSupportMultiSelect {
 	 * @see \exface\Core\Interfaces\Widgets\iSupportMultiSelect::set_multi_select()
 	 */
 	public function set_multi_select($value) {
-		$this->multi_select = filter_var($value, FILTER_VALIDATE_BOOLEAN);
+		$this->multi_select = \exface\Core\DataTypes\BooleanDataType::parse($value);
 	} 
 	
 	/**
@@ -425,7 +425,7 @@ class InputSelect extends Input implements iSupportMultiSelect {
 	 * @return \exface\Core\Widgets\InputSelect
 	 */
 	public function set_use_prefill_to_filter_options($value) {
-		$this->use_prefill_to_filter_options = filter_var($value, FILTER_VALIDATE_BOOLEAN);
+		$this->use_prefill_to_filter_options = \exface\Core\DataTypes\BooleanDataType::parse($value);
 		return $this;
 	}
 	
@@ -443,7 +443,7 @@ class InputSelect extends Input implements iSupportMultiSelect {
 	 * @return \exface\Core\Widgets\InputSelect
 	 */
 	public function set_use_prefill_values_as_options($value) {
-		$this->use_prefill_values_as_options = filter_var($value, FILTER_VALIDATE_BOOLEAN);
+		$this->use_prefill_values_as_options = \exface\Core\DataTypes\BooleanDataType::parse($value);
 		return $this;
 	}  
 	

@@ -425,7 +425,7 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied {
 	 * @return Attribute
 	 */
 	public function set_system($value) {
-		$this->system = filter_var($value, FILTER_VALIDATE_BOOLEAN);
+		$this->system = \exface\Core\DataTypes\BooleanDataType::parse($value);
 		return $this;
 	}
 	
@@ -468,7 +468,7 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied {
 	 * @return \exface\Core\CommonLogic\Model\Attribute
 	 */
 	public function set_sortable($value) {
-		$this->sortable = filter_var($value, FILTER_VALIDATE_BOOLEAN);
+		$this->sortable = \exface\Core\DataTypes\BooleanDataType::parse($value);
 		return $this;
 	}
 	
@@ -486,7 +486,7 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied {
 	 * @return \exface\Core\CommonLogic\Model\Attribute
 	 */
 	public function set_filterable($value) {
-		$this->filterable = filter_var($value, FILTER_VALIDATE_BOOLEAN);
+		$this->filterable = \exface\Core\DataTypes\BooleanDataType::parse($value);
 		return $this;
 	}
 	
@@ -504,7 +504,7 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied {
 	 * @return \exface\Core\CommonLogic\Model\Attribute
 	 */
 	public function set_aggregatable($value) {
-		$this->aggregatable = filter_var($value, FILTER_VALIDATE_BOOLEAN);
+		$this->aggregatable = \exface\Core\DataTypes\BooleanDataType::parse($value);
 		return $this;
 	}
 	

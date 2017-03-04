@@ -97,7 +97,7 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
 	 * @param boolean
 	 */
 	public function set_sortable($value) {
-	  $this->sortable = filter_var($value, FILTER_VALIDATE_BOOLEAN);
+	  $this->sortable = \exface\Core\DataTypes\BooleanDataType::parse($value);
 	}
 	
 	/**
@@ -271,7 +271,7 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
 	 * @return DataColumn
 	 */
 	public function set_include_in_quick_search($value) {
-		$this->include_in_quick_search = filter_var($value, FILTER_VALIDATE_BOOLEAN);
+		$this->include_in_quick_search = \exface\Core\DataTypes\BooleanDataType::parse($value);
 		return $this;
 	}
 

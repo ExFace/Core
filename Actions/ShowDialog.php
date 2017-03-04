@@ -130,7 +130,7 @@ class ShowDialog extends ShowWidget implements iShowDialog {
 	}
 	
 	public function set_include_headers($value) {
-		$this->include_headers = filter_var($value, FILTER_VALIDATE_BOOLEAN);
+		$this->include_headers = \exface\Core\DataTypes\BooleanDataType::parse($value);
 		return $this;
 	}
 	

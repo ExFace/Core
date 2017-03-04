@@ -27,7 +27,7 @@ class QueryPartSorter extends QueryPartAttribute {
 	 * @return QueryPartSorter
 	 */
 	public function set_apply_after_reading($value) {
-		$this->apply_after_reading = filter_var($value, FILTER_VALIDATE_BOOLEAN);
+		$this->apply_after_reading = \exface\Core\DataTypes\BooleanDataType::parse($value);
 		return $this;
 	}
 }
