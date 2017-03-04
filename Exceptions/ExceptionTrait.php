@@ -23,6 +23,7 @@ trait ExceptionTrait {
 	
 	private $alias = null;
 	private $id = null;
+	private $widget = null;
 	
 	public function __construct ($message, $alias = null, $previous = null) {
 		parent::__construct($message, null, $previous);
@@ -78,6 +79,10 @@ trait ExceptionTrait {
 	 * @return ErrorMessage
 	 */
 	public function create_widget(UiPageInterface $page){
+		// Make sure, the widget is generated only once. Otherwise different parts of the code might get different widgets (with different ids).
+		if (!is_null($this->widget)){
+			return $this->widget;
+		}
 		// Create a new error message
 		/* @var $tabs \exface\Core\Widgets\ErrorMessage */
 		$debug_widget = WidgetFactory::create($page, 'ErrorMessage');
@@ -134,6 +139,9 @@ trait ExceptionTrait {
 				$debug_widget = $prev->create_debug_widget($debug_widget);
 			}
 		}
+		
+		// Save the widget in case create_widget() is called again
+		$this->widget = $debug_widget;
 		
 		return $debug_widget;
 	}
