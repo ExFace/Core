@@ -5,9 +5,11 @@ use exface\Core\Exceptions\DataTypeValidationError;
 class NumberDataType extends AbstractDataType {
 	
 	public static function parse($string){
-		if (is_numeric($string) || $string === ''){
+		if (is_numeric($string)){
 			// Decimal numbers
 			return $string;
+		} elseif($string === '' || is_null($string)){
+			return null;
 		} elseif (strpos($string, '0x') === 0) {
 			// Hexadecimal numbers in '0x....'-Notation
 			return $string;
