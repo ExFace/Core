@@ -3,6 +3,7 @@ namespace exface\Core\Actions;
 class CreateObjectDialog extends EditObjectDialog {
 	
 	protected function init(){
+		parent::init();
 		$this->set_input_rows_min(null);
 		$this->set_input_rows_max(null);
 		$this->set_icon_name('add');
