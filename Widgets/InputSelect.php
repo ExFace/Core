@@ -260,7 +260,11 @@ class InputSelect extends Input implements iSupportMultiSelect {
 	 * @see \exface\Core\Interfaces\Widgets\iHaveValues::set_values_from_array()
 	 */
 	public function set_values_from_array(array $values){
-		$this->set_value(implode(EXF_LIST_SEPARATOR, $values));
+		if ($this->get_multi_select()){
+			$this->set_value(implode(EXF_LIST_SEPARATOR, $values));
+		} else {
+			$this->set_value(reset($values));
+		}
 		return $this;
 	}
 	

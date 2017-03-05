@@ -51,7 +51,7 @@ class ComboTable extends InputCombo implements iHaveChildren {
 	 */
 	public function get_table(){
 		// If the data table was not specified explicitly, attempt to create one from the attirbute_alias
-		if (!$this->data_table){
+		if (is_null($this->data_table)){
 			$this->init_table();
 		}
 		return $this->data_table;
@@ -74,7 +74,8 @@ class ComboTable extends InputCombo implements iHaveChildren {
 		
 		// Now see if the user had already defined a table in UXON
 		/* @var $table_uxon \exface\Core\CommonLogic\UxonObject */
-		if (($table_uxon = $this->get_original_uxon_object()->get_property('table')) && !$table_uxon->is_empty()){
+		$table_uxon = $this->get_table_uxon();
+		if (!$table_uxon->is_empty()){
 			// Do not allow custom widget types
 			if ($table_uxon->get_property('widget_type')){
 				$table_uxon->unset_property('widget_type');
@@ -83,7 +84,7 @@ class ComboTable extends InputCombo implements iHaveChildren {
 		}
 		
 		// Add default attributes
-		if (!$table_uxon || !$table_uxon->has_property('columns') || count($table_uxon->get_property('columns')) == 0){
+		if (!$table_uxon->has_property('columns') || count($table_uxon->get_property('columns')) == 0){
 			$table->add_columns_for_default_display_attributes();
 		}
 		
@@ -276,6 +277,7 @@ class ComboTable extends InputCombo implements iHaveChildren {
 					// values directly
 					$this->set_value($data_sheet->get_cell_value($this->get_relation()->get_related_object_key_alias(), 0));
 					$this->set_value_text($data_sheet->get_cell_value($this->get_text_column()->get_data_column_name(), 0));
+					return;
 				} elseif ($this->get_relation()) {
 					// If it is not the object selected within the combo, than we still can look for columns in the sheet, that
 					// contain selectors (UIDs) of that object. This means, we need to look for data columns showing relations
@@ -283,12 +285,15 @@ class ComboTable extends InputCombo implements iHaveChildren {
 					foreach ($data_sheet->get_columns()->get_all() as $column){
 						if ($column->get_attribute() && $column->get_attribute()->is_relation()){
 							if ($column->get_attribute()->get_relation()->get_related_object()->is($this->get_relation()->get_related_object())){
-								$this->set_value($column->get_values(false)[0])	;
+								$this->set_values_from_array($column->get_values(false));
+								return;
 							}							
 						}
 					}
 				}
-				// If none of the above is the case, we cannot use data from the given sheet for a prefill.
+				// If we are still here, that means, the above checks did not work. We still can try to use the prefill data
+				// to filter the options, so just pass it to the internal data widget
+				$this->get_table()->prefill($data_sheet);
 			}
 		}
 	}
@@ -423,7 +428,7 @@ class ComboTable extends InputCombo implements iHaveChildren {
 			if ($condition_or_uxon_object instanceof Condition){
 				// TODO
 			} elseif ($condition_or_uxon_object instanceof \stdClass) {
-				$this->get_table_uxon()->get_property('filters')[] = $condition_or_uxon_object;
+				$this->get_table_uxon()->set_property('filters', array_merge($this->get_table_uxon()->get_property('filters'), array($condition_or_uxon_object)));
 			}
 		}
 		return $this;
