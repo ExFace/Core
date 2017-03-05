@@ -13,6 +13,7 @@ class EditObjectDialog extends ShowObjectDialog {
 		$this->set_icon_name('edit');
 		$this->set_save_action_alias('exface.Core.UpdateData');
 		$this->set_show_only_editable_attributes(true);
+		$this->set_disable_editing(false);
 	}
 	
 	/**

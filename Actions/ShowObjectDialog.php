@@ -4,6 +4,7 @@ use exface\Core\Widgets\AbstractWidget;
 use exface\Core\Widgets\Dialog;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Factories\WidgetFactory;
+use exface\Core\DataTypes\BooleanDataType;
 
 /**
  * This action will show a dialog displaying the default editor of a meta object in read-only mode.
@@ -34,6 +35,7 @@ use exface\Core\Factories\WidgetFactory;
 class ShowObjectDialog extends ShowDialog {
 
 	private $show_only_editable_attributes = null;
+	private $disable_editing = true;
 	
 	protected function init(){
 		$this->set_input_rows_min(1);
@@ -114,6 +116,16 @@ class ShowObjectDialog extends ShowDialog {
 		return $dialog;
 	}
 	
+	protected function enhance_dialog_widget(Dialog $dialog){
+		$dialog = parent::enhance_dialog_widget($dialog);
+		if ($this->get_disable_editing()){
+			foreach ($dialog->get_input_widgets() as $widget){
+				$widget->set_disabled(true);
+			}
+		}
+		return $dialog;
+	}
+	
 	public function set_dialog_widget(AbstractWidget $widget){
 		$this->dialog_widget = $widget;
 	}  
@@ -130,5 +142,17 @@ class ShowObjectDialog extends ShowDialog {
 		$this->show_only_editable_attributes = $value;
 		return $this;
 	}
+	
+	public function get_disable_editing() {
+		return $this->disable_editing;
+	}
+	
+	public function set_disable_editing($value) {
+		$this->disable_editing = BooleanDataType::parse($value);
+		return $this;
+	}
+	
+	
+	  
 }
 ?>
