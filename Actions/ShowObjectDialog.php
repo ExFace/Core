@@ -92,8 +92,14 @@ class ShowObjectDialog extends ShowDialog {
 		$dialog = parent::create_dialog_widget();
 		$page = $this->get_called_on_ui_page();
 		$default_editor_uxon = $dialog->get_meta_object()->get_default_editor_uxon();
-		if ($default_editor_uxon && !$default_editor_uxon->is_empty()){
-			// If there is a default editor for an object, use it
+		
+		// If the content is explicitly defined, just add it to the dialog
+		if ($contained_widget){
+			$dialog->add_widget($contained_widget);
+		}
+		// Otherwise try to generate the widget automatically
+		// First check, if there is a default editor for an object, and instantiate it if so
+		elseif ($default_editor_uxon && !$default_editor_uxon->is_empty()){
 			if (!$default_editor_uxon->get_property('widget_type') || $default_editor_uxon->get_property('widget_type') == 'Dialog'){
 				$dialog->import_uxon_object($default_editor_uxon);
 				if ($dialog->count_widgets() == 0){
@@ -103,7 +109,9 @@ class ShowObjectDialog extends ShowDialog {
 				$default_editor = WidgetFactory::create_from_uxon($page, $default_editor_uxon, $dialog);
 				$dialog->add_widget($default_editor);
 			}
-		} else {
+		} 
+		// Lastly, try to generate a usefull editor from the meta model
+		else {
 			// If there is no editor defined, create one: Add a panel to the dialog and generate editors for all attributes
 			// of the object in that panel.
 			// IDEA A separate method "create_object_editor" would probably be handy, once we have attribute groups and

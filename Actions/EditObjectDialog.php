@@ -29,7 +29,7 @@ class EditObjectDialog extends ShowObjectDialog {
 	 * @return \exface\Core\Widgets\exfDialog
 	 */
 	protected function create_dialog_widget(AbstractWidget $contained_widget = NULL){
-		$dialog = parent::create_dialog_widget();
+		$dialog = parent::create_dialog_widget($contained_widget);
 		$page = $this->get_called_on_ui_page();
 		// TODO add save button via followup actions in the init() method instead of the button directly
 		/* @var $save_button \exface\Core\Widgets\Button */
