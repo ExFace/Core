@@ -325,15 +325,16 @@ class StateMachineBehavior extends AbstractBehavior {
 		
 		// Check all the updated attributes for disabled attributes, if a disabled attribute
 		// is changed throw an error
-		foreach ($check_column->get_values() as $row_nr => $check_state_val) {
+		foreach ($data_sheet->get_rows() as $updated_row_nr => $updated_row) {
+			$check_row_nr = $check_sheet->get_uid_column()->find_row_by_value($data_sheet->get_uid_column()->get_cell_value($updated_row_nr));
+			$check_state_val = $check_column->get_cell_value($check_row_nr);
 			$disabled_attributes = $this->get_state($check_state_val)->get_disabled_attributes_aliases();
-			foreach ($data_sheet->get_columns() as $col) {
-				if (in_array($col->get_attribute_alias(), $disabled_attributes)) {
-					$updated_val = $col->get_cell_value($data_sheet->get_uid_column()->find_row_by_value($check_sheet->get_uid_column()->get_cell_value($row_nr)));
-					$check_val = $check_sheet->get_cell_value($col->get_attribute_alias(), $row_nr);
+			foreach ($updated_row as $attribute_alias => $updated_val) {
+				if (in_array($attribute_alias, $disabled_attributes)) {
+					$check_val = $check_sheet->get_cell_value($attribute_alias, $check_row_nr);
 					if ($updated_val != $check_val) {
 						$data_sheet->data_mark_invalid();
-						throw new StateMachineUpdateException($data_sheet, 'Cannot update data in data sheet with "' . $data_sheet->get_meta_object()->get_alias_with_namespace() . '": attribute '.$col->get_attribute_alias().' is disabled in the current state ('.$check_state_val.')!');
+						throw new StateMachineUpdateException($data_sheet, 'Cannot update data in data sheet with "' . $data_sheet->get_meta_object()->get_alias_with_namespace() . '": attribute ' . $attribute_alias . ' is disabled in the current state (' . $check_state_val . ')!');
 					}
 				}
 			}

@@ -114,12 +114,19 @@ class TimeStampingBehavior extends AbstractBehavior {
 			$check_nr = count($check_column->get_values());
 			
 			if ($check_nr == $update_nr) {
-				//beim Bearbeiten eines einzelnen Objektes ueber einfaches Bearbeiten, Massenupdate in Tabelle, Massenupdate
-				//	ueber Knopf $check_nr == 1, $update_nr == 1
-				//beim Bearbeiten mehrerer Objekte ueber Massenupdate in Tabelle $check_nr == $update_nr > 1
+				// beim Bearbeiten eines einzelnen Objektes ueber einfaches Bearbeiten, Massenupdate in Tabelle, Massenupdate
+				//   ueber Knopf, ueber Knopf mit Filtern $check_nr == 1, $update_nr == 1
+				// beim Bearbeiten mehrerer Objekte ueber Massenupdate in Tabelle $check_nr == $update_nr > 1
 				foreach ($updated_column->get_values() as $row_nr => $updated_val){
 					$check_val = $check_column->get_cell_value($check_sheet->get_uid_column()->find_row_by_value($data_sheet->get_uid_column()->get_cell_value($row_nr)));
 					try {
+						if (empty($data_sheet->get_uid_column()->get_values()[$row_nr])) {
+							// Beim Massenupdate mit Filtern wird als TS_UPDATE-Wert die momentane Zeit mitgeliefert, die natuerlich neuer
+							// ist, als alle Werte in der Datenbank. Es werden jedoch keine oid-Werte uebergeben, da nicht klar ist welche
+							// Objekte betroffen sind. Momentan wird daher das Update einfach gestattet, spaeter soll hier eine Warnung
+							// ausgegeben werden.
+							throw new ConcurrentWritesCannotBePreventedWarning('Cannot check for concurrent writes on mass updates via filters', '6T6I04D');
+						}
 						$updated_date = new \DateTime($updated_val);
 						$check_date = new \DateTime($check_val);
 						/* FIXME These commented out lines were a workaround for a problem of oracle SQL delivering an other date format by default
@@ -142,17 +149,17 @@ class TimeStampingBehavior extends AbstractBehavior {
 				}
 				
 			} else if ($check_nr > 1 && $update_nr == 1) {
-				//beim Bearbeiten mehrerer Objekte ueber Massenupdate ueber Knopf, Massenupdate ueber Knopf mit Filtern
-				//	$check_nr > 1, $update_nr == 1
+				// beim Bearbeiten mehrerer Objekte ueber Massenupdate ueber Knopf, mehrerer Objekte ueber Knopf mit Filtern
+				// $check_nr > 1, $update_nr == 1
 				$updated_val = $updated_column->get_values()[0];
 				$check_val = DataColumn::aggregate_values($check_column->get_values(), $check_column->get_attribute()->get_default_aggregate_function());
 				
 				try {
 					if (empty($data_sheet->get_uid_column()->get_values()[0])) {
-						//Beim Massenupdate mit Filtern wird als TS_UPDATE-Wert die momentane Zeit mitgeliefert, die natuerlich neuer
-						//ist, als alle Werte in der Datenbank. Es werden jedoch keine oid-Werte uebergeben, da nicht klar ist welche
-						//Objekte betroffen sind. Momentan wird daher das Update einfach gestattet, später soll hier eine Warnung
-						//ausgegeben werden.
+						// Beim Massenupdate mit Filtern wird als TS_UPDATE-Wert die momentane Zeit mitgeliefert, die natuerlich neuer
+						// ist, als alle Werte in der Datenbank. Es werden jedoch keine oid-Werte uebergeben, da nicht klar ist welche
+						// Objekte betroffen sind. Momentan wird daher das Update einfach gestattet, spaeter soll hier eine Warnung
+						// ausgegeben werden.
 						throw new ConcurrentWritesCannotBePreventedWarning('Cannot check for concurrent writes on mass updates via filters', '6T6I04D');
 					}
 					$updated_date = new \DateTime($updated_val);
