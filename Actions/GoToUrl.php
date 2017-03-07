@@ -45,7 +45,7 @@ class GoToUrl extends AbstractAction implements iShowUrl {
 		}
 		$result = str_replace($vars, $vals, $this->get_url());
 		$this->set_result($result);
-		$this->set_result_message('Redirecting...');
+		$this->set_result_message($this->get_workbench()->get_core_app()->get_translator()->translate('ACTION.GOTOURL.SUCCESS'));
 		$this->set_result_data_sheet($this->get_input_data_sheet());
 		return $this;
 	}
