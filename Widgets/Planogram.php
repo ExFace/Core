@@ -7,7 +7,16 @@
  *
  */
 class Planogram extends Diagram {
-	  
+	private $add_row_link_button_id = null;
+	
+	public function get_add_row_link_button_id() {
+		return $this->add_row_link_button_id;
+	}
+	
+	public function set_add_row_link_button_id($value) {
+		$this->add_row_link_button_id = $value;
+		return $this;
+	}
 }
 
 ?>
