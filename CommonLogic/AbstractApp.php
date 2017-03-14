@@ -326,10 +326,10 @@ abstract class AbstractApp implements AppInterface {
 	 * 
 	 * {@inheritDoc}
 	 * @see \exface\Core\Interfaces\AppInterface::get_installer()
-	 * @return AppInstaller
+	 * @return AppInstallerContainer
 	 */
 	public function get_installer(InstallerInterface $injected_installer = null){
-		$app_installer = new AppInstaller($this);
+		$app_installer = new AppInstallerContainer($this);
 		// Add the injected installer
 		if ($injected_installer){
 			$app_installer->add_installer($injected_installer);
