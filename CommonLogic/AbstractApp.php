@@ -334,19 +334,31 @@ abstract class AbstractApp implements AppInterface {
 		if ($injected_installer){
 			$app_installer->add_installer($injected_installer);
 		}
-		// See if there is a custom installer for this app named [AppAlias]Installer in the same namespace. If so, add it here
-		$class = get_class($this);
-		if (substr($class, -3) == 'App'){
-			$installer_class = substr($class, 0, -3) . 'Installer';
-			if (class_exists($installer_class)){
-				$installer = new $installer_class($this->get_name_resolver());
-				if (!(($installer instanceof NameResolverInstallerInterface) || ($installer instanceof AppInstallerInterface))){
-					throw new InvalidArgumentException('The app installer "' . $installer_class . '" must implement the NameResolverInstallerInterface or the AppInstallerInterface!');
-				}
-				$app_installer->add_installer($installer);
-			}
-		}
 		return $app_installer;
+	}
+	
+	/**
+	 * By default a class is conscidered part of an app if it is in the namespace of the app.
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\AppInterface::contains_class()
+	 */
+	public function contains_class($object_or_class_name){
+		if (is_object($object_or_class_name)){
+			$class_name = get_class($object_or_class_name);
+		} elseif (is_string($object_or_class_name)) {
+			$class_name = $object_or_class_name;
+		} else {
+			throw new InvalidArgumentException('AppInterface::contains_class() expects the argument to be either an object or a string class name: "' . gettype($object_or_class_name) . '" given instead!');
+		}
+		
+		$app_namespace = $this->get_name_resolver()->get_class_namespace();
+		$app_namespace = substr($app_namespace, 0, 1) == "\\" ? substr($app_namespace, 1) : $app_namespace;
+		$class_name = substr($class_name, 0, 1) == "\\" ? substr($class_name, 1) : $class_name;
+		if (substr($class_name, 0, strlen($app_namespace)) == $app_namespace){
+			return true;
+		}
+		return false;
 	}
 }
 ?>
