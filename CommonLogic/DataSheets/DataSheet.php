@@ -394,11 +394,6 @@ class DataSheet implements DataSheetInterface {
 		// create new query for the main object
 		$query = QueryBuilderFactory::create_from_alias($this->exface, $this->get_meta_object()->get_query_builder());
 		$query->set_main_object($this->get_meta_object());
-	
-		// Add columns to the query
-		if (empty($this->cols)){
-			// TODO get default attributes from meta object
-		}
 		
 		foreach ($this->get_columns() as $col){
 			$this->get_data_for_column($col, $query);
