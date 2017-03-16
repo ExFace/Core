@@ -112,7 +112,7 @@ class Text extends AbstractWidget implements iShowSingleAttribute, iHaveValue, i
 					// Iterate over all forward relations
 					$inherited_rel = null;
 					$direct_rel = null;
-					foreach ($data_sheet->get_meta_object()->find_relations($this->get_meta_object(), Relation::RELATION_TYPE_FORWARD) as $rel){						
+					foreach ($data_sheet->get_meta_object()->find_relations($this->get_meta_object()->get_id(), Relation::RELATION_TYPE_FORWARD) as $rel){						
 						if ($rel->is_inherited() && !$inherited_rel){
 							// Remember the first inherited relation in case there will be no direct relations 
 							$inherited_rel = $rel;
