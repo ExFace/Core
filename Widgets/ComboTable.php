@@ -245,7 +245,7 @@ class ComboTable extends InputCombo implements iHaveChildren {
 	 */
 	protected function do_prefill(DataSheetInterface $data_sheet){
 		// Do not do anything, if the value is already set explicitly (e.g. a fixed value)
-		if ($this->get_value()){
+		if ($this->get_value() && !$this->get_value_expression()->is_reference()){
 			return;
 		}
 		
