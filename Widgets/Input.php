@@ -3,11 +3,13 @@ namespace exface\Core\Widgets;
 use exface\Core\Interfaces\Widgets\iTakeInput;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\Interfaces\Widgets\iHaveDefaultValue;
+use exface\Core\DataTypes\BooleanDataType;
 
 class Input extends Text implements iTakeInput, iHaveDefaultValue {
 	private $required = null;
 	private $validator = null;
 	private $readonly = false;
+	private $display_only = false;
 	
 	public function get_validator() {
 		return $this->validator;
@@ -149,6 +151,28 @@ class Input extends Text implements iTakeInput, iHaveDefaultValue {
 		}
 		return parent::get_empty_text();
 	}
-  
+	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\Widgets\iTakeInput::is_display_only()
+	 */
+	public function is_display_only() {
+		if ($this->is_readonly()){
+			return true;
+		}
+		return $this->display_only;
+	}
+	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\Widgets\iTakeInput::set_display_only()
+	 */
+	public function set_display_only($value) {
+		$this->display_only = BooleanDataType::parse($value);
+		return $this;
+	}
+	 
 }
 ?>
