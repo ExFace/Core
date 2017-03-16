@@ -38,6 +38,7 @@ class ShowObjectDialog extends ShowDialog {
 	private $disable_editing = true;
 	
 	protected function init(){
+		parent::init();
 		$this->set_input_rows_min(1);
 		$this->set_input_rows_max(1);
 		$this->set_icon_name('info');

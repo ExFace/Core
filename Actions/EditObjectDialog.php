@@ -14,6 +14,10 @@ class EditObjectDialog extends ShowObjectDialog {
 		$this->set_save_action_alias('exface.Core.UpdateData');
 		$this->set_show_only_editable_attributes(true);
 		$this->set_disable_editing(false);
+		// Make sure, prefill with input data is enabled (otherwise there will be nothing to edit).
+		$this->set_prefill_with_input_data(true);
+		// Disable prefills from context, so they do not interfere
+		$this->set_prefill_with_filter_context(true);
 	}
 	
 	/**
