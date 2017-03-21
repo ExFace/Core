@@ -79,7 +79,7 @@ abstract class AbstractQueryBuilder {
 	
 	/**
 	 * Adds an attribute to be fetched by the query
-	 * @param string attribute_alias
+	 * @param string $attribute_alias
 	 */
 	public function add_attribute($alias){
 		$qpart = new QueryPartSelect($alias, $this);
