@@ -4,6 +4,8 @@ use exface\Core\CommonLogic\Model\Object;
 use exface\Core\Exceptions\Actions\ActionConfigurationError;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Factories\DataSheetFactory;
+use exface\Core\Exceptions\UiPageNotFoundError;
+use exface\Core\Factories\UiPageFactory;
 
 /**
  * Fetches meta object instances stored in the object basket of the specified context_scope (by default, the window scope)
@@ -42,8 +44,13 @@ class ObjectBasketFetch extends ObjectBasketAdd {
 	}
 	
 	protected function build_dialog(Object $meta_object){
+		try {
+			$page = $this->get_called_on_ui_page();
+		} catch (\Throwable $e){
+			$page = UiPageFactory::create_empty($meta_object->get_workbench()->ui(), 0);
+		}
 		/* @var $dialog \exface\Core\Widgets\Dialog */
-		$dialog = WidgetFactory::create($this->get_called_on_ui_page(), 'Dialog');
+		$dialog = WidgetFactory::create($page, 'Dialog');
 		$dialog->set_id('object_basket');
 		$dialog->set_meta_object($meta_object);
 		$dialog->set_caption($this->get_workbench()->get_core_app()->get_translator()->translate('ACTION.OBJECTBASKET'));
