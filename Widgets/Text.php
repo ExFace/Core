@@ -171,9 +171,13 @@ class Text extends AbstractWidget implements iShowSingleAttribute, iHaveValue, i
 		$prefill_columns = $this->prepare_data_sheet_to_prefill(DataSheetFactory::create_from_object($data_sheet->get_meta_object()))->get_columns();
 		if ($col = $prefill_columns->get_first()){
 			if (count($data_sheet->get_column_values($col->get_name(false))) > 1 && $this->get_aggregate_function()){
-				$this->set_value(\exface\Core\CommonLogic\DataSheets\DataColumn::aggregate_values($data_sheet->get_column_values($col->get_name(false)), $this->get_aggregate_function()));
+				$value = \exface\Core\CommonLogic\DataSheets\DataColumn::aggregate_values($data_sheet->get_column_values($col->get_name(false)), $this->get_aggregate_function());
 			} else {
-				$this->set_value($data_sheet->get_cell_value($col->get_name(), 0));
+				$value = $data_sheet->get_cell_value($col->get_name(), 0);
+			}
+			if (!is_null($value) && $value != '') {
+				// if empty values are set, live-references get overwritten even without a prefill
+				$this->set_value($value);
 			}
 		}
 	}
