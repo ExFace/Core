@@ -245,7 +245,7 @@ class ComboTable extends InputCombo implements iHaveChildren {
 	 */
 	protected function do_prefill(DataSheetInterface $data_sheet){
 		// Do not do anything, if the value is already set explicitly (e.g. a fixed value)
-		if ($this->get_value() && !$this->get_value_expression()->is_reference()){
+		if (!$this->is_prefillable()){
 			return;
 		}
 		
@@ -307,9 +307,9 @@ class ComboTable extends InputCombo implements iHaveChildren {
 	 */
 	public function prepare_data_sheet_to_prefill(DataSheetInterface $data_sheet = null){
 		$data_sheet = parent::prepare_data_sheet_to_prefill($data_sheet);
-		
+	
 		// Do not request any prefill data, if the value is already set explicitly (e.g. a fixed value)
-		if ($this->get_value()){
+		if (!$this->is_prefillable()){
 			return $data_sheet;
 		}
 		
@@ -332,7 +332,10 @@ class ComboTable extends InputCombo implements iHaveChildren {
 			}
 		} elseif ($this->get_relation() && $this->get_relation()->get_related_object()->is($data_sheet->get_meta_object())){
 			$data_sheet->get_columns()->add_from_expression($this->get_relation()->get_related_object_key_alias());
-			$data_sheet->get_columns()->add_from_expression($this->get_text_column()->get_attribute_alias(), $this->get_text_column()->get_data_column_name());
+			foreach ($this->get_table()->get_columns() as $col) {
+				$data_sheet->get_columns()->add_from_expression($col->get_attribute_alias(), $col->get_data_column_name());
+			}
+			//$data_sheet->get_columns()->add_from_expression($this->get_text_column()->get_attribute_alias(), $this->get_text_column()->get_data_column_name());
 		} else {
 			// TODO what if the prefill object is not the one at the end of the current relation?
 		}

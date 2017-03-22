@@ -145,10 +145,15 @@ class Text extends AbstractWidget implements iShowSingleAttribute, iHaveValue, i
 	 */
 	public function prepare_data_sheet_to_prefill(DataSheetInterface $data_sheet = null){
 		// Do not request any prefill data, if the value is already set explicitly (e.g. a fixed value)
-		if ($this->get_value()){
+		if (!$this->is_prefillable()){
 			return $data_sheet;
 		}
 		return $this->prepare_data_sheet_to_read($data_sheet);
+	}
+	
+	protected function is_prefillable(){
+		return !($this->get_value() && !$this->get_value_expression()->is_reference());
+		//return !($this->get_value());
 	}
 	
 	/**
@@ -157,7 +162,7 @@ class Text extends AbstractWidget implements iShowSingleAttribute, iHaveValue, i
 	 */
 	protected function do_prefill(\exface\Core\Interfaces\DataSheets\DataSheetInterface $data_sheet){
 		// Do not do anything, if the value is already set explicitly (e.g. a fixed value)
-		if ($this->get_value()){
+		if (!$this->is_prefillable()){
 			return;
 		}
 		// To figure out, which attributes we need from the data sheet, we just run prepare_data_sheet_to_prefill()

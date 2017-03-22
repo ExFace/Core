@@ -280,10 +280,9 @@ class StateMachineBehavior extends AbstractBehavior {
 		// extended from it.
 		if (!$widget->get_meta_object()->is($this->get_object())) return;
 		
-		if (($prefill_data = $widget->get_prefill_data()) &&
-				($state_column = $prefill_data->get_column_values($this->get_state_attribute_alias()))) {
-			$current_state = $state_column[0];
-		} else {
+		if (!($prefill_data = $widget->get_prefill_data()) ||
+				!($state_column = $prefill_data->get_column_values($this->get_state_attribute_alias())) ||
+				!($current_state = $state_column[0])) {
 			$current_state = $this->get_default_state_id();
 		}
 		

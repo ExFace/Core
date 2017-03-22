@@ -170,6 +170,10 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren {
 		return $data_sheet;
 	}
 	
+	protected function is_prefillable(){
+		return true;
+	}
+	
 	protected function create_data_sheet(){
 		return $this->get_workbench()->data()->create_data_sheet($this->get_meta_object());
 	}
