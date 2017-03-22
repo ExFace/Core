@@ -9,6 +9,8 @@ class MassEditDialog extends ShowDialog {
 		$this->set_input_rows_min(null);
 		$this->set_input_rows_max(null);
 		$this->set_icon_name('mass-edit');
+		$this->set_prefill_with_input_data(true);
+		$this->set_prefill_with_filter_context(false);
 	}
 	
 	public function set_input_data_sheet($data_sheet){
