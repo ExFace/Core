@@ -79,7 +79,7 @@ abstract class AbstractQueryBuilder {
 	
 	/**
 	 * Adds an attribute to be fetched by the query
-	 * @param string attribute_alias
+	 * @param string $attribute_alias
 	 */
 	public function add_attribute($alias){
 		$qpart = new QueryPartSelect($alias, $this);
@@ -420,6 +420,9 @@ abstract class AbstractQueryBuilder {
 		}
 		$sorter = new RowDataArraySorter();
 		foreach ($this->get_sorters() as $qpart){
+			// Do not sort if the attribute sorted by is unsortable
+			if ($qpart->get_attribute() && !$qpart->get_attribute()->is_sortable()) continue;
+			// Do not sort if already sorted (remote sort)
 			if (!$qpart->get_apply_after_reading()) continue;
 			$sorter->addCriteria($qpart->get_alias(), $qpart->get_order());
 		}
@@ -441,7 +444,10 @@ abstract class AbstractQueryBuilder {
 		// Apply filters
 		$row_filter = new RowDataArrayFilter();
 		foreach ($this->get_filters()->get_filters() as $qpart){
-			if (!$qpart->get_apply_after_reading()) continue;
+			// Do not filter if the attribute to filter over is unfilterable
+			if ($qpart->get_attribute() && !$qpart->get_attribute()->is_filterable()) continue;
+			// Do not filter if already filtered (remotely)
+			if (!$qpart->get_apply_after_reading() || !$qpart->get_compare_value()) continue;
 			$row_filter->add_and($qpart->get_alias(), $qpart->get_compare_value(), $qpart->get_comparator());
 		}
 		return $row_filter->filter($row_array);

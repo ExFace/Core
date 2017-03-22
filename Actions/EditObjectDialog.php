@@ -17,7 +17,7 @@ class EditObjectDialog extends ShowObjectDialog {
 		// Make sure, prefill with input data is enabled (otherwise there will be nothing to edit).
 		$this->set_prefill_with_input_data(true);
 		// Disable prefills from context, so they do not interfere
-		$this->set_prefill_with_filter_context(true);
+		$this->set_prefill_with_filter_context(false);
 	}
 	
 	/**

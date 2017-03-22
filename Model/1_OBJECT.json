@@ -109,8 +109,8 @@
     ],
     "rows": [
         {
-            "CREATED_ON": "0000-00-00 00:00:00",
-            "MODIFIED_ON": "0000-00-00 00:00:00",
+            "CREATED_ON": "2007-01-01 00:00:00",
+            "MODIFIED_ON": "2007-01-01 00:00:00",
             "CREATED_BY_USER": "",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x31343400000000000000000000000000",
@@ -126,8 +126,8 @@
             "DATA_ADDRESS": "exf_user"
         },
         {
-            "CREATED_ON": "0000-00-00 00:00:00",
-            "MODIFIED_ON": "0000-00-00 00:00:00",
+            "CREATED_ON": "2007-01-01 00:00:00",
+            "MODIFIED_ON": "2007-01-01 00:00:00",
             "CREATED_BY_USER": "",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x31343500000000000000000000000000",
@@ -143,7 +143,7 @@
             "DATA_ADDRESS": "exf_data_connection_credentials"
         },
         {
-            "CREATED_ON": "0000-00-00 00:00:00",
+            "CREATED_ON": "2007-01-01 00:00:00",
             "MODIFIED_ON": "2017-01-24 11:23:23",
             "CREATED_BY_USER": "",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
@@ -160,8 +160,8 @@
             "DATA_ADDRESS": "exf_object"
         },
         {
-            "CREATED_ON": "0000-00-00 00:00:00",
-            "MODIFIED_ON": "0000-00-00 00:00:00",
+            "CREATED_ON": "2007-01-01 00:00:00",
+            "MODIFIED_ON": "2007-01-01 00:00:00",
             "CREATED_BY_USER": "",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x31353000000000000000000000000000",
@@ -177,7 +177,7 @@
             "DATA_ADDRESS": "exf_user_credentials"
         },
         {
-            "CREATED_ON": "0000-00-00 00:00:00",
+            "CREATED_ON": "2007-01-01 00:00:00",
             "MODIFIED_ON": "2016-11-08 12:02:14",
             "CREATED_BY_USER": "",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
@@ -194,7 +194,7 @@
             "DATA_ADDRESS": "exf_data_source"
         },
         {
-            "CREATED_ON": "0000-00-00 00:00:00",
+            "CREATED_ON": "2007-01-01 00:00:00",
             "MODIFIED_ON": "2016-12-14 14:40:48",
             "CREATED_BY_USER": "",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
@@ -211,7 +211,7 @@
             "DATA_ADDRESS": "exf_attribute"
         },
         {
-            "CREATED_ON": "0000-00-00 00:00:00",
+            "CREATED_ON": "2007-01-01 00:00:00",
             "MODIFIED_ON": "2016-11-08 12:02:40",
             "CREATED_BY_USER": "",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
@@ -228,7 +228,7 @@
             "DATA_ADDRESS": "exf_data_type"
         },
         {
-            "CREATED_ON": "0000-00-00 00:00:00",
+            "CREATED_ON": "2007-01-01 00:00:00",
             "MODIFIED_ON": "2016-11-08 11:30:54",
             "CREATED_BY_USER": "",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
@@ -245,7 +245,7 @@
             "DATA_ADDRESS": ""
         },
         {
-            "CREATED_ON": "0000-00-00 00:00:00",
+            "CREATED_ON": "2007-01-01 00:00:00",
             "MODIFIED_ON": "2016-11-08 12:02:26",
             "CREATED_BY_USER": "",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
@@ -262,7 +262,7 @@
             "DATA_ADDRESS": "exf_data_connection"
         },
         {
-            "CREATED_ON": "0000-00-00 00:00:00",
+            "CREATED_ON": "2007-01-01 00:00:00",
             "MODIFIED_ON": "2016-11-08 12:02:32",
             "CREATED_BY_USER": "",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
@@ -416,7 +416,7 @@
         },
         {
             "CREATED_ON": "2016-12-09 12:27:33",
-            "MODIFIED_ON": "2017-01-09 16:22:06",
+            "MODIFIED_ON": "2017-03-22 11:35:12",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6be0ad5666af88ddee4b318306b9a",
@@ -426,7 +426,7 @@
             "SHORT_DESCRIPTION": "",
             "PARENT_OBJECT": "",
             "DATA_ADDRESS_PROPS": "{}",
-            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Tabs\",\"object_alias\":\"exface.Core.UXON_ENTITY_ANNOTATION\",\"tabs\":[{\"caption\":\"General\",\"widgets\":[{\"attribute_alias\":\"CLASS\",\"width\":2},{\"attribute_alias\":\"FULL_DESCRIPTION\",\"width\":2,\"height\":10}]},{\"caption\":\"Properties\",\"widgets\":[{\"object_alias\":\"exface.core.UXON_PROPERTY_ANNOTATION\",\"widget_type\":\"DataTable\",\"filters\":[{\"attribute_alias\":\"FILE\"},{\"attribute_alias\":\"PROPERTY\"}],\"columns\":[{\"attribute_alias\":\"PROPERTY\"},{\"attribute_alias\":\"TITLE\"},{\"attribute_alias\":\"TYPE\"}],\"sorters\":[{\"attribute_alias\":\"PROPERTY\",\"direction\":\"desc\"}],\"buttons\":[{\"action_alias\":\"exface.Core.ShowObjectDialog\",\"bind_to_double_click\":true}]}]}]}",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Tabs\",\"object_alias\":\"exface.Core.UXON_ENTITY_ANNOTATION\",\"tabs\":[{\"caption\":\"General\",\"widgets\":[{\"attribute_alias\":\"CLASS\",\"width\":2},{\"attribute_alias\":\"FULL_DESCRIPTION\",\"width\":2,\"height\":16,\"hide_caption\":true}]},{\"caption\":\"Properties\",\"widgets\":[{\"object_alias\":\"exface.core.UXON_PROPERTY_ANNOTATION\",\"widget_type\":\"DataTable\",\"filters\":[{\"attribute_alias\":\"FILE\"},{\"attribute_alias\":\"PROPERTY\"}],\"columns\":[{\"attribute_alias\":\"PROPERTY\"},{\"attribute_alias\":\"TITLE\"},{\"attribute_alias\":\"TYPE\"}],\"sorters\":[{\"attribute_alias\":\"PROPERTY\",\"direction\":\"desc\"}],\"buttons\":[{\"action_alias\":\"exface.Core.ShowObjectDialog\",\"bind_to_double_click\":true}]}]}]}",
             "LABEL": "UXON entity PHP-file",
             "ALIAS": "UXON_ENTITY_PHP_FILE",
             "DATA_ADDRESS": ""

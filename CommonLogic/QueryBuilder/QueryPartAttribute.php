@@ -72,6 +72,10 @@ class QueryPartAttribute extends QueryPart {
 		return $this->get_attribute()->get_data_address_property($property_key);
 	}
 	
+	public function set_data_address_property($property_key, $value){
+		return $this->get_attribute()->set_data_address_property($property_key, $value);
+	}
+	
 	/**
 	 * Returns the data source specific address of the attribute represented by this query part. Depending
 	 * on the data source, this can be an SQL column name, a file name, etc.
