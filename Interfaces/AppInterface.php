@@ -5,6 +5,7 @@ use exface\Core\Widgets\AbstractWidget;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Contexts\Types\DataContext;
 use exface\Core\Exceptions\Actions\ActionNotFoundError;
+use exface\Core\Exceptions\InvalidArgumentException;
 
 interface AppInterface extends ExfaceClassInterface, AliasInterface {
 	
@@ -108,6 +109,14 @@ interface AppInterface extends ExfaceClassInterface, AliasInterface {
 	 * @return AppInstallerInterface
 	 */
 	public function get_installer(InstallerInterface $injected_installer = null);
+	
+	/**
+	 * Returns TRUE if the given class is part of the app and FALSE otherwise. 
+	 * @param string|object $object_or_class_name
+	 * @throws InvalidArgumentException if the given argument is neither object nor string
+	 * @return boolean
+	 */
+	public function contains_class($object_or_class_name);
 	
 }
 ?>

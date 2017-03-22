@@ -5,9 +5,11 @@ use exface\Core\Exceptions\DataTypeValidationError;
 class NumberDataType extends AbstractDataType {
 	
 	public static function parse($string){
-		if (is_numeric($string) || $string === ''){
+		if (is_numeric($string)){
 			// Decimal numbers
 			return $string;
+		} elseif($string === '' || is_null($string)){
+			return null;
 		} elseif (strpos($string, '0x') === 0) {
 			// Hexadecimal numbers in '0x....'-Notation
 			return $string;
@@ -18,10 +20,12 @@ class NumberDataType extends AbstractDataType {
 		} elseif (strcasecmp($string, 'null') === 0) {
 			return null;
 		} else {
+			$string = trim($string);
 			$matches = array();
-			preg_match_all('!-?\d+[,\.]?\d*+!', str_replace(' ', '', $string), $matches);
-			if (is_numeric($matches[0][0])){
-				return $matches[0][0];
+			preg_match('!-?\d+[,\.]?\d*+!', str_replace(' ', '', $string), $matches);
+			$match = str_replace(',', '.', $matches[0]);
+			if (is_numeric($match)){
+				return $match;
 			}			
 			throw new DataTypeValidationError('Cannot convert "' . $string . '" to a number!');
 			return '';

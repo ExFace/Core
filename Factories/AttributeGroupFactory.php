@@ -40,6 +40,11 @@ abstract class AttributeGroupFactory extends AbstractFactory {
 					$group->add($attr);
 				}
 				break;
+			case AttributeGroup::DEFAULT_DISPLAY:
+				foreach ($object->get_attributes()->get_default_display_list() as $attr){
+					$group->add($attr);
+				}
+				break;
 			default:
 				// TODO load group from DB
 				break;

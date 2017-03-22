@@ -17,9 +17,6 @@ use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 use exface\Core\Factories\WidgetLinkFactory;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
-use exface\Core\Exceptions\DataSheets\DataSheetImportRowError;
-use exface\Core\Interfaces\Widgets\iShowDataSet;
-use exface\Core\Interfaces\WidgetInterface;
 
 /**
  * Data is the base for all widgets displaying tabular data.
@@ -633,7 +630,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 		}
 		// Set a special caption for filters on relations, which is derived from the relation itself
 		// IDEA this might be obsolete since it probably allways returns the attribute name anyway, but I'm not sure
-		if ($attr->is_relation()){
+		if (!$uxon->has_property('caption') && $attr->is_relation()){
 			$uxon->set_property('caption', $this->get_meta_object()->get_relation($attribute_alias)->get_name());
 		}
 		$page = $this->get_page();
@@ -865,7 +862,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 	 * @param boolean $value
 	 */
 	public function set_paginate($value) {
-		$this->paginate = $value ? true : false;
+		$this->paginate = \exface\Core\DataTypes\BooleanDataType::parse($value);
 		return $this;
 	}
 	
@@ -1172,7 +1169,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 	 * @return \exface\Core\Widgets\Data
 	 */
 	public function set_editable($value = true){
-		$this->editable = $value ? true : false;
+		$this->editable = \exface\Core\DataTypes\BooleanDataType::parse($value);
 		return $this;
 	}
 	

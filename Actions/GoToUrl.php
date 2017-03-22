@@ -41,10 +41,11 @@ class GoToUrl extends AbstractAction implements iShowUrl {
 		$vals = array();
 		foreach ($this->get_input_data_sheet()->get_row(0) as $var => $val){
 			$vars[] = '[#' . $var . '#]';
-			$vals[] = $val;
+			$vals[] = urlencode($val);
 		}
 		$result = str_replace($vars, $vals, $this->get_url());
 		$this->set_result($result);
+		$this->set_result_message($this->get_workbench()->get_core_app()->get_translator()->translate('ACTION.GOTOURL.SUCCESS'));
 		$this->set_result_data_sheet($this->get_input_data_sheet());
 		return $this;
 	}
@@ -65,6 +66,6 @@ class GoToUrl extends AbstractAction implements iShowUrl {
 	public function set_urlencode_placeholders($value) {
 		$this->urlencode_placeholders = $value;
 		return $this;
-	}  
+	} 
 }
 ?>

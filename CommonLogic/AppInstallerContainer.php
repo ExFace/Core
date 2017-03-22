@@ -10,7 +10,7 @@ use exface\Core\Interfaces\InstallerContainerInterface;
  * @author Andrej Kabachnik
  * 
  */
-class AppInstaller implements AppInstallerInterface, InstallerContainerInterface {
+class AppInstallerContainer implements AppInstallerInterface, InstallerContainerInterface {
 	private $app = null;
 	private $installers = array();
 	

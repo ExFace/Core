@@ -44,7 +44,7 @@ class Debugger implements DebuggerInterface {
 	 * @see \exface\Core\Interfaces\DebuggerInterface::set_prettify_errors()
 	 */
 	public function set_prettify_errors($value) {
-		$this->prettify_errors = $value ? true : false;
+		$this->prettify_errors = \exface\Core\DataTypes\BooleanDataType::parse($value);
 		if ($this->prettify_errors){
 			$this->register_handler();
 		}

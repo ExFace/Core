@@ -13,6 +13,11 @@ class EditObjectDialog extends ShowObjectDialog {
 		$this->set_icon_name('edit');
 		$this->set_save_action_alias('exface.Core.UpdateData');
 		$this->set_show_only_editable_attributes(true);
+		$this->set_disable_editing(false);
+		// Make sure, prefill with input data is enabled (otherwise there will be nothing to edit).
+		$this->set_prefill_with_input_data(true);
+		// Disable prefills from context, so they do not interfere
+		$this->set_prefill_with_filter_context(true);
 	}
 	
 	/**
@@ -28,7 +33,7 @@ class EditObjectDialog extends ShowObjectDialog {
 	 * @return \exface\Core\Widgets\exfDialog
 	 */
 	protected function create_dialog_widget(AbstractWidget $contained_widget = NULL){
-		$dialog = parent::create_dialog_widget();
+		$dialog = parent::create_dialog_widget($contained_widget);
 		$page = $this->get_called_on_ui_page();
 		// TODO add save button via followup actions in the init() method instead of the button directly
 		/* @var $save_button \exface\Core\Widgets\Button */

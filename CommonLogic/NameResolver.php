@@ -132,6 +132,10 @@ class NameResolver extends AbstractExfaceClass implements NameResolverInterface 
 		return $this->namespace;
 	}
 	
+	public function get_namespace_directory(){
+		return static::convert_namespace_filesystem_path($this->get_namespace());
+	}
+	
 	public function set_namespace($value) {
 		$this->namespace = $value;
 		return $this;

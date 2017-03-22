@@ -15,8 +15,8 @@ abstract class AbstractNameResolverInstaller implements NameResolverInstallerInt
 	 * 
 	 * @param NameResolverInterface $name_resolver
 	 */
-	public function __construct(NameResolverInterface $name_resolver){
-		$this->name_resolver = $name_resolver;
+	public function __construct(NameResolverInterface $name_resolver_to_install){
+		$this->name_resolver = $name_resolver_to_install;
 	}
 	
 	/**

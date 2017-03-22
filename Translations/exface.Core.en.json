@@ -25,6 +25,7 @@
 	
 	"ACTION.GOBACK.NAME": "Back",
 	"ACTION.GOTOURL.NAME": "Visit URL",
+	"ACTION.GOTOURL.SUCCESS": "Redirecting...",
 	"ACTION.GOTOWIDGET.NAME": "Go to",
 	
 	"ACTION.MASSEDITDIALOG.NAME": "Mass edit",

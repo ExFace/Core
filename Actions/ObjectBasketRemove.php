@@ -45,7 +45,7 @@ class ObjectBasketRemove extends ObjectBasketFetch {
 	}
 	
 	public function set_return_basket_content($value){
-		$this->return_basket_content = $value ? true : false;
+		$this->return_basket_content = \exface\Core\DataTypes\BooleanDataType::parse($value);
 		return $this;
 	}
 }

@@ -23,6 +23,7 @@ class AttributeGroup extends AttributeList {
 	const VISIBLE = '~VISIBLE';
 	const REQUIRED = '~REQUIRED';
 	const EDITABLE = '~EDITABLE';
+	const DEFAULT_DISPLAY = '~DEFAULT_DISPLAY';
 	
 	public function get_alias() {
 		return $this->alias;

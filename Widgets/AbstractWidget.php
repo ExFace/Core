@@ -19,6 +19,7 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Exceptions\Widgets\WidgetPropertyUnknownError;
 use exface\Core\Factories\EventFactory;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\DataTypes\BooleanDataType;
 
 /**
  * Basic ExFace widget
@@ -50,6 +51,7 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren {
 	private $uxon = null;
 	private $hide_caption = false;
 	private $page = null;
+	private $do_not_prefill = false;
 	
 	/**
 	 * @deprecated use WidgetFactory::create() instead!
@@ -132,10 +134,12 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren {
 	 * @see \exface\Core\Interfaces\WidgetInterface::prefill()
 	 */
 	public final function prefill(DataSheetInterface $data_sheet){
+		if ($this->get_do_not_prefill()) return;
 		$this->get_workbench()->event_manager()->dispatch(EventFactory::create_widget_event($this, 'Prefill.Before'));
 		$this->set_prefill_data($data_sheet);
 		$this->do_prefill($data_sheet);
 		$this->get_workbench()->event_manager()->dispatch(EventFactory::create_widget_event($this, 'Prefill.After'));
+		return;
 	}
 	
 	protected function do_prefill(DataSheetInterface $data_sheet){
@@ -460,7 +464,7 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren {
 	 * @see \exface\Core\Interfaces\WidgetInterface::set_disabled()
 	 */
 	public function set_disabled($value) {
-		$this->disabled = $value ? true : false;
+		$this->disabled = \exface\Core\DataTypes\BooleanDataType::parse($value);
 		return $this;
 	}
 	
@@ -953,5 +957,16 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren {
 		$message_id = trim($message_id);
 		return $this->get_workbench()->get_core_app()->get_translator()->translate($message_id, $placeholders, $number_for_plurification); 
 	}
+	
+	public function get_do_not_prefill() {
+		return $this->do_not_prefill;
+	}
+	
+	public function set_do_not_prefill($value) {
+		$this->do_not_prefill = BooleanDataType::parse($value);
+		return $this;
+	}
+	
+	  
 }
 ?>
