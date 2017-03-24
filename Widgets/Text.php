@@ -145,10 +145,15 @@ class Text extends AbstractWidget implements iShowSingleAttribute, iHaveValue, i
 	 */
 	public function prepare_data_sheet_to_prefill(DataSheetInterface $data_sheet = null){
 		// Do not request any prefill data, if the value is already set explicitly (e.g. a fixed value)
-		if ($this->get_value()){
+		if (!$this->is_prefillable()){
 			return $data_sheet;
 		}
 		return $this->prepare_data_sheet_to_read($data_sheet);
+	}
+	
+	protected function is_prefillable(){
+		return !($this->get_value() && !$this->get_value_expression()->is_reference());
+		//return !($this->get_value());
 	}
 	
 	/**
@@ -157,7 +162,7 @@ class Text extends AbstractWidget implements iShowSingleAttribute, iHaveValue, i
 	 */
 	protected function do_prefill(\exface\Core\Interfaces\DataSheets\DataSheetInterface $data_sheet){
 		// Do not do anything, if the value is already set explicitly (e.g. a fixed value)
-		if ($this->get_value()){
+		if (!$this->is_prefillable()){
 			return;
 		}
 		// To figure out, which attributes we need from the data sheet, we just run prepare_data_sheet_to_prefill()
@@ -166,9 +171,13 @@ class Text extends AbstractWidget implements iShowSingleAttribute, iHaveValue, i
 		$prefill_columns = $this->prepare_data_sheet_to_prefill(DataSheetFactory::create_from_object($data_sheet->get_meta_object()))->get_columns();
 		if ($col = $prefill_columns->get_first()){
 			if (count($data_sheet->get_column_values($col->get_name(false))) > 1 && $this->get_aggregate_function()){
-				$this->set_value(\exface\Core\CommonLogic\DataSheets\DataColumn::aggregate_values($data_sheet->get_column_values($col->get_name(false)), $this->get_aggregate_function()));
+				$value = \exface\Core\CommonLogic\DataSheets\DataColumn::aggregate_values($data_sheet->get_column_values($col->get_name(false)), $this->get_aggregate_function());
 			} else {
-				$this->set_value($data_sheet->get_cell_value($col->get_name(), 0));
+				$value = $data_sheet->get_cell_value($col->get_name(), 0);
+			}
+			if (!is_null($value) && $value != '') {
+				// if empty values are set, live-references get overwritten even without a prefill
+				$this->set_value($value);
 			}
 		}
 	}
