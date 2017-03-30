@@ -8,7 +8,7 @@ use exface\Core\Interfaces\NameResolverInterface;
 abstract class QueryBuilderFactory extends AbstractNameResolverFactory {
 	
 	/**
-	 * Creates a new query based on the given name resolver
+	 * Creates a new query builder based on the given name resolver
 	 * @param NameResolverInterface $name_resolver
 	 * @return AbstractQueryBuilder
 	 */
