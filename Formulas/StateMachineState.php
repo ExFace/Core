@@ -52,7 +52,11 @@ class StateMachineState extends Formula
             $maxProgess = max($statesKeys);
 
             $progressBar = new Progressbar($workbench);
-            return $progressBar->run($state, $stateString, $minProgess, $maxProgess);
+            $colorMap = $smb->get_progress_bar_color_map();
+            if ($colorMap)
+                return $progressBar->run($state, $stateString, $minProgess, $maxProgess, $colorMap);
+            else
+                return $progressBar->run($state, $stateString, $minProgess, $maxProgess);
         } else
             return $stateString;
     }

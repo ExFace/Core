@@ -19,8 +19,9 @@ class StateMachineBehavior extends AbstractBehavior {
 	private $default_state = null;
 	private $uxon_states = null;
 	private $states = null;
-	
-	/**
+    private $progress_bar_color_map = null;
+
+    /**
 	 * 
 	 * {@inheritDoc}
 	 * @see \exface\Core\CommonLogic\AbstractBehavior::register()
@@ -371,6 +372,37 @@ class StateMachineBehavior extends AbstractBehavior {
 			}
 		}
 	}
+
+    /**
+     * Sets color map for use in for instance ProgressBar formula.
+     *
+     * @param array $progress_bar_color_map
+     */
+	public function set_progress_bar_color_map($progress_bar_color_map)
+    {
+        $uxonColorMap = UxonObject::from_anything($progress_bar_color_map);
+        if ($uxonColorMap instanceof UxonObject) {
+            $colorMap = array();
+            foreach ($uxonColorMap as $progressBarValue => $color){
+                $colorMap[$progressBarValue] = $color;
+            }
+            $this->progress_bar_color_map = $colorMap;
+        } elseif (is_array($progress_bar_color_map)) {
+            $this->progress_bar_color_map = $progress_bar_color_map;
+        } else {
+            throw new BehaviorConfigurationError($this->get_object(), 'Can not set progress_bar_color_map for "' . $this->get_object()->get_alias_with_namespace() . '": the argument passed to set_progress_bar_color_map() is neither an UxonObject nor an array!');
+        }
+    }
+
+    /**
+     * Returns color map for use in for instance ProgressBar formula.
+     *
+     * @return array
+     */
+    public function get_progress_bar_color_map()
+    {
+        return $this->progress_bar_color_map;
+    }
 }
 
 ?>

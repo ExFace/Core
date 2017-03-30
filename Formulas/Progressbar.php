@@ -42,7 +42,7 @@ class Progressbar extends Formula
 
         $return = '<div style="width:100%; border:1px solid #ccc; position:relative; overflow: hidden">' .
             '<div style="width:' . ($value ? $value / ($max - $min) * 100 : $min) . '%;background:' . $this->getBackgroundColor($value, $colorMap) . ';">&nbsp;</div>' .
-            '<div style="position:absolute; left:0; top:0; z-index:100; padding:0 3px; width:100%">' . $text . '</div>' .
+            '<div style="position:absolute; left:0; top:0; z-index:100; padding:0 0; width:100%">' . $text . '</div>' .
             '</div>';
         return $return;
     }
