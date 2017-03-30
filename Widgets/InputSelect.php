@@ -540,6 +540,12 @@ class InputSelect extends Input implements iSupportMultiSelect {
 		return $this;
 	}
 
+    /**
+	 * Uses possibly existing name and name_translation_key attributes of StateMachineStates for displaying options.
+	 *
+     * @param $options
+     * @return array
+     */
     protected function applyStateNames($options)
     {
         if (!($smb = $this->get_meta_object()->get_behaviors()->get_by_alias('exface.Core.Behaviors.StateMachineBehavior'))) {
