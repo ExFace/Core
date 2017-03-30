@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Widgets;
 
+use exface\Core\Behaviors\StateMachineState;
 use exface\Core\Interfaces\Widgets\iSupportMultiSelect;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
@@ -133,6 +134,9 @@ class InputSelect extends Input implements iSupportMultiSelect {
 		} else {
 			$options = $this->selectable_options;
 		}
+
+        $options = $this->applyStateNames($options);
+
 		return $options;
 	}
 	
@@ -170,7 +174,7 @@ class InputSelect extends Input implements iSupportMultiSelect {
 		} else {
 			throw new WidgetPropertyInvalidValueError($this, 'Wrong data type for possible values of ' . $this->get_widget_type() . '! Expecting array or object, ' . gettype($array_or_object) . ' given.', '6T91S9G');
 		}
-		$this->selectable_options = $options;
+        $this->selectable_options = $options;
 		return $this;
 	}
 	
@@ -535,5 +539,32 @@ class InputSelect extends Input implements iSupportMultiSelect {
 		}
 		return $this;
 	}
+
+    protected function applyStateNames($options)
+    {
+        if (!($smb = $this->get_meta_object()->get_behaviors()->get_by_alias('exface.Core.Behaviors.StateMachineBehavior'))) {
+            return $options;
+        }
+
+        $states = $smb->get_states();
+
+        $appliedOptions = array();
+        foreach ($options as $stateNum => $optionValue) {
+            /** @var StateMachineState $stateObject */
+            $stateObject = $states[$stateNum];
+            if (!$stateObject) {
+                $appliedOptions[$stateNum] = $optionValue;
+                continue;
+            }
+
+            $name = $stateObject->getStateName($this->get_workbench()->get_core_app()->get_translator());
+            if ($name)
+                $appliedOptions[$stateNum] = $name;
+            else
+                $appliedOptions[$stateNum] = $optionValue;
+        }
+
+        return $appliedOptions;
+    }
 }
 ?>

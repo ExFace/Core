@@ -1,6 +1,7 @@
 <?php namespace exface\Core\Behaviors;
 
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Interfaces\TranslationInterface;
 
 /**
  * Defines a state for the StateMachineBehavior.
@@ -13,6 +14,8 @@ class StateMachineState {
 	private $buttons = [];
 	private $disabled_attributes_aliases = [];
 	private $transitions = [];
+	private $name = null;
+	private $name_translation_key = null;
 	
 	/**
 	 * Returns the state id.
@@ -132,5 +135,68 @@ class StateMachineState {
 		$this->transitions = $value;
 		return $this;
 	}
+
+    /**
+	 * Defines the name for the state.
+	 *
+     * @param string $name
+     */
+    public function set_name($name)
+    {
+        $this->name = $name;
+    }
+
+    /**
+     * Returns the name of the state.
+     *
+     * @return string
+     */
+    public function get_name()
+    {
+        return $this->name;
+    }
+
+    /**
+     * Defines the name_translation_key for the state.
+	 *
+     * @param null $name_translation_key
+     */
+    public function set_name_translation_key($name_translation_key)
+    {
+        $this->name_translation_key = $name_translation_key;
+    }
+
+    /**
+	 * Returns the name_translation_key of the state.
+	 *
+     * @return string
+     */
+    public function get_name_translation_key()
+    {
+        return $this->name_translation_key;
+    }
+
+    /**
+     * @param TranslationInterface $translator
+     *
+     * @return mixed
+     */
+    public function getStateName($translator)
+    {
+        $nameTranslationKey = $this->get_name_translation_key();
+        if ($nameTranslationKey) {
+            $translation = $translator->translate($nameTranslationKey);
+            if ($translation && $translation != $nameTranslationKey) {
+                return $translation;
+            }
+        }
+
+        $name = $this->get_name();
+        if ($name) {
+            return $name;
+        }
+
+        return false;
+    }
 }
 ?>

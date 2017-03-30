@@ -33,8 +33,9 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iHaveC
 	private $refresh_widget_link = null;
 	private $hide_button_text = false;
 	private $hide_button_icon = false;
-	
-	public function get_action() {
+    private $name = null;
+
+    public function get_action() {
 		if (!$this->action){
 			if ($this->get_action_alias()){
 				$this->action = ActionFactory::create_from_string($this->get_workbench(), $this->get_action_alias(), $this);
@@ -300,6 +301,10 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iHaveC
 	 */
 	public function get_caption(){
 		$caption = parent::get_caption();
+		if (is_null($caption) && $this->get_name()) {
+		    $caption = $this->get_name();
+        }
+
 		if (is_null($caption) && $this->get_action()){
 			$caption = $this->get_action()->get_name();
 		}
@@ -356,5 +361,23 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iHaveC
 		$this->align = constant('EXF_ALIGN_' . mb_strtoupper($value));
 		return $this;
 	}
+
+    /**
+     * Returns the name (or translated name).
+     *
+     * @return string
+     */
+	public function get_name() {
+	    return $this->name;
+    }
+
+    /**
+     * Sets the name (or translated name).
+     *
+     * @param string $name
+     */
+    public function set_name($name) {
+        $this->name = $name;
+    }
 }
 ?>

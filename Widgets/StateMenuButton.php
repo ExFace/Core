@@ -1,5 +1,6 @@
 <?php
 namespace exface\Core\Widgets;
+use exface\Core\Behaviors\StateMachineState;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\MetaModelBehaviorException;
 
@@ -26,7 +27,9 @@ class StateMenuButton extends MenuButton {
 			} else {
 				$current_state = $smb->get_default_state_id();
 			}
-			
+
+            $states = $smb->get_states();
+
 			$button_widget = $this->get_input_widget()->get_button_widget_type();
 			foreach ($smb->get_state_buttons($current_state) as $target_state => $smb_button) {
 				// Ist show_states leer werden alle Buttons hinzugefuegt (default)
@@ -50,6 +53,13 @@ class StateMenuButton extends MenuButton {
 					} else {
 						$button = $this->get_page()->create_widget($button_widget, $this, UxonObject::from_anything($smb_button));
 					}
+
+                    /** @var StateMachineState $stateObject */
+                    $stateObject = $states[$target_state];
+					$name = $stateObject->getStateName($this->get_workbench()->get_core_app()->get_translator());
+					if ($name)
+						$button->set_name($name);
+
 					$this->add_button($button);
 				}
 			}
