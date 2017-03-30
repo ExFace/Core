@@ -3,14 +3,14 @@ namespace exface\Core\Actions;
 
 use exface\Core\Exceptions\Actions\ActionInputMissingError;
 use exface\Core\Exceptions\Actions\ActionRuntimeError;
-use exface\Core\CommonLogic\UxonObject;
 
 /**
- * This action performs another action specified in the action_alias property or via request parameter "call=your_action_alias".
+ * This action performs calls one of the actions specified in the switch_action_map property depending on 
+ * the first value of the switch_attribute_alias column in the input data sheet.
  * 
- * This action behaves exactly as the action to be called, but offers a universal interface for multiple action types. Thus, if you
- * need a custom server call somewhere in a template, but you do not know, which action will be called in advance, you can request
- * this action an pass the actually desired one as a request parameter.
+ * TODO It seems, that switching actions makes lot's of problems if these actions implements different interfaces.
+ * It's not really SwitchAction, but rather SwitchActionConfig - maybe we can attach that kind of switcher-logic
+ * to all actions? Maybe this will be an easy-to-built extension for the planned DataSheetMapper?
  * 
  * @author Andrej Kabachnik
  *
