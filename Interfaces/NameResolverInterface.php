@@ -37,6 +37,14 @@ use exface\Core\Factories\AbstractNameResolverFactory;
  */
 interface NameResolverInterface extends ExfaceClassInterface {
 	
+	/**
+	 * Creates a name resolver from a give string. The string must be a reference to an entity according to the definition in
+	 * the interface doc.
+	 * 
+	 * @param string $string
+	 * @param string $object_type
+	 * @param Workbench $exface
+	 */
 	public static function create_from_string($string, $object_type, Workbench $exface);
 	
 	/**
