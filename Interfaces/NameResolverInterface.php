@@ -8,9 +8,9 @@ use exface\Core\Factories\AbstractNameResolverFactory;
  * The name resolver normalizes different forms of references to PHP classes within ExFace and resolves the corresponding class name.
  * 
  * There are three types of references, the name resolver can convert to class names:
- * - The dot-notation - e.g. exface.FileSystemConnector.FileFinderConnector
- * - File path relative to the vendor folder - e.g. exface\FileSystemConnector\DataConnectors\FileFinderConnector.php
- * - Qualified PHP class name (with namespace) - e.g. \exface\FileSystemConnector\DataConnectors\FileFinderConnector
+ * - The dot-notation - e.g. exface.FileSystemConnector.FileFinderConnector (case insensitive!)
+ * - File path relative to the vendor folder - e.g. exface\FileSystemConnector\DataConnectors\FileFinderConnector.php (case sensitive)
+ * - Qualified PHP class name (with namespace) - e.g. \exface\FileSystemConnector\DataConnectors\FileFinderConnector (case sensitive)
  * All the above examples will be resolved to \exface\FileSystemConnector\DataConnectors\FileFinderConnector
  * 
  * The name resolver must know, what type of object is to be resolved: a query builder, a data connector, an app, etc. This allows
