@@ -20,10 +20,11 @@ class StateInputSelect extends InputSelect
 
     public function get_selectable_options()
     {
-        if (!$this->show_status_ids)
-            return parent::get_selectable_options();
+        $options = $this->applyStateNames(parent::get_selectable_options());
+        if ($this->show_status_ids)
+            return $this->addStateNumbers($options);
         else
-            return $this->addStateNumbers(parent::get_selectable_options());
+            return $options;
     }
 
     protected function addStateNumbers($options)
@@ -44,6 +45,39 @@ class StateInputSelect extends InputSelect
 
             $appliedOptions[$stateNum] = $stateNum . ' ' . $optionValue;
         }
+        return $appliedOptions;
+    }
+
+    /**
+     * Uses possibly existing name and name_translation_key attributes of StateMachineStates for displaying options.
+     *
+     * @param $options
+     * @return array
+     */
+    protected function applyStateNames($options)
+    {
+        if (!($smb = $this->get_meta_object()->get_behaviors()->get_by_alias('exface.Core.Behaviors.StateMachineBehavior'))) {
+            return $options;
+        }
+
+        $states = $smb->get_states();
+
+        $appliedOptions = array();
+        foreach ($options as $stateNum => $optionValue) {
+            /** @var StateMachineState $stateObject */
+            $stateObject = $states[$stateNum];
+            if (!$stateObject) {
+                $appliedOptions[$stateNum] = $optionValue;
+                continue;
+            }
+
+            $name = $stateObject->getStateName($this->get_workbench()->get_core_app()->get_translator());
+            if ($name)
+                $appliedOptions[$stateNum] = $name;
+            else
+                $appliedOptions[$stateNum] = $optionValue;
+        }
+
         return $appliedOptions;
     }
 }

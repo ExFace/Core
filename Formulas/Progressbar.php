@@ -34,7 +34,18 @@ class Progressbar extends Formula
      *
      * @return string
      */
-    function run($value, $text = '', $min = 0, $max = 100, $colorMap = array(30 => "#0a0", 79 => "yellow", 80 => "red", 99 => "grey"))
+    function run($value, $text = '', $min = 0, $max = 100, $colorMap = array(
+        10 => "#FFEF9C",
+        20 => "#EEEA99",
+        30 => "#DDE595",
+        40 => "#CBDF91",
+        50 => "#BADA8E",
+        60 => "#A9D48A",
+        70 => "#97CF86",
+        80 => "#86C983",
+        90 => "#75C47F",
+        100 => "#63BE7B")
+    )
     {
         if (!$value) return '';
         if (!$text) $text = $value;
