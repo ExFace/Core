@@ -30,7 +30,7 @@ use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iHaveButtons, iHaveFilters, iSupportLazyLoading {
 	// properties
 	private $paginate = true;
-	private $paginate_page_sizes = array(10, 20, 30, 40, 50);
+	private $paginate_page_size = null;
 	private $paginate_default_page_size = 20;
 	private $aggregate_by_attribute_alias = null;
 	private $lazy_loading = true; // Data should be loaded lazily by defaul (via AJAX) - of course, only if the used template supports this
@@ -867,7 +867,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 	}
 	
 	/**
-	 * 
+	 * @deprecated use set_paginate_page_size() instead
 	 * @return integer
 	 */
 	public function get_paginate_default_page_size() {
@@ -877,32 +877,13 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 	/**
 	 * Sets the number of rows to show on one page by default (only if pagination is enabled).
 	 * 
-	 * @uxon-property paginate_default_page_size
-	 * @uxon-type number
+	 * @deprecated use set_paginate_page_size() instead
 	 * 
 	 * @param integer $value
 	 * @return Data
 	 */
 	public function set_paginate_default_page_size($value) {
 		$this->paginate_default_page_size = $value;
-		return $this;
-	}
-	
-	public function get_paginate_page_sizes() {
-		return $this->paginate_page_sizes;
-	}
-	
-	/**
-	 * Defines the available page size, the user can choose from via array of numbers.
-	 * 
-	 * @uxon-property paginate_page_sizes
-	 * @uxon-type number[]
-	 * 
-	 * @param integer[] $value
-	 * @return \exface\Core\Widgets\Data
-	 */
-	public function set_paginate_page_sizes(array $value) {
-		$this->paginate_page_sizes = $value;
 		return $this;
 	}
 	
@@ -1215,6 +1196,31 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 		$this->values_data_sheet = $data_sheet;
 		return $this;
 	}
+	
+	/**
+	 * Returns the number of rows to load for a page when pagination is enabled. 
+	 * Defaults to NULL - in this case, the template must decide, how many rows to load.
+	 * 
+	 * @return integer
+	 */
+	public function get_paginate_page_size() {
+		return $this->paginate_page_size;
+	}
+	
+	/**
+	 * Sets the number of rows to show on one page (only if pagination is enabled).
+	 * If not set, the template's default value will be used.
+	 * 
+	 * @uxon-property paginate_page_size
+	 * @uxon-type number
+	 * 
+	 * @param integer $value
+	 * @return \exface\Core\Widgets\Data
+	 */
+	public function set_paginate_page_size($value) {
+		$this->paginate_page_size = $value;
+		return $this;
+	}  
 }
 
 ?>
