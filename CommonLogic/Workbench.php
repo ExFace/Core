@@ -304,6 +304,10 @@ class Workbench {
 		return new Filemanager($this);
 	}
 	
+	/**
+	 * 
+	 * @return \exface\Core\Interfaces\DebuggerInterface
+	 */
 	public function get_debugger() {
 		return $this->debugger;
 	}
