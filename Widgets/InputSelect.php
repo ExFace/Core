@@ -1,7 +1,6 @@
 <?php
 namespace exface\Core\Widgets;
 
-use exface\Core\Behaviors\StateMachineState;
 use exface\Core\Interfaces\Widgets\iSupportMultiSelect;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
@@ -134,7 +133,6 @@ class InputSelect extends Input implements iSupportMultiSelect {
 		} else {
 			$options = $this->selectable_options;
 		}
-
 		return $options;
 	}
 	
@@ -172,7 +170,7 @@ class InputSelect extends Input implements iSupportMultiSelect {
 		} else {
 			throw new WidgetPropertyInvalidValueError($this, 'Wrong data type for possible values of ' . $this->get_widget_type() . '! Expecting array or object, ' . gettype($array_or_object) . ' given.', '6T91S9G');
 		}
-        $this->selectable_options = $options;
+		$this->selectable_options = $options;
 		return $this;
 	}
 	
