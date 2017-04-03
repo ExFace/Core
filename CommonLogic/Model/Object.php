@@ -14,6 +14,7 @@ use exface\Core\Exceptions\Model\MetaRelationNotFoundError;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\Interfaces\Actions\ActionInterface;
+use exface\Core\Exceptions\Model\MetaObjectNotFoundError;
 
 class Object implements ExfaceClassInterface, AliasInterface {
 	private $id;
@@ -413,7 +414,12 @@ class Object implements ExfaceClassInterface, AliasInterface {
 	public function find_relations($related_object_id, $relation_type = null){
 		$rels = array();
 		foreach ($this->get_relations() as $rel){
-			if ($rel->get_related_object()->is($related_object_id) && ($relation_type == null || $relation_type == $rel->get_type())) $rels[] = $rel;
+			try {
+				if ($rel->get_related_object()->is($related_object_id) && ($relation_type == null || $relation_type == $rel->get_type())) $rels[] = $rel;
+			} catch (MetaObjectNotFoundError $e){
+				// FIXME for some reason calling find_relations on alexa.RMS.STYLE produces a relation with the object 0x11E678F8FD442F59ACD40205857FEB80, 
+				// which cannot be found - need to fix quickly! For now, just ignore these cases
+			}
 		}
 		return $rels;
 	}
@@ -863,6 +869,15 @@ class Object implements ExfaceClassInterface, AliasInterface {
 			$this->actions = $this->get_model()->get_model_loader()->load_object_actions(new ObjectActionList($this->get_workbench(), $this));
 		}
 		return $this->actions;
+	}
+	
+	/**
+	 * Returns the currently running instance of the app, this object belongs to.
+	 * 
+	 * @return \exface\Core\Interfaces\AppInterface
+	 */
+	public function get_app(){
+		return $this->get_workbench()->get_app($this->get_namespace());
 	}
 	  
 }
