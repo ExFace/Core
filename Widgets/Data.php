@@ -694,6 +694,22 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 				$filter_widget = $this->create_filter_from_relation($rel);
 				$filter_widget->prefill($data_sheet);
 			}
+			
+			// Apart from trying to prefill a filter, we should also look if we can reuse filters from the given prefill sheet.
+			// This is the case, if this data widget has a filter over exactly the same attribute, as the prefill sheet.
+			if (!$data_sheet->get_filters()->is_empty()){
+				foreach ($data_sheet->get_filters()->get_conditions() as $condition){
+					// Skip conditions without attributes or with broken expressions (we do not want errors from the prefill logic!)
+					if (!$condition->get_expression()->is_meta_attribute() || !$condition->get_expression()->get_attribute()) continue;
+					// See if there are filters in this widget, that work on the very same attribute
+					foreach ($this->find_filters_by_object($condition->get_expression()->get_attribute()->get_object()) as $fltr){
+						if ($fltr->get_attribute()->get_alias() == $condition->get_expression()->get_attribute()->get_alias() && !$fltr->get_value()){
+							$fltr->set_comparator($condition->get_comparator());
+							$fltr->set_value($condition->get_value());
+						}
+					}
+				}
+			}
 		}
 	}
 	
