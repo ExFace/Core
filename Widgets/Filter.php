@@ -47,8 +47,17 @@ class Filter extends Container implements iCanBeRequired {
 			$this->widget = $this->widget->transform_into_select();
 		}
 		
+		// Set a default comparator
+		if (is_null($this->get_comparator())){
+			// If the input widget will produce multiple values, use the IN comparator
+			if ($this->widget->implements_interface('iSupportMultiselect') && $this->widget->get_multi_select()){
+				$this->set_comparator(EXF_COMPARATOR_IN);
+			} 
+			// Otherwise leave the comparator null for other parts of the logic to use their defaults
+		}
+		
 		// If the filter has a specific comparator, that is non-intuitive, add a corresponding suffix to
-		// the caption of the actul widget.
+		// the caption of the actual widget.
 		switch ($this->get_comparator()){
 			case EXF_COMPARATOR_GREATER_THAN:
 			case EXF_COMPARATOR_GREATER_THAN_OR_EQUALS:
@@ -143,6 +152,7 @@ class Filter extends Container implements iCanBeRequired {
 	}
 	
 	public function set_comparator($value) {
+		if (!$value) return $this;
 		$this->comparator = $value;
 		return $this;
 	} 
