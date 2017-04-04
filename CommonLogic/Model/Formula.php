@@ -3,6 +3,8 @@ namespace exface\Core\CommonLogic\Model;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Interfaces\ExfaceClassInterface;
 use exface\Core\CommonLogic\Workbench;
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\Interfaces\Formulas\FormulaInterface;
 
 /**
  * Data functions are much like Excel functions. They calculate 
@@ -11,34 +13,39 @@ use exface\Core\CommonLogic\Workbench;
  * @author Andrej Kabachnik
  *
  */
-abstract class Formula implements ExfaceClassInterface {
+abstract class Formula implements FormulaInterface {
 	private $required_attributes = array();
 	private $arguments = array();
 	private $data_sheet = null;
 	private $relation_path = null;
 	private $data_type = NULL;
 	private $exface = null;
+	private $current_column_name = null;
+	private $current_row_number = null;
 	
+	/**
+	 * @deprecated use FormulaFactory instead!
+	 * @param Workbench $workbench
+	 */
 	public function __construct(Workbench $workbench){
 		$this->exface = $workbench;
 	}
 	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\ExfaceClassInterface::get_workbench()
+	 */
 	public function get_workbench(){
 		return $this->exface;
 	}
 		
 	/**
-	 * Parses the the arguments for this function. Each argument 
-	 * is an ExFace expression, which in turn can be another function, 
-	 * a reference, a constant - whatever. We generally instatiate 
-	 * expression objects for the arguments together with the function 
-	 * and not while applying the function to data, because argument types 
-	 * do not change depending on the contents of cells of data_sheets. 
-	 * It is faster to create the respective expressions here and just 
-	 * evaluate them, when really running the function.
-	 * @param array arguments
+	 *
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\Formulas\FormulaInterface::init()
 	 */
-	function init(array $arguments){
+	public function init(array $arguments){
 		// now find out, what each parameter is: a column reference, a string, a widget reference etc.
 		foreach ($arguments as $arg){
 			$expr = $this->get_workbench()->model()->parse_expression($arg);
@@ -48,25 +55,19 @@ abstract class Formula implements ExfaceClassInterface {
 	}
 	
 	/**
-	 * Evaluates the function based on a given data sheet and the coordinates 
-	 * of a cell (data functions are only applicable to specific cells!)
-	 * This method is called for every row of a data sheet, while the function 
-	 * is mostly defined for an entire column, so we try to do as little as possible 
-	 * here: evaluate each argument's expression and call the run() method with 
-	 * the resulting values. At this point all arguments are ExFace expressions 
-	 * already. They where instantiated together with the function.
-	 * @param \exface\Core\Interfaces\DataSheets\DataSheetInterface $data_sheet
-	 * @param string $column_name
-	 * @param int $row_number
-	 * @return mixed
+	 *
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\Formulas\FormulaInterface::evaluate()
 	 */
-	function evaluate(\exface\Core\Interfaces\DataSheets\DataSheetInterface $data_sheet, $column_name, $row_number){
+	public function evaluate(\exface\Core\Interfaces\DataSheets\DataSheetInterface $data_sheet, $column_name, $row_number){
 		$args = array();
 		foreach ($this->arguments as $expr){
 			$args[] = $expr->evaluate($data_sheet, $column_name, $row_number);
 		}
-		// IDEA keep only a name reference to the sheet!
-		$this->data_sheet = $data_sheet;
+		
+		$this->set_data_sheet($data_sheet);
+		$this->set_current_column_name($column_name);
+		$this->set_current_row_number($row_number);
 		
 		return call_user_func_array(array($this, 'run'), $args);
 	}
@@ -84,22 +85,34 @@ abstract class Formula implements ExfaceClassInterface {
 				$this->arguments[$key] = $a;
 			}
 		}
+		return $this;
 	}
 	
-	function get_required_attributes(){
+	public function get_required_attributes(){
 		return $this->required_attributes;
 	}
 	
-	function get_arguments(){
+	public function get_arguments(){
 		return $this->arguments;
 	}
 	
+	/**
+	 * Returns the data sheet, the formula is being run on
+	 * 
+	 * @return DataSheetInterface
+	 */
 	public function get_data_sheet() {
 		return $this->data_sheet;
 	}
 	
-	public function set_data_sheet($value) {
+	/**
+	 * 
+	 * @param DataSheetInterface $value
+	 * @return \exface\Core\CommonLogic\Model\Formula
+	 */
+	protected function set_data_sheet(DataSheetInterface $value) {
 		$this->data_sheet = $value;
+		return $this;
 	}
 	
 	public function get_data_type() {
@@ -125,5 +138,44 @@ abstract class Formula implements ExfaceClassInterface {
 			$this->arguments[$key] = $a;
 		}
 	}
+	
+	/**
+	 * Returns the column name of the data sheet column currently being processed
+	 * 
+	 * @return string
+	 */
+	public function get_current_column_name() {
+		return $this->current_column_name;
+	}
+	
+	/**
+	 * 
+	 * @param string $value
+	 * @return \exface\Core\CommonLogic\Model\Formula
+	 */
+	protected function set_current_column_name($value) {
+		$this->current_column_name = $value;
+		return $this;
+	}
+	
+	/**
+	 * Returns the row number in the data sheet currently being processed.
+	 *
+	 * @return integer
+	 */
+	public function get_current_row_number() {
+		return $this->current_row_number;
+	}
+	
+	/**
+	 * 
+	 * @param integer $value
+	 * @return \exface\Core\CommonLogic\Model\Formula
+	 */
+	protected function set_current_row_number($value) {
+		$this->current_row_number = $value;
+		return $this;
+	}
+	
 }
 ?>

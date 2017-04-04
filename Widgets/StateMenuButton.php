@@ -56,7 +56,7 @@ class StateMenuButton extends MenuButton {
 
                     /** @var StateMachineState $stateObject */
                     $stateObject = $states[$target_state];
-					$name = $stateObject->getStateName($this->get_workbench()->get_core_app()->get_translator());
+					$name = $stateObject->getStateName($this->get_meta_object()->get_app()->get_translator());
 					if ($name)
 						$button->set_caption($name);
 

@@ -71,13 +71,16 @@ class StateMachineState extends Formula
     protected function getStateString($state, $states, $showId)
     {
         $stateObject = $states[$state];
-        $stateName = $stateObject->getStateName($this->get_workbench()->get_core_app()->get_translator());
-        if ($stateName) {
-            if ($showId)
-                return strval($state) . ' ' . $stateName;
-            else
-                return $stateName;
-        } else
+        if ($col = $this->get_data_sheet()->get_columns()->get($this->get_current_column_name())){
+        	$stateName = $stateObject->getStateName($col->get_meta_object()->get_app()->get_translator());
+	        if ($stateName) {
+	            if ($showId)
+	                return strval($state) . ' ' . $stateName;
+	            else
+	                return $stateName;
+	        }
+        } else {
             return strval($state);
+        }
     }
 }

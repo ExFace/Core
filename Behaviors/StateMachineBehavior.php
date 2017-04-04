@@ -7,6 +7,7 @@ use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
 use exface\Core\Events\DataSheetEvent;
 use exface\Core\Exceptions\Behaviors\StateMachineUpdateException;
 use exface\Core\Factories\DataSheetFactory;
+use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
 
 /**
  * A behavior that defines states and transitions between these states for an objects.
@@ -282,9 +283,15 @@ class StateMachineBehavior extends AbstractBehavior {
 		if (!$widget->get_meta_object()->is($this->get_object())) return;
 		
 		if (!($prefill_data = $widget->get_prefill_data()) ||
+				!($prefill_data->get_uid_column()) ||
 				!($state_column = $prefill_data->get_column_values($this->get_state_attribute_alias())) ||
 				!($current_state = $state_column[0])) {
 			$current_state = $this->get_default_state_id();
+		}
+		
+		// Throw an error if the current state is not in the state machine definition!
+		if ($current_state && !$this->get_state($current_state)){
+			throw new BehaviorRuntimeError($this->get_object(), 'Cannot disable widget of uneditable attributes for state "' . $current_state . '": State not found in the the state machine behavior definition!', '6UMF9UL');
 		}
 		
 		if (method_exists($widget, 'get_attribute_alias')
