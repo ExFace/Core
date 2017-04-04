@@ -30,6 +30,7 @@ const EXF_WIDGET_VISIBILITY_HIDDEN = 'hidden';
 
 /** @const EXF_COMPARATOR_IN compares to each vaule in a list via EXF_COMPARATOR_IS. At least one must suffice. */
 const EXF_COMPARATOR_IN = 'in';
+const EXF_COMPARATOR_NOT_IN = '!in';
 /** @const EXF_COMPARATOR_IS universal comparater - can be applied to any data type */
 const EXF_COMPARATOR_IS = '=';
 const EXF_COMPARATOR_IS_NOT = '!=';
