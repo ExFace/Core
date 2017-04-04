@@ -2,6 +2,7 @@
 namespace exface\Core\Widgets;
 
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
+use exface\Core\CommonLogic\Model\RelationPath;
 
 /**
  * This is a special InputSelect widget for the state attribute of objects with the StateMachineBehavior.
@@ -35,21 +36,7 @@ class StateInputSelect extends InputSelect
     /** @var boolean $show_state_ids */
     private $show_state_ids = true;
     
-    protected function init(){
-    	// Check if the attribute is the state in the StateMachineBehavior of it's object
-    	/* @var $smb \exface\Core\Behaviors\StateMachineBehavior */
-    	$smb = $this->get_attribute()->get_object()->get_behaviors()->get_by_alias('exface.Core.Behaviors.StateMachineBehavior');
-    	if (!$smb || $this->get_attribute_alias() != $smb->get_state_attribute_alias()){
-    		$error_text = 'Cannot use the widget "' . $this->get_widget_type() . '" for attribute "' . $this->get_attribute_alias() . '" of object "' . $this->get_meta_object()->get_alias_with_namespace() . '": ';
-    		if (!$smb){
-    			$error_text .= 'The object does not have the StateMachineBehavior!';
-    		} else {
-    			$error_text .= 'The attribute is not the state attribute - use "' . $smb->get_state_attribute_alias() . '" instead!';
-    		}
-    		
-    		throw new WidgetConfigurationError($this, $error_text, '6UMTC14');
-    	}
-    	
+    protected function init(){    	
     	// Start with multiselect enabled by default
     	$this->set_multi_select(true);
     }
@@ -70,6 +57,22 @@ class StateInputSelect extends InputSelect
 
     public function get_selectable_options()
     {
+    	// Check if the attribute is the state in the StateMachineBehavior of it's object
+    	/* @var $smb \exface\Core\Behaviors\StateMachineBehavior */
+    	$smb = $this->get_attribute()->get_object()->get_behaviors()->get_by_alias('exface.Core.Behaviors.StateMachineBehavior');
+    	if (!$smb || !$this->get_attribute() || $this->get_attribute()->get_alias() != $smb->get_state_attribute_alias()){
+    		$error_text = 'Cannot use the widget "' . $this->get_widget_type() . '" for attribute "' . $this->get_attribute_alias() . '" of object "' . $this->get_meta_object()->get_alias_with_namespace() . '": ';
+    		if (!$smb){
+    			$error_text .= 'The object "' . $this->get_attribute()->get_object()->get_alias_with_namespace() . '" does not have the StateMachineBehavior!';
+    		} elseif (!$this->get_attribute()) {
+    			$error_text .= 'Attribute not found!';
+    		} else {
+    			$error_text .= 'The attribute is not the state attribute - use "' . RelationPath::relation_path_add($this->get_attribute()->get_relation_path()->to_string(), $smb->get_state_attribute_alias()) . '" instead!';
+    		}
+    		
+    		throw new WidgetConfigurationError($this, $error_text, '6UMTC14');
+    	}
+    	
         $options = $this->applyStateNames(parent::get_selectable_options());
         if ($this->show_state_ids)
             return $this->addStateNumbers($options);
