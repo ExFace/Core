@@ -7,6 +7,7 @@ use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
 use exface\Core\Events\DataSheetEvent;
 use exface\Core\Exceptions\Behaviors\StateMachineUpdateException;
 use exface\Core\Factories\DataSheetFactory;
+use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
 
 /**
  * A behavior that defines states and transitions between these states for an objects.
@@ -19,8 +20,9 @@ class StateMachineBehavior extends AbstractBehavior {
 	private $default_state = null;
 	private $uxon_states = null;
 	private $states = null;
-	
-	/**
+    private $progress_bar_color_map = null;
+
+    /**
 	 * 
 	 * {@inheritDoc}
 	 * @see \exface\Core\CommonLogic\AbstractBehavior::register()
@@ -281,9 +283,15 @@ class StateMachineBehavior extends AbstractBehavior {
 		if (!$widget->get_meta_object()->is($this->get_object())) return;
 		
 		if (!($prefill_data = $widget->get_prefill_data()) ||
+				!($prefill_data->get_uid_column()) ||
 				!($state_column = $prefill_data->get_column_values($this->get_state_attribute_alias())) ||
 				!($current_state = $state_column[0])) {
 			$current_state = $this->get_default_state_id();
+		}
+		
+		// Throw an error if the current state is not in the state machine definition!
+		if ($current_state && !$this->get_state($current_state)){
+			throw new BehaviorRuntimeError($this->get_object(), 'Cannot disable widget of uneditable attributes for state "' . $current_state . '": State not found in the the state machine behavior definition!', '6UMF9UL');
 		}
 		
 		if (method_exists($widget, 'get_attribute_alias')
@@ -371,6 +379,37 @@ class StateMachineBehavior extends AbstractBehavior {
 			}
 		}
 	}
+
+    /**
+     * Sets color map for use in for instance ProgressBar formula.
+     *
+     * @param array $progress_bar_color_map
+     */
+	public function set_progress_bar_color_map($progress_bar_color_map)
+    {
+        $uxonColorMap = UxonObject::from_anything($progress_bar_color_map);
+        if ($uxonColorMap instanceof UxonObject) {
+            $colorMap = array();
+            foreach ($uxonColorMap as $progressBarValue => $color){
+                $colorMap[$progressBarValue] = $color;
+            }
+            $this->progress_bar_color_map = $colorMap;
+        } elseif (is_array($progress_bar_color_map)) {
+            $this->progress_bar_color_map = $progress_bar_color_map;
+        } else {
+            throw new BehaviorConfigurationError($this->get_object(), 'Can not set progress_bar_color_map for "' . $this->get_object()->get_alias_with_namespace() . '": the argument passed to set_progress_bar_color_map() is neither an UxonObject nor an array!');
+        }
+    }
+
+    /**
+     * Returns color map for use in for instance ProgressBar formula.
+     *
+     * @return array
+     */
+    public function get_progress_bar_color_map()
+    {
+        return $this->progress_bar_color_map;
+    }
 }
 
 ?>
