@@ -236,7 +236,13 @@ class InputSelect extends Input implements iSupportMultiSelect {
 	 */
 	public function get_values(){
 		if ($this->get_value()){
-			return explode(EXF_LIST_SEPARATOR, $this->get_value());
+			// Split the value by value delimiter, but only if the raw value does not match 
+			// one of the selectable options exactly!
+			if (!array_key_exists($this->get_value(), $this->get_selectable_options())){
+				return explode($this->get_multi_select_value_delimiter(), $this->get_value());
+			} else {
+				return array($this->get_value());
+			}
 		} else {
 			return array();
 		}
@@ -263,7 +269,7 @@ class InputSelect extends Input implements iSupportMultiSelect {
 	 */
 	public function set_values_from_array(array $values){
 		if ($this->get_multi_select()){
-			$this->set_value(implode(EXF_LIST_SEPARATOR, $values));
+			$this->set_value(implode($this->get_multi_select_value_delimiter(), $values));
 		} else {
 			$this->set_value(reset($values));
 		}
