@@ -1028,6 +1028,32 @@
             "ERROR_TEXT": "Invalid chained action configuration",
             "DESCRIPTION": "",
             "LABEL": "exface.Core.6U5TRGK"
+        },
+        {
+            "CREATED_ON": "2017-04-03 15:45:45",
+            "MODIFIED_ON": "2017-04-03 15:45:45",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e718846c01369abeb2e4b318306b9a",
+            "FULL_ERROR_CODE": "exface.Core.6UMF9UL",
+            "APP": "0x31000000000000000000000000000000",
+            "ERROR_CODE": "6UMF9UL",
+            "ERROR_TEXT": "Illegal state in StateMachineBehavior",
+            "DESCRIPTION": "",
+            "LABEL": "exface.Core.6UMF9UL"
+        },
+        {
+            "CREATED_ON": "2017-04-04 09:59:06",
+            "MODIFIED_ON": "2017-04-04 09:59:06",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e7191d54763fc4be75e4b318306b9a",
+            "FULL_ERROR_CODE": "exface.Core.6UMTC14",
+            "APP": "0x31000000000000000000000000000000",
+            "ERROR_CODE": "6UMTC14",
+            "ERROR_TEXT": "Invalid configuration of the StateInputSelect widget",
+            "DESCRIPTION": "",
+            "LABEL": "exface.Core.6UMTC14"
         }
     ],
     "totals_rows": [],
