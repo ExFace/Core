@@ -12,7 +12,7 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 /**
  * 
  * @method DataColumnInterface[] get_all()
- * @method DataColumnInterface get(mixed $key)
+ * @method DataColumnInterface get(string $key)
  * @method DataColumnInterface get_first()
  * @method DataColumnInterface get_last()
  * 

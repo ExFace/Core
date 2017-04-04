@@ -631,9 +631,9 @@ class DataColumn implements DataColumnInterface {
 	}
 	
 	/**
-	 * Returns the meta object of this data column 
 	 * 
-	 * @return \exface\Core\CommonLogic\Model\Object
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::get_meta_object()
 	 */
 	public function get_meta_object(){
 		return $this->get_data_sheet()->get_meta_object();

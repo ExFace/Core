@@ -774,6 +774,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 	/**
 	 * Adds a widget as a filter. Any widget, that can be used to input a value, can be used for filtering. It will automatically be wrapped in a filter
 	 * widget. The second parameter (if set to TRUE) will make the filter automatically get used in quick search queries.
+	 * 
 	 * @param AbstractWidget $filter_widget
 	 * @param boolean $include_in_quick_search 
 	 * @see \exface\Core\Interfaces\Widgets\iHaveFilters::add_filter()
