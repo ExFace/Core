@@ -163,7 +163,7 @@ class Condition implements iCanBeConvertedToUxon {
 			$expression = $uxon_object->get_property('attribute_alias');
 		}
 		$this->set_expression($this->exface->model()->parse_expression($expression, $this->exface->model()->get_object($uxon_object->get_property('object_alias'))));
-		if ($uxon_object->has_property('comparator')){
+		if ($uxon_object->has_property('comparator') && $uxon_object->get_property('comparator')){
 			$this->set_comparator($uxon_object->get_property('comparator'));
 		} 
 		$this->set_value($uxon_object->get_property('value'));
