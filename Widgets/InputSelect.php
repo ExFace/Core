@@ -56,6 +56,8 @@ use exface\Core\Factories\DataSorterFactory;
 class InputSelect extends Input implements iSupportMultiSelect { 
 	private $value_text = '';
 	private $multi_select = false;
+	private $multi_select_value_delimiter = EXF_LIST_SEPARATOR;
+	private $multi_select_text_delimiter = EXF_LIST_SEPARATOR;
 	private $selectable_options = array();
 	private $text_attribute_alias = null;
 	private $value_attribute_alias = null;
@@ -535,5 +537,45 @@ class InputSelect extends Input implements iSupportMultiSelect {
 		}
 		return $this;
 	}
+	
+	public function get_multi_select_value_delimiter() {
+		return $this->multi_select_value_delimiter;
+	}
+	
+	/**
+	 * Sets the delimiter to be used for values. Default: ",".
+	 * 
+	 * Be carefull overriding this setting, as the data source must understand, what to do with the custom delimiter.
+	 * 
+	 * @uxon-property multi_select_value_delimiter
+	 * @uxon-type string
+	 * 
+	 * @param string $value
+	 * @return \exface\Core\Widgets\InputSelect
+	 */
+	public function set_multi_select_value_delimiter($value) {
+		$this->multi_select_value_delimiter = $value;
+		return $this;
+	}
+	
+	public function get_multi_select_text_delimiter() {
+		return $this->multi_select_text_delimiter;
+	}
+	
+	/**
+	 * Sets the delimiter to be used for the displayed text. Default: ",".
+	 *
+	 * This setting will only affect the displayed text, not the value passed to the server.
+	 *
+	 * @uxon-property multi_select_text_delimiter
+	 * @uxon-type string
+	 *
+	 * @param string $value
+	 * @return \exface\Core\Widgets\InputSelect
+	 */
+	public function set_multi_select_text_delimiter($value) {
+		$this->multi_select_text_delimiter = $value;
+		return $this;
+	}    
 }
 ?>

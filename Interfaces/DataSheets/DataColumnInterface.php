@@ -266,5 +266,12 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied {
 	 * @return string
 	 */
 	public function aggregate($aggregate_function_name);
+	
+	/**
+	 * Returns the meta object of this data column
+	 *
+	 * @return \exface\Core\CommonLogic\Model\Object
+	 */
+	public function get_meta_object();
  
 }

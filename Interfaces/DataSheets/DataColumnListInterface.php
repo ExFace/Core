@@ -3,6 +3,16 @@
 use exface\Core\Interfaces\EntityListInterface;
 use exface\Core\CommonLogic\Model\Attribute;
 
+/**
+ *
+ * @method DataColumnInterface[] get_all()
+ * @method DataColumnInterface get(string $key)
+ * @method DataColumnInterface get_first()
+ * @method DataColumnInterface get_last()
+ *
+ * @author Andrej Kabachnik
+ *
+ */
 interface DataColumnListInterface extends EntityListInterface {
 	/**
 	 * Returns all elements as an array
