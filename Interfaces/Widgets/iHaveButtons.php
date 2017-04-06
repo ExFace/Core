@@ -1,6 +1,7 @@
 <?php namespace exface\Core\Interfaces\Widgets;
 
 use exface\Core\Widgets\Button;
+use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 
 interface iHaveButtons extends iHaveChildren {
 	
@@ -26,6 +27,8 @@ interface iHaveButtons extends iHaveChildren {
 	
 	/**
 	 * Adds multiple buttons from an array of their UXON descriptions
+	 * 
+	 * @throws WidgetConfigurationError if the array includes miscofigured widgets or widget, that are not buttons.
 	 * @param array $buttons_array of UXON descriptions for buttons
 	 * @return boolean
 	 */

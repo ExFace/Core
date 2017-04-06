@@ -106,7 +106,7 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren {
 			if (method_exists($this, 'set_'.$var)){
 				call_user_func(array($this, 'set_'.$var), $val);
 			} else {
-				throw new WidgetPropertyUnknownError($this, 'Property "' . $var . '" of widget "' . $this->get_widget_type() . '" cannot be set: setter method not found!');
+				throw new WidgetPropertyUnknownError($this, 'Property "' . $var . '" of widget "' . $this->get_widget_type() . '" cannot be set: setter method not found!', '6UNTXJE');
 			}
 		}
 	}

@@ -17,6 +17,7 @@ use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 use exface\Core\Factories\WidgetLinkFactory;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
+use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 
 /**
  * Data is the base for all widgets displaying tabular data.
@@ -488,6 +489,9 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 				$button = $this->get_page()->create_widget('DataButton', $this, $button_uxon);
 			} else {
 				$button = $this->get_page()->create_widget($button_uxon->widget_type, $this, $button_uxon);
+				if (!$button->is('Button')){
+					throw new WidgetConfigurationError($this, 'Invalid widget type "' . $button->get_widget_type() . '" used for button widget!', '6UNT6D5');
+				}
 			}
 			$this->add_button($button);
 		}
