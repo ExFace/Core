@@ -745,14 +745,14 @@
         },
         {
             "CREATED_ON": "2016-12-28 14:55:15",
-            "MODIFIED_ON": "2016-12-28 14:55:15",
+            "MODIFIED_ON": "2017-04-06 09:22:37",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6cd0d94c70d7593cce4b318306b9a",
             "FULL_ERROR_CODE": "exface.Core.6T90UH3",
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6T90UH3",
-            "ERROR_TEXT": "Invalid widget visibility error",
+            "ERROR_TEXT": "Invalid widget visibility setting",
             "DESCRIPTION": "",
             "LABEL": "exface.Core.6T90UH3"
         },
@@ -1054,6 +1054,32 @@
             "ERROR_TEXT": "Invalid configuration of the StateInputSelect widget",
             "DESCRIPTION": "",
             "LABEL": "exface.Core.6UMTC14"
+        },
+        {
+            "CREATED_ON": "2017-04-06 08:26:13",
+            "MODIFIED_ON": "2017-04-06 08:26:13",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e71aa2a57442b2be75e4b318306b9a",
+            "FULL_ERROR_CODE": "exface.Core.6UNT6D5",
+            "APP": "0x31000000000000000000000000000000",
+            "ERROR_CODE": "6UNT6D5",
+            "ERROR_TEXT": "Invalid button widget type",
+            "DESCRIPTION": "This error indicates, that a non-button was added to the buttons property of a widget. You may overwrite the widget type of each individual button, to make it a special type of button (e.g. a MenuButton), but it still must be a button: you can't use an input widget or so.",
+            "LABEL": "exface.Core.6UNT6D5"
+        },
+        {
+            "CREATED_ON": "2017-04-06 09:24:55",
+            "MODIFIED_ON": "2017-04-06 09:28:45",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e71aaad8435cb9be75e4b318306b9a",
+            "FULL_ERROR_CODE": "exface.Core.6UNTXJE",
+            "APP": "0x31000000000000000000000000000000",
+            "ERROR_CODE": "6UNTXJE",
+            "ERROR_TEXT": "Unknown widget property",
+            "DESCRIPTION": "This error indicates, that a property was used in the description of the widget, which is not known for the selected widget type. Please refer to the widget reference in Administration > Core > Widgets.",
+            "LABEL": "exface.Core.6UNTXJE"
         }
     ],
     "totals_rows": [],
