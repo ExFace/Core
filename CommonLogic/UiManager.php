@@ -86,12 +86,15 @@ class UiManager implements UiManagerInterface {
 	}
 	
 	/**
+	 * Returns the UI page with the given $page_id. If the $page_id is ommitted or =0, the default (initially empty) page is returned.
 	 * 
-	 * @param unknown $page_id
+	 * @param string $page_id
 	 * @return UiPageInterface
 	 */
-	public function get_page($page_id){
-		if (!$this->pages[$page_id]){ 
+	public function get_page($page_id = null){
+		if (!$page_id){
+			$this->pages[$page_id] = UiPageFactory::create_empty($this);
+		} elseif (!$this->pages[$page_id]){ 
 			$this->pages[$page_id] = UiPageFactory::create_from_cms_page($this, $page_id);
 		}
 		return $this->pages[$page_id];
