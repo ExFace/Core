@@ -707,7 +707,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 					if (!$condition->get_expression()->is_meta_attribute() || !$condition->get_expression()->get_attribute()) continue;
 					// See if there are filters in this widget, that work on the very same attribute
 					foreach ($this->find_filters_by_object($condition->get_expression()->get_attribute()->get_object()) as $fltr){
-						if ($fltr->get_meta_object()->is($condition->get_expression()->get_meta_object()) 
+						if ($fltr->get_attribute()->get_object()->is($condition->get_expression()->get_attribute()->get_object()) 
 						&& $fltr->get_attribute()->get_alias() == $condition->get_expression()->get_attribute()->get_alias() 
 						&& !$fltr->get_value()){
 							$fltr->set_comparator($condition->get_comparator());
