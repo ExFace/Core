@@ -557,16 +557,26 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren {
 	 * @see \exface\Core\Interfaces\WidgetInterface::set_object_alias()
 	 */
 	public function set_object_alias($full_or_object_alias) {
-		if ($app = $this->get_ui()->get_workbench()->model()->get_namespace_from_qualified_alias($full_or_object_alias)){
+		// If it's a fully qualified alias, use it directly
+		if ($ns = $this->get_ui()->get_workbench()->model()->get_namespace_from_qualified_alias($full_or_object_alias)){
 			$this->object_qualified_alias = $full_or_object_alias;
 			$this->object_alias = $this->get_ui()->get_workbench()->model()->get_object_alias_from_qualified_alias($full_or_object_alias);
-		} else {
+		} 
+		// ... if the namespace is missing, get it from the app of the parent object
+		else {
 			if ($this->get_parent()){
-				$app = $this->get_parent()->get_meta_object()->get_namespace();
+				$ns = $this->get_parent()->get_meta_object()->get_namespace();
+			} 
+			
+			if (!$ns) {
+				throw new WidgetConfigurationError($this, 'Cannot set object_alias property for widget "' . $this->get_id() . '": neither a namespace is specified, nor is there a parent widget to take it from!', '6UOD4TW');
 			}
 			$this->object_alias = $full_or_object_alias;
-			$this->object_qualified_alias = $app . NameResolver::NAMESPACE_SEPARATOR . $this->object_alias;
+			$this->object_qualified_alias = $ns . NameResolver::NAMESPACE_SEPARATOR . $this->object_alias;
 		}
+		// IMPORTANT: unset the meta_object_id of this class, because it may already have been initialized previously and would act as a cache
+		// for the meta object.
+		unset($this->meta_object_id);
 		return $this;
 	}
 	
