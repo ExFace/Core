@@ -95,10 +95,12 @@ class DataSorterList extends EntityList implements DataSorterListInterface {
 			$attribute_alias = $attribute_alias_or_column_id;
 		}
 		
-		$sorter = DataSorterFactory::create_for_data_sheet($data_sheet);
-		$sorter->set_attribute_alias($attribute_alias);
-		$sorter->set_direction($direction);
-		$this->add($sorter);
+		if ($attribute_alias){
+			$sorter = DataSorterFactory::create_for_data_sheet($data_sheet);
+			$sorter->set_attribute_alias($attribute_alias);
+			$sorter->set_direction($direction);
+			$this->add($sorter);
+		}
 		return $this;
 	}
 
