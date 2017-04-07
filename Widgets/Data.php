@@ -147,6 +147,9 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 				}
 			}
 			// Add sorters
+			foreach ($this->get_sorters() as $sorter_obj){
+				$data_sheet->get_sorters()->add_from_string($sorter_obj->attribute_alias, $sorter_obj->direction);
+			}
 		}
 		
 		return $data_sheet;
