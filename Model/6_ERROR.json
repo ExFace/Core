@@ -1080,6 +1080,19 @@
             "ERROR_TEXT": "Unknown widget property",
             "DESCRIPTION": "This error indicates, that a property was used in the description of the widget, which is not known for the selected widget type. Please refer to the widget reference in Administration > Core > Widgets.",
             "LABEL": "exface.Core.6UNTXJE"
+        },
+        {
+            "CREATED_ON": "2017-04-07 10:18:06",
+            "MODIFIED_ON": "2017-04-07 10:18:06",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e71b7b6d461362be75e4b318306b9a",
+            "FULL_ERROR_CODE": "exface.Core.6UOD4TW",
+            "APP": "0x31000000000000000000000000000000",
+            "ERROR_CODE": "6UOD4TW",
+            "ERROR_TEXT": "Cannot automatically determine the current object namespace",
+            "DESCRIPTION": "",
+            "LABEL": "exface.Core.6UOD4TW"
         }
     ],
     "totals_rows": [],

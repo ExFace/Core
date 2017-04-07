@@ -197,7 +197,8 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns {
 			}
 
 			// Create the column
-			$column = $this->get_page()->create_widget('DataColumn', $this);
+			$column_type = $c->widget_type ? $c->widget_type : 'DataColumn';
+			$column = $this->get_page()->create_widget($column_type, $this);
 			$column->set_caption($caption);
 			$column->import_uxon_object($c);
 
