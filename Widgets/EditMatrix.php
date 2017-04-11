@@ -1,6 +1,6 @@
 <?php
 namespace exface\Core\Widgets;
-class EditMatrix extends DataMatrix { 
+class EditMatrix extends DataMatrixOld { 
 	private $formulas_enabled = true;
 	
 	public function get_formulas_enabled() {
