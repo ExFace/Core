@@ -7,6 +7,8 @@ use exface\Core\Interfaces\ExfaceClassInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\Exceptions\InvalidArgumentException;
+use exface\Core\Exceptions\UnexpectedValueException;
+use exface\Core\Exceptions\DataSheets\DataSheetStructureError;
 
 class DataSorter implements iCanBeConvertedToUxon, ExfaceClassInterface {
 	const DIRECTION_ASC = 'ASC';
@@ -26,6 +28,9 @@ class DataSorter implements iCanBeConvertedToUxon, ExfaceClassInterface {
 	}
 	
 	public function set_attribute_alias($value) {
+		if (!$this->get_data_sheet()->get_meta_object()->has_attribute($value)){
+			throw new DataSheetStructureError($this->get_data_sheet(), 'Cannot add a sorter over "' . $value . '" to data sheet with object "' . $this->get_data_sheet()->get_meta_object()->get_alias_with_namespace() . '": only sorters over meta attributes are supported!', '6UQBX9K');
+		}
 		$this->attribute_alias = $value;
 		return $this;
 	}
@@ -40,7 +45,7 @@ class DataSorter implements iCanBeConvertedToUxon, ExfaceClassInterface {
 		} elseif (strtoupper($value) == $this::DIRECTION_DESC){
 			$this->direction = $this::DIRECTION_DESC;
 		} else {
-			throw new InvalidArgumentException('Invalid sort direction "' . $value . '" for a data sheet sorter: only DESC or ASC are allowed!', '6T5V9KS');
+			throw new UnexpectedValueException('Invalid sort direction "' . $value . '" for a data sheet sorter: only DESC or ASC are allowed!', '6T5V9KS');
 		}
 		return $this;
 	}

@@ -6,6 +6,7 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\EntityList;
 use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;
+use exface\Core\Exceptions\DataSheets\DataSheetStructureError;
 
 /**
  * 
@@ -95,12 +96,15 @@ class DataSorterList extends EntityList implements DataSorterListInterface {
 			$attribute_alias = $attribute_alias_or_column_id;
 		}
 		
-		if ($attribute_alias){
-			$sorter = DataSorterFactory::create_for_data_sheet($data_sheet);
-			$sorter->set_attribute_alias($attribute_alias);
-			$sorter->set_direction($direction);
-			$this->add($sorter);
+		if (!$attribute_alias){
+			throw new DataSheetStructureError($this->get_data_sheet(), 'Cannot add a sorter over "' . $attribute_alias_or_column_id . '" to data sheet with object "' . $this->get_data_sheet()->get_meta_object()->get_alias_with_namespace() . '": no matching attribute could be found!', '6UQBX9K');
 		}
+		
+		$sorter = DataSorterFactory::create_for_data_sheet($data_sheet);
+		$sorter->set_attribute_alias($attribute_alias);
+		$sorter->set_direction($direction);
+		$this->add($sorter);
+		
 		return $this;
 	}
 

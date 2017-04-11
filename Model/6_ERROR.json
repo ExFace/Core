@@ -1093,6 +1093,32 @@
             "ERROR_TEXT": "Cannot automatically determine the current object namespace",
             "DESCRIPTION": "",
             "LABEL": "exface.Core.6UOD4TW"
+        },
+        {
+            "CREATED_ON": "2017-04-11 05:57:35",
+            "MODIFIED_ON": "2017-04-11 06:02:52",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e71e7ba0dcd1e6be75e4b318306b9a",
+            "FULL_ERROR_CODE": "exface.Core.6UQBUVZ",
+            "APP": "0x31000000000000000000000000000000",
+            "ERROR_CODE": "6UQBUVZ",
+            "ERROR_TEXT": "Invalid configuration for column totals in a data sheet",
+            "DESCRIPTION": "",
+            "LABEL": "exface.Core.6UQBUVZ"
+        },
+        {
+            "CREATED_ON": "2017-04-11 06:02:43",
+            "MODIFIED_ON": "2017-04-11 06:02:43",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e71e7c587d1cc6be75e4b318306b9a",
+            "FULL_ERROR_CODE": "exface.Core.6UQBX9K",
+            "APP": "0x31000000000000000000000000000000",
+            "ERROR_CODE": "6UQBX9K",
+            "ERROR_TEXT": "Invalid configuration for sorters in a data sheet",
+            "DESCRIPTION": "",
+            "LABEL": "exface.Core.6UQBX9K"
         }
     ],
     "totals_rows": [],

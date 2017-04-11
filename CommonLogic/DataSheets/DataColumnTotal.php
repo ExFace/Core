@@ -5,6 +5,8 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\ExfaceClassInterface;
 use exface\Core\Interfaces\DataSheets\DataColumnInterface;
 use exface\Core\Exceptions\DomainException;
+use exface\Core\Exceptions\DataSheets\DataSheetRuntimeError;
+use exface\Core\Exceptions\DataSheets\DataSheetStructureError;
 
 class DataColumnTotal implements iCanBeConvertedToUxon, ExfaceClassInterface {
 	
@@ -25,8 +27,11 @@ class DataColumnTotal implements iCanBeConvertedToUxon, ExfaceClassInterface {
 		return $this->data_column;
 	}
 	
-	public function set_column(DataColumnInterface $value) {
-		$this->data_column = $value;
+	public function set_column(DataColumnInterface $column_instance) {
+		if (!$column_instance->get_attribute()){
+			throw new DataSheetStructureError($column_instance->get_data_sheet(), 'Cannot add a total to column "' . $column_instance->get_name() . '": this column does not represent a meta attribute!', '6UQBUVZ');
+		}
+		$this->data_column = $column_instance;
 		return $this;
 	} 
 	
