@@ -28,7 +28,7 @@ class DataSorter implements iCanBeConvertedToUxon, ExfaceClassInterface {
 	}
 	
 	public function set_attribute_alias($value) {
-		if (!$this->get_data_sheet()->get_meta_object()->has_attribute($value)){
+		if ($this->get_data_sheet() && !$this->get_data_sheet()->get_meta_object()->has_attribute($value)){
 			throw new DataSheetStructureError($this->get_data_sheet(), 'Cannot add a sorter over "' . $value . '" to data sheet with object "' . $this->get_data_sheet()->get_meta_object()->get_alias_with_namespace() . '": only sorters over meta attributes are supported!', '6UQBX9K');
 		}
 		$this->attribute_alias = $value;
@@ -55,6 +55,9 @@ class DataSorter implements iCanBeConvertedToUxon, ExfaceClassInterface {
 	}
 	
 	public function set_data_sheet(DataSheetInterface $data_sheet) {
+		if($this->get_attribute_alias() && !$data_sheet->get_meta_object()->has_attribute($this->get_attribute_alias())){
+			throw new DataSheetStructureError($data_sheet, 'Cannot use a sorter over "' . $this->get_attribute_alias() . '" in data sheet with object "' . $this->get_data_sheet()->get_meta_object()->get_alias_with_namespace() . '": only sorters over meta attributes are supported!', '6UQBX9K');
+		}
 		$this->data_sheet = $data_sheet;
 		return $this;
 	}
