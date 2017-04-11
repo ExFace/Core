@@ -58,16 +58,15 @@ trait MetaObjectExceptionTrait {
 	 */
 	public function create_debug_widget(DebugMessage $error_message){
 		$error_message = $this->parent_create_debug_widget($error_message);
-		$page = $error_message->get_page();
+		
+		// Do not enrich the debug message widget if DEBUG.SHOW_META_MODEL_DETAILS is false
+		if (!$error_message->get_workbench()->get_config()->get_option('DEBUG.SHOW_META_MODEL_DETAILS')) return $error_message;
 		
 		/* @var $object_editor \exface\Core\Widgets\Tabs */
-		
-		/* FIXME Implement non-lazy loading for tales, so we don't run into problems because the page, where the error occurs
-		 * would deny ajax-requests for a widget, that is not planned there (the error widget)
-		 */
-		 $object_object = $page->get_workbench()->model()->get_object('exface.Core.OBJECT');
-		 $object_editor = WidgetFactory::create_from_uxon($page, $object_object->get_default_editor_uxon());
-		 if ($object_editor->is('Tabs')){
+		$page = $error_message->get_page();
+		$object_object = $page->get_workbench()->model()->get_object('exface.Core.OBJECT');
+		$object_editor = WidgetFactory::create_from_uxon($page, $object_object->get_default_editor_uxon());
+		if ($object_editor->is('Tabs')){
 			foreach ($object_editor->get_tabs() as $tab){
 				// Skip unimportant tabs
 				$skip = false;
@@ -76,11 +75,9 @@ trait MetaObjectExceptionTrait {
 				}
 				
 				if ($skip) continue;
-								 // Make sure, every tab has the correct meta object (and will not fall back to the parent meta object, which would be
+				// Make sure, every tab has the correct meta object (and will not fall back to the parent meta object, which would be
 				// the object of the ErrorMessage in this case
 				$tab->set_meta_object($tab->get_meta_object());
-				
-				// TODO copy tabs before moving to the error message
 				
 				foreach ($tab->get_children() as $child){
 					// Remove all buttons, as the ErrorMessage is read-only
@@ -91,6 +88,10 @@ trait MetaObjectExceptionTrait {
 					}
 					// Make sure, no widgets use lazy loading, as it won't work for a widget, that is not part of the page explicitly
 					// for security reasons
+					// TODO many non-lazy tales take a long time to load, so we need to be able to lazy load them somehow. This is
+					// currenlty impossible due to the limitation, that a table can only read data if it is defined in the page, the
+					// request comes from. To get rid of this, we can either identify error widgets somehow and treat them differently
+					// or we need to wait for ABAC to allow reading access based on rules.
 					if ($child instanceof iSupportLazyLoading){
 						$child->set_lazy_loading(false);
 					}
