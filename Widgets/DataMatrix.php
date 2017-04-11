@@ -52,7 +52,48 @@ class DataMatrix extends DataTable {
 		$this->set_paginate(false);
 		$this->set_show_row_numbers(false);
 		$this->set_multi_select(false);
-		$this->set_lazy_loading(false);
+	}
+	
+	/**
+	 * Returns an array with the transposed columns of the matrix
+	 * 
+	 * @return \exface\Core\Widgets\DataColumnTransposed[]
+	 */
+	public function get_columns_transposed(){
+		$cols = array();
+		foreach ($this->get_columns() as $col){
+			if ($col instanceof DataColumnTransposed){
+				$cols[] = $col;
+			}
+		}
+		return $cols;
+	}
+	
+	/**
+	 * Returns an array with regular (not transposed and not used as labels) columns in the matrix
+	 * 
+	 * @return |\exface\Core\Widgets\DataColumn[]
+	 */
+	public function get_columns_regular(){
+		$cols = array();
+		$label_cols = array();
+		// Collect all non-transposed columns
+		foreach ($this->get_columns() as $col){
+			if (!($col instanceof DataColumnTransposed)){
+				$cols[] = $col;
+			} else {
+				$label_cols[] = $col->get_label_attribute_alias();
+			}
+		}
+		
+		// Remove label columns
+		foreach ($cols as $nr => $col){
+			if (in_array($col->get_data_column_name(), $label_cols)){
+				unset ($cols[$nr]);
+			}
+		}
+		
+		return $cols;
 	}
 		  
 }
