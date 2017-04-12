@@ -35,11 +35,6 @@ class StateInputSelect extends InputSelect
 {
     /** @var boolean $show_state_ids */
     private $show_state_ids = true;
-    
-    protected function init(){    	
-    	// Start with multiselect enabled by default
-    	$this->set_multi_select(true);
-    }
 
     /**
      * Set to FALSE to not show state ids in the dropdown - just the state names. TRUE by default.
