@@ -168,6 +168,23 @@ class ConditionGroup implements iCanBeConvertedToUxon, iCanBeCopied {
 	}
 	
 	/**
+	 * Returns a numeric flat array with all conditions within this condition group and it's nested subgroups.
+	 * 
+	 * NOTE: This array cannot be used to evaluate the condition group, as all information about operators in
+	 * nested groups is lost, but this method can be usefull to search for conditions with certain properties
+	 * (e.g. an attribute, a comparator, etc.)
+	 * 
+	 * @return \exface\Core\CommonLogic\Model\Condition[]
+	 */
+	public function get_conditions_recursive(){
+		$result = $this->get_conditions();
+		foreach ($this->get_nested_groups() as $group){
+			$result = array_merge($result, $group->get_conditions_recursive());
+		}
+		return $result;
+	}
+	
+	/**
 	 * Returns an array of condition groups directly contained in this group (not in the subgroups!). Returns an empty array if the group does not have subgroups.
 	 * @return ConditionGroup[]
 	 */
@@ -319,6 +336,40 @@ class ConditionGroup implements iCanBeConvertedToUxon, iCanBeCopied {
 		$exface = $this->get_workbench();
 		$copy = ConditionGroupFactory::create_from_uxon($exface, $this->export_uxon_object());
 		return $copy;
+	}
+	
+	/**
+	 * Returns the number of conditions in this group. If $recursive is TRUE, conditions in nested condition groups will be counted to,
+	 * otherwise just the direct conditions of the group will be included.
+	 * 
+	 * @param boolean $recursive
+	 * @return string
+	 */
+	public function count_conditions($recursive = true){
+		$result = count($this->get_conditions());
+		if ($recursive){
+			foreach ($this->get_nested_groups() as $group){
+				$result += $group->count_conditions(true);
+			}
+		}
+		return $result;
+	}
+	
+	/**
+	 * Returns the number of nested condition groups in this group. If $recursive is TRUE, condition groups within the nested groups 
+	 * will be counted to, otherwise just the direct subgroups of the group will be included.
+	 * 
+	 * @param boolean $recursive
+	 * @return integer
+	 */
+	public function count_nested_groups($recursive = true){
+		$result = count($this->get_nested_groups());
+		if ($recursive){
+			foreach ($this->get_nested_groups() as $group){
+				$result += $group->count_nested_groups(true);
+			}
+		}
+		return $result;
 	}
 }
 ?>

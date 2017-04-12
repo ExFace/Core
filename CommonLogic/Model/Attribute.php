@@ -205,11 +205,32 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied {
 	
 	/**
 	 * Returns the meta object to which this attributes belongs to. If the attribute has a relation path, this
-	 * will return the last object in that path.
+	 * will return the last object in that path. 
+	 * 
+	 * If the attribute is inherited, the inheriting object will be returned. To get the base object, the
+	 * attribute was inherited from, use get_object_inherited_from().
+	 * 
 	 * @return \exface\Core\CommonLogic\Model\Object
 	 */
 	public function get_object(){
 		return $this->get_model()->get_object($this->get_object_id());
+	}
+	
+	/**
+	 * Returns the object, this attribute was inherited from. If the attribute was not inherited, returns it's regular object (same as get_object()).
+	 * 
+	 * If the attribute was inherited multiple times, this method will go back exactly one step. For example, if we have a base object
+	 * of a data source, that is extended by OBJECT1, which in turn, is extended by OBJECT2, calling get_object_extended_from() on an
+	 * attribute of OBJECT2 will return OBJECT1, while doing so for OBJECT1 will return the base object.
+	 * 
+	 * @return \exface\Core\CommonLogic\Model\Object
+	 */
+	public function get_object_inherited_from(){
+		if ($this->is_inherited()){
+			return $this->get_model()->get_object_by_id($this->get_inherited_from_object_id());
+		} else {
+			return $this->get_object();
+		}
 	}
 	
 	/**
@@ -391,6 +412,42 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied {
 		} else {
 			return false;
 		}
+	}
+	
+	/**
+	 * Returns TRUE if this attribute is the same (same UID, same object), as the given attribute, and FALSE otherwise.
+	 * 
+	 * This method will also return TRUE if the attributes have differen relations paths.
+	 * NOTE: comparing the UID is not enough, as inherited attributes will keep their UID.
+	 * 
+	 * @param Attribute $attribute
+	 * @return boolean
+	 */
+	public function is_exactly(Attribute $attribute){
+		if ($this->get_id() == $attribute->get_id() && $this->get_object()->is_exactly($attribute->get_object())){
+			return true;
+		}
+		return false;
+	}
+	
+	/**
+	 * Returns TRUE if the given attribute is the same as this one or is inherited from it.
+	 * 
+	 * For example, if we have a BASE object for a data source holds the UID attribute, and OBJECT1 inherits from that base object,
+	 * we will have the following behavior - even if there is a custom UID attribute for OBJECT1, that overrides the default:
+	 * - BASE__UID->is(OBJECT1__UID) = FALSE
+	 * - OBJECT__UID->is(BASE__UID) = TRUE
+	 * - BASE__UID->is(BASE__UID) = TRUE
+	 * - OBJECT1__UID->is(OBJECT1__UID) = TRUE
+	 * 
+	 * @param Attribute $attribute
+	 * @return boolean
+	 */
+	public function is(Attribute $attribute){
+		if (strcasecmp($this->get_alias(), $attribute->get_alias()) === 0 && $this->get_object()->is($attribute->get_object())){
+			return true;
+		}
+		return false;
 	}
 	
 	/**
