@@ -111,8 +111,9 @@ class InputSelect extends Input implements iSupportMultiSelect {
 	} 
 	
 	/**
+	 * Returns an array of value/label-pairs
 	 * 
-	 * @return array[]
+	 * @return array
 	 */
 	public function get_selectable_options() {
 		// If there are no selectable options set explicitly, try to determine them from the meta model. Otherwise the select box would be empty.
@@ -582,6 +583,36 @@ class InputSelect extends Input implements iSupportMultiSelect {
 	public function set_multi_select_text_delimiter($value) {
 		$this->multi_select_text_delimiter = $value;
 		return $this;
-	}    
+	} 
+	
+	/**
+	 * Returns TRUE if the given value is among the selectable options of this select widget and FALSE otherwise.
+	 * 
+	 * @param string $value
+	 * @return boolean
+	 */
+	public function has_option($value){
+		foreach (array_keys($this->get_selectable_options()) as $v){
+			if (strcasecmp($v, $value) === 0){
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	/**
+	 * Sets the current value of the select. If the given value is a delimited list and multi-select is disabled, the first item of the list will be used.
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Widgets\AbstractWidget::set_value()
+	 */
+	public function set_value($value){
+		if (!$this->has_option($value) && strpos($value, $this->get_multi_select_value_delimiter())){
+			if (!$this->get_multi_select()){
+				return parent::set_value(explode($this->get_multi_select_value_delimiter(),$value)[0]);
+			}
+		}
+		return parent::set_value($value);
+	}
 }
 ?>
