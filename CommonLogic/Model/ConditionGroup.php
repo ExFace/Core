@@ -63,6 +63,7 @@ class ConditionGroup implements iCanBeConvertedToUxon, iCanBeCopied {
 	 * @return ConditionGroup
 	 */
 	function add_conditions_from_string(Object $base_object, $expression_string, $value, $comparator = null){
+		$value = trim($value);
 		// Determine the comparator if it is not given directly.
 		// It can be derived from the value or set to a default value
 		if (is_null($comparator)){
@@ -115,8 +116,6 @@ class ConditionGroup implements iCanBeConvertedToUxon, iCanBeCopied {
 			else { 
 				$comparator = EXF_COMPARATOR_IS; 
 			}
-	
-			$value = trim($value);
 				
 			// a value enclosed in [] is actually a IN-statement
 			if (substr($value, 0, 1) == '[' && substr($value, -1) == ']'){
