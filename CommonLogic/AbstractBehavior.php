@@ -71,7 +71,7 @@ abstract class AbstractBehavior implements BehaviorInterface {
 	}
 	
 	public function import_uxon_object(UxonObject $uxon){
-		$uxon->import_to_instance($this);
+		return $uxon->map_to_class_setters($this);
 	}
 	
 	/**

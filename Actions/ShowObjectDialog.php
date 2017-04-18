@@ -5,6 +5,8 @@ use exface\Core\Widgets\Dialog;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\Interfaces\Widgets\iCanBeRequired;
+use exface\Core\Interfaces\Widgets\iCanBeDisabled;
 
 /**
  * This action will show a dialog displaying the default editor of a meta object in read-only mode.
@@ -65,8 +67,8 @@ class ShowObjectDialog extends ShowDialog {
 			if ($attr->get_fixed_value()) continue;
 			// Create the widget
 			$ed = $this->create_widget_from_attribute($this->get_meta_object(), $attr->get_alias(), $parent_widget);
-			if (method_exists($ed, 'set_required')) $ed->set_required($attr->is_required());
-			if (method_exists($ed, 'set_disabled')) $ed->set_disabled(($attr->is_editable() ? false : true));
+			if ($ed instanceof iCanBeRequired) $ed->set_required($attr->is_required());
+			if ($ed instanceof iCanBeDisabled) $ed->set_disabled(($attr->is_editable() ? false : true));
 			$editors[] = $ed;
 		}
 		

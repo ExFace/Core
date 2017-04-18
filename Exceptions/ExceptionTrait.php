@@ -11,6 +11,7 @@ use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;
 use exface\Core\Widgets\DebugMessage;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\CommonLogic\Workbench;
+use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 
 /**
  * This trait enables an exception to output more usefull specific debug information. It is used by all
@@ -20,6 +21,8 @@ use exface\Core\CommonLogic\Workbench;
  *
  */
 trait ExceptionTrait {
+	
+	use ImportUxonObjectTrait;
 	
 	private $alias = null;
 	private $id = null;
@@ -32,18 +35,6 @@ trait ExceptionTrait {
 	
 	public function export_uxon_object(){
 		return new UxonObject();
-	}
-	
-	public function import_uxon_object(UxonObject $uxon){
-		foreach ($uxon as $property => $value){
-			$method_name = 'set_' . $property;
-			if (method_exists($this, $method_name)){
-				call_user_func(array($this, $method_name), $value);
-			} else {
-				// Ignore invalid exception properties. They might originate from earlier versions of the export and should not bother us.
-				// IDEA alternatively we can throw an exception here and catch it in those places, where we can accept wrong parameters.
-			}
-		}
 	}
 	
 	/**

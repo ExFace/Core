@@ -1,8 +1,8 @@
 <?php namespace exface\Core\CommonLogic;
 
 use exface\Core\Interfaces\DataSources\DataQueryInterface;
-use exface\Core\Interfaces\UiPageInterface;
 use exface\Core\Widgets\DebugMessage;
+use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 
 /**
  * This is the base class for data queries. It includes a default UXON importer.
@@ -11,6 +11,7 @@ use exface\Core\Widgets\DebugMessage;
  * 
  */
 abstract class AbstractDataQuery implements DataQueryInterface {
+	use ImportUxonObjectTrait;
 	
 	/**
 	 * 
@@ -37,23 +38,6 @@ abstract class AbstractDataQuery implements DataQueryInterface {
 	 */
 	public function export_uxon_object(){
 		return new UxonObject();
-	}
-	
-	/**
-	 * 
-	 * {@inheritDoc}
-	 * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::import_uxon_object()
-	 */
-	public function import_uxon_object(UxonObject $uxon){
-		foreach ($uxon as $property => $value){
-			$method_name = 'set_' . $property;
-			if (method_exists($this, $method_name)){
-				call_user_func(array($this, $method_name), $value);
-			} else {
-				// Ignore properties, that cannot be set, as data queries will only import automatically generated UXON and thus will
-				// not contain user input, where we would have to look out for wrong parameters.
-			}
-		}
 	}
 	
 	/**

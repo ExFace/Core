@@ -8,6 +8,8 @@ use exface\Core\Events\DataSheetEvent;
 use exface\Core\Exceptions\Behaviors\StateMachineUpdateException;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
+use exface\Core\Exceptions\UxonMapError;
+use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 
 /**
  * A behavior that defines states and transitions between these states for an objects.
@@ -191,12 +193,10 @@ class StateMachineBehavior extends AbstractBehavior {
 				$smstate = new StateMachineState();
 				$smstate->set_state_id($state);
 				if ($uxon_smstate){
-					foreach ($uxon_smstate as $var => $val) {
-						if (method_exists($smstate, 'set_'.$var)){
-							call_user_func(array($smstate, 'set_'.$var), $val);
-						} else {
-							throw new BehaviorConfigurationError($this->get_object(), 'Property "' . $var . '" of StateMachineState cannot be set: setter function not found!');
-						}
+					try {
+						$uxon_smstate->map_to_class_setters($smstate);
+					} catch (UxonMapError $e){
+						throw new BehaviorConfigurationError($this->get_object(), 'Cannot load UXON configuration for state machine state. ' . $e->getMessage(), null, $e);
 					}
 				}
 				$this->add_state($smstate);
@@ -294,7 +294,7 @@ class StateMachineBehavior extends AbstractBehavior {
 			throw new BehaviorRuntimeError($this->get_object(), 'Cannot disable widget of uneditable attributes for state "' . $current_state . '": State not found in the the state machine behavior definition!', '6UMF9UL');
 		}
 		
-		if (method_exists($widget, 'get_attribute_alias')
+		if (($widget instanceof iShowSingleAttribute)
 				&& ($disabled_attributes = $this->get_state($current_state)->get_disabled_attributes_aliases())
 				&& in_array($widget->get_attribute_alias(), $disabled_attributes)) {
 			$widget->set_disabled(true);

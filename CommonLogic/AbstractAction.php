@@ -16,6 +16,8 @@ use exface\Core\Exceptions\Model\MetaObjectNotFoundError;
 use exface\Core\Exceptions\Actions\ActionOutputError;
 use exface\Core\Exceptions\Actions\ActionObjectNotSpecifiedError;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
+use exface\Core\DataTypes\StringDataType;
+use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 
 /**
  * The abstract action is the base ActionInterface implementation, that simplifies the creation of custom actions. All core
@@ -32,6 +34,10 @@ use exface\Core\Interfaces\DataSources\DataTransactionInterface;
  *
  */
 abstract class AbstractAction implements ActionInterface {
+	use ImportUxonObjectTrait {
+		import_uxon_object as import_uxon_object_default;
+	}
+	
 	private $id = null;
 	private $alias = null;
 	private $name = null;
@@ -170,25 +176,15 @@ abstract class AbstractAction implements ActionInterface {
 	 * setters.
 	 * @param \stdClass $source
 	 */
-	public function import_uxon_object(\stdClass $source){
-		if (!$source) return false;
-		$vars = get_object_vars($source);
-		foreach ($vars as $var => $val){
-			// Skip alias property if found because it was processed already to instantiate the right action class.
-			// Setting the alias after instantiation is currently not possible beacuase it would mean recreating
-			// the entire action.
-			if (strcasecmp($var, 'alias') === 0) continue;
-			if ($this->has_property($var)){
-				call_user_func(array($this, 'set_'.$var), $val);
-			} else {
-				throw new ActionConfigurationError($this, 'Property "' . $var . '" of action "' . $this->get_alias() . '" cannot be set: setter function not found!', '6T5DI5E');
-			}
-		}
-		return true;
+	public function import_uxon_object(\stdClass $uxon){
+		// Skip alias property if found because it was processed already to instantiate the right action class.
+		// Setting the alias after instantiation is currently not possible beacuase it would mean recreating
+		// the entire action.
+		return $this->import_uxon_object_default(UxonObject::from_stdClass($uxon), array('alias'));
 	}
 	
 	public function has_property($name){
-		return method_exists($this, 'set_'.$name);
+		return method_exists($this, 'set_'.$name) || method_exists($this, 'set'.StringDataType::convert_case_underscore_to_pascal($name));
 	}
 	
 	/**

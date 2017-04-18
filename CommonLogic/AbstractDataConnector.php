@@ -6,8 +6,15 @@ use exface\Core\Interfaces\NameResolverInterface;
 use exface\Core\Factories\EventFactory;
 use exface\Core\Interfaces\DataSources\DataQueryInterface;
 use exface\Core\Exceptions\DataSources\DataConnectionConfigurationError;
+use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
+use exface\Core\Exceptions\UxonMapError;
 
 abstract class AbstractDataConnector implements DataConnectionInterface {
+	
+	use ImportUxonObjectTrait {
+		import_uxon_object as import_uxon_object_default;
+	}
+	
 	private $config_array = array();
 	private $exface = null;
 	
@@ -36,14 +43,12 @@ abstract class AbstractDataConnector implements DataConnectionInterface {
 	 * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::import_uxon_object()
 	 */
 	public function import_uxon_object(UxonObject $uxon){
-		foreach ($uxon as $property => $value){
-			$method_name = 'set_' . $property;
-			if (method_exists($this, $method_name)){
-				call_user_func(array($this, $method_name), $value);
-			} else {
-				throw new DataConnectionConfigurationError($this, 'Invalid data connection configuration: option "' . $property . '" not found for "' . get_class() . '"!', '6T4F41P');
-			}
+		try {
+			return $this->import_uxon_object_default($uxon);
+		} catch (UxonMapError $e){
+			throw new DataConnectionConfigurationError($this, 'Invalid data connection configuration: ' . $e->getMessage(), '6T4F41P', $e);
 		}
+		return;
 	}
 	
 	/**
