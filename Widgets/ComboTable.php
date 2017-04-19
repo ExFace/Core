@@ -270,7 +270,7 @@ class ComboTable extends InputCombo implements iHaveChildren {
 				if ($text_column_name){
 					$this->set_value_text($data_sheet->get_cell_value($text_column_name, 0));
 				}
-			} else {
+			} elseif ($this->get_relation()) {
 				// If the prefill data was loaded for another object, there are still multiple possibilities to prefill
 				if ($data_sheet->get_meta_object()->is($this->get_relation()->get_related_object())){
 					// If the sheet is based upon the object, that is being selected by this Combo, we can use the prefill sheet
@@ -278,7 +278,7 @@ class ComboTable extends InputCombo implements iHaveChildren {
 					$this->set_value($data_sheet->get_cell_value($this->get_relation()->get_related_object_key_alias(), 0));
 					$this->set_value_text($data_sheet->get_cell_value($this->get_text_column()->get_data_column_name(), 0));
 					return;
-				} elseif ($this->get_relation()) {
+				} else {
 					// If it is not the object selected within the combo, than we still can look for columns in the sheet, that
 					// contain selectors (UIDs) of that object. This means, we need to look for data columns showing relations
 					// and see if their related object is the same as the related object of the relation represented by the combo.
