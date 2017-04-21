@@ -36,5 +36,16 @@ class Html extends Text {
 		$this->javascript = $value;
 		return $this;
 	}  
+	
+	public function generate_uxon_object(){
+		$uxon = parent::generate_uxon_object();
+		if (!is_null($this->get_css())){
+			$uxon->set_property('css', $this->get_css());
+		}
+		if (!is_null($this->get_javascript())){
+			$uxon->set_property('javascript', $this->get_javascript());
+		}
+		return $uxon;
+	}
 }
 ?>

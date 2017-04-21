@@ -64,8 +64,6 @@ trait ExceptionTrait {
 	 * Do not override this method in order to customize the ErrorMessage widget - implement create_debug_widget() instead.
 	 * It is more convenient and does not require taking care of event handling, etc.
 	 * 
-	 * @see \exface\Core\Interfaces\Exceptions\ExceptionInterface::create_widget()
-	 * @final
 	 * @param UiPageInterface $page
 	 * @return ErrorMessage
 	 */

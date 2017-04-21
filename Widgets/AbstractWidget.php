@@ -115,7 +115,44 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren {
 	}
 	
 	public function export_uxon_object(){
-		return $this->uxon;
+		if (!is_null($this->uxon)){
+			return $this->uxon;
+		} else {
+			return $this->generate_uxon_object();
+		}
+	}
+	
+	/**
+	 * 
+	 * @return \exface\Core\CommonLogic\UxonObject
+	 */
+	public function generate_uxon_object(){
+		$uxon = new UxonObject();
+		$uxon->set_property('id', $this->get_id());
+		$uxon->set_property('widget_type', $this->get_widget_type());
+		$uxon->set_property('object_alias', $this->get_meta_object()->get_alias_with_namespace());
+		if (!is_null($this->get_caption())){
+			$uxon->set_property('caption', $this->get_caption());
+		}
+		if ($this->is_disabled()){
+			$uxon->set_property('disabled', $this->is_disabled());
+		}
+		if ($this->get_hint()){
+			$uxon->set_property('hint', $this->get_hint());
+		}
+		if (!is_null($this->get_value())){
+			$uxon->set_property('value', $this->get_value());
+		}
+		if (!is_null($this->get_visibility())){
+			$uxon->set_property('visibility', $this->get_visibility());
+		}
+		if (!$this->get_width()->is_undefined()){
+			$uxon->set_property('width', $this->get_width()->to_string());
+		}
+		if (!$this->get_height()->is_undefined()){
+			$uxon->set_property('height', $this->get_height()->to_string());
+		}
+		return $uxon;
 	}
 	
 	/**

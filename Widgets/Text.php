@@ -23,7 +23,6 @@ class Text extends AbstractWidget implements iShowSingleAttribute, iHaveValue, i
 	private $size = null;
 	private $style = null;
 	private $aggregate_function = null;
-	private $ignore_default_value = null;
 	private $empty_text = null;
 	
 	public function get_text() {
@@ -298,6 +297,26 @@ class Text extends AbstractWidget implements iShowSingleAttribute, iHaveValue, i
 	public function set_empty_text($value) {
 		$this->empty_text = $value;
 		return $this;
+	}
+	
+	public function generate_uxon_object(){
+		$uxon = parent::generate_uxon_object();
+		if (!is_null($this->empty_text)){
+			$uxon->set_property('empty_text', $this->empty_text);
+		}
+		if (!is_null($this->size)){
+			$uxon->set_property('size', $this->size);
+		}
+		if (!is_null($this->style)){
+			$uxon->set_property('style', $this->style);
+		}
+		if (!is_null($this->align)){
+			$uxon->set_property('align', $this->align);
+		}
+		if (!is_null($this->get_attribute_alias())){
+			$uxon->set_property('attribute_alias', $this->get_attribute_alias());
+		}
+		return $uxon;
 	}
 }
 ?>
