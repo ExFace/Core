@@ -197,5 +197,22 @@ class Container extends AbstractWidget implements iContainOtherWidgets {
 		}
 		return $result;
 	}
+	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Widgets\AbstractWidget::generate_uxon_object()
+	 */
+	public function generate_uxon_object(){
+		$uxon = parent::generate_uxon_object();
+		$widgets_array = array();
+		foreach ($this->get_widgets() as $widget){
+			$widgets_array[] = $widget->export_uxon_object();
+		}
+		if (count($widgets_array) > 0){
+			$uxon->set_property('widgets', UxonObject::from_array($widgets_array));
+		}
+		return $uxon;
+	}
 }
 ?>

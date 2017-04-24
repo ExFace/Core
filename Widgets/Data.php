@@ -264,7 +264,8 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 		$def_attrs = $this->get_meta_object()->get_attributes()->get_default_display_list();
 		foreach ($def_attrs as $attr) {
 			$alias = ($attr->get_relation_path()->to_string() ? $attr->get_relation_path()->to_string() . RelationPath::RELATION_SEPARATOR : '') . $attr->get_alias();
-			$this->add_column($this->create_column_from_attribute($this->get_meta_object()->get_attribute($alias)));
+			$attr = $this->get_meta_object()->get_attribute($alias);
+			$this->add_column($this->create_column_from_attribute($attr, null, $attr->is_hidden()));
 		}
 		return $this;
 	}

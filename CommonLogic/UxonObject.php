@@ -3,6 +3,8 @@ namespace exface\Core\CommonLogic;
 
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Exceptions\UnexpectedValueException;
+use exface\Core\DataTypes\StringDataType;
+use exface\Core\Exceptions\UxonMapError;
 
 class UxonObject extends \stdClass implements \IteratorAggregate {
 	/**
@@ -92,6 +94,7 @@ class UxonObject extends \stdClass implements \IteratorAggregate {
 	/**
 	 * Attempts to create a UxonObject autodetecting the type of input
 	 * @param mixed $string_or_array_or_object
+	 * @return UxonObject
 	 */
 	public static function from_anything($string_or_array_or_object){
 		if ($string_or_array_or_object instanceof UxonObject){
@@ -198,26 +201,6 @@ class UxonObject extends \stdClass implements \IteratorAggregate {
 	}
 	
 	/**
-	 * This method will try to import this UXON object to a given business object instance (e.g. a widget, an action, etc.)
-	 * using it's public setters. It is a generic alternative to a manually defined import_uxon_object() method.
-	 * @param iCanBeConvertedToUxon $instance
-	 * @param array $exclue_properties
-	 * @throws UnexpectedValueException
-	 * @return UxonObject
-	 */
-	public function import_to_instance(iCanBeConvertedToUxon $instance, $exclue_properties = array()){
-		$vars = array_diff_key($this->get_properties_all(), array_flip($exclue_properties));
-		foreach ($vars as $var => $val){
-			if (method_exists($instance, 'set_'.$var)){
-				call_user_func(array($instance, 'set_'.$var), $val);
-			} else {
-				throw new UnexpectedValueException('Property "' . $var . '" cannot be automatically imported to "' . get_class($instance) . '": setter function not found!');
-			}
-		}
-		return $this;
-	}
-	
-	/**
 	 * Removes the given property from the UXON object
 	 * @param string $name
 	 * @return \exface\Core\CommonLogic\UxonObject
@@ -237,5 +220,33 @@ class UxonObject extends \stdClass implements \IteratorAggregate {
 			}
 		}
 		return $array;
+	}
+	
+	/**
+	 * Finds public setter methods in the given class mathing properties of this UXON object and calls them for each property.
+	 * 
+	 * NOTE: this only works with public setters as private and protected methods cannot be called from the UXON object. To
+	 * work with non-public setters use the ImportUxonObjectTrait in your enitity!
+	 * 
+	 * @param object $target_class_instance
+	 * @throws UxonMapError
+	 * @return \exface\Core\CommonLogic\UxonObject
+	 */
+	public function map_to_class_setters($target_class_instance){
+		if (!is_object($target_class_instance)){
+			throw new UxonMapError($this, 'Cannot import UXON configuration to "' . gettype($target_class_instance) . '": only instantiated PHP classes supported!');
+		}
+		
+		foreach ($this->get_properties_all() as $var => $val) {
+			$setterCamelCased = 'set'.StringDataType::convert_case_underscore_to_pascal($var);
+			if (method_exists($target_class_instance, $setterCamelCased)){
+				call_user_func(array($target_class_instance, $setterCamelCased), $val);
+			} elseif (method_exists($target_class_instance, 'set_'.$var)){
+				call_user_func(array($target_class_instance, 'set_'.$var), $val);
+			} else {
+				throw new UxonMapError($this, 'No setter method found for UXON property "' . $var . '" in "' . get_class($target_class_instance) . '"!');
+			}
+		}
+		return $this;
 	}
 }

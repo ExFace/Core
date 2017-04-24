@@ -18,6 +18,7 @@ use exface\Core\Interfaces\DebuggerInterface;
 use exface\Core\CoreApp;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\NameResolverInterface;
+use exface\Core\Interfaces\LoggerInterface;
 
 class Workbench {
 	private $started = false;
@@ -27,6 +28,7 @@ class Workbench {
 	private $ui;
 	private $db;
 	private $debugger;
+	private $logger;
 	private $context;
 	private $running_apps = array();
 	private $utils = null;
@@ -315,7 +317,16 @@ class Workbench {
 	public function set_debugger(DebuggerInterface $value) {
 		$this->debugger = $value;
 		return $this;
-	}  
+	} 
+	
+	public function set_logger(LoggerInterface $logger){
+		$this->logger = $logger;
+		return $this;
+	}
+	
+	public function get_logger(){
+		return $this->logger;
+	}
 
 }
 ?>

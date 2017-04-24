@@ -114,9 +114,12 @@ class ContextManager implements ContextManagerInterface {
 	 * @return AbstractContextScope
 	 */
 	public function get_scope($scope_name){
-		$getter_method = 'get_scope_' . $scope_name;
+		$getter_method = 'getScope' . ucfirst($scope_name);
 		if (!method_exists($this, $getter_method)){
-			throw new ContextScopeNotFoundError('Context scope "' . $scope_name . '" not found!', '6T5E14B');
+			$getter_method = 'get_scope_' . $scope_name;
+			if (!method_exists($this, $getter_method)){
+				throw new ContextScopeNotFoundError('Context scope "' . $scope_name . '" not found!', '6T5E14B');
+			}
 		}
 		return call_user_func(get_class($this) . '::' . $getter_method);
 	}

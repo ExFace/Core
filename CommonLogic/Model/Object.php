@@ -344,7 +344,17 @@ class Object implements ExfaceClassInterface, AliasInterface {
 				$attr_clone->set_inherited_from_object_id($parent_object_id);
 				// TODO Is it a good idea to set the object id of the inheridted attribute to the inheriting object? Would it be
 				// better, if we only do this for objects, that do not have their own data address and merely are containers for attributes?
-				// $attr_clone->set_object_id($this->get_id());
+				// Currently the attribute is attached to the inheriting object, but the reference to the original object is saved in the
+				// inherited_from_object_id property. This is important because otherwise there is no easy way to find out, which object
+				// the attribute belongs to. Say, we want to get the object filtered over if the filter attribute_alias is RELATION__RELATION__ATTRIBUTE
+				// and ATTRIBUTE is inherited. In this case ATTRIBUTE->get_object() should return the inheriting object and not the base object.
+				// 
+				// One place, this is used at is \exface\Core\Widgets\Data::do_prefill(). When trying to prefill from the filters of the prefill sheet, 
+				// we need to find a filter widget over the object the prefill filters attribute belong to. Now, if that attribute is a UID or a 
+				// create/update-timestamp, it will often be inherited from some base object of the data source - perhaps the same base object, the
+				// widget's object inherits from as well. In this case, there is no way to know, whose UID it is, unless the object_id of the inherited
+				// attribute points to the object it directly belongs to (working example in Administration > Core > App > Button "Show Objects").
+				$attr_clone->set_object_id($this->get_id());
 			}
 			$this->get_attributes()->add($attr_clone);
 		}

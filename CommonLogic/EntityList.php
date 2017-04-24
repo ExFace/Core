@@ -40,7 +40,7 @@ class EntityList extends AbstractExfaceClass implements EntityListInterface {
 	public function export_uxon_object(){
 		$result = array();
 		foreach ($this->get_all() as $object){
-			if (method_exists($object, 'export_uxon_object')){
+			if ($object instanceof iCanBeConvertedToUxon){
 				$result[] = $object->export_uxon_object();
 			}
 		}
