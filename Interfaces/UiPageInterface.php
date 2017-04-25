@@ -39,19 +39,21 @@ interface UiPageInterface extends ExfaceClassInterface {
 	public function set_id($value);
 	
 	/**
+	 * Removes the widget with the given id from this page. By default all children are removed too.
 	 *
 	 * @param string $widget_id
+	 * @param boolean $remove_children_too
 	 * @return \exface\Core\CommonLogic\UiPage
 	 */
-	public function remove_widget_by_id($widget_id);
+	public function remove_widget_by_id($widget_id, $remove_children_too = true);
 	
 	/**
-	 * Removes a widget from the page
+	 * Removes a widget from the page. By default all children are removed too.
 	 *
 	 * @param WidgetInterface $widget
 	 * @return UiPageInterface
 	 */
-	public function remove_widget(WidgetInterface $widget);
+	public function remove_widget(WidgetInterface $widget, $remove_children_too = true);
 	
 	/**
 	 * @return UiManagerInterface

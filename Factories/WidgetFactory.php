@@ -88,8 +88,16 @@ abstract class WidgetFactory extends AbstractFactory {
 			$widget->set_id($id);
 		}
 		
-		// Now import the UXON description
-		$widget->import_uxon_object($uxon_object);
+		// Now import the UXON description. Since the import is not an atomic operation, be wure to remove this widget
+		// and all it's children if anything goes wrong. This is important, as leaving the broken widget there may
+		// produce an inconsistan stage of the application: e.g. the widget is registered in the page, but is not
+		// properly referenced in whatever instance had produced it.
+		try {
+			$widget->import_uxon_object($uxon_object);
+		} catch (\Throwable $e){
+			$page->remove_widget($widget, true);
+			throw $e;
+		}
 		
 		return $widget;
 	}

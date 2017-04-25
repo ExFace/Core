@@ -6,6 +6,7 @@ use exface\Core\Interfaces\TemplateInterface;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\UiManagerInterface;
 use exface\Core\Exceptions\Widgets\WidgetIdConflictError;
+use exface\Core\Interfaces\Widgets\iHaveChildren;
 
 class UiPage implements UiPageInterface {
 	private $widgets = array();
@@ -51,7 +52,7 @@ class UiPage implements UiPageInterface {
 	 * {@inheritDoc}
 	 * @see \exface\Core\Interfaces\UiPageInterface::remove_widget()
 	 */
-	public function remove_widget(WidgetInterface $widget){
+	public function remove_widget(WidgetInterface $widget, $remove_children_too = true){
 		return $this->remove_widget_by_id($widget->get_id());
 	}
 	
@@ -178,7 +179,15 @@ class UiPage implements UiPageInterface {
 	 * @param string $widget_id
 	 * @return \exface\Core\CommonLogic\UiPage
 	 */
-	public function remove_widget_by_id($widget_id){
+	public function remove_widget_by_id($widget_id, $remove_children_too = true){
+		if ($remove_children_too){
+			$widget = $this->get_widget($widget_id);
+			if ($widget instanceof iHaveChildren){
+				foreach ($widget->get_children() as $child){
+					$this->remove_widget($child, true);
+				}
+			}
+		}
 		unset($this->widgets[$widget_id]);
 		return $this;
 	}
