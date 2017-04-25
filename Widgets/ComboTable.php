@@ -314,7 +314,7 @@ class ComboTable extends InputCombo implements iHaveChildren {
 				}
 			} else {
 				// If the prefill data was loaded for another object, there are still multiple possibilities to prefill
-				if ($data_sheet->get_meta_object()->is($this->get_options_object())){
+				if ($data_sheet->get_meta_object()->is($this->get_table_object())){
 					// If the sheet is based upon the object, that is being selected by this Combo, we can use the prefill sheet
 					// values directly
 					$this->set_value($data_sheet->get_columns()->get_by_attribute($this->get_value_attribute())->get_cell_value(0));
