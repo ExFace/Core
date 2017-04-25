@@ -53,9 +53,10 @@ class ShowWidget extends AbstractAction implements iShowWidget, iUsePrefillData 
 			if ($this->get_widget_uxon()){
 				$this->widget = WidgetFactory::create_from_uxon($this->get_called_on_ui_page(), $this->get_widget_uxon(), $this->get_called_by_widget());
 			} elseif ($this->widget_id && !$this->page_id){
-				// TODO
+				$this->widget = $this->get_app()->get_workbench()->ui()->get_widget($this->widget_id, $this->get_called_on_ui_page()->get_id());
 			} elseif ($this->page_id && !$this->widget_id){
-				// TODO
+				// TODO this causes problems with simple links to other pages, as the action attempts to load them here...
+				//$this->widget = $this->get_app()->get_workbench()->ui()->get_page($this->page_id)->get_widget_root();
 			} elseif ($this->page_id && $this->widget_id){
 				$this->widget = $this->get_app()->get_workbench()->ui()->get_widget($this->widget_id, $this->page_id);
 			}

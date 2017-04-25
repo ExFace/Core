@@ -7,7 +7,6 @@ use exface\Core\Interfaces\Widgets\iHaveIcon;
 
 class ShowDialog extends ShowWidget implements iShowDialog {
 	private $include_headers = true;
-	private $dialog_widget = null;
 	private $widget_was_enhanced = false;
 	
 	/**

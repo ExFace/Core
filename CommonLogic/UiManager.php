@@ -11,9 +11,7 @@ use exface\Core\Exceptions\UiPageFoundError;
 
 class UiManager implements UiManagerInterface {
 	private $widget_id_forbidden_chars_regex = '[^A-Za-z0-9_\.]';
-	private $widget_ids_registered = array();
 	private $loaded_templates = array();
-	private $loaded_pages = array();
 	private $pages = array();
 	private $exface = null;
 	private $base_template = null;
