@@ -13,7 +13,7 @@ class InputCombo extends InputSelect implements iSupportLazyLoading {
 	private $lazy_loading_action = 'exface.Core.Autosuggest';
 	private $max_suggestions = 20;
 	private $allow_new_values = true;
-	private $autoselect_single_result = false;
+	private $autoselect_single_result = true;
 	
 	/**
 	 * (non-PHPdoc)
@@ -101,7 +101,7 @@ class InputCombo extends InputSelect implements iSupportLazyLoading {
 	}
 	
 	/**
-	 * Set to true to auto-select a single result from an autosuggest.
+	 * Set to FALSE to disable automatic selection of the suggested value if only one suggestion found.
 	 * 
 	 * @uxon-property autoselect_single_result
 	 * @uxon-type boolean
