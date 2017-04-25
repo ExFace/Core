@@ -13,7 +13,7 @@ class InputCombo extends InputSelect implements iSupportLazyLoading {
 	private $lazy_loading_action = 'exface.Core.Autosuggest';
 	private $max_suggestions = 20;
 	private $allow_new_values = true;
-	private $autoselect_single_result = true;
+	private $autoselect_single_suggestion = true;
 	
 	/**
 	 * (non-PHPdoc)
@@ -96,21 +96,21 @@ class InputCombo extends InputSelect implements iSupportLazyLoading {
 		return $this;
 	}
 	
-	public function get_autoselect_single_result() {
-		return $this->autoselect_single_result;
+	public function get_autoselect_single_suggestion() {
+		return $this->autoselect_single_suggestion;
 	}
 	
 	/**
 	 * Set to FALSE to disable automatic selection of the suggested value if only one suggestion found.
 	 * 
-	 * @uxon-property autoselect_single_result
+	 * @uxon-property autoselect_single_suggestion
 	 * @uxon-type boolean
 	 * 
 	 * @param boolean $value
 	 * @return \exface\Core\Widgets\InputCombo
 	 */
-	public function set_autoselect_single_result($value) {
-		$this->autoselect_single_result = \exface\Core\DataTypes\BooleanDataType::parse($value);
+	public function set_autoselect_single_suggestion($value) {
+		$this->autoselect_single_suggestion = \exface\Core\DataTypes\BooleanDataType::parse($value);
 		return $this;
 	}
 	
