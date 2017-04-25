@@ -108,6 +108,14 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 	public function get_uid_column(){
 		return $this->get_column_group_main()->get_uid_column();
 	}
+	
+	/**
+	 * Returns TRUE if this data widget has a UID column or FALSE otherwise.
+	 * @return boolean
+	 */
+	public function has_uid_column(){
+		return $this->get_column_group_main()->has_uid_column();
+	}
 
 	/**
 	 * {@inheritDoc}
@@ -733,8 +741,15 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 		// Create a new hidden filter if there is no such filter already
 		if (!$filter_widget){
 			$page = $this->get_page();
-			$filter_widget = WidgetFactory::create_from_uxon($page, $relation->get_main_object_key_attribute()->get_default_widget_uxon(), $this);
-			$filter_widget->set_attribute_alias($relation->get_foreign_key_alias());
+			// FIXME This is a workaround for the known issues, that get_main_object_key_attribute() does not work for
+			// reverse relations. When the issue is fixed, this if needs to be rewritten.
+			if (!$relation->get_main_object_key_attribute() && $relation->is_reverse_relation()) {
+				$filter_widget = WidgetFactory::create_from_uxon($page, $relation->get_related_object_key_attribute()->get_default_widget_uxon(), $this);
+				$filter_widget->set_attribute_alias($relation->get_related_object_key_alias());
+			} else {
+				$filter_widget = WidgetFactory::create_from_uxon($page, $relation->get_main_object_key_attribute()->get_default_widget_uxon(), $this);
+				$filter_widget->set_attribute_alias($relation->get_foreign_key_alias());
+			}
 			$this->add_filter($filter_widget);
 		}
 		return $filter_widget;

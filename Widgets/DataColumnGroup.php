@@ -3,6 +3,8 @@
 use exface\Core\CommonLogic\Model\Attribute;
 use exface\Core\Interfaces\Widgets\iHaveColumns;
 use exface\Core\CommonLogic\Model\RelationPath;
+use exface\Core\Exceptions\Widgets\WidgetHasNoUidColumnError;
+use exface\Core\Exceptions\Model\MetaObjectHasNoUidAttributeError;
 
 /**
  * The DataColumnGroup is a group of columns in a data widget from one side and at the same time a full featured data widget on the other.
@@ -73,11 +75,16 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns {
 	function get_uid_column_id(){
 		// If there is no UID column defined yet, try to generate one automatically
 		if (is_null($this->uid_column_id)){
-			if (!$col = $this->get_column_by_attribute_alias($this->get_meta_object()->get_uid_attribute()->get_alias_with_relation_path())){
-				$col = $this->create_column_from_attribute($this->get_meta_object()->get_uid_attribute(), null, true);
-				$this->add_column($col);
+			try {
+				if (!$col = $this->get_column_by_attribute_alias($this->get_meta_object()->get_uid_attribute()->get_alias_with_relation_path())){
+					$col = $this->create_column_from_attribute($this->get_meta_object()->get_uid_attribute(), null, true);
+					$this->add_column($col);
+				}
+				$this->uid_column_id = $col->get_id();
+			} catch (MetaObjectHasNoUidAttributeError $e){
+				// Do nothing. Depending on what the user wants to do with the column group, it might work without
+				// a UID column. If not, an error will be generated elsewhere.
 			}
-			$this->uid_column_id = $col->get_id();
 		}
 		return $this->uid_column_id;
 	}
@@ -101,10 +108,26 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns {
 	}
 	
 	public function get_uid_column(){
+		if (!$this->get_uid_column_id()){
+			throw new WidgetHasNoUidColumnError($this, 'No UID column found in DataColumnGroup: either set uid_column_id for the column group explicitly or give the object "' . $this->get_meta_object()->get_alias_with_namespace() . '" a UID attribute!');
+		}
 		if (!$col = $this->get_column($this->get_uid_column_id())){
 			$col = $this->get_parent()->get_column($this->get_uid_column_id());
 		}
 		return $col;
+	}
+	
+	/**
+	 * Returns TRUE if this column group has a UID column or FALSE otherwise.
+	 * @return boolean
+	 */
+	public function has_uid_column(){
+		try {
+			$this->get_uid_column();
+		} catch (WidgetHasNoUidColumnError $e){
+			return false;
+		}
+		return true;
 	}
 	
 	/**

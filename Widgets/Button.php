@@ -64,6 +64,7 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iHaveC
 		} else {
 			throw new WidgetPropertyInvalidValueError($this, 'The set_action() method of a button accepts either an action object extended from ActionInterface or a UXON description object. ' . gettype($action_object_or_uxon_description) . ' given for button "' . $this->get_id() . '".', '6T919D5');
 		}
+		return $this;
 	}
 	
 	public function get_action_alias() {

@@ -15,6 +15,7 @@ use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Exceptions\Model\MetaObjectNotFoundError;
+use exface\Core\Exceptions\Model\MetaObjectHasNoUidAttributeError;
 
 class Object implements ExfaceClassInterface, AliasInterface {
 	private $id;
@@ -490,11 +491,30 @@ class Object implements ExfaceClassInterface, AliasInterface {
 	}
 	
 	/**
-	 * Returns the meta attribute with the unique ID of the object
+	 * Returns the meta attribute with the unique ID of the object.
+	 * 
+	 * @throws MetaObjectHasNoUidAttributeError if no UID attribute defined for this object
 	 * @return \exface\Core\CommonLogic\Model\Attribute
 	 */
 	public function get_uid_attribute(){
+		if (!$this->get_uid_alias()){
+			throw new MetaObjectHasNoUidAttributeError($this, 'No UID attribute defined for object "' . $this->get_alias_with_namespace() . '"!');
+		} 
 		return $this->get_attribute($this->get_uid_alias());
+	}
+	
+	/**
+	 * Returns TRUE if the object has a UID attribute and FALSE otherwise.
+	 * 
+	 * @return boolean
+	 */
+	public function has_uid_attribute(){
+		try {
+			$this->get_uid_attribute();
+		} catch (MetaObjectHasNoUidAttributeError $e){
+			return false;
+		}
+		return true;
 	}
 	
 	public function get_label_alias(){

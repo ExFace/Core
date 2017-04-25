@@ -286,7 +286,7 @@ class InputSelect extends Input implements iSupportMultiSelect {
 	}
 	
 	/**
-	 * Defines the alias of the attribute to be displayed for every value. If not set, the system will try to determine one automatically.
+	 * Defines the alias of the attribute of the options object to be displayed for every value. If not set, the system will try to determine one automatically.
 	 * 
 	 * If the text_attribute_alias was not set explicitly (e.g. via UXON), it will be determined as follows:
 	 * - If an option object was specified explicitly, it's label will be used (or it's UID if no label is defined)
@@ -308,7 +308,7 @@ class InputSelect extends Input implements iSupportMultiSelect {
 	}
 	
 	/**
-	 * Returns the alias of the attribute to be displayed, when a value is selected.
+	 * Returns the alias of the options object's attribute to be displayed, when a value is selected.
 	 * 
 	 * If the text_attribute_alias was not set explicitly (e.g. via UXON), it will be determined as follows:
 	 * - If an option object was specified explicitly, it's label will be used (or it's UID if no label is defined)
@@ -407,11 +407,11 @@ class InputSelect extends Input implements iSupportMultiSelect {
 	}
 	
 	public function get_value_attribute(){
-		return $this->get_meta_object()->get_attribute($this->get_value_attribute_alias());
+		return $this->get_options_object()->get_attribute($this->get_value_attribute_alias());
 	}
 	
 	/**
-	 * Defines the alias of the attribute to be used as the internal value of the select. If not set, the UID of the options object will be used
+	 * Defines the alias of the attribute of the options object to be used as the internal value of the select. If not set, the UID will be used.
 	 *
 	 * @uxon-property value_attribute_alias
 	 * @uxon-type string
