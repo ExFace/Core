@@ -21,6 +21,48 @@ use exface\Core\CommonLogic\UxonObject;
  * showing more data about a selectable object in the autosuggest. Mobile templates might use cards like in Googles material design,
  * for example.
  * 
+ * ComboTables support two type of live references to other objects: in the value and in the data filters. Concider the following
+ * example, where we need a product selector for an order position. We order a specific product variant, but we need a two-step
+ * selector, so we can select the product first and choose one of it's variants afterwards. To do this, we need an extra product
+ * selector befor the actual variant selector for our order position. The product selector does not refer to an order attribute,
+ * so we declare it display_only (so it will not get included in action data). Our variant selector has a filter reference to the
+ * product selector. This means, that once a product is selected, only variants of that product will be displayed. If no product
+ * is selected, we can search through all product variants in the system. But what happens if we select a variant and do not
+ * touch the product selector (This will actually happen every time the form is prefilled). The id-reference in the product
+ * selector takes care of that: It sets the value of the selector to the product id of the selected variant. Of course, if
+ * the product id does not belong to the default display attributes of the variant, we need to add it to the respective combo
+ * manually: just add it next to the ~DEFAULT_DISPLAY attribute group.
+ * 
+ * {
+ * 	"widget_type": "Form",
+ * 	"object_alias": "MY.APP.ORDER_POSITION",
+ * 	...
+ * 	{
+ * 		"widget_type": "ComboTable",
+ * 		"object_alias": "MY.APP.PRODUCT",
+ * 		"id": "product_selector",
+ * 		"value": "=product_variant_selector!product_id",
+ * 		"display_only": true
+ * 	},
+ * 	{
+ * 		"widget_type": "ComboTable",
+ * 		"attribute_alias: "PRODUCT_VARIANT"
+ * 		"id": "product_variant_selector",
+ * 		"table": {
+ * 			"columns": [
+ * 				{ "attribute_group_alias": "~DEFAULT_DISPLAY" },
+ * 				{ "attribute_alias": "PRODUCT"}
+ * 			],
+ * 			"filters": [
+ * 				{
+ * 					"attribute_alias": "PRODUCT"
+ * 					"value": "=product_selector!id"
+ * 				}
+ * 			]
+ * 		}
+ * 	}
+ * }
+ * 
  * @author Andrej Kabachnik
  * 
  */
@@ -272,13 +314,13 @@ class ComboTable extends InputCombo implements iHaveChildren {
 				}
 			} else {
 				// If the prefill data was loaded for another object, there are still multiple possibilities to prefill
-				if ($data_sheet->get_meta_object()->is($this->get_relation()->get_related_object())){
+				if ($data_sheet->get_meta_object()->is($this->get_table_object())){
 					// If the sheet is based upon the object, that is being selected by this Combo, we can use the prefill sheet
 					// values directly
-					$this->set_value($data_sheet->get_cell_value($this->get_relation()->get_related_object_key_alias(), 0));
-					$this->set_value_text($data_sheet->get_cell_value($this->get_text_column()->get_data_column_name(), 0));
+					$this->set_value($data_sheet->get_columns()->get_by_attribute($this->get_value_attribute())->get_cell_value(0));
+					$this->set_value_text($data_sheet->get_columns()->get_by_attribute($this->get_text_attribute())->get_cell_value(0));
 					return;
-				} elseif ($this->get_relation()) {
+				} elseif ($this->get_relation()){
 					// If it is not the object selected within the combo, than we still can look for columns in the sheet, that
 					// contain selectors (UIDs) of that object. This means, we need to look for data columns showing relations
 					// and see if their related object is the same as the related object of the relation represented by the combo.
