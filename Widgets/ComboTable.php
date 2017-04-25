@@ -63,7 +63,24 @@ use exface\Core\CommonLogic\UxonObject;
  * 	}
  * }
  * 
- * @author Andrej Kabachnik
+ * You can add as many widgets in this chain of live references, as you wish. This way, interactive selectors can be built
+ * for very complex hierarchies. If you do not want the lower hierarchy levels to be selectable before the higher levels
+ * are set, make the respective fiters required (in the above example, adding "required": "true" to the PRODUCT-filter of
+ * the variant selector would make this selector disabled until a product is selected).
+ * 
+ * Note, that if a value is changed by the user, all the referencing filters will be updated causing their widgets
+ * to revalidate. This means, that changing the product in our example, will reload data for the variant selector filtered
+ * by the new product. Most likely, the previously selected variant will not belong to the new product, so the variant
+ * selector will be emptied automatically. Unless, of course, the new product only has one variant and 
+ * autoselect_single_suggestion is true, than the value of the only variant of the new product will be automatically selected.
+ * 
+ * Changing or removing a value will also change/empty all referencing values. 
+ * 
+ * For hierarchies like the one in the above example this means, that changing a value at a certain level will change the 
+ * values at higher levels and revalidate values at lower levels. Similarly, removing a value will in the middle will empty 
+ * higher level selectors and revalidate lower level fields.
+ * 
+ * @author Andrej Kabachnik 
  * 
  */
 class ComboTable extends InputCombo implements iHaveChildren { 	
