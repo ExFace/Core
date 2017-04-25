@@ -2,17 +2,18 @@
 namespace exface\Core\Widgets;
 use exface\Core\Interfaces\Widgets\iSupportLazyLoading;
 /**
- * InputCombo is similar to InputSelect extended by an autosuggest, that supports lazy loading. It also can optionally accept new values. 
- * 
+ * InputCombo is similar to InputSelect extended by an autosuggest, that supports lazy loading. It also can optionally accept new values.
+ *
  * @see InputCombo
- * 
+ *
  * @author Andrej Kabachnik
  */
-class InputCombo extends InputSelect implements iSupportLazyLoading { 
+class InputCombo extends InputSelect implements iSupportLazyLoading {
 	private $lazy_loading = true; // Combos should use lazy autosuggest in general
 	private $lazy_loading_action = 'exface.Core.Autosuggest';
 	private $max_suggestions = 20;
 	private $allow_new_values = true;
+	private $autoselect_single_result = true;
 	
 	/**
 	 * (non-PHPdoc)
@@ -24,10 +25,10 @@ class InputCombo extends InputSelect implements iSupportLazyLoading {
 	
 	/**
 	 * By default lazy loading is used to fetch autosuggest values. Set to FALSE to preload the values.
-	 * 
+	 *
 	 * @uxon-property lazy_loading
 	 * @uxon-type boolean
-	 * 
+	 *
 	 * (non-PHPdoc)
 	 * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::set_lazy_loading()
 	 */
@@ -37,7 +38,7 @@ class InputCombo extends InputSelect implements iSupportLazyLoading {
 	
 	/**
 	 * Returns the alias of the action to be called by the lazy autosuggest.
-	 *  
+	 *
 	 * (non-PHPdoc)
 	 * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::get_lazy_loading_action()
 	 */
@@ -47,10 +48,10 @@ class InputCombo extends InputSelect implements iSupportLazyLoading {
 	
 	/**
 	 * Defines the alias of the action to be called by the autosuggest. Default: exface.Core.Autosuggest.
-	 * 
+	 *
 	 * @uxon-property lazy_loading_action
 	 * @uxon-type string
-	 * 
+	 *
 	 * (non-PHPdoc)
 	 * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::set_lazy_loading_action()
 	 */
@@ -65,10 +66,10 @@ class InputCombo extends InputSelect implements iSupportLazyLoading {
 	
 	/**
 	 * By default the InputCombo will also accept values not present in the autosuggest. Set to FALSE to prevent this
-	 * 
+	 *
 	 * @uxon-property allow new values
 	 * @uxon-type boolean
-	 * 
+	 *
 	 * @param boolean $value
 	 * @return \exface\Core\Widgets\InputCombo
 	 */
@@ -83,15 +84,33 @@ class InputCombo extends InputSelect implements iSupportLazyLoading {
 	
 	/**
 	 * Limits the number of suggestions loaded for every autosuggest.
-	 * 
+	 *
 	 * @uxon-property max_suggestions
 	 * @uxon-type number
-	 * 
+	 *
 	 * @param integer $value
 	 * @return \exface\Core\Widgets\InputCombo
 	 */
 	public function set_max_suggestions($value) {
 		$this->max_suggestions = intval($value);
+		return $this;
+	}
+	
+	public function get_autoselect_single_result() {
+		return $this->autoselect_single_result;
+	}
+	
+	/**
+	 * Set to FALSE to disable automatic selection of the suggested value if only one suggestion found.
+	 *
+	 * @uxon-property autoselect_single_result
+	 * @uxon-type boolean
+	 *
+	 * @param boolean $value
+	 * @return \exface\Core\Widgets\InputCombo
+	 */
+	public function set_autoselect_single_result($value) {
+		$this->autoselect_single_result = \exface\Core\DataTypes\BooleanDataType::parse($value);
 		return $this;
 	}
 	
