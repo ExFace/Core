@@ -30,6 +30,7 @@ use exface\Core\Exceptions\DataSheets\DataSheetRuntimeError;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\Exceptions\DataSheets\DataSheetReadError;
 use exface\Core\Exceptions\DataSheets\DataSheetMissingRequiredValueError;
+use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;
 
 /**
  * Internal data respresentation object in exface. Similar to an Excel-table:
@@ -442,6 +443,8 @@ class DataSheet implements DataSheetInterface {
 		
 		try {
 			$result = $query->read($this->get_meta_object()->get_data_connection());
+		} catch (ErrorExceptionInterface $e){
+			throw new DataSheetReadError($this, $e->getMessage(), $e->get_alias(), $e);
 		} catch (\Throwable $e){
 			throw new DataSheetReadError($this, $e->getMessage(), null, $e);
 		}
