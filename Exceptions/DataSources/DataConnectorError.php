@@ -16,7 +16,7 @@ use exface\Core\Interfaces\DataSources\DataConnectionInterface;
  * @author Andrej Kabachnik
  *
  */
-abstract class DataConnectorError extends RuntimeException implements ErrorExceptionInterface, DataConnectorExceptionInterface {
+abstract class DataConnectorError extends RuntimeException implements DataConnectorExceptionInterface {
 	
 	use DataConnectorExceptionTrait;
 	

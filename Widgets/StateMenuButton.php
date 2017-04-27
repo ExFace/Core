@@ -50,6 +50,12 @@ class StateMenuButton extends MenuButton {
 						$button = $this->get_page()->create_widget($button_widget, $this, UxonObject::from_anything($smb_button));
 						$smb_button->action->alias = $action_alias_temp;
 						$smb_button->refresh_widget_link = $refresh_widget_link_temp;
+						
+						// TODO das wäre schöner, muss aber erst ausprobiert werden!
+						/* @var $uxon \exface\Core\CommonLogic\UxonObject */
+						// $uxon = $this->get_original_uxon_object()->extend(UxonObject::from_anything($smb_button)->copy());
+						// $button = $this->get_page()->create_widget($button_widget, $this, $uxon);
+						
 					} else {
 						$button = $this->get_page()->create_widget($button_widget, $this, UxonObject::from_anything($smb_button));
 					}

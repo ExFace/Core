@@ -98,7 +98,7 @@ class UxonObject extends \stdClass implements \IteratorAggregate {
 	 */
 	public static function from_anything($string_or_array_or_object){
 		if ($string_or_array_or_object instanceof UxonObject){
-			return $string_or_array_or_object;
+			return $string_or_array_or_object->copy();
 		} elseif (is_array($string_or_array_or_object)){
 			return self::from_array($string_or_array_or_object);
 		} elseif ($string_or_array_or_object instanceof \stdClass){
@@ -188,7 +188,7 @@ class UxonObject extends \stdClass implements \IteratorAggregate {
 	 * @return UxonObject
 	 */
 	public function copy(){
-		return self::from_stdClass($this);
+		return self::from_array_assotiative($this->to_array());
 	}
 	
 	/**

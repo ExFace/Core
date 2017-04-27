@@ -171,7 +171,7 @@ trait ExceptionTrait {
 	 * @see \exface\Core\Interfaces\Exceptions\ExceptionInterface::get_alias()
 	 */
 	public function get_alias(){
-		return $this->alias;
+		return is_null($this->alias) ? static::get_default_alias() : $this->alias;
 	}
 	
 	/**
@@ -180,7 +180,9 @@ trait ExceptionTrait {
 	 * @see \exface\Core\Interfaces\Exceptions\ExceptionInterface::set_alias()
 	 */
 	public function set_alias($alias){
-		$this->alias = $alias;
+		if (!is_null($alias)){
+			$this->alias = $alias;
+		}
 		return $this;
 	}
 	

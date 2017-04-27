@@ -31,6 +31,7 @@ use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\Exceptions\DataSheets\DataSheetReadError;
 use exface\Core\Exceptions\DataSheets\DataSheetMissingRequiredValueError;
 use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;
+use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 
 /**
  * Internal data respresentation object in exface. Similar to an Excel-table:
@@ -443,10 +444,8 @@ class DataSheet implements DataSheetInterface {
 		
 		try {
 			$result = $query->read($this->get_meta_object()->get_data_connection());
-		} catch (ErrorExceptionInterface $e){
-			throw new DataSheetReadError($this, $e->getMessage(), $e->get_alias(), $e);
 		} catch (\Throwable $e){
-			throw new DataSheetReadError($this, $e->getMessage(), null, $e);
+			throw new DataSheetReadError($this, $e->getMessage(), ($e instanceof ExceptionInterface ? $e->get_alias() : null), $e);
 		}
 
 		$this->add_rows($query->get_result_rows());
@@ -665,7 +664,7 @@ class DataSheet implements DataSheetInterface {
 		} catch (\Throwable $e){
 			$transaction->rollback();
 			$commit = false;
-			throw new DataSheetWriteError($this, 'Data source error. ' . $e->getMessage(), null, $e);
+			throw new DataSheetWriteError($this, 'Data source error. ' . $e->getMessage(), ($e instanceof ExceptionInterface ? $e->get_alias() : null), $e);
 		}
 		
 		if ($commit  && !$transaction->is_rolled_back()){
@@ -831,7 +830,7 @@ class DataSheet implements DataSheetInterface {
 		} catch (\Throwable $e) {
 			$transaction->rollback();
 			$commit = false;
-			throw new DataSheetWriteError($this, $e->getMessage(), null, $e);
+			throw new DataSheetWriteError($this, $e->getMessage(), ($e instanceof ExceptionInterface ? $e->get_alias() : null), $e);
 		}
 		
 		if ($commit  && !$transaction->is_rolled_back()){
@@ -900,7 +899,7 @@ class DataSheet implements DataSheetInterface {
 			$affected_rows += $query->delete($connection);
 		} catch (\Throwable $e){
 			$transaction->rollback();
-			throw new DataSheetWriteError($this, 'Data source error. ' . $e->getMessage(), null, $e);
+			throw new DataSheetWriteError($this, 'Data source error. ' . $e->getMessage(), ($e instanceof ExceptionInterface ? $e->get_alias() : null), $e);
 		}
 		
 		if ($commit && !$transaction->is_rolled_back()){

@@ -2,6 +2,8 @@
 namespace exface\Core\Exceptions;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Exceptions\UxonExceptionInterface;
+use exface\Core\Widgets\DebugMessage;
+use exface\Core\Factories\WidgetFactory;
 
 /**
  * Exception thrown if the entity (widget, action, etc.) represented by a UXON description cannot be instantiated due to invalid or missing properties.
@@ -35,6 +37,18 @@ class UxonParserError extends RuntimeException implements UxonExceptionInterface
 	public function set_uxon(UxonObject $uxon){
 		$this->uxon = $uxon;
 		return $this;
+	}
+	
+	public function create_debug_widget(DebugMessage $debug_widget){
+		$page = $debug_widget->get_page();
+		$uxon_tab = $debug_widget->create_tab();
+		$uxon_tab->set_id('UXON');
+		$uxon_tab->set_caption('UXON');
+		$request_widget = WidgetFactory::create($page, 'Html');
+		$uxon_tab->add_widget($request_widget);
+		$request_widget->set_value('<pre>' . $this->get_uxon()->to_json(true) . '</pre>');
+		$debug_widget->add_tab($uxon_tab);
+		return $debug_widget;
 	}
 }
 ?>

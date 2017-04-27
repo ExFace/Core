@@ -46,6 +46,9 @@ trait WidgetExceptionTrait {
 	}
 	
 	public function create_debug_widget(DebugMessage $debug_widget){
+		if ($debug_widget->find_child_recursive('UXON')){
+			return $debug_widget;
+		}
 		$page = $debug_widget->get_page();
 		$uxon_tab = $debug_widget->create_tab();
 		$uxon_tab->set_caption('UXON');

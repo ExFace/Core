@@ -1119,6 +1119,32 @@
             "ERROR_TEXT": "Invalid configuration for sorters in a data sheet",
             "DESCRIPTION": "",
             "LABEL": "exface.Core.6UQBX9K"
+        },
+        {
+            "CREATED_ON": "2017-04-27 07:25:15",
+            "MODIFIED_ON": "2017-04-27 07:25:40",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e72b1a9933156bbaa5e4b318306b9a",
+            "FULL_ERROR_CODE": "exface.Core.6UX6TNT",
+            "APP": "0x31000000000000000000000000000000",
+            "ERROR_CODE": "6UX6TNT",
+            "ERROR_TEXT": "Missing UID attribute for meta object",
+            "DESCRIPTION": "This error indicates, that a meta object does not have a UID attribute, but the current runtime requires it. Please mark one of the attributes as object UID.\n\nIn general, an object does not neccessarily need a UID attribute. However, certain actions or query builders require it for their logic to function correctly.",
+            "LABEL": "exface.Core.6UX6TNT"
+        },
+        {
+            "CREATED_ON": "2017-04-27 07:32:21",
+            "MODIFIED_ON": "2017-04-27 07:32:21",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e72b1b96e12cd2baa5e4b318306b9a",
+            "FULL_ERROR_CODE": "exface.Core.6UX6KAQ",
+            "APP": "0x31000000000000000000000000000000",
+            "ERROR_CODE": "6UX6KAQ",
+            "ERROR_TEXT": "Missing UID column in data-widget",
+            "DESCRIPTION": "This error occurs if a data widget (DataTable, DataMatrix, Chart, etc.) has no UID column, but it is required for the current configuration (e.g. for button actions). \n\nTo solve the problem, either add a UID attribute to the main object of the widget or specify a custom uid_column_id in the UXON configuration.",
+            "LABEL": "exface.Core.6UX6KAQ"
         }
     ],
     "totals_rows": [],
