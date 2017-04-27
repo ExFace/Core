@@ -96,6 +96,12 @@ class ShowObjectDialog extends ShowDialog {
 		$page = $this->get_called_on_ui_page();
 		$default_editor_uxon = $dialog->get_meta_object()->get_default_editor_uxon();
 		
+		// If there is a default editor, make sure it gets it's own id space, so widget links inside still work
+		// if multiple editors of the same object are located in the same page (e.g. for creating, editing, etc.)
+		if ($this->get_called_by_widget() && !$default_editor_uxon->is_empty()){
+			$default_editor_uxon->set_property('id_space', $this->get_called_by_widget()->get_id());
+		}
+		
 		// If the content is explicitly defined, just add it to the dialog
 		if ($contained_widget){
 			$dialog->add_widget($contained_widget);

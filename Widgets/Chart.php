@@ -305,7 +305,7 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveButtons, iHaveT
 	 */
 	public function set_data_widget_link($value) {
 		$exface = $this->get_workbench();
-		$this->data_widget_link = WidgetLinkFactory::create_from_anything($exface, $value);
+		$this->data_widget_link = WidgetLinkFactory::create_from_anything($exface, $value, $this->get_id_space());
 		return $this;
 	}  
 	

@@ -83,9 +83,16 @@ abstract class WidgetFactory extends AbstractFactory {
 				$widget_type = $uxon_object->get_property('widget_type');
 			}
 		}
-		$widget = static::create($page, $widget_type, $parent_widget);
-		if ($id = $uxon_object->get_property('id')){
-			$widget->set_id($id);
+		try {
+			$widget = static::create($page, $widget_type, $parent_widget);
+			if ($id_space = $uxon_object->get_property('id_space')){
+				$widget->set_id_space($id_space);
+			}
+			if ($id = $uxon_object->get_property('id')){
+				$widget->set_id($id);
+			}
+		} catch (\Throwable $e){
+			throw new UxonParserError($uxon_object, 'Failed to create a widget from UXON! ' . $e->getMessage(), null, $e);
 		}
 		
 		// Now import the UXON description. Since the import is not an atomic operation, be wure to remove this widget

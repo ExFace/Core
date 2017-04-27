@@ -23,6 +23,15 @@ interface iHaveValue extends WidgetInterface {
 	public function get_value_expression();
 	
 	/**
+	 * Returns the link to the widget, this widget's value is linked to. Returns NULL if the value of this widget is not a link.
+	 * 
+	 * The widget link will be resolved relative to the id space of this widget.
+	 * 
+	 * @return NULL|\exface\Core\Interfaces\Widgets\WidgetLinkInterface
+	 */
+	public function get_value_widget_link();
+	
+	/**
 	 * Returns the placeholder text to be used by templates if the widget has no value.
 	 *
 	 * @return string

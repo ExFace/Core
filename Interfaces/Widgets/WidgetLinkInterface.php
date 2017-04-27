@@ -6,6 +6,11 @@ use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\UiPageInterface;
 use exface\Core\CommonLogic\UxonObject;
 
+/**
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
 interface WidgetLinkInterface extends ExfaceClassInterface, iCanBeConvertedToUxon {
 	
 	public function parse_link($string_or_object);
@@ -33,6 +38,10 @@ interface WidgetLinkInterface extends ExfaceClassInterface, iCanBeConvertedToUxo
 	public function set_page_id($value);
 	
 	/**
+	 * Retruns the id of the linked widget within the linked page.
+	 * 
+	 * If an id space is set, this will return the fully qualified widget id includig the id space.
+	 * 
 	 * @return string
 	 */
 	public function get_widget_id();
@@ -78,6 +87,23 @@ interface WidgetLinkInterface extends ExfaceClassInterface, iCanBeConvertedToUxo
 	 * @param integer $value
 	 * @return WidgetLinkInterface
 	 */
-	public function set_row_number($value);    
+	public function set_row_number($value);  
+	
+	/**
+	 * Sets the id space - a subnamespace of the page, for the widget ids to be resolved in.
+	 * 
+	 * If a page has multiple id spaces, the same widget id can exist in each of the independently.
+	 * 
+	 * @return string
+	 */
+	public function get_widget_id_space();
+	
+	/**
+	 * Returns the id space of this widget link: an empty string by default.
+	 * 
+	 * @param string $value
+	 * @return WidgetLinkInterface
+	 */
+	public function set_widget_id_space($value);  
 }
 ?>

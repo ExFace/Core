@@ -6,6 +6,7 @@ use exface\Core\Interfaces\AppInterface;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\CommonLogic\Model\ObjectActionList;
 use exface\Core\Interfaces\NameResolverInstallerInterface;
+use exface\Core\Interfaces\WidgetInterface;
 
 interface ModelLoaderInterface {
 	
@@ -58,9 +59,10 @@ interface ModelLoaderInterface {
 	 * 
 	 * @param AppInterface $app
 	 * @param string $action_alias
+	 * @param WidgetInterface $called_by_widget
 	 * @return ActionInterface
 	 */
-	public function load_action(AppInterface $app, $action_alias);
+	public function load_action(AppInterface $app, $action_alias, WidgetInterface $called_by_widget = null);
 	
 	/**
 	 * Returns the Installer, that will take care of setting up the model data source, keeping in upto date, etc.

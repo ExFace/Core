@@ -23,9 +23,9 @@ class Expression implements ExfaceClassInterface, iCanBeCopied {
 	private $type = null;
 	private $relation_path = '';
 	private $string = '';
-	private $data_type = NULL;
+	private $data_type = null;
 	private $exface;
-	private $meta_object = NULL;
+	private $meta_object = null;
 	
 	function __construct(\exface\Core\CommonLogic\Workbench $exface, $string, $meta_object = null){
 		$this->exface = $exface;
@@ -362,6 +362,6 @@ class Expression implements ExfaceClassInterface, iCanBeCopied {
 		$copy = clone $this;
 		$copy->parse($this->to_string());
 		return $copy;
-	}
+	} 
 }
 ?>

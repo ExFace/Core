@@ -329,7 +329,7 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iHaveC
 			$this->refresh_widget_link = null;
 		} else {
 			$exface = $this->get_workbench();
-			if ($link = WidgetLinkFactory::create_from_anything($exface, $widget_link_or_uxon_or_string)){
+			if ($link = WidgetLinkFactory::create_from_anything($exface, $widget_link_or_uxon_or_string, $this->get_id_space())){
 				$this->refresh_widget_link = $link;
 			}
 		}

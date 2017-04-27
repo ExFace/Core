@@ -58,7 +58,7 @@ class Input extends Text implements iTakeInput, iHaveDefaultValue {
 		$disabled = parent::is_disabled();
 		if (is_null($disabled)){
 			try {
-				if (!$this->get_attribute()->is_editable()){
+				if ($this->get_meta_object()->has_attribute($this->get_attribute_alias()) && !$this->get_attribute()->is_editable()){
 					$disabled = true;
 				} else {
 					$disabled = false;

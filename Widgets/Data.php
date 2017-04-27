@@ -1215,7 +1215,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 	 */
 	public function set_refresh_with_widget($widget_link_or_uxon_or_string) {
 		$exface = $this->get_workbench();
-		if ($link = WidgetLinkFactory::create_from_anything($exface, $widget_link_or_uxon_or_string)){
+		if ($link = WidgetLinkFactory::create_from_anything($exface, $widget_link_or_uxon_or_string, $this->get_id_space())){
 			$this->refresh_with_widget = $link;
 		}
 		return $this;

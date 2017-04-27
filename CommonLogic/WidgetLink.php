@@ -4,11 +4,13 @@ use exface\Core\Widgets\AbstractWidget;
 use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 use exface\Core\Exceptions\Widgets\WidgetNotFoundError;
 use exface\Core\Exceptions\UnexpectedValueException;
+use exface\Core\Interfaces\WidgetInterface;
 
 class WidgetLink implements WidgetLinkInterface {
 	private $exface;
 	private $page_id;
 	private $widget_id;
+	private $widget_id_space = null;
 	private $column_id;
 	private $row_number;
 	
@@ -114,7 +116,7 @@ class WidgetLink implements WidgetLinkInterface {
 	 * @see \exface\Core\Interfaces\Widgets\WidgetLinkInterface::get_widget_id()
 	 */
 	public function get_widget_id() {
-		return $this->widget_id;
+		return ($this->get_widget_id_space() ? $this->get_widget_id_space() . WidgetInterface::WIDGET_ID_SPACE_SEPARATOR : '') . $this->widget_id;
 	}
 	
 	/**
@@ -250,5 +252,24 @@ class WidgetLink implements WidgetLinkInterface {
 	public function get_workbench(){
 		return $this->exface;
 	}
+	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\Widgets\WidgetLinkInterface::get_widget_id_space()
+	 */
+	public function get_widget_id_space() {
+		return $this->widget_id_space;
+	}
+	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\Widgets\WidgetLinkInterface::set_widget_id_space()
+	 */
+	public function set_widget_id_space($value) {
+		$this->widget_id_space = $value;
+		return $this;
+	}  
 }
 ?>

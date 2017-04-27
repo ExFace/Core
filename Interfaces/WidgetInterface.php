@@ -12,6 +12,8 @@ use exface\Core\CommonLogic\UxonObject;
 
 interface WidgetInterface extends ExfaceClassInterface {
 	
+	const WIDGET_ID_SPACE_SEPARATOR = '.';
+	
 	/**
 	 * Loads data from a standard object (stdClass) into any widget using setter functions.
 	 * E.g. calls $this->set_id($source->id) for every property of the source object. Thus the behaviour of this
@@ -101,6 +103,27 @@ interface WidgetInterface extends ExfaceClassInterface {
 	 * @return WidgetInterface
 	 */
 	public function set_id($value);
+	
+	/**
+	 * Retruns the id space of this widget.
+	 * 
+	 * @return string
+	 */
+	public function get_id_space();
+	
+	/**
+	 * Sets the id space for this widget. This means, all ids, links, etc. of it's children will
+	 * be resolved within this id space.
+	 * 
+	 * The id space allows to reuse complex widgets with live references and other links multiple
+	 * times on a single page. A complex oject editor, for example, can be used by the create,
+	 * update and dublicate buttons on one page. To make the links within the editor work, each
+	 * button must have it's own id space.
+	 * 
+	 * @param string $value
+	 * @return WidgetInterface
+	 */
+	public function set_id_space($value);
 	
 	/**
 	 * Returns true if current widget is a container, false otherwise
