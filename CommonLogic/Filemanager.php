@@ -156,6 +156,9 @@ class Filemanager extends Filesystem implements ExfaceClassInterface {
 	 * @return boolean
 	 */
 	public static function path_is_absolute($path){
+		if (is_null($path) || $path == ''){
+			return false;
+		}
 		return Path::isAbsolute($path);
 	}
 	
