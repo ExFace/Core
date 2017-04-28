@@ -386,6 +386,8 @@ class DataSheet implements DataSheetInterface {
 	 * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::data_read()
 	 */
 	public function data_read($limit = null, $offset = null){
+		$this->get_workbench()->event_manager()->dispatch(EventFactory::create_data_sheet_event($this, 'ReadData.Before'));
+		
 		// Empty the data before reading
 		// IDEA Enable incremental reading by distinguishing between reading the same page an reading a new page
 		$this->remove_rows();
@@ -497,6 +499,7 @@ class DataSheet implements DataSheetInterface {
 			}
 			$this->set_column_values($name, $vals, $totals);
 		}
+		$this->get_workbench()->event_manager()->dispatch(EventFactory::create_data_sheet_event($this, 'ReadData.After'));
 		return $result;
 	}
 	

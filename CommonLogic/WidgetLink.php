@@ -201,8 +201,11 @@ class WidgetLink implements WidgetLinkInterface {
 	 */
 	public function export_uxon_object(){
 		$uxon = $this->exface->create_uxon_object();
-		$uxon->widget_id = $this->get_widget_id();
-		$uxon->page_id = $this->get_page_id();
+		$uxon->widget_id = $this->widget_id;
+		$uxon->page_id = $this->page_id;
+		$uxon->widget_id_space = $this->widget_id_space;
+		$uxon->column_id = $this->column_id;
+		$uxon->row_number = $this->row_number;
 		return $uxon;
 	}
 	

@@ -8,6 +8,7 @@ use exface\Core\Interfaces\Widgets\iHaveIcon;
 class ShowDialog extends ShowWidget implements iShowDialog {
 	private $include_headers = true;
 	private $widget_was_enhanced = false;
+	private $dialog_buttons_uxon = [];
 	
 	/**
 	 * Creates the dialog widget. If not contents is passed, an empty dialog widget will be returned.
@@ -62,6 +63,10 @@ class ShowDialog extends ShowWidget implements iShowDialog {
 		
 		if (!$dialog->get_caption()){
 			$dialog->set_caption($this->get_dialog_caption());
+		}
+		
+		if (count($this->get_dialog_buttons_uxon()) > 0){
+			$dialog->set_buttons($this->get_dialog_buttons_uxon());
 		}
 		
 		return $dialog;
@@ -133,6 +138,27 @@ class ShowDialog extends ShowWidget implements iShowDialog {
 		return $this;
 	}
 	
-	  
+	public function get_dialog_buttons_uxon() {
+		return $this->dialog_buttons_uxon;
+	}
+	
+	/**
+	 * Adds extra buttons to a dialog.
+	 * 
+	 * "dialog_buttons": [
+	 * 		{
+	 * 			"widget_type": "DialogButton",
+	 * 			"action_alias": "exface.Core.UpdateData",
+	 * 			"caption": "Speichern"
+	 * 		}
+	 * 	]
+	 * 
+	 * @param array $uxon_array
+	 * @return \exface\Core\Actions\ShowDialog
+	 */
+	public function set_dialog_buttons($uxon_array) {
+		$this->dialog_buttons_uxon = $uxon_array;
+		return $this;
+	}
 }
 ?>
