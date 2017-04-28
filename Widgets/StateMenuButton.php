@@ -45,9 +45,14 @@ class StateMenuButton extends MenuButton {
 					if (!is_null($this->get_action_alias())) {
 						$action_alias_temp = $smb_button->action->alias;
 						$refresh_widget_link_temp = $smb_button->refresh_widget_link;
+						
 						$smb_button->action->alias = $this->get_action_alias();
-						$smb_button->refresh_widget_link = $this->get_refresh_widget_link()->export_uxon_object();
+						if (!is_null($this->get_refresh_widget_link())) {
+							$smb_button->refresh_widget_link = $this->get_refresh_widget_link()->export_uxon_object();
+						}
+						
 						$button = $this->get_page()->create_widget($button_widget, $this, UxonObject::from_anything($smb_button));
+						
 						$smb_button->action->alias = $action_alias_temp;
 						$smb_button->refresh_widget_link = $refresh_widget_link_temp;
 						
