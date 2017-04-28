@@ -391,7 +391,7 @@ class ComboTable extends InputCombo implements iHaveChildren {
 				unset($text_column_name);
 			}
 			if ($text_column_name){
-				$data_sheet->get_columns()->add_from_expression($text_column_name, $this->get_text_column()->get_data_column_name());
+				$data_sheet->get_columns()->add_from_expression($text_column_name);
 			}
 		} elseif ($this->get_relation() && $this->get_relation()->get_related_object()->is($data_sheet->get_meta_object())){
 			$data_sheet->get_columns()->add_from_expression($this->get_relation()->get_related_object_key_alias());
@@ -402,6 +402,7 @@ class ComboTable extends InputCombo implements iHaveChildren {
 		} else {
 			// TODO what if the prefill object is not the one at the end of the current relation?
 		}
+		
 		return $data_sheet;
 	}
 	
@@ -428,7 +429,7 @@ class ComboTable extends InputCombo implements iHaveChildren {
 	/**
 	 * Makes the autosuggest-table use a different meta object than the input.
 	 * 
-	 * Use with case! Using a different object normally requires custom value_column_id and text_column_id.
+	 * Use with care! Using a different object normally requires custom value_column_id and text_column_id.
 	 * 
 	 * @uxon-property table_object_alias
 	 * @uxon-type string
