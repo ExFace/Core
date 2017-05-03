@@ -63,6 +63,9 @@ class UiPage implements UiPageInterface {
 	 * @return \exface\Core\Interfaces\WidgetInterface
 	 */
 	public function get_widget_root(){
+		if (is_null($this->widget_root)){
+			$this->widget_root = reset($this->widgets);
+		}
 		return $this->widget_root;
 	}
 	
@@ -81,6 +84,13 @@ class UiPage implements UiPageInterface {
 			return $widget;
 		}
 		
+		// If the page is empty, no widget can be found ;)
+		if ($this->is_empty()){
+			return null;
+		}
+		
+		// If the parent is null, look under the root widget
+		// FIXME this makes a non-parent lookup in pages with multiple roots impossible.
 		if (is_null($parent)){
 			$parent = $this->get_widget_root();
 		}
