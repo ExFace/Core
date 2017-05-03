@@ -2,8 +2,12 @@
 namespace exface\Core\Actions;
 class ShowHeaders extends ShowWidget {
 	public function get_result_output(){
-		$this->prefill_widget();
-		return $this->get_app()->get_workbench()->ui()->get_template()->draw_headers($this->get_widget());
+		if ($this->get_widget()){
+			$this->prefill_widget();
+			return $this->get_app()->get_workbench()->ui()->get_template()->draw_headers($this->get_widget());
+		} else {
+			return '';
+		}
 	}
 }
 ?>

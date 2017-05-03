@@ -8,8 +8,6 @@ use exface\Core\Interfaces\Contexts\ContextManagerInterface;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\TranslationInterface;
 use exface\Core\Interfaces\InstallerInterface;
-use exface\Core\Interfaces\AppInstallerInterface;
-use exface\Core\Interfaces\NameResolverInstallerInterface;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Exceptions\Actions\ActionNotFoundError;
 

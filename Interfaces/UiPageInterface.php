@@ -72,6 +72,13 @@ interface UiPageInterface extends ExfaceClassInterface {
 	 * @return string
 	 */
 	public function get_widget_id_space_separator();
+	
+	/**
+	 * Returns TRUE if the page does not have widgets and FALSE if there is at least one widget.
+	 * 
+	 * @return boolean
+	 */
+	public function is_empty();
 }
 
 ?>

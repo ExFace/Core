@@ -61,6 +61,8 @@ class UiPageFactory extends AbstractFactory {
 		$page_text = $ui->get_workbench()->CMS()->get_page_contents($page_id);
 		if (is_null($page_text)){
 			throw new UiPageNotFoundError('UI page with id "' . $page_id . '" not found!');
+		} elseif (substr(trim($page_text), 0, 1) !== '{'){
+			return static::create($ui, $page_id);
 		}
 		return static::create_from_string($ui, $page_id, $page_text);
 	}

@@ -274,7 +274,10 @@ class UiPage implements UiPageInterface {
 	public function get_widget_id_space_separator(){
 		return self::WIDGET_ID_SPACE_SEPARATOR;
 	}
-  
+  	
+	public function is_empty(){
+		return count($this->widgets) ? false : true;
+	}
 }
 
 ?>
