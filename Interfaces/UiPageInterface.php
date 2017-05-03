@@ -19,11 +19,14 @@ interface UiPageInterface extends ExfaceClassInterface {
 	public function get_widget_root();
 	
 	/**
+	 * Returns the widget with the given id from this page or FALSE if no matching widget could be found. The search
+	 * can optionally be restricted to the children of another widget.
 	 *
 	 * @param string $widget_id
-	 * @return WidgetInterface
+	 * @param WidgetInterface $parent
+	 * @return WidgetInterface|null
 	 */
-	public function get_widget($widget_id);
+	public function get_widget($widget_id, WidgetInterface $parent = null);
 	
 	/**
 	 *
@@ -59,6 +62,16 @@ interface UiPageInterface extends ExfaceClassInterface {
 	 * @return UiManagerInterface
 	 */
 	public function get_ui();
+	
+	/**
+	 * @return string
+	 */
+	public function get_widget_id_separator();
+	
+	/**
+	 * @return string
+	 */
+	public function get_widget_id_space_separator();
 }
 
 ?>

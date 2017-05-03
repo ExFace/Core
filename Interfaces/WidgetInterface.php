@@ -12,8 +12,6 @@ use exface\Core\CommonLogic\UxonObject;
 
 interface WidgetInterface extends ExfaceClassInterface {
 	
-	const WIDGET_ID_SPACE_SEPARATOR = '.';
-	
 	/**
 	 * Loads data from a standard object (stdClass) into any widget using setter functions.
 	 * E.g. calls $this->set_id($source->id) for every property of the source object. Thus the behaviour of this
@@ -130,13 +128,6 @@ interface WidgetInterface extends ExfaceClassInterface {
 	 * @return boolean
 	 */
 	public function is_container();
-	
-	/**
-	 * Returns the child widget matching the given id or FALSE if no child with this id was found
-	 * @param string $widget_id
-	 * @return AbstractWidget|boolean
-	 */
-	public function find_child_recursive($widget_id);
 	
 	/**
 	 * @return string

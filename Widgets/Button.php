@@ -5,7 +5,6 @@ use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\Widgets\iTriggerAction;
 use exface\Core\Interfaces\Widgets\iHaveChildren;
 use exface\Core\Factories\ActionFactory;
-use exface\Core\CommonLogic\NameResolver;
 use exface\Core\Factories\WidgetLinkFactory;
 use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 use exface\Core\CommonLogic\UxonObject;

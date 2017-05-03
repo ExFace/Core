@@ -7,6 +7,7 @@ use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\UiManagerInterface;
 use exface\Core\Exceptions\Widgets\WidgetIdConflictError;
 use exface\Core\Interfaces\Widgets\iHaveChildren;
+use exface\Core\DataTypes\StringDataType;
 
 class UiPage implements UiPageInterface {
 	private $widgets = array();
@@ -16,6 +17,7 @@ class UiPage implements UiPageInterface {
 	private $widget_root = null;
 	
 	const WIDGET_ID_SEPARATOR = '_';
+	const WIDGET_ID_SPACE_SEPARATOR = '.';
 	
 	/**
 	 * @deprecated use UiPageFactory::create() instead!
@@ -65,6 +67,80 @@ class UiPage implements UiPageInterface {
 	}
 	
 	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\UiPageInterface::get_widget()
+	 */
+	public function get_widget($id, WidgetInterface $parent = null){
+		// First check to see, if the widget id is already in the widget list. If so, return the corresponding widget.
+		// Otherwise look throgh the entire tree to make sure, even subwidgets with late binding can be found (= that is
+		// those, that are created if a certain property of another widget is accessed.
+		if ($widget = $this->widgets[$id]){
+			// FIXME Check if one of the ancestors of the widget really is the given parent. Although this should always
+			// be the case, but better doublecheck ist.
+			return $widget;
+		}
+		
+		if (is_null($parent)){
+			$parent = $this->get_widget_root();
+		}
+		
+		if ($id_space_length = strpos($id, static::WIDGET_ID_SPACE_SEPARATOR)){
+			$id_space = substr($id, 0, $id_space_length);
+			$id = substr($id, $id_space_length+1);
+			return $this->get_widget_from_id_space($id, $id_space, $parent);
+		} else {
+			return $this->get_widget_from_id_space($id, '', $parent);
+		}
+	}
+	
+	private function get_widget_from_id_space($id, $id_space, WidgetInterface $parent){
+		$id_with_namespace = static::add_id_space($id_space, $id);
+		if ($widget = $this->widgets[$id_with_namespace]){
+			// FIXME Check if one of the ancestors of the widget really is the given parent. Although this should always
+			// be the case, but better doublecheck ist.
+			return $widget;
+		}
+		
+		if ($parent->get_id() === $id){
+			return $parent;
+		}
+		
+		if (StringDataType::starts_with($id_space, $parent->get_id() . self::WIDGET_ID_SEPARATOR)){
+			$id_space_root = $this->get_widget($id_space, $parent);
+			return $this->get_widget_from_id_space($id, $id_space, $id_space_root);
+		}
+		
+		$id_is_path = false;
+		if (StringDataType::starts_with($id_with_namespace, $parent->get_id() . self::WIDGET_ID_SEPARATOR)){
+			$id_is_path = true;
+		}
+		
+		if ($parent instanceof iHaveChildren){
+			foreach ($parent->get_children() as $child){
+				$child_id = $child->get_id();
+				if ($child_id == $id_with_namespace) {
+					return $child;
+				} else {
+					if (!$id_is_path || StringDataType::starts_with($id_with_namespace, $child_id . self::WIDGET_ID_SEPARATOR)){
+						if ($found = $this->get_widget_from_id_space($id, $id_space, $child)) {
+							return $found;
+						}
+					} elseif ($id_is_path) {
+						continue;
+					}
+				}
+			}
+		}
+		
+		return null;
+	}
+	
+	private static function add_id_space($id_space, $id){
+		return (is_null($id_space) || $id_space === '' ? '' : $id_space . static::WIDGET_ID_SPACE_SEPARATOR) . $id;
+	}
+	
+	/**
 	 * Generates an unique id for the given widget. If the widget has an id already, this is merely sanitized.
 	 * @param WidgetInterface $widget
 	 * @return string
@@ -98,23 +174,6 @@ class UiPage implements UiPageInterface {
 			return $this->sanitize_id($string);
 		}
 		return $string;
-	}
-	
-	/**
-	 * 
-	 * @param string $widget_id
-	 * @return WidgetInterface
-	 */
-	public function get_widget($widget_id){
-		// First check to see, if the widget id is already in the widget list. If so, return the corresponding widget.
-		// Otherwise look throgh the entire tree to make sure, even subwidgets with late binding can be found (= that is
-		// those, that are created if a certain property of another widget is accessed.
-		if (!$widget = $this->widgets[$widget_id]){
-			if ($this->get_widget_root()){
-				$widget = $this->get_widget_root()->find_child_recursive($widget_id);
-			}
-		}
-		return $widget;
 	}
 	
 	/**
@@ -206,6 +265,14 @@ class UiPage implements UiPageInterface {
 	 */
 	public function get_workbench(){
 		return $this->get_ui()->get_workbench();
+	}
+	
+	public function get_widget_id_separator(){
+		return self::WIDGET_ID_SEPARATOR;
+	}
+	
+	public function get_widget_id_space_separator(){
+		return self::WIDGET_ID_SPACE_SEPARATOR;
 	}
   
 }

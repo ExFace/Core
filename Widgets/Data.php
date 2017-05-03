@@ -654,9 +654,10 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 			$comparator = $uxon->comparator;
 			unset($uxon->comparator);
 		}
-		$filter_input = WidgetFactory::create_from_uxon($page, $uxon, $this);
 		
 		$filter = $this->get_page()->create_widget('Filter', $this);
+		$filter_input = WidgetFactory::create_from_uxon($page, $uxon, $filter);
+		
 		$filter->set_widget($filter_input);
 		$filter->set_comparator($comparator);
 		

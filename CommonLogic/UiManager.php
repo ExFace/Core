@@ -72,7 +72,7 @@ class UiManager implements UiManagerInterface {
 	 */
 	function get_widget($widget_id, $page_id){
 		$page = $this->get_page($page_id);
-		if ($widget_id){
+		if (!is_null($widget_id)){
 			return $page->get_widget($widget_id);
 		} else {
 			return $page->get_widget_root();

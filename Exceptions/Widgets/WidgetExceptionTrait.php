@@ -46,7 +46,7 @@ trait WidgetExceptionTrait {
 	}
 	
 	public function create_debug_widget(DebugMessage $debug_widget){
-		if ($debug_widget->find_child_recursive('UXON')){
+		if ($debug_widget->get_page()->get_widget('UXON', $debug_widget)){
 			return $debug_widget;
 		}
 		$page = $debug_widget->get_page();

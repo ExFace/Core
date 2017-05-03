@@ -18,7 +18,7 @@ class MassEditDialog extends ShowDialog {
 		$data_sheet = $this->get_input_data_sheet();
 		if($this->get_widget()){
 			$this->get_widget()->set_caption(intval($data_sheet->count_rows()));
-			if ($counter = $this->get_widget()->find_child_recursive($this->get_affected_counter_widget_id())){
+			if ($counter = $this->get_called_on_ui_page()->get_widget($this->get_affected_counter_widget_id(), $this->get_widget())){
 				$counter->set_text($this->get_affected_counter_text());
 			}
 		}

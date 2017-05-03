@@ -38,5 +38,20 @@ class StringDataType extends AbstractDataType {
 	public static function convert_case_pascal_to_underscore($string){
 		return strtolower(preg_replace('/(?<!^)[A-Z]/', '_$0', $string));
 	}
+	
+	/**
+	 * 
+	 * @param string $haystack
+	 * @param string $needle
+	 * @param boolean $case_sensitive
+	 * @return boolean
+	 */
+	public static function starts_with($haystack, $needle, $case_sensitive = true){
+		if ($case_sensitive){
+			return substr($haystack, 0, strlen($needle)) === $needle;
+		} else {
+			return substr(mb_strtoupper($haystack), 0, strlen(mb_strtoupper($needle))) === mb_strtoupper($needle);
+		}
+	}
 }
 ?>

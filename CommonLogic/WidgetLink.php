@@ -4,7 +4,6 @@ use exface\Core\Widgets\AbstractWidget;
 use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 use exface\Core\Exceptions\Widgets\WidgetNotFoundError;
 use exface\Core\Exceptions\UnexpectedValueException;
-use exface\Core\Interfaces\WidgetInterface;
 
 class WidgetLink implements WidgetLinkInterface {
 	private $exface;
@@ -116,7 +115,7 @@ class WidgetLink implements WidgetLinkInterface {
 	 * @see \exface\Core\Interfaces\Widgets\WidgetLinkInterface::get_widget_id()
 	 */
 	public function get_widget_id() {
-		return ($this->get_widget_id_space() ? $this->get_widget_id_space() . WidgetInterface::WIDGET_ID_SPACE_SEPARATOR : '') . $this->widget_id;
+		return ($this->get_widget_id_space() ? $this->get_widget_id_space() . $this->get_page()->get_widget_id_space_separator() : '') . $this->widget_id;
 	}
 	
 	/**

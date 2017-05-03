@@ -109,13 +109,13 @@ class Filter extends Container implements iCanBeRequired {
 		return $this->get_widget()->get_attribute_alias();
 	}
 	
-	public function get_meta_object(){
+	/*public function get_meta_object(){
 		return $this->get_widget()->get_meta_object();
 	}
 	
 	public function get_meta_object_id(){
 		return $this->get_widget()->get_meta_object_id();
-	}
+	}*/
 	
 	public function get_value(){
 		return $this->get_widget()->get_value();

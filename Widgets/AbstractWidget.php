@@ -22,6 +22,7 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\Exceptions\UxonMapError;
+use exface\Core\CommonLogic\UiPage;
 
 /**
  * Basic ExFace widget
@@ -328,22 +329,6 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren {
 	/**
 	 * 
 	 * {@inheritDoc}
-	 * @see \exface\Core\Interfaces\WidgetInterface::find_child_recursive()
-	 */
-	function find_child_recursive($widget_id){
-		foreach ($this->get_children() as $child){
-			if ($child->get_id() == $widget_id) {
-				return $child;
-			} elseif ($found = $child->find_child_recursive($widget_id)) {
-				return $found;
-			}
-		}
-		return false;
-	}
-	
-	/**
-	 * 
-	 * {@inheritDoc}
 	 * @see \exface\Core\Interfaces\WidgetInterface::get_caption()
 	 */
 	function get_caption(){
@@ -418,7 +403,7 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren {
 	}
 	
 	public function set_id_specified($value) {
-		$value = ($this->get_id_space() ? $this->get_id_space() . '.' : '') . $value;
+		$value = ($this->get_id_space() ? $this->get_id_space() . $this->get_page()->get_widget_id_space_separator() : '') . $value;
 		
 		// Don't do anything, if the id's are identical
 		if ($this->get_id() === $value){
