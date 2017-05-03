@@ -117,15 +117,13 @@ class ShowDialog extends ShowWidget implements iShowDialog {
 	 */
 	public function get_result_output(){
 		$dialog = $this->get_result();
-		if ($dialog->get_lazy_loading() && !$this->get_template()->is('exface.AdminLteTemplate')){
-			$code = $this->get_app()->get_workbench()->ui()->draw($dialog->get_contents_container());
-		} else {
-			$this->get_result()->set_lazy_loading(false);
-			if ($this->get_include_headers()){
-				$code = $this->get_template()->draw_headers($this->get_result());
-			}
-			$code .= parent::get_result_output();
+		
+		$this->get_result()->set_lazy_loading(false);
+		if ($this->get_include_headers()){
+			$code = $this->get_template()->draw_headers($this->get_result());
 		}
+		$code .= parent::get_result_output();
+		
 		return $code;
 	} 
 	
