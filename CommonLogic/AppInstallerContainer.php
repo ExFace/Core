@@ -60,9 +60,23 @@ class AppInstallerContainer implements AppInstallerInterface, InstallerContainer
 		// TODO Dispatch App.Install.After
 		return $result;
 	}
-	
+
 	public final function backup($destination_absolute_path){
-		
+		$exface = $this->get_workbench();
+		$app = $this->get_app();
+		$appAlias = $app->get_alias();
+		$appNameResolver = NameResolver::create_from_string($appAlias, NameResolver::OBJECT_TYPE_APP, $exface);
+		$appPath = $exface->filemanager()->get_path_to_vendor_folder() . $appNameResolver->get_class_directory();
+		$result = '';
+		$app->get_workbench()->filemanager()->path_construct($destination_absolute_path);
+		// TODO Dispatch App.Backup.Before
+		foreach ($this->get_installers() as $installer){
+			$result .= $installer->backup($destination_absolute_path);
+		}
+		$exface->filemanager()->copyDir($appPath,$destination_absolute_path);
+		// TODO Dispatch App.Backup.After
+		$result .= '';
+		return $result;
 	}
 	
 	public final function uninstall(){
