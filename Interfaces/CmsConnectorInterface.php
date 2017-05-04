@@ -35,7 +35,14 @@ interface CmsConnectorInterface extends ExfaceClassInterface {
 	 * @return string
 	 */
 	public function create_link_external($url);
-	
+
+	/**
+	 * Returns an internal file link compliant with the current CMS based on a given URL. This allows to wrap
+	 * any URL in CMS-specific code, add trackers, etc.
+	 * @param string $path_absolute
+	 * @return string
+	 */
+	public function create_link_to_file($path_absolute);
 	/**
 	 * Removes parameters used by the CMS for internal needs from the given parameter array. $_GET or $_POST
 	 * can be passed to this method to get rid of all kinds of CMS-specific variables
