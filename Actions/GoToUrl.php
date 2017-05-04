@@ -18,24 +18,24 @@ class GoToUrl extends AbstractAction implements iShowUrl {
 	 * @var boolean
 	 */
 	private $urlencode_placeholders = true;
-	
+
 	protected function init(){
 		parent::init();
-		$this->set_input_rows_min(1);	
+		$this->set_input_rows_min(1);
 		$this->set_input_rows_max(1);
 		$this->set_icon_name('link');
 		return $this;
 	}
-	
+
 	public function get_url() {
 		return $this->url;
 	}
-	
+
 	public function set_url($value) {
 		$this->url = $value;
 		return $this;
 	}
-	
+
 	protected function perform(){
 		$vars = array();
 		$vals = array();
@@ -43,29 +43,37 @@ class GoToUrl extends AbstractAction implements iShowUrl {
 			$vars[] = '[#' . $var . '#]';
 			$vals[] = urlencode($val);
 		}
+
 		$result = str_replace($vars, $vals, $this->get_url());
+		$result = filter_var($result, FILTER_SANITIZE_STRING);
+		if (substr($result, 0, 4) !== 'http'){
+			$result = $this->get_workbench()->CMS()->create_link_to_file($result);
+		}
+		if ($this->get_open_in_new_window()){
+			$result .= (strrpos($result, "?")!==false ? "&" : "?")."target=_blank";
+		}
 		$this->set_result($result);
 		$this->set_result_message($this->get_workbench()->get_core_app()->get_translator()->translate('ACTION.GOTOURL.SUCCESS'));
 		$this->set_result_data_sheet($this->get_input_data_sheet());
 		return $this;
 	}
-	
+
 	public function get_open_in_new_window() {
 		return $this->open_in_new_window;
 	}
-	
+
 	public function set_open_in_new_window($value) {
 		$this->open_in_new_window = $value;
 		return $this;
-	}	
-	
+	}
+
 	public function get_urlencode_placeholders() {
 		return $this->urlencode_placeholders;
 	}
-	
+
 	public function set_urlencode_placeholders($value) {
 		$this->urlencode_placeholders = $value;
 		return $this;
-	} 
+	}
 }
 ?>
