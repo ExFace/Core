@@ -10,12 +10,14 @@ class Filemanager extends Filesystem implements ExfaceClassInterface {
 	const FOLDER_NAME_CACHE = 'cache';
 	const FOLDER_NAME_CONFIG = 'config';
 	const FOLDER_NAME_TRANSLATIONS = 'translations';
+	const FOLDER_NAME_BACKUP 		= 'backup';
 	
 	private $exface = null;
 	private $path_to_cache_folder = null;
 	private $path_to_config_folder = null;
 	private $path_to_user_data_folder = null;
-	
+	private $path_to_backup_folder = null;
+
 	public function __construct(Workbench $exface){
 		$this->exface = $exface;
 	}
@@ -91,9 +93,21 @@ class Filemanager extends Filesystem implements ExfaceClassInterface {
 		}
 		return $this->path_to_translations_folder;
 	}
-	
 	/**
-	 * Copies a complete folder to a new location including all subfolders
+	 * Returns the absolute path to the main backup folder
+	 * @return string
+	 */
+	public function get_path_to_backup_folder(){
+		if (is_null($this->path_to_backup_folder)){
+			$this->path_to_backup_folder = $this->get_path_to_base_folder() . DIRECTORY_SEPARATOR . static::FOLDER_NAME_BACKUP;
+			if (!is_dir($this->path_to_backup_folder)){
+				mkdir($this->path_to_backup_folder);
+			}
+		}
+		return $this->path_to_backup_folder;
+	}
+	/**
+	 * Copies a complete folder to a new location including all sub folders
 	 * @param string $originDir
 	 * @param string $destinationDir
 	 */
@@ -180,6 +194,23 @@ class Filemanager extends Filesystem implements ExfaceClassInterface {
 	public static function path_get_common_base(array $paths){
 		return Path::getLongestCommonBasePath($paths);
 	}
-	
+
+	/**
+	 * Checks a path folder by folder to determine if they are present, constructs folders that aren't
+	 *
+	 * @param $path
+	 * @return string
+	 */
+	public static function path_construct($path){
+		$paths = explode(DIRECTORY_SEPARATOR,$path);
+		$sPathList = $paths[0];
+		for ($i=1;$i < count($paths); $i++){
+			$sPathList .= DIRECTORY_SEPARATOR.$paths[$i];
+			$file_parts = pathinfo($sPathList);
+			if (file_exists($sPathList)===false && array_key_exists('extension',$file_parts)==false){
+				mkdir($sPathList,0755);
+			}
+		}
+	}
 }
 ?>
