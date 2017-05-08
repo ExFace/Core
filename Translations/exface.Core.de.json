@@ -35,7 +35,7 @@
 	
 	"ACTION.READDATA.NAME": "Reload",
 	
-	"ACTION.SAVEDATA.RESULT": "%number% Objekt gespeichrt.|%number% Objekte gespeichert.",
+	"ACTION.SAVEDATA.RESULT": "%number% Objekt gespeichert.|%number% Objekte gespeichert.",
 	"ACTION.SAVEDATA.NAME": "Speichern",
 	
 	"ACTION.SETCONTEXT.NAME": "Set context",
@@ -52,7 +52,7 @@
 	"ACTION.UNDOACTION.RESULT": "%number% Aktion wurde rückgängig gemacht.|%number% Aktionen wurden rückgängig gemacht.",
 	
 	"ACTION.UPDATEDATA.NAME": "Speichern",
-	"ACTION.UPDATEDATA.RESULT": "%number% Objekt gespeichrt.|%number% Objekte gespeichert.",
+	"ACTION.UPDATEDATA.RESULT": "%number% Objekt gespeichert.|%number% Objekte gespeichert.",
 	
 	"WIDGET.SELECT_ALL": "Alle",
 	"WIDGET.SELECT_YES": "Ja",
