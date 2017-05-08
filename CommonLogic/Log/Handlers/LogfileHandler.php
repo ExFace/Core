@@ -1,9 +1,9 @@
 <?php
 
-namespace exface\Core\Log\Handlers;
+namespace exface\Core\CommonLogic\Log\Handlers;
 
 
-use exface\Core\Log\Processors\IdProcessor;
+use exface\Core\CommonLogic\Log\Processors\IdProcessor;
 use FemtoPixel\Monolog\Handler\CsvHandler;
 use Monolog\Logger;
 
@@ -18,11 +18,11 @@ class LogfileHandler extends AbstractMonologHandler {
 	 * @throws \Exception                If a missing directory is not buildable
 	 * @throws \InvalidArgumentException If stream is not a resource or string
 	 */
-	function __construct( $name, $stream, $level = Logger::DEBUG, $bubble = true, $filePermission = null, $useLocking = false ) {
-		$logger = new Logger( $name );
-		$logger->pushHandler( new CsvHandler( $stream, $level, $bubble, $filePermission, $useLocking ) );
-		$logger->pushProcessor( new IdProcessor() );
+	function __construct($name, $stream, $level = Logger::DEBUG, $bubble = true, $filePermission = null, $useLocking = false) {
+		$logger = new Logger($name);
+		$logger->pushHandler(new CsvHandler($stream, $level, $bubble, $filePermission, $useLocking));
+		$logger->pushProcessor(new IdProcessor());
 
-		parent::__construct( $logger );
+		parent::__construct($logger);
 	}
 }

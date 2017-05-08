@@ -1,6 +1,6 @@
 <?php
 
-namespace exface\Core\Log\Processors;
+namespace exface\Core\CommonLogic\Log\Processors;
 
 
 class IdProcessor

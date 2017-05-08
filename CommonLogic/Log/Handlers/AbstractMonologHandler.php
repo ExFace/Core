@@ -1,6 +1,6 @@
 <?php
 
-namespace exface\Core\Log\Handlers;
+namespace exface\Core\CommonLogic\Log\Handlers;
 
 
 use exface\Core\Interfaces\iCanGenerateDebugWidgets;
@@ -10,7 +10,7 @@ use Monolog\Logger;
 /**
  * Abstract base class for LogHandlers using monolog as log backend.
  *
- * @package exface\Core\Log\Handlers
+ * @package exface\Core\CommonLogic\Log\Handlers
  */
 abstract class AbstractMonologHandler implements LogHandlerInterface {
 	protected $levelFunctions = array(

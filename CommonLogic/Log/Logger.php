@@ -1,13 +1,13 @@
 <?php
 
-namespace exface\Core\Log;
+namespace exface\Core\CommonLogic\Log;
 
 
 use exface\Core\Exceptions\LogicException;
 use exface\Core\Interfaces\iCanGenerateDebugWidgets;
 use exface\Core\Interfaces\LoggerInterface;
 use exface\Core\Interfaces\LogHandlerInterface;
-use exface\Core\Log\Handlers\LogfileHandler;
+use exface\Core\CommonLogic\Log\Handlers\LogfileHandler;
 
 class Logger implements LoggerInterface
 {

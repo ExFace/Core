@@ -1,12 +1,11 @@
 <?php
 
-namespace exface\Core\Log;
+namespace exface\Core\CommonLogic\Log;
 
 
 use exface\Core\CommonLogic\Filemanager;
+use exface\Core\CommonLogic\Log\Handlers\LogfileHandler;
 use exface\Core\Interfaces\LoggerInterface;
-use exface\Core\Log\Handlers\DebugMessageFileHandler;
-use exface\Core\Log\Handlers\LogfileHandler;
 
 class Log
 {

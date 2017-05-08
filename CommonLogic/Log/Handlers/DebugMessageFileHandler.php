@@ -1,6 +1,6 @@
 <?php
 
-namespace exface\Core\Log\Handlers;
+namespace exface\Core\CommonLogic\Log\Handlers;
 
 
 use exface\Core\Factories\UiPageFactory;
