@@ -40,9 +40,9 @@ class StateMenuButton extends MenuButton {
 					// werden entfernt.
 					/* @var $uxon \exface\Core\CommonLogic\UxonObject */
 					$uxon = $this->get_original_uxon_object()->extend(UxonObject::from_anything($smb_button)->copy());
-					unset($uxon->show_states);
-					unset($uxon->buttons);
-					unset($uxon->menu);
+					$uxon->unset_property('show_states');
+					$uxon->unset_property('buttons');
+					$uxon->unset_property('menu');
 					
 					$button = $this->get_page()->create_widget($button_widget, $this->get_menu(), $uxon);
 					
