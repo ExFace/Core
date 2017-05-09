@@ -35,36 +35,17 @@ class StateMenuButton extends MenuButton {
 				// Ist show_states leer werden alle Buttons hinzugefuegt (default)
 				// sonst wird der Knopf nur hinzugefuegt wenn er in show_states enthalten ist.
 				if (empty($this->get_show_states()) || in_array($target_state, $this->get_show_states())) {
-					// Die Action des StateMenuButtons wird fuer die einzelnen Buttons uebernommen.
-					// Das UxonObject wird weiter im urspruenglichen Zustand benoetigt, daher wird
-					// der Action-Alias nur temporaer gesetzt.
-					// TODO: Das UxonObject sollte besser vor der Aktion kopiert und mit der Kopie
-					// gearbeitet werden. Das Problem ist dass die referenzierten Objekte der
-					// Kopie die selben wie beim Orginal sind, daher das Orginal verändert wird
-					// wenn man mit der Kopie arbeitet.
-					if (!is_null($this->get_action_alias())) {
-						$action_alias_temp = $smb_button->action->alias;
-						$refresh_widget_link_temp = $smb_button->refresh_widget_link;
-						
-						$smb_button->action->alias = $this->get_action_alias();
-						if (!is_null($this->get_refresh_widget_link())) {
-							$smb_button->refresh_widget_link = $this->get_refresh_widget_link()->export_uxon_object();
-						}
-						
-						$button = $this->get_page()->create_widget($button_widget, $this, UxonObject::from_anything($smb_button));
-						
-						$smb_button->action->alias = $action_alias_temp;
-						$smb_button->refresh_widget_link = $refresh_widget_link_temp;
-						
-						// TODO das wäre schöner, muss aber erst ausprobiert werden!
-						/* @var $uxon \exface\Core\CommonLogic\UxonObject */
-						// $uxon = $this->get_original_uxon_object()->extend(UxonObject::from_anything($smb_button)->copy());
-						// $button = $this->get_page()->create_widget($button_widget, $this, $uxon);
-						
-					} else {
-						$button = $this->get_page()->create_widget($button_widget, $this, UxonObject::from_anything($smb_button));
-					}
-
+					// Die Eigenschaften des StateMenuButtons werden fuer die einzelnen Buttons
+					// uebernommen. Alle exklusiven Eigenschaften von MenuButton und StateMenuButton
+					// werden entfernt.
+					/* @var $uxon \exface\Core\CommonLogic\UxonObject */
+					$uxon = $this->get_original_uxon_object()->extend(UxonObject::from_anything($smb_button)->copy());
+					$uxon->unset_property('show_states');
+					$uxon->unset_property('buttons');
+					$uxon->unset_property('menu');
+					
+					$button = $this->get_page()->create_widget($button_widget, $this->get_menu(), $uxon);
+					
                     /** @var StateMachineState $stateObject */
                     $stateObject = $states[$target_state];
 					$name = $stateObject->getStateName($this->get_meta_object()->get_app()->get_translator());

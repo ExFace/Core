@@ -297,7 +297,12 @@ class StateMachineBehavior extends AbstractBehavior {
 		if (($widget instanceof iShowSingleAttribute)
 				&& ($disabled_attributes = $this->get_state($current_state)->get_disabled_attributes_aliases())
 				&& in_array($widget->get_attribute_alias(), $disabled_attributes)) {
-			$widget->set_disabled(true);
+			// set_readonly() statt set_disabled(), dadurch werden die deaktivierten
+			// Widgets nicht gespeichert. Behebt einen Fehler, der dadurch ausgeloest
+			// wurde, dass ein deaktiviertes Widget durch einen Link geaendert wurde,
+			// und sich der Wert dadurch vom Wert in der DB unterschied ->
+			// StateMachineUpdateException
+			$widget->set_readonly(true);
 		}
 	}
 	
