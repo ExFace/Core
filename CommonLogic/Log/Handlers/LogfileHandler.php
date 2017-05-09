@@ -3,6 +3,7 @@
 namespace exface\Core\CommonLogic\Log\Handlers;
 
 
+use exface\Core\CommonLogic\Log\Handlers\monolog\AbstractMonologHandler;
 use exface\Core\CommonLogic\Log\Processors\IdProcessor;
 use FemtoPixel\Monolog\Handler\CsvHandler;
 use Monolog\Logger;
