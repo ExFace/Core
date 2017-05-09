@@ -6,6 +6,7 @@ namespace exface\Core\CommonLogic\Log;
 use exface\Core\CommonLogic\Filemanager;
 use exface\Core\CommonLogic\Log\Handlers\DebugMessageFileHandler;
 use exface\Core\CommonLogic\Log\Handlers\LogfileHandler;
+use exface\Core\CommonLogic\Log\Handlers\RotatingLogHandler;
 use exface\Core\Interfaces\LoggerInterface;
 
 class Log
@@ -24,7 +25,12 @@ class Log
 	    $detailsLogPath = static::getDetailsLogPath();
 
 	    $minLogLevel = static::getWorkbench()->get_config()->get_option('LOG.MINIMUM_LEVEL_TO_LOG');
-        $logger->pushHandler(new LogfileHandler("exface", $coreLogPath, $minLogLevel));
+	    $maxDaysToKeep = static::getWorkbench()->get_config()->get_option('LOG.MAX_DAYS_TO_KEEP');
+
+        $logger->pushHandler(new RotatingLogHandler(function($filename) use ($minLogLevel) {
+        	return new LogfileHandler("exface", $filename, $minLogLevel);
+		}, $coreLogPath, $maxDaysToKeep));
+
         // TODO tvw enable when log details are used
         $logger->pushHandler(new DebugMessageFileHandler($detailsLogPath, $minLogLevel));
 
