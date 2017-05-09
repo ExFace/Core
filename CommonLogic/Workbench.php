@@ -36,7 +36,7 @@ class Workbench {
 	private $vendor_dir_path = '';
 	private $installation_path = null;
 	
-	private $request_params = array();
+	private $request_params = null;
 	
 	public function __construct(){
 		if (substr(phpversion(), 0, 1) == 5){
@@ -222,10 +222,8 @@ class Workbench {
 	
 	public function process_request(){
 		// Determine the template
-		$template_alias = $_REQUEST['exftpl'];
-		unset($_REQUEST['exftpl']);
-		// Read other request params
-		$this->set_request_params($_REQUEST);
+		$template_alias = $this->get_request_param('exftpl');
+		$this->remove_request_param('exftpl');
 		
 		// Process request
 		if ($template_alias){
@@ -244,6 +242,9 @@ class Workbench {
 	 * @return array
 	 */
 	public function get_request_params(){
+		if (is_null($this->request_params)){
+			$this->request_params = $this->cms()->remove_system_request_params($_REQUEST);
+		}
 		return $this->request_params;		
 	}
 	
@@ -254,12 +255,6 @@ class Workbench {
 	
 	public function remove_request_param($param_name){
 		unset($this->request_params[$param_name]);
-	}
-	
-	private function set_request_params(array $params){
-		$params = $this->cms()->remove_system_request_params($params);
-		$this->request_params = $params;
-		return $this;
 	}
 	
 	public function set_request_param($param_name, $value){
