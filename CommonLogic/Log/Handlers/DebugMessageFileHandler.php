@@ -13,21 +13,24 @@ use Monolog\Logger;
 class DebugMessageFileHandler implements LogHandlerInterface {
 	private $dir;
 	private $minLogLevel;
+	private $staticFilenamePart;
 
 	/**
 	 * DebugMessageFileHandler constructor.
 	 *
 	 * @param $dir
+	 * @param $staticFilenamePart
 	 * @param $minLogLevel
 	 */
-	function __construct($dir, $minLogLevel = Logger::DEBUG) {
-		$this->dir = $dir;
-		$this->minLogLevel = $minLogLevel;
+	function __construct($dir, $staticFilenamePart, $minLogLevel = Logger::DEBUG) {
+		$this->dir                = $dir;
+		$this->staticFilenamePart = $staticFilenamePart;
+		$this->minLogLevel        = $minLogLevel;
 	}
 
 	public function handle($level, $message, array $context = array(), iCanGenerateDebugWidgets $sender = null) {
-		$fileName = $context["id"];
-		if ( ! $fileName) {
+		$fileName = $context["id"] . $this->staticFilenamePart;
+		if (!$fileName) {
 			return;
 		}
 

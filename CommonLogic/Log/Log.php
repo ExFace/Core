@@ -5,8 +5,9 @@ namespace exface\Core\CommonLogic\Log;
 
 use exface\Core\CommonLogic\Filemanager;
 use exface\Core\CommonLogic\Log\Handlers\DebugMessageFileHandler;
+use exface\Core\CommonLogic\Log\Handlers\limit\FileLimitingLogHandler;
+use exface\Core\CommonLogic\Log\Handlers\limit\DirLimitingLogHandler;
 use exface\Core\CommonLogic\Log\Handlers\LogfileHandler;
-use exface\Core\CommonLogic\Log\Handlers\RotatingLogHandler;
 use exface\Core\Interfaces\LoggerInterface;
 
 class Log
@@ -21,24 +22,30 @@ class Log
     {
         $logger = new Logger();
 
-        $coreLogPath = static::getCoreLogPath();
-	    $detailsLogPath = static::getDetailsLogPath();
+        $coreLogFilePath = static::getCoreLogPath();
+	    $detailsLogBasePath = static::getDetailsLogPath();
 
 	    $minLogLevel = static::getWorkbench()->get_config()->get_option('LOG.MINIMUM_LEVEL_TO_LOG');
 	    $maxDaysToKeep = static::getWorkbench()->get_config()->get_option('LOG.MAX_DAYS_TO_KEEP');
+	    $detailsStaticFilenamePart = static::getWorkbench()->get_config()->get_option('LOGDETAILS.STATIC_FILENAME_PART');
 
-        $logger->pushHandler(new RotatingLogHandler(function($filename) use ($minLogLevel) {
-        	return new LogfileHandler("exface", $filename, $minLogLevel);
-		}, $coreLogPath, $maxDaysToKeep));
+        $logger->pushHandler(new FileLimitingLogHandler(
+        	function($filename) use ($minLogLevel) {
+	            return new LogfileHandler("exface", $filename, $minLogLevel);
+			}, $coreLogFilePath, $maxDaysToKeep
+        ));
 
         // TODO tvw enable when log details are used
-        $logger->pushHandler(new DebugMessageFileHandler($detailsLogPath, $minLogLevel));
+        $logger->pushHandler(new DirLimitingLogHandler(
+        	function() use ($detailsLogBasePath, $detailsStaticFilenamePart, $minLogLevel) {
+		        return new DebugMessageFileHandler($detailsLogBasePath, $detailsStaticFilenamePart, $minLogLevel);
+            }, $detailsLogBasePath, $detailsStaticFilenamePart, $maxDaysToKeep
+        ));
 
         return $logger;
     }
 
 	private static function getCoreLogPath() {
-		global $exface;
 		$workbench = static::getWorkbench();
 
 		$basePath = Filemanager::path_normalize($workbench->filemanager()->get_path_to_base_folder());
@@ -50,7 +57,6 @@ class Log
 	}
 
 	private static function getDetailsLogPath() {
-		global $exface;
 		$workbench = static::getWorkbench();
 
 		$basePath = Filemanager::path_normalize($workbench->filemanager()->get_path_to_base_folder());
