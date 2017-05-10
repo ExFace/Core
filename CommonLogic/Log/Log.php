@@ -50,10 +50,10 @@ class Log
 
 		$basePath = Filemanager::path_normalize($workbench->filemanager()->get_path_to_base_folder());
 
-		$obj = $workbench->model()->get_object('exface.Core.LOG');
+		$obj = $workbench->model()->get_object('exface.Core.LOGS');
 		$relativePath = $obj->get_data_address();
 
-		return $basePath . '/' . $relativePath;
+		return $basePath . '/' . $relativePath . '/log';
 	}
 
 	private static function getDetailsLogPath() {
