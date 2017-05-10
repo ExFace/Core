@@ -467,9 +467,9 @@
         },
         {
             "CREATED_ON": "2017-04-28 10:09:21",
-            "MODIFIED_ON": "2017-05-10 09:38:09",
+            "MODIFIED_ON": "2017-05-10 15:07:43",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
-            "MODIFIED_BY_USER": "",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e72bfabc4cc8e7a3bee4b318306b9a",
             "DATA_SOURCE": "0x11e7355390695395a6300242ac110004",
             "long_description": "",
@@ -480,7 +480,7 @@
             "DEFAULT_EDITOR_UXON": "{}",
             "LABEL": "Log",
             "ALIAS": "LOG",
-            "DATA_ADDRESS": "logs\/core.log"
+            "DATA_ADDRESS": "[#logfile#]"
         },
         {
             "CREATED_ON": "2017-05-05 11:10:48",
@@ -497,6 +497,23 @@
             "DEFAULT_EDITOR_UXON": "{}",
             "LABEL": "Log Details",
             "ALIAS": "LOGDETAILS",
+            "DATA_ADDRESS": "logs"
+        },
+        {
+            "CREATED_ON": "2017-05-10 15:06:24",
+            "MODIFIED_ON": "2017-05-10 15:06:24",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e7359214da6ecbba83e4b318306b9a",
+            "DATA_SOURCE": "0x11e6b09e2002641f8943e4b318306b9a",
+            "long_description": null,
+            "APP": "0x31000000000000000000000000000000",
+            "SHORT_DESCRIPTION": "",
+            "PARENT_OBJECT": "",
+            "DATA_ADDRESS_PROPS": "{}",
+            "DEFAULT_EDITOR_UXON": "{}",
+            "LABEL": "Logs",
+            "ALIAS": "LOGS",
             "DATA_ADDRESS": "logs"
         }
     ],
