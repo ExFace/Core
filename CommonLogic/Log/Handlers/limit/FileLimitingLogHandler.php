@@ -1,40 +1,49 @@
 <?php
 
-namespace exface\Core\CommonLogic\Log\Handlers;
+namespace exface\Core\CommonLogic\Log\Handlers\limit;
 
 
 use exface\Core\Interfaces\iCanGenerateDebugWidgets;
-use exface\Core\Interfaces\LogHandlerInterface;
 
-class RotatingLogHandler implements LogHandlerInterface {
-	private $createCallback;
+/**
+ * Log handler that uses the given createCallback to instantiate an underlying log handler that logs to a specific log
+ * file and limits the number of daily versions of a this log file to the given value of maxDays.
+ *
+ * @package exface\Core\CommonLogic\Log\Handlers
+ */
+class FileLimitingLogHandler extends LimitingWrapper {
 	private $filename;
-	private $maxFiles;
 	private $filenameFormat;
 	private $dateFormat;
+	private $maxDays;
 
-	function __construct($createCallback, $filename, $maxFiles = 0) {
+	/**
+	 * DailyRotatingLogHandler constructor.
+	 *
+	 * @param Callable $createCallback callback function that create the underlying, "real" log handler
+	 * @param string $filename base file name of the log file (date string is added to)
+	 * @param int $maxDays maximum number of daily versions of a log file
+	 */
+	function __construct(Callable $createCallback, $filename, $maxDays = 0) {
+		parent::__construct($createCallback);
+
 		$this->filename = $filename;
-		$this->maxFiles = $maxFiles;
-		$this->createCallback = $createCallback;
+		$this->maxDays  = $maxDays;
 
 		$this->filenameFormat = '{filename}-{date}';
 		$this->dateFormat = 'Y-m-d';
 	}
 
-	public function handle($level, $message, array $context = array(), iCanGenerateDebugWidgets $sender = null) {
-		// check and possibly rotate
-		$this->rotate();
-
-		$this->callLogger($level, $message, $context, $sender);
+	protected function callLogger(Callable $createLoggerCall, $level, $message, array $context = array(), iCanGenerateDebugWidgets $sender = null) {
+		$createLoggerCall($this->getFilename())->handle($level, $message, $context, $sender);
 	}
 
-	public function callLogger($level, $message, array $context = array(), iCanGenerateDebugWidgets $sender = null) {
-		$call = $this->createCallback;  // stupid PHP
-		$call($this->getTimedFilename())->handle($level, $message, $context, $sender);
-	}
-
-	protected function getTimedFilename()
+	/**
+	 * Returns the log filename with date added to it.
+	 *
+	 * @return string
+	 */
+	protected function getFilename()
 	{
 		$fileInfo = pathinfo($this->filename);
 		$timedFilename = str_replace(
@@ -51,17 +60,17 @@ class RotatingLogHandler implements LogHandlerInterface {
 	}
 
 	/**
-	 * Rotates the files.
+	 * Log file cleanup.
 	 */
-	protected function rotate()
+	protected function limit()
 	{
 		// skip GC of old logs if files are unlimited
-		if (0 === $this->maxFiles) {
+		if (0 === $this->maxDays) {
 			return;
 		}
 
 		$logFiles = glob($this->getGlobPattern());
-		if ($this->maxFiles >= count($logFiles)) {
+		if ($this->maxDays >= count($logFiles)) {
 			// no files to remove
 			return;
 		}
@@ -71,7 +80,7 @@ class RotatingLogHandler implements LogHandlerInterface {
 			return strcmp($b, $a);
 		});
 
-		foreach (array_slice($logFiles, $this->maxFiles) as $file) {
+		foreach (array_slice($logFiles, $this->maxDays) as $file) {
 			if (is_writable($file)) {
 				// suppress errors here as unlink() might fail if two processes
 				// are cleaning up/rotating at the same time
