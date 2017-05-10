@@ -3,6 +3,7 @@
 namespace exface\Core\CommonLogic\Log\Handlers\limit;
 
 
+use exface\Core\CommonLogic\Log\Helpers\LogHelper;
 use exface\Core\Interfaces\iCanGenerateDebugWidgets;
 
 /**
@@ -30,33 +31,12 @@ class FileLimitingLogHandler extends LimitingWrapper {
 		$this->filename = $filename;
 		$this->maxDays  = $maxDays;
 
-		$this->filenameFormat = '{filename}-{date}';
+		$this->filenameFormat = '{filename}-{variable}';
 		$this->dateFormat = 'Y-m-d';
 	}
 
 	protected function callLogger(Callable $createLoggerCall, $level, $message, array $context = array(), iCanGenerateDebugWidgets $sender = null) {
-		$createLoggerCall($this->getFilename())->handle($level, $message, $context, $sender);
-	}
-
-	/**
-	 * Returns the log filename with date added to it.
-	 *
-	 * @return string
-	 */
-	protected function getFilename()
-	{
-		$fileInfo = pathinfo($this->filename);
-		$timedFilename = str_replace(
-			array('{filename}', '{date}'),
-			array($fileInfo['filename'], date($this->dateFormat)),
-			$fileInfo['dirname'] . '/' . $this->filenameFormat
-		);
-
-		if (!empty($fileInfo['extension'])) {
-			$timedFilename .= '.'.$fileInfo['extension'];
-		}
-
-		return $timedFilename;
+		$createLoggerCall(LogHelper::getFilename($this->filename, $this->dateFormat, $this->filenameFormat))->handle($level, $message, $context, $sender);
 	}
 
 	/**
@@ -69,7 +49,7 @@ class FileLimitingLogHandler extends LimitingWrapper {
 			return;
 		}
 
-		$logFiles = glob($this->getGlobPattern());
+		$logFiles = glob(LogHelper::getPattern($this->filename, $this->filenameFormat));
 		if ($this->maxDays >= count($logFiles)) {
 			// no files to remove
 			return;
@@ -89,20 +69,5 @@ class FileLimitingLogHandler extends LimitingWrapper {
 				restore_error_handler();
 			}
 		}
-	}
-
-	protected function getGlobPattern()
-	{
-		$fileInfo = pathinfo($this->filename);
-		$glob = str_replace(
-			array('{filename}', '{date}'),
-			array($fileInfo['filename'], '*'),
-			$fileInfo['dirname'] . '/' . $this->filenameFormat
-		);
-		if (!empty($fileInfo['extension'])) {
-			$glob .= '.'.$fileInfo['extension'];
-		}
-
-		return $glob;
 	}
 }

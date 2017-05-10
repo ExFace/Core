@@ -3,6 +3,7 @@
 namespace exface\Core\CommonLogic\Log\Handlers\limit;
 
 
+use exface\Core\CommonLogic\Log\Helpers\LogHelper;
 use exface\Core\Interfaces\iCanGenerateDebugWidgets;
 
 /**
@@ -14,15 +15,18 @@ use exface\Core\Interfaces\iCanGenerateDebugWidgets;
  */
 class DirLimitingLogHandler extends LimitingWrapper {
 	private $logPath;
-	private $fileEnding;
+	private $staticFileNamePart;
 	private $maxDays;
+	private $filenameFormat;
 
-	function __construct(Callable $createCallback, $logPath, $fileEnding, $maxDays = 0) {
+	function __construct(Callable $createCallback, $logPath, $staticFileNamePart, $maxDays = 0) {
 		parent::__construct($createCallback);
 
 		$this->logPath = $logPath;
-		$this->fileEnding = $fileEnding;
+		$this->staticFileNamePart = $staticFileNamePart;
 		$this->maxDays  = $maxDays;
+
+		$this->filenameFormat = '{filename}{variable}{static}';
 	}
 
 	protected function callLogger(Callable $createLoggerCall, $level, $message, array $context = array(), iCanGenerateDebugWidgets $sender = null) {
@@ -39,7 +43,7 @@ class DirLimitingLogHandler extends LimitingWrapper {
 		}
 
 		$limitTime = max(0, time() - ($this->maxDays * 24 * 60 * 60));
-		$logFiles = glob($this->getGlobPattern());
+		$logFiles = glob(LogHelper::getPattern($this->logPath, $this->filenameFormat, '/*', $this->staticFileNamePart));
 		foreach ($logFiles as $logFile) {
 			$mtime = filemtime($logFile);
 			if ($mtime > $limitTime)
@@ -55,7 +59,7 @@ class DirLimitingLogHandler extends LimitingWrapper {
 		}
 	}
 
-	protected function getGlobPattern() {
-		return $this->logPath . '/*' . $this->fileEnding;
-	}
+//	protected function getGlobPattern() {
+//		return $this->logPath . '/*' . $this->staticFileNamePart;
+//	}
 }
