@@ -90,6 +90,7 @@ class ComboTable extends InputCombo implements iHaveChildren {
 	private $data_table = null;
 	private $table_object = null;
 	private $table_uxon = null;
+	private $filter_group_id = null;
 	
 	/**
 	 * Returns the relation, this widget represents or FALSE if the widget stands for a direct attribute. 
@@ -498,6 +499,20 @@ class ComboTable extends InputCombo implements iHaveChildren {
 				$this->get_table_uxon()->set_property('filters', array_merge($this->get_table_uxon()->get_property('filters'), array($condition_or_uxon_object)));
 			}
 		}
+		return $this;
+	}
+	
+	public function get_filter_group_id(){
+		return $this->filter_group_id;
+	}
+	
+	/**
+	 * 
+	 * @param string $value
+	 * @return \exface\Core\Widgets\ComboTable
+	 */
+	public function set_filter_group_id($value){
+		$this->filter_group_id = $value;
 		return $this;
 	}
 }
