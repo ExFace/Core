@@ -22,14 +22,16 @@
         "symfony/debug": "~2.8 || ~3.1",
         "symfony/var-dumper": "~3.2",
         "jmikola/Wildcard-Event-Dispatcher": "~1.1.0",
-        "webmozart/path-util": "~2.3.0"
+        "webmozart/path-util": "~2.3.0",
+        "monolog/monolog": "^1.22.1",
+        "femtopixel/monolog-csvhandler": "^0.1.2"
     },
     "extra": {
         "app": {
             "app_uid": "0x31000000000000000000000000000000",
             "app_alias": "exface.Core",
-            "model_md5": "09680ce380f8b85f93b4ad2e8182dd1f",
-            "model_timestamp": "2017-04-28 10:23:51"
+            "model_md5": "957ff80b20412fca9af367a04ee243f1",
+            "model_timestamp": "2017-05-10 09:38:09"
         }
     }
 }

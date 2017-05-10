@@ -202,9 +202,13 @@ trait ExceptionTrait {
 	 */
 	public function get_id(){
 		if (is_null($this->id)){
-			$this->id = uniqid('', true);
+			$this->id = $this->createId();
 		}
 		return $this->id;
 	}
+
+	private function createId() {
+        return substr(md5(uniqid(rand(), true)), 0, 8);
+    }
 }
 ?>
