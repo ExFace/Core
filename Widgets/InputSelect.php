@@ -11,6 +11,7 @@ use exface\Core\Factories\ConditionFactory;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\DataSheets\DataSorter;
 use exface\Core\Factories\DataSorterFactory;
+use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 
 /**
  * A dropdown menu to select from. Each menu item has a value and a text. Optional support for selecting multiple items.
@@ -399,8 +400,10 @@ class InputSelect extends Input implements iSupportMultiSelect {
 			if ($this->get_options_object()->is_exactly($this->get_meta_object())
 			&& !($this->get_attribute() && $this->get_attribute()->is_relation())){
 				$this->value_attribute_alias = $this->get_attribute_alias();
-			} else {
+			} elseif ($this->get_options_object()->get_uid_alias()) {
 				$this->value_attribute_alias = $this->get_options_object()->get_uid_alias();
+			} else {
+				throw new WidgetConfigurationError($this, 'Cannot create ' . $this->get_widget_type() . ': there is no value attribute defined and the options object "' . $this->get_options_object()->get_alias_with_namespace() . '" has no UID attribute!', '6V5FGYF');
 			}
 		}
 		return $this->value_attribute_alias;
