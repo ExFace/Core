@@ -467,7 +467,7 @@
         },
         {
             "CREATED_ON": "2017-04-28 10:09:21",
-            "MODIFIED_ON": "2017-05-10 15:32:34",
+            "MODIFIED_ON": "2017-05-11 14:55:00",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e72bfabc4cc8e7a3bee4b318306b9a",
@@ -478,8 +478,8 @@
             "PARENT_OBJECT": "",
             "DATA_ADDRESS_PROPS": "{\"DELIMITER\":\",\",\"ENCLOSURE\":\"'\",\"HAS_HEADER_ROW\":\"0\"}",
             "DEFAULT_EDITOR_UXON": "{}",
-            "LABEL": "Log",
-            "ALIAS": "LOG",
+            "LABEL": "Log Entry",
+            "ALIAS": "LOG_ENTRY",
             "DATA_ADDRESS": "[#logfile#]"
         },
         {
@@ -501,7 +501,7 @@
         },
         {
             "CREATED_ON": "2017-05-10 15:06:24",
-            "MODIFIED_ON": "2017-05-10 15:39:36",
+            "MODIFIED_ON": "2017-05-11 14:55:09",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e7359214da6ecbba83e4b318306b9a",
@@ -512,8 +512,8 @@
             "PARENT_OBJECT": "",
             "DATA_ADDRESS_PROPS": "{}",
             "DEFAULT_EDITOR_UXON": "{\"object_alias\":\"exface.Core.LOG\",\"widget_type\":\"DataTable\",\"filters\":[{\"attribute_alias\":\"id\"},{\"attribute_alias\":\"message\"},{\"attribute_alias\":\"level\"},{\"attribute_alias\":\"timestamp\"},{\"attribute_alias\":\"logfile\",\"widget_type\":\"InputHidden\"}],\"columns\":[{\"attribute_group_alias\":\"~ALL\"}]}",
-            "LABEL": "Logs",
-            "ALIAS": "LOGS",
+            "LABEL": "Log",
+            "ALIAS": "LOG",
             "DATA_ADDRESS": "logs"
         }
     ],
