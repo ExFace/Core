@@ -38,7 +38,7 @@ class Log
         // TODO tvw enable when log details are used
         $logger->pushHandler(new DirLimitingLogHandler(
         	function() use ($detailsLogBasePath, $detailsStaticFilenamePart, $minLogLevel) {
-		        return new DebugMessageFileHandler($detailsLogBasePath, $detailsStaticFilenamePart, $minLogLevel);
+        		return new DebugMessageFileHandler($detailsLogBasePath . DIRECTORY_SEPARATOR . 'details', $detailsStaticFilenamePart, $minLogLevel);
             }, $detailsLogBasePath, $detailsStaticFilenamePart, $maxDaysToKeep
         ));
 
