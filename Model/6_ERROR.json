@@ -1158,6 +1158,19 @@
             "ERROR_TEXT": "No value or  attribute found for a select widget",
             "DESCRIPTION": "This error indicates, that the attributes are neither specified, nor could they be guessed.\n\nSelect widgets like InputSelect or InputCombo require a value attribute and a text attribute to be rendered. The system will try to determine suitable attributes automatically if the respective properties (value_attribute_alias, text_attribute_alias) are not set. \n\nPlease refer to the widget documentation for detailed information on how the attributes are determined.",
             "LABEL": "exface.Core.6V5FGYF"
+        },
+        {
+            "CREATED_ON": "2017-05-12 11:36:47",
+            "MODIFIED_ON": "2017-05-12 11:36:47",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e7370744671e4d83200205857feb80",
+            "FULL_ERROR_CODE": "exface.Core.6V6EAL3",
+            "APP": "0x31000000000000000000000000000000",
+            "ERROR_CODE": "6V6EAL3",
+            "ERROR_TEXT": "Data connection not found",
+            "DESCRIPTION": "",
+            "LABEL": "exface.Core.6V6EAL3"
         }
     ],
     "totals_rows": [],

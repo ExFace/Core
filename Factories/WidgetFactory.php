@@ -102,8 +102,12 @@ abstract class WidgetFactory extends AbstractFactory {
 		try {
 			$widget->import_uxon_object($uxon_object);
 		} catch (\Throwable $e){
-			$page->remove_widget($widget, true);
-			throw $e;
+			try {
+				$page->remove_widget($widget, true);
+			} finally {
+				// Need to throw the error in any case - even if removing failed!
+				throw $e;
+			}
 		}
 		
 		return $widget;
