@@ -7,4 +7,17 @@ interface iSupportLazyLoading extends WidgetInterface {
 	public function set_lazy_loading($value);
 	public function get_lazy_loading_action();
 	public function set_lazy_loading_action($value);
+	public function get_lazy_loading_group_id();
+	
+	/**
+	 * Title
+     * 
+     * Description
+     * 
+     * @uxon-property lazy_loading_group_id
+	 * @uxon-type string
+	 * 
+	 * @param string $value
+	 */
+	public function set_lazy_loading_group_id($value);
 }
