@@ -4,6 +4,7 @@ use exface;
 use exface\Core\CommonLogic\NameResolver;
 use exface\Core\CommonLogic\AbstractDataConnector;
 use exface\Core\Interfaces\NameResolverInterface;
+use exface\Core\Exceptions\DataSources\DataConnectionNotFoundError;
 
 abstract class DataConnectorFactory extends AbstractNameResolverFactory {
 	
@@ -16,6 +17,9 @@ abstract class DataConnectorFactory extends AbstractNameResolverFactory {
 	public static function create(NameResolverInterface $name_resolver, array $config = null){
 		$class = $name_resolver->get_class_name_with_namespace();
 		$exface = $name_resolver->get_workbench();
+		if (!$name_resolver->class_exists()){
+			throw new DataConnectionNotFoundError('Data connection "' . $name_resolver->get_alias() . '" not found in namespace "' . $name_resolver->get_namespace() . '"!');
+		}
 		$instance = new $class($exface, $config);
 		$instance->set_name_resolver($name_resolver);
 		return $instance;

@@ -30,7 +30,7 @@ class Price extends \exface\Core\CommonLogic\Model\Formula {
 		$exface = $this->get_workbench();
 		if ($cache = $exface->data()->get_cache('currencies', $currency_oid)) return $cache;
 		
-		$curr = $exface->model()->get_object('ALEXA.RMS.CURR');
+		$curr = $exface->model()->get_object('ALEXA.RMS.CURRENCY');
 		$ds = $curr->create_data_sheet();
 		$ds->get_columns()->add_from_expression('SUFFIX');
 		$ds->add_filter_from_string('OID', $currency_oid);

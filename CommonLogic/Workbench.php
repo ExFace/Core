@@ -314,11 +314,10 @@ class Workbench {
 		return $this;
 	} 
 	
-	public function set_logger(LoggerInterface $logger){
-		$this->logger = $logger;
-		return $this;
-	}
-	
+	/**
+	 * 
+	 * @return \exface\Core\Interfaces\LoggerInterface
+	 */
 	public function get_logger(){
 		return $this->logger;
 	}

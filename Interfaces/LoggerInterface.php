@@ -112,7 +112,7 @@ interface LoggerInterface extends \Psr\Log\LoggerInterface {
 	 * @return void
 	 */
 	public function log($level, $message, array $context = array(), iCanGenerateDebugWidgets $sender = null);
-	
+
 	/**
 	 * Pushes a handler on to the stack.
 	 * 
