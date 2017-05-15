@@ -58,6 +58,14 @@ interface CmsConnectorInterface extends ExfaceClassInterface {
 	public function get_user_name();
 	
 	/**
+	 * Returns TRUE if the current user is an administrator. Administrators are those users, that can create/edit dialogs and, 
+	 * thus, need enhanced error reporting, debug-tools, etc.
+	 * 
+	 * @return boolean
+	 */
+	public function is_user_admin();
+	
+	/**
 	 * Returns the locale string for the current user (e.g. "en_US" or only "en" if merely the language is specified within the CMS).
 	 * @return string
 	 */

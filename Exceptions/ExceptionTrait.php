@@ -129,6 +129,15 @@ trait ExceptionTrait {
 			}
 		}
 		
+		if ($page->get_workbench()->get_config()->get_option('DEBUG.SHOW_ERROR_DETAILS_TO_ADMINS_ONLY')
+		&& !$page->get_workbench()->CMS()->is_user_admin()){
+			foreach ($debug_widget->get_tabs() as $tab){
+				if ($tab != $error_tab){
+					$tab->set_hidden(true);
+				}
+			}
+		}
+		
 		// Save the widget in case create_widget() is called again
 		$this->exception_widget = $debug_widget;
 		
