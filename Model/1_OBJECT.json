@@ -501,7 +501,7 @@
         },
         {
             "CREATED_ON": "2017-05-10 15:06:24",
-            "MODIFIED_ON": "2017-05-11 14:55:09",
+            "MODIFIED_ON": "2017-05-12 14:00:57",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e7359214da6ecbba83e4b318306b9a",
@@ -511,7 +511,7 @@
             "SHORT_DESCRIPTION": "",
             "PARENT_OBJECT": "",
             "DATA_ADDRESS_PROPS": "{}",
-            "DEFAULT_EDITOR_UXON": "{\"object_alias\":\"exface.Core.LOG\",\"widget_type\":\"DataTable\",\"filters\":[{\"attribute_alias\":\"id\"},{\"attribute_alias\":\"message\"},{\"attribute_alias\":\"level\"},{\"attribute_alias\":\"timestamp\"},{\"attribute_alias\":\"logfile\",\"widget_type\":\"InputHidden\"}],\"columns\":[{\"attribute_group_alias\":\"~ALL\"}]}",
+            "DEFAULT_EDITOR_UXON": "{\"object_alias\":\"exface.Core.LOG_ENTRY\",\"widget_type\":\"DataTable\",\"filters\":[{\"attribute_alias\":\"id\"},{\"attribute_alias\":\"message\"},{\"attribute_alias\":\"level\"},{\"attribute_alias\":\"timestamp\"},{\"attribute_alias\":\"logfile\",\"widget_type\":\"InputHidden\"}],\"columns\":[{\"attribute_group_alias\":\"~ALL\"}]}",
             "LABEL": "Log",
             "ALIAS": "LOG",
             "DATA_ADDRESS": "logs"
