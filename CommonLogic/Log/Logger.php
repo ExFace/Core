@@ -2,12 +2,11 @@
 
 namespace exface\Core\CommonLogic\Log;
 
-
-use exface\Core\Exceptions\LogicException;
 use exface\Core\Interfaces\iCanGenerateDebugWidgets;
 use exface\Core\Interfaces\LoggerInterface;
 use exface\Core\Interfaces\LogHandlerInterface;
 use exface\Core\CommonLogic\Log\Handlers\LogfileHandler;
+use exface\Core\Exceptions\UnderflowException;
 
 class Logger implements LoggerInterface
 {
@@ -149,9 +148,6 @@ class Logger implements LoggerInterface
      */
     public function log($level, $message, array $context = array(), iCanGenerateDebugWidgets $sender = null)
     {
-        if (!$this->handlers)
-            $this->pushHandler(new LogfileHandler("exface", "/home/tvw/public_html/alexa-ui/exface/exface/logs/core.log"), $level);
-
         foreach ($this->handlers as $handler)
             $handler->handle($level, $message, $context, $sender);
     }
@@ -172,12 +168,13 @@ class Logger implements LoggerInterface
     /**
      * Pops a handler from the top of the stack and returns it
      *
+     * @throws UnderflowException if no handlers registered
      * @return LogHandlerInterface
      */
     public function popHandler()
     {
         if (!$this->handlers) {
-            throw new LogicException('Can not pop handler from an empty handler stack.');
+            throw new UnderflowException('Can not pop handler from an empty handler stack.');
         }
 
         return array_shift($this->handlers);
