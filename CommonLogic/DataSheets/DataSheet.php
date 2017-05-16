@@ -30,8 +30,8 @@ use exface\Core\Exceptions\DataSheets\DataSheetRuntimeError;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\Exceptions\DataSheets\DataSheetReadError;
 use exface\Core\Exceptions\DataSheets\DataSheetMissingRequiredValueError;
-use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;
 use exface\Core\Interfaces\Exceptions\ExceptionInterface;
+use exface\Core\CommonLogic\Model\Relation;
 
 /**
  * Internal data respresentation object in exface. Similar to an Excel-table:
@@ -622,7 +622,7 @@ class DataSheet implements DataSheetInterface {
 				
 				// First check, if the attribute belongs to a related object
 				if ($rel_path = $column->get_attribute()->get_relation_path()->to_string()){
-					if ($this->get_meta_object()->get_relation($rel_path)->get_type() == 'n1'){
+					if ($this->get_meta_object()->get_relation($rel_path)->is_forward_relation()){
 						$uid_column_alias = $rel_path;
 					} else {
 						//$uid_column = $this->get_column($this->get_meta_object()->get_relation($rel_path)->get_main_object_key_attribute()->get_alias_with_relation_path());
@@ -925,7 +925,7 @@ class DataSheet implements DataSheetInterface {
 		// This is the case, if the deleted object has reverse relations (1-to-many), where the relation is a mandatory
 		// attribute of the related object (that is, if the related object cannot exist without the one we are deleting)
 		/* @var $rel \exface\Core\CommonLogic\Model\Relation */
-		foreach ($this->get_meta_object()->get_relations('1n') as $rel){
+		foreach ($this->get_meta_object()->get_relations(Relation::RELATION_TYPE_REVERSE) as $rel){
 			// FIXME use $rel->get_related_object_key_attribute() here instead. This must be fixed first though, as it returns false now
 			if (!$rel->get_related_object()->get_attribute($rel->get_foreign_key_alias())->is_required()){
 				// FIXME Throw a warning here! Need to be able to show warning along with success messages!

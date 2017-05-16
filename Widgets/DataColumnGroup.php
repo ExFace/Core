@@ -30,11 +30,11 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns {
 			// the behaviors of the related object
 			if ($column->get_attribute() && $rel_path = $column->get_attribute()->get_relation_path()->to_string()){
 				$rel = $this->get_meta_object()->get_relation($rel_path);
-				if ($rel->get_type() == 'n1'){
+				if ($rel->is_forward_relation()){
 					$this->get_parent()->add_columns_for_system_attributes($rel_path);
-				} elseif ($rel->get_type() == '1n'){
+				} elseif ($rel->is_reverse_relation()){
 					// TODO Concatennate UIDs here?
-				} elseif ($rel->get_type() == '11'){
+				} elseif ($rel->is_one_to_one_relation()){
 					// TODO
 				}
 			}

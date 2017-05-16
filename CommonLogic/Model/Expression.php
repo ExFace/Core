@@ -324,7 +324,7 @@ class Expression implements ExfaceClassInterface, iCanBeCopied {
 				// IDEA A bit awqard is rebasing "POSITION->ORDER" from ORDER to POSITION as it will result in ORDER<-POSITION->ORDER, which
 				// is a loop: first we would fetch the order, than it's positions than again all orders of thouse position, which will result in
 				// that one order we fetched in step 1 again. Not sure, if these loops can be prevented somehow...
-				if (!($rel->get_type() == '1n' && $relation_path_to_new_base_object == $rel->get_alias() && ($relation_path_to_new_base_object == $this->to_string() || $rel->get_related_object_key_alias() == $this->to_string()))){
+				if (!($rel->is_reverse_relation() && $relation_path_to_new_base_object == $rel->get_alias() && ($relation_path_to_new_base_object == $this->to_string() || $rel->get_related_object_key_alias() == $this->to_string()))){
 					$new_expression_string = RelationPath::relation_path_add($new_expression_string, $this->to_string());
 				}
 			}

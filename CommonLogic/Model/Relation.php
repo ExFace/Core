@@ -33,7 +33,7 @@ class Relation implements ExfaceClassInterface {
 	 * @param unknown $main_object
 	 * @param unknown $foreign_key_alias
 	 * @param unknown $related_object_id
-	 * @param string $type 1n n1 or 11
+	 * @param string $type one of the Relation::RELATION_TYPE_xxx constants
 	 */
 	function __construct(Workbench $workbench, $relation_id, $alias, $name, $main_object_id, $foreign_key_alias, $related_object_id, $related_object_key_attribute_id = null, $type = 'n1'){
 		$this->exface = $workbench;
@@ -202,11 +202,11 @@ class Relation implements ExfaceClassInterface {
      * @return \exface\Core\CommonLogic\Model\relation | boolean
      */
     public function get_reversed_relation(){
-    	if ($this->get_type() == 'n1'){
+    	if ($this->get_type() == self::RELATION_TYPE_FORWARD){
     		// If it is a regular relation, it will be a reverse one from the point of view of the related object. That is identified by the
     		// alias of the object it leads to (in our case, the current object)
     		$reverse = $this->get_related_object()->get_relation($this->get_main_object()->get_alias(), $this->get_alias());
-    	} elseif ($this->get_type() == '1n' || $this->get_type() == '11'){
+    	} elseif ($this->get_type() == self::RELATION_TYPE_REVERSE || $this->get_type() == self::RELATION_TYPE_ONE_TO_ONE){
     		// If it is a reverse relation, it will be a regular one from the point of view of the related object. That is identified by its alias.
     		// TODO Will it also work for one-to-one relations?
     		$reverse = $this->get_related_object()->get_relation($this->get_foreign_key_alias());

@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\CommonLogic\QueryBuilder;
 use exface\Core\CommonLogic\Model\Attribute;
+use exface\Core\CommonLogic\Model\Relation;
 
 class QueryPart {
 	protected $query = NULL;
@@ -43,7 +44,7 @@ class QueryPart {
 	/**
 	 * Returns an array of relations used in this query part. If $relation_type is given, only returns relations of this type.
 	 * @param string $relations_type
-	 * @return array [ relation_alias_relative_to_main_object => relation_object ]
+	 * @return Relation[]
 	 */
 	public function get_used_relations($relation_type = null){
 		return array();
@@ -53,7 +54,7 @@ class QueryPart {
 	 * Returns the first relation of the given type or false if no relations of this type is found.
 	 * If $relation_type is ommitted, returns the very first relation regardless of it's type.
 	 * @param string $relations_type
-	 * @return mixed boolean|array [ relation_alias_relative_to_main_object => relation_object ]
+	 * @return Relation
 	 */
 	public function get_first_relation($relations_type = null){
 		$rels = $this->get_used_relations($relations_type);

@@ -20,7 +20,7 @@ class QueryPartFilter extends QueryPartAttribute {
 		// it is a relation and not a direct attribute. Concider the case of CUSTOMER<-CUSTOMER_CARD. If we filter CUSTOMERs over 
 		// CUSTOMER_CARD, it would look as if the CUSTOMER_CARD is an attribute of CUSTOMER. We need to detect this and transform
 		// the filter into CUSTOMER_CARD__UID, which would clearly be a relation.
-		if ($this->get_attribute()->is_relation() && $this->get_query()->get_main_object()->get_relation($alias)->get_type() == '1n'){
+		if ($this->get_attribute()->is_relation() && $this->get_query()->get_main_object()->get_relation($alias)->is_reverse_relation()){
 			$attr = $this->get_query()->get_main_object()->get_attribute(RelationPath::relation_path_add($alias, $this->get_attribute()->get_object()->get_uid_alias()));
 			$this->set_attribute($attr);
 		}

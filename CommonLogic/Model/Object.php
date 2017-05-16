@@ -65,7 +65,7 @@ class Object implements ExfaceClassInterface, AliasInterface {
 	function get_relations($relation_type = null){
 		$result = array();
 		foreach ($this->get_relations_array() as $rel){
-			if (is_null($relation_type) || (is_array($rel) && $relation_type == '1n') || $relation_type == $rel->get_type()){
+			if (is_null($relation_type) || (is_array($rel) && $relation_type == Relation::RELATION_TYPE_REVERSE) || $relation_type == $rel->get_type()){
 				if (is_array($rel)){
 					$result = array_merge($result, $rel);
 				} else {
@@ -141,7 +141,7 @@ class Object implements ExfaceClassInterface, AliasInterface {
 					// In this case, the reverse relation can only be addressed using the $foreign_key_alias
 					// There can only be at most one regular relation with the same alias for one object, but there
 					// can be multiple reverse relations with the same alias.
-					if ($r->get_type() == 'n1'){
+					if ($r->is_forward_relation()){
 						return $r;
 					} elseif ($first_rel === false) {
 						$first_rel = $r;
@@ -226,7 +226,7 @@ class Object implements ExfaceClassInterface, AliasInterface {
 		// At this point only two possibilities are left: it's either a reverse relation or an error
 		if ($this->has_relation($alias)){
 			$rev_rel = $this->get_relation($alias);
-			if ($rev_rel->get_type() == '1n'){
+			if ($rev_rel->is_reverse_relation()){
 				try {
 					$rel_attr = $rev_rel->get_related_object()->get_attribute($rev_rel->get_foreign_key_alias());
 					$attr = $rel_attr->copy();
