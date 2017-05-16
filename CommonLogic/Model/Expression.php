@@ -305,11 +305,13 @@ class Expression implements ExfaceClassInterface, iCanBeCopied {
 			}
 			
 			if (strpos($this->to_string(), $relation_path_to_new_base_object) === 0){
-				// If the realtion path to the new object is just part of the expression, cut it off, returning whatever is left
-				$new_expression_string = RelationPath::relaton_path_cut($this->to_string(), $relation_path_to_new_base_object);
+				// If the realtion path to the new object is just the beginning of the expression, cut it off, returning whatever is left
+				// $new_expression_string = RelationPath::relaton_path_cut($this->to_string(), $relation_path_to_new_base_object);
+				$new_expression_string = ltrim(substr($this->to_string(), strlen($relation_path_to_new_base_object)), "_");
 			} elseif (strpos($relation_path_to_new_base_object, $this->to_string()) === 0) {
-				// If the expression is part of the relation path, do it the other way around
-				$new_expression_string = RelationPath::relaton_path_cut($relation_path_to_new_base_object, $this->to_string());
+				// If the expression is the beginning of the relation path, do it the other way around
+				// $new_expression_string = RelationPath::relaton_path_cut($relation_path_to_new_base_object, $this->to_string());
+				$new_expression_string = ltrim(substr($relation_path_to_new_base_object, strlen($this->to_string())), "_");
 			} else {
 				// Otherwise append the expression to the relation path (typically the expression is a direct attribute here an would need
 				// a relation path, if referenced from another object).				
