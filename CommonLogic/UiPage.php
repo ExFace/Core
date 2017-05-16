@@ -52,15 +52,6 @@ class UiPage implements UiPageInterface {
 	
 	/**
 	 * 
-	 * {@inheritDoc}
-	 * @see \exface\Core\Interfaces\UiPageInterface::remove_widget()
-	 */
-	public function remove_widget(WidgetInterface $widget, $remove_children_too = true){
-		return $this->remove_widget_by_id($widget->get_id());
-	}
-	
-	/**
-	 * 
 	 * @return \exface\Core\Interfaces\WidgetInterface
 	 */
 	public function get_widget_root(){
@@ -249,20 +240,29 @@ class UiPage implements UiPageInterface {
 	 * @param string $widget_id
 	 * @return \exface\Core\CommonLogic\UiPage
 	 */
-	public function remove_widget_by_id($widget_id, $remove_children_too = true){
+	public function remove_widget_by_id($widget_id){		
+		unset($this->widgets[$widget_id]);
+		return $this;
+	}
+	
+	/**
+	 *
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\UiPageInterface::remove_widget()
+	 */
+	public function remove_widget(WidgetInterface $widget, $remove_children_too = true){
 		if ($remove_children_too){
-			$widget = $this->get_widget($widget_id);
 			if ($widget instanceof iHaveChildren){
 				foreach ($widget->get_children() as $child){
 					$this->remove_widget($child, true);
 				}
 			}
 		}
-		unset($this->widgets[$widget_id]);
+		$result = $this->remove_widget_by_id($widget->get_id());
 		
 		$this->get_workbench()->event_manager()->dispatch(EventFactory::create_widget_event($widget, 'Remove.After'));
 		
-		return $this;
+		return $result;
 	}
 	
 	/**
