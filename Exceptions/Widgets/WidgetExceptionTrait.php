@@ -23,6 +23,10 @@ trait WidgetExceptionTrait {
 		parent::__construct($message, null, $previous);
 		$this->set_alias($alias);
 		$this->set_widget($widget);
+		// Ist die Widget-Konfiguration fehlerhaft wird das entsprechende Widget entfernt.
+		// Ueber ein Event (Widget.Remove.After) wird das Element auch aus dem Element-
+		// Cache des Templates entfernt (siehe AbstractAjaxTemplate->init()).
+		$widget->get_page()->remove_widget($widget);
 	}
 	
 	/**

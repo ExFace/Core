@@ -36,6 +36,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 	private $aggregate_by_attribute_alias = null;
 	private $lazy_loading = true; // Data should be loaded lazily by defaul (via AJAX) - of course, only if the used template supports this
 	private $lazy_loading_action = 'exface.Core.ReadData';
+	private $lazy_loading_group_id = null;
 	
 	/** @var DataColumnGroup[] */
 	private $column_groups = array();
@@ -1264,6 +1265,20 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 		$this->paginate_page_size = $value;
 		return $this;
 	}  
+	
+	public function get_lazy_loading_group_id(){
+		return $this->lazy_loading_group_id;
+	}
+	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::set_lazy_loading_group_id()
+	 */
+	public function set_lazy_loading_group_id($value){
+		$this->lazy_loading_group_id = $value;
+		return $this;
+	}
 }
 
 ?>

@@ -14,6 +14,7 @@ class InputCombo extends InputSelect implements iSupportLazyLoading {
 	private $max_suggestions = 20;
 	private $allow_new_values = true;
 	private $autoselect_single_suggestion = true;
+	private $lazy_loading_group_id = null;
 	
 	/**
 	 * (non-PHPdoc)
@@ -114,5 +115,18 @@ class InputCombo extends InputSelect implements iSupportLazyLoading {
 		return $this;
 	}
 	
+	public function get_lazy_loading_group_id(){
+		return $this->lazy_loading_group_id;
+	}
+	
+	/**
+	 *
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::set_lazy_loading_group_id()
+	 */
+	public function set_lazy_loading_group_id($value){
+		$this->lazy_loading_group_id = $value;
+		return $this;
+	}
 }
 ?>

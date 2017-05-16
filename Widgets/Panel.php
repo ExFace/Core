@@ -29,6 +29,7 @@ class Panel extends Container implements iLayoutWidgets, iSupportLazyLoading, iH
 	private $column_number = null;
 	private $column_stack_on_smartphones = null;
 	private $column_stack_on_tablets = null;
+	private $lazy_loading_group_id = null;
 	
 	/**
 	 * 
@@ -154,6 +155,20 @@ class Panel extends Container implements iLayoutWidgets, iSupportLazyLoading, iH
 	 * @return Panel
 	 */
 	public function get_alternative_container_for_orphaned_siblings(){
+		return $this;
+	}
+	
+	public function get_lazy_loading_group_id(){
+		return $this->lazy_loading_group_id;
+	}
+	
+	/**
+	 *
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::set_lazy_loading_group_id()
+	 */
+	public function set_lazy_loading_group_id($value){
+		$this->lazy_loading_group_id = $value;
 		return $this;
 	}
 }

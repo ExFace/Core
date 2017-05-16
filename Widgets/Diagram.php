@@ -21,6 +21,7 @@ class Diagram extends Container implements iSupportLazyLoading {
 	private $background_image_attribute_alias = null;
 	private $scale = null;
 	private $diagram_object_selector_widget = null;
+	private $lazy_loading_group_id = null;
 	
 	/**
 	 * Returns an array of shapes usable in this diagram. Keep in mind, that these are not the actually plotted instances of
@@ -174,7 +175,20 @@ class Diagram extends Container implements iSupportLazyLoading {
 		}
 		return $data_sheet;
 	}
-
+	
+	public function get_lazy_loading_group_id(){
+		return $this->lazy_loading_group_id;
+	}
+	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::set_lazy_loading_group_id()
+	 */
+	public function set_lazy_loading_group_id($value){
+		$this->lazy_loading_group_id = $value;
+		return $this;
+	}
 }
 
 ?>

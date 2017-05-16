@@ -56,6 +56,9 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveButtons, iHaveT
 	/** @var Button[] */
 	private $buttons = array();
 	
+	/** @var string */
+	private $lazy_loading_group_id = null;
+	
 	const AXIS_X = 'x';
 	const AXIS_Y = 'y';
 	
@@ -546,6 +549,20 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveButtons, iHaveT
 	 */
 	public function get_button_widget_type(){
 		return 'DataButton';
+	}
+	
+	public function get_lazy_loading_group_id(){
+		return $this->lazy_loading_group_id;
+	}
+	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::set_lazy_loading_group_id()
+	 */
+	public function set_lazy_loading_group_id($value){
+		$this->lazy_loading_group_id = $value;
+		return $this;
 	}
 }
 ?>

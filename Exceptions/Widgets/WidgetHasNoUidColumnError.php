@@ -14,19 +14,6 @@ class WidgetHasNoUidColumnError extends UnexpectedValueException implements Widg
 	
 	use WidgetExceptionTrait;
 	
-	/**
-	 *
-	 * @param WidgetInterface $widget
-	 * @param string $message
-	 * @param string $alias
-	 * @param \Throwable $previous
-	 */
-	public function __construct (WidgetInterface $widget, $message, $alias = null, $previous = null) {
-		parent::__construct($message, null, $previous);
-		$this->set_alias($alias);
-		$this->set_widget($widget);
-	}
-	
 	public static function get_default_alias(){
 		return '6UX6KAQ';
 	}

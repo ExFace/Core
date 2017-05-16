@@ -8,6 +8,7 @@ use exface\Core\Interfaces\UiManagerInterface;
 use exface\Core\Exceptions\Widgets\WidgetIdConflictError;
 use exface\Core\Interfaces\Widgets\iHaveChildren;
 use exface\Core\DataTypes\StringDataType;
+use exface\Core\Factories\EventFactory;
 
 class UiPage implements UiPageInterface {
 	private $widgets = array();
@@ -258,6 +259,9 @@ class UiPage implements UiPageInterface {
 			}
 		}
 		unset($this->widgets[$widget_id]);
+		
+		$this->get_workbench()->event_manager()->dispatch(EventFactory::create_widget_event($widget, 'Remove.After'));
+		
 		return $this;
 	}
 	
