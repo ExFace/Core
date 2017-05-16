@@ -484,9 +484,9 @@
         },
         {
             "CREATED_ON": "2017-05-05 11:10:48",
-            "MODIFIED_ON": "2017-05-09 16:11:49",
+            "MODIFIED_ON": "2017-05-16 15:51:04",
             "CREATED_BY_USER": "",
-            "MODIFIED_BY_USER": "",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e73172ba930d0a9cea0242ac110004",
             "DATA_SOURCE": "0x11e72bfa9ebaa493a3bee4b318306b9a",
             "long_description": "",
@@ -497,11 +497,11 @@
             "DEFAULT_EDITOR_UXON": "{}",
             "LABEL": "Log Details",
             "ALIAS": "LOGDETAILS",
-            "DATA_ADDRESS": "logs"
+            "DATA_ADDRESS": "logs\/details"
         },
         {
             "CREATED_ON": "2017-05-10 15:06:24",
-            "MODIFIED_ON": "2017-05-12 14:00:57",
+            "MODIFIED_ON": "2017-05-16 14:54:55",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e7359214da6ecbba83e4b318306b9a",
@@ -511,10 +511,27 @@
             "SHORT_DESCRIPTION": "",
             "PARENT_OBJECT": "",
             "DATA_ADDRESS_PROPS": "{}",
-            "DEFAULT_EDITOR_UXON": "{\"object_alias\":\"exface.Core.LOG_ENTRY\",\"widget_type\":\"DataTable\",\"filters\":[{\"attribute_alias\":\"id\"},{\"attribute_alias\":\"message\"},{\"attribute_alias\":\"level\"},{\"attribute_alias\":\"timestamp\"},{\"attribute_alias\":\"logfile\",\"widget_type\":\"InputHidden\"}],\"columns\":[{\"attribute_group_alias\":\"~ALL\"}]}",
+            "DEFAULT_EDITOR_UXON": "{\"object_alias\":\"exface.Core.LOG_ENTRY\",\"widget_type\":\"DataTable\",\"filters\":[{\"attribute_alias\":\"id\"},{\"attribute_alias\":\"message\"},{\"attribute_alias\":\"level\"},{\"attribute_alias\":\"timestamp\"},{\"attribute_alias\":\"logfile\",\"widget_type\":\"InputHidden\"}],\"columns\":[{\"attribute_group_alias\":\"~ALL\"}],\"buttons\":[{\"action_alias\":\"exface.Core.ShowDialogFromFile\",\"action_file_path_attribute_alias\":\"id\"}]}",
             "LABEL": "Log",
             "ALIAS": "LOG",
             "DATA_ADDRESS": "logs"
+        },
+        {
+            "CREATED_ON": "2017-05-16 14:02:26",
+            "MODIFIED_ON": "2017-05-16 14:02:26",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e73a4048ba8ae8bff5e4b318306b9a",
+            "DATA_SOURCE": "0x32000000000000000000000000000000",
+            "long_description": null,
+            "APP": "0x31000000000000000000000000000000",
+            "SHORT_DESCRIPTION": "",
+            "PARENT_OBJECT": "",
+            "DATA_ADDRESS_PROPS": "{}",
+            "DEFAULT_EDITOR_UXON": "{}",
+            "LABEL": "Auto-generated help",
+            "ALIAS": "USER_HELP_ELEMENT",
+            "DATA_ADDRESS": ""
         }
     ],
     "totals_rows": [],
