@@ -16,17 +16,4 @@ class WidgetPropertyInvalidValueError extends UnexpectedValueException implement
 	
 	use WidgetExceptionTrait;
 	
-	/**
-	 *
-	 * @param WidgetInterface $widget
-	 * @param string $message
-	 * @param string $alias
-	 * @param \Throwable $previous
-	 */
-	public function __construct (WidgetInterface $widget, $message, $alias = null, $previous = null) {
-		parent::__construct($message, null, $previous);
-		$this->set_alias($alias);
-		$this->set_widget($widget);
-	}
-	
 }
