@@ -26,15 +26,9 @@ interface iSupportLazyLoading extends WidgetInterface {
      * for Style, Article Supplier, Sizing and Selling Code. An example for a lazy
      * loading group can be found in the consumer complaint dialog.
      * 
-     * Widgets inside a lazy loading group are not allowed to have value-references at
-     * all (doesn't matter if the other elements is a member of the same group or not).
-     * They are allowed to have filter-references to other elements of the same group but
-     * not to other elements outside of this group. If such a reference is needed it may
-     * be a good idea to include this widget in the lazy loading group.
-     * 
-     * On the other hand it is not a problem if widgets outside the group have a value-
-     * or filter-reference to a widget inside the group. This is actually the intended
-     * usage of a lazy loading group.
+     * The concrete implementation of the lazy_loading_group is done in the individual
+     * templates, consequently the behavior of such a group might vary in the different
+     * templates.
      * 
      * @uxon-property lazy_loading_group_id
 	 * @uxon-type string
