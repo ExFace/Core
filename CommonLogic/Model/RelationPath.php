@@ -2,6 +2,8 @@
 
 use exface\Core\Factories\RelationPathFactory;
 use exface\Core\Exceptions\Model\MetaRelationNotFoundError;
+use exface\Core\Exceptions\InvalidArgumentException;
+use exface\Core\Exceptions\OutOfRangeException;
 
 /**
  * The relation path object holds all relations needed to reach the end object from the start object. If attributes
@@ -115,19 +117,19 @@ class RelationPath implements \IteratorAggregate {
 	 */
 	public function get_end_object(){
 		if ($this->count_relations()){
-			return $this->get_relation($this->count_relations())->get_related_object();
+			return $this->get_relation_last()->get_related_object();
 		} else {
 			return $this->get_start_object();
 		}
 	}
 	
 	/**
-	 * Returns the nth relation in the path (starting with 1 for the first relation).
+	 * Returns the nth relation in the path (starting with 0 for the first relation).
 	 * @param integer $sequence_number
 	 * @return Relation
 	 */
-	public function get_relation($sequence_number){
-		return $this->get_relations()[$sequence_number-1];
+	public function get_relation($index){
+		return $this->get_relations()[$index];
 	}
 	
 	/**
@@ -135,7 +137,7 @@ class RelationPath implements \IteratorAggregate {
 	 * @return Relation
 	 */
 	public function get_relation_first(){
-		return $this->get_relation(1);
+		return $this->get_relation(0);
 	}
 	
 	/**
@@ -143,7 +145,7 @@ class RelationPath implements \IteratorAggregate {
 	 * @return Relation
 	 */
 	public function get_relation_last(){
-		return $this->get_relation($this->count_relations());	
+		return $this->get_relation($this->count_relations()-1);	
 	}
 	
 	public function count_relations(){
@@ -243,58 +245,76 @@ class RelationPath implements \IteratorAggregate {
 	}
 	
 	/**
-	 * DEPRECATED! Use trim() instead!
-	 * Cuts off the relation path leaving only the part between $cut_after_alias and $cut_before_alias
+	 * Returns a relation path, that $length of relations from this path starting with the relation at $start_index.
+	 * 
 	 * Examples:
-	 * relation_path_cut('ORDER__CUSTOMER__ADDRESS__TYPE__LABEL', 'CUSTOMER') = 'ADDRESS__TYPE__LABEL'
-	 * relation_path_cut('ORDER__CUSTOMER__ADDRESS__TYPE__LABEL', 'ORDER__CUSTOMER') = 'ADDRESS__TYPE__LABEL'
-	 * relation_path_cut('ORDER__CUSTOMER__ADDRESS__TYPE__LABEL', null, 'ADDRESS') = 'ORDER__CUSTOMER'
-	 * relation_path_cut('ORDER__CUSTOMER__ADDRESS__TYPE__LABEL', 'ORDER', 'TYPE') = 'CUSTOMER__ADDRESS'
+	 * ORDER__CUSTOMER__ADDRESS__TYPE__LABEL::subpath(2) = ADDRESS__TYPE__LABEL
+	 * ORDER__CUSTOMER__ADDRESS__TYPE__LABEL::subpath(0,2) = ORDER__CUSTOMER
+	 * ORDER__CUSTOMER__ADDRESS__TYPE__LABEL::subpath(0,-2) = 'ORDER__CUSTOMER__ADDRESS'
+	 * ORDER__CUSTOMER__ADDRESS__TYPE__LABEL::subpath(-2) = 'TYPE__LABEL'
+	 * 
 	 * @param string $relation_path
 	 * @param string $cut_before_alias
-	 * @return string
+	 * @return RelationPath
 	 */
-	public static function relaton_path_cut($relation_path, $cut_after_alias, $cut_before_alias = null){
-		$output = '';
-		if ($cut_after_rels = self::relation_path_parse($cut_after_alias)){
-			$cut_after_alias = array_shift($cut_after_rels);
+	public function get_subpath($start_index = 0, $length = null){
+		if ($start_index == 0 && is_null($length)){
+			return $this->copy();
+		}
+		
+		if (!is_null($length) && !is_numeric($length)){
+			throw new InvalidArgumentException('Non-numeric length for Relation::subpath($start_index, $length) given!');
+		}
+		
+		// Save the originally passed index for error reporting before doing calculations with it
+		$passed_index = $start_index;
+		
+		if ($start_index < 0){
+			$start_index = $this->count_relations() - $start_index;
+		}
+		
+		if ($start_index === $this->count_relations()){
+			// If the start index matches the end of the relation path, just return an empty path starting with the end object.
+			// No need for any further processing as the subpath would be empty in any case.
+			return new self($this->get_end_object());
+		} elseif ($start_index >= 0 && $start_index < $this->count_relations()) {
+			// If the start index fits in the range of relation keys, make the subpath start with the main object of the relation at the index
+			$subpath = new self($this->get_relation($start_index)->get_main_object());
 		} else {
-			$cut_after_rels = array();
+			throw new OutOfRangeException('Subpath starting with illegal index "' . $start_index . '" requested for relation path "' . $this->to_string() . '" with ' . $this->count_relations() . ' relations!');			
 		}
-		if ($rels = self::relation_path_parse($relation_path)){
-			foreach($rels as $rel){
-				if ($cut_after_alias) {
-					if ($rel === $cut_after_alias){
-						$cut_after_alias = array_shift($cut_after_rels);
-					}
-				} else {
-					if ($rel === $cut_before_alias){
-						break;
-					} else {
-						$output = self::relation_path_add($output, $rel);
-					}
-				}
-			}
+		
+		if (is_null($length)){
+			$end_index = $this->count_relations();
+		} elseif ($length < 0){
+			$end_index = $this->count_relations()-$length;
+		} else {
+			$end_index = $this->count_relations() > ($start_index+$length) ? $start_index+$length : $this->count_relations();
 		}
-		return $output;
+		
+		for ($i = $start_index; $i < $end_index; $i++){
+			$subpath->append_relation($this->get_relation($i));
+		}
+		
+		return $subpath;
 	}
 	
 	/**
-	 * Returns a new relation path cutting off subpathes left and right of the current path.
-	 * Examples:
-	 * relation_path_cut('ORDER__CUSTOMER__ADDRESS__TYPE__LABEL', 'CUSTOMER') = 'ADDRESS__TYPE__LABEL'
-	 * relation_path_cut('ORDER__CUSTOMER__ADDRESS__TYPE__LABEL', 'ORDER__CUSTOMER') = 'ADDRESS__TYPE__LABEL'
-	 * relation_path_cut('ORDER__CUSTOMER__ADDRESS__TYPE__LABEL', null, 'ADDRESS') = 'ORDER__CUSTOMER'
-	 * relation_path_cut('ORDER__CUSTOMER__ADDRESS__TYPE__LABEL', 'ORDER', 'TYPE') = 'CUSTOMER__ADDRESS'
+	 * Returns the numeric index of the first occurrence of the given relation in the path or FALSE if the relation was not found.
 	 * 
-	 * TODO Rewrite to get rid of the static string methods 
-	 * 
-	 * @param string $relation_path
-	 * @param string $cut_before_alias
-	 * @return string
+	 * @param Relation $relation
+	 * @param boolean $exact_match
+	 * @return integer|boolean
 	 */
-	public function trim(RelationPath $trim_left, RelationPath $trim_right){
-		return self::relaton_path_cut($this->to_string(), $trim_left->to_string(), ($trim_right->is_empty() ? $trim_right->to_string() : null));
+	public function get_index_of(Relation $relation, $exact_match = false){
+		foreach ($this->get_relations() as $index => $rel){
+			if ($exact_match && $rel->is_exactly($relation)){
+				return $index;
+			} elseif (!$exact_match && $rel->is($relation)){
+				return $index;
+			}
+		}
+		return false;
 	}
 	
 	/**

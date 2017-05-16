@@ -265,5 +265,32 @@ class Relation implements ExfaceClassInterface {
     public function is_one_to_one_relation(){
     	return $this->get_type() == self::RELATION_TYPE_ONE_TO_ONE ? true : false;
     }
+    
+    /**
+     * Returns TRUE if this relation equals the given relation or is derived (inherited) from it and FALSE otherwise.
+     * 
+     * This method will return TRUE for rel1::is(rel2) if rel1 belongs to object1 and was inherited by object2 to form
+     * rel2. These relations are the same (have the same definition and the same UID), but belong to different objects.
+     * The method is_exaclty() would return FALSE in this situation.
+     * 
+     * @param Relation $other_relation
+     * @return boolean
+     */
+    public function is(Relation $other_relation){
+    	return $this->get_id() === $other_relation->get_id() && $this->get_type() === $other_relation->get_type() ? true : false;
+    }
+    
+    /**
+     * Returns TRUE if this relation is exactly the same as the given one and belongs to the same object. Otherwise returns FALSE.
+     * @param Relation $other_relation
+     * @return boolean
+     */
+    public function is_exactly(Relation $other_relation){
+    	if ($this->is($other_relation) && $this->get_main_object()->is_exactly($other_relation->get_main_object())){
+    		return true;
+    	} else {
+    		return false;
+    	}
+    }
 }
 ?>

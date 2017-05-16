@@ -451,14 +451,25 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied {
 	}
 	
 	/**
-	 * Clones the attribute keeping the model and object
+	 * Creates an exact copy of the attribute
+	 * 
 	 * @return Attribute
 	 */
 	public function copy(){
+		return $this->rebase($this->get_relation_path()->copy());
+	}
+	
+	/**
+	 * Creates a copy of the attribute relative to a given relation path. This is usefull if you want to rebase an attribute.
+	 * 
+	 * @param RelationPath $path
+	 * @return \exface\Core\CommonLogic\Model\Attribute
+	 */
+	public function rebase(RelationPath $path){
 		$copy = clone $this;
 		
 		// Explicitly copy properties, that are objects themselves
-		$copy->set_relation_path($this->get_relation_path()->copy());
+		$copy->set_relation_path($path);
 		$copy->set_default_widget_uxon($this->get_default_widget_uxon()->copy());
 		return $copy;
 	}
