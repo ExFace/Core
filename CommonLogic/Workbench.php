@@ -2,6 +2,7 @@
 
 use exface\Core\CommonLogic\EventManager;
 use exface\Core\CommonLogic\Filemanager;
+use exface\Core\CommonLogic\Log\Log;
 use exface\Core\utils;
 use exface\Core\Factories\DataConnectorFactory;
 use exface\Core\Factories\CmsConnectorFactory;
@@ -99,7 +100,11 @@ class Workbench {
 		
 		// load the ui
 		$this->ui = new \exface\Core\CommonLogic\UiManager($this);
-		
+
+		// logger
+		$this->logger = Log::getErrorLogger($this);
+		Log::registerErrorLogger($this);
+
 		$this->started = true;
 	}
 	

@@ -148,9 +148,6 @@ class Logger implements LoggerInterface
      */
     public function log($level, $message, array $context = array(), iCanGenerateDebugWidgets $sender = null)
     {
-        if (!$this->handlers)
-            $this->pushHandler(new LogfileHandler("exface", "/home/tvw/public_html/alexa-ui/exface/exface/logs/core.log"), $level);
-
         foreach ($this->handlers as $handler)
             $handler->handle($level, $message, $context, $sender);
     }
