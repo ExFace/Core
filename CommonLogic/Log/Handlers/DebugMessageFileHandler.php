@@ -37,8 +37,13 @@ class DebugMessageFileHandler implements LogHandlerInterface {
 		$logger = new \Monolog\Logger("Stacktrace");
 		$logger->pushHandler(new CsvHandler($this->dir . "/" . $fileName, $this->minLogLevel));
 
-		$debugWidget = $sender->create_debug_widget($this->createDebugMessage());
-		$logger->log($level, $debugWidget->export_uxon_object()->to_json(), $this->prepareContext($context));
+		$debugWidgetData = "";
+		if ($sender) {
+			$debugWidget = $sender->create_debug_widget($this->createDebugMessage());
+			$debugWidgetData = $debugWidget->export_uxon_object()->to_json();
+		}
+			
+		$logger->log($level, $debugWidgetData, $this->prepareContext($context));
 	}
 
 	protected function prepareContext($context) {
