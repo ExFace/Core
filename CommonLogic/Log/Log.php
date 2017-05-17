@@ -47,8 +47,9 @@ class Log
 
 		$obj = $workbench->model()->get_object('exface.Core.LOG');
 		$relativePath = $obj->get_data_address();
+		$filename = $obj->get_data_address_property('BASE_FILE_NAME');
 
-		return $basePath . '/' . $relativePath;
+		return $basePath . '/' . $relativePath . '/' . $filename;
 	}
 
 	private static function getDetailsLogPath($workbench) {
