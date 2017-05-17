@@ -55,7 +55,7 @@ class Log
 	private static function getDetailsLogPath($workbench) {
 		$basePath = Filemanager::path_normalize($workbench->filemanager()->get_path_to_base_folder());
 
-		$obj = $workbench->model()->get_object('exface.Core.LOGDETAILS');
+		$obj = $workbench->model()->get_object('exface.Core.LOG_DETAILS');
 		$relativePath = $obj->get_data_address();
 
 		return $basePath . '/' . $relativePath;
@@ -79,7 +79,6 @@ class Log
 
 		    $minLogLevel = $workbench->get_config()->get_option('LOG.MINIMUM_LEVEL_TO_LOG');
 		    $maxDaysToKeep = $workbench->get_config()->get_option('LOG.MAX_DAYS_TO_KEEP');
-		    $detailsStaticFilenamePart = $workbench->get_config()->get_option('LOGDETAILS.STATIC_FILENAME_PART');
 
     		self::$errorLogHandlers["filelog"] = new FileLimitingLogHandler(
 			    new LogfileHandler("exface", "", $minLogLevel), // real file name is determined late by FileLimitingLogHandler
@@ -88,9 +87,9 @@ class Log
 		    );
 
 		    self::$errorLogHandlers["detaillog"] = new DirLimitingLogHandler(
-			    new DebugMessageFileHandler($detailsLogBasePath, $detailsStaticFilenamePart, $minLogLevel),
+			    new DebugMessageFileHandler($detailsLogBasePath, "", $minLogLevel),
 			    $detailsLogBasePath,
-			    $detailsStaticFilenamePart,
+			    "",
 			    $maxDaysToKeep
 		    );
 	    }
