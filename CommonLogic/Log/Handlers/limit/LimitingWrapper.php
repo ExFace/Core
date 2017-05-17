@@ -14,28 +14,29 @@ use exface\Core\Interfaces\LogHandlerInterface;
  * @package exface\Core\CommonLogic\Log\Handlers\rotation
  */
 abstract class LimitingWrapper implements LogHandlerInterface {
-	private $createCallback;
+	/** @var LogHandlerInterface $handler */
+	private $handler;
 
 	/**
 	 * LimitingWrapper constructor.
 	 *
-	 * @param Callable $createCallback callback function that create the underlying, "real" log handler
+	 * @param LogHandlerInterface $handler the "real" log handler
 	 */
-	function __construct(Callable $createCallback) {
-		$this->createCallback = $createCallback;
+	function __construct(LogHandlerInterface $handler) {
+		$this->handler = $handler;
 	}
 
 	public function handle($level, $message, array $context = array(), iCanGenerateDebugWidgets $sender = null) {
 		// check and possibly rotate
 		$this->limit();
 
-		$this->callLogger($this->createCallback, $level, $message, $context, $sender);
+		$this->callLogger($this->handler, $level, $message, $context, $sender);
 	}
 
 	/**
 	 * Create and call the underlying, "real" log handler.
 	 *
-	 * @param Callable $createLoggerCall callback function that create the underlying, "real" log handler
+	 * @param LogHandlerInterface $handler the "real" log handler
 	 * @param $level
 	 * @param $message
 	 * @param array $context
@@ -43,7 +44,7 @@ abstract class LimitingWrapper implements LogHandlerInterface {
 	 *
 	 * @return mixed
 	 */
-	protected abstract function callLogger(Callable $createLoggerCall, $level, $message, array $context = array(), iCanGenerateDebugWidgets $sender = null);
+	protected abstract function callLogger(LogHandlerInterface $handler, $level, $message, array $context = array(), iCanGenerateDebugWidgets $sender = null);
 
 	/**
 	 * Log file cleanup.
