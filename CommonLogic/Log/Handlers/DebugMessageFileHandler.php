@@ -3,11 +3,12 @@
 namespace exface\Core\CommonLogic\Log\Handlers;
 
 
+use exface\Core\CommonLogic\Log\Formatters\MessageOnlyFormatter;
 use exface\Core\Factories\UiPageFactory;
 use exface\Core\Interfaces\iCanGenerateDebugWidgets;
 use exface\Core\Interfaces\LogHandlerInterface;
 use exface\Core\Widgets\DebugMessage;
-use FemtoPixel\Monolog\Handler\CsvHandler;
+use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
 
 class DebugMessageFileHandler implements LogHandlerInterface {
@@ -29,21 +30,21 @@ class DebugMessageFileHandler implements LogHandlerInterface {
 	}
 
 	public function handle($level, $message, array $context = array(), iCanGenerateDebugWidgets $sender = null) {
-		$fileName = $context["id"] . $this->staticFilenamePart;
-		if (!$fileName) {
-			return;
-		}
-
-		$logger = new \Monolog\Logger("Stacktrace");
-		$logger->pushHandler(new CsvHandler($this->dir . "/" . $fileName, $this->minLogLevel));
-
-		$debugWidgetData = "";
 		if ($sender) {
+			$fileName = $context["id"] . $this->staticFilenamePart;
+			if (!$fileName) {
+				return;
+			}
+
+			$logger = new \Monolog\Logger("Stacktrace");
+			$handler = new StreamHandler($this->dir . "/" . $fileName, $this->minLogLevel);
+			$handler->setFormatter(new MessageOnlyFormatter());
+			$logger->pushHandler($handler);
+
 			$debugWidget = $sender->create_debug_widget($this->createDebugMessage());
 			$debugWidgetData = $debugWidget->export_uxon_object()->to_json();
+			$logger->log($level, $debugWidgetData);
 		}
-			
-		$logger->log($level, $debugWidgetData, $this->prepareContext($context));
 	}
 
 	protected function prepareContext($context) {
