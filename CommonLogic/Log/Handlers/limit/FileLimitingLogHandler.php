@@ -3,8 +3,10 @@
 namespace exface\Core\CommonLogic\Log\Handlers\limit;
 
 
+use exface\Core\CommonLogic\Log\Handlers\AbstractFileHandler;
 use exface\Core\CommonLogic\Log\Helpers\LogHelper;
 use exface\Core\Interfaces\iCanGenerateDebugWidgets;
+use exface\Core\Interfaces\LogHandlerInterface;
 
 /**
  * Log handler that uses the given createCallback to instantiate an underlying log handler that logs to a specific log
@@ -21,12 +23,12 @@ class FileLimitingLogHandler extends LimitingWrapper {
 	/**
 	 * DailyRotatingLogHandler constructor.
 	 *
-	 * @param Callable $createCallback callback function that create the underlying, "real" log handler
+	 * @param AbstractFileHandler $handler callback function that create the underlying, "real" log handler
 	 * @param string $filename base file name of the log file (date string is added to)
 	 * @param int $maxDays maximum number of daily versions of a log file
 	 */
-	function __construct(Callable $createCallback, $filename, $maxDays = 0) {
-		parent::__construct($createCallback);
+	function __construct(AbstractFileHandler $handler, $filename, $maxDays = 0) {
+		parent::__construct($handler);
 
 		$this->filename = $filename;
 		$this->maxDays  = $maxDays;
@@ -35,8 +37,9 @@ class FileLimitingLogHandler extends LimitingWrapper {
 		$this->dateFormat = 'Y-m-d';
 	}
 
-	protected function callLogger(Callable $createLoggerCall, $level, $message, array $context = array(), iCanGenerateDebugWidgets $sender = null) {
-		$createLoggerCall(LogHelper::getFilename($this->filename, $this->dateFormat, $this->filenameFormat))->handle($level, $message, $context, $sender);
+	protected function callLogger(LogHandlerInterface $handler, $level, $message, array $context = array(), iCanGenerateDebugWidgets $sender = null) {
+		$handler->setFilename(LogHelper::getFilename($this->filename, $this->dateFormat, $this->filenameFormat)); // AbstractFileHandler demanded by __construct
+		$handler->handle($level, $message, $context, $sender);
 	}
 
 	/**

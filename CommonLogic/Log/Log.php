@@ -81,16 +81,16 @@ class Log
 		    $detailsStaticFilenamePart = $workbench->get_config()->get_option('LOGDETAILS.STATIC_FILENAME_PART');
 
     		self::$errorLogHandlers["filelog"] = new FileLimitingLogHandler(
-			    function($filename) use ($minLogLevel) {
-				    return new LogfileHandler("exface", $filename, $minLogLevel);
-			    }, $coreLogFilePath, $maxDaysToKeep
+			    new LogfileHandler("exface", "", $minLogLevel), // real file name is determined late by FileLimitingLogHandler
+			    $coreLogFilePath,
+			    $maxDaysToKeep
 		    );
 
-		    // TODO tvw enable when log details are used
 		    self::$errorLogHandlers["detaillog"] = new DirLimitingLogHandler(
-			    function() use ($detailsLogBasePath, $detailsStaticFilenamePart, $minLogLevel) {
-				    return new DebugMessageFileHandler($detailsLogBasePath, $detailsStaticFilenamePart, $minLogLevel);
-			    }, $detailsLogBasePath, $detailsStaticFilenamePart, $maxDaysToKeep
+			    new DebugMessageFileHandler($detailsLogBasePath, $detailsStaticFilenamePart, $minLogLevel),
+			    $detailsLogBasePath,
+			    $detailsStaticFilenamePart,
+			    $maxDaysToKeep
 		    );
 	    }
 
