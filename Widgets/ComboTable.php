@@ -310,9 +310,10 @@ class ComboTable extends InputCombo implements iHaveChildren {
 		
 		if (!$data_sheet->is_empty()){
 			$this->set_prefill_data($data_sheet);
-			if ($data_sheet->get_meta_object()->is($this->get_meta_object())){
-				// If the prefill data is based on the same object, as the widget, simply look for the required attributes
-				// in the prefill data.
+			if ($data_sheet->get_meta_object()->is($this->get_meta_object())
+			&&  $data_sheet->get_columns()->get_by_expression($this->get_attribute_alias())){
+				// If the prefill data is based on the same object, as the widget and has a column matching for
+				// this widgets attribute_alias, simply look for all the required attributes in the prefill data.
 				$this->set_value($data_sheet->get_cell_value($this->get_attribute_alias(), 0));
 				
 				// Be carefull with the value text. If the combo stands for a relation, it can be retrieved from the prefill data,
