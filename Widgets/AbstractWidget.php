@@ -22,7 +22,6 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\Exceptions\UxonMapError;
-use exface\Core\CommonLogic\UiPage;
 
 /**
  * Basic ExFace widget
