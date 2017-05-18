@@ -25,8 +25,11 @@ class ShowDialogFromFile extends ShowDialog {
 
 		$filename = $this->get_input_data_sheet()->get_columns()->get_by_expression($this->get_file_path_attribute_alias())->get_cell_value(0);
 
-		$json = file_get_contents($basePath . '/' . $relativePath . '/' . $filename);
-		$widget = WidgetFactory::create_from_uxon($this->get_dialog_widget()->get_page(), UxonObject::from_json($json), $this->get_dialog_widget());
+		$completeFilename = $basePath . '/' . $relativePath . '/' . $filename;
+		if (file_exists($completeFilename)) {
+			$json   = file_get_contents($completeFilename);
+			$this->set_widget(WidgetFactory::create_from_uxon($this->get_dialog_widget()->get_page(), UxonObject::from_json($json), $this->get_dialog_widget()));
+		}
 
 		parent::perform();
 	}
