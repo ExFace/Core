@@ -1,4 +1,8 @@
-<?php namespace exface\Core\Interfaces;
+<?php
+
+namespace exface\Core\CommonLogic\Log;
+
+use exface\Core\Interfaces\iCanGenerateDebugWidgets;
 
 interface LoggerInterface extends \Psr\Log\LoggerInterface {
 	/**

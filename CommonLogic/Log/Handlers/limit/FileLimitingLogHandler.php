@@ -3,10 +3,10 @@
 namespace exface\Core\CommonLogic\Log\Handlers\limit;
 
 
-use exface\Core\CommonLogic\Log\Handlers\AbstractFileHandler;
+use exface\Core\CommonLogic\Log\Handlers\FileHandlerInterface;
 use exface\Core\CommonLogic\Log\Helpers\LogHelper;
+use exface\Core\CommonLogic\Log\LogHandlerInterface;
 use exface\Core\Interfaces\iCanGenerateDebugWidgets;
-use exface\Core\Interfaces\LogHandlerInterface;
 
 /**
  * Log handler that uses the given createCallback to instantiate an underlying log handler that logs to a specific log
@@ -23,11 +23,11 @@ class FileLimitingLogHandler extends LimitingWrapper {
 	/**
 	 * DailyRotatingLogHandler constructor.
 	 *
-	 * @param AbstractFileHandler $handler callback function that create the underlying, "real" log handler
+	 * @param FileHandlerInterface $handler callback function that create the underlying, "real" log handler
 	 * @param string $filename base file name of the log file (date string is added to)
 	 * @param int $maxDays maximum number of daily versions of a log file
 	 */
-	function __construct(AbstractFileHandler $handler, $filename, $maxDays = 0) {
+	function __construct(FileHandlerInterface $handler, $filename, $maxDays = 0) {
 		parent::__construct($handler);
 
 		$this->filename = $filename;

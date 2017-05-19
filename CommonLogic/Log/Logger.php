@@ -4,8 +4,6 @@ namespace exface\Core\CommonLogic\Log;
 
 use exface\Core\Exceptions\UnderflowException;
 use exface\Core\Interfaces\iCanGenerateDebugWidgets;
-use exface\Core\Interfaces\LoggerInterface;
-use exface\Core\Interfaces\LogHandlerInterface;
 
 class Logger implements LoggerInterface
 {
