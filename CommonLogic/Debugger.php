@@ -1,5 +1,6 @@
 <?php namespace exface\Core\CommonLogic;
 
+use exface\Core\CommonLogic\Log\LoggerInterface;
 use exface\Core\Interfaces\DebuggerInterface;
 use Symfony\Component\Debug\Debug;
 use Symfony\Component\Debug\ExceptionHandler;
@@ -12,7 +13,12 @@ use Symfony\Component\VarDumper\Dumper\CliDumper;
 class Debugger implements DebuggerInterface {
 	
 	private $prettify_errors = false;
-	
+	private $logger = null;
+
+	function __construct(LoggerInterface $logger) {
+		$this->logger = $logger;
+	}
+
 	/**
 	 * 
 	 * {@inheritDoc}
@@ -55,6 +61,12 @@ class Debugger implements DebuggerInterface {
 		//Debug::enable(E_ALL & ~E_NOTICE);
 		ExceptionHandler::register();
 		ErrorHandler::register();
+
+		// register logger
+		$handler = new \Monolog\ErrorHandler($this->logger);
+		$handler->registerErrorHandler([], false);
+		$handler->registerExceptionHandler();
+		$handler->registerFatalHandler();
 	}
 	
 	/**

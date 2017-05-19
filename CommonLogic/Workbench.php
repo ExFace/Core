@@ -63,8 +63,11 @@ class Workbench {
 	}
 	
 	public function start(){
+		// logger
+		$this->logger = Log::getErrorLogger($this);
+
 		// Start the error handler
-		$dbg = new Debugger();
+		$dbg = new Debugger($this->logger);
 		$this->set_debugger($dbg);
 		if ($this->get_config()->get_option('DEBUG.PRETTIFY_ERRORS')){
 			$dbg->set_prettify_errors(true);
@@ -99,10 +102,6 @@ class Workbench {
 		
 		// load the ui
 		$this->ui = new \exface\Core\CommonLogic\UiManager($this);
-
-		// logger
-		$this->logger = Log::getErrorLogger($this);
-		Log::registerErrorLogger($this);
 
 		$this->started = true;
 	}
