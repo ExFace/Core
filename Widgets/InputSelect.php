@@ -133,7 +133,7 @@ class InputSelect extends Input implements iSupportMultiSelect {
 		if (!$this->is_required() 
 		&& !array_key_exists('', $this->selectable_options)
 		&& !($this->is_disabled() && $this->get_value())){
-			$options = array_merge(array('' => $this->translate('WIDGET.SELECT_NONE')), $this->selectable_options);
+			$options = array('' => $this->translate('WIDGET.SELECT_NONE')) + $this->selectable_options;
 		} else {
 			$options = $this->selectable_options;
 		}
@@ -169,7 +169,12 @@ class InputSelect extends Input implements iSupportMultiSelect {
 					}
 				}
 			} else {
-				$options = array_combine($array_or_object, $array_or_object);
+				// See if it is an assotiative array
+				if (array_keys($array_or_object)[0] === 0 && array_keys($array_or_object)[count($array_or_object)-1] == (count($array_or_object)-1)){
+					$options = array_combine($array_or_object, $array_or_object);
+				} else {
+					$options = $array_or_object;
+				}
 			}
 		} else {
 			throw new WidgetPropertyInvalidValueError($this, 'Wrong data type for possible values of ' . $this->get_widget_type() . '! Expecting array or object, ' . gettype($array_or_object) . ' given.', '6T91S9G');
