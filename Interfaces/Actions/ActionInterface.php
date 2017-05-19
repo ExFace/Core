@@ -307,6 +307,28 @@ interface ActionInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
 	 * @return ActionInterface
 	 */
 	public function set_autocommit($true_or_false);
+	
+	/**
+	 * Returns the text for the result message if one was set in the UXON description of the action and NULL otherwise.
+	 * @return string
+	 */
+	public function get_result_message_text();
+	
+	/**
+	 * Overrides the auto-generated result message with the given text. The text can contain placeholders.
+	 * 
+	 * Placeholders can be used for any column in the result data sheet of this action: e.g. for a CreateObject action
+	 * a the follwoing text could be used: "Object [#LABEL#] with id [#UID#] created". If the result sheet contains
+	 * multiple rows, the message text will be repeated for every row with the placeholders being replaced from that
+	 * row.
+	 * 
+	 * @uxon-property result_message_text
+	 * @uxon-type string
+	 * 
+	 * @param string $value
+	 * @return \exface\Core\CommonLogic\AbstractAction
+	 */
+	public function set_result_message_text($value); 
 }
 
 ?>
