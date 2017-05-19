@@ -19,7 +19,6 @@ use exface\Core\Interfaces\DebuggerInterface;
 use exface\Core\CoreApp;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\NameResolverInterface;
-use exface\Core\Interfaces\LoggerInterface;
 
 class Workbench {
 	private $started = false;
@@ -321,7 +320,7 @@ class Workbench {
 	
 	/**
 	 * 
-	 * @return \exface\Core\Interfaces\LoggerInterface
+	 * @return \exface\Core\CommonLogic\Log\LoggerInterface
 	 */
 	public function get_logger(){
 		return $this->logger;

@@ -4,9 +4,9 @@ namespace exface\Core\CommonLogic\Log\Handlers;
 
 
 use exface\Core\CommonLogic\Log\Formatters\MessageOnlyFormatter;
+use exface\Core\CommonLogic\Log\LogHandlerInterface;
 use exface\Core\Factories\UiPageFactory;
 use exface\Core\Interfaces\iCanGenerateDebugWidgets;
-use exface\Core\Interfaces\LogHandlerInterface;
 use exface\Core\Widgets\DebugMessage;
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
