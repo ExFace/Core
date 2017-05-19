@@ -18,6 +18,10 @@ use exface\Core\Factories\WidgetLinkFactory;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
+use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
+use exface\Core\Factories\DataSheetFactory;
+use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\Interfaces\Widgets\iHaveContextualHelp;
 
 /**
  * Data is the base for all widgets displaying tabular data.
@@ -28,7 +32,7 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
  * @author Andrej Kabachnik
  *
  */
-class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iHaveButtons, iHaveFilters, iSupportLazyLoading {
+class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iHaveButtons, iHaveFilters, iSupportLazyLoading, iHaveContextualHelp {
 	// properties
 	private $paginate = true;
 	private $paginate_page_size = null;
@@ -63,9 +67,12 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 	 * @var string
 	 */
 	private $empty_text = null;
+	private $help_button = null;
+	private $hide_help_button = false;
 	
 	protected function init(){
 		parent::init();
+		// Add the main column group
 		if (count($this->get_column_groups()) == 0){
 			$this->add_column_group($this->get_page()->create_widget('DataColumnGroup', $this));
 		}
@@ -516,7 +523,8 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 	 */
 	public function add_button(Button $button_widget){
 		$button_widget->set_parent($this);
-		$button_widget->set_meta_object_id($this->get_meta_object()->get_id());
+		// FIXME remove if everything OK (18.05.2017)
+		//$button_widget->set_meta_object_id($this->get_meta_object()->get_id());
 		$this->buttons[] = $button_widget;
 	}
 	
@@ -890,6 +898,14 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 	
 	public function get_children(){
 		$children = array_merge($this->get_filters(), $this->get_buttons(), $this->get_columns());
+		
+		// Add the help button, so pages will be able to find it when dealing with the ShowHelpDialog action.
+		// IMPORTANT: Add the help button to the children only if it is not hidden. This is needed to hide the button in 
+		// help widgets themselves, because otherwise they would produce their own help widgets, with - in turn - even
+		// more help widgets, resulting in an infinite loop. 
+		if (!$this->get_hide_help_button()){
+			$children[] = $this->get_help_button();
+		}
 		return $children;
 	}
 	
@@ -1279,6 +1295,104 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 		$this->lazy_loading_group_id = $value;
 		return $this;
 	}
+	
+	public function get_help_button(){
+		if (is_null($this->help_button)){
+			$this->help_button = WidgetFactory::create($this->get_page(), $this->get_button_widget_type(), $this);
+			$this->help_button->set_action_alias('exface.Core.ShowHelpDialog');
+			$this->help_button->set_hidden(true);
+		}
+		return $this->help_button;
+	}
+	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\Widgets\iHaveContextualHelp::get_help_widget()
+	 */
+	public function get_help_widget(iContainOtherWidgets $help_container){
+		/**
+		 * @var DataTable $table
+		 */
+		$table = WidgetFactory::create($help_container->get_page(), 'DataTable', $help_container);
+		$object = $this->get_workbench()->model()->get_object('exface.Core.USER_HELP_ELEMENT');
+		$table->set_meta_object($object);
+		$table->set_caption($this->get_widget_type(). ($this->get_caption() ? '"' . $this->get_caption() . '"' : ''));
+		$table->add_column($table->create_column_from_attribute($object->get_attribute('TITLE')));
+		$table->add_column($table->create_column_from_attribute($object->get_attribute('DESCRIPTION')));
+		$table->set_lazy_loading(false);
+		$table->set_paginate(false);
+		$table->set_nowrap(false);
+		$table->set_group_rows(UxonObject::from_array(array('group_by_column_id' => 'GROUP')));
+		
+		// IMPORTANT: make sure the help table does not have a help button itself, because that would result in having
+		// infinite children!
+		$table->set_hide_help_button(true);
+		
+		$data_sheet = DataSheetFactory::create_from_object($object);
+		
+		foreach ($this->get_filters() as $filter){
+			$row = array('TITLE' => $filter->get_caption(), 'GROUP' => $this->translate('WIDGET.DATA.HELP.FILTERS'));
+			if ($attr = $filter->get_attribute()){
+				$row = array_merge($row, $this->get_help_row_from_attribute($attr));
+			}
+			$data_sheet->add_row($row);
+		}
+		
+		foreach ($this->get_columns() as $col){
+			$row = array('TITLE' => $col->get_caption(), 'GROUP' => $this->translate('WIDGET.DATA.HELP.COLUMNS'));
+			if ($attr = $col->get_attribute()){
+				$row = array_merge($row, $this->get_help_row_from_attribute($attr));
+			}
+			$data_sheet->add_row($row);
+		}
+		
+		$table->prefill($data_sheet);
+		
+		$help_container->add_widget($table);
+		return $help_container;
+	}
+	
+	/**
+	 * Returns a row (assotiative array) for a data sheet with exface.Core.USER_HELP_ELEMENT filled with information about
+	 * the given attribute. The inforation is derived from the attributes meta model.
+	 * 
+	 * @param Attribute $attr
+	 * @return string[]
+	 */
+	protected function get_help_row_from_attribute(Attribute $attr){
+		$row = array();
+		$row['DESCRIPTION'] = $attr->get_short_description() ? rtrim(trim($attr->get_short_description()), ".") . '.' : '';
+		
+		if (!$attr->get_relation_path()->is_empty()){
+			$row['DESCRIPTION'] .=  $attr->get_object()->get_short_description() ? ' ' . rtrim($attr->get_object()->get_short_description(), ".") . '.' : '';
+		}
+		return $row;
+	}
+	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\Widgets\iHaveContextualHelp::get_hide_help_button()
+	 */
+	public function get_hide_help_button() {
+		return $this->hide_help_button;
+	}
+	
+	/**
+	 * Set to TRUE to remove the contextual help button. Default: FALSE.
+	 * 
+	 * @uxon-property hide_help_button
+	 * @uxon-type boolean
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\Widgets\iHaveContextualHelp::set_hide_help_button()
+	 */
+	public function set_hide_help_button($value) {
+		$this->hide_help_button = BooleanDataType::parse($value);
+		return $this;
+	}
+	  
 }
 
 ?>

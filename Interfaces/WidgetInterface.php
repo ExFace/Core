@@ -9,6 +9,7 @@ use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Widgets\Container;
 
 interface WidgetInterface extends ExfaceClassInterface {
 	

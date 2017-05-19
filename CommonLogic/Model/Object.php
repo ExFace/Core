@@ -618,7 +618,8 @@ class Object implements ExfaceClassInterface, AliasInterface {
 	}
 	
 	/**
-	 * Returns an assotiative array of all data source specific properties of the object
+	 * Returns a UXON object with data source specific properties of the object
+	 * @return UxonObject
 	 */
 	public function get_data_address_properties() {
 		if (is_null($this->data_address_properties)){
@@ -628,7 +629,7 @@ class Object implements ExfaceClassInterface, AliasInterface {
 	}
 	
 	/**
-	 * Returns the value of a data source specifi object property specified by it's id
+	 * Returns the value of a data source specific object property specified by it's id
 	 * @param string $id
 	 */
 	public function get_data_address_property($id){
@@ -636,8 +637,19 @@ class Object implements ExfaceClassInterface, AliasInterface {
 	}
 	
 	/**
+	 * Sets the value of a data address property specified by it's id
+	 * @param string $id
+	 * @param string $value
+	 * @return Object
+	 */
+	public function set_data_address_property($id, $value){
+		$this->get_data_address_properties()->set_property($id, $value);
+		return $this;
+	}
+	
+	/**
 	 * @param UxonObject $uxon
-	 * @return Object;
+	 * @return Object
 	 */
 	public function set_data_address_properties(UxonObject $uxon){
 		$this->data_address_properties = $uxon;

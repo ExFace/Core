@@ -1171,6 +1171,19 @@
             "ERROR_TEXT": "Data connection not found",
             "DESCRIPTION": "",
             "LABEL": "exface.Core.6V6EAL3"
+        },
+        {
+            "CREATED_ON": "2017-05-19 08:19:23",
+            "MODIFIED_ON": "2017-05-19 08:19:23",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e73c6bd29ca5e38820e4b318306b9a",
+            "FULL_ERROR_CODE": "exface.Core.6V9XDV4",
+            "APP": "0x31000000000000000000000000000000",
+            "ERROR_CODE": "6V9XDV4",
+            "ERROR_TEXT": "Cannot render contextual help",
+            "DESCRIPTION": "",
+            "LABEL": "exface.Core.6V9XDV4"
         }
     ],
     "totals_rows": [],
