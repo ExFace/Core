@@ -77,50 +77,69 @@ trait ExceptionTrait {
 		$debug_widget = WidgetFactory::create($page, 'ErrorMessage');
 		$debug_widget->set_meta_object($page->get_workbench()->model()->get_object('exface.Core.ERROR'));
 		
+		$debug_widget = $this->create_debug_widget($debug_widget);
+		
+		// Save the widget in case create_widget() is called again
+		$this->exception_widget = $debug_widget;
+		
+		return $debug_widget;
+	}
+	
+	/**
+	 *
+	 * {@inheritDoc}
+	 * @see \exface\Core\Interfaces\iCanGenerateDebugWidgets::create_debug_widget()
+	 */
+	public function create_debug_widget(DebugMessage $debug_widget){
+		$page = $debug_widget->get_page();
 		// Add a tab with a user-friendly error description
-		$error_tab = $debug_widget->create_tab();
-		$error_tab->set_caption($debug_widget->get_workbench()->get_core_app()->get_translator()->translate('ERROR.CAPTION'));
-		if ($this->get_alias()){
-			$error_ds = $this->get_error_data($page->get_workbench(), $this->get_alias());
-			$error_heading = WidgetFactory::create($page, 'TextHeading', $error_tab)
+		if ($debug_widget->get_child('error_tab') === false){
+			$error_tab = $debug_widget->create_tab();
+			$error_tab->set_id('error_tab');
+			$error_tab->set_caption($debug_widget->get_workbench()->get_core_app()->get_translator()->translate('ERROR.CAPTION'));
+			if ($this->get_alias()){
+				$error_ds = $this->get_error_data($page->get_workbench(), $this->get_alias());
+				$error_heading = WidgetFactory::create($page, 'TextHeading', $error_tab)
 				->set_heading_level(2)
 				->set_value($debug_widget->get_workbench()->get_core_app()->get_translator()->translate('ERROR.CAPTION') . ' ' . $this->get_alias() . ': ' . $error_ds->get_cell_value('ERROR_TEXT', 0));
-			$error_tab->add_widget($error_heading);
-			$error_text = WidgetFactory::create($page, 'Text', $error_tab)
+				$error_tab->add_widget($error_heading);
+				$error_text = WidgetFactory::create($page, 'Text', $error_tab)
 				->set_value($this->getMessage());
-			$error_tab->add_widget($error_text);
-			$error_descr = WidgetFactory::create($page, 'Text', $error_tab)
+				$error_tab->add_widget($error_text);
+				$error_descr = WidgetFactory::create($page, 'Text', $error_tab)
 				->set_attribute_alias('DESCRIPTION');
-			$error_tab->add_widget($error_descr);
-			$error_tab->prefill($error_ds);
-		} else {
-			$error_heading = WidgetFactory::create($page, 'TextHeading', $error_tab)
-			->set_heading_level(2)
-			->set_value($this->getMessage());
-			$error_tab->add_widget($error_heading);
+				$error_tab->add_widget($error_descr);
+				$error_tab->prefill($error_ds);
+			} else {
+				$error_heading = WidgetFactory::create($page, 'TextHeading', $error_tab)
+				->set_heading_level(2)
+				->set_value($this->getMessage());
+				$error_tab->add_widget($error_heading);
+			}
+			$debug_widget->add_tab($error_tab);
 		}
-		$debug_widget->add_tab($error_tab);
 		
 		// Add a tab with the exception printout
-		$stacktrace_tab = $debug_widget->create_tab();
-		$stacktrace_tab->set_caption($debug_widget->get_workbench()->get_core_app()->get_translator()->translate('ERROR.STACKTRACE_CAPTION'));
-		$stacktrace_widget = WidgetFactory::create($page, 'Html', $stacktrace_tab);
-		$stacktrace_tab->add_widget($stacktrace_widget);
-		$stacktrace_widget->set_value($page->get_workbench()->CMS()->sanitize_error_output($page->get_workbench()->get_debugger()->print_exception($this)));
-		$debug_widget->add_tab($stacktrace_tab);
+		if ($debug_widget->get_child('stacktrace_tab') === false){
+			$stacktrace_tab = $debug_widget->create_tab();
+			$stacktrace_tab->set_id('stacktrace_tab');
+			$stacktrace_tab->set_caption($debug_widget->get_workbench()->get_core_app()->get_translator()->translate('ERROR.STACKTRACE_CAPTION'));
+			$stacktrace_widget = WidgetFactory::create($page, 'Html', $stacktrace_tab);
+			$stacktrace_tab->add_widget($stacktrace_widget);
+			$stacktrace_widget->set_value($page->get_workbench()->CMS()->sanitize_error_output($page->get_workbench()->get_debugger()->print_exception($this)));
+			$debug_widget->add_tab($stacktrace_tab);
+		}
 		
 		// Add a tab with the request printout
-		if ($page->get_workbench()->get_config()->get_option('DEBUG.SHOW_REQUEST_DUMP')){
+		if ($page->get_workbench()->get_config()->get_option('DEBUG.SHOW_REQUEST_DUMP') && $debug_widget->get_child('request_tab') === false){
 			$request_tab = $debug_widget->create_tab();
+			$request_tab->set_id('request_tab');
 			$request_tab->set_caption($page->get_workbench()->get_core_app()->get_translator()->translate('ERROR.REQUEST_CAPTION'));
 			$request_widget = WidgetFactory::create($page, 'Html');
 			$request_tab->add_widget($request_widget);
 			$request_widget->set_value('<pre>' . $page->get_workbench()->get_debugger()->print_variable($_REQUEST) . '</pre>');
 			$debug_widget->add_tab($request_tab);
 		}
-		
-		// Add extra tabs from current exception
-		$debug_widget = $this->create_debug_widget($debug_widget);
 		
 		// Recursively enrich the error widget with information from previous exceptions
 		if ($prev = $this->getPrevious()){
@@ -138,9 +157,6 @@ trait ExceptionTrait {
 			}
 		}
 		
-		// Save the widget in case create_widget() is called again
-		$this->exception_widget = $debug_widget;
-		
 		return $debug_widget;
 	}
 	
@@ -154,15 +170,6 @@ trait ExceptionTrait {
 			$ds->data_read();
 		}
 		return $ds;
-	}
-	
-	/**
-	 *
-	 * {@inheritDoc}
-	 * @see \exface\Core\Interfaces\iCanGenerateDebugWidgets::create_debug_widget()
-	 */
-	public function create_debug_widget(DebugMessage $debug_widget){
-		return $debug_widget;
 	}
 	
 	/**

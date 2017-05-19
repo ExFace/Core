@@ -389,7 +389,7 @@ interface WidgetInterface extends ExfaceClassInterface {
 	 *
 	 * @return \exface\Core\CommonLogic\UxonObject|\exface\Core\CommonLogic\UxonObject
 	 */
-	public function get_original_uxon_object();
+	public function export_uxon_object_original();
 	
 }
 ?>

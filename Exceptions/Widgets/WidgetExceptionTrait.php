@@ -14,7 +14,7 @@ use exface\Core\Factories\WidgetFactory;
 trait WidgetExceptionTrait {
 
 	use ExceptionTrait {
-		create_widget as create_parent_widget;
+		create_debug_widget as parent_create_debug_widget;
 	}
 
 	private $widget = null;
@@ -50,16 +50,17 @@ trait WidgetExceptionTrait {
 	}
 	
 	public function create_debug_widget(DebugMessage $debug_widget){
-		if ($debug_widget->get_page()->get_widget('UXON', $debug_widget)){
-			return $debug_widget;
+		$debug_widget = $this->parent_create_debug_widget($debug_widget);		
+		if ($debug_widget->get_child('widget_uxon_tab') === false){
+			$page = $debug_widget->get_page();
+			$uxon_tab = $debug_widget->create_tab();
+			$uxon_tab->set_id('widget_uxon_tab');
+			$uxon_tab->set_caption('Widget UXON');
+			$request_widget = WidgetFactory::create($page, 'Html');
+			$uxon_tab->add_widget($request_widget);
+			$request_widget->set_value('<pre>' . (!$this->get_widget()->export_uxon_object_original()->is_empty() ? $this->get_widget()->export_uxon_object_original()->to_json(true) : $this->get_widget()->export_uxon_object()->to_json(true)) . '</pre>');
+			$debug_widget->add_tab($uxon_tab);
 		}
-		$page = $debug_widget->get_page();
-		$uxon_tab = $debug_widget->create_tab();
-		$uxon_tab->set_caption('UXON');
-		$request_widget = WidgetFactory::create($page, 'Html');
-		$uxon_tab->add_widget($request_widget);
-		$request_widget->set_value('<pre>' . $this->get_widget()->export_uxon_object()->to_json(true) . '</pre>');
-		$debug_widget->add_tab($uxon_tab);
 		return $debug_widget;
 	}
 

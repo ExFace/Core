@@ -54,7 +54,7 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren {
 	private $id_specified_by_user = false;
 	private $data_connection_alias_specified_by_user = NULL;
 	private $prefill_data = null;
-	private $uxon = null;
+	private $uxon_original = null;
 	private $hide_caption = false;
 	private $page = null;
 	private $do_not_prefill = false;
@@ -103,7 +103,11 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren {
 	 */
 	function import_uxon_object(\stdClass $source){
 		$uxon = UxonObject::from_anything($source);
-		$this->uxon = $uxon->copy();
+		
+		// Save the original UXON description
+		$this->uxon_original = $uxon->copy();
+		
+		// Now do the actual importing
 		// First look for an object alias. It must be assigned before the rest because many other properties depend on having the right object
 		if ($uxon->has_property('object_alias')){
 			$this->set_object_alias($uxon->get_property('object_alias'));
@@ -127,20 +131,11 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren {
 	}
 	
 	public function export_uxon_object(){
-		if (!is_null($this->uxon)){
-			return $this->uxon;
-		} else {
-			return $this->generate_uxon_object();
+		$uxon = $this->export_uxon_object_original();
+		
+		if ($this->get_id_specified()){
+			$uxon->set_property('id', $this->get_id());
 		}
-	}
-	
-	/**
-	 * 
-	 * @return \exface\Core\CommonLogic\UxonObject
-	 */
-	public function generate_uxon_object(){
-		$uxon = new UxonObject();
-		$uxon->set_property('id', $this->get_id());
 		$uxon->set_property('widget_type', $this->get_widget_type());
 		$uxon->set_property('object_alias', $this->get_meta_object()->get_alias_with_namespace());
 		if (!is_null($this->get_caption())){
@@ -170,11 +165,11 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren {
 	/**
 	 * 
 	 * {@inheritDoc}
-	 * @see \exface\Core\Interfaces\WidgetInterface::get_original_uxon_object()
+	 * @see \exface\Core\Interfaces\WidgetInterface::export_uxon_object_original()
 	 */
-	public function get_original_uxon_object(){
-		if ($this->uxon instanceof UxonObject){
-			return $this->uxon;
+	public function export_uxon_object_original(){
+		if ($this->uxon_original instanceof UxonObject){
+			return $this->uxon_original;
 		} else {
 			return new UxonObject();
 		}

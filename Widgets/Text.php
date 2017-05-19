@@ -299,8 +299,13 @@ class Text extends AbstractWidget implements iShowSingleAttribute, iHaveValue, i
 		return $this;
 	}
 	
-	public function generate_uxon_object(){
-		$uxon = parent::generate_uxon_object();
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Widgets\AbstractWidget::export_uxon_object()
+	 */
+	public function export_uxon_object(){
+		$uxon = parent::export_uxon_object();
 		if (!is_null($this->empty_text)){
 			$uxon->set_property('empty_text', $this->empty_text);
 		}

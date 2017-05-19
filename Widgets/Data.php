@@ -640,7 +640,14 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 		return true;
 	}
 	
-	public function create_filter_widget($attribute_alias, \stdClass $uxon_object = null){
+	public function create_filter_widget($attribute_alias = null, \stdClass $uxon_object = null){
+		if (is_null($attribute_alias)){
+			if ($uxon_object->attribute_alias){
+				$attribute_alias = $uxon_object->attribute_alias;
+			} elseif ($uxon_object->widget && $uxon_object->widget->attribute_alias) {
+				$attribute_alias = $uxon_object->widget->attribute_alias;
+			}
+		}
 		// a filter can only be applied, if the attribute alias is specified and the attribute exists
 		if (!$attribute_alias) throw new WidgetPropertyInvalidValueError($this, 'Cannot create a filter for an empty attribute alias in widget "' . $this->get_id() . '"!', '6T91AR9');
 		try {
@@ -665,10 +672,9 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 		}
 		
 		$filter = $this->get_page()->create_widget('Filter', $this);
-		$filter_input = WidgetFactory::create_from_uxon($page, $uxon, $filter);
+		$filter->set_comparator($comparator);		
+		$filter->set_widget(WidgetFactory::create_from_uxon($page, $uxon, $filter));
 		
-		$filter->set_widget($filter_input);
-		$filter->set_comparator($comparator);
 		
 		return $filter;
 	}
@@ -1391,6 +1397,43 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 	public function set_hide_help_button($value) {
 		$this->hide_help_button = BooleanDataType::parse($value);
 		return $this;
+	}
+	
+	public function export_uxon_object(){
+		$uxon = parent::export_uxon_object();
+		
+		$uxon->set_property('paginate', $this->get_paginate());
+		$uxon->set_property('paginate_page_size', $this->get_paginate_page_size());
+		$uxon->set_property('aggregate_by_attribute_alias', $this->get_aggregate_by_attribute_alias());
+		$uxon->set_property('lazy_loading', $this->get_lazy_loading());
+		$uxon->set_property('lazy_loading_action', $this->get_lazy_loading_action());
+		$uxon->set_property('lazy_loading_group_id', $this->get_lazy_loading_group_id());
+		
+		$col_groups = array();
+		foreach ($this->get_column_groups() as $col_group){
+			$col_groups[] = $col_group->export_uxon_object();
+		}
+		$uxon->set_property('columns', $col_groups);
+		
+		$buttons = array();
+		foreach ($this->get_buttons() as $button){
+			$buttons[] = $button->export_uxon_object();
+		}
+		$uxon->set_property('buttons', $buttons);
+		
+		$filters = array();
+		foreach ($this->get_filters() as $filter){
+			$filters[] = $filter->export_uxon_object();
+		}
+		$uxon->set_property('filters', $filters);
+		
+		$uxon->set_property('sorters', $this->get_sorters());
+		
+		if ($this->get_refresh_with_widget()){
+			$uxon->set_property('refresh_with_widget', $this->get_refresh_with_widget()->export_uxon_object());
+		}
+		
+		return $uxon;
 	}
 	  
 }

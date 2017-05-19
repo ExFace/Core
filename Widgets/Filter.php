@@ -5,6 +5,7 @@ use exface\Core\CommonLogic\Model\Attribute;
 use exface\Core\Interfaces\Widgets\iCanBeRequired;
 use exface\Core\Interfaces\Widgets\iHaveValue;
 use exface\Core\Interfaces\Widgets\iTakeInput;
+use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 
 /**
  * A filter is a wrapper widget, which typically consist of one or more input widgets. The purpose of filters is to enable the user to
@@ -17,7 +18,7 @@ use exface\Core\Interfaces\Widgets\iTakeInput;
  * @author Andrej Kabachnik
  *
  */
-class Filter extends Container implements iCanBeRequired {
+class Filter extends Container implements iCanBeRequired, iShowSingleAttribute {
 	private $widget = null;
 	private $comparator = null;
 	private $required = null;
@@ -105,30 +106,56 @@ class Filter extends Container implements iCanBeRequired {
 		return $this->get_widget()->get_attribute();
 	}
 	
+	/**
+	 * 
+	 * @return unknown
+	 */
 	public function get_attribute_alias(){
 		return $this->get_widget()->get_attribute_alias();
 	}
 	
-	/*public function get_meta_object(){
-		return $this->get_widget()->get_meta_object();
+	/**
+	 * 
+	 * @return \exface\Core\Widgets\Filter
+	 */
+	public function set_attribute_alias($value){
+		$this->get_widget()->set_attribute_alias($value);
+		return $this;
 	}
 	
-	public function get_meta_object_id(){
-		return $this->get_widget()->get_meta_object_id();
-	}*/
-	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Widgets\AbstractWidget::get_value()
+	 */
 	public function get_value(){
 		return $this->get_widget()->get_value();
 	}
 	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Widgets\AbstractWidget::get_value_expression()
+	 */
 	public function get_value_expression(){
 		return $this->get_widget()->get_value_expression();
 	}
 	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Widgets\AbstractWidget::set_value()
+	 */
 	public function set_value($value){
-		return $this->get_widget()->set_value($value);
+		$this->get_widget()->set_value($value);
+		return $this;
 	}
 	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Widgets\AbstractWidget::get_caption()
+	 */
 	public function get_caption(){
 		return $this->get_widget()->get_caption();
 	}
@@ -196,6 +223,14 @@ class Filter extends Container implements iCanBeRequired {
 	public function set_empty_text($value){
 		$this->get_widget()->set_empty_text($value);
 		return $this;
+	}
+	
+	public function export_uxon_object(){
+		$uxon = parent::export_uxon_object();
+		$uxon->set_property('comparator', $this->get_comparator());
+		$uxon->set_property('required', $this->is_required());
+		$uxon->set_property('widget', $this->get_widget()->export_uxon_object());
+		return $uxon;
 	}
 }
 ?>

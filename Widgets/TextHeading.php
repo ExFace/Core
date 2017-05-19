@@ -27,8 +27,13 @@ class TextHeading extends Text {
 		return $this;
 	} 
 	
-	public function generate_uxon_object(){
-		$uxon = parent::generate_uxon_object();
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Widgets\Text::export_uxon_object()
+	 */
+	public function export_uxon_object(){		
+		$uxon = parent::export_uxon_object();
 		if (!is_null($this->heading_level)){
 			$uxon->set_property('heading_level', $this->get_heading_level());
 		}

@@ -160,8 +160,8 @@ class ComboTable extends InputCombo implements iHaveChildren {
 	
 	protected function get_table_uxon(){
 		if (is_null($this->table_uxon)){
-			if ($this->get_original_uxon_object()->has_property('table')){
-				$this->table_uxon = $this->get_original_uxon_object()->get_property('table');
+			if ($this->export_uxon_object_original()->has_property('table')){
+				$this->table_uxon = $this->export_uxon_object_original()->get_property('table');
 			} else {
 				$this->table_uxon = new UxonObject();
 			}

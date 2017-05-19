@@ -15,6 +15,11 @@ use exface\Core\Factories\WidgetFactory;
  *
  */
 class UxonParserError extends RuntimeException implements UxonExceptionInterface {
+	
+	use ExceptionTrait {
+		create_debug_widget as parent_create_debug_widget;
+	}
+	
 	private $uxon = null;
 	
 	/**
@@ -40,14 +45,17 @@ class UxonParserError extends RuntimeException implements UxonExceptionInterface
 	}
 	
 	public function create_debug_widget(DebugMessage $debug_widget){
-		$page = $debug_widget->get_page();
-		$uxon_tab = $debug_widget->create_tab();
-		$uxon_tab->set_id('UXON');
-		$uxon_tab->set_caption('UXON');
-		$request_widget = WidgetFactory::create($page, 'Html');
-		$uxon_tab->add_widget($request_widget);
-		$request_widget->set_value('<pre>' . $this->get_uxon()->to_json(true) . '</pre>');
-		$debug_widget->add_tab($uxon_tab);
+		$debug_widget = $this->parent_create_debug_widget($debug_widget);
+		if ($debug_widget->get_child('uxon_tab') === false){
+			$page = $debug_widget->get_page();
+			$uxon_tab = $debug_widget->create_tab();
+			$uxon_tab->set_id('UXON');
+			$uxon_tab->set_caption('UXON');
+			$request_widget = WidgetFactory::create($page, 'Html');
+			$uxon_tab->add_widget($request_widget);
+			$request_widget->set_value('<pre>' . $this->get_uxon()->to_json(true) . '</pre>');
+			$debug_widget->add_tab($uxon_tab);
+		}
 		return $debug_widget;
 	}
 }

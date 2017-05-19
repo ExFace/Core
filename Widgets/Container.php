@@ -94,6 +94,21 @@ class Container extends AbstractWidget implements iContainOtherWidgets {
 	}
 	
 	/**
+	 * Returns the direct child widget with the given id or boolean FALSE if there is no matching child.
+	 * 
+	 * @param string $widget_id
+	 * @return \exface\Core\Widgets\WidgetInterface|boolean
+	 */
+	public function get_child($widget_id){
+		foreach ($this->get_children() as $child){
+			if (strcasecmp($child->get_id(), $widget_id) === 0){
+				return $child;
+			}
+		}
+		return false;
+	}
+	
+	/**
 	 * 
 	 * {@inheritDoc}
 	 * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::get_widgets()
@@ -203,8 +218,8 @@ class Container extends AbstractWidget implements iContainOtherWidgets {
 	 * {@inheritDoc}
 	 * @see \exface\Core\Widgets\AbstractWidget::generate_uxon_object()
 	 */
-	public function generate_uxon_object(){
-		$uxon = parent::generate_uxon_object();
+	public function export_uxon_object(){
+		$uxon = parent::export_uxon_object();
 		$widgets_array = array();
 		foreach ($this->get_widgets() as $widget){
 			$widgets_array[] = $widget->export_uxon_object();

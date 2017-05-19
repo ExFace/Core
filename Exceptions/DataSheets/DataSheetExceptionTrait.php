@@ -44,6 +44,7 @@ trait DataSheetExceptionTrait {
 	}
 	
 	public function create_debug_widget(DebugMessage $debug_widget){
+		$debug_widget = $this->parent_create_debug_widget($debug_widget);
 		$page = $debug_widget->get_page();
 		// Add a tab with the data sheet UXON
 		$uxon_tab = $debug_widget->create_tab();

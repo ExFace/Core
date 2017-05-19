@@ -39,7 +39,7 @@ class StateMenuButton extends MenuButton {
 					// uebernommen. Alle exklusiven Eigenschaften von MenuButton und StateMenuButton
 					// werden entfernt.
 					/* @var $uxon \exface\Core\CommonLogic\UxonObject */
-					$uxon = $this->get_original_uxon_object()->extend(UxonObject::from_anything($smb_button)->copy());
+					$uxon = $this->export_uxon_object_original()->extend(UxonObject::from_anything($smb_button)->copy());
 					$uxon->unset_property('show_states');
 					$uxon->unset_property('buttons');
 					$uxon->unset_property('menu');
