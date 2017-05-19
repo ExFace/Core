@@ -18,6 +18,11 @@ use exface\Core\Exceptions\Actions\ActionLogicError;
  */
 class ShowHelpDialog extends ShowDialog {
 	
+	protected function init(){
+		parent::init();
+		$this->set_icon_name('help');
+	}
+	
 	/**
 	 * 
 	 * {@inheritDoc}
@@ -25,6 +30,10 @@ class ShowHelpDialog extends ShowDialog {
 	 */
 	protected function enhance_dialog_widget(Dialog $dialog){
 		$dialog = parent::enhance_dialog_widget($dialog);
+		
+		// IMPORTANT: remove help button from the help dialog to prevent infinite help popups
+		$dialog->set_hide_help_button(true);
+		
 		if ($this->get_called_by_widget() && $this->get_called_by_widget() instanceof iTriggerAction){
 			if ($this->get_called_by_widget()->get_input_widget() instanceof iHaveContextualHelp){
 				$this->get_called_by_widget()->get_input_widget()->get_help_widget($dialog);

@@ -30,6 +30,17 @@ class DataColumnTransposed extends DataColumn {
 		return $this;
 	}
 	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Widgets\DataColumn::export_uxon_object()
+	 */
+	public function export_uxon_object(){
+		$uxon = parent::export_uxon_object();
+		$uxon->set_property('label_attribute_alias', $this->get_label_attribute_alias());
+		$uxon->set_property('label_sort_direction', $this->get_label_sort_direction());
+		return $uxon;
+	}
 	  
 }
 ?>

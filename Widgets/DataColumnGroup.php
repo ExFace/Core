@@ -262,5 +262,16 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns {
 		}
 		return $result;
 	}
+	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Widgets\AbstractWidget::export_uxon_object()
+	 */
+	public function export_uxon_object(){
+		$uxon = parent::export_uxon_object();
+		// TODO add properties specific to this widget here
+		return $uxon;
+	}
 }
 ?>

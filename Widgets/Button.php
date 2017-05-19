@@ -356,5 +356,16 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iHaveC
 		$this->align = constant('EXF_ALIGN_' . mb_strtoupper($value));
 		return $this;
 	}
+	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Widgets\AbstractWidget::export_uxon_object()
+	 */
+	public function export_uxon_object(){
+		$uxon = parent::export_uxon_object();
+		// TODO What do we do with the action here?
+		return $uxon;
+	}
 }
 ?>

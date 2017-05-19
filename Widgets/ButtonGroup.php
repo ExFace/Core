@@ -88,5 +88,22 @@ class ButtonGroup extends Button implements iHaveButtons {
 		if (count($this->buttons)) return true;
 		else return false;
 	}
+	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Widgets\Button::export_uxon_object()
+	 */
+	public function export_uxon_object(){
+		$uxon = parent::export_uxon_object();
+		
+		$buttons = array();
+		foreach ($this->get_buttons() as $button){
+			$buttons[] = $button->export_uxon_object();	
+		}
+		$uxon->set_property('buttons', $buttons);
+		
+		return $uxon;
+	}
 }
 ?>

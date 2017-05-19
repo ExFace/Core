@@ -173,6 +173,19 @@ class Input extends Text implements iTakeInput, iHaveDefaultValue {
 		$this->display_only = BooleanDataType::parse($value);
 		return $this;
 	}
+	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Widgets\Text::export_uxon_object()
+	 */
+	public function export_uxon_object(){
+		$uxon = parent::export_uxon_object();
+		$uxon->set_property('display_only', $this->is_display_only());
+		$uxon->set_property('readonly', $this->is_readonly());
+		$uxon->set_property('required', $this->is_required());
+		return $uxon;
+	}
 	 
 }
 ?>

@@ -25,6 +25,18 @@ class DialogButton extends Button {
 	
 	public function set_close_dialog_after_action_fails($value) {
 		$this->close_dialog_after_action_fails = $value;
-	}  
+	} 
+	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Widgets\Button::export_uxon_object()
+	 */
+	public function export_uxon_object(){
+		$uxon = parent::export_uxon_object();
+		$uxon->set_property('close_dialog_after_action_succeeds', $this->get_close_dialog_after_action_succeeds());
+		$uxon->set_property('close_dialog_after_action_fails', $this->get_close_dialog_after_action_fails());
+		return $uxon;
+	}
 }
 ?>

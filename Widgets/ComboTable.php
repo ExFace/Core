@@ -501,5 +501,16 @@ class ComboTable extends InputCombo implements iHaveChildren {
 		}
 		return $this;
 	}
+	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \exface\Core\Widgets\Text::export_uxon_object()
+	 */
+	public function export_uxon_object(){
+		$uxon = parent::export_uxon_object();
+		// TODO add properties specific to this widget here
+		return $uxon;
+	}
 }
 ?>

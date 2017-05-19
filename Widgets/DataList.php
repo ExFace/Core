@@ -136,5 +136,13 @@ class DataList extends Data implements iHaveTopToolbar, iHaveBottomToolbar, iFil
 		$this->set_value(implode(EXF_LIST_SEPARATOR, $values));
 		return $this;
 	}
+	
+	public function export_uxon_object(){
+		$uxon = parent::export_uxon_object();
+		$uxon->set_property('multi_select', $this->get_multi_select());
+		$uxon->set_property('hide_toolbar_top', $this->get_hide_toolbar_top());
+		$uxon->set_property('hide_toolbar_bottom', $this->get_hide_toolbar_bottom());
+		return $uxon;
+	}
 }
 ?>
