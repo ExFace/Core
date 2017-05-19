@@ -2,11 +2,8 @@
 
 namespace exface\Core\CommonLogic\Log;
 
-use exface\Core\Interfaces\iCanGenerateDebugWidgets;
-use exface\Core\Interfaces\LoggerInterface;
-use exface\Core\Interfaces\LogHandlerInterface;
-use exface\Core\CommonLogic\Log\Handlers\LogfileHandler;
 use exface\Core\Exceptions\UnderflowException;
+use exface\Core\Interfaces\iCanGenerateDebugWidgets;
 
 class Logger implements LoggerInterface
 {
@@ -24,7 +21,7 @@ class Logger implements LoggerInterface
      */
     public function emergency($message, array $context = array(), iCanGenerateDebugWidgets $sender = null)
     {
-        $this->log(LogHandlerInterface::EMERGENCY, $message, $context, $sender);
+        $this->log(LoggerInterface::EMERGENCY, $message, $context, $sender);
     }
 
     /**
@@ -41,7 +38,7 @@ class Logger implements LoggerInterface
      */
     public function alert($message, array $context = array(), iCanGenerateDebugWidgets $sender = null)
     {
-        $this->log(LogHandlerInterface::ALERT, $message, $context, $sender);
+        $this->log(LoggerInterface::ALERT, $message, $context, $sender);
     }
 
     /**
@@ -57,7 +54,7 @@ class Logger implements LoggerInterface
      */
     public function critical($message, array $context = array(), iCanGenerateDebugWidgets $sender = null)
     {
-        $this->log(LogHandlerInterface::CRITICAL, $message, $context, $sender);
+        $this->log(LoggerInterface::CRITICAL, $message, $context, $sender);
     }
 
     /**
@@ -72,7 +69,7 @@ class Logger implements LoggerInterface
      */
     public function error($message, array $context = array(), iCanGenerateDebugWidgets $sender = null)
     {
-        $this->log(LogHandlerInterface::ERROR, $message, $context, $sender);
+        $this->log(LoggerInterface::ERROR, $message, $context, $sender);
     }
 
     /**
@@ -89,7 +86,7 @@ class Logger implements LoggerInterface
      */
     public function warning($message, array $context = array(), iCanGenerateDebugWidgets $sender = null)
     {
-        $this->log(LogHandlerInterface::WARNING, $message, $context, $sender);
+        $this->log(LoggerInterface::WARNING, $message, $context, $sender);
     }
 
     /**
@@ -103,7 +100,7 @@ class Logger implements LoggerInterface
      */
     public function notice($message, array $context = array(), iCanGenerateDebugWidgets $sender = null)
     {
-        $this->log(LogHandlerInterface::NOTICE, $message, $context, $sender);
+        $this->log(LoggerInterface::NOTICE, $message, $context, $sender);
     }
 
     /**
@@ -119,7 +116,7 @@ class Logger implements LoggerInterface
      */
     public function info($message, array $context = array(), iCanGenerateDebugWidgets $sender = null)
     {
-        $this->log(LogHandlerInterface::INFO, $message, $context, $sender);
+        $this->log(LoggerInterface::INFO, $message, $context, $sender);
     }
 
     /**
@@ -133,7 +130,7 @@ class Logger implements LoggerInterface
      */
     public function debug($message, array $context = array(), iCanGenerateDebugWidgets $sender = null)
     {
-        $this->log(LogHandlerInterface::DEBUG, $message, $context, $sender);
+        $this->log(LoggerInterface::DEBUG, $message, $context, $sender);
     }
 
     /**
@@ -148,8 +145,11 @@ class Logger implements LoggerInterface
      */
     public function log($level, $message, array $context = array(), iCanGenerateDebugWidgets $sender = null)
     {
-        foreach ($this->handlers as $handler)
-            $handler->handle($level, $message, $context, $sender);
+        foreach ($this->handlers as $handler) {
+        	try {
+		        $handler->handle($level, $message, $context, $sender);
+	        } catch (\Exception $e) {}
+        }
     }
 
     /**

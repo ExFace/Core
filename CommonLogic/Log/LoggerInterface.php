@@ -1,7 +1,25 @@
-<?php namespace exface\Core\Interfaces;
+<?php
+
+namespace exface\Core\CommonLogic\Log;
+
+use exface\Core\Interfaces\iCanGenerateDebugWidgets;
 
 interface LoggerInterface extends \Psr\Log\LoggerInterface {
-	
+	/**
+	 * PSR 3 log levels
+	 *
+	 * These level values work flawlessly with monolog. If some other log mechanism/library is to be used there
+	 * possibly needs to be some translation.
+	 */
+	const DEBUG = 'debug';
+	const INFO = 'info';
+	const NOTICE = 'notice';
+	const WARNING = 'warning';
+	const ERROR = 'error';
+	const CRITICAL = 'critical';
+	const ALERT = 'alert';
+	const EMERGENCY = 'emergency';
+
 	/**
 	 * System is unusable.
 	 *

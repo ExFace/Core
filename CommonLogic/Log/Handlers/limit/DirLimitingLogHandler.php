@@ -4,6 +4,7 @@ namespace exface\Core\CommonLogic\Log\Handlers\limit;
 
 
 use exface\Core\CommonLogic\Log\Helpers\LogHelper;
+use exface\Core\CommonLogic\Log\LogHandlerInterface;
 use exface\Core\Interfaces\iCanGenerateDebugWidgets;
 
 /**
@@ -19,8 +20,8 @@ class DirLimitingLogHandler extends LimitingWrapper {
 	private $maxDays;
 	private $filenameFormat;
 
-	function __construct(Callable $createCallback, $logPath, $staticFileNamePart, $maxDays = 0) {
-		parent::__construct($createCallback);
+	function __construct(LogHandlerInterface $handler, $logPath, $staticFileNamePart, $maxDays = 0) {
+		parent::__construct($handler);
 
 		$this->logPath = $logPath;
 		$this->staticFileNamePart = $staticFileNamePart;
@@ -29,8 +30,8 @@ class DirLimitingLogHandler extends LimitingWrapper {
 		$this->filenameFormat = '{filename}{variable}{static}';
 	}
 
-	protected function callLogger(Callable $createLoggerCall, $level, $message, array $context = array(), iCanGenerateDebugWidgets $sender = null) {
-		$createLoggerCall()->handle($level, $message, $context, $sender);
+	protected function callLogger(LogHandlerInterface $handler, $level, $message, array $context = array(), iCanGenerateDebugWidgets $sender = null) {
+		$handler->handle($level, $message, $context, $sender);
 	}
 
 	/**
@@ -58,8 +59,4 @@ class DirLimitingLogHandler extends LimitingWrapper {
 			}
 		}
 	}
-
-//	protected function getGlobPattern() {
-//		return $this->logPath . '/*' . $this->staticFileNamePart;
-//	}
 }

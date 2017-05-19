@@ -9,9 +9,9 @@ use exface\Core\CommonLogic\Log\Handlers\limit\FileLimitingLogHandler;
 use exface\Core\CommonLogic\Log\Handlers\limit\DirLimitingLogHandler;
 use exface\Core\CommonLogic\Log\Handlers\LogfileHandler;
 use exface\Core\CommonLogic\Workbench;
-use exface\Core\Interfaces\LoggerInterface;
-use exface\Core\Interfaces\LogHandlerInterface;
+use exface\Core\Exceptions\Model\MetaObjectNotFoundError;
 use Monolog\ErrorHandler;
+use Psr\Log\LogLevel;
 
 class Log
 {
@@ -34,30 +34,38 @@ class Log
     	if (!static::$logger) {
 		    static::$logger = new Logger();
 
-		    foreach (static::getErrorLogHandlers($workbench) as $handler) {
-			    static::$logger->pushHandler($handler);
+		    try {
+			    $handlers = static::getErrorLogHandlers($workbench);
+			    foreach ($handlers as $handler) {
+				    static::$logger->pushHandler($handler);
+			    }
+		    } catch (\Throwable $t) {
+		    	static::$logger->pushHandler(static::getFallbackHandler($workbench));
+		    	static::$logger->critical('Log initialisation failed', array('exception', $t));
 		    }
 	    }
 
         return static::$logger;
     }
 
+	/**
+	 * @param Workbench $workbench
+	 *
+	 * @return string
+	 * @throws MetaObjectNotFoundError
+	 */
 	private static function getCoreLogPath($workbench) {
-		$basePath = Filemanager::path_normalize($workbench->filemanager()->get_path_to_base_folder());
-
-		$obj = $workbench->model()->get_object('exface.Core.LOG');
-		$relativePath = $obj->get_data_address();
-
-		return $basePath . '/' . $relativePath . '/log';
+		return $workbench->filemanager()->get_path_to_log_folder() . '/' . $workbench->filemanager()->get_core_log_filename();
 	}
 
+	/**
+	 * @param Workbench $workbench
+	 *
+	 * @return string
+	 * @throws MetaObjectNotFoundError
+	 */
 	private static function getDetailsLogPath($workbench) {
-		$basePath = Filemanager::path_normalize($workbench->filemanager()->get_path_to_base_folder());
-
-		$obj = $workbench->model()->get_object('exface.Core.LOGDETAILS');
-		$relativePath = $obj->get_data_address();
-
-		return $basePath . '/' . $relativePath;
+		return $workbench->filemanager()->get_path_to_log_details_folder();
 	}
 
 	/**
@@ -71,29 +79,36 @@ class Log
 
 	protected static function getErrorLogHandlers($workbench) {
     	if (!static::$errorLogHandlers) {
-    		self::$errorLogHandlers = array();
+    		static::$errorLogHandlers = array();
 
 		    $coreLogFilePath = static::getCoreLogPath($workbench);
 		    $detailsLogBasePath = static::getDetailsLogPath($workbench);
 
 		    $minLogLevel = $workbench->get_config()->get_option('LOG.MINIMUM_LEVEL_TO_LOG');
 		    $maxDaysToKeep = $workbench->get_config()->get_option('LOG.MAX_DAYS_TO_KEEP');
-		    $detailsStaticFilenamePart = $workbench->get_config()->get_option('LOGDETAILS.STATIC_FILENAME_PART');
 
-    		self::$errorLogHandlers["filelog"] = new FileLimitingLogHandler(
-			    function($filename) use ($minLogLevel) {
-				    return new LogfileHandler("exface", $filename, $minLogLevel);
-			    }, $coreLogFilePath, $maxDaysToKeep
+    		static::$errorLogHandlers["filelog"] = new FileLimitingLogHandler(
+			    new LogfileHandler("exface", "", $minLogLevel), // real file name is determined late by FileLimitingLogHandler
+			    $coreLogFilePath,
+			    $maxDaysToKeep
 		    );
 
-		    // TODO tvw enable when log details are used
-		    self::$errorLogHandlers["detaillog"] = new DirLimitingLogHandler(
-			    function() use ($detailsLogBasePath, $detailsStaticFilenamePart, $minLogLevel) {
-				    return new DebugMessageFileHandler($detailsLogBasePath, $detailsStaticFilenamePart, $minLogLevel);
-			    }, $detailsLogBasePath, $detailsStaticFilenamePart, $maxDaysToKeep
+		    static::$errorLogHandlers["detaillog"] = new DirLimitingLogHandler(
+			    new DebugMessageFileHandler($detailsLogBasePath, "", $minLogLevel),
+			    $detailsLogBasePath,
+			    "",
+			    $maxDaysToKeep
 		    );
 	    }
 
 	    return static::$errorLogHandlers;
+	}
+
+	protected static function getFallbackHandler($workbench) {
+		return new FileLimitingLogHandler(
+			new LogfileHandler("exface", "", LogLevel::DEBUG), // real file name is determined late by FileLimitingLogHandler
+			Filemanager::path_normalize($workbench->filemanager()->get_path_to_base_folder()) . '/logs/fallback.log',
+			3
+		);
 	}
 }

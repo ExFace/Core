@@ -12,6 +12,8 @@ class Filemanager extends Filesystem implements ExfaceClassInterface {
 	const FOLDER_NAME_TRANSLATIONS = 'translations';
 	const FOLDER_NAME_BACKUP = 'backup';
 	const FOLDER_NAME_LOG = 'logs';
+	const FILE_NAME_CORE_LOG = 'core.log';
+	const FOLDER_NAME_LOG_DETAILS = 'details';
 	
 	private $exface = null;
 	private $path_to_cache_folder = null;
@@ -19,6 +21,8 @@ class Filemanager extends Filesystem implements ExfaceClassInterface {
 	private $path_to_user_data_folder = null;
 	private $path_to_backup_folder = null;
 	private $path_to_log_folder = null;
+	private $core_log_filename = null;
+	private $path_to_log_detail_folder = null;
 
 	public function __construct(Workbench $exface){
 		$this->exface = $exface;
@@ -97,7 +101,7 @@ class Filemanager extends Filesystem implements ExfaceClassInterface {
 	}
 	
 	/**
-	 * Returns the absolute path to the main backup folder
+	 * Returns the absolute path to the log folder
 	 * @return string
 	 */
 	public function get_path_to_log_folder(){
@@ -108,6 +112,34 @@ class Filemanager extends Filesystem implements ExfaceClassInterface {
 			}
 		}
 		return $this->path_to_log_folder;
+	}
+
+	/**
+	 * Returns the filename of the core log.
+	 * @return string
+	 */
+	public function get_core_log_filename(){
+		if (is_null($this->core_log_filename)){
+			$this->core_log_filename = static::FILE_NAME_CORE_LOG;
+			if (!is_dir($this->core_log_filename)){
+				mkdir($this->core_log_filename);
+			}
+		}
+		return $this->core_log_filename;
+	}
+
+	/**
+	 * Returns the absolute path to the log details folder
+	 * @return string
+	 */
+	public function get_path_to_log_details_folder(){
+		if (is_null($this->path_to_log_detail_folder)){
+			$this->path_to_log_detail_folder = $this->get_path_to_base_folder() . DIRECTORY_SEPARATOR . static::FOLDER_NAME_LOG . DIRECTORY_SEPARATOR . static::FOLDER_NAME_LOG_DETAILS;
+			if (!is_dir($this->path_to_log_detail_folder)){
+				mkdir($this->path_to_log_detail_folder);
+			}
+		}
+		return $this->path_to_log_detail_folder;
 	}
 	
 	/**
