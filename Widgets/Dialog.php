@@ -232,6 +232,9 @@ class Dialog extends Form implements iAmClosable, iHaveContextualHelp {
 	 * @see \exface\Core\Interfaces\Widgets\iHaveContextualHelp::get_hide_help_button()
 	 */
 	public function get_hide_help_button() {
+		if (!$this->hide_help_button && count($this->get_input_widgets()) == 0){
+			$this->hide_help_button = true;
+		}
 		return $this->hide_help_button;
 	}
 	
