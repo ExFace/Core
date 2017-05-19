@@ -42,7 +42,7 @@ class DebugMessageFileHandler implements LogHandlerInterface {
 			$logger->pushHandler($handler);
 
 			$debugWidget = $sender->create_debug_widget($this->createDebugMessage());
-			$debugWidgetData = $debugWidget->export_uxon_object()->to_json();
+			$debugWidgetData = $debugWidget->export_uxon_object()->to_json(true);
 			$logger->log($level, $debugWidgetData);
 		}
 	}
