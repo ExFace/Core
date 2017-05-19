@@ -49,34 +49,23 @@ class Log
     }
 
 	/**
-	 * @param $workbench
+	 * @param Workbench $workbench
 	 *
 	 * @return string
 	 * @throws MetaObjectNotFoundError
 	 */
 	private static function getCoreLogPath($workbench) {
-		$basePath = Filemanager::path_normalize($workbench->filemanager()->get_path_to_base_folder());
-
-		$obj = $workbench->model()->get_object('exface.Core.LOG');
-		$relativePath = $obj->get_data_address();
-		$filename = $obj->get_data_address_property('BASE_FILE_NAME');
-
-		return $basePath . '/' . $relativePath . '/' . $filename;
+		return $workbench->filemanager()->get_path_to_log_folder() . '/' . $workbench->filemanager()->get_core_log_filename();
 	}
 
 	/**
-	 * @param $workbench
+	 * @param Workbench $workbench
 	 *
 	 * @return string
 	 * @throws MetaObjectNotFoundError
 	 */
 	private static function getDetailsLogPath($workbench) {
-		$basePath = Filemanager::path_normalize($workbench->filemanager()->get_path_to_base_folder());
-
-		$obj = $workbench->model()->get_object('exface.Core.LOG_DETAILS');
-		$relativePath = $obj->get_data_address();
-
-		return $basePath . '/' . $relativePath;
+		return $workbench->filemanager()->get_path_to_log_details_folder();
 	}
 
 	/**
