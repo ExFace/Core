@@ -33,7 +33,7 @@ class FileLimitingLogHandler extends LimitingWrapper {
 		$this->filename = $filename;
 		$this->maxDays  = $maxDays;
 
-		$this->filenameFormat = '{filename}-{variable}';
+		$this->filenameFormat = '{variable}';
 		$this->dateFormat = 'Y-m-d';
 	}
 

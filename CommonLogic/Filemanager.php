@@ -12,7 +12,7 @@ class Filemanager extends Filesystem implements ExfaceClassInterface {
 	const FOLDER_NAME_TRANSLATIONS = 'translations';
 	const FOLDER_NAME_BACKUP = 'backup';
 	const FOLDER_NAME_LOG = 'logs';
-	const FILE_NAME_CORE_LOG = 'core.log';
+	const FILE_NAME_CORE_LOG = '.log';
 	const FOLDER_NAME_LOG_DETAILS = 'details';
 	
 	private $exface = null;
