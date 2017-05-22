@@ -4,8 +4,8 @@
 namespace exface\Core\CommonLogic\Log\Handlers\limit;
 
 
-use exface\Core\CommonLogic\Log\LogHandlerInterface;
 use exface\Core\Interfaces\iCanGenerateDebugWidgets;
+use exface\Core\Interfaces\Log\LogHandlerInterface;
 
 /**
  * Abstract log handler wrapper to implement any kind of log file cleanup according to the implementation function

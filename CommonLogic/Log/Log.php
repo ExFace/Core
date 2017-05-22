@@ -10,6 +10,8 @@ use exface\Core\CommonLogic\Log\Handlers\limit\DirLimitingLogHandler;
 use exface\Core\CommonLogic\Log\Handlers\LogfileHandler;
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\Exceptions\Model\MetaObjectNotFoundError;
+use exface\Core\Interfaces\Log\LoggerInterface;
+use exface\Core\Interfaces\Log\LogHandlerInterface;
 use Monolog\ErrorHandler;
 use Psr\Log\LogLevel;
 

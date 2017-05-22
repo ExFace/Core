@@ -1,7 +1,7 @@
 <?php namespace exface\Core\CommonLogic;
 
-use exface\Core\CommonLogic\Log\LoggerInterface;
 use exface\Core\Interfaces\DebuggerInterface;
+use exface\Core\Interfaces\Log\LoggerInterface;
 use Symfony\Component\Debug\Debug;
 use Symfony\Component\Debug\ExceptionHandler;
 use Symfony\Component\Debug\Exception\FlattenException;

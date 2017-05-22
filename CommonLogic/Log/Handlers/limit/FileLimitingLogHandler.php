@@ -5,8 +5,8 @@ namespace exface\Core\CommonLogic\Log\Handlers\limit;
 
 use exface\Core\CommonLogic\Log\Handlers\FileHandlerInterface;
 use exface\Core\CommonLogic\Log\Helpers\LogHelper;
-use exface\Core\CommonLogic\Log\LogHandlerInterface;
 use exface\Core\Interfaces\iCanGenerateDebugWidgets;
+use exface\Core\Interfaces\Log\LogHandlerInterface;
 
 /**
  * Log handler that uses the given createCallback to instantiate an underlying log handler that logs to a specific log

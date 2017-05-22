@@ -1,6 +1,6 @@
 <?php
 
-namespace exface\Core\CommonLogic\Log;
+namespace exface\Core\Interfaces\Log;
 
 use exface\Core\Interfaces\iCanGenerateDebugWidgets;
 
