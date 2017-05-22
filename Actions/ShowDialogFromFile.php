@@ -6,6 +6,54 @@ use exface\Core\Factories\WidgetFactory;
 use exface\Core\Exceptions\FileNotFoundError;
 use exface\Core\Exceptions\Actions\ActionInputMissingError;
 
+/**
+ * This creates and displays a widget from a JSON file containing some UXON description of the widget.
+ *
+ * It is used for instance to show errors with additional information from log detail files. Such files contain
+ * UXON like this:
+ *
+ * {
+ *   "widget_type": "DebugMessage",
+ *   "object_alias": "exface.Core.ERROR",
+ *   "visibility": "normal",
+ *   "widgets": [
+ *     {
+ *       "id": "error_tab",
+ *		 "widget_type": "Tab",
+ *		 "object_alias": "exface.Core.ERROR",
+ *		 "caption": "Error",
+ *		 "visibility": "normal",
+ *		 "widgets": [
+ *		   {
+ *		     "widget_type": "TextHeading",
+ *		     "object_alias": "exface.Core.ERROR",
+ *		     "value": "Error 6T91AR9: Invalid data filter widget configuration",
+ *		     "visibility": "normal",
+ *		     "heading_level": 2
+ *		   },
+ *		   {
+ *		     "widget_type": "Text",
+ *		     "object_alias": "exface.Core.ERROR",
+ *		     "value": "Cannot create a filter for attribute alias \"NO\" in widget \"style\": attribute not found for object \"alexa.RMS.ARTICLE\"!",
+ *		     "visibility": "normal"
+ *		   },
+ *		   {
+ *		     "widget_type": "Text",
+ *		     "object_alias": "exface.Core.ERROR",
+ *		     "caption": "Description",
+ *		     "hint": "[Text] ",
+ *		     "visibility": "normal",
+ *		     "attribute_alias": "DESCRIPTION"
+ *		   }
+ *		 ]
+ *	   },
+ *   ... eventually more tabs ...
+ *   ]
+ * }
+ *
+ * @author Thomas Walter
+ *
+ */
 class ShowDialogFromFile extends ShowDialog {
 	private $file_path_attribute_alias = null;
 
