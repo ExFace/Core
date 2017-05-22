@@ -67,21 +67,21 @@ class ConditionGroup implements iCanBeConvertedToUxon, iCanBeCopied {
 		// Determine the comparator if it is not given directly.
 		// It can be derived from the value or set to a default value
 		if (is_null($comparator)){
-			if (strpos($value, '==') === 0) { 
+			if (strpos($value, '!==') === 0) {
+				$comparator = EXF_COMPARATOR_EQUALS_NOT;
+				$value = substr($value, 3);
+			}
+			elseif (strpos($value, '==') === 0) { 
 				$comparator = EXF_COMPARATOR_EQUALS; 
 				$value = substr($value, 2); 
 			}
-			elseif (strpos($value, '!==') === 0) { 
-				$comparator = EXF_COMPARATOR_EQUALS_NOT; 
-				$value = substr($value, 3); 
+			elseif (strpos($value, '>=') === 0) {
+				$comparator = EXF_COMPARATOR_GREATER_THAN_OR_EQUALS;
+				$value = substr($value, 2);
 			}
 			elseif (strpos($value, '>') === 0) { 
 				$comparator = EXF_COMPARATOR_GREATER_THAN; 
 				$value = substr($value, 1); 
-			}
-			elseif (strpos($value, '>=') === 0) { 
-				$comparator = EXF_COMPARATOR_GREATER_THAN_OR_EQUALS; 
-				$value = substr($value, 2); 
 			}
 			elseif (strpos($value, '[') === 0) { 
 				$comparator = EXF_COMPARATOR_IN; 
@@ -89,21 +89,21 @@ class ConditionGroup implements iCanBeConvertedToUxon, iCanBeCopied {
 					$value = substr($value, 1); 
 				}
 			}
-			elseif (strpos($value, '=') === 0) { 
-				$comparator = EXF_COMPARATOR_IS; 
-				$value = substr($value, 1); 
-			}
-			elseif (strpos($value, '!=') === 0) { 
-				$comparator = EXF_COMPARATOR_IS_NOT; 
-				$value = substr($value, 2); 
+			elseif (strpos($value, '<=') === 0) {
+				$comparator = EXF_COMPARATOR_LESS_THAN_OR_EQUALS;
+				$value = substr($value, 2);
 			}
 			elseif (strpos($value, '<') === 0) { 
 				$comparator = EXF_COMPARATOR_LESS_THAN; 
 				$value = substr($value, 1); 
 			}
-			elseif (strpos($value, '<=') === 0) { 
-				$comparator = EXF_COMPARATOR_LESS_THAN_OR_EQUALS; 
-				$value = substr($value, 2); 
+			elseif (strpos($value, '!=') === 0) {
+				$comparator = EXF_COMPARATOR_IS_NOT;
+				$value = substr($value, 2);
+			}
+			elseif (strpos($value, '=') === 0) {
+				$comparator = EXF_COMPARATOR_IS;
+				$value = substr($value, 1);
 			}
 			elseif (strpos($value, '![') === 0) { 
 				$comparator = EXF_COMPARATOR_NOT_IN; 
