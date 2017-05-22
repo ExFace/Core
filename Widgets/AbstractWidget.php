@@ -60,6 +60,7 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren {
 	private $page = null;
 	private $do_not_prefill = false;
 	private $id_space = null;
+	private $disable_condition = null;
 	
 	/**
 	 * 
@@ -1072,6 +1073,34 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren {
 		$this->do_not_prefill = BooleanDataType::parse($value);
 		return $this;
 	}
-	  
+	
+	/**
+	 * 
+	 * @return \exface\Core\Interfaces\iCanBeConvertedToUxon|\exface\Core\CommonLogic\Model\Condition
+	 */
+	public function get_disable_condition(){
+		return $this->disable_condition;
+	}
+	
+	/**
+	 * Sets a condition to disable the widget.
+	 * 
+	 * E.g.:
+	 * "disable_condition": {
+	 * 		"widget_link": "consumer!CONSUMER_MAIL_PHONE",
+	 * 		"comparator": "!=",
+	 * 		"value": ""
+	 * }
+	 * means the current widget is disabled when the column CONSUMER_MAIL_PHONE of
+	 * widget consumer is not empty. Can be usefully combined with a value-reference
+	 * to the same widget and column. 
+	 * 
+	 * @param UxonObject $value
+	 * @return \exface\Core\Widgets\AbstractWidget
+	 */
+	public function set_disable_condition($value){
+		$this->disable_condition = $value;
+		return $this;
+	}
 }
 ?>

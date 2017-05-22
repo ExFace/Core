@@ -1,7 +1,7 @@
 {
 	"ACTION.AUTOSUGGEST.NAME": "Autosuggest",
 	
-	"ACTION.CREATEDATA.RESULT": "%number% Object erstellt.|%number% Objekte erstellt.",
+	"ACTION.CREATEDATA.RESULT": "%number% Objekt erstellt.|%number% Objekte erstellt.",
 	"ACTION.CREATEDATA.NAME": "Speichern",
 	"ACTION.CREATEOBJECTDIALOG.NAME": "Neu",
 	
@@ -10,7 +10,7 @@
 	"ACTION.DELETEOBJECT.RESULT": "%number% Objekt gelöscht.|%number% Objekte gelöscht.",
 	"ACTION.DELETEOBJECT.NAME": "Löschen",
 	
-	"ACTION.DUPLICATEOBJECTDIALOG.NAME": "Dublizieren",
+	"ACTION.DUPLICATEOBJECTDIALOG.NAME": "Duplizieren",
 	
 	"ACTION.EDITOBJECTDIALOG.SAVE_BUTTON": "Speichern",
 	"ACTION.EDITOBJECTDIALOG.NAME": "Bearbeiten",
