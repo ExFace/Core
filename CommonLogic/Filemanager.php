@@ -119,13 +119,7 @@ class Filemanager extends Filesystem implements ExfaceClassInterface {
 	 * @return string
 	 */
 	public function get_core_log_filename(){
-		if (is_null($this->core_log_filename)){
-			$this->core_log_filename = static::FILE_NAME_CORE_LOG;
-			if (!is_dir($this->core_log_filename)){
-				mkdir($this->core_log_filename);
-			}
-		}
-		return $this->core_log_filename;
+		return static::FILE_NAME_CORE_LOG;
 	}
 
 	/**
