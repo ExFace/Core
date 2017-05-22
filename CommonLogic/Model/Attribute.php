@@ -326,7 +326,7 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied {
 	}
 	
 	public function get_hint(){
-		return '[' . $this->get_data_type()->get_name() . '] ' . $this->get_short_description();
+	    return $this->get_short_description() . ' [' . $this->get_data_type()->get_name() . ']';
 	}	
 
 	/**
