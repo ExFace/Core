@@ -100,7 +100,7 @@ class StateMachineBehavior extends AbstractBehavior {
 		} elseif (is_int($value) || is_string($value)) {
 			$this->default_state = $value;
 		} else {
-			throw new BehaviorConfigurationError($this->get_object(), 'Can not set default state for "' . $this->get_object()->get_alias_with_namespace() . '": the argument passed to set_default_state() is neither a StateMachineState nor an integer nor a string!');
+			throw new BehaviorConfigurationError($this->get_object(), 'Can not set default state for "' . $this->get_object()->get_alias_with_namespace() . '": the argument passed to set_default_state() is neither a StateMachineState nor an integer nor a string!', '6TG2ZFI');
 		}
 		
 		return $this;
@@ -196,7 +196,7 @@ class StateMachineBehavior extends AbstractBehavior {
 					try {
 						$uxon_smstate->map_to_class_setters($smstate);
 					} catch (UxonMapError $e){
-						throw new BehaviorConfigurationError($this->get_object(), 'Cannot load UXON configuration for state machine state. ' . $e->getMessage(), null, $e);
+						throw new BehaviorConfigurationError($this->get_object(), 'Cannot load UXON configuration for state machine state. ' . $e->getMessage(), '6TG2ZFI', $e);
 					}
 				}
 				$this->add_state($smstate);
@@ -204,7 +204,7 @@ class StateMachineBehavior extends AbstractBehavior {
 		} elseif (is_array($value)) {
 			$this->states = $value;
 		} else {
-			throw new BehaviorConfigurationError($this->get_object(), 'Can not set states for "' . $this->get_object()->get_alias_with_namespace() . '": the argument passed to set_states() is neither an UxonObject nor an array!');
+			throw new BehaviorConfigurationError($this->get_object(), 'Can not set states for "' . $this->get_object()->get_alias_with_namespace() . '": the argument passed to set_states() is neither an UxonObject nor an array!', '6TG2ZFI');
 		}
 		
 		return $this;
@@ -349,7 +349,7 @@ class StateMachineBehavior extends AbstractBehavior {
 					$allowed_transitions = $this->get_state($check_val)->get_transitions();
 					if (!in_array($updated_val, $allowed_transitions)) {
 						$data_sheet->data_mark_invalid();
-						throw new StateMachineUpdateException($data_sheet, 'Cannot update data in data sheet with "' . $data_sheet->get_meta_object()->get_alias_with_namespace() . '": state transition from '.$check_val.' to '.$updated_val.' is not allowed!');
+						throw new StateMachineUpdateException($data_sheet, 'Cannot update data in data sheet with "' . $data_sheet->get_meta_object()->get_alias_with_namespace() . '": state transition from '.$check_val.' to '.$updated_val.' is not allowed!', '6VC040N');
 					}
 				}
 		
@@ -361,7 +361,7 @@ class StateMachineBehavior extends AbstractBehavior {
 					$allowed_transitions = $this->get_state($check_val)->get_transitions();
 					if (!in_array($updated_val, $allowed_transitions)) {
 						$data_sheet->data_mark_invalid();
-						throw new StateMachineUpdateException($data_sheet, 'Cannot update data in data sheet with "' . $data_sheet->get_meta_object()->get_alias_with_namespace() . '": state transition from '.$check_val.' to '.$updated_val.' is not allowed!');
+						throw new StateMachineUpdateException($data_sheet, 'Cannot update data in data sheet with "' . $data_sheet->get_meta_object()->get_alias_with_namespace() . '": state transition from '.$check_val.' to '.$updated_val.' is not allowed!', '6VC040N');
 					}
 				}
 			}
@@ -378,7 +378,7 @@ class StateMachineBehavior extends AbstractBehavior {
 					$check_val = $check_sheet->get_cell_value($attribute_alias, $check_row_nr);
 					if ($updated_val != $check_val) {
 						$data_sheet->data_mark_invalid();
-						throw new StateMachineUpdateException($data_sheet, 'Cannot update data in data sheet with "' . $data_sheet->get_meta_object()->get_alias_with_namespace() . '": attribute ' . $attribute_alias . ' is disabled in the current state (' . $check_state_val . ')!');
+						throw new StateMachineUpdateException($data_sheet, 'Cannot update data in data sheet with "' . $data_sheet->get_meta_object()->get_alias_with_namespace() . '": attribute ' . $attribute_alias . ' is disabled in the current state (' . $check_state_val . ')!', '6VC07QH');
 					}
 				}
 			}
@@ -402,7 +402,7 @@ class StateMachineBehavior extends AbstractBehavior {
         } elseif (is_array($progress_bar_color_map)) {
             $this->progress_bar_color_map = $progress_bar_color_map;
         } else {
-            throw new BehaviorConfigurationError($this->get_object(), 'Can not set progress_bar_color_map for "' . $this->get_object()->get_alias_with_namespace() . '": the argument passed to set_progress_bar_color_map() is neither an UxonObject nor an array!');
+            throw new BehaviorConfigurationError($this->get_object(), 'Can not set progress_bar_color_map for "' . $this->get_object()->get_alias_with_namespace() . '": the argument passed to set_progress_bar_color_map() is neither an UxonObject nor an array!', '6TG2ZFI');
         }
     }
 
