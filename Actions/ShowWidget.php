@@ -13,6 +13,7 @@ use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Factories\WidgetLinkFactory;
 use exface\Core\Exceptions\Actions\ActionConfigurationError;
+use exface\Core\DataTypes\BooleanDataType;
 
 /**
  * The ShowWidget action is the base for all actions, that render widgets. 
@@ -330,6 +331,21 @@ class ShowWidget extends AbstractAction implements iShowWidget, iUsePrefillData 
 	
 	protected function get_widget_uxon(){
 		return $this->widget_uxon;
+	}
+	
+	/**
+	 * Disables the prefill for this action entirely.
+	 * 
+	 * @uxon-property do_not_prefill
+	 * @uxon-type boolean
+	 * 
+	 * @return \exface\Core\Actions\ShowWidget
+	 */
+	public function set_do_not_prefill($value){
+	    $value = BooleanDataType::parse($value) ? false : true;
+	    $this->set_prefill_with_filter_context($value);
+	    $this->set_prefill_with_input_data($value);
+	    return $this;
 	}
 }
 ?>
