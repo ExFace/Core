@@ -1184,6 +1184,32 @@
             "ERROR_TEXT": "Cannot render contextual help",
             "DESCRIPTION": "",
             "LABEL": "exface.Core.6V9XDV4"
+        },
+        {
+            "CREATED_ON": "2017-05-23 09:10:07",
+            "MODIFIED_ON": "2017-05-23 09:17:03",
+            "CREATED_BY_USER": "",
+            "MODIFIED_BY_USER": "",
+            "UID": "0x11e73f979d0dbdd69ba474e5434dc47d",
+            "FULL_ERROR_CODE": "exface.Core.6VC040N",
+            "APP": "0x31000000000000000000000000000000",
+            "ERROR_CODE": "6VC040N",
+            "ERROR_TEXT": "Illegal state transition in StateMachineBehavior",
+            "DESCRIPTION": "",
+            "LABEL": "exface.Core.6VC040N"
+        },
+        {
+            "CREATED_ON": "2017-05-23 09:18:08",
+            "MODIFIED_ON": "2017-05-23 09:24:32",
+            "CREATED_BY_USER": "",
+            "MODIFIED_BY_USER": "",
+            "UID": "0x11e73f98bc30de5d9ba474e5434dc47d",
+            "FULL_ERROR_CODE": "exface.Core.6VC07QH",
+            "APP": "0x31000000000000000000000000000000",
+            "ERROR_CODE": "6VC07QH",
+            "ERROR_TEXT": "Disabled attribute changed in StateMachineBehavior",
+            "DESCRIPTION": "",
+            "LABEL": "exface.Core.6VC07QH"
         }
     ],
     "totals_rows": [],
