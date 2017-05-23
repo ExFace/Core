@@ -7,6 +7,7 @@ use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Exceptions\Widgets\WidgetLogicError;
 
 /**
  * A ComboTable is similar to InputCombo, but it uses a DataTable to show the autosuggest values. 
@@ -258,10 +259,15 @@ class ComboTable extends InputCombo implements iHaveChildren {
 	
 	/**
 	 * Returns the column of the DataTable, where the text displayed in the combo will come from
+	 * 
+	 * @throws WidgetLogicError if no text column can be found
 	 * @return exface\Core\Widgets\DataColumn
 	 */
 	public function get_text_column(){
-		return $this->get_table()->get_column($this->get_text_column_id());
+	    if (!$this->get_table()->get_column($this->get_text_column_id())){
+	        throw new WidgetLogicError($this, 'No text data column found for ' . $this->get_widget_type() . ' with attribute_alias "' . $this->get_attribute_alias() . '"!');
+	    }
+	    return $this->get_table()->get_column($this->get_text_column_id());
 	}
 	
 	public function get_value_column_id() {
@@ -292,9 +298,14 @@ class ComboTable extends InputCombo implements iHaveChildren {
 	
 	/**
 	 * Returns the column of the DataTable, where the value of the combo will come from
+	 * 
+	 * @throws WidgetLogicError if no value column defined
 	 * @return exface\Core\Widgets\DataColumn
 	 */
 	public function get_value_column(){
+	    if (!$this->get_table()->get_column($this->get_value_column_id())){
+	        throw new WidgetLogicError($this, 'No value data column found for ' . $this->get_widget_type() . ' with attribute_alias "' . $this->get_attribute_alias() . '"!');
+	    }
 		return $this->get_table()->get_column($this->get_value_column_id());
 	}
 	
