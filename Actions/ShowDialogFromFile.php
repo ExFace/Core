@@ -1,10 +1,10 @@
 <?php namespace exface\Core\Actions;
 
-use exface\Core\CommonLogic\Filemanager;
-use exface\Core\CommonLogic\UxonObject;
-use exface\Core\Factories\WidgetFactory;
 use exface\Core\Exceptions\FileNotFoundError;
 use exface\Core\Exceptions\Actions\ActionInputMissingError;
+use exface\Core\CommonLogic\Filemanager;
+use exface\Core\Factories\WidgetFactory;
+use exface\Core\CommonLogic\UxonObject;
 
 /**
  * This creates and displays a widget from a JSON file containing some UXON description of the widget.
@@ -56,26 +56,39 @@ use exface\Core\Exceptions\Actions\ActionInputMissingError;
  */
 class ShowDialogFromFile extends ShowDialog {
 	private $file_path_attribute_alias = null;
-
+	private $file_extension = null;
+    
+	/**
+	 * 
+	 * @return string
+	 */
 	public function get_file_path_attribute_alias() {
 		return $this->file_path_attribute_alias;
 	}
 	
+	/**
+	 * 
+	 * @param string $value
+	 * @return \exface\Core\Actions\ShowDialogFromFile
+	 */
 	public function set_file_path_attribute_alias($value) {
 		$this->file_path_attribute_alias = $value;
-
 		return $this;
 	}
 
 	protected function perform() {
 		$basePath = Filemanager::path_normalize($this->get_workbench()->filemanager()->get_path_to_base_folder());
 
-		$obj          = $this->get_workbench()->model()->get_object('exface.Core.LOG_DETAILS');
-		$relativePath = $obj->get_data_address();
-
 		$filename = $this->get_input_data_sheet()->get_columns()->get_by_expression($this->get_file_path_attribute_alias())->get_cell_value(0);
 		if (strlen(trim($filename)) > 0) {
-			$completeFilename = $basePath . '/' . $relativePath . '/' . $filename . '.json';
+		    if ($this->get_folder_path()){
+		        if (Filemanager::path_is_absolute($this->get_folder_path())){
+		            $basePath = $this->get_folder_path();
+		        } else {
+		            $basePath = Filemanager::path_join(array($basePath, $this->get_folder_path()));
+		        }
+		    }
+			$completeFilename = $basePath . '/' . $filename . ($this->get_file_extension() ? '.' . ltrim($this->get_file_extension(), ".") : '');
 			if (file_exists($completeFilename)) {
 				$json = file_get_contents($completeFilename);
 				$this->set_widget(WidgetFactory::create_from_uxon($this->get_dialog_widget()->get_page(), UxonObject::from_json($json), $this->get_dialog_widget()));
@@ -92,6 +105,54 @@ class ShowDialogFromFile extends ShowDialog {
 
 		parent::perform();
 	}
+	
+	/**
+	 * 
+	 * @return string
+	 */
+	public function get_file_extension() {
+	    return $this->file_extension;
+	}
+	
+	/**
+	 * Sets the file extension to be used if file_path_attribute_alias does not contain the extension.
+	 * 
+	 * If the value of the file path attribute only contains the file name and no extension, add the
+	 * extension here: e.g. "json" or ".json".
+	 * 
+	 * @uxon-property file_extension
+	 * @uxon-type string
+	 * 
+	 * @param string $value
+	 * @return \exface\Core\Actions\ShowDialogFromFile
+	 */
+	public function set_file_extension($value) {
+	    $this->file_extension = $value;
+	    return $this;
+	}  
+	
+	/**
+	 * 
+	 * @return string
+	 */
+	public function get_folder_path() {
+	    return $this->folder_path;
+	}
+	
+	/**
+	 * Adds a folder path to the value of the file path. Relative paths will be assumed relative to the installation folder.
+	 * 
+	 * @uxon-property folder_path
+	 * @uxon-type string
+	 * 
+	 * @param unknown $value
+	 * @return \exface\Core\Actions\ShowDialogFromFile
+	 */
+	public function set_folder_path($value) {
+	    $this->folder_path = $value;
+	    return $this;
+	}  
+  
 }
 
 ?>

@@ -1089,6 +1089,9 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren {
 	 * widget consumer is not empty. Can be usefully combined with a value-reference
 	 * to the same widget and column. 
 	 * 
+	 * @uxon-property disable_condition
+	 * @uxon-type object
+	 * 
 	 * @param UxonObject $value
 	 * @return \exface\Core\Widgets\AbstractWidget
 	 */
