@@ -3,8 +3,8 @@
 namespace exface\Core\CommonLogic\Log\Handlers\monolog;
 
 
-use exface\Core\CommonLogic\Log\LogHandlerInterface;
 use exface\Core\Interfaces\iCanGenerateDebugWidgets;
+use exface\Core\Interfaces\Log\LogHandlerInterface;
 use Monolog\Logger;
 
 /**

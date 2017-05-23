@@ -319,7 +319,7 @@ class Workbench {
 	
 	/**
 	 * 
-	 * @return \exface\Core\CommonLogic\Log\LoggerInterface
+	 * @return \exface\Core\Interfaces\Log\LoggerInterface
 	 */
 	public function get_logger(){
 		return $this->logger;
