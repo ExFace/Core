@@ -21,6 +21,8 @@ class ShowHelpDialog extends ShowDialog {
 	protected function init(){
 		parent::init();
 		$this->set_icon_name('help');
+		$this->set_prefill_with_filter_context(false);
+		$this->set_prefill_with_input_data(false);
 	}
 	
 	/**
