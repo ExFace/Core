@@ -1,4 +1,5 @@
 <?php
+
 namespace exface\Core\CommonLogic\Model;
 
 use exface\Core\DataTypes\AbstractDataType;
@@ -78,10 +79,10 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
 
     /**
      * Marks this attribute as a relation
-     *
+     * 
      * @param boolean $value            
      */
-    public function set_relation_flag($value)
+    public function setRelationFlag($value)
     {
         $this->is_relation = $value;
     }
@@ -89,77 +90,77 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
     /**
      * Returns TRUE if this attribute actually is a relation and FALSE otherwise.
      * The relation itself can be obtained by calling get_relation().
-     *
+     * 
      * @see get_relation()
      * @return boolean
      */
-    public function is_relation()
+    public function isRelation()
     {
         return $this->is_relation;
     }
 
     /**
      * Returns the relation, this attribute represents if it is a relation attribute and NULL otherwise
-     *
+     * 
      * @return Relation
      */
-    public function get_relation()
+    public function getRelation()
     {
-        return $this->get_object()->get_relation($this->get_alias());
+        return $this->getObject()->getRelation($this->getAlias());
     }
 
-    public function get_alias_with_relation_path()
+    public function getAliasWithRelationPath()
     {
-        return RelationPath::relation_path_add($this->get_relation_path()->to_string(), $this->get_alias());
+        return RelationPath::relationPathAdd($this->getRelationPath()->toString(), $this->getAlias());
     }
 
-    public function get_id()
+    public function getId()
     {
         return $this->id;
     }
 
-    public function set_id($value)
+    public function setId($value)
     {
         $this->id = $value;
     }
 
-    public function get_alias()
+    public function getAlias()
     {
         return $this->alias;
     }
 
-    public function set_alias($value)
+    public function setAlias($value)
     {
         $this->alias = $value;
     }
 
     /**
      * Returns the data type of the attribute as an instantiated data type object
-     *
+     * 
      * @return AbstractDataType
      */
-    public function get_data_type()
+    public function getDataType()
     {
         return $this->data_type;
     }
 
-    public function set_data_type($object_or_name)
+    public function setDataType($object_or_name)
     {
         if ($object_or_name instanceof AbstractDataType) {
             $this->data_type = $object_or_name;
         } else {
-            $exface = $this->get_model()->get_workbench();
-            $this->data_type = DataTypeFactory::create_from_alias($exface, $object_or_name);
+            $exface = $this->getModel()->getWorkbench();
+            $this->data_type = DataTypeFactory::createFromAlias($exface, $object_or_name);
         }
         return $this;
     }
 
-    public function get_default_display_order()
+    public function getDefaultDisplayOrder()
     {
         return $this->default_display_order;
     }
 
-    public function set_default_display_order($value)
+    public function setDefaultDisplayOrder($value)
     {
         $this->default_display_order = $value;
     }
@@ -167,18 +168,18 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
     /**
      * Returns TRUE if the attribute can be changed and FALSE if it is read only.
      * Attributes of objects from read-only data sources are never editable!
-     *
+     * 
      * @return boolean
      */
-    public function is_editable()
+    public function isEditable()
     {
-        if ($this->get_object()->get_data_source()->is_read_only()) {
+        if ($this->getObject()->getDataSource()->isReadOnly()) {
             return false;
         }
         return $this->editable;
     }
 
-    public function set_editable($value)
+    public function setEditable($value)
     {
         $this->editable = $value;
     }
@@ -187,7 +188,7 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
      *
      * @return unknown
      */
-    public function get_formatter()
+    public function getFormatter()
     {
         return $this->formatter;
     }
@@ -196,47 +197,47 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
      *
      * @param unknown $value            
      */
-    public function set_formatter($value)
+    public function setFormatter($value)
     {
         $this->formatter = $value;
     }
 
-    public function is_hidden()
+    public function isHidden()
     {
         return $this->hidden;
     }
 
-    public function set_hidden($value)
+    public function setHidden($value)
     {
         $this->hidden = $value;
     }
 
-    public function get_name()
+    public function getName()
     {
         return $this->name;
     }
 
-    public function set_name($value)
+    public function setName($value)
     {
         $this->name = $value;
     }
 
-    public function is_required()
+    public function isRequired()
     {
         return $this->required;
     }
 
-    public function set_required($value)
+    public function setRequired($value)
     {
         $this->required = $value;
     }
 
-    public function get_data_address()
+    public function getDataAddress()
     {
         return $this->data;
     }
 
-    public function set_data_address($value)
+    public function setDataAddress($value)
     {
         $this->data = $value;
     }
@@ -251,15 +252,15 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
      *
      * @return RelationPath
      */
-    public function get_relation_path()
+    public function getRelationPath()
     {
         if (is_null($this->relation_path)) {
-            $this->relation_path = RelationPathFactory::create_for_object($this->get_object());
+            $this->relation_path = RelationPathFactory::createForObject($this->getObject());
         }
         return $this->relation_path;
     }
 
-    protected function set_relation_path(RelationPath $path)
+    protected function setRelationPath(RelationPath $path)
     {
         $this->relation_path = $path;
     }
@@ -274,9 +275,9 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
      *
      * @return \exface\Core\CommonLogic\Model\Object
      */
-    public function get_object()
+    public function getObject()
     {
-        return $this->get_model()->get_object($this->get_object_id());
+        return $this->getModel()->getObject($this->getObjectId());
     }
 
     /**
@@ -289,12 +290,12 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
      *
      * @return \exface\Core\CommonLogic\Model\Object
      */
-    public function get_object_inherited_from()
+    public function getObjectInheritedFrom()
     {
-        if ($this->is_inherited()) {
-            return $this->get_model()->get_object_by_id($this->get_inherited_from_object_id());
+        if ($this->isInherited()) {
+            return $this->getModel()->getObjectById($this->getInheritedFromObjectId());
         } else {
-            return $this->get_object();
+            return $this->getObject();
         }
     }
 
@@ -303,49 +304,49 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
      * The default widget can be defined
      * for a data type and extended by a further definition for a specific attribute. If none of the above is defined,
      * a blank UXON object with merely the overall default widget type (specified in the config) will be returned.
-     *
+     * 
      * @return UxonObject
      */
-    public function get_default_widget_uxon()
+    public function getDefaultWidgetUxon()
     {
-        if (! $this->default_widget_uxon->get_property('attribute_alias')) {
-            $this->default_widget_uxon->set_property(attribute_alias, $this->get_alias_with_relation_path());
+        if (! $this->default_widget_uxon->getProperty('attribute_alias')) {
+            $this->default_widget_uxon->setProperty(attribute_alias, $this->getAliasWithRelationPath());
         }
         return $this->default_widget_uxon;
     }
 
-    public function set_default_widget_uxon(UxonObject $uxon_object)
+    public function setDefaultWidgetUxon(UxonObject $uxon_object)
     {
         $this->default_widget_uxon = $uxon_object;
     }
 
-    public function get_formula()
+    public function getFormula()
     {
         return $this->formula;
     }
 
-    public function set_formula($value)
+    public function setFormula($value)
     {
         if ($value) {
-            $this->formula = $this->get_model()->parse_expression($value, $this->get_object());
+            $this->formula = $this->getModel()->parseExpression($value, $this->getObject());
         }
     }
 
     /**
      * Returns an expression for the default value of this attribute, which is to be used, when saving the attribute without an explicit value given in the data sheet.
-     *
+     * 
      * @see get_fixed_value() in contrast to the fixed value, the default value is always overridden by any value in the data sheet.
      * @return \exface\Core\CommonLogic\Model\Expression
      */
-    public function get_default_value()
+    public function getDefaultValue()
     {
         if ($this->default_value && ! ($this->default_value instanceof expression)) {
-            $this->default_value = $this->get_model()->parse_expression($this->default_value, $this->get_object());
+            $this->default_value = $this->getModel()->parseExpression($this->default_value, $this->getObject());
         }
         return $this->default_value;
     }
 
-    public function set_default_value($value)
+    public function setDefaultValue($value)
     {
         if ($value) {
             $this->default_value = $value;
@@ -354,73 +355,73 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
 
     /**
      * Returns an expression for value of this attribute, which is to be set or updated every time the attribute is saved to the data source.
-     *
+     * 
      * @return \exface\Core\CommonLogic\Model\Expression
      */
-    public function get_fixed_value()
+    public function getFixedValue()
     {
         if ($this->fixed_value && ! ($this->fixed_value instanceof expression)) {
-            $this->fixed_value = $this->get_model()->parse_expression($this->fixed_value, $this->get_object());
+            $this->fixed_value = $this->getModel()->parseExpression($this->fixed_value, $this->getObject());
         }
         return $this->fixed_value;
     }
 
-    public function set_fixed_value($value)
+    public function setFixedValue($value)
     {
         $this->fixed_value = $value;
     }
 
-    public function get_default_sorter_dir()
+    public function getDefaultSorterDir()
     {
         return $this->default_sorter_dir;
     }
 
-    public function set_default_sorter_dir($value)
+    public function setDefaultSorterDir($value)
     {
         $this->default_sorter_dir = $value;
     }
 
-    public function get_object_id()
+    public function getObjectId()
     {
         return $this->object_id;
     }
 
-    public function set_object_id($value)
+    public function setObjectId($value)
     {
         $this->object_id = $value;
     }
 
-    public function get_model()
+    public function getModel()
     {
         return $this->model;
     }
 
-    public function set_model(\exface\Core\CommonLogic\Model\Model $model)
+    public function setModel(\exface\Core\CommonLogic\Model\Model $model)
     {
         $this->model = $model;
     }
 
-    public function get_short_description()
+    public function getShortDescription()
     {
         return $this->short_description;
     }
 
-    public function set_short_description($value)
+    public function setShortDescription($value)
     {
         $this->short_description = $value;
     }
 
-    public function get_hint()
+    public function getHint()
     {
-        return $this->get_short_description() . ' [' . $this->get_data_type()->get_name() . ']';
+        return $this->getShortDescription() . ' [' . $this->getDataType()->getName() . ']';
     }
 
     /**
      * Returns the UID of the object, this attribute was inherited from or NULL if it is a direct attribute of it's object
-     *
+     * 
      * @return string
      */
-    public function get_inherited_from_object_id()
+    public function getInheritedFromObjectId()
     {
         return $this->inherited_from_object_id;
     }
@@ -429,26 +430,26 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
      *
      * @param string $value            
      */
-    public function set_inherited_from_object_id($value)
+    public function setInheritedFromObjectId($value)
     {
         $this->inherited_from_object_id = $value;
     }
 
     /**
      * Returns TRUE if this Relation was inherited from a parent object
-     *
+     * 
      * @return boolean
      */
-    public function is_inherited()
+    public function isInherited()
     {
-        return is_null($this->get_inherited_from_object_id()) ? true : false;
+        return is_null($this->getInheritedFromObjectId()) ? true : false;
     }
 
     /**
      *
      * @return \exface\Core\CommonLogic\UxonObject
      */
-    public function get_data_address_properties()
+    public function getDataAddressProperties()
     {
         return $this->data_address_properties;
     }
@@ -458,7 +459,7 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
      * @param UxonObject $value            
      * @return Attribute
      */
-    public function set_data_address_properties(UxonObject $value)
+    public function setDataAddressProperties(UxonObject $value)
     {
         $this->data_address_properties = $value;
         return $this;
@@ -466,12 +467,12 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
 
     /**
      * Returns the value of a data source specifi object property specified by it's id
-     *
+     * 
      * @param string $id            
      */
-    public function get_data_address_property($id)
+    public function getDataAddressProperty($id)
     {
-        return $this->get_data_address_properties()->get_property($id);
+        return $this->getDataAddressProperties()->getProperty($id);
     }
 
     /**
@@ -480,20 +481,20 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
      * @param mixed $value            
      * @return \exface\Core\CommonLogic\Model\Attribute
      */
-    public function set_data_address_property($id, $value)
+    public function setDataAddressProperty($id, $value)
     {
-        $this->get_data_address_properties()->set_property($id, $value);
+        $this->getDataAddressProperties()->setProperty($id, $value);
         return $this;
     }
 
     /**
      * Returns TRUE if the attribute is used as the label for it's object or FALSE otherwise
-     *
+     * 
      * @return boolean
      */
-    public function is_label()
+    public function isLabel()
     {
-        if ($this->get_alias() == $this->get_object()->get_label_alias()) {
+        if ($this->getAlias() == $this->getObject()->getLabelAlias()) {
             return true;
         } else {
             return false;
@@ -502,12 +503,12 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
 
     /**
      * Returns TRUE if this attribute is used as UID for it's object and FALSE otherwise
-     *
+     * 
      * @return boolean
      */
-    public function is_uid_for_object()
+    public function isUidForObject()
     {
-        if ($this->get_object()->get_uid_alias() === $this->get_alias()) {
+        if ($this->getObject()->getUidAlias() === $this->getAlias()) {
             return true;
         } else {
             return false;
@@ -523,9 +524,9 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
      * @param Attribute $attribute            
      * @return boolean
      */
-    public function is_exactly(Attribute $attribute)
+    public function isExactly(Attribute $attribute)
     {
-        if ($this->get_id() == $attribute->get_id() && $this->get_object()->is_exactly($attribute->get_object())) {
+        if ($this->getId() == $attribute->getId() && $this->getObject()->isExactly($attribute->getObject())) {
             return true;
         }
         return false;
@@ -546,7 +547,7 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
      */
     public function is(Attribute $attribute)
     {
-        if (strcasecmp($this->get_alias(), $attribute->get_alias()) === 0 && $this->get_object()->is($attribute->get_object())) {
+        if (strcasecmp($this->getAlias(), $attribute->getAlias()) === 0 && $this->getObject()->is($attribute->getObject())) {
             return true;
         }
         return false;
@@ -559,7 +560,7 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
      */
     public function copy()
     {
-        return $this->rebase($this->get_relation_path()->copy());
+        return $this->rebase($this->getRelationPath()->copy());
     }
 
     /**
@@ -574,8 +575,8 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
         $copy = clone $this;
         
         // Explicitly copy properties, that are objects themselves
-        $copy->set_relation_path($path);
-        $copy->set_default_widget_uxon($this->get_default_widget_uxon()->copy());
+        $copy->setRelationPath($path);
+        $copy->setDefaultWidgetUxon($this->getDefaultWidgetUxon()->copy());
         return $copy;
     }
 
@@ -586,7 +587,7 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
      *
      * @return boolean
      */
-    public function is_system()
+    public function isSystem()
     {
         return $this->system;
     }
@@ -599,7 +600,7 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
      * @param boolean $value            
      * @return Attribute
      */
-    public function set_system($value)
+    public function setSystem($value)
     {
         $this->system = \exface\Core\DataTypes\BooleanDataType::parse($value);
         return $this;
@@ -609,16 +610,16 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
      *
      * @return Workbench
      */
-    public function get_workbench()
+    public function getWorkbench()
     {
-        return $this->get_model()->get_workbench();
+        return $this->getModel()->getWorkbench();
     }
 
     /**
      *
      * @return string
      */
-    public function get_default_aggregate_function()
+    public function getDefaultAggregateFunction()
     {
         return $this->default_aggregate_function;
     }
@@ -628,7 +629,7 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
      * @param string $value            
      * @return \exface\Core\CommonLogic\Model\Attribute
      */
-    public function set_default_aggregate_function($value)
+    public function setDefaultAggregateFunction($value)
     {
         $this->default_aggregate_function = $value;
         return $this;
@@ -638,7 +639,7 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
      *
      * @return boolean
      */
-    public function is_sortable()
+    public function isSortable()
     {
         return $this->sortable;
     }
@@ -648,7 +649,7 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
      * @param boolean $value            
      * @return \exface\Core\CommonLogic\Model\Attribute
      */
-    public function set_sortable($value)
+    public function setSortable($value)
     {
         $this->sortable = \exface\Core\DataTypes\BooleanDataType::parse($value);
         return $this;
@@ -658,7 +659,7 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
      *
      * @return boolean
      */
-    public function is_filterable()
+    public function isFilterable()
     {
         return $this->filterable;
     }
@@ -668,7 +669,7 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
      * @param boolean $value            
      * @return \exface\Core\CommonLogic\Model\Attribute
      */
-    public function set_filterable($value)
+    public function setFilterable($value)
     {
         $this->filterable = \exface\Core\DataTypes\BooleanDataType::parse($value);
         return $this;
@@ -678,7 +679,7 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
      *
      * @return boolean
      */
-    public function is_aggregatable()
+    public function isAggregatable()
     {
         return $this->aggregatable;
     }
@@ -688,7 +689,7 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
      * @param boolean $value            
      * @return \exface\Core\CommonLogic\Model\Attribute
      */
-    public function set_aggregatable($value)
+    public function setAggregatable($value)
     {
         $this->aggregatable = \exface\Core\DataTypes\BooleanDataType::parse($value);
         return $this;
