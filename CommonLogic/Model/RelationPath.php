@@ -420,7 +420,7 @@ class RelationPath implements \IteratorAggregate
 
     /**
      * Returns an attribute of the end object specified by it's attribute alias, but with a relation path relative to the start object.
-     * E.g. calling get_attribute_of_end_object('POSITION_NO') on the relation path ORDER<-POSITION will return ORDER__POSITION__POSITION_NO
+     * E.g. calling getAttributeOfEndObject('POSITION_NO') on the relation path ORDER<-POSITION will return ORDER__POSITION__POSITION_NO
      *
      * @param string $attribute_alias            
      * @return Attribute

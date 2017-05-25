@@ -343,7 +343,7 @@ class ShowWidget extends AbstractAction implements iShowWidget, iUsePrefillData
 
     /**
      *
-     * @deprecated use set_page_id() instead! This method is kept for backwards compatibility only.
+     * @deprecated use setPageId() instead! This method is kept for backwards compatibility only.
      * @param string $value            
      * @return \exface\Core\Actions\ShowWidget
      */

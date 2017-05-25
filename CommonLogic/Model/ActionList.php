@@ -8,11 +8,11 @@ use exface\Core\Interfaces\Actions\ActionInterface;
  *
  * @author Andrej Kabachnik
  *        
- * @method ActionInterface[] get_all()
+ * @method ActionInterface[] getAll()
  * @method ActionList|ActionInterface[] getIterator()
  * @method ActionInterface get()
- * @method ActionInterface get_first()
- * @method ActionInterface get_last()
+ * @method ActionInterface getFirst()
+ * @method ActionInterface getLast()
  * @method ActionList copy()
  *        
  */

@@ -75,7 +75,7 @@ abstract class AbstractApp implements AppInterface
     public function getAction($action_alias, \exface\Core\Widgets\AbstractWidget $called_by_widget = null, \stdClass $uxon_description = null)
     {
         if (! $action_alias) {
-            throw new ActionNotFoundError('Cannot find action with alias "' . $action_alias . '" in app "' . $this->get_alias_with_namespace . '"!');
+            throw new ActionNotFoundError('Cannot find action with alias "' . $action_alias . '" in app "' . $this->getAliasWithNamespace() . '"!');
         }
         $action = ActionFactory::createFromString($this->getWorkbench(), $this->getAliasWithNamespace() . NameResolver::NAMESPACE_SEPARATOR . $action_alias, $called_by_widget);
         if ($uxon_description instanceof \stdClass) {
@@ -187,7 +187,7 @@ abstract class AbstractApp implements AppInterface
      * into the given configuration object.
      *
      * This method is handy if an app needs to create some custom base config object and load the config files on that. In this case,
-     * simply overwrite the get_config() method to pass a non-empty $base_config.
+     * simply overwrite the getConfig() method to pass a non-empty $base_config.
      *
      * @param ConfigurationInterface $base_config            
      * @return \exface\Core\Interfaces\ConfigurationInterface

@@ -191,7 +191,7 @@ class Object implements ExfaceClassInterface, AliasInterface
      * Returns TRUE if the object has a relation matching the given alias and FALSE otherwise.
      * The alias may include a relation path
      *
-     * @see get_relation()
+     * @see getRelation()
      *
      * @param string $alias            
      * @param string $foreign_key_alias            
@@ -353,7 +353,7 @@ class Object implements ExfaceClassInterface, AliasInterface
      *
      * Inherited elements become property of the extende object and loose any connection to their parents
      * (i.e. changing an attribute on the parent object at window will not effect the respective inherited
-     * attribute of the extended object). However, using the method get_inherited_from_object_id() of an
+     * attribute of the extended object). However, using the method getInheritedFromObjectId() of an
      * inherited element, it can be determined, whether the element is inherited and from which object.
      *
      * @param string $parent_object_id            
@@ -451,7 +451,7 @@ class Object implements ExfaceClassInterface, AliasInterface
         $first_relation = false;
         foreach ($this->getRelations() as $rel) {
             // It is important to compare the ids only, because otherwise the related object will need to be loaded.
-            // Don't call get_related_object() here to loading half the model just to look through relations.
+            // Don't call getRelatedObject() here to loading half the model just to look through relations.
             if ($related_object->is($rel->getRelatedObjectId())) {
                 if (! $rel->isInherited() || ! $prefer_direct_relations) {
                     return $rel;
@@ -824,7 +824,7 @@ class Object implements ExfaceClassInterface, AliasInterface
     public function getInheritingObjects()
     {
         $result = array();
-        $res = $this->getModel()->getWorkbench()->get_model_data_connector()->runSql('SELECT o.oid FROM exf_object o WHERE o.parent_object_oid = ' . $this->getId());
+        $res = $this->getModel()->getWorkbench()->model()->getModelLoader()->getDataConnection()->runSql('SELECT o.oid FROM exf_object o WHERE o.parent_object_oid = ' . $this->getId());
         foreach ($res as $row) {
             if ($obj = $this->getModel()->getObject($row['oid'])) {
                 $result[] = $obj;

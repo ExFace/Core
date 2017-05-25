@@ -70,7 +70,7 @@ class CustomTemplateScript extends AbstractAction implements iRunTemplateScript
     /**
      * Replaces placeholders in the script, thus preparing it for use.
      * Expects a placeholders array of the
-     * form [placeholder => value]. If the script is not passed directly, get_script() will be used to get it.
+     * form [placeholder => value]. If the script is not passed directly, getScript() will be used to get it.
      * This method can be overridden to easiliy extend or modify the script specified in UXON.
      *
      * @param array $placeholders

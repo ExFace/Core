@@ -6,10 +6,10 @@ use exface\Core\CommonLogic\Model\Attribute;
 
 /**
  *
- * @method DataColumnInterface[] get_all()
+ * @method DataColumnInterface[] getAll()
  * @method DataColumnInterface get(string $key)
- * @method DataColumnInterface get_first()
- * @method DataColumnInterface get_last()
+ * @method DataColumnInterface getFirst()
+ * @method DataColumnInterface getLast()
  *        
  * @author Andrej Kabachnik
  *        

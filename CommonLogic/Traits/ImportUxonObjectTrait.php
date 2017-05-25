@@ -13,7 +13,7 @@ trait ImportUxonObjectTrait {
      * Matching setters are methods named exactly as the property and prefixed by "set": e.g. the
      * property widget_type would map to setWidgetType().
      *
-     * NOTE: snake_case methods (set_widget_type() for the example above) are supported for backwards
+     * NOTE: snake_case methods (setWidgetType() for the example above) are supported for backwards
      * compatibility but must not be used anymore! The fallback will be removed in future versions!
      *
      * @param \stdClass $uxon            

@@ -281,7 +281,7 @@ class Expression implements ExfaceClassInterface, iCanBeCopied
     /**
      * Returns the expression as string.
      * Basically this is the opposite fo parse.
-     * Note, that in case of attributes the expression will include the relation path, aggregators, etc., whereas get_attribute->getAlias() would return only the actual alias.
+     * Note, that in case of attributes the expression will include the relation path, aggregators, etc., whereas getAttribute->getAlias() would return only the actual alias.
      *
      * @return string
      */

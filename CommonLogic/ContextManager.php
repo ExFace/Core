@@ -110,7 +110,7 @@ class ContextManager implements ContextManagerInterface
     {
         $contexts = array();
         foreach ($this->getSopes() as $scope) {
-            $contexts = array_merge($contexts, $scope->getFilterContext()->get_conditions_for_object($meta_object));
+            $contexts = array_merge($contexts, $scope->getFilterContext()->getConditions($meta_object));
         }
         return $contexts;
     }

@@ -120,7 +120,7 @@ class StateMachineBehavior extends AbstractBehavior
         } elseif (is_int($value) || is_string($value)) {
             $this->default_state = $value;
         } else {
-            throw new BehaviorConfigurationError($this->getObject(), 'Can not set default state for "' . $this->getObject()->getAliasWithNamespace() . '": the argument passed to set_default_state() is neither a StateMachineState nor an integer nor a string!', '6TG2ZFI');
+            throw new BehaviorConfigurationError($this->getObject(), 'Can not set default state for "' . $this->getObject()->getAliasWithNamespace() . '": the argument passed to setDefaultState() is neither a StateMachineState nor an integer nor a string!', '6TG2ZFI');
         }
         
         return $this;
@@ -227,7 +227,7 @@ class StateMachineBehavior extends AbstractBehavior
         } elseif (is_array($value)) {
             $this->states = $value;
         } else {
-            throw new BehaviorConfigurationError($this->getObject(), 'Can not set states for "' . $this->getObject()->getAliasWithNamespace() . '": the argument passed to set_states() is neither an UxonObject nor an array!', '6TG2ZFI');
+            throw new BehaviorConfigurationError($this->getObject(), 'Can not set states for "' . $this->getObject()->getAliasWithNamespace() . '": the argument passed to setStates() is neither an UxonObject nor an array!', '6TG2ZFI');
         }
         
         return $this;

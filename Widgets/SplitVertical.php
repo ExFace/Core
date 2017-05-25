@@ -34,7 +34,7 @@ class SplitVertical extends Container
      * Returns the panels of the Split.
      * Technically it is an alias for Split::getWidgets() for better readability.
      *
-     * @see get_widgets()
+     * @see getWidgets()
      */
     public function getPanels()
     {

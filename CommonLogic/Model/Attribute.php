@@ -91,7 +91,7 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
      * Returns TRUE if this attribute actually is a relation and FALSE otherwise.
      * The relation itself can be obtained by calling get_relation().
      * 
-     * @see get_relation()
+     * @see getRelation()
      * @return boolean
      */
     public function isRelation()
@@ -271,7 +271,7 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
      * will return the last object in that path.
      *
      * If the attribute is inherited, the inheriting object will be returned. To get the base object, the
-     * attribute was inherited from, use get_object_inherited_from().
+     * attribute was inherited from, use getObjectInheritedFrom().
      *
      * @return \exface\Core\CommonLogic\Model\Object
      */
@@ -335,7 +335,7 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
     /**
      * Returns an expression for the default value of this attribute, which is to be used, when saving the attribute without an explicit value given in the data sheet.
      * 
-     * @see get_fixed_value() in contrast to the fixed value, the default value is always overridden by any value in the data sheet.
+     * @see getFixedValue() in contrast to the fixed value, the default value is always overridden by any value in the data sheet.
      * @return \exface\Core\CommonLogic\Model\Expression
      */
     public function getDefaultValue()

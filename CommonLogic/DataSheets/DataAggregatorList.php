@@ -69,7 +69,7 @@ class DataAggregatorList extends EntityList implements DataAggregatorListInterfa
 
     /**
      * Returns the data sheet, the list belongs to.
-     * This is a better understandable alias for the inherited get_parent()
+     * This is a better understandable alias for the inherited getParent()
      *
      * @return DataSheetInterface
      */
