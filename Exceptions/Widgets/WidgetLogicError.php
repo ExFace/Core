@@ -13,4 +13,8 @@ class WidgetLogicError extends LogicException implements WidgetExceptionInterfac
 	
 	use WidgetExceptionTrait;
 	
+	public static function get_default_alias(){
+	    return '6VCYEUC';
+	}
+	
 }

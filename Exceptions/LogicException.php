@@ -16,5 +16,9 @@ class LogicException extends \LogicException implements ErrorExceptionInterface,
 	
 	use ExceptionTrait;
 	
+	public static function get_default_alias(){
+	    return '6VCYFND';
+	}
+	
 }
 ?>
