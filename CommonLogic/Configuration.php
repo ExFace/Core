@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\CommonLogic;
 
 use exface\Core\Interfaces\ExfaceClassInterface;
@@ -27,7 +26,7 @@ class Configuration implements ConfigurationInterface
      * Returns a UXON object with the current configuration options for this app.
      * Options defined on different levels
      * (user, installation, etc.) are already merged at this point.
-     * 
+     *
      * @return \exface\Core\CommonLogic\UxonObject
      */
     protected function getConfigUxon()
@@ -40,7 +39,7 @@ class Configuration implements ConfigurationInterface
 
     /**
      * Overwrites the internal config UXON with the given UXON object
-     * 
+     *
      * @param UxonObject $uxon            
      * @return \exface\Core\CommonLogic\Configuration
      */
@@ -113,8 +112,7 @@ class Configuration implements ConfigurationInterface
      */
     public function loadConfigUxon(UxonObject $uxon)
     {
-        $this->setConfigUxon($this->getConfigUxon()
-            ->extend($uxon));
+        $this->setConfigUxon($this->getConfigUxon()->extend($uxon));
         return $this;
     }
 

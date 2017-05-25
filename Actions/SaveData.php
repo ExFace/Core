@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Actions;
 
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
@@ -31,10 +30,7 @@ class SaveData extends AbstractAction implements iModifyData, iCanBeUndone
         $this->setAffectedRows($data_sheet->dataSave($this->getTransaction()));
         $this->setResultDataSheet($data_sheet);
         $this->setResult('');
-        $this->setResultMessage($this->getWorkbench()
-            ->getCoreApp()
-            ->getTranslator()
-            ->translate('ACTION.SAVEDATA.RESULT', array(
+        $this->setResultMessage($this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.SAVEDATA.RESULT', array(
             '%number%' => $this->getAffectedRows()
         ), $this->getAffectedRows()));
     }

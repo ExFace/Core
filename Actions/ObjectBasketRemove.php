@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Actions;
 
 /**
@@ -27,10 +26,7 @@ class ObjectBasketRemove extends ObjectBasketFetch
         $object = $input->getMetaObject();
         if ($input->isEmpty()) {
             $this->getContext()->removeInstancesForObjectId($object->getId());
-            $this->setResultMessage($this->getWorkbench()
-                ->getCoreApp()
-                ->getTranslator()
-                ->translate('ACTION.OBJECTBASKETREMOVE.RESULT_ALL', array(
+            $this->setResultMessage($this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.OBJECTBASKETREMOVE.RESULT_ALL', array(
                 '%object_name%' => $object->getName()
             )));
         } else {
@@ -39,10 +35,7 @@ class ObjectBasketRemove extends ObjectBasketFetch
                 $this->getContext()->removeInstance($object->getId(), $uid);
                 $removed ++;
             }
-            $this->setResultMessage($this->getWorkbench()
-                ->getCoreApp()
-                ->getTranslator()
-                ->translate('ACTION.OBJECTBASKETREMOVE.RESULT', array(
+            $this->setResultMessage($this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.OBJECTBASKETREMOVE.RESULT', array(
                 '%number%' => $removed,
                 '%object_name%' => $object->getName()
             ), $removed));

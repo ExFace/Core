@@ -1,11 +1,10 @@
 <?php
-
 namespace exface\Core\Formulas;
 
 /**
  * Shows weather icon based on yahoo condition code (e.g.
  * 28 = cloudy).
- * 
+ *
  * @author Andrej Kabachnik
  *        
  */

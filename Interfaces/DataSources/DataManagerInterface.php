@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Interfaces\DataSources;
 
 use exface\Core\Interfaces\ExfaceClassInterface;
@@ -35,7 +34,7 @@ interface DataManagerInterface extends ExfaceClassInterface
 
     /**
      * Establishes a data connection specified by the given alias
-     * 
+     *
      * @param string $data_connector
      *            connection alias
      * @param array $config            
@@ -51,7 +50,7 @@ interface DataManagerInterface extends ExfaceClassInterface
 
     /**
      * Creates the data connection described in the given data source and returns the connector object
-     * 
+     *
      * @param string $data_source_id            
      * @return DataConnectionInterface
      */
@@ -59,7 +58,7 @@ interface DataManagerInterface extends ExfaceClassInterface
 
     /**
      * Starts a new global transaction and returns it
-     * 
+     *
      * @return DataTransactionInterface
      */
     public function startTransaction();

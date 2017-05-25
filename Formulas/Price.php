@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Formulas;
 
 use exface\Core\Factories\DataTypeFactory;
@@ -8,7 +7,7 @@ use exface\Core\Factories\DataTypeFactory;
  * Formats prices based on a currency meta object.
  * Currency information is cached, so in general only one query per displayed
  * currency is needed.
- * 
+ *
  * @author Andrej Kabachnik
  *        
  */

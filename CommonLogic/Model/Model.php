@@ -107,7 +107,7 @@ class Model
     /**
      * Checks if the object is loaded already and returns the cached version.
      * Returns false if the object is not in the cache.
-     * 
+     *
      * @param int $object_id            
      * @return \exface\Core\CommonLogic\Model\Object
      */
@@ -123,7 +123,7 @@ class Model
     /**
      * Adds the object to the model cache.
      * Also sets the default namespace, if it is the first object loaded.
-     * 
+     *
      * @param \exface\Core\CommonLogic\Model\Object $obj            
      * @return boolean
      */
@@ -144,7 +144,7 @@ class Model
 
     /**
      * Returns the object part of a full alias ("CUSTOMER" from "CRM.CUSTOMER")
-     * 
+     *
      * @param string $qualified_alias_with_app            
      * @return string
      */
@@ -159,7 +159,7 @@ class Model
 
     /**
      * Returns the app part of a full alias ("CRM" from "CRM.CUSTOMER")
-     * 
+     *
      * @param string $qualified_alias_with_app            
      * @return string
      */
@@ -180,7 +180,7 @@ class Model
 
     /**
      * TODO Move this method to the ExpressionFactory (need to replace all calls...)
-     * 
+     *
      * @param string $expression            
      * @param Object $object            
      * @return \exface\Core\CommonLogic\Model\Expression

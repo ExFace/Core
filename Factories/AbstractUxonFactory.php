@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Factories;
 
 use exface\Core\CommonLogic\UxonObject;
@@ -13,7 +12,7 @@ abstract class AbstractUxonFactory extends AbstractFactory
     /**
      * Creates an object from a standard class (e.g.
      * the result of json_decode())
-     * 
+     *
      * @param exface $exface            
      * @param \stdClass $json_object            
      */
@@ -31,7 +30,7 @@ abstract class AbstractUxonFactory extends AbstractFactory
      * Creates a business object from it's UXON description.
      * If the business object implements iCanBeConvertedToUxon, this method
      * will work automatically. Otherwise it needs to be overridden in the specific factory.
-     * 
+     *
      * @param exface $exface            
      * @param UxonObject $uxon            
      * @throws UnexpectedValueException

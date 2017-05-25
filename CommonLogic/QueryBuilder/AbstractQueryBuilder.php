@@ -32,7 +32,7 @@ abstract class AbstractQueryBuilder
     /**
      * Performs a create query.
      * Returns the number of successfully created rows.
-     * 
+     *
      * @param string $data_connection            
      * @return int
      */
@@ -44,7 +44,7 @@ abstract class AbstractQueryBuilder
     /**
      * Performs a read query.
      * Returns the number of read rows.
-     * 
+     *
      * @param string $data_connection            
      * @return int
      */
@@ -56,7 +56,7 @@ abstract class AbstractQueryBuilder
     /**
      * Performs an update query.
      * Returns the number of successfully updated rows.
-     * 
+     *
      * @param string $data_connection            
      * @return int
      */
@@ -68,7 +68,7 @@ abstract class AbstractQueryBuilder
     /**
      * Performs a delete query.
      * Returns the number of deleted rows.
-     * 
+     *
      * @param string $data_connection            
      * @return int
      */
@@ -79,7 +79,7 @@ abstract class AbstractQueryBuilder
 
     /**
      * Set the main object for the query
-     * 
+     *
      * @param \exface\Core\CommonLogic\Model\Object $meta_object            
      * @throws MetaObjectDataConnectionNotFoundError if the data connection for the object cannot be established
      * @return \exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder
@@ -96,7 +96,7 @@ abstract class AbstractQueryBuilder
 
     /**
      * Returns the main meta object of the query
-     * 
+     *
      * @return \exface\Core\CommonLogic\Model\Object
      */
     public function getMainObject()
@@ -106,7 +106,7 @@ abstract class AbstractQueryBuilder
 
     /**
      * Adds an attribute to be fetched by the query
-     * 
+     *
      * @param string $attribute_alias            
      */
     public function addAttribute($alias)
@@ -140,7 +140,7 @@ abstract class AbstractQueryBuilder
     /**
      * Adds a total row to the query (i.e.
      * for the footers)
-     * 
+     *
      * @param string $attribute
      *            attribute_alias
      * @param string $function
@@ -165,7 +165,7 @@ abstract class AbstractQueryBuilder
 
     /**
      * Creates and adds a single filter to the query
-     * 
+     *
      * @param unknown $attribute_alias            
      * @param unknown $value            
      * @param string $comparator            
@@ -174,15 +174,13 @@ abstract class AbstractQueryBuilder
     public function addFilterFromString($attribute_alias, $value, $comparator = EXF_COMPARATOR_IS)
     {
         $exface = $this->getWorkbench();
-        $condition = ConditionFactory::createFromExpression($exface, $this->getWorkbench()
-            ->model()
-            ->parseExpression($attribute_alias, $this->getMainObject()), $value, $comparator);
+        $condition = ConditionFactory::createFromExpression($exface, $this->getWorkbench()->model()->parseExpression($attribute_alias, $this->getMainObject()), $value, $comparator);
         return $this->addFilterCondition($condition);
     }
 
     /**
      * Replaces all filters of the query by the given condition group.
-     * 
+     *
      * @param ConditionGroup $filters            
      * @return \exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder
      */
@@ -195,7 +193,7 @@ abstract class AbstractQueryBuilder
 
     /**
      * Replaces all filters of the query by the given filter group
-     * 
+     *
      * @param QueryPartFilterGroup $filter_group            
      */
     protected function setFilters(QueryPartFilterGroup $filter_group)
@@ -206,7 +204,7 @@ abstract class AbstractQueryBuilder
 
     /**
      * Adds a condition group to the first level of filters
-     * 
+     *
      * @param ConditionGroup $condition_group            
      * @return \exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder
      */
@@ -218,7 +216,7 @@ abstract class AbstractQueryBuilder
 
     /**
      * Adds a filter group query part to the first level of filters
-     * 
+     *
      * @param QueryPartFilterGroup $filter_group            
      * @return \exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder
      */
@@ -230,7 +228,7 @@ abstract class AbstractQueryBuilder
 
     /**
      * Adds a first level condition to the root filter group
-     * 
+     *
      * @param Condition $condition            
      * @return \exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder
      */
@@ -242,7 +240,7 @@ abstract class AbstractQueryBuilder
 
     /**
      * Adds a filter query part to the first level of filters
-     * 
+     *
      * @param QueryPartFilter $filter            
      * @return \exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder
      */
@@ -254,7 +252,7 @@ abstract class AbstractQueryBuilder
 
     /**
      * Returns the root filter group.
-     * 
+     *
      * @return QueryPartFilterGroup
      */
     protected function getFilters()
@@ -266,7 +264,7 @@ abstract class AbstractQueryBuilder
 
     /**
      * Returns a filter query part with the given alias
-     * 
+     *
      * @return QueryPartFilter
      */
     protected function getFilter($alias)
@@ -276,7 +274,7 @@ abstract class AbstractQueryBuilder
 
     /**
      * Removes all filters from the query
-     * 
+     *
      * @return \exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder
      */
     public function clearFilters()
@@ -288,7 +286,7 @@ abstract class AbstractQueryBuilder
     /**
      * Adds a sorter to the query.
      * Multiple sorters can be added sequentially.
-     * 
+     *
      * @param string $sort_by
      *            attribute_alias
      * @param string $order            
@@ -306,7 +304,7 @@ abstract class AbstractQueryBuilder
 
     /**
      * Returns an array of sorter query parts
-     * 
+     *
      * @return QueryPartSorter[]
      */
     protected function getSorters()
@@ -316,7 +314,7 @@ abstract class AbstractQueryBuilder
 
     /**
      * Addes a an attribute to aggregate over (= group by for SQL builders)
-     * 
+     *
      * @param string $attribute_alias            
      * @return \exface\Core\CommonLogic\QueryBuilder\QueryPartAttribute
      */
@@ -331,7 +329,7 @@ abstract class AbstractQueryBuilder
 
     /**
      * Returns an array of attribute query parts, that are to be used for aggregation
-     * 
+     *
      * @return QueryPartAttribute[]
      */
     protected function getAggregations()
@@ -352,7 +350,7 @@ abstract class AbstractQueryBuilder
     /**
      * Sets pagination for the query (i.e.
      * get $limit lines starting from line number $offset)
-     * 
+     *
      * @param number $limit            
      * @param number $offset            
      */
@@ -382,7 +380,7 @@ abstract class AbstractQueryBuilder
 
     /**
      * Adds a value column with a single row
-     * 
+     *
      * @param string $attribute_alias            
      * @param string $value            
      * @return QueryPartValue
@@ -400,7 +398,7 @@ abstract class AbstractQueryBuilder
      * The values
      * are passed as an array with row ids as keys. What column is meant by "row id" can optionally be specified via the
      * $row_id_attribute_alias parameter. If not set, the UID column of the main object of the query will be used.
-     * 
+     *
      * @param string $attribute_alias            
      * @param array $values
      *            [ row_id_attribute_alias_value => value_to_be_saved ]
@@ -418,7 +416,7 @@ abstract class AbstractQueryBuilder
 
     /**
      * Resets the values of the query
-     * 
+     *
      * @return \exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder
      */
     public function clearValues()
@@ -429,7 +427,7 @@ abstract class AbstractQueryBuilder
 
     /**
      * Returns the value query part specified by the given attribute alias
-     * 
+     *
      * @param unknown $attribute_alias            
      * @return QueryPartValue
      */
@@ -440,7 +438,7 @@ abstract class AbstractQueryBuilder
 
     /**
      * Returns an array of value query parts with all value columns of this query.
-     * 
+     *
      * @return QueryPartValue[]
      */
     protected function getValues()
@@ -452,7 +450,7 @@ abstract class AbstractQueryBuilder
      * Returns an array of rows fetched.
      * Each row is an associative array in turn
      * with attribute_aliases for keys.
-     * 
+     *
      * @return array
      */
     abstract function getResultRows();
@@ -460,29 +458,27 @@ abstract class AbstractQueryBuilder
     /**
      * Returns an array with totals: array[column][function]=[value]
      * Multiple agregating functions can be used on each column.
-     * 
+     *
      * @return array
      */
     abstract function getResultTotals();
 
     /**
      * Returns the total number of rows found, regardless of the pagination
-     * 
+     *
      * @return int
      */
     abstract function getResultTotalRows();
 
     public function getWorkbench()
     {
-        return $this->getMainObject()
-            ->getModel()
-            ->getWorkbench();
+        return $this->getMainObject()->getModel()->getWorkbench();
     }
 
     /**
      * Adds multiple query parts of any type to the query.
      * Even mixed types are supported!
-     * 
+     *
      * @param QueryPart[] $qparts            
      * @return \exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder
      */
@@ -496,7 +492,7 @@ abstract class AbstractQueryBuilder
 
     /**
      * Adds a query part of any type to the query.
-     * 
+     *
      * @param QueryPart $qpart            
      * @return \exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder
      */

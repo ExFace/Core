@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\CommonLogic;
 
 use exface\Core\CommonLogic\Workbench;
@@ -70,7 +69,7 @@ class NameResolver extends AbstractExfaceClass implements NameResolverInterface
      * Returns the namespace part of a given string (e.g.
      * "exface.Core" for "exface.Core.OBJECT")
      * NOTE: This is the ExFace-namespace. To get the PHP-namespace use get_class_namespace() instead.
-     * 
+     *
      * @param string $string            
      * @param exface $exface            
      * @return string
@@ -97,7 +96,7 @@ class NameResolver extends AbstractExfaceClass implements NameResolverInterface
     /**
      * Returns the alias part of a given string (e.g.
      * "OBJECT" for "exface.Core.OBJECT")
-     * 
+     *
      * @param string $string            
      * @param exface $exface            
      * @return string
@@ -193,7 +192,7 @@ class NameResolver extends AbstractExfaceClass implements NameResolverInterface
 
     /**
      * Returns the resolved class name in PSR-1 notation
-     * 
+     *
      * @return string
      */
     public function getClassNameWithNamespace()

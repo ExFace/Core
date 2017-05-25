@@ -8,11 +8,7 @@ class ShowHeaders extends ShowWidget
     {
         if ($this->getWidget()) {
             $this->prefillWidget();
-            return $this->getApp()
-                ->getWorkbench()
-                ->ui()
-                ->getTemplate()
-                ->drawHeaders($this->getWidget());
+            return $this->getApp()->getWorkbench()->ui()->getTemplate()->drawHeaders($this->getWidget());
         } else {
             return '';
         }

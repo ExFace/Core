@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Factories;
 
 use exface\Core\CommonLogic\Workbench;
@@ -20,7 +19,7 @@ abstract class EventFactory extends AbstractNameResolverFactory
 
     /**
      * Creates a new action from the given name resolver
-     * 
+     *
      * @param NameResolver $name_resolver            
      * @return ActionInterface
      */

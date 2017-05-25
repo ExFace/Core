@@ -142,9 +142,7 @@ class InputSelect extends Input implements iSupportMultiSelect
     {
         // If there are no selectable options set explicitly, try to determine them from the meta model. Otherwise the select box would be empty.
         if (empty($this->selectable_options) && $this->getAttribute()) {
-            if ($this->getAttribute()
-                ->getDataType()
-                ->is(EXF_DATA_TYPE_BOOLEAN)) {
+            if ($this->getAttribute()->getDataType()->is(EXF_DATA_TYPE_BOOLEAN)) {
                 $this->setSelectableOptions(array(
                     1,
                     0
@@ -250,8 +248,8 @@ class InputSelect extends Input implements iSupportMultiSelect
                 if ($data_sheet->getMetaObject()->is($this->getOptionsObject())) {
                     // TODO which values from the prefill are we going to use here for fitlers? Which columns?
                     // Or maybe use the filter of the prefill sheet? Or even ignore this case completely?
-                }                // If the prefill object is not the options object (or there was no special options object defined), but a
-                // relation to it can be found, use this relation as filter to query the data source for selectable options
+                } // If the prefill object is not the options object (or there was no special options object defined), but a
+                  // relation to it can be found, use this relation as filter to query the data source for selectable options
                 elseif ($rel = $this->getOptionsObject()->findRelation($data_sheet->getMetaObject(), true)) {
                     if ($col = $data_sheet->getColumns()->getByExpression($rel->getRelatedObjectKeyAlias())) {
                         $this->getOptionsDataSheet()->addFilterInFromString($rel->getAlias(), $col->getValues(false));
@@ -266,11 +264,7 @@ class InputSelect extends Input implements iSupportMultiSelect
         $data_sheet->getColumns()->addFromAttribute($this->getValueAttribute());
         $data_sheet->getColumns()->addFromAttribute($this->getTextAttribute());
         $data_sheet->dataRead();
-        $this->setSelectableOptions($data_sheet->getColumns()
-            ->getByAttribute($this->getValueAttribute())
-            ->getValues(false), $data_sheet->getColumns()
-            ->getByAttribute($this->getTextAttribute())
-            ->getValues(false));
+        $this->setSelectableOptions($data_sheet->getColumns()->getByAttribute($this->getValueAttribute())->getValues(false), $data_sheet->getColumns()->getByAttribute($this->getTextAttribute())->getValues(false));
         return $this;
     }
 
@@ -397,7 +391,7 @@ class InputSelect extends Input implements iSupportMultiSelect
     /**
      * Returns TRUE if a text attribute was specified explicitly (e.g.
      * via UXON-property "text_attribute_alias") and FALSE otherwise.
-     * 
+     *
      * @return boolean
      */
     public function hasCustomTextAttribute()
@@ -408,7 +402,7 @@ class InputSelect extends Input implements iSupportMultiSelect
     /**
      * Returns TRUE if the options object was specified explicitly (e.g.
      * via UXON-property "options_object_alias") and FALSE otherwise.
-     * 
+     *
      * @return boolean
      */
     public function hasCustomOptionsObject()
@@ -420,9 +414,7 @@ class InputSelect extends Input implements iSupportMultiSelect
     {
         if (is_null($this->options_object)) {
             if (! $this->getMetaObject()->isExactly($this->getOptionsObjectAlias())) {
-                $this->options_object = $this->getWorkbench()
-                    ->model()
-                    ->getObject($this->getOptionsObjectAlias());
+                $this->options_object = $this->getWorkbench()->model()->getObject($this->getOptionsObjectAlias());
             } else {
                 $this->options_object = $this->getMetaObject();
             }
@@ -582,18 +574,13 @@ class InputSelect extends Input implements iSupportMultiSelect
     {
         foreach ($conditions_or_uxon_objects as $condition_or_uxon_object) {
             if ($condition_or_uxon_object instanceof Condition) {
-                $this->getOptionsDataSheet()
-                    ->getFilters()
-                    ->addCondition($condition_or_uxon_object);
+                $this->getOptionsDataSheet()->getFilters()->addCondition($condition_or_uxon_object);
             } elseif ($condition_or_uxon_object instanceof \stdClass) {
                 $uxon = UxonObject::fromAnything($condition_or_uxon_object);
                 if (! $uxon->hasProperty('object_alias')) {
-                    $uxon->setProperty('object_alias', $this->getMetaObject()
-                        ->getAliasWithNamespace());
+                    $uxon->setProperty('object_alias', $this->getMetaObject()->getAliasWithNamespace());
                 }
-                $this->getOptionsDataSheet()
-                    ->getFilters()
-                    ->addCondition(ConditionFactory::createFromUxon($this->getWorkbench(), $uxon));
+                $this->getOptionsDataSheet()->getFilters()->addCondition(ConditionFactory::createFromUxon($this->getWorkbench(), $uxon));
             }
         }
         return $this;
@@ -624,14 +611,10 @@ class InputSelect extends Input implements iSupportMultiSelect
     {
         foreach ($data_sorters_or_uxon_objects as $sorter_or_uxon) {
             if ($sorter_or_uxon instanceof DataSorter) {
-                $this->getOptionsDataSheet()
-                    ->getSorters()
-                    ->add($sorter_or_uxon);
+                $this->getOptionsDataSheet()->getSorters()->add($sorter_or_uxon);
             } elseif ($sorter_or_uxon instanceof \stdClass) {
                 $uxon = UxonObject::fromAnything($sorter_or_uxon);
-                $this->getOptionsDataSheet()
-                    ->getSorters()
-                    ->add(DataSorterFactory::createFromUxon($this->getOptionsDataSheet(), $uxon));
+                $this->getOptionsDataSheet()->getSorters()->add(DataSorterFactory::createFromUxon($this->getOptionsDataSheet(), $uxon));
             }
         }
         return $this;

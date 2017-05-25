@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Formulas;
 
 class HtmlImage extends \exface\Core\CommonLogic\Model\Formula

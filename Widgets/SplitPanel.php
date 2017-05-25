@@ -8,7 +8,7 @@ use exface\Core\Interfaces\Widgets\iHaveBorders;
  * A SplitPanel is a special panel, which can be resized within a split layout (e.g.
  * by dragging it's
  * internal border).
- * 
+ *
  * @author PATRIOT
  */
 class SplitPanel extends Panel implements iAmResizable, iHaveBorders
@@ -28,7 +28,7 @@ class SplitPanel extends Panel implements iAmResizable, iHaveBorders
      * Makes it possible to resize this panel within the layout if set to true.
      * Resizing one panel
      * will generally also resize a neighbour panel, since the total size of the layout remains.
-     * 
+     *
      * @param boolean $value            
      */
     public function setResizable($value)

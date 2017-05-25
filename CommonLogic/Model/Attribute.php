@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\CommonLogic\Model;
 
 use exface\Core\DataTypes\AbstractDataType;
@@ -79,7 +78,7 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
 
     /**
      * Marks this attribute as a relation
-     * 
+     *
      * @param boolean $value            
      */
     public function set_relation_flag($value)
@@ -90,7 +89,7 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
     /**
      * Returns TRUE if this attribute actually is a relation and FALSE otherwise.
      * The relation itself can be obtained by calling get_relation().
-     * 
+     *
      * @see get_relation()
      * @return boolean
      */
@@ -101,7 +100,7 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
 
     /**
      * Returns the relation, this attribute represents if it is a relation attribute and NULL otherwise
-     * 
+     *
      * @return Relation
      */
     public function get_relation()
@@ -136,7 +135,7 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
 
     /**
      * Returns the data type of the attribute as an instantiated data type object
-     * 
+     *
      * @return AbstractDataType
      */
     public function get_data_type()
@@ -168,14 +167,12 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
     /**
      * Returns TRUE if the attribute can be changed and FALSE if it is read only.
      * Attributes of objects from read-only data sources are never editable!
-     * 
+     *
      * @return boolean
      */
     public function is_editable()
     {
-        if ($this->get_object()
-            ->get_data_source()
-            ->is_read_only()) {
+        if ($this->get_object()->get_data_source()->is_read_only()) {
             return false;
         }
         return $this->editable;
@@ -306,7 +303,7 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
      * The default widget can be defined
      * for a data type and extended by a further definition for a specific attribute. If none of the above is defined,
      * a blank UXON object with merely the overall default widget type (specified in the config) will be returned.
-     * 
+     *
      * @return UxonObject
      */
     public function get_default_widget_uxon()
@@ -336,7 +333,7 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
 
     /**
      * Returns an expression for the default value of this attribute, which is to be used, when saving the attribute without an explicit value given in the data sheet.
-     * 
+     *
      * @see get_fixed_value() in contrast to the fixed value, the default value is always overridden by any value in the data sheet.
      * @return \exface\Core\CommonLogic\Model\Expression
      */
@@ -357,7 +354,7 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
 
     /**
      * Returns an expression for value of this attribute, which is to be set or updated every time the attribute is saved to the data source.
-     * 
+     *
      * @return \exface\Core\CommonLogic\Model\Expression
      */
     public function get_fixed_value()
@@ -420,7 +417,7 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
 
     /**
      * Returns the UID of the object, this attribute was inherited from or NULL if it is a direct attribute of it's object
-     * 
+     *
      * @return string
      */
     public function get_inherited_from_object_id()
@@ -439,7 +436,7 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
 
     /**
      * Returns TRUE if this Relation was inherited from a parent object
-     * 
+     *
      * @return boolean
      */
     public function is_inherited()
@@ -469,7 +466,7 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
 
     /**
      * Returns the value of a data source specifi object property specified by it's id
-     * 
+     *
      * @param string $id            
      */
     public function get_data_address_property($id)
@@ -491,7 +488,7 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
 
     /**
      * Returns TRUE if the attribute is used as the label for it's object or FALSE otherwise
-     * 
+     *
      * @return boolean
      */
     public function is_label()
@@ -505,7 +502,7 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
 
     /**
      * Returns TRUE if this attribute is used as UID for it's object and FALSE otherwise
-     * 
+     *
      * @return boolean
      */
     public function is_uid_for_object()
@@ -562,8 +559,7 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
      */
     public function copy()
     {
-        return $this->rebase($this->get_relation_path()
-            ->copy());
+        return $this->rebase($this->get_relation_path()->copy());
     }
 
     /**
@@ -579,8 +575,7 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
         
         // Explicitly copy properties, that are objects themselves
         $copy->set_relation_path($path);
-        $copy->set_default_widget_uxon($this->get_default_widget_uxon()
-            ->copy());
+        $copy->set_default_widget_uxon($this->get_default_widget_uxon()->copy());
         return $copy;
     }
 

@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Interfaces\DataSheets;
 
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
@@ -26,7 +25,7 @@ interface DataAggregatorInterface extends iCanBeConvertedToUxon, iCanBeCopied
 
     /**
      * PRODUCT->SIZE:CONCAT(',') --> CONCAT(',')
-     * 
+     *
      * @param string $attribute_alias            
      * @return string|boolean
      */

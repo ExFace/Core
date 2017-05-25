@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Factories;
 
 use exface\Core\CommonLogic\Workbench;
@@ -10,7 +9,7 @@ abstract class WidgetDimensionFactory extends AbstractFactory
 
     /**
      * Creates an empty dimension object
-     * 
+     *
      * @param exface $exface            
      * @return WidgetDimension
      */
@@ -22,7 +21,7 @@ abstract class WidgetDimensionFactory extends AbstractFactory
     /**
      * Parses a dimension string (e.g.
      * 100% or 68px) into a dimension object
-     * 
+     *
      * @param exface $exface            
      * @param string $string            
      * @return WidgetDimension

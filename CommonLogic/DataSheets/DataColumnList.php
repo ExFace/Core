@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\CommonLogic\DataSheets;
 
 use exface\Core\CommonLogic\Model\RelationPath;
@@ -26,7 +25,7 @@ class DataColumnList extends EntityList implements DataColumnListInterface
 
     /**
      * Adds a data sheet
-     * 
+     *
      * @param DataColumn $column            
      * @param mixed $key            
      * @param boolean $overwrite_values            
@@ -62,7 +61,7 @@ class DataColumnList extends EntityList implements DataColumnListInterface
     /**
      * Add an array of columns.
      * The array can contain DataColumns, expressions or a mixture of those
-     * 
+     *
      * @param array $columns            
      * @param string $relation_path            
      * @return DataColumnListInterface
@@ -81,8 +80,7 @@ class DataColumnList extends EntityList implements DataColumnListInterface
                     // it will also update the attribute alias, etc.
                     // FIXME perhaps it would be nicer to use the expression::rebase() here, but the relation path seems to
                     // be in the wrong direction here
-                    $col->setExpression($col->getExpressionObj()
-                        ->setRelationPath($relation_path));
+                    $col->setExpression($col->getExpressionObj()->setRelationPath($relation_path));
                     // Update the formatter
                     if ($col->getFormatter()) {
                         $col->getFormatter()->setRelationPath($relation_path);
@@ -150,7 +148,7 @@ class DataColumnList extends EntityList implements DataColumnListInterface
     /**
      * Returns the first column, that shows the specified attribute explicitly (not within a formula).
      * Returns FALSE if no column is found.
-     * 
+     *
      * @param Attribute $attribute            
      * @return DataColumnInterface|boolean
      */
@@ -179,7 +177,7 @@ class DataColumnList extends EntityList implements DataColumnListInterface
 
     /**
      * Removes a column from the list completetly including it's values
-     * 
+     *
      * @param string $column_name            
      * @return DataColumnListInterface
      */
@@ -198,7 +196,7 @@ class DataColumnList extends EntityList implements DataColumnListInterface
 
     /**
      * Returns the parent data sheet (this method is a better understandable alias for get_parent())
-     * 
+     *
      * @return DataSheetInterface
      */
     public function getDataSheet()
@@ -208,7 +206,7 @@ class DataColumnList extends EntityList implements DataColumnListInterface
 
     /**
      * Set the given data sheet as parent object for this column list and all it's columns
-     * 
+     *
      * @see \exface\Core\CommonLogic\EntityList::setParent()
      * @param DataSheetInterface $data_sheet            
      */

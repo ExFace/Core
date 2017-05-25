@@ -8,7 +8,7 @@ use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 
 /**
  * This is the base class for all sorts of data source access errors like
- * 
+ *
  * @see DataConnectionFailedError
  * @see DataConnectionCommitFailedError
  * @see DataConnectionRollbackFailedError

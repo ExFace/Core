@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\CommonLogic;
 
 use exface\Core\CommonLogic\Workbench;
@@ -115,13 +114,9 @@ abstract class AbstractDataConnector implements DataConnectionInterface
      */
     public final function connect()
     {
-        $this->getWorkbench()
-            ->eventManager()
-            ->dispatch(EventFactory::createDataConnectionEvent($this, 'Connect.Before'));
+        $this->getWorkbench()->eventManager()->dispatch(EventFactory::createDataConnectionEvent($this, 'Connect.Before'));
         $result = $this->performConnect();
-        $this->getWorkbench()
-            ->eventManager()
-            ->dispatch(EventFactory::createDataConnectionEvent($this, 'Connect.After'));
+        $this->getWorkbench()->eventManager()->dispatch(EventFactory::createDataConnectionEvent($this, 'Connect.After'));
         return $result;
     }
 
@@ -135,13 +130,9 @@ abstract class AbstractDataConnector implements DataConnectionInterface
      */
     public final function disconnect()
     {
-        $this->getWorkbench()
-            ->eventManager()
-            ->dispatch(EventFactory::createDataConnectionEvent($this, 'Disconnect.Before'));
+        $this->getWorkbench()->eventManager()->dispatch(EventFactory::createDataConnectionEvent($this, 'Disconnect.Before'));
         $result = $this->performDisconnect();
-        $this->getWorkbench()
-            ->eventManager()
-            ->dispatch(EventFactory::createDataConnectionEvent($this, 'Disconnect.After'));
+        $this->getWorkbench()->eventManager()->dispatch(EventFactory::createDataConnectionEvent($this, 'Disconnect.After'));
         return $result;
     }
 
@@ -155,13 +146,9 @@ abstract class AbstractDataConnector implements DataConnectionInterface
      */
     public final function query(DataQueryInterface $query)
     {
-        $this->getWorkbench()
-            ->eventManager()
-            ->dispatch(EventFactory::createDataConnectionEvent($this, 'Query.Before'));
+        $this->getWorkbench()->eventManager()->dispatch(EventFactory::createDataConnectionEvent($this, 'Query.Before'));
         $result = $this->performQuery($query);
-        $this->getWorkbench()
-            ->eventManager()
-            ->dispatch(EventFactory::createDataConnectionEvent($this, 'Query.After'));
+        $this->getWorkbench()->eventManager()->dispatch(EventFactory::createDataConnectionEvent($this, 'Query.After'));
         return $result;
     }
 

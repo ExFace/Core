@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Actions;
 
 use exface\Core\Widgets\Dialog;
@@ -44,9 +43,7 @@ class ShowHelpDialog extends ShowDialog
         
         if ($this->getCalledByWidget() && $this->getCalledByWidget() instanceof iTriggerAction) {
             if ($this->getCalledByWidget()->getInputWidget() instanceof iHaveContextualHelp) {
-                $this->getCalledByWidget()
-                    ->getInputWidget()
-                    ->getHelpWidget($dialog);
+                $this->getCalledByWidget()->getInputWidget()->getHelpWidget($dialog);
             } else {
                 throw new ActionLogicError($this, 'Calling widget cannot generate contextual help: id does not implement the interface iHaveContextualHelp!', '6V9XDV4');
             }

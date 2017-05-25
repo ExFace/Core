@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\CommonLogic\Model;
 
 use exface\Core\CommonLogic\UxonObject;
@@ -13,7 +12,7 @@ use exface\Core\Interfaces\iCanBeCopied;
  * A condition group contains one or more conditions and/or other (nested) condition groups combined by one logical operator,
  * e.g.
  * OR( AND( cond1 = val1, cond2 < val2 ), cond3 = val3 ).
- * 
+ *
  * @author Andrej Kabachnik
  *        
  */
@@ -38,7 +37,7 @@ class ConditionGroup implements iCanBeConvertedToUxon, iCanBeCopied
 
     /**
      * Adds a condition to the group
-     * 
+     *
      * @param Condition $condition            
      * @return \exface\Core\CommonLogic\Model\ConditionGroup
      */
@@ -51,7 +50,7 @@ class ConditionGroup implements iCanBeConvertedToUxon, iCanBeCopied
 
     /**
      * Creates a new condition and adds it to this group
-     * 
+     *
      * @param expression $expression            
      * @param string $value            
      * @param string $comparator            
@@ -69,7 +68,7 @@ class ConditionGroup implements iCanBeConvertedToUxon, iCanBeCopied
     /**
      * Creates a new condition and adds it to this condition group.
      * TODO Refactor to use ConditionFactory::createFromString() and process special prefixes and so on there
-     * 
+     *
      * @param string $column_name            
      * @param mixed $value            
      * @param string $comparator            
@@ -125,12 +124,8 @@ class ConditionGroup implements iCanBeConvertedToUxon, iCanBeCopied
             if (substr($value, 0, 1) == '[' && substr($value, - 1) == ']') {
                 $value = trim($value, '[]');
                 $comparator = EXF_COMPARATOR_IN;
-            }            // if a numeric attribute has a value with commas, it is actually an IN-statement
-            elseif (strpos($expression_string, EXF_LIST_SEPARATOR) === false && $base_object->getAttribute($expression_string) && ($base_object->getAttribute($expression_string)
-                ->getDataType()
-                ->is(EXF_DATA_TYPE_NUMBER) || $base_object->getAttribute($expression_string)
-                ->getDataType()
-                ->is(EXF_DATA_TYPE_RELATION)) && strpos($value, EXF_LIST_SEPARATOR) !== false) {
+            } // if a numeric attribute has a value with commas, it is actually an IN-statement
+elseif (strpos($expression_string, EXF_LIST_SEPARATOR) === false && $base_object->getAttribute($expression_string) && ($base_object->getAttribute($expression_string)->getDataType()->is(EXF_DATA_TYPE_NUMBER) || $base_object->getAttribute($expression_string)->getDataType()->is(EXF_DATA_TYPE_RELATION)) && strpos($value, EXF_LIST_SEPARATOR) !== false) {
                 $comparator = EXF_COMPARATOR_IN;
             }
         }
@@ -141,13 +136,11 @@ class ConditionGroup implements iCanBeConvertedToUxon, iCanBeCopied
         if (count($expression_strings) > 1) {
             $group = ConditionGroupFactory::createEmpty($this->exface, EXF_LOGICAL_OR);
             foreach ($expression_strings as $f) {
-                $group->addConditionFromExpression($this->exface->model()
-                    ->parseExpression($f, $base_object), $value, $comparator);
+                $group->addConditionFromExpression($this->exface->model()->parseExpression($f, $base_object), $value, $comparator);
             }
             $this->addNestedGroup($group);
         } elseif (! is_null($value) && $value !== '') {
-            $this->addConditionFromExpression($this->exface->model()
-                ->parseExpression($expression_string, $base_object), $value, $comparator);
+            $this->addConditionFromExpression($this->exface->model()->parseExpression($expression_string, $base_object), $value, $comparator);
         }
         
         return $this;
@@ -155,7 +148,7 @@ class ConditionGroup implements iCanBeConvertedToUxon, iCanBeCopied
 
     /**
      * Adds a subgroup to this group.
-     * 
+     *
      * @param ConditionGroup $group            
      * @return \exface\Core\CommonLogic\Model\ConditionGroup
      */
@@ -168,7 +161,7 @@ class ConditionGroup implements iCanBeConvertedToUxon, iCanBeCopied
     /**
      * Returns an array of conditions directly contained in this group (not in the subgroups!).
      * Returns an empty array if the group does not have conditions.
-     * 
+     *
      * @return Condition[]
      */
     public function getConditions()
@@ -197,7 +190,7 @@ class ConditionGroup implements iCanBeConvertedToUxon, iCanBeCopied
     /**
      * Returns an array of condition groups directly contained in this group (not in the subgroups!).
      * Returns an empty array if the group does not have subgroups.
-     * 
+     *
      * @return ConditionGroup[]
      */
     public function getNestedGroups()
@@ -208,7 +201,7 @@ class ConditionGroup implements iCanBeConvertedToUxon, iCanBeCopied
     /**
      * Returns the logical operator of the group.
      * Operators are defined by the EXF_LOGICAL_xxx constants.
-     * 
+     *
      * @return string
      */
     public function getOperator()
@@ -219,7 +212,7 @@ class ConditionGroup implements iCanBeConvertedToUxon, iCanBeCopied
     /**
      * Sets the logical operator of the group.
      * Operators are defined by the EXF_LOGICAL_xxx constants.
-     * 
+     *
      * @param string $value            
      */
     public function setOperator($value)
@@ -232,7 +225,7 @@ class ConditionGroup implements iCanBeConvertedToUxon, iCanBeCopied
 
     /**
      * Returns a condition group with the same conditions, but based on a related object specified by the given relation path.
-     * 
+     *
      * @see expression::rebase()
      *
      * @param string $relation_path_to_new_base_object            
@@ -334,7 +327,7 @@ class ConditionGroup implements iCanBeConvertedToUxon, iCanBeCopied
 
     /**
      * Removes a given condition from this condition group (not from the nested groups!)
-     * 
+     *
      * @param Condition $condition            
      * @return Condition
      */
@@ -350,7 +343,7 @@ class ConditionGroup implements iCanBeConvertedToUxon, iCanBeCopied
 
     /**
      * Removes all conditions and nested groups from this condition group thus resetting it completely
-     * 
+     *
      * @return ConditionGroup
      */
     public function removeAll()

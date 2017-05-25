@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Actions;
 
 use exface\Core\Interfaces\Actions\iShowDialog;
@@ -63,8 +62,7 @@ class ShowDialog extends ShowWidget implements iShowDialog
         // If the widget calling the action (typically a button) is known, inherit some of it's attributes
         if ($this->getCalledByWidget()) {
             if (! $dialog->getIconName() && ($this->getCalledByWidget() instanceof iHaveIcon)) {
-                $dialog->setIconName($this->getCalledByWidget()
-                    ->getIconName());
+                $dialog->setIconName($this->getCalledByWidget()->getIconName());
             }
         } else {
             if (! $dialog->getIconName()) {

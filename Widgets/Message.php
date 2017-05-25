@@ -8,7 +8,7 @@ use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
  * There are different types of messages: warnings,
  * errors, general information, success messages, etc. Messages are displayed alongside other widgets within regular panels - in contrast to toasts or
  * popups, which are displayed above the main level of widgets.
- * 
+ *
  * @author Andrej Kabachnik
  *        
  */

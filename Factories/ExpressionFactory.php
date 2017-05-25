@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Factories;
 
 use exface\Core\CommonLogic\Workbench;
@@ -14,7 +13,7 @@ abstract class ExpressionFactory
      * It is highly recommended to pass the meta object, the expression is related to as well. Otherwise
      * attribute_aliases cannot be parsed properly.
      * TODO Make the object a mandatory parameter. This requires a lot of changes to formulas, however. Probably will do that when rewriting the formula parser.
-     * 
+     *
      * @param exface $exface            
      * @param string $expression            
      * @param object $object            

@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\CommonLogic;
 
 use exface\Core\Interfaces\AppInstallerInterface;
@@ -23,8 +22,7 @@ abstract class AbstractAppInstaller extends AbstractNameResolverInstaller implem
     public function getApp()
     {
         if (is_null($this->app)) {
-            $this->app = $this->getWorkbench()->getApp($this->getNameResolver()
-                ->getAliasWithNamespace());
+            $this->app = $this->getWorkbench()->getApp($this->getNameResolver()->getAliasWithNamespace());
         }
         return $this->app;
     }

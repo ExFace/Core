@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Interfaces\Widgets;
 
 /**
@@ -19,21 +18,21 @@ interface iSupportStagedWriting extends iTriggerAction
 
     /**
      * Returns TRUE if staged writing is enabled for this action and FALSE otherwise
-     * 
+     *
      * @return boolean
      */
     public function isStagedWritingEnabled();
 
     /**
      * Returns the current value of the stage writing property
-     * 
+     *
      * @return boolean
      */
     public function getStagedWriting();
 
     /**
      * Enables (TRUE) or disables (FALSE) for this action
-     * 
+     *
      * @param boolean $value            
      */
     public function setStagedWriting($true_or_false);

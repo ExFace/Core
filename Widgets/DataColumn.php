@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Widgets;
 
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
@@ -408,8 +407,7 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
                 $attr = $this->getAttribute();
             } catch (MetaAttributeNotFoundError $e) {
                 if ($this->getExpression()->isFormula()) {
-                    $attr = $this->getMetaObject()->getAttribute($this->getExpression()
-                        ->getRequiredAttributes()[0]);
+                    $attr = $this->getMetaObject()->getAttribute($this->getExpression()->getRequiredAttributes()[0]);
                 }
             }
             

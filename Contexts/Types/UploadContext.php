@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Contexts\Types;
 
 /**
@@ -23,15 +22,12 @@ class UploadContext extends AbstractContext
      */
     public function getUploadsPath()
     {
-        return $this->getWorkbench()
-            ->context()
-            ->getScopeUser()
-            ->getUserDataFolderAbsolutePath() . DIRECTORY_SEPARATOR . $this->upload_folder . DIRECTORY_SEPARATOR . $this->getScope()->getScopeId();
+        return $this->getWorkbench()->context()->getScopeUser()->getUserDataFolderAbsolutePath() . DIRECTORY_SEPARATOR . $this->upload_folder . DIRECTORY_SEPARATOR . $this->getScope()->getScopeId();
     }
 
     /**
      * Returns an array with all file names in the uploads folder
-     * 
+     *
      * @return array
      */
     public function getUploadedFileNames($include_folders = false)
@@ -61,7 +57,7 @@ class UploadContext extends AbstractContext
 
     /**
      * Clears all uploaded files from the current context
-     * 
+     *
      * @return \exface\Core\Contexts\Types\UploadContext
      */
     public function clearUploads()
@@ -72,7 +68,7 @@ class UploadContext extends AbstractContext
 
     /**
      * Deletes the given folder including all subfolders
-     * 
+     *
      * @param string $dir            
      */
     protected function deleteFolder($dir)
@@ -96,14 +92,12 @@ class UploadContext extends AbstractContext
     /**
      * The default scope of the upload context ist window, because it should only show the uploads from the current
      * browser window if the user works with multiple windows at the same time.
-     * 
+     *
      * @see \exface\Core\Contexts\Types\AbstractContext::getDefaultScope()
      */
     public function getDefaultScope()
     {
-        return $this->getWorkbench()
-            ->context()
-            ->getScopeWindow();
+        return $this->getWorkbench()->context()->getScopeWindow();
     }
 }
 ?>

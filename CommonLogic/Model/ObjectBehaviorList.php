@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\CommonLogic\Model;
 
 use exface\Core\CommonLogic\EntityList;
@@ -16,7 +15,7 @@ class ObjectBehaviorList extends EntityList implements BehaviorListInterface
 
     /**
      * A behavior list will activate every behavior right after it has been added
-     * 
+     *
      * {@inheritdoc}
      *
      * @see \exface\Core\CommonLogic\EntityList::add()

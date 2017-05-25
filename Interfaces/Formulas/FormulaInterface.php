@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Interfaces\Formulas;
 
 use exface\Core\Interfaces\ExfaceClassInterface;

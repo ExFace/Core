@@ -23,9 +23,7 @@ class StateMenuButton extends MenuButton
         // Falls am Objekt ein StateMachineBehavior haengt wird versucht den momentanen Status aus
         // dem Objekt auszulesen und die entsprechenden Buttons aus dem Behavior hinzuzufuegen.
         if (! $this->smb_buttons_set) {
-            if (is_null($smb = $this->getMetaObject()
-                ->getBehaviors()
-                ->getByAlias('exface.Core.Behaviors.StateMachineBehavior'))) {
+            if (is_null($smb = $this->getMetaObject()->getBehaviors()->getByAlias('exface.Core.Behaviors.StateMachineBehavior'))) {
                 throw new MetaModelBehaviorException('StateMenuButton: The object ' . $this->getMetaObject()->getAliasWithNamespace() . ' has no StateMachineBehavior attached.');
             }
             
@@ -55,9 +53,7 @@ class StateMenuButton extends MenuButton
                     
                     /** @var StateMachineState $stateObject */
                     $stateObject = $states[$target_state];
-                    $name = $stateObject->getStateName($this->getMetaObject()
-                        ->getApp()
-                        ->getTranslator());
+                    $name = $stateObject->getStateName($this->getMetaObject()->getApp()->getTranslator());
                     if ($name)
                         $button->setCaption($name);
                     
@@ -81,10 +77,7 @@ class StateMenuButton extends MenuButton
     {
         $caption = parent::getCaption();
         if (! $caption && ! $this->getHideCaption()) {
-            $caption = $this->getWorkbench()
-                ->getCoreApp()
-                ->getTranslator()
-                ->translate('WIDGET.STATEMENUBUTTON.CAPTION');
+            $caption = $this->getWorkbench()->getCoreApp()->getTranslator()->translate('WIDGET.STATEMENUBUTTON.CAPTION');
         }
         return $caption;
     }

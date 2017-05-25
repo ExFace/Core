@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Exceptions\Model;
 
 use exface\Core\CommonLogic\Model\Object;
@@ -68,16 +67,12 @@ trait MetaObjectExceptionTrait {
         $error_message = $this->parentCreateDebugWidget($error_message);
         
         // Do not enrich the debug message widget if DEBUG.SHOW_META_MODEL_DETAILS is false
-        if (! $error_message->getWorkbench()
-            ->getConfig()
-            ->getOption('DEBUG.SHOW_META_MODEL_DETAILS'))
+        if (! $error_message->getWorkbench()->getConfig()->getOption('DEBUG.SHOW_META_MODEL_DETAILS'))
             return $error_message;
         
         /* @var $object_editor \exface\Core\Widgets\Tabs */
         $page = $error_message->getPage();
-        $object_object = $page->getWorkbench()
-            ->model()
-            ->getObject('exface.Core.OBJECT');
+        $object_object = $page->getWorkbench()->model()->getObject('exface.Core.OBJECT');
         $object_editor = WidgetFactory::createFromUxon($page, $object_object->getDefaultEditorUxon());
         if ($object_editor->is('Tabs')) {
             foreach ($object_editor->getTabs() as $tab) {
@@ -120,8 +115,7 @@ trait MetaObjectExceptionTrait {
         
         // Prefill the debug widget with data of the current meta object
         $object_data = DataSheetFactory::createFromObject($object_object);
-        $object_data->addFilterFromString($object_object->getUidAlias(), $this->getMetaObject()
-            ->getId(), EXF_COMPARATOR_EQUALS);
+        $object_data->addFilterFromString($object_object->getUidAlias(), $this->getMetaObject()->getId(), EXF_COMPARATOR_EQUALS);
         $object_data = $error_message->prepareDataSheetToPrefill($object_data);
         $object_data->dataRead();
         $error_message->prefill($object_data);

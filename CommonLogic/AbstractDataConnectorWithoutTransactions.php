@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\CommonLogic;
 
 use exface\Core\CommonLogic\Workbench;

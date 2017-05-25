@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Interfaces;
 
 interface TranslationInterface
@@ -29,7 +28,7 @@ interface TranslationInterface
 
     /**
      * Returns an array of fallback locales
-     * 
+     *
      * @return array
      */
     public function getFallbackLocales();

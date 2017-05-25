@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Formulas;
 
 class Now extends \exface\Core\CommonLogic\Model\Formula

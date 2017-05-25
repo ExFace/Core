@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Actions;
 
 use exface\Core\CommonLogic\Model\Object;
@@ -28,10 +27,7 @@ class ObjectBasketFetch extends ObjectBasketAdd
     {
         if ($this->getOutputType() == static::OUTPUT_TYPE_DIALOG) {
             if ($this->getTemplate()->getRequestObjectId()) {
-                $meta_object = $this->getWorkbench()
-                    ->model()
-                    ->getObject($this->getTemplate()
-                    ->getRequestObjectId());
+                $meta_object = $this->getWorkbench()->model()->getObject($this->getTemplate()->getRequestObjectId());
             }
             $this->setResult($this->buildDialog($meta_object));
         } else {
@@ -63,10 +59,7 @@ class ObjectBasketFetch extends ObjectBasketAdd
         $dialog = WidgetFactory::create($page, 'Dialog');
         $dialog->setId('object_basket');
         $dialog->setMetaObject($meta_object);
-        $dialog->setCaption($this->getWorkbench()
-            ->getCoreApp()
-            ->getTranslator()
-            ->translate('ACTION.OBJECTBASKET'));
+        $dialog->setCaption($this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.OBJECTBASKET'));
         $dialog->setLazyLoading(false);
         
         /* @var $table \exface\Core\Widgets\DataTable */
@@ -76,8 +69,7 @@ class ObjectBasketFetch extends ObjectBasketAdd
         $table->setHideToolbarBottom(true);
         $table->setMultiSelect(true);
         $table->setMultiSelectAllSelected(true);
-        $table->prefill($this->getContext()
-            ->getFavoritesByObject($meta_object));
+        $table->prefill($this->getContext()->getFavoritesByObject($meta_object));
         $dialog->addWidget($table);
         
         // Add action buttons

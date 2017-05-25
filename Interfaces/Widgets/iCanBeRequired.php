@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Interfaces\Widgets;
 
 interface iCanBeRequired extends iHaveValue

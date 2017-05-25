@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Interfaces\Actions;
 
 use exface\Core\Interfaces\WidgetInterface;
@@ -22,7 +21,7 @@ interface iShowWidget extends iNavigate
 
     /**
      * The output of an action showing a widget is the widget instance
-     * 
+     *
      * @return WidgetInterface
      */
     public function getResult();

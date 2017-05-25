@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\CommonLogic;
 
 use exface\Core\CommonLogic\EventManager;
@@ -102,8 +101,7 @@ class Workbench
         $this->utils = new utils();
         
         // load the CMS connector
-        $this->cms = CmsConnectorFactory::create($this->createNameResolver($this->getConfig()
-            ->getOption('CMS_CONNECTOR'), NameResolver::OBJECT_TYPE_CMS_CONNECTOR));
+        $this->cms = CmsConnectorFactory::create($this->createNameResolver($this->getConfig()->getOption('CMS_CONNECTOR'), NameResolver::OBJECT_TYPE_CMS_CONNECTOR));
         // init data module
         $this->data = new DataManager($this);
         
@@ -166,21 +164,17 @@ class Workbench
      */
     public function getRequestId()
     {
-        return $this->context()
-            ->getScopeRequest()
-            ->getRequetsId();
+        return $this->context()->getScopeRequest()->getRequetsId();
     }
 
     /**
      * TODO Move to the request context scope completely
-     * 
+     *
      * @param unknown $value            
      */
     public function setRequestId($value)
     {
-        $this->context()
-            ->getScopeRequest()
-            ->setRequetsId($value);
+        $this->context()->getScopeRequest()->setRequetsId($value);
         return $this;
     }
 
@@ -224,7 +218,7 @@ class Workbench
     /**
      * Launches an ExFace app and returns it.
      * Apps are cached and kept running for script (request) window
-     * 
+     *
      * @param string $app_alias            
      * @return AppInterface
      */
@@ -238,7 +232,7 @@ class Workbench
 
     /**
      * Returns the core app
-     * 
+     *
      * @return CoreApp
      */
     public function getCoreApp()
@@ -285,9 +279,7 @@ class Workbench
         // Process request
         if ($template_alias) {
             $this->ui()->setBaseTemplateAlias($template_alias);
-            echo $this->ui()
-                ->getTemplate($template_alias)
-                ->processRequest();
+            echo $this->ui()->getTemplate($template_alias)->processRequest();
         } else {
             // If template alias not given - it's not an AJAX request, so do not do anything here, wait for the CMS to call request processing
             // The reason for this is, that the CMS will select the template.
@@ -298,7 +290,7 @@ class Workbench
 
     /**
      * Returns the parameters of the current request (URL params for GET-requests, data of POST-requests, etc.)
-     * 
+     *
      * @return array
      */
     public function getRequestParams()
@@ -328,7 +320,7 @@ class Workbench
 
     /**
      * Get the utilities class
-     * 
+     *
      * @return \Workbench\Core\utils
      */
     public function utils()
@@ -338,7 +330,7 @@ class Workbench
 
     /**
      * Returns the central event manager (dispatcher)
-     * 
+     *
      * @return EventManagerInterface
      */
     public function eventManager()
@@ -353,7 +345,7 @@ class Workbench
 
     /**
      * Returns the absolute path of the ExFace installation folder
-     * 
+     *
      * @return string
      */
     public function getInstallationPath()

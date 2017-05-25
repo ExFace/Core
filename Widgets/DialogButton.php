@@ -6,7 +6,7 @@ namespace exface\Core\Widgets;
  * Additionally to the normal button functionality
  * this button can explicitly control the dialog it belongs to. Thus, the user can decide whether
  * the dialog is to be closed after the button's action is performed or not.
- * 
+ *
  * @author PATRIOT
  *        
  */

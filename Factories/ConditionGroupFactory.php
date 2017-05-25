@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Factories;
 
 use exface\Core\CommonLogic\Workbench;
@@ -12,7 +11,7 @@ abstract class ConditionGroupFactory extends AbstractUxonFactory
 
     /**
      * Returns an empty condition group
-     * 
+     *
      * @param exface $exface            
      * @param string $group_operator            
      * @return ConditionGroup
@@ -27,7 +26,7 @@ abstract class ConditionGroupFactory extends AbstractUxonFactory
      * Creates a condition group from short notation arrays of the form
      * [ OPERATOR1, [ CONDITION1 ], [ CONDITION2 ], [ OPERATOR2, [ CONDITION3 ], [ CONDITION4] ], ...
      * ]
-     * 
+     *
      * @param exface $exface            
      * @param array $array_notation            
      * @return ConditionGroup

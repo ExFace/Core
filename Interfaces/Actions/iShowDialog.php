@@ -10,7 +10,7 @@ interface iShowDialog
 
     /**
      * The output of an action showing a widget is the widget instance
-     * 
+     *
      * @return Dialog
      */
     public function getResult();

@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Exceptions\Contexts;
 
 use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;

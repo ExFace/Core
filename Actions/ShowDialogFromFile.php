@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Actions;
 
 use exface\Core\Exceptions\FileNotFoundError;
@@ -85,14 +84,9 @@ class ShowDialogFromFile extends ShowDialog
 
     protected function perform()
     {
-        $basePath = Filemanager::pathNormalize($this->getWorkbench()
-            ->filemanager()
-            ->getPathToBaseFolder());
+        $basePath = Filemanager::pathNormalize($this->getWorkbench()->filemanager()->getPathToBaseFolder());
         
-        $filename = $this->getInputDataSheet()
-            ->getColumns()
-            ->getByExpression($this->getFilePathAttributeAlias())
-            ->getCellValue(0);
+        $filename = $this->getInputDataSheet()->getColumns()->getByExpression($this->getFilePathAttributeAlias())->getCellValue(0);
         if (strlen(trim($filename)) > 0) {
             if ($this->getFolderPath()) {
                 if (Filemanager::pathIsAbsolute($this->getFolderPath())) {
@@ -107,8 +101,7 @@ class ShowDialogFromFile extends ShowDialog
             $completeFilename = $basePath . '/' . $filename . ($this->getFileExtension() ? '.' . ltrim($this->getFileExtension(), ".") : '');
             if (file_exists($completeFilename)) {
                 $json = file_get_contents($completeFilename);
-                $this->setWidget(WidgetFactory::createFromUxon($this->getDialogWidget()
-                    ->getPage(), UxonObject::fromJson($json), $this->getDialogWidget()));
+                $this->setWidget(WidgetFactory::createFromUxon($this->getDialogWidget()->getPage(), UxonObject::fromJson($json), $this->getDialogWidget()));
             } else {
                 throw new FileNotFoundError('File "' . $completeFilename . '" not found!');
             }

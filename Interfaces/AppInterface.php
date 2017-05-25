@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Interfaces;
 
 use exface\Core\CommonLogic\Workbench;
@@ -25,21 +24,21 @@ interface AppInterface extends ExfaceClassInterface, AliasInterface
 
     /**
      * Returns the path to the app's folder relative to the vendor folder
-     * 
+     *
      * @return string
      */
     public function getDirectory();
 
     /**
      * Returns the absolute path to the app's folder
-     * 
+     *
      * @return string
      */
     public function getDirectoryAbsolutePath();
 
     /**
      * Return the applications vendor (first part of the namespace)
-     * 
+     *
      * @return string
      */
     public function getVendor();
@@ -56,14 +55,14 @@ interface AppInterface extends ExfaceClassInterface, AliasInterface
     /**
      * Returns the unique identifier of this app.
      * It is a UUID by default.
-     * 
+     *
      * @return string
      */
     public function getUid();
 
     /**
      * Returns an array with data variables stored for this app in the given context scope
-     * 
+     *
      * @param string $scope            
      * @return DataContext
      */
@@ -73,7 +72,7 @@ interface AppInterface extends ExfaceClassInterface, AliasInterface
      * Returns the value of the given variable stored in the given context scope for this app.
      * If no scope is specified,
      * the default data scope of this app will be used - @see get_context_data_default_scope()
-     * 
+     *
      * @param string $variable_name            
      * @param string $scope            
      * @return mixed
@@ -106,14 +105,14 @@ interface AppInterface extends ExfaceClassInterface, AliasInterface
     /**
      * Returns the alias of the default context scope to be used when saving context data for this app.
      * If not explicitly specified by set_context_data_default_scope() the window scope will be used.
-     * 
+     *
      * @return string
      */
     public function getContextDataDefaultScope();
 
     /**
      * Sets the default context scope to be used when saving context data for this app.
-     * 
+     *
      * @param string $value            
      * @return AppInterface
      */
@@ -128,7 +127,7 @@ interface AppInterface extends ExfaceClassInterface, AliasInterface
 
     /**
      * Returns TRUE if the given class is part of the app and FALSE otherwise.
-     * 
+     *
      * @param string|object $object_or_class_name            
      * @throws InvalidArgumentException if the given argument is neither object nor string
      * @return boolean

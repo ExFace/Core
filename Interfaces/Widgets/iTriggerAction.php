@@ -11,7 +11,7 @@ interface iTriggerAction extends WidgetInterface
 
     /**
      * Returns the action object
-     * 
+     *
      * @return ActionInterface
      */
     public function getAction();
@@ -27,7 +27,7 @@ interface iTriggerAction extends WidgetInterface
      * other_params: ...
      * }
      * }
-     * 
+     *
      * @param ActionInterface|\stdClass $action_object_or_uxon_description            
      * @throws WidgetPropertyInvalidValueError
      */
@@ -35,14 +35,14 @@ interface iTriggerAction extends WidgetInterface
 
     /**
      * Returns the widget, that supplies the input data for the action
-     * 
+     *
      * @return AbstractWidget $widget
      */
     public function getInputWidget();
 
     /**
      * Sets the widget, that supplies the input data for the action
-     * 
+     *
      * @param AbstractWidget $widget            
      * @return AbstractWidget
      */

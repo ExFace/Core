@@ -1,10 +1,9 @@
 <?php
-
 namespace exface\Core\Formulas;
 
 /**
  * Creates an HTML-Progressbar taking the text, value and a max value as parameters.
- * 
+ *
  * @author Andrej Kabachnik
  *        
  */

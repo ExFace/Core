@@ -8,7 +8,7 @@ class FileUploader extends Input
 
     /**
      * @uxon allowed_extensions Comma separated list of allowed file extensions (case insensitive) - all by default
-     * 
+     *
      * @var string
      */
     private $allowed_extensions = '';

@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Exceptions\Actions;
 
 use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;
@@ -13,7 +12,7 @@ use exface\Core\Interfaces\Exceptions\ActionExceptionInterface;
  * in the input data sheet).
  *
  * It's the base class for more specific excpetions:
- * 
+ *
  * @see ActionInputInvalidObjectError
  * @see ActionInputMissingError
  *

@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\CommonLogic\Model;
 
 use exface\Core\CommonLogic\Workbench;
@@ -17,7 +16,7 @@ class RelationList extends EntityList
     /**
      * An attribute list stores attributes with their aliases for keys unless the keys are explicitly specified.
      * Using the alias with relation path ensures, that adding related attributes will never lead to dublicates here!
-     * 
+     *
      * {@inheritdoc}
      *
      * @see \exface\Core\CommonLogic\EntityList::add()
@@ -65,7 +64,7 @@ class RelationList extends EntityList
 
     /**
      * Returns the attribute matching the given alias or FALSE if no such attribute is found
-     * 
+     *
      * @param string $alias            
      * @return Attribute|boolean
      */
@@ -86,7 +85,7 @@ class RelationList extends EntityList
 
     /**
      * Returns the attribute matching the given UID or FALSE if no such attribute is found
-     * 
+     *
      * @param string $uid            
      * @return Attribute|boolean
      */
@@ -102,7 +101,7 @@ class RelationList extends EntityList
 
     /**
      * Returns a new attribute list with all attributes of the given data type
-     * 
+     *
      * @param string $data_type_alias            
      * @return AttributeList
      */
@@ -120,7 +119,7 @@ class RelationList extends EntityList
 
     /**
      * Returns a new attribute list containig only attributes marked as required
-     * 
+     *
      * @return AttributeList
      */
     function getRequired()
@@ -139,7 +138,7 @@ class RelationList extends EntityList
      * Returns a list with all attributes, marked for the default display of the object sorted by default_display_order
      * The list can then be easily used to create widgets to display the object without the user having to
      * specify which particular attributes to display.
-     * 
+     *
      * @return AttributeList
      */
     function getDefaultDisplayList()

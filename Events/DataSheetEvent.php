@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Events;
 
 use exface\Core\CommonLogic\NameResolver;
@@ -9,7 +8,7 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
  * Data sheet event names consist of the qualified alias of the base meta object followed by "DataSheet" and the respective event type:
  * e.g.
  * exface.Core.Object.DataSheet.UpdateData.Before, etc.
- * 
+ *
  * @author Andrej Kabachnik
  *        
  */
@@ -46,8 +45,6 @@ class DataSheetEvent extends ExfaceEvent
      */
     public function getNamespace()
     {
-        return $this->getDataSheet()
-            ->getMetaObject()
-            ->getAliasWithNamespace() . NameResolver::NAMESPACE_SEPARATOR . 'DataSheet';
+        return $this->getDataSheet()->getMetaObject()->getAliasWithNamespace() . NameResolver::NAMESPACE_SEPARATOR . 'DataSheet';
     }
 }

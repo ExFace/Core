@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Widgets;
 
 use exface\Core\Interfaces\Widgets\iHaveChildren;
@@ -102,7 +101,7 @@ class ComboTable extends InputCombo implements iHaveChildren
     /**
      * Returns the relation, this widget represents or FALSE if the widget stands for a direct attribute.
      * This shortcut function is very handy because a ComboTable often stands for a relation.
-     * 
+     *
      * @return \exface\Core\CommonLogic\Model\relation
      */
     public function getRelation()
@@ -116,7 +115,7 @@ class ComboTable extends InputCombo implements iHaveChildren
 
     /**
      * Returns the DataTable, that is used for autosuggesting in a ComboTable or false if a DataTable cannot be created
-     * 
+     *
      * @return \exface\Core\Widgets\DataTable|boolean
      */
     public function getTable()
@@ -216,7 +215,7 @@ class ComboTable extends InputCombo implements iHaveChildren
      * Creates table columns for the value and text attributes of the combo and adds them to the table.
      * NOTE: the columns are only added if they are not there already (= if they are not part of the default columns)
      * and they will be automatically hidden, if the corresponding attribute is hidden!
-     * 
+     *
      * @return ComboTable
      */
     protected function addComboColumns()
@@ -269,8 +268,7 @@ class ComboTable extends InputCombo implements iHaveChildren
     {
         $this->text_column_id = $value;
         if ($this->getTextColumn()) {
-            $this->setTextAttributeAlias($this->getTextColumn()
-                ->getAttributeAlias());
+            $this->setTextAttributeAlias($this->getTextColumn()->getAttributeAlias());
         } else {
             throw new WidgetPropertyInvalidValueError($this, 'Invalid text_column_id "' . $value . '" specified: no matching column found in the autosuggest table!', '6TV1LBR');
         }
@@ -312,8 +310,7 @@ class ComboTable extends InputCombo implements iHaveChildren
         $this->getTable()->setUidColumnId($value);
         
         if ($this->getValueColumn()) {
-            $this->setValueAttributeAlias($this->getValueColumn()
-                ->getAttributeAlias());
+            $this->setValueAttributeAlias($this->getValueColumn()->getAttributeAlias());
         } else {
             throw new WidgetPropertyInvalidValueError($this, 'Invalid value_column_id "' . $value . '" specified: no matching column found in the autosuggest table!', '6TV1LBR');
         }
@@ -336,7 +333,7 @@ class ComboTable extends InputCombo implements iHaveChildren
 
     /**
      * Prefills a ComboTable with the value it represents and the corresponding text.
-     * 
+     *
      * @see \exface\Core\Widgets\Text::prefill()
      */
     protected function doPrefill(DataSheetInterface $data_sheet)
@@ -359,8 +356,7 @@ class ComboTable extends InputCombo implements iHaveChildren
                 // corresponding text by itself (e.g. via lazy loading), so it is not a real problem.
                 if ($this->getAttribute()->isRelation()) {
                     $text_column_name = RelationPath::relationPathAdd($this->getRelation()->getAlias(), $this->getTextColumn()->getAttributeAlias());
-                } elseif ($this->getMetaObject()->isExactly($this->getTable()
-                    ->getMetaObject())) {
+                } elseif ($this->getMetaObject()->isExactly($this->getTable()->getMetaObject())) {
                     $text_column_name = $this->getTextColumn()->getDataColumnName();
                 } else {
                     unset($text_column_name);
@@ -386,11 +382,7 @@ class ComboTable extends InputCombo implements iHaveChildren
                     // and see if their related object is the same as the related object of the relation represented by the combo.
                     foreach ($data_sheet->getColumns()->getAll() as $column) {
                         if ($column->getAttribute() && $column->getAttribute()->isRelation()) {
-                            if ($column->getAttribute()
-                                ->getRelation()
-                                ->getRelatedObject()
-                                ->is($this->getRelation()
-                                ->getRelatedObject())) {
+                            if ($column->getAttribute()->getRelation()->getRelatedObject()->is($this->getRelation()->getRelatedObject())) {
                                 $this->setValuesFromArray($column->getValues(false));
                                 return;
                             }
@@ -428,8 +420,7 @@ class ComboTable extends InputCombo implements iHaveChildren
             // corresponding text by itself (e.g. via lazy loading), so it is not a real problem.
             if ($this->getAttribute() && $this->getAttribute()->isRelation()) {
                 $text_column_name = RelationPath::relationPathAdd($this->getRelation()->getAlias(), $this->getTextColumn()->getAttributeAlias());
-            } elseif ($this->getMetaObject()->isExactly($this->getTable()
-                ->getMetaObject())) {
+            } elseif ($this->getMetaObject()->isExactly($this->getTable()->getMetaObject())) {
                 $text_column_name = $this->getTextColumn()->getDataColumnName();
             } else {
                 unset($text_column_name);
@@ -437,11 +428,8 @@ class ComboTable extends InputCombo implements iHaveChildren
             if ($text_column_name) {
                 $data_sheet->getColumns()->addFromExpression($text_column_name);
             }
-        } elseif ($this->getRelation() && $this->getRelation()
-            ->getRelatedObject()
-            ->is($data_sheet->getMetaObject())) {
-            $data_sheet->getColumns()->addFromExpression($this->getRelation()
-                ->getRelatedObjectKeyAlias());
+        } elseif ($this->getRelation() && $this->getRelation()->getRelatedObject()->is($data_sheet->getMetaObject())) {
+            $data_sheet->getColumns()->addFromExpression($this->getRelation()->getRelatedObjectKeyAlias());
             foreach ($this->getTable()->getColumns() as $col) {
                 $data_sheet->getColumns()->addFromExpression($col->getAttributeAlias(), $col->getDataColumnName());
             }
@@ -457,7 +445,7 @@ class ComboTable extends InputCombo implements iHaveChildren
      * Since the ComboTable contains a DataTable widget, we need to return it as a child widget to allow ajax data loaders to
      * find the table a load data for it.
      * This does not make the ComboTable a container though!
-     * 
+     *
      * @see \exface\Core\Widgets\AbstractWidget::getChildren()
      */
     public function getChildren()
@@ -470,8 +458,7 @@ class ComboTable extends InputCombo implements iHaveChildren
     public function getMaxSuggestions()
     {
         if (is_null(parent::getMaxSuggestions()) && $this->getTable()) {
-            $this->setMaxSuggestions($this->getTable()
-                ->getPaginateDefaultPageSize());
+            $this->setMaxSuggestions($this->getTable()->getPaginateDefaultPageSize());
         }
         return parent::getMaxSuggestions();
     }
@@ -500,7 +487,7 @@ class ComboTable extends InputCombo implements iHaveChildren
 
     /**
      * Returns the meta object, that the table within the combo will show
-     * 
+     *
      * @throws WidgetConfigurationError
      * @return object
      */
@@ -508,9 +495,7 @@ class ComboTable extends InputCombo implements iHaveChildren
     {
         if (! $this->hasCustomOptionsObject()) {
             if ($this->getAttribute()->isRelation()) {
-                $this->setOptionsObject($this->getMetaObject()
-                    ->getRelation($this->getAttributeAlias())
-                    ->getRelatedObject());
+                $this->setOptionsObject($this->getMetaObject()->getRelation($this->getAttributeAlias())->getRelatedObject());
             }
         }
         return $this->getOptionsObject();
@@ -556,8 +541,7 @@ class ComboTable extends InputCombo implements iHaveChildren
             if ($condition_or_uxon_object instanceof Condition) {
                 // TODO
             } elseif ($condition_or_uxon_object instanceof \stdClass) {
-                $this->getTableUxon()->setProperty('filters', array_merge($this->getTableUxon()
-                    ->getProperty('filters'), array(
+                $this->getTableUxon()->setProperty('filters', array_merge($this->getTableUxon()->getProperty('filters'), array(
                     $condition_or_uxon_object
                 )));
             }

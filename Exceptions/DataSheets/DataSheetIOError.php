@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Exceptions\DataSheets;
 
 /**
@@ -7,7 +6,7 @@ namespace exface\Core\Exceptions\DataSheets;
  * the DataSheet::data_xxx() methods).
  *
  * This is the base class for more specific errors:
- * 
+ *
  * @see DataSheetWriteError
  * @see DataSheetReadError
  *

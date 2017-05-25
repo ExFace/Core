@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Actions;
 
 use exface\Core\Contexts\Types\AbstractContext;
@@ -42,16 +41,12 @@ class SetContext extends AbstractAction
 
     /**
      * Returns the context addressed in this action
-     * 
+     *
      * @return AbstractContext
      */
     public function getContext()
     {
-        return $this->getApp()
-            ->getWorkbench()
-            ->context()
-            ->getScope($this->getScope())
-            ->getContext($this->getContextType());
+        return $this->getApp()->getWorkbench()->context()->getScope($this->getScope())->getContext($this->getContextType());
     }
 
     protected function perform()

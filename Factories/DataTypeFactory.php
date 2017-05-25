@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Factories;
 
 use exface\Core\CommonLogic\Workbench;
@@ -22,7 +21,7 @@ abstract class DataTypeFactory extends AbstractNameResolverFactory
 
     /**
      * TODO Make data types compatible to the name resolver, so they can also be added by app developers!
-     * 
+     *
      * @param exface $exface            
      * @param string $data_type_alias            
      * @return AbstractDataType

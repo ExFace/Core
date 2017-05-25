@@ -39,16 +39,11 @@ class Autosuggest extends ReadData
         // rewritten.
         // IDEA Once there is some kind of default table widget for meta object, we could use it here instead of
         // simply outputting the UID and LABEL
-        if (! parent::getCalledByWidget() && $this->getWorkbench()
-            ->ui()
-            ->getPageCurrent()) {
+        if (! parent::getCalledByWidget() && $this->getWorkbench()->ui()->getPageCurrent()) {
             /* @var $reading_widget \exface\Core\Widgets\DataTable */
-            $reading_widget = WidgetFactory::create($this->getWorkbench()
-                ->ui()
-                ->getPageCurrent(), 'DataTable');
+            $reading_widget = WidgetFactory::create($this->getWorkbench()->ui()->getPageCurrent(), 'DataTable');
             $reading_widget->setMetaObject($this->getMetaObject());
-            $reading_widget->addColumn($reading_widget->createColumnFromAttribute($this->getMetaObject()
-                ->getLabelAttribute()));
+            $reading_widget->addColumn($reading_widget->createColumnFromAttribute($this->getMetaObject()->getLabelAttribute()));
             $this->setCalledByWidget($reading_widget);
             $this->setInputDataSheet($reading_widget->prepareDataSheetToRead($this->getInputDataSheet()));
         }

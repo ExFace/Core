@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Actions;
 
 use exface\Core\Interfaces\Actions\iShowWidget;
@@ -19,7 +18,7 @@ use exface\Core\DataTypes\BooleanDataType;
 
 /**
  * The ShowWidget action is the base for all actions, that render widgets.
- * 
+ *
  * @author Andrej Kabachnik
  *        
  */
@@ -71,19 +70,12 @@ class ShowWidget extends AbstractAction implements iShowWidget, iUsePrefillData
             if ($this->get_widget_uxon()) {
                 $this->widget = WidgetFactory::create_from_uxon($this->get_called_on_ui_page(), $this->get_widget_uxon(), $this->get_called_by_widget());
             } elseif ($this->widget_id && ! $this->page_id) {
-                $this->widget = $this->get_app()
-                    ->get_workbench()
-                    ->ui()
-                    ->get_widget($this->widget_id, $this->get_called_on_ui_page()
-                    ->get_id());
+                $this->widget = $this->get_app()->get_workbench()->ui()->get_widget($this->widget_id, $this->get_called_on_ui_page()->get_id());
             } elseif ($this->page_id && ! $this->widget_id) {
                 // TODO this causes problems with simple links to other pages, as the action attempts to load them here...
                 // $this->widget = $this->get_app()->get_workbench()->ui()->get_page($this->page_id)->get_widget_root();
             } elseif ($this->page_id && $this->widget_id) {
-                $this->widget = $this->get_app()
-                    ->get_workbench()
-                    ->ui()
-                    ->get_widget($this->widget_id, $this->page_id);
+                $this->widget = $this->get_app()->get_workbench()->ui()->get_widget($this->widget_id, $this->page_id);
             }
         }
         return $this->widget;
@@ -173,13 +165,7 @@ class ShowWidget extends AbstractAction implements iShowWidget, iUsePrefillData
         
         // Prefill widget using the filter contexts if the widget does not have any prefill data yet
         // TODO Use the context prefill even if the widget already has other prefill data: use DataSheet::merge()!
-        if ($this->get_prefill_with_filter_context() && $this->get_widget() && $context_conditions = $this->get_app()
-            ->get_workbench()
-            ->context()
-            ->get_scope_window()
-            ->get_filter_context()
-            ->get_conditions($this->get_widget()
-            ->get_meta_object())) {
+        if ($this->get_prefill_with_filter_context() && $this->get_widget() && $context_conditions = $this->get_app()->get_workbench()->context()->get_scope_window()->get_filter_context()->get_conditions($this->get_widget()->get_meta_object())) {
             if (! $data_sheet || $data_sheet->is_empty()) {
                 $data_sheet = DataSheetFactory::create_from_object($this->get_widget()->get_meta_object());
             }
@@ -187,9 +173,7 @@ class ShowWidget extends AbstractAction implements iShowWidget, iUsePrefillData
             // Make sure, the context object fits the data sheet object.
             // TODO Currently we fetch context filters for the object of the action. If data sheet has another object, we ignore the context filters.
             // Wouldn't it be better to add the context filters to the data sheet or maybe even to the data sheet and the prefill data separately?
-            if ($this->get_widget()
-                ->get_meta_object()
-                ->is($data_sheet->get_meta_object())) {
+            if ($this->get_widget()->get_meta_object()->is($data_sheet->get_meta_object())) {
                 /* @var $condition \exface\Core\CommonLogic\Model\Condition */
                 foreach ($context_conditions as $condition) {
                     /*
@@ -271,7 +255,7 @@ class ShowWidget extends AbstractAction implements iShowWidget, iUsePrefillData
 
     /**
      * Returns FALSE, if the values of the currently registered context filters should be used to attempt to prefill the widget
-     * 
+     *
      * @return boolean
      */
     public function get_prefill_with_filter_context()
@@ -281,7 +265,7 @@ class ShowWidget extends AbstractAction implements iShowWidget, iUsePrefillData
 
     /**
      * If set to TRUE, the values of the filters registered in the window context scope will be used to prefill the widget (if possible)
-     * 
+     *
      * @param boolean $value            
      * @return \exface\Core\Actions\ShowWidget
      */
@@ -293,7 +277,7 @@ class ShowWidget extends AbstractAction implements iShowWidget, iUsePrefillData
 
     /**
      * Returns TRUE, if the input data of the action should be used to prefill the widget shown, or FALSE otherwise
-     * 
+     *
      * @return boolean
      */
     public function get_prefill_with_input_data()
@@ -303,7 +287,7 @@ class ShowWidget extends AbstractAction implements iShowWidget, iUsePrefillData
 
     /**
      * Set to TRUE, if the input data of the action should be used to prefill the widget shown, or FALSE otherwise.
-     * 
+     *
      * @param boolean $value            
      * @return ShowWidget
      */
@@ -315,7 +299,7 @@ class ShowWidget extends AbstractAction implements iShowWidget, iUsePrefillData
 
     /**
      * The output for actions showing a widget is the actual code for the template element representing that widget
-     * 
+     *
      * @see \exface\Core\Interfaces\Actions\ActionInterface::get_result_output()
      */
     public function get_result_output()
@@ -326,7 +310,7 @@ class ShowWidget extends AbstractAction implements iShowWidget, iUsePrefillData
     /**
      * ShowWidget needs some kind of widget representation in UXON in order to be recreatable from the UXON object.
      * TODO Currently the widget is represented by widget_id and page_id and there is no action widget UXON saved here. This won't work for generated widgets!
-     * 
+     *
      * @see \exface\Core\Interfaces\Actions\ActionInterface::export_uxon_object()
      */
     public function export_uxon_object()
@@ -337,8 +321,7 @@ class ShowWidget extends AbstractAction implements iShowWidget, iUsePrefillData
         $uxon->prefill_with_filter_context = $this->get_prefill_with_filter_context();
         $uxon->prefill_with_input_data = $this->get_prefill_with_input_data();
         if ($this->get_prefill_data_sheet()) {
-            $uxon->set_property('prefill_data_sheet', $this->get_prefill_data_sheet()
-                ->export_uxon_object());
+            $uxon->set_property('prefill_data_sheet', $this->get_prefill_data_sheet()->export_uxon_object());
         }
         return $uxon;
     }

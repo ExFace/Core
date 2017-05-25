@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\CommonLogic;
 
 use exface\Core\Widgets\AbstractWidget;
@@ -153,7 +152,7 @@ class WidgetLink implements WidgetLinkInterface
 
     /**
      * Returns the widget instance referenced by this link
-     * 
+     *
      * @throws uiWidgetNotFoundException if no widget with a matching id can be found in the specified resource
      * @return AbstractWidget
      */
@@ -174,9 +173,7 @@ class WidgetLink implements WidgetLinkInterface
      */
     public function getPage()
     {
-        return $this->getWorkbench()
-            ->ui()
-            ->getPage($this->getPageId());
+        return $this->getWorkbench()->ui()->getPage($this->getPageId());
     }
 
     /**

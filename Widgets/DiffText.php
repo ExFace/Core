@@ -9,7 +9,7 @@ use exface\Core\Exceptions\NotImplementedError;
  * This widget
  * is especially usefull since all objects in ExFace can be converted to a UXON text representation, which can be compared using
  * this widget.
- * 
+ *
  * @author Andrej Kabachnik
  *        
  */

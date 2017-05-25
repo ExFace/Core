@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Widgets;
 
 use exface\Core\Factories\WidgetFactory;
@@ -32,21 +31,20 @@ class Filter extends Container implements iCanBeRequired, iShowSingleAttribute
 
     /**
      * Returns the widget used to interact with the filter (typically some kind of input widget)
-     * 
+     *
      * @return iTakeInput
      */
     public function getWidget()
     {
         if (! $this->widget) {
-            $this->setWidget($this->getPage()
-                ->createWidget('Input', $this));
+            $this->setWidget($this->getPage()->createWidget('Input', $this));
         }
         return $this->widget;
     }
 
     /**
      * Sets the widget used to interact with the filter (typically some kind of input widget)
-     * 
+     *
      * @param iTakeInput|\stdClass $widget_or_uxon_object            
      * @return \exface\Core\Widgets\Filter
      */
@@ -76,8 +74,7 @@ class Filter extends Container implements iCanBeRequired, iShowSingleAttribute
             case EXF_COMPARATOR_GREATER_THAN_OR_EQUALS:
             case EXF_COMPARATOR_LESS_THAN:
             case EXF_COMPARATOR_LESS_THAN_OR_EQUALS:
-                $this->widget->setCaption($this->getWidget()
-                    ->getCaption() . ' (' . $this->getComparator() . ')');
+                $this->widget->setCaption($this->getWidget()->getCaption() . ' (' . $this->getComparator() . ')');
                 break;
         }
         
@@ -193,7 +190,7 @@ class Filter extends Container implements iCanBeRequired, iShowSingleAttribute
      * Thus, the filter is a simple proxy from the point of view of the template. However, it can be easily
      * enhanced with additional methods, that will override the ones of the value widget.
      * TODO this did not really work so far. Don't know why. As a work around, added some explicit proxy methods
-     * 
+     *
      * @param string $name            
      * @param array $arguments            
      */
@@ -272,8 +269,7 @@ class Filter extends Container implements iCanBeRequired, iShowSingleAttribute
         $uxon = parent::exportUxonObject();
         $uxon->setProperty('comparator', $this->getComparator());
         $uxon->setProperty('required', $this->isRequired());
-        $uxon->setProperty('widget', $this->getWidget()
-            ->exportUxonObject());
+        $uxon->setProperty('widget', $this->getWidget()->exportUxonObject());
         return $uxon;
     }
 }

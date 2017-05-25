@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Exceptions\Widgets;
 
 use exface\Core\Exceptions\UnexpectedValueException;

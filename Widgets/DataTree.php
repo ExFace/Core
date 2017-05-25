@@ -45,7 +45,7 @@ class DataTree extends DataTable
 
     /**
      * Set the id of the column, that is supposed to display the tree
-     * 
+     *
      * @param string $value            
      */
     public function setTreeColumnId($value)
@@ -59,9 +59,7 @@ class DataTree extends DataTable
     public function getTreeFolderFlagAttributeAlias()
     {
         if (! $this->tree_folder_flag_attribute_alias) {
-            $flags = $this->getMetaObject()
-                ->getAttributes()
-                ->getByDataTypeAlias(EXF_DATA_TYPE_FLAG_TREE_FOLDER);
+            $flags = $this->getMetaObject()->getAttributes()->getByDataTypeAlias(EXF_DATA_TYPE_FLAG_TREE_FOLDER);
             if ($flags->count() == 1) {
                 $flag = $flags->getFirst();
                 $this->setTreeFolderFlagAttributeAlias($flag->getAlias());
@@ -75,7 +73,7 @@ class DataTree extends DataTable
     /**
      * Sets the alias of the attribute, that indicates, wether the node has children (= is a folder)
      * The attribute is also automatically added as a hidden column!
-     * 
+     *
      * @param string $value            
      */
     public function setTreeFolderFlagAttributeAlias($value)
@@ -87,7 +85,7 @@ class DataTree extends DataTable
      * Returns the alias of the relation to the parent object (same as the alias of the corresponding attribute).
      * If the relation is not explicitly defined, ExFace tries to determine it automatically by searching for
      * a recursive relation to the object itself.
-     * 
+     *
      * @throws WidgetConfigurationError if more than one recursive relation is found
      */
     public function getTreeParentIdAttributeAlias()
@@ -111,7 +109,7 @@ class DataTree extends DataTable
     /**
      * Sets the alias of the relation to the parent object (same as the alias of the corresponding attribute).
      * The attribute is also automatically added as a hidden column!
-     * 
+     *
      * @param string $value            
      */
     public function setTreeParentIdAttributeAlias($value)

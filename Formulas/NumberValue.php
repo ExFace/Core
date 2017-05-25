@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Formulas;
 
 use exface\Core\DataTypes\NumberDataType;

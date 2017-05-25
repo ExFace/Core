@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\CommonLogic\Model;
 
 use exface\Core\CommonLogic\EntityList;

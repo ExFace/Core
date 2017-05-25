@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Events;
 
 use Symfony\Component\EventDispatcher\Event;

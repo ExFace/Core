@@ -17,7 +17,7 @@ class FilterContext extends AbstractContext
 
     /**
      * Returns an array with all conditions from the current context
-     * 
+     *
      * @param object $object            
      * @return Condition[] TODO Modify to look for possible related objects and rebase() their conditions!
      *         Ccurrently we only look for conitions based on direct attributes of the object given.
@@ -65,35 +65,31 @@ class FilterContext extends AbstractContext
 
     /**
      * Adds a condition to the current context
-     * 
+     *
      * @param Condition $condition            
      * @return \exface\Core\Contexts\Types\FilterContext
      */
     public function addCondition(Condition $condition)
     {
-        $this->conditions_by_object[$condition->getExpression()
-            ->getMetaObject()
-            ->getId()][$condition->getExpression()->toString()] = $condition;
+        $this->conditions_by_object[$condition->getExpression()->getMetaObject()->getId()][$condition->getExpression()->toString()] = $condition;
         return $this;
     }
 
     /**
      * Removes a given condition from the current context
-     * 
+     *
      * @param Condition $condition            
      * @return \exface\Core\Contexts\Types\FilterContext
      */
     public function removeCondition(Condition $condition)
     {
-        unset($this->conditions_by_object[$condition->getExpression()
-            ->getMetaObject()
-            ->getId()][$condition->getExpression()->toString()]);
+        unset($this->conditions_by_object[$condition->getExpression()->getMetaObject()->getId()][$condition->getExpression()->toString()]);
         return $this;
     }
 
     /**
      * Removes all conditions based on a certain attribute
-     * 
+     *
      * @param attribute $attribute            
      * @return \exface\Core\Contexts\Types\FilterContext
      */
@@ -111,7 +107,7 @@ class FilterContext extends AbstractContext
 
     /**
      * Clears all conditions from this context
-     * 
+     *
      * @return \exface\Core\Contexts\Types\FilterContext
      */
     public function removeAllConditions()
@@ -122,7 +118,7 @@ class FilterContext extends AbstractContext
 
     /**
      * Returns an array with UXON objects for each condition in the context
-     * 
+     *
      * @return UxonObject
      */
     public function exportUxonObject()
@@ -139,7 +135,7 @@ class FilterContext extends AbstractContext
 
     /**
      * Loads an array of conditions in UXON representation into the context
-     * 
+     *
      * @param UxonObject $uxon            
      * @throws ContextLoadError
      * @return \exface\Core\Contexts\Types\FilterContext

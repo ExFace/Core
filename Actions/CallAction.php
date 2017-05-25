@@ -26,10 +26,8 @@ class CallAction extends AbstractAction
 
     protected function perform()
     {
-        $this->setResult($this->getAction()
-            ->getResult());
-        $this->setResultMessage($this->getAction()
-            ->getResultMessage());
+        $this->setResult($this->getAction()->getResult());
+        $this->setResultMessage($this->getAction()->getResultMessage());
         if ($parent_result = $this->getAction()->getResultDataSheet()) {
             $this->setResultDataSheet($parent_result);
         }

@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Actions;
 
 use exface\Core\Widgets\Dialog;
@@ -53,22 +52,10 @@ class MassEditDialog extends ShowDialog
                 ), $counter);
             } else {
                 $filters = array();
-                $filter_conditions = array_merge($this->getInputDataSheet()
-                    ->getFilters()
-                    ->getConditions(), $this->getApp()
-                    ->getWorkbench()
-                    ->context()
-                    ->getScopeWindow()
-                    ->getFilterContext()
-                    ->getConditions($this->getInputDataSheet()
-                    ->getMetaObject()));
+                $filter_conditions = array_merge($this->getInputDataSheet()->getFilters()->getConditions(), $this->getApp()->getWorkbench()->context()->getScopeWindow()->getFilterContext()->getConditions($this->getInputDataSheet()->getMetaObject()));
                 if (is_array($filter_conditions) && count($filter_conditions) > 0) {
                     foreach ($filter_conditions as $cond) {
-                        $filters[$cond->getExpression()->toString()] = $cond->getExpression()
-                            ->getAttribute()
-                            ->getName() . ' (' . $cond->getExpression()
-                            ->getAttribute()
-                            ->getDataAddress() . ') ' . $cond->getComparator() . ' ' . $cond->getValue();
+                        $filters[$cond->getExpression()->toString()] = $cond->getExpression()->getAttribute()->getName() . ' (' . $cond->getExpression()->getAttribute()->getDataAddress() . ') ' . $cond->getComparator() . ' ' . $cond->getValue();
                     }
                     return $this->translate('EDITING_BY_FILTER', array(
                         '%filters%' => implode($filters, ' AND ')

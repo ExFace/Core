@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Widgets;
 
 use exface\Core\Interfaces\Widgets\iHaveIcon;
@@ -126,11 +125,9 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iHaveC
     {
         if (! $this->input_widget_id) {
             if ($this->input_widget) {
-                $this->setInputWidgetId($this->getInputWidget()
-                    ->getId());
+                $this->setInputWidgetId($this->getInputWidget()->getId());
             } else {
-                $this->setInputWidgetId($this->getParent()
-                    ->getId());
+                $this->setInputWidgetId($this->getParent()->getId());
             }
         }
         return $this->input_widget_id;
@@ -176,7 +173,7 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iHaveC
      * Buttons allow to set action options as an options array or directly as an option of the button itself.
      * In the latter case the option's name must be prefixed by "action_": to set a action's property
      * called "script" simply add "action_script": XXX to the button.
-     * 
+     *
      * @see \exface\Core\Widgets\AbstractWidget::importUxonObject()
      */
     public function importUxonObject(\stdClass $source)
@@ -217,7 +214,7 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iHaveC
 
     /**
      * Returns the hotkeys bound to this button.
-     * 
+     *
      * @see set_hotkey()
      * @return string
      */
@@ -327,7 +324,7 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iHaveC
     /**
      * The Button may have a child widget, if the action it triggers shows a widget.
      * NOTE: the widget description will only be returned, if the widget is explicitly defined, not merely by a link to another resource.
-     * 
+     *
      * @see \exface\Core\Widgets\AbstractWidget::getChildren()
      */
     public function getChildren()
@@ -341,7 +338,7 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iHaveC
 
     /**
      * The button's caption falls back to the name of the action if there is no caption defined explicitly and the button has an action.
-     * 
+     *
      * {@inheritdoc}
      *
      * @see \exface\Core\Widgets\AbstractWidget::getCaption()
@@ -357,7 +354,7 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iHaveC
 
     /**
      * Returns a link to the widget, that should be refreshed when this button is pressed.
-     * 
+     *
      * @return \exface\Core\Interfaces\Widgets\WidgetLinkInterface
      */
     public function getRefreshWidgetLink()

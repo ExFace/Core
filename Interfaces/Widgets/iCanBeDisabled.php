@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Interfaces\Widgets;
 
 use exface\Core\Interfaces\WidgetInterface;
@@ -9,7 +8,7 @@ interface iCanBeDisabled extends WidgetInterface
 
     /**
      * Returns TRUE if the widget is disabled (= no user interaction) and FALSE otherwise
-     * 
+     *
      * @return boolean
      */
     public function isDisabled();

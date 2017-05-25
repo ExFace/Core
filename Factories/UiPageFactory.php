@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Factories;
 
 use exface\Core\Interfaces\TemplateInterface;
@@ -58,7 +57,7 @@ class UiPageFactory extends AbstractFactory
 
     /**
      * TODO This method is still unfinished!
-     * 
+     *
      * @param TemplateInterface $template            
      * @param string $page_id            
      * @throws UiPageNotFoundError if no CMS page can be found by the given id
@@ -66,9 +65,7 @@ class UiPageFactory extends AbstractFactory
      */
     public static function createFromCmsPage(UiManagerInterface $ui, $page_id)
     {
-        $page_text = $ui->getWorkbench()
-            ->cMS()
-            ->getPageContents($page_id);
+        $page_text = $ui->getWorkbench()->cMS()->getPageContents($page_id);
         if (is_null($page_text)) {
             throw new UiPageNotFoundError('UI page with id "' . $page_id . '" not found!');
         } elseif (substr(trim($page_text), 0, 1) !== '{') {

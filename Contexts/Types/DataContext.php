@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Contexts\Types;
 
 use exface\Core\CommonLogic\UxonObject;
@@ -24,7 +23,7 @@ class DataContext extends AbstractContext
 
     /**
      * Returns the value stored under the given name
-     * 
+     *
      * @param string $namespace            
      * @param string $variable_name            
      * @return mixed
@@ -36,7 +35,7 @@ class DataContext extends AbstractContext
 
     /**
      * Stores a value under the given name
-     * 
+     *
      * @param string $namespace            
      * @param string $variable_name            
      * @param mixed $value            
@@ -50,7 +49,7 @@ class DataContext extends AbstractContext
 
     /**
      * Removes the given variable from the data context
-     * 
+     *
      * @param string $namespace            
      * @param string $variable_name            
      * @return \exface\Core\Contexts\Types\DataContext
@@ -63,7 +62,7 @@ class DataContext extends AbstractContext
 
     /**
      * Removes the given variable from the data context
-     * 
+     *
      * @param AppInterface $app            
      * @param string $variable_name            
      * @return \exface\Core\Contexts\Types\DataContext
@@ -99,7 +98,7 @@ class DataContext extends AbstractContext
 
     /**
      * Returns an array with all variables from the given namespace
-     * 
+     *
      * @param string $namespace            
      * @return mixed[]
      */
@@ -135,14 +134,12 @@ class DataContext extends AbstractContext
      * The default scope of the data context is the window.
      * Most apps will run in the context of a single window,
      * so two windows running one app are independant in general.
-     * 
+     *
      * @see \exface\Core\Contexts\Types\AbstractContext::getDefaultScope()
      */
     public function getDefaultScope()
     {
-        return $this->getWorkbench()
-            ->context()
-            ->getScopeWindow();
+        return $this->getWorkbench()->context()->getScopeWindow();
     }
 
     /**
@@ -174,7 +171,7 @@ class DataContext extends AbstractContext
      * },
      * namespace2: ...
      * }
-     * 
+     *
      * {@inheritdoc}
      *
      * @see \exface\Core\Contexts\Types\AbstractContext::exportUxonObject()
@@ -202,8 +199,7 @@ class DataContext extends AbstractContext
         if ($variable_value instanceof UxonObject || (! is_object($variable_value) && ! is_array($variable_value))) {
             $uxon_container->setProperty($variable_name, $variable_value);
         } elseif (is_array($variable_value)) {
-            $uxon_container->setProperty($variable_name, $this->getWorkbench()
-                ->createUxonObject());
+            $uxon_container->setProperty($variable_name, $this->getWorkbench()->createUxonObject());
             foreach ($variable_value as $var => $value) {
                 $this->exportUxonForVariable($uxon_container->getProperty($variable_name), $var, $value);
             }

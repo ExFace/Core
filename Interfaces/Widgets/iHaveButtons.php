@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Interfaces\Widgets;
 
 use exface\Core\Widgets\Button;
@@ -24,7 +23,7 @@ interface iHaveButtons extends iHaveChildren
 
     /**
      * Returs an array of button widgets
-     * 
+     *
      * @return Button[]
      */
     public function getButtons();

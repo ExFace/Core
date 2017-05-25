@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Interfaces;
 
 use exface\Core\CommonLogic\Workbench;
@@ -32,7 +31,7 @@ use exface\Core\Factories\AbstractNameResolverFactory;
  * - Templates - located in the subfolder "Template" of an app, the file name matches the alias. Every app can currently have at most one template.
  *
  * The name resolver is used by many factories:
- * 
+ *
  * @see AbstractNameResolverFactory
  *
  * @author Andrej Kabachnik
@@ -55,7 +54,7 @@ interface NameResolverInterface extends ExfaceClassInterface
     /**
      * Returns the object type of this name resolver (i.e.
      * one of the OBJECT_TYPE_xxx constants)
-     * 
+     *
      * @return string
      */
     public function getObjectType();
@@ -63,7 +62,7 @@ interface NameResolverInterface extends ExfaceClassInterface
     /**
      * Returns the alias without the namespace (e.g.
      * FileFinderConnectcor for exface.FileSystemConnector.FileFinderConnector)
-     * 
+     *
      * @return string
      */
     public function getAlias();
@@ -71,7 +70,7 @@ interface NameResolverInterface extends ExfaceClassInterface
     /**
      * Returns the namespace (e.g.
      * exface.FileSystemConnector for exface.FileSystemConnector.FileFinderConnector)
-     * 
+     *
      * @return string
      */
     public function getNamespace();
@@ -79,7 +78,7 @@ interface NameResolverInterface extends ExfaceClassInterface
     /**
      * Returns the qualified alias (including namespace) in the default dot-notation (e.g.
      * exface.FileSystemConnector.FileFinderConnector)
-     * 
+     *
      * @return string
      */
     public function getAliasWithNamespace();
@@ -87,7 +86,7 @@ interface NameResolverInterface extends ExfaceClassInterface
     /**
      * Returns the vendor name (e.g.
      * exface for exface.FileSystemConnector.FileFinderConnector)
-     * 
+     *
      * @return string
      */
     public function getVendor();
@@ -95,7 +94,7 @@ interface NameResolverInterface extends ExfaceClassInterface
     /**
      * Returns the resolved class name in PSR-1 notation (e.g.
      * \exface\FileSystemConnector\DataConnectors\FileFinderConnector for exface.FileSystemConnector.FileFinderConnector)
-     * 
+     *
      * @return string
      */
     public function getClassNameWithNamespace();
@@ -103,7 +102,7 @@ interface NameResolverInterface extends ExfaceClassInterface
     /**
      * Returns the PHP namespace of the resolved class (e.g.
      * \exface\FileSystemConnector\DataConnectors for exface.FileSystemConnector.FileFinderConnector)
-     * 
+     *
      * @return string
      */
     public function getClassNamespace();
@@ -111,21 +110,21 @@ interface NameResolverInterface extends ExfaceClassInterface
     /**
      * Returns the path to the resolved class relative to the vendor folder (e.g.
      * \exface\FileSystemConnector\DataConnectors for exface.FileSystemConnector.FileFinderConnector)
-     * 
+     *
      * @return string
      */
     public function getClassDirectory();
 
     /**
      * Returns TRUE if a class name could be resolved and the class exists and FALSE otherwise
-     * 
+     *
      * @return boolean
      */
     public function classExists();
 
     /**
      * Validates if the name resolver can instatiate the required object and throws exceptions if not so
-     * 
+     *
      * @throws NameResolverError
      * @return NameResolverInterface
      */

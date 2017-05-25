@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Interfaces\Events;
 
 use exface\Core\Interfaces\ExfaceClassInterface;
@@ -17,7 +16,7 @@ interface EventManagerInterface extends ExfaceClassInterface
     /**
      * Registers a listener for the given event name.
      * The listener can be any PHP-callable.
-     * 
+     *
      * @param string $event_name            
      * @param callable $listener_callable            
      * @param int $priority            
@@ -27,7 +26,7 @@ interface EventManagerInterface extends ExfaceClassInterface
 
     /**
      * Dispatches an event
-     * 
+     *
      * @param string $event_name            
      * @param EventInterface $event            
      * @return \exface\Core\EventDispatcher
@@ -36,7 +35,7 @@ interface EventManagerInterface extends ExfaceClassInterface
 
     /**
      * Detaches the given listener from the specified event name
-     * 
+     *
      * @param string $event_name            
      * @param callable $listener            
      * @return \exface\Core\EventDispatcher
@@ -45,7 +44,7 @@ interface EventManagerInterface extends ExfaceClassInterface
 
     /**
      * Returns an array of listeners registered for the specified event
-     * 
+     *
      * @param string $event_name            
      * @return callable[]
      */
@@ -53,7 +52,7 @@ interface EventManagerInterface extends ExfaceClassInterface
 
     /**
      * Returns TRUE if there are listeners registered for the given event name or FALSE otherwise.
-     * 
+     *
      * @param string $event_name            
      */
     public function hasListeners($event_name);

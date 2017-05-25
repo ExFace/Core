@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\DataConnectors;
 
 use exface\Core\CommonLogic\AbstractDataConnectorWithoutTransactions;

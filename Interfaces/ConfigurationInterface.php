@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Interfaces;
 
 use exface\Core\Interfaces\ExfaceClassInterface;
@@ -10,7 +9,7 @@ interface ConfigurationInterface extends ExfaceClassInterface, iCanBeConvertedTo
 
     /**
      * Returns a single configuration value specified by the given key
-     * 
+     *
      * @param string $key            
      * @return multitype
      */
@@ -18,7 +17,7 @@ interface ConfigurationInterface extends ExfaceClassInterface, iCanBeConvertedTo
 
     /**
      * Sets a single configuration value specified by the given key
-     * 
+     *
      * @param string $key            
      * @param mixed $value_or_object_or_string            
      */

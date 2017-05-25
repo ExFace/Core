@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Actions;
 
 use exface\Core\CommonLogic\AbstractAction;
@@ -49,9 +48,7 @@ class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuer
     public function getDataConnection()
     {
         if (is_null($this->data_connection)) {
-            $this->setDataConnection($this->getCalledByWidget()
-                ->getMetaObject()
-                ->getDataConnection());
+            $this->setDataConnection($this->getCalledByWidget()->getMetaObject()->getDataConnection());
         }
         return $this->data_connection;
     }
@@ -77,9 +74,7 @@ class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuer
      */
     public function getAplicableToObject()
     {
-        return $this->getWorkbench()
-            ->model()
-            ->getObject($this->getAplicableToObjectAlias());
+        return $this->getWorkbench()->model()->getObject($this->getAplicableToObjectAlias());
     }
 
     public function setAplicableToObjectAlias($value)
@@ -108,9 +103,7 @@ class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuer
             foreach ($this->getQueries() as $query) {
                 // See if the query has any placeholders
                 $placeholders = array();
-                foreach ($this->getWorkbench()
-                    ->utils()
-                    ->findPlaceholdersInString($query) as $ph) {
+                foreach ($this->getWorkbench()->utils()->findPlaceholdersInString($query) as $ph) {
                     /* @var $col exface\Core\CommonLogic\DataSheets\DataColumn */
                     if (! $col = $data_sheet->getColumns()->get(DataColumn::sanitizeColumnName($ph))) {
                         throw new ActionInputMissingError($this, 'Cannot perform custom query in "' . $this->getAliasWithNamespace() . '": placeholder "' . $ph . '" not found in inupt data!', '6T5DNWE');
@@ -138,10 +131,7 @@ class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuer
         $data_sheet->dataRead();
         $this->setResultDataSheet($data_sheet);
         $this->setResult('');
-        $this->setResultMessage($this->getWorkbench()
-            ->getCoreApp()
-            ->getTranslator()
-            ->translate('ACTION.CUSTOMDATAQUERY.RESULT', array(
+        $this->setResultMessage($this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.CUSTOMDATAQUERY.RESULT', array(
             '%number%' => $counter
         ), $counter));
     }

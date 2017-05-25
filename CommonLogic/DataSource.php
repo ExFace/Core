@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\CommonLogic;
 
 use exface\Core\Interfaces\DataSources\DataSourceInterface;
@@ -51,9 +50,7 @@ class DataSource implements DataSourceInterface
      */
     public function getConnection()
     {
-        return $this->getWorkbench()
-            ->data()
-            ->getDataConnection($this->getId(), $this->getConnectionId());
+        return $this->getWorkbench()->data()->getDataConnection($this->getId(), $this->getConnectionId());
     }
 
     /**

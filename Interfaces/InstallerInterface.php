@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Interfaces;
 
 interface InstallerInterface extends ExfaceClassInterface

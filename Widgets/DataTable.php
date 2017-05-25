@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Widgets;
 
 use exface\Core\Interfaces\Widgets\iHaveTopToolbar;
@@ -539,7 +538,7 @@ class DataTable extends Data implements iHaveTopToolbar, iHaveBottomToolbar, iFi
     /**
      * Returns TRUE all rows should be selected initially and FALSE otherwise.
      * This only works with multi_select=true and no lazy loading.
-     * 
+     *
      * @return boolean
      */
     public function getMultiSelectAllSelected()

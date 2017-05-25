@@ -1,12 +1,11 @@
 <?php
-
 namespace exface\Core\Formulas;
 
 /**
  * Concatenates all its arguments.
  * Used to quickly concatenate values from different cells of a data sheet.
  * E.g.: concatenate(ALIAS1, ALIAS2, ALIAS3...)
- * 
+ *
  * @author Andrej Kabachnik
  *        
  */

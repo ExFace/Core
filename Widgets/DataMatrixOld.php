@@ -102,7 +102,7 @@ class DataMatrixOld extends DataTable
 
     /**
      * Returns the data column widget or false if no data column specified
-     * 
+     *
      * @return \exface\Core\Widgets\DataColumn | boolean
      */
     public function getDataColumn()
@@ -115,7 +115,7 @@ class DataMatrixOld extends DataTable
 
     /**
      * Returns the label column widget or false if no label column specified
-     * 
+     *
      * @return \exface\Core\Widgets\DataColumn | boolean
      */
     public function getLabelColumn()

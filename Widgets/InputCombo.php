@@ -15,7 +15,8 @@ class InputCombo extends InputSelect implements iSupportLazyLoading
 {
 
     private $lazy_loading = true;
- // Combos should use lazy autosuggest in general
+
+    // Combos should use lazy autosuggest in general
     private $lazy_loading_action = 'exface.Core.Autosuggest';
 
     private $max_suggestions = 20;
@@ -28,7 +29,7 @@ class InputCombo extends InputSelect implements iSupportLazyLoading
 
     /**
      * (non-PHPdoc)
-     * 
+     *
      * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::getLazyLoading()
      */
     public function getLazyLoading()
@@ -44,7 +45,7 @@ class InputCombo extends InputSelect implements iSupportLazyLoading
      * @uxon-type boolean
      *
      * (non-PHPdoc)
-     * 
+     *
      * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::setLazyLoading()
      */
     public function setLazyLoading($value)
@@ -56,7 +57,7 @@ class InputCombo extends InputSelect implements iSupportLazyLoading
      * Returns the alias of the action to be called by the lazy autosuggest.
      *
      * (non-PHPdoc)
-     * 
+     *
      * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::getLazyLoadingAction()
      */
     public function getLazyLoadingAction()
@@ -72,7 +73,7 @@ class InputCombo extends InputSelect implements iSupportLazyLoading
      * @uxon-type string
      *
      * (non-PHPdoc)
-     * 
+     *
      * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::setLazyLoadingAction()
      */
     public function setLazyLoadingAction($value)

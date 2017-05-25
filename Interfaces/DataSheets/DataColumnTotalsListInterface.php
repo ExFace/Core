@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Interfaces\DataSheets;
 
 use exface\Core\Interfaces\EntityListInterface;
@@ -9,21 +8,21 @@ interface DataColumnTotalsListInterface extends EntityListInterface
 
     /**
      * Returns all elements as an array
-     * 
+     *
      * @return DataColumnTotalInterface[]
      */
     public function getAll();
 
     /**
      * Returns the first element of the list
-     * 
+     *
      * @return DataColumnTotalInterface
      */
     public function getFirst();
 
     /**
      * Returns the last element of the list
-     * 
+     *
      * @return DataColumnTotalInterface
      */
     public function getLast();
@@ -41,7 +40,7 @@ interface DataColumnTotalsListInterface extends EntityListInterface
 
     /**
      * Removes the given entity from the list
-     * 
+     *
      * @param mixed $entity            
      * @return DataColumnTotalsListInterface
      */
@@ -50,7 +49,7 @@ interface DataColumnTotalsListInterface extends EntityListInterface
     /**
      * Returns the entity, that was stored under the given key.
      * Returns NULL if the key is not present in the list.
-     * 
+     *
      * @param mixed $key            
      * @return DataColumnTotalsListInterface
      */
@@ -59,7 +58,7 @@ interface DataColumnTotalsListInterface extends EntityListInterface
     /**
      * Returns the n-th entity in the list (starting from 1 for the first entity).
      * Returns NULL if the list is smaller than $number.
-     * 
+     *
      * @param integer $number            
      * @return DataColumnTotalInterface
      */
@@ -67,14 +66,14 @@ interface DataColumnTotalsListInterface extends EntityListInterface
 
     /**
      * Returns the lists parent object
-     * 
+     *
      * @return DataSheetInterface
      */
     public function getParent();
 
     /**
      * Sets the lists parent object
-     * 
+     *
      * @param DataSheetInterface $parent_object            
      */
     public function setParent($parent_object);

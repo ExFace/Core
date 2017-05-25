@@ -12,7 +12,7 @@ use exface\Core\Interfaces\Formulas\FormulaInterface;
  * They calculate
  * the value of a cell in a data_sheet based on other data from
  * this sheet and user defined arguments.
- * 
+ *
  * @author Andrej Kabachnik
  *        
  */
@@ -66,9 +66,7 @@ abstract class Formula implements FormulaInterface
     {
         // now find out, what each parameter is: a column reference, a string, a widget reference etc.
         foreach ($arguments as $arg) {
-            $expr = $this->getWorkbench()
-                ->model()
-                ->parseExpression($arg);
+            $expr = $this->getWorkbench()->model()->parseExpression($arg);
             $this->arguments[] = $expr;
             $this->required_attributes = array_merge($this->required_attributes, $expr->getRequiredAttributes());
         }

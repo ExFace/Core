@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Factories;
 
 use exface\Core\CommonLogic\Workbench;
@@ -12,7 +11,7 @@ abstract class FormulaFactory extends AbstractNameResolverFactory
 
     /**
      * Creates a formula from the given name resolver and optionally specified array of arguments
-     * 
+     *
      * @param NameResolverInterface $name_resolver            
      * @param array $arguments            
      * @return Formula
@@ -28,7 +27,7 @@ abstract class FormulaFactory extends AbstractNameResolverFactory
 
     /**
      * Creates a Formula specified by the function name and an optional array of arguments.
-     * 
+     *
      * @param exface $exface            
      * @param string $function_name            
      * @param array $arguments            

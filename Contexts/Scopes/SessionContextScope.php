@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Contexts\Scopes;
 
 use exface\Core\CommonLogic\UxonObject;
@@ -27,7 +26,7 @@ class SessionContextScope extends AbstractContextScope
      * instantiate all contexts saved there.
      * Thus, the session contexts are always loaded on startup, not only once they are
      * actually used. This should be OK, since window contexts will probably be used in every single request.
-     * 
+     *
      * @see \exface\Core\Contexts\Scopes\AbstractContextScope::init()
      */
     protected function init()
@@ -52,7 +51,7 @@ class SessionContextScope extends AbstractContextScope
     /**
      * Since the session context ist stored in the $_SESSION, loading contexts simply fetches the contents
      * of the contexts array in the $_SESSION variable and tries to parse it as a UXON object.
-     * 
+     *
      * @see \exface\Core\Contexts\Scopes\AbstractContextScope::loadContextData()
      */
     public function loadContextData(ContextInterface $context)
@@ -83,7 +82,7 @@ class SessionContextScope extends AbstractContextScope
 
     /**
      * The session scope saves all it's contexts as UXON objects in the $_SESSION
-     * 
+     *
      * @see \exface\Core\Contexts\Scopes\AbstractContextScope::saveContexts()
      */
     public function saveContexts()
@@ -118,7 +117,7 @@ class SessionContextScope extends AbstractContextScope
 
     /**
      * The id of the session scope it the session id.
-     * 
+     *
      * {@inheritdoc}
      *
      * @see \exface\Core\Contexts\Scopes\AbstractContextScope::getScopeId()
@@ -132,7 +131,7 @@ class SessionContextScope extends AbstractContextScope
      * Sets the session id assotiated with this scope.
      * This is usefull if there are multiple php sessions and only
      * one of them should be used in the session scope.
-     * 
+     *
      * @param string $string            
      * @return \exface\Core\Contexts\Scopes\SessionContextScope
      */
@@ -144,7 +143,7 @@ class SessionContextScope extends AbstractContextScope
 
     /**
      * Returns the id of the session, that is assotiated with this context scope
-     * 
+     *
      * @return string
      */
     protected function getSessionId()
@@ -155,7 +154,7 @@ class SessionContextScope extends AbstractContextScope
     /**
      * Opens the curernt session for writing.
      * Creates a new session, if there is no session yet
-     * 
+     *
      * @return SessionContextScope
      */
     protected function sessionOpen()
@@ -190,7 +189,7 @@ class SessionContextScope extends AbstractContextScope
      * Closes the session, but does not empty the context data.
      * This way, the session is not locked any more and can be used by
      * other threads/processes
-     * 
+     *
      * @return SessionContextScope
      */
     protected function sessionClose()
@@ -204,7 +203,7 @@ class SessionContextScope extends AbstractContextScope
 
     /**
      * Returns TRUE if the current session is open and active and FALSE otherwise
-     * 
+     *
      * @return boolean
      */
     protected function sessionIsOpen()
@@ -221,7 +220,7 @@ class SessionContextScope extends AbstractContextScope
 
     /**
      * Returns the raw array of context data from the current session
-     * 
+     *
      * @return array
      */
     protected function getSessionData()
@@ -231,7 +230,7 @@ class SessionContextScope extends AbstractContextScope
 
     /**
      * Writes data to the session
-     * 
+     *
      * @param string $key            
      * @param string $value            
      * @return \exface\Core\Contexts\Scopes\SessionContextScope
@@ -246,22 +245,20 @@ class SessionContextScope extends AbstractContextScope
      * Returns the locale used in the current session.
      * If no locale was set for the session explicitly, the locale from
      * the user context scope is returned.
-     * 
+     *
      * @return string
      */
     public function getSessionLocale()
     {
         if (is_null($this->session_locale)) {
-            return $this->getContextManager()
-                ->getScopeUser()
-                ->getUserLocale();
+            return $this->getContextManager()->getScopeUser()->getUserLocale();
         }
         return $this->session_locale;
     }
 
     /**
      * Sets the locale to be used in the current session
-     * 
+     *
      * @param string $value            
      * @return SessionContextScope
      */

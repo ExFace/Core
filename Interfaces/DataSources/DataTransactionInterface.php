@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Interfaces\DataSources;
 
 use exface\Core\Interfaces\ExfaceClassInterface;
@@ -35,14 +34,14 @@ interface DataTransactionInterface extends ExfaceClassInterface
 
     /**
      * Physically commits transactions in all data sources assotiated with this transaction
-     * 
+     *
      * @return DataTransactionInterface
      */
     public function commit();
 
     /**
      * Physically rolls back transactions in all data sources assotiated with this transaction
-     * 
+     *
      * @return DataTransactionInterface
      */
     public function rollback();
@@ -69,7 +68,7 @@ interface DataTransactionInterface extends ExfaceClassInterface
      * Assotiates this transaction with a given connection starting a physical transaction there.
      * Adding the same connection
      * multiple times is no problem - there will still be only one physical transaction there.
-     * 
+     *
      * @param DataConnectionInterface $connection            
      * @return DataTransactionInterface
      */
@@ -77,7 +76,7 @@ interface DataTransactionInterface extends ExfaceClassInterface
 
     /**
      * Returns all connections assotiated with this transaction
-     * 
+     *
      * @return DataConnectionInterface[]
      */
     public function getDataConnections();

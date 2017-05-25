@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Contexts\Types;
 
 use exface\Core\CommonLogic\UxonObject;
@@ -28,25 +27,17 @@ class ObjectBasketContext extends AbstractContext
     public function add(DataSheetInterface $data_sheet)
     {
         if (! $data_sheet->getUidColumn()) {
-            throw new ContextRuntimeError($this, 'Cannot add object "' . $this->getInputDataSheet()
-                ->getMetaObject()
-                ->getAliasWithNamespace() . '" to object basket: missing UID-column "' . $this->getInputDataSheet()
-                ->getMetaObject()
-                ->getUidAlias() . '"!', '6TMQR5N');
+            throw new ContextRuntimeError($this, 'Cannot add object "' . $this->getInputDataSheet()->getMetaObject()->getAliasWithNamespace() . '" to object basket: missing UID-column "' . $this->getInputDataSheet()->getMetaObject()->getUidAlias() . '"!', '6TMQR5N');
         }
         
         $basket_data = $this->createBasketSheet($data_sheet->getMetaObject());
         $basket_data->importRows($data_sheet);
         if (! $basket_data->isFresh()) {
-            $basket_data->addFilterInFromString($data_sheet->getUidColumn()
-                ->getName(), $data_sheet->getUidColumn()
-                ->getValues(false));
+            $basket_data->addFilterInFromString($data_sheet->getUidColumn()->getName(), $data_sheet->getUidColumn()->getValues(false));
             $basket_data->dataRead();
         }
         
-        $this->getFavoritesByObjectId($data_sheet->getMetaObject()
-            ->getId())
-            ->addRows($basket_data->getRows(), true);
+        $this->getFavoritesByObjectId($data_sheet->getMetaObject()->getId())->addRows($basket_data->getRows(), true);
         return $this;
     }
 
@@ -64,9 +55,7 @@ class ObjectBasketContext extends AbstractContext
         if ($meta_object_or_alias_or_id instanceof Object) {
             $object = $meta_object_or_alias_or_id;
         } else {
-            $object = $this->getWorkbench()
-                ->model()
-                ->getObject($meta_object_or_alias_or_id);
+            $object = $this->getWorkbench()->model()->getObject($meta_object_or_alias_or_id);
         }
         return $object;
     }
@@ -113,9 +102,7 @@ class ObjectBasketContext extends AbstractContext
      */
     public function getFavoritesByObjectAlias($alias_with_namespace)
     {
-        $object = $this->getWorkbench()
-            ->model()
-            ->getObjectByAlias($alias_with_namespace);
+        $object = $this->getWorkbench()->model()->getObjectByAlias($alias_with_namespace);
         if ($object) {
             return $this->getFavoritesByObjectId($object->getId());
         } else {
@@ -127,14 +114,12 @@ class ObjectBasketContext extends AbstractContext
      * The default scope of the data context is the window.
      * Most apps will run in the context of a single window,
      * so two windows running one app are independant in general.
-     * 
+     *
      * @see \exface\Core\Contexts\Types\AbstractContext::getDefaultScope()
      */
     public function getDefaultScope()
     {
-        return $this->getWorkbench()
-            ->context()
-            ->getScopeWindow();
+        return $this->getWorkbench()->context()->getScopeWindow();
     }
 
     /**
@@ -160,7 +145,7 @@ class ObjectBasketContext extends AbstractContext
      * }
      * object_id2: ...
      * }
-     * 
+     *
      * {@inheritdoc}
      *
      * @see \exface\Core\Contexts\Types\AbstractContext::exportUxonObject()

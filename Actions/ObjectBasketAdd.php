@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Actions;
 
 use exface\Core\Contexts\Types\ObjectBasketContext;
@@ -36,10 +35,8 @@ class ObjectBasketAdd extends SetContext
     {
         $this->getContext()->add($this->getInputDataSheet());
         $this->setResultMessage($this->translate('RESULT', array(
-            '%number%' => $this->getInputDataSheet()
-                ->countRows()
-        ), $this->getInputDataSheet()
-            ->countRows()));
+            '%number%' => $this->getInputDataSheet()->countRows()
+        ), $this->getInputDataSheet()->countRows()));
         $this->setResult('');
     }
 }

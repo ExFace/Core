@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Interfaces\DataSheets;
 
 use exface\Core\CommonLogic\Model\ConditionGroup;
@@ -75,7 +74,7 @@ interface DataSheetInterface extends ExfaceClassInterface, iCanBeCopied, iCanBeC
 
     /**
      * Returns the values a column of the data sheet as an array
-     * 
+     *
      * @param
      *            string column_name
      * @param
@@ -90,7 +89,7 @@ interface DataSheetInterface extends ExfaceClassInterface, iCanBeCopied, iCanBeC
      * Values for total rows can be specified
      * via $totals_values in the same manner. This is usefull when applying data functions to columns.
      * NOTE: if the data sheet does not contain a column with the given name, it will be added automatically.
-     * 
+     *
      * @param
      *            string column_name
      * @param
@@ -197,14 +196,14 @@ interface DataSheetInterface extends ExfaceClassInterface, iCanBeCopied, iCanBeC
 
     /**
      * Returns an array of data sorters
-     * 
+     *
      * @return DataSorterListInterface
      */
     public function getSorters();
 
     /**
      * Returns TRUE if the data sheet has at least one sorter and FALSE otherwise
-     * 
+     *
      * @return boolean
      */
     public function hasSorters();
@@ -215,7 +214,7 @@ interface DataSheetInterface extends ExfaceClassInterface, iCanBeCopied, iCanBeC
      * Returns multiple rows of the data sheet as an array of associative array (e.g.
      * [rownum => [col1 => val1, col2 => val2, ...] ])
      * By default returns all rows. Use the arguments to select only a range of rows.
-     * 
+     *
      * @param number $how_many            
      * @param number $offset            
      * @return array
@@ -225,7 +224,7 @@ interface DataSheetInterface extends ExfaceClassInterface, iCanBeCopied, iCanBeC
     /**
      * Returns the specified row as an associative array (e.g.
      * [col1 => val1, col2 => val2, ...])
-     * 
+     *
      * @param number $row_number            
      * @return multitype:
      */
@@ -234,7 +233,7 @@ interface DataSheetInterface extends ExfaceClassInterface, iCanBeCopied, iCanBeC
     /**
      * Returns the first row, that contains a given value in the specified column.
      * Returns NULL if no row matches.
-     * 
+     *
      * @param string $column_name            
      * @param mixed $value            
      * @throws DataSheetColumnNotFoundError
@@ -245,7 +244,7 @@ interface DataSheetInterface extends ExfaceClassInterface, iCanBeCopied, iCanBeC
     /**
      * Returns the total rows as assotiative arrays.
      * Multiple total rows can be used to display multiple totals per column.
-     * 
+     *
      * @return array [ column_id => total value ]
      */
     public function getTotalsRows();
@@ -256,14 +255,14 @@ interface DataSheetInterface extends ExfaceClassInterface, iCanBeCopied, iCanBeC
 
     /**
      * Returns an array of DataColumns
-     * 
+     *
      * @return DataColumn[]|DataColumnListInterface
      */
     public function getColumns();
 
     /**
      * Returns the data sheet column containing the UID values of the main object or false if the data sheet does not contain that column
-     * 
+     *
      * @return \exface\Core\Interfaces\DataSheets\DataColumnInterface
      */
     public function getUidColumn();
@@ -282,35 +281,35 @@ interface DataSheetInterface extends ExfaceClassInterface, iCanBeCopied, iCanBeC
 
     /**
      * Returns TRUE if the data sheet has at least one aggregator and FALSE otherwise
-     * 
+     *
      * @return boolean
      */
     public function hasAggregators();
 
     /**
      * Returns the root condition group with all filters of the data sheet
-     * 
+     *
      * @return ConditionGroup
      */
     public function getFilters();
 
     /**
      * Replaces all filters of the data sheet by the given condition group
-     * 
+     *
      * @param ConditionGroup $condition_group            
      */
     public function setFilters(ConditionGroup $condition_group);
 
     /**
      * Removes all rows of the data sheet without chaning anything in the column structure
-     * 
+     *
      * @return DataSheetInterface
      */
     public function removeRows();
 
     /**
      * Removes a single row of the data sheet
-     * 
+     *
      * @param integer $row_number            
      * @return DataSheetInterface
      */
@@ -327,7 +326,7 @@ interface DataSheetInterface extends ExfaceClassInterface, iCanBeCopied, iCanBeC
     /**
      * Removes all rows from the specified column.
      * If it is the only column in the row, the entire row will be removed.
-     * 
+     *
      * @param string $column_name            
      * @return DataSheetInterface
      */
@@ -335,14 +334,14 @@ interface DataSheetInterface extends ExfaceClassInterface, iCanBeCopied, iCanBeC
 
     /**
      * Returns TRUE if the data sheet currently does not have any data and FALSE otherwise.
-     * 
+     *
      * @return boolean
      */
     public function isEmpty();
 
     /**
      * Returns TRUE if the data in the sheet is up to date and FALSE otherwise (= if the data needs to be loaded)
-     * 
+     *
      * @return boolean
      */
     public function isFresh();
@@ -383,7 +382,7 @@ interface DataSheetInterface extends ExfaceClassInterface, iCanBeCopied, iCanBeC
     /**
      * Merges the current data sheet with another one.
      * Values of the other sheet will overwrite values of identical columns of the current one!
-     * 
+     *
      * @param DataSheet $other_sheet            
      */
     public function merge(DataSheetInterface $other_sheet);
@@ -394,7 +393,7 @@ interface DataSheetInterface extends ExfaceClassInterface, iCanBeCopied, iCanBeC
      * Clones the data sheet and returns the new copy.
      * The copy will point to the same meta object, but will
      * have separate columns, filters, aggregations, etc.
-     * 
+     *
      * @return DataSheetInterface
      */
     public function copy();
@@ -424,14 +423,14 @@ interface DataSheetInterface extends ExfaceClassInterface, iCanBeCopied, iCanBeC
      * Apart from automatic validation based on the meta model (e.g. data types, etc.), custom validators can be
      * easily added by creating object behaviours listening to validation events. If they detect invalid data,
      * they would only need to call data_mark_invalid() and the sheet will fail validation in any case.
-     * 
+     *
      * @return boolean
      */
     public function dataValidate();
 
     /**
      * Marks the data in this sheet as invalid causing the validation to fail in any case
-     * 
+     *
      * @return DataSheetInterface
      */
     public function dataMarkInvalid();

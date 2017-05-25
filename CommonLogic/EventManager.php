@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\CommonLogic;
 
 use Jmikola\WildcardEventDispatcher\WildcardEventDispatcher;
@@ -30,7 +29,7 @@ class EventManager implements EventManagerInterface
     /**
      * Registers a listener for the given event name.
      * The listener can be any PHP-callable.
-     * 
+     *
      * @param string $event_name            
      * @param callable $listener_callable            
      * @param int $priority            
@@ -56,7 +55,7 @@ class EventManager implements EventManagerInterface
 
     /**
      * Detaches the given listener from the specified event name
-     * 
+     *
      * @param string $event_name            
      * @param callable $listener            
      * @return \exface\Core\EventDispatcher
@@ -69,7 +68,7 @@ class EventManager implements EventManagerInterface
 
     /**
      * Returns an array of listeners registered for the specified event
-     * 
+     *
      * @param string $event_name            
      * @return callable[]
      */
@@ -80,7 +79,7 @@ class EventManager implements EventManagerInterface
 
     /**
      * Returns TRUE if there are listeners registered for the given event name or FALSE otherwise.
-     * 
+     *
      * @param string $event_name            
      */
     public function hasListeners($event_name)

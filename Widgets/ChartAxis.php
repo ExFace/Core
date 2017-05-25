@@ -51,12 +51,8 @@ class ChartAxis extends AbstractWidget
      */
     public function getDataColumn()
     {
-        if (! $result = $this->getChart()
-            ->getData()
-            ->getColumn($this->getDataColumnId())) {
-            $result = $this->getChart()
-                ->getData()
-                ->getColumnByAttributeAlias($this->getDataColumnId());
+        if (! $result = $this->getChart()->getData()->getColumn($this->getDataColumnId())) {
+            $result = $this->getChart()->getData()->getColumnByAttributeAlias($this->getDataColumnId());
         }
         return $result;
     }
@@ -230,7 +226,7 @@ class ChartAxis extends AbstractWidget
 
     /**
      * The caption for an axis can either be set directly, or will be inherited from the used data column
-     * 
+     *
      * {@inheritdoc}
      *
      * @see \exface\Core\Widgets\AbstractWidget::getCaption()

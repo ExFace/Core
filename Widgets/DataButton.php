@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Widgets;
 
 /**
@@ -50,7 +49,7 @@ class DataButton extends Button
      *
      * This a shortcut for set_bind_to_mouse_action(EXF_MOUSE_ACTION_DOUBLE_CLICK), which makes it possible to use easy-to-
      * understand UXON-attributes
-     * 
+     *
      * @see set_bind_to_mouse_action()
      * @return DataButton
      */
@@ -70,7 +69,7 @@ class DataButton extends Button
      *
      * This a shortcut for set_bind_to_mouse_action(EXF_MOUSE_ACTION_RIGHT_CLICK), which makes it possible to use easy-to-
      * understand UXON-attributes
-     * 
+     *
      * @see set_bind_to_mouse_action()
      * @return DataButton
      */
@@ -90,7 +89,7 @@ class DataButton extends Button
      *
      * This a shortcut for set_bind_to_mouse_action(EXF_MOUSE_ACTION_DOUBLE_CLICK), which makes it possible to use easy-to-
      * understand UXON-attributes
-     * 
+     *
      * @see set_bind_to_mouse_action()
      * @return DataButton
      */

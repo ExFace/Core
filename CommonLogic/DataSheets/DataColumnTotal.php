@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\CommonLogic\DataSheets;
 
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
@@ -59,10 +58,7 @@ class DataColumnTotal implements iCanBeConvertedToUxon, ExfaceClassInterface
 
     public function exportUxonObject()
     {
-        $uxon = $this->getColumn()
-            ->getDataSheet()
-            ->getWorkbench()
-            ->createUxonObject();
+        $uxon = $this->getColumn()->getDataSheet()->getWorkbench()->createUxonObject();
         $uxon->setProperty('function', $this->getFunction());
         return $uxon;
     }

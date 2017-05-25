@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Widgets;
 
 use exface\Core\Factories\WidgetFactory;
@@ -12,7 +11,7 @@ use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
  * Tabs will typically show the contents of
  * the active tab and a navbar to enable the user to change tabs. The position of that
  * navbar can be determined by the tab_position attribute. Most typical position is "top".
- * 
+ *
  * @author Andrej Kabachnik
  *        
  */
@@ -75,7 +74,7 @@ class Tabs extends Container implements iFillEntireContainer
      * This
      * way, a short an understandable notation of tabs is possible: simply add any type of widget to the tabs array and
      * see them be displayed in tabs.
-     * 
+     *
      * @see \exface\Core\Widgets\Container::setWidgets()
      */
     public function setWidgets(array $widget_or_uxon_array)
@@ -110,7 +109,7 @@ class Tabs extends Container implements iFillEntireContainer
 
     /**
      * Creates a tab and adds
-     * 
+     *
      * @param AbstractWidget $contents            
      * @return \exface\Core\Interfaces\WidgetInterface
      */
@@ -134,7 +133,7 @@ class Tabs extends Container implements iFillEntireContainer
      * The position (sequential number) of the tab can
      * be specified optionally. If the given widget is not a tab itself, it will be wrapped
      * in a Tab widget.
-     * 
+     *
      * @see add_widget()
      *
      * @param AbstractWidget $widget            
@@ -159,7 +158,7 @@ class Tabs extends Container implements iFillEntireContainer
 
     /**
      * Returns the number of currently contained tabs
-     * 
+     *
      * @return number
      */
     public function countTabs()

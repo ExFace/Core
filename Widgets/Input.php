@@ -58,7 +58,7 @@ class Input extends Text implements iTakeInput, iHaveDefaultValue
 
     /**
      * Input widgets are disabled if the displayed attribute is not editable or if the widget was explicitly disabled.
-     * 
+     *
      * @see \exface\Core\Widgets\AbstractWidget::isDisabled()
      */
     public function isDisabled()
@@ -115,8 +115,7 @@ class Input extends Text implements iTakeInput, iHaveDefaultValue
     {
         if (! $this->getIgnoreDefaultValue() && $default_expr = $this->getDefaultValueExpression()) {
             if ($data_sheet = $this->getPrefillData()) {
-                $value = $default_expr->evaluate($data_sheet, \exface\Core\CommonLogic\DataSheets\DataColumn::sanitizeColumnName($this->getAttribute()
-                    ->getAlias()), 0);
+                $value = $default_expr->evaluate($data_sheet, \exface\Core\CommonLogic\DataSheets\DataColumn::sanitizeColumnName($this->getAttribute()->getAlias()), 0);
             } elseif ($default_expr->isString()) {
                 $value = $default_expr->getRawValue();
             }

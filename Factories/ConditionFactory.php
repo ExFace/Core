@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Factories;
 
 use exface\Core\CommonLogic\Workbench;
@@ -19,7 +18,7 @@ abstract class ConditionFactory extends AbstractUxonFactory
      * Returns a condition object, that can be used in filters, conditional operators, etc.
      * Conditions consist of an expression, a value to
      * compare the expression to and a comparator like "=", ">", "<", etc. Comparators are defined by the EXF_COMPARATOR_xxx constants.
-     * 
+     *
      * @param
      *            exface
      * @param string|\exface\Core\CommonLogic\Model\Expression $expression_or_string            
@@ -47,9 +46,7 @@ abstract class ConditionFactory extends AbstractUxonFactory
     public static function createFromArray(Workbench $exface, array $array_notation)
     {
         $condition = self::create($exface);
-        $condition->setExpression($exface->model()
-            ->parseExpression($array_notation[1], $exface->model()
-            ->getObject($array_notation[0])));
+        $condition->setExpression($exface->model()->parseExpression($array_notation[1], $exface->model()->getObject($array_notation[0])));
         $condition->setComparator($array_notation[2]);
         $condition->setValue($array_notation[3]);
         return $condition;

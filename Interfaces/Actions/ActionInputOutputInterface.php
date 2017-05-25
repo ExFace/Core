@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Interfaces\Actions;
 
 use exface\Core\Interfaces\iCanBeConvertedToUxon;

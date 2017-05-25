@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Interfaces\DataSources;
 
 use exface\Core\Interfaces\ExfaceClassInterface;
@@ -40,7 +39,7 @@ interface DataConnectionInterface extends ExfaceClassInterface, AliasInterface, 
 
     /**
      * Starts a new transaction in the data source.
-     * 
+     *
      * @throws DataConnectionFailedError if no transaction could be started
      * @return DataConnectionInterface
      */
@@ -49,7 +48,7 @@ interface DataConnectionInterface extends ExfaceClassInterface, AliasInterface, 
     /**
      * Commits the current transaction in the data source.
      * Returns TRUE on success and FALSE otherwise.
-     * 
+     *
      * @throws DataConnectionCommitFailedError if the transaction cannot be committed
      * @return DataConnectionInterface
      */
@@ -57,7 +56,7 @@ interface DataConnectionInterface extends ExfaceClassInterface, AliasInterface, 
 
     /**
      * Rolls back the current transaction in the data source.
-     * 
+     *
      * @throws DataConnectionRollbackFailedError if the transaction cannot be rolled back
      * @return DataConnectionInterface
      */
@@ -65,7 +64,7 @@ interface DataConnectionInterface extends ExfaceClassInterface, AliasInterface, 
 
     /**
      * Returns true if a transaction is currently open
-     * 
+     *
      * @return boolean
      */
     public function transactionIsStarted();

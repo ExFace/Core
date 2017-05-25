@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Interfaces\Widgets;
 
 use exface\Core\Interfaces\Widgets\iHaveChildren;
@@ -27,7 +26,7 @@ interface iContainOtherWidgets extends iHaveChildren
 
     /**
      * Returns all widgets in this container as an array
-     * 
+     *
      * @return WidgetInterface[]
      */
     public function getWidgets();
@@ -45,14 +44,14 @@ interface iContainOtherWidgets extends iHaveChildren
 
     /**
      * Removes all widgets from the container
-     * 
+     *
      * @return iContainOtherWidgets
      */
     public function removeWidgets();
 
     /**
      * Alias for add_widgets()
-     * 
+     *
      * @see add_widgets()
      * @param
      *            WidgetInterface[]|UxonObject[]
@@ -62,7 +61,7 @@ interface iContainOtherWidgets extends iHaveChildren
 
     /**
      * Returns the current number of child widgets
-     * 
+     *
      * @return int
      */
     public function countWidgets();

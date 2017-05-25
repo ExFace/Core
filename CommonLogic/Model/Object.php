@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\CommonLogic\Model;
 
 use exface\Core\CommonLogic\UxonObject;
@@ -78,7 +77,7 @@ class Object implements ExfaceClassInterface, AliasInterface
      * If an ALIAS stands for multiple
      * relations (of different types), the respective element of the relations array will be an array in
      * turn.
-     * 
+     *
      * @return relation[] [relation_alias => relation | relation[]]
      */
     function getRelationsArray()
@@ -89,7 +88,7 @@ class Object implements ExfaceClassInterface, AliasInterface
     /**
      * Returns all direct relations of this object as a flat array.
      * Optionally filtered by relation type.
-     * 
+     *
      * @return Relation[]
      */
     function getRelations($relation_type = null)
@@ -191,7 +190,7 @@ class Object implements ExfaceClassInterface, AliasInterface
     /**
      * Returns TRUE if the object has a relation matching the given alias and FALSE otherwise.
      * The alias may include a relation path
-     * 
+     *
      * @see get_relation()
      *
      * @param string $alias            
@@ -210,7 +209,7 @@ class Object implements ExfaceClassInterface, AliasInterface
 
     /**
      * Returns a list of all direct attributes of this object (including inherited ones!)
-     * 
+     *
      * @return AttributeList
      */
     function getAttributes()
@@ -300,7 +299,7 @@ class Object implements ExfaceClassInterface, AliasInterface
 
     /**
      * Returns the object related to the current one via the given relation path string
-     * 
+     *
      * @param string $relation_path_string            
      * @return Object
      */
@@ -441,7 +440,7 @@ class Object implements ExfaceClassInterface, AliasInterface
      * Returns FALSE if no relation to the given object is found.
      *
      * Note: Currently this will only work for direct relations. Chained relations can be found via find_relation_path().
-     * 
+     *
      * @see find_relation_path()
      *
      * @param Object $related_object            
@@ -499,7 +498,7 @@ class Object implements ExfaceClassInterface, AliasInterface
      * find_relation() this method returns merely the relation path, not the relation itself.
      * FIXME This does not work very well. It would be better to create a single finder method, that would return a relation and
      * to make the relation know its path like the attributes do.
-     * 
+     *
      * @see find_relation()
      *
      * @param object $related_object            
@@ -531,7 +530,7 @@ class Object implements ExfaceClassInterface, AliasInterface
     /**
      * Returns an array with all attributes of this object having the specified data address (e.g.
      * SQL column name)
-     * 
+     *
      * @param string $data_address            
      * @return attribute[]
      */
@@ -597,7 +596,7 @@ class Object implements ExfaceClassInterface, AliasInterface
 
     /**
      * Returns the meta attribute with the label of the object
-     * 
+     *
      * @return Attribute
      */
     public function getLabelAttribute()
@@ -621,35 +620,29 @@ class Object implements ExfaceClassInterface, AliasInterface
     /**
      * Returns the data source for this object.
      * The data source is fully initialized and the connection is already established.
-     * 
+     *
      * @return \exface\Core\CommonLogic\DataSource
      */
     public function getDataSource()
     {
-        return $this->getModel()
-            ->getWorkbench()
-            ->data()
-            ->getDataSource($this->getDataSourceId(), $this->data_connection_alias);
+        return $this->getModel()->getWorkbench()->data()->getDataSource($this->getDataSourceId(), $this->data_connection_alias);
     }
 
     /**
      * Returns the data connection for this object.
      * The connection is already initialized and established.
-     * 
+     *
      * @return \exface\Core\CommonLogic\AbstractDataConnector
      */
     function getDataConnection()
     {
-        return $this->getModel()
-            ->getWorkbench()
-            ->data()
-            ->getDataConnection($this->data_source_id, $this->data_connection_alias);
+        return $this->getModel()->getWorkbench()->data()->getDataConnection($this->data_source_id, $this->data_connection_alias);
     }
 
     /**
      * Sets a custom data connection to be used for this object.
      * This way, the default connection for the data source can be overridden!
-     * 
+     *
      * @param string $alias            
      * @return \exface\Core\CommonLogic\Model\Object
      */
@@ -661,10 +654,7 @@ class Object implements ExfaceClassInterface, AliasInterface
 
     function getQueryBuilder()
     {
-        return $this->getModel()
-            ->getWorkbench()
-            ->data()
-            ->getQueryBuilder($this->data_source_id);
+        return $this->getModel()->getWorkbench()->data()->getQueryBuilder($this->data_source_id);
     }
 
     /**
@@ -673,10 +663,7 @@ class Object implements ExfaceClassInterface, AliasInterface
      */
     function createDataSheet()
     {
-        $ds = $this->getModel()
-            ->getWorkbench()
-            ->data()
-            ->createDataSheet($this);
+        $ds = $this->getModel()->getWorkbench()->data()->createDataSheet($this);
         return $ds;
     }
 
@@ -722,7 +709,7 @@ class Object implements ExfaceClassInterface, AliasInterface
 
     /**
      * Returns a UXON object with data source specific properties of the object
-     * 
+     *
      * @return UxonObject
      */
     public function getDataAddressProperties()
@@ -735,7 +722,7 @@ class Object implements ExfaceClassInterface, AliasInterface
 
     /**
      * Returns the value of a data source specific object property specified by it's id
-     * 
+     *
      * @param string $id            
      */
     public function getDataAddressProperty($id)
@@ -745,7 +732,7 @@ class Object implements ExfaceClassInterface, AliasInterface
 
     /**
      * Sets the value of a data address property specified by it's id
-     * 
+     *
      * @param string $id            
      * @param string $value            
      * @return Object
@@ -770,7 +757,7 @@ class Object implements ExfaceClassInterface, AliasInterface
     /**
      * DEPRECATED!
      * Parses a string with data address properties to an assotiative array
-     * 
+     *
      * @param unknown $string            
      * @return array
      */
@@ -797,7 +784,7 @@ class Object implements ExfaceClassInterface, AliasInterface
 
     /**
      * Returns all objects, this one inherits from as an array
-     * 
+     *
      * @return object[]
      */
     public function getParentObjects()
@@ -821,7 +808,7 @@ class Object implements ExfaceClassInterface, AliasInterface
 
     /**
      * TODO
-     * 
+     *
      * @param string $object_alias            
      */
     public function getParentObject($object_alias)
@@ -831,16 +818,13 @@ class Object implements ExfaceClassInterface, AliasInterface
      * Returns all objects, that inherit from the current one as an array.
      * This includes distant relatives, that inherit
      * from other objects, inheriting from the current one.
-     * 
+     *
      * @return object[]
      */
     public function getInheritingObjects()
     {
         $result = array();
-        $res = $this->getModel()
-            ->getWorkbench()
-            ->get_model_data_connector()
-            ->runSql('SELECT o.oid FROM exf_object o WHERE o.parent_object_oid = ' . $this->getId());
+        $res = $this->getModel()->getWorkbench()->get_model_data_connector()->runSql('SELECT o.oid FROM exf_object o WHERE o.parent_object_oid = ' . $this->getId());
         foreach ($res as $row) {
             if ($obj = $this->getModel()->getObject($row['oid'])) {
                 $result[] = $obj;
@@ -908,7 +892,7 @@ class Object implements ExfaceClassInterface, AliasInterface
     /**
      * Returns the UXON description of the default editor widget for instances of this object.
      * This can be specified in the meta model
-     * 
+     *
      * @return UxonObject
      */
     public function getDefaultEditorUxon()
@@ -949,10 +933,7 @@ class Object implements ExfaceClassInterface, AliasInterface
      */
     public function getDataAddressRequiredPlaceholders()
     {
-        return $this->getModel()
-            ->getWorkbench()
-            ->utils()
-            ->findPlaceholdersInString($this->getDataAddress());
+        return $this->getModel()->getWorkbench()->utils()->findPlaceholdersInString($this->getDataAddress());
     }
 
     /**
@@ -1062,9 +1043,7 @@ class Object implements ExfaceClassInterface, AliasInterface
     public function getActions()
     {
         if (! ($this->actions instanceof ObjectActionList)) {
-            $this->actions = $this->getModel()
-                ->getModelLoader()
-                ->loadObjectActions(new ObjectActionList($this->getWorkbench(), $this));
+            $this->actions = $this->getModel()->getModelLoader()->loadObjectActions(new ObjectActionList($this->getWorkbench(), $this));
         }
         return $this->actions;
     }

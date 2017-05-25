@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Factories;
 
 use exface\Core\CommonLogic\Workbench;
@@ -12,7 +11,7 @@ abstract class WidgetLinkFactory extends AbstractUxonFactory
 
     /**
      * Creates an empty dimension object
-     * 
+     *
      * @param exface $exface            
      * @return WidgetLinkInterface
      */

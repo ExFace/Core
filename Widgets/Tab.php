@@ -6,7 +6,7 @@ use exface\Core\Exceptions\NotImplementedError;
 
 /**
  * A Tab is a special panel to be used within the tabs widget
- * 
+ *
  * @author Andrej Kabachnik
  *        
  */

@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Widgets;
 
 use exface\Core\Interfaces\Widgets\iHaveColumns;
@@ -47,7 +46,8 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
     private $aggregate_by_attribute_alias = null;
 
     private $lazy_loading = true;
- // Data should be loaded lazily by defaul (via AJAX) - of course, only if the used template supports this
+
+    // Data should be loaded lazily by defaul (via AJAX) - of course, only if the used template supports this
     private $lazy_loading_action = 'exface.Core.ReadData';
 
     private $lazy_loading_group_id = null;
@@ -78,7 +78,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 
     /**
      * @uxon empty_text The text to be displayed, if there are no data records
-     * 
+     *
      * @var string
      */
     private $empty_text = null;
@@ -92,8 +92,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
         parent::init();
         // Add the main column group
         if (count($this->getColumnGroups()) == 0) {
-            $this->addColumnGroup($this->getPage()
-                ->createWidget('DataColumnGroup', $this));
+            $this->addColumnGroup($this->getPage()->createWidget('DataColumnGroup', $this));
         }
     }
 
@@ -112,7 +111,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
      * Returns the id of the column holding the UID of each row.
      * By default it is the column with the UID attribute of
      * the meta object displayed in by the data widget, but this can be changed in the UXON description if required.
-     * 
+     *
      * @return string
      */
     public function getUidColumnId()
@@ -136,7 +135,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 
     /**
      * Returns the UID column as DataColumn
-     * 
+     *
      * @return \exface\Core\Widgets\DataColumn
      */
     public function getUidColumn()
@@ -146,7 +145,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 
     /**
      * Returns TRUE if this data widget has a UID column or FALSE otherwise.
-     * 
+     *
      * @return boolean
      */
     public function hasUidColumn()
@@ -217,8 +216,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
         if ($data_sheet->getMetaObject()->getId() == $this->getMetaObjectId()) {
             // If trying to prefill with an instance of the same object, we actually just need the uid column in the resulting prefill
             // data sheet. It will probably be there anyway, but we still add it here (just in case).
-            $data_sheet->getColumns()->addFromExpression($this->getMetaObject()
-                ->getUidAlias());
+            $data_sheet->getColumns()->addFromExpression($this->getMetaObject()->getUidAlias());
         } else {
             // If trying to prefill with a different object, we need to find a relation to that object somehow.
             // First we check for filters based on the prefill object. If filters exists, we can be sure, that those
@@ -230,10 +228,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
             // time. If data for the other filters will be found in the prefill sheet when actually doing the prefilling,
             // it should, of course, be applied too, but we do not tell ExFace to always fetch this data.
             foreach ($relevant_filters as $fltr) {
-                if ($fltr->getAttribute()->isRelation() && $fltr->getAttribute()
-                    ->getRelation()
-                    ->getRelatedObject()
-                    ->isExactly($data_sheet->getMetaObject())) {
+                if ($fltr->getAttribute()->isRelation() && $fltr->getAttribute()->getRelation()->getRelatedObject()->isExactly($data_sheet->getMetaObject())) {
                     $data_sheet = $fltr->prepareDataSheetToPrefill($data_sheet);
                     $uid_filters_found = true;
                 }
@@ -261,7 +256,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 
     /**
      * IDEA Separate DataColumnFooter widget??
-     * 
+     *
      * @return NULL[]
      */
     public function getTotals()
@@ -279,7 +274,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
      * Returns an array with all columns of the grid.
      * If no columns have been added yet,
      * default display attributes of the meta object are added as columns automatically.
-     * 
+     *
      * @return DataColumn[]
      */
     public function getColumns()
@@ -303,7 +298,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
     /**
      * Returns the number of currently contained columns over all column groups.
      * NOTE: This does not trigger the creation of any default columns!
-     * 
+     *
      * @return number
      */
     public function countColumns()
@@ -317,15 +312,13 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 
     /**
      * Creates and adds columns based on the default attributes of the underlying meta object (the ones marked with default_display_order)
-     * 
+     *
      * @return Data
      */
     public function addColumnsForDefaultDisplayAttributes()
     {
         // add the default columns
-        $def_attrs = $this->getMetaObject()
-            ->getAttributes()
-            ->getDefaultDisplayList();
+        $def_attrs = $this->getMetaObject()->getAttributes()->getDefaultDisplayList();
         foreach ($def_attrs as $attr) {
             $alias = ($attr->getRelationPath()->toString() ? $attr->getRelationPath()->toString() . RelationPath::RELATION_SEPARATOR : '') . $attr->getAlias();
             $attr = $this->getMetaObject()->getAttribute($alias);
@@ -346,7 +339,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 
     /**
      * Returns the first column with a matching attribute alias.
-     * 
+     *
      * @param string $alias_with_relation_path            
      * @return \exface\Core\Widgets\DataColumn|boolean
      */
@@ -377,7 +370,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 
     /**
      * Returns an array with columns containing system attributes
-     * 
+     *
      * @return \exface\Core\Widgets\DataColumn[]
      */
     public function getColumnsWithSystemAttributes()
@@ -502,7 +495,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 
     /**
      * (non-PHPdoc)
-     * 
+     *
      * @see \exface\Core\Interfaces\Widgets\iHaveButtons::getButtons()
      * @return DataButton
      */
@@ -513,7 +506,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 
     /**
      * Returns an array of button widgets, that are explicitly bound to a double click on a data element
-     * 
+     *
      * @param string $mouse_action            
      * @return DataButton[]
      */
@@ -581,7 +574,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 
     /**
      * (non-PHPdoc)
-     * 
+     *
      * @see \exface\Core\Interfaces\Widgets\iHaveButtons::addButton()
      */
     public function addButton(Button $button_widget)
@@ -608,7 +601,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 
     /**
      * Returns an array with all filter widgets.
-     * 
+     *
      * @return Filter[]
      */
     public function getFilters()
@@ -621,7 +614,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 
     /**
      * Returns the filter widget matching the given widget id
-     * 
+     *
      * @param string $filter_widget_id            
      * @return \exface\Core\Widgets\Filter
      */
@@ -636,7 +629,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 
     /**
      * Returns all filters, that have values and thus will be applied to the result
-     * 
+     *
      * @return \exface\Core\Widgets\AbstractWidget[] array of widgets
      */
     public function getFiltersApplied()
@@ -739,9 +732,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
         // Set a special caption for filters on relations, which is derived from the relation itself
         // IDEA this might be obsolete since it probably allways returns the attribute name anyway, but I'm not sure
         if (! $uxon->hasProperty('caption') && $attr->isRelation()) {
-            $uxon->setProperty('caption', $this->getMetaObject()
-                ->getRelation($attribute_alias)
-                ->getName());
+            $uxon->setProperty('caption', $this->getMetaObject()->getRelation($attribute_alias)->getName());
         }
         $page = $this->getPage();
         if ($uxon->comparator) {
@@ -766,13 +757,10 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
             // If the prefill data is based on the same object as the widget, inherit the filter conditions from the prefill
             foreach ($data_sheet->getFilters()->getConditions() as $condition) {
                 // For each filter condition look for filters over the same attribute
-                $attribute_filters = $this->findFiltersByAttribute($condition->getExpression()
-                    ->getAttribute());
+                $attribute_filters = $this->findFiltersByAttribute($condition->getExpression()->getAttribute());
                 // If no filters are there, create one
                 if (count($attribute_filters) == 0) {
-                    $filter = $this->createFilterWidget($condition->getExpression()
-                        ->getAttribute()
-                        ->getAliasWithRelationPath());
+                    $filter = $this->createFilterWidget($condition->getExpression()->getAttribute()->getAliasWithRelationPath());
                     $this->addFilter($filter);
                     $filter->setValue($condition->getValue());
                 } else {
@@ -817,16 +805,8 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
                     if (! $condition->getExpression()->isMetaAttribute() || ! $condition->getExpression()->getAttribute())
                         continue;
                     // See if there are filters in this widget, that work on the very same attribute
-                    foreach ($this->findFiltersByObject($condition->getExpression()
-                        ->getAttribute()
-                        ->getObject()) as $fltr) {
-                        if ($fltr->getAttribute()
-                            ->getObject()
-                            ->is($condition->getExpression()
-                            ->getAttribute()
-                            ->getObject()) && $fltr->getAttribute()->getAlias() == $condition->getExpression()
-                            ->getAttribute()
-                            ->getAlias() && ! $fltr->getValue()) {
+                    foreach ($this->findFiltersByObject($condition->getExpression()->getAttribute()->getObject()) as $fltr) {
+                        if ($fltr->getAttribute()->getObject()->is($condition->getExpression()->getAttribute()->getObject()) && $fltr->getAttribute()->getAlias() == $condition->getExpression()->getAttribute()->getAlias() && ! $fltr->getValue()) {
                             $fltr->setComparator($condition->getComparator());
                             $fltr->setValue($condition->getValue());
                         }
@@ -838,7 +818,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 
     /**
      * Creates and adds a filter based on the given relation
-     * 
+     *
      * @param relation $relation            
      * @return \exface\Core\Widgets\AbstractWidget
      */
@@ -867,7 +847,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
      * It will mostly contain only one filter, but if there
      * are different filters with different comparators (like from+to for numeric or data values), there will be multiple filters
      * in the list.
-     * 
+     *
      * @param Attribute $attribute            
      * @return Filter[]
      */
@@ -884,7 +864,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 
     /**
      * TODO Make the method return an array like find_filters_by_attribute() does
-     * 
+     *
      * @param Relation $relation            
      * @return Filter
      */
@@ -908,7 +888,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
     /**
      * Returns the first filter based on the given object or it's attributes
      * TODO Make the method return an array like find_filters_by_attribute() does
-     * 
+     *
      * @param Object $object            
      * @return \exface\Core\Widgets\Filter|boolean
      */
@@ -916,14 +896,10 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
     {
         $result = array();
         foreach ($this->getFilters() as $filter_widget) {
-            $filter_object = $this->getMetaObject()
-                ->getAttribute($filter_widget->getAttributeAlias())
-                ->getObject();
+            $filter_object = $this->getMetaObject()->getAttribute($filter_widget->getAttributeAlias())->getObject();
             if ($object->is($filter_object)) {
                 $result[] = $filter_widget;
-            } elseif ($filter_widget->getAttribute()->isRelation() && $object->is($filter_widget->getAttribute()
-                ->getRelation()
-                ->getRelatedObject())) {
+            } elseif ($filter_widget->getAttribute()->isRelation() && $object->is($filter_widget->getAttribute()->getRelation()->getRelatedObject())) {
                 $result[] = $filter_widget;
             }
         }
@@ -1074,7 +1050,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 
     /**
      * Returns an all data sorters applied to this sheet as an array.
-     * 
+     *
      * @return \stdClass[]
      */
     public function getSorters()
@@ -1131,7 +1107,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 
     /**
      * Returns aliases of attributes used to aggregate data
-     * 
+     *
      * @return array
      */
     public function getAggregations()
@@ -1145,7 +1121,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 
     /**
      * Returns an array of aliases of attributes, that should be used for quick search relative to the meta object of the widget
-     * 
+     *
      * @return array
      */
     public function getAttributesForQuickSearch()
@@ -1164,7 +1140,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 
     /**
      * Replaces the current set of filters used for quick search queries by the given filter array
-     * 
+     *
      * @param Filter[] $filters            
      */
     public function setQuickSearchFilters(array $filters)
@@ -1177,7 +1153,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
      * Registers a filter for the quick search queries.
      * The filter is passed by reference because it is also contained in the
      * retular filters.
-     * 
+     *
      * @param Filter $widget            
      */
     public function addQuickSearchFilter(Filter $widget)
@@ -1188,7 +1164,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
     /**
      * Returns an array of editor widgets.
      * One for every editable data column.
-     * 
+     *
      * @return AbstractWidget[]
      */
     public function getEditors()
@@ -1204,7 +1180,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 
     /**
      * (non-PHPdoc)
-     * 
+     *
      * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::getLazyLoading()
      */
     public function getLazyLoading()
@@ -1262,7 +1238,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 
     /**
      * Returns TRUE if the table has a footer with total values and FALSE otherwise
-     * 
+     *
      * @return boolean
      */
     public function hasFooter()
@@ -1335,15 +1311,13 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
      * Adds columns with system attributes of the main object or any related object.
      * This is very usefull for editable tables as
      * system attributes are needed to save the data.
-     * 
+     *
      * @param string $relation_path            
      */
     public function addColumnsForSystemAttributes($relation_path = null)
     {
         $object = $relation_path ? $this->getMetaObject()->getRelatedObject($relation_path) : $this->getMetaObject();
-        foreach ($object->getAttributes()
-            ->getSystem()
-            ->getAll() as $attr) {
+        foreach ($object->getAttributes()->getSystem()->getAll() as $attr) {
             $system_alias = RelationPath::relationPathAdd($relation_path, $attr->getAlias());
             // Add the system attribute only if it is not there already.
             // Counting the columns first allows to add the system column without searching for it. If we would search over
@@ -1351,8 +1325,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
             // at this point - especially since add_columns_for_system_attributes() can get called before all column defintions
             // in UXON are processed.
             if ($this->countColumns() == 0 || ! $this->getColumnByAttributeAlias($system_alias)) {
-                $col = $this->createColumnFromAttribute($this->getMetaObject()
-                    ->getAttribute($system_alias), null, true);
+                $col = $this->createColumnFromAttribute($this->getMetaObject()->getAttribute($system_alias), null, true);
                 $this->addColumn($col);
             }
         }
@@ -1360,7 +1333,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 
     /**
      * Returns true, if the data table contains at least one editable column
-     * 
+     *
      * @return boolean
      */
     public function isEditable()
@@ -1500,9 +1473,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
          * @var DataTable $table
          */
         $table = WidgetFactory::create($help_container->getPage(), 'DataTable', $help_container);
-        $object = $this->getWorkbench()
-            ->model()
-            ->getObject('exface.Core.USER_HELP_ELEMENT');
+        $object = $this->getWorkbench()->model()->getObject('exface.Core.USER_HELP_ELEMENT');
         $table->setMetaObject($object);
         $table->setCaption($this->getWidgetType() . ($this->getCaption() ? '"' . $this->getCaption() . '"' : ''));
         $table->addColumn($table->createColumnFromAttribute($object->getAttribute('TITLE')));
@@ -1627,8 +1598,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
         $uxon->setProperty('sorters', $this->getSorters());
         
         if ($this->getRefreshWithWidget()) {
-            $uxon->setProperty('refresh_with_widget', $this->getRefreshWithWidget()
-                ->exportUxonObject());
+            $uxon->setProperty('refresh_with_widget', $this->getRefreshWithWidget()->exportUxonObject());
         }
         
         return $uxon;

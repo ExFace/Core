@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Interfaces\Contexts;
 
 use exface\Core\Exceptions\Contexts\ContextScopeNotFoundError;
@@ -20,14 +19,14 @@ interface ContextManagerInterface
     /**
      * Return an array of all existing context scopes.
      * Usefull to get a context from all scopes
-     * 
+     *
      * @return ContextScopeInterface[]
      */
     public function getSopes();
 
     /**
      * Saves all contexts in all scopes
-     * 
+     *
      * @return ContextManagerInterface
      */
     public function saveContexts();
@@ -35,7 +34,7 @@ interface ContextManagerInterface
     /**
      * Returns the context scope specified by the given name (e.g.
      * window, application, etc)
-     * 
+     *
      * @param string $scope_name            
      * @throws ContextScopeNotFoundError if no context scope is found for the given name
      * @return ContextScopeInterface

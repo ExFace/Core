@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Interfaces\DataSheets;
 
 use exface\Core\Interfaces\EntityListInterface;
@@ -20,21 +19,21 @@ interface DataColumnListInterface extends EntityListInterface
 
     /**
      * Returns all elements as an array
-     * 
+     *
      * @return DataColumnInterface[]
      */
     public function getAll();
 
     /**
      * Returns the first element of the list
-     * 
+     *
      * @return DataColumnInterface
      */
     public function getFirst();
 
     /**
      * Returns the last element of the list
-     * 
+     *
      * @return DataColumnInterface
      */
     public function getLast();
@@ -52,7 +51,7 @@ interface DataColumnListInterface extends EntityListInterface
 
     /**
      * Adds a new column from an instatiated expression object or a string expression and returns it.
-     * 
+     *
      * @param \exface\Core\CommonLogic\Model\Expression|string $expression            
      * @param string $name            
      * @param string $hidden            
@@ -62,7 +61,7 @@ interface DataColumnListInterface extends EntityListInterface
 
     /**
      * Adds a new column with the given attribute and returns it
-     * 
+     *
      * @param Attribute $attribute            
      * @return DataColumnInterface
      */
@@ -70,7 +69,7 @@ interface DataColumnListInterface extends EntityListInterface
 
     /**
      * Removes the given entity from the list
-     * 
+     *
      * @param DataColumnInterface $entity            
      * @return DataColumnListInterface
      */
@@ -79,7 +78,7 @@ interface DataColumnListInterface extends EntityListInterface
     /**
      * Returns the entity, that was stored under the given key.
      * Returns NULL if the key is not present in the list.
-     * 
+     *
      * @param mixed $key            
      * @return DataColumnListInterface
      */
@@ -88,21 +87,21 @@ interface DataColumnListInterface extends EntityListInterface
     /**
      * Returns the n-th entity in the list (starting from 1 for the first entity).
      * Returns NULL if the list is smaller than $number.
-     * 
+     *
      * @param integer $number            
      */
     public function getNth($number);
 
     /**
      * Returns the lists parent object
-     * 
+     *
      * @return DataSheetInterface
      */
     public function getParent();
 
     /**
      * Sets the lists parent object
-     * 
+     *
      * @param DataSheetInterface $parent_object            
      */
     public function setParent($parent_object);
@@ -110,7 +109,7 @@ interface DataColumnListInterface extends EntityListInterface
     /**
      * Returns the first data column matching the given expression or FALSE if no matching column is found.
      * The expression can be passed as a string or an instantiated expression object.
-     * 
+     *
      * @param
      *            expression | string $expression_or_string
      * @return DataColumnInterface|boolean
@@ -120,7 +119,7 @@ interface DataColumnListInterface extends EntityListInterface
     /**
      * Returns the first column, that shows the specified attribute explicitly (not within a formula).
      * Returns FALSE if no column is found.
-     * 
+     *
      * @param Attribute $attribute            
      * @return DataColumnInterface|boolean
      */

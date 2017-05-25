@@ -15,10 +15,7 @@ class CreateData extends SaveData implements iCreateData
         $this->setUndoDataSheet($data_sheet);
         $this->setResultDataSheet($data_sheet);
         $this->setResult('');
-        $this->setResultMessage($this->getWorkbench()
-            ->getCoreApp()
-            ->getTranslator()
-            ->translate('ACTION.CREATEDATA.RESULT', array(
+        $this->setResultMessage($this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.CREATEDATA.RESULT', array(
             '%number%' => $this->getAffectedRows()
         ), $this->getAffectedRows()));
     }

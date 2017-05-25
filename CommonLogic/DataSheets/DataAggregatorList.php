@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\CommonLogic\DataSheets;
 
 use exface\Core\Factories\DataAggregatorFactory;
@@ -71,7 +70,7 @@ class DataAggregatorList extends EntityList implements DataAggregatorListInterfa
     /**
      * Returns the data sheet, the list belongs to.
      * This is a better understandable alias for the inherited get_parent()
-     * 
+     *
      * @return DataSheetInterface
      */
     public function getDataSheet()

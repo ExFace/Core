@@ -8,7 +8,7 @@ use exface\Core\CommonLogic\Model\RelationPath;
  * The filter query part represents one filter within a query (in SQL it translates to a WHERE-statement).
  * Filter query parts
  * implement the general filter interface and thus can be aggregated to filter groups with logical operators like AND, OR, etc.
- * 
+ *
  * @author Andrej Kabachnik
  *        
  */
@@ -30,15 +30,8 @@ class QueryPartFilter extends QueryPartAttribute
         // it is a relation and not a direct attribute. Concider the case of CUSTOMER<-CUSTOMER_CARD. If we filter CUSTOMERs over
         // CUSTOMER_CARD, it would look as if the CUSTOMER_CARD is an attribute of CUSTOMER. We need to detect this and transform
         // the filter into CUSTOMER_CARD__UID, which would clearly be a relation.
-        if ($this->getAttribute()->isRelation() && $this->getQuery()
-            ->getMainObject()
-            ->getRelation($alias)
-            ->isReverseRelation()) {
-            $attr = $this->getQuery()
-                ->getMainObject()
-                ->getAttribute(RelationPath::relationPathAdd($alias, $this->getAttribute()
-                ->getObject()
-                ->getUidAlias()));
+        if ($this->getAttribute()->isRelation() && $this->getQuery()->getMainObject()->getRelation($alias)->isReverseRelation()) {
+            $attr = $this->getQuery()->getMainObject()->getAttribute(RelationPath::relationPathAdd($alias, $this->getAttribute()->getObject()->getUidAlias()));
             $this->setAttribute($attr);
         }
     }

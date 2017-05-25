@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\CommonLogic\DataSheets;
 
 use exface\Core\CommonLogic\Model\Attribute;
@@ -55,8 +54,7 @@ class DataColumn implements DataColumnInterface
         $exface = $data_sheet->getWorkbench();
         $this->data_sheet = $data_sheet;
         $this->setExpression($expression);
-        $this->setName($name ? $name : $this->getExpressionObj()
-            ->toString());
+        $this->setName($name ? $name : $this->getExpressionObj()->toString());
         $this->totals = EntityListFactory::createWithEntityFactory($exface, $this, 'DataColumnTotalsFactory');
     }
 
@@ -220,9 +218,7 @@ class DataColumn implements DataColumnInterface
     public function setFormatter($expression)
     {
         if (! ($expression instanceof expression)) {
-            $expression = $this->getWorkbench()
-                ->model()
-                ->parseExpression($expression);
+            $expression = $this->getWorkbench()->model()->parseExpression($expression);
         }
         $this->formatter = $expression;
     }
@@ -363,12 +359,10 @@ class DataColumn implements DataColumnInterface
     {
         $copy = clone $this;
         if ($this->getExpressionObj()) {
-            $copy->setExpression($this->getExpressionObj()
-                ->copy());
+            $copy->setExpression($this->getExpressionObj()->copy());
         }
         if ($this->getFormula()) {
-            $copy->setFormula($this->getFormula()
-                ->copy());
+            $copy->setFormula($this->getFormula()->copy());
         }
         return $copy;
     }
@@ -381,9 +375,7 @@ class DataColumn implements DataColumnInterface
      */
     public function exportUxonObject()
     {
-        $uxon = $this->getDataSheet()
-            ->getWorkbench()
-            ->createUxonObject();
+        $uxon = $this->getDataSheet()->getWorkbench()->createUxonObject();
         $uxon->expression = $this->getExpressionObj()->toString();
         $uxon->name = $this->getName();
         $uxon->hidden = $this->getHidden();
@@ -624,11 +616,9 @@ class DataColumn implements DataColumnInterface
         foreach ($this->getValues(false) as $row_id => $val) {
             if (is_null($val) || $val === '') {
                 if ($attr->getFixedValue()) {
-                    $this->setValue($row_id, $attr->getFixedValue()
-                        ->evaluate($this->getDataSheet(), $this->getName(), $row_id));
+                    $this->setValue($row_id, $attr->getFixedValue()->evaluate($this->getDataSheet(), $this->getName(), $row_id));
                 } elseif ($attr->getDefaultValue()) {
-                    $this->setValue($row_id, $attr->getDefaultValue()
-                        ->evaluate($this->getDataSheet(), $this->getName(), $row_id));
+                    $this->setValue($row_id, $attr->getDefaultValue()->evaluate($this->getDataSheet(), $this->getName(), $row_id));
                 } else {
                     throw new DataSheetRuntimeError($this->getDataSheet(), 'Cannot fill column with default values ' . $this->getMetaObject()->getName() . ': attribute ' . $attr->getName() . ' not set in row ' . $row_id . '!', '6T5UX3Q');
                 }

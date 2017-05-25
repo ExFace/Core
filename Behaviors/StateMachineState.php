@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Behaviors;
 
 use exface\Core\CommonLogic\UxonObject;

@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Contexts\Types;
 
 use exface\Core\CommonLogic\UxonObject;
@@ -22,7 +21,7 @@ abstract class AbstractContext implements ContextInterface
 
     /**
      * Returns the scope of this speicific context
-     * 
+     *
      * @return AbstractContextScope
      */
     public function getScope()
@@ -32,7 +31,7 @@ abstract class AbstractContext implements ContextInterface
 
     /**
      * Sets the scope for this specific context
-     * 
+     *
      * @param AbstractContextScope $context_scope            
      * @return AbstractContext
      */
@@ -44,14 +43,12 @@ abstract class AbstractContext implements ContextInterface
 
     /**
      * Returns the default scope for this type of context.
-     * 
+     *
      * @return \exface\Core\Contexts\Scopes\windowContextScope
      */
     public function getDefaultScope()
     {
-        return $this->getWorkbench()
-            ->context()
-            ->getScopeWindow();
+        return $this->getWorkbench()->context()->getScopeWindow();
     }
 
     /**
@@ -70,7 +67,7 @@ abstract class AbstractContext implements ContextInterface
      * a filter context needs to save it's filters conditions, etc. In any case, the serialized version should contain enoght
      * data to restore the context completely afterwards, but also not to much data in order not to consume too much space in
      * whatever stores the respective context scope.
-     * 
+     *
      * @return UxonObject
      */
     public function exportUxonObject()
@@ -81,7 +78,7 @@ abstract class AbstractContext implements ContextInterface
     /**
      * Restores a context from it's UXON representation.
      * The input is whatever export_uxon_object() produces for this context type.
-     * 
+     *
      * @param
      *            UxonObject
      * @return AbstractContext
@@ -94,7 +91,7 @@ abstract class AbstractContext implements ContextInterface
     /**
      * Returns the alias (name) of the context - e.g.
      * "Filter" for the FilterContext, etc.
-     * 
+     *
      * @return string
      */
     public function getAlias()

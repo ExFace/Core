@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\CommonLogic;
 
 use exface\Core\Interfaces\UiPageInterface;
@@ -162,7 +161,7 @@ class UiPage implements UiPageInterface
     /**
      * Generates an unique id for the given widget.
      * If the widget has an id already, this is merely sanitized.
-     * 
+     *
      * @param WidgetInterface $widget            
      * @return string
      */
@@ -181,7 +180,7 @@ class UiPage implements UiPageInterface
      * Makes sure, the given widget id is unique in this page.
      * If not, the id gets a numeric index, which makes it unique.
      * Thus, the returned value is guaranteed to be unique!
-     * 
+     *
      * @param string $string            
      * @return string
      */
@@ -291,9 +290,7 @@ class UiPage implements UiPageInterface
         }
         $result = $this->removeWidgetById($widget->getId());
         
-        $this->getWorkbench()
-            ->eventManager()
-            ->dispatch(EventFactory::createWidgetEvent($widget, 'Remove.After'));
+        $this->getWorkbench()->eventManager()->dispatch(EventFactory::createWidgetEvent($widget, 'Remove.After'));
         
         return $result;
     }

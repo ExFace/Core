@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Widgets;
 
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
@@ -51,12 +50,8 @@ class ChartSeries extends AbstractWidget
      */
     public function getDataColumn()
     {
-        if (! $result = $this->getChart()
-            ->getData()
-            ->getColumn($this->getDataColumnId())) {
-            $result = $this->getChart()
-                ->getData()
-                ->getColumnByAttributeAlias($this->getDataColumnId());
+        if (! $result = $this->getChart()->getData()->getColumn($this->getDataColumnId())) {
+            $result = $this->getChart()->getData()->getColumnByAttributeAlias($this->getDataColumnId());
         }
         return $result;
     }

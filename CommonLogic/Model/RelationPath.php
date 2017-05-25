@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\CommonLogic\Model;
 
 use exface\Core\Factories\RelationPathFactory;
@@ -40,7 +39,7 @@ class RelationPath implements \IteratorAggregate
 
     /**
      * Returns all relations from this path as an array
-     * 
+     *
      * @return relation[]
      */
     public function getRelations()
@@ -50,7 +49,7 @@ class RelationPath implements \IteratorAggregate
 
     /**
      * Adds the given relation to the right end of the path
-     * 
+     *
      * @param Relation $relation            
      * @return \exface\Core\CommonLogic\Model\RelationPath
      */
@@ -62,7 +61,7 @@ class RelationPath implements \IteratorAggregate
 
     /**
      * Adds the given relation to the left end of the path
-     * 
+     *
      * @param Relation $relation            
      * @return \exface\Core\CommonLogic\Model\RelationPath
      */
@@ -121,9 +120,7 @@ class RelationPath implements \IteratorAggregate
 
     public function getWorkbench()
     {
-        return $this->getStartObject()
-            ->getModel()
-            ->getWorkbench();
+        return $this->getStartObject()->getModel()->getWorkbench();
     }
 
     public function getStartObject()
@@ -133,7 +130,7 @@ class RelationPath implements \IteratorAggregate
 
     /**
      * Returns the last object in the relation path (the related object of the last relation)
-     * 
+     *
      * @return Object
      */
     public function getEndObject()
@@ -147,7 +144,7 @@ class RelationPath implements \IteratorAggregate
 
     /**
      * Returns the nth relation in the path (starting with 0 for the first relation).
-     * 
+     *
      * @param integer $sequence_number            
      * @return Relation
      */
@@ -158,7 +155,7 @@ class RelationPath implements \IteratorAggregate
 
     /**
      * Returns the first relation of the path or NULL if the path is empty
-     * 
+     *
      * @return Relation
      */
     public function getRelationFirst()
@@ -168,7 +165,7 @@ class RelationPath implements \IteratorAggregate
 
     /**
      * Returns the last relation of the path or NULL if the path is empty
-     * 
+     *
      * @return Relation
      */
     public function getRelationLast()
@@ -185,7 +182,7 @@ class RelationPath implements \IteratorAggregate
      * DEPRECATED! Use RelationPathFactory::crate_from_string_path() instead!
      * TODO make protected or remove
      * Checks if the given alias includes a relation path and returns an array with relations
-     * 
+     *
      * @param string $col            
      * @param int $depth            
      *
@@ -209,7 +206,7 @@ class RelationPath implements \IteratorAggregate
 
     /**
      * DEPRECATED! Use combine() instead!
-     * 
+     *
      * @param unknown $relation_alias_1            
      * @param unknown $relation_alias_2            
      */
@@ -228,7 +225,7 @@ class RelationPath implements \IteratorAggregate
 
     /**
      * Returns a new relation path appending the given path to the current one
-     * 
+     *
      * @param RelationPath $path_to_append            
      * @return RelationPath
      */
@@ -245,7 +242,7 @@ class RelationPath implements \IteratorAggregate
      * DEPRECATED! Use reverse() instead!
      * Reverses a given relation path relative to a given object: POSITION->PRODUCT relative to an ORDER will become POSITION->ORDER and thus can now be
      * used in the context of a PRODUCT.
-     * 
+     *
      * @param string $relation_path            
      * @param object $meta_object            
      * @return string
@@ -364,7 +361,7 @@ class RelationPath implements \IteratorAggregate
      * If the alias does not contain any relations, returns empty strgin.
      * E.g. for the attribute CUSTOMER__CUSTOMER_GROUP__LABEL it woud return CUSTOMER__CUSTOMER_GRUP.
      * For the attribute LABEL it would return '' since there is no relation prefix.
-     * 
+     *
      * @param string $attribute_alias            
      * @return string relation path separated by the relation separater or empty string if no relation used.
      */
@@ -403,7 +400,7 @@ class RelationPath implements \IteratorAggregate
     /**
      * TODO Make the staic method relation_path_reverse protected or remove it once all calls are replaced
      * by this method!
-     * 
+     *
      * @return \exface\Core\CommonLogic\Model\RelationPath
      */
     public function reverse()
@@ -424,7 +421,7 @@ class RelationPath implements \IteratorAggregate
     /**
      * Returns an attribute of the end object specified by it's attribute alias, but with a relation path relative to the start object.
      * E.g. calling get_attribute_of_end_object('POSITION_NO') on the relation path ORDER<-POSITION will return ORDER__POSITION__POSITION_NO
-     * 
+     *
      * @param string $attribute_alias            
      * @return Attribute
      */

@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Actions;
 
 use exface\Core\Interfaces\Actions\iDeleteData;
@@ -21,10 +20,7 @@ class DeleteObject extends AbstractAction implements iDeleteData
     {
         /* @var $data_sheet \exface\Core\Interfaces\DataSheets\DataSheetInterface */
         $obj = $this->getInputDataSheet()->getMetaObject();
-        $ds = $this->getApp()
-            ->getWorkbench()
-            ->data()
-            ->createDataSheet($obj);
+        $ds = $this->getApp()->getWorkbench()->data()->createDataSheet($obj);
         $instances = array();
         foreach ($this->getInputDataSheet()->getRows() as $row) {
             $instances[] = $row[$obj->getUidAlias()];

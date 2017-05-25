@@ -1,10 +1,9 @@
 <?php
-
 namespace exface\Core\Formulas;
 
 /**
  * Creates an HTML-Progressbar for object states in alexa.
- * 
+ *
  * @author Andrej Kabachnik
  *        
  */

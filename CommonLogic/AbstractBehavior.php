@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\CommonLogic;
 
 use exface\Core\CommonLogic\UxonObject;
@@ -130,7 +129,7 @@ abstract class AbstractBehavior implements BehaviorInterface
     /**
      * This method does the same as enable() and disable().
      * It is important to be able to import UXON objects.
-     * 
+     *
      * @param
      *            boolean
      * @return BehaviorInterface
@@ -173,7 +172,7 @@ abstract class AbstractBehavior implements BehaviorInterface
      * is_registered() will now return true. This is a helper method for
      * the case, if you don't want to override the is_registered() method: just call set_registered() in
      * your register() implementation!
-     * 
+     *
      * @param boolean $value            
      * @return BehaviorListInterface
      */
@@ -196,7 +195,7 @@ abstract class AbstractBehavior implements BehaviorInterface
 
     /**
      * Returns a copy of the Behavior without
-     * 
+     *
      * @see \exface\Core\Interfaces\iCanBeCopied::copy()
      * @return BehaviorInterface
      */

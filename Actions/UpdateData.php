@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Actions;
 
 use exface\Core\Interfaces\Actions\iUpdateData;
@@ -16,22 +15,13 @@ class UpdateData extends SaveData implements iUpdateData, iCanBeUndone
     {
         $data_sheet = $this->getInputDataSheet();
         if (! $data_sheet->getUidColumn()) {
-            foreach ($this->getApp()
-                ->getWorkbench()
-                ->context()
-                ->getScopeWindow()
-                ->getFilterContext()
-                ->getConditions($data_sheet->getMetaObject()) as $cond) {
+            foreach ($this->getApp()->getWorkbench()->context()->getScopeWindow()->getFilterContext()->getConditions($data_sheet->getMetaObject()) as $cond) {
                 $data_sheet->getFilters()->addCondition($cond);
             }
         }
         
         if ($this->getUseContextFilters()) {
-            if ($conditions = $this->getWorkbench()
-                ->context()
-                ->getScopeWindow()
-                ->getFilterContext()
-                ->getConditions($data_sheet->getMetaObject())) {
+            if ($conditions = $this->getWorkbench()->context()->getScopeWindow()->getFilterContext()->getConditions($data_sheet->getMetaObject())) {
                 foreach ($conditions as $condition) {
                     $data_sheet->getFilters()->addCondition($condition);
                 }
@@ -51,10 +41,7 @@ class UpdateData extends SaveData implements iUpdateData, iCanBeUndone
         $this->setAffectedRows($data_sheet->dataUpdate(false, $this->getTransaction()));
         $this->setResult('');
         $this->setResultDataSheet($data_sheet);
-        $this->setResultMessage($this->getWorkbench()
-            ->getCoreApp()
-            ->getTranslator()
-            ->translate('ACTION.UPDATEDATA.RESULT', array(
+        $this->setResultMessage($this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.UPDATEDATA.RESULT', array(
             '%number%' => $this->getAffectedRows()
         ), $this->getAffectedRows()));
     }

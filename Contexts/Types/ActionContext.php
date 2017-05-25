@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Contexts\Types;
 
 use exface\Core\Interfaces\Actions\ActionInterface;
@@ -21,7 +20,7 @@ class ActionContext extends AbstractContext
     /**
      * Returns the action being performed at this time.
      * That is the action, for which the context is not closed yet
-     * 
+     *
      * @return ActionInterfaceActionInterface
      */
     public function getCurrentAction()
@@ -31,7 +30,7 @@ class ActionContext extends AbstractContext
 
     /**
      * Returns an array with all actions, registered in this context during the current server request
-     * 
+     *
      * @return ActionInterface[]
      */
     public function getActions()
@@ -41,7 +40,7 @@ class ActionContext extends AbstractContext
 
     /**
      * Registers an action in this context
-     * 
+     *
      * @param ActionInterface $action            
      * @return \exface\Core\Contexts\Types\ActionContext
      */
@@ -57,7 +56,7 @@ class ActionContext extends AbstractContext
      * that modify data in the data source.
      * Returns the entire history, if $steps_back is not specified (=NULL)
      * IDEA Create a separate class for action history with methods to get the most recent item, etc. This would free the context scope from action specific methods
-     * 
+     *
      * @param integer $steps_back            
      * @return ActionInterface[]
      */
@@ -65,8 +64,7 @@ class ActionContext extends AbstractContext
     {
         // If history not yet loaded, load it now
         if (count($this->action_history_raw) == 0) {
-            $this->importUxonObject($this->getScope()
-                ->getSavedContexts($this->getAlias()));
+            $this->importUxonObject($this->getScope()->getSavedContexts($this->getAlias()));
         }
         
         // Put the last $steps_back actions from the history into an array starting with the most recent entry
@@ -102,9 +100,7 @@ class ActionContext extends AbstractContext
      */
     public function getDefaultScope()
     {
-        return $this->getWorkbench()
-            ->context()
-            ->getScopeSession();
+        return $this->getWorkbench()->context()->getScopeSession();
     }
 
     /**

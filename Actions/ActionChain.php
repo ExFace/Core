@@ -154,16 +154,12 @@ class ActionChain extends AbstractAction
 
     public function getInputRowsMin()
     {
-        return $this->getActions()
-            ->getFirst()
-            ->getInputRowsMin();
+        return $this->getActions()->getFirst()->getInputRowsMin();
     }
 
     public function getInputRowsMax()
     {
-        return $this->getActions()
-            ->getFirst()
-            ->getInputRowsMax();
+        return $this->getActions()->getFirst()->getInputRowsMax();
     }
 
     public function isUndoable()
@@ -174,18 +170,14 @@ class ActionChain extends AbstractAction
     public function getName()
     {
         if (! parent::hasName()) {
-            return $this->getActions()
-                ->getFirst()
-                ->getName();
+            return $this->getActions()->getFirst()->getName();
         }
         return parent::getName();
     }
 
     public function getIconName()
     {
-        return parent::getIconName() ? parent::getIconName() : $this->getActions()
-            ->getFirst()
-            ->getIconName();
+        return parent::getIconName() ? parent::getIconName() : $this->getActions()->getFirst()->getIconName();
     }
     
     /*

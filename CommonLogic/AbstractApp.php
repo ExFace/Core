@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\CommonLogic;
 
 use exface\Core\Interfaces\AppInterface;
@@ -61,7 +60,7 @@ abstract class AbstractApp implements AppInterface
      * This ist the startup-method for apps.
      * Anything put here will be run right after the app is instantiated. By default it does not do anything!
      * This method is handy to initialize some dependencies, variables, etc.
-     * 
+     *
      * @return void
      */
     protected function init()
@@ -132,9 +131,7 @@ abstract class AbstractApp implements AppInterface
      */
     public function getDirectoryAbsolutePath()
     {
-        return $this->getWorkbench()
-            ->filemanager()
-            ->getPathToVendorFolder() . DIRECTORY_SEPARATOR . $this->getDirectory();
+        return $this->getWorkbench()->filemanager()->getPathToVendorFolder() . DIRECTORY_SEPARATOR . $this->getDirectory();
     }
 
     public function getNamespace()
@@ -149,7 +146,7 @@ abstract class AbstractApp implements AppInterface
 
     /**
      * Return the applications vendor (first part of the namespace)
-     * 
+     *
      * @return string
      */
     public function getVendor()
@@ -203,18 +200,13 @@ abstract class AbstractApp implements AppInterface
         $config->loadConfigFile($this->getConfigFolder() . DIRECTORY_SEPARATOR . $this->getConfigFileName());
         
         // Load the installation config of the app
-        $config->loadConfigFile($this->getWorkbench()
-            ->filemanager()
-            ->getPathToConfigFolder() . DIRECTORY_SEPARATOR . $this->getConfigFileName());
+        $config->loadConfigFile($this->getWorkbench()->filemanager()->getPathToConfigFolder() . DIRECTORY_SEPARATOR . $this->getConfigFileName());
         
         // Load the user config if there is one
         // IDEA Enable user-configs for the core app too: currently custom configs are not possible for the core app,
         // because it's config is loaded before the context.
         if ($this->getWorkbench()->context()) {
-            $config->loadConfigFile($this->getWorkbench()
-                ->context()
-                ->getScopeUser()
-                ->getUserDataFolderAbsolutePath() . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . $this->getConfigFileName());
+            $config->loadConfigFile($this->getWorkbench()->context()->getScopeUser()->getUserDataFolderAbsolutePath() . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . $this->getConfigFileName());
         }
         
         return $config;
@@ -225,7 +217,7 @@ abstract class AbstractApp implements AppInterface
      * By default it is [vendor].[app_alias].[file_suffix].json.
      * The app will look for files with this name in all configuration folders. If your app needs a custom file name, overwrite this method.
      * Using different file suffixes allows the developer to have separate configuration files for app specific purposes.
-     * 
+     *
      * @param string $file_suffix            
      * @return string
      */
@@ -241,14 +233,12 @@ abstract class AbstractApp implements AppInterface
     /**
      * Returns the absolute path to the config folder of this app.
      * Overwrite this if you want your app configs to be placed somewhere else.
-     * 
+     *
      * @return string
      */
     protected function getConfigFolder()
     {
-        return $this->getWorkbench()
-            ->filemanager()
-            ->getPathToVendorFolder() . DIRECTORY_SEPARATOR . $this->getDirectory() . DIRECTORY_SEPARATOR . static::CONFIG_FOLDER_IN_APP;
+        return $this->getWorkbench()->filemanager()->getPathToVendorFolder() . DIRECTORY_SEPARATOR . $this->getDirectory() . DIRECTORY_SEPARATOR . static::CONFIG_FOLDER_IN_APP;
     }
 
     /**
@@ -316,10 +306,7 @@ abstract class AbstractApp implements AppInterface
         if (is_null($scope)) {
             $scope = $this->getContextDataDefaultScope();
         }
-        return $this->getWorkbench()
-            ->context()
-            ->getScope($scope)
-            ->getContext('Data');
+        return $this->getWorkbench()->context()->getScope($scope)->getContext('Data');
     }
 
     /**
@@ -359,10 +346,7 @@ abstract class AbstractApp implements AppInterface
     {
         if (is_null($this->translator)) {
             $translator = new Translation($this);
-            $translator->setLocale($this->getWorkbench()
-                ->context()
-                ->getScopeSession()
-                ->getSessionLocale());
+            $translator->setLocale($this->getWorkbench()->context()->getScopeSession()->getSessionLocale());
             $translator->setFallbackLocales(array(
                 'en_US'
             ));
@@ -389,9 +373,7 @@ abstract class AbstractApp implements AppInterface
                 $translator->addDictionaryFromFile($this->getTranslationsFolder() . DIRECTORY_SEPARATOR . $filename, $locale);
                 
                 // Load the installation specific translation of the app
-                $translator->addDictionaryFromFile($this->getWorkbench()
-                    ->filemanager()
-                    ->getPathToTranslationsFolder() . DIRECTORY_SEPARATOR . $filename, $locale);
+                $translator->addDictionaryFromFile($this->getWorkbench()->filemanager()->getPathToTranslationsFolder() . DIRECTORY_SEPARATOR . $filename, $locale);
             }
         }
         
@@ -400,9 +382,7 @@ abstract class AbstractApp implements AppInterface
 
     protected function getTranslationsFolder()
     {
-        return $this->getWorkbench()
-            ->filemanager()
-            ->getPathToVendorFolder() . DIRECTORY_SEPARATOR . $this->getDirectory() . DIRECTORY_SEPARATOR . static::TRANSLATIONS_FOLDER_IN_APP;
+        return $this->getWorkbench()->filemanager()->getPathToVendorFolder() . DIRECTORY_SEPARATOR . $this->getDirectory() . DIRECTORY_SEPARATOR . static::TRANSLATIONS_FOLDER_IN_APP;
     }
 
     /**

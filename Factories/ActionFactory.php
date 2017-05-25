@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Factories;
 
 use exface\Core\CommonLogic\Workbench;
@@ -20,7 +19,7 @@ abstract class ActionFactory extends AbstractNameResolverFactory
 
     /**
      * Creates a new action from the given name resolver
-     * 
+     *
      * @param NameResolver $name_resolver            
      * @return ActionInterface
      */
@@ -30,10 +29,7 @@ abstract class ActionFactory extends AbstractNameResolverFactory
         if ($name_resolver->classExists()) {
             $action = static::createEmpty($name_resolver, $app, $called_by_widget);
         } else {
-            $action = $name_resolver->getWorkbench()
-                ->model()
-                ->getModelLoader()
-                ->loadAction($app, $name_resolver->getAlias(), $called_by_widget);
+            $action = $name_resolver->getWorkbench()->model()->getModelLoader()->loadAction($app, $name_resolver->getAlias(), $called_by_widget);
             if (! $action) {
                 throw new ActionNotFoundError('Cannot find action "' . $name_resolver->getAliasWithNamespace() . '"!');
             }

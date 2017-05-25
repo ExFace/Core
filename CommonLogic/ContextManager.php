@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\CommonLogic;
 
 use exface\Core\Contexts\Scopes\WindowContextScope;
@@ -86,7 +85,7 @@ class ContextManager implements ContextManagerInterface
     /**
      * Return an array of all existing context scopes.
      * Usefull to get a context from all scopes
-     * 
+     *
      * @return AbstractContextScope[]
      */
     public function getSopes()
@@ -103,7 +102,7 @@ class ContextManager implements ContextManagerInterface
     /**
      * Returns an array of filter conditions from all scopes.
      * If a meta object id is given, only conditions applicable to that object are returned.
-     * 
+     *
      * @param \exface\Core\CommonLogic\Model\Object $meta_object            
      * @return Condition[]
      */
@@ -118,7 +117,7 @@ class ContextManager implements ContextManagerInterface
 
     /**
      * Saves all contexts in all scopes
-     * 
+     *
      * @return \exface\Core\Context
      */
     public function saveContexts()
@@ -132,7 +131,7 @@ class ContextManager implements ContextManagerInterface
     /**
      * Returns the context scope specified by the given name (e.g.
      * window, application, etc)
-     * 
+     *
      * @param string $scope_name            
      * @throws ContextScopeNotFoundError if no context scope is found for the given name
      * @return AbstractContextScope

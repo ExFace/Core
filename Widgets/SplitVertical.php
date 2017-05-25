@@ -21,7 +21,7 @@ class SplitVertical extends Container
     /**
      * Creates a new SplitPanel for this Split and returns it.
      * The panel is not automatically added to the panels collection!
-     * 
+     *
      * @return SplitPanel
      */
     private function createSplitPanel()
@@ -33,7 +33,7 @@ class SplitVertical extends Container
     /**
      * Returns the panels of the Split.
      * Technically it is an alias for Split::getWidgets() for better readability.
-     * 
+     *
      * @see get_widgets()
      */
     public function getPanels()
@@ -51,7 +51,7 @@ class SplitVertical extends Container
      * This
      * way, a short an understandable notation of splits is possible: simply add any type of widget to the panels or widgets
      * array and see them be displayed in the split.
-     * 
+     *
      * @see \exface\Core\Widgets\Container::setWidgets()
      */
     public function setWidgets(array $widget_or_uxon_array)

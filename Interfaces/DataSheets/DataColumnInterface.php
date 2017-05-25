@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Interfaces\DataSheets;
 
 use exface\Core\CommonLogic\Model\Attribute;
@@ -37,7 +36,7 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
 
     /**
      * Returns the data sheet, which the column belongs to
-     * 
+     *
      * @return DataSheetInterface
      */
     public function getDataSheet();
@@ -45,7 +44,7 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
     /**
      * Updates the parent data sheet by the given one.
      * This can be used to copy columns back and forth, but must be handeld with CAUTION, because it only copies the column, not the values!!!
-     * 
+     *
      * @param DataSheet $data_sheet            
      */
     public function setDataSheet(DataSheetInterface $data_sheet);
@@ -106,7 +105,7 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
     /**
      * Returns an array of values of this data sheet column.
      * This is just a shortcut to DataSheet->getColumnValues()
-     * 
+     *
      * @param boolean $include_totals            
      * @return array
      */
@@ -114,7 +113,7 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
 
     /**
      * Returns the value of the given row within this column
-     * 
+     *
      * @param integer $row_number            
      * @return mixed
      */
@@ -130,7 +129,7 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
 
     /**
      * Sets the values of the column by evaluating the given expression for this column
-     * 
+     *
      * @param expression $expression            
      * @return @return DataColumnInterface
      */
@@ -150,7 +149,7 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
 
     /**
      * Clones the column and returns the new copy
-     * 
+     *
      * @return DataColumn
      */
     public function copy();
@@ -204,7 +203,7 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
      * corresponding UIDs.
      * NOTE: The keys of the returned array are the UIDs of the diff rows
      * Similarly to diff_values() this method does not pay attention to the order of rows in both columns.
-     * 
+     *
      * @param DataColumnInterface $another_column            
      * @return array
      */
@@ -214,7 +213,7 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
      * Returns an array with with all values of this column, which are not present in the same row of another one.
      * NOTE: The keys of the returned array are the row numbers of this column
      * In contrast to diff_values(), this method compares the column per row.
-     * 
+     *
      * @param DataColumnInterface $another_column            
      * @return array
      */
@@ -238,21 +237,21 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
 
     /**
      * Retruns a list with all total row functions for this column
-     * 
+     *
      * @return DataColumnTotalsListInterface
      */
     public function getTotals();
 
     /**
      * Returns FALSE if the column contains at least one data row and TRUE otherwise
-     * 
+     *
      * @return boolean
      */
     public function isEmpty();
 
     /**
      * Applies default and fixed values defined in the meta model to this column.
-     * 
+     *
      * @return DataColumnInterface
      */
     public function setValuesFromDefaults();
@@ -266,14 +265,14 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
 
     /**
      * Returns TRUE if setting fixed values from the meta model is disabled for this column and FALSE otherwise
-     * 
+     *
      * @return boolean
      */
     public function getIgnoreFixedValues();
 
     /**
      * Prevents setting fixed values based on expressions in the meta model for this column if set to TRUE
-     * 
+     *
      * @param boolean $value            
      * @return \exface\Core\Interfaces\DataSheets\DataColumnInterface
      */
@@ -281,7 +280,7 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
 
     /**
      * Removes all rows from this column, thus making it empty
-     * 
+     *
      * @return DataColumnInterface
      */
     public function removeRows();
@@ -290,7 +289,7 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
      * Aggregates all values in this column using the given function.
      * The function names are the same, as in
      * the column definitions (e.g. attribute_alias:SUM)
-     * 
+     *
      * @param string $aggregate_function            
      * @return string
      */

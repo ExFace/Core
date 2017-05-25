@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Widgets;
 
 use exface\Core\Interfaces\Widgets\iAmClosable;
@@ -59,7 +58,7 @@ class Dialog extends Form implements iAmClosable, iHaveContextualHelp
 
     /**
      * If TRUE, the automatically generated close button for the dialog is not shown
-     * 
+     *
      * @return boolean
      */
     public function getHideCloseButton()
@@ -69,7 +68,7 @@ class Dialog extends Form implements iAmClosable, iHaveContextualHelp
 
     /**
      * If set to TRUE, the automatically generated close button will not be shown in this dialog
-     * 
+     *
      * @param boolean $value            
      */
     public function setHideCloseButton($value)
@@ -79,7 +78,7 @@ class Dialog extends Form implements iAmClosable, iHaveContextualHelp
 
     /**
      * Returns a special dialog button, that just closes the dialog without doing any other action
-     * 
+     *
      * @return \exface\Core\Widgets\DialogButton
      */
     public function getCloseButton()
@@ -103,7 +102,7 @@ class Dialog extends Form implements iAmClosable, iHaveContextualHelp
      * The close button is always added to the end of the button list.
      * This ensures, that the other buttons can be rearranged without an impact on the close buttons last
      * position.
-     * 
+     *
      * @see \exface\Core\Widgets\Panel::getButtons()
      */
     public function getButtons()
@@ -213,9 +212,7 @@ class Dialog extends Form implements iAmClosable, iHaveContextualHelp
          * @var DataTable $table
          */
         $table = WidgetFactory::create($help_container->getPage(), 'DataTable', $help_container);
-        $object = $this->getWorkbench()
-            ->model()
-            ->getObject('exface.Core.USER_HELP_ELEMENT');
+        $object = $this->getWorkbench()->model()->getObject('exface.Core.USER_HELP_ELEMENT');
         $table->setMetaObject($object);
         $table->setCaption($this->getWidgetType() . ($this->getCaption() ? '"' . $this->getCaption() . '"' : ''));
         $table->addColumn($table->createColumnFromAttribute($object->getAttribute('TITLE')));

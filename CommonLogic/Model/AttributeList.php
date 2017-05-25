@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\CommonLogic\Model;
 
 use exface\Core\CommonLogic\EntityList;
@@ -19,7 +18,7 @@ class AttributeList extends EntityList
     /**
      * An attribute list stores attributes with their aliases for keys unless the keys are explicitly specified.
      * Using the alias with relation path ensures, that adding related attributes will never lead to dublicates here!
-     * 
+     *
      * {@inheritdoc}
      *
      * @see \exface\Core\CommonLogic\EntityList::add()
@@ -54,7 +53,7 @@ class AttributeList extends EntityList
 
     /**
      * Returns the attribute matching the given alias or FALSE if no such attribute is found
-     * 
+     *
      * @param string $alias            
      * @return Attribute|boolean
      */
@@ -75,7 +74,7 @@ class AttributeList extends EntityList
 
     /**
      * Returns the attribute matching the given UID or FALSE if no such attribute is found
-     * 
+     *
      * @param string $uid            
      * @return Attribute|boolean
      */
@@ -91,7 +90,7 @@ class AttributeList extends EntityList
 
     /**
      * Returns a new attribute list with all attributes of the given data type
-     * 
+     *
      * @param string $data_type_alias            
      * @return AttributeList|Attribute[]
      */
@@ -109,7 +108,7 @@ class AttributeList extends EntityList
 
     /**
      * Returns a new attribute list containig only attributes marked as required
-     * 
+     *
      * @return AttributeList|Attribute[]
      */
     function getRequired()

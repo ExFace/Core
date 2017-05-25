@@ -5,7 +5,7 @@ namespace exface\Core\Widgets;
  * The HTML widget simply shows some HTML.
  * In contrast to a Text widget it will be seamlessly embedded in an HTML-based template
  * and not put into a paragraph as plain text.
- * 
+ *
  * @author Andrej Kabachnik
  *        
  */

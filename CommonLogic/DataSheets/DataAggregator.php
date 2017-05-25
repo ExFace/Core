@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\CommonLogic\DataSheets;
 
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
@@ -44,9 +43,7 @@ class DataAggregator implements iCanBeConvertedToUxon
 
     public function exportUxonObject()
     {
-        $uxon = $this->getDataSheet()
-            ->getWorkbench()
-            ->createUxonObject();
+        $uxon = $this->getDataSheet()->getWorkbench()->createUxonObject();
         $uxon->setProperty('attribute_alias', $this->getAttributeAlias());
         return $uxon;
     }
@@ -58,7 +55,7 @@ class DataAggregator implements iCanBeConvertedToUxon
 
     /**
      * PRODUCT->SIZE:CONCAT(',') --> CONCAT(EXF_LIST_SEPARATOR)
-     * 
+     *
      * @param string $attribute_alias            
      * @return string|boolean
      */
@@ -74,7 +71,7 @@ class DataAggregator implements iCanBeConvertedToUxon
 
     /**
      * Returns a copy of this sorter still belonging to the same data sheet
-     * 
+     *
      * @return DataSorter
      */
     public function copy()

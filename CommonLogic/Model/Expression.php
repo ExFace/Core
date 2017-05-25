@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\CommonLogic\Model;
 
 use exface\Core\Exceptions\FormulaError;
@@ -50,7 +49,7 @@ class Expression implements ExfaceClassInterface, iCanBeCopied
 
     /**
      * Parses an ExFace expression and returns it's type
-     * 
+     *
      * @param
      *            string expression
      */
@@ -111,7 +110,7 @@ class Expression implements ExfaceClassInterface, iCanBeCopied
 
     /**
      * Returns TRUE if the expression has no value (expression->toString() = NULL) and FALSE otherwise
-     * 
+     *
      * @return boolean
      */
     function isEmpty()
@@ -139,7 +138,7 @@ class Expression implements ExfaceClassInterface, iCanBeCopied
     /**
      * Checks, if the given expression is a data function and returns the function object if so, false otherwise.
      * It is a good idea to create the function here already, because we need to know it's required attributes.
-     * 
+     *
      * @param string $expression            
      * @return boolean|exf_formula function object or false
      */
@@ -211,7 +210,7 @@ class Expression implements ExfaceClassInterface, iCanBeCopied
     /**
      * Evaluates the given expression based on a data sheet and the coordinates of a cell.
      * Returns either a string value (if column and row are specified) or an array of values (if only the column is specified).
-     * 
+     *
      * @param
      *            \exface\Core\Interfaces\DataSheets\DataSheetInterface data_sheet
      * @param
@@ -283,7 +282,7 @@ class Expression implements ExfaceClassInterface, iCanBeCopied
      * Returns the expression as string.
      * Basically this is the opposite fo parse.
      * Note, that in case of attributes the expression will include the relation path, aggregators, etc., whereas get_attribute->getAlias() would return only the actual alias.
-     * 
+     *
      * @return string
      */
     function toString()
@@ -399,9 +398,7 @@ class Expression implements ExfaceClassInterface, iCanBeCopied
                 $new_expression_string .= $rel->getRelatedObjectKeyAlias();
             }
             
-            return $this->getWorkbench()
-                ->model()
-                ->parseExpression($new_expression_string, $rel->getRelatedObject());
+            return $this->getWorkbench()->model()->parseExpression($new_expression_string, $rel->getRelatedObject());
         } else {
             // In all other cases (i.e. for constants), just leave the expression as it is. It does not depend on any meta model!
             return $this;
@@ -410,7 +407,7 @@ class Expression implements ExfaceClassInterface, iCanBeCopied
 
     /**
      * Returns the meta attribute, represented by this expression or FALSE if the expression represents something else (a formula, a constant, etc.)
-     * 
+     *
      * @return boolean|attribute
      */
     public function getAttribute()

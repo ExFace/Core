@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Interfaces\Widgets;
 
 use exface\Core\Widgets\DataColumnGroup;

@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Widgets;
 
 use exface\Core\Interfaces\Widgets\iHaveIcon;
@@ -26,7 +25,8 @@ class Panel extends Container implements iLayoutWidgets, iSupportLazyLoading, iH
 {
 
     private $lazy_loading = false;
- // A panel will not be loaded via AJAX by default
+
+    // A panel will not be loaded via AJAX by default
     private $lazy_loading_action = 'exface.Core.ShowWidget';
 
     private $collapsible = false;
@@ -65,7 +65,7 @@ class Panel extends Container implements iLayoutWidgets, iSupportLazyLoading, iH
 
     /**
      * (non-PHPdoc)
-     * 
+     *
      * @see \exface\Core\Interfaces\Widgets\iHaveIcon::getIconName()
      */
     public function getIconName()
@@ -75,7 +75,7 @@ class Panel extends Container implements iLayoutWidgets, iSupportLazyLoading, iH
 
     /**
      * (non-PHPdoc)
-     * 
+     *
      * @see \exface\Core\Interfaces\Widgets\iHaveIcon::setIconName()
      */
     public function setIconName($value)
@@ -85,7 +85,7 @@ class Panel extends Container implements iLayoutWidgets, iSupportLazyLoading, iH
 
     /**
      * (non-PHPdoc)
-     * 
+     *
      * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::getLazyLoading()
      */
     public function getLazyLoading()
@@ -95,7 +95,7 @@ class Panel extends Container implements iLayoutWidgets, iSupportLazyLoading, iH
 
     /**
      * (non-PHPdoc)
-     * 
+     *
      * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::setLazyLoading()
      */
     public function setLazyLoading($value)
@@ -105,7 +105,7 @@ class Panel extends Container implements iLayoutWidgets, iSupportLazyLoading, iH
 
     /**
      * (non-PHPdoc)
-     * 
+     *
      * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::getLazyLoadingAction()
      */
     public function getLazyLoadingAction()
@@ -115,7 +115,7 @@ class Panel extends Container implements iLayoutWidgets, iSupportLazyLoading, iH
 
     /**
      * (non-PHPdoc)
-     * 
+     *
      * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::setLazyLoadingAction()
      */
     public function setLazyLoadingAction($value)
@@ -139,7 +139,7 @@ class Panel extends Container implements iLayoutWidgets, iSupportLazyLoading, iH
      * Returns TRUE if the columns should be stacked on small screens and FALSE otherwise.
      * Returns NULL if the creator of the widget
      * had made no preference and thus the stacking is completely upto the template.
-     * 
+     *
      * @return boolean
      */
     public function getColumnStackOnSmartphones()
@@ -151,7 +151,7 @@ class Panel extends Container implements iLayoutWidgets, iSupportLazyLoading, iH
      * Determines wether columns should be stacked on smaller screens (TRUE) or left side-by-side (FALSE).
      * Setting this to NULL will
      * leave it upto the template to decide.
-     * 
+     *
      * @param boolean $value            
      */
     public function setColumnStackOnSmartphones($value)
@@ -164,7 +164,7 @@ class Panel extends Container implements iLayoutWidgets, iSupportLazyLoading, iH
      * Returns TRUE if the columns should be stacked on midsize screens and FALSE otherwise.
      * Returns NULL if the creator of the widget
      * had made no preference and thus the stacking is completely upto the template.
-     * 
+     *
      * @return boolean
      */
     public function getColumnStackOnTablets()
@@ -176,7 +176,7 @@ class Panel extends Container implements iLayoutWidgets, iSupportLazyLoading, iH
      * Determines wether columns should be stacked on midsize screens (TRUE) or left side-by-side (FALSE).
      * Setting this to NULL will
      * leave it upto the template to decide.
-     * 
+     *
      * @param boolean $value            
      */
     public function setColumnStackOnTablets($value)

@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Interfaces;
 
 interface DebuggerInterface
@@ -7,7 +6,7 @@ interface DebuggerInterface
 
     /**
      * Returns a human readable representation of the exception
-     * 
+     *
      * @param \Throwable $exception            
      * @return string
      */
@@ -28,7 +27,7 @@ interface DebuggerInterface
 
     /**
      * Returns a human-readable string dump of the given variable (similar to var_dump(), but returning a string)
-     * 
+     *
      * @param mixed $anything            
      * @return string
      */

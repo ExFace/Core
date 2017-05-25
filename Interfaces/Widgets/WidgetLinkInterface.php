@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Interfaces\Widgets;
 
 use exface\Core\Interfaces\ExfaceClassInterface;
@@ -60,7 +59,7 @@ interface WidgetLinkInterface extends ExfaceClassInterface, iCanBeConvertedToUxo
 
     /**
      * Returns the widget instance referenced by this link
-     * 
+     *
      * @throws uiWidgetNotFoundException if no widget with a matching id can be found in the specified resource
      * @return WidgetInterface
      */

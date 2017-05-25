@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Actions;
 
 use exface\Core\Widgets\AbstractWidget;
@@ -56,7 +55,7 @@ class ShowObjectDialog extends ShowDialog
 
     /**
      * Create editors for all editable attributes of the object
-     * 
+     *
      * @return WidgetInterface[]
      */
     protected function createWidgetsForAttributes(AbstractWidget $parent_widget)
@@ -115,15 +114,14 @@ class ShowObjectDialog extends ShowDialog
         // If there is a default editor, make sure it gets it's own id space, so widget links inside still work
         // if multiple editors of the same object are located in the same page (e.g. for creating, editing, etc.)
         if ($this->getCalledByWidget() && ! $default_editor_uxon->isEmpty()) {
-            $default_editor_uxon->setProperty('id_space', $this->getCalledByWidget()
-                ->getId());
+            $default_editor_uxon->setProperty('id_space', $this->getCalledByWidget()->getId());
         }
         
         // If the content is explicitly defined, just add it to the dialog
         if ($contained_widget) {
             $dialog->addWidget($contained_widget);
-        }        // Otherwise try to generate the widget automatically
-        // First check, if there is a default editor for an object, and instantiate it if so
+        } // Otherwise try to generate the widget automatically
+          // First check, if there is a default editor for an object, and instantiate it if so
         elseif ($default_editor_uxon && ! $default_editor_uxon->isEmpty()) {
             if (! $default_editor_uxon->getProperty('widget_type') || $default_editor_uxon->getProperty('widget_type') == 'Dialog') {
                 $dialog->importUxonObject($default_editor_uxon);
@@ -134,8 +132,8 @@ class ShowObjectDialog extends ShowDialog
                 $default_editor = WidgetFactory::createFromUxon($page, $default_editor_uxon, $dialog);
                 $dialog->addWidget($default_editor);
             }
-        }        // Lastly, try to generate a usefull editor from the meta model
-        else {
+        } // Lastly, try to generate a usefull editor from the meta model
+else {
             // If there is no editor defined, create one: Add a panel to the dialog and generate editors for all attributes
             // of the object in that panel.
             // IDEA A separate method "create_object_editor" would probably be handy, once we have attribute groups and
@@ -166,7 +164,7 @@ class ShowObjectDialog extends ShowDialog
 
     /**
      * Returns TRUE if only widgets for editable attributes should be shown or FALSE, if all visible widgets should appear (some being disabled).
-     * 
+     *
      * @return boolean
      */
     public function getShowOnlyEditableAttributes()

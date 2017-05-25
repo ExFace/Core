@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Contexts\Scopes;
 
 use exface\Core\Interfaces\Contexts\ContextInterface;
@@ -14,29 +13,23 @@ class UserContextScope extends AbstractContextScope
 
     public function getUserName()
     {
-        return $this->getWorkbench()
-            ->cms()
-            ->getUserName();
+        return $this->getWorkbench()->cms()->getUserName();
     }
 
     public function getUserId()
     {
-        return $this->getUserData()
-            ->getUidColumn()
-            ->getCellValue(0);
+        return $this->getUserData()->getUidColumn()->getCellValue(0);
     }
 
     /**
      * Returns the absolute path to the base installation folder (e.g.
      * c:\xampp\htdocs\exface\exface\UserData\username)
-     * 
+     *
      * @return string
      */
     public function getUserDataFolderAbsolutePath()
     {
-        $path = $this->getWorkbench()
-            ->filemanager()
-            ->getPathToUserDataFolder() . DIRECTORY_SEPARATOR . $this->getUserDataFolderName();
+        $path = $this->getWorkbench()->filemanager()->getPathToUserDataFolder() . DIRECTORY_SEPARATOR . $this->getUserDataFolderName();
         if (! file_exists($path)) {
             mkdir($path);
         }
@@ -50,7 +43,7 @@ class UserContextScope extends AbstractContextScope
 
     /**
      * TODO
-     * 
+     *
      * @see \exface\Core\Contexts\Scopes\AbstractContextScope::loadContextData()
      */
     public function loadContextData(ContextInterface $context)
@@ -61,15 +54,13 @@ class UserContextScope extends AbstractContextScope
 
     /**
      * Returns a data sheet with all data from the user object
-     * 
+     *
      * @return \exface\Core\Interfaces\DataSheets\DataSheetInterface
      */
     protected function getUserData()
     {
         if (is_null($this->user_data)) {
-            $user_object = $this->getWorkbench()
-                ->model()
-                ->getObject('exface.Core.USER');
+            $user_object = $this->getWorkbench()->model()->getObject('exface.Core.USER');
             $ds = DataSheetFactory::createFromObject($user_object);
             $ds->getColumns()->addFromExpression($user_object->getUidAlias());
             $ds->getColumns()->addFromExpression('USERNAME');
@@ -84,14 +75,12 @@ class UserContextScope extends AbstractContextScope
 
     /**
      * Returns the locale, set for the current user
-     * 
+     *
      * @return string
      */
     public function getUserLocale()
     {
-        if (is_null($this->user_locale) && $cms_locale = $this->getWorkbench()
-            ->cMS()
-            ->getUserLocale()) {
+        if (is_null($this->user_locale) && $cms_locale = $this->getWorkbench()->cMS()->getUserLocale()) {
             $this->setUserLocale($cms_locale);
         }
         return $this->user_locale;
@@ -99,7 +88,7 @@ class UserContextScope extends AbstractContextScope
 
     /**
      * Sets the locale for the current user
-     * 
+     *
      * @param string $string            
      * @return \exface\Core\Contexts\Scopes\UserContextScope
      */

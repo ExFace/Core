@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Factories;
 
 use exface;
@@ -13,7 +12,7 @@ abstract class DataConnectorFactory extends AbstractNameResolverFactory
 
     /**
      * Creates a data connector from the given name resolver and an optional config array
-     * 
+     *
      * @param NameResolverInterface $name_resolver            
      * @param array $config            
      * @return AbstractDataConnector
@@ -35,7 +34,7 @@ abstract class DataConnectorFactory extends AbstractNameResolverFactory
      * - file path relative to the ExFace installation directory
      * - ExFace alias with namespace
      * - class name
-     * 
+     *
      * @param exface\Core\CommonLogic\Workbench $exface            
      * @param string $path_or_qualified_alias            
      * @param array $config            

@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Formulas;
 
 class Timestamp extends \exface\Core\CommonLogic\Model\Formula

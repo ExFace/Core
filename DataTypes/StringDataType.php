@@ -17,7 +17,7 @@ class StringDataType extends AbstractDataType
 
     /**
      * Converts a string from camelCase to under_score (snake_case).
-     * 
+     *
      * @param string $string            
      * @return string
      */
@@ -39,7 +39,7 @@ class StringDataType extends AbstractDataType
 
     /**
      * Converts a string from PascalCase to under_score (snake_case).
-     * 
+     *
      * @param string $string            
      * @return string
      */

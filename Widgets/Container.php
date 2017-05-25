@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Widgets;
 
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
@@ -105,7 +104,7 @@ class Container extends AbstractWidget implements iContainOtherWidgets
 
     /**
      * (non-PHPdoc)
-     * 
+     *
      * @see \exface\Core\Widgets\AbstractWidget::getChildren()
      */
     public function getChildren()

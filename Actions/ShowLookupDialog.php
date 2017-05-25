@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Actions;
 
 use exface\Core\Widgets\AbstractWidget;
@@ -73,10 +72,7 @@ class ShowLookupDialog extends ShowDialog
         
         // @var $save_button \exface\Core\Widgets\Button
         $save_button = $page->createWidget('DialogButton', $dialog);
-        $save_button->setCaption($this->getWorkbench()
-            ->getCoreApp()
-            ->getTranslator()
-            ->translate("ACTION.SHOWLOOKUPDIALOG.SAVE_BUTTON"));
+        $save_button->setCaption($this->getWorkbench()->getCoreApp()->getTranslator()->translate("ACTION.SHOWLOOKUPDIALOG.SAVE_BUTTON"));
         $save_button->setVisibility(EXF_WIDGET_VISIBILITY_PROMOTED);
         
         // @var $save_action \exface\Core\Actions\CustomTemplateScript

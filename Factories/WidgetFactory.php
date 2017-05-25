@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Factories;
 
 use exface\Core\Interfaces\WidgetInterface;
@@ -16,7 +15,7 @@ abstract class WidgetFactory extends AbstractFactory
 
     /**
      * Creates a widget of the specified type in the given page.
-     * 
+     *
      * @param UiPageInterface $page            
      * @param string $widget_type            
      * @param WidgetInterface $parent_widget            
@@ -42,7 +41,7 @@ abstract class WidgetFactory extends AbstractFactory
      * The main difference to create_widget() is, that
      * the widget type will be determined from the UXON description. If not given there, ExFace will attempt
      * to find a default widget type of the meta object or the attribute.
-     * 
+     *
      * @param UiPageInterface $page            
      * @param UxonObject $uxon_object            
      * @param WidgetInterface $parent_widget            
@@ -72,9 +71,7 @@ abstract class WidgetFactory extends AbstractFactory
         if (! $widget_type) {
             // First of all, we need to figure out, which object the widget is representing
             if ($uxon_object->object_alias) {
-                $obj = $page->getWorkbench()
-                    ->model()
-                    ->getObject($uxon_object->object_alias);
+                $obj = $page->getWorkbench()->model()->getObject($uxon_object->object_alias);
             } elseif ($parent_widget) {
                 $obj = $parent_widget->getMetaObject();
             } else {

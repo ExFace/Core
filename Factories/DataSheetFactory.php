@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Factories;
 
 use exface\Core\CommonLogic\UxonObject;
@@ -15,7 +14,7 @@ abstract class DataSheetFactory extends AbstractUxonFactory
     /**
      * Creates a data sheet for a give object.
      * The object can be passed directly or specified by it's fully qualified alias (with namespace!)
-     * 
+     *
      * @param exface $exface            
      * @param Object|string $meta_object_or_alias            
      * @return DataSheetInterface

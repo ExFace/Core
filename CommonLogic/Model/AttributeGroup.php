@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\CommonLogic\Model;
 
 use exface\Core\CommonLogic\Workbench;
@@ -15,7 +14,7 @@ use exface\Core\Factories\AttributeGroupFactory;
  * attributes must be selectable from the parent object of the group: thus, they must be related somehow.
  *
  * IDEA use a Condition as a selector to populate the group
- * 
+ *
  * @author Andrej Kabachnik
  *        
  */
@@ -47,7 +46,7 @@ class AttributeGroup extends AttributeList
 
     /**
      * This is an alias for AttributeList->getAll()
-     * 
+     *
      * @return Attribute[]
      */
     public function getAttributes()
@@ -59,7 +58,7 @@ class AttributeGroup extends AttributeList
      * Returns a new attribute group, that contains all attributes of the object, that were not present in the original group
      * E.g.
      * group(~VISIBLE)->getInvertedAttributeGroup() will hold all hidden attributes.
-     * 
+     *
      * @return \exface\Core\CommonLogic\Model\AttributeGroup
      */
     public function getInvertedAttributeGroup()

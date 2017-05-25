@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Actions;
 
 /**
@@ -7,7 +6,7 @@ namespace exface\Core\Actions;
  * To linke to another page or a widget
  * within another page there is also an action called "crosslink", that basically does the same thing but uses a better
  * understandable name.
- * 
+ *
  * @see crosslink
  * @author Andrej Kabachnik
  *        

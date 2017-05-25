@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Widgets;
 
 use exface\Core\CommonLogic\Model\Expression;
@@ -27,7 +26,7 @@ use exface\Core\Exceptions\UxonMapError;
 
 /**
  * Basic ExFace widget
- * 
+ *
  * @author Andrej Kabachnik
  *        
  */
@@ -122,7 +121,7 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
 
     /**
      * This method is called every time a widget is instantiated an can be used as a hook for additional initializing logics.
-     * 
+     *
      * @return void
      */
     protected function init()
@@ -172,8 +171,7 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
             $uxon->setProperty('id', $this->getId());
         }
         $uxon->setProperty('widget_type', $this->getWidgetType());
-        $uxon->setProperty('object_alias', $this->getMetaObject()
-            ->getAliasWithNamespace());
+        $uxon->setProperty('object_alias', $this->getMetaObject()->getAliasWithNamespace());
         if (! is_null($this->getCaption())) {
             $uxon->setProperty('caption', $this->getCaption());
         }
@@ -190,12 +188,10 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
             $uxon->setProperty('visibility', $this->getVisibility());
         }
         if (! $this->getWidth()->isUndefined()) {
-            $uxon->setProperty('width', $this->getWidth()
-                ->toString());
+            $uxon->setProperty('width', $this->getWidth()->toString());
         }
         if (! $this->getHeight()->isUndefined()) {
-            $uxon->setProperty('height', $this->getHeight()
-                ->toString());
+            $uxon->setProperty('height', $this->getHeight()->toString());
         }
         return $uxon;
     }
@@ -225,14 +221,10 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
     {
         if ($this->getDoNotPrefill())
             return;
-        $this->getWorkbench()
-            ->eventManager()
-            ->dispatch(EventFactory::createWidgetEvent($this, 'Prefill.Before'));
+        $this->getWorkbench()->eventManager()->dispatch(EventFactory::createWidgetEvent($this, 'Prefill.Before'));
         $this->setPrefillData($data_sheet);
         $this->doPrefill($data_sheet);
-        $this->getWorkbench()
-            ->eventManager()
-            ->dispatch(EventFactory::createWidgetEvent($this, 'Prefill.After'));
+        $this->getWorkbench()->eventManager()->dispatch(EventFactory::createWidgetEvent($this, 'Prefill.After'));
         return;
     }
 
@@ -276,9 +268,7 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
 
     protected function createDataSheet()
     {
-        return $this->getWorkbench()
-            ->data()
-            ->createDataSheet($this->getMetaObject());
+        return $this->getWorkbench()->data()->createDataSheet($this->getMetaObject());
     }
 
     /**
@@ -443,15 +433,9 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
     function getMetaObject()
     {
         if ($this->meta_object_id) {
-            $obj = $this->getUi()
-                ->getWorkbench()
-                ->model()
-                ->getObject($this->meta_object_id);
+            $obj = $this->getUi()->getWorkbench()->model()->getObject($this->meta_object_id);
         } elseif ($this->getObjectQualifiedAlias()) {
-            $obj = $this->getUi()
-                ->getWorkbench()
-                ->model()
-                ->getObject($this->getObjectQualifiedAlias());
+            $obj = $this->getUi()->getWorkbench()->model()->getObject($this->getObjectQualifiedAlias());
         } elseif ($this->getParent()) {
             $obj = $this->getParent()->getMetaObject();
         } else {
@@ -590,7 +574,7 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
 
     /**
      * TODO Move to iHaveValue-Widgets or trait
-     * 
+     *
      * @return string|NULL
      */
     public function getValue()
@@ -603,7 +587,7 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
 
     /**
      * TODO Move to iHaveValue-Widgets or trait
-     * 
+     *
      * @return Expression
      */
     public function getValueExpression()
@@ -632,7 +616,7 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
      * @uxon-type Expression|string
      *
      * TODO Move to iHaveValue-Widgets or trait
-     * 
+     *
      * @param Expression|string $expression_or_string            
      */
     public function setValue($expression_or_string)
@@ -640,9 +624,7 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
         if ($expression_or_string instanceof expression) {
             $this->value = $expression_or_string;
         } else {
-            $this->value = $this->getWorkbench()
-                ->model()
-                ->parseExpression($expression_or_string, $this->getMetaObject());
+            $this->value = $this->getWorkbench()->model()->parseExpression($expression_or_string, $this->getMetaObject());
         }
         return $this;
     }
@@ -777,21 +759,13 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
     public function setObjectAlias($full_or_object_alias)
     {
         // If it's a fully qualified alias, use it directly
-        if ($ns = $this->getUi()
-            ->getWorkbench()
-            ->model()
-            ->getNamespaceFromQualifiedAlias($full_or_object_alias)) {
+        if ($ns = $this->getUi()->getWorkbench()->model()->getNamespaceFromQualifiedAlias($full_or_object_alias)) {
             $this->object_qualified_alias = $full_or_object_alias;
-            $this->object_alias = $this->getUi()
-                ->getWorkbench()
-                ->model()
-                ->getObjectAliasFromQualifiedAlias($full_or_object_alias);
-        }        // ... if the namespace is missing, get it from the app of the parent object
-        else {
+            $this->object_alias = $this->getUi()->getWorkbench()->model()->getObjectAliasFromQualifiedAlias($full_or_object_alias);
+        } // ... if the namespace is missing, get it from the app of the parent object
+else {
             if ($this->getParent()) {
-                $ns = $this->getParent()
-                    ->getMetaObject()
-                    ->getNamespace();
+                $ns = $this->getParent()->getMetaObject()->getNamespace();
             }
             
             if (! $ns) {
@@ -821,15 +795,11 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
                 // If there is no relation path yet, create one
                 $this->object_relation_path_from_parent = RelationPathFactory::createForObject($this->getParent()->getMetaObject());
                 // If the parent is based on another object, search for a relation to it - append it to the path if found
-                if (! $this->getParent()
-                    ->getMetaObject()
-                    ->is($this->getMetaObject())) {
+                if (! $this->getParent()->getMetaObject()->is($this->getMetaObject())) {
                     if ($this->object_relation_path_to_parent) {
                         // If we already know the path from this widgets object to the parent, just reverse it
                         $this->object_relation_path_from_parent = $this->getObjectRelationPathToParent()->reverse();
-                    } elseif ($rel = $this->getParent()
-                        ->getMetaObject()
-                        ->findRelation($this->getMetaObject(), true)) {
+                    } elseif ($rel = $this->getParent()->getMetaObject()->findRelation($this->getMetaObject(), true)) {
                         // Otherwise, try to find a path automatically
                         $this->object_relation_path_from_parent->appendRelation($rel);
                     }
@@ -840,9 +810,7 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
         } else {
             // If there is a relation path already built, check if it still fits to the current parent widget (which might have changed)
             // If not, removed the cached path and runt the getter again to try to find a new path
-            if (! $this->getParent()
-                ->getMetaObject()
-                ->is($this->object_relation_path_from_parent->getStartObject())) {
+            if (! $this->getParent()->getMetaObject()->is($this->object_relation_path_from_parent->getStartObject())) {
                 $this->object_relation_path_from_parent = null;
                 return $this->getObjectRelationPathFromParent();
             }
@@ -864,10 +832,7 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
     {
         $this->object_relation_path_from_parent = $string;
         if ($this->isObjectInheritedFromParent()) {
-            $this->setObjectAlias($this->getParent()
-                ->getMetaObject()
-                ->getRelatedObject($string)
-                ->getAliasWithNamespace());
+            $this->setObjectAlias($this->getParent()->getMetaObject()->getRelatedObject($string)->getAliasWithNamespace());
         }
         return $this;
     }
@@ -902,14 +867,11 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
                 // If there is no relation path yet, create one
                 $this->object_relation_path_to_parent = RelationPathFactory::createForObject($this->getMetaObject());
                 // If the parent is based on another object, search for a relation to it - append it to the path if found
-                if (! $this->getParent()
-                    ->getMetaObject()
-                    ->is($this->getMetaObject())) {
+                if (! $this->getParent()->getMetaObject()->is($this->getMetaObject())) {
                     if ($this->object_relation_path_from_parent) {
                         // If we already know the path from the parents object to this widget, just reverse it
                         $this->object_relation_path_to_parent = $this->getObjectRelationPathToParent()->reverse();
-                    } elseif ($rel = $this->getMetaObject()->findRelation($this->getParent()
-                        ->getMetaObject(), true)) {
+                    } elseif ($rel = $this->getMetaObject()->findRelation($this->getParent()->getMetaObject(), true)) {
                         $this->object_relation_path_to_parent->appendRelation($rel);
                     }
                 }
@@ -920,9 +882,7 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
         } else {
             // If there is a relation path already built, check if it still fits to the current parent widget (which might have changed)
             // If not, removed the cached path and runt the getter again to try to find a new path
-            if (! $this->getParent()
-                ->getMetaObject()
-                ->is($this->object_relation_path_to_parent->getEndObject())) {
+            if (! $this->getParent()->getMetaObject()->is($this->object_relation_path_to_parent->getEndObject())) {
                 $this->object_relation_path_to_parent = null;
                 return $this->getObjectRelationPathToParent();
             }
@@ -988,9 +948,7 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
      */
     public function getUi()
     {
-        return $this->getPage()
-            ->getWorkbench()
-            ->ui();
+        return $this->getPage()->getWorkbench()->ui();
     }
 
     /**
@@ -1002,8 +960,7 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
     public function getHint()
     {
         if (! $this->hint && ($this instanceof iShowSingleAttribute) && $this->getAttribute()) {
-            $this->setHint($this->getAttribute()
-                ->getHint());
+            $this->setHint($this->getAttribute()->getHint());
         }
         return $this->hint;
     }
@@ -1262,10 +1219,7 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
     public function translate($message_id, array $placeholders = null, $number_for_plurification = null)
     {
         $message_id = trim($message_id);
-        return $this->getWorkbench()
-            ->getCoreApp()
-            ->getTranslator()
-            ->translate($message_id, $placeholders, $number_for_plurification);
+        return $this->getWorkbench()->getCoreApp()->getTranslator()->translate($message_id, $placeholders, $number_for_plurification);
     }
 
     public function getDoNotPrefill()

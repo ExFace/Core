@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\CommonLogic;
 
 use Symfony\Component\Filesystem\Filesystem;
@@ -51,7 +50,7 @@ class Filemanager extends Filesystem implements ExfaceClassInterface
     /**
      * Returns the absolute path to the base installation folder (e.g.
      * c:\xampp\htdocs\exface\exface)
-     * 
+     *
      * @return string
      */
     public function getPathToBaseFolder()
@@ -62,7 +61,7 @@ class Filemanager extends Filesystem implements ExfaceClassInterface
     /**
      * Returns the absolute path to the base installation folder (e.g.
      * c:\xampp\htdocs\exface\exface\vendor)
-     * 
+     *
      * @return string
      */
     public function getPathToVendorFolder()
@@ -73,7 +72,7 @@ class Filemanager extends Filesystem implements ExfaceClassInterface
     /**
      * Returns the absolute path to the base installation folder (e.g.
      * c:\xampp\htdocs\exface\exface\UserData)
-     * 
+     *
      * @return string
      */
     public function getPathToUserDataFolder()
@@ -90,7 +89,7 @@ class Filemanager extends Filesystem implements ExfaceClassInterface
     /**
      * Returns the absolute path to the main cache folder (e.g.
      * c:\xampp\htdocs\exface\exface\cache)
-     * 
+     *
      * @return string
      */
     public function getPathToCacheFolder()
@@ -107,7 +106,7 @@ class Filemanager extends Filesystem implements ExfaceClassInterface
     /**
      * Returns the absolute path to the installation specific config folder (e.g.
      * c:\xampp\htdocs\exface\exface\config)
-     * 
+     *
      * @return string
      */
     public function getPathToConfigFolder()
@@ -124,7 +123,7 @@ class Filemanager extends Filesystem implements ExfaceClassInterface
     /**
      * Returns the absolute path to the installation specific translations folder (e.g.
      * c:\xampp\htdocs\exface\exface\translations)
-     * 
+     *
      * @return string
      */
     public function getPathToTranslationsFolder()
@@ -140,7 +139,7 @@ class Filemanager extends Filesystem implements ExfaceClassInterface
 
     /**
      * Returns the absolute path to the log folder
-     * 
+     *
      * @return string
      */
     public function getPathToLogFolder()
@@ -156,7 +155,7 @@ class Filemanager extends Filesystem implements ExfaceClassInterface
 
     /**
      * Returns the filename of the core log.
-     * 
+     *
      * @return string
      */
     public function getCoreLogFilename()
@@ -166,7 +165,7 @@ class Filemanager extends Filesystem implements ExfaceClassInterface
 
     /**
      * Returns the absolute path to the log details folder
-     * 
+     *
      * @return string
      */
     public function getPathToLogDetailsFolder()
@@ -182,7 +181,7 @@ class Filemanager extends Filesystem implements ExfaceClassInterface
 
     /**
      * Returns the absolute path to the main backup folder
-     * 
+     *
      * @return string
      */
     public function getPathToBackupFolder()
@@ -198,7 +197,7 @@ class Filemanager extends Filesystem implements ExfaceClassInterface
 
     /**
      * Copies a complete folder to a new location including all sub folders
-     * 
+     *
      * @param string $originDir            
      * @param string $destinationDir            
      */
@@ -232,7 +231,7 @@ class Filemanager extends Filesystem implements ExfaceClassInterface
     /**
      * Deletes all files in the given folder.
      * Does not delete subfolders or files in subfolders
-     * 
+     *
      * @param string $path            
      */
     public function emptyDir($path)
@@ -263,7 +262,7 @@ class Filemanager extends Filesystem implements ExfaceClassInterface
 
     /**
      * Returns TRUE if the given string is an absolute path and FALSE otherwise
-     * 
+     *
      * @param string $path            
      * @return boolean
      */
@@ -277,7 +276,7 @@ class Filemanager extends Filesystem implements ExfaceClassInterface
 
     /**
      * Joins all paths given in the array and returns the resulting path
-     * 
+     *
      * @param array $paths            
      * @return string
      */

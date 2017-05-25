@@ -8,7 +8,7 @@ interface iShowText extends iCanBeAligned
 
     /**
      * Returns the text size (one of the EXF_TEXT_SIZE_xxx constants)
-     * 
+     *
      * @return string
      */
     public function getSize();
@@ -25,7 +25,7 @@ interface iShowText extends iCanBeAligned
 
     /**
      * Returns the text style (one of the EXF_TEXT_STYLE_xxx constants)
-     * 
+     *
      * @return string
      */
     public function getStyle();

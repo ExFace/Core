@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Widgets;
 
 use exface\Core\CommonLogic\Model\Attribute;
@@ -34,9 +33,7 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
             // If an attribute of a related object should be editable, we need it's system attributes as columns -
             // that is, at least a column with the UID of the related object, but maybe also some columns needed for
             // the behaviors of the related object
-            if ($column->getAttribute() && $rel_path = $column->getAttribute()
-                ->getRelationPath()
-                ->toString()) {
+            if ($column->getAttribute() && $rel_path = $column->getAttribute()->getRelationPath()->toString()) {
                 $rel = $this->getMetaObject()->getRelation($rel_path);
                 if ($rel->isForwardRelation()) {
                     $this->getParent()->addColumnsForSystemAttributes($rel_path);
@@ -54,16 +51,14 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
     /**
      * Creates a DataColumn from a meta attribute.
      * For relations the column will automatically show the label of the related object
-     * 
+     *
      * @param attribute $attribute            
      * @return \exface\Core\Widgets\DataColumn
      */
     function createColumnFromAttribute(Attribute $attribute, $caption = null, $hidden = null)
     {
         if ($attribute->isRelation()) {
-            $attribute = $this->getMetaObject()->getAttribute(RelationPath::relationPathAdd($attribute->getAlias(), $this->getMetaObject()
-                ->getRelatedObject($attribute->getAlias())
-                ->getLabelAlias()));
+            $attribute = $this->getMetaObject()->getAttribute(RelationPath::relationPathAdd($attribute->getAlias(), $this->getMetaObject()->getRelatedObject($attribute->getAlias())->getLabelAlias()));
         }
         
         $c = $this->getPage()->createWidget('DataColumn', $this);
@@ -84,7 +79,7 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
      * Returns the id of the column holding the UID of each row.
      * By default it is the column with the UID attribute of
      * the meta object displayed in by the data widget, but this can be changed in the UXON description if required.
-     * 
+     *
      * @return string
      */
     function getUidColumnId()
@@ -92,11 +87,8 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
         // If there is no UID column defined yet, try to generate one automatically
         if (is_null($this->uid_column_id)) {
             try {
-                if (! $col = $this->getColumnByAttributeAlias($this->getMetaObject()
-                    ->getUidAttribute()
-                    ->getAliasWithRelationPath())) {
-                    $col = $this->createColumnFromAttribute($this->getMetaObject()
-                        ->getUidAttribute(), null, true);
+                if (! $col = $this->getColumnByAttributeAlias($this->getMetaObject()->getUidAttribute()->getAliasWithRelationPath())) {
+                    $col = $this->createColumnFromAttribute($this->getMetaObject()->getUidAttribute(), null, true);
                     $this->addColumn($col);
                 }
                 $this->uid_column_id = $col->getId();
@@ -140,7 +132,7 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
 
     /**
      * Returns TRUE if this column group has a UID column or FALSE otherwise.
-     * 
+     *
      * @return boolean
      */
     public function hasUidColumn()
@@ -155,7 +147,7 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
 
     /**
      * Returns TRUE if this column group is the main column group of the parent widget
-     * 
+     *
      * @return boolean
      */
     public function isMainColumnGroup()
@@ -183,7 +175,7 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
 
     /**
      * Returns the data column matching the given id.
-     * 
+     *
      * @param unknown $column_id            
      * @return \exface\Core\Widgets\DataColumn|boolean
      */
@@ -233,9 +225,7 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
         foreach ($columns as $c) {
             $caption = null;
             if ($c->attribute_group_alias) {
-                foreach ($this->getMetaObject()
-                    ->getAttributeGroup($c->attribute_group_alias)
-                    ->getAttributes() as $attr) {
+                foreach ($this->getMetaObject()->getAttributeGroup($c->attribute_group_alias)->getAttributes() as $attr) {
                     $this->addColumn($this->createColumnFromAttribute($attr));
                 }
                 continue;
@@ -247,10 +237,7 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
             if (! $c->caption && $this->getMetaObject()->hasAttribute($c->attribute_alias)) {
                 $attr = $this->getMetaObject()->getAttribute($c->attribute_alias);
                 if ($attr->isLabel() && $attr->getRelationPath()->toString()) {
-                    $caption = $this->getMetaObject()
-                        ->getRelation($attr->getRelationPath()
-                        ->toString())
-                        ->getName();
+                    $caption = $this->getMetaObject()->getRelation($attr->getRelationPath()->toString())->getName();
                 } else {
                     $caption = $attr->getName();
                 }
@@ -282,7 +269,7 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
 
     /**
      * Returns the number of columns in this group (including hidden columns!)
-     * 
+     *
      * @return integer
      */
     public function countColumns()
@@ -292,7 +279,7 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
 
     /**
      * Returns the number of visible columns in this group
-     * 
+     *
      * @return integer
      */
     public function countColumnsVisible()

@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Widgets;
 
 use exface\Core\Interfaces\Widgets\iSupportLazyLoading;
@@ -19,7 +18,8 @@ class Diagram extends Container implements iSupportLazyLoading
 {
 
     private $lazy_loading = false;
- // A diagram will not be loaded via AJAX by default
+
+    // A diagram will not be loaded via AJAX by default
     private $lazy_loading_action = 'exface.Core.ReadData';
 
     private $diagram_options_attribute_alias = null;
@@ -38,7 +38,7 @@ class Diagram extends Container implements iSupportLazyLoading
      * Returns an array of shapes usable in this diagram.
      * Keep in mind, that these are not the actually plotted instances of
      * shapes, but rather "types of shapes".
-     * 
+     *
      * @return DiagramShape[]
      */
     public function getShapes()
@@ -116,7 +116,7 @@ class Diagram extends Container implements iSupportLazyLoading
 
     /**
      * (non-PHPdoc)
-     * 
+     *
      * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::getLazyLoading()
      */
     public function getLazyLoading()
@@ -126,7 +126,7 @@ class Diagram extends Container implements iSupportLazyLoading
 
     /**
      * (non-PHPdoc)
-     * 
+     *
      * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::setLazyLoading()
      */
     public function setLazyLoading($value)
@@ -136,7 +136,7 @@ class Diagram extends Container implements iSupportLazyLoading
 
     /**
      * (non-PHPdoc)
-     * 
+     *
      * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::getLazyLoadingAction()
      */
     public function getLazyLoadingAction()
@@ -146,7 +146,7 @@ class Diagram extends Container implements iSupportLazyLoading
 
     /**
      * (non-PHPdoc)
-     * 
+     *
      * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::setLazyLoadingAction()
      */
     public function setLazyLoadingAction($value)
@@ -158,8 +158,7 @@ class Diagram extends Container implements iSupportLazyLoading
     public function getDiagramObjectSelectorWidget()
     {
         if (is_null($this->diagram_object_selector_widget)) {
-            $this->setDiagramObjectSelectorWidget($this->getWorkbench()
-                ->createUxonObject());
+            $this->setDiagramObjectSelectorWidget($this->getWorkbench()->createUxonObject());
         }
         
         return $this->diagram_object_selector_widget;
@@ -173,14 +172,10 @@ class Diagram extends Container implements iSupportLazyLoading
             
             $widget_or_uxon->widget_type = $widget_or_uxon->widget_type ? $widget_or_uxon->widget_type : 'ComboTable';
             $widget = $this->getPage()->createWidget($widget_or_uxon->widget_type, $this, $widget_or_uxon);
-            $widget->setMetaObjectId($this->getMetaObject()
-                ->getId());
-            $widget->setAttributeAlias($this->getMetaObject()
-                ->getUidAlias());
-            $widget->setTableObjectAlias($this->getMetaObject()
-                ->getAliasWithNamespace());
-            $widget->setCaption($this->getMetaObject()
-                ->getName());
+            $widget->setMetaObjectId($this->getMetaObject()->getId());
+            $widget->setAttributeAlias($this->getMetaObject()->getUidAlias());
+            $widget->setTableObjectAlias($this->getMetaObject()->getAliasWithNamespace());
+            $widget->setCaption($this->getMetaObject()->getName());
             $widget->setDisabled(false);
             // $this->diagram_object_selector_widget->setWidget($widget);
         } elseif ($widget_or_uxon instanceof WidgetInterface) {

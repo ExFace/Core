@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Factories;
 
 use exface;
@@ -14,7 +13,7 @@ abstract class AppFactory extends AbstractNameResolverFactory
 
     /**
      * Creates a new app from the given name resolver
-     * 
+     *
      * @param NameResolver $name_resolver            
      * @return AppInterface
      */

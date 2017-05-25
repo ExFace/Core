@@ -22,11 +22,12 @@ class Form extends Panel implements iHaveButtons
     private $buttons = array();
 
     private $button_widget_type = 'Button';
- // Which type of Buttons should be used. Can be overridden by inheriting widgets
+
+    // Which type of Buttons should be used. Can be overridden by inheriting widgets
     
     /**
      * (non-PHPdoc)
-     * 
+     *
      * @see \exface\Core\Interfaces\Widgets\iHaveButtons::getButtons()
      * @return Button[]
      */
@@ -37,7 +38,7 @@ class Form extends Panel implements iHaveButtons
 
     /**
      * (non-PHPdoc)
-     * 
+     *
      * @see \exface\Core\Interfaces\Widgets\iHaveButtons::setButtons()
      */
     public function setButtons(array $buttons_array)
@@ -56,24 +57,19 @@ class Form extends Panel implements iHaveButtons
 
     /**
      * (non-PHPdoc)
-     * 
+     *
      * @see \exface\Core\Interfaces\Widgets\iHaveButtons::addButton()
      */
     public function addButton(Button $button_widget)
     {
         $button_widget->setParent($this);
-        $button_widget->setMetaObjectId($this->getMetaObject()
-            ->getId());
+        $button_widget->setMetaObjectId($this->getMetaObject()->getId());
         
         // If the button has an action, that is supposed to modify data, we need to make sure, that the panel
         // contains alls system attributes of the base object, because they may be needed by the business logic
-        if ($button_widget->getAction() && $button_widget->getAction()
-            ->getMetaObject()
-            ->is($this->getMetaObject()) && $button_widget->getAction()->implementsInterface('iModifyData')) {
+        if ($button_widget->getAction() && $button_widget->getAction()->getMetaObject()->is($this->getMetaObject()) && $button_widget->getAction()->implementsInterface('iModifyData')) {
             /* @var $attr \exface\Core\CommonLogic\Model\Attribute */
-            foreach ($this->getMetaObject()
-                ->getAttributes()
-                ->getSystem() as $attr) {
+            foreach ($this->getMetaObject()->getAttributes()->getSystem() as $attr) {
                 if (count($this->findChildrenByAttribute($attr)) <= 0) {
                     $widget = $this->getPage()->createWidget('InputHidden', $this);
                     $widget->setAttributeAlias($attr->getAlias());

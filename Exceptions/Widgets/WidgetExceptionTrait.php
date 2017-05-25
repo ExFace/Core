@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Exceptions\Widgets;
 
 use exface\Core\Interfaces\WidgetInterface;
@@ -64,13 +63,7 @@ trait WidgetExceptionTrait {
             $uxon_tab->setCaption('Widget UXON');
             $request_widget = WidgetFactory::create($page, 'Html');
             $uxon_tab->addWidget($request_widget);
-            $request_widget->setValue('<pre>' . (! $this->getWidget()
-                ->exportUxonObjectOriginal()
-                ->isEmpty() ? $this->getWidget()
-                ->exportUxonObjectOriginal()
-                ->toJson(true) : $this->getWidget()
-                ->exportUxonObject()
-                ->toJson(true)) . '</pre>');
+            $request_widget->setValue('<pre>' . (! $this->getWidget()->exportUxonObjectOriginal()->isEmpty() ? $this->getWidget()->exportUxonObjectOriginal()->toJson(true) : $this->getWidget()->exportUxonObject()->toJson(true)) . '</pre>');
             $debug_widget->addTab($uxon_tab);
         }
         return $debug_widget;

@@ -7,7 +7,7 @@ use exface\Core\Factories\ConditionGroupFactory;
 
 /**
  * A filter group query part represents a condition group used for filtering in a query.
- * 
+ *
  * @author Andrej Kabachnik
  *        
  */
@@ -34,7 +34,7 @@ class QueryPartFilterGroup extends QueryPart
 
     /**
      * Adds a filter to the group.
-     * 
+     *
      * @param
      *            QueryPartFilter
      * @return \exface\Core\CommonLogic\QueryBuilder\QueryPartFilterGroup
@@ -52,7 +52,7 @@ class QueryPartFilterGroup extends QueryPart
 
     /**
      * Creates a filter from a given condition object and adds it to the group
-     * 
+     *
      * @param Condition $condition            
      * @return \exface\Core\CommonLogic\QueryBuilder\QueryPartFilterGroup
      */
@@ -64,7 +64,7 @@ class QueryPartFilterGroup extends QueryPart
 
     /**
      * Adds a nested filter group.
-     * 
+     *
      * @param QueryPartFilterGroup $group            
      * @return \exface\Core\CommonLogic\QueryBuilder\QueryPartFilterGroup
      */
@@ -77,7 +77,7 @@ class QueryPartFilterGroup extends QueryPart
 
     /**
      * Creates a filter group from a given condition group and adds it to the group
-     * 
+     *
      * @param ConditionGroup $group            
      * @return \exface\Core\CommonLogic\QueryBuilder\QueryPartFilterGroup
      */
@@ -107,7 +107,7 @@ class QueryPartFilterGroup extends QueryPart
 
     /**
      * Returns an array of filters an nested filter groups - that is, all query parts contained in this filter group
-     * 
+     *
      * @return QueryPart[]
      */
     public function getFiltersAndNestedGroups()
@@ -117,7 +117,7 @@ class QueryPartFilterGroup extends QueryPart
 
     /**
      * Creates a filter query part from a condition
-     * 
+     *
      * @param Condition $condition            
      * @return \exface\Core\CommonLogic\QueryBuilder\QueryPartFilter
      */
@@ -130,7 +130,7 @@ class QueryPartFilterGroup extends QueryPart
 
     /**
      * Creates a filter group query part from a condition group
-     * 
+     *
      * @param ConditionGroup $group            
      * @return \exface\Core\CommonLogic\QueryBuilder\QueryPartFilterGroup
      */
@@ -149,7 +149,7 @@ class QueryPartFilterGroup extends QueryPart
 
     /**
      * A filter group uses all relations used by it's filters and subgroups
-     * 
+     *
      * @see \exface\Core\CommonLogic\QueryBuilder\QueryPart::getUsedRelations()
      */
     public function getUsedRelations($relation_type = null)
@@ -167,7 +167,7 @@ class QueryPartFilterGroup extends QueryPart
     /**
      * Returns an array of meta object ids, that are assumed to be unique in the result of the query because of filtering for
      * a single instance of that meta object.
-     * 
+     *
      * @return array
      */
     public function getObjectIdsSafeForAggregation()
@@ -176,12 +176,7 @@ class QueryPartFilterGroup extends QueryPart
         foreach ($this->getFilters() as $qpart) {
             // TODO The current checks do not really ensure, that the object is unique. Need a better idea!
             if ($qpart->getComparator() == EXF_COMPARATOR_IS || $qpart->getComparator() == EXF_COMPARATOR_EQUALS) {
-                $ids[] = ($qpart->getAttribute()->isRelation() ? $this->getQuery()
-                    ->getMainObject()
-                    ->getRelatedObject($qpart->getAlias())
-                    ->getId() : $qpart->getAttribute()
-                    ->getObject()
-                    ->getId());
+                $ids[] = ($qpart->getAttribute()->isRelation() ? $this->getQuery()->getMainObject()->getRelatedObject($qpart->getAlias())->getId() : $qpart->getAttribute()->getObject()->getId());
             }
         }
         foreach ($this->getNestedGroups() as $qpart) {
@@ -210,7 +205,7 @@ class QueryPartFilterGroup extends QueryPart
     /**
      * Returns a filter query part matching the given alias or FALSE if no match found.
      * Checks nested filter groups recursively.
-     * 
+     *
      * @param string $alias            
      * @return QueryPartFilter || boolean
      */

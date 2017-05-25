@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Contexts\Scopes;
 
 use exface\Core\Interfaces\Contexts\ContextScopeInterface;
@@ -31,7 +30,7 @@ abstract class AbstractContextScope implements ContextScopeInterface
      * This may be connecting to DBs,
      * reading files, preparing data structures, etc. This method is called right after each context scope is
      * created.
-     * 
+     *
      * @return AbstractContextScope
      */
     protected function init()
@@ -42,7 +41,7 @@ abstract class AbstractContextScope implements ContextScopeInterface
     /**
      * Returns the filter context of the current scope.
      * Shortcut for calling get_context('filter')
-     * 
+     *
      * @return FilterContext
      */
     public function getFilterContext()
@@ -53,7 +52,7 @@ abstract class AbstractContextScope implements ContextScopeInterface
     /**
      * Returns the action context of the current scope.
      * Shortcut for calling get_context ('action')
-     * 
+     *
      * @return ActionContext
      */
     public function getActionContext()
@@ -63,7 +62,7 @@ abstract class AbstractContextScope implements ContextScopeInterface
 
     /**
      * Returns an array with all contexts available in this scope.
-     * 
+     *
      * @return AbstractContext[]
      */
     public function getAllContexts()
@@ -75,7 +74,7 @@ abstract class AbstractContextScope implements ContextScopeInterface
      * Returns the context matching the given alias (like "action", "filter", "test", etc.).
      * If the context
      * is not initialized yet, it will be initialized now and saved contexts will be loaded.
-     * 
+     *
      * @param string $alias            
      * @return AbstractContext
      */
@@ -107,14 +106,14 @@ abstract class AbstractContextScope implements ContextScopeInterface
 
     /**
      * Loads data saved in the current context scope into the given context object
-     * 
+     *
      * @return AbstractContextScope
      */
     abstract public function loadContextData(ContextInterface $context);
 
     /**
      * Saves data of all contexts in the current scope to the scopes storage
-     * 
+     *
      * @return AbstractContextScope
      */
     abstract public function saveContexts();
@@ -146,7 +145,7 @@ abstract class AbstractContextScope implements ContextScopeInterface
      * the session id for window or session context, the user id
      * for user context, the app alias for app contexts, etc. This id is mainly used as a key for storing information from
      * the context (see session scope example).
-     * 
+     *
      * @return string
      */
     public function getScopeId()

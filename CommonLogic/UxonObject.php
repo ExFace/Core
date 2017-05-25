@@ -11,7 +11,7 @@ class UxonObject extends \stdClass implements \IteratorAggregate
 
     /**
      * Returns true if there are not properties in the UXON object
-     * 
+     *
      * @return boolean
      */
     public function isEmpty()
@@ -27,7 +27,7 @@ class UxonObject extends \stdClass implements \IteratorAggregate
     /**
      * Returns the actual UXON code (in JSON notation).
      * The output can be optionally prettified, improving human readability
-     * 
+     *
      * @param boolean $prettify            
      */
     public function toJson($prettify = false)
@@ -38,7 +38,7 @@ class UxonObject extends \stdClass implements \IteratorAggregate
 
     /**
      * Creates a UXON object from a JSON string
-     * 
+     *
      * @param unknown $uxon            
      * @return UxonObject
      */
@@ -57,7 +57,7 @@ class UxonObject extends \stdClass implements \IteratorAggregate
     /**
      * Creates a UXON object from a standard class object (e.g.
      * the result of json_decode())
-     * 
+     *
      * @param \stdClass $uxon            
      * @return UxonObject
      */
@@ -74,7 +74,7 @@ class UxonObject extends \stdClass implements \IteratorAggregate
      * Creates a UXON object from an array.
      * The resulting UXON will be an array itself, but alle elements will get transformed
      * to UXON objects.
-     * 
+     *
      * @param array $uxon            
      * @return array
      */
@@ -109,7 +109,7 @@ class UxonObject extends \stdClass implements \IteratorAggregate
 
     /**
      * Attempts to create a UxonObject autodetecting the type of input
-     * 
+     *
      * @param mixed $string_or_array_or_object            
      * @return UxonObject
      */
@@ -128,7 +128,7 @@ class UxonObject extends \stdClass implements \IteratorAggregate
 
     /**
      * Returns a property specified by name (alternative to $uxon->name)
-     * 
+     *
      * @param string $name            
      * @return mixed
      */
@@ -169,7 +169,7 @@ class UxonObject extends \stdClass implements \IteratorAggregate
 
     /**
      * Returns all properties of this UXON object as an assotiative array
-     * 
+     *
      * @return array
      */
     public function getPropertiesAll()
@@ -180,7 +180,7 @@ class UxonObject extends \stdClass implements \IteratorAggregate
     /**
      * Adds a property to the UXON object.
      * Property values may be scalars, arrays, stdClasses or other UxonObjects
-     * 
+     *
      * @param string $property_name            
      * @param mixed $value_or_object_or_string            
      */
@@ -200,7 +200,7 @@ class UxonObject extends \stdClass implements \IteratorAggregate
      * Extends this UXON object with properties of the given one.
      * Conflicting properties will be overridden with
      * values from the argument object!
-     * 
+     *
      * @param UxonObject $extend_by_uxon            
      * @return UxonObject
      */
@@ -215,7 +215,7 @@ class UxonObject extends \stdClass implements \IteratorAggregate
      * Returns a full copy of the UXON object.
      * This is a deep copy including arrays, etc. in contrast to the built-in
      * PHP clone.
-     * 
+     *
      * @return UxonObject
      */
     public function copy()
@@ -237,7 +237,7 @@ class UxonObject extends \stdClass implements \IteratorAggregate
 
     /**
      * Removes the given property from the UXON object
-     * 
+     *
      * @param string $name            
      * @return \exface\Core\CommonLogic\UxonObject
      */

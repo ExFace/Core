@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Factories;
 
 use exface\Core\Interfaces\NameResolverInterface;
@@ -10,7 +9,7 @@ abstract class ModelLoaderFactory extends AbstractNameResolverFactory
 
     /**
      * Creates a ModelLoader
-     * 
+     *
      * @param NameResolverInterface $name_resolver            
      * @return ModelLoaderInterface
      */

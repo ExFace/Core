@@ -38,27 +38,17 @@ class QueryPartAttribute extends QueryPart
         } else {
             // fetch relations
             // first make sure, the attribute has a relation path (otherwise we do not need to to anything
-            if ($this->getAttribute()
-                ->getRelationPath()
-                ->toString()) {
+            if ($this->getAttribute()->getRelationPath()->toString()) {
                 // split the path in case it contains multiple relations
-                $rel_aliases = RelationPath::relationPathParse($this->getAttribute()
-                    ->getRelationPath()
-                    ->toString());
+                $rel_aliases = RelationPath::relationPathParse($this->getAttribute()->getRelationPath()->toString());
                 // if it is one relation only, use it
-                if (! $rel_aliases && $this->getAttribute()
-                    ->getRelationPath()
-                    ->toString())
-                    $rel_aliases[] = $this->getAttribute()
-                        ->getRelationPath()
-                        ->toString();
+                if (! $rel_aliases && $this->getAttribute()->getRelationPath()->toString())
+                    $rel_aliases[] = $this->getAttribute()->getRelationPath()->toString();
                 // iterate through the found relations
                 if ($rel_aliases) {
                     $last_alias = '';
                     foreach ($rel_aliases as $alias) {
-                        $rels[$last_alias . $alias] = $this->getQuery()
-                            ->getMainObject()
-                            ->getRelation($last_alias . $alias);
+                        $rels[$last_alias . $alias] = $this->getQuery()->getMainObject()->getRelation($last_alias . $alias);
                         $last_alias .= $alias . RelationPath::RELATION_SEPARATOR;
                     }
                 }
@@ -103,7 +93,7 @@ class QueryPartAttribute extends QueryPart
      * Returns the data source specific address of the attribute represented by this query part.
      * Depending
      * on the data source, this can be an SQL column name, a file name, etc.
-     * 
+     *
      * @return string
      */
     public function getDataAddress()
@@ -118,15 +108,12 @@ class QueryPartAttribute extends QueryPart
 
     /**
      * Parses the alias of this query part as an ExFace expression and returns the expression object
-     * 
+     *
      * @return \exface\Core\CommonLogic\Model\Expression
      */
     public function getExpression()
     {
-        return $this->getWorkbench()
-            ->model()
-            ->parseExpression($this->getAlias(), $this->getQuery()
-            ->getMainObject());
+        return $this->getWorkbench()->model()->parseExpression($this->getAlias(), $this->getQuery()->getMainObject());
     }
 
     public function rebase(AbstractQueryBuilder $new_query, $relation_path_to_new_base_object)

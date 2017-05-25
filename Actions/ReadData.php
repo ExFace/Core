@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Actions;
 
 use exface\Core\Interfaces\Actions\iReadData;
@@ -16,27 +15,16 @@ class ReadData extends AbstractAction implements iReadData
     protected function perform()
     {
         $data_sheet = $this->getInputDataSheet()->copy();
-        $this->setAffectedRows($data_sheet->removeRows()
-            ->dataRead());
+        $this->setAffectedRows($data_sheet->removeRows()->dataRead());
         
         // Replace the filter conditions in the current window context by the ones in this data sheet
         // It is important to do it after the data had been read, because otherwise the newly set
         // context filters would affect the result of the read operation (context filters are automatically
         // applied to the query, each time, data is fetched)
         if ($this->getUpdateFilterContext()) {
-            $this->getApp()
-                ->getWorkbench()
-                ->context()
-                ->getScopeWindow()
-                ->getFilterContext()
-                ->removeAllConditions();
+            $this->getApp()->getWorkbench()->context()->getScopeWindow()->getFilterContext()->removeAllConditions();
             foreach ($data_sheet->getFilters()->getConditions() as $condition) {
-                $this->getApp()
-                    ->getWorkbench()
-                    ->context()
-                    ->getScopeWindow()
-                    ->getFilterContext()
-                    ->addCondition($condition);
+                $this->getApp()->getWorkbench()->context()->getScopeWindow()->getFilterContext()->addCondition($condition);
             }
         }
         
@@ -73,17 +61,9 @@ class ReadData extends AbstractAction implements iReadData
         if (! $this->getCalledByWidget()) {
             throw new ActionCallingWidgetNotSpecifiedError($this, 'Security violaion! Cannot read data without a target widget in action "' . $this->getAliasWithNamespace() . '"!', '6T5DOSV');
         }
-        $elem = $this->getApp()
-            ->getWorkbench()
-            ->ui()
-            ->getTemplate()
-            ->getElement($this->getCalledByWidget());
+        $elem = $this->getApp()->getWorkbench()->ui()->getTemplate()->getElement($this->getCalledByWidget());
         $output = $elem->prepareData($this->getResultDataSheet());
-        return $this->getApp()
-            ->getWorkbench()
-            ->ui()
-            ->getTemplate()
-            ->encodeData($output);
+        return $this->getApp()->getWorkbench()->ui()->getTemplate()->encodeData($output);
     }
 }
 ?>

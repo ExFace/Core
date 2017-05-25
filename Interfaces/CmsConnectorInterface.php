@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Interfaces;
 
 interface CmsConnectorInterface extends ExfaceClassInterface
@@ -7,14 +6,14 @@ interface CmsConnectorInterface extends ExfaceClassInterface
 
     /**
      * Returns the contents of the page specified by the given id
-     * 
+     *
      * @param string $id            
      */
     public function getPageContents($id);
 
     /**
      * Returns the id of the current page in the CMS
-     * 
+     *
      * @return string
      */
     public function getPageId();
@@ -22,14 +21,14 @@ interface CmsConnectorInterface extends ExfaceClassInterface
     /**
      * Returns the title of the CMS page with the given id.
      * If no id specified, the title of the current CMS page is returned.
-     * 
+     *
      * @param unknown $resource_id            
      */
     public function getPageTitle($page_id = null);
 
     /**
      * Returns an href-link generated from document id an URL parameters.
-     * 
+     *
      * @param string $doc_id            
      * @param string $url_params
      *            e.g. &param1=val1&param2=val2
@@ -41,7 +40,7 @@ interface CmsConnectorInterface extends ExfaceClassInterface
      * Returns an href-link compilant with the current CMS based on a given URL.
      * This allows to wrap
      * any URL in CMS-specific code, add trackers, etc.
-     * 
+     *
      * @param string $url            
      * @return string
      */
@@ -51,7 +50,7 @@ interface CmsConnectorInterface extends ExfaceClassInterface
      * Returns an internal file link compliant with the current CMS based on a given URL.
      * This allows to wrap
      * any URL in CMS-specific code, add trackers, etc.
-     * 
+     *
      * @param string $path_absolute            
      * @return string
      */
@@ -61,7 +60,7 @@ interface CmsConnectorInterface extends ExfaceClassInterface
      * Removes parameters used by the CMS for internal needs from the given parameter array.
      * $_GET or $_POST
      * can be passed to this method to get rid of all kinds of CMS-specific variables
-     * 
+     *
      * @param array $param_array            
      * @return array
      */
@@ -69,7 +68,7 @@ interface CmsConnectorInterface extends ExfaceClassInterface
 
     /**
      * Returns the user name of the user currently logged in
-     * 
+     *
      * @return string
      */
     public function getUserName();
@@ -86,14 +85,14 @@ interface CmsConnectorInterface extends ExfaceClassInterface
     /**
      * Returns the locale string for the current user (e.g.
      * "en_US" or only "en" if merely the language is specified within the CMS).
-     * 
+     *
      * @return string
      */
     public function getUserLocale();
 
     /**
      * Returns the currently running instance of the app, the connector belongs to.
-     * 
+     *
      * @return AppInterface
      */
     public function getApp();

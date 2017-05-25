@@ -13,7 +13,7 @@ use exface\Core\CommonLogic\Model\Relation;
 
 /**
  * The text widget simply shows text with an optional title created from the caption of the widget
- * 
+ *
  * @author Andrej Kabachnik
  *        
  */
@@ -99,9 +99,7 @@ class Text extends AbstractWidget implements iShowSingleAttribute, iHaveValue, i
                 // prefill object (this is possible, if the prefill object sits somewhere along the relation path. So,
                 // traverse up this path to see if it includes the prefill object. If so, add a column to the prefill
                 // sheet, that contains the widget's attribute with a relation path relative to the prefill object.
-                if ($rel_path = $this->getAttribute()
-                    ->getRelationPath()
-                    ->toString()) {
+                if ($rel_path = $this->getAttribute()->getRelationPath()->toString()) {
                     $rel_parts = RelationPath::relationPathParse($rel_path);
                     if (is_array($rel_parts)) {
                         $related_obj = $this->getMetaObject();
@@ -117,29 +115,23 @@ class Text extends AbstractWidget implements iShowSingleAttribute, iHaveValue, i
                     }
                     // If the prefill object is not in the widget's relation path, try to find a relation from this widget's
                     // object to the data sheet object and vice versa
-                }                // If this widget represents the direct relation attribute, the attribute to display would be the UID of the
-                // of the related object (e.g. trying to fill the order positions attribute "ORDER" relative to the object
-                // "ORDER" should result in the attribute UID of ORDER because it holds the same value)
-                elseif ($this->getAttribute()->isRelation() && $this->getAttribute()
-                    ->getRelation()
-                    ->getRelatedObject()
-                    ->is($data_sheet->getMetaObject())) {
-                    $data_sheet->getColumns()->addFromExpression($this->getAttribute()
-                        ->getRelation()
-                        ->getRelatedObjectKeyAlias());
-                }                // If the attribute is not a relation itself, we still can use it for prefills if we find a relation to access
-                // it from the $data_sheet's object. In order to do this, we need to find relations from the prefill object to
-                // the object of this widget. However, it does not make sense to use reverse relations because the corresponding
-                // values would need to get aggregated in the prefill sheet in most cases and we don't have a meaningfull
-                // aggregator at hand at this time. Direct (not inherited) relations should be preffered. That is, a relation from
-                // the prefill object to an object, this widget's object extends, can still be used in most cases, but a direct
-                // relation is safer. Not sure, if inherited relations will work if the extending object has a different data address...
+                } // If this widget represents the direct relation attribute, the attribute to display would be the UID of the
+                  // of the related object (e.g. trying to fill the order positions attribute "ORDER" relative to the object
+                  // "ORDER" should result in the attribute UID of ORDER because it holds the same value)
+                elseif ($this->getAttribute()->isRelation() && $this->getAttribute()->getRelation()->getRelatedObject()->is($data_sheet->getMetaObject())) {
+                    $data_sheet->getColumns()->addFromExpression($this->getAttribute()->getRelation()->getRelatedObjectKeyAlias());
+                } // If the attribute is not a relation itself, we still can use it for prefills if we find a relation to access
+                  // it from the $data_sheet's object. In order to do this, we need to find relations from the prefill object to
+                  // the object of this widget. However, it does not make sense to use reverse relations because the corresponding
+                  // values would need to get aggregated in the prefill sheet in most cases and we don't have a meaningfull
+                  // aggregator at hand at this time. Direct (not inherited) relations should be preffered. That is, a relation from
+                  // the prefill object to an object, this widget's object extends, can still be used in most cases, but a direct
+                  // relation is safer. Not sure, if inherited relations will work if the extending object has a different data address...
                 else {
                     // Iterate over all forward relations
                     $inherited_rel = null;
                     $direct_rel = null;
-                    foreach ($data_sheet->getMetaObject()->findRelations($this->getMetaObject()
-                        ->getId(), Relation::RELATION_TYPE_FORWARD) as $rel) {
+                    foreach ($data_sheet->getMetaObject()->findRelations($this->getMetaObject()->getId(), Relation::RELATION_TYPE_FORWARD) as $rel) {
                         if ($rel->isInherited() && ! $inherited_rel) {
                             // Remember the first inherited relation in case there will be no direct relations
                             $inherited_rel = $rel;
@@ -156,8 +148,7 @@ class Text extends AbstractWidget implements iShowSingleAttribute, iHaveValue, i
                     if ($direct_rel) {
                         $rel_path = RelationPath::relationPathAdd($rel->getAlias(), $this->getAttribute()->getAlias());
                         if ($data_sheet->getMetaObject()->hasAttribute($rel_path)) {
-                            $data_sheet->getColumns()->addFromAttribute($data_sheet->getMetaObject()
-                                ->getAttribute($rel_path));
+                            $data_sheet->getColumns()->addFromAttribute($data_sheet->getMetaObject()->getAttribute($rel_path));
                         }
                     }
                 }
@@ -190,7 +181,7 @@ class Text extends AbstractWidget implements iShowSingleAttribute, iHaveValue, i
 
     /**
      * Prefills the input with a value taken from the corresponding column of a given data sheet
-     * 
+     *
      * @see \exface\Core\Widgets\AbstractWidget::prefill()
      */
     protected function doPrefill(\exface\Core\Interfaces\DataSheets\DataSheetInterface $data_sheet)
@@ -202,8 +193,7 @@ class Text extends AbstractWidget implements iShowSingleAttribute, iHaveValue, i
         // To figure out, which attributes we need from the data sheet, we just run prepare_data_sheet_to_prefill()
         // Since an Input only needs one value, we take the first one from the returned array, fetch it from the data sheet
         // and set it as the value of our input.
-        $prefill_columns = $this->prepareDataSheetToPrefill(DataSheetFactory::createFromObject($data_sheet->getMetaObject()))
-            ->getColumns();
+        $prefill_columns = $this->prepareDataSheetToPrefill(DataSheetFactory::createFromObject($data_sheet->getMetaObject()))->getColumns();
         if ($col = $prefill_columns->getFirst()) {
             if (count($data_sheet->getColumnValues($col->getName(false))) > 1 && $this->getAggregateFunction()) {
                 $value = \exface\Core\CommonLogic\DataSheets\DataColumn::aggregateValues($data_sheet->getColumnValues($col->getName(false)), $this->getAggregateFunction());

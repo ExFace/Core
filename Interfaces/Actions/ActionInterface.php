@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Interfaces\Actions;
 
 use exface\Core\Interfaces\ExfaceClassInterface;
@@ -53,7 +52,7 @@ interface ActionInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
 
     /**
      * Returns the widget, that called the action (typically a button) or null, if the action was called internally or via AJAX.
-     * 
+     *
      * @return WidgetInterface IDEA Returning NULL in certain cases does not feel right. We had to add the called_by_widget() method to be able to determine the meta_object
      *         of the dialog even if the action does not have an input data sheet yet (when drawing the dialog in ajax templates). At that point,
      *         the action does not know, what object it is going to be performed upon. I don't feel comfortable with this solution though, since called_by_widget
@@ -69,7 +68,7 @@ interface ActionInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
 
     /**
      * Sets the widget, that called the action: either taking an instantiated widget object or a widget link (text, uxon or object)
-     * 
+     *
      * @param
      *            AbstractWidget || WidgetLink || string $widget_or_widget_link
      * @return ActionInterface
@@ -98,7 +97,7 @@ interface ActionInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
     /**
      * Returns the resulting data sheet.
      * Performs the action if it had not been performed yet.
-     * 
+     *
      * @return DataSheetInterface
      */
     public function getResultDataSheet();
@@ -110,14 +109,14 @@ interface ActionInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
      * In contrast to get_result_data_sheet(), the get_result() methods can return anything. While get_result_data_sheet() is important
      * for concatennation of actions and actually performing them, the output is whatever the user actually sees and, perhaps even more importantly,
      * whatever is compared to there reference when testing actions.
-     * 
+     *
      * @return mixed
      */
     public function getResult();
 
     /**
      * Returns a string representing the result object of the action (= a string version of get_result())
-     * 
+     *
      * @return string
      */
     public function getResultStringified();
@@ -125,21 +124,21 @@ interface ActionInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
     /**
      * Returns a printable version of the result: HTML or text if the result is a widget, UXON for data sheets, etc.
      * By default, it's the UXON of the result data sheet
-     * 
+     *
      * @return string
      */
     public function getResultOutput();
 
     /**
      * Returns a human readable message, describing, what the action has done.
-     * 
+     *
      * @return string
      */
     public function getResultMessage();
 
     /**
      * Sets the data sheet, the action is supposed to be performed upon.
-     * 
+     *
      * @param
      *            DataSheet || UxonObject || string $data_sheet_or_uxon
      * @throws ActionInputError if the passed input data is of an unsupported type
@@ -151,14 +150,14 @@ interface ActionInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
      * Returns the data sheet, the action is performed upon.
      * It remains untouched even after
      * the action is performed, so you can always return to the input data.
-     * 
+     *
      * @return DataSheetInterface
      */
     public function getInputDataSheet();
 
     /**
      * Returns the minimum number of rows the action expects in the input data sheet.
-     * 
+     *
      * @return integer
      */
     public function getInputRowsMin();
@@ -172,7 +171,7 @@ interface ActionInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
 
     /**
      * Returns the maximum number of rows the action expects in the input data sheet.
-     * 
+     *
      * @return integer
      */
     public function getInputRowsMax();
@@ -190,7 +189,7 @@ interface ActionInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
      * from the input data sheet, because this is the data the action is performed with. If not input
      * data is set, the meta object of the calling widget is used because it is most likely, that it's
      * data will be the input (i.e. after an ajax-request).
-     * 
+     *
      * @throws ActionObjectNotSpecifiedError if neither input data nor calling widget are known
      * @return Object
      */
@@ -222,7 +221,7 @@ interface ActionInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
      * An action may override this method for a more complex algorithm
      * to determine, if it can be undone. In particular, the result may vary depending on the current application state: a complex action
      * may become not undoable after performing som checks on the actual data, while it would be undoable by default.
-     * 
+     *
      * @return boolean
      */
     public function isUndoable();
@@ -239,7 +238,7 @@ interface ActionInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
      * By default all actions capable of modifying data return TRUE,
      * but the flag may change, if there had been no data actually modified while performing the action. Assuming TRUE if a data modification is
      * possible, makes sure, no modifications actually remains undiscovered because of developers forgetting to set the appropriate flag of an action.
-     * 
+     *
      * @return boolean
      */
     public function isDataModified();
@@ -290,7 +289,7 @@ interface ActionInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
 
     /**
      * Returns the default name of the action translated to the currently used locale.
-     * 
+     *
      * @return string
      */
     public function getName();
@@ -304,7 +303,7 @@ interface ActionInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
 
     /**
      * Returns TRUE if the action has a name or a name translation key translatable in the current language and FALSE otherwise
-     * 
+     *
      * @return boolean
      */
     public function hasName();
@@ -345,7 +344,7 @@ interface ActionInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
 
     /**
      * Returns the text for the result message if one was set in the UXON description of the action and NULL otherwise.
-     * 
+     *
      * @return string
      */
     public function getResultMessageText();

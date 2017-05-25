@@ -28,8 +28,7 @@ class DuplicateObjectDialog extends EditObjectDialog
                 $data_sheet->addFilterFromColumnValues($data_sheet->getUidColumn());
                 $data_sheet->dataRead();
             }
-            $data_sheet->getColumns()->removeByKey($data_sheet->getUidColumn()
-                ->getName());
+            $data_sheet->getColumns()->removeByKey($data_sheet->getUidColumn()->getName());
         }
         
         $this->getWidget()->prefill($data_sheet);

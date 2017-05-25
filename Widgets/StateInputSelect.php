@@ -57,22 +57,15 @@ class StateInputSelect extends InputSelect
     {
         // Check if the attribute is the state in the StateMachineBehavior of it's object
         /* @var $smb \exface\Core\Behaviors\StateMachineBehavior */
-        $smb = $this->getAttribute()
-            ->getObject()
-            ->getBehaviors()
-            ->getByAlias('exface.Core.Behaviors.StateMachineBehavior');
+        $smb = $this->getAttribute()->getObject()->getBehaviors()->getByAlias('exface.Core.Behaviors.StateMachineBehavior');
         if (! $smb || ! $this->getAttribute() || $this->getAttribute()->getAlias() != $smb->getStateAttributeAlias()) {
             $error_text = 'Cannot use the widget "' . $this->getWidgetType() . '" for attribute "' . $this->getAttributeAlias() . '" of object "' . $this->getMetaObject()->getAliasWithNamespace() . '": ';
             if (! $smb) {
-                $error_text .= 'The object "' . $this->getAttribute()
-                    ->getObject()
-                    ->getAliasWithNamespace() . '" does not have the StateMachineBehavior!';
+                $error_text .= 'The object "' . $this->getAttribute()->getObject()->getAliasWithNamespace() . '" does not have the StateMachineBehavior!';
             } elseif (! $this->getAttribute()) {
                 $error_text .= 'Attribute not found!';
             } else {
-                $error_text .= 'The attribute is not the state attribute - use "' . RelationPath::relationPathAdd($this->getAttribute()
-                    ->getRelationPath()
-                    ->toString(), $smb->getStateAttributeAlias()) . '" instead!';
+                $error_text .= 'The attribute is not the state attribute - use "' . RelationPath::relationPathAdd($this->getAttribute()->getRelationPath()->toString(), $smb->getStateAttributeAlias()) . '" instead!';
             }
             
             throw new WidgetConfigurationError($this, $error_text, '6UMTC14');
@@ -87,10 +80,7 @@ class StateInputSelect extends InputSelect
 
     protected function addStateNumbers($options)
     {
-        $smb = $this->getAttribute()
-            ->getObject()
-            ->getBehaviors()
-            ->getByAlias('exface.Core.Behaviors.StateMachineBehavior');
+        $smb = $this->getAttribute()->getObject()->getBehaviors()->getByAlias('exface.Core.Behaviors.StateMachineBehavior');
         if (! $smb)
             return parent::getSelectableOptions();
         
@@ -118,10 +108,7 @@ class StateInputSelect extends InputSelect
      */
     protected function applyStateNames($options)
     {
-        if (! ($smb = $this->getAttribute()
-            ->getObject()
-            ->getBehaviors()
-            ->getByAlias('exface.Core.Behaviors.StateMachineBehavior'))) {
+        if (! ($smb = $this->getAttribute()->getObject()->getBehaviors()->getByAlias('exface.Core.Behaviors.StateMachineBehavior'))) {
             return $options;
         }
         
@@ -131,10 +118,7 @@ class StateInputSelect extends InputSelect
         foreach ($states as $stateNum => $stateObject) {
             if ($appliedOptions[$stateNum])
                 continue;
-            $name = $stateObject->getStateName($this->getAttribute()
-                ->getObject()
-                ->getApp()
-                ->getTranslator());
+            $name = $stateObject->getStateName($this->getAttribute()->getObject()->getApp()->getTranslator());
             $appliedOptions[$stateNum] = $name;
         }
         

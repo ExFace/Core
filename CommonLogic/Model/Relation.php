@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\CommonLogic\Model;
 
 use exface\Core\Interfaces\ExfaceClassInterface;
@@ -112,7 +111,7 @@ class Relation implements ExfaceClassInterface
     /**
      * Returns the alias of the foreign key in the main object.
      * E.g. for the relation ORDER->USER it would return USER_UID, which is a attribute of the object ORDER.
-     * 
+     *
      * @return string
      */
     public function getForeignKeyAlias()
@@ -160,7 +159,7 @@ class Relation implements ExfaceClassInterface
      * In most cases it is the UID
      * of the related object, but can also be another attribute.
      * E.g. for the relation ORDER->USER it would return UID, which is the alias of the id attribute of the object USER.
-     * 
+     *
      * @return string
      */
     public function getRelatedObjectKeyAlias()
@@ -168,10 +167,7 @@ class Relation implements ExfaceClassInterface
         // If there is no special related_object_key_alias set, use the UID
         if (! $this->related_object_key_alias) {
             if ($this->related_object_key_attribute_id) {
-                $this->related_object_key_alias = $this->getRelatedObject()
-                    ->getAttributes()
-                    ->getByAttributeId($this->related_object_key_attribute_id)
-                    ->getAlias();
+                $this->related_object_key_alias = $this->getRelatedObject()->getAttributes()->getByAttributeId($this->related_object_key_attribute_id)->getAlias();
             } else {
                 $this->related_object_key_alias = $this->getRelatedObject()->getUidAlias();
             }
@@ -210,7 +206,7 @@ class Relation implements ExfaceClassInterface
 
     /**
      * Returns the UID of the object, this attribute was inherited from or NULL if it is a direct attribute of it's object
-     * 
+     *
      * @return string
      */
     public function getInheritedFromObjectId()
@@ -229,7 +225,7 @@ class Relation implements ExfaceClassInterface
 
     /**
      * Returns TRUE if this Relation was inherited from a parent object
-     * 
+     *
      * @return boolean
      */
     public function isInherited()
@@ -240,7 +236,7 @@ class Relation implements ExfaceClassInterface
     /**
      * Returns a related attribute as if it was queried via $object->getAttribute("this_relation_alias->attribute_alias").
      * An attribute returned by this function has a relation path relative to the main object of this relation!
-     * 
+     *
      * @param string $attribute_alias            
      * @return \exface\Core\CommonLogic\Model\Attribute
      */
@@ -251,7 +247,7 @@ class Relation implements ExfaceClassInterface
 
     /**
      * Returns the relation in the opposite direction: ORDER->POSITION will become POSITION->ORDER
-     * 
+     *
      * @return \exface\Core\CommonLogic\Model\relation | boolean
      */
     public function getReversedRelation()
@@ -259,8 +255,7 @@ class Relation implements ExfaceClassInterface
         if ($this->getType() == self::RELATION_TYPE_FORWARD) {
             // If it is a regular relation, it will be a reverse one from the point of view of the related object. That is identified by the
             // alias of the object it leads to (in our case, the current object)
-            $reverse = $this->getRelatedObject()->getRelation($this->getMainObject()
-                ->getAlias(), $this->getAlias());
+            $reverse = $this->getRelatedObject()->getRelation($this->getMainObject()->getAlias(), $this->getAlias());
         } elseif ($this->getType() == self::RELATION_TYPE_REVERSE || $this->getType() == self::RELATION_TYPE_ONE_TO_ONE) {
             // If it is a reverse relation, it will be a regular one from the point of view of the related object. That is identified by its alias.
             // TODO Will it also work for one-to-one relations?
@@ -273,7 +268,7 @@ class Relation implements ExfaceClassInterface
 
     /**
      * Clones the attribute keeping the model and object
-     * 
+     *
      * @return Relation
      */
     public function copy()
@@ -303,7 +298,7 @@ class Relation implements ExfaceClassInterface
 
     /**
      * Returns TRUE if this is a reverse relation and FALSE otherwise
-     * 
+     *
      * @return boolean
      */
     public function isReverseRelation()
@@ -323,7 +318,7 @@ class Relation implements ExfaceClassInterface
 
     /**
      * Returns TRUE if this is a one-to-one relation and FALSE otherwise
-     * 
+     *
      * @return boolean
      */
     public function isOneToOneRelation()
@@ -349,7 +344,7 @@ class Relation implements ExfaceClassInterface
     /**
      * Returns TRUE if this relation is exactly the same as the given one and belongs to the same object.
      * Otherwise returns FALSE.
-     * 
+     *
      * @param Relation $other_relation            
      * @return boolean
      */

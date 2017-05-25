@@ -24,20 +24,13 @@ class SwitchAction extends ActionChain
 
     protected function perform()
     {
-        if (! $this->getInputDataSheet() || ! $this->getInputDataSheet()
-            ->getColumns()
-            ->getByExpression($this->getSwitchAttributeAlias())) {
+        if (! $this->getInputDataSheet() || ! $this->getInputDataSheet()->getColumns()->getByExpression($this->getSwitchAttributeAlias())) {
             throw new ActionInputMissingError($this, 'Cannot perform SwitchAction: Missing column "' . $this->getSwitchAttributeAlias() . '" in input data!');
         }
         
-        $switch_value = $this->getInputDataSheet()
-            ->getColumns()
-            ->getByExpression($this->getSwitchAttributeAlias())
-            ->getCellValue(0);
+        $switch_value = $this->getInputDataSheet()->getColumns()->getByExpression($this->getSwitchAttributeAlias())->getCellValue(0);
         if ($action = $this->getActionsArray()[$this->getSwitchActionMap()->getProperty($switch_value)]) {
-            $this->getActions()
-                ->removeAll()
-                ->add($action);
+            $this->getActions()->removeAll()->add($action);
         } else {
             throw new ActionRuntimeError($this, 'No action found to switch to for value "' . $switch_value . '" of "' . $this->getSwitchAttributeAlias() . '"!');
         }
@@ -74,9 +67,7 @@ class SwitchAction extends ActionChain
     public function implementsInterface($interface)
     {
         if ($this->isPerformed()) {
-            return $this->getActions()
-                ->getFirst()
-                ->implementsInterface($interface);
+            return $this->getActions()->getFirst()->implementsInterface($interface);
         } else {
             return parent::implementsInterface($interface);
         }

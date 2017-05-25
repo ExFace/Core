@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\CommonLogic;
 
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
@@ -37,7 +36,7 @@ class EntityList extends AbstractExfaceClass implements EntityListInterface
 
     /**
      * An EntityList is alway attached to some parent object, so a reference to that object is required in the constructor
-     * 
+     *
      * @param exface $exface            
      * @param mixed $parent_object            
      */
@@ -61,7 +60,7 @@ class EntityList extends AbstractExfaceClass implements EntityListInterface
     /**
      * Returns all entities in the list as an array.
      * It is an assosiative array, if key were explicitly speicified when filling the list.
-     * 
+     *
      * @return array
      */
     public function getAll()
@@ -105,7 +104,7 @@ class EntityList extends AbstractExfaceClass implements EntityListInterface
      * If so, factory::createFromUxon($exface, $uxon)
      * will be called for each element of the array. The resultin entities will be added to the list. This, of course,
      * only works if the entities have a factory, that supports this kind of instantiation.
-     * 
+     *
      * {@inheritdoc}
      *
      * @see \exface\Core\Interfaces\EntityListInterface::importUxonArray()
@@ -148,7 +147,7 @@ class EntityList extends AbstractExfaceClass implements EntityListInterface
 
     /**
      * Removes the given entity from the list
-     * 
+     *
      * @param mixed $entity            
      * @return UxonObjectList
      */
@@ -162,7 +161,7 @@ class EntityList extends AbstractExfaceClass implements EntityListInterface
 
     /**
      * Removes the entity matching the given key
-     * 
+     *
      * @param mixed $key            
      */
     public function removeByKey($key)
@@ -173,7 +172,7 @@ class EntityList extends AbstractExfaceClass implements EntityListInterface
 
     /**
      * Removes all entities from the list, thus emptying the list.
-     * 
+     *
      * @return EntityList
      */
     public function removeAll()
@@ -189,7 +188,7 @@ class EntityList extends AbstractExfaceClass implements EntityListInterface
     /**
      * Returns the entity, that was stored under the given key.
      * Returns NULL if the key is not present in the list.
-     * 
+     *
      * @param mixed $key            
      * @return mixed
      */
@@ -200,7 +199,7 @@ class EntityList extends AbstractExfaceClass implements EntityListInterface
 
     /**
      * Returns the first entity in the list or NULL if the list is empty.
-     * 
+     *
      * @return mixed
      */
     public function getFirst()
@@ -210,7 +209,7 @@ class EntityList extends AbstractExfaceClass implements EntityListInterface
 
     /**
      * Returns the last entity in the list or NULL if the list is empty.
-     * 
+     *
      * @return mixed
      */
     public function getLast()
@@ -222,7 +221,7 @@ class EntityList extends AbstractExfaceClass implements EntityListInterface
     /**
      * Returns the n-th entity in the list (starting from 1 for the first entity).
      * Returns NULL if the list is smaller than $number.
-     * 
+     *
      * @param integer $number            
      */
     public function getNth($number)
@@ -256,7 +255,7 @@ class EntityList extends AbstractExfaceClass implements EntityListInterface
 
     /**
      * Sets the lists parent object
-     * 
+     *
      * @param mixed $parent_object            
      */
     public function setParent($parent_object)
@@ -267,7 +266,7 @@ class EntityList extends AbstractExfaceClass implements EntityListInterface
 
     /**
      * Returns the current number of entities in the list.
-     * 
+     *
      * @return integer
      */
     public function count()
@@ -277,7 +276,7 @@ class EntityList extends AbstractExfaceClass implements EntityListInterface
 
     /**
      * Returns TRUE, if the list is empty and FALSE otherwise
-     * 
+     *
      * @return boolean
      */
     public function isEmpty()
@@ -314,7 +313,7 @@ class EntityList extends AbstractExfaceClass implements EntityListInterface
 
     /**
      * Sorts the list by key values
-     * 
+     *
      * @return EntityList
      */
     public function sortByKey()
@@ -352,7 +351,7 @@ class EntityList extends AbstractExfaceClass implements EntityListInterface
 
     /**
      * Copies the entire list including all entities by calling the copy() method on each entity
-     * 
+     *
      * @throws InvalidArgumentException
      * @return EntityList
      */

@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Interfaces\Model;
 
 use exface\Core\Interfaces\ExfaceClassInterface;

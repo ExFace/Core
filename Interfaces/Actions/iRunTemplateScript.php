@@ -17,7 +17,7 @@ interface iRunTemplateScript
 
     /**
      * Returns an array of include paths relative to the templates js-folder
-     * 
+     *
      * @return array()
      */
     public function getIncludes();
@@ -29,7 +29,7 @@ interface iRunTemplateScript
      * action).
      * In the result of this method placeholders are already replaced! How exactly this is achieved
      * and what else happens to the script is subject of the specific implementation.
-     * 
+     *
      * @param string $element_id            
      * @return string valid java script
      */
@@ -42,7 +42,7 @@ interface iRunTemplateScript
      * The parameter $element_id contains the
      * java script id of the element the script should be applied to (in general the input widget of the
      * action).
-     * 
+     *
      * @param string $element_id            
      * @return string valid java script
      */
@@ -50,7 +50,7 @@ interface iRunTemplateScript
 
     /**
      * The output of custom template script actions is text
-     * 
+     *
      * @return string
      */
     public function getResult();

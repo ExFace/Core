@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Interfaces\Model;
 
 use exface\Core\Exceptions\DataTypeValidationError;
@@ -11,7 +10,7 @@ interface DataTypeInterface extends \exface\Core\Interfaces\ExfaceClassInterface
 
     /**
      * Constructuro
-     * 
+     *
      * @param Workbench $exface            
      */
     public function __construct(Workbench $exface);
@@ -25,7 +24,7 @@ interface DataTypeInterface extends \exface\Core\Interfaces\ExfaceClassInterface
     /**
      * Returns the string name of the data type (e.g.
      * Number, String, etc.)
-     * 
+     *
      * @return string
      */
     public function getName();

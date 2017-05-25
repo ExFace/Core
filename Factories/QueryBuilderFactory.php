@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Factories;
 
 use exface;
@@ -12,7 +11,7 @@ abstract class QueryBuilderFactory extends AbstractNameResolverFactory
 
     /**
      * Creates a new query builder based on the given name resolver
-     * 
+     *
      * @param NameResolverInterface $name_resolver            
      * @return AbstractQueryBuilder
      */
@@ -26,7 +25,7 @@ abstract class QueryBuilderFactory extends AbstractNameResolverFactory
      * - file path relative to the ExFace installation directory
      * - ExFace alias with namespace
      * - class name
-     * 
+     *
      * @param exface\Core\CommonLogic\Workbench $exface            
      * @param string $alias_with_namespace            
      * @return AbstractQueryBuilder

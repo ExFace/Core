@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\CommonLogic\DataSheets;
 
 use exface\Core\Factories\DataSorterFactory;
@@ -64,7 +63,7 @@ class DataSorterList extends EntityList implements DataSorterListInterface
     /**
      * Returns the data sheet, the list belongs to.
      * This is a better understandable alias for the inherited get_parent()
-     * 
+     *
      * @return DataSheetInterface
      */
     public function getDataSheet()
@@ -109,9 +108,7 @@ class DataSorterList extends EntityList implements DataSorterListInterface
         }
         
         if (! $attribute_alias) {
-            throw new DataSheetStructureError($this->getDataSheet(), 'Cannot add a sorter over "' . $attribute_alias_or_column_id . '" to data sheet with object "' . $this->getDataSheet()
-                ->getMetaObject()
-                ->getAliasWithNamespace() . '": no matching attribute could be found!', '6UQBX9K');
+            throw new DataSheetStructureError($this->getDataSheet(), 'Cannot add a sorter over "' . $attribute_alias_or_column_id . '" to data sheet with object "' . $this->getDataSheet()->getMetaObject()->getAliasWithNamespace() . '": no matching attribute could be found!', '6UQBX9K');
         }
         
         $sorter = DataSorterFactory::createForDataSheet($data_sheet);

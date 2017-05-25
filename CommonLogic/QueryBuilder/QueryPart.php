@@ -47,7 +47,7 @@ class QueryPart
      * Checks, if the qpart is meaningfull.
      * What exactly is checked depends on the type of the query part
      * (i.e. a select will need a select statement at the attribute, etc.)
-     * 
+     *
      * @return boolean
      */
     public function isValid()
@@ -58,7 +58,7 @@ class QueryPart
     /**
      * Returns an array of relations used in this query part.
      * If $relation_type is given, only returns relations of this type.
-     * 
+     *
      * @param string $relations_type            
      * @return Relation[]
      */
@@ -70,7 +70,7 @@ class QueryPart
     /**
      * Returns the first relation of the given type or false if no relations of this type is found.
      * If $relation_type is ommitted, returns the very first relation regardless of it's type.
-     * 
+     *
      * @param string $relations_type            
      * @return Relation
      */

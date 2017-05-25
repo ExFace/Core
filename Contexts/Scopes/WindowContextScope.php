@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Contexts\Scopes;
 
 use exface\Core\Interfaces\Contexts\ContextInterface;
@@ -21,7 +20,7 @@ class WindowContextScope extends AbstractContextScope
 
     /**
      * The window scope currently just delegates to the session scope, which actually takes care of saving and loading data
-     * 
+     *
      * @see \exface\Core\Contexts\Scopes\AbstractContextScope::saveContexts()
      */
     public function saveContexts()
@@ -31,7 +30,7 @@ class WindowContextScope extends AbstractContextScope
 
     /**
      * The window scope currently just delegates to the session scope, which actually takes care of saving and loading data
-     * 
+     *
      * @see \exface\Core\Contexts\Scopes\AbstractContextScope::loadContextData()
      */
     public function loadContextData(ContextInterface $context)
@@ -43,44 +42,38 @@ class WindowContextScope extends AbstractContextScope
      * TODO The session id should get somehow bound to a window, since the window context scope only exists in a
      * specific instance of ExFace in contrast to the session context scope, which actually is quite like the php session!
      * For now we just return the session scopr id (session id) here.
-     * 
+     *
      * {@inheritdoc}
      *
      * @see \exface\Core\Contexts\Scopes\AbstractContextScope::getScopeId()
      */
     public function getScopeId()
     {
-        return $this->getContextManager()
-            ->getScopeSession()
-            ->getScopeId();
+        return $this->getContextManager()->getScopeSession()->getScopeId();
     }
 
     /**
      * Delegate everything to the session scope until there is a proper implementation for the window scope
-     * 
+     *
      * {@inheritdoc}
      *
      * @see \exface\Core\Contexts\Scopes\AbstractContextScope::getContext()
      */
     public function getContext($alias)
     {
-        return $this->getContextManager()
-            ->getScopeSession()
-            ->getContext($alias);
+        return $this->getContextManager()->getScopeSession()->getContext($alias);
     }
 
     /**
      * Delegate everything to the session scope until there is a proper implementation for the window scope
-     * 
+     *
      * {@inheritdoc}
      *
      * @see \exface\Core\Contexts\Scopes\AbstractContextScope::getAllContexts()
      */
     public function getAllContexts()
     {
-        return $this->getContextManager()
-            ->getScopeSession()
-            ->getAllContexts();
+        return $this->getContextManager()->getScopeSession()->getAllContexts();
     }
 }
 ?>

@@ -53,7 +53,7 @@ class WidgetDimension
 
     /**
      * Returns TRUE if the dimension is not defined (null) or FALSE otherwise.
-     * 
+     *
      * @return boolean
      */
     public function isUndefined()
@@ -66,7 +66,7 @@ class WidgetDimension
 
     /**
      * Returns TRUE if the dimension was specified in relative units and FALSE otherwise.
-     * 
+     *
      * @return boolean
      */
     public function isRelative()
@@ -79,7 +79,7 @@ class WidgetDimension
 
     /**
      * Returns TRUE if the dimension was specified in template specific units and FALSE otherwise.
-     * 
+     *
      * @return boolean
      */
     public function isTemplateSpecific()
@@ -92,7 +92,7 @@ class WidgetDimension
 
     /**
      * Returns TRUE if the dimension was specified in percent and FALSE otherwise.
-     * 
+     *
      * @return boolean
      */
     public function isPercentual()

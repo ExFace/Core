@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\CommonLogic;
 
 use exface\Core\Interfaces\TemplateInterface;
@@ -84,14 +83,14 @@ abstract class AbstractTemplate implements TemplateInterface
 
     /**
      * Generates the declaration of the JavaScript sources
-     * 
+     *
      * @return string
      */
     abstract function drawHeaders(\exface\Core\Widgets\AbstractWidget $widget);
 
     /**
      * Processes the current HTTP request, assuming it was made from a UI using this template
-     * 
+     *
      * @param string $page_id            
      * @param string $widget_id            
      * @param string $action_alias            

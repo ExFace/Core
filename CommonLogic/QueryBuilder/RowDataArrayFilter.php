@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\CommonLogic\QueryBuilder;
 
 class RowDataArrayFilter

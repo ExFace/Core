@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Interfaces\Exceptions;
 
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
@@ -12,14 +11,14 @@ interface ExceptionInterface extends iCanBeConvertedToUxon, iCanGenerateDebugWid
 
     /**
      * Returns TRUE if this exception is a warning and FALSE otherwise
-     * 
+     *
      * @return boolean
      */
     public function isWarning();
 
     /**
      * Returns TRUE if this exception is an error and FALSE otherwise
-     * 
+     *
      * @return boolean
      */
     public function isError();
@@ -63,7 +62,7 @@ interface ExceptionInterface extends iCanBeConvertedToUxon, iCanGenerateDebugWid
 
     /**
      * Returns the unique identifier of this exception (exceptions thrown at the same line at different times will have differnt ids!)
-     * 
+     *
      * @return string
      */
     public function getId();

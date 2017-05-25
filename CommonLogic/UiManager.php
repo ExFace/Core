@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\CommonLogic;
 
 use exface\Core\Widgets\AbstractWidget;
@@ -34,7 +33,7 @@ class UiManager implements UiManagerInterface
     /**
      * Returns a template instance for a given template alias.
      * If no alias given, returns the current template.
-     * 
+     *
      * @param string $template            
      * @return AbstractTemplate
      */
@@ -54,7 +53,7 @@ class UiManager implements UiManagerInterface
     /**
      * Output the final UI code for a given widget
      * IDEA Remove this method from the UI in favor of template::draw() after template handling has been moved to the actions
-     * 
+     *
      * @param AbstractWidget $widget            
      * @param
      *            TemplateInterface ui_template to use when drawing
@@ -72,7 +71,7 @@ class UiManager implements UiManagerInterface
      * This could be JS-Includes, stylesheets - anything, that needs to be placed in the
      * resulting document separately from the renderen widget itself.
      * IDEA Remove this method from the UI in favor of template::drawHeaders() after template handling has been moved to the actions
-     * 
+     *
      * @param WidgetInterface $widget            
      * @param
      *            TemplateInterface ui_template to use when drawing
@@ -88,7 +87,7 @@ class UiManager implements UiManagerInterface
     /**
      * Returns an ExFace widget from a given resource by id
      * Caching is used to store widgets from already loaded pages
-     * 
+     *
      * @param string $widget_id            
      * @param string $page_id            
      * @return WidgetInterface
@@ -138,9 +137,7 @@ class UiManager implements UiManagerInterface
     {
         if (is_null($this->base_template)) {
             // $this->base_template = $this->getTemplate($this->getWorkbench()->getConfig()->getOption('DEFAULT_UI_TEMPLATE'));
-            $this->base_template = $this->getWorkbench()
-                ->getConfig()
-                ->getOption('DEFAULT_UI_TEMPLATE');
+            $this->base_template = $this->getWorkbench()->getConfig()->getOption('DEFAULT_UI_TEMPLATE');
         }
         return $this->getTemplate($this->base_template);
     }
@@ -154,9 +151,7 @@ class UiManager implements UiManagerInterface
     public function getPageIdCurrent()
     {
         if (is_null($this->page_id_current)) {
-            $this->page_id_current = $this->getWorkbench()
-                ->cms()
-                ->getPageId();
+            $this->page_id_current = $this->getWorkbench()->cms()->getPageId();
         }
         return $this->page_id_current;
     }

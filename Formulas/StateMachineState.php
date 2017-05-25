@@ -15,7 +15,7 @@ use exface\Core\DataTypes\BooleanDataType;
  * Formula example: =StateMachineState(STATE_ID, 'alexa.RMS.CUSTOMER_COMPLAINT', 'true', 'true')
  *
  * Class StateMachineState
- * 
+ *
  * @package exface\Core\Formulas
  * @author Thomas Walter
  */
@@ -38,10 +38,7 @@ class StateMachineState extends Formula
         
         $workbench = $this->getWorkbench();
         /** @var StateMachineBehavior $smb */
-        $smb = $workbench->model()
-            ->getObject($object)
-            ->getBehaviors()
-            ->getByAlias('exface.Core.Behaviors.StateMachineBehavior');
+        $smb = $workbench->model()->getObject($object)->getBehaviors()->getByAlias('exface.Core.Behaviors.StateMachineBehavior');
         if (! $smb) {
             // no StateMachineBehavior -> simply return state string
             return strval($state);
@@ -77,12 +74,8 @@ class StateMachineState extends Formula
     protected function getStateString($state, $states, $showId)
     {
         $stateObject = $states[$state];
-        if ($col = $this->getDataSheet()
-            ->getColumns()
-            ->get($this->getCurrentColumnName())) {
-            $stateName = $stateObject->getStateName($col->getMetaObject()
-                ->getApp()
-                ->getTranslator());
+        if ($col = $this->getDataSheet()->getColumns()->get($this->getCurrentColumnName())) {
+            $stateName = $stateObject->getStateName($col->getMetaObject()->getApp()->getTranslator());
             if ($stateName) {
                 if ($showId)
                     return strval($state) . ' ' . $stateName;

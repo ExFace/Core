@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\CommonLogic\DataSheets;
 
 use exface\Core\CommonLogic\UxonObject;
@@ -160,9 +159,7 @@ class DataSheet implements DataSheetInterface
                 if (! $data_sheet->getColumns()->get($right_key_column)) {
                     throw new DataSheetMergeError($this, 'Cannot find right key column "' . $right_key_column . '" for a left join!', '6T5E849');
                 }
-                $right_row = $data_sheet->getColumns()
-                    ->get($right_key_column)
-                    ->findRowByValue($row[$left_key_column]);
+                $right_row = $data_sheet->getColumns()->get($right_key_column)->findRowByValue($row[$left_key_column]);
                 if ($right_row !== false) {
                     foreach ($data_sheet->getColumns() as $col) {
                         $this->setCellValue(RelationPath::relationPathAdd($relation_path, $col->getName()), $left_row, $data_sheet->getCellValue($col->getName(), $right_row));
@@ -187,8 +184,7 @@ class DataSheet implements DataSheetInterface
      */
     public function importRows(DataSheetInterface $other_sheet)
     {
-        if (! $this->getMetaObject()->isExactly($other_sheet->getMetaObject()
-            ->getAliasWithNamespace())) {
+        if (! $this->getMetaObject()->isExactly($other_sheet->getMetaObject()->getAliasWithNamespace())) {
             throw new DataSheetImportRowError($this, 'Cannot replace rows for object "' . $this->getMetaObject()->getAliasWithNamespace() . '" with rows from "' . $other_sheet->getMetaObject()->getAliasWithNamespace() . '": replacing rows only possible for identical objects!', '6T5V1DR');
         }
         
@@ -212,8 +208,7 @@ class DataSheet implements DataSheetInterface
         }
         
         foreach ($columns_with_formulas as $name) {
-            $this->getColumn($name)->setValuesByExpression($this->getColumn($name)
-                ->getFormula());
+            $this->getColumn($name)->setValuesByExpression($this->getColumn($name)->getFormula());
         }
         return $this;
     }
@@ -340,8 +335,7 @@ class DataSheet implements DataSheetInterface
                 if ($expr = $attribute->getFormula()) {
                     if ($expr->isFormula()) {
                         $expr = $attribute->get_data_expression();
-                        $expr->setRelationPath($attribute->getRelationPath()
-                            ->toString());
+                        $expr->setRelationPath($attribute->getRelationPath()->toString());
                         $this->getColumns()->addFromExpression($expr, $attr);
                         $this->getDataForColumn($this->getColumn($attr), $query);
                     }
@@ -367,9 +361,7 @@ class DataSheet implements DataSheetInterface
                 $rels = RelationPath::relationPathParse($attribute->getAliasWithRelationPath());
                 foreach ($rels as $depth => $rel) {
                     $rel_path = RelationPath::relationPathAdd($last_rel_path, $rel);
-                    if ($this->getMetaObject()
-                        ->getRelatedObject($rel_path)
-                        ->getDataSourceId() == $this->getMetaObject()->getDataSourceId()) {
+                    if ($this->getMetaObject()->getRelatedObject($rel_path)->getDataSourceId() == $this->getMetaObject()->getDataSourceId()) {
                         $rel_path_in_main_ds = $last_rel_path;
                     } else {
                         if (! $rel_path_to_subsheet) {
@@ -389,9 +381,7 @@ class DataSheet implements DataSheetInterface
                     $subsheet_object = $this->getMetaObject()->getRelatedObject($rel_path_to_subsheet);
                     $subsheet = DataSheetSubsheetFactory::createForObject($subsheet_object, $this);
                     $this->getSubsheets()->add($subsheet, $rel_path_to_subsheet);
-                    if (! $this->getMetaObject()
-                        ->getRelation($rel_path_to_subsheet)
-                        ->isReverseRelation()) {
+                    if (! $this->getMetaObject()->getRelation($rel_path_to_subsheet)->isReverseRelation()) {
                         // add the foreign key to the main query and to this sheet
                         $query->addAttribute($rel_path_to_subsheet);
                         // IDEA do we need to add the column to the sheet? This is just useless data...
@@ -403,26 +393,18 @@ class DataSheet implements DataSheetInterface
                 // Add the current attribute to the subsheet prefixing it with it's relation path relative to the subsheet's object
                 $subsheet->getColumns()->addFromExpression(RelationPath::relationPathAdd($rel_path_in_subsheet, $attribute->getAlias()));
                 // Add the related object key alias of the relation to the subsheet to that subsheet. This will be the right key in the future JOIN.
-                if ($rel_path_to_subsheet_right_key = $this->getMetaObject()
-                    ->getRelation($rel_path_to_subsheet)
-                    ->getRelatedObjectKeyAlias()) {
+                if ($rel_path_to_subsheet_right_key = $this->getMetaObject()->getRelation($rel_path_to_subsheet)->getRelatedObjectKeyAlias()) {
                     $subsheet->getColumns()->addFromExpression(RelationPath::relationPathAdd($rel_path_in_main_ds, $rel_path_to_subsheet_right_key));
                 } else {
-                    throw new DataSheetUidColumnNotFoundError($this, 'Cannot find UID (primary key) for subsheet: no key alias can be determined for the relation "' . $rel_path_to_subsheet . '" from "' . $this->getMetaObject()->getAliasWithNamespace() . '" to "' . $this->getMetaObject()
-                        ->getRelation($rel_path_to_subsheet)
-                        ->getRelatedObject()
-                        ->getAliasWithNamespace() . '"!');
+                    throw new DataSheetUidColumnNotFoundError($this, 'Cannot find UID (primary key) for subsheet: no key alias can be determined for the relation "' . $rel_path_to_subsheet . '" from "' . $this->getMetaObject()->getAliasWithNamespace() . '" to "' . $this->getMetaObject()->getRelation($rel_path_to_subsheet)->getRelatedObject()->getAliasWithNamespace() . '"!');
                 }
             }
             
             if ($attribute->getFormatter()) {
                 $col->setFormatter($attribute->getFormatter());
-                $col->getFormatter()->setRelationPath($attribute->getRelationPath()
-                    ->toString());
+                $col->getFormatter()->setRelationPath($attribute->getRelationPath()->toString());
                 if ($aggregator = DataAggregator::getAggregateFunctionFromAlias($col->getExpressionObj()->toString())) {
-                    $col->getFormatter()->mapAttribute(str_replace(':' . $aggregator, '', $col->getExpressionObj()
-                        ->toString()), $col->getExpressionObj()
-                        ->toString());
+                    $col->getFormatter()->mapAttribute(str_replace(':' . $aggregator, '', $col->getExpressionObj()->toString()), $col->getExpressionObj()->toString());
                 }
                 foreach ($col->getFormatter()->getRequiredAttributes() as $req) {
                     if (! $this->getColumn($req)) {
@@ -442,9 +424,7 @@ class DataSheet implements DataSheetInterface
      */
     public function dataRead($limit = null, $offset = null)
     {
-        $this->getWorkbench()
-            ->eventManager()
-            ->dispatch(EventFactory::createDataSheetEvent($this, 'ReadData.Before'));
+        $this->getWorkbench()->eventManager()->dispatch(EventFactory::createDataSheetEvent($this, 'ReadData.Before'));
         
         // Empty the data before reading
         // IDEA Enable incremental reading by distinguishing between reading the same page an reading a new page
@@ -470,10 +450,7 @@ class DataSheet implements DataSheetInterface
         // FIXME With growing numbers of behaviors and system attributes, this becomes a pain, as more and more possibly
         // aggregated columns are added automatically - even if the sheet is only meant for reading. Maybe we should let
         // the code creating the sheet add the system columns. The behaviors will prduce errors if this does not happen anyway.
-        foreach ($this->getMetaObject()
-            ->getAttributes()
-            ->getSystem()
-            ->getAll() as $attr) {
+        foreach ($this->getMetaObject()->getAttributes()->getSystem()->getAll() as $attr) {
             if (! $this->getColumns()->getByAttribute($attr)) {
                 // Check if the system attribute has a default aggregator if the data sheet is being aggregated
                 if ($this->hasAggregators() && $attr->getDefaultAggregateFunction()) {
@@ -488,10 +465,7 @@ class DataSheet implements DataSheetInterface
         // Set explicitly defined filters
         $query->setFiltersConditionGroup($this->getFilters());
         // Add filters from the contexts
-        foreach ($this->exface->context()
-            ->getScopeApplication()
-            ->getFilterContext()
-            ->getConditions($this->getMetaObject()) as $cond) {
+        foreach ($this->exface->context()->getScopeApplication()->getFilterContext()->getConditions($this->getMetaObject()) as $cond) {
             $query->addFilterCondition($cond);
         }
         
@@ -511,8 +485,7 @@ class DataSheet implements DataSheetInterface
         }
         
         try {
-            $result = $query->read($this->getMetaObject()
-                ->getDataConnection());
+            $result = $query->read($this->getMetaObject()->getDataConnection());
         } catch (\Throwable $e) {
             throw new DataSheetReadError($this, $e->getMessage(), ($e instanceof ExceptionInterface ? $e->getAlias() : null), $e);
         }
@@ -524,36 +497,21 @@ class DataSheet implements DataSheetInterface
         // load data for subsheets if needed
         if ($this->countRows()) {
             foreach ($this->getSubsheets() as $rel_path => $subsheet) {
-                if (! $this->getMetaObject()
-                    ->getRelation($rel_path)
-                    ->isReverseRelation()) {
+                if (! $this->getMetaObject()->getRelation($rel_path)->isReverseRelation()) {
                     $foreign_keys = $this->getColumnValues($rel_path);
-                    $subsheet->addFilterFromString($this->getMetaObject()
-                        ->getRelation($rel_path)
-                        ->getRelatedObjectKeyAlias(), implode(EXF_LIST_SEPARATOR, array_unique($foreign_keys)), EXF_COMPARATOR_IN);
+                    $subsheet->addFilterFromString($this->getMetaObject()->getRelation($rel_path)->getRelatedObjectKeyAlias(), implode(EXF_LIST_SEPARATOR, array_unique($foreign_keys)), EXF_COMPARATOR_IN);
                     $left_key_column = $rel_path;
-                    $right_key_column = $this->getMetaObject()
-                        ->getRelation($rel_path)
-                        ->getRelatedObjectKeyAlias();
+                    $right_key_column = $this->getMetaObject()->getRelation($rel_path)->getRelatedObjectKeyAlias();
                 } else {
-                    if ($this->getMetaObject()
-                        ->getRelation($rel_path)
-                        ->getMainObjectKeyAttribute()) {
+                    if ($this->getMetaObject()->getRelation($rel_path)->getMainObjectKeyAttribute()) {
                         throw new DataSheetJoinError($this, 'Joining subsheets via reverse relations with explicitly specified foreign keys, not implemented yet!', '6T5V36I');
                     } else {
                         $foreign_keys = $this->getUidColumn()->getValues();
-                        $subsheet->addFilterFromString($this->getMetaObject()
-                            ->getRelation($rel_path)
-                            ->getForeignKeyAlias(), implode(EXF_LIST_SEPARATOR, array_unique($foreign_keys)), EXF_COMPARATOR_IN);
+                        $subsheet->addFilterFromString($this->getMetaObject()->getRelation($rel_path)->getForeignKeyAlias(), implode(EXF_LIST_SEPARATOR, array_unique($foreign_keys)), EXF_COMPARATOR_IN);
                         // FIXME Fix Reverse relations key bug. Getting the left key column from the reversed relation here is a crude hack, but
                         // the get_main_object_key_alias() strangely does not work for reverse relations
-                        $left_key_column = $this->getMetaObject()
-                            ->getRelation($rel_path)
-                            ->getReversedRelation()
-                            ->getRelatedObjectKeyAlias();
-                        $right_key_column = $this->getMetaObject()
-                            ->getRelation($rel_path)
-                            ->getForeignKeyAlias();
+                        $left_key_column = $this->getMetaObject()->getRelation($rel_path)->getReversedRelation()->getRelatedObjectKeyAlias();
+                        $right_key_column = $this->getMetaObject()->getRelation($rel_path)->getForeignKeyAlias();
                     }
                 }
                 $subsheet->dataRead();
@@ -581,9 +539,7 @@ class DataSheet implements DataSheetInterface
             }
             $this->setColumnValues($name, $vals, $totals);
         }
-        $this->getWorkbench()
-            ->eventManager()
-            ->dispatch(EventFactory::createDataSheetEvent($this, 'ReadData.After'));
+        $this->getWorkbench()->eventManager()->dispatch(EventFactory::createDataSheetEvent($this, 'ReadData.After'));
         return $result;
     }
 
@@ -615,9 +571,7 @@ class DataSheet implements DataSheetInterface
         
         // Start a new transaction, if not given
         if (! $transaction) {
-            $transaction = $this->getWorkbench()
-                ->data()
-                ->startTransaction();
+            $transaction = $this->getWorkbench()->data()->startTransaction();
             $commit = true;
         } else {
             $commit = false;
@@ -637,8 +591,7 @@ class DataSheet implements DataSheetInterface
                 if (count($missing_uids) > 0) {
                     $create_ds = $this->copy()->removeRows();
                     foreach ($missing_uids as $missing_uid) {
-                        $create_ds->addRow($this->getRowByColumnValue($this->getUidColumn()
-                            ->getName(), $missing_uid));
+                        $create_ds->addRow($this->getRowByColumnValue($this->getUidColumn()->getName(), $missing_uid));
                     }
                     $counter += $create_ds->dataCreate(false, $transaction);
                 }
@@ -653,9 +606,7 @@ class DataSheet implements DataSheetInterface
         }
         
         // Now the actual updating starts
-        $this->getWorkbench()
-            ->eventManager()
-            ->dispatch(EventFactory::createDataSheetEvent($this, 'UpdateData.Before'));
+        $this->getWorkbench()->eventManager()->dispatch(EventFactory::createDataSheetEvent($this, 'UpdateData.Before'));
         
         // Add columns with fixed values to the data sheet
         $processed_relations = array();
@@ -665,15 +616,11 @@ class DataSheet implements DataSheetInterface
                 continue;
             }
             // Fetch all attributes with fixed values and add them to the sheet if not already there
-            $rel_path = $col->getAttribute()
-                ->getRelationPath()
-                ->toString();
+            $rel_path = $col->getAttribute()->getRelationPath()->toString();
             if ($processed_relations[$rel_path])
                 continue;
             /* @var $attr \exface\Core\CommonLogic\Model\Attribute */
-            foreach ($col->getAttribute()
-                ->getObject()
-                ->getAttributes() as $attr) {
+            foreach ($col->getAttribute()->getObject()->getAttributes() as $attr) {
                 if ($expr = $attr->getFixedValue()) {
                     $alias_with_relation_path = RelationPath::relationPathAdd($rel_path, $attr->getAlias());
                     if (! $col = $this->getColumn($alias_with_relation_path)) {
@@ -715,18 +662,13 @@ class DataSheet implements DataSheetInterface
             
             // Use the UID column as a filter to make sure, only these rows are affected
             if ($column->getAttribute()->getAliasWithRelationPath() == $this->getMetaObject()->getUidAlias()) {
-                $query->addFilterFromString($this->getMetaObject()
-                    ->getUidAlias(), implode(EXF_LIST_SEPARATOR, array_unique($column->getValues(false))), EXF_COMPARATOR_IN);
+                $query->addFilterFromString($this->getMetaObject()->getUidAlias(), implode(EXF_LIST_SEPARATOR, array_unique($column->getValues(false))), EXF_COMPARATOR_IN);
             } else {
                 // Add all other columns to values
                 
                 // First check, if the attribute belongs to a related object
-                if ($rel_path = $column->getAttribute()
-                    ->getRelationPath()
-                    ->toString()) {
-                    if ($this->getMetaObject()
-                        ->getRelation($rel_path)
-                        ->isForwardRelation()) {
+                if ($rel_path = $column->getAttribute()->getRelationPath()->toString()) {
+                    if ($this->getMetaObject()->getRelation($rel_path)->isForwardRelation()) {
                         $uid_column_alias = $rel_path;
                     } else {
                         // $uid_column = $this->getColumn($this->getMetaObject()->getRelation($rel_path)->getMainObjectKeyAttribute()->getAliasWithRelationPath());
@@ -748,22 +690,17 @@ class DataSheet implements DataSheetInterface
                     if (! $uid_column = $this->getColumn($uid_column_alias)) {
                         $uid_data_sheet = $this->copy();
                         $uid_data_sheet->getColumns()->removeAll();
-                        $uid_data_sheet->getColumns()->addFromExpression($this->getMetaObject()
-                            ->getUidAlias());
+                        $uid_data_sheet->getColumns()->addFromExpression($this->getMetaObject()->getUidAlias());
                         $uid_data_sheet->getColumns()->addFromExpression($uid_column_alias);
-                        $uid_data_sheet->addFilterFromString($this->getMetaObject()
-                            ->getUidAlias(), implode($this->getUidColumn()
-                            ->getValues(), EXF_LIST_SEPARATOR), EXF_COMPARATOR_IN);
+                        $uid_data_sheet->addFilterFromString($this->getMetaObject()->getUidAlias(), implode($this->getUidColumn()->getValues(), EXF_LIST_SEPARATOR), EXF_COMPARATOR_IN);
                         $uid_data_sheet->dataRead();
                         $uid_column = $uid_data_sheet->getColumn($uid_column_alias);
                     }
-                    $query->addValues($column->getExpressionObj()
-                        ->toString(), $column->getValues(false), $uid_column->getValues(false));
+                    $query->addValues($column->getExpressionObj()->toString(), $column->getValues(false), $uid_column->getValues(false));
                 } else {
                     // If there is only one value for the entire data sheet (no UIDs gived), add it to the query as a single column value.
                     // In this case all object matching the filter will get updated by this value
-                    $query->addValue($column->getExpressionObj()
-                        ->toString(), $column->getValues(false)[0]);
+                    $query->addValue($column->getExpressionObj()->toString(), $column->getValues(false)[0]);
                 }
             }
         }
@@ -783,9 +720,7 @@ class DataSheet implements DataSheetInterface
             $transaction->commit();
         }
         
-        $this->getWorkbench()
-            ->eventManager()
-            ->dispatch(EventFactory::createDataSheetEvent($this, 'UpdateData.After'));
+        $this->getWorkbench()->eventManager()->dispatch(EventFactory::createDataSheetEvent($this, 'UpdateData.After'));
         
         return $counter;
     }
@@ -800,17 +735,13 @@ class DataSheet implements DataSheetInterface
     {
         // Start a new transaction, if not given
         if (! $transaction) {
-            $transaction = $this->getWorkbench()
-                ->data()
-                ->startTransaction();
+            $transaction = $this->getWorkbench()->data()->startTransaction();
             $commit = true;
         } else {
             $commit = false;
         }
         
-        $this->getWorkbench()
-            ->eventManager()
-            ->dispatch(EventFactory::createDataSheetEvent($this, 'ReplaceData.Before'));
+        $this->getWorkbench()->eventManager()->dispatch(EventFactory::createDataSheetEvent($this, 'ReplaceData.Before'));
         
         $counter = 0;
         if ($delete_redundant_rows) {
@@ -828,9 +759,7 @@ class DataSheet implements DataSheetInterface
                     $delete_ds = DataSheetFactory::createFromObject($this->getMetaObject());
                     $delete_col = $uid_column->copy();
                     $delete_ds->getColumns()->add($delete_col);
-                    $delete_ds->getUidColumn()
-                        ->removeRows()
-                        ->setValues(array_values($redundant_rows));
+                    $delete_ds->getUidColumn()->removeRows()->setValues(array_values($redundant_rows));
                     $counter += $delete_ds->dataDelete($transaction);
                 }
             } else {
@@ -854,9 +783,7 @@ class DataSheet implements DataSheetInterface
             $transaction->commit();
         }
         
-        $this->getWorkbench()
-            ->eventManager()
-            ->dispatch(EventFactory::createDataSheetEvent($this, 'ReplaceData.After'));
+        $this->getWorkbench()->eventManager()->dispatch(EventFactory::createDataSheetEvent($this, 'ReplaceData.After'));
         
         return $counter;
     }
@@ -871,25 +798,19 @@ class DataSheet implements DataSheetInterface
     {
         // Start a new transaction, if not given
         if (! $transaction) {
-            $transaction = $this->getWorkbench()
-                ->data()
-                ->startTransaction();
+            $transaction = $this->getWorkbench()->data()->startTransaction();
             $commit = true;
         } else {
             $commit = false;
         }
         
-        $this->getWorkbench()
-            ->eventManager()
-            ->dispatch(EventFactory::createDataSheetEvent($this, 'CreateData.Before'));
+        $this->getWorkbench()->eventManager()->dispatch(EventFactory::createDataSheetEvent($this, 'CreateData.Before'));
         // Create a query
         $query = QueryBuilderFactory::createFromAlias($this->exface, $this->getMetaObject()->getQueryBuilder());
         $query->setMainObject($this->getMetaObject());
         
         // Add values for columns based on attributes with defaults or fixed values
-        foreach ($this->getMetaObject()
-            ->getAttributes()
-            ->getAll() as $attr) {
+        foreach ($this->getMetaObject()->getAttributes()->getAll() as $attr) {
             if ($def = ($attr->getDefaultValue() ? $attr->getDefaultValue() : $attr->getFixedValue())) {
                 if (! $col = $this->getColumns()->getByAttribute($attr)) {
                     $col = $this->getColumns()->addFromExpression($attr->getAlias());
@@ -899,9 +820,7 @@ class DataSheet implements DataSheetInterface
         }
         
         // Check, if all required attributes are present
-        foreach ($this->getMetaObject()
-            ->getAttributes()
-            ->getRequired() as $req) {
+        foreach ($this->getMetaObject()->getAttributes()->getRequired() as $req) {
             if (! $req_col = $this->getColumns()->getByAttribute($req)) {
                 // If there is no column for the required attribute, add one
                 $col = $this->getColumns()->addFromExpression($req->getAlias());
@@ -912,10 +831,7 @@ class DataSheet implements DataSheetInterface
                     // Try to get the value from the current filter contexts: if the missing attribute was used as a direct filter, we assume, that the data is saved
                     // in the same context, so we can set the attribute value to the filter value
                     // TODO Look in other context scopes, not only in the application scope. Still looking for an elegant solution here.
-                    foreach ($this->exface->context()
-                        ->getScopeApplication()
-                        ->getFilterContext()
-                        ->getConditions($this->getMetaObject()) as $cond) {
+                    foreach ($this->exface->context()->getScopeApplication()->getFilterContext()->getConditions($this->getMetaObject()) as $cond) {
                         if ($req->getAlias() == $cond->getExpression()->toString() && ($cond->getComparator() == EXF_COMPARATOR_EQUALS || $cond->getComparator() == EXF_COMPARATOR_IS)) {
                             $this->setColumnValues($req->getAlias(), $cond->getValue());
                         }
@@ -951,8 +867,7 @@ class DataSheet implements DataSheetInterface
                     $values_found = true;
                 }
                 // Add all other columns to values
-                $query->addValues($column->getExpressionObj()
-                    ->toString(), $column->getValues(false));
+                $query->addValues($column->getExpressionObj()->toString(), $column->getValues(false));
             }
         }
         
@@ -976,19 +891,16 @@ class DataSheet implements DataSheetInterface
         }
         
         // Save the new UIDs in the data sheet
-        $this->setColumnValues($this->getMetaObject()
-            ->getUidAlias(), $new_uids);
+        $this->setColumnValues($this->getMetaObject()->getUidAlias(), $new_uids);
         
-        $this->getWorkbench()
-            ->eventManager()
-            ->dispatch(EventFactory::createDataSheetEvent($this, 'CreateData.After'));
+        $this->getWorkbench()->eventManager()->dispatch(EventFactory::createDataSheetEvent($this, 'CreateData.After'));
         
         return count($new_uids);
     }
 
     /**
      * TODO Ask the user before a cascading delete!
-     * 
+     *
      * {@inheritdoc}
      *
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::dataDelete()
@@ -997,17 +909,13 @@ class DataSheet implements DataSheetInterface
     {
         // Start a new transaction, if not given
         if (! $transaction) {
-            $transaction = $this->getWorkbench()
-                ->data()
-                ->startTransaction();
+            $transaction = $this->getWorkbench()->data()->startTransaction();
             $commit = true;
         } else {
             $commit = false;
         }
         
-        $this->getWorkbench()
-            ->eventManager()
-            ->dispatch(EventFactory::createDataSheetEvent($this, 'DeleteData.Before'));
+        $this->getWorkbench()->eventManager()->dispatch(EventFactory::createDataSheetEvent($this, 'DeleteData.Before'));
         
         $affected_rows = 0;
         // create new query for the main object
@@ -1021,8 +929,7 @@ class DataSheet implements DataSheetInterface
         $query->setFiltersConditionGroup($this->getFilters());
         if ($this->getUidColumn()) {
             if ($uids = $this->getUidColumn()->getValues(false)) {
-                $query->addFilterCondition(ConditionFactory::createFromExpression($this->exface, $this->getUidColumn()
-                    ->getExpressionObj(), implode(EXF_LIST_SEPARATOR, $uids), EXF_COMPARATOR_IN));
+                $query->addFilterCondition(ConditionFactory::createFromExpression($this->exface, $this->getUidColumn()->getExpressionObj(), implode(EXF_LIST_SEPARATOR, $uids), EXF_COMPARATOR_IN));
             }
         }
         
@@ -1056,9 +963,7 @@ class DataSheet implements DataSheetInterface
             $transaction->commit();
         }
         
-        $this->getWorkbench()
-            ->eventManager()
-            ->dispatch(EventFactory::createDataSheetEvent($this, 'DeleteData.After'));
+        $this->getWorkbench()->eventManager()->dispatch(EventFactory::createDataSheetEvent($this, 'DeleteData.After'));
         
         return $affected_rows;
     }
@@ -1066,7 +971,7 @@ class DataSheet implements DataSheetInterface
     /**
      * Returns an array with data sheets containig all instances, that would need to be deleted cascadingly if the
      * data of this sheet would be deleted.
-     * 
+     *
      * @return DataSheetInterface[]
      */
     public function getSubsheetsForCascadingDelete()
@@ -1078,25 +983,19 @@ class DataSheet implements DataSheetInterface
         /* @var $rel \exface\Core\CommonLogic\Model\Relation */
         foreach ($this->getMetaObject()->getRelations(Relation::RELATION_TYPE_REVERSE) as $rel) {
             // FIXME use $rel->getRelatedObjectKeyAttribute() here instead. This must be fixed first though, as it returns false now
-            if (! $rel->getRelatedObject()
-                ->getAttribute($rel->getForeignKeyAlias())
-                ->isRequired()) {
+            if (! $rel->getRelatedObject()->getAttribute($rel->getForeignKeyAlias())->isRequired()) {
                 // FIXME Throw a warning here! Need to be able to show warning along with success messages!
                 // throw new DataSheetWriteError($this, 'Cascading deletion via optional relations not yet implemented: no instances were deleted for relation "' . $rel->getAlias() . '" to object "' . $rel->getRelatedObject()->getAliasWithNamespace() . '"!');
             } else {
                 $ds = DataSheetFactory::createFromObject($rel->getRelatedObject());
                 // Use all filters of the original query in the cascading queries
-                $ds->setFilters($this->getFilters()
-                    ->rebase($rel->getAlias()));
+                $ds->setFilters($this->getFilters()->rebase($rel->getAlias()));
                 // Additionally add a filter over UIDs in the original query, if it has data with UIDs. This makes sure, the cascading deletes
                 // only affect the loaded rows and nothing "invisible" to the user!
                 if ($this->getUidColumn()) {
                     $uids = $this->getUidColumn()->getValues(false);
                     if (count($uids) > 0) {
-                        $ds->addFilterInFromString($this->getUidColumn()
-                            ->getExpressionObj()
-                            ->rebase($rel->getAlias())
-                            ->toString(), $uids);
+                        $ds->addFilterInFromString($this->getUidColumn()->getExpressionObj()->rebase($rel->getAlias())->toString(), $uids);
                     }
                 }
                 $subsheets[] = $ds;
@@ -1118,7 +1017,7 @@ class DataSheet implements DataSheetInterface
      * Creates a new condition and adds it to the filters of this data sheet to the root condition group.
      * FIXME Make ConditionGroup::addConditionsFromString() better usable by introducing the base object there. Then
      * remove this method here.
-     * 
+     *
      * @param string $column_name            
      * @param ambiguos $value            
      * @param string $comparator            
@@ -1134,7 +1033,7 @@ class DataSheet implements DataSheetInterface
      * Adds an filter based on a list of values: the column value must equal one of the values in the list.
      * The list may be an array or a comma separated string
      * FIXME move to ConditionGroup, so it can be used for nested groups too!
-     * 
+     *
      * @param string $column            
      * @param string|array $values            
      */
@@ -1152,7 +1051,7 @@ class DataSheet implements DataSheetInterface
      * Adds an filter based on a list of values: the column value must equal one of the values in the list.
      * The list may be an array or a comma separated string
      * FIXME move to ConditionGroup, so it can be used for nested groups too!
-     * 
+     *
      * @param string $column            
      * @param string|array $values            
      */
@@ -1168,7 +1067,7 @@ class DataSheet implements DataSheetInterface
 
     /**
      * Returns an array of data sorters
-     * 
+     *
      * @return DataSorterListInterface
      */
     function getSorters()
@@ -1178,7 +1077,7 @@ class DataSheet implements DataSheetInterface
 
     /**
      * Returns TRUE if the data sheet has at least one sorter and FALSE otherwise
-     * 
+     *
      * @return boolean
      */
     public function hasSorters()
@@ -1199,7 +1098,7 @@ class DataSheet implements DataSheetInterface
      * Returns multiple rows of the data sheet as an array of associative array (e.g.
      * [rownum => [col1 => val1, col2 => val2, ...] ])
      * By default returns all rows. Use the arguments to select only a range of rows.
-     * 
+     *
      * @param number $how_many            
      * @param number $offset            
      * @return array
@@ -1222,7 +1121,7 @@ class DataSheet implements DataSheetInterface
     /**
      * Returns the specified row as an associative array (e.g.
      * [col1 => val1, col2 => val2, ...])
-     * 
+     *
      * @param number $row_number            
      * @return multitype:
      */
@@ -1234,7 +1133,7 @@ class DataSheet implements DataSheetInterface
     /**
      * Returns the first row, that contains a given value in the specified column.
      * Returns NULL if no row matches.
-     * 
+     *
      * @param string $column_name            
      * @param mixed $value            
      * @throws DataSheetColumnNotFoundError
@@ -1252,7 +1151,7 @@ class DataSheet implements DataSheetInterface
     /**
      * Returns the total rows as assotiative arrays.
      * Multiple total rows can be used to display multiple totals per column.
-     * 
+     *
      * @return array [ column_id => total value ]
      */
     function getTotalsRows()
@@ -1287,7 +1186,7 @@ class DataSheet implements DataSheetInterface
      * Use with care! This may cause inconsistensies or unwanted data reads!
      * TODO This method seams to dangerous.
      * Need to find out, when columns are actually marked out of date!
-     * 
+     *
      * @param DataColumnList $columns            
      */
     public function setColumns(DataColumnList $columns)
@@ -1313,7 +1212,7 @@ class DataSheet implements DataSheetInterface
      * This is an alias for get_columns()->get($name)!
      * FIXME Remove in favor of get_columns()->get($name). This method is just temporarily here as long as the
      * strange bug with the wrong parent sheet is not fixed.
-     * 
+     *
      * @param
      *            string column name
      * @return DataColumn
@@ -1335,7 +1234,7 @@ class DataSheet implements DataSheetInterface
 
     /**
      * Returns the data sheet column containing the UID values of the main object or false if the data sheet does not contain that column
-     * 
+     *
      * @return \exface\Core\Interfaces\DataSheets\DataColumnInterface
      */
     public function getUidColumn()
@@ -1359,7 +1258,7 @@ class DataSheet implements DataSheetInterface
 
     /**
      * Returns TRUE if the data sheet has at least one aggregator and FALSE otherwise
-     * 
+     *
      * @return boolean
      */
     public function hasAggregators()
@@ -1373,7 +1272,7 @@ class DataSheet implements DataSheetInterface
 
     /**
      * Returns the root condition group with all filters of the data sheet
-     * 
+     *
      * @return ConditionGroup
      */
     public function getFilters()
@@ -1390,7 +1289,7 @@ class DataSheet implements DataSheetInterface
      * Returns a JSON representation of the data sheet with all it's data.
      * This JSON can be used to recreate the data
      * sheet later or just to make the data well readable.
-     * 
+     *
      * @return string JSON
      */
     public function toUxon()
@@ -1540,8 +1439,7 @@ class DataSheet implements DataSheetInterface
 
     public function addFilterFromColumnValues(DataColumnInterface $column)
     {
-        $this->addFilterFromString($column->getExpressionObj()
-            ->toString(), implode(EXF_LIST_SEPARATOR, array_unique($column->getValues(false))), EXF_COMPARATOR_IN);
+        $this->addFilterFromString($column->getExpressionObj()->toString(), implode(EXF_LIST_SEPARATOR, array_unique($column->getValues(false))), EXF_COMPARATOR_IN);
         return $this;
     }
 
@@ -1616,7 +1514,7 @@ class DataSheet implements DataSheetInterface
     /**
      * Merges the current data sheet with another one.
      * Values of the other sheet will overwrite values of identical columns of the current one!
-     * 
+     *
      * @param DataSheet $other_sheet            
      * @return DataSheet
      */
@@ -1648,9 +1546,7 @@ class DataSheet implements DataSheetInterface
         // to dublicate them!
         
         // Merge columns
-        $this->joinLeft($other_sheet, $this->getMetaObject()
-            ->getUidAlias(), $this->getMetaObject()
-            ->getUidAlias());
+        $this->joinLeft($other_sheet, $this->getMetaObject()->getUidAlias(), $this->getMetaObject()->getUidAlias());
         
         return $this;
     }
@@ -1667,7 +1563,7 @@ class DataSheet implements DataSheetInterface
      * Clones the data sheet and returns the new copy.
      * The copy will point to the same meta object, but will
      * have it's own columns, filters, aggregations, etc.
-     * 
+     *
      * @return DataSheetInterface
      */
     public function copy()
@@ -1677,9 +1573,7 @@ class DataSheet implements DataSheetInterface
         // Copy internal properties, that do not get exported to UXON
         foreach ($this->getColumns() as $key => $col) {
             if ($col->getIgnoreFixedValues()) {
-                $copy->getColumns()
-                    ->get($key)
-                    ->setIgnoreFixedValues($col->getIgnoreFixedValues());
+                $copy->getColumns()->get($key)->setIgnoreFixedValues($col->getIgnoreFixedValues());
             }
         }
         return $copy;
@@ -1740,16 +1634,12 @@ class DataSheet implements DataSheetInterface
      */
     public function dataValidate()
     {
-        $this->getWorkbench()
-            ->eventManager()
-            ->dispatch(EventFactory::createDataSheetEvent($this, 'ValidateData.Before'));
+        $this->getWorkbench()->eventManager()->dispatch(EventFactory::createDataSheetEvent($this, 'ValidateData.Before'));
         if ($this->invalid_data_flag !== true) {
             // TODO Add data type validation here
             $this->invalid_data_flag = false;
         }
-        $this->getWorkbench()
-            ->eventManager()
-            ->dispatch(EventFactory::createDataSheetEvent($this, 'ValidateData.After'));
+        $this->getWorkbench()->eventManager()->dispatch(EventFactory::createDataSheetEvent($this, 'ValidateData.After'));
         return $this->invalid_data_flag;
     }
 

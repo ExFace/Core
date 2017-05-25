@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Interfaces\DataSources;
 
 use exface\Core\CommonLogic\Workbench;
@@ -66,7 +65,7 @@ interface DataSourceInterface extends ExfaceClassInterface
     /**
      * Returns an assotiative array with configuration options for this connections (e.g.
      * [user => user_value, password => password_value, ...]
-     * 
+     *
      * @return array
      */
     public function getConnectionConfig();
@@ -79,14 +78,14 @@ interface DataSourceInterface extends ExfaceClassInterface
 
     /**
      * Returns TRUE, if the data source or it's connection is marked as read only or FALSE otherwise.
-     * 
+     *
      * @return boolean
      */
     public function isReadOnly();
 
     /**
      * Set to TRUE to mark this data source as read only.
-     * 
+     *
      * @param boolean $value            
      * @return DataSourceInterface
      */

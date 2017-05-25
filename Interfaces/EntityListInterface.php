@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Interfaces;
 
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
@@ -25,7 +24,7 @@ interface EntityListInterface extends iCanBeConvertedToUxon, \IteratorAggregate
     /**
      * Returns all entities in the list as an array.
      * It is an assosiative array, if key were explicitly speicified when filling the list.
-     * 
+     *
      * @return array
      */
     public function getAll();
@@ -43,7 +42,7 @@ interface EntityListInterface extends iCanBeConvertedToUxon, \IteratorAggregate
 
     /**
      * Removes the given entity from the list
-     * 
+     *
      * @param mixed $entity            
      * @return UxonObjectList
      */
@@ -51,7 +50,7 @@ interface EntityListInterface extends iCanBeConvertedToUxon, \IteratorAggregate
 
     /**
      * Removes the entity matching the given key
-     * 
+     *
      * @param mixed $key            
      */
     public function removeByKey($key);
@@ -59,7 +58,7 @@ interface EntityListInterface extends iCanBeConvertedToUxon, \IteratorAggregate
     /**
      * Returns the entity, that was stored under the given key.
      * Returns NULL if the key is not present in the list.
-     * 
+     *
      * @param mixed $key            
      * @return mixed
      */
@@ -67,14 +66,14 @@ interface EntityListInterface extends iCanBeConvertedToUxon, \IteratorAggregate
 
     /**
      * Returns the first entity in the list or NULL if the list is empty.
-     * 
+     *
      * @return mixed
      */
     public function getFirst();
 
     /**
      * Returns the last entity in the list or NULL if the list is empty.
-     * 
+     *
      * @return mixed
      */
     public function getLast();
@@ -82,7 +81,7 @@ interface EntityListInterface extends iCanBeConvertedToUxon, \IteratorAggregate
     /**
      * Returns the n-th entity in the list (starting from 1 for the first entity).
      * Returns NULL if the list is smaller than $number.
-     * 
+     *
      * @param integer $number            
      */
     public function getNth($number);
@@ -94,28 +93,28 @@ interface EntityListInterface extends iCanBeConvertedToUxon, \IteratorAggregate
 
     /**
      * Sets the lists parent object
-     * 
+     *
      * @param mixed $parent_object            
      */
     public function setParent($parent_object);
 
     /**
      * Returns the current number of entities in the list.
-     * 
+     *
      * @return integer
      */
     public function count();
 
     /**
      * Returns TRUE, if the list is empty and FALSE otherwise
-     * 
+     *
      * @return boolean
      */
     public function isEmpty();
 
     /**
      * Sorts the list by key values
-     * 
+     *
      * @return EntityList
      */
     public function sortByKey();
@@ -124,7 +123,7 @@ interface EntityListInterface extends iCanBeConvertedToUxon, \IteratorAggregate
      * Uses the given array of UXON objects to populate the entity list.
      * Each UXON object in the array
      * will be instantiated and added to the list.
-     * 
+     *
      * @param array $uxon            
      * @return void
      */
@@ -133,7 +132,7 @@ interface EntityListInterface extends iCanBeConvertedToUxon, \IteratorAggregate
     /**
      * Returns a new entity list, containing all entities of this one and all entities of the given other list, that
      * were not present in the current one.
-     * 
+     *
      * @param EntityListInterface $other_list            
      * @return EntityListInterface
      */

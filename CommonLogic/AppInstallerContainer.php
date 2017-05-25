@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\CommonLogic;
 
 use exface\Core\Interfaces\AppInstallerInterface;
@@ -82,9 +81,7 @@ class AppInstallerContainer implements AppInstallerInterface, InstallerContainer
         $appNameResolver = NameResolver::createFromString($appAlias, NameResolver::OBJECT_TYPE_APP, $exface);
         $appPath = $exface->filemanager()->getPathToVendorFolder() . $appNameResolver->getClassDirectory();
         $result = '';
-        $app->getWorkbench()
-            ->filemanager()
-            ->pathConstruct($destination_absolute_path);
+        $app->getWorkbench()->filemanager()->pathConstruct($destination_absolute_path);
         // TODO Dispatch App.Backup.Before
         foreach ($this->getInstallers() as $installer) {
             $result .= $installer->backup($destination_absolute_path);

@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Interfaces\DataSources;
 
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
@@ -21,7 +20,7 @@ interface DataQueryInterface extends iCanBeConvertedToUxon, iCanBeConvertedToStr
 
     /**
      * Returns the number of rows affected by the this query
-     * 
+     *
      * @return integer
      */
     public function countAffectedRows();

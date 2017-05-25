@@ -14,7 +14,7 @@ use exface\Core\Exceptions\UnexpectedValueException;
  * Thus, a condition is basically
  * something like "expr = a" or "date > 01.01.1970", etc, while a ConditionGroup can be used to combine multiple conditions using
  * logical operators like AND, OR, etc.
- * 
+ *
  * @author Andrej Kabachnik
  *        
  */
@@ -43,7 +43,7 @@ class Condition implements iCanBeConvertedToUxon
 
     /**
      * Returns the expression to filter
-     * 
+     *
      * @return Expression
      */
     public function getExpression()
@@ -53,7 +53,7 @@ class Condition implements iCanBeConvertedToUxon
 
     /**
      * Sets the expression that will be compared to the value
-     * 
+     *
      * @param Expression $expression            
      */
     public function setExpression(Expression $expression)
@@ -63,7 +63,7 @@ class Condition implements iCanBeConvertedToUxon
 
     /**
      * Returns the value to compare to
-     * 
+     *
      * @return mixed
      */
     public function getValue()
@@ -73,7 +73,7 @@ class Condition implements iCanBeConvertedToUxon
 
     /**
      * Sets the value to compare to
-     * 
+     *
      * @param mixed $value            
      * @throws RangeException
      */
@@ -82,10 +82,7 @@ class Condition implements iCanBeConvertedToUxon
         try {
             $value = $this->getDataType()->parse($value);
         } catch (\Throwable $e) {
-            throw new RangeException('Illegal filter value "' . $value . '" for attribute "' . $this->getAttributeAlias() . '" of data type "' . $this->getExpression()
-                ->getAttribute()
-                ->getDataType()
-                ->getName() . '": ' . $e->getMessage(), '6T5WBNB', $e);
+            throw new RangeException('Illegal filter value "' . $value . '" for attribute "' . $this->getAttributeAlias() . '" of data type "' . $this->getExpression()->getAttribute()->getDataType()->getName() . '": ' . $e->getMessage(), '6T5WBNB', $e);
             $value = null;
         }
         $this->value = $value;
@@ -94,7 +91,7 @@ class Condition implements iCanBeConvertedToUxon
     /**
      * Returns the comparison operator from this condition.
      * Normally it is one of the EXF_COMPARATOR_xxx constants.
-     * 
+     *
      * @return string
      */
     public function getComparator()
@@ -156,7 +153,7 @@ class Condition implements iCanBeConvertedToUxon
 
     /**
      * Returns the attribute_alias to filter if the filter is based upon an attribute or FALSE otherwise
-     * 
+     *
      * @return string|boolean
      */
     public function getAttributeAlias()
@@ -184,15 +181,13 @@ class Condition implements iCanBeConvertedToUxon
         $uxon->expression = $this->getExpression()->toString();
         $uxon->comparator = $this->getComparator();
         $uxon->value = $this->getValue();
-        $uxon->object_alias = $this->getExpression()
-            ->getMetaObject()
-            ->getAliasWithNamespace();
+        $uxon->object_alias = $this->getExpression()->getMetaObject()->getAliasWithNamespace();
         return $uxon;
     }
 
     /**
      * Imports data from UXON objects like {"object_alias": "...", "expression": "...", "value": "...", "comparator": "..."}
-     * 
+     *
      * @param UxonObject $uxon_object            
      */
     public function importUxonObject(UxonObject $uxon_object)
@@ -202,9 +197,7 @@ class Condition implements iCanBeConvertedToUxon
         } elseif ($uxon_object->hasProperty('attribute_alias')) {
             $expression = $uxon_object->getProperty('attribute_alias');
         }
-        $this->setExpression($this->exface->model()
-            ->parseExpression($expression, $this->exface->model()
-            ->getObject($uxon_object->getProperty('object_alias'))));
+        $this->setExpression($this->exface->model()->parseExpression($expression, $this->exface->model()->getObject($uxon_object->getProperty('object_alias'))));
         if ($uxon_object->hasProperty('comparator') && $uxon_object->getProperty('comparator')) {
             $this->setComparator($uxon_object->getProperty('comparator'));
         }

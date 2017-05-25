@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Behaviors;
 
 use exface\Core\CommonLogic\AbstractBehavior;
@@ -24,14 +23,9 @@ class TimeStampingBehavior extends AbstractBehavior
 
     public function register()
     {
-        $this->getUpdatedOnAttribute()
-            ->setSystem(true)
-            ->setDefaultAggregateFunction('MAX');
+        $this->getUpdatedOnAttribute()->setSystem(true)->setDefaultAggregateFunction('MAX');
         if ($this->getCheckForConflictsOnUpdate()) {
-            $this->getWorkbench()
-                ->eventManager()
-                ->addListener($this->getObject()
-                ->getAliasWithNamespace() . '.DataSheet.UpdateData.Before', array(
+            $this->getWorkbench()->eventManager()->addListener($this->getObject()->getAliasWithNamespace() . '.DataSheet.UpdateData.Before', array(
                 $this,
                 'checkForConflictsOnUpdate'
             ));
@@ -127,11 +121,7 @@ class TimeStampingBehavior extends AbstractBehavior
         
         $conflict_rows = array();
         // See, if the UndoAction is performed currently. It needs special treatment
-        $current_action = $this->getWorkbench()
-            ->context()
-            ->getScopeWindow()
-            ->getActionContext()
-            ->getCurrentAction();
+        $current_action = $this->getWorkbench()->context()->getScopeWindow()->getActionContext()->getCurrentAction();
         if ($current_action instanceof iUndoActions) {
             // FIXME To check for conflicts when performing and undo, we need to see, if the timestamp changed
             // since the undone action had been performed. The current problem is, however, that we do not store
@@ -152,9 +142,7 @@ class TimeStampingBehavior extends AbstractBehavior
                 // ueber Knopf, ueber Knopf mit Filtern $check_nr == 1, $update_nr == 1
                 // beim Bearbeiten mehrerer Objekte ueber Massenupdate in Tabelle $check_nr == $update_nr > 1
                 foreach ($updated_column->getValues() as $row_nr => $updated_val) {
-                    $check_val = $check_column->getCellValue($check_sheet->getUidColumn()
-                        ->findRowByValue($data_sheet->getUidColumn()
-                        ->getCellValue($row_nr)));
+                    $check_val = $check_column->getCellValue($check_sheet->getUidColumn()->findRowByValue($data_sheet->getUidColumn()->getCellValue($row_nr)));
                     try {
                         if (empty($data_sheet->getUidColumn()->getValues()[$row_nr])) {
                             // Beim Massenupdate mit Filtern wird als TS_UPDATE-Wert die momentane Zeit mitgeliefert, die natuerlich neuer

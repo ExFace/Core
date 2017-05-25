@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\DataTypes;
 
 use exface\Core\Interfaces\Model\DataTypeInterface;

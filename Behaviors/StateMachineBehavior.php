@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Behaviors;
 
 use exface\Core\CommonLogic\AbstractBehavior;
@@ -39,17 +38,11 @@ class StateMachineBehavior extends AbstractBehavior
      */
     public function register()
     {
-        $this->getWorkbench()
-            ->eventManager()
-            ->addListener($this->getObject()
-            ->getAliasWithNamespace() . '.Widget.Prefill.After', array(
+        $this->getWorkbench()->eventManager()->addListener($this->getObject()->getAliasWithNamespace() . '.Widget.Prefill.After', array(
             $this,
             'setWidgetStates'
         ));
-        $this->getWorkbench()
-            ->eventManager()
-            ->addListener($this->getObject()
-            ->getAliasWithNamespace() . '.DataSheet.UpdateData.Before', array(
+        $this->getWorkbench()->eventManager()->addListener($this->getObject()->getAliasWithNamespace() . '.DataSheet.UpdateData.Before', array(
             $this,
             'checkForConflictsOnUpdate'
         ));
@@ -388,9 +381,7 @@ class StateMachineBehavior extends AbstractBehavior
                 // ueber Knopf $check_nr == 1, $update_nr == 1
                 // beim Bearbeiten mehrerer Objekte ueber Massenupdate in Tabelle $check_nr == $update_nr > 1
                 foreach ($updated_column->getValues() as $row_nr => $updated_val) {
-                    $check_val = $check_column->getCellValue($check_sheet->getUidColumn()
-                        ->findRowByValue($data_sheet->getUidColumn()
-                        ->getCellValue($row_nr)));
+                    $check_val = $check_column->getCellValue($check_sheet->getUidColumn()->findRowByValue($data_sheet->getUidColumn()->getCellValue($row_nr)));
                     $allowed_transitions = $this->getState($check_val)->getTransitions();
                     if (! in_array($updated_val, $allowed_transitions)) {
                         $data_sheet->dataMarkInvalid();
@@ -414,8 +405,7 @@ class StateMachineBehavior extends AbstractBehavior
         // Check all the updated attributes for disabled attributes, if a disabled attribute
         // is changed throw an error
         foreach ($data_sheet->getRows() as $updated_row_nr => $updated_row) {
-            $check_row_nr = $check_sheet->getUidColumn()->findRowByValue($data_sheet->getUidColumn()
-                ->getCellValue($updated_row_nr));
+            $check_row_nr = $check_sheet->getUidColumn()->findRowByValue($data_sheet->getUidColumn()->getCellValue($updated_row_nr));
             $check_state_val = $check_column->getCellValue($check_row_nr);
             $disabled_attributes = $this->getState($check_state_val)->getDisabledAttributesAliases();
             foreach ($updated_row as $attribute_alias => $updated_val) {

@@ -71,9 +71,7 @@ class DebugMessageFileHandler implements LogHandlerInterface
         $page = UiPageFactory::createEmpty($ui);
         
         $debugMessage = new DebugMessage($page);
-        $debugMessage->setMetaObject($page->getWorkbench()
-            ->model()
-            ->getObject('exface.Core.ERROR'));
+        $debugMessage->setMetaObject($page->getWorkbench()->model()->getObject('exface.Core.ERROR'));
         
         return $debugMessage;
     }

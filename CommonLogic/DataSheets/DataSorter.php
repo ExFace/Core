@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\CommonLogic\DataSheets;
 
 use exface\Core\Exceptions\DataSheetException;
@@ -39,12 +38,8 @@ class DataSorter implements iCanBeConvertedToUxon, ExfaceClassInterface
 
     public function setAttributeAlias($value)
     {
-        if ($this->getDataSheet() && ! $this->getDataSheet()
-            ->getMetaObject()
-            ->hasAttribute($value)) {
-            throw new DataSheetStructureError($this->getDataSheet(), 'Cannot add a sorter over "' . $value . '" to data sheet with object "' . $this->getDataSheet()
-                ->getMetaObject()
-                ->getAliasWithNamespace() . '": only sorters over meta attributes are supported!', '6UQBX9K');
+        if ($this->getDataSheet() && ! $this->getDataSheet()->getMetaObject()->hasAttribute($value)) {
+            throw new DataSheetStructureError($this->getDataSheet(), 'Cannot add a sorter over "' . $value . '" to data sheet with object "' . $this->getDataSheet()->getMetaObject()->getAliasWithNamespace() . '": only sorters over meta attributes are supported!', '6UQBX9K');
         }
         $this->attribute_alias = $value;
         return $this;
@@ -75,9 +70,7 @@ class DataSorter implements iCanBeConvertedToUxon, ExfaceClassInterface
     public function setDataSheet(DataSheetInterface $data_sheet)
     {
         if ($this->getAttributeAlias() && ! $data_sheet->getMetaObject()->hasAttribute($this->getAttributeAlias())) {
-            throw new DataSheetStructureError($data_sheet, 'Cannot use a sorter over "' . $this->getAttributeAlias() . '" in data sheet with object "' . $this->getDataSheet()
-                ->getMetaObject()
-                ->getAliasWithNamespace() . '": only sorters over meta attributes are supported!', '6UQBX9K');
+            throw new DataSheetStructureError($data_sheet, 'Cannot use a sorter over "' . $this->getAttributeAlias() . '" in data sheet with object "' . $this->getDataSheet()->getMetaObject()->getAliasWithNamespace() . '": only sorters over meta attributes are supported!', '6UQBX9K');
         }
         $this->data_sheet = $data_sheet;
         return $this;
@@ -106,7 +99,7 @@ class DataSorter implements iCanBeConvertedToUxon, ExfaceClassInterface
 
     /**
      * Returns a copy of this sorter still belonging to the same data sheet
-     * 
+     *
      * @return DataSorter
      */
     public function copy()

@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Actions;
 
 use exface\Core\Interfaces\Actions\iUndoActions;
@@ -8,7 +7,7 @@ use exface\Core\Exceptions\Actions\ActionUndoFailedError;
 
 /**
  * This action performs an undo operation on one or more other actions from the action context history.
- * 
+ *
  * @author Andrej Kabachnik
  *        
  */
@@ -62,12 +61,7 @@ class UndoAction extends AbstractAction implements iUndoActions
     public function getActionsToUndo()
     {
         $data_sheet = $this->getInputDataSheet();
-        return $this->getApp()
-            ->getWorkbench()
-            ->context()
-            ->getScopeWindow()
-            ->getActionContext()
-            ->getActionHistory($data_sheet && $data_sheet->countRows() ? $data_sheet->countRows() : 1);
+        return $this->getApp()->getWorkbench()->context()->getScopeWindow()->getActionContext()->getActionHistory($data_sheet && $data_sheet->countRows() ? $data_sheet->countRows() : 1);
     }
 
     public function countUndoneActions()

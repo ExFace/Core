@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Actions;
 
 use exface\Core\Interfaces\Actions\iRunTemplateScript;
@@ -73,7 +72,7 @@ class CustomTemplateScript extends AbstractAction implements iRunTemplateScript
      * Expects a placeholders array of the
      * form [placeholder => value]. If the script is not passed directly, get_script() will be used to get it.
      * This method can be overridden to easiliy extend or modify the script specified in UXON.
-     * 
+     *
      * @param array $placeholders
      *            [placeholder => value]
      * @param string $script            
