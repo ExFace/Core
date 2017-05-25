@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Widgets;
-class InputDate extends Input {
-	
+
+class InputDate extends Input
+{
 }
 ?>

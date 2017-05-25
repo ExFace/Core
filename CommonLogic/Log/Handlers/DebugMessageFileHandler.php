@@ -1,7 +1,5 @@
 <?php
-
 namespace exface\Core\CommonLogic\Log\Handlers;
-
 
 use exface\Core\CommonLogic\Log\Formatters\MessageOnlyFormatter;
 use exface\Core\Factories\UiPageFactory;
@@ -11,59 +9,72 @@ use exface\Core\Widgets\DebugMessage;
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
 
-class DebugMessageFileHandler implements LogHandlerInterface {
-	private $dir;
-	private $minLogLevel;
-	private $staticFilenamePart;
+class DebugMessageFileHandler implements LogHandlerInterface
+{
 
-	/**
-	 * DebugMessageFileHandler constructor.
-	 *
-	 * @param $dir
-	 * @param $staticFilenamePart
-	 * @param $minLogLevel
-	 */
-	function __construct($dir, $staticFilenamePart, $minLogLevel = Logger::DEBUG) {
-		$this->dir                = $dir;
-		$this->staticFilenamePart = $staticFilenamePart;
-		$this->minLogLevel        = $minLogLevel;
-	}
+    private $dir;
 
-	public function handle($level, $message, array $context = array(), iCanGenerateDebugWidgets $sender = null) {
-		if ($sender) {
-			$fileName = $context["id"] . $this->staticFilenamePart;
-			if (!$fileName) {
-				return;
-			}
+    private $minLogLevel;
 
-			$logger = new \Monolog\Logger("Stacktrace");
-			$handler = new StreamHandler($this->dir . "/" . $fileName, $this->minLogLevel);
-			$handler->setFormatter(new MessageOnlyFormatter());
-			$logger->pushHandler($handler);
+    private $staticFilenamePart;
 
-			$debugWidget = $sender->create_debug_widget($this->createDebugMessage());
-			$debugWidgetData = $debugWidget->export_uxon_object()->to_json(true);
-			$logger->log($level, $debugWidgetData);
-		}
-	}
+    /**
+     * DebugMessageFileHandler constructor.
+     *
+     * @param
+     *            $dir
+     * @param
+     *            $staticFilenamePart
+     * @param
+     *            $minLogLevel
+     */
+    function __construct($dir, $staticFilenamePart, $minLogLevel = Logger::DEBUG)
+    {
+        $this->dir = $dir;
+        $this->staticFilenamePart = $staticFilenamePart;
+        $this->minLogLevel = $minLogLevel;
+    }
 
-	protected function prepareContext($context) {
-		// do not log the exception in this handler
-		if (isset($context["exception"])) {
-			unset($context["exception"]);
-		}
+    public function handle($level, $message, array $context = array(), iCanGenerateDebugWidgets $sender = null)
+    {
+        if ($sender) {
+            $fileName = $context["id"] . $this->staticFilenamePart;
+            if (! $fileName) {
+                return;
+            }
+            
+            $logger = new \Monolog\Logger("Stacktrace");
+            $handler = new StreamHandler($this->dir . "/" . $fileName, $this->minLogLevel);
+            $handler->setFormatter(new MessageOnlyFormatter());
+            $logger->pushHandler($handler);
+            
+            $debugWidget = $sender->createDebugWidget($this->createDebugMessage());
+            $debugWidgetData = $debugWidget->exportUxonObject()->toJson(true);
+            $logger->log($level, $debugWidgetData);
+        }
+    }
 
-		return $context;
-	}
+    protected function prepareContext($context)
+    {
+        // do not log the exception in this handler
+        if (isset($context["exception"])) {
+            unset($context["exception"]);
+        }
+        
+        return $context;
+    }
 
-	protected function createDebugMessage() {
-		global $exface;
-		$ui   = $exface->ui();
-		$page = UiPageFactory::create_empty($ui);
-
-		$debugMessage = new DebugMessage($page);
-		$debugMessage->set_meta_object($page->get_workbench()->model()->get_object('exface.Core.ERROR'));
-
-		return $debugMessage;
-	}
+    protected function createDebugMessage()
+    {
+        global $exface;
+        $ui = $exface->ui();
+        $page = UiPageFactory::createEmpty($ui);
+        
+        $debugMessage = new DebugMessage($page);
+        $debugMessage->setMetaObject($page->getWorkbench()
+            ->model()
+            ->getObject('exface.Core.ERROR'));
+        
+        return $debugMessage;
+    }
 }

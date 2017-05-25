@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Widgets;
-class InputText extends Input {
-	   
+
+class InputText extends Input
+{
 }
 ?>

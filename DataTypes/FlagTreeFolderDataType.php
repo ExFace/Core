@@ -1,11 +1,14 @@
 <?php
 namespace exface\Core\DataTypes;
+
 /**
- * @DEPRECATED
- * @author Andrej Kabachnik
  *
+ * @deprecated
+ *
+ * @author Andrej Kabachnik
+ *        
  */
-class FlagTreeFolderDataType extends BooleanDataType {
-	
+class FlagTreeFolderDataType extends BooleanDataType
+{
 }
 ?>

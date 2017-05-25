@@ -1,4 +1,6 @@
-<?php namespace exface\Core\Exceptions\Model;
+<?php
+
+namespace exface\Core\Exceptions\Model;
 
 use exface\Core\Exceptions\RuntimeException;
 
@@ -6,8 +8,8 @@ use exface\Core\Exceptions\RuntimeException;
  * Exception thrown if an expression cannot be rebased.
  *
  * @author Andrej Kabachnik
- *
+ *        
  */
-class ExpressionRebaseImpossibleError extends RuntimeException {
-	
+class ExpressionRebaseImpossibleError extends RuntimeException
+{
 }

@@ -1,7 +1,8 @@
-<?php namespace exface\Core\Interfaces\Actions;
+<?php
 
-interface iRunDataSourceQuery extends ActionInterface {
-	
-	
+namespace exface\Core\Interfaces\Actions;
+
+interface iRunDataSourceQuery extends ActionInterface
+{
 }
 ?>

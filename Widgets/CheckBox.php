@@ -3,25 +3,34 @@ namespace exface\Core\Widgets;
 
 /**
  * This widget represents a two-state-switch mostly displayed as a checkbox.
- * 
- * @author Andrej Kabachnik
  *
+ * @author Andrej Kabachnik
+ *        
  */
-class CheckBox extends Input {
-	
-	public function transform_into_select(){
-		$parent = $this->get_parent();
-		$select = $this->get_page()->create_widget('InputSelect', $parent);
-		$this->get_page()->remove_widget($this);
-		$select->set_id($this->get_id());
-		$select->set_attribute_alias($this->get_attribute_alias());
-		$select->set_value($this->get_value());
-		$select->set_selectable_options(array('', 1, 0), array($this->translate('WIDGET.SELECT_ALL'), $this->translate('WIDGET.SELECT_YES'), $this->translate('WIDGET.SELECT_NO')));
-		$select->set_disabled($this->is_disabled());
-		$select->set_visibility($this->get_visibility());
-		$select->set_caption($this->get_caption());
-		return $select;
-	}
-	
+class CheckBox extends Input
+{
+
+    public function transformIntoSelect()
+    {
+        $parent = $this->getParent();
+        $select = $this->getPage()->createWidget('InputSelect', $parent);
+        $this->getPage()->removeWidget($this);
+        $select->setId($this->getId());
+        $select->setAttributeAlias($this->getAttributeAlias());
+        $select->setValue($this->getValue());
+        $select->setSelectableOptions(array(
+            '',
+            1,
+            0
+        ), array(
+            $this->translate('WIDGET.SELECT_ALL'),
+            $this->translate('WIDGET.SELECT_YES'),
+            $this->translate('WIDGET.SELECT_NO')
+        ));
+        $select->setDisabled($this->isDisabled());
+        $select->setVisibility($this->getVisibility());
+        $select->setCaption($this->getCaption());
+        return $select;
+    }
 }
 ?>

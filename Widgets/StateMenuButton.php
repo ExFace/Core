@@ -1,109 +1,129 @@
 <?php
 namespace exface\Core\Widgets;
+
 use exface\Core\Behaviors\StateMachineState;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\MetaModelBehaviorException;
 
-class StateMenuButton extends MenuButton {
-	
-	private $smb_buttons_set = false;
-	private $show_states = [];
-	
-	/**
-	 * 
-	 * {@inheritDoc}
-	 * @see \exface\Core\Widgets\MenuButton::get_buttons()
-	 */
-	public function get_buttons() {
-		// Falls am Objekt ein StateMachineBehavior haengt wird versucht den momentanen Status aus
-		// dem Objekt auszulesen und die entsprechenden Buttons aus dem Behavior hinzuzufuegen.
-		if (!$this->smb_buttons_set) {
-			if (is_null($smb = $this->get_meta_object()->get_behaviors()->get_by_alias('exface.Core.Behaviors.StateMachineBehavior'))) {
-				throw new MetaModelBehaviorException('StateMenuButton: The object '.$this->get_meta_object()->get_alias_with_namespace().' has no StateMachineBehavior attached.');
-			}
-			
-			if (($data_sheet = $this->get_prefill_data()) && ($state_column = $data_sheet->get_column_values($smb->get_state_attribute_alias()))) {
-				$current_state = $state_column[0];
-			} else {
-				$current_state = $smb->get_default_state_id();
-			}
+class StateMenuButton extends MenuButton
+{
 
-            $states = $smb->get_states();
+    private $smb_buttons_set = false;
 
-			$button_widget = $this->get_input_widget()->get_button_widget_type();
-			foreach ($smb->get_state_buttons($current_state) as $target_state => $smb_button) {
-				// Ist show_states leer werden alle Buttons hinzugefuegt (default)
-				// sonst wird der Knopf nur hinzugefuegt wenn er in show_states enthalten ist.
-				if (empty($this->get_show_states()) || in_array($target_state, $this->get_show_states())) {
-					// Die Eigenschaften des StateMenuButtons werden fuer die einzelnen Buttons
-					// uebernommen. Alle exklusiven Eigenschaften von MenuButton und StateMenuButton
-					// werden entfernt.
-					/* @var $uxon \exface\Core\CommonLogic\UxonObject */
-					$uxon = $this->export_uxon_object_original()->extend(UxonObject::from_anything($smb_button)->copy());
-					$uxon->unset_property('show_states');
-					$uxon->unset_property('buttons');
-					$uxon->unset_property('menu');
-					
-					$button = $this->get_page()->create_widget($button_widget, $this->get_menu(), $uxon);
-					
+    private $show_states = [];
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Widgets\MenuButton::getButtons()
+     */
+    public function getButtons()
+    {
+        // Falls am Objekt ein StateMachineBehavior haengt wird versucht den momentanen Status aus
+        // dem Objekt auszulesen und die entsprechenden Buttons aus dem Behavior hinzuzufuegen.
+        if (! $this->smb_buttons_set) {
+            if (is_null($smb = $this->getMetaObject()
+                ->getBehaviors()
+                ->getByAlias('exface.Core.Behaviors.StateMachineBehavior'))) {
+                throw new MetaModelBehaviorException('StateMenuButton: The object ' . $this->getMetaObject()->getAliasWithNamespace() . ' has no StateMachineBehavior attached.');
+            }
+            
+            if (($data_sheet = $this->getPrefillData()) && ($state_column = $data_sheet->getColumnValues($smb->getStateAttributeAlias()))) {
+                $current_state = $state_column[0];
+            } else {
+                $current_state = $smb->getDefaultStateId();
+            }
+            
+            $states = $smb->getStates();
+            
+            $button_widget = $this->getInputWidget()->getButtonWidgetType();
+            foreach ($smb->getStateButtons($current_state) as $target_state => $smb_button) {
+                // Ist show_states leer werden alle Buttons hinzugefuegt (default)
+                // sonst wird der Knopf nur hinzugefuegt wenn er in show_states enthalten ist.
+                if (empty($this->getShowStates()) || in_array($target_state, $this->getShowStates())) {
+                    // Die Eigenschaften des StateMenuButtons werden fuer die einzelnen Buttons
+                    // uebernommen. Alle exklusiven Eigenschaften von MenuButton und StateMenuButton
+                    // werden entfernt.
+                    /* @var $uxon \exface\Core\CommonLogic\UxonObject */
+                    $uxon = $this->exportUxonObjectOriginal()->extend(UxonObject::fromAnything($smb_button)->copy());
+                    $uxon->unsetProperty('show_states');
+                    $uxon->unsetProperty('buttons');
+                    $uxon->unsetProperty('menu');
+                    
+                    $button = $this->getPage()->createWidget($button_widget, $this->getMenu(), $uxon);
+                    
                     /** @var StateMachineState $stateObject */
                     $stateObject = $states[$target_state];
-					$name = $stateObject->getStateName($this->get_meta_object()->get_app()->get_translator());
-					if ($name)
-						$button->set_caption($name);
+                    $name = $stateObject->getStateName($this->getMetaObject()
+                        ->getApp()
+                        ->getTranslator());
+                    if ($name)
+                        $button->setCaption($name);
+                    
+                    $this->addButton($button);
+                }
+            }
+            
+            $this->smb_buttons_set = true;
+        }
+        
+        return parent::getButtons();
+    }
 
-					$this->add_button($button);
-				}
-			}
-			
-			$this->smb_buttons_set = true;
-		}
-		
-		return parent::get_buttons();
-	}
-	
-	/**
-	 * 
-	 * {@inheritDoc}
-	 * @see \exface\Core\Widgets\Button::get_caption()
-	 */
-	public function get_caption(){
-		$caption = parent::get_caption();
-		if (!$caption && !$this->get_hide_caption()){
-			$caption = $this->get_workbench()->get_core_app()->get_translator()->translate('WIDGET.STATEMENUBUTTON.CAPTION');		
-		}
-		return $caption;
-	}
-	
-	/**
-	 * 
-	 * {@inheritDoc}
-	 * @see \exface\Core\Widgets\MenuButton::get_children()
-	 */
-	public function get_children() {
-		if (!$this->smb_buttons_set) { $this->get_buttons(); }
-		return parent::get_children();
-	}
-	
-	/**
-	 * Returns the states that are shown.
-	 * 
-	 * @return integer[]|string[]
-	 */
-	public function get_show_states() {
-		return $this->show_states;
-	}
-	
-	/**
-	 * Defines a number of states for which transition buttons are shown.
-	 * By default all buttons defined for the current state are shown.
-	 * 
-	 * @param integer[]|string[] $value
-	 * @return \exface\Core\Widgets\StateMenuButton
-	 */
-	public function set_show_states($value) {
-		$this->show_states = $value;
-		return $this;
-	}
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Widgets\Button::getCaption()
+     */
+    public function getCaption()
+    {
+        $caption = parent::getCaption();
+        if (! $caption && ! $this->getHideCaption()) {
+            $caption = $this->getWorkbench()
+                ->getCoreApp()
+                ->getTranslator()
+                ->translate('WIDGET.STATEMENUBUTTON.CAPTION');
+        }
+        return $caption;
+    }
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Widgets\MenuButton::getChildren()
+     */
+    public function getChildren()
+    {
+        if (! $this->smb_buttons_set) {
+            $this->getButtons();
+        }
+        return parent::getChildren();
+    }
+
+    /**
+     * Returns the states that are shown.
+     *
+     * @return integer[]|string[]
+     */
+    public function getShowStates()
+    {
+        return $this->show_states;
+    }
+
+    /**
+     * Defines a number of states for which transition buttons are shown.
+     * By default all buttons defined for the current state are shown.
+     *
+     * @param integer[]|string[] $value            
+     * @return \exface\Core\Widgets\StateMenuButton
+     */
+    public function setShowStates($value)
+    {
+        $this->show_states = $value;
+        return $this;
+    }
 }
 ?>

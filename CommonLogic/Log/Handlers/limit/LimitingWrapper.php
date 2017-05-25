@@ -1,8 +1,5 @@
 <?php
-
-
 namespace exface\Core\CommonLogic\Log\Handlers\limit;
-
 
 use exface\Core\Interfaces\iCanGenerateDebugWidgets;
 use exface\Core\Interfaces\Log\LogHandlerInterface;
@@ -13,41 +10,49 @@ use exface\Core\Interfaces\Log\LogHandlerInterface;
  *
  * @package exface\Core\CommonLogic\Log\Handlers\rotation
  */
-abstract class LimitingWrapper implements LogHandlerInterface {
-	/** @var LogHandlerInterface $handler */
-	private $handler;
+abstract class LimitingWrapper implements LogHandlerInterface
+{
 
-	/**
-	 * LimitingWrapper constructor.
-	 *
-	 * @param LogHandlerInterface $handler the "real" log handler
-	 */
-	function __construct(LogHandlerInterface $handler) {
-		$this->handler = $handler;
-	}
+    /** @var LogHandlerInterface $handler */
+    private $handler;
 
-	public function handle($level, $message, array $context = array(), iCanGenerateDebugWidgets $sender = null) {
-		// check and possibly rotate
-		$this->limit();
+    /**
+     * LimitingWrapper constructor.
+     *
+     * @param LogHandlerInterface $handler
+     *            the "real" log handler
+     */
+    function __construct(LogHandlerInterface $handler)
+    {
+        $this->handler = $handler;
+    }
 
-		$this->callLogger($this->handler, $level, $message, $context, $sender);
-	}
+    public function handle($level, $message, array $context = array(), iCanGenerateDebugWidgets $sender = null)
+    {
+        // check and possibly rotate
+        $this->limit();
+        
+        $this->callLogger($this->handler, $level, $message, $context, $sender);
+    }
 
-	/**
-	 * Create and call the underlying, "real" log handler.
-	 *
-	 * @param LogHandlerInterface $handler the "real" log handler
-	 * @param $level
-	 * @param $message
-	 * @param array $context
-	 * @param iCanGenerateDebugWidgets|null $sender
-	 *
-	 * @return mixed
-	 */
-	protected abstract function callLogger(LogHandlerInterface $handler, $level, $message, array $context = array(), iCanGenerateDebugWidgets $sender = null);
+    /**
+     * Create and call the underlying, "real" log handler.
+     *
+     * @param LogHandlerInterface $handler
+     *            the "real" log handler
+     * @param
+     *            $level
+     * @param
+     *            $message
+     * @param array $context            
+     * @param iCanGenerateDebugWidgets|null $sender            
+     *
+     * @return mixed
+     */
+    protected abstract function callLogger(LogHandlerInterface $handler, $level, $message, array $context = array(), iCanGenerateDebugWidgets $sender = null);
 
-	/**
-	 * Log file cleanup.
-	 */
-	protected abstract function limit();
+    /**
+     * Log file cleanup.
+     */
+    protected abstract function limit();
 }

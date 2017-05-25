@@ -1,11 +1,14 @@
-<?php namespace exface\Core\Interfaces;
+<?php
 
-interface AliasInterface {
-	
-	public function get_alias();
-	
-	public function get_alias_with_namespace();
-	
-	public function get_namespace();
+namespace exface\Core\Interfaces;
+
+interface AliasInterface
+{
+
+    public function getAlias();
+
+    public function getAliasWithNamespace();
+
+    public function getNamespace();
 }
 ?>

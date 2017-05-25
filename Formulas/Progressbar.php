@@ -1,4 +1,6 @@
-<?php namespace exface\Core\Formulas;
+<?php
+
+namespace exface\Core\Formulas;
 
 use exface\Core\CommonLogic\Model\Formula;
 use exface\Core\DataTypes\NumberDataType;
@@ -14,23 +16,25 @@ use exface\Core\DataTypes\NumberDataType;
  * would make values between 0 and 30 green, then upto 79 yellow, value 80 would be red and all the following values gill be grey. Colors
  * can be defined in any format compatible with the CSS color attribute.
  * [
- *    30: "#0a0",
- *    79: "yellow",
- *    80: "red",
- *    99: "grey"
+ * 30: "#0a0",
+ * 79: "yellow",
+ * 80: "red",
+ * 99: "grey"
  * ]
  *
  * @author Andrej Kabachnik
- *
+ *        
  */
 class Progressbar extends Formula
 {
+
     /**
-     * @param int $value
-     * @param string $text
-     * @param int $min
-     * @param int $max
-     * @param array $colorMap
+     *
+     * @param int $value            
+     * @param string $text            
+     * @param int $min            
+     * @param int $max            
+     * @param array $colorMap            
      *
      * @return string
      */
@@ -44,25 +48,23 @@ class Progressbar extends Formula
         70 => "#97CF86",
         80 => "#86C983",
         90 => "#75C47F",
-        100 => "#63BE7B")
-    )
+        100 => "#63BE7B"))
     {
-        if (!$value) return '';
-        if (!$text) $text = $value;
+        if (! $value)
+            return '';
+        if (! $text)
+            $text = $value;
         $value = NumberDataType::parse($value);
-
-        $return = '<div style="width:100%; border:1px solid #ccc; position:relative; overflow: hidden">' .
-            '<div style="width:' . ($value ? $value / ($max - $min) * 100 : $min) . '%;background:' . $this->getBackgroundColor($value, $colorMap) . ';">&nbsp;</div>' .
-            '<div style="position:absolute; left:0; top:0; z-index:100; padding:0 0; width:100%">' . $text . '</div>' .
-            '</div>';
+        
+        $return = '<div style="width:100%; border:1px solid #ccc; position:relative; overflow: hidden">' . '<div style="width:' . ($value ? $value / ($max - $min) * 100 : $min) . '%;background:' . $this->getBackgroundColor($value, $colorMap) . ';">&nbsp;</div>' . '<div style="position:absolute; left:0; top:0; z-index:100; padding:0 0; width:100%">' . $text . '</div>' . '</div>';
         return $return;
     }
 
     /**
      * Returns color corresponding to $value.
      *
-     * @param int $value
-     * @param array $colorMap
+     * @param int $value            
+     * @param array $colorMap            
      *
      * @return string
      */
@@ -74,8 +76,8 @@ class Progressbar extends Formula
     /**
      * Find the matching colorMap key.
      *
-     * @param int $value
-     * @param array $colorMap
+     * @param int $value            
+     * @param array $colorMap            
      *
      * @return int
      */
@@ -87,7 +89,7 @@ class Progressbar extends Formula
             if ($value <= $colorKey)
                 return $colorKey;
         }
-
+        
         return max($colorKeys);
     }
 }

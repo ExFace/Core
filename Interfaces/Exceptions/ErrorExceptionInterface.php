@@ -1,6 +1,7 @@
-<?php namespace exface\Core\Interfaces\Exceptions;
+<?php
 
-interface ErrorExceptionInterface extends ExceptionInterface {
-	
-	
+namespace exface\Core\Interfaces\Exceptions;
+
+interface ErrorExceptionInterface extends ExceptionInterface
+{
 }

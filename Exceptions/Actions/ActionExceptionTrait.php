@@ -1,51 +1,58 @@
-<?php namespace exface\Core\Exceptions\Actions;
+<?php
+
+namespace exface\Core\Exceptions\Actions;
 
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Exceptions\ExceptionTrait;
 
 /**
- * This trait enables an exception to output action specific debug information. 
- * 
- * @author Andrej Kabachnik
+ * This trait enables an exception to output action specific debug information.
  *
+ * @author Andrej Kabachnik
+ *        
  */
 trait ActionExceptionTrait {
-	
-	use ExceptionTrait {
-		create_widget as create_parent_widget;
+    
+    use ExceptionTrait {
+		createWidget as createParentWidget;
 	}
-	
-	private $action = null;
-	
-	/**
-	 *
-	 * {@inheritDoc}
-	 * @see \exface\Core\Interfaces\Exceptions\ActionExceptionInterface::__construct()
-	 */
-	public function __construct (ActionInterface $action, $message, $alias = null, $previous = null) {
-		parent::__construct($message, null, $previous);
-		$this->set_alias($alias);
-		$this->set_action($action);
-	}
-	
-	/**
-	 *
-	 * {@inheritDoc}
-	 * @see \exface\Core\Interfaces\Exceptions\ActionExceptionInterface::get_action()
-	 */
-	public function get_action(){
-		return $this->action;
-	}
-	
-	/**
-	 *
-	 * {@inheritDoc}
-	 * @see \exface\Core\Interfaces\Exceptions\ActionExceptionInterface::set_action()
-	 */
-	public function set_action(ActionInterface $value){
-		$this->action = $value;
-		return $this;
-	}
-	
+
+    private $action = null;
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Exceptions\ActionExceptionInterface::__construct()
+     */
+    public function __construct(ActionInterface $action, $message, $alias = null, $previous = null)
+    {
+        parent::__construct($message, null, $previous);
+        $this->setAlias($alias);
+        $this->setAction($action);
+    }
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Exceptions\ActionExceptionInterface::getAction()
+     */
+    public function getAction()
+    {
+        return $this->action;
+    }
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Exceptions\ActionExceptionInterface::setAction()
+     */
+    public function setAction(ActionInterface $value)
+    {
+        $this->action = $value;
+        return $this;
+    }
 }
 ?>

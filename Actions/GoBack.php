@@ -1,15 +1,21 @@
-<?php namespace exface\Core\Actions;
+<?php
+
+namespace exface\Core\Actions;
 
 use exface\Core\Interfaces\Actions\iNavigate;
 use exface\Core\CommonLogic\AbstractAction;
 
-class GoBack extends AbstractAction implements iNavigate {
-	protected function init(){
-		$this->set_icon_name('back');
-	}
-	
-	protected function perform(){
-		$this->set_result_data_sheet($this->get_input_data_sheet());
-	}
+class GoBack extends AbstractAction implements iNavigate
+{
+
+    protected function init()
+    {
+        $this->setIconName('back');
+    }
+
+    protected function perform()
+    {
+        $this->setResultDataSheet($this->getInputDataSheet());
+    }
 }
 ?>

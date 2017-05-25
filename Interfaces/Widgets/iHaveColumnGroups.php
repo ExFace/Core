@@ -1,10 +1,13 @@
-<?php namespace exface\Core\Interfaces\Widgets;
+<?php
+
+namespace exface\Core\Interfaces\Widgets;
 
 use exface\Core\Widgets\DataColumnGroup;
 
-interface iHaveColumnGroups extends iHaveChildren {
-	
-	public function add_column_group(DataColumnGroup $column);
-	public function get_column_groups();
-	  
+interface iHaveColumnGroups extends iHaveChildren
+{
+
+    public function addColumnGroup(DataColumnGroup $column);
+
+    public function getColumnGroups();
 }

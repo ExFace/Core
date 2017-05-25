@@ -1,4 +1,6 @@
-<?php namespace exface\Core\Exceptions\Behaviors;
+<?php
+
+namespace exface\Core\Exceptions\Behaviors;
 
 use exface\Core\Exceptions\DataSheets\DataSheetWriteError;
 
@@ -9,6 +11,6 @@ use exface\Core\Exceptions\DataSheets\DataSheetWriteError;
  *
  * @author Stefan Leupold
  */
-class StateMachineUpdateException extends DataSheetWriteError {
-	
+class StateMachineUpdateException extends DataSheetWriteError
+{
 }

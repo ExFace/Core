@@ -1,7 +1,5 @@
 <?php
-
 namespace exface\Core\CommonLogic\Log\Handlers\monolog;
-
 
 use exface\Core\Interfaces\iCanGenerateDebugWidgets;
 use exface\Core\Interfaces\Log\LogHandlerInterface;
@@ -12,21 +10,25 @@ use Monolog\Logger;
  *
  * @package exface\Core\CommonLogic\Log\Handlers
  */
-abstract class AbstractMonologHandler implements LogHandlerInterface {
-	/** @var Logger $logger */
-	private $logger;
+abstract class AbstractMonologHandler implements LogHandlerInterface
+{
 
-	public function handle($level, $message, array $context = array(), iCanGenerateDebugWidgets $sender = null) {
-		$logger = $this->getLogger();
-		$logger->log($level, $message, $context);
-	}
+    /** @var Logger $logger */
+    private $logger;
 
-	protected function getLogger() {
-		if (!$this->logger)
-			$this->logger = $this->createRealLogger();
+    public function handle($level, $message, array $context = array(), iCanGenerateDebugWidgets $sender = null)
+    {
+        $logger = $this->getLogger();
+        $logger->log($level, $message, $context);
+    }
 
-		return $this->logger;
-	}
+    protected function getLogger()
+    {
+        if (! $this->logger)
+            $this->logger = $this->createRealLogger();
+        
+        return $this->logger;
+    }
 
-	protected abstract function createRealLogger();
+    protected abstract function createRealLogger();
 }

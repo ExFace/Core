@@ -1,11 +1,13 @@
-<?php namespace exface\Core\Exceptions\Actions;
+<?php
+
+namespace exface\Core\Exceptions\Actions;
 
 /**
- * Exception thrown if an action does not have a calling widget. 
- * 
- * @author Andrej Kabachnik
+ * Exception thrown if an action does not have a calling widget.
  *
+ * @author Andrej Kabachnik
+ *        
  */
-class ActionCallingWidgetNotSpecifiedError extends ActionLogicError {
-		
+class ActionCallingWidgetNotSpecifiedError extends ActionLogicError
+{
 }

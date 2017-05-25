@@ -1,6 +1,7 @@
 <?php
-if (!interface_exists('\Throwable')){
-	interface Throwable {
-		
-	}
+if (! interface_exists('\Throwable')) {
+
+    interface Throwable
+    {
+    }
 }

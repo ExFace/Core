@@ -1,4 +1,6 @@
-<?php namespace exface\Core\CommonLogic;
+<?php
+
+namespace exface\Core\CommonLogic;
 
 use exface\Core\Interfaces\ExfaceClassInterface;
 use Symfony\Component\Config\Definition\Exception\Exception;
@@ -6,78 +8,93 @@ use ZipArchive;
 
 class ArchiveManager implements ExfaceClassInterface
 {
+
     private $exface = null;
+
     private $filePath = '';
+
     private $archive = null;
+
     private $mode = ZipArchive::CREATE;
 
-    public function __construct(Workbench $exface){
+    public function __construct(Workbench $exface)
+    {
         $this->exface = $exface;
         $this->archive = new \ZipArchive();
     }
 
     /**
      *
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\ExfaceClassInterface::get_workbench()
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\ExfaceClassInterface::getWorkbench()
      */
-    public function get_workbench(){
+    public function getWorkbench()
+    {
         return $this->exface;
     }
 
-    public function archive_open(){
+    public function archiveOpen()
+    {
         $this->archive->open($this->filePath, $this->mode);
     }
 
-    public function archive_close(){
+    public function archiveClose()
+    {
         $this->archive->close();
     }
-    public function addFileFromSource($source){
-        $dirPath = pathinfo($this->filePath)['dirname'].DIRECTORY_SEPARATOR;
-        $this->archive->addFile($source, str_replace($dirPath,"",$source));
+
+    public function addFileFromSource($source)
+    {
+        $dirPath = pathinfo($this->filePath)['dirname'] . DIRECTORY_SEPARATOR;
+        $this->archive->addFile($source, str_replace($dirPath, "", $source));
     }
-    public function addFolder($name){
-        $this->archive->addEmptyDir(str_replace($this->filePath,"",$name));
+
+    public function addFolder($name)
+    {
+        $this->archive->addEmptyDir(str_replace($this->filePath, "", $name));
         return $name;
     }
 
-    public function addFolderFromSource($sourcePath){
+    public function addFolderFromSource($sourcePath)
+    {
         try {
-            $dirPath = pathinfo($this->filePath)['dirname'].DIRECTORY_SEPARATOR;
+            $dirPath = pathinfo($this->filePath)['dirname'] . DIRECTORY_SEPARATOR;
             $dir = opendir($sourcePath);
-            while(false !== ( $file = readdir($dir)) ) {
-                if (( $file != '.' ) && ( $file != '..' )) {
-                    if (is_dir($sourcePath. DIRECTORY_SEPARATOR .$file)){
-                        $this->addFolderFromSource($sourcePath. DIRECTORY_SEPARATOR .$file);
-                    }
-                    else {
-                        $this->addFileFromSource($sourcePath. DIRECTORY_SEPARATOR .$file);
+            while (false !== ($file = readdir($dir))) {
+                if (($file != '.') && ($file != '..')) {
+                    if (is_dir($sourcePath . DIRECTORY_SEPARATOR . $file)) {
+                        $this->addFolderFromSource($sourcePath . DIRECTORY_SEPARATOR . $file);
+                    } else {
+                        $this->addFileFromSource($sourcePath . DIRECTORY_SEPARATOR . $file);
                     }
                 }
             }
             closedir($dir);
             return true;
-        }
-        catch(Exception $e){
+        } catch (Exception $e) {
             return false;
         }
     }
-    public function file_add(){
 
-    }
+    public function fileAdd()
+    {}
 
     /**
      * This method is experimental
      */
-    public function download(){
+    public function download()
+    {
         header("Content-type: application/zip");
-        header("Content-Disposition: attachment; filename=".basename($this->filePath));
+        header("Content-Disposition: attachment; filename=" . basename($this->filePath));
         header("Pragma: no-cache");
         header("Expires: 0");
         readfile($this->filePath);
-        exit;
+        exit();
     }
+
     /**
+     *
      * @return string
      */
     public function getFilePath()
@@ -86,16 +103,18 @@ class ArchiveManager implements ExfaceClassInterface
     }
 
     /**
-     * @param string $filePath
+     *
+     * @param string $filePath            
      */
     public function setFilePath($filePath)
     {
         if ($filePath)
-        $this->filePath = $filePath;
-        $this->archive_open();
+            $this->filePath = $filePath;
+        $this->archiveOpen();
     }
 
     /**
+     *
      * @return null
      */
     public function getArchive()
@@ -104,7 +123,8 @@ class ArchiveManager implements ExfaceClassInterface
     }
 
     /**
-     * @param null $archive
+     *
+     * @param null $archive            
      */
     public function setArchive($archive)
     {

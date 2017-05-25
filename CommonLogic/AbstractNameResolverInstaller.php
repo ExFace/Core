@@ -1,40 +1,48 @@
-<?php namespace exface\Core\CommonLogic;
+<?php
+
+namespace exface\Core\CommonLogic;
 
 use exface\Core\Interfaces\NameResolverInterface;
 use exface\Core\Interfaces\NameResolverInstallerInterface;
 
 /**
- * 
+ *
  * @author Andrej Kabachnik
- * 
+ *        
  */
-abstract class AbstractNameResolverInstaller implements NameResolverInstallerInterface {
-	private $name_resolver = null;
-	
-	/**
-	 * 
-	 * @param NameResolverInterface $name_resolver
-	 */
-	public function __construct(NameResolverInterface $name_resolver_to_install){
-		$this->name_resolver = $name_resolver_to_install;
-	}
-	
-	/**
-	 * 
-	 * {@inheritDoc}
-	 * @see \exface\Core\Interfaces\NameResolverInstallerInterface::get_name_resolver()
-	 */
-	public function get_name_resolver(){
-		return $this->name_resolver;
-	}
-	
-	/**
-	 * 
-	 * {@inheritDoc}
-	 * @see \exface\Core\Interfaces\ExfaceClassInterface::get_workbench()
-	 */
-	public function get_workbench(){
-		return $this->get_name_resolver()->get_workbench();
-	}
-	
+abstract class AbstractNameResolverInstaller implements NameResolverInstallerInterface
+{
+
+    private $name_resolver = null;
+
+    /**
+     *
+     * @param NameResolverInterface $name_resolver            
+     */
+    public function __construct(NameResolverInterface $name_resolver_to_install)
+    {
+        $this->name_resolver = $name_resolver_to_install;
+    }
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\NameResolverInstallerInterface::getNameResolver()
+     */
+    public function getNameResolver()
+    {
+        return $this->name_resolver;
+    }
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\ExfaceClassInterface::getWorkbench()
+     */
+    public function getWorkbench()
+    {
+        return $this->getNameResolver()->getWorkbench();
+    }
 }

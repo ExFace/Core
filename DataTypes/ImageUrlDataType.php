@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\DataTypes;
-class ImageUrlDataType extends UrlDataType {
-	
+
+class ImageUrlDataType extends UrlDataType
+{
 }
 ?>

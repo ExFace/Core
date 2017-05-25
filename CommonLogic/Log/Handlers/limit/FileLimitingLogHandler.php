@@ -1,7 +1,5 @@
 <?php
-
 namespace exface\Core\CommonLogic\Log\Handlers\limit;
-
 
 use exface\Core\CommonLogic\Log\Handlers\FileHandlerInterface;
 use exface\Core\CommonLogic\Log\Helpers\LogHelper;
@@ -14,63 +12,73 @@ use exface\Core\Interfaces\Log\LogHandlerInterface;
  *
  * @package exface\Core\CommonLogic\Log\Handlers
  */
-class FileLimitingLogHandler extends LimitingWrapper {
-	private $filename;
-	private $filenameFormat;
-	private $dateFormat;
-	private $maxDays;
+class FileLimitingLogHandler extends LimitingWrapper
+{
 
-	/**
-	 * DailyRotatingLogHandler constructor.
-	 *
-	 * @param FileHandlerInterface $handler callback function that create the underlying, "real" log handler
-	 * @param string $filename base file name of the log file (date string is added to)
-	 * @param int $maxDays maximum number of daily versions of a log file
-	 */
-	function __construct(FileHandlerInterface $handler, $filename, $maxDays = 0) {
-		parent::__construct($handler);
+    private $filename;
 
-		$this->filename = $filename;
-		$this->maxDays  = $maxDays;
+    private $filenameFormat;
 
-		$this->filenameFormat = '{variable}';
-		$this->dateFormat = 'Y-m-d';
-	}
+    private $dateFormat;
 
-	protected function callLogger(LogHandlerInterface $handler, $level, $message, array $context = array(), iCanGenerateDebugWidgets $sender = null) {
-		$handler->setFilename(LogHelper::getFilename($this->filename, $this->dateFormat, $this->filenameFormat)); // AbstractFileHandler demanded by __construct
-		$handler->handle($level, $message, $context, $sender);
-	}
+    private $maxDays;
 
-	/**
-	 * Log file cleanup.
-	 */
-	protected function limit()
-	{
-		// skip GC of old logs if files are unlimited
-		if (0 === $this->maxDays) {
-			return;
-		}
+    /**
+     * DailyRotatingLogHandler constructor.
+     *
+     * @param FileHandlerInterface $handler
+     *            callback function that create the underlying, "real" log handler
+     * @param string $filename
+     *            base file name of the log file (date string is added to)
+     * @param int $maxDays
+     *            maximum number of daily versions of a log file
+     */
+    function __construct(FileHandlerInterface $handler, $filename, $maxDays = 0)
+    {
+        parent::__construct($handler);
+        
+        $this->filename = $filename;
+        $this->maxDays = $maxDays;
+        
+        $this->filenameFormat = '{variable}';
+        $this->dateFormat = 'Y-m-d';
+    }
 
-		$logFiles = glob(LogHelper::getPattern($this->filename, $this->filenameFormat));
-		if ($this->maxDays >= count($logFiles)) {
-			// no files to remove
-			return;
-		}
+    protected function callLogger(LogHandlerInterface $handler, $level, $message, array $context = array(), iCanGenerateDebugWidgets $sender = null)
+    {
+        $handler->setFilename(LogHelper::getFilename($this->filename, $this->dateFormat, $this->filenameFormat)); // AbstractFileHandler demanded by __construct
+        $handler->handle($level, $message, $context, $sender);
+    }
 
-		// Sorting the files by name to remove the older ones
-		usort($logFiles, function ($a, $b) {
-			return strcmp($b, $a);
-		});
-
-		foreach (array_slice($logFiles, $this->maxDays) as $file) {
-			if (is_writable($file)) {
-				// suppress errors here as unlink() might fail if two processes
-				// are cleaning up/rotating at the same time
-				set_error_handler(function ($errno, $errstr, $errfile, $errline) {});
-				unlink($file);
-				restore_error_handler();
-			}
-		}
-	}
+    /**
+     * Log file cleanup.
+     */
+    protected function limit()
+    {
+        // skip GC of old logs if files are unlimited
+        if (0 === $this->maxDays) {
+            return;
+        }
+        
+        $logFiles = glob(LogHelper::getPattern($this->filename, $this->filenameFormat));
+        if ($this->maxDays >= count($logFiles)) {
+            // no files to remove
+            return;
+        }
+        
+        // Sorting the files by name to remove the older ones
+        usort($logFiles, function ($a, $b) {
+            return strcmp($b, $a);
+        });
+        
+        foreach (array_slice($logFiles, $this->maxDays) as $file) {
+            if (is_writable($file)) {
+                // suppress errors here as unlink() might fail if two processes
+                // are cleaning up/rotating at the same time
+                set_error_handler(function ($errno, $errstr, $errfile, $errline) {});
+                unlink($file);
+                restore_error_handler();
+            }
+        }
+    }
 }

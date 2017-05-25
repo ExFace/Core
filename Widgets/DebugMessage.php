@@ -1,5 +1,7 @@
-<?php namespace exface\Core\Widgets;
+<?php
 
-class DebugMessage extends Tabs {
-	
+namespace exface\Core\Widgets;
+
+class DebugMessage extends Tabs
+{
 }

@@ -1,277 +1,327 @@
-<?php namespace exface\Core\CommonLogic;
+<?php
+
+namespace exface\Core\CommonLogic;
 
 use exface\Core\Widgets\AbstractWidget;
 use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 use exface\Core\Exceptions\Widgets\WidgetNotFoundError;
 use exface\Core\Exceptions\UnexpectedValueException;
 
-class WidgetLink implements WidgetLinkInterface {
-	private $exface;
-	private $page_id;
-	private $widget_id;
-	private $widget_id_space = null;
-	private $column_id;
-	private $row_number;
-	
-	function __construct(\exface\Core\CommonLogic\Workbench $exface){
-		$this->exface = $exface;
-	}
-	
-	/**
-	 * 
-	 * {@inheritDoc}
-	 * @see \exface\Core\Interfaces\Widgets\WidgetLinkInterface::parse_link()
-	 */
-	public function parse_link($string_or_object){
-		if ($string_or_object instanceof \stdClass){
-			return $this->parse_link_object($string_or_object);
-		} else {
-			return $this->parse_link_string($string_or_object);
-		}
-	}
-	
-	/**
-	 * 
-	 * {@inheritDoc}
-	 * @see \exface\Core\Interfaces\Widgets\WidgetLinkInterface::parse_link_string()
-	 */
-	public function parse_link_string($string){
-		$string = trim($string);
-		// Check for reference to specific page_id
-		if (strpos($string, '[') === 0){
-			$page_id = substr($string, 1, strpos($string, ']')-1);
-			if ($page_id) {
-				$this->set_page_id($page_id);
-				$string = substr($string, strpos($string, ']')+1);
-			} else {
-				throw new UnexpectedValueException('Cannot parse widget reference "' . $string . '"! Expected format: "[page_id]widget_id".', '6T91IGZ');
-			}
-		} 
-		
-		// Determine the widget id
-		// Now the string definitely does not kontain a resource id any more
-		if ($pos = strpos($string, '!')){
-			// If there is a "!", there is at least a column id following it
-			$widget_id = substr($string, 0, $pos);
-			$string = substr($string, ($pos + 1));
-			
-			// Determine the column id
-			if ($pos = strpos($string, '$')){
-				// If there is a "$", there is a row number following it
-				$column_id = substr($string, 0, $pos);
-				$string = substr($string, ($pos + 1));
-				$this->set_row_number($string);
-			} else {
-				// Otherwise, everything that is left, is the column id
-				$column_id = $string;
-			}
-			$this->set_column_id($column_id);
-			
-		} else {
-			// Otherwise, everything that is left, is the widget id
-			$widget_id = $string;
-		}
-		$this->set_widget_id($widget_id);
-		
-		return $this;
-	}
-	
-	public function parse_link_object(\stdClass $object){
-		$this->set_page_id($object->page_id);
-		$this->set_widget_id($object->widget_id);
-		return $this;
-	}
-	
-	/**
-	 * 
-	 * {@inheritDoc}
-	 * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::import_uxon_object()
-	 */
-	public function import_uxon_object(UxonObject $uxon){
-		return $this->parse_link_object($uxon);
-	}
-	
-	/**
-	 * 
-	 * {@inheritDoc}
-	 * @see \exface\Core\Interfaces\Widgets\WidgetLinkInterface::get_page_id()
-	 */
-	public function get_page_id() {
-		return $this->page_id;
-	}
-	
-	/**
-	 * 
-	 * {@inheritDoc}
-	 * @see \exface\Core\Interfaces\Widgets\WidgetLinkInterface::set_page_id()
-	 */
-	public function set_page_id($value) {
-		$this->page_id = $value;
-	}
-	
-	/**
-	 * 
-	 * {@inheritDoc}
-	 * @see \exface\Core\Interfaces\Widgets\WidgetLinkInterface::get_widget_id()
-	 */
-	public function get_widget_id() {
-		return ($this->get_widget_id_space() ? $this->get_widget_id_space() . $this->get_page()->get_widget_id_space_separator() : '') . $this->widget_id;
-	}
-	
-	/**
-	 * 
-	 * {@inheritDoc}
-	 * @see \exface\Core\Interfaces\Widgets\WidgetLinkInterface::set_widget_id()
-	 */
-	public function set_widget_id($value) {
-		$this->widget_id = $value;
-	}
-	
-	/**
-	 * Returns the widget instance referenced by this link
-	 * @throws uiWidgetNotFoundException if no widget with a matching id can be found in the specified resource
-	 * @return AbstractWidget
-	 */
-	public function get_widget() {
-		$widget = $this->get_page()->get_widget($this->get_widget_id());
-		if (!$widget){
-			throw new WidgetNotFoundError('Cannot find widget "' . $this->get_widget_id() . '" in resource "' . $this->get_page_id() . '"!');
-		}
-		return $widget;
-	}   
-	
-	/**
-	 * 
-	 * {@inheritDoc}
-	 * @see \exface\Core\Interfaces\Widgets\WidgetLinkInterface::get_page()
-	 */
-	public function get_page(){
-		return $this->get_workbench()->ui()->get_page($this->get_page_id());
-	}
-	
-	/**
-	 * @return UxonObject
-	 */
-	public function get_widget_uxon(){
-		$resource = $this->exface->cms()->get_page_contents($this->get_page_id());
-		$uxon = UxonObject::from_json($resource);
-		if ($this->get_widget_id() && $uxon->widget_id != $this->get_widget_id()){
-			$uxon = $this->find_widget_id_in_uxon($uxon, $this->get_widget_id());
-			if ($uxon === false){
-				$uxon = $this->exface->create_uxon_object();
-			}
-		}
-		return $uxon;
-	}
-	
-	/**
-	 * 
-	 * @param UxonObject || array $uxon
-	 * @param string $widget_id
-	 * @return UxonObject|boolean
-	 */
-	private function find_widget_id_in_uxon($uxon, $widget_id){
-		$result = false; 
-		if ($uxon instanceof \stdClass){
-			if ($uxon->id == $widget_id){
-				$result = $uxon;
-			} else {
-				$array = get_object_vars($uxon);
-			}
-		} elseif (is_array($uxon)) {
-			$array = $uxon;
-		} 
-		
-		if (is_array($array)){
-			foreach ($array as $prop){
-				if ($result = $this->find_widget_id_in_uxon($prop, $widget_id)){
-					return $result;
-				}
-			}
-		}
-		
-		return $result;
-	}
-	
-	/**
-	 * 
-	 * {@inheritDoc}
-	 * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::export_uxon_object()
-	 */
-	public function export_uxon_object(){
-		$uxon = $this->exface->create_uxon_object();
-		$uxon->widget_id = $this->widget_id;
-		$uxon->page_id = $this->page_id;
-		$uxon->widget_id_space = $this->widget_id_space;
-		$uxon->column_id = $this->column_id;
-		$uxon->row_number = $this->row_number;
-		return $uxon;
-	}
-	
-	/**
-	 * 
-	 * {@inheritDoc}
-	 * @see \exface\Core\Interfaces\Widgets\WidgetLinkInterface::get_column_id()
-	 */
-	public function get_column_id() {
-		return $this->column_id;
-	}
-	
-	/**
-	 * 
-	 * {@inheritDoc}
-	 * @see \exface\Core\Interfaces\Widgets\WidgetLinkInterface::set_column_id()
-	 */
-	public function set_column_id($value) {
-		$this->column_id = $value;
-		return $this;
-	}
-	
-	/**
-	 * 
-	 * {@inheritDoc}
-	 * @see \exface\Core\Interfaces\Widgets\WidgetLinkInterface::get_row_number()
-	 */
-	public function get_row_number() {
-		return $this->row_number;
-	}
-	
-	/**
-	 * 
-	 * {@inheritDoc}
-	 * @see \exface\Core\Interfaces\Widgets\WidgetLinkInterface::set_row_number()
-	 */
-	public function set_row_number($value) {
-		$this->row_number = $value;
-		return $this;
-	}    
-	
-	/**
-	 * 
-	 * {@inheritDoc}
-	 * @see \exface\Core\Interfaces\ExfaceClassInterface::get_workbench()
-	 */
-	public function get_workbench(){
-		return $this->exface;
-	}
-	
-	/**
-	 * 
-	 * {@inheritDoc}
-	 * @see \exface\Core\Interfaces\Widgets\WidgetLinkInterface::get_widget_id_space()
-	 */
-	public function get_widget_id_space() {
-		return $this->widget_id_space;
-	}
-	
-	/**
-	 * 
-	 * {@inheritDoc}
-	 * @see \exface\Core\Interfaces\Widgets\WidgetLinkInterface::set_widget_id_space()
-	 */
-	public function set_widget_id_space($value) {
-		$this->widget_id_space = $value;
-		return $this;
-	}  
+class WidgetLink implements WidgetLinkInterface
+{
+
+    private $exface;
+
+    private $page_id;
+
+    private $widget_id;
+
+    private $widget_id_space = null;
+
+    private $column_id;
+
+    private $row_number;
+
+    function __construct(\exface\Core\CommonLogic\Workbench $exface)
+    {
+        $this->exface = $exface;
+    }
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Widgets\WidgetLinkInterface::parseLink()
+     */
+    public function parseLink($string_or_object)
+    {
+        if ($string_or_object instanceof \stdClass) {
+            return $this->parseLinkObject($string_or_object);
+        } else {
+            return $this->parseLinkString($string_or_object);
+        }
+    }
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Widgets\WidgetLinkInterface::parseLinkString()
+     */
+    public function parseLinkString($string)
+    {
+        $string = trim($string);
+        // Check for reference to specific page_id
+        if (strpos($string, '[') === 0) {
+            $page_id = substr($string, 1, strpos($string, ']') - 1);
+            if ($page_id) {
+                $this->setPageId($page_id);
+                $string = substr($string, strpos($string, ']') + 1);
+            } else {
+                throw new UnexpectedValueException('Cannot parse widget reference "' . $string . '"! Expected format: "[page_id]widget_id".', '6T91IGZ');
+            }
+        }
+        
+        // Determine the widget id
+        // Now the string definitely does not kontain a resource id any more
+        if ($pos = strpos($string, '!')) {
+            // If there is a "!", there is at least a column id following it
+            $widget_id = substr($string, 0, $pos);
+            $string = substr($string, ($pos + 1));
+            
+            // Determine the column id
+            if ($pos = strpos($string, '$')) {
+                // If there is a "$", there is a row number following it
+                $column_id = substr($string, 0, $pos);
+                $string = substr($string, ($pos + 1));
+                $this->setRowNumber($string);
+            } else {
+                // Otherwise, everything that is left, is the column id
+                $column_id = $string;
+            }
+            $this->setColumnId($column_id);
+        } else {
+            // Otherwise, everything that is left, is the widget id
+            $widget_id = $string;
+        }
+        $this->setWidgetId($widget_id);
+        
+        return $this;
+    }
+
+    public function parseLinkObject(\stdClass $object)
+    {
+        $this->setPageId($object->page_id);
+        $this->setWidgetId($object->widget_id);
+        return $this;
+    }
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::importUxonObject()
+     */
+    public function importUxonObject(UxonObject $uxon)
+    {
+        return $this->parseLinkObject($uxon);
+    }
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Widgets\WidgetLinkInterface::getPageId()
+     */
+    public function getPageId()
+    {
+        return $this->page_id;
+    }
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Widgets\WidgetLinkInterface::setPageId()
+     */
+    public function setPageId($value)
+    {
+        $this->page_id = $value;
+    }
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Widgets\WidgetLinkInterface::getWidgetId()
+     */
+    public function getWidgetId()
+    {
+        return ($this->getWidgetIdSpace() ? $this->getWidgetIdSpace() . $this->getPage()->getWidgetIdSpaceSeparator() : '') . $this->widget_id;
+    }
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Widgets\WidgetLinkInterface::setWidgetId()
+     */
+    public function setWidgetId($value)
+    {
+        $this->widget_id = $value;
+    }
+
+    /**
+     * Returns the widget instance referenced by this link
+     * 
+     * @throws uiWidgetNotFoundException if no widget with a matching id can be found in the specified resource
+     * @return AbstractWidget
+     */
+    public function getWidget()
+    {
+        $widget = $this->getPage()->getWidget($this->getWidgetId());
+        if (! $widget) {
+            throw new WidgetNotFoundError('Cannot find widget "' . $this->getWidgetId() . '" in resource "' . $this->getPageId() . '"!');
+        }
+        return $widget;
+    }
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Widgets\WidgetLinkInterface::getPage()
+     */
+    public function getPage()
+    {
+        return $this->getWorkbench()
+            ->ui()
+            ->getPage($this->getPageId());
+    }
+
+    /**
+     *
+     * @return UxonObject
+     */
+    public function getWidgetUxon()
+    {
+        $resource = $this->exface->cms()->getPageContents($this->getPageId());
+        $uxon = UxonObject::fromJson($resource);
+        if ($this->getWidgetId() && $uxon->widget_id != $this->getWidgetId()) {
+            $uxon = $this->findWidgetIdInUxon($uxon, $this->getWidgetId());
+            if ($uxon === false) {
+                $uxon = $this->exface->createUxonObject();
+            }
+        }
+        return $uxon;
+    }
+
+    /**
+     *
+     * @param
+     *            UxonObject || array $uxon
+     * @param string $widget_id            
+     * @return UxonObject|boolean
+     */
+    private function findWidgetIdInUxon($uxon, $widget_id)
+    {
+        $result = false;
+        if ($uxon instanceof \stdClass) {
+            if ($uxon->id == $widget_id) {
+                $result = $uxon;
+            } else {
+                $array = get_object_vars($uxon);
+            }
+        } elseif (is_array($uxon)) {
+            $array = $uxon;
+        }
+        
+        if (is_array($array)) {
+            foreach ($array as $prop) {
+                if ($result = $this->findWidgetIdInUxon($prop, $widget_id)) {
+                    return $result;
+                }
+            }
+        }
+        
+        return $result;
+    }
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::exportUxonObject()
+     */
+    public function exportUxonObject()
+    {
+        $uxon = $this->exface->createUxonObject();
+        $uxon->widget_id = $this->widget_id;
+        $uxon->page_id = $this->page_id;
+        $uxon->widget_id_space = $this->widget_id_space;
+        $uxon->column_id = $this->column_id;
+        $uxon->row_number = $this->row_number;
+        return $uxon;
+    }
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Widgets\WidgetLinkInterface::getColumnId()
+     */
+    public function getColumnId()
+    {
+        return $this->column_id;
+    }
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Widgets\WidgetLinkInterface::setColumnId()
+     */
+    public function setColumnId($value)
+    {
+        $this->column_id = $value;
+        return $this;
+    }
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Widgets\WidgetLinkInterface::getRowNumber()
+     */
+    public function getRowNumber()
+    {
+        return $this->row_number;
+    }
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Widgets\WidgetLinkInterface::setRowNumber()
+     */
+    public function setRowNumber($value)
+    {
+        $this->row_number = $value;
+        return $this;
+    }
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\ExfaceClassInterface::getWorkbench()
+     */
+    public function getWorkbench()
+    {
+        return $this->exface;
+    }
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Widgets\WidgetLinkInterface::getWidgetIdSpace()
+     */
+    public function getWidgetIdSpace()
+    {
+        return $this->widget_id_space;
+    }
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Widgets\WidgetLinkInterface::setWidgetIdSpace()
+     */
+    public function setWidgetIdSpace($value)
+    {
+        $this->widget_id_space = $value;
+        return $this;
+    }
 }
 ?>

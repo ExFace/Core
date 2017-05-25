@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\CommonLogic\Log;
 
 use exface\Core\Exceptions\UnderflowException;
@@ -9,15 +8,16 @@ use exface\Core\Interfaces\Log\LogHandlerInterface;
 
 class Logger implements LoggerInterface
 {
+
     /** @var LogHandlerInterface[] $handlers */
     private $handlers = array();
 
     /**
      * System is unusable.
      *
-     * @param string $message
-     * @param array $context
-     * @param iCanGenerateDebugWidgets $sender
+     * @param string $message            
+     * @param array $context            
+     * @param iCanGenerateDebugWidgets $sender            
      *
      * @return void
      */
@@ -32,9 +32,9 @@ class Logger implements LoggerInterface
      * Example: Entire website down, database unavailable, etc. This should
      * trigger the SMS alerts and wake you up.
      *
-     * @param string $message
-     * @param array $context
-     * @param iCanGenerateDebugWidgets $sender
+     * @param string $message            
+     * @param array $context            
+     * @param iCanGenerateDebugWidgets $sender            
      *
      * @return void
      */
@@ -48,9 +48,9 @@ class Logger implements LoggerInterface
      *
      * Example: Application component unavailable, unexpected exception.
      *
-     * @param string $message
-     * @param array $context
-     * @param iCanGenerateDebugWidgets $sender
+     * @param string $message            
+     * @param array $context            
+     * @param iCanGenerateDebugWidgets $sender            
      *
      * @return void
      */
@@ -63,9 +63,9 @@ class Logger implements LoggerInterface
      * Runtime errors that do not require immediate action but should typically
      * be logged and monitored.
      *
-     * @param string $message
-     * @param array $context
-     * @param iCanGenerateDebugWidgets $sender
+     * @param string $message            
+     * @param array $context            
+     * @param iCanGenerateDebugWidgets $sender            
      *
      * @return void
      */
@@ -80,9 +80,9 @@ class Logger implements LoggerInterface
      * Example: Use of deprecated APIs, poor use of an API, undesirable things
      * that are not necessarily wrong.
      *
-     * @param string $message
-     * @param array $context
-     * @param iCanGenerateDebugWidgets $sender
+     * @param string $message            
+     * @param array $context            
+     * @param iCanGenerateDebugWidgets $sender            
      *
      * @return void
      */
@@ -94,9 +94,9 @@ class Logger implements LoggerInterface
     /**
      * Normal but significant events.
      *
-     * @param string $message
-     * @param array $context
-     * @param iCanGenerateDebugWidgets $sender
+     * @param string $message            
+     * @param array $context            
+     * @param iCanGenerateDebugWidgets $sender            
      *
      * @return void
      */
@@ -110,9 +110,9 @@ class Logger implements LoggerInterface
      *
      * Example: User logs in, SQL logs.
      *
-     * @param string $message
-     * @param array $context
-     * @param iCanGenerateDebugWidgets $sender
+     * @param string $message            
+     * @param array $context            
+     * @param iCanGenerateDebugWidgets $sender            
      *
      * @return void
      */
@@ -124,9 +124,9 @@ class Logger implements LoggerInterface
     /**
      * Detailed debug information.
      *
-     * @param string $message
-     * @param array $context
-     * @param iCanGenerateDebugWidgets $sender
+     * @param string $message            
+     * @param array $context            
+     * @param iCanGenerateDebugWidgets $sender            
      *
      * @return void
      */
@@ -138,32 +138,32 @@ class Logger implements LoggerInterface
     /**
      * Logs with an arbitrary level.
      *
-     * @param mixed $level
-     * @param string $message
-     * @param array $context
-     * @param iCanGenerateDebugWidgets $sender
+     * @param mixed $level            
+     * @param string $message            
+     * @param array $context            
+     * @param iCanGenerateDebugWidgets $sender            
      *
      * @return void
      */
     public function log($level, $message, array $context = array(), iCanGenerateDebugWidgets $sender = null)
     {
         foreach ($this->handlers as $handler) {
-        	try {
-		        $handler->handle($level, $message, $context, $sender);
-	        } catch (\Exception $e) {}
+            try {
+                $handler->handle($level, $message, $context, $sender);
+            } catch (\Exception $e) {}
         }
     }
 
     /**
      * Pushes a handler on to the stack.
      *
-     * @param LogHandlerInterface $handler
+     * @param LogHandlerInterface $handler            
      * @return LoggerInterface
      */
     public function pushHandler(LogHandlerInterface $handler)
     {
         $this->handlers[] = $handler;
-
+        
         return $this;
     }
 
@@ -175,10 +175,10 @@ class Logger implements LoggerInterface
      */
     public function popHandler()
     {
-        if (!$this->handlers) {
+        if (! $this->handlers) {
             throw new UnderflowException('Can not pop handler from an empty handler stack.');
         }
-
+        
         return array_shift($this->handlers);
     }
 

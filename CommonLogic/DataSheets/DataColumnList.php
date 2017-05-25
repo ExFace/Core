@@ -1,4 +1,6 @@
-<?php namespace exface\Core\CommonLogic\DataSheets;
+<?php
+
+namespace exface\Core\CommonLogic\DataSheets;
 
 use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Factories\DataColumnFactory;
@@ -10,193 +12,213 @@ use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 
 /**
- * 
+ *
  * @method DataColumnInterface[] get_all()
  * @method DataColumnInterface get(string $key)
  * @method DataColumnInterface get_first()
  * @method DataColumnInterface get_last()
- * 
+ *        
  * @author Andrej Kabachnik
- *
+ *        
  */
-class DataColumnList extends EntityList implements DataColumnListInterface {
-	
-	/**
-	 * Adds a data sheet
-	 * @param DataColumn $column
-	 * @param mixed $key
-	 * @param boolean $overwrite_values
-	 * @return DataColumnListInterface
-	 */
-	public function add($column, $key = null, $overwrite_values = true){
-		if (!($column instanceof DataColumn)){
-			throw new InvalidArgumentException('Cannot add column to data sheet: only DataColumns can be added to the column list of a datasheet, "' . get_class($column) . '" given instead!');
-		}
-		
-		$data_sheet = $this->get_data_sheet();
-		if (!$this->get($column->get_name())){
-			if ($column->get_data_sheet() !== $data_sheet){
-				$column_original = $column;
-				$column = $column_original->copy();
-				$column->set_data_sheet($data_sheet);
-			} 
-			// Mark the data as outdated if new columns are added because the values for these columns should be fetched now
-			$column->set_fresh(false);
-			$result = parent::add($column, (is_null($key) && $column->get_name() ? $column->get_name() : $key));
-		}
-		
-		// If the original column had values, use them to overwrite the values in the newly added column
-		// IDEA When is this used??? It seems, it can only happen when addin a foreign column? Shouldn't it then be moved to the IF above?
-		if ($overwrite_values && $column_original && $column_original->is_fresh()){
-			$data_sheet->set_column_values($column->get_name(), $column->get_values());
-		}
-		
-		return $result;
-	}
-	
-	/**
-	 * Add an array of columns. The array can contain DataColumns, expressions or a mixture of those
-	 * @param array $columns
-	 * @param string $relation_path
-	 * @return DataColumnListInterface
-	 */
-	public function add_multiple(array $columns, $relation_path = '') {
-		foreach ($columns as $col){
-			if ($col instanceof DataColumn){
-				$col_name = $relation_path ? RelationPath::relation_path_add($relation_path, $col->get_name()) : $col->get_name();
-				if (!$this->get($col_name)){
-					// Change the column name so it does not overwrite any existing columns
-					$col->set_name($col_name);	
-					// Add the column (this will change the column's data sheet, etc.)
-					$this->add($col);
-					// Modify the column's expression and overwrite the old one. Overwriting explicitly is important because
-					// it will also update the attribute alias, etc.
-					// FIXME perhaps it would be nicer to use the expression::rebase() here, but the relation path seems to 
-					// be in the wrong direction here
-					$col->set_expression($col->get_expression_obj()->set_relation_path($relation_path));
-					// Update the formatter
-					if ($col->get_formatter()){
-						$col->get_formatter()->set_relation_path($relation_path);
-					}
-				}
-			} else {
-				$col_name = $relation_path ? RelationPath::relation_path_add($relation_path, $col) : $col;
-				if (!$this->get($col_name)){
-					try {
-						$this->add_from_expression($col_name);
-					} catch (\Exception $e){
-						// TODO How to distinguish between unwanted garbage and bad column names?
-					}
-				}
-			}
-		}
-		return $this;
-	}
-	
-	/**
-	 * 
-	 * {@inheritDoc}
-	 * @see \exface\Core\Interfaces\DataSheets\DataColumnListInterface::add_from_expression()
-	 */
-	public function add_from_expression($expression_or_string, $name='', $hidden=false){
-		$data_sheet = $this->get_data_sheet();
-		$col = DataColumnFactory::create_from_string($data_sheet, $expression_or_string, $name);
-		$col->set_hidden($hidden);
-		$this->add($col);
-		return $col;
-	}
-	
-	/**
-	 * 
-	 * {@inheritDoc}
-	 * @see \exface\Core\Interfaces\DataSheets\DataColumnListInterface::add_from_attribute()
-	 */
-	public function add_from_attribute(Attribute $attribute){
-		return $this->add_from_expression($attribute->get_alias_with_relation_path());
-	}
-	
-	/**
-	 * 
-	 * {@inheritDoc}
-	 * @see \exface\Core\Interfaces\DataSheets\DataColumnListInterface::get_by_expression()
-	 */
-	public function get_by_expression($expression_or_string){
-		if ($expression_or_string instanceof expression){
-			$expression_or_string = $expression_or_string->to_string();
-		}
-		foreach ($this->get_all() as $col){
-			if ($col->get_expression_obj()->to_string() == $expression_or_string){
-				return $col;
-			}
-		}
-		return false;
-	}
-	
-	/**
-	 * Returns the first column, that shows the specified attribute explicitly (not within a formula).
-	 * Returns FALSE if no column is found.
-	 * @param Attribute $attribute
-	 * @return DataColumnInterface|boolean
-	 */
-	public function get_by_attribute(Attribute $attribute){
-		foreach ($this->get_all() as $col){
-			if ($col->get_attribute()
-			&& $col->get_attribute()->get_alias_with_relation_path() == $attribute->get_alias_with_relation_path()){
-				return $col;
-			}
-		}
-		return false;
-	}
-	
-	public function get_system(){
-		$exface = $this->get_workbench();
-		$parent = $this->get_parent();
-		$result = new self($exface, $parent);
-		foreach ($this->get_all() as $col){
-			if ($col->get_attribute() && $col->get_attribute()->is_system()){
-				$result->add($col);
-			}
-		}
-		return $result;
-	}
-	
-	/**
-	 * Removes a column from the list completetly including it's values
-	 * @param string $column_name
-	 * @return DataColumnListInterface
-	 */
-	public function remove_by_key($column_name){
-		parent::remove_by_key($column_name);
-		$this->get_data_sheet()->remove_rows_for_column($column_name);
-		
-		// Make sure, the rows are reset if the last column is removed
-		if ($this->is_empty()){
-			$this->get_data_sheet()->remove_rows();
-		}
-	
-		return $this;
-	}
-	
-	/**
-	 * Returns the parent data sheet (this method is a better understandable alias for get_parent())
-	 * @return DataSheetInterface
-	 */
-	public function get_data_sheet(){
-		return $this->get_parent();
-	}
-	
-	/**
-	 * Set the given data sheet as parent object for this column list and all it's columns
-	 * @see \exface\Core\CommonLogic\EntityList::set_parent()
-	 * @param DataSheetInterface $data_sheet
-	 */
-	public function set_parent($data_sheet){
-		$result = parent::set_parent($data_sheet);
-		foreach ($this->get_all() as $column){
-			$column->set_data_sheet($data_sheet);
-		}
-		return $result;
-	}
-	
+class DataColumnList extends EntityList implements DataColumnListInterface
+{
+
+    /**
+     * Adds a data sheet
+     * 
+     * @param DataColumn $column            
+     * @param mixed $key            
+     * @param boolean $overwrite_values            
+     * @return DataColumnListInterface
+     */
+    public function add($column, $key = null, $overwrite_values = true)
+    {
+        if (! ($column instanceof DataColumn)) {
+            throw new InvalidArgumentException('Cannot add column to data sheet: only DataColumns can be added to the column list of a datasheet, "' . get_class($column) . '" given instead!');
+        }
+        
+        $data_sheet = $this->getDataSheet();
+        if (! $this->get($column->getName())) {
+            if ($column->getDataSheet() !== $data_sheet) {
+                $column_original = $column;
+                $column = $column_original->copy();
+                $column->setDataSheet($data_sheet);
+            }
+            // Mark the data as outdated if new columns are added because the values for these columns should be fetched now
+            $column->setFresh(false);
+            $result = parent::add($column, (is_null($key) && $column->getName() ? $column->getName() : $key));
+        }
+        
+        // If the original column had values, use them to overwrite the values in the newly added column
+        // IDEA When is this used??? It seems, it can only happen when addin a foreign column? Shouldn't it then be moved to the IF above?
+        if ($overwrite_values && $column_original && $column_original->isFresh()) {
+            $data_sheet->setColumnValues($column->getName(), $column->getValues());
+        }
+        
+        return $result;
+    }
+
+    /**
+     * Add an array of columns.
+     * The array can contain DataColumns, expressions or a mixture of those
+     * 
+     * @param array $columns            
+     * @param string $relation_path            
+     * @return DataColumnListInterface
+     */
+    public function addMultiple(array $columns, $relation_path = '')
+    {
+        foreach ($columns as $col) {
+            if ($col instanceof DataColumn) {
+                $col_name = $relation_path ? RelationPath::relationPathAdd($relation_path, $col->getName()) : $col->getName();
+                if (! $this->get($col_name)) {
+                    // Change the column name so it does not overwrite any existing columns
+                    $col->setName($col_name);
+                    // Add the column (this will change the column's data sheet, etc.)
+                    $this->add($col);
+                    // Modify the column's expression and overwrite the old one. Overwriting explicitly is important because
+                    // it will also update the attribute alias, etc.
+                    // FIXME perhaps it would be nicer to use the expression::rebase() here, but the relation path seems to
+                    // be in the wrong direction here
+                    $col->setExpression($col->getExpressionObj()
+                        ->setRelationPath($relation_path));
+                    // Update the formatter
+                    if ($col->getFormatter()) {
+                        $col->getFormatter()->setRelationPath($relation_path);
+                    }
+                }
+            } else {
+                $col_name = $relation_path ? RelationPath::relationPathAdd($relation_path, $col) : $col;
+                if (! $this->get($col_name)) {
+                    try {
+                        $this->addFromExpression($col_name);
+                    } catch (\Exception $e) {
+                        // TODO How to distinguish between unwanted garbage and bad column names?
+                    }
+                }
+            }
+        }
+        return $this;
+    }
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\DataSheets\DataColumnListInterface::addFromExpression()
+     */
+    public function addFromExpression($expression_or_string, $name = '', $hidden = false)
+    {
+        $data_sheet = $this->getDataSheet();
+        $col = DataColumnFactory::createFromString($data_sheet, $expression_or_string, $name);
+        $col->setHidden($hidden);
+        $this->add($col);
+        return $col;
+    }
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\DataSheets\DataColumnListInterface::addFromAttribute()
+     */
+    public function addFromAttribute(Attribute $attribute)
+    {
+        return $this->addFromExpression($attribute->getAliasWithRelationPath());
+    }
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\DataSheets\DataColumnListInterface::getByExpression()
+     */
+    public function getByExpression($expression_or_string)
+    {
+        if ($expression_or_string instanceof expression) {
+            $expression_or_string = $expression_or_string->toString();
+        }
+        foreach ($this->getAll() as $col) {
+            if ($col->getExpressionObj()->toString() == $expression_or_string) {
+                return $col;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Returns the first column, that shows the specified attribute explicitly (not within a formula).
+     * Returns FALSE if no column is found.
+     * 
+     * @param Attribute $attribute            
+     * @return DataColumnInterface|boolean
+     */
+    public function getByAttribute(Attribute $attribute)
+    {
+        foreach ($this->getAll() as $col) {
+            if ($col->getAttribute() && $col->getAttribute()->getAliasWithRelationPath() == $attribute->getAliasWithRelationPath()) {
+                return $col;
+            }
+        }
+        return false;
+    }
+
+    public function getSystem()
+    {
+        $exface = $this->getWorkbench();
+        $parent = $this->getParent();
+        $result = new self($exface, $parent);
+        foreach ($this->getAll() as $col) {
+            if ($col->getAttribute() && $col->getAttribute()->isSystem()) {
+                $result->add($col);
+            }
+        }
+        return $result;
+    }
+
+    /**
+     * Removes a column from the list completetly including it's values
+     * 
+     * @param string $column_name            
+     * @return DataColumnListInterface
+     */
+    public function removeByKey($column_name)
+    {
+        parent::removeByKey($column_name);
+        $this->getDataSheet()->removeRowsForColumn($column_name);
+        
+        // Make sure, the rows are reset if the last column is removed
+        if ($this->isEmpty()) {
+            $this->getDataSheet()->removeRows();
+        }
+        
+        return $this;
+    }
+
+    /**
+     * Returns the parent data sheet (this method is a better understandable alias for get_parent())
+     * 
+     * @return DataSheetInterface
+     */
+    public function getDataSheet()
+    {
+        return $this->getParent();
+    }
+
+    /**
+     * Set the given data sheet as parent object for this column list and all it's columns
+     * 
+     * @see \exface\Core\CommonLogic\EntityList::setParent()
+     * @param DataSheetInterface $data_sheet            
+     */
+    public function setParent($data_sheet)
+    {
+        $result = parent::setParent($data_sheet);
+        foreach ($this->getAll() as $column) {
+            $column->setDataSheet($data_sheet);
+        }
+        return $result;
+    }
 }
 ?>

@@ -1,27 +1,30 @@
-<?php namespace exface\Core\Interfaces\Exceptions;
+<?php
+
+namespace exface\Core\Interfaces\Exceptions;
 
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 
-interface DataConnectorExceptionInterface extends DataSourceExceptionInterface {
-	
-	/**
-	 *
-	 * @param DataConnectionInterface $connector
-	 * @param string $message
-	 * @param string $code
-	 * @param \Throwable $previous
-	 */
-	public function __construct (DataConnectionInterface $connector, $message, $code = null, $previous = null);
-	
-	/**
-	 * 
-	 * @return DataConnectionInterface
-	 */
-	public function get_connector();
-	
-	/**
-	 * 
-	 * @param DataQueryInterface $query
-	 */
-	public function set_connector(DataConnectionInterface $connector);
+interface DataConnectorExceptionInterface extends DataSourceExceptionInterface
+{
+
+    /**
+     *
+     * @param DataConnectionInterface $connector            
+     * @param string $message            
+     * @param string $code            
+     * @param \Throwable $previous            
+     */
+    public function __construct(DataConnectionInterface $connector, $message, $code = null, $previous = null);
+
+    /**
+     *
+     * @return DataConnectionInterface
+     */
+    public function getConnector();
+
+    /**
+     *
+     * @param DataQueryInterface $query            
+     */
+    public function setConnector(DataConnectionInterface $connector);
 }

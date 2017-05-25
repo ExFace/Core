@@ -1,4 +1,6 @@
-<?php namespace exface\Core\Exceptions\Actions;
+<?php
+
+namespace exface\Core\Exceptions\Actions;
 
 use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;
 use exface\Core\Exceptions\Actions\ActionExceptionTrait;
@@ -12,21 +14,23 @@ use exface\Core\Interfaces\Exceptions\ActionExceptionInterface;
  * etc.
  *
  * @author Andrej Kabachnik
- *
+ *        
  */
-class ActionRuntimeError extends RuntimeException implements ActionExceptionInterface, ErrorExceptionInterface {
-	
-	use ActionExceptionTrait;
-	
-	/**
-	 *
-	 * {@inheritDoc}
-	 * @see \exface\Core\Interfaces\Exceptions\ActionExceptionInterface::__construct()
-	 */
-	public function __construct (ActionInterface $action, $message, $alias = null, $previous = null) {
-		parent::__construct($message, null, $previous);
-		$this->set_alias($alias);
-		$this->set_action($action);
-	}
-	
+class ActionRuntimeError extends RuntimeException implements ActionExceptionInterface, ErrorExceptionInterface
+{
+    
+    use ActionExceptionTrait;
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Exceptions\ActionExceptionInterface::__construct()
+     */
+    public function __construct(ActionInterface $action, $message, $alias = null, $previous = null)
+    {
+        parent::__construct($message, null, $previous);
+        $this->setAlias($alias);
+        $this->setAction($action);
+    }
 }

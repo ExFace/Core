@@ -1,9 +1,13 @@
-<?php namespace exface\Core\Interfaces;
+<?php
 
-interface iCanBeCopied extends ExfaceClassInterface {
-	/**
-	 * Copies 
-	 */
-	public function copy();
+namespace exface\Core\Interfaces;
+
+interface iCanBeCopied extends ExfaceClassInterface
+{
+
+    /**
+     * Copies
+     */
+    public function copy();
 }
 ?>

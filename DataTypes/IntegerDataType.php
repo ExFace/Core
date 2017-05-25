@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\DataTypes;
-class IntegerDataType extends NumberDataType {
-	
+
+class IntegerDataType extends NumberDataType
+{
 }
 ?>

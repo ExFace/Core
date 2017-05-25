@@ -1,4 +1,6 @@
-<?php namespace exface\Core\Exceptions\Behaviors;
+<?php
+
+namespace exface\Core\Exceptions\Behaviors;
 
 use exface\Core\Exceptions\DataSheets\DataSheetWriteError;
 
@@ -6,10 +8,13 @@ use exface\Core\Exceptions\DataSheets\DataSheetWriteError;
  * Exception thrown a concurrent write attemt (racing condition) is detected.
  *
  * @author Andrej Kabachnik
- *
+ *        
  */
-class ConcurrentWriteError extends DataSheetWriteError {
-	public static function get_default_alias(){
-		return '6T6HZLF';
-	}
+class ConcurrentWriteError extends DataSheetWriteError
+{
+
+    public static function getDefaultAlias()
+    {
+        return '6T6HZLF';
+    }
 }

@@ -1,4 +1,6 @@
-<?php namespace exface\Core\Exceptions\Contexts;
+<?php
+
+namespace exface\Core\Exceptions\Contexts;
 
 use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;
 use exface\Core\Exceptions\RuntimeException;
@@ -11,21 +13,23 @@ use exface\Core\Interfaces\Exceptions\ContextExceptionInterface;
  * context specific information like the context scope and current data.
  *
  * @author Andrej Kabachnik
- *
+ *        
  */
-class ContextRuntimeError extends RuntimeException implements ContextExceptionInterface, ErrorExceptionInterface {
-	
-	use ContextExceptionTrait;
-	
-	/**
-	 *
-	 * {@inheritDoc}
-	 * @see \exface\Core\Interfaces\Exceptions\ContextExceptionInterface::__construct()
-	 */
-	public function __construct (ContextInterface $context, $message, $alias = null, $previous = null) {
-		parent::__construct($message, null, $previous);
-		$this->set_alias($alias);
-		$this->set_context($context);
-	}
-	
+class ContextRuntimeError extends RuntimeException implements ContextExceptionInterface, ErrorExceptionInterface
+{
+    
+    use ContextExceptionTrait;
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Exceptions\ContextExceptionInterface::__construct()
+     */
+    public function __construct(ContextInterface $context, $message, $alias = null, $previous = null)
+    {
+        parent::__construct($message, null, $previous);
+        $this->setAlias($alias);
+        $this->setContext($context);
+    }
 }

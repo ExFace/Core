@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\DataTypes;
-class TextDataType extends StringDataType {
-	
+
+class TextDataType extends StringDataType
+{
 }
 ?>

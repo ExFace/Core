@@ -1,6 +1,8 @@
-<?php namespace exface\Core\Interfaces\Actions;
+<?php
 
-interface ActionOutputInterface extends ActionInputOutputInterface {
+namespace exface\Core\Interfaces\Actions;
 
+interface ActionOutputInterface extends ActionInputOutputInterface
+{
 }
 ?>

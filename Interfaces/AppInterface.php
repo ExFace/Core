@@ -1,4 +1,6 @@
-<?php namespace exface\Core\Interfaces;
+<?php
+
+namespace exface\Core\Interfaces;
 
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\Widgets\AbstractWidget;
@@ -7,116 +9,130 @@ use exface\Core\Contexts\Types\DataContext;
 use exface\Core\Exceptions\Actions\ActionNotFoundError;
 use exface\Core\Exceptions\InvalidArgumentException;
 
-interface AppInterface extends ExfaceClassInterface, AliasInterface {
-	
-	public function __construct(Workbench $exface);
-	
-	/**
-	 * Returns an action object
-	 * 
-	 * @param string $action_alias
-	 * @throws ActionNotFoundError if the alias cannot be resolved
-	 * @return ActionInterface
-	 */
-	public function get_action($action_alias, AbstractWidget $called_by_widget = null, \stdClass $uxon_description = null);
-	
-	/**
-	 * Returns the path to the app's folder relative to the vendor folder
-	 * @return string
-	 */
-	public function get_directory();
-	
-	/**
-	 * Returns the absolute path to the app's folder
-	 * @return string
-	 */
-	public function get_directory_absolute_path();
-	
-	/**
-	 * Return the applications vendor (first part of the namespace)
-	 * @return string
-	 */
-	public function get_vendor();
-	
-	/**
-	 * Returns the configuration object of this app. At this point, the configuration is already fully compiled and contains
-	 * all options from all definition levels: defaults, installation config, user config, etc.
-	 * 
-	 * @return ConfigurationInterface
-	 */
-	public function get_config();
-	
-	/**
-	 * Returns the unique identifier of this app. It is a UUID by default.
-	 * @return string
-	 */
-	public function get_uid();
-	
-	/**
-	 * Returns an array with data variables stored for this app in the given context scope 
-	 * @param string $scope
-	 * @return DataContext
-	 */
-	public function get_context_data($scope);
-	
-	/**
-	 * Returns the value of the given variable stored in the given context scope for this app. If no scope is specified,
-	 * the default data scope of this app will be used - @see get_context_data_default_scope()
-	 * @param string $variable_name
-	 * @param string $scope
-	 * @return mixed
-	 */
-	public function get_context_variable($variable_name, $scope = null);
-	
-	/**
-	 * Sets the value of the given context variable in the specified scope. If no scope specified, the default data
-	 * scope of this app will be used - @see get_context_data_default_scope()
-	 * 
-	 * @param string $variable_name
-	 * @param mixed $value
-	 * @param string $scope
-	 * @return DataContext
-	 */
-	public function set_context_variable($variable_name, $value, $scope = null);
-	
-	/**
-	 * Removes the given variable from the context of this app in the given scope. If no scope specified, the default data
-	 * scope of this app will be used - @see get_context_data_default_scope().
-	 * 
-	 * @param string $variable_name
-	 * @param string $scope
-	 * @return DataContext
-	 */
-	public function unset_context_variable($variable_name, $scope = null);
-	
-	/**
-	 * Returns the alias of the default context scope to be used when saving context data for this app.
-	 * If not explicitly specified by set_context_data_default_scope() the window scope will be used.
-	 * @return string
-	 */
-	public function get_context_data_default_scope();
-	
-	/**
-	 * Sets the default context scope to be used when saving context data for this app.
-	 * @param string $value
-	 * @return AppInterface
-	 */
-	public function set_context_data_default_scope($scope_alias);
-	
-	/**
-	 *
-	 * @param InstallerInterface $injected_installer
-	 * @return AppInstallerInterface
-	 */
-	public function get_installer(InstallerInterface $injected_installer = null);
-	
-	/**
-	 * Returns TRUE if the given class is part of the app and FALSE otherwise. 
-	 * @param string|object $object_or_class_name
-	 * @throws InvalidArgumentException if the given argument is neither object nor string
-	 * @return boolean
-	 */
-	public function contains_class($object_or_class_name);
-	
+interface AppInterface extends ExfaceClassInterface, AliasInterface
+{
+
+    public function __construct(Workbench $exface);
+
+    /**
+     * Returns an action object
+     *
+     * @param string $action_alias            
+     * @throws ActionNotFoundError if the alias cannot be resolved
+     * @return ActionInterface
+     */
+    public function getAction($action_alias, AbstractWidget $called_by_widget = null, \stdClass $uxon_description = null);
+
+    /**
+     * Returns the path to the app's folder relative to the vendor folder
+     * 
+     * @return string
+     */
+    public function getDirectory();
+
+    /**
+     * Returns the absolute path to the app's folder
+     * 
+     * @return string
+     */
+    public function getDirectoryAbsolutePath();
+
+    /**
+     * Return the applications vendor (first part of the namespace)
+     * 
+     * @return string
+     */
+    public function getVendor();
+
+    /**
+     * Returns the configuration object of this app.
+     * At this point, the configuration is already fully compiled and contains
+     * all options from all definition levels: defaults, installation config, user config, etc.
+     *
+     * @return ConfigurationInterface
+     */
+    public function getConfig();
+
+    /**
+     * Returns the unique identifier of this app.
+     * It is a UUID by default.
+     * 
+     * @return string
+     */
+    public function getUid();
+
+    /**
+     * Returns an array with data variables stored for this app in the given context scope
+     * 
+     * @param string $scope            
+     * @return DataContext
+     */
+    public function getContextData($scope);
+
+    /**
+     * Returns the value of the given variable stored in the given context scope for this app.
+     * If no scope is specified,
+     * the default data scope of this app will be used - @see get_context_data_default_scope()
+     * 
+     * @param string $variable_name            
+     * @param string $scope            
+     * @return mixed
+     */
+    public function getContextVariable($variable_name, $scope = null);
+
+    /**
+     * Sets the value of the given context variable in the specified scope.
+     * If no scope specified, the default data
+     * scope of this app will be used - @see get_context_data_default_scope()
+     *
+     * @param string $variable_name            
+     * @param mixed $value            
+     * @param string $scope            
+     * @return DataContext
+     */
+    public function setContextVariable($variable_name, $value, $scope = null);
+
+    /**
+     * Removes the given variable from the context of this app in the given scope.
+     * If no scope specified, the default data
+     * scope of this app will be used - @see get_context_data_default_scope().
+     *
+     * @param string $variable_name            
+     * @param string $scope            
+     * @return DataContext
+     */
+    public function unsetContextVariable($variable_name, $scope = null);
+
+    /**
+     * Returns the alias of the default context scope to be used when saving context data for this app.
+     * If not explicitly specified by set_context_data_default_scope() the window scope will be used.
+     * 
+     * @return string
+     */
+    public function getContextDataDefaultScope();
+
+    /**
+     * Sets the default context scope to be used when saving context data for this app.
+     * 
+     * @param string $value            
+     * @return AppInterface
+     */
+    public function setContextDataDefaultScope($scope_alias);
+
+    /**
+     *
+     * @param InstallerInterface $injected_installer            
+     * @return AppInstallerInterface
+     */
+    public function getInstaller(InstallerInterface $injected_installer = null);
+
+    /**
+     * Returns TRUE if the given class is part of the app and FALSE otherwise.
+     * 
+     * @param string|object $object_or_class_name            
+     * @throws InvalidArgumentException if the given argument is neither object nor string
+     * @return boolean
+     */
+    public function containsClass($object_or_class_name);
 }
 ?>

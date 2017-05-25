@@ -7,34 +7,36 @@ use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 
 /**
  * Exception thrown if an unsupported DataQuery type was passed to the DataConnecto::query() method.
- * 
- * It is best practice for data connectors to always check if a supported query object was passed before 
+ *
+ * It is best practice for data connectors to always check if a supported query object was passed before
  * trying to deal with it! Similar query objects could produce strange effects otherwise, that would be
  * hard to debug.
  *
  * @author Andrej Kabachnik
- *
+ *        
  */
-class DataConnectionQueryTypeError extends InvalidArgumentException implements DataConnectorExceptionInterface {
-	
-	use DataConnectorExceptionTrait;
-	
-	/**
-	 *
-	 * @param DataConnectionInterface $connector
-	 * @param string $message
-	 * @param string $alias
-	 * @param \Throwable $previous
-	 */
-	public function __construct (DataConnectionInterface $connector, $message, $alias = null, $previous = null) {
-		parent::__construct($message, null, $previous);
-		$this->set_alias($alias);
-		$this->set_connector($connector);
-	}
-	
-	public static function get_default_alias(){
-		return '6T5W75J';
-	}
-	
+class DataConnectionQueryTypeError extends InvalidArgumentException implements DataConnectorExceptionInterface
+{
+    
+    use DataConnectorExceptionTrait;
+
+    /**
+     *
+     * @param DataConnectionInterface $connector            
+     * @param string $message            
+     * @param string $alias            
+     * @param \Throwable $previous            
+     */
+    public function __construct(DataConnectionInterface $connector, $message, $alias = null, $previous = null)
+    {
+        parent::__construct($message, null, $previous);
+        $this->setAlias($alias);
+        $this->setConnector($connector);
+    }
+
+    public static function getDefaultAlias()
+    {
+        return '6T5W75J';
+    }
 }
 ?>

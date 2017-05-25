@@ -1,55 +1,64 @@
 <?php
-
 namespace exface\Core\CommonLogic\Log\Helpers;
 
+class LogHelper
+{
 
-class LogHelper {
-	/**
-	 * Returns the log filename with date added to it.
-	 *
-	 * @param string $filename
-	 * @param string $dateFormat
-	 * @param string $filenameFormat
-	 *
-	 * @return string
-	 */
-	public static function getFilename($filename, $dateFormat, $filenameFormat)
-	{
-		$fileInfo = pathinfo($filename);
-		$timedFilename = str_replace(
-			array('{filename}', '{variable}'),
-			array($fileInfo['filename'], date($dateFormat)),
-			$fileInfo['dirname'] . '/' . $filenameFormat
-		);
+    /**
+     * Returns the log filename with date added to it.
+     *
+     * @param string $filename            
+     * @param string $dateFormat            
+     * @param string $filenameFormat            
+     *
+     * @return string
+     */
+    public static function getFilename($filename, $dateFormat, $filenameFormat)
+    {
+        $fileInfo = pathinfo($filename);
+        $timedFilename = str_replace(array(
+            '{filename}',
+            '{variable}'
+        ), array(
+            $fileInfo['filename'],
+            date($dateFormat)
+        ), $fileInfo['dirname'] . '/' . $filenameFormat);
+        
+        if (! empty($fileInfo['extension'])) {
+            $timedFilename .= '.' . $fileInfo['extension'];
+        }
+        
+        return $timedFilename;
+    }
 
-		if (!empty($fileInfo['extension'])) {
-			$timedFilename .= '.'.$fileInfo['extension'];
-		}
-
-		return $timedFilename;
-	}
-
-	/**
-	 * Return file pattern.
-	 *
-	 * @param $filename
-	 * @param $filenameFormat
-	 * @param string $variable
-	 * @param string $static
-	 *
-	 * @return mixed|string
-	 */
-	public static function getPattern($filename, $filenameFormat, $variable = '*', $static = '') {
-		$fileInfo = pathinfo($filename);
-		$glob     = str_replace(
-			array('{filename}', '{variable}', '{static}'),
-			array($fileInfo['filename'], $variable, $static),
-			$fileInfo['dirname'] . '/' . $filenameFormat
-		);
-		if (!empty($fileInfo['extension'])) {
-			$glob .= '.' . $fileInfo['extension'];
-		}
-
-		return $glob;
-	}
+    /**
+     * Return file pattern.
+     *
+     * @param
+     *            $filename
+     * @param
+     *            $filenameFormat
+     * @param string $variable            
+     * @param string $static            
+     *
+     * @return mixed|string
+     */
+    public static function getPattern($filename, $filenameFormat, $variable = '*', $static = '')
+    {
+        $fileInfo = pathinfo($filename);
+        $glob = str_replace(array(
+            '{filename}',
+            '{variable}',
+            '{static}'
+        ), array(
+            $fileInfo['filename'],
+            $variable,
+            $static
+        ), $fileInfo['dirname'] . '/' . $filenameFormat);
+        if (! empty($fileInfo['extension'])) {
+            $glob .= '.' . $fileInfo['extension'];
+        }
+        
+        return $glob;
+    }
 }

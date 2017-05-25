@@ -7,9 +7,9 @@ use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;
  * Exception thrown if an file was not found.
  *
  * @author Andrej Kabachnik
- *
+ *        
  */
-class FileNotFoundError extends NotFoundError implements ErrorExceptionInterface {
-	
+class FileNotFoundError extends NotFoundError implements ErrorExceptionInterface
+{
 }
 ?>

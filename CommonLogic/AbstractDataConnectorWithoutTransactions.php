@@ -1,43 +1,53 @@
-<?php namespace exface\Core\CommonLogic;
+<?php
+
+namespace exface\Core\CommonLogic;
 
 use exface\Core\CommonLogic\Workbench;
 
-abstract class AbstractDataConnectorWithoutTransactions extends AbstractDataConnector {
-	
-	/**
-	 * 
-	 * {@inheritDoc}
-	 * @see \exface\Core\CommonLogic\AbstractDataConnector::transaction_start()
-	 */
-	public function transaction_start(){
-		return $this;
-	}
-	
-	/**
-	 * 
-	 * {@inheritDoc}
-	 * @see \exface\Core\CommonLogic\AbstractDataConnector::transaction_commit()
-	 */
-	public function transaction_commit(){
-		return $this;
-	}
-	
-	/**
-	 * 
-	 * {@inheritDoc}
-	 * @see \exface\Core\CommonLogic\AbstractDataConnector::transaction_rollback()
-	 */
-	public function transaction_rollback(){
-		return $this;
-	}
-	
-	/**
-	 * 
-	 * {@inheritDoc}
-	 * @see \exface\Core\CommonLogic\AbstractDataConnector::transaction_is_started()
-	 */
-	public function transaction_is_started(){
-		return false;
-	}
-	
+abstract class AbstractDataConnectorWithoutTransactions extends AbstractDataConnector
+{
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\CommonLogic\AbstractDataConnector::transactionStart()
+     */
+    public function transactionStart()
+    {
+        return $this;
+    }
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\CommonLogic\AbstractDataConnector::transactionCommit()
+     */
+    public function transactionCommit()
+    {
+        return $this;
+    }
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\CommonLogic\AbstractDataConnector::transactionRollback()
+     */
+    public function transactionRollback()
+    {
+        return $this;
+    }
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\CommonLogic\AbstractDataConnector::transactionIsStarted()
+     */
+    public function transactionIsStarted()
+    {
+        return false;
+    }
 }

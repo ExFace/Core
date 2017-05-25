@@ -1,5 +1,7 @@
-<?php namespace exface\Core\Interfaces\Actions;
+<?php
 
-interface iUpdateData extends iModifyData {
-	
+namespace exface\Core\Interfaces\Actions;
+
+interface iUpdateData extends iModifyData
+{
 }

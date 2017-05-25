@@ -1,60 +1,82 @@
-<?php namespace exface\Core\Actions;
+<?php
+
+namespace exface\Core\Actions;
 
 use exface\Core\Interfaces\Actions\iUpdateData;
 use exface\Core\Interfaces\Actions\iCanBeUndone;
 use exface\Core\Exceptions\Actions\ActionUndoFailedError;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 
-class UpdateData extends SaveData implements iUpdateData, iCanBeUndone {
-	private $use_context_filters = false;
-	
-	protected function perform(){
-		$data_sheet = $this->get_input_data_sheet();
-		if (!$data_sheet->get_uid_column()){
-			foreach ($this->get_app()->get_workbench()->context()->get_scope_window()->get_filter_context()->get_conditions($data_sheet->get_meta_object()) as $cond){
-				$data_sheet->get_filters()->add_condition($cond);
-			}
-		}
-		
-		if ($this->get_use_context_filters()){
-			if ($conditions = $this->get_workbench()->context()->get_scope_window()->get_filter_context()->get_conditions($data_sheet->get_meta_object())){
-				foreach ($conditions as $condition){
-					$data_sheet->get_filters()->add_condition($condition);
-				}
-			}
-		}
-		
-		// Create a backup of the current data for this data sheet (it can be used for undo operations later)
-		if ($data_sheet->count_rows() && $data_sheet->get_uid_column()){
-			$backup = $data_sheet->copy();
-			$backup->add_filter_from_column_values($backup->get_uid_column());
-			$backup->remove_rows()->data_read();
-			$this->set_undo_data_sheet($backup);
-		} else {
-			$this->set_undoable(false);
-		}
-		
-		$this->set_affected_rows($data_sheet->data_update(false, $this->get_transaction()));
-		$this->set_result('');
-		$this->set_result_data_sheet($data_sheet);
-		$this->set_result_message($this->get_workbench()->get_core_app()->get_translator()->translate('ACTION.UPDATEDATA.RESULT', array('%number%' => $this->get_affected_rows()), $this->get_affected_rows()));
-	}
-	
-	public function undo(DataTransactionInterface $transaction = null){
-		if (!$data_sheet = $this->get_undo_data_sheet()){
-			throw new ActionUndoFailedError($this, 'Cannot undo action "' . $this->get_alias() . '": Failed to load history for this action!', '6T5DLGN');
-		}
-		$data_sheet->data_update($transaction ? $transaction : $this->get_transaction());
-		return $data_sheet;
-	}
-	
-	public function get_use_context_filters() {
-		return $this->use_context_filters;
-	}
-	
-	public function set_use_context_filters($value) {
-		$this->use_context_filters = $value;
-		return $this;
-	}  
+class UpdateData extends SaveData implements iUpdateData, iCanBeUndone
+{
+
+    private $use_context_filters = false;
+
+    protected function perform()
+    {
+        $data_sheet = $this->getInputDataSheet();
+        if (! $data_sheet->getUidColumn()) {
+            foreach ($this->getApp()
+                ->getWorkbench()
+                ->context()
+                ->getScopeWindow()
+                ->getFilterContext()
+                ->getConditions($data_sheet->getMetaObject()) as $cond) {
+                $data_sheet->getFilters()->addCondition($cond);
+            }
+        }
+        
+        if ($this->getUseContextFilters()) {
+            if ($conditions = $this->getWorkbench()
+                ->context()
+                ->getScopeWindow()
+                ->getFilterContext()
+                ->getConditions($data_sheet->getMetaObject())) {
+                foreach ($conditions as $condition) {
+                    $data_sheet->getFilters()->addCondition($condition);
+                }
+            }
+        }
+        
+        // Create a backup of the current data for this data sheet (it can be used for undo operations later)
+        if ($data_sheet->countRows() && $data_sheet->getUidColumn()) {
+            $backup = $data_sheet->copy();
+            $backup->addFilterFromColumnValues($backup->getUidColumn());
+            $backup->removeRows()->dataRead();
+            $this->setUndoDataSheet($backup);
+        } else {
+            $this->setUndoable(false);
+        }
+        
+        $this->setAffectedRows($data_sheet->dataUpdate(false, $this->getTransaction()));
+        $this->setResult('');
+        $this->setResultDataSheet($data_sheet);
+        $this->setResultMessage($this->getWorkbench()
+            ->getCoreApp()
+            ->getTranslator()
+            ->translate('ACTION.UPDATEDATA.RESULT', array(
+            '%number%' => $this->getAffectedRows()
+        ), $this->getAffectedRows()));
+    }
+
+    public function undo(DataTransactionInterface $transaction = null)
+    {
+        if (! $data_sheet = $this->getUndoDataSheet()) {
+            throw new ActionUndoFailedError($this, 'Cannot undo action "' . $this->getAlias() . '": Failed to load history for this action!', '6T5DLGN');
+        }
+        $data_sheet->dataUpdate($transaction ? $transaction : $this->getTransaction());
+        return $data_sheet;
+    }
+
+    public function getUseContextFilters()
+    {
+        return $this->use_context_filters;
+    }
+
+    public function setUseContextFilters($value)
+    {
+        $this->use_context_filters = $value;
+        return $this;
+    }
 }
 ?>

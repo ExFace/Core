@@ -1,75 +1,86 @@
-<?php namespace exface\Core\CommonLogic\Model;
+<?php
+
+namespace exface\Core\CommonLogic\Model;
 
 /**
- * 
+ *
  * @author Andrej Kabachnik
- * 
+ *        
  */
-class ObjectActionList extends ActionList {
-	
-	private $object_basket_action_aliases = array();
-	
-	/**
-	 * 
-	 * {@inheritDoc}
-	 * @see \exface\Core\CommonLogic\Model\ActionList::add()
-	 */
-	public function add($action, $key = null){
-		$action->set_meta_object($this->get_meta_object());
-		return parent::add($action, $key);
-	}
-	
-	/**
-	 * @return model
-	 */
-	public function get_model(){
-		return $this->get_meta_object()->get_model();
-	}	
-	
-	/**
-	 * 
-	 * @return Object
-	 */
-	public function get_meta_object() {
-		return $this->get_parent();
-	}
-	
-	/**
-	 * 
-	 * @param Object $meta_object
-	 * @return \exface\Core\CommonLogic\Model\ObjectActionList
-	 */
-	public function set_meta_object(Object $meta_object) {
-		return $this->set_parent($meta_object);
-	}	
-	
-	public function get_used_in_object_basket(){
-		$list = clone $this;
-		$list->remove_all();
-		foreach ($this->get_all() as $action){
-			if (in_array($action->get_alias_with_namespace(), $this->get_object_basket_action_aliases())){
-				$list->add($action);
-			}
-		}
-		return $list;
-	}
-	
-	/**
-	 *
-	 * @return string[]
-	 */
-	public function get_object_basket_action_aliases() {
-		return $this->object_basket_action_aliases;
-	}
-	
-	/**
-	 *
-	 * @param array $value
-	 * @return \exface\Core\CommonLogic\Model\Object
-	 */
-	public function set_object_basket_action_aliases(array $value) {
-		$this->object_basket_action_aliases = $value;
-		return $this;
-	}
-	
+class ObjectActionList extends ActionList
+{
+
+    private $object_basket_action_aliases = array();
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\CommonLogic\Model\ActionList::add()
+     */
+    public function add($action, $key = null)
+    {
+        $action->setMetaObject($this->getMetaObject());
+        return parent::add($action, $key);
+    }
+
+    /**
+     *
+     * @return model
+     */
+    public function getModel()
+    {
+        return $this->getMetaObject()->getModel();
+    }
+
+    /**
+     *
+     * @return Object
+     */
+    public function getMetaObject()
+    {
+        return $this->getParent();
+    }
+
+    /**
+     *
+     * @param Object $meta_object            
+     * @return \exface\Core\CommonLogic\Model\ObjectActionList
+     */
+    public function setMetaObject(Object $meta_object)
+    {
+        return $this->setParent($meta_object);
+    }
+
+    public function getUsedInObjectBasket()
+    {
+        $list = clone $this;
+        $list->removeAll();
+        foreach ($this->getAll() as $action) {
+            if (in_array($action->getAliasWithNamespace(), $this->getObjectBasketActionAliases())) {
+                $list->add($action);
+            }
+        }
+        return $list;
+    }
+
+    /**
+     *
+     * @return string[]
+     */
+    public function getObjectBasketActionAliases()
+    {
+        return $this->object_basket_action_aliases;
+    }
+
+    /**
+     *
+     * @param array $value            
+     * @return \exface\Core\CommonLogic\Model\Object
+     */
+    public function setObjectBasketActionAliases(array $value)
+    {
+        $this->object_basket_action_aliases = $value;
+        return $this;
+    }
 }

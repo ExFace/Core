@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\DataTypes;
-class RelationHierarchyDataType extends RelationDataType {
-	
+
+class RelationHierarchyDataType extends RelationDataType
+{
 }
 ?>

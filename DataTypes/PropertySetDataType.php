@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\DataTypes;
-class PropertySetDataType extends TextDataType {
-	
+
+class PropertySetDataType extends TextDataType
+{
 }
 ?>

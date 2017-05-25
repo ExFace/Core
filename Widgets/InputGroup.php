@@ -1,6 +1,8 @@
-<?php namespace exface\Core\Widgets;
+<?php
 
-class InputGroup extends Panel {
-	
+namespace exface\Core\Widgets;
+
+class InputGroup extends Panel
+{
 }
 ?>

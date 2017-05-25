@@ -1,6 +1,11 @@
-<?php namespace exface\Core\Interfaces\Widgets;
+<?php
 
-interface iCanBeRequired extends iHaveValue {
-	public function is_required();
-	public function set_required($value);
+namespace exface\Core\Interfaces\Widgets;
+
+interface iCanBeRequired extends iHaveValue
+{
+
+    public function isRequired();
+
+    public function setRequired($value);
 }

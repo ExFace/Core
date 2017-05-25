@@ -1,67 +1,82 @@
-<?php namespace exface\Core\Actions;
+<?php
+
+namespace exface\Core\Actions;
 
 use exface\Core\Widgets\AbstractWidget;
 use exface\Core\Widgets\Dialog;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Widgets\Button;
 
-class EditObjectDialog extends ShowObjectDialog {
-	private $save_action_alias = null;
-	
-	protected function init(){
-		parent::init();
-		$this->set_icon_name('edit');
-		$this->set_save_action_alias('exface.Core.UpdateData');
-		$this->set_show_only_editable_attributes(true);
-		$this->set_disable_editing(false);
-		// Make sure, prefill with input data is enabled (otherwise there will be nothing to edit).
-		$this->set_prefill_with_input_data(true);
-		// Disable prefills from context, so they do not interfere
-		$this->set_prefill_with_filter_context(false);
-	}
-	
-	/**
-	 * Create editors for all editable attributes of the object
-	 * @return WidgetInterface[]
-	 */
-	protected function create_editors(AbstractWidget $parent_widget){		
-		return parent::create_widgets_for_attributes($parent_widget);
-	}
-	
-	/**
-	 * Creates the dialog widget. Just the dialog itself, no contents!
-	 * @return \exface\Core\Widgets\exfDialog
-	 */
-	protected function create_dialog_widget(AbstractWidget $contained_widget = NULL){
-		$dialog = parent::create_dialog_widget($contained_widget);
-		$page = $this->get_called_on_ui_page();
-		// TODO add save button via followup actions in the init() method instead of the button directly
-		/* @var $save_button \exface\Core\Widgets\Button */
-		$save_button = $page->create_widget('DialogButton', $dialog);
-		$save_button->set_action_alias($this->get_save_action_alias());
-		$save_button->set_caption($this->get_workbench()->get_core_app()->get_translator()->translate("ACTION.EDITOBJECTDIALOG.SAVE_BUTTON"));
-		$save_button->set_visibility(EXF_WIDGET_VISIBILITY_PROMOTED);
-		// Make the save button refresh the same widget as the Button showing the dialog would do
-		if ($this->get_called_by_widget() instanceof Button){
-			$save_button->set_refresh_widget_link($this->get_called_by_widget()->get_refresh_widget_link());
-			$this->get_called_by_widget()->set_refresh_widget_link(null);
-		}
-		$dialog->add_button($save_button);
-		return $dialog;
-	}
-	
-	public function set_dialog_widget(AbstractWidget $widget){
-		$this->dialog_widget = $widget;
-	}
+class EditObjectDialog extends ShowObjectDialog
+{
 
-	
-	public function get_save_action_alias() {
-		return $this->save_action_alias;
-	}
-	
-	public function set_save_action_alias($value) {
-		$this->save_action_alias = $value;
-	} 
-	
+    private $save_action_alias = null;
+
+    protected function init()
+    {
+        parent::init();
+        $this->setIconName('edit');
+        $this->setSaveActionAlias('exface.Core.UpdateData');
+        $this->setShowOnlyEditableAttributes(true);
+        $this->setDisableEditing(false);
+        // Make sure, prefill with input data is enabled (otherwise there will be nothing to edit).
+        $this->setPrefillWithInputData(true);
+        // Disable prefills from context, so they do not interfere
+        $this->setPrefillWithFilterContext(false);
+    }
+
+    /**
+     * Create editors for all editable attributes of the object
+     * 
+     * @return WidgetInterface[]
+     */
+    protected function createEditors(AbstractWidget $parent_widget)
+    {
+        return parent::createWidgetsForAttributes($parent_widget);
+    }
+
+    /**
+     * Creates the dialog widget.
+     * Just the dialog itself, no contents!
+     * 
+     * @return \exface\Core\Widgets\exfDialog
+     */
+    protected function createDialogWidget(AbstractWidget $contained_widget = NULL)
+    {
+        $dialog = parent::createDialogWidget($contained_widget);
+        $page = $this->getCalledOnUiPage();
+        // TODO add save button via followup actions in the init() method instead of the button directly
+        /* @var $save_button \exface\Core\Widgets\Button */
+        $save_button = $page->createWidget('DialogButton', $dialog);
+        $save_button->setActionAlias($this->getSaveActionAlias());
+        $save_button->setCaption($this->getWorkbench()
+            ->getCoreApp()
+            ->getTranslator()
+            ->translate("ACTION.EDITOBJECTDIALOG.SAVE_BUTTON"));
+        $save_button->setVisibility(EXF_WIDGET_VISIBILITY_PROMOTED);
+        // Make the save button refresh the same widget as the Button showing the dialog would do
+        if ($this->getCalledByWidget() instanceof Button) {
+            $save_button->setRefreshWidgetLink($this->getCalledByWidget()
+                ->getRefreshWidgetLink());
+            $this->getCalledByWidget()->setRefreshWidgetLink(null);
+        }
+        $dialog->addButton($save_button);
+        return $dialog;
+    }
+
+    public function setDialogWidget(AbstractWidget $widget)
+    {
+        $this->dialog_widget = $widget;
+    }
+
+    public function getSaveActionAlias()
+    {
+        return $this->save_action_alias;
+    }
+
+    public function setSaveActionAlias($value)
+    {
+        $this->save_action_alias = $value;
+    }
 }
 ?>

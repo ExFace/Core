@@ -1,7 +1,5 @@
 <?php
-
 namespace exface\Core\CommonLogic\Log\Handlers\limit;
-
 
 use exface\Core\CommonLogic\Log\Helpers\LogHelper;
 use exface\Core\Interfaces\iCanGenerateDebugWidgets;
@@ -14,49 +12,57 @@ use exface\Core\Interfaces\Log\LogHandlerInterface;
  *
  * @package exface\Core\CommonLogic\Log\Handlers
  */
-class DirLimitingLogHandler extends LimitingWrapper {
-	private $logPath;
-	private $staticFileNamePart;
-	private $maxDays;
-	private $filenameFormat;
+class DirLimitingLogHandler extends LimitingWrapper
+{
 
-	function __construct(LogHandlerInterface $handler, $logPath, $staticFileNamePart, $maxDays = 0) {
-		parent::__construct($handler);
+    private $logPath;
 
-		$this->logPath = $logPath;
-		$this->staticFileNamePart = $staticFileNamePart;
-		$this->maxDays  = $maxDays;
+    private $staticFileNamePart;
 
-		$this->filenameFormat = '{filename}{variable}{static}';
-	}
+    private $maxDays;
 
-	protected function callLogger(LogHandlerInterface $handler, $level, $message, array $context = array(), iCanGenerateDebugWidgets $sender = null) {
-		$handler->handle($level, $message, $context, $sender);
-	}
+    private $filenameFormat;
 
-	/**
-	 * Log file cleanup.
-	 */
-	protected function limit() {
-		// skip GC of old logs if files are unlimited
-		if (0 === $this->maxDays) {
-			return;
-		}
+    function __construct(LogHandlerInterface $handler, $logPath, $staticFileNamePart, $maxDays = 0)
+    {
+        parent::__construct($handler);
+        
+        $this->logPath = $logPath;
+        $this->staticFileNamePart = $staticFileNamePart;
+        $this->maxDays = $maxDays;
+        
+        $this->filenameFormat = '{filename}{variable}{static}';
+    }
 
-		$limitTime = max(0, time() - ($this->maxDays * 24 * 60 * 60));
-		$logFiles = glob(LogHelper::getPattern($this->logPath, $this->filenameFormat, '/*', $this->staticFileNamePart));
-		foreach ($logFiles as $logFile) {
-			$mtime = filemtime($logFile);
-			if ($mtime > $limitTime)
-				continue;
+    protected function callLogger(LogHandlerInterface $handler, $level, $message, array $context = array(), iCanGenerateDebugWidgets $sender = null)
+    {
+        $handler->handle($level, $message, $context, $sender);
+    }
 
-			if (is_writable($logFile)) {
-				// suppress errors here as unlink() might fail if two processes
-				// are cleaning up/rotating at the same time
-				set_error_handler(function ($errno, $errstr, $errfile, $errline) {});
-				unlink($logFile);
-				restore_error_handler();
-			}
-		}
-	}
+    /**
+     * Log file cleanup.
+     */
+    protected function limit()
+    {
+        // skip GC of old logs if files are unlimited
+        if (0 === $this->maxDays) {
+            return;
+        }
+        
+        $limitTime = max(0, time() - ($this->maxDays * 24 * 60 * 60));
+        $logFiles = glob(LogHelper::getPattern($this->logPath, $this->filenameFormat, '/*', $this->staticFileNamePart));
+        foreach ($logFiles as $logFile) {
+            $mtime = filemtime($logFile);
+            if ($mtime > $limitTime)
+                continue;
+            
+            if (is_writable($logFile)) {
+                // suppress errors here as unlink() might fail if two processes
+                // are cleaning up/rotating at the same time
+                set_error_handler(function ($errno, $errstr, $errfile, $errline) {});
+                unlink($logFile);
+                restore_error_handler();
+            }
+        }
+    }
 }

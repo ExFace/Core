@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\DataTypes;
-class UxonDataType extends JsonDataType {
-	
+
+class UxonDataType extends JsonDataType
+{
 }
 ?>

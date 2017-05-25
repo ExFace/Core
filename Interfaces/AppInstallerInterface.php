@@ -1,12 +1,14 @@
-<?php namespace exface\Core\Interfaces;
+<?php
 
-interface AppInstallerInterface extends InstallerInterface {	
-	
-	/**
-	 *
-	 * @return \exface\Core\Interfaces\AppInterface
-	 */
-	public function get_app();
-	
+namespace exface\Core\Interfaces;
+
+interface AppInstallerInterface extends InstallerInterface
+{
+
+    /**
+     *
+     * @return \exface\Core\Interfaces\AppInterface
+     */
+    public function getApp();
 }
 ?>

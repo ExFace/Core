@@ -1,56 +1,59 @@
-<?php namespace exface\Core\Factories;
+<?php
+
+namespace exface\Core\Factories;
 
 use exface\Core\CommonLogic\Model\Object;
 use exface\Core\CommonLogic\Model\AttributeGroup;
 
-abstract class AttributeGroupFactory extends AbstractFactory {
-	
-	/**
-	 * 
-	 * @param Object $object
-	 * @param string $alias
-	 * @return AttributeGroup
-	 */
-	public static function create_for_object(Object $object, $alias = null){
-		$exface = $object->get_workbench();
-		$group = new AttributeGroup($exface, $object);
-		$group->set_alias($alias);
-		switch ($alias) {
-			case AttributeGroup::ALL:
-				foreach ($object->get_attributes() as $attr){
-					$group->add($attr);
-				}
-				break;
-			case AttributeGroup::VISIBLE:
-				foreach ($object->get_attributes() as $attr){
-					if (!$attr->is_hidden()){
-						$group->add($attr);
-					}
-				}
-				break;
-			case AttributeGroup::EDITABLE:
-				foreach ($object->get_attributes() as $attr){
-					if ($attr->is_editable()){
-						$group->add($attr);
-					}
-				}
-				break;
-			case AttributeGroup::REQUIRED:
-				foreach ($object->get_required_attributes() as $attr){
-					$group->add($attr);
-				}
-				break;
-			case AttributeGroup::DEFAULT_DISPLAY:
-				foreach ($object->get_attributes()->get_default_display_list() as $attr){
-					$group->add($attr);
-				}
-				break;
-			default:
-				// TODO load group from DB
-				break;
-		}
-		return $group;
-	}
-	
+abstract class AttributeGroupFactory extends AbstractFactory
+{
+
+    /**
+     *
+     * @param Object $object            
+     * @param string $alias            
+     * @return AttributeGroup
+     */
+    public static function createForObject(Object $object, $alias = null)
+    {
+        $exface = $object->getWorkbench();
+        $group = new AttributeGroup($exface, $object);
+        $group->setAlias($alias);
+        switch ($alias) {
+            case AttributeGroup::ALL:
+                foreach ($object->getAttributes() as $attr) {
+                    $group->add($attr);
+                }
+                break;
+            case AttributeGroup::VISIBLE:
+                foreach ($object->getAttributes() as $attr) {
+                    if (! $attr->isHidden()) {
+                        $group->add($attr);
+                    }
+                }
+                break;
+            case AttributeGroup::EDITABLE:
+                foreach ($object->getAttributes() as $attr) {
+                    if ($attr->isEditable()) {
+                        $group->add($attr);
+                    }
+                }
+                break;
+            case AttributeGroup::REQUIRED:
+                foreach ($object->getRequiredAttributes() as $attr) {
+                    $group->add($attr);
+                }
+                break;
+            case AttributeGroup::DEFAULT_DISPLAY:
+                foreach ($object->getAttributes()->getDefaultDisplayList() as $attr) {
+                    $group->add($attr);
+                }
+                break;
+            default:
+                // TODO load group from DB
+                break;
+        }
+        return $group;
+    }
 }
 ?>

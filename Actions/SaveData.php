@@ -1,4 +1,6 @@
-<?php namespace exface\Core\Actions;
+<?php
+
+namespace exface\Core\Actions;
 
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Actions\iModifyData;
@@ -9,62 +11,79 @@ use exface\Core\CommonLogic\AbstractAction;
 use exface\Core\Exceptions\Actions\ActionUndoFailedError;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 
-class SaveData extends AbstractAction implements iModifyData, iCanBeUndone {
-	private $affected_rows = 0;
-	private $undo_data_sheet = null;
-	
-	function init(){
-		$this->set_icon_name('save');
-		$this->set_input_rows_min(0);
-		$this->set_input_rows_max(null);
-	}
-	
-	protected function perform(){
-		$data_sheet = $this->get_input_data_sheet()->copy();
-		$this->set_affected_rows($data_sheet->data_save($this->get_transaction()));
-		$this->set_result_data_sheet($data_sheet);
-		$this->set_result('');
-		$this->set_result_message($this->get_workbench()->get_core_app()->get_translator()->translate('ACTION.SAVEDATA.RESULT', array('%number%' => $this->get_affected_rows()), $this->get_affected_rows()));
-	}
-	
-	protected function get_affected_rows() {
-		return $this->affected_rows;
-	}
-	
-	protected function set_affected_rows($value) {
-		if ($value == 0){
-			$this->set_undoable(false);
-		}
-		$this->affected_rows = $value;
-	}
-	
-	/**
-	 *
-	 * @return DataSheetInterface
-	 */
-	public function get_undo_data_sheet() {
-		return $this->undo_data_sheet;
-	}
-	
-	public function set_undo_data_sheet(DataSheetInterface $data_sheet) {
-		$this->undo_data_sheet = $data_sheet;
-	}
-	
-	public function get_undo_data_serializable(){
-		if ($this->get_undo_data_sheet()){
-			return $this->get_undo_data_sheet()->export_uxon_object();
-		} else {
-			return new UxonObject();
-		}
-	}
-	
-	public function set_undo_data(\stdClass $uxon_object){
-		$exface = $this->get_app()->get_workbench();
-		$this->undo_data_sheet = DataSheetFactory::create_from_stdClass($exface, $uxon_object);
-	}
-	
-	public function undo(DataTransactionInterface $transaction = null){
-		throw new ActionUndoFailedError($this, 'Undo functionality not implemented yet for action "' . $this->get_alias() . '"!', '6T5DS00');
-	}
+class SaveData extends AbstractAction implements iModifyData, iCanBeUndone
+{
+
+    private $affected_rows = 0;
+
+    private $undo_data_sheet = null;
+
+    function init()
+    {
+        $this->setIconName('save');
+        $this->setInputRowsMin(0);
+        $this->setInputRowsMax(null);
+    }
+
+    protected function perform()
+    {
+        $data_sheet = $this->getInputDataSheet()->copy();
+        $this->setAffectedRows($data_sheet->dataSave($this->getTransaction()));
+        $this->setResultDataSheet($data_sheet);
+        $this->setResult('');
+        $this->setResultMessage($this->getWorkbench()
+            ->getCoreApp()
+            ->getTranslator()
+            ->translate('ACTION.SAVEDATA.RESULT', array(
+            '%number%' => $this->getAffectedRows()
+        ), $this->getAffectedRows()));
+    }
+
+    protected function getAffectedRows()
+    {
+        return $this->affected_rows;
+    }
+
+    protected function setAffectedRows($value)
+    {
+        if ($value == 0) {
+            $this->setUndoable(false);
+        }
+        $this->affected_rows = $value;
+    }
+
+    /**
+     *
+     * @return DataSheetInterface
+     */
+    public function getUndoDataSheet()
+    {
+        return $this->undo_data_sheet;
+    }
+
+    public function setUndoDataSheet(DataSheetInterface $data_sheet)
+    {
+        $this->undo_data_sheet = $data_sheet;
+    }
+
+    public function getUndoDataSerializable()
+    {
+        if ($this->getUndoDataSheet()) {
+            return $this->getUndoDataSheet()->exportUxonObject();
+        } else {
+            return new UxonObject();
+        }
+    }
+
+    public function setUndoData(\stdClass $uxon_object)
+    {
+        $exface = $this->getApp()->getWorkbench();
+        $this->undo_data_sheet = DataSheetFactory::createFromStdClass($exface, $uxon_object);
+    }
+
+    public function undo(DataTransactionInterface $transaction = null)
+    {
+        throw new ActionUndoFailedError($this, 'Undo functionality not implemented yet for action "' . $this->getAlias() . '"!', '6T5DS00');
+    }
 }
 ?>
