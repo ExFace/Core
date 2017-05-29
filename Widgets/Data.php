@@ -724,7 +724,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
         } catch (MetaAttributeNotFoundError $e) {
             throw new WidgetPropertyInvalidValueError($this, 'Cannot create a filter for attribute alias "' . $attribute_alias . '" in widget "' . $this->getId() . '": attribute not found for object "' . $this->getMetaObject()->getAliasWithNamespace() . '"!', '6T91AR9', $e);
         }
-        // determine the widget for the filte
+        // determine the widget for the filter
         $uxon = $attr->getDefaultWidgetUxon()->copy();
         if ($uxon_object) {
             $uxon = $uxon->extend(UxonObject::fromStdClass($uxon_object));

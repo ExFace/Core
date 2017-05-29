@@ -301,18 +301,23 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
 
     /**
      * Returns a UXON object for the default editor widget for this attribute.
-     * The default widget can be defined
-     * for a data type and extended by a further definition for a specific attribute. If none of the above is defined,
+     * 
+     * The default widget can be defined for a data type and extended by a further definition for a specific attribute. If none of the above is defined,
      * a blank UXON object with merely the overall default widget type (specified in the config) will be returned.
+     * 
+     * The returned UXON is a copy. Changes on it will not affect the result of the next method call. If you need to change
+     * the default UXON use Attribute::setDefaultWidgetUxon(Attribute::getDefaultWidgetUxon()) or similar.
      * 
      * @return UxonObject
      */
     public function getDefaultWidgetUxon()
     {
-        if (! $this->default_widget_uxon->getProperty('attribute_alias')) {
-            $this->default_widget_uxon->setProperty(attribute_alias, $this->getAliasWithRelationPath());
+        $uxon = $this->default_widget_uxon->copy();
+        
+        if (! $uxon->getProperty('attribute_alias')) {
+            $uxon->setProperty(attribute_alias, $this->getAliasWithRelationPath());
         }
-        return $this->default_widget_uxon;
+        return $uxon;
     }
 
     public function setDefaultWidgetUxon(UxonObject $uxon_object)
@@ -576,7 +581,8 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
         
         // Explicitly copy properties, that are objects themselves
         $copy->setRelationPath($path);
-        $copy->setDefaultWidgetUxon($this->getDefaultWidgetUxon()->copy());
+        // Do not use getDefaultWidgetUxon() here as it already performs some enrichment
+        $copy->setDefaultWidgetUxon($this->default_widget_uxon->copy());
         return $copy;
     }
 

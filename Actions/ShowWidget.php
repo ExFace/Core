@@ -167,7 +167,7 @@ class ShowWidget extends AbstractAction implements iShowWidget, iUsePrefillData
         // Prefill widget using the filter contexts if the widget does not have any prefill data yet
         // TODO Use the context prefill even if the widget already has other prefill data: use DataSheet::merge()!
         if ($this->getPrefillWithFilterContext() && $this->getWidget() && $context_conditions = $this->getApp()->getWorkbench()->context()->getScopeWindow()->getFilterContext()->getConditions($this->getWidget()->getMetaObject())) {
-            if (! $data_sheet || $data_sheet->isEmpty()) {
+            if (! $data_sheet || $data_sheet->isBlank()) {
                 $data_sheet = DataSheetFactory::createFromObject($this->getWidget()->getMetaObject());
             }
             
