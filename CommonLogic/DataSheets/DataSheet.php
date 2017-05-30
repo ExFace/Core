@@ -454,7 +454,7 @@ class DataSheet implements DataSheetInterface
             if (! $this->getColumns()->getByAttribute($attr)) {
                 // Check if the system attribute has a default aggregator if the data sheet is being aggregated
                 if ($this->hasAggregators() && $attr->getDefaultAggregateFunction()) {
-                    $col = $this->getColumns()->addFromExpression($attr->getAlias() . ':' . $attr->getDefaultAggregateFunction());
+                    $col = $this->getColumns()->addFromExpression($attr->getAlias() . DataAggregator::AGGREGATION_SEPARATOR . $attr->getDefaultAggregateFunction());
                 } else {
                     $col = $this->getColumns()->addFromAttribute($attr);
                 }
