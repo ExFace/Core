@@ -10,7 +10,7 @@ namespace exface\Core\Exceptions\DataSources;
 class DataTransactionStartError extends DataTransactionError
 {
 
-    public static function getDefaultAlias()
+    public function getDefaultAlias()
     {
         return '6T5VK2M';
     }

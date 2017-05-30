@@ -7,7 +7,7 @@ use exface\Core\Exceptions\OutOfBoundsException;
 class ContextNotFoundError extends OutOfBoundsException implements ErrorExceptionInterface
 {
 
-    public static function getDefaultAlias()
+    public function getDefaultAlias()
     {
         return '6T5E24E';
     }

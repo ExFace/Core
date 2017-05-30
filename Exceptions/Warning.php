@@ -18,4 +18,9 @@ class Warning extends \Exception implements WarningExceptionInterface, \Throwabl
 {
     
     use ExceptionTrait;
+    
+    public function getDefaultAlias()
+    {
+        return '6VCYFND';
+    }
 }

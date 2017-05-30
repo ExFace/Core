@@ -56,8 +56,6 @@ trait DataSheetExceptionTrait {
         $uxon_tab->setCaption('DataSheet');
         $uxon_widget = WidgetFactory::create($page, 'Html');
         $uxon_tab->addWidget($uxon_widget);
-        // Using symfony var-dumper causes enormous memory leaks for some reason
-        // $uxon_widget->setValue($debug_widget->getWorkbench()->getDebugger()->printVariable($this->getDataSheet()->exportUxonObject()->toArray()));
         $uxon_widget->setValue('<pre>' . $this->getDataSheet()->exportUxonObject()->toJson(true) . '</pre>');
         $debug_widget->addTab($uxon_tab);
         return $debug_widget;

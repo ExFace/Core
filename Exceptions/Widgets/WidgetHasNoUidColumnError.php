@@ -17,7 +17,7 @@ class WidgetHasNoUidColumnError extends UnexpectedValueException implements Widg
     
     use WidgetExceptionTrait;
 
-    public static function getDefaultAlias()
+    public function getDefaultAlias()
     {
         return '6UX6KAQ';
     }

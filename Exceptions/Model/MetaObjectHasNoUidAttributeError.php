@@ -18,7 +18,7 @@ class MetaObjectHasNoUidAttributeError extends RuntimeException implements MetaO
     
     use MetaObjectExceptionTrait;
 
-    public static function getDefaultAlias()
+    public function getDefaultAlias()
     {
         return '6UX6TNT';
     }

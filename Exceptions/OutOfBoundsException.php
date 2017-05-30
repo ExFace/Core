@@ -17,7 +17,11 @@ use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;
  */
 class OutOfBoundsException extends \OutOfBoundsException implements ErrorExceptionInterface, \Throwable
 {
-    
     use ExceptionTrait;
+    
+    public function getDefaultAlias()
+    {
+        return '6VCYFND';
+    }
 }
 ?>

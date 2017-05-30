@@ -28,8 +28,10 @@ interface DebuggerInterface
     /**
      * Returns a human-readable string dump of the given variable (similar to var_dump(), but returning a string)
      *
-     * @param mixed $anything            
+     * @param mixed $anything
+     * @param boolean $use_html
+     * @param integer $expand_depth            
      * @return string
      */
-    public function printVariable($anything, $use_html = true);
+    public function printVariable($anything, $use_html = true, $expand_depth = 1);
 }

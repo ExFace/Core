@@ -6,6 +6,7 @@ use exface\Core\CommonLogic\Log\Processors\IdProcessor;
 use exface\Core\Interfaces\Log\LoggerInterface;
 use FemtoPixel\Monolog\Handler\CsvHandler;
 use Monolog\Logger;
+use exface\Core\Interfaces\iCanGenerateDebugWidgets;
 
 class LogfileHandler extends AbstractMonologHandler implements FileHandlerInterface
 {
@@ -62,5 +63,12 @@ class LogfileHandler extends AbstractMonologHandler implements FileHandlerInterf
         $logger->pushProcessor(new IdProcessor());
         
         return $logger;
+    }
+    
+    public function handle($level, $message, array $context = array(), iCanGenerateDebugWidgets $sender = null){
+        // Keeping the exception corrupted log files in some cases, so they could not be read any more.
+        unset($context['exception']);
+        
+        return parent::handle($level, $message, $context, $sender);
     }
 }

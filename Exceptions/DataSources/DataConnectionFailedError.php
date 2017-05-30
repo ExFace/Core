@@ -14,7 +14,7 @@ namespace exface\Core\Exceptions\DataSources;
 class DataConnectionFailedError extends DataConnectorError
 {
 
-    public static function getDefaultAlias()
+    public function getDefaultAlias()
     {
         return '6T5VG46';
     }

@@ -10,7 +10,7 @@ namespace exface\Core\Exceptions\Contexts;
 class ContextSaveError extends ContextRuntimeError
 {
 
-    public static function getDefaultAlias()
+    public function getDefaultAlias()
     {
         return '6T5E3ID';
     }

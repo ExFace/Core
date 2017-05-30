@@ -23,7 +23,7 @@ class RuntimeException extends \RuntimeException implements ErrorExceptionInterf
     
     use ExceptionTrait;
 
-    public static function getDefaultAlias()
+    public function getDefaultAlias()
     {
         return '6VCYFND';
     }

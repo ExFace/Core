@@ -5,6 +5,7 @@ use exface\Core\Exceptions\UnderflowException;
 use exface\Core\Interfaces\iCanGenerateDebugWidgets;
 use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\Interfaces\Log\LogHandlerInterface;
+use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 
 class Logger implements LoggerInterface
 {
@@ -147,6 +148,11 @@ class Logger implements LoggerInterface
      */
     public function log($level, $message, array $context = array(), iCanGenerateDebugWidgets $sender = null)
     {
+        if ($sender instanceof ExceptionInterface){
+            $context['exception'] = $sender;
+            $context['id'] = $sender->getId();
+        }
+        
         foreach ($this->handlers as $handler) {
             try {
                 $handler->handle($level, $message, $context, $sender);

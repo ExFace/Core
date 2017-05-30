@@ -6,6 +6,14 @@ use exface\Core\Interfaces\UiPageInterface;
 use exface\Core\Widgets\ErrorMessage;
 use exface\Core\Interfaces\iCanGenerateDebugWidgets;
 
+/**
+ * This interface describes ExFace exceptions. They are compatible to the
+ * SPL-exceptions in PHP, but include advanced features like the ability to
+ * generate debug widgets.
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
 interface ExceptionInterface extends iCanBeConvertedToUxon, iCanGenerateDebugWidgets
 {
 
@@ -38,7 +46,7 @@ interface ExceptionInterface extends iCanBeConvertedToUxon, iCanGenerateDebugWid
      *
      * @return string
      */
-    public static function getDefaultAlias();
+    public function getDefaultAlias();
 
     /**
      * Returns the HTTP status code appropriate for this exception

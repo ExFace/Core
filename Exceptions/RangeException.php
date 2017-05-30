@@ -17,5 +17,10 @@ class RangeException extends \RangeException implements ErrorExceptionInterface,
 {
     
     use ExceptionTrait;
+    
+    public function getDefaultAlias()
+    {
+        return '6VCYFND';
+    }
 }
 ?>

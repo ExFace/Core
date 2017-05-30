@@ -14,7 +14,7 @@ use exface\Core\Exceptions\OutOfRangeException;
 class ContextScopeNotFoundError extends OutOfRangeException implements ErrorExceptionInterface
 {
 
-    public static function getDefaultAlias()
+    public function getDefaultAlias()
     {
         return '6T5E14B';
     }

@@ -10,7 +10,7 @@ namespace exface\Core\Exceptions\DataSheets;
 class DataSheetColumnNotFoundError extends DataSheetRuntimeError
 {
 
-    public static function getDefaultAlias()
+    public function getDefaultAlias()
     {
         return '6T5V6WE';
     }

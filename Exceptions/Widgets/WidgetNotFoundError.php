@@ -12,7 +12,7 @@ use exface\Core\Exceptions\RuntimeException;
 class WidgetNotFoundError extends RuntimeException
 {
 
-    public static function getDefaultAlias()
+    public function getDefaultAlias()
     {
         return '6T91E4Q';
     }

@@ -17,5 +17,10 @@ class UnderflowException extends \UnderflowException implements ErrorExceptionIn
 {
     
     use ExceptionTrait;
+    
+    public function getDefaultAlias()
+    {
+        return '6VCYFND';
+    }
 }
 ?>

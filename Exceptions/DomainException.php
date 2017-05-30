@@ -21,5 +21,10 @@ class DomainException extends \DomainException implements ErrorExceptionInterfac
 {
     
     use ExceptionTrait;
+    
+    public function getDefaultAlias()
+    {
+        return '6VCYFND';
+    }
 }
 ?>

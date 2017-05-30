@@ -20,5 +20,10 @@ class BadMethodCallException extends \BadMethodCallException implements ErrorExc
 {
     
     use ExceptionTrait;
+    
+    public function getDefaultAlias()
+    {
+        return '6VCYFND';
+    }
 }
 ?>

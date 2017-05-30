@@ -12,6 +12,7 @@ use exface\Core\Widgets\DebugMessage;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
+use exface\Core\Widgets\Message;
 
 /**
  * This trait enables an exception to output more usefull specific debug information.
@@ -122,6 +123,13 @@ trait ExceptionTrait {
                 $error_heading = WidgetFactory::create($page, 'TextHeading', $error_tab)->setHeadingLevel(2)->setValue($this->getMessage());
                 $error_tab->addWidget($error_heading);
             }
+            
+            /** @var Message $support_hint */
+            $support_hint = WidgetFactory::create($page, 'Message', $error_tab);
+            $support_hint->setType(EXF_MESSAGE_TYPE_INFO);
+            $support_hint->setText($debug_widget->getWorkbench()->getCoreApp()->getTranslator()->translate('ERROR.SUPPORT_HINT', ['%error_id%' => 'LOG-'.$this->getId()]));
+            $error_tab->addWidget($support_hint);
+            
             $debug_widget->addTab($error_tab);
         }
         
@@ -143,7 +151,7 @@ trait ExceptionTrait {
             $request_tab->setCaption($page->getWorkbench()->getCoreApp()->getTranslator()->translate('ERROR.REQUEST_CAPTION'));
             $request_widget = WidgetFactory::create($page, 'Html');
             $request_tab->addWidget($request_widget);
-            $request_widget->setValue('<pre>' . $page->getWorkbench()->getDebugger()->printVariable($_REQUEST) . '</pre>');
+            $request_widget->setValue('<pre>' . $page->getWorkbench()->getDebugger()->printVariable($_REQUEST, true, 5) . '</pre>');
             $debug_widget->addTab($request_tab);
         }
         
@@ -181,22 +189,18 @@ trait ExceptionTrait {
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\Interfaces\Exceptions\ExceptionInterface::getDefaultAlias()
-     */
-    public static function getDefaultAlias()
-    {
-        return '';
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\Exceptions\ExceptionInterface::getAlias()
      */
     public function getAlias()
     {
-        return is_null($this->alias) ? static::getDefaultAlias() : $this->alias;
+        if (is_null($this->alias)){
+            if ($alias = $this->getDefaultAlias()) {
+                return $alias;
+            } elseif ($this->getPrevious() && $this->getPrevious() instanceof ExceptionInterface && $alias = $this->getPrevious()->getAlias()){
+                return $alias;
+            }
+        }
+        return $this->alias;
     }
 
     /**
@@ -240,7 +244,7 @@ trait ExceptionTrait {
 
     private function createId()
     {
-        return substr(md5(uniqid(rand(), true)), 0, 8);
+        return strtoupper(substr(md5(uniqid(rand(), true)), 0, 8));
     }
 }
 ?>

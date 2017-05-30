@@ -86,13 +86,13 @@ class Debugger implements DebuggerInterface
      *
      * @see \exface\Core\Interfaces\DebuggerInterface::printVariable()
      */
-    public function printVariable($anything, $use_html = true)
+    public function printVariable($anything, $use_html = true, $expand_depth = 1)
     {
         $cloner = new VarCloner();
         if ($use_html) {
             $dumper = new HtmlDumper();
             $dumper->setDisplayOptions(array(
-                'maxDepth' => 5
+                'maxDepth' => $expand_depth
             ));
         } else {
             $dumper = new CliDumper();

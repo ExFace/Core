@@ -15,7 +15,7 @@ class MetaObjectModelError extends RuntimeException implements MetaObjectExcepti
     
     use MetaObjectExceptionTrait;
 
-    public static function getDefaultAlias()
+    public function getDefaultAlias()
     {
         return '6VCYA0J';
     }

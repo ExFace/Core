@@ -15,7 +15,11 @@ use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;
  */
 class OutOfRangeException extends \OutOfRangeException implements ErrorExceptionInterface, \Throwable
 {
-    
     use ExceptionTrait;
+    
+    public function getDefaultAlias()
+    {
+        return '6VCYFND';
+    }
 }
 ?>

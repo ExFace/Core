@@ -13,7 +13,7 @@ namespace exface\Core\Exceptions\Actions;
 class ActionInputInvalidObjectError extends ActionInputError
 {
 
-    public static function getDefaultAlias()
+    public function getDefaultAlias()
     {
         return '6T5DMUS';
     }

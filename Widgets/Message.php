@@ -34,5 +34,17 @@ class Message extends Text
         }
         return $this;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Text::exportUxonObject()
+     */
+    public function exportUxonObject()
+    {
+        $uxon = parent::exportUxonObject();
+        $uxon->setProperty('type', $this->getType());
+        return $uxon;
+    }
 }
 ?>

@@ -34,7 +34,7 @@ class DataConnectionQueryTypeError extends InvalidArgumentException implements D
         $this->setConnector($connector);
     }
 
-    public static function getDefaultAlias()
+    public function getDefaultAlias()
     {
         return '6T5W75J';
     }

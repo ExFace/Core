@@ -19,5 +19,10 @@ class OverflowException extends \OverflowException implements ErrorExceptionInte
 {
     
     use ExceptionTrait;
+    
+    public function getDefaultAlias()
+    {
+        return '6VCYFND';
+    }
 }
 ?>

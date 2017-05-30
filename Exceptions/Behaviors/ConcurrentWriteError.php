@@ -12,7 +12,7 @@ use exface\Core\Exceptions\DataSheets\DataSheetWriteError;
 class ConcurrentWriteError extends DataSheetWriteError
 {
 
-    public static function getDefaultAlias()
+    public function getDefaultAlias()
     {
         return '6T6HZLF';
     }

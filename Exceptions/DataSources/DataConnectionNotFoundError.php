@@ -12,7 +12,7 @@ use exface\Core\Exceptions\UnexpectedValueException;
 class DataConnectionNotFoundError extends UnexpectedValueException
 {
 
-    public static function getDefaultAlias()
+    public function getDefaultAlias()
     {
         return '6V6EAL3';
     }

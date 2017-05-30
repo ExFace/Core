@@ -10,7 +10,7 @@ namespace exface\Core\Exceptions\Contexts;
 class ContextLoadError extends ContextRuntimeError
 {
 
-    public static function getDefaultAlias()
+    public function getDefaultAlias()
     {
         return '6T5E400';
     }

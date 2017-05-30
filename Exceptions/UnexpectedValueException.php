@@ -20,5 +20,10 @@ class UnexpectedValueException extends \UnexpectedValueException implements Erro
 {
     
     use ExceptionTrait;
+    
+    public function getDefaultAlias()
+    {
+        return '6VCYFND';
+    }
 }
 ?>

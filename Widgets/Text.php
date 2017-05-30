@@ -360,6 +360,9 @@ class Text extends AbstractWidget implements iShowSingleAttribute, iHaveValue, i
         if (! is_null($this->align)) {
             $uxon->setProperty('align', $this->align);
         }
+        if (! is_null($this->text)){
+            $uxon->setProperty('text', $this->text);
+        }
         if (! is_null($this->getAttributeAlias())) {
             $uxon->setProperty('attribute_alias', $this->getAttributeAlias());
         }
