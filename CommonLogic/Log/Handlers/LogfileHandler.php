@@ -8,6 +8,7 @@ use exface\Core\CommonLogic\Log\Processors\UserNameProcessor;
 use exface\Core\Interfaces\iCanGenerateDebugWidgets;
 use exface\Core\Interfaces\Log\LoggerInterface;
 use FemtoPixel\Monolog\Handler\CsvHandler;
+use Monolog\Formatter\NormalizerFormatter;
 use Monolog\Logger;
 
 class LogfileHandler extends AbstractMonologHandler implements FileHandlerInterface
@@ -69,7 +70,12 @@ class LogfileHandler extends AbstractMonologHandler implements FileHandlerInterf
     {
         $logger = new Logger($this->name);
 
-        $logger->pushHandler(new CsvHandler($this->filename, $this->level, $this->bubble, $this->filePermission, $this->useLocking));
+        // create csv log handler and set formatter with customized date format
+        $csvHandler = new CsvHandler($this->filename, $this->level, $this->bubble, $this->filePermission,
+            $this->useLocking);
+        $csvHandler->setFormatter(new NormalizerFormatter("Y-m-d H:i:s-v")); // with milliseconds
+
+        $logger->pushHandler($csvHandler);
         $logger->pushProcessor(new IdProcessor());
         $logger->pushProcessor(new RequestIdProcessor($this->requestId));
         $logger->pushProcessor(new UsernameProcessor($this->userName));
