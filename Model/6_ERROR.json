@@ -1223,6 +1223,32 @@
             "ERROR_TEXT": "Internal error",
             "DESCRIPTION": "This indicates a programmatic error in the internal logic. Please contact the support!",
             "LABEL": "exface.Core.6VCYFND"
+        },
+        {
+            "CREATED_ON": "2017-05-31 07:43:32",
+            "MODIFIED_ON": "2017-05-31 07:43:32",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e745d49074a8d18820e4b318306b9a",
+            "FULL_ERROR_CODE": "exface.Core.6VG359M",
+            "APP": "0x31000000000000000000000000000000",
+            "ERROR_CODE": "6VG359M",
+            "ERROR_TEXT": "Meta object not found",
+            "DESCRIPTION": "This error occurs when an object is requested from the meta model, but cannot be found. The error text mostly shows, which object id or alias was requested.\n\nIf the object was requested by alias, make sure, it's a fully qualified prefixed by the app alias (e.g. exface.Core.MyObject instead of simply MyObject).",
+            "LABEL": "exface.Core.6VG359M"
+        },
+        {
+            "CREATED_ON": "2017-05-31 07:44:24",
+            "MODIFIED_ON": "2017-05-31 07:45:04",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e745d4afef4b488820e4b318306b9a",
+            "FULL_ERROR_CODE": "exface.Core.6VG35OA",
+            "APP": "0x31000000000000000000000000000000",
+            "ERROR_CODE": "6VG35OA",
+            "ERROR_TEXT": "Meta attribute not found",
+            "DESCRIPTION": "This error occurs when an attribute is requested from the meta model, but cannot be found. The error text mostly shows, which attribute alias was requested.",
+            "LABEL": "exface.Core.6VG35OA"
         }
     ],
     "totals_rows": [],

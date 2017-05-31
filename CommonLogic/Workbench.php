@@ -120,9 +120,6 @@ class Workbench
         
         // load the context
         $this->context = new ContextManager($this);
-
-        // load the ui
-        $this->ui = new \exface\Core\CommonLogic\UiManager($this);
         
         $this->started = true;
     }
@@ -209,9 +206,17 @@ class Workbench
     {
         return $this->data;
     }
-
+    
+    /**
+     * 
+     * @return \exface\Core\CommonLogic\UiManager
+     */
     public function ui()
-    {
+    {   
+        if (is_null($this->ui)){
+            $this->ui = new \exface\Core\CommonLogic\UiManager($this);
+        }
+            
         return $this->ui;
     }
 
