@@ -74,4 +74,30 @@ interface ExceptionInterface extends iCanBeConvertedToUxon, iCanGenerateDebugWid
      * @return string
      */
     public function getId();
+    
+    /**
+     * Returns the log level for this exception according to the PSR-3 standard.
+     * 
+     * If not log level was specified, the value of getDefaultLogLevel() will
+     * be returned. This way each exception class can have it's own default
+     * log level.
+     * 
+     * @return string
+     */
+    public function getLogLevel();
+    
+    /**
+     * Sets the log level for this exceptions according to the PSR-3 standard.
+     * 
+     * @param string $logLevel
+     * @return ExceptionInterface
+     */
+    public function setLogLevel($logLevel);  
+    
+    /**
+     * Returns the default log level for this exception according to PSR-3
+     * 
+     * @return string
+     */
+    public function getDefaultLogLevel();
 }

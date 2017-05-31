@@ -2,6 +2,7 @@
 namespace exface\Core\Exceptions;
 
 use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;
+use exface\Core\Interfaces\Log\LoggerInterface;
 
 /**
  * Exception thrown if an error which can only be found on runtime occurs.
@@ -22,10 +23,25 @@ class RuntimeException extends \RuntimeException implements ErrorExceptionInterf
 {
     
     use ExceptionTrait;
-
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Exceptions\ExceptionInterface::getDefaultAlias()
+     */
     public function getDefaultAlias()
     {
         return '6VCYFND';
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Exceptions\ExceptionInterface::getDefaultLogLevel()
+     */
+    public function getDefaultLogLevel()
+    {
+        return LoggerInterface::ERROR;
     }
 }
 ?>

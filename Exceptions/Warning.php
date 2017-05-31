@@ -2,6 +2,7 @@
 namespace exface\Core\Exceptions;
 
 use exface\Core\Interfaces\Exceptions\WarningExceptionInterface;
+use exface\Core\Interfaces\Log\LoggerInterface;
 
 /**
  * Exception thrown if a non-severe error occurs.
@@ -19,8 +20,23 @@ class Warning extends \Exception implements WarningExceptionInterface, \Throwabl
     
     use ExceptionTrait;
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Exceptions\ExceptionInterface::getDefaultAlias()
+     */
     public function getDefaultAlias()
     {
         return '6VCYFND';
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Exceptions\ExceptionInterface::getDefaultLogLevel()
+     */
+    public function getDefaultLogLevel()
+    {
+        return LoggerInterface::ERROR;
     }
 }

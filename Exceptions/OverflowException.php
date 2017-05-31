@@ -2,6 +2,7 @@
 namespace exface\Core\Exceptions;
 
 use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;
+use exface\Core\Interfaces\Log\LoggerInterface;
 
 /**
  * Exception thrown when adding an element to a full container.
@@ -20,9 +21,24 @@ class OverflowException extends \OverflowException implements ErrorExceptionInte
     
     use ExceptionTrait;
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Exceptions\ExceptionInterface::getDefaultAlias()
+     */
     public function getDefaultAlias()
     {
         return '6VCYFND';
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Exceptions\ExceptionInterface::getDefaultLogLevel()
+     */
+    public function getDefaultLogLevel()
+    {
+        return LoggerInterface::ERROR;
     }
 }
 ?>

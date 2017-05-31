@@ -148,7 +148,14 @@ class Logger implements LoggerInterface
      */
     public function log($level, $message, array $context = array(), iCanGenerateDebugWidgets $sender = null)
     {
+        if (is_null($sender) && $context['exception'] instanceof iCanGenerateDebugWidgets){
+            $sender = $context['exception'];
+        }
+        
         if ($sender instanceof ExceptionInterface){
+            if (is_null($level)){
+                $level = $sender->getLogLevel();
+            }
             $context['exception'] = $sender;
             $context['id'] = $sender->getId();
         }

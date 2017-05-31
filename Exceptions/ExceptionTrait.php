@@ -25,6 +25,8 @@ use exface\Core\Widgets\Message;
 trait ExceptionTrait {
     
     use ImportUxonObjectTrait;
+    
+    private $logLevel = null;
 
     private $alias = null;
 
@@ -246,5 +248,29 @@ trait ExceptionTrait {
     {
         return strtoupper(substr(md5(uniqid(rand(), true)), 0, 8));
     }
+
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Exceptions\ExceptionInterface::getLogLevel()
+     */
+    public function getLogLevel()
+    {
+        return $this->logLevel;
+    }
+
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Exceptions\ExceptionInterface::setLogLevel()
+     */
+    public function setLogLevel($logLevel)
+    {
+        if (is_null($this->logLevel)){
+            return $this->getDefaultLogLevel();
+        }
+        $this->logLevel = $logLevel;
+        return $this;
+    }    
 }
 ?>

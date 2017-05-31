@@ -2,6 +2,7 @@
 namespace exface\Core\Exceptions;
 
 use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;
+use exface\Core\Interfaces\Log\LoggerInterface;
 
 /**
  * Exception thrown if a value does not match with a set of values.
@@ -21,9 +22,24 @@ class UnexpectedValueException extends \UnexpectedValueException implements Erro
     
     use ExceptionTrait;
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Exceptions\ExceptionInterface::getDefaultAlias()
+     */
     public function getDefaultAlias()
     {
         return '6VCYFND';
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Exceptions\ExceptionInterface::getDefaultLogLevel()
+     */
+    public function getDefaultLogLevel()
+    {
+        return LoggerInterface::ERROR;
     }
 }
 ?>
