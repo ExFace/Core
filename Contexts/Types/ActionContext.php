@@ -21,7 +21,7 @@ class ActionContext extends AbstractContext
      * Returns the action being performed at this time.
      * That is the action, for which the context is not closed yet
      *
-     * @return ActionInterfaceActionInterface
+     * @return ActionInterface
      */
     public function getCurrentAction()
     {
