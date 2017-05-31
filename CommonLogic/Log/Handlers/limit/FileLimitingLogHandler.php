@@ -17,6 +17,8 @@ class FileLimitingLogHandler extends LimitingWrapper
 
     private $filename;
 
+    private $filenameStatic;
+
     private $filenameFormat;
 
     private $dateFormat;
@@ -33,20 +35,21 @@ class FileLimitingLogHandler extends LimitingWrapper
      * @param int $maxDays
      *            maximum number of daily versions of a log file
      */
-    function __construct(FileHandlerInterface $handler, $filename, $maxDays = 0)
+    function __construct(FileHandlerInterface $handler, $filename, $fileNameStatic = "", $maxDays = 0)
     {
         parent::__construct($handler);
         
         $this->filename = $filename;
+        $this->filenameStatic = $fileNameStatic;
         $this->maxDays = $maxDays;
         
-        $this->filenameFormat = '{variable}';
+        $this->filenameFormat = '{filename}{static}{variable}';
         $this->dateFormat = 'Y-m-d';
     }
 
     protected function callLogger(LogHandlerInterface $handler, $level, $message, array $context = array(), iCanGenerateDebugWidgets $sender = null)
     {
-        $handler->setFilename(LogHelper::getFilename($this->filename, $this->dateFormat, $this->filenameFormat)); // AbstractFileHandler demanded by __construct
+        $handler->setFilename(LogHelper::getFilename($this->filename, $this->dateFormat, $this->filenameFormat, $this->filenameStatic)); // AbstractFileHandler demanded by __construct
         $handler->handle($level, $message, $context, $sender);
     }
 
@@ -60,7 +63,7 @@ class FileLimitingLogHandler extends LimitingWrapper
             return;
         }
         
-        $logFiles = glob(LogHelper::getPattern($this->filename, $this->filenameFormat));
+        $logFiles = glob(LogHelper::getPattern($this->filename, $this->filenameFormat, '*', $this->filenameStatic));
         if ($this->maxDays >= count($logFiles)) {
             // no files to remove
             return;
