@@ -31,5 +31,14 @@ class MetaAttributeNotFoundError extends UnexpectedValueException implements Met
         $this->setAlias($alias);
         $this->setMetaObject($meta_object);
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Exceptions\UnexpectedValueException::getDefaultAlias()
+     */
+    public function getDefaultAlias(){
+        return '6VG35OA';
+    }
 }
 ?>

@@ -11,4 +11,12 @@ use exface\Core\Exceptions\UnexpectedValueException;
  */
 class MetaObjectNotFoundError extends UnexpectedValueException
 {
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Exceptions\UnexpectedValueException::getDefaultAlias()
+     */
+    public function getDefaultAlias(){
+        return '6VG359M';
+    }
 }
