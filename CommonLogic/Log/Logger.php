@@ -6,6 +6,7 @@ use exface\Core\Interfaces\iCanGenerateDebugWidgets;
 use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\Interfaces\Log\LogHandlerInterface;
 use exface\Core\Interfaces\Exceptions\ExceptionInterface;
+use exface\Core\Exceptions\InternalError;
 
 class Logger implements LoggerInterface
 {
@@ -163,7 +164,13 @@ class Logger implements LoggerInterface
         foreach ($this->handlers as $handler) {
             try {
                 $handler->handle($level, $message, $context, $sender);
-            } catch (\Exception $e) {}
+            } catch (\Throwable $e) {
+                try {
+                    $this->log(LoggerInterface::ERROR, $e->getMessage(), array(), new InternalError($e->getMessage(), null, $e));
+                } catch (\Throwable $ee){
+                    // do nothing if even logging fails
+                }
+            }
         }
     }
 

@@ -78,9 +78,11 @@ interface ExceptionInterface extends iCanBeConvertedToUxon, iCanGenerateDebugWid
     /**
      * Returns the log level for this exception according to the PSR-3 standard.
      * 
-     * If not log level was specified, the value of getDefaultLogLevel() will
+     * If no log level was specified, the value of getDefaultLogLevel() will
      * be returned. This way each exception class can have it's own default
      * log level.
+     * 
+     * Chained exceptions will have the log level of the first exception.
      * 
      * @return string
      */

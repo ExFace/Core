@@ -4,6 +4,7 @@ namespace exface\Core\Exceptions\DataSources;
 use exface\Core\Interfaces\Exceptions\DataQueryExceptionInterface;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Interfaces\DataSources\DataQueryInterface;
+use exface\Core\Interfaces\Log\LoggerInterface;
 
 /**
  * Exception thrown if a data source query fails.
@@ -26,6 +27,10 @@ class DataQueryFailedError extends RuntimeException implements DataQueryExceptio
         parent::__construct($message, null, $previous);
         $this->setAlias($alias);
         $this->setQuery($query);
+    }
+    
+    public function getDefaultLogLevel(){
+        return LoggerInterface::CRITICAL;
     }
 }
 ?>

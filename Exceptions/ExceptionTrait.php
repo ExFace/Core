@@ -256,6 +256,12 @@ trait ExceptionTrait {
      */
     public function getLogLevel()
     {
+        if (is_null($this->logLevel)){
+            if ($this->getPrevious() && $this->getPrevious() instanceof ExceptionInterface && $this->getPrevious()->getLogLevel() != $this->getDefaultLogLevel()){
+                return $this->getPrevious()->getLogLevel();
+            }
+            return $this->getDefaultLogLevel();
+        }
         return $this->logLevel;
     }
 
@@ -266,9 +272,6 @@ trait ExceptionTrait {
      */
     public function setLogLevel($logLevel)
     {
-        if (is_null($this->logLevel)){
-            return $this->getDefaultLogLevel();
-        }
         $this->logLevel = $logLevel;
         return $this;
     }    
