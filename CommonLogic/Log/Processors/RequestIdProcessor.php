@@ -5,11 +5,11 @@ namespace exface\Core\CommonLogic\Log\Processors;
 
 class RequestIdProcessor
 {
-    private $requestId;
+    private $workbench;
 
-    function __construct($requestId)
+    function __construct($workbench)
     {
-        $this->requestId = $requestId ? $requestId : "";
+        $this->workbench = $workbench;
     }
 
     /**
@@ -19,7 +19,7 @@ class RequestIdProcessor
      */
     public function __invoke(array $record)
     {
-        $requestIdArray = array('requestid' => $this->requestId);
+        $requestIdArray = array('requestid' => $this->workbench->context()->getScopeRequest()->getScopeId());
 
         $index = $this->getIndex($record);
         if ($index !== false) {

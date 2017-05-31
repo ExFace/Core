@@ -18,9 +18,7 @@ class LogfileHandler extends AbstractMonologHandler implements FileHandlerInterf
 
     private $filename;
 
-    private $requestId;
-
-    private $userName;
+    private $workbench;
 
     private $level;
 
@@ -49,12 +47,11 @@ class LogfileHandler extends AbstractMonologHandler implements FileHandlerInterf
      * @throws \Exception If a missing directory is not buildable
      * @throws \InvalidArgumentException If stream is not a resource or string
      */
-    function __construct($name, $filename, $level = LoggerInterface::DEBUG, $requestId = null, $userName = null, $bubble = true, $filePermission = null, $useLocking = false)
+    function __construct($name, $filename, $workbench, $level = LoggerInterface::DEBUG, $bubble = true, $filePermission = null, $useLocking = false)
     {
         $this->name = $name;
         $this->filename = $filename;
-        $this->requestId = $requestId;
-        $this->userName = $userName;
+        $this->workbench = $workbench;
         $this->level = $level;
         $this->bubble = $bubble;
         $this->filePermission = $filePermission;
@@ -77,8 +74,8 @@ class LogfileHandler extends AbstractMonologHandler implements FileHandlerInterf
 
         $logger->pushHandler($csvHandler);
         $logger->pushProcessor(new IdProcessor());
-        $logger->pushProcessor(new RequestIdProcessor($this->requestId));
-        $logger->pushProcessor(new UsernameProcessor($this->userName));
+        $logger->pushProcessor(new RequestIdProcessor($this->workbench));
+        $logger->pushProcessor(new UsernameProcessor($this->workbench));
 
         return $logger;
     }

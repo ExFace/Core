@@ -97,10 +97,7 @@ class Log
             $minLogLevel = $workbench->getConfig()->getOption('LOG.MINIMUM_LEVEL_TO_LOG');
             $maxDaysToKeep = $workbench->getConfig()->getOption('LOG.MAX_DAYS_TO_KEEP');
 
-            $requestId = $workbench->context()->getScopeRequest()->getScopeId();
-            $userName = $workbench->context()->getScopeUser()->getUserName();
-
-            static::$errorLogHandlers["filelog"] = new FileLimitingLogHandler(new LogfileHandler("exface", "", $minLogLevel, $requestId, $userName), // real file name is determined late by FileLimitingLogHandler
+            static::$errorLogHandlers["filelog"] = new FileLimitingLogHandler(new LogfileHandler("exface", "", $workbench, $minLogLevel), // real file name is determined late by FileLimitingLogHandler
 $coreLogFilePath, '', $maxDaysToKeep);
 
             static::$errorLogHandlers["detaillog"] = new DirLimitingLogHandler(new DebugMessageFileHandler($detailsLogBasePath, ".json", $minLogLevel), $detailsLogBasePath, ".json", $maxDaysToKeep);

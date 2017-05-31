@@ -5,11 +5,11 @@ namespace exface\Core\CommonLogic\Log\Processors;
 
 class UserNameProcessor
 {
-    private $userName;
+    private $workbench;
 
-    function __construct($userName)
+    function __construct($workbench)
     {
-        $this->userName = $userName ? $userName : "";
+        $this->workbench = $workbench;
     }
 
     /**
@@ -19,7 +19,7 @@ class UserNameProcessor
      */
     public function __invoke(array $record)
     {
-        $requestIdArray = array('userName' => $this->userName);
+        $requestIdArray = array('userName' => $this->workbench->context()->getScopeUser()->getUserName());
 
         $index = $this->getIndex($record);
         if ($index !== false) {
