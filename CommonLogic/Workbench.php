@@ -84,16 +84,6 @@ class Workbench
 
     public function start()
     {
-        // logger
-        $this->logger = Log::getErrorLogger($this);
-        
-        // Start the error handler
-        $dbg = new Debugger($this->logger);
-        $this->setDebugger($dbg);
-        if ($this->getConfig()->getOption('DEBUG.PRETTIFY_ERRORS')) {
-            $dbg->setPrettifyErrors(true);
-        }
-        
         // start the event dispatcher
         $this->event_manager = new EventManager($this);
         $this->event_manager->dispatch(EventFactory::createBasicEvent($this, 'Start'));
@@ -120,7 +110,17 @@ class Workbench
         
         // load the context
         $this->context = new ContextManager($this);
-        
+
+        // logger
+        $this->logger = Log::getErrorLogger($this);
+
+        // Start the error handler
+        $dbg = new Debugger($this->logger);
+        $this->setDebugger($dbg);
+        if ($this->getConfig()->getOption('DEBUG.PRETTIFY_ERRORS')) {
+            $dbg->setPrettifyErrors(true);
+        }
+
         // load the ui
         $this->ui = new \exface\Core\CommonLogic\UiManager($this);
         

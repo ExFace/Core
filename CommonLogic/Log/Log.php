@@ -25,7 +25,7 @@ class Log
      * Creates a LoggerInterface implementation if none is there yet and returns it after adding default
      * LogHandlerInterface instances to it.
      *
-     * @param Workbench $workbench            
+     * @param Workbench $workbench
      *
      * @return LoggerInterface
      */
@@ -33,7 +33,7 @@ class Log
     {
         if (! static::$logger) {
             static::$logger = new Logger();
-            
+
             try {
                 $handlers = static::getErrorLogHandlers($workbench);
                 foreach ($handlers as $handler) {
@@ -47,13 +47,13 @@ class Log
                 ));
             }
         }
-        
+
         return static::$logger;
     }
 
     /**
      *
-     * @param Workbench $workbench            
+     * @param Workbench $workbench
      *
      * @return string
      * @throws MetaObjectNotFoundError
@@ -65,7 +65,7 @@ class Log
 
     /**
      *
-     * @param Workbench $workbench            
+     * @param Workbench $workbench
      *
      * @return string
      * @throws MetaObjectNotFoundError
@@ -90,25 +90,28 @@ class Log
     {
         if (! static::$errorLogHandlers) {
             static::$errorLogHandlers = array();
-            
+
             $coreLogFilePath = static::getCoreLogPath($workbench);
             $detailsLogBasePath = static::getDetailsLogPath($workbench);
-            
+
             $minLogLevel = $workbench->getConfig()->getOption('LOG.MINIMUM_LEVEL_TO_LOG');
             $maxDaysToKeep = $workbench->getConfig()->getOption('LOG.MAX_DAYS_TO_KEEP');
-            
-            static::$errorLogHandlers["filelog"] = new FileLimitingLogHandler(new LogfileHandler("exface", "", $minLogLevel), // real file name is determined late by FileLimitingLogHandler
-$coreLogFilePath, $maxDaysToKeep);
-            
+
+            $requestId = $workbench->context()->getScopeRequest()->getScopeId();
+            $userName = $workbench->context()->getScopeUser()->getUserName();
+
+            static::$errorLogHandlers["filelog"] = new FileLimitingLogHandler(new LogfileHandler("exface", "", $minLogLevel, $requestId, $userName), // real file name is determined late by FileLimitingLogHandler
+$coreLogFilePath, '', $maxDaysToKeep);
+
             static::$errorLogHandlers["detaillog"] = new DirLimitingLogHandler(new DebugMessageFileHandler($detailsLogBasePath, ".json", $minLogLevel), $detailsLogBasePath, ".json", $maxDaysToKeep);
         }
-        
+
         return static::$errorLogHandlers;
     }
 
     protected static function getFallbackHandler($workbench)
     {
         return new FileLimitingLogHandler(new LogfileHandler("exface", "", LogLevel::DEBUG), // real file name is determined late by FileLimitingLogHandler
-Filemanager::pathNormalize($workbench->filemanager()->getPathToBaseFolder()) . '/logs/fallback.log', 3);
+Filemanager::pathNormalize($workbench->filemanager()->getPathToBaseFolder()) . '/logs/fallback.log', '-', 3);
     }
 }

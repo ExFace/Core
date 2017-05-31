@@ -13,15 +13,17 @@ class LogHelper
      *
      * @return string
      */
-    public static function getFilename($filename, $dateFormat, $filenameFormat)
+    public static function getFilename($filename, $dateFormat, $filenameFormat, $static)
     {
         $fileInfo = pathinfo($filename);
         $timedFilename = str_replace(array(
             '{filename}',
-            '{variable}'
+            '{variable}',
+            '{static}'
         ), array(
             $fileInfo['filename'],
-            date($dateFormat)
+            date($dateFormat),
+            $static
         ), $fileInfo['dirname'] . '/' . $filenameFormat);
         
         if (! empty($fileInfo['extension'])) {
