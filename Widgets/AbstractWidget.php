@@ -42,7 +42,7 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
 
     private $caption = null;
 
-    private $hint = '';
+    private $hint = null;
 
     private $widget_type = null;
 

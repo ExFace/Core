@@ -418,7 +418,7 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
 
     public function getHint()
     {
-        return $this->getShortDescription() . ' [' . $this->getDataType()->getName() . ']';
+        return ($this->getShortDescription() ? $this->getShortDescription() : $this->getName()) . ' [' . $this->getDataType()->getName() . ']';
     }
 
     /**
