@@ -114,6 +114,9 @@ class WidgetLink implements WidgetLinkInterface
      */
     public function getPageId()
     {
+        if (is_null($this->page_id)){
+            return $this->getWorkbench()->ui()->getPageCurrent()->getId();
+        }
         return $this->page_id;
     }
 

@@ -16,6 +16,7 @@ use exface\Core\Factories\WidgetFactory;
 use exface\Core\Factories\WidgetLinkFactory;
 use exface\Core\Exceptions\Actions\ActionConfigurationError;
 use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 
 /**
  * The ShowWidget action is the base for all actions, that render widgets.
@@ -23,7 +24,7 @@ use exface\Core\DataTypes\BooleanDataType;
  * @author Andrej Kabachnik
  *        
  */
-class ShowWidget extends AbstractAction implements iShowWidget, iUsePrefillData
+class ShowWidget extends AbstractAction implements iShowWidget
 {
 
     private $widget = null;
@@ -35,6 +36,8 @@ class ShowWidget extends AbstractAction implements iShowWidget, iUsePrefillData
     private $prefill_with_filter_context = true;
 
     private $prefill_with_input_data = true;
+    
+    private $prefill_with_prefill_data = true;
 
     private $prefill_with_data_from_widget_link = null;
 
@@ -44,9 +47,12 @@ class ShowWidget extends AbstractAction implements iShowWidget, iUsePrefillData
     private $filter_contexts = array();
 
     private $page_id = null;
+    
+    private $takeAlongFilters = null;
 
     protected function init()
     {
+        parent::init();
         $this->setIconName('link');
     }
 
@@ -139,7 +145,7 @@ class ShowWidget extends AbstractAction implements iShowWidget, iUsePrefillData
         }
         
         // Now prefill with prefill data.
-        if ($prefill_data = $this->getPrefillDataSheet()) {
+        if ($this->getPrefillWithPrefillData() && $prefill_data = $this->getPrefillDataSheet()) {
             // Try to merge prefill data and any data already gathered. If the merge does not work, ignore the prefill data
             // for now and use it for a secondary prefill later.
             $prefill_data_merge_failed = false;
@@ -254,21 +260,24 @@ class ShowWidget extends AbstractAction implements iShowWidget, iUsePrefillData
         $this->widget_id = $value;
     }
 
-    /**
-     * Returns FALSE, if the values of the currently registered context filters should be used to attempt to prefill the widget
-     * 
-     * @return boolean
-     */
+   /**
+    * 
+    * {@inheritDoc}
+    * @see \exface\Core\Interfaces\Actions\iShowWidget::getPrefillWithFilterContext()
+    */
     public function getPrefillWithFilterContext()
     {
         return $this->prefill_with_filter_context;
     }
 
     /**
-     * If set to TRUE, the values of the filters registered in the window context scope will be used to prefill the widget (if possible)
+     * Set to FALSE disable context prefills for this action
      * 
-     * @param boolean $value            
-     * @return \exface\Core\Actions\ShowWidget
+     * @uxon-property prefill_with_filter_context
+     * @uxon-type boolean
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\iShowWidget::setPrefillWithFilterContext()
      */
     public function setPrefillWithFilterContext($value)
     {
@@ -277,9 +286,9 @@ class ShowWidget extends AbstractAction implements iShowWidget, iUsePrefillData
     }
 
     /**
-     * Returns TRUE, if the input data of the action should be used to prefill the widget shown, or FALSE otherwise
      * 
-     * @return boolean
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\iShowWidget::getPrefillWithInputData()
      */
     public function getPrefillWithInputData()
     {
@@ -287,10 +296,13 @@ class ShowWidget extends AbstractAction implements iShowWidget, iUsePrefillData
     }
 
     /**
-     * Set to TRUE, if the input data of the action should be used to prefill the widget shown, or FALSE otherwise.
+     * Set to FALSE disable prefilling widgets with action input data.
      * 
-     * @param boolean $value            
-     * @return ShowWidget
+     * @uxon-property prefill_with_input_data
+     * @uxon-type boolean
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\iShowWidget::setPrefillWithInputData()
      */
     public function setPrefillWithInputData($value)
     {
@@ -378,12 +390,13 @@ class ShowWidget extends AbstractAction implements iShowWidget, iUsePrefillData
     }
 
     /**
-     * Disables the prefill for this action entirely.
+     * Set to TRUE to disable the prefill for this action entirely.
      *
      * @uxon-property do_not_prefill
      * @uxon-type boolean
      *
-     * @return \exface\Core\Actions\ShowWidget
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\iShowWidget::setDoNotPrefill($value)
      */
     public function setDoNotPrefill($value)
     {
@@ -392,5 +405,87 @@ class ShowWidget extends AbstractAction implements iShowWidget, iUsePrefillData
         $this->setPrefillWithInputData($value);
         return $this;
     }
+
+    /**
+     *
+     * @return WidgetLinkInterface[]
+     */
+    public function getTakeAlongFilters()
+    {
+        return $this->takeAlongFilters;
+    }
+
+    /**
+     * Specifies filters on the target page that should be filled with values from widgets on the current page.
+     * 
+     * This option accepts an object with attribute aliases for keys and
+     * widget links for values. Thus, if you need to pass a filter over
+     * ORDER__ORDER_DATE to a page showing ORDER_POSITION and use the value
+     * of the widget with the id "my_date" on the current page, use the 
+     * following configuration:
+     * 
+     *  {
+     *      "widget_type": "InputDate",
+     *      "id": "my_date"
+     *  },
+     *  ...,
+     *  {
+     *      ...
+     *      "buttons": [
+     *          {
+     *              "action": {
+     *                  "alias": "GoToPage",
+     *                  "take_along_filters": 
+     *                      {"ORDER__ORDER_DATE": "my_date"}
+     *              }
+     *          }
+     *      ]
+     *  }
+     * 
+     * @uxon-property take_along_filters
+     * @uxon-type WidgetLink[]
+     *
+     * @param UxonObject $takeAlongFilters   
+     * @return ShowWidget         
+     */
+    public function setTakeAlongFilters(UxonObject $takeAlongFilters)
+    {
+        $array = [];
+        foreach ($takeAlongFilters as $attributeAlias => $widgetLink){
+            if (! $widgetLink instanceof WidgetLinkInterface){
+                $array[$attributeAlias] = WidgetLinkFactory::createFromAnything($this->getWorkbench(), $widgetLink);
+            }
+        }
+        
+        $this->takeAlongFilters = $array;
+        return $this;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\iUsePrefillData::getPrefillWithPrefillData()
+     */
+    public function getPrefillWithPrefillData()
+    {
+        return $this->prefill_with_prefill_data;
+    }
+
+    /**
+     * Set to FALSE to make this action ignore prefill data passed along
+     * 
+     * @uxon-property prefill_with_prefill_data
+     * @uxon-type boolean
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\iUsePrefillData::setPrefillWithPrefillData()
+     */
+    public function setPrefillWithPrefillData($prefill_with_prefill_data)
+    {
+        $this->prefill_with_prefill_data = $prefill_with_prefill_data;
+        return $this;
+    }
+ 
+ 
 }
 ?>

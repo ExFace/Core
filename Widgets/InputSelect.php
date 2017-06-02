@@ -121,7 +121,7 @@ class InputSelect extends Input implements iSupportMultiSelect
      * Set to TRUE to allow multiple items to be selected.
      * FALSE by default.
      *
-     * @uxon-property multi-select
+     * @uxon-property multi_select
      * @uxon-type boolean
      *
      * {@inheritdoc}
