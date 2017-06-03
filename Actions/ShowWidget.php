@@ -47,8 +47,6 @@ class ShowWidget extends AbstractAction implements iShowWidget
     private $filter_contexts = array();
 
     private $page_id = null;
-    
-    private $takeAlongFilters = null;
 
     protected function init()
     {
@@ -89,9 +87,11 @@ class ShowWidget extends AbstractAction implements iShowWidget
     }
 
     /**
-     *
+     * 
+     * @uxon-property widget
+     * @uxon-type \exface\Core\Widgets\Container
+     * 
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\Actions\iShowWidget::setWidget()
      */
     public function setWidget($widget_or_uxon_object)
@@ -225,7 +225,13 @@ class ShowWidget extends AbstractAction implements iShowWidget
     }
 
     /**
-     *
+     * Sets the prefill data sheet to be used for this action.
+     * 
+     * Note, the prefill data will be ignored if prefill_with_prefill_data is
+     * set to FALSE!
+     * 
+     * TODO make it possible to override the prefill data sheet from UXON
+     * 
      * @param DataSheetInterface|UxonObject $data_sheet_or_uxon_object            
      * @return ShowWidget
      */
@@ -254,10 +260,21 @@ class ShowWidget extends AbstractAction implements iShowWidget
             return $this->widget_id;
         }
     }
-
+    
+    /**
+     * Sets the id of the widget to be shown. If not set, the main widget of the
+     * page will be used.
+     * 
+     * @uxon-property widget_id
+     * @uxon-type string
+     * 
+     * @param string $value
+     * @return ShowWidget
+     */
     public function setWidgetId($value)
     {
         $this->widget_id = $value;
+        return $this;
     }
 
    /**
@@ -338,7 +355,11 @@ class ShowWidget extends AbstractAction implements iShowWidget
         }
         return $uxon;
     }
-
+    
+    /**
+     * 
+     * @return string
+     */
     public function getPageId()
     {
         if ($this->getWidget()) {
@@ -346,29 +367,45 @@ class ShowWidget extends AbstractAction implements iShowWidget
         }
         return $this->page_id;
     }
-
+    
+    /**
+     * Which page to get the widget from. If only page_id is specified, the
+     * action will use the main root widget of that page.
+     * 
+     * @uxon-property page_id
+     * @uxon-type string
+     * 
+     * @param unknown $value
+     * @return \exface\Core\Actions\ShowWidget
+     */
     public function setPageId($value)
     {
         $this->page_id = $value;
         return $this;
     }
-
+    
     /**
-     *
-     * @deprecated use setPageId() instead! This method is kept for backwards compatibility only.
-     * @param string $value            
-     * @return \exface\Core\Actions\ShowWidget
+     * 
+     * @return \exface\Core\Interfaces\Widgets\WidgetLinkInterface
      */
-    public function setDocumentId($value)
-    {
-        return $this->setPageId($value);
-    }
-
     public function getPrefillWithDataFromWidgetLink()
     {
         return $this->prefill_with_data_from_widget_link;
     }
-
+    
+    /**
+     * If a widget link is defined here, the prefill data for this action will
+     * be taken from that widget link and not from the input widget.
+     * 
+     * The value can be either a string ([page_id]widget_id!optional_column_id)
+     * or a widget link defined as an object.
+     * 
+     * @uxon-property prefill_with_data_from_widget_link
+     * @uxon-type \exface\Core\CommonLogic\WidgetLink
+     * 
+     * @param string|UxonObject|WidgetLinkInterface $string_or_widget_link
+     * @return \exface\Core\Actions\ShowWidget
+     */
     public function setPrefillWithDataFromWidgetLink($string_or_widget_link)
     {
         $exface = $this->getWorkbench();
@@ -377,13 +414,22 @@ class ShowWidget extends AbstractAction implements iShowWidget
         }
         return $this;
     }
-
+    
+    /**
+     * 
+     * @param UxonObject|string $uxon_object_or_string
+     * @return \exface\Core\Actions\ShowWidget
+     */
     protected function setWidgetUxon($uxon_object_or_string)
     {
         $this->widget_uxon = UxonObject::fromAnything($uxon_object_or_string);
         return $this;
     }
-
+    
+    /**
+     * 
+     * @return UxonObject
+     */
     protected function getWidgetUxon()
     {
         return $this->widget_uxon;
@@ -403,61 +449,6 @@ class ShowWidget extends AbstractAction implements iShowWidget
         $value = BooleanDataType::parse($value) ? false : true;
         $this->setPrefillWithFilterContext($value);
         $this->setPrefillWithInputData($value);
-        return $this;
-    }
-
-    /**
-     *
-     * @return WidgetLinkInterface[]
-     */
-    public function getTakeAlongFilters()
-    {
-        return $this->takeAlongFilters;
-    }
-
-    /**
-     * Specifies filters on the target page that should be filled with values from widgets on the current page.
-     * 
-     * This option accepts an object with attribute aliases for keys and
-     * widget links for values. Thus, if you need to pass a filter over
-     * ORDER__ORDER_DATE to a page showing ORDER_POSITION and use the value
-     * of the widget with the id "my_date" on the current page, use the 
-     * following configuration:
-     * 
-     *  {
-     *      "widget_type": "InputDate",
-     *      "id": "my_date"
-     *  },
-     *  ...,
-     *  {
-     *      ...
-     *      "buttons": [
-     *          {
-     *              "action": {
-     *                  "alias": "GoToPage",
-     *                  "take_along_filters": 
-     *                      {"ORDER__ORDER_DATE": "my_date"}
-     *              }
-     *          }
-     *      ]
-     *  }
-     * 
-     * @uxon-property take_along_filters
-     * @uxon-type WidgetLink[]
-     *
-     * @param UxonObject $takeAlongFilters   
-     * @return ShowWidget         
-     */
-    public function setTakeAlongFilters(UxonObject $takeAlongFilters)
-    {
-        $array = [];
-        foreach ($takeAlongFilters as $attributeAlias => $widgetLink){
-            if (! $widgetLink instanceof WidgetLinkInterface){
-                $array[$attributeAlias] = WidgetLinkFactory::createFromAnything($this->getWorkbench(), $widgetLink);
-            }
-        }
-        
-        $this->takeAlongFilters = $array;
         return $this;
     }
 
@@ -485,7 +476,5 @@ class ShowWidget extends AbstractAction implements iShowWidget
         $this->prefill_with_prefill_data = $prefill_with_prefill_data;
         return $this;
     }
- 
- 
 }
 ?>

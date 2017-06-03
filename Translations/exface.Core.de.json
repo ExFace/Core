@@ -26,7 +26,7 @@
 	"ACTION.GOBACK.NAME": "Zurück",
 	"ACTION.GOTOURL.NAME": "Webseite anzeigen",
 	"ACTION.GOTOURL.SUCCESS": "Sie werden weitergeleitet...",
-	"ACTION.GOTOWIDGET.NAME": "Anzeigen",
+	"ACTION.GOTOPAGE.NAME": "Anzeigen",
 	
 	"ACTION.MASSEDITDIALOG.NAME": "Massenbearbeitung",
 	"ACTION.MASSEDITDIALOG.EDITING_BY_FILTER": "Bearbeitung aller Objekte, die folgenden Filtern entsprechen: %filters%",

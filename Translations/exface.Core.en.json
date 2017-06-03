@@ -26,7 +26,7 @@
 	"ACTION.GOBACK.NAME": "Back",
 	"ACTION.GOTOURL.NAME": "Visit URL",
 	"ACTION.GOTOURL.SUCCESS": "Redirecting...",
-	"ACTION.GOTOWIDGET.NAME": "Go to",
+	"ACTION.GOTOPAGE.NAME": "Go to",
 	
 	"ACTION.MASSEDITDIALOG.NAME": "Mass edit",
 	"ACTION.MASSEDITDIALOG.EDITING_BY_FILTER": "Editing all objects matching the following filters: %filters%",
