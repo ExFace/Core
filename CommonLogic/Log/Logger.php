@@ -166,7 +166,7 @@ class Logger implements LoggerInterface
                 $handler->handle($level, $message, $context, $sender);
             } catch (\Throwable $e) {
                 try {
-                    $this->log(LoggerInterface::ERROR, $e->getMessage(), array(), new InternalError($e->getMessage(), null, $e));
+                    //$this->log(LoggerInterface::ERROR, $e->getMessage(), array(), new InternalError($e->getMessage(), null, $e));
                 } catch (\Throwable $ee){
                     // do nothing if even logging fails
                 }
