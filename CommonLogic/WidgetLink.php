@@ -185,7 +185,7 @@ class WidgetLink implements WidgetLinkInterface
      */
     public function getWidgetUxon()
     {
-        $resource = $this->exface->cms()->getPageContents($this->getPageId());
+        $resource = $this->exface->getCMS()->getPageContents($this->getPageId());
         $uxon = UxonObject::fromJson($resource);
         if ($this->getWidgetId() && $uxon->widget_id != $this->getWidgetId()) {
             $uxon = $this->findWidgetIdInUxon($uxon, $this->getWidgetId());

@@ -142,7 +142,7 @@ trait ExceptionTrait {
             $stacktrace_tab->setCaption($debug_widget->getWorkbench()->getCoreApp()->getTranslator()->translate('ERROR.STACKTRACE_CAPTION'));
             $stacktrace_widget = WidgetFactory::create($page, 'Html', $stacktrace_tab);
             $stacktrace_tab->addWidget($stacktrace_widget);
-            $stacktrace_widget->setValue($page->getWorkbench()->cMS()->sanitizeErrorOutput($page->getWorkbench()->getDebugger()->printException($this)));
+            $stacktrace_widget->setValue($page->getWorkbench()->getCMS()->sanitizeErrorOutput($page->getWorkbench()->getDebugger()->printException($this)));
             $debug_widget->addTab($stacktrace_tab);
         }
         
@@ -164,7 +164,7 @@ trait ExceptionTrait {
             }
         }
         
-        if ($page->getWorkbench()->getConfig()->getOption('DEBUG.SHOW_ERROR_DETAILS_TO_ADMINS_ONLY') && ! $page->getWorkbench()->cMS()->isUserAdmin()) {
+        if ($page->getWorkbench()->getConfig()->getOption('DEBUG.SHOW_ERROR_DETAILS_TO_ADMINS_ONLY') && ! $page->getWorkbench()->getCMS()->isUserAdmin()) {
             foreach ($debug_widget->getTabs() as $tab) {
                 if ($tab != $error_tab) {
                     $tab->setHidden(true);

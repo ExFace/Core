@@ -60,7 +60,7 @@ class GoToUrl extends AbstractAction implements iShowUrl
         $result = str_replace($vars, $vals, $this->getUrl());
         $result = filter_var($result, FILTER_SANITIZE_STRING);
         if (substr($result, 0, 4) !== 'http') {
-            $result = $this->getWorkbench()->cMS()->createLinkToFile($result);
+            $result = $this->getWorkbench()->getCMS()->createLinkToFile($result);
         }
         if ($this->getOpenInNewWindow()) {
             $result .= (strrpos($result, "?") !== false ? "&" : "?") . "target=_blank";

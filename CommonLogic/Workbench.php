@@ -193,7 +193,7 @@ class Workbench
      *
      * @return CMSInterface
      */
-    public function cMS()
+    public function getCMS()
     {
         return $this->cms;
     }
@@ -301,7 +301,7 @@ class Workbench
     public function getRequestParams()
     {
         if (is_null($this->request_params)) {
-            $this->request_params = $this->cms()->removeSystemRequestParams($_REQUEST);
+            $this->request_params = $this->getCMS()->removeSystemRequestParams($_REQUEST);
         }
         return $this->request_params;
     }
@@ -392,6 +392,18 @@ class Workbench
     public function getLogger()
     {
         return $this->logger;
+    }
+    
+    /**
+     * Empties all caches of this workbench: internal cache, CMS cache, etc.
+     * 
+     * @return \exface\Core\CommonLogic\Workbench
+     */
+    public function clearCache()
+    {
+        $this->getCMS()->clearCmsCache();
+        // TODO clear other caches
+        return $this;
     }
 }
 ?>

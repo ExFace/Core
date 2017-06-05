@@ -151,7 +151,7 @@ class UiManager implements UiManagerInterface
     public function getPageIdCurrent()
     {
         if (is_null($this->page_id_current)) {
-            $this->page_id_current = $this->getWorkbench()->cms()->getPageId();
+            $this->page_id_current = $this->getWorkbench()->getCMS()->getPageId();
         }
         return $this->page_id_current;
     }

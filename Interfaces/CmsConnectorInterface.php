@@ -101,7 +101,8 @@ interface CmsConnectorInterface extends ExfaceClassInterface
      * Escapes all CMS specific tags in the given string to make sure the string is interpreted as pure text/HTML by the CMS and not
      * as a script or template.
      *
-     * @param string $string            
+     * @param string $string  
+     * @return string          
      */
     public function sanitizeOutput($string);
 
@@ -110,8 +111,16 @@ interface CmsConnectorInterface extends ExfaceClassInterface
      * Stacktraces may easily contain special characters that
      * may be interpreted as tags by the CMS.
      *
-     * @param string $string            
+     * @param string $string  
+     * @return string          
      */
     public function sanitizeErrorOutput($string);
+    
+    /**
+     * Clears ths cache of the CMS (if present)
+     * 
+     * @return CmsConnectorInterface
+     */
+    public function clearCmsCache();
 }
 ?>

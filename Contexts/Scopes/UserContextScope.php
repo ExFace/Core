@@ -13,7 +13,7 @@ class UserContextScope extends AbstractContextScope
 
     public function getUserName()
     {
-        return $this->getWorkbench()->cms()->getUserName();
+        return $this->getWorkbench()->getCMS()->getUserName();
     }
 
     public function getUserId()
@@ -80,7 +80,7 @@ class UserContextScope extends AbstractContextScope
      */
     public function getUserLocale()
     {
-        if (is_null($this->user_locale) && $cms_locale = $this->getWorkbench()->cMS()->getUserLocale()) {
+        if (is_null($this->user_locale) && $cms_locale = $this->getWorkbench()->getCMS()->getUserLocale()) {
             $this->setUserLocale($cms_locale);
         }
         return $this->user_locale;

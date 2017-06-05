@@ -65,7 +65,7 @@ class UiPageFactory extends AbstractFactory
      */
     public static function createFromCmsPage(UiManagerInterface $ui, $page_id)
     {
-        $page_text = $ui->getWorkbench()->cMS()->getPageContents($page_id);
+        $page_text = $ui->getWorkbench()->getCMS()->getPageContents($page_id);
         if (is_null($page_text)) {
             throw new UiPageNotFoundError('UI page with id "' . $page_id . '" not found!');
         } elseif (substr(trim($page_text), 0, 1) !== '{') {

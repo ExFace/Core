@@ -137,7 +137,7 @@ class ActionTestContext extends AbstractContext
                 $page_id = $action->getCalledByWidget()->getPage()->getId();
             }
             if (is_null(page_id))
-                $page_id = $this->getWorkbench()->cms()->getPageId();
+                $page_id = $this->getWorkbench()->getCMS()->getPageId();
             
             // Only continue if the current page is not the excluded list
             // var_dump($page_id, $this->getSkipPageIds());
@@ -145,9 +145,9 @@ class ActionTestContext extends AbstractContext
                 // Create a test case if needed
                 if (! $this->getRecordingTestCaseId()) {
                     $test_case_data = $this->getWorkbench()->data()->createDataSheet($this->getWorkbench()->model()->getObject('EXFACE.ACTIONTEST.TEST_CASE'));
-                    $test_case_data->setCellValue('NAME', 0, $this->createTestCaseName($this->getWorkbench()->cms()->getPageTitle($page_id)));
+                    $test_case_data->setCellValue('NAME', 0, $this->createTestCaseName($this->getWorkbench()->getCMS()->getPageTitle($page_id)));
                     $test_case_data->setCellValue('START_PAGE_ID', 0, $page_id);
-                    $test_case_data->setCellValue('START_PAGE_NAME', 0, $this->getWorkbench()->cms()->getPageTitle($page_id));
+                    $test_case_data->setCellValue('START_PAGE_NAME', 0, $this->getWorkbench()->getCMS()->getPageTitle($page_id));
                     $test_case_data->setCellValue('START_OBJECT', 0, $action->getInputDataSheet()->getMetaObject()->getId());
                     $test_case_data->dataCreate();
                     $this->setRecordingTestCaseId($test_case_data->getCellValue($test_case_data->getMetaObject()->getUidAlias(), 0));
@@ -179,7 +179,7 @@ class ActionTestContext extends AbstractContext
                 
                 // Add page attributes
                 $data_sheet->setCellValue('PAGE_ID', 0, $page_id);
-                $data_sheet->setCellValue('PAGE_NAME', 0, $this->getWorkbench()->cms()->getPageTitle($page_id));
+                $data_sheet->setCellValue('PAGE_NAME', 0, $this->getWorkbench()->getCMS()->getPageTitle($page_id));
                 $data_sheet->setCellValue('OBJECT', 0, $action->getInputDataSheet()->getMetaObject()->getId());
                 $data_sheet->setCellValue('TEMPLATE_ALIAS', 0, $action->getTemplateAlias());
                 
