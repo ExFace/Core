@@ -80,11 +80,11 @@ class Text extends AbstractWidget implements iShowSingleAttribute, iHaveValue, i
         // FIXME how to prefill values, that were defined by a widget link???
         /*
          * if ($this->getValueExpression() && $this->getValueExpression()->isReference()){
-         * $ref_widget = $this->getValueExpression()->getWidgetLink()->getWidget();
-         * if ($ref_widget instanceof ComboTable){
-         * $data_column = $ref_widget->getTable()->getColumn($this->getValueExpression()->getWidgetLink()->getColumnId());
-         * var_dump($data_column->getAttributeAlias());
-         * }
+         *  $ref_widget = $this->getValueExpression()->getWidgetLink()->getWidget();
+         *  if ($ref_widget instanceof ComboTable){
+         *      $data_column = $ref_widget->getTable()->getColumn($this->getValueExpression()->getWidgetLink()->getColumnId());
+         *      var_dump($data_column->getAttributeAlias());
+         *  }
          * } else
          */
         if ($this->getMetaObject()->is($data_sheet->getMetaObject())) {
@@ -360,7 +360,7 @@ class Text extends AbstractWidget implements iShowSingleAttribute, iHaveValue, i
         if (! is_null($this->align)) {
             $uxon->setProperty('align', $this->align);
         }
-        if (! is_null($this->text)){
+        if (! is_null($this->text)) {
             $uxon->setProperty('text', $this->text);
         }
         if (! is_null($this->getAttributeAlias())) {
