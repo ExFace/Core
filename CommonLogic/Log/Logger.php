@@ -149,28 +149,40 @@ class Logger implements LoggerInterface
      */
     public function log($level, $message, array $context = array(), iCanGenerateDebugWidgets $sender = null)
     {
-        if (is_null($sender) && $context['exception'] instanceof iCanGenerateDebugWidgets){
-            $sender = $context['exception'];
-        }
-        
-        if ($sender instanceof ExceptionInterface){
-            if (is_null($level)){
-                $level = $sender->getLogLevel();
+        if ($this->shouldNotLog($level))
+            return;
+
+        // mark as "in logging process"
+        $_REQUEST['UIDebugLog'] = true;
+
+        try {
+            if (is_null($sender) && $context['exception'] instanceof iCanGenerateDebugWidgets) {
+                $sender = $context['exception'];
             }
-            $context['exception'] = $sender;
-            $context['id'] = $sender->getId();
-        }
-        
-        foreach ($this->handlers as $handler) {
-            try {
-                $handler->handle($level, $message, $context, $sender);
-            } catch (\Throwable $e) {
+
+            if ($sender instanceof ExceptionInterface) {
+                if (is_null($level)) {
+                    $level = $sender->getLogLevel();
+                }
+                $context['exception'] = $sender;
+                $context['id']        = $sender->getId();
+            }
+
+            foreach ($this->handlers as $handler) {
                 try {
-                    //$this->log(LoggerInterface::ERROR, $e->getMessage(), array(), new InternalError($e->getMessage(), null, $e));
-                } catch (\Throwable $ee){
-                    // do nothing if even logging fails
+                    $handler->handle($level, $message, $context, $sender);
+                } catch (\Throwable $e) {
+                    try {
+                        $this->log(LoggerInterface::ERROR, $e->getMessage(), array(),
+                            new InternalError($e->getMessage(), null, $e));
+                    } catch (\Throwable $ee) {
+                        // do nothing if even logging fails
+                    }
                 }
             }
+        } finally {
+            // clear "in logging process" mark
+            unset($_REQUEST['UIDebugLog']);
         }
     }
 
@@ -210,5 +222,19 @@ class Logger implements LoggerInterface
     public function getHandlers()
     {
         return $this->handlers;
+    }
+
+    protected function shouldNotLog($level)
+    {
+        // check log level and return if it is smaller than min log level, otherwise debug widget will be created also
+        // if this is not logged in the underlying log handler
+        if (\Monolog\Logger::toMonologLevel($level) < \Monolog\Logger::toMonologLevel($this->minLogLevel))
+            return true;
+
+        $isAlreadyLogging = $_REQUEST['UIDebugLog'];
+        if ($isAlreadyLogging)
+            return true;
+
+        return false;
     }
 }
