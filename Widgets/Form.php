@@ -26,7 +26,7 @@ class Form extends Panel implements iHaveButtons
     // Which type of Buttons should be used. Can be overridden by inheriting widgets
     
     /**
-     * (non-PHPdoc)
+     * {@inheritdoc}
      *
      * @see \exface\Core\Interfaces\Widgets\iHaveButtons::getButtons()
      * @return Button[]
@@ -37,7 +37,7 @@ class Form extends Panel implements iHaveButtons
     }
 
     /**
-     * (non-PHPdoc)
+     * {@inheritdoc}
      *
      * @see \exface\Core\Interfaces\Widgets\iHaveButtons::setButtons()
      */
@@ -56,7 +56,7 @@ class Form extends Panel implements iHaveButtons
     }
 
     /**
-     * (non-PHPdoc)
+     * {@inheritdoc}
      *
      * @see \exface\Core\Interfaces\Widgets\iHaveButtons::addButton()
      */

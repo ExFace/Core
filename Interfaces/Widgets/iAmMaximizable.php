@@ -5,12 +5,28 @@ use exface\Core\Interfaces\WidgetInterface;
 
 interface iAmMaximizable extends WidgetInterface
 {
-
+    
+    /**
+     * 
+     * @param boolean $value
+     * @return iAmMaximizable
+     */
     function setMaximizable($value);
+    
+    /**
+     * @return boolean
+     */
+    function isMaximizable();
 
-    function getMaximizable();
-
+    /**
+     *
+     * @param boolean $value
+     * @return iAmMaximizable
+     */
     function setMaximized();
-
-    function getMaximized();
+    
+    /**
+     * @return boolean
+     */
+    function isMaximized();
 }

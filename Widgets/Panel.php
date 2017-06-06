@@ -6,14 +6,17 @@ use exface\Core\Interfaces\Widgets\iSupportLazyLoading;
 use exface\Core\Interfaces\Widgets\iFillEntireContainer;
 use exface\Core\Interfaces\Widgets\iLayoutWidgets;
 use exface\Core\Interfaces\Widgets\iAmCollapsible;
+use exface\Core\DataTypes\BooleanDataType;
 
 /**
- * A panel is a visible container with a configurable layout, support for lazy-loading of content.
+ * A panel is a visible container with a configurable layout (number of columns, 
+ * etc.) and optional support for lazy-loading of content.
  *
- * The panel is the base widget for many containers, that show multiple smaller widgets in a column-based
- * (newspaper-like) layout.
+ * The panel is the base widget for many containers, that show multiple smaller 
+ * widgets in a column-based (newspaper-like) layout.
  *
  * @see Form - Panel with buttons
+ * @see Dashboard - Panel with a common customizer (common filters, buttons, etc.)
  * @see InputGroup - Small panel to easily group input widgets
  * @see SplitPanel - Special resizable panel to be used in SplitVertical and SplitHorizontal widgets
  * @see Tab - Special panel to be used in the Tabs widget
@@ -24,16 +27,16 @@ use exface\Core\Interfaces\Widgets\iAmCollapsible;
 class Panel extends Container implements iLayoutWidgets, iSupportLazyLoading, iHaveIcon, iAmCollapsible, iFillEntireContainer
 {
 
+    // A panel will not be loaded via AJAX by default
     private $lazy_loading = false;
 
-    // A panel will not be loaded via AJAX by default
     private $lazy_loading_action = 'exface.Core.ShowWidget';
 
     private $collapsible = false;
 
     private $icon_name = null;
 
-    private $column_number = null;
+    private $number_of_columns = null;
 
     private $column_stack_on_smartphones = null;
 
@@ -44,10 +47,9 @@ class Panel extends Container implements iLayoutWidgets, iSupportLazyLoading, iH
     /**
      *
      * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Widgets\iAmCollapsible::getCollapsible()
+     * @see \exface\Core\Interfaces\Widgets\iAmCollapsible::isCollapsible()
      */
-    public function getCollapsible()
+    public function isCollapsible()
     {
         return $this->collapsible;
     }
@@ -55,17 +57,15 @@ class Panel extends Container implements iLayoutWidgets, iSupportLazyLoading, iH
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\Widgets\iAmCollapsible::setCollapsible()
      */
     public function setCollapsible($value)
     {
-        $this->collapsible = $value;
+        $this->collapsible = BooleanDataType::parse($value);
     }
 
     /**
-     * (non-PHPdoc)
-     *
+     * {@inheritdoc}
      * @see \exface\Core\Interfaces\Widgets\iHaveIcon::getIconName()
      */
     public function getIconName()
@@ -74,8 +74,7 @@ class Panel extends Container implements iLayoutWidgets, iSupportLazyLoading, iH
     }
 
     /**
-     * (non-PHPdoc)
-     *
+     * {@inheritdoc}
      * @see \exface\Core\Interfaces\Widgets\iHaveIcon::setIconName()
      */
     public function setIconName($value)
@@ -84,8 +83,7 @@ class Panel extends Container implements iLayoutWidgets, iSupportLazyLoading, iH
     }
 
     /**
-     * (non-PHPdoc)
-     *
+     * {@inheritdoc}
      * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::getLazyLoading()
      */
     public function getLazyLoading()
@@ -94,18 +92,16 @@ class Panel extends Container implements iLayoutWidgets, iSupportLazyLoading, iH
     }
 
     /**
-     * (non-PHPdoc)
-     *
+     * {@inheritdoc}
      * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::setLazyLoading()
      */
     public function setLazyLoading($value)
     {
-        $this->lazy_loading = $value;
+        $this->lazy_loading = BooleanDataType::parse($value);
     }
 
     /**
-     * (non-PHPdoc)
-     *
+     * {@inheritdoc}
      * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::getLazyLoadingAction()
      */
     public function getLazyLoadingAction()
@@ -114,8 +110,7 @@ class Panel extends Container implements iLayoutWidgets, iSupportLazyLoading, iH
     }
 
     /**
-     * (non-PHPdoc)
-     *
+     * {@inheritdoc}
      * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::setLazyLoadingAction()
      */
     public function setLazyLoadingAction($value)
@@ -124,71 +119,75 @@ class Panel extends Container implements iLayoutWidgets, iSupportLazyLoading, iH
         return $this;
     }
 
-    public function getColumnNumber()
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iLayoutWidgets::getNumberOfColumns()
+     */
+    public function getNumberOfColumns()
     {
-        return $this->column_number;
+        return $this->number_of_columns;
     }
 
-    public function setColumnNumber($value)
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iLayoutWidgets::setNumberOfColumns()
+     */
+    public function setNumberOfColumns($value)
     {
-        $this->column_number = $value;
+        $this->number_of_columns = intval($value);
         return $this;
     }
 
     /**
-     * Returns TRUE if the columns should be stacked on small screens and FALSE otherwise.
-     * Returns NULL if the creator of the widget
-     * had made no preference and thus the stacking is completely upto the template.
-     *
-     * @return boolean
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iLayoutWidgets::getStackColumnsOnTabletsSmartphones()
      */
-    public function getColumnStackOnSmartphones()
+    public function getStackColumnsOnTabletsSmartphones()
     {
         return $this->column_stack_on_smartphones;
     }
 
     /**
-     * Determines wether columns should be stacked on smaller screens (TRUE) or left side-by-side (FALSE).
-     * Setting this to NULL will
-     * leave it upto the template to decide.
-     *
-     * @param boolean $value            
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iLayoutWidgets::setStackColumnsOnTabletsSmartphones()
      */
-    public function setColumnStackOnSmartphones($value)
+    public function setStackColumnsOnTabletsSmartphones($value)
     {
-        $this->column_stack_on_smartphones = $value;
+        $this->column_stack_on_smartphones = BooleanDataType::parse($value);
         return $this;
     }
 
     /**
-     * Returns TRUE if the columns should be stacked on midsize screens and FALSE otherwise.
-     * Returns NULL if the creator of the widget
-     * had made no preference and thus the stacking is completely upto the template.
-     *
-     * @return boolean
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iLayoutWidgets::getStackColumnsOnTabletsTablets()
      */
-    public function getColumnStackOnTablets()
+    public function getStackColumnsOnTabletsTablets()
     {
         return $this->column_stack_on_tablets;
     }
 
     /**
-     * Determines wether columns should be stacked on midsize screens (TRUE) or left side-by-side (FALSE).
-     * Setting this to NULL will
-     * leave it upto the template to decide.
-     *
-     * @param boolean $value            
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iLayoutWidgets::setStackColumnsOnTabletsTablets()
      */
-    public function setColumnStackOnTablets($value)
+    public function setStackColumnsOnTabletsTablets($value)
     {
-        $this->column_stack_on_tablets = $value;
+        $this->column_stack_on_tablets = BooleanDataType::parse($value);
         return $this;
     }
 
     /**
-     *
-     * {@inheritdoc} If the parent widget of a panel has other children (siblings of the panel), they should be moved to the panel itself, once it is
-     *               added to it's paren.
+     *  
+     * {@inheritdoc} 
+     * 
+     * If the parent widget of a panel has other children (siblings of the panel), 
+     * they should be moved to the panel itself, once it is added to it's paren.
      *              
      * @see \exface\Core\Interfaces\Widgets\iFillEntireContainer::getAlternativeContainerForOrphanedSiblings()
      * @return Panel
@@ -198,6 +197,11 @@ class Panel extends Container implements iLayoutWidgets, iSupportLazyLoading, iH
         return $this;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::getLazyLoadingGroupId()
+     */
     public function getLazyLoadingGroupId()
     {
         return $this->lazy_loading_group_id;
@@ -206,7 +210,6 @@ class Panel extends Container implements iLayoutWidgets, iSupportLazyLoading, iH
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::setLazyLoadingGroupId()
      */
     public function setLazyLoadingGroupId($value)

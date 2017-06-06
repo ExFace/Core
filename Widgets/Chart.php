@@ -502,7 +502,7 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveButtons, iHaveT
     }
 
     /**
-     * (non-PHPdoc)
+     * {@inheritdoc}
      *
      * @see \exface\Core\Interfaces\Widgets\iHaveButtons::getButtons()
      * @return DataButton
@@ -544,7 +544,7 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveButtons, iHaveT
     }
 
     /**
-     * (non-PHPdoc)
+     * {@inheritdoc}
      *
      * @see \exface\Core\Interfaces\Widgets\iHaveButtons::addButton()
      */
@@ -584,7 +584,7 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveButtons, iHaveT
     }
 
     /**
-     * (non-PHPdoc)
+     * {@inheritdoc}
      *
      * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::getLazyLoading()
      */
@@ -599,7 +599,7 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveButtons, iHaveT
      * @uxon-property lazy_loading
      * @uxon-type boolean
      *
-     * (non-PHPdoc)
+     * {@inheritdoc}
      *
      * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::setLazyLoading()
      */
@@ -610,7 +610,7 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveButtons, iHaveT
 
     /**
      *
-     * (non-PHPdoc)
+     * {@inheritdoc}
      *
      * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::getLazyLoadingAction()
      */
@@ -625,7 +625,7 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveButtons, iHaveT
      * @uxon-property lazy_loading_action
      * @uxon-type string
      *
-     * (non-PHPdoc)
+     * {@inheritdoc}
      *
      * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::setLazyLoadingAction()
      */

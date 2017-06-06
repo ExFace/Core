@@ -18,7 +18,7 @@ class ButtonGroup extends Button implements iHaveButtons
     private $buttons = array();
 
     /**
-     * (non-PHPdoc)
+     * {@inheritdoc}
      *
      * @see \exface\Core\Interfaces\Widgets\iHaveButtons::getButtons()
      */
@@ -33,7 +33,7 @@ class ButtonGroup extends Button implements iHaveButtons
      * @uxon-property buttons
      * @uxon-type Button[]
      *
-     * (non-PHPdoc)
+     * {@inheritdoc}
      *
      * @see \exface\Core\Interfaces\Widgets\iHaveButtons::setButtons()
      */
@@ -74,7 +74,7 @@ class ButtonGroup extends Button implements iHaveButtons
     }
 
     /**
-     * (non-PHPdoc)
+     * {@inheritdoc}
      *
      * @see \exface\Core\Widgets\AbstractWidget::getChildren()
      */

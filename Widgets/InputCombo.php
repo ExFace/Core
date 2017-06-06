@@ -28,7 +28,7 @@ class InputCombo extends InputSelect implements iSupportLazyLoading
     private $lazy_loading_group_id = null;
 
     /**
-     * (non-PHPdoc)
+     * {@inheritdoc}
      *
      * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::getLazyLoading()
      */
@@ -44,7 +44,7 @@ class InputCombo extends InputSelect implements iSupportLazyLoading
      * @uxon-property lazy_loading
      * @uxon-type boolean
      *
-     * (non-PHPdoc)
+     * {@inheritdoc}
      *
      * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::setLazyLoading()
      */
@@ -56,7 +56,7 @@ class InputCombo extends InputSelect implements iSupportLazyLoading
     /**
      * Returns the alias of the action to be called by the lazy autosuggest.
      *
-     * (non-PHPdoc)
+     * {@inheritdoc}
      *
      * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::getLazyLoadingAction()
      */
@@ -72,7 +72,7 @@ class InputCombo extends InputSelect implements iSupportLazyLoading
      * @uxon-property lazy_loading_action
      * @uxon-type string
      *
-     * (non-PHPdoc)
+     * {@inheritdoc}
      *
      * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::setLazyLoadingAction()
      */

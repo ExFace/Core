@@ -13,36 +13,42 @@ interface iLayoutWidgets extends iContainOtherWidgets
 {
 
     /**
-     * Returns the number of columns in the layout
+     * Returns the number of columns in the layout.
+     * 
+     * Returns NULL if the creator of the widget had made no preference and 
+     * thus the number of columns is completely upto the template. 
      *
      * @return integer
      */
-    public function getColumnNumber();
+    public function getNumberOfColumns();
 
     /**
-     * Set the number of columns in the layout
+     * Set the number of columns in the layout. The default depends on the template.
      *
-     * @param integer $value            
+     * @param integer $value
+     * @return iLayoutWidgets            
      */
-    public function setColumnNumber($value);
+    public function setNumberOfColumns($value);
 
     /**
      * Returns TRUE if the columns should be stacked on small screens and FALSE otherwise.
-     * Returns NULL if the creator of the widget
-     * had made no preference and thus the stacking is completely upto the template.
+     * 
+     * Returns NULL if the creator of the widget had made no preference and 
+     * thus the stacking is completely upto the template.
      *
      * @return boolean
      */
-    public function getColumnStackOnSmartphones();
+    public function getStackColumnsOnTabletsSmartphones();
 
     /**
      * Determines wether columns should be stacked on smaller screens (TRUE) or left side-by-side (FALSE).
      * Setting this to NULL will
      * leave it upto the template to decide.
      *
-     * @param boolean $value            
+     * @param boolean $value 
+     * @return iLayoutWidgets              
      */
-    public function setColumnStackOnSmartphones($value);
+    public function setStackColumnsOnTabletsSmartphones($value);
 
     /**
      * Returns TRUE if the columns should be stacked on midsize screens and FALSE otherwise.
@@ -51,14 +57,15 @@ interface iLayoutWidgets extends iContainOtherWidgets
      *
      * @return boolean
      */
-    public function getColumnStackOnTablets();
+    public function getStackColumnsOnTabletsTablets();
 
     /**
      * Determines wether columns should be stacked on midsize screens (TRUE) or left side-by-side (FALSE).
      * Setting this to NULL will
      * leave it upto the template to decide.
      *
-     * @param boolean $value            
+     * @param boolean $value
+     * @return iLayoutWidgets            
      */
-    public function setColumnStackOnTablets($value);
+    public function setStackColumnsOnTabletsTablets($value);
 }

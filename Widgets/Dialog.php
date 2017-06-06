@@ -135,25 +135,25 @@ class Dialog extends Form implements iAmClosable, iHaveContextualHelp
         return $container;
     }
 
-    public function getMaximizable()
+    public function isMaximizable()
     {
         return $this->maximizable;
     }
 
     public function setMaximizable($value)
     {
-        $this->maximizable = $value;
+        $this->maximizable = BooleanDataType::parse($value);
         return $this;
     }
 
-    public function getMaximized()
+    public function isMaximized()
     {
         return $this->maximized;
     }
 
     public function setMaximized($value)
     {
-        $this->maximized = $value;
+        $this->maximized = BooleanDataType::parse($value);
         return $this;
     }
 

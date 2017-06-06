@@ -494,7 +494,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
     }
 
     /**
-     * (non-PHPdoc)
+     * {@inheritdoc}
      *
      * @see \exface\Core\Interfaces\Widgets\iHaveButtons::getButtons()
      * @return DataButton
@@ -573,7 +573,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
     }
 
     /**
-     * (non-PHPdoc)
+     * {@inheritdoc}
      *
      * @see \exface\Core\Interfaces\Widgets\iHaveButtons::addButton()
      */
@@ -1179,7 +1179,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
     }
 
     /**
-     * (non-PHPdoc)
+     * {@inheritdoc}
      *
      * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::getLazyLoading()
      */

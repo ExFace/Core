@@ -103,7 +103,7 @@ class Container extends AbstractWidget implements iContainOtherWidgets
     }
 
     /**
-     * (non-PHPdoc)
+     * {@inheritdoc}
      *
      * @see \exface\Core\Widgets\AbstractWidget::getChildren()
      */

@@ -11,7 +11,7 @@ interface iAmCollapsible extends WidgetInterface
      *
      * @return boolean
      */
-    public function getCollapsible();
+    public function isCollapsible();
 
     /**
      * Defines if widget shall be collapsible (TRUE) or not (FALSE)

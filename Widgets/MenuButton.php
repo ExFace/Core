@@ -61,7 +61,7 @@ class MenuButton extends Button implements iHaveMenu, iHaveButtons
     }
 
     /**
-     * (non-PHPdoc)
+     * {@inheritdoc}
      *
      * @see \exface\Core\Interfaces\Widgets\iHaveButtons::getButtons()
      */
@@ -76,7 +76,7 @@ class MenuButton extends Button implements iHaveMenu, iHaveButtons
      * @uxon-property buttons
      * @uxon-type Button[]
      *
-     * (non-PHPdoc)
+     * {@inheritdoc}
      *
      * @see \exface\Core\Interfaces\Widgets\iHaveButtons::setButtons()
      */
@@ -108,7 +108,7 @@ class MenuButton extends Button implements iHaveMenu, iHaveButtons
     }
 
     /**
-     * (non-PHPdoc)
+     * {@inheritdoc}
      *
      * @see \exface\Core\Widgets\AbstractWidget::getChildren()
      */

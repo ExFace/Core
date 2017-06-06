@@ -115,7 +115,7 @@ class Diagram extends Container implements iSupportLazyLoading
     }
 
     /**
-     * (non-PHPdoc)
+     * {@inheritdoc}
      *
      * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::getLazyLoading()
      */
@@ -125,7 +125,7 @@ class Diagram extends Container implements iSupportLazyLoading
     }
 
     /**
-     * (non-PHPdoc)
+     * {@inheritdoc}
      *
      * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::setLazyLoading()
      */
@@ -135,7 +135,7 @@ class Diagram extends Container implements iSupportLazyLoading
     }
 
     /**
-     * (non-PHPdoc)
+     * {@inheritdoc}
      *
      * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::getLazyLoadingAction()
      */
@@ -145,7 +145,7 @@ class Diagram extends Container implements iSupportLazyLoading
     }
 
     /**
-     * (non-PHPdoc)
+     * {@inheritdoc}
      *
      * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::setLazyLoadingAction()
      */
