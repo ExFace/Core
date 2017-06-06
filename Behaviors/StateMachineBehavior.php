@@ -334,7 +334,11 @@ class StateMachineBehavior extends AbstractBehavior
             // wurde, dass ein deaktiviertes Widget durch einen Link geaendert wurde,
             // und sich der Wert dadurch vom Wert in der DB unterschied ->
             // StateMachineUpdateException
-            $widget->setReadonly(true);
+            if (method_exists($widget, 'setReadonly')) {
+                $widget->setReadonly(true);
+            } else {
+                $widget->setDisabled(true);
+            }
         }
     }
 
