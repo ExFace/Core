@@ -13,7 +13,7 @@ use exface\Core\Factories\WidgetLinkFactory;
 class GoToPage extends ShowWidget
 {
     
-    private $takeAlongFilters = null;
+    private $takeAlongFilters = array();
 
     protected function init()
     {
