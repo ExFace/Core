@@ -2,6 +2,7 @@
 namespace exface\Core\CommonLogic\Log\Handlers;
 
 use exface\Core\CommonLogic\Log\Handlers\monolog\AbstractMonologHandler;
+use exface\Core\CommonLogic\Log\Processors\ActionAliasProcessor;
 use exface\Core\CommonLogic\Log\Processors\IdProcessor;
 use exface\Core\CommonLogic\Log\Processors\RequestIdProcessor;
 use exface\Core\CommonLogic\Log\Processors\UserNameProcessor;
@@ -35,8 +36,7 @@ class LogfileHandler extends AbstractMonologHandler implements FileHandlerInterf
      * @param string $level
      *            The minimum logging level name at which this handler will be triggered (see LoggerInterface
      *            level values)
-     * @param string $requestId
-     * @param string $userName
+     * @param string $workbench
      * @param Boolean $bubble
      *            Whether the messages that are handled can bubble up the stack or not
      * @param int|null $filePermission
@@ -76,6 +76,7 @@ class LogfileHandler extends AbstractMonologHandler implements FileHandlerInterf
         $logger->pushProcessor(new IdProcessor());
         $logger->pushProcessor(new RequestIdProcessor($this->workbench));
         $logger->pushProcessor(new UsernameProcessor($this->workbench));
+        $logger->pushProcessor(new ActionAliasProcessor($this->workbench));
 
         return $logger;
     }
