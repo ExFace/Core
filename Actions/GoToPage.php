@@ -12,7 +12,7 @@ use exface\Core\Factories\WidgetLinkFactory;
  */
 class GoToPage extends ShowWidget
 {
-    
+
     private $takeAlongFilters = array();
 
     protected function init()
@@ -21,7 +21,7 @@ class GoToPage extends ShowWidget
         $this->setPrefillWithInputData(true);
         $this->setInputRowsMin(1);
     }
-    
+
     /**
      *
      * @return WidgetLinkInterface[]
@@ -30,7 +30,7 @@ class GoToPage extends ShowWidget
     {
         return $this->takeAlongFilters;
     }
-    
+
     /**
      * Specifies filters on the target page that should be filled with values from widgets on the current page.
      *
@@ -67,8 +67,8 @@ class GoToPage extends ShowWidget
     public function setTakeAlongFilters(UxonObject $takeAlongFilters)
     {
         $array = [];
-        foreach ($takeAlongFilters as $attributeAlias => $widgetLink){
-            if (! $widgetLink instanceof WidgetLinkInterface){
+        foreach ($takeAlongFilters as $attributeAlias => $widgetLink) {
+            if (! $widgetLink instanceof WidgetLinkInterface) {
                 $array[$attributeAlias] = WidgetLinkFactory::createFromAnything($this->getWorkbench(), $widgetLink);
             }
         }
