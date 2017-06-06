@@ -3,6 +3,7 @@ namespace exface\Core\Interfaces;
 
 use exface\Core\Interfaces\ExfaceClassInterface;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Exceptions\OutOfBoundsException;
 
 interface ConfigurationInterface extends ExfaceClassInterface, iCanBeConvertedToUxon
 {
@@ -16,19 +17,29 @@ interface ConfigurationInterface extends ExfaceClassInterface, iCanBeConvertedTo
     public function getOption($key);
 
     /**
-     * Sets a single configuration value specified by the given key
+     * Sets a single configuration value specified by the given key. If a scope
+     * is defined, the value will be stored in this scope. Otherwise the value
+     * will only affect the current request. 
      *
-     * @param string $key            
+     * @param string $key     
+     * @param string $configScope       
      * @param mixed $value_or_object_or_string            
      */
-    public function setOption($key, $value_or_object_or_string);
+    public function setOption($key, $value_or_object_or_string, $configScope);
 
     /**
-     *
-     * @param string $absolute_path            
+     * Loads the configuration stored in a file, overriding already existing
+     * values. If a configuration scope is given, the file will be accessible
+     * for writing via this scope.
+     * 
+     * @throws OutOfBoundsException 
+     *                  if the given context scope was not loaded into this 
+     *                  configuration before writing to it.
+     * @param string $absolute_path  
+     * @param string $configScope          
      * @return ConfigurationInterface
      */
-    public function loadConfigFile($absolute_path);
+    public function loadConfigFile($absolute_path, $configScope = null);
 
     /**
      *

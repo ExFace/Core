@@ -4,6 +4,8 @@ namespace exface\Core\CommonLogic;
 use exface\Core\Interfaces\ExfaceClassInterface;
 use exface\Core\Interfaces\ConfigurationInterface;
 use exface\Core\Exceptions\Configuration\ConfigOptionNotFoundError;
+use exface\Core\Exceptions\RuntimeException;
+use exface\Core\Exceptions\OutOfBoundsException;
 
 class Configuration implements ConfigurationInterface
 {
@@ -11,6 +13,8 @@ class Configuration implements ConfigurationInterface
     private $exface = null;
 
     private $config_uxon = null;
+
+    private $config_files = array();
 
     /**
      *
@@ -67,15 +71,36 @@ class Configuration implements ConfigurationInterface
         return $this->getConfigUxon()->getProperty($key);
     }
 
+    protected function getConfigFilePath($scope)
+    {
+        return $this->config_files[$scope];
+    }
+
     /**
      *
      * {@inheritdoc}
      *
      * @see \exface\Core\Interfaces\ConfigurationInterface::setOption()
      */
-    public function setOption($key, $value_or_object_or_string)
+    public function setOption($key, $value_or_object_or_string, $configScope = null)
     {
         $this->getConfigUxon()->setProperty(mb_strtoupper($key), $value_or_object_or_string);
+        
+        if (! is_null($configScope)) {
+            if (! $filename = $this->getConfigFilePath($configScope)) {
+                throw new OutOfBoundsException('No configuration path found for config scope "' . $configScope . '"!');
+            }
+            // Load the installation specific config file
+            $config = new self($this->getWorkbench());
+            if (file_exists($filename)) {
+                $config->loadConfigFile($filename);
+            }
+            // Overwrite the option
+            $config->setOption($key, $value_or_object_or_string);
+            // Save the file or create one if there was no installation specific config before
+            file_put_contents($filename, $config->exportUxonObject()->toJson(true));
+        }
+        
         return $this;
     }
 
@@ -96,8 +121,12 @@ class Configuration implements ConfigurationInterface
      *
      * @see \exface\Core\Interfaces\ConfigurationInterface::loadConfigFile()
      */
-    public function loadConfigFile($absolute_path)
+    public function loadConfigFile($absolute_path, $config_scope_key = null)
     {
+        if (! is_null($config_scope_key)) {
+            $this->config_files[$config_scope_key] = $absolute_path;
+        }
+        
         if (file_exists($absolute_path) && $uxon = UxonObject::fromJson(file_get_contents($absolute_path))) {
             $this->loadConfigUxon($uxon);
         }

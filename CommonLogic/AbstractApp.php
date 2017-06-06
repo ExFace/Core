@@ -196,17 +196,18 @@ abstract class AbstractApp implements AppInterface
     {
         $config = ! is_null($base_config) ? $base_config : ConfigurationFactory::createFromApp($this);
         
-        // Load the default config of the app
+        // Load the default config of the app. Do not pass a scope to the loader,
+        // beacuase the packaged config file should not be edited programmatically.
         $config->loadConfigFile($this->getConfigFolder() . DIRECTORY_SEPARATOR . $this->getConfigFileName());
         
         // Load the installation config of the app
-        $config->loadConfigFile($this->getWorkbench()->filemanager()->getPathToConfigFolder() . DIRECTORY_SEPARATOR . $this->getConfigFileName());
+        $config->loadConfigFile($this->getWorkbench()->filemanager()->getPathToConfigFolder() . DIRECTORY_SEPARATOR . $this->getConfigFileName(), AppInterface::CONFIG_SCOPE_INSTALLATION);
         
         // Load the user config if there is one
         // IDEA Enable user-configs for the core app too: currently custom configs are not possible for the core app,
         // because it's config is loaded before the context.
         if ($this->getWorkbench()->context()) {
-            $config->loadConfigFile($this->getWorkbench()->context()->getScopeUser()->getUserDataFolderAbsolutePath() . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . $this->getConfigFileName());
+            $config->loadConfigFile($this->getWorkbench()->context()->getScopeUser()->getUserDataFolderAbsolutePath() . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . $this->getConfigFileName(), AppInterface::CONFIG_SCOPE_USER);
         }
         
         return $config;
