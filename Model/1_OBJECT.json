@@ -467,7 +467,7 @@
         },
         {
             "CREATED_ON": "2017-04-28 10:09:21",
-            "MODIFIED_ON": "2017-05-31 14:26:00",
+            "MODIFIED_ON": "2017-06-06 15:07:23",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "",
             "UID": "0x11e72bfabc4cc8e7a3bee4b318306b9a",
@@ -501,7 +501,7 @@
         },
         {
             "CREATED_ON": "2017-05-10 15:06:24",
-            "MODIFIED_ON": "2017-05-31 14:27:07",
+            "MODIFIED_ON": "2017-06-06 15:09:08",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "",
             "UID": "0x11e7359214da6ecbba83e4b318306b9a",
@@ -511,7 +511,7 @@
             "SHORT_DESCRIPTION": "",
             "PARENT_OBJECT": "",
             "DATA_ADDRESS_PROPS": "{}",
-            "DEFAULT_EDITOR_UXON": "{\"object_alias\":\"exface.Core.LOG_ENTRY\",\"widget_type\":\"DataTable\",\"filters\":[{\"attribute_alias\":\"id\"},{\"attribute_alias\":\"requestId\"},{\"attribute_alias\":\"userName\"},{\"attribute_alias\":\"message\"},{\"attribute_alias\":\"timestamp\",\"comparator\":\">\"},{\"attribute_alias\":\"timestamp\",\"comparator\":\"<\"},{\"attribute_alias\":\"level\",\"multi_select\":true},{\"attribute_alias\":\"logfile\",\"widget_type\":\"InputHidden\"}],\"columns\":[{\"attribute_alias\":\"levelname\"},{\"attribute_alias\":\"timestamp\"},{\"attribute_alias\":\"message\"},{\"attribute_alias\":\"id\"},{\"attribute_alias\":\"requestId\"},{\"attribute_alias\":\"userName\"},{\"attribute_alias\":\"channel\"},{\"attribute_alias\":\"level\"}],\"sorters\":[{\"attribute_alias\":\"timestamp\",\"direction\":\"DESC\"}],\"buttons\":[{\"action\":{\"alias\":\"exface.Core.ShowDialogFromFile\",\"file_path_attribute_alias\":\"id\",\"file_extension\":\"json\",\"folder_path\":\"logs\/details\",\"do_not_prefill\":true},\"bind_to_double_click\":true}]}",
+            "DEFAULT_EDITOR_UXON": "{\"object_alias\":\"exface.Core.LOG_ENTRY\",\"widget_type\":\"DataTable\",\"filters\":[{\"attribute_alias\":\"id\"},{\"attribute_alias\":\"requestId\"},{\"attribute_alias\":\"userName\"},{\"attribute_alias\":\"actionAlias\"},{\"attribute_alias\":\"message\"},{\"attribute_alias\":\"timestamp\",\"comparator\":\">\"},{\"attribute_alias\":\"timestamp\",\"comparator\":\"<\"},{\"attribute_alias\":\"level\",\"multi_select\":true},{\"attribute_alias\":\"logfile\",\"widget_type\":\"InputHidden\"}],\"columns\":[{\"attribute_alias\":\"levelname\"},{\"attribute_alias\":\"timestamp\"},{\"attribute_alias\":\"message\"},{\"attribute_alias\":\"id\"},{\"attribute_alias\":\"requestId\"},{\"attribute_alias\":\"userName\"},{\"attribute_alias\":\"actionAlias\"},{\"attribute_alias\":\"channel\"},{\"attribute_alias\":\"level\"}],\"sorters\":[{\"attribute_alias\":\"timestamp\",\"direction\":\"DESC\"}],\"buttons\":[{\"action\":{\"alias\":\"exface.Core.ShowDialogFromFile\",\"file_path_attribute_alias\":\"id\",\"file_extension\":\"json\",\"folder_path\":\"logs\/details\",\"do_not_prefill\":true},\"bind_to_double_click\":true}]}",
             "LABEL": "Log",
             "ALIAS": "LOG",
             "DATA_ADDRESS": "logs\/*.log"
