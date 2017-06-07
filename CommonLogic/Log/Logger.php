@@ -13,6 +13,7 @@ class Logger implements LoggerInterface
 
     /** @var LogHandlerInterface[] $handlers */
     private $handlers = array();
+    private $isLogging = false;
 
     /**
      * System is unusable.
@@ -149,11 +150,11 @@ class Logger implements LoggerInterface
      */
     public function log($level, $message, array $context = array(), iCanGenerateDebugWidgets $sender = null)
     {
-        if ($this->shouldNotLog($level))
+        if ($this->shouldNotLog())
             return;
 
         // mark as "in logging process"
-        $_REQUEST['UIDebugLog'] = true;
+        $this->setLogging(true);
 
         try {
             if (is_null($sender) && $context['exception'] instanceof iCanGenerateDebugWidgets) {
@@ -182,7 +183,7 @@ class Logger implements LoggerInterface
             }
         } finally {
             // clear "in logging process" mark
-            unset($_REQUEST['UIDebugLog']);
+            $this->setLogging(false);
         }
     }
 
@@ -224,17 +225,21 @@ class Logger implements LoggerInterface
         return $this->handlers;
     }
 
-    protected function shouldNotLog($level)
+    protected function shouldNotLog()
     {
-        // check log level and return if it is smaller than min log level, otherwise debug widget will be created also
-        // if this is not logged in the underlying log handler
-        if (\Monolog\Logger::toMonologLevel($level) < \Monolog\Logger::toMonologLevel($this->minLogLevel))
-            return true;
-
-        $isAlreadyLogging = $_REQUEST['UIDebugLog'];
-        if ($isAlreadyLogging)
+        if ($this->isLogging())
             return true;
 
         return false;
+    }
+
+    protected function setLogging($isLogging)
+    {
+        $this->isLogging = $isLogging;
+    }
+
+    protected function isLogging()
+    {
+        return $this->isLogging;
     }
 }

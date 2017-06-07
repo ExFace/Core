@@ -37,6 +37,11 @@ class DebugMessageFileHandler implements LogHandlerInterface
 
     public function handle($level, $message, array $context = array(), iCanGenerateDebugWidgets $sender = null)
     {
+        // check log level and return if it is smaller than min log level, otherwise debug widget will be created also
+        // if this is not logged in the underlying log handler
+        if (\Monolog\Logger::toMonologLevel($level) < \Monolog\Logger::toMonologLevel($this->minLogLevel))
+            return true;
+
         if ($sender) {
             $fileName = $context["id"] . $this->staticFilenamePart;
             if (! $fileName) {
