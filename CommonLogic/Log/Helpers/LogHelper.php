@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\CommonLogic\Log\Helpers;
 
+use Monolog\Logger;
+
 class LogHelper
 {
 
@@ -62,5 +64,10 @@ class LogHelper
         }
         
         return $glob;
+    }
+
+    public static function compareLogLevels($level1, $level2)
+    {
+        return Logger::toMonologLevel($level1) - Logger::toMonologLevel($level2);
     }
 }
