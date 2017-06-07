@@ -10,6 +10,8 @@ use exface\Core\Interfaces\Log\LogHandlerInterface;
 use exface\Core\Widgets\DebugMessage;
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
+use exface\Core\CommonLogic\Workbench;
+use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 
 class DebugMessageFileHandler implements LogHandlerInterface
 {
@@ -19,19 +21,20 @@ class DebugMessageFileHandler implements LogHandlerInterface
     private $minLogLevel;
 
     private $staticFilenamePart;
+    
+    private $workbench;
 
     /**
      * DebugMessageFileHandler constructor.
      *
-     * @param
-     *            $dir
-     * @param
-     *            $staticFilenamePart
-     * @param
-     *            $minLogLevel
+     * @param Workbench $workbench
+     * @param string $dir
+     * @param string $staticFilenamePart
+     * @param string $minLogLevel
      */
-    function __construct($dir, $staticFilenamePart, $minLogLevel = Logger::DEBUG)
+    public function __construct(Workbench $workbench, $dir, $staticFilenamePart, $minLogLevel = Logger::DEBUG)
     {
+        $this->workbench = $workbench;
         $this->dir                = $dir;
         $this->staticFilenamePart = $staticFilenamePart;
         $this->minLogLevel        = $minLogLevel;
@@ -44,24 +47,65 @@ class DebugMessageFileHandler implements LogHandlerInterface
         if (LogHelper::compareLogLevels($level, $this->minLogLevel) < 0) {
             return;
         }
-
+        
+        $fileName = $context["id"] . $this->staticFilenamePart;
+        if (!$fileName) {
+            return;
+        }
+        
+        $logger  = new \Monolog\Logger("Stacktrace");
+        $handler = new StreamHandler($this->dir . "/" . $fileName, $this->minLogLevel);
+        $handler->setFormatter(new MessageOnlyFormatter());
+        $logger->pushHandler($handler);
+        
         if ($sender) {
-            $fileName = $context["id"] . $this->staticFilenamePart;
-            if (!$fileName) {
-                return;
+            try {
+                $debugWidget     = $sender->createDebugWidget($this->createDebugMessage());
+                $debugWidgetData = $debugWidget->exportUxonObject()->toJson(true);
+            } catch (\Throwable $e){
+                // If errors occur when creating debug widgets, just create an
+                // HTML-widget with an exception-dump. If the sender was an error,
+                // dump it, otherwise dump the error, that just occured.
+                if ($sender instanceof ExceptionInterface){
+                    $exception = $sender;
+                } else {
+                    $exception = $e;
+                }
+                $debugWidgetData = $this->createFallbackWidgetUxon($this->getWorkbench()->getDebugger()->printException($exception, true));
             }
-
-            $logger  = new \Monolog\Logger("Stacktrace");
-            $handler = new StreamHandler($this->dir . "/" . $fileName, $this->minLogLevel);
-            $handler->setFormatter(new MessageOnlyFormatter());
-            $logger->pushHandler($handler);
-
-            $debugWidget     = $sender->createDebugWidget($this->createDebugMessage());
-            $debugWidgetData = $debugWidget->exportUxonObject()->toJson(true);
             $logger->log($level, $debugWidgetData);
+        } elseif ($context['exception'] instanceof \Throwable){
+            // If there is no sender, but the context contains an error, use
+            // the error fallback to create a debug widget
+            $logger->log($level, $this->createHtmlFallback($this->getWorkbench()->getDebugger()->printException($context['exception'], true)));
+        } else {
+            // If all the above fails, simply dump the context to the debug widget
+            $logger->log($level, $this->createHtmlFallback($this->getWorkbench()->getDebugger()->printVariable($context, true)));
         }
     }
-
+    
+    /**
+     * Generates a JSON-dump of an HTML-widget with the given contents. 
+     * 
+     * This is handy if the regular DebugWidget cannot be created for some 
+     * reason. Using this fallback it is still possible to create a readable
+     * debug widget.
+     * 
+     * @param string $html
+     * @return string
+     */
+    protected function createHtmlFallback($html){
+        $uxon = new \stdClass();
+        $uxon->widget_type = 'Html';
+        $uxon->html = $html;
+        return json_encode($uxon, JSON_PRETTY_PRINT);
+    }
+    
+    /**
+     * 
+     * @param array $context
+     * @return array
+     */
     protected function prepareContext($context)
     {
         // do not log the exception in this handler
@@ -71,16 +115,27 @@ class DebugMessageFileHandler implements LogHandlerInterface
 
         return $context;
     }
-
+    
+    /**
+     * 
+     * @return \exface\Core\Widgets\DebugMessage
+     */
     protected function createDebugMessage()
     {
-        global $exface;
-        $ui   = $exface->ui();
+        $ui   = $this->getWorkbench()->ui();
         $page = UiPageFactory::createEmpty($ui);
 
         $debugMessage = new DebugMessage($page);
         $debugMessage->setMetaObject($page->getWorkbench()->model()->getObject('exface.Core.ERROR'));
 
         return $debugMessage;
+    }
+    
+    /**
+     * 
+     * @return \exface\Core\CommonLogic\Workbench
+     */
+    public function getWorkbench(){
+        return $this->workbench;
     }
 }

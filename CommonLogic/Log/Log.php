@@ -100,7 +100,7 @@ class Log
             static::$errorLogHandlers["filelog"] = new FileLimitingLogHandler(new LogfileHandler("exface", "", $workbench, $minLogLevel), // real file name is determined late by FileLimitingLogHandler
 $coreLogFilePath, '', $maxDaysToKeep);
 
-            static::$errorLogHandlers["detaillog"] = new DirLimitingLogHandler(new DebugMessageFileHandler($detailsLogBasePath, ".json", $minLogLevel), $detailsLogBasePath, ".json", $maxDaysToKeep);
+            static::$errorLogHandlers["detaillog"] = new DirLimitingLogHandler(new DebugMessageFileHandler($workbench, $detailsLogBasePath, ".json", $minLogLevel), $detailsLogBasePath, ".json", $maxDaysToKeep);
         }
 
         return static::$errorLogHandlers;
