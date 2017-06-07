@@ -1,7 +1,9 @@
 <?php
+
 namespace exface\Core\CommonLogic\Log\Handlers;
 
 use exface\Core\CommonLogic\Log\Formatters\MessageOnlyFormatter;
+use exface\Core\CommonLogic\Log\Helpers\LogHelper;
 use exface\Core\Factories\UiPageFactory;
 use exface\Core\Interfaces\iCanGenerateDebugWidgets;
 use exface\Core\Interfaces\Log\LogHandlerInterface;
@@ -30,25 +32,31 @@ class DebugMessageFileHandler implements LogHandlerInterface
      */
     function __construct($dir, $staticFilenamePart, $minLogLevel = Logger::DEBUG)
     {
-        $this->dir = $dir;
+        $this->dir                = $dir;
         $this->staticFilenamePart = $staticFilenamePart;
-        $this->minLogLevel = $minLogLevel;
+        $this->minLogLevel        = $minLogLevel;
     }
 
     public function handle($level, $message, array $context = array(), iCanGenerateDebugWidgets $sender = null)
     {
+        // check log level and return if it is smaller than min log level, otherwise debug widget will be created also
+        // if this is not logged in the underlying log handler
+        if (LogHelper::compareLogLevels($level, $this->minLogLevel) < 0) {
+            return;
+        }
+
         if ($sender) {
             $fileName = $context["id"] . $this->staticFilenamePart;
-            if (! $fileName) {
+            if (!$fileName) {
                 return;
             }
-            
-            $logger = new \Monolog\Logger("Stacktrace");
+
+            $logger  = new \Monolog\Logger("Stacktrace");
             $handler = new StreamHandler($this->dir . "/" . $fileName, $this->minLogLevel);
             $handler->setFormatter(new MessageOnlyFormatter());
             $logger->pushHandler($handler);
-            
-            $debugWidget = $sender->createDebugWidget($this->createDebugMessage());
+
+            $debugWidget     = $sender->createDebugWidget($this->createDebugMessage());
             $debugWidgetData = $debugWidget->exportUxonObject()->toJson(true);
             $logger->log($level, $debugWidgetData);
         }
@@ -60,19 +68,19 @@ class DebugMessageFileHandler implements LogHandlerInterface
         if (isset($context["exception"])) {
             unset($context["exception"]);
         }
-        
+
         return $context;
     }
 
     protected function createDebugMessage()
     {
         global $exface;
-        $ui = $exface->ui();
+        $ui   = $exface->ui();
         $page = UiPageFactory::createEmpty($ui);
-        
+
         $debugMessage = new DebugMessage($page);
         $debugMessage->setMetaObject($page->getWorkbench()->model()->getObject('exface.Core.ERROR'));
-        
+
         return $debugMessage;
     }
 }
