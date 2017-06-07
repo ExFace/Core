@@ -10,6 +10,8 @@ use exface\Core\Interfaces\iCanGenerateDebugWidgets;
 use exface\Core\Interfaces\Log\LoggerInterface;
 use FemtoPixel\Monolog\Handler\CsvHandler;
 use Monolog\Formatter\NormalizerFormatter;
+use Monolog\Handler\FingersCrossed\ErrorLevelActivationStrategy;
+use Monolog\Handler\FingersCrossedHandler;
 use Monolog\Logger;
 
 class LogfileHandler extends AbstractMonologHandler implements FileHandlerInterface
@@ -72,7 +74,17 @@ class LogfileHandler extends AbstractMonologHandler implements FileHandlerInterf
             $this->useLocking);
         $csvHandler->setFormatter(new NormalizerFormatter("Y-m-d H:i:s-v")); // with milliseconds
 
-        $logger->pushHandler($csvHandler);
+        $persistLogLevel = $this->workbench->getConfig()->getOption('LOG.PERSIST_LOG_LEVEL');
+        $fcHandler = new FingersCrossedHandler(
+            $csvHandler,
+            new ErrorLevelActivationStrategy(Logger::toMonologLevel($persistLogLevel)),
+            0,
+            true,
+            true,
+            Logger::toMonologLevel($this->level)
+        );
+
+        $logger->pushHandler($fcHandler);
         $logger->pushProcessor(new IdProcessor());
         $logger->pushProcessor(new RequestIdProcessor($this->workbench));
         $logger->pushProcessor(new UsernameProcessor($this->workbench));

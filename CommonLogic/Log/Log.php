@@ -94,8 +94,9 @@ class Log
             $coreLogFilePath = static::getCoreLogPath($workbench);
             $detailsLogBasePath = static::getDetailsLogPath($workbench);
 
-            $minLogLevel = $workbench->getConfig()->getOption('LOG.MINIMUM_LEVEL_TO_LOG');
-            $maxDaysToKeep = $workbench->getConfig()->getOption('LOG.MAX_DAYS_TO_KEEP');
+            $config          = $workbench->getConfig();
+            $minLogLevel     = $config->getOption('LOG.MINIMUM_LEVEL_TO_LOG');
+            $maxDaysToKeep   = $config->getOption('LOG.MAX_DAYS_TO_KEEP');
 
             static::$errorLogHandlers["filelog"] = new FileLimitingLogHandler(new LogfileHandler("exface", "", $workbench, $minLogLevel), // real file name is determined late by FileLimitingLogHandler
 $coreLogFilePath, '', $maxDaysToKeep);
