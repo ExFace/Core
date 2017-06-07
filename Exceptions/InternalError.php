@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\Exceptions;
 
+use exface\Core\Interfaces\Log\LoggerInterface;
+
 /**
  * Exception thrown if a non-ExFace exception is caught. 
  * 
@@ -12,5 +14,8 @@ namespace exface\Core\Exceptions;
  */
 class InternalError extends LogicException
 {
+    public function getDefaultLogLevel(){
+        return LoggerInterface::CRITICAL;
+    }
 }
 ?>
