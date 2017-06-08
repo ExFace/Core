@@ -11,6 +11,7 @@ use exface\Core\Interfaces\Widgets\iSupportLazyLoading;
 use exface\Core\Interfaces\Widgets\iShowDataSet;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
+use exface\Core\Interfaces\Widgets\iFillEntireContainer;
 
 /**
  * A Button is the primary widget for triggering actions.
@@ -20,7 +21,7 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
  * @author Andrej Kabachnik
  *        
  */
-class Chart extends AbstractWidget implements iShowDataSet, iHaveButtons, iHaveTopToolbar, iHaveBottomToolbar, iSupportLazyLoading
+class Chart extends AbstractWidget implements iShowDataSet, iHaveButtons, iHaveTopToolbar, iHaveBottomToolbar, iSupportLazyLoading, iFillEntireContainer
 {
 
     /**
@@ -660,6 +661,11 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveButtons, iHaveT
     {
         $this->lazy_loading_group_id = $value;
         return $this;
+    }
+
+    public function getAlternativeContainerForOrphanedSiblings()
+    {
+        return null;
     }
 }
 ?>
