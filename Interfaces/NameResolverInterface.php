@@ -129,4 +129,11 @@ interface NameResolverInterface extends ExfaceClassInterface
      * @return NameResolverInterface
      */
     public function validate();
+    
+    /**
+     * Returns the alias of the app, the named instance belongs to.
+     * 
+     * @return string
+     */
+    public function getAppAlias();
 }
