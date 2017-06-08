@@ -41,8 +41,6 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 
     private $paginate_page_size = null;
 
-    private $paginate_default_page_size = 20;
-
     private $aggregate_by_attribute_alias = null;
 
     private $lazy_loading = true;
@@ -1021,30 +1019,6 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
     public function setPaginate($value)
     {
         $this->paginate = \exface\Core\DataTypes\BooleanDataType::parse($value);
-        return $this;
-    }
-
-    /**
-     *
-     * @deprecated use set_paginate_page_size() instead
-     * @return integer
-     */
-    public function getPaginateDefaultPageSize()
-    {
-        return $this->paginate_default_page_size;
-    }
-
-    /**
-     * Sets the number of rows to show on one page by default (only if pagination is enabled).
-     *
-     * @deprecated use set_paginate_page_size() instead
-     *            
-     * @param integer $value            
-     * @return Data
-     */
-    public function setPaginateDefaultPageSize($value)
-    {
-        $this->paginate_default_page_size = $value;
         return $this;
     }
 

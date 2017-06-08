@@ -458,7 +458,7 @@ class ComboTable extends InputCombo implements iHaveChildren
     public function getMaxSuggestions()
     {
         if (is_null(parent::getMaxSuggestions()) && $this->getTable()) {
-            $this->setMaxSuggestions($this->getTable()->getPaginateDefaultPageSize());
+            $this->setMaxSuggestions($this->getTable()->getPaginatePageSize());
         }
         return parent::getMaxSuggestions();
     }
