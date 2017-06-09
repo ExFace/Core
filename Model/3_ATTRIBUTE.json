@@ -2583,7 +2583,7 @@
         },
         {
             "CREATED_ON": "2016-12-16 11:52:46",
-            "MODIFIED_ON": "2017-06-05 06:07:12",
+            "MODIFIED_ON": "2017-06-09 11:01:23",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6c6a02e5cc611a3e40205857feb80",
@@ -2608,7 +2608,7 @@
             "SORTERDIR": "",
             "RELATED_OBJ_ATTR": "",
             "SHORT_DESCRIPTION": "Unique error code. Leave blank to generate an error code automatically.",
-            "DATA_ADDRESS_PROPS": "{\"SQL_INSERT\":\"CONV(ROUND(UNIX_TIMESTAMP(CURTIME(4)) * 10),10,36)\"}",
+            "DATA_ADDRESS_PROPS": "{\"SQL_INSERT\":\"IF([#value#]!='', [#value#], CONV(ROUND(UNIX_TIMESTAMP(CURTIME(4)) * 10),10,36))\"}",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
             "DEFAULT_EDITOR_UXON": "{}"
