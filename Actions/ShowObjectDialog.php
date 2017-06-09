@@ -76,11 +76,19 @@ class ShowObjectDialog extends ShowDialog
                 continue;
             // Create the widget
             $ed = $this->createWidgetFromAttribute($this->getMetaObject(), $attr->getAlias(), $parent_widget);
-            if ($ed instanceof iCanBeRequired)
+            if ($ed instanceof iCanBeRequired) {
                 $ed->setRequired($attr->isRequired());
-            if ($ed instanceof iCanBeDisabled)
+            }
+            if ($ed instanceof iCanBeDisabled) {
                 $ed->setDisabled(($attr->isEditable() ? false : true));
+            }
             $editors[] = $ed;
+        }
+        
+        if (count($editors) == 0){
+            $editors[] = WidgetFactory::create($parent_widget->getPage(), 'Message', $parent_widget)
+            ->setType(EXF_MESSAGE_TYPE_WARNING)
+            ->setText($this->getApp()->getTranslator()->translate('ACTION.EDITOBJECTDIALOG.NO_EDITABLE_ATTRIBUTES'));
         }
         
         ksort($editors);

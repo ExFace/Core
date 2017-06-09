@@ -14,6 +14,7 @@
 	
 	"ACTION.EDITOBJECTDIALOG.SAVE_BUTTON": "Speichern",
 	"ACTION.EDITOBJECTDIALOG.NAME": "Bearbeiten",
+	"ACTION.EDITOBJECTDIALOG.NO_EDITABLE_ATTRIBUTES": "Keine editierbaren Attribute gefunden!",
 		
 	"ACTION.OBJECTBASKET": "Objektkorb",
 	"ACTION.OBJECTBASKETADD.NAME": "In den Objektkorb legen",
