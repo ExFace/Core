@@ -12,6 +12,8 @@ use exface\Core\Interfaces\Widgets\iShowDataSet;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Interfaces\Widgets\iFillEntireContainer;
+use exface\Core\Interfaces\Widgets\iLayoutWidgets;
+use exface\Core\CommonLogic\Model\Attribute;
 
 /**
  * A Button is the primary widget for triggering actions.
@@ -21,7 +23,7 @@ use exface\Core\Interfaces\Widgets\iFillEntireContainer;
  * @author Andrej Kabachnik
  *        
  */
-class Chart extends AbstractWidget implements iShowDataSet, iHaveButtons, iHaveTopToolbar, iHaveBottomToolbar, iSupportLazyLoading, iFillEntireContainer
+class Chart extends AbstractWidget implements iShowDataSet, iHaveButtons, iHaveTopToolbar, iHaveBottomToolbar, iSupportLazyLoading, iFillEntireContainer, iLayoutWidgets
 {
 
     /**
@@ -77,6 +79,12 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveButtons, iHaveT
 
     /** @var string */
     private $lazy_loading_group_id = null;
+
+    private $number_of_columns = null;
+
+    private $column_stack_on_smartphones = null;
+
+    private $column_stack_on_tablets = null;
 
     const AXIS_X = 'x';
 
@@ -503,6 +511,7 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveButtons, iHaveT
     }
 
     /**
+     *
      * {@inheritdoc}
      *
      * @see \exface\Core\Interfaces\Widgets\iHaveButtons::getButtons()
@@ -545,6 +554,7 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveButtons, iHaveT
     }
 
     /**
+     *
      * {@inheritdoc}
      *
      * @see \exface\Core\Interfaces\Widgets\iHaveButtons::addButton()
@@ -585,6 +595,7 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveButtons, iHaveT
     }
 
     /**
+     *
      * {@inheritdoc}
      *
      * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::getLazyLoading()
@@ -667,5 +678,167 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveButtons, iHaveT
     {
         return null;
     }
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Widgets\iLayoutWidgets::getNumberOfColumns()
+     */
+    public function getNumberOfColumns()
+    {
+        if (is_null($this->number_of_columns)) {
+            $widget = $this;
+            while ($widget->getParent()){
+                $widget = $widget->getParent();
+                if ($widget instanceof iLayoutWidgets && $widget->getNumberOfColumns()){
+                    $this->number_of_columns = $widget->getNumberOfColumns();
+                    break;
+                }
+            }
+            if (is_null($this->number_of_columns)) {
+                $this->number_of_columns = 4;
+            }
+    
+            $dimension = $this->getWidth();
+            if ($dimension->isRelative()) {
+                $width = $dimension->getValue();
+                if ($width === 'max') { $width = $this->number_of_columns; }
+                if ($width < 1) { $width = 1; }
+                if ($width < $this->number_of_columns) { $this->number_of_columns = $width; }
+            }
+        }
+        return $this->number_of_columns;
+    }
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Widgets\iLayoutWidgets::setNumberOfColumns()
+     */
+    public function setNumberOfColumns($value)
+    {
+        $this->number_of_columns = intval($value);
+        return $this;
+    }
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Widgets\iLayoutWidgets::getStackColumnsOnTabletsSmartphones()
+     */
+    public function getStackColumnsOnTabletsSmartphones()
+    {
+        return $this->column_stack_on_smartphones;
+    }
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Widgets\iLayoutWidgets::setStackColumnsOnTabletsSmartphones()
+     */
+    public function setStackColumnsOnTabletsSmartphones($value)
+    {
+        $this->column_stack_on_smartphones = BooleanDataType::parse($value);
+        return $this;
+    }
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Widgets\iLayoutWidgets::getStackColumnsOnTabletsTablets()
+     */
+    public function getStackColumnsOnTabletsTablets()
+    {
+        return $this->column_stack_on_tablets;
+    }
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Widgets\iLayoutWidgets::setStackColumnsOnTabletsTablets()
+     */
+    public function setStackColumnsOnTabletsTablets($value)
+    {
+        $this->column_stack_on_tablets = BooleanDataType::parse($value);
+        return $this;
+    }
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::addWidget()
+     */
+    public function addWidget(AbstractWidget $widget, $position = NULL)
+    {}
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::addWidgets()
+     */
+    public function addWidgets(array $widgets)
+    {}
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::getWidgets()
+     */
+    public function getWidgets()
+    {}
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::getInputWidgets()
+     */
+    public function getInputWidgets($depth = null)
+    {}
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::removeWidgets()
+     */
+    public function removeWidgets()
+    {}
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::setWidgets()
+     */
+    public function setWidgets(array $widget_or_uxon_array)
+    {}
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::countWidgets()
+     */
+    public function countWidgets()
+    {}
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::findChildrenByAttribute()
+     */
+    public function findChildrenByAttribute(Attribute $attribute)
+    {}
 }
 ?>

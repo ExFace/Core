@@ -23,6 +23,7 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\Exceptions\UxonMapError;
+use exface\Core\Interfaces\Widgets\iLayoutWidgets;
 
 /**
  * Basic ExFace widget
@@ -88,6 +89,9 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
     private $id_space = null;
 
     private $disable_condition = null;
+    
+    private $layoutWidget = null;
+    private $searchedForLayoutWidget = false;
 
     /**
      *
@@ -1265,6 +1269,27 @@ else {
     {
         $this->disable_condition = $value;
         return $this;
+    }
+    
+    /**
+     * Gibt das naechste uebergeordnete Widget welches das Interface iLayoutWidgets
+     * implementiert zurueck. Wenn ein solches nicht existiert wird null zurueckgegeben.
+     * 
+     * @return \exface\Core\Widgets\iLayoutWidgets|\exface\Core\Widgets\AbstractWidget|\exface\Core\Interfaces\WidgetInterface
+     */
+    public function getLayoutWidget() {
+        if (is_null($this->layoutWidget) && ! $this->searchedForLayoutWidget) {
+            $widget = $this;
+            while ($widget->getParent()) {
+                $widget = $widget->getParent();
+                if ($widget instanceof iLayoutWidgets) {
+                    $this->layoutWidget = $widget;
+                    break;
+                }
+            }
+            $this->searchedForLayoutWidget = true;
+        }
+        return $this->layoutWidget;
     }
 }
 ?>

@@ -37,6 +37,7 @@ class Panel extends Container implements iLayoutWidgets, iSupportLazyLoading, iH
     private $icon_name = null;
 
     private $number_of_columns = null;
+    private $searchedForNumberOfColumns = false;
 
     private $column_stack_on_smartphones = null;
 
@@ -126,6 +127,32 @@ class Panel extends Container implements iLayoutWidgets, iSupportLazyLoading, iH
      */
     public function getNumberOfColumns()
     {
+        if (is_null($this->number_of_columns) && !$this->searchedForNumberOfColumns) {
+            $layoutWidget = $this->getLayoutWidget();
+            if ($layoutWidget) {
+                $this->number_of_columns = $layoutWidget->getNumberOfColumns();
+            }
+            
+            // Es ist moeglich, dass number_of_columns null ist, wenn es nirgendwo
+            // spezifiziert wurde. Ist fuer dieses Widget explizit eine Spaltenzahl als
+            // Breite gesetzt, dann wird diese uebernommen, sonst wird sie nur ueber-
+            // nommen, wenn sie kleiner als die vorher ermittelte Spaltenzahl ist.
+            $dimension = $this->getWidth();
+            if ($dimension->isRelative()) {
+                $width = $dimension->getValue();
+                if (is_null($this->number_of_columns)) {
+                    if (is_numeric($width)) {
+                        $this->number_of_columns = $width;
+                    }
+                } else {
+                    if ($width === 'max') { $width = $this->number_of_columns; }
+                    if ($width < 1) { $width = 1; }
+                    if ($width < $this->number_of_columns) { $this->number_of_columns = $width; }
+                }
+            }
+            
+            $this->searchedForNumberOfColumns = true;
+        }
         return $this->number_of_columns;
     }
 

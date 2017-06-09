@@ -6,6 +6,8 @@ use exface\Core\Interfaces\Widgets\iHaveBottomToolbar;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Widgets\iFillEntireContainer;
 use exface\Core\Interfaces\Widgets\iSupportMultiSelect;
+use exface\Core\Interfaces\Widgets\iLayoutWidgets;
+use exface\Core\CommonLogic\Model\Attribute;
 
 /**
  * Renders data as a table with filters, columns, and toolbars.
@@ -60,7 +62,7 @@ use exface\Core\Interfaces\Widgets\iSupportMultiSelect;
  * @author Andrej Kabachnik
  *        
  */
-class DataTable extends Data implements iHaveTopToolbar, iHaveBottomToolbar, iFillEntireContainer, iSupportMultiSelect
+class DataTable extends Data implements iHaveTopToolbar, iHaveBottomToolbar, iFillEntireContainer, iSupportMultiSelect, iLayoutWidgets
 {
 
     private $show_filter_row = false;
@@ -94,6 +96,12 @@ class DataTable extends Data implements iHaveTopToolbar, iHaveBottomToolbar, iFi
     private $context_menu_enabled = true;
 
     private $header_sort_multiple = false;
+
+    private $number_of_columns = null;
+
+    private $column_stack_on_smartphones = null;
+
+    private $column_stack_on_tablets = null;
 
     function hasRowDetails()
     {
@@ -561,5 +569,167 @@ class DataTable extends Data implements iHaveTopToolbar, iHaveBottomToolbar, iFi
         $this->multi_select_all_selected = $true_or_false ? true : false;
         return $this;
     }
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Widgets\iLayoutWidgets::getNumberOfColumns()
+     */
+    public function getNumberOfColumns()
+    {
+        if (is_null($this->number_of_columns)) {
+            $widget = $this;
+            while ($widget->getParent()){
+                $widget = $widget->getParent();
+                if ($widget instanceof iLayoutWidgets && $widget->getNumberOfColumns()){
+                    $this->number_of_columns = $widget->getNumberOfColumns();
+                    break;
+                }
+            }
+            if (is_null($this->number_of_columns)) {
+                $this->number_of_columns = 4;
+            }
+            
+            $dimension = $this->getWidth();
+            if ($dimension->isRelative()) {
+                $width = $dimension->getValue();
+                if ($width === 'max') { $width = $this->number_of_columns; }
+                if ($width < 1) { $width = 1; }
+                if ($width < $this->number_of_columns) { $this->number_of_columns = $width; }
+            }
+        }
+        return $this->number_of_columns;
+    }
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Widgets\iLayoutWidgets::setNumberOfColumns()
+     */
+    public function setNumberOfColumns($value)
+    {
+        $this->number_of_columns = intval($value);
+        return $this;
+    }
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Widgets\iLayoutWidgets::getStackColumnsOnTabletsSmartphones()
+     */
+    public function getStackColumnsOnTabletsSmartphones()
+    {
+        return $this->column_stack_on_smartphones;
+    }
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Widgets\iLayoutWidgets::setStackColumnsOnTabletsSmartphones()
+     */
+    public function setStackColumnsOnTabletsSmartphones($value)
+    {
+        $this->column_stack_on_smartphones = BooleanDataType::parse($value);
+        return $this;
+    }
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Widgets\iLayoutWidgets::getStackColumnsOnTabletsTablets()
+     */
+    public function getStackColumnsOnTabletsTablets()
+    {
+        return $this->column_stack_on_tablets;
+    }
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Widgets\iLayoutWidgets::setStackColumnsOnTabletsTablets()
+     */
+    public function setStackColumnsOnTabletsTablets($value)
+    {
+        $this->column_stack_on_tablets = BooleanDataType::parse($value);
+        return $this;
+    }
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::addWidget()
+     */
+    public function addWidget(AbstractWidget $widget, $position = NULL)
+    {}
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::addWidgets()
+     */
+    public function addWidgets(array $widgets)
+    {}
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::getWidgets()
+     */
+    public function getWidgets()
+    {}
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::getInputWidgets()
+     */
+    public function getInputWidgets($depth = null)
+    {}
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::removeWidgets()
+     */
+    public function removeWidgets()
+    {}
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::setWidgets()
+     */
+    public function setWidgets(array $widget_or_uxon_array)
+    {}
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::countWidgets()
+     */
+    public function countWidgets()
+    {}
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::findChildrenByAttribute()
+     */
+    public function findChildrenByAttribute(Attribute $attribute)
+    {}
 }
 ?>
