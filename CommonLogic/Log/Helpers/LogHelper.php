@@ -66,6 +66,15 @@ class LogHelper
         return $glob;
     }
 
+    /**
+     * Compares PSR 3 log levels. It uses monolog to do so.
+     *
+     * @param string $level1
+     * @param string $level2
+     *
+     * @return int Result is < 0 if monolog values of level1 < level2. Result is > 0 if monolog values of level1 >
+     * level2. Result is 0 if monolog values of level1 and level2 are equal.
+     */
     public static function compareLogLevels($level1, $level2)
     {
         return Logger::toMonologLevel($level1) - Logger::toMonologLevel($level2);

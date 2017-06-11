@@ -42,8 +42,6 @@ class DebugMessageFileHandler implements LogHandlerInterface
 
     public function handle($level, $message, array $context = array(), iCanGenerateDebugWidgets $sender = null)
     {
-        // check log level and return if it is smaller than min log level, otherwise debug widget will be created also
-        // if this is not logged in the underlying log handler
         if (LogHelper::compareLogLevels($level, $this->minLogLevel) < 0) {
             return;
         }
