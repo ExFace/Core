@@ -245,23 +245,6 @@ class Filemanager extends Filesystem implements ExfaceClassInterface
     }
 
     /**
-     * Deletes all files in the given folder.
-     * Does not delete subfolders or files in subfolders
-     *
-     * @param string $path            
-     */
-    public function emptyDir($path)
-    {
-        $files = glob($path . '/*'); // get all file names
-        if (is_array($files)) {
-            foreach ($files as $file) { // iterate files
-                if (is_file($file))
-                    unlink($file); // delete file
-            }
-        }
-    }
-
-    /**
      * Transforms "C:\wamp\www\exface\exface\vendor\exface\Core\CommonLogic\..\..\..\.." to "C:/wamp/www/exface/exface"
      *
      * @param string $path            
