@@ -1815,7 +1815,7 @@
         },
         {
             "CREATED_ON": "2007-01-01 00:00:00",
-            "MODIFIED_ON": "2016-04-26 15:45:16",
+            "MODIFIED_ON": "2017-06-12 13:18:24",
             "CREATED_BY_USER": "",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x38310000000000000000000000000000",
@@ -1840,7 +1840,7 @@
             "SORTERDIR": "",
             "RELATED_OBJ_ATTR": "",
             "SHORT_DESCRIPTION": "",
-            "DATA_ADDRESS_PROPS": "{\"SQL_DATA_TYPE\":\"binary\",\"SQL_INSERT\":\"UNHEX(CONCAT(SUBSTR(@uid:=uuid(), 15, 4),SUBSTR(@uid, 10, 4),SUBSTR(@uid, 1, 8),SUBSTR(@uid, 20, 4),SUBSTR(@uid, 25)))\"}",
+            "DATA_ADDRESS_PROPS": "{\"SQL_DATA_TYPE\":\"binary\",\"SQL_INSERT\":\"IF([#value#], [#value#], UNHEX(CONCAT(SUBSTR(@uid:=uuid(), 15, 4),SUBSTR(@uid, 10, 4),SUBSTR(@uid, 1, 8),SUBSTR(@uid, 20, 4),SUBSTR(@uid, 25))))\"}",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
             "DEFAULT_EDITOR_UXON": "{}"
