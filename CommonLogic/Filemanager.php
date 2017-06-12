@@ -216,6 +216,22 @@ class Filemanager extends Filesystem implements ExfaceClassInterface
         }
         closedir($dir);
     }
+    
+    /**
+     * Removes all files and subfolders in the given folder, leaving it empty.
+     * @param string $absolutePath
+     * @param boolean $removeHiddenFiles
+     */
+    public function emptyDir($absolutePath, $removeHiddenFiles = true){
+        $absolutePath = rtrim(static::pathNormalize($absolutePath, '/'), "/");
+        if ($removeHiddenFiles){
+            $files = glob('path/to/temp/{,.}*', GLOB_BRACE);
+        } else {
+            $files = glob($absolutePath . '/*');
+        }
+        array_map('unlink', $files);
+        return;
+    }
 
     /**
      *
