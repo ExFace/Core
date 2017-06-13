@@ -19,7 +19,7 @@
         "symfony/Event-Dispatcher": "^2.8 || ^3.1",
         "symfony/translation": "^2.8 || ^3.1",
         "symfony/config": "^2.8 || ^3.1",
-        "symfony/debug": "^2.8 || ^3.1",
+        "symfony/debug": "^3.3",
         "symfony/var-dumper": "^3.2",
         "jmikola/Wildcard-Event-Dispatcher": "^1.1",
         "webmozart/path-util": "^2.3",
@@ -30,8 +30,8 @@
         "app": {
             "app_uid": "0x31000000000000000000000000000000",
             "app_alias": "exface.Core",
-            "model_md5": "9ebe2177ca59e424b4c1708512763e89",
-            "model_timestamp": "2017-06-05 06:43:28"
+            "model_md5": "196e6c3e888026b6ce65dce2309313c0",
+            "model_timestamp": "2017-06-12 13:18:24"
         }
     }
 }

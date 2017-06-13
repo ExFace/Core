@@ -3,46 +3,20 @@
 namespace exface\Core\CommonLogic\Log\Processors;
 
 
-class UserNameProcessor
+class UserNameProcessor extends AbstractColumnPositionProcessor
 {
-    private $workbench;
-
-    function __construct($workbench)
+    protected function getContentId()
     {
-        $this->workbench = $workbench;
+        return 'userName';
     }
 
-    /**
-     * @param array $record
-     *
-     * @return array
-     */
-    public function __invoke(array $record)
+    protected function getContent()
     {
-        $requestIdArray = array('userName' => $this->workbench->context()->getScopeUser()->getUserName());
-
-        $index = $this->getIndex($record);
-        if ($index !== false) {
-            return array_slice($record, 0, $index, true) +
-                   $requestIdArray +
-                   array_slice($record, $index, count($record) - 1, true);
-        } else {
-            // otherwise insert requestId as first element
-            return $requestIdArray + $record;
-        }
+        return $this->getWorkbench()->context()->getScopeUser()->getUserName();
     }
 
-    protected function getIndex($record)
+    protected function getIndexColumns()
     {
-        // insert userName after requestId if present or after id if present
-        $index = array_search('requestId', array_keys($record));
-        if ($index !== false)
-            return $index + 1;
-
-        $index = array_search('id', array_keys($record));
-        if ($index !== false)
-            return $index + 1;
-
-        return false;
+        return array('requestId', 'id');
     }
 }

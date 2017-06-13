@@ -316,4 +316,15 @@ class NameResolver extends AbstractExfaceClass implements NameResolverInterface
         }
         return $this;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\NameResolverInterface::getAppAlias()
+     */
+    public function getAppAlias(){
+        // TODO once subnamecpaces inside apps become possible, we will need
+        // to strip the off here somehow.
+        return $this->getNamespace();
+    }
 }

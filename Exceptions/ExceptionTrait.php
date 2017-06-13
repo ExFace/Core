@@ -164,14 +164,6 @@ trait ExceptionTrait {
             }
         }
         
-        if ($page->getWorkbench()->getConfig()->getOption('DEBUG.SHOW_ERROR_DETAILS_TO_ADMINS_ONLY') && ! $page->getWorkbench()->getCMS()->isUserAdmin()) {
-            foreach ($debug_widget->getTabs() as $tab) {
-                if ($tab != $error_tab) {
-                    $tab->setHidden(true);
-                }
-            }
-        }
-        
         return $debug_widget;
     }
 

@@ -13,6 +13,7 @@ class Logger implements LoggerInterface
 
     /** @var LogHandlerInterface[] $handlers */
     private $handlers = array();
+    private $isLogging = false;
 
     /**
      * System is unusable.
@@ -149,28 +150,40 @@ class Logger implements LoggerInterface
      */
     public function log($level, $message, array $context = array(), iCanGenerateDebugWidgets $sender = null)
     {
-        if (is_null($sender) && $context['exception'] instanceof iCanGenerateDebugWidgets){
-            $sender = $context['exception'];
-        }
-        
-        if ($sender instanceof ExceptionInterface){
-            if (is_null($level)){
-                $level = $sender->getLogLevel();
+        if ($this->shouldNotLog())
+            return;
+
+        // mark as "in logging process"
+        $this->setLogging(true);
+
+        try {
+            if (is_null($sender) && $context['exception'] instanceof iCanGenerateDebugWidgets) {
+                $sender = $context['exception'];
             }
-            $context['exception'] = $sender;
-            $context['id'] = $sender->getId();
-        }
-        
-        foreach ($this->handlers as $handler) {
-            try {
-                $handler->handle($level, $message, $context, $sender);
-            } catch (\Throwable $e) {
+
+            if ($sender instanceof ExceptionInterface) {
+                if (is_null($level)) {
+                    $level = $sender->getLogLevel();
+                }
+                $context['exception'] = $sender;
+                $context['id']        = $sender->getId();
+            }
+
+            foreach ($this->handlers as $handler) {
                 try {
-                    //$this->log(LoggerInterface::ERROR, $e->getMessage(), array(), new InternalError($e->getMessage(), null, $e));
-                } catch (\Throwable $ee){
-                    // do nothing if even logging fails
+                    $handler->handle($level, $message, $context, $sender);
+                } catch (\Throwable $e) {
+                    try {
+                        $this->log(LoggerInterface::ERROR, $e->getMessage(), array(),
+                            new InternalError($e->getMessage(), null, $e));
+                    } catch (\Throwable $ee) {
+                        // do nothing if even logging fails
+                    }
                 }
             }
+        } finally {
+            // clear "in logging process" mark
+            $this->setLogging(false);
         }
     }
 
@@ -210,5 +223,23 @@ class Logger implements LoggerInterface
     public function getHandlers()
     {
         return $this->handlers;
+    }
+
+    protected function shouldNotLog()
+    {
+        if ($this->isLogging())
+            return true;
+
+        return false;
+    }
+
+    protected function setLogging($isLogging)
+    {
+        $this->isLogging = $isLogging;
+    }
+
+    protected function isLogging()
+    {
+        return $this->isLogging;
     }
 }

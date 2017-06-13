@@ -401,8 +401,14 @@ class Workbench
      */
     public function clearCache()
     {
+        // Clear CMS cache
         $this->getCMS()->clearCmsCache();
+        
         // TODO clear other caches
+        
+        // Clear main cache folder
+        $filemanager = $this->filemanager();
+        $filemanager->emptyDir($filemanager->getPathToCacheFolder());
         return $this;
     }
 }

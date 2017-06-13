@@ -2,8 +2,7 @@
 namespace exface\Core\Interfaces\Actions;
 
 /**
- * Actions, that modify data in data source must implement this interface.
- * Only these actions are saved in the action history!
+ * Actions, that read data from data sources must implement this interface
  *
  * @author Andrej Kabachnik
  *        

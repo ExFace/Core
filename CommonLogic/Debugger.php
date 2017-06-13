@@ -4,7 +4,6 @@ namespace exface\Core\CommonLogic;
 use exface\Core\Interfaces\DebuggerInterface;
 use exface\Core\Interfaces\Log\LoggerInterface;
 use Symfony\Component\Debug\Debug;
-use Symfony\Component\Debug\ExceptionHandler;
 use Symfony\Component\Debug\Exception\FlattenException;
 use Symfony\Component\Debug\ErrorHandler;
 use Symfony\Component\VarDumper\Dumper\HtmlDumper;
@@ -31,10 +30,16 @@ class Debugger implements DebuggerInterface
      */
     public function printException(\Throwable $exception, $use_html = true)
     {
-        $handler = new ExceptionHandler();
+        $handler = new DebuggerExceptionHandler();        
         $flattened_exception = FlattenException::create($exception);
         if ($use_html) {
-            $output = "<style>" . $handler->getStylesheet($flattened_exception) . "</style>" . $handler->getContent($flattened_exception);
+            $output = <<<HTML
+    <style>
+        {$handler->getStylesheet($flattened_exception)}
+        .exception .exception-summary { display: none !important }
+    </style>
+    {$handler->getContent($flattened_exception)}
+HTML;
         } else {
             $output = strip_tags($handler->getContent($flattened_exception));
         }
@@ -70,7 +75,7 @@ class Debugger implements DebuggerInterface
     protected function registerHandler()
     {
         // Debug::enable(E_ALL & ~E_NOTICE);
-        ExceptionHandler::register();
+        DebuggerExceptionHandler::register();
         ErrorHandler::register();
         
         // register logger
