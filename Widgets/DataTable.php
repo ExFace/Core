@@ -574,7 +574,9 @@ class DataTable extends Data implements iHaveTopToolbar, iHaveBottomToolbar, iFi
      * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::addWidget()
      */
     public function addWidget(AbstractWidget $widget, $position = NULL)
-    {}
+    {
+        //TODO: Funktion implementieren
+    }
 
     /**
      *
@@ -583,7 +585,9 @@ class DataTable extends Data implements iHaveTopToolbar, iHaveBottomToolbar, iFi
      * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::addWidgets()
      */
     public function addWidgets(array $widgets)
-    {}
+    {
+        //TODO: Funktion implementieren
+    }
 
     /**
      *
@@ -592,7 +596,10 @@ class DataTable extends Data implements iHaveTopToolbar, iHaveBottomToolbar, iFi
      * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::getWidgets()
      */
     public function getWidgets()
-    {}
+    {
+        //TODO: Funktion implementieren
+        return [];
+    }
 
     /**
      *
@@ -601,7 +608,10 @@ class DataTable extends Data implements iHaveTopToolbar, iHaveBottomToolbar, iFi
      * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::getInputWidgets()
      */
     public function getInputWidgets($depth = null)
-    {}
+    {
+        //TODO: Funktion implementieren
+        return [];
+    }
 
     /**
      *
@@ -610,7 +620,9 @@ class DataTable extends Data implements iHaveTopToolbar, iHaveBottomToolbar, iFi
      * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::removeWidgets()
      */
     public function removeWidgets()
-    {}
+    {
+        //TODO: Funktion implementieren
+    }
 
     /**
      *
@@ -619,7 +631,9 @@ class DataTable extends Data implements iHaveTopToolbar, iHaveBottomToolbar, iFi
      * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::setWidgets()
      */
     public function setWidgets(array $widget_or_uxon_array)
-    {}
+    {
+        //TODO: Funktion implementieren
+    }
 
     /**
      *
@@ -628,7 +642,10 @@ class DataTable extends Data implements iHaveTopToolbar, iHaveBottomToolbar, iFi
      * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::countWidgets()
      */
     public function countWidgets()
-    {}
+    {
+        //TODO: Funktion implementieren
+        return 0;
+    }
 
     /**
      *
@@ -637,6 +654,8 @@ class DataTable extends Data implements iHaveTopToolbar, iHaveBottomToolbar, iFi
      * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::findChildrenByAttribute()
      */
     public function findChildrenByAttribute(Attribute $attribute)
-    {}
+    {
+        //TODO: Funktion implementieren
+    }
 }
 ?>
