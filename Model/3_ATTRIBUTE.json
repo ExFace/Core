@@ -1840,7 +1840,7 @@
             "SORTERDIR": "",
             "RELATED_OBJ_ATTR": "",
             "SHORT_DESCRIPTION": "",
-            "DATA_ADDRESS_PROPS": "{\"SQL_DATA_TYPE\":\"binary\",\"SQL_INSERT\":\"IF([#value#], [#value#], UNHEX(CONCAT(SUBSTR(@uid:=uuid(), 15, 4),SUBSTR(@uid, 10, 4),SUBSTR(@uid, 1, 8),SUBSTR(@uid, 20, 4),SUBSTR(@uid, 25))))\"}",
+            "DATA_ADDRESS_PROPS": "{\"SQL_DATA_TYPE\":\"binary\",\"SQL_INSERT\":\"IF([#value#]!='', [#value#], UNHEX(CONCAT(SUBSTR(@uid:=uuid(), 15, 4),SUBSTR(@uid, 10, 4),SUBSTR(@uid, 1, 8),SUBSTR(@uid, 20, 4),SUBSTR(@uid, 25))))\"}",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
             "DEFAULT_EDITOR_UXON": "{}"
