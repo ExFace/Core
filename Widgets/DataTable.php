@@ -8,6 +8,7 @@ use exface\Core\Interfaces\Widgets\iFillEntireContainer;
 use exface\Core\Interfaces\Widgets\iSupportMultiSelect;
 use exface\Core\Interfaces\Widgets\iLayoutWidgets;
 use exface\Core\CommonLogic\Model\Attribute;
+use exface\Core\CommonLogic\Traits\WidgetLayoutTrait;
 
 /**
  * Renders data as a table with filters, columns, and toolbars.
@@ -64,6 +65,8 @@ use exface\Core\CommonLogic\Model\Attribute;
  */
 class DataTable extends Data implements iHaveTopToolbar, iHaveBottomToolbar, iFillEntireContainer, iSupportMultiSelect, iLayoutWidgets
 {
+    
+    use WidgetLayoutTrait;
 
     private $show_filter_row = false;
 
@@ -96,12 +99,6 @@ class DataTable extends Data implements iHaveTopToolbar, iHaveBottomToolbar, iFi
     private $context_menu_enabled = true;
 
     private $header_sort_multiple = false;
-
-    private $number_of_columns = null;
-
-    private $column_stack_on_smartphones = null;
-
-    private $column_stack_on_tablets = null;
 
     function hasRowDetails()
     {
@@ -567,96 +564,6 @@ class DataTable extends Data implements iHaveTopToolbar, iHaveBottomToolbar, iFi
     public function setMultiSelectAllSelected($true_or_false)
     {
         $this->multi_select_all_selected = $true_or_false ? true : false;
-        return $this;
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Widgets\iLayoutWidgets::getNumberOfColumns()
-     */
-    public function getNumberOfColumns()
-    {
-        if (is_null($this->number_of_columns)) {
-            $widget = $this;
-            while ($widget->getParent()){
-                $widget = $widget->getParent();
-                if ($widget instanceof iLayoutWidgets && $widget->getNumberOfColumns()){
-                    $this->number_of_columns = $widget->getNumberOfColumns();
-                    break;
-                }
-            }
-            if (is_null($this->number_of_columns)) {
-                $this->number_of_columns = 4;
-            }
-            
-            $dimension = $this->getWidth();
-            if ($dimension->isRelative()) {
-                $width = $dimension->getValue();
-                if ($width === 'max') { $width = $this->number_of_columns; }
-                if ($width < 1) { $width = 1; }
-                if ($width < $this->number_of_columns) { $this->number_of_columns = $width; }
-            }
-        }
-        return $this->number_of_columns;
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Widgets\iLayoutWidgets::setNumberOfColumns()
-     */
-    public function setNumberOfColumns($value)
-    {
-        $this->number_of_columns = intval($value);
-        return $this;
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Widgets\iLayoutWidgets::getStackColumnsOnTabletsSmartphones()
-     */
-    public function getStackColumnsOnTabletsSmartphones()
-    {
-        return $this->column_stack_on_smartphones;
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Widgets\iLayoutWidgets::setStackColumnsOnTabletsSmartphones()
-     */
-    public function setStackColumnsOnTabletsSmartphones($value)
-    {
-        $this->column_stack_on_smartphones = BooleanDataType::parse($value);
-        return $this;
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Widgets\iLayoutWidgets::getStackColumnsOnTabletsTablets()
-     */
-    public function getStackColumnsOnTabletsTablets()
-    {
-        return $this->column_stack_on_tablets;
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Widgets\iLayoutWidgets::setStackColumnsOnTabletsTablets()
-     */
-    public function setStackColumnsOnTabletsTablets($value)
-    {
-        $this->column_stack_on_tablets = BooleanDataType::parse($value);
         return $this;
     }
 
