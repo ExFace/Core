@@ -575,7 +575,7 @@ class DataTable extends Data implements iHaveTopToolbar, iHaveBottomToolbar, iFi
      */
     public function addWidget(AbstractWidget $widget, $position = NULL)
     {
-        //TODO: Funktion implementieren
+        // TODO: Funktion implementieren
     }
 
     /**
@@ -586,7 +586,7 @@ class DataTable extends Data implements iHaveTopToolbar, iHaveBottomToolbar, iFi
      */
     public function addWidgets(array $widgets)
     {
-        //TODO: Funktion implementieren
+        // TODO: Funktion implementieren
     }
 
     /**
@@ -597,7 +597,7 @@ class DataTable extends Data implements iHaveTopToolbar, iHaveBottomToolbar, iFi
      */
     public function getWidgets()
     {
-        //TODO: Funktion implementieren
+        // TODO: Funktion implementieren
         return [];
     }
 
@@ -609,7 +609,7 @@ class DataTable extends Data implements iHaveTopToolbar, iHaveBottomToolbar, iFi
      */
     public function getInputWidgets($depth = null)
     {
-        //TODO: Funktion implementieren
+        // TODO: Funktion implementieren
         return [];
     }
 
@@ -621,7 +621,7 @@ class DataTable extends Data implements iHaveTopToolbar, iHaveBottomToolbar, iFi
      */
     public function removeWidgets()
     {
-        //TODO: Funktion implementieren
+        // TODO: Funktion implementieren
     }
 
     /**
@@ -632,7 +632,7 @@ class DataTable extends Data implements iHaveTopToolbar, iHaveBottomToolbar, iFi
      */
     public function setWidgets(array $widget_or_uxon_array)
     {
-        //TODO: Funktion implementieren
+        // TODO: Funktion implementieren
     }
 
     /**
@@ -643,7 +643,19 @@ class DataTable extends Data implements iHaveTopToolbar, iHaveBottomToolbar, iFi
      */
     public function countWidgets()
     {
-        //TODO: Funktion implementieren
+        // TODO: Funktion implementieren
+        return 0;
+    }
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::countVisibleWidgets()
+     */
+    public function countVisibleWidgets()
+    {
+        // TODO: Funktion implementieren
         return 0;
     }
 
@@ -655,7 +667,7 @@ class DataTable extends Data implements iHaveTopToolbar, iHaveBottomToolbar, iFi
      */
     public function findChildrenByAttribute(Attribute $attribute)
     {
-        //TODO: Funktion implementieren
+        // TODO: Funktion implementieren
     }
 }
 ?>

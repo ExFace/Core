@@ -24,6 +24,7 @@ use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\Exceptions\UxonMapError;
 use exface\Core\Interfaces\Widgets\iLayoutWidgets;
+use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 
 /**
  * Basic ExFace widget
@@ -89,9 +90,14 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
     private $id_space = null;
 
     private $disable_condition = null;
-    
+
     private $layoutWidget = null;
+
     private $searchedForLayoutWidget = false;
+    
+    private $containerWidget = null;
+    
+    private $searchedForContainerWidget = false;
 
     /**
      *
@@ -766,7 +772,7 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
         if ($ns = $this->getUi()->getWorkbench()->model()->getNamespaceFromQualifiedAlias($full_or_object_alias)) {
             $this->object_qualified_alias = $full_or_object_alias;
             $this->object_alias = $this->getUi()->getWorkbench()->model()->getObjectAliasFromQualifiedAlias($full_or_object_alias);
-        } // ... if the namespace is missing, get it from the app of the parent object
+        }  // ... if the namespace is missing, get it from the app of the parent object
 else {
             if ($this->getParent()) {
                 $ns = $this->getParent()->getMetaObject()->getNamespace();
@@ -1270,15 +1276,18 @@ else {
         $this->disable_condition = $value;
         return $this;
     }
-    
+
     /**
      * Gibt das naechste uebergeordnete Widget welches das Interface iLayoutWidgets
-     * implementiert zurueck. Wenn ein solches nicht existiert wird null zurueckgegeben.
+     * implementiert zurueck.
      * 
+     * Wenn ein solches nicht existiert wird null zurueckgegeben.
+     *
      * @return \exface\Core\Widgets\iLayoutWidgets|\exface\Core\Widgets\AbstractWidget|\exface\Core\Interfaces\WidgetInterface
      */
-    public function getLayoutWidget() {
-        if (is_null($this->layoutWidget) && ! $this->searchedForLayoutWidget) {
+    public function getLayoutWidget()
+    {
+        if (! $this->searchedForLayoutWidget) {
             $widget = $this;
             while ($widget->getParent()) {
                 $widget = $widget->getParent();
@@ -1290,6 +1299,30 @@ else {
             $this->searchedForLayoutWidget = true;
         }
         return $this->layoutWidget;
+    }
+
+    /**
+     * Gibt das naechste uebergeordnete Widget welches das Interface iContainOtherWidgets
+     * implementiert zurueck.
+     * 
+     * Wenn ein solches nicht existiert wird null zurueckgegeben.
+     *
+     * @return \exface\Core\Interfaces\Widgets\iContainOtherWidgets|\exface\Core\Widgets\AbstractWidget|\exface\Core\Interfaces\WidgetInterface
+     */
+    public function getContainerWidget()
+    {
+        if (! $this->searchedForContainerWidget) {
+            $widget = $this;
+            while ($widget->getParent()) {
+                $widget = $widget->getParent();
+                if ($widget instanceof iContainOtherWidgets) {
+                    $this->containerWidget = $widget;
+                    break;
+                }
+            }
+            $this->searchedForContainerWidget = true;
+        }
+        return $this->containerWidget;
     }
 }
 ?>

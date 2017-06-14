@@ -103,6 +103,7 @@ class Container extends AbstractWidget implements iContainOtherWidgets
     }
 
     /**
+     *
      * {@inheritdoc}
      *
      * @see \exface\Core\Widgets\AbstractWidget::getChildren()
@@ -202,6 +203,23 @@ class Container extends AbstractWidget implements iContainOtherWidgets
     public function countWidgets()
     {
         return count($this->getWidgets());
+    }
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::countVisibleWidgets()
+     */
+    public function countVisibleWidgets()
+    {
+        $count = 0;
+        foreach ($this->getWidgets() as $widget) {
+            if (! $widget->isHidden()) {
+                $count ++;
+            }
+        }
+        return $count;
     }
 
     /**

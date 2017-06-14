@@ -684,7 +684,7 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveButtons, iHaveT
      */
     public function addWidget(AbstractWidget $widget, $position = NULL)
     {
-        //TODO: Funktion implementieren
+        // TODO: Funktion implementieren
     }
 
     /**
@@ -695,7 +695,7 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveButtons, iHaveT
      */
     public function addWidgets(array $widgets)
     {
-        //TODO: Funktion implementieren
+        // TODO: Funktion implementieren
     }
 
     /**
@@ -706,7 +706,7 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveButtons, iHaveT
      */
     public function getWidgets()
     {
-        //TODO: Funktion implementieren
+        // TODO: Funktion implementieren
         return [];
     }
 
@@ -718,7 +718,7 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveButtons, iHaveT
      */
     public function getInputWidgets($depth = null)
     {
-        //TODO: Funktion implementieren
+        // TODO: Funktion implementieren
         return [];
     }
 
@@ -730,7 +730,7 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveButtons, iHaveT
      */
     public function removeWidgets()
     {
-        //TODO: Funktion implementieren
+        // TODO: Funktion implementieren
     }
 
     /**
@@ -741,7 +741,7 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveButtons, iHaveT
      */
     public function setWidgets(array $widget_or_uxon_array)
     {
-        //TODO: Funktion implementieren
+        // TODO: Funktion implementieren
     }
 
     /**
@@ -752,7 +752,19 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveButtons, iHaveT
      */
     public function countWidgets()
     {
-        //TODO: Funktion implementieren
+        // TODO: Funktion implementieren
+        return 0;
+    }
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::countVisibleWidgets()
+     */
+    public function countVisibleWidgets()
+    {
+        // TODO: Funktion implementieren
         return 0;
     }
 
@@ -764,7 +776,7 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveButtons, iHaveT
      */
     public function findChildrenByAttribute(Attribute $attribute)
     {
-        //TODO: Funktion implementieren
+        // TODO: Funktion implementieren
     }
 }
 ?>
