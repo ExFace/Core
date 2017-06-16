@@ -22,7 +22,7 @@ interface ContextManagerInterface
      *
      * @return ContextScopeInterface[]
      */
-    public function getSopes();
+    public function getScopes();
 
     /**
      * Saves all contexts in all scopes

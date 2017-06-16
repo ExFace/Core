@@ -88,7 +88,7 @@ class ContextManager implements ContextManagerInterface
      *
      * @return AbstractContextScope[]
      */
-    public function getSopes()
+    public function getScopes()
     {
         return array(
             $this->getScopeWindow(),
@@ -109,7 +109,7 @@ class ContextManager implements ContextManagerInterface
     public function getFilterConditionsFromAllContexts(Object $meta_object)
     {
         $contexts = array();
-        foreach ($this->getSopes() as $scope) {
+        foreach ($this->getScopes() as $scope) {
             $contexts = array_merge($contexts, $scope->getFilterContext()->getConditions($meta_object));
         }
         return $contexts;
@@ -122,7 +122,7 @@ class ContextManager implements ContextManagerInterface
      */
     public function saveContexts()
     {
-        foreach ($this->getSopes() as $scope) {
+        foreach ($this->getScopes() as $scope) {
             $scope->saveContexts();
         }
         return $this;

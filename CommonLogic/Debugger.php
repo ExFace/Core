@@ -96,12 +96,10 @@ HTML;
         $cloner = new VarCloner();
         if ($use_html) {
             $dumper = new HtmlDumper();
-            $dumper->setDisplayOptions(array(
-                'maxDepth' => $expand_depth
-            ));
+            return $dumper->dump($cloner->cloneVar($anything), true, ['maxDepth' => $expand_depth]);
         } else {
             $dumper = new CliDumper();
+            return $dumper->dump($cloner->cloneVar($anything), true);
         }
-        return $dumper->dump($cloner->cloneVar($anything), true);
     }
 }
