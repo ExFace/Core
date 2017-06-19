@@ -1315,7 +1315,8 @@ else {
             $widget = $this;
             while ($widget->getParent()) {
                 $widget = $widget->getParent();
-                if ($widget instanceof iContainOtherWidgets) {
+                // Ein Filter is eher ein Wrapper als ein Container (kann nur ein Widget enthalten).
+                if ($widget instanceof iContainOtherWidgets && !($widget instanceof Filter)) {
                     $this->containerWidget = $widget;
                     break;
                 }
