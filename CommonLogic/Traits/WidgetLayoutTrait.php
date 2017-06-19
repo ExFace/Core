@@ -1,6 +1,15 @@
 <?php
 namespace exface\Core\CommonLogic\Traits;
 
+/**
+ * Trait for widgets that implemenent the interface iLayoutWidgets.
+ *
+ * Primarily contains the method getNumberOfColumns which determines the number of columns
+ * of the widget based on the number of columns of the parent layout-widget
+ *
+ * @author SFL
+ *        
+ */
 trait WidgetLayoutTrait {
 
     private $number_of_columns = null;
@@ -20,8 +29,7 @@ trait WidgetLayoutTrait {
     public function getNumberOfColumns()
     {
         if (! $this->searchedForNumberOfColumns) {
-            $layoutWidget = $this->getLayoutWidget();
-            if ($layoutWidget) {
+            if ($layoutWidget = $this->getLayoutWidget()) {
                 $this->number_of_columns = $layoutWidget->getNumberOfColumns();
             }
             
@@ -43,9 +51,7 @@ trait WidgetLayoutTrait {
                     if ($width < 1) {
                         $width = 1;
                     }
-                    if ($width < $this->number_of_columns) {
-                        $this->number_of_columns = $width;
-                    }
+                    $this->number_of_columns = $width;
                 }
             }
             

@@ -94,9 +94,9 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
     private $layoutWidget = null;
 
     private $searchedForLayoutWidget = false;
-    
+
     private $containerWidget = null;
-    
+
     private $searchedForContainerWidget = false;
 
     /**
@@ -1278,9 +1278,9 @@ else {
     }
 
     /**
-     * Gibt das naechste uebergeordnete Widget welches das Interface iLayoutWidgets
-     * implementiert zurueck.
-     * 
+     * Gibt das naechste uebergeordnete Widget, welches das Interface iLayoutWidgets
+     * implementiert, zurueck.
+     *
      * Wenn ein solches nicht existiert wird null zurueckgegeben.
      *
      * @return \exface\Core\Widgets\iLayoutWidgets|\exface\Core\Widgets\AbstractWidget|\exface\Core\Interfaces\WidgetInterface
@@ -1304,7 +1304,7 @@ else {
     /**
      * Gibt das naechste uebergeordnete Widget welches das Interface iContainOtherWidgets
      * implementiert zurueck.
-     * 
+     *
      * Wenn ein solches nicht existiert wird null zurueckgegeben.
      *
      * @return \exface\Core\Interfaces\Widgets\iContainOtherWidgets|\exface\Core\Widgets\AbstractWidget|\exface\Core\Interfaces\WidgetInterface

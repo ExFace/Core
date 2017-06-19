@@ -7,7 +7,6 @@ use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
-use exface\Core\Interfaces\Widgets\iFillEntireContainer;
 use exface\Core\Interfaces\Widgets\iTakeInput;
 
 /**
