@@ -1,5 +1,5 @@
 <?php
-namespace exface\Core\Contexts\Types;
+namespace exface\Core\Contexts;
 
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Contexts\ContextInterface;
@@ -8,11 +8,15 @@ use exface\Core\Interfaces\Contexts\ContextScopeInterface;
 abstract class AbstractContext implements ContextInterface
 {
 
-    private $exface = NULL;
+    private $exface = null;
 
     private $scope = null;
 
-    private $alias = NULL;
+    private $alias = null;
+    
+    private $indicator = null;
+    
+    private $visibility = null;
 
     public function __construct(\exface\Core\CommonLogic\Workbench $exface)
     {
@@ -101,5 +105,55 @@ abstract class AbstractContext implements ContextInterface
         }
         return $this->alias;
     }
+    
+    /**
+     * @return string
+     */
+    public function getIndicator()
+    {
+        return $this->indicator;
+    }
+    
+    /**
+     * 
+     * @param string $indicator
+     * @return \exface\Core\Contexts\AbstractContext
+     */
+    public function setIndicator($indicator)
+    {
+        $this->indicator = $indicator;
+        return $this;
+    }
+    
+    /**
+     * Returns the visibility of this context.
+     * 
+     * @return string
+     */
+    public function getVisibility()
+    {
+        if (is_null($this->visibility)){
+            $this->setVisibility(EXF_WIDGET_VISIBILITY_NORMAL);
+        }
+        return $this->visibility;
+    }
+    
+    /**
+     * Sets the visibility of the context. Accepts one of the EXF_WIDGET_VISIBILITY_xxx constants.
+     *
+     * @param string $visibility
+     * @return \exface\Core\Contexts\AbstractContext
+     */
+    public function setVisibility($value)
+    {
+        $value = mb_strtolower($value);
+        if ($value != EXF_WIDGET_VISIBILITY_HIDDEN && $value != EXF_WIDGET_VISIBILITY_NORMAL && $value != EXF_WIDGET_VISIBILITY_OPTIONAL && $value != EXF_WIDGET_VISIBILITY_PROMOTED) {
+            throw new \UnexpectedValueException('Invalid visibility value "' . $value . '" for context "' . $this->getAlias() . '"!');
+            return;
+        }
+        $this->visibility = $value;
+        return $this;
+    }
+ 
 }
 ?>

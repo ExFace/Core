@@ -1,5 +1,5 @@
 <?php
-namespace exface\Core\Contexts\Types;
+namespace exface\Core\Contexts;
 
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\CommonLogic\UxonObject;
@@ -42,7 +42,7 @@ class ActionContext extends AbstractContext
      * Registers an action in this context
      *
      * @param ActionInterface $action            
-     * @return \exface\Core\Contexts\Types\ActionContext
+     * @return \exface\Core\Contexts\ActionContext
      */
     public function addAction(ActionInterface $action)
     {
@@ -96,7 +96,7 @@ class ActionContext extends AbstractContext
 
     /**
      *
-     * @see \exface\Core\Contexts\Types\AbstractContext::getDefaultScope()
+     * @see \exface\Core\Contexts\AbstractContext::getDefaultScope()
      */
     public function getDefaultScope()
     {
@@ -105,7 +105,7 @@ class ActionContext extends AbstractContext
 
     /**
      *
-     * @see \exface\Core\Contexts\Types\AbstractContext::exportUxonObject()
+     * @see \exface\Core\Contexts\AbstractContext::exportUxonObject()
      */
     public function exportUxonObject()
     {
@@ -140,7 +140,7 @@ class ActionContext extends AbstractContext
 
     /**
      *
-     * @see \exface\Core\Contexts\Types\AbstractContext::importUxonObject()
+     * @see \exface\Core\Contexts\AbstractContext::importUxonObject()
      */
     public function importUxonObject(UxonObject $uxon)
     {

@@ -1,7 +1,7 @@
 <?php
 namespace exface\Core\Actions;
 
-use exface\Core\Contexts\Types\ObjectBasketContext;
+use exface\Core\Contexts\ObjectBasketContext;
 
 /**
  * Adds the input rows to the object basket in a specified context_scope (by default, the window scope)

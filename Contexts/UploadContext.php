@@ -1,5 +1,5 @@
 <?php
-namespace exface\Core\Contexts\Types;
+namespace exface\Core\Contexts;
 
 /**
  * The upload context takes care of files uploaded by the user.
@@ -58,7 +58,7 @@ class UploadContext extends AbstractContext
     /**
      * Clears all uploaded files from the current context
      *
-     * @return \exface\Core\Contexts\Types\UploadContext
+     * @return \exface\Core\Contexts\UploadContext
      */
     public function clearUploads()
     {
@@ -93,7 +93,7 @@ class UploadContext extends AbstractContext
      * The default scope of the upload context ist window, because it should only show the uploads from the current
      * browser window if the user works with multiple windows at the same time.
      *
-     * @see \exface\Core\Contexts\Types\AbstractContext::getDefaultScope()
+     * @see \exface\Core\Contexts\AbstractContext::getDefaultScope()
      */
     public function getDefaultScope()
     {

@@ -4,8 +4,6 @@ namespace exface\Core\Actions;
 use exface\Core\CommonLogic\Model\Object;
 use exface\Core\Exceptions\Actions\ActionConfigurationError;
 use exface\Core\Factories\WidgetFactory;
-use exface\Core\Factories\DataSheetFactory;
-use exface\Core\Exceptions\UiPageNotFoundError;
 use exface\Core\Factories\UiPageFactory;
 
 /**

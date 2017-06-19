@@ -3,9 +3,9 @@ namespace exface\Core\Contexts\Scopes;
 
 use exface\Core\Interfaces\Contexts\ContextScopeInterface;
 use exface\Core\Interfaces\Contexts\ContextInterface;
-use exface\Core\Contexts\Types\FilterContext;
-use exface\Core\Contexts\Types\ActionContext;
-use exface\Core\Contexts\Types\AbstractContext;
+use exface\Core\Contexts\FilterContext;
+use exface\Core\Contexts\ActionContext;
+use exface\Core\Contexts\AbstractContext;
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\Exceptions\Contexts\ContextNotFoundError;
 
@@ -97,9 +97,9 @@ abstract class AbstractContextScope implements ContextScopeInterface
 
     protected function getClassFromAlias($context_alias)
     {
-        $context_class = '\\exface\\Core\\Contexts\\Types\\' . $context_alias . 'Context';
+        $context_class = '\\exface\\Core\\Contexts\\' . $context_alias . 'Context';
         if (! class_exists($context_class)) {
-            $context_class = '\\exface\\Core\\Contexts\\Types\\' . ucfirst(strtolower($context_alias)) . 'Context';
+            $context_class = '\\exface\\Core\\Contexts\\' . ucfirst(strtolower($context_alias)) . 'Context';
         }
         return $context_class;
     }

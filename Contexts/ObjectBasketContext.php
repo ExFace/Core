@@ -1,5 +1,5 @@
 <?php
-namespace exface\Core\Contexts\Types;
+namespace exface\Core\Contexts;
 
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\Model\Object;
@@ -115,7 +115,7 @@ class ObjectBasketContext extends AbstractContext
      * Most apps will run in the context of a single window,
      * so two windows running one app are independant in general.
      *
-     * @see \exface\Core\Contexts\Types\AbstractContext::getDefaultScope()
+     * @see \exface\Core\Contexts\AbstractContext::getDefaultScope()
      */
     public function getDefaultScope()
     {
@@ -126,7 +126,7 @@ class ObjectBasketContext extends AbstractContext
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\Contexts\Types\AbstractContext::importUxonObject()
+     * @see \exface\Core\Contexts\AbstractContext::importUxonObject()
      */
     public function importUxonObject(UxonObject $uxon)
     {
@@ -148,7 +148,7 @@ class ObjectBasketContext extends AbstractContext
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\Contexts\Types\AbstractContext::exportUxonObject()
+     * @see \exface\Core\Contexts\AbstractContext::exportUxonObject()
      */
     public function exportUxonObject()
     {
@@ -164,7 +164,7 @@ class ObjectBasketContext extends AbstractContext
     /**
      *
      * @param string $object_id            
-     * @return \exface\Core\Contexts\Types\ObjectBasketContext
+     * @return \exface\Core\Contexts\ObjectBasketContext
      */
     public function removeInstancesForObjectId($object_id)
     {
@@ -176,7 +176,7 @@ class ObjectBasketContext extends AbstractContext
      *
      * @param string $object_id            
      * @param string $uid            
-     * @return \exface\Core\Contexts\Types\ObjectBasketContext
+     * @return \exface\Core\Contexts\ObjectBasketContext
      */
     public function removeInstance($object_id, $uid)
     {
