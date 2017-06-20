@@ -91,13 +91,7 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
 
     private $disable_condition = null;
 
-    private $layoutWidget = null;
-
-    private $searchedForLayoutWidget = false;
-
-    private $containerWidget = null;
-
-    private $searchedForContainerWidget = false;
+    private $parentByType = [];
 
     /**
      *
@@ -1278,52 +1272,37 @@ else {
     }
 
     /**
-     * Gibt das naechste uebergeordnete Widget, welches das Interface iLayoutWidgets
-     * implementiert, zurueck.
-     *
-     * Wenn ein solches nicht existiert wird null zurueckgegeben.
-     *
-     * @return \exface\Core\Widgets\iLayoutWidgets|\exface\Core\Widgets\AbstractWidget|\exface\Core\Interfaces\WidgetInterface
-     */
-    public function getLayoutWidget()
-    {
-        if (! $this->searchedForLayoutWidget) {
-            $widget = $this;
-            while ($widget->getParent()) {
-                $widget = $widget->getParent();
-                if ($widget instanceof iLayoutWidgets) {
-                    $this->layoutWidget = $widget;
-                    break;
-                }
-            }
-            $this->searchedForLayoutWidget = true;
-        }
-        return $this->layoutWidget;
-    }
-
-    /**
-     * Gibt das naechste uebergeordnete Widget welches das Interface iContainOtherWidgets
+     * Gibt das naechste uebergeordnete Widget welches die uebergebene Klasse oder Interface
      * implementiert zurueck.
      *
      * Wenn ein solches nicht existiert wird null zurueckgegeben.
      *
-     * @return \exface\Core\Interfaces\Widgets\iContainOtherWidgets|\exface\Core\Widgets\AbstractWidget|\exface\Core\Interfaces\WidgetInterface
+     * @param string $typeName            
+     * @return mixed
      */
-    public function getContainerWidget()
+    public function getParentByType(string $typeName)
     {
-        if (! $this->searchedForContainerWidget) {
+        if (! array_key_exists($typeName, $this->parentByType)) {
             $widget = $this;
             while ($widget->getParent()) {
                 $widget = $widget->getParent();
+                
                 // Ein Filter is eher ein Wrapper als ein Container (kann nur ein Widget enthalten).
-                if ($widget instanceof iContainOtherWidgets && !($widget instanceof Filter)) {
-                    $this->containerWidget = $widget;
+                if (($typeName == 'exface\\Core\\Interfaces\\Widgets\\iContainOtherWidgets') && ($widget instanceof $typeName) && ($widget instanceof Filter)) {
+                    continue;
+                }
+                
+                if ($widget instanceof $typeName) {
+                    $this->parentByType[$typeName] = $widget;
                     break;
                 }
             }
-            $this->searchedForContainerWidget = true;
+            
+            if (! array_key_exists($typeName, $this->parentByType)) {
+                $this->parentByType[$typeName] = null;
+            }
         }
-        return $this->containerWidget;
+        return $this->parentByType[$typeName];
     }
 }
 ?>

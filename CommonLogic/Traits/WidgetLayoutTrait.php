@@ -29,7 +29,7 @@ trait WidgetLayoutTrait {
     public function getNumberOfColumns()
     {
         if (! $this->searchedForNumberOfColumns) {
-            if ($layoutWidget = $this->getLayoutWidget()) {
+            if ($layoutWidget = $this->getParentByType('exface\\Core\\Interfaces\\Widgets\\iLayoutWidgets')) {
                 $this->number_of_columns = $layoutWidget->getNumberOfColumns();
             }
             
@@ -41,11 +41,11 @@ trait WidgetLayoutTrait {
             if ($dimension->isRelative()) {
                 $width = $dimension->getValue();
                 if (is_null($this->number_of_columns)) {
-                    if (is_numeric($width)) {
+                    if (! $dimension->isMax()) {
                         $this->number_of_columns = $width;
                     }
                 } else {
-                    if ($width === 'max') {
+                    if ($dimension->isMax()) {
                         $width = $this->number_of_columns;
                     }
                     if ($width < 1) {
