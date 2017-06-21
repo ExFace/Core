@@ -23,7 +23,6 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\Exceptions\UxonMapError;
-use exface\Core\Interfaces\Widgets\iLayoutWidgets;
 use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 
 /**

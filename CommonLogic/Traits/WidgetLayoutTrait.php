@@ -14,8 +14,6 @@ trait WidgetLayoutTrait {
 
     private $number_of_columns = null;
 
-    private $searchedForNumberOfColumns = false;
-
     private $column_stack_on_smartphones = null;
 
     private $column_stack_on_tablets = null;
@@ -28,35 +26,6 @@ trait WidgetLayoutTrait {
      */
     public function getNumberOfColumns()
     {
-        if (! $this->searchedForNumberOfColumns) {
-            if ($layoutWidget = $this->getParentByType('exface\\Core\\Interfaces\\Widgets\\iLayoutWidgets')) {
-                $this->number_of_columns = $layoutWidget->getNumberOfColumns();
-            }
-            
-            // Es ist moeglich, dass number_of_columns null ist, wenn es nirgendwo
-            // spezifiziert wurde. Ist fuer dieses Widget explizit eine Spaltenzahl als
-            // Breite gesetzt, dann wird diese uebernommen, sonst wird sie nur ueber-
-            // nommen, wenn sie kleiner als die vorher ermittelte Spaltenzahl ist.
-            $dimension = $this->getWidth();
-            if ($dimension->isRelative()) {
-                $width = $dimension->getValue();
-                if (is_null($this->number_of_columns)) {
-                    if (! $dimension->isMax()) {
-                        $this->number_of_columns = $width;
-                    }
-                } else {
-                    if ($dimension->isMax()) {
-                        $width = $this->number_of_columns;
-                    }
-                    if ($width < 1) {
-                        $width = 1;
-                    }
-                    $this->number_of_columns = $width;
-                }
-            }
-            
-            $this->searchedForNumberOfColumns = true;
-        }
         return $this->number_of_columns;
     }
 
