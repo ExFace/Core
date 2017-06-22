@@ -4,6 +4,7 @@ namespace exface\Core\Interfaces\Formulas;
 use exface\Core\Interfaces\ExfaceClassInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Model\DataTypeInterface;
+use exface\Core\Interfaces\DataSheets\DataColumnInterface;
 
 interface FormulaInterface extends ExfaceClassInterface
 {
@@ -61,6 +62,13 @@ interface FormulaInterface extends ExfaceClassInterface
      * @return string
      */
     public function getCurrentColumnName();
+    
+    /**
+     * Returns the column of the data sheet, that the formula is being applied to
+     * 
+     * @return DataColumnInterface
+     */
+    public function getCurrentColumn();
 
     /**
      * Returns the row number in the data sheet currently being processed.

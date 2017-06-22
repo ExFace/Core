@@ -107,6 +107,16 @@ class Relation implements ExfaceClassInterface
     {
         $this->related_object_id = $value;
     }
+    
+    /**
+     * Returns the attribute, that is the foreign key in the main object.
+     * Same as calling getMainObjectKeyAttribute()
+     *
+     * @return Attribute
+     */
+    public function getForeignKeyAttribute(){
+        return $this->getMainObjectKeyAttribute();
+    }
 
     /**
      * Returns the alias of the foreign key in the main object.
