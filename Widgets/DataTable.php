@@ -6,6 +6,9 @@ use exface\Core\Interfaces\Widgets\iHaveBottomToolbar;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Widgets\iFillEntireContainer;
 use exface\Core\Interfaces\Widgets\iSupportMultiSelect;
+use exface\Core\Interfaces\Widgets\iLayoutWidgets;
+use exface\Core\CommonLogic\Model\Attribute;
+use exface\Core\CommonLogic\Traits\WidgetLayoutTrait;
 
 /**
  * Renders data as a table with filters, columns, and toolbars.
@@ -60,8 +63,10 @@ use exface\Core\Interfaces\Widgets\iSupportMultiSelect;
  * @author Andrej Kabachnik
  *        
  */
-class DataTable extends Data implements iHaveTopToolbar, iHaveBottomToolbar, iFillEntireContainer, iSupportMultiSelect
+class DataTable extends Data implements iHaveTopToolbar, iHaveBottomToolbar, iFillEntireContainer, iSupportMultiSelect, iLayoutWidgets
 {
+    
+    use WidgetLayoutTrait;
 
     private $show_filter_row = false;
 
@@ -560,6 +565,109 @@ class DataTable extends Data implements iHaveTopToolbar, iHaveBottomToolbar, iFi
     {
         $this->multi_select_all_selected = $true_or_false ? true : false;
         return $this;
+    }
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::addWidget()
+     */
+    public function addWidget(AbstractWidget $widget, $position = NULL)
+    {
+        // TODO: Funktion implementieren
+    }
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::addWidgets()
+     */
+    public function addWidgets(array $widgets)
+    {
+        // TODO: Funktion implementieren
+    }
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::getWidgets()
+     */
+    public function getWidgets()
+    {
+        // TODO: Funktion implementieren
+        return [];
+    }
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::getInputWidgets()
+     */
+    public function getInputWidgets($depth = null)
+    {
+        // TODO: Funktion implementieren
+        return [];
+    }
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::removeWidgets()
+     */
+    public function removeWidgets()
+    {
+        // TODO: Funktion implementieren
+    }
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::setWidgets()
+     */
+    public function setWidgets(array $widget_or_uxon_array)
+    {
+        // TODO: Funktion implementieren
+    }
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::countWidgets()
+     */
+    public function countWidgets()
+    {
+        // TODO: Funktion implementieren
+        return 0;
+    }
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::countWidgetsVisible()
+     */
+    public function countWidgetsVisible()
+    {
+        // TODO: Funktion implementieren
+        return 0;
+    }
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::findChildrenByAttribute()
+     */
+    public function findChildrenByAttribute(Attribute $attribute)
+    {
+        // TODO: Funktion implementieren
     }
 }
 ?>
