@@ -71,7 +71,7 @@ interface iContainOtherWidgets extends iHaveChildren
      *
      * @return int
      */
-    public function countVisibleWidgets();
+    public function countWidgetsVisible();
 
     /**
      * Returns an array of direct children, that show the given attribute.

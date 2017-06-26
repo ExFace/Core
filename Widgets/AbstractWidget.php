@@ -1271,13 +1271,12 @@ else {
     }
 
     /**
-     * Gibt das naechste uebergeordnete Widget welches die uebergebene Klasse oder Interface
-     * implementiert zurueck.
-     *
-     * Wenn ein solches nicht existiert wird null zurueckgegeben.
+     * Returns the closest parent widget which implements the passed class or interface.
+     * 
+     * Returns null if no such parent widget exists.
      *
      * @param string $typeName            
-     * @return mixed
+     * @return AbstractWidget
      */
     public function getParentByType(string $typeName)
     {

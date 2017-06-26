@@ -85,7 +85,7 @@ class WidgetDimension
      */
     public function isMax()
     {
-        if (! $this->isUndefined() && ($this->getValue() == 'max')) {
+        if (! $this->isUndefined() && (strcasecmp($this->getValue(), 'max') == 0)) {
             return true;
         } else {
             return false;

@@ -208,9 +208,9 @@ class Container extends AbstractWidget implements iContainOtherWidgets
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::countVisibleWidgets()
+     * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::countWidgetsVisible()
      */
-    public function countVisibleWidgets()
+    public function countWidgetsVisible()
     {
         $count = 0;
         foreach ($this->getWidgets() as $widget) {

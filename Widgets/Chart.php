@@ -760,9 +760,9 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveButtons, iHaveT
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::countVisibleWidgets()
+     * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::countWidgetsVisible()
      */
-    public function countVisibleWidgets()
+    public function countWidgetsVisible()
     {
         // TODO: Funktion implementieren
         return 0;

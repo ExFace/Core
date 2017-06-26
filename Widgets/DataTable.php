@@ -651,9 +651,9 @@ class DataTable extends Data implements iHaveTopToolbar, iHaveBottomToolbar, iFi
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::countVisibleWidgets()
+     * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::countWidgetsVisible()
      */
-    public function countVisibleWidgets()
+    public function countWidgetsVisible()
     {
         // TODO: Funktion implementieren
         return 0;
