@@ -19,5 +19,7 @@
 	"DEBUG.SHOW_ERROR_DETAILS_TO_ADMINS_ONLY": true,
 	"LOG.MINIMUM_LEVEL_TO_LOG": "error",
 	"LOG.MAX_DAYS_TO_KEEP": "3",
-	"LOG.PERSIST_LOG_LEVEL": "error"
+	"LOG.PERSIST_LOG_LEVEL": "error",
+	"DEBUG.SYSTEM_NAME": "mydomain.com",
+	"DEBUG.SUPPORT_EMAIL_ADDRESS": "support@mydomain.com"
 }
