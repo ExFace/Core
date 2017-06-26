@@ -154,27 +154,6 @@ class Workbench
         return $this->getApp('exface.Core')->getConfig();
     }
 
-    /**
-     * Returns a unique ID of the request, that is being handled by this instance.
-     * Can be used for cache invalidation of persistant caches
-     * TODO Move to the request context scope completely
-     */
-    public function getRequestId()
-    {
-        return $this->context()->getScopeRequest()->getRequetsId();
-    }
-
-    /**
-     * TODO Move to the request context scope completely
-     *
-     * @param unknown $value            
-     */
-    public function setRequestId($value)
-    {
-        $this->context()->getScopeRequest()->setRequetsId($value);
-        return $this;
-    }
-
     public function model()
     {
         return $this->mm;

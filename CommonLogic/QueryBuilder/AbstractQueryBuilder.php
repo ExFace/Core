@@ -554,7 +554,7 @@ abstract class AbstractQueryBuilder
             // Do not filter if already filtered (remotely)
             if (! $qpart->getApplyAfterReading() || ! $qpart->getCompareValue())
                 continue;
-            $row_filter->addAnd($qpart->getAlias(), $qpart->getCompareValue(), $qpart->getComparator());
+            $row_filter->addAnd($qpart->getAlias(), $qpart->getCompareValue(), $qpart->getComparator(), $qpart->getValueListDelimiter());
         }
         return $row_filter->filter($row_array);
     }

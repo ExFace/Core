@@ -77,7 +77,7 @@ class Expression implements ExfaceClassInterface, iCanBeCopied
                 $this->attributes[] = $expression;
             } else {
                 $this->type = 'string';
-                $this->value = $str;
+                $this->value = $str === false ? '' : $str;
             }
         }
         

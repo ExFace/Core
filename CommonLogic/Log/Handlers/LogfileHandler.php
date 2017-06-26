@@ -75,13 +75,15 @@ class LogfileHandler extends AbstractMonologHandler implements FileHandlerInterf
         $csvHandler->setFormatter(new NormalizerFormatter("Y-m-d H:i:s-v")); // with milliseconds
 
         $persistLogLevel = $this->workbench->getConfig()->getOption('LOG.PERSIST_LOG_LEVEL');
+        $passthroughLevel = $this->workbench->getConfig()->getOption('LOG.PASSTHROUGH_LOG_LEVEL');
+
         $fcHandler = new FingersCrossedHandler(
             $csvHandler,
             new ErrorLevelActivationStrategy(Logger::toMonologLevel($persistLogLevel)),
             0,
             true,
             true,
-            Logger::toMonologLevel($this->level)
+            $passthroughLevel
         );
 
         $logger->pushHandler($fcHandler);
