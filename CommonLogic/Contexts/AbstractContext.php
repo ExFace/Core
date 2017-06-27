@@ -4,6 +4,7 @@ namespace exface\Core\CommonLogic\Contexts;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Contexts\ContextInterface;
 use exface\Core\Interfaces\Contexts\ContextScopeInterface;
+use exface\Core\Exceptions\UnexpectedValueException;
 
 abstract class AbstractContext implements ContextInterface
 {
@@ -148,7 +149,7 @@ abstract class AbstractContext implements ContextInterface
     {
         $value = mb_strtolower($value);
         if ($value != EXF_WIDGET_VISIBILITY_HIDDEN && $value != EXF_WIDGET_VISIBILITY_NORMAL && $value != EXF_WIDGET_VISIBILITY_OPTIONAL && $value != EXF_WIDGET_VISIBILITY_PROMOTED) {
-            throw new \UnexpectedValueException('Invalid visibility value "' . $value . '" for context "' . $this->getAlias() . '"!');
+            throw new UnexpectedValueException('Invalid visibility value "' . $value . '" for context "' . $this->getAlias() . '"!');
             return;
         }
         $this->visibility = $value;
