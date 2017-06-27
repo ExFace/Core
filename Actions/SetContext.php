@@ -1,7 +1,7 @@
 <?php
 namespace exface\Core\Actions;
 
-use exface\Core\Contexts\AbstractContext;
+use exface\Core\CommonLogic\Contexts\AbstractContext;
 use exface\Core\CommonLogic\AbstractAction;
 
 /**

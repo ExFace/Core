@@ -1,11 +1,11 @@
 <?php
-namespace exface\Core\Contexts\Scopes;
+namespace exface\Core\CommonLogic\Contexts\Scopes;
 
 use exface\Core\Interfaces\Contexts\ContextScopeInterface;
 use exface\Core\Interfaces\Contexts\ContextInterface;
 use exface\Core\Contexts\FilterContext;
 use exface\Core\Contexts\ActionContext;
-use exface\Core\Contexts\AbstractContext;
+use exface\Core\CommonLogic\Contexts\AbstractContext;
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\Exceptions\Contexts\ContextNotFoundError;
 

@@ -1,5 +1,5 @@
 <?php
-namespace exface\Core\Contexts\Scopes;
+namespace exface\Core\CommonLogic\Contexts\Scopes;
 
 use exface\Core\Interfaces\Contexts\ContextInterface;
 use exface\Core\Factories\DataSheetFactory;
@@ -48,7 +48,7 @@ class UserContextScope extends AbstractContextScope
     /**
      * TODO
      *
-     * @see \exface\Core\Contexts\Scopes\AbstractContextScope::loadContextData()
+     * @see \exface\Core\CommonLogic\Contexts\Scopes\AbstractContextScope::loadContextData()
      */
     public function loadContextData(ContextInterface $context)
     {}
@@ -94,7 +94,7 @@ class UserContextScope extends AbstractContextScope
      * Sets the locale for the current user
      *
      * @param string $string            
-     * @return \exface\Core\Contexts\Scopes\UserContextScope
+     * @return \exface\Core\CommonLogic\Contexts\Scopes\UserContextScope
      */
     public function setUserLocale($string)
     {

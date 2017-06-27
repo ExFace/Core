@@ -1,5 +1,5 @@
 <?php
-namespace exface\Core\Contexts;
+namespace exface\Core\CommonLogic\Contexts;
 
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Contexts\ContextInterface;
@@ -48,7 +48,7 @@ abstract class AbstractContext implements ContextInterface
     /**
      * Returns the default scope for this type of context.
      *
-     * @return \exface\Core\Contexts\Scopes\windowContextScope
+     * @return \exface\Core\CommonLogic\Contexts\Scopes\windowContextScope
      */
     public function getDefaultScope()
     {
@@ -117,7 +117,7 @@ abstract class AbstractContext implements ContextInterface
     /**
      * 
      * @param string $indicator
-     * @return \exface\Core\Contexts\AbstractContext
+     * @return \exface\Core\CommonLogic\Contexts\AbstractContext
      */
     public function setIndicator($indicator)
     {
@@ -142,7 +142,7 @@ abstract class AbstractContext implements ContextInterface
      * Sets the visibility of the context. Accepts one of the EXF_WIDGET_VISIBILITY_xxx constants.
      *
      * @param string $visibility
-     * @return \exface\Core\Contexts\AbstractContext
+     * @return \exface\Core\CommonLogic\Contexts\AbstractContext
      */
     public function setVisibility($value)
     {

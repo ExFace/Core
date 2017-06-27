@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\Contexts;
 
+use exface\Core\CommonLogic\Contexts\AbstractContext;
+
 /**
  * The upload context takes care of files uploaded by the user.
  * Uploads are saved in the UserData/Uploads folder and organized in
@@ -93,7 +95,7 @@ class UploadContext extends AbstractContext
      * The default scope of the upload context ist window, because it should only show the uploads from the current
      * browser window if the user works with multiple windows at the same time.
      *
-     * @see \exface\Core\Contexts\AbstractContext::getDefaultScope()
+     * @see \exface\Core\CommonLogic\Contexts\AbstractContext::getDefaultScope()
      */
     public function getDefaultScope()
     {

@@ -4,6 +4,7 @@ namespace exface\Core\Contexts;
 use exface\Core\CommonLogic\Model\Object;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Events\ActionEvent;
+use exface\Core\CommonLogic\Contexts\AbstractContext;
 
 /**
  * FIXME Use the generic DataContext instead of this ugly ActionTest specific context

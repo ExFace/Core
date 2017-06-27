@@ -1,5 +1,5 @@
 <?php
-namespace exface\Core\Contexts\Scopes;
+namespace exface\Core\CommonLogic\Contexts\Scopes;
 
 use exface\Core\Interfaces\Contexts\ContextInterface;
 
@@ -21,7 +21,7 @@ class WindowContextScope extends AbstractContextScope
     /**
      * The window scope currently just delegates to the session scope, which actually takes care of saving and loading data
      *
-     * @see \exface\Core\Contexts\Scopes\AbstractContextScope::saveContexts()
+     * @see \exface\Core\CommonLogic\Contexts\Scopes\AbstractContextScope::saveContexts()
      */
     public function saveContexts()
     {
@@ -31,7 +31,7 @@ class WindowContextScope extends AbstractContextScope
     /**
      * The window scope currently just delegates to the session scope, which actually takes care of saving and loading data
      *
-     * @see \exface\Core\Contexts\Scopes\AbstractContextScope::loadContextData()
+     * @see \exface\Core\CommonLogic\Contexts\Scopes\AbstractContextScope::loadContextData()
      */
     public function loadContextData(ContextInterface $context)
     {
@@ -45,7 +45,7 @@ class WindowContextScope extends AbstractContextScope
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\Contexts\Scopes\AbstractContextScope::getScopeId()
+     * @see \exface\Core\CommonLogic\Contexts\Scopes\AbstractContextScope::getScopeId()
      */
     public function getScopeId()
     {
@@ -57,7 +57,7 @@ class WindowContextScope extends AbstractContextScope
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\Contexts\Scopes\AbstractContextScope::getContext()
+     * @see \exface\Core\CommonLogic\Contexts\Scopes\AbstractContextScope::getContext()
      */
     public function getContext($alias)
     {
@@ -69,7 +69,7 @@ class WindowContextScope extends AbstractContextScope
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\Contexts\Scopes\AbstractContextScope::getAllContexts()
+     * @see \exface\Core\CommonLogic\Contexts\Scopes\AbstractContextScope::getAllContexts()
      */
     public function getAllContexts()
     {

@@ -9,6 +9,7 @@ use exface\Core\Factories\ConditionFactory;
 use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;
 use exface\Core\Exceptions\Contexts\ContextLoadError;
+use exface\Core\CommonLogic\Contexts\AbstractContext;
 
 class FilterContext extends AbstractContext
 {

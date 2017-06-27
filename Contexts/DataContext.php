@@ -5,6 +5,7 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Exceptions\Contexts\ContextSaveError;
 use exface\Core\Exceptions\Contexts\ContextLoadError;
+use exface\Core\CommonLogic\Contexts\AbstractContext;
 
 /**
  * The DataContext provides a unified interface to store arbitrary data in any context scope.
@@ -135,7 +136,7 @@ class DataContext extends AbstractContext
      * Most apps will run in the context of a single window,
      * so two windows running one app are independant in general.
      *
-     * @see \exface\Core\Contexts\AbstractContext::getDefaultScope()
+     * @see \exface\Core\CommonLogic\Contexts\AbstractContext::getDefaultScope()
      */
     public function getDefaultScope()
     {
@@ -146,7 +147,7 @@ class DataContext extends AbstractContext
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\Contexts\AbstractContext::importUxonObject()
+     * @see \exface\Core\CommonLogic\Contexts\AbstractContext::importUxonObject()
      */
     public function importUxonObject(UxonObject $uxon)
     {
@@ -174,7 +175,7 @@ class DataContext extends AbstractContext
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\Contexts\AbstractContext::exportUxonObject()
+     * @see \exface\Core\CommonLogic\Contexts\AbstractContext::exportUxonObject()
      */
     public function exportUxonObject()
     {

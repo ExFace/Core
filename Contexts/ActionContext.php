@@ -5,6 +5,7 @@ use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\ActionFactory;
 use exface\Core\Exceptions\Contexts\ContextLoadError;
+use exface\Core\CommonLogic\Contexts\AbstractContext;
 
 class ActionContext extends AbstractContext
 {
@@ -96,7 +97,7 @@ class ActionContext extends AbstractContext
 
     /**
      *
-     * @see \exface\Core\Contexts\AbstractContext::getDefaultScope()
+     * @see \exface\Core\CommonLogic\Contexts\AbstractContext::getDefaultScope()
      */
     public function getDefaultScope()
     {
@@ -105,7 +106,7 @@ class ActionContext extends AbstractContext
 
     /**
      *
-     * @see \exface\Core\Contexts\AbstractContext::exportUxonObject()
+     * @see \exface\Core\CommonLogic\Contexts\AbstractContext::exportUxonObject()
      */
     public function exportUxonObject()
     {
@@ -140,7 +141,7 @@ class ActionContext extends AbstractContext
 
     /**
      *
-     * @see \exface\Core\Contexts\AbstractContext::importUxonObject()
+     * @see \exface\Core\CommonLogic\Contexts\AbstractContext::importUxonObject()
      */
     public function importUxonObject(UxonObject $uxon)
     {
