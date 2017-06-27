@@ -195,7 +195,7 @@
         },
         {
             "CREATED_ON": "2007-01-01 00:00:00",
-            "MODIFIED_ON": "2017-06-05 05:50:00",
+            "MODIFIED_ON": "2017-06-21 11:09:13",
             "CREATED_BY_USER": "",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x32350000000000000000000000000000",
@@ -205,7 +205,7 @@
             "SHORT_DESCRIPTION": "",
             "PARENT_OBJECT": "",
             "DATA_ADDRESS_PROPS": "{}",
-            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Tabs\",\"tabs\":[{\"caption\":\"General\",\"widgets\":[{\"attribute_alias\":\"OBJECT\"},{\"attribute_alias\":\"ALIAS\"},{\"attribute_alias\":\"LABEL\"},{\"attribute_alias\":\"DATA_ADDRESS\"},{\"attribute_alias\":\"DATATYPE\"},{\"attribute_alias\":\"RELATED_OBJ\",\"id\":\"related_object_selector\"},{\"attribute_alias\":\"FORMATTER\"},{\"attribute_alias\":\"RELATED_OBJ_ATTR\",\"autoselect_single_suggestion\":false,\"filters\":[{\"attribute_alias\":\"OBJECT\",\"value\":\"=related_object_selector!UID\"}]},{\"attribute_alias\":\"DISPLAYORDER\"},{\"attribute_alias\":\"EDITABLEFLAG\"},{\"attribute_alias\":\"DEFAULT_VALUE\"},{\"attribute_alias\":\"REQUIREDFLAG\"},{\"attribute_alias\":\"FIXED_VALUE\"},{\"attribute_alias\":\"HIDDENFLAG\"},{\"attribute_alias\":\"DEFAULT_AGGREGATE_FUNCTION\"},{\"attribute_alias\":\"UIDFLAG\"},{\"attribute_alias\":\"SORTERPOS\"},{\"attribute_alias\":\"LABELFLAG\"},{\"attribute_alias\":\"SORTERDIR\"},{\"attribute_alias\":\"SORTABLEFLAG\"},{\"attribute_alias\":\"SHORT_DESCRIPTION\"},{\"attribute_alias\":\"FILTERABLEFLAG\"},{\"attribute_alias\":\"AGGREGATABLEFLAG\"},{\"attribute_alias\":\"DATA_ADDRESS_PROPS\"}]},{\"caption\":\"Default Editor\",\"widgets\":[{\"attribute_alias\":\"DEFAULT_EDITOR_UXON\",\"hide_caption\":true,\"height\":12}]}]}",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Tabs\",\"tabs\":[{\"caption\":\"General\",\"widgets\":[{\"attribute_alias\":\"OBJECT\"},{\"attribute_alias\":\"ALIAS\"},{\"attribute_alias\":\"LABEL\"},{\"attribute_alias\":\"DATA_ADDRESS\"},{\"attribute_alias\":\"DATATYPE\"},{\"attribute_alias\":\"RELATED_OBJ\",\"id\":\"related_object_selector\"},{\"attribute_alias\":\"FORMATTER\"},{\"attribute_alias\":\"RELATED_OBJ_ATTR\",\"autoselect_single_suggestion\":false,\"filters\":[{\"attribute_alias\":\"OBJECT\",\"value\":\"=related_object_selector!UID\"}]},{\"attribute_alias\":\"DISPLAYORDER\"},{\"attribute_alias\":\"EDITABLEFLAG\"},{\"attribute_alias\":\"DEFAULT_VALUE\"},{\"attribute_alias\":\"REQUIREDFLAG\"},{\"attribute_alias\":\"FIXED_VALUE\"},{\"attribute_alias\":\"HIDDENFLAG\"},{\"attribute_alias\":\"DEFAULT_AGGREGATE_FUNCTION\"},{\"attribute_alias\":\"UIDFLAG\"},{\"attribute_alias\":\"SORTERPOS\"},{\"attribute_alias\":\"LABELFLAG\"},{\"attribute_alias\":\"SORTERDIR\"},{\"attribute_alias\":\"SORTABLEFLAG\"},{\"attribute_alias\":\"VALUE_LIST_DELIMITER\"},{\"attribute_alias\":\"FILTERABLEFLAG\"},{\"attribute_alias\":\"SHORT_DESCRIPTION\"},{\"attribute_alias\":\"AGGREGATABLEFLAG\"},{\"attribute_alias\":\"DATA_ADDRESS_PROPS\"}]},{\"caption\":\"Default Editor\",\"widgets\":[{\"attribute_alias\":\"DEFAULT_EDITOR_UXON\",\"hide_caption\":true,\"height\":12}]}]}",
             "LABEL": "Meta Attribute",
             "ALIAS": "ATTRIBUTE",
             "DATA_ADDRESS": "exf_attribute"

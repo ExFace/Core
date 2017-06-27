@@ -122,5 +122,12 @@ interface CmsConnectorInterface extends ExfaceClassInterface
      * @return CmsConnectorInterface
      */
     public function clearCmsCache();
+    
+    /**
+     * Returns the full URL of the root of the CMS site: e.g. https://www.exface.com/demo
+     * 
+     * @return string
+     */
+    public function getSiteUrl();
 }
 ?>

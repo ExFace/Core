@@ -180,6 +180,16 @@ abstract class Formula implements FormulaInterface
     {
         return $this->current_column_name;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Formulas\FormulaInterface::getCurrentColumn()
+     */
+    public function getCurrentColumn()
+    {
+        return $this->getDataSheet()->getColumns()->get($this->getCurrentColumnName());
+    }
 
     /**
      *

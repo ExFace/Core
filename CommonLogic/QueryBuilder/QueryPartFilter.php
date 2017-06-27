@@ -88,6 +88,16 @@ class QueryPartFilter extends QueryPartAttribute
     {
         return $this->condition;
     }
+    
+    /**
+     * Returns the delimiter to be used for concatennated value strings 
+     * (comma by default)
+     * 
+     * @return string
+     */
+    public function getValueListDelimiter(){
+        return $this->getAttribute()->getValueListDelimiter();
+    }
 
     /**
      *

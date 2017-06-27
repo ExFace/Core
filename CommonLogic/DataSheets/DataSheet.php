@@ -499,7 +499,7 @@ class DataSheet implements DataSheetInterface
             foreach ($this->getSubsheets() as $rel_path => $subsheet) {
                 if (! $this->getMetaObject()->getRelation($rel_path)->isReverseRelation()) {
                     $foreign_keys = $this->getColumnValues($rel_path);
-                    $subsheet->addFilterFromString($this->getMetaObject()->getRelation($rel_path)->getRelatedObjectKeyAlias(), implode(EXF_LIST_SEPARATOR, array_unique($foreign_keys)), EXF_COMPARATOR_IN);
+                    $subsheet->addFilterFromString($this->getMetaObject()->getRelation($rel_path)->getRelatedObjectKeyAlias(), implode($this->getMetaObject()->getRelation($rel_path)->getRelatedObjectKeyAttribute()->getValueListDelimiter(), array_unique($foreign_keys)), EXF_COMPARATOR_IN);
                     $left_key_column = $rel_path;
                     $right_key_column = $this->getMetaObject()->getRelation($rel_path)->getRelatedObjectKeyAlias();
                 } else {
@@ -507,7 +507,7 @@ class DataSheet implements DataSheetInterface
                         throw new DataSheetJoinError($this, 'Joining subsheets via reverse relations with explicitly specified foreign keys, not implemented yet!', '6T5V36I');
                     } else {
                         $foreign_keys = $this->getUidColumn()->getValues();
-                        $subsheet->addFilterFromString($this->getMetaObject()->getRelation($rel_path)->getForeignKeyAlias(), implode(EXF_LIST_SEPARATOR, array_unique($foreign_keys)), EXF_COMPARATOR_IN);
+                        $subsheet->addFilterFromString($this->getMetaObject()->getRelation($rel_path)->getForeignKeyAlias(), implode($this->getMetaObject()->getRelation($rel_path)->getForeignKeyAttribute()->getValueListDelimiter(), array_unique($foreign_keys)), EXF_COMPARATOR_IN);
                         // FIXME Fix Reverse relations key bug. Getting the left key column from the reversed relation here is a crude hack, but
                         // the get_main_object_key_alias() strangely does not work for reverse relations
                         $left_key_column = $this->getMetaObject()->getRelation($rel_path)->getReversedRelation()->getRelatedObjectKeyAlias();
@@ -662,7 +662,7 @@ class DataSheet implements DataSheetInterface
             
             // Use the UID column as a filter to make sure, only these rows are affected
             if ($column->getAttribute()->getAliasWithRelationPath() == $this->getMetaObject()->getUidAlias()) {
-                $query->addFilterFromString($this->getMetaObject()->getUidAlias(), implode(EXF_LIST_SEPARATOR, array_unique($column->getValues(false))), EXF_COMPARATOR_IN);
+                $query->addFilterFromString($this->getMetaObject()->getUidAlias(), implode($this->getMetaObject()->getUidAttribute()->getValueListDelimiter(), array_unique($column->getValues(false))), EXF_COMPARATOR_IN);
             } else {
                 // Add all other columns to values
                 
@@ -692,7 +692,7 @@ class DataSheet implements DataSheetInterface
                         $uid_data_sheet->getColumns()->removeAll();
                         $uid_data_sheet->getColumns()->addFromExpression($this->getMetaObject()->getUidAlias());
                         $uid_data_sheet->getColumns()->addFromExpression($uid_column_alias);
-                        $uid_data_sheet->addFilterFromString($this->getMetaObject()->getUidAlias(), implode($this->getUidColumn()->getValues(), EXF_LIST_SEPARATOR), EXF_COMPARATOR_IN);
+                        $uid_data_sheet->addFilterFromString($this->getMetaObject()->getUidAlias(), implode($this->getUidColumn()->getValues(), $this->getUidColumn()->getAttribute()->getValueListDelimiter()), EXF_COMPARATOR_IN);
                         $uid_data_sheet->dataRead();
                         $uid_column = $uid_data_sheet->getColumn($uid_column_alias);
                     }
@@ -929,7 +929,7 @@ class DataSheet implements DataSheetInterface
         $query->setFiltersConditionGroup($this->getFilters());
         if ($this->getUidColumn()) {
             if ($uids = $this->getUidColumn()->getValues(false)) {
-                $query->addFilterCondition(ConditionFactory::createFromExpression($this->exface, $this->getUidColumn()->getExpressionObj(), implode(EXF_LIST_SEPARATOR, $uids), EXF_COMPARATOR_IN));
+                $query->addFilterCondition(ConditionFactory::createFromExpression($this->exface, $this->getUidColumn()->getExpressionObj(), implode($this->getUidColumn()->getAttribute()->getValueListDelimiter(), $uids), EXF_COMPARATOR_IN));
             }
         }
         
@@ -1040,7 +1040,12 @@ class DataSheet implements DataSheetInterface
     function addFilterInFromString($column, $value_list)
     {
         if (is_array($value_list)) {
-            $value = implode(EXF_LIST_SEPARATOR, $value_list);
+            if ($this->getColumn($column) && $this->getColumn($column)->getAttribute()){
+                $delimiter = $this->getColumn($column)->getAttribute()->getValueListDelimiter();
+            } else {
+                $delimiter = EXF_LIST_SEPARATOR;
+            }
+            $value = implode($delimiter, $value_list);
         } else {
             $value = $value_list;
         }
@@ -1058,7 +1063,12 @@ class DataSheet implements DataSheetInterface
     function addFilterIsFromString($column, $value_list)
     {
         if (is_array($value_list)) {
-            $value = implode(EXF_LIST_SEPARATOR, $value_list);
+            if ($this->getColumn($column) && $this->getColumn($column)->getAttribute()){
+                $delimiter = $this->getColumn($column)->getAttribute()->getValueListDelimiter();
+            } else {
+                $delimiter = EXF_LIST_SEPARATOR;
+            }
+            $value = implode($delimiter, $value_list);
         } else {
             $value = $value_list;
         }
@@ -1439,7 +1449,7 @@ class DataSheet implements DataSheetInterface
 
     public function addFilterFromColumnValues(DataColumnInterface $column)
     {
-        $this->addFilterFromString($column->getExpressionObj()->toString(), implode(EXF_LIST_SEPARATOR, array_unique($column->getValues(false))), EXF_COMPARATOR_IN);
+        $this->addFilterFromString($column->getExpressionObj()->toString(), implode(($column->getAttribute() ? $column->getAttribute()->getValueListDelimiter() : EXF_LIST_SEPARATOR), array_unique($column->getValues(false))), EXF_COMPARATOR_IN);
         return $this;
     }
 

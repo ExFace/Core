@@ -5,13 +5,22 @@ class RowDataArrayFilter
 {
 
     private $filters = array();
-
-    public function addAnd($key, $value, $comparator)
+    
+    /**
+     * 
+     * 
+     * @param string $key
+     * @param string $value
+     * @param string $comparator - one of the EXF_COMPARATOR_xxx constants
+     * @param string $listDelimiter
+     */
+    public function addAnd($key, $value, $comparator, $listDelimiter = EXF_LIST_SEPARATOR)
     {
         $this->filters[] = array(
             'key' => $key,
             'value' => $value,
-            'comparator' => $comparator
+            'comparator' => $comparator,
+            'listDelimiter' => $listDelimiter
         );
     }
 
@@ -23,7 +32,7 @@ class RowDataArrayFilter
                     case EXF_COMPARATOR_IN:
                         $match = false;
                         $row_val = $row[$filter['key']];
-                        foreach (explode(EXF_LIST_SEPARATOR, $filter['value']) as $val) {
+                        foreach (explode($filter['listDelimiter'], $filter['value']) as $val) {
                             $val = trim($val);
                             if (strcasecmp($row_val, $val) === 0) {
                                 $match = true;

@@ -157,7 +157,7 @@ class DataList extends Data implements iHaveTopToolbar, iHaveBottomToolbar, iFil
      */
     public function setValuesFromArray(array $values)
     {
-        $this->setValue(implode(EXF_LIST_SEPARATOR, $values));
+        $this->setValue(implode($this->getUidColumn()->getAttribute()->getValueListDelimiter(), $values));
         return $this;
     }
 

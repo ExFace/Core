@@ -61,6 +61,7 @@ trait WidgetExceptionTrait {
             $uxon_tab = $debug_widget->createTab();
             $uxon_tab->setId('widget_uxon_tab');
             $uxon_tab->setCaption('Widget UXON');
+            $uxon_tab->setNumberOfColumns(1);
             $request_widget = WidgetFactory::create($page, 'Html');
             $uxon_tab->addWidget($request_widget);
             $request_widget->setValue('<pre>' . (! $this->getWidget()->exportUxonObjectOriginal()->isEmpty() ? $this->getWidget()->exportUxonObjectOriginal()->toJson(true) : $this->getWidget()->exportUxonObject()->toJson(true)) . '</pre>');

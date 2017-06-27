@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\CommonLogic\Log;
 
+use exface\Core\CommonLogic\Log\Helpers\LogHelper;
 use exface\Core\Exceptions\UnderflowException;
 use exface\Core\Interfaces\iCanGenerateDebugWidgets;
 use exface\Core\Interfaces\Log\LoggerInterface;
@@ -167,6 +168,8 @@ class Logger implements LoggerInterface
                 }
                 $context['exception'] = $sender;
                 $context['id']        = $sender->getId();
+            } else {
+                $context['id']        = LogHelper::createId();
             }
 
             foreach ($this->handlers as $handler) {

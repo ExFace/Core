@@ -25,27 +25,26 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
  * represented by the InputSelect itself.
  *
  * Example 1 (manually defined options):
- * {
- * "object_alias": "MY.APP.CUSTOMER",
- * "widget_type": "InputSelect",
- * "attribute_alias": "CLASSIFICATION",
- * "selectable_options":
- * [
- * "A": "A-Customer",
- * "B": "B-Customer",
- * "C": "C-Customer"
- * ]
- * }
+ *  {
+ *      "object_alias": "MY.APP.CUSTOMER",
+ *      "widget_type": "InputSelect",
+ *      "attribute_alias": "CLASSIFICATION",
+ *      "selectable_options": [
+ *          "A": "A-Customer",
+ *          "B": "B-Customer",
+ *          "C": "C-Customer"
+ *      ]
+ *  }
  *
  * Example 2 (attributes of another object as options):
- * {
- * "object_alias": "MY.APP.CUSTOMER",
- * "widget_type": "InputSelect",
- * "attribute_alias": "CLASSIFICATION",
- * "options_object_alias": "MY.APP.CUSTOMER_CLASSIFICATION",
- * "value_attribute_alias": "ID",
- * "text_attribute_alias": "CLASSIFICATION_NAME"
- * }
+ *  {
+ *      "object_alias": "MY.APP.CUSTOMER",
+ *      "widget_type": "InputSelect",
+ *      "attribute_alias": "CLASSIFICATION",
+ *      "options_object_alias": "MY.APP.CUSTOMER_CLASSIFICATION",
+ *      "value_attribute_alias": "ID",
+ *      "text_attribute_alias": "CLASSIFICATION_NAME"
+ *  }
  *
  * By turning "use_prefill_to_filter_options" on or off, the prefill behavior can be customized. By default, the values
  * from the prefill data will be used as options in the select automatically.
@@ -62,9 +61,9 @@ class InputSelect extends Input implements iSupportMultiSelect
 
     private $multi_select = false;
 
-    private $multi_select_value_delimiter = EXF_LIST_SEPARATOR;
+    private $multi_select_value_delimiter = null;
 
-    private $multi_select_text_delimiter = EXF_LIST_SEPARATOR;
+    private $multi_select_text_delimiter = null;
 
     private $selectable_options = array();
 
@@ -619,17 +618,29 @@ class InputSelect extends Input implements iSupportMultiSelect
         }
         return $this;
     }
-
+    
+    /**
+     * 
+     * @return string
+     */
     public function getMultiSelectValueDelimiter()
     {
+        if (is_null($this->multi_select_value_delimiter)){
+            if ($this->getAttribute()){
+                $this->multi_select_value_delimiter = $this->getAttribute()->getValueListDelimiter();
+            } else {
+                $this->multi_select_value_delimiter = EXF_LIST_SEPARATOR;
+            }
+        }
         return $this->multi_select_value_delimiter;
     }
 
     /**
      * Sets the delimiter to be used for values.
-     * Default: ",".
+     * 
+     * Default: value list delimiter from the value attribute or "," if no value attribute defined.
      *
-     * Be carefull overriding this setting, as the data source must understand, what to do with the custom delimiter.
+     * Be careful overriding this setting, as the data source must understand, what to do with the custom delimiter.
      *
      * @uxon-property multi_select_value_delimiter
      * @uxon-type string
@@ -642,15 +653,27 @@ class InputSelect extends Input implements iSupportMultiSelect
         $this->multi_select_value_delimiter = $value;
         return $this;
     }
-
+    
+    /**
+     * 
+     * @return string
+     */
     public function getMultiSelectTextDelimiter()
     {
+        if (is_null($this->multi_select_text_delimiter)){
+            if ($this->getTextAttribute()){
+                $this->multi_select_text_delimiter = $this->getTextAttribute()->getValueListDelimiter();
+            } else {
+                $this->multi_select_text_delimiter = EXF_LIST_SEPARATOR;
+            }
+        }
         return $this->multi_select_text_delimiter;
     }
 
     /**
      * Sets the delimiter to be used for the displayed text.
-     * Default: ",".
+     * 
+     * Default: value list delimiter from the text attribute or "," if no text attribute defined.
      *
      * This setting will only affect the displayed text, not the value passed to the server.
      *
