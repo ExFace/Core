@@ -99,6 +99,9 @@ class ContextApi extends AbstractAction
     }
     
     /**
+     * Returns the current PSR-7 ServerRequest
+     * 
+     * TODO Move this method to AbstractAction once the new PSR7-based API is available
      * 
      * @return ServerRequestInterface
      */

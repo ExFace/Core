@@ -4,7 +4,7 @@ namespace exface\Core\CommonLogic\Contexts;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Contexts\ContextInterface;
 use exface\Core\Interfaces\Contexts\ContextScopeInterface;
-use exface\Core\Exceptions\UnexpectedValueException;
+use exface\Core\Exceptions\Contexts\ContextRuntimeError;
 
 abstract class AbstractContext implements ContextInterface
 {
@@ -18,6 +18,8 @@ abstract class AbstractContext implements ContextInterface
     private $indicator = null;
     
     private $visibility = null;
+    
+    private $active = false;
 
     public function __construct(\exface\Core\CommonLogic\Workbench $exface)
     {
@@ -149,12 +151,35 @@ abstract class AbstractContext implements ContextInterface
     {
         $value = mb_strtolower($value);
         if ($value != EXF_WIDGET_VISIBILITY_HIDDEN && $value != EXF_WIDGET_VISIBILITY_NORMAL && $value != EXF_WIDGET_VISIBILITY_OPTIONAL && $value != EXF_WIDGET_VISIBILITY_PROMOTED) {
-            throw new UnexpectedValueException('Invalid visibility value "' . $value . '" for context "' . $this->getAlias() . '"!');
+            throw new ContextRuntimeError($this, 'Invalid visibility value "' . $value . '" for context "' . $this->getAlias() . '"!');
             return;
         }
         $this->visibility = $value;
         return $this;
     }
+    
+    /**
+     * 
+     * @return boolean
+     */
+    public function isActive()
+    {
+        return $this->active;
+    }
+    
+    /**
+     * 
+     * @param boolean $true_or_false
+     * @return \exface\Core\CommonLogic\Contexts\AbstractContext
+     */
+    public function setActive($true_or_false)
+    {
+        $this->active = $true_or_false;
+        return $this;
+    }
+ 
+    
+    
  
 }
 ?>
