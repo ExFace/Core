@@ -298,7 +298,7 @@ trait ExceptionTrait {
     public function getSystemByPage(UiPageInterface $page)
     {
         if( $this->system == FALSE) {
-            $this->system = $this->getConfigValueByPage($page, "DEBUG.SUPPORT_EMAIL_SYSTEM_NAME");
+            $this->system = $page->getWorkbench()->getCMS()->getSiteUrl();
         }
         return $this->system;
     }

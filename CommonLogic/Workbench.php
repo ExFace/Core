@@ -4,6 +4,7 @@ namespace exface\Core\CommonLogic;
 use exface\Core\CommonLogic\EventManager;
 use exface\Core\CommonLogic\Filemanager;
 use exface\Core\CommonLogic\Log\Log;
+use exface\Core\Interfaces\CmsConnectorInterface;
 use exface\Core\utils;
 use exface\Core\Factories\DataConnectorFactory;
 use exface\Core\Factories\CmsConnectorFactory;
@@ -170,7 +171,7 @@ class Workbench
 
     /**
      *
-     * @return CMSInterface
+     * @return CmsConnectorInterface
      */
     public function getCMS()
     {

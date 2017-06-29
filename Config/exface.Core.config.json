@@ -20,7 +20,6 @@
 	"LOG.MINIMUM_LEVEL_TO_LOG": "notice",
 	"LOG.MAX_DAYS_TO_KEEP": "14",
 	"LOG.PERSIST_LOG_LEVEL": "alert",
-	"DEBUG.SYSTEM_NAME": "mydomain.com",
-	"DEBUG.SUPPORT_EMAIL_ADDRESS": "support@mydomain.com"
+	"DEBUG.SUPPORT_EMAIL_ADDRESS": "support@mydomain.com",
 	"LOG.PASSTHROUGH_LOG_LEVEL": "error"
 }
