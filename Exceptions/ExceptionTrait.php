@@ -34,6 +34,10 @@ trait ExceptionTrait {
 
     private $exception_widget = null;
 
+    private $system = false;
+
+    private $support_mail = false;
+
     public function __construct($message, $alias = null, $previous = null)
     {
         parent::__construct($message, null, $previous);
@@ -130,7 +134,8 @@ trait ExceptionTrait {
             /** @var Message $support_hint */
             $support_hint = WidgetFactory::create($page, 'Message', $error_tab);
             $support_hint->setType(EXF_MESSAGE_TYPE_INFO);
-            $support_hint->setText($debug_widget->getWorkbench()->getCoreApp()->getTranslator()->translate('ERROR.SUPPORT_HINT', ['%error_id%' => 'LOG-'.$this->getId()]));
+
+            $support_hint->setText($debug_widget->getWorkbench()->getCoreApp()->getTranslator()->translate('ERROR.SUPPORT_HINT', ['%error_id%' => 'LOG-'.$this->getId(), '%system_name%' => $this->getSystemByPage($page), '%support_mail%' => $this->getSupportMailByPage($page)]));
             $error_tab->addWidget($support_hint);
             
             $debug_widget->addTab($error_tab);
@@ -288,6 +293,34 @@ trait ExceptionTrait {
     {
         $this->logLevel = $logLevel;
         return $this;
-    }    
+    }
+
+    public function getSystemByPage(UiPageInterface $page)
+    {
+        if( $this->system == FALSE) {
+            $this->system = $page->getWorkbench()->getCMS()->getSiteUrl();
+        }
+        return $this->system;
+    }
+
+    public function getSupportMailByPage(UiPageInterface $page)
+    {
+        if( $this->support_mail == FALSE) {
+            $this->support_mail = $this->getConfigValueByPage($page, "DEBUG.SUPPORT_EMAIL_ADDRESS");
+        }
+        return $this->support_mail;
+    }
+
+    protected function getConfigValueByPage(UiPageInterface $page, $option) {
+        $app = $page->getWorkbench()->getApp("exface.Core");
+        if(!$app ) {
+            return null;
+        }
+        $config = $app->getConfig();
+        if(!$config ) {
+            return null;
+        }
+        return $config->getOption($option);
+    }
 }
 ?>

@@ -80,7 +80,7 @@
 	"ERROR.REQUEST_CAPTION": "Request",
 	"ERROR.CONTEXT_CAPTION": "Context",
 	"ERROR.STACKTRACE_CAPTION": "Stacktrace",
-	"ERROR.SUPPORT_HINT": "Please be sure to include the LOG-number of this error when contacting support: \"%error_id%\"!",
+	"ERROR.SUPPORT_HINT": "Please be sure to include the LOG-number of this error when contacting <a href=\"mailto:%support_mail%?subject=[%system_name%]%20%error_id%\">support</a>: \"%error_id%\"!",
 	"WARNING.CAPTION": "Warning"
 	
 }
