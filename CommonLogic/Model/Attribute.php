@@ -49,6 +49,8 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
     private $default_value;
 
     private $fixed_value;
+    
+    private $value_list_delimiter = EXF_LIST_SEPARATOR;
 
     private $default_sorter_dir = 'ASC';
 
@@ -700,5 +702,43 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
         $this->aggregatable = \exface\Core\DataTypes\BooleanDataType::parse($value);
         return $this;
     }
+    
+    /**
+     * Returns the delimiter to be used when concatennating multiple values of 
+     * this attribute into a string.
+     * 
+     * Defaults to EXF_LIST_SEPARATOR unless changed via setValueListDelimiter()
+     * 
+     * @return string
+     */
+    public function getValueListDelimiter()
+    {
+        return $this->value_list_delimiter;
+    }
+    
+    /**
+     * Changes the delimiter to be used when concatennating multiple values of 
+     * this attribute into a string.
+     * 
+     * This is usefull if the values are likely to contain the delimiter string
+     * themselves. Since the default delimiter is a comma, you should change it
+     * to something else if your values will regularly contain commas. 
+     * 
+     * Note, for longer texts, that will contain commas in most cases, there is
+     * normally no need to change the delimiter because it is mainly used for
+     * all kinds of filter and relation keys. Longer texts with commas, on the 
+     * other hand, are very unlikely to be used for keys or as search strings.
+     * If it still happens, change the delimiter to a pipe or so, that - in
+     * turn - is very unlikely to be included in a longer text.
+     * 
+     * @param string $string
+     * @return \exface\Core\CommonLogic\Model\Attribute
+     */
+    public function setValueListDelimiter($string)
+    {
+        $this->value_list_delimiter = $string;
+        return $this;
+    }
+ 
 }
 ?>

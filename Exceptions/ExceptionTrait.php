@@ -116,6 +116,7 @@ trait ExceptionTrait {
             $error_tab = $debug_widget->createTab();
             $error_tab->setId('error_tab');
             $error_tab->setCaption($debug_widget->getWorkbench()->getCoreApp()->getTranslator()->translate('ERROR.CAPTION'));
+            $error_tab->setNumberOfColumns(1);
             if ($this->getAlias()) {
                 $error_ds = $this->getErrorData($page->getWorkbench(), $this->getAlias());
                 $error_heading = WidgetFactory::create($page, 'TextHeading', $error_tab)->setHeadingLevel(2)->setValue($debug_widget->getWorkbench()->getCoreApp()->getTranslator()->translate('ERROR.CAPTION') . ' ' . $this->getAlias() . ': ' . $error_ds->getCellValue('ERROR_TEXT', 0));
@@ -145,6 +146,7 @@ trait ExceptionTrait {
             $stacktrace_tab = $debug_widget->createTab();
             $stacktrace_tab->setId('stacktrace_tab');
             $stacktrace_tab->setCaption($debug_widget->getWorkbench()->getCoreApp()->getTranslator()->translate('ERROR.STACKTRACE_CAPTION'));
+            $stacktrace_tab->setNumberOfColumns(1);
             $stacktrace_widget = WidgetFactory::create($page, 'Html', $stacktrace_tab);
             $stacktrace_tab->addWidget($stacktrace_widget);
             $stacktrace_widget->setValue($page->getWorkbench()->getCMS()->sanitizeErrorOutput($page->getWorkbench()->getDebugger()->printException($this)));
@@ -156,10 +158,30 @@ trait ExceptionTrait {
             $request_tab = $debug_widget->createTab();
             $request_tab->setId('request_tab');
             $request_tab->setCaption($page->getWorkbench()->getCoreApp()->getTranslator()->translate('ERROR.REQUEST_CAPTION'));
-            $request_widget = WidgetFactory::create($page, 'Html');
+            $request_tab->setNumberOfColumns(1);
+            $request_widget = WidgetFactory::create($page, 'Html', $request_tab);
             $request_tab->addWidget($request_widget);
             $request_widget->setValue('<pre>' . $page->getWorkbench()->getDebugger()->printVariable($_REQUEST, true, 5) . '</pre>');
             $debug_widget->addTab($request_tab);
+        }
+        
+        // Context tab
+        if ($debug_widget->getChild('context_tab') === false){
+            $context_dump = array();
+            foreach ($page->getWorkbench()->context()->getScopes() as $context_scope){
+                $context_dump[$context_scope->getName()]['id'] = $context_scope->getScopeId();
+                foreach ($context_scope->getAllContexts() as $context){
+                    $context_dump[$context_scope->getName()][$context->getAlias()] = $context->exportUxonObject();
+                }
+            }
+            $context_tab = $debug_widget->createTab();
+            $context_tab->setId('context_tab');
+            $context_tab->setCaption($page->getWorkbench()->getCoreApp()->getTranslator()->translate('ERROR.CONTEXT_CAPTION'));
+            $context_tab->setNumberOfColumns(1);
+            $context_widget = WidgetFactory::create($page, 'Html', $context_tab);
+            $context_widget->setValue('<pre>' . $page->getWorkbench()->getDebugger()->printVariable($context_dump, true, 2) . '</pre>');
+            $context_tab->addWidget($context_widget);
+            $debug_widget->addTab($context_tab);
         }
         
         // Recursively enrich the error widget with information from previous exceptions

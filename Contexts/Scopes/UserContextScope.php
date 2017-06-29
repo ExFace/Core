@@ -10,6 +10,10 @@ class UserContextScope extends AbstractContextScope
     private $user_data = null;
 
     private $user_locale = null;
+    
+    public function getScopeId(){
+        return $this->getUserName();
+    }
 
     public function getUserName()
     {

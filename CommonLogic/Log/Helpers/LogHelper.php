@@ -79,4 +79,9 @@ class LogHelper
     {
         return Logger::toMonologLevel($level1) - Logger::toMonologLevel($level2);
     }
+
+    public static function createId()
+    {
+        return strtoupper(substr(md5(uniqid(rand(), true)), 0, 8));
+    }
 }

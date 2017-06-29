@@ -79,6 +79,7 @@
 	"ERROR.CAPTION": "Fehler",
 	"ERROR.STACKTRACE_CAPTION": "Stacktrace",
 	"ERROR.REQUEST_CAPTION": "Request",
+	"ERROR.CONTEXT_CAPTION": "Context",	
 	"ERROR.SUPPORT_HINT": "Bitte geben Sie bei Anfragen an den <a href=\"mailto:%support_mail%?subject=[%system_name%]%20%error_id%\">Support</a> stets die LOG-Nummer an: \"%error_id%\"!",
 	"WARNING.CAPTION": "Warnung"
 }
