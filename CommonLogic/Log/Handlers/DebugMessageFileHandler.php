@@ -26,6 +26,9 @@ class DebugMessageFileHandler implements LogHandlerInterface
     
     private $workbench;
 
+    /** @var Logger logger */
+    private $logger;
+
     /**
      * DebugMessageFileHandler constructor.
      *
@@ -53,23 +56,7 @@ class DebugMessageFileHandler implements LogHandlerInterface
             return;
         }
         
-        $logger  = new \Monolog\Logger("Stacktrace");
-        $handler = new StreamHandler($this->dir . "/" . $fileName, $this->minLogLevel);
-        $handler->setFormatter(new MessageOnlyFormatter());
-
-        $persistLogLevel = $this->workbench->getConfig()->getOption('LOG.PERSIST_LOG_LEVEL');
-        $passthroughLevel = $this->workbench->getConfig()->getOption('LOG.PASSTHROUGH_LOG_LEVEL');
-
-        $fcHandler = new FingersCrossedHandler(
-            $handler,
-            new ErrorLevelActivationStrategy(Logger::toMonologLevel($persistLogLevel)),
-            0,
-            true,
-            true,
-            $passthroughLevel
-        );
-
-        $logger->pushHandler($fcHandler);
+        $logger = $this->getLogger();
         
         if ($sender) {
             try {
@@ -86,7 +73,7 @@ class DebugMessageFileHandler implements LogHandlerInterface
                 }
                 $debugWidgetData = $this->createFallbackWidgetUxon($this->getWorkbench()->getDebugger()->printException($exception, true));
             }
-            $logger->log($level, $debugWidgetData);
+            $logger->log($level, $debugWidgetData, array('filename' => $fileName));
         } elseif ($context['exception'] instanceof \Throwable){
             // If there is no sender, but the context contains an error, use
             // the error fallback to create a debug widget
@@ -150,5 +137,32 @@ class DebugMessageFileHandler implements LogHandlerInterface
      */
     public function getWorkbench(){
         return $this->workbench;
+    }
+
+    protected function getLogger()
+    {
+        if (! $this->logger) {
+            $logger  = new \Monolog\Logger("Stacktrace");
+            $handler = new DirStreamHandler($this->dir . "/", $this->minLogLevel);
+            $handler->setFormatter(new MessageOnlyFormatter());
+
+            $persistLogLevel  = $this->workbench->getConfig()->getOption('LOG.PERSIST_LOG_LEVEL');
+            $passthroughLevel = $this->workbench->getConfig()->getOption('LOG.PASSTHROUGH_LOG_LEVEL');
+
+            $fcHandler = new FingersCrossedHandler(
+                $handler,
+                new ErrorLevelActivationStrategy(Logger::toMonologLevel($persistLogLevel)),
+                0,
+                true,
+                true,
+                $passthroughLevel
+            );
+
+            $logger->pushHandler($fcHandler);
+
+            $this->logger = $logger;
+        }
+
+        return $this->logger;
     }
 }
