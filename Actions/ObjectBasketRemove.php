@@ -7,10 +7,8 @@ namespace exface\Core\Actions;
  * @author Andrej Kabachnik
  *        
  */
-class ObjectBasketRemove extends ObjectBasketFetch
+class ObjectBasketRemove extends ObjectBasketAdd
 {
-
-    private $return_basket_content = null;
 
     protected function init()
     {
@@ -27,6 +25,7 @@ class ObjectBasketRemove extends ObjectBasketFetch
         if ($input->isEmpty()) {
             $this->getContext()->removeInstancesForObjectId($object->getId());
             $this->setResultMessage($this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.OBJECTBASKETREMOVE.RESULT_ALL', array(
+                '%context_name%' => $this->getContext()->getName(),
                 '%object_name%' => $object->getName()
             )));
         } else {
@@ -36,29 +35,13 @@ class ObjectBasketRemove extends ObjectBasketFetch
                 $removed ++;
             }
             $this->setResultMessage($this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.OBJECTBASKETREMOVE.RESULT', array(
+                '%context_name%' => $this->getContext()->getName(),
                 '%number%' => $removed,
                 '%object_name%' => $object->getName()
             ), $removed));
         }
-        if ($this->getReturnBasketContent()) {
-            $this->setResult($this->getFavoritesJson());
-        } else {
-            $this->setResult('');
-        }
-    }
-
-    public function getReturnBasketContent()
-    {
-        if (is_null($this->return_basket_content)) {
-            $this->return_basket_content = $this->getWorkbench()->getRequestParam('fetch') ? true : false;
-        }
-        return $this->return_basket_content;
-    }
-
-    public function setReturnBasketContent($value)
-    {
-        $this->return_basket_content = \exface\Core\DataTypes\BooleanDataType::parse($value);
-        return $this;
+        
+        $this->setResult('');
     }
 }
 ?>

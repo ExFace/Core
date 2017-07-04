@@ -5,6 +5,7 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Contexts\ContextInterface;
 use exface\Core\Interfaces\Contexts\ContextScopeInterface;
 use exface\Core\Exceptions\Contexts\ContextRuntimeError;
+use exface\Core\Widgets\Container;
 
 abstract class AbstractContext implements ContextInterface
 {
@@ -17,19 +18,25 @@ abstract class AbstractContext implements ContextInterface
     
     private $indicator = null;
     
-    private $visibility = null;
+    private $icon = null;
     
-    private $active = false;
-
+    private $name = null;
+    
+    private $context_bar_visibility = null;
+    
+    /**
+     * 
+     * @param \exface\Core\CommonLogic\Workbench $exface
+     */
     public function __construct(\exface\Core\CommonLogic\Workbench $exface)
     {
         $this->exface = $exface;
     }
 
     /**
-     * Returns the scope of this speicific context
-     *
-     * @return AbstractContextScope
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Contexts\ContextInterface::getScope()
      */
     public function getScope()
     {
@@ -37,10 +44,9 @@ abstract class AbstractContext implements ContextInterface
     }
 
     /**
-     * Sets the scope for this specific context
-     *
-     * @param AbstractContextScope $context_scope            
-     * @return AbstractContext
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Contexts\ContextInterface::setScope()
      */
     public function setScope(ContextScopeInterface $context_scope)
     {
@@ -49,9 +55,9 @@ abstract class AbstractContext implements ContextInterface
     }
 
     /**
-     * Returns the default scope for this type of context.
-     *
-     * @return \exface\Core\CommonLogic\Contexts\Scopes\windowContextScope
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Contexts\ContextInterface::getDefaultScope()
      */
     public function getDefaultScope()
     {
@@ -59,8 +65,9 @@ abstract class AbstractContext implements ContextInterface
     }
 
     /**
-     *
-     * @return \exface\Core\CommonLogic\Workbench
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\ExfaceClassInterface::getWorkbench()
      */
     public function getWorkbench()
     {
@@ -68,14 +75,19 @@ abstract class AbstractContext implements ContextInterface
     }
 
     /**
-     * Returns a serializable UXON object, that represents the current contxt, thus preparing it to be saved in a session,
-     * cookie, database or whatever is used by a context scope.
-     * What exactly ist to be saved, strongly depends on the context type: an action context needs an acton alias and, perhaps, a data backup,
-     * a filter context needs to save it's filters conditions, etc. In any case, the serialized version should contain enoght
-     * data to restore the context completely afterwards, but also not to much data in order not to consume too much space in
-     * whatever stores the respective context scope.
-     *
-     * @return UxonObject
+     * Returns a serializable UXON object, that represents the current contxt, 
+     * thus preparing it to be saved in a session, cookie, database or whatever 
+     * is used by a context scope.
+     * 
+     * What exactly ist to be saved, strongly depends on the context type: an 
+     * action context needs an acton alias and, perhaps, a data backup, a filter 
+     * context needs to save it's filters conditions, etc. In any case, the 
+     * serialized version should contain enough data to restore the context 
+     * completely afterwards, but also not to much data in order not to consume 
+     * too much space in whatever stores the respective context scope.
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::exportUxonObject()
      */
     public function exportUxonObject()
     {
@@ -84,11 +96,12 @@ abstract class AbstractContext implements ContextInterface
 
     /**
      * Restores a context from it's UXON representation.
+     * 
      * The input is whatever export_uxon_object() produces for this context type.
-     *
-     * @param
-     *            UxonObject
-     * @return AbstractContext
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::importUxonObject()
+     * @return ContextInterface
      */
     public function importUxonObject(UxonObject $uxon)
     {
@@ -96,10 +109,9 @@ abstract class AbstractContext implements ContextInterface
     }
 
     /**
-     * Returns the alias (name) of the context - e.g.
-     * "Filter" for the FilterContext, etc.
-     *
-     * @return string
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Contexts\ContextInterface::getAlias()
      */
     public function getAlias()
     {
@@ -110,7 +122,9 @@ abstract class AbstractContext implements ContextInterface
     }
     
     /**
-     * @return string
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Contexts\ContextInterface::getIndicator()
      */
     public function getIndicator()
     {
@@ -119,8 +133,8 @@ abstract class AbstractContext implements ContextInterface
     
     /**
      * 
-     * @param string $indicator
-     * @return \exface\Core\CommonLogic\Contexts\AbstractContext
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Contexts\ContextInterface::setIndicator()
      */
     public function setIndicator($indicator)
     {
@@ -129,57 +143,99 @@ abstract class AbstractContext implements ContextInterface
     }
     
     /**
-     * Returns the visibility of this context.
      * 
-     * @return string
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Contexts\ContextInterface::getContextBarVisibility()
      */
-    public function getVisibility()
+    public function getContextBarVisibility()
     {
-        if (is_null($this->visibility)){
-            $this->setVisibility(EXF_WIDGET_VISIBILITY_NORMAL);
+        if (is_null($this->context_bar_visibility)){
+            $this->setVisibility(ContextInterface::CONTEXT_BAR_SHOW_IF_NOT_EMPTY);
         }
-        return $this->visibility;
+        return $this->context_bar_visibility;
     }
     
     /**
-     * Sets the visibility of the context. Accepts one of the EXF_WIDGET_VISIBILITY_xxx constants.
-     *
-     * @param string $visibility
-     * @return \exface\Core\CommonLogic\Contexts\AbstractContext
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Contexts\ContextInterface::setContextBarVisibility()
      */
-    public function setVisibility($value)
+    public function setContextBarVisibility($value)
     {
         $value = mb_strtolower($value);
-        if ($value != EXF_WIDGET_VISIBILITY_HIDDEN && $value != EXF_WIDGET_VISIBILITY_NORMAL && $value != EXF_WIDGET_VISIBILITY_OPTIONAL && $value != EXF_WIDGET_VISIBILITY_PROMOTED) {
-            throw new ContextRuntimeError($this, 'Invalid visibility value "' . $value . '" for context "' . $this->getAlias() . '"!');
+        if ($value != ContextInterface::CONTEXT_BAR_DISABED 
+        && $value != ContextInterface::CONTEXT_BAR_HIDE_ALLWAYS 
+        && $value != ContextInterface::CONTEXT_BAR_SHOW_ALLWAYS 
+        && $value != ContextInterface::CONTEXT_BAR_SHOW_IF_NOT_EMPTY) {
+            throw new ContextRuntimeError($this, 'Invalid context_bar_visibility value "' . $value . '" for context "' . $this->getAlias() . '"!');
             return;
         }
-        $this->visibility = $value;
+        $this->context_bar_visibility = $value;
         return $this;
     }
     
     /**
      * 
-     * @return boolean
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Contexts\ContextInterface::isEmpty()
      */
-    public function isActive()
+    public function isEmpty()
     {
         return $this->active;
     }
     
     /**
      * 
-     * @param boolean $true_or_false
-     * @return \exface\Core\CommonLogic\Contexts\AbstractContext
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Contexts\ContextInterface::getContextBarPopup()
      */
-    public function setActive($true_or_false)
+    public function getContextBarPopup(Container $container)
     {
-        $this->active = $true_or_false;
+        return $container;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Contexts\ContextInterface::getIcon()
+     */
+    public function getIcon()
+    {
+        return $this->icon;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Contexts\ContextInterface::setIcon()
+     */
+    public function setIcon($icon)
+    {
+        $this->icon = $icon;
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Contexts\ContextInterface::getName()
+     */
+    public function getName()
+    {
+        return $this->name;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Contexts\ContextInterface::setName()
+     */
+    public function setName($name)
+    {
+        $this->name = $name;
         return $this;
     }
  
-    
-    
  
 }
 ?>

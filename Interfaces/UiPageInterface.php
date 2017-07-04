@@ -2,6 +2,7 @@
 namespace exface\Core\Interfaces;
 
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Widgets\ContextBar;
 
 interface UiPageInterface extends ExfaceClassInterface
 {
@@ -93,6 +94,13 @@ interface UiPageInterface extends ExfaceClassInterface
      * @return boolean
      */
     public function isEmpty();
+    
+    /**
+     * Returns the context bar widget for this page
+     * 
+     * @return ContextBar
+     */
+    public function getContextBar();
 }
 
 ?>

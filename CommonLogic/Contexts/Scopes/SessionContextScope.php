@@ -90,7 +90,7 @@ class SessionContextScope extends AbstractContextScope
         // var_dump($_SESSION);
         $this->sessionOpen();
         
-        foreach ($this->getAllContexts() as $context) {
+        foreach ($this->getContextsLoaded() as $context) {
             $uxon = $context->exportUxonObject();
             if (! is_null($uxon) && ! $uxon->isEmpty()) {
                 // Save the context in the session in JSON-Representation, because saving it directly as a UxonObject

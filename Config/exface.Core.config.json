@@ -12,14 +12,21 @@
 	"DEFAULT_DATE_FORMAT": "d.m.Y",
 	"DEFAULT_DATETIME_FORMAT": "d.m.Y H:i:s",
 	"FOLDER_USER_DATA": "UserData",
+	
 	"DEBUG.DISABLE_TEMPLATE_ERROR_HANDLERS": false,
 	"DEBUG.PRETTIFY_ERRORS": true,
 	"DEBUG.SHOW_REQUEST_DUMP": false,
 	"DEBUG.SHOW_META_MODEL_DETAILS": true,
 	"DEBUG.SHOW_ERROR_DETAILS_TO_ADMINS_ONLY": true,
+	"DEBUG.SUPPORT_EMAIL_ADDRESS": "support@mydomain.com",
+    
 	"LOG.MINIMUM_LEVEL_TO_LOG": "notice",
 	"LOG.MAX_DAYS_TO_KEEP": "14",
 	"LOG.PERSIST_LOG_LEVEL": "alert",
-	"DEBUG.SUPPORT_EMAIL_ADDRESS": "support@mydomain.com",
-	"LOG.PASSTHROUGH_LOG_LEVEL": "error"
+	"LOG.PASSTHROUGH_LOG_LEVEL": "error",
+	
+	"CONTEXT_BAR.VISIBILITY": {
+	   "User:Favorites": "show_allways",
+	   "Window:ObjectBasket": "show_allways"
+	}
 }

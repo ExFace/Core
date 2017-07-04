@@ -170,7 +170,7 @@ trait ExceptionTrait {
             $context_dump = array();
             foreach ($page->getWorkbench()->context()->getScopes() as $context_scope){
                 $context_dump[$context_scope->getName()]['id'] = $context_scope->getScopeId();
-                foreach ($context_scope->getAllContexts() as $context){
+                foreach ($context_scope->getContextsLoaded() as $context){
                     $context_dump[$context_scope->getName()][$context->getAlias()] = $context->exportUxonObject();
                 }
             }

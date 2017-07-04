@@ -8,6 +8,10 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Exceptions\Contexts\ContextRuntimeError;
 use exface\Core\CommonLogic\Contexts\AbstractContext;
+use exface\Core\Widgets\Container;
+use exface\Core\Factories\WidgetFactory;
+use exface\Core\Factories\UiPageFactory;
+use exface\Core\CommonLogic\UiPage;
 
 /**
  * The ObjectBasketContext provides a unified interface to store links to selected instances of meta objects in any context scope.
@@ -112,10 +116,9 @@ class ObjectBasketContext extends AbstractContext
     }
 
     /**
-     * The default scope of the data context is the window.
-     * Most apps will run in the context of a single window,
-     * so two windows running one app are independant in general.
-     *
+     * The object basket context resides in the window scope by default.
+     * 
+     * {@inheritDoc}
      * @see \exface\Core\CommonLogic\Contexts\AbstractContext::getDefaultScope()
      */
     public function getDefaultScope()
@@ -126,7 +129,6 @@ class ObjectBasketContext extends AbstractContext
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\CommonLogic\Contexts\AbstractContext::importUxonObject()
      */
     public function importUxonObject(UxonObject $uxon)
@@ -138,17 +140,16 @@ class ObjectBasketContext extends AbstractContext
 
     /**
      * The favorites context is exported to the following UXON structure:
-     * {
-     * object_id1: {
-     * uid1: { data sheet },
-     * uid2: { data sheet },
-     * ...
-     * }
-     * object_id2: ...
-     * }
+     *  {
+     *      object_id1: {
+     *          uid1: { data sheet },
+     *          uid2: { data sheet },
+     *          ...
+     *      }
+     *      object_id2: ...
+     *  }
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\CommonLogic\Contexts\AbstractContext::exportUxonObject()
      */
     public function exportUxonObject()
@@ -183,6 +184,123 @@ class ObjectBasketContext extends AbstractContext
     {
         $this->getFavoritesByObjectId($object_id)->removeRowsByUid($uid);
         return $this;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Contexts\AbstractContext::getIndicator()
+     */
+    public function getIndicator()
+    {
+        $i = 0;
+        foreach ($this->getFavoritesAll() as $data_sheet) {
+            $i += $data_sheet->countRows();
+        }
+        return $i;
+    }
+
+    public function getIcon()
+    {
+        return 'basket';
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Contexts\AbstractContext::getContextBarPopup()
+     */
+    public function getContextBarPopup(Container $container)
+    {
+        /* @var $data_list \exface\Core\Widgets\DataList */
+        $data_list = WidgetFactory::create($container->getPage(), 'DataList', $container)
+            ->setCaption($this->getName())
+            ->setLazyLoading(false)
+            ->setPaginate(false)
+            ->setPaginatePageSize(40);
+        
+        $data_list->addColumn(WidgetFactory::create($container->getPage(), 'DataColumn', $data_list)->setAttributeAlias('TITLE'));
+        
+        $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.CONTEXT_BASE_OBJECT');
+        foreach ($this->getFavoritesAll() as $data_sheet) {
+            $ds->addRow([
+                'ID' => $data_sheet->getMetaObject()->getId(),
+                'TITLE' => $data_sheet->countRows() . 'x ' . $data_sheet->getMetaObject()->getName()
+            ]);
+        }
+        $data_list->setValuesDataSheet($ds);
+        
+        /* @var $details_button \exface\Core\Widgets\DataButton */
+        $details_button = WidgetFactory::create($container->getPage(), $data_list->getButtonWidgetType(), $data_list)
+            ->setActionAlias('exface.Core.ObjectBasketShowDialog')
+            ->setBindToLeftClick(true)
+            ->setHidden(true);
+        // Make sure the object basket is generated from the same scope!
+        // This makes it easy to reuse this method for user favorites, that are
+        // simply another object basket in a different scope.
+        $details_button->getAction()->setContextScope($this->getScope()->getName());
+        $data_list->addButton($details_button);
+        
+        // TODO add button to remove from basket here
+        
+        $container->addWidget($data_list);
+        return $container;
+    }
+    
+    protected function createBasketDialog(Object $meta_object, UiPage $page = null)
+    {
+        if (is_null($page)){
+            $page = UiPageFactory::createEmpty($meta_object->getWorkbench()->ui(), 0);
+        }
+        
+        /* @var $dialog \exface\Core\Widgets\Dialog */
+        $dialog = WidgetFactory::create($page, 'Dialog');
+        $dialog->setId('object_basket');
+        $dialog->setMetaObject($meta_object);
+        $dialog->setCaption();
+        $dialog->setLazyLoading(false);
+        
+        /* @var $table \exface\Core\Widgets\DataTable */
+        $table = WidgetFactory::create($dialog->getPage(), 'DataTable', $dialog);
+        $table->setLazyLoading(false);
+        $table->setPaginate(false);
+        $table->setHideToolbarBottom(true);
+        $table->setMultiSelect(true);
+        $table->setMultiSelectAllSelected(true);
+        $table->prefill($this->getFavoritesByObject($meta_object));
+        $dialog->addWidget($table);
+        
+        // Add action buttons
+        foreach ($meta_object->getActions()->getUsedInObjectBasket() as $a) {
+            /* @var $button \exface\Core\Widgets\Button */
+            $button = WidgetFactory::create($dialog->getPage(), 'DialogButton', $dialog);
+            $button->setAction($a);
+            $button->setAlign(EXF_ALIGN_LEFT);
+            $button->setInputWidget($table);
+            $dialog->addButton($button);
+        }
+        
+        // Add remove button
+        $button = WidgetFactory::create($dialog->getPage(), 'DialogButton', $dialog);
+        $button->setActionAlias('exface.Core.ObjectBasketRemove');
+        $button->setInputWidget($table);
+        $button->setAlign(EXF_ALIGN_LEFT);
+        $button->getAction()->setReturnBasketContent(true);
+        $dialog->addButton($button);
+        
+        /*
+         * IDEA delegate dialog rendering to ShowDialog action. Probably need to override getResultOutput in this case...
+         * $action = $this->getApp()->getAction('ShowDialog');
+         * $action->setTemplateAlias($this->getTemplate()->getAliasWithNamespace());
+         * $action->setWidget($dialog);
+         * return $action->getResult();
+         */
+        
+        return $dialog;
+    }
+    
+    public function getName(){
+        return $this->getWorkbench()->getCoreApp()->getTranslator()->translate('CONTEXT.OBJECTBASKET.NAME');
     }
 }
 ?>
