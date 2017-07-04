@@ -532,6 +532,23 @@
             "LABEL": "Contextual Help Element",
             "ALIAS": "USER_HELP_ELEMENT",
             "DATA_ADDRESS": ""
+        },
+        {
+            "CREATED_ON": "2017-06-29 15:29:52",
+            "MODIFIED_ON": "2017-06-29 15:29:52",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e75cdfc2892ceab9dd0205857feb80",
+            "DATA_SOURCE": "0x32000000000000000000000000000000",
+            "long_description": null,
+            "APP": "0x31000000000000000000000000000000",
+            "SHORT_DESCRIPTION": "",
+            "PARENT_OBJECT": "",
+            "DATA_ADDRESS_PROPS": "{}",
+            "DEFAULT_EDITOR_UXON": "{}",
+            "LABEL": "Context Base Object",
+            "ALIAS": "CONTEXT_BASE_OBJECT",
+            "DATA_ADDRESS": ""
         }
     ],
     "totals_rows": [],
