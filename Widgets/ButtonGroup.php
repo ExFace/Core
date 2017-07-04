@@ -55,7 +55,9 @@ class ButtonGroup extends Button implements iHaveButtons
     public function addButton(Button $button_widget)
     {
         $button_widget->setParent($this);
-        $button_widget->setInputWidget($this->getInputWidget());
+        if ($this->getInputWidget()){
+            $button_widget->setInputWidget($this->getInputWidget());
+        }
         $this->buttons[] = $button_widget;
         return $this;
     }
