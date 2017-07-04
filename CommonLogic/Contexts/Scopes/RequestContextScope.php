@@ -1,5 +1,5 @@
 <?php
-namespace exface\Core\Contexts\Scopes;
+namespace exface\Core\CommonLogic\Contexts\Scopes;
 
 use exface\Core\Interfaces\Contexts\ContextInterface;
 
@@ -23,7 +23,7 @@ class RequestContextScope extends AbstractContextScope
     /**
      * There is nothing to load in the request context scope, as it only lives for one request
      *
-     * @see \exface\Core\Contexts\Scopes\AbstractContextScope::load_contexts()
+     * @see \exface\Core\CommonLogic\Contexts\Scopes\AbstractContextScope::load_contexts()
      */
     public function loadContextData(ContextInterface $context)
     {}
@@ -31,7 +31,7 @@ class RequestContextScope extends AbstractContextScope
     /**
      * The request context scope does not need to be saved, as it only lives for one request
      *
-     * @see \exface\Core\Contexts\Scopes\AbstractContextScope::saveContexts()
+     * @see \exface\Core\CommonLogic\Contexts\Scopes\AbstractContextScope::saveContexts()
      */
     public function saveContexts()
     {}
@@ -77,7 +77,7 @@ class RequestContextScope extends AbstractContextScope
      * @see getRequestId() for explanations.
      * 
      * @param string $value
-     * @return \exface\Core\Contexts\Scopes\RequestContextScope
+     * @return \exface\Core\CommonLogic\Contexts\Scopes\RequestContextScope
      */
     public function setRequestId($value)
     {
@@ -106,7 +106,7 @@ class RequestContextScope extends AbstractContextScope
      * @see getRequestId() for explanations.
      * 
      * @param string $value
-     * @return \exface\Core\Contexts\Scopes\RequestContextScope
+     * @return \exface\Core\CommonLogic\Contexts\Scopes\RequestContextScope
      */
     public function setSubrequestId($value)
     {
@@ -117,7 +117,7 @@ class RequestContextScope extends AbstractContextScope
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Contexts\Scopes\AbstractContextScope::getScopeId()
+     * @see \exface\Core\CommonLogic\Contexts\Scopes\AbstractContextScope::getScopeId()
      */
     public function getScopeId()
     {

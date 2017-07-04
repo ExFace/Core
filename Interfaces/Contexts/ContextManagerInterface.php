@@ -43,31 +43,31 @@ interface ContextManagerInterface
 
     /**
      *
-     * @return \exface\Core\Contexts\Scopes\WindowContextScope
+     * @return \exface\Core\CommonLogic\Contexts\Scopes\WindowContextScope
      */
     public function getScopeWindow();
 
     /**
      *
-     * @return \exface\Core\Contexts\Scopes\SessionContextScope
+     * @return \exface\Core\CommonLogic\Contexts\Scopes\SessionContextScope
      */
     public function getScopeSession();
 
     /**
      *
-     * @return \exface\Core\Contexts\Scopes\ApplicationContextScope
+     * @return \exface\Core\CommonLogic\Contexts\Scopes\ApplicationContextScope
      */
     public function getScopeApplication();
 
     /**
      *
-     * @return \exface\Core\Contexts\Scopes\UserContextScope
+     * @return \exface\Core\CommonLogic\Contexts\Scopes\UserContextScope
      */
     public function getScopeUser();
 
     /**
      *
-     * @return \exface\Core\Contexts\Scopes\RequestContextScope
+     * @return \exface\Core\CommonLogic\Contexts\Scopes\RequestContextScope
      */
     public function getScopeRequest();
 }

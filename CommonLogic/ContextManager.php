@@ -1,15 +1,15 @@
 <?php
 namespace exface\Core\CommonLogic;
 
-use exface\Core\Contexts\Scopes\WindowContextScope;
-use exface\Core\Contexts\Scopes\SessionContextScope;
-use exface\Core\Contexts\Scopes\AbstractContextScope;
+use exface\Core\CommonLogic\Contexts\Scopes\WindowContextScope;
+use exface\Core\CommonLogic\Contexts\Scopes\SessionContextScope;
+use exface\Core\CommonLogic\Contexts\Scopes\AbstractContextScope;
 use exface\Core\CommonLogic\Model\Condition;
-use exface\Core\Contexts\Scopes\ApplicationContextScope;
+use exface\Core\CommonLogic\Contexts\Scopes\ApplicationContextScope;
 use exface\Core\CommonLogic\Model\Object;
-use exface\Core\Contexts\Scopes\UserContextScope;
+use exface\Core\CommonLogic\Contexts\Scopes\UserContextScope;
 use exface\Core\Interfaces\Contexts\ContextManagerInterface;
-use exface\Core\Contexts\Scopes\RequestContextScope;
+use exface\Core\CommonLogic\Contexts\Scopes\RequestContextScope;
 use exface\Core\Exceptions\Contexts\ContextScopeNotFoundError;
 
 class ContextManager implements ContextManagerInterface
@@ -30,16 +30,16 @@ class ContextManager implements ContextManagerInterface
     public function __construct(\exface\Core\CommonLogic\Workbench $exface)
     {
         $this->exface = $exface;
-        $this->window_scope = new WindowContextScope($this->exface);
-        $this->session_scope = new SessionContextScope($this->exface);
-        $this->application_scope = new ApplicationContextScope($this->exface);
         $this->user_scope = new UserContextScope($this->exface);
+        $this->application_scope = new ApplicationContextScope($this->exface);
+        $this->session_scope = new SessionContextScope($this->exface);
+        $this->window_scope = new WindowContextScope($this->exface);
         $this->request_scope = new RequestContextScope($this->exface);
     }
 
     /**
      *
-     * @return \exface\Core\Contexts\Scopes\WindowContextScope
+     * @return \exface\Core\CommonLogic\Contexts\Scopes\WindowContextScope
      */
     public function getScopeWindow()
     {
@@ -48,7 +48,7 @@ class ContextManager implements ContextManagerInterface
 
     /**
      *
-     * @return \exface\Core\Contexts\Scopes\SessionContextScope
+     * @return \exface\Core\CommonLogic\Contexts\Scopes\SessionContextScope
      */
     public function getScopeSession()
     {
@@ -57,7 +57,7 @@ class ContextManager implements ContextManagerInterface
 
     /**
      *
-     * @return \exface\Core\Contexts\Scopes\ApplicationContextScope
+     * @return \exface\Core\CommonLogic\Contexts\Scopes\ApplicationContextScope
      */
     public function getScopeApplication()
     {
@@ -66,7 +66,7 @@ class ContextManager implements ContextManagerInterface
 
     /**
      *
-     * @return \exface\Core\Contexts\Scopes\UserContextScope
+     * @return \exface\Core\CommonLogic\Contexts\Scopes\UserContextScope
      */
     public function getScopeUser()
     {
@@ -75,7 +75,7 @@ class ContextManager implements ContextManagerInterface
 
     /**
      *
-     * @return \exface\Core\Contexts\Scopes\RequestContextScope
+     * @return \exface\Core\CommonLogic\Contexts\Scopes\RequestContextScope
      */
     public function getScopeRequest()
     {

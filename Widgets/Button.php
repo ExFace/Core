@@ -101,11 +101,13 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iHaveC
      * @uxon-property action_alias
      * @uxon-type string
      *
-     * @param string $value            
+     * @param string $value
+     * @return Button            
      */
     public function setActionAlias($value)
     {
         $this->action_alias = $value;
+        return $this;
     }
 
     public function setCaption($caption)
@@ -144,6 +146,7 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iHaveC
     public function setInputWidgetId($value)
     {
         $this->input_widget_id = $value;
+        return $this;
     }
 
     public function getInputWidget()
@@ -151,7 +154,7 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iHaveC
         if (is_null($this->input_widget)) {
             if ($this->input_widget_id) {
                 $this->input_widget = $this->getUi()->getWidget($this->input_widget_id, $this->getPageId());
-            } else {
+            } elseif ($this->getParent()) {
                 $parent = $this->getParent();
                 while ((! ($parent instanceof iHaveButtons) || ($parent instanceof Button)) && ! is_null($parent->getParent())) {
                     $parent = $parent->getParent();
@@ -202,6 +205,7 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iHaveC
      *
      * @param \stdClass $action_options            
      * @throws WidgetPropertyInvalidValueError
+     * @return Button
      */
     protected function setActionOptions(\stdClass $action_options)
     {
@@ -210,6 +214,7 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iHaveC
         } else {
             $action->importUxonObject($action_options);
         }
+        return $this;
     }
 
     /**
@@ -231,11 +236,13 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iHaveC
      * @uxon-property hotkey
      * @uxon-type string
      *
-     * @param string $value            
+     * @param string $value  
+     * @return Button          
      */
     public function setHotkey($value)
     {
         $this->hotkey = $value;
+        return $this;
     }
 
     public function getIconName()
@@ -262,6 +269,7 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iHaveC
     public function setIconName($value)
     {
         $this->icon_name = $value;
+        return $this;
     }
 
     public function getRefreshInput()
@@ -281,6 +289,7 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iHaveC
     public function setRefreshInput($value)
     {
         $this->refresh_input = $value;
+        return $this;
     }
 
     public function getHideButtonText()
@@ -295,11 +304,13 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iHaveC
      * @uxon-property hide_button_text
      * @uxon-type boolean
      *
-     * @param boolean $value            
+     * @param boolean $value  
+     * @return Button          
      */
     public function setHideButtonText($value)
     {
         $this->hide_button_text = $value;
+        return $this;
     }
 
     public function getHideButtonIcon()
@@ -314,11 +325,13 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iHaveC
      * @uxon-property hide_button_icon
      * @uxon-type boolean
      *
-     * @param boolean $value            
+     * @param boolean $value 
+     * @return Button           
      */
     public function setHideButtonIcon($value)
     {
         $this->hide_button_icon = $value;
+        return $this;
     }
 
     /**

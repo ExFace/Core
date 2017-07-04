@@ -2,11 +2,10 @@
 namespace exface\Core\Actions;
 
 use exface\Core\CommonLogic\Model\Object;
-use exface\Core\Exceptions\Actions\ActionConfigurationError;
 use exface\Core\Factories\WidgetFactory;
-use exface\Core\Factories\DataSheetFactory;
-use exface\Core\Exceptions\UiPageNotFoundError;
 use exface\Core\Factories\UiPageFactory;
+use exface\Core\Exceptions\Actions\ActionInputInvalidObjectError;
+use exface\Core\CommonLogic\Contexts\ContextActionTrait;
 
 /**
  * Fetches meta object instances stored in the object basket of the specified context_scope (by default, the window scope)
@@ -14,41 +13,32 @@ use exface\Core\Factories\UiPageFactory;
  * @author Andrej Kabachnik
  *        
  */
-class ObjectBasketFetch extends ObjectBasketAdd
+class ObjectBasketShowDialog extends ShowDialog
 {
-
-    const OUTPUT_TYPE_JSON = 'JSON';
-
-    const OUTPUT_TYPE_DIALOG = 'DIALOG';
-
-    private $output_type = null;
+    use ContextActionTrait; 
+    
+    protected function init()
+    {
+        parent::init();
+        $this->setInputRowsMax(1);
+        $this->setInputRowsMin(1);
+        $this->setContextType('ObjectBasket');
+    }
 
     protected function perform()
     {
-        if ($this->getOutputType() == static::OUTPUT_TYPE_DIALOG) {
-            if ($this->getTemplate()->getRequestObjectId()) {
-                $meta_object = $this->getWorkbench()->model()->getObject($this->getTemplate()->getRequestObjectId());
-            }
-            $this->setResult($this->buildDialog($meta_object));
+        
+        if ($this->getInputDataSheet() && $this->getInputDataSheet()->getMetaObject()->is('exface.Core.CONTEXT_BASE_OBJECT')) {
+            $meta_object = $this->getWorkbench()->model()->getObject($this->getInputDataSheet()->getCellValue('ID', 0));
         } else {
-            $this->setResult($this->getFavoritesJson());
+            throw new ActionInputInvalidObjectError($this, 'Missing or invalid input data object: expecting exface.Core.CONTEXT_BASE_OBJECT or derivatives!');
         }
+        
+        $this->setResult($this->createDialog($meta_object));
+        
     }
 
-    protected function getFavoritesJson()
-    {
-        $result = array();
-        foreach ($this->getContext()->getFavoritesAll() as $data_sheet) {
-            $result[] = array(
-                'object_id' => $data_sheet->getMetaObject()->getId(),
-                'object_name' => $data_sheet->getMetaObject()->getName(),
-                'instance_counter' => $data_sheet->countRows()
-            );
-        }
-        return json_encode($result);
-    }
-
-    protected function buildDialog(Object $meta_object)
+    protected function createDialog(Object $meta_object)
     {
         try {
             $page = $this->getCalledOnUiPage();
@@ -87,7 +77,6 @@ class ObjectBasketFetch extends ObjectBasketAdd
         $button->setActionAlias('exface.Core.ObjectBasketRemove');
         $button->setInputWidget($table);
         $button->setAlign(EXF_ALIGN_LEFT);
-        $button->getAction()->setReturnBasketContent(true);
         $dialog->addButton($button);
         
         /*
@@ -98,29 +87,7 @@ class ObjectBasketFetch extends ObjectBasketAdd
          * return $action->getResult();
          */
         
-        return $this->getTemplate()->drawHeaders($dialog) . $this->getTemplate()->draw($dialog);
-    }
-
-    public function getOutputType()
-    {
-        if (is_null($this->output_type)) {
-            if ($type = $this->getWorkbench()->getRequestParam('output_type')) {
-                $this->setOutputType($type);
-            } else {
-                $this->output_type = static::OUTPUT_TYPE_JSON;
-            }
-        }
-        return $this->output_type;
-    }
-
-    public function setOutputType($value)
-    {
-        $const = 'static::OUTPUT_TYPE_' . mb_strtoupper($value);
-        if (! defined($const)) {
-            throw new ActionConfigurationError($this, 'Invalid value "' . $value . '" for option "output_type" of action "' . $this->getAliasWithNamespace() . '": use "JSON" or "DIALOG"!');
-        }
-        $this->output_type = constant($const);
-        return $this;
+        return $dialog;
     }
 }
 ?>

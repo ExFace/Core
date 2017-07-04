@@ -1,7 +1,7 @@
 <?php
 namespace exface\Core\Actions;
 
-use exface\Core\Contexts\Types\ObjectBasketContext;
+use exface\Core\Contexts\ObjectBasketContext;
 
 /**
  * Adds the input rows to the object basket in a specified context_scope (by default, the window scope)
@@ -21,20 +21,22 @@ class ObjectBasketAdd extends SetContext
         $this->setInputRowsMax(null);
         $this->setIconName('basket');
         $this->setContextType('ObjectBasket');
+        $this->setContextScope('Window');
     }
 
-    public function getScope()
+    public function getContextScope()
     {
-        if (! parent::getScope()) {
-            $this->setScope('Window');
+        if (! parent::getContextScope()) {
+            $this->setContextScope('Window');
         }
-        return parent::getScope();
+        return parent::getContextScope();
     }
 
     protected function perform()
     {
         $this->getContext()->add($this->getInputDataSheet());
         $this->setResultMessage($this->translate('RESULT', array(
+            '%context_name%' => $this->getContext()->getName(),
             '%number%' => $this->getInputDataSheet()->countRows()
         ), $this->getInputDataSheet()->countRows()));
         $this->setResult('');

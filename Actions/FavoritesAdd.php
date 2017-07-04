@@ -24,12 +24,12 @@ class FavoritesAdd extends ObjectBasketAdd
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\Actions\ObjectBasketAdd::getScope()
+     * @see \exface\Core\Actions\ObjectBasketAdd::getContextScope()
      */
-    public function getScope()
+    public function getContextScope()
     {
-        $this->setScope('User');
-        return parent::getScope();
+        $this->setContextScope('User');
+        return parent::getContextScope();
     }
 }
 ?>

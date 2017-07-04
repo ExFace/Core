@@ -24,7 +24,9 @@
         "jmikola/Wildcard-Event-Dispatcher": "^1.1",
         "webmozart/path-util": "^2.3",
         "monolog/monolog": "^1.22.1",
-        "femtopixel/monolog-csvhandler": "~0.1"
+        "femtopixel/monolog-csvhandler": "~0.1",
+        "psr/http-message": "^1.0.1",
+        "guzzlehttp/psr7": "^1.4.2"
     },
     "extra": {
         "app": {

@@ -1,0 +1,77 @@
+<?php
+namespace exface\Core\Actions;
+
+use exface\Core\Widgets\AbstractWidget;
+use exface\Core\Interfaces\Contexts\ContextScopeInterface;
+
+class ShowContextPopup extends ShowPopup
+{
+    
+    private $context_scope_name = null;
+    
+    private $context_alias = null;
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Actions\ShowPopup::createPopupContainer()
+     */
+    protected function createPopupContainer(AbstractWidget $contained_widget = NULL)
+    {
+        $popup = parent::createPopupContainer($contained_widget);
+        $popup = $this->getContext()->getContextBarPopup($popup);
+        
+        return $popup;
+    }
+    
+    /**
+     * 
+     * @return ContextScopeInterface
+     */
+    public function getContextScope()
+    {
+        return $this->getWorkbench()->context()->getScope($this->context_scope_name);
+    }
+    
+    /**
+     * 
+     * @param string $context_scope
+     * @return \exface\Core\Actions\ShowContextPopup
+     */
+    public function setContextScope($scope_name)
+    {
+        $this->context_scope_name = $scope_name;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return string
+     */
+    public function getContextAlias()
+    {
+        return $this->context_alias;
+    }
+
+    /**
+     * 
+     * @param string $context_alias
+     * @return \exface\Core\Actions\ShowContextPopup
+     */
+    public function setContextAlias($context_alias)
+    {
+        $this->context_alias = $context_alias;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return \exface\Core\Interfaces\Contexts\ContextInterface
+     */
+    public function getContext()
+    {
+        return $this->getContextScope()->getContext($this->getContextAlias());
+    }
+    
+}
+?>

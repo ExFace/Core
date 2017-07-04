@@ -1,5 +1,5 @@
 <?php
-namespace exface\Core\Contexts\Scopes;
+namespace exface\Core\CommonLogic\Contexts\Scopes;
 
 use exface\Core\Interfaces\Contexts\ContextInterface;
 
@@ -9,7 +9,7 @@ class ApplicationContextScope extends AbstractContextScope
     /**
      * TODO
      *
-     * @see \exface\Core\Contexts\Scopes\AbstractContextScope::load_contexts()
+     * @see \exface\Core\CommonLogic\Contexts\Scopes\AbstractContextScope::load_contexts()
      */
     public function loadContextData(ContextInterface $context)
     {}
@@ -17,7 +17,7 @@ class ApplicationContextScope extends AbstractContextScope
     /**
      * TODO
      *
-     * @see \exface\Core\Contexts\Scopes\AbstractContextScope::saveContexts()
+     * @see \exface\Core\CommonLogic\Contexts\Scopes\AbstractContextScope::saveContexts()
      */
     public function saveContexts()
     {}

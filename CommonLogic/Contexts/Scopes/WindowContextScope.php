@@ -1,5 +1,5 @@
 <?php
-namespace exface\Core\Contexts\Scopes;
+namespace exface\Core\CommonLogic\Contexts\Scopes;
 
 use exface\Core\Interfaces\Contexts\ContextInterface;
 
@@ -21,7 +21,7 @@ class WindowContextScope extends AbstractContextScope
     /**
      * The window scope currently just delegates to the session scope, which actually takes care of saving and loading data
      *
-     * @see \exface\Core\Contexts\Scopes\AbstractContextScope::saveContexts()
+     * @see \exface\Core\CommonLogic\Contexts\Scopes\AbstractContextScope::saveContexts()
      */
     public function saveContexts()
     {
@@ -31,7 +31,7 @@ class WindowContextScope extends AbstractContextScope
     /**
      * The window scope currently just delegates to the session scope, which actually takes care of saving and loading data
      *
-     * @see \exface\Core\Contexts\Scopes\AbstractContextScope::loadContextData()
+     * @see \exface\Core\CommonLogic\Contexts\Scopes\AbstractContextScope::loadContextData()
      */
     public function loadContextData(ContextInterface $context)
     {
@@ -45,7 +45,7 @@ class WindowContextScope extends AbstractContextScope
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\Contexts\Scopes\AbstractContextScope::getScopeId()
+     * @see \exface\Core\CommonLogic\Contexts\Scopes\AbstractContextScope::getScopeId()
      */
     public function getScopeId()
     {
@@ -57,11 +57,16 @@ class WindowContextScope extends AbstractContextScope
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\Contexts\Scopes\AbstractContextScope::getContext()
+     * @see \exface\Core\CommonLogic\Contexts\Scopes\AbstractContextScope::getContext()
      */
     public function getContext($alias)
     {
-        return $this->getContextManager()->getScopeSession()->getContext($alias);
+        if (!array_key_exists($alias, $this->getContextsLoaded())){
+            // Initialize the context in the session scope just to have it included 
+            // in the next getContextsLoaded()
+            $this->getContextManager()->getScopeSession()->getContext($alias);
+        }
+        return $this->getContextsLoaded()[$alias];
     }
 
     /**
@@ -69,11 +74,16 @@ class WindowContextScope extends AbstractContextScope
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\Contexts\Scopes\AbstractContextScope::getAllContexts()
+     * @see \exface\Core\CommonLogic\Contexts\Scopes\AbstractContextScope::getContextsLoaded()
      */
-    public function getAllContexts()
+    public function getContextsLoaded()
     {
-        return $this->getContextManager()->getScopeSession()->getAllContexts();
+        $contexts = [];
+        foreach ($this->getContextManager()->getScopeSession()->getContextsLoaded() as $key => $context){
+            $context->setScope($this);
+            $contexts[$key] = $context;
+        }
+        return $contexts;
     }
 }
 ?>

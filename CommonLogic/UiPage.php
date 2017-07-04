@@ -24,6 +24,8 @@ class UiPage implements UiPageInterface
 
     private $widget_root = null;
 
+    private $context_bar = null;
+
     const WIDGET_ID_SEPARATOR = '_';
 
     const WIDGET_ID_SPACE_SEPARATOR = '.';
@@ -98,7 +100,11 @@ class UiPage implements UiPageInterface
         // If the parent is null, look under the root widget
         // FIXME this makes a non-parent lookup in pages with multiple roots impossible.
         if (is_null($parent)) {
-            $parent = $this->getWidgetRoot();
+            if (StringDataType::startsWith($id . static::WIDGET_ID_SEPARATOR, $this->getContextBar()->getId())){
+                $parent = $this->getContextBar();
+            } else {
+                $parent = $this->getWidgetRoot();
+            }
         }
         
         if ($id_space_length = strpos($id, static::WIDGET_ID_SPACE_SEPARATOR)) {
@@ -282,11 +288,11 @@ class UiPage implements UiPageInterface
     public function removeWidget(WidgetInterface $widget, $remove_children_too = true)
     {
         if ($remove_children_too) {
-            if ($widget instanceof iHaveChildren) {
+            /*if ($widget instanceof iHaveChildren) {
                 foreach ($widget->getChildren() as $child) {
                     $this->removeWidget($child, true);
                 }
-            }
+            }*/
         }
         $result = $this->removeWidgetById($widget->getId());
         
@@ -315,19 +321,47 @@ class UiPage implements UiPageInterface
         return $this->getUi()->getWorkbench();
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\UiPageInterface::getWidgetIdSeparator()
+     */
     public function getWidgetIdSeparator()
     {
         return self::WIDGET_ID_SEPARATOR;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\UiPageInterface::getWidgetIdSpaceSeparator()
+     */
     public function getWidgetIdSpaceSeparator()
     {
         return self::WIDGET_ID_SPACE_SEPARATOR;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\UiPageInterface::isEmpty()
+     */
     public function isEmpty()
     {
         return count($this->widgets) ? false : true;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\UiPageInterface::getContextBar()
+     */
+    public function getContextBar()
+    {
+        if (is_null($this->context_bar)) {
+            $this->context_bar = WidgetFactory::create($this, 'ContextBar');
+        }
+        return $this->context_bar;
     }
 }
 

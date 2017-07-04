@@ -1,10 +1,11 @@
 <?php
-namespace exface\Core\Contexts\Types;
+namespace exface\Core\Contexts;
 
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Exceptions\Contexts\ContextSaveError;
 use exface\Core\Exceptions\Contexts\ContextLoadError;
+use exface\Core\CommonLogic\Contexts\AbstractContext;
 
 /**
  * The DataContext provides a unified interface to store arbitrary data in any context scope.
@@ -39,7 +40,7 @@ class DataContext extends AbstractContext
      * @param string $namespace            
      * @param string $variable_name            
      * @param mixed $value            
-     * @return \exface\Core\Contexts\Types\DataContext
+     * @return \exface\Core\Contexts\DataContext
      */
     public function setVariable($namespace, $variable_name, $value)
     {
@@ -52,7 +53,7 @@ class DataContext extends AbstractContext
      *
      * @param string $namespace            
      * @param string $variable_name            
-     * @return \exface\Core\Contexts\Types\DataContext
+     * @return \exface\Core\Contexts\DataContext
      */
     public function unsetVariable($namespace, $variable_name)
     {
@@ -65,7 +66,7 @@ class DataContext extends AbstractContext
      *
      * @param AppInterface $app            
      * @param string $variable_name            
-     * @return \exface\Core\Contexts\Types\DataContext
+     * @return \exface\Core\Contexts\DataContext
      */
     public function unsetVariableForApp(AppInterface $app, $variable_name)
     {
@@ -78,7 +79,7 @@ class DataContext extends AbstractContext
      * @param AppInterface $app            
      * @param string $variable_name            
      * @param mixed $value            
-     * @return \exface\Core\Contexts\Types\DataContext
+     * @return \exface\Core\Contexts\DataContext
      */
     public function setVariableForApp(AppInterface $app, $variable_name, $value)
     {
@@ -135,7 +136,7 @@ class DataContext extends AbstractContext
      * Most apps will run in the context of a single window,
      * so two windows running one app are independant in general.
      *
-     * @see \exface\Core\Contexts\Types\AbstractContext::getDefaultScope()
+     * @see \exface\Core\CommonLogic\Contexts\AbstractContext::getDefaultScope()
      */
     public function getDefaultScope()
     {
@@ -146,7 +147,7 @@ class DataContext extends AbstractContext
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\Contexts\Types\AbstractContext::importUxonObject()
+     * @see \exface\Core\CommonLogic\Contexts\AbstractContext::importUxonObject()
      */
     public function importUxonObject(UxonObject $uxon)
     {
@@ -174,7 +175,7 @@ class DataContext extends AbstractContext
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\Contexts\Types\AbstractContext::exportUxonObject()
+     * @see \exface\Core\CommonLogic\Contexts\AbstractContext::exportUxonObject()
      */
     public function exportUxonObject()
     {
