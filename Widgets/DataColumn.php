@@ -93,6 +93,7 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     public function setAttributeAlias($value)
     {
         $this->attribute_alias = $value;
+        return $this;
     }
 
     /**
@@ -123,6 +124,7 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     public function setSortable($value)
     {
         $this->sortable = \exface\Core\DataTypes\BooleanDataType::parse($value);
+        return $this;
     }
 
     /**
@@ -158,6 +160,7 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     public function setFixedWidth($value)
     {
         $this->fixed_width = $value;
+        return $this;
     }
 
     /**
@@ -261,6 +264,7 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     public function setDataType($exface_data_type)
     {
         $this->data_type = $exface_data_type;
+        return $this;
     }
 
     /**
