@@ -18,11 +18,11 @@
 	
 	"ACTION.OBJECTBASKET": "Object basket",
 	"ACTION.OBJECTBASKETADD.NAME": "Add to object basket",
-	"ACTION.OBJECTBASKETADD.RESULT": "%number% objects added to object basket.",
-	"ACTION.OBJECTBASKETFETCH.NAME": "Show object basket",
+	"ACTION.OBJECTBASKETADD.RESULT": "%context_name%: %number% objects added to object basket.",
+	"ACTION.OBJECTBASKETSHOWDIALOG.NAME": "Show object basket",
 	"ACTION.OBJECTBASKETREMOVE.NAME": "Remove",
-	"ACTION.OBJECTBASKETREMOVE.RESULT": "%number%x %object_name% removed.",
-	"ACTION.OBJECTBASKETREMOVE.RESULT_ALL": "All objects of type %object_name% removed.",
+	"ACTION.OBJECTBASKETREMOVE.RESULT": "%context_name%: %number%x %object_name% removed.",
+	"ACTION.OBJECTBASKETREMOVE.RESULT_ALL": "%context_name%: All objects of type %object_name% removed.",
 	
 	"ACTION.GOBACK.NAME": "Back",
 	"ACTION.GOTOURL.NAME": "Visit URL",
@@ -58,6 +58,12 @@
 	
 	"ACTION.UPDATEDATA.NAME": "Update",
 	"ACTION.UPDATEDATA.RESULT": "%number% item updated.|%number% items updated.",
+	
+	"CONTEXT.FAVORITES.NAME": "Favorites",
+    "CONTEXT.OBJECTBASKET.NAME": "Object Basket",
+    "CONTEXT.OBJECTBASKET.SHOW_DETAILS_DIALOG": "Show content",
+    "CONTEXT.OBJECTBASKET.REMOVE": "Remove",
+    "CONTEXT.OBJECTBASKET.REMOVE_ALL": "Remove all",
 	
 	"WIDGET.SELECT_ALL": "All",
 	"WIDGET.SELECT_YES": "Yes",
