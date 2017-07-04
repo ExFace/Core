@@ -59,7 +59,10 @@
 	"ACTION.UPDATEDATA.NAME": "Update",
 	"ACTION.UPDATEDATA.RESULT": "%number% item updated.|%number% items updated.",
 	
-	"CONTEXT.FAVORITES.NAME": "Favorites",
+	"CONTEXT.ACTIONTEST.NAME": "ActionTest",
+    "CONTEXT.DATA.NAME": "Data",
+    "CONTEXT.FAVORITES.NAME": "Favorites",
+    "CONTEXT.FILTER.NAME": "Filters",
     "CONTEXT.OBJECTBASKET.NAME": "Object Basket",
     "CONTEXT.OBJECTBASKET.SHOW_DETAILS_DIALOG": "Show content",
     "CONTEXT.OBJECTBASKET.REMOVE": "Remove",

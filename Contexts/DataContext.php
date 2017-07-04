@@ -220,5 +220,25 @@ class DataContext extends AbstractContext
             throw new ContextLoadError($this, 'Cannot load context data for "' . $this->getScope()->getName() . '": invalid variable value type for "' . get_class($variable_name) . '"!', '6T5E400');
         }
     }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Contexts\AbstractContext::getIcon()
+     */
+    public function getIcon()
+    {
+        return 'save';
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Contexts\AbstractContext::getName()
+     */
+    public function getName()
+    {
+        return $this->getWorkbench()->getCoreApp()->getTranslator()->translate('CONTEXT.DATA.NAME');
+    }
 }
 ?>

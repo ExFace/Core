@@ -59,7 +59,10 @@
 	"ACTION.UPDATEDATA.NAME": "Speichern",
 	"ACTION.UPDATEDATA.RESULT": "%number% Objekt gespeichert.|%number% Objekte gespeichert.",
 	
-	"CONTEXT.FAVORITES.NAME": "Favoriten",
+	"CONTEXT.ACTIONTEST.NAME": "ActionTest",
+    "CONTEXT.DATA.NAME": "Daten",
+    "CONTEXT.FAVORITES.NAME": "Favoriten",
+    "CONTEXT.FILTER.NAME": "Filter",
     "CONTEXT.OBJECTBASKET.NAME": "Objektkorb",
     "CONTEXT.OBJECTBASKET.SHOW_DETAILS_DIALOG": "Inhalt anzeigen",
     "CONTEXT.OBJECTBASKET.REMOVE": "Entfernen",

@@ -229,5 +229,28 @@ class ActionTestContext extends AbstractContext
         $this->skip_page_ids = $value;
         return $this;
     }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Contexts\AbstractContext::getIcon()
+     */
+    public function getIcon()
+    {
+        if ($this->isRecording()){
+            return 'record';
+        } 
+        return 'pause';
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Contexts\AbstractContext::getName()
+     */
+    public function getName()
+    {
+        return $this->getWorkbench()->getCoreApp()->getTranslator()->translate('CONTEXT.ACTIONTEST.NAME');
+    }
 }
 ?>

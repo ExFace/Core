@@ -152,5 +152,25 @@ class ActionContext extends AbstractContext
         }
         return $this;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Contexts\AbstractContext::getIcon()
+     */
+    public function getIcon()
+    {
+        return 'gear';
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Contexts\AbstractContext::getName()
+     */
+    public function getName()
+    {
+        return $this->getWorkbench()->getCoreApp()->getTranslator()->translate('CONTEXT.ACTION.NAME');
+    }
 }
 ?>

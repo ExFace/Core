@@ -166,5 +166,25 @@ class FilterContext extends AbstractContext
             return true;
         }
     }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Contexts\AbstractContext::getIcon()
+     */
+    public function getIcon()
+    {
+        return 'filter';
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Contexts\AbstractContext::getName()
+     */
+    public function getName()
+    {
+        return $this->getWorkbench()->getCoreApp()->getTranslator()->translate('CONTEXT.FILTER.NAME');
+    }
 }
 ?>
