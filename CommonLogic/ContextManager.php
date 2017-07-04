@@ -30,10 +30,10 @@ class ContextManager implements ContextManagerInterface
     public function __construct(\exface\Core\CommonLogic\Workbench $exface)
     {
         $this->exface = $exface;
-        $this->window_scope = new WindowContextScope($this->exface);
-        $this->session_scope = new SessionContextScope($this->exface);
-        $this->application_scope = new ApplicationContextScope($this->exface);
         $this->user_scope = new UserContextScope($this->exface);
+        $this->application_scope = new ApplicationContextScope($this->exface);
+        $this->session_scope = new SessionContextScope($this->exface);
+        $this->window_scope = new WindowContextScope($this->exface);
         $this->request_scope = new RequestContextScope($this->exface);
     }
 
