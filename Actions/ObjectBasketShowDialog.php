@@ -52,15 +52,21 @@ class ObjectBasketShowDialog extends ShowDialog
         $table->setMetaObject($meta_object);
         $table->prefill($this->getContext()->getFavoritesByObject($meta_object));
         
-        // Add action buttons
+        // Add actions menu
+        /* @var $menu \exface\Core\Widgets\MenuButton */
+        $menu = WidgetFactory::create($this->getWidget()->getPage(), 'MenuButton', $this->getWidget());
+        $menu->setCaption($this->getWorkbench()->getCoreApp()->getTranslator()->translate('GLOBAL.ACTIONS'));
+        $menu->setAlign(EXF_ALIGN_LEFT);
+        $menu->setVisibility(EXF_WIDGET_VISIBILITY_PROMOTED);
+        $menu->setInputWidget($table);
         foreach ($meta_object->getActions()->getUsedInObjectBasket() as $a) {
             /* @var $button \exface\Core\Widgets\Button */
             $button = WidgetFactory::create($this->getDialogWidget()->getPage(), $this->getDialogWidget()->getButtonWidgetType(), $this->getDialogWidget());
             $button->setAction($a);
             $button->setAlign(EXF_ALIGN_LEFT);
-            $button->setInputWidget($table);
-            $this->getDialogWidget()->addButton($button);
+            $menu->addButton($button);
         }
+        $this->getDialogWidget()->addButton($menu);
         
         parent::perform();
     }

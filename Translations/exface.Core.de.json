@@ -16,15 +16,10 @@
 	"ACTION.EDITOBJECTDIALOG.NAME": "Bearbeiten",
 	"ACTION.EDITOBJECTDIALOG.NO_EDITABLE_ATTRIBUTES": "Keine editierbaren Attribute gefunden!",
 
-	"ACTION.OBJECTBASKET": "Objektkorb",
-	"ACTION.OBJECTBASKETADD.NAME": "In den Objektkorb legen",
-	"ACTION.OBJECTBASKETADD.RESULT": "%context_name%: %number% Objekt hinzugefügt.|%context_name%: %number% Objekte hinzugefügt.",
-	"ACTION.OBJECTBASKETSHOWDIALOG.NAME": "Objektkorb anzeigen",
-	"ACTION.OBJECTBASKETREMOVE.NAME": "Entfernen",
-	"ACTION.OBJECTBASKETREMOVE.RESULT": "%context_name%: %number%x %object_name% entfernt.",
-	"ACTION.OBJECTBASKETREMOVE.RESULT_ALL": "%context_name%: Alle Objekte vom Typ %object_name% entfernt.",
-
-	"ACTION.GOBACK.NAME": "Zurück",
+	"ACTION.FAVORITESADD.NAME": "In die Favoriten",
+    "ACTION.FAVORITESADD.RESULT": "%number% Objekt zu Favoriten hinzugefügt.|%number% Objekte zu Favoriten hinzugefügt.",
+    
+    "ACTION.GOBACK.NAME": "Zurück",
 	"ACTION.GOTOURL.NAME": "Webseite anzeigen",
 	"ACTION.GOTOURL.SUCCESS": "Sie werden weitergeleitet...",
 	"ACTION.GOTOPAGE.NAME": "Anzeigen",
@@ -34,7 +29,15 @@
 	"ACTION.MASSEDITDIALOG.EDITING_ALL": "Bearbeitung aller Objekte",
 	"ACTION.MASSEDITDIALOG.EDITING_SELECTED": "Bearbeitung für %number% Objekt|Bearbeitung für %number% Objekte",
 
-	"ACTION.READDATA.NAME": "Reload",
+	"ACTION.OBJECTBASKET": "Objektkorb",
+    "ACTION.OBJECTBASKETADD.NAME": "In den Objektkorb",
+    "ACTION.OBJECTBASKETADD.RESULT": "%number% Objekt zum Objektkorb hinzugefügt.|%context_name%: %number% Objekte zum Objektkorb hinzugefügt.",
+    "ACTION.OBJECTBASKETSHOWDIALOG.NAME": "Objektkorb anzeigen",
+    "ACTION.OBJECTBASKETREMOVE.NAME": "Entfernen",
+    "ACTION.OBJECTBASKETREMOVE.RESULT": "%context_name%: %number%x %object_name% entfernt.",
+    "ACTION.OBJECTBASKETREMOVE.RESULT_ALL": "%context_name%: Alle Objekte vom Typ %object_name% entfernt.",
+
+    "ACTION.READDATA.NAME": "Reload",
 
 	"ACTION.SAVEDATA.RESULT": "%number% Objekt gespeichert.|%number% Objekte gespeichert.",
 	"ACTION.SAVEDATA.NAME": "Speichern",
@@ -67,6 +70,8 @@
     "CONTEXT.OBJECTBASKET.SHOW_DETAILS_DIALOG": "Inhalt anzeigen",
     "CONTEXT.OBJECTBASKET.REMOVE": "Entfernen",
     "CONTEXT.OBJECTBASKET.REMOVE_ALL": "Alle entfernen",
+    
+    "GLOBAL.ACTIONS": "Aktionen",
 
 	"WIDGET.SELECT_ALL": "Alle",
 	"WIDGET.SELECT_YES": "Ja",
