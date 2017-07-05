@@ -15,7 +15,9 @@ use exface\Core\CommonLogic\Contexts\ContextActionTrait;
  */
 class ObjectBasketAdd extends AbstractAction
 {
-    use ContextActionTrait;
+    use ContextActionTrait {
+        getContextScope as parentGetContextScope;
+    }
     
     protected function init()
     {
@@ -29,10 +31,10 @@ class ObjectBasketAdd extends AbstractAction
 
     public function getContextScope()
     {
-        if (! parent::getContextScope()) {
+        if (! $this->parentGetContextScope()) {
             $this->setContextScope('Window');
         }
-        return parent::getContextScope();
+        return $this->parentGetContextScope();
     }
 
     protected function perform()

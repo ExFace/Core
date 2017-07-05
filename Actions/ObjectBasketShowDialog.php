@@ -77,7 +77,7 @@ class ObjectBasketShowDialog extends ShowDialog
      * should be added here while buttons that only work with specific object
      * must be created in the perform(). Those buttons cannot be found by id
      * references though, so basically only model actions or actions with default
-     * parameters are supported.     * 
+     * parameters are supported.
      * 
      * {@inheritDoc}
      * @see \exface\Core\Actions\ShowDialog::createDialogWidget()
