@@ -25,10 +25,10 @@ class FavoritesAdd extends ObjectBasketAdd
      * {@inheritdoc}
      * @see \exface\Core\Actions\ObjectBasketAdd::getContextScope()
      */
-    public function getContextType()
+    public function getContextAlias()
     {
-        $this->setContextType('Favorites');
-        return parent::getContextType();
+        $this->setContextAlias('Favorites');
+        return parent::getContextAlias();
     }
 
     /**

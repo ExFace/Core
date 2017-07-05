@@ -2,6 +2,8 @@
 namespace exface\Core\Actions;
 
 use exface\Core\Contexts\ObjectBasketContext;
+use exface\Core\CommonLogic\AbstractAction;
+use exface\Core\CommonLogic\Contexts\ContextActionTrait;
 
 /**
  * Adds the input rows to the object basket in a specified context_scope (by default, the window scope)
@@ -11,16 +13,17 @@ use exface\Core\Contexts\ObjectBasketContext;
  * @author Andrej Kabachnik
  *        
  */
-class ObjectBasketAdd extends SetContext
+class ObjectBasketAdd extends AbstractAction
 {
-
+    use ContextActionTrait;
+    
     protected function init()
     {
         parent::init();
         $this->setInputRowsMin(1);
         $this->setInputRowsMax(null);
         $this->setIconName('basket');
-        $this->setContextType('ObjectBasket');
+        $this->setContextAlias('ObjectBasket');
         $this->setContextScope('Window');
     }
 

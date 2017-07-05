@@ -11,7 +11,7 @@ use exface\Core\Widgets\AbstractWidget;
 /**
  * Displays a popup-table with all instances of a meta object in the object basket.
  * 
- * Using the context_scope and context_type UXON properties the action can be 
+ * Using the context_scope and context_alias UXON properties the action can be 
  * used to fetch object instances from different baskets. 
  *
  * @author Andrej Kabachnik
@@ -26,7 +26,7 @@ class ObjectBasketShowDialog extends ShowDialog
         parent::init();
         $this->setInputRowsMax(1);
         $this->setInputRowsMin(1);
-        $this->setContextType('ObjectBasket');
+        $this->setContextAlias('ObjectBasket');
     }
 
     /**
@@ -109,7 +109,7 @@ class ObjectBasketShowDialog extends ShowDialog
         $button->setActionAlias('exface.Core.ObjectBasketRemove');
         $button->setInputWidget($table);
         $button->setAlign(EXF_ALIGN_LEFT);
-        $button->getAction()->setContextScope($this->getContextScope())->setContextType($this->getContextType());
+        $button->getAction()->setContextScope($this->getContextScope())->setContextAlias($this->getContextAlias());
         $dialog->addButton($button);
         
         return $dialog;

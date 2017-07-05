@@ -240,7 +240,7 @@ class ObjectBasketContext extends AbstractContext
         // This makes it easy to reuse this method for user favorites, that are
         // simply another object basket in a different scope.
         $details_button->getAction()->setContextScope($this->getScope()->getName());
-        $details_button->getAction()->setContextType($this->getAlias());
+        $details_button->getAction()->setContextAlias($this->getAlias());
         $data_list->addButton($details_button);
         
         // TODO add button to remove from basket here

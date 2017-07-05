@@ -3,18 +3,18 @@ namespace exface\Core\CommonLogic\Contexts;
 
 trait ContextActionTrait 
 {  
-    private $context_type = null;
+    private $context_alias = null;
     
     private $context_scope = null;
     
-    public function getContextType()
+    public function getContextAlias()
     {
-        return $this->context_type;
+        return $this->context_alias;
     }
     
-    public function setContextType($value)
+    public function setContextAlias($value)
     {
-        $this->context_type = $value;
+        $this->context_alias = $value;
         return $this;
     }
     
@@ -36,6 +36,6 @@ trait ContextActionTrait
      */
     public function getContext()
     {
-        return $this->getApp()->getWorkbench()->context()->getScope($this->getContextScope())->getContext($this->getContextType());
+        return $this->getApp()->getWorkbench()->context()->getScope($this->getContextScope())->getContext($this->getContextAlias());
     }
 }

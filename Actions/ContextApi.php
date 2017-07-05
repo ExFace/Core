@@ -16,23 +16,23 @@ use Psr\Http\Message\ServerRequestInterface;
 class ContextApi extends AbstractAction
 {
 
-    private $context_type = null;
+    private $context_alias = null;
 
     private $scope = null;
     
     private $operation = null;
 
-    public function getContextType()
+    public function getContextAlias()
     {
-        return $this->context_type;
+        return $this->context_alias;
     }
 
-    public function setContextType($value)
+    public function setContextAlias($value)
     {
-        if (is_null($this->context_type)){
-            $this->setContextType($this->getRequest()->getQueryParams()['ctype']);
+        if (is_null($this->context_alias)){
+            $this->setContextAlias($this->getRequest()->getQueryParams()['ctype']);
         }
-        $this->context_type = $value;
+        $this->context_alias = $value;
         return $this;
     }
 
@@ -57,7 +57,7 @@ class ContextApi extends AbstractAction
      */
     public function getContext()
     {
-        return $this->getApp()->getWorkbench()->context()->getScope($this->getScope())->getContext($this->getContextType());
+        return $this->getApp()->getWorkbench()->context()->getScope($this->getScope())->getContext($this->getContextAlias());
     }
     
     /**
