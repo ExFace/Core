@@ -138,6 +138,10 @@ class ContextManager implements ContextManagerInterface
      */
     public function getScope($scope_name)
     {
+        if (!$scope_name){
+            throw new ContextScopeNotFoundError('Empty context scope name requested!', '6T5E14B');
+        }
+        
         $getter_method = 'getScope' . ucfirst($scope_name);
         if (! method_exists($this, $getter_method)) {
             $getter_method = 'get_scope_' . $scope_name;
