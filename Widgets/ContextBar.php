@@ -4,7 +4,6 @@ namespace exface\Core\Widgets;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\CommonLogic\UiPage;
 use exface\Core\Interfaces\Contexts\ContextInterface;
-use exface\Core\Actions\ContextApi;
 use exface\Core\Exceptions\Widgets\WidgetLogicError;
 
 /**
@@ -70,13 +69,10 @@ class ContextBar extends ButtonBar
      * @return \exface\Core\Widgets\Button
      */
     protected function createButtonForContext(ContextInterface $context)
-    {
-        $button_id = $this->createButtonIdFromContext($context);
-        $this->context_widget_map[$button_id] = $context;
-        
+    {   
         /* @var $btn \exface\Core\Widgets\Button */
         $btn = WidgetFactory::create($this->getPage(), $this->getButtonWidgetType(), $this)
-        ->setId($button_id)
+        ->setId($this->createButtonIdFromContext($context))
         ->setActionAlias('exface.Core.ShowContextPopup')
         ->setHint($context->getName())
         ->setIconName($context->getIcon())
@@ -84,6 +80,9 @@ class ContextBar extends ButtonBar
         
         $btn->getAction()->setContextAlias($context->getAlias());
         $btn->getAction()->setContextScope($context->getScope()->getName());
+        
+        $this->context_widget_map[$btn->getId()] = $context;
+        
         return $btn;
     }
     

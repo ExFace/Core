@@ -3,13 +3,17 @@ namespace exface\Core\CommonLogic\Contexts\Scopes;
 
 use exface\Core\Interfaces\Contexts\ContextInterface;
 use exface\Core\Factories\DataSheetFactory;
+use exface\Core\CommonLogic\UxonObject;
 
 class UserContextScope extends AbstractContextScope
 {
+    const CONTEXTS_FILENAME_IN_USER_DATA = '.contexts.json';
 
     private $user_data = null;
 
     private $user_locale = null;
+    
+    private $user_context_file_contents = null;
     
     public function getScopeId(){
         return $this->getUserName();
@@ -51,10 +55,74 @@ class UserContextScope extends AbstractContextScope
      * @see \exface\Core\CommonLogic\Contexts\Scopes\AbstractContextScope::loadContextData()
      */
     public function loadContextData(ContextInterface $context)
-    {}
-
+    {
+        if (is_null($this->user_context_file_contents)){
+            if (file_exists($this->getFilename())){
+                try {
+                    $this->user_context_file_contents = UxonObject::fromAnything(file_get_contents($this->getFilename()));
+                } catch (\Throwable $e){
+                    $this->user_context_file_contents = new UxonObject();
+                }
+            } else {
+                $this->user_context_file_contents = new UxonObject();
+            }
+        }
+        
+        if ($this->user_context_file_contents->hasProperty($context->getAlias())){
+            $context->importUxonObject($this->user_context_file_contents->getProperty($context->getAlias()));
+        }
+        
+        return $this;
+    }
+    
+    /**
+     * Contexts in the user scope get saved to the file .contexts.json in the
+     * user data folder of the current user.
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Contexts\Scopes\AbstractContextScope::saveContexts()
+     */
     public function saveContexts()
-    {}
+    {
+        // Update the cached file contents with data from all loaded contexts
+        // If a context is not loaded, but present in the file, it had noch
+        // chance to get changed, so we just keep it in the file. If the
+        // context is loaded, but empty - then we know, it should disapear from
+        // the file.
+        foreach ($this->getContextsLoaded() as $context) {
+            $uxon = $context->exportUxonObject();
+            if (! is_null($uxon) && ! $uxon->isEmpty()) {
+                $this->user_context_file_contents->setProperty($context->getAlias(), $uxon);
+            } else {
+                $this->removeContext($context->getAlias());
+            }
+        }
+        
+        // Now save the cached version of the file. 
+        // NOTE: if nothing was cached, than we don't need to change anything.
+        if (!is_null($this->user_context_file_contents)){
+            if (!$this->user_context_file_contents->isEmpty()){
+                file_put_contents($this->getFilename(), $this->user_context_file_contents->toJson());
+            } elseif (file_exists($this->getFilename())){
+                unlink($this->getFilename());
+            }
+        }
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Contexts\Scopes\AbstractContextScope::removeContext()
+     */
+    public function removeContext($alias){
+        $this->user_context_file_contents->unsetProperty($alias);
+        return parent::removeContext($alias);
+    }
+    
+    protected function getFilename(){
+        return $this->getUserDataFolderAbsolutePath() . DIRECTORY_SEPARATOR . static::CONTEXTS_FILENAME_IN_USER_DATA;
+    }
 
     /**
      * Returns a data sheet with all data from the user object

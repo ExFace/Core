@@ -18,6 +18,18 @@ class FavoritesAdd extends ObjectBasketAdd
         parent::init();
         $this->setIconName('star');
     }
+    
+    /**
+     * The context type for the favorites-actions is allways FavoritesContext
+     *
+     * {@inheritdoc}
+     * @see \exface\Core\Actions\ObjectBasketAdd::getContextScope()
+     */
+    public function getContextType()
+    {
+        $this->setContextType('Favorites');
+        return parent::getContextType();
+    }
 
     /**
      * In constrast to the generic object basket, favorites are always stored in the user context scope.

@@ -19,6 +19,13 @@ class ShowContextPopup extends ShowPopup
     protected function createPopupContainer(AbstractWidget $contained_widget = NULL)
     {
         $popup = parent::createPopupContainer($contained_widget);
+        
+        // Make sure, each popup has it's own id space. This is important because
+        // a single context can produce multiple popups (in different scopes) and
+        // this would lead to id-collisions without different id scopes.
+        $popup->setIdSpace($popup->getParent()->getId());
+        
+        // Give to popup to the context to fill with widgets
         $popup = $this->getContext()->getContextBarPopup($popup);
         
         return $popup;

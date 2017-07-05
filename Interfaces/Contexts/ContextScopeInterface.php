@@ -23,6 +23,14 @@ interface ContextScopeInterface extends ExfaceClassInterface
      * @return ContextInterface
      */
     public function getContext($alias);
+    
+    /**
+     * Removes the context matching the given alias from the scope
+     * 
+     * @param string $alias
+     * @return ContextScopeInterface
+     */
+    public function removeContext($alias);
 
     /**
      * Saves data of all contexts in the current scope to the scopes storage

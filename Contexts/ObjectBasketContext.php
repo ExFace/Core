@@ -12,6 +12,7 @@ use exface\Core\Widgets\Container;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Factories\UiPageFactory;
 use exface\Core\CommonLogic\UiPage;
+use exface\Core\Interfaces\WidgetInterface;
 
 /**
  * The ObjectBasketContext provides a unified interface to store links to selected instances of meta objects in any context scope.
@@ -239,64 +240,13 @@ class ObjectBasketContext extends AbstractContext
         // This makes it easy to reuse this method for user favorites, that are
         // simply another object basket in a different scope.
         $details_button->getAction()->setContextScope($this->getScope()->getName());
+        $details_button->getAction()->setContextType($this->getAlias());
         $data_list->addButton($details_button);
         
         // TODO add button to remove from basket here
         
         $container->addWidget($data_list);
         return $container;
-    }
-    
-    protected function createBasketDialog(Object $meta_object, UiPage $page = null)
-    {
-        if (is_null($page)){
-            $page = UiPageFactory::createEmpty($meta_object->getWorkbench()->ui(), 0);
-        }
-        
-        /* @var $dialog \exface\Core\Widgets\Dialog */
-        $dialog = WidgetFactory::create($page, 'Dialog');
-        $dialog->setId('object_basket');
-        $dialog->setMetaObject($meta_object);
-        $dialog->setCaption();
-        $dialog->setLazyLoading(false);
-        
-        /* @var $table \exface\Core\Widgets\DataTable */
-        $table = WidgetFactory::create($dialog->getPage(), 'DataTable', $dialog);
-        $table->setLazyLoading(false);
-        $table->setPaginate(false);
-        $table->setHideToolbarBottom(true);
-        $table->setMultiSelect(true);
-        $table->setMultiSelectAllSelected(true);
-        $table->prefill($this->getFavoritesByObject($meta_object));
-        $dialog->addWidget($table);
-        
-        // Add action buttons
-        foreach ($meta_object->getActions()->getUsedInObjectBasket() as $a) {
-            /* @var $button \exface\Core\Widgets\Button */
-            $button = WidgetFactory::create($dialog->getPage(), 'DialogButton', $dialog);
-            $button->setAction($a);
-            $button->setAlign(EXF_ALIGN_LEFT);
-            $button->setInputWidget($table);
-            $dialog->addButton($button);
-        }
-        
-        // Add remove button
-        $button = WidgetFactory::create($dialog->getPage(), 'DialogButton', $dialog);
-        $button->setActionAlias('exface.Core.ObjectBasketRemove');
-        $button->setInputWidget($table);
-        $button->setAlign(EXF_ALIGN_LEFT);
-        $button->getAction()->setReturnBasketContent(true);
-        $dialog->addButton($button);
-        
-        /*
-         * IDEA delegate dialog rendering to ShowDialog action. Probably need to override getResultOutput in this case...
-         * $action = $this->getApp()->getAction('ShowDialog');
-         * $action->setTemplateAlias($this->getTemplate()->getAliasWithNamespace());
-         * $action->setWidget($dialog);
-         * return $action->getResult();
-         */
-        
-        return $dialog;
     }
     
     public function getName(){

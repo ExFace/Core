@@ -56,8 +56,6 @@ class SessionContextScope extends AbstractContextScope
      */
     public function loadContextData(ContextInterface $context)
     {
-        // Check to see if the session had been started by some other code (e.g. the CMS, etc.)
-        // If not, start it here!
         if ($this->getSavedContexts($context->getAlias())) {
             $context->importUxonObject($this->getSavedContexts($context->getAlias()));
         }
@@ -108,11 +106,16 @@ class SessionContextScope extends AbstractContextScope
         
         return $this;
     }
-
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Contexts\Scopes\AbstractContextScope::removeContext()
+     */
     public function removeContext($alias)
     {
         unset($_SESSION['exface']['contexts'][$alias]);
-        return $this;
+        return parent::removeContext($alias);
     }
 
     /**

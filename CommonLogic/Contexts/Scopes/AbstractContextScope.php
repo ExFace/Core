@@ -93,6 +93,17 @@ abstract class AbstractContextScope implements ContextScopeInterface
     
     /**
      * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Contexts\ContextScopeInterface::removeContext()
+     */
+    public function removeContext($alias)
+    {
+        unset($this->active_contexts[$alias]);
+        return $this;
+    }
+    
+    /**
+     * 
      * @param string $context_alias
      * @return string
      */
