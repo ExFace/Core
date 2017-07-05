@@ -36,25 +36,31 @@ class ContextBar extends ButtonBar
             $context_scope_name = $context_selector_parts[0];
             $context_alias = $context_selector_parts[1];
             
-            $btn = $this->createButtonForContext($this->getWorkbench()->context()->getScope($context_scope_name)->getContext($context_alias));
-            
-            switch ($visibility){
-                case ContextInterface::CONTEXT_BAR_SHOW_IF_NOT_EMPTY:
-                    if ($btn->getAction()->getWidget()->countWidgetsVisible() == 0){
+            try {
+                $btn = $this->createButtonForContext($this->getWorkbench()->context()->getScope($context_scope_name)->getContext($context_alias));
+                
+                switch ($visibility){
+                    case ContextInterface::CONTEXT_BAR_SHOW_IF_NOT_EMPTY:
+                        if ($btn->getAction()->getWidget()->countWidgetsVisible() == 0){
+                            $btn->setVisibility(EXF_WIDGET_VISIBILITY_OPTIONAL);
+                            break;
+                        }
+                    case ContextInterface::CONTEXT_BAR_SHOW_ALLWAYS:
+                        $btn->setVisibility(EXF_WIDGET_VISIBILITY_PROMOTED);
+                        break;
+                    case ContextInterface::CONTEXT_BAR_HIDE_ALLWAYS:
                         $btn->setVisibility(EXF_WIDGET_VISIBILITY_OPTIONAL);
                         break;
-                    }
-                case ContextInterface::CONTEXT_BAR_SHOW_ALLWAYS:
-                    $btn->setVisibility(EXF_WIDGET_VISIBILITY_PROMOTED);
-                    break;
-                case ContextInterface::CONTEXT_BAR_HIDE_ALLWAYS:
-                    $btn->setVisibility(EXF_WIDGET_VISIBILITY_OPTIONAL);
-                    break;
-                default:
-                    throw new WidgetLogicError($this, 'Invalid context bar visibility "' . $visibility . '" set for context "' . $context_alias . '"');
-            }
+                    default:
+                        throw new WidgetLogicError($this, 'Invalid context bar visibility "' . $visibility . '" set for context "' . $context_alias . '"');
+                }
             
-            $this->addButton($btn);
+                $this->addButton($btn);
+            } catch (ExceptionInterface $e){
+                $this->getWorkbench()->getLogger()->alert($e->getMessage(), [], $e);
+            } catch (\Throwable $e){
+                $this->getWorkbench()->getLogger()->alert($e->getMessage(), ["exception" => $e]);
+            }
         }                
     }
     
