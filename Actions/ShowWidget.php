@@ -182,7 +182,7 @@ class ShowWidget extends AbstractAction implements iShowWidget
             // Wouldn't it be better to add the context filters to the data sheet or maybe even to the data sheet and the prefill data separately?
             if ($this->getWidget()->getMetaObject()->is($data_sheet->getMetaObject())) {
                 /* @var $condition \exface\Core\CommonLogic\Model\Condition */
-                foreach ($context_conditions as $condition) {
+                foreach ($context_conditions as $condition) {                    
                     /*
                      * if ($this->getWidget() && $condition->getExpression()->getMetaObject()->getId() == $this->getWidget()->getMetaObjectId()){
                      * // If the expressions belong to the same object, as the one being displayed, use them as filters
@@ -192,7 +192,25 @@ class ShowWidget extends AbstractAction implements iShowWidget
                      * } else
                      */
                     if ($condition->getComparator() == EXF_COMPARATOR_IS || $condition->getComparator() == EXF_COMPARATOR_EQUALS || $condition->getComparator() == EXF_COMPARATOR_IN) {
-                        // If it is not the same object, as the one displayed, add the context values as filters
+                        
+                        // Double check to see if the data sheet already has filters over the attribute coming from the context.
+                        // This could cause strange conflicts especially because the filter contest is added as a row, not as another
+                        // filter: i.e. without this code you could not call a page with a filter URL parameter twice in a row with 
+                        // different parameter values.
+                        $filter_conflict = false;
+                        foreach ($data_sheet->getFilters()->getConditions() as $existing){
+                            if ($existing->getExpression()->toString() == $condition->getExpression()->toString()){
+                                $filter_conflict = true;
+                                break;
+                            }
+                        }
+                        if ($filter_conflict) {
+                            continue;
+                        }
+                        
+                        // IDEA do we also need to check for conflicts with rows?
+                        
+                        // Add the filter values as columns (because the objects are the same)
                         try {
                             $col = $data_sheet->getColumns()->addFromExpression($condition->getExpression());
                             $col->setValues(array(
