@@ -55,7 +55,7 @@ class UiPage implements UiPageInterface
         }
         
         // Remember the first widget added automatically as the root widget of the page
-        if (count($this->widgets) === 0) {
+        if (count($this->widgets) === 0 && !$widget->is('ContextBar')) {
             $this->widget_root = $widget;
         }
         
@@ -69,9 +69,6 @@ class UiPage implements UiPageInterface
      */
     public function getWidgetRoot()
     {
-        if (is_null($this->widget_root)) {
-            $this->widget_root = reset($this->widgets);
-        }
         return $this->widget_root;
     }
 
@@ -92,11 +89,6 @@ class UiPage implements UiPageInterface
             return $widget;
         }
         
-        // If the page is empty, no widget can be found ;)
-        if ($this->isEmpty()) {
-            return null;
-        }
-        
         // If the parent is null, look under the root widget
         // FIXME this makes a non-parent lookup in pages with multiple roots impossible.
         if (is_null($parent)) {
@@ -104,6 +96,10 @@ class UiPage implements UiPageInterface
             || StringDataType::startsWith($id . static::WIDGET_ID_SPACE_SEPARATOR, $this->getContextBar()->getId())){
                 $parent = $this->getContextBar();
             } else {
+                // If the page is empty, no widget can be found ;) ...except the widget, that are always there
+                if ($this->isEmpty()) {
+                    return null;
+                }
                 $parent = $this->getWidgetRoot();
             }
         }
@@ -349,7 +345,7 @@ class UiPage implements UiPageInterface
      */
     public function isEmpty()
     {
-        return count($this->widgets) ? false : true;
+        return $this->getWidgetRoot() ? false : true;
     }
 
     /**

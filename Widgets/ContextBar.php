@@ -25,6 +25,8 @@ class ContextBar extends ButtonBar
     
     protected function init()
     {
+        $this->setMetaObject($this->getWorkbench()->model()->getObject('exface.Core.CONTEXT_BASE_OBJECT'));
+        $this->setInputWidget($this);
         foreach ($this->getWorkbench()->getConfig()->getOption('CONTEXT_BAR.VISIBILITY') as $context_selector => $visibility){
             $visibility = strtolower($visibility);
             if ($visibility == ContextInterface::CONTEXT_BAR_DISABED){
