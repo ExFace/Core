@@ -67,7 +67,7 @@ interface CmsConnectorInterface extends ExfaceClassInterface
     public function removeSystemRequestParams(array $param_array);
 
     /**
-     * Returns the user name of the user currently logged in
+     * Returns the user name if a user is currently logged in and an empty string otherwise.
      *
      * @return string
      */
