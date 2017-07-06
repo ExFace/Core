@@ -5,6 +5,8 @@ use exface\Core\Factories\WidgetFactory;
 use exface\Core\CommonLogic\UiPage;
 use exface\Core\Interfaces\Contexts\ContextInterface;
 use exface\Core\Exceptions\Widgets\WidgetLogicError;
+use exface\Core\Exceptions\Contexts\ContextAccessDeniedError;
+use exface\Core\Interfaces\Log\LoggerInterface;
 
 /**
  * The context bar shows information about the current context of the workbench.
@@ -57,6 +59,8 @@ class ContextBar extends ButtonBar
                 }
             
                 $this->addButton($btn);
+            } catch (ContextAccessDeniedError $e){
+                $this->getWorkbench()->getLogger()->logException($e, LoggerInterface::INFO);   
             } catch (\Throwable $e){
                 $this->getWorkbench()->getLogger()->logException($e);
             }

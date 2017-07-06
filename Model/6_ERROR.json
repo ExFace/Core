@@ -1249,6 +1249,19 @@
             "ERROR_TEXT": "Meta attribute not found",
             "DESCRIPTION": "This error occurs when an attribute is requested from the meta model, but cannot be found. The error text mostly shows, which attribute alias was requested.",
             "LABEL": "exface.Core.6VG35OA"
+        },
+        {
+            "CREATED_ON": "2017-07-06 08:32:40",
+            "MODIFIED_ON": "2017-07-06 09:02:13",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e76225a9029e5e8298e4b318306b9a",
+            "FULL_ERROR_CODE": "exface.Core.6VYMG0N",
+            "APP": "0x31000000000000000000000000000000",
+            "ERROR_CODE": "6VYMG0N",
+            "ERROR_TEXT": "Access denied for requested context",
+            "DESCRIPTION": "This error indicates, that the current user cannot access the specified context. Many contexts require specific user rights. \n\nInaccessible contexts are automatically hidden from the context bar. ",
+            "LABEL": "exface.Core.6VYMG0N"
         }
     ],
     "totals_rows": [],

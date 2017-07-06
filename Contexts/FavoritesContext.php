@@ -3,6 +3,9 @@ namespace exface\Core\Contexts;
 
 use exface\Core\Interfaces\Contexts\ContextScopeInterface;
 use exface\Core\Exceptions\Contexts\ContextRuntimeError;
+use exface\Core\CommonLogic\Contexts\AbstractContext;
+use exface\Core\CommonLogic\Workbench;
+use exface\Core\Exceptions\Contexts\ContextAccessDeniedError;
 
 /**
  * 
@@ -12,6 +15,12 @@ use exface\Core\Exceptions\Contexts\ContextRuntimeError;
  */
 class FavoritesContext extends ObjectBasketContext
 {
+    public function __construct(Workbench $exface){
+        parent::__construct($exface);
+        if ($exface->context()->getScopeUser()->isUserAnonymous()){
+            throw new ContextAccessDeniedError($this, 'The favorites context cannot be used for anonymous users!');
+        }
+    }
 
     /**
      * The favorites context resides in the user scope.

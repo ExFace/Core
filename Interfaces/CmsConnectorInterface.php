@@ -72,6 +72,13 @@ interface CmsConnectorInterface extends ExfaceClassInterface
      * @return string
      */
     public function getUserName();
+    
+    /**
+     * Returns TRUE if there is a named user logged in and FALSE otherwise.
+     * 
+     * @return boolean
+     */
+    public function isUserLoggedIn();
 
     /**
      * Returns TRUE if the current user is an administrator.

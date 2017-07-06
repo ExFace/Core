@@ -169,5 +169,25 @@ class UserContextScope extends AbstractContextScope
         $this->user_locale = $string;
         return $this;
     }
+    
+    /**
+     * Returns TRUE if the user currently logged in is an administrator and FALSE otherwise.
+     * 
+     * @return boolean
+     */
+    public function isUserAdmin()
+    {
+        return $this->getWorkbench()->getCMS()->isUserAdmin();
+    }
+    
+    /**
+     * Returns TRUE if no named user is logged in and FALSE otherwise.
+     * 
+     * @return boolean
+     */
+    public function isUserAnonymous()
+    {
+        return $this->getWorkbench()->getCMS()->isUserLoggedIn() ? false : true;
+    }
 }
 ?>
