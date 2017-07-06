@@ -189,6 +189,21 @@ class Logger implements LoggerInterface
             $this->setLogging(false);
         }
     }
+    
+    /**
+     * 
+     * @param \Throwable $e
+     * @param string $level
+     */
+    public function logException(\Throwable $e, $level = null)
+    {
+        if ($e instanceof  ExceptionInterface){
+            $this->log((is_null($level) ? $e->getDefaultLogLevel() : $level), $e->getMessage(), [], $e);
+        } else {
+            $this->log((is_null($level) ? LoggerInterface::ALERT : $level), $e->getMessage(), ["exception" => $e]);
+        }
+        return $this;
+    }
 
     /**
      * Pushes a handler on to the stack.

@@ -25,10 +25,20 @@ trait WidgetExceptionTrait {
         parent::__construct($message, null, $previous);
         $this->setAlias($alias);
         $this->setWidget($widget);
-        // Ist die Widget-Konfiguration fehlerhaft wird das entsprechende Widget entfernt.
-        // Ueber ein Event (Widget.Remove.After) wird das Element auch aus dem Element-
-        // Cache des Templates entfernt (siehe AbstractAjaxTemplate->init()).
-        $widget->getPage()->removeWidget($widget);
+        $this->cleanupPageCache();        
+    }
+    
+    /**
+     * Ist die Widget-Konfiguration fehlerhaft wird das entsprechende Widget entfernt.
+     * Ueber ein Event (Widget.Remove.After) wird das Element auch aus dem Element-
+     * Cache des Templates entfernt (siehe AbstractAjaxTemplate->init()).
+     * 
+     * @return \exface\Core\Exceptions\Widgets\WidgetExceptionTrait
+     */
+    protected function cleanupPageCache()
+    {
+        $this->getWidget()->getPage()->removeWidget($this->getWidget());
+        return $this;
     }
 
     /**

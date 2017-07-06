@@ -24,6 +24,7 @@ use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\Exceptions\UxonMapError;
 use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
+use exface\Core\Exceptions\Widgets\WidgetHasNoMetaObjectError;
 
 /**
  * Basic ExFace widget
@@ -442,7 +443,7 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
         } elseif ($this->getParent()) {
             $obj = $this->getParent()->getMetaObject();
         } else {
-            throw new WidgetConfigurationError($this, 'A widget must have either an object_id, an object_alias or a parent widget with an object reference!', '6T9137Y');
+            throw new WidgetHasNoMetaObjectError($this, 'A widget must have either an object_id, an object_alias or a parent widget with an object reference!');
         }
         $this->setMetaObjectId($obj->getId());
         return $obj;

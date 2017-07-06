@@ -3,7 +3,6 @@ namespace exface\Core\Exceptions\Widgets;
 
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Interfaces\Exceptions\WidgetExceptionInterface;
-use exface\Core\Interfaces\WidgetInterface;
 
 /**
  * Exception thrown if a widget fails to read it's configuration or an invalid configuration value is passed.

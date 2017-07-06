@@ -57,10 +57,8 @@ class ContextBar extends ButtonBar
                 }
             
                 $this->addButton($btn);
-            } catch (ExceptionInterface $e){
-                $this->getWorkbench()->getLogger()->alert($e->getMessage(), [], $e);
             } catch (\Throwable $e){
-                $this->getWorkbench()->getLogger()->alert($e->getMessage(), ["exception" => $e]);
+                $this->getWorkbench()->getLogger()->logException($e);
             }
         }                
     }

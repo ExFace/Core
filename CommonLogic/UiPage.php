@@ -285,11 +285,11 @@ class UiPage implements UiPageInterface
     public function removeWidget(WidgetInterface $widget, $remove_children_too = true)
     {
         if ($remove_children_too) {
-            /*if ($widget instanceof iHaveChildren) {
-                foreach ($widget->getChildren() as $child) {
-                    $this->removeWidget($child, true);
+            foreach ($this->widgets as $cached_widget){
+                if ($cached_widget->getParent() === $widget){
+                    $this->removeWidget($cached_widget, true);
                 }
-            }*/
+            }
         }
         $result = $this->removeWidgetById($widget->getId());
         

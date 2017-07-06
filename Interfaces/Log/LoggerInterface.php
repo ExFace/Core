@@ -176,6 +176,15 @@ interface LoggerInterface extends \Psr\Log\LoggerInterface
      * @return void
      */
     public function log($level, $message, array $context = array(), iCanGenerateDebugWidgets $sender = null);
+    
+    /**
+     * Shortcut to logging an exception automatically figuring out the sender, message, log level, etc.
+     * 
+     * @param \Throwable $e
+     * @param string $level
+     * @return LoggerInterface
+     */
+    public function logException(\Throwable $e, $level = null);
 
     /**
      * Pushes a handler on to the stack.

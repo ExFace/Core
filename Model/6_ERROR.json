@@ -810,15 +810,15 @@
         },
         {
             "CREATED_ON": "2016-12-28 15:14:09",
-            "MODIFIED_ON": "2016-12-28 15:14:09",
+            "MODIFIED_ON": "2017-07-06 08:07:06",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6cd1038b4abab93cce4b318306b9a",
             "FULL_ERROR_CODE": "exface.Core.6T9137Y",
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6T9137Y",
-            "ERROR_TEXT": "A widget must have either an object_id, an object_alias or a parent widget with an object reference!",
-            "DESCRIPTION": "",
+            "ERROR_TEXT": "Widget has no meta object",
+            "DESCRIPTION": "Every widget showing data must have a reference to it's main meta object. This reference can either be set directly in the widget's UXON description via the \"object_alias\" property or will be inherited automatically from the widget's parent.\n\nGenerally it is a good idea to always specify an object_alias for the root widget of every page - even if it is a container with widgets based on other objects. It is no problem to specify a different object for a child widget!",
             "LABEL": "exface.Core.6T9137Y"
         },
         {
