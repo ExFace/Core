@@ -218,7 +218,8 @@ class ObjectBasketContext extends AbstractContext
             ->setCaption($this->getName())
             ->setLazyLoading(false)
             ->setPaginate(false)
-            ->setPaginatePageSize(40);
+            ->setPaginatePageSize(40)
+            ->setHideToolbarTop(true);
         
         $data_list->addColumn(WidgetFactory::create($container->getPage(), 'DataColumn', $data_list)->setAttributeAlias('TITLE'));
         

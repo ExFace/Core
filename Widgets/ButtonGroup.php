@@ -128,5 +128,31 @@ class ButtonGroup extends Button implements iHaveButtons
         
         return $uxon;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveButtons::countButtons()
+     */
+    public function countButtons()
+    {
+        return count($this->getButtons());
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveButtons::countButtonsVisible()
+     */
+    public function countButtonsVisible()
+    {
+        $cnt = 0;
+        foreach ($this->getButtons() as $btn){
+            if (!$btn->isHidden()){
+                $cnt++;
+            }
+        }
+        return $cnt;
+    }
 }
 ?>

@@ -18,23 +18,27 @@ use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 use exface\Core\Factories\WidgetLinkFactory;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
-use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Interfaces\Widgets\iHaveContextualHelp;
+use exface\Core\Interfaces\Widgets\iHaveToolbars;
+use exface\Core\Widgets\Traits\iHaveButtonsAndToolbarsTrait;
 
 /**
  * Data is the base for all widgets displaying tabular data.
  *
  * Many widgets like Chart, ComboTable, etc. contain internal Data sub-widgets, that define the data set used
  * by these widgets. Datas are much like tables: you can define columns, sorters, filters, pagination rules, etc.
+ * 
+ * @method DataButton[] getButtons()
  *
  * @author Andrej Kabachnik
  *        
  */
-class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iHaveButtons, iHaveFilters, iSupportLazyLoading, iHaveContextualHelp
+class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iHaveToolbars, iHaveButtons, iHaveFilters, iSupportLazyLoading, iHaveContextualHelp
 {
+    use iHaveButtonsAndToolbarsTrait;
 
     // properties
     private $paginate = true;
@@ -52,9 +56,9 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 
     /** @var DataColumnGroup[] */
     private $column_groups = array();
-
-    /** @var Button[] */
-    private $buttons = array();
+    
+    /** @var DataToolbar[] */
+    private $toolbars = array();
 
     /** @var Filter[] */
     private $filters = array();
@@ -492,17 +496,6 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
     }
 
     /**
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Widgets\iHaveButtons::getButtons()
-     * @return DataButton
-     */
-    public function getButtons()
-    {
-        return $this->buttons;
-    }
-
-    /**
      * Returns an array of button widgets, that are explicitly bound to a double click on a data element
      *
      * @param string $mouse_action            
@@ -517,84 +510,6 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
             }
         }
         return $result;
-    }
-
-    /**
-     * Defines the buttons for interaction with data elements (e.g.
-     * rows in the table, points on a chart, etc.)
-     *
-     * The array must contain widget objects with widget_type Button or any derivatives. The widget_type can
-     * also be ommitted. It is a good idea to only specify an explicit widget type if a special button
-     * (e.g. MenuButton) is required. For regular buttons it is advisable to let ExFache choose the right type.
-     *
-     * Example:
-     * "buttons": [
-     * {
-     * "action_alias": "exface.CreateObjectDialog"
-     * },
-     * {
-     * "widget_type": "MenuButton",
-     * "caption": "My menu",
-     * "buttons": [
-     * ...
-     * ]
-     * }
-     * ]
-     *
-     * @uxon-property buttons
-     * @uxon-type Button[]
-     *
-     * @see \exface\Core\Interfaces\Widgets\iHaveButtons::setButtons()
-     */
-    public function setButtons(array $buttons_array)
-    {
-        if (! is_array($buttons_array))
-            return false;
-        foreach ($buttons_array as $b) {
-            // FIXME Separating DataButton from Button does not work with MenuButton and ButtonGroup. Not sure, what to do,
-            // because the DataButton can be bound to click events while the others can't - thus there is quite a differece.
-            // For now, setting the widget type for the button explicitly will allow the user to create non-DataButtons - thus
-            // loosing the possibility to use mouse events (which may even be okay, since MenuButtons do not trigger actions
-            // by themselves.
-            // $button = $this->getPage()->createWidget('DataButton', $this, UxonObject::fromAnything($b));
-            $button_uxon = UxonObject::fromAnything($b);
-            if (! $button_uxon->widget_type) {
-                $button = $this->getPage()->createWidget('DataButton', $this, $button_uxon);
-            } else {
-                $button = $this->getPage()->createWidget($button_uxon->widget_type, $this, $button_uxon);
-                if (! $button->is('Button')) {
-                    throw new WidgetConfigurationError($this, 'Invalid widget type "' . $button->getWidgetType() . '" used for button widget!', '6UNT6D5');
-                }
-            }
-            $this->addButton($button);
-        }
-    }
-
-    /**
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Widgets\iHaveButtons::addButton()
-     */
-    public function addButton(Button $button_widget)
-    {
-        $button_widget->setParent($this);
-        // FIXME remove if everything OK (18.05.2017)
-        // $button_widget->setMetaObjectId($this->getMetaObject()->getId());
-        $this->buttons[] = $button_widget;
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Widgets\iHaveButtons::removeButton()
-     */
-    public function removeButton(Button $button_widget)
-    {
-        if (($key = array_search($button_widget, $this->buttons)) !== false) {
-            unset($this->buttons[$key]);
-        }
-        return $this;
     }
 
     /**
@@ -972,18 +887,6 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
             $this->addRequiredFilters();
         }
         if (count($this->filters))
-            return true;
-        else
-            return false;
-    }
-
-    /**
-     *
-     * @return boolean
-     */
-    public function hasButtons()
-    {
-        if (count($this->buttons))
             return true;
         else
             return false;
@@ -1557,6 +1460,8 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
         }
         $uxon->setProperty('columns', $col_groups);
         
+        // TODO export toolbars to UXON instead of buttons. Currently all
+        // information about toolbars is lost.
         $buttons = array();
         foreach ($this->getButtons() as $button) {
             $buttons[] = $button->exportUxonObject();

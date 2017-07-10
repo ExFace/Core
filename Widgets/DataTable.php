@@ -15,50 +15,49 @@ use exface\Core\CommonLogic\Traits\WidgetLayoutTrait;
  * Columns of the DataTable can also be made editable.
  *
  * Example:
- * {
- * "id": "attributes",
- * "widget_type": "DataTable",
- * "object_alias": "exface.Core.ATTRIBUTE",
- * "filters": [
- * {
- * "attribute_alias": "OBJECT"
- * },
- * {
- * "attribute_alias": "OBJECT__DATA_SOURCE"
- * }
- * ],
- * "columns": [
- * {
- * "attribute_alias": "OBJECT__LABEL"
- * },
- * {
- * "attribute_alias": "LABEL"
- * },
- * {
- * "attribute_alias": "ALIAS"
- * },
- * {
- * "attribute_alias": "RELATED_OBJ__LABEL",
- * "caption": "Relation to"
- * }
- * ],
- * "buttons": [
- * {
- * "action_alias": "exface.Core.UpdateData"
- * },
- * {
- * "action_alias": "exface.Core.CreateObjectDialog",
- * "caption": "Neu"
- * },
- * {
- * "action_alias": "exface.Core.EditObjectDialog",
- * "bind_to_double_click": true
- * },
- * {
- * "action_alias": "exface.Core.DeleteObject"
- * }
- * ]
- * }
+ *  {
+ *      "id": "attributes",
+ *      "widget_type": "DataTable",
+ *      "object_alias": "exface.Core.ATTRIBUTE",
+ *      "filters": [
+ *          {
+ *              "attribute_alias": "OBJECT"
+ *          },
+ *          {
+ *              "attribute_alias": "OBJECT__DATA_SOURCE"
+ *          }
+ *      ],
+ *      "columns": [
+ *          {
+ *              "attribute_alias": "OBJECT__LABEL"
+ *          },
+ *          {
+ *              "attribute_alias": "LABEL"
+ *          },
+ *          {
+ *              "attribute_alias": "ALIAS"
+ *          },
+ *          {
+ *              "attribute_alias": "RELATED_OBJ__LABEL",
+ *              "caption": "Relation to"
+ *          }
+ *      ],
+ *      "buttons": [
+ *          {
+ *              "action_alias": "exface.Core.UpdateData"
+ *          },
+ *          {
+ *              "action_alias": "exface.Core.CreateObjectDialog"
+ *          },
+ *          {
+ *              "action_alias": "exface.Core.EditObjectDialog",
+ *              "bind_to_double_click": true
+ *          },
+ *          {
+ *              "action_alias": "exface.Core.DeleteObject"
+ *          }
+ *      ]
+ *  }
  *
  * @author Andrej Kabachnik
  *        

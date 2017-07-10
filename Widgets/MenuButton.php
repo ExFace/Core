@@ -143,5 +143,25 @@ class MenuButton extends Button implements iHaveMenu, iHaveButtons
     {
         return $this->getMenu()->getButtonWidgetType();
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveButtons::countButtons()
+     */
+    public function countButtons()
+    {
+        return $this->getMenu()->countButtons();
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveButtons::countButtonsVisible()
+     */
+    public function countButtonsVisible()
+    {
+        return $this->getMenu()->countButtonsVisible();
+    }
 }
 ?>

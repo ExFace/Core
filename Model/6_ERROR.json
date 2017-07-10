@@ -433,14 +433,14 @@
         },
         {
             "CREATED_ON": "2016-12-22 11:25:32",
-            "MODIFIED_ON": "2016-12-22 11:24:36",
+            "MODIFIED_ON": "2017-07-10 11:58:19",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6c8395814905993cce4b318306b9a",
             "FULL_ERROR_CODE": "exface.Core.6T5V1DR",
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6T5V1DR",
-            "ERROR_TEXT": "Importing rows from another sheet is only possible if both sheets are base on the same object",
+            "ERROR_TEXT": "Importing rows from another sheet is only possible if both sheets are based on the same object",
             "DESCRIPTION": "",
             "LABEL": "exface.Core.6T5V1DR"
         },
@@ -1262,6 +1262,32 @@
             "ERROR_TEXT": "Access denied for requested context",
             "DESCRIPTION": "This error indicates, that the current user cannot access the specified context. Many contexts require specific user rights. \n\nInaccessible contexts are automatically hidden from the context bar. ",
             "LABEL": "exface.Core.6VYMG0N"
+        },
+        {
+            "CREATED_ON": "2017-07-06 11:04:49",
+            "MODIFIED_ON": "2017-07-06 11:09:26",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e7623ae9f942578298e4b318306b9a",
+            "FULL_ERROR_CODE": "exface.Core.6VYOEGI",
+            "APP": "0x31000000000000000000000000000000",
+            "ERROR_CODE": "6VYOEGI",
+            "ERROR_TEXT": "Invalid value for a widget property in UXON",
+            "DESCRIPTION": "This error indicates, that an illegal value was assigned to a widget property in it's UXON description. See the error subtitle for details. \n\nIf you are editing your Screens right know, you can see the UXON-code of the faulty widget in the respective tabs.",
+            "LABEL": "exface.Core.6VYOEGI"
+        },
+        {
+            "CREATED_ON": "2017-07-06 11:08:07",
+            "MODIFIED_ON": "2017-07-06 11:09:37",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e7623b600691ee8298e4b318306b9a",
+            "FULL_ERROR_CODE": "exface.Core.6VYOFZJ",
+            "APP": "0x31000000000000000000000000000000",
+            "ERROR_CODE": "6VYOFZJ",
+            "ERROR_TEXT": "Unknown widget property specified",
+            "DESCRIPTION": "This error indicates, that an illegal or misspelled widget property name was used in the UXON description: see the subtitle for details.\n\nThe most common cause for these errors are typos in the UXON configuration. If you are editing your Screens right know, you can see the UXON-code of the faulty widget in the respective tabs.",
+            "LABEL": "exface.Core.6VYOFZJ"
         }
     ],
     "totals_rows": [],

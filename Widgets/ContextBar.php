@@ -21,14 +21,37 @@ use exface\Core\Interfaces\Log\LoggerInterface;
  * @author Andrej Kabachnik
  *        
  */
-class ContextBar extends ButtonBar
+class ContextBar extends Toolbar
 {
     private $context_widget_map = [];
     
-    protected function init()
-    {
+    protected function init(){
+        parent::init();
         $this->setMetaObject($this->getWorkbench()->model()->getObject('exface.Core.CONTEXT_BASE_OBJECT'));
-        $this->setInputWidget($this);
+        return;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\ButtonGroup::getButtons()
+     */
+    public function getButtons()
+    {
+        if (count(parent::getButtons()) == 0){
+            $this->createButtons();
+        }
+        return parent::getButtons();
+    }
+    
+    /**
+     * Creates a button for every accessible context defined in the context bar
+     * configuration (see core config file).
+     * 
+     * @throws WidgetLogicError
+     */
+    protected function createButtons()
+    {
         foreach ($this->getWorkbench()->getConfig()->getOption('CONTEXT_BAR.VISIBILITY') as $context_selector => $visibility){
             $visibility = strtolower($visibility);
             if ($visibility == ContextInterface::CONTEXT_BAR_DISABED){
@@ -99,9 +122,35 @@ class ContextBar extends ButtonBar
         return $this->getId() . UiPage::WIDGET_ID_SEPARATOR . $context->getScope()->getName() . $context->getAlias();
     }
     
+    /**
+     * 
+     * @param Button $button
+     * @return ContextInterface|null
+     */
     public function getContextForButton(Button $button)
     {
         return $this->context_widget_map[$button->getId()];
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Toolbar::getButtonWidgetType()
+     */
+    public function getButtonWidgetType()
+    {
+        return 'Button';
+    }
+    
+    /**
+     * The input widget of the context bar is the context bar itself.
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Button::getInputWidget()
+     */
+    public function getInputWidget()
+    {
+        return $this;
     }
     
 }
