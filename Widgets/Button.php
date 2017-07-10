@@ -148,7 +148,25 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iHaveC
         $this->input_widget_id = $value;
         return $this;
     }
-
+    
+    /**
+     * Returns the input widget of the button.
+     * 
+     * If no input widget was set for this button explicitly (via UXON or
+     * programmatically using setInputWidget()), the input widget will be
+     * determined automatically:
+     * - If the parent of the button is a button or a button group, the input
+     * widget will be inherited
+     * - If the parent of the widget has buttons (e.g. a Data widget), it will
+     * be used as input widget
+     * - Otherwise the search for those criteria will continue up the hierarchy
+     * untill the root widget is reached. If no match is found, the root widget
+     * itself will be returned.
+     * 
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iTriggerAction::getInputWidget()
+     */
     public function getInputWidget()
     {
         if (is_null($this->input_widget)) {
@@ -156,10 +174,14 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iHaveC
                 $this->input_widget = $this->getUi()->getWidget($this->input_widget_id, $this->getPageId());
             } elseif ($this->getParent()) {
                 $parent = $this->getParent();
-                while ((! ($parent instanceof iHaveButtons) || ($parent instanceof Button)) && ! is_null($parent->getParent())) {
+                while (!(($parent instanceof iHaveButtons) || ($parent instanceof iTriggerAction)) && ! is_null($parent->getParent())) {
                     $parent = $parent->getParent();
                 }
-                $this->input_widget = $parent;
+                if ($parent instanceof iTriggerAction){
+                    $this->input_widget = $parent->getInputWidget();
+                } else {
+                    $this->input_widget = $parent;
+                }
             }
         }
         return $this->input_widget;

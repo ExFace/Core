@@ -61,7 +61,7 @@ class ObjectBasketShowDialog extends ShowDialog
         $menu->setInputWidget($table);
         foreach ($meta_object->getActions()->getUsedInObjectBasket() as $a) {
             /* @var $button \exface\Core\Widgets\Button */
-            $button = WidgetFactory::create($this->getDialogWidget()->getPage(), $this->getDialogWidget()->getButtonWidgetType(), $this->getDialogWidget());
+            $button = WidgetFactory::create($this->getDialogWidget()->getPage(), $this->getDialogWidget()->getButtonWidgetType(), $menu);
             $button->setAction($a);
             $button->setAlign(EXF_ALIGN_LEFT);
             $menu->addButton($button);
