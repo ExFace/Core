@@ -68,8 +68,8 @@ class UserContextScope extends AbstractContextScope
             }
         }
         
-        if ($this->user_context_file_contents->hasProperty($context->getAlias())){
-            $context->importUxonObject($this->user_context_file_contents->getProperty($context->getAlias()));
+        if ($this->user_context_file_contents->hasProperty($context->getAliasWithNamespace())){
+            $context->importUxonObject($this->user_context_file_contents->getProperty($context->getAliasWithNamespace()));
         }
         
         return $this;
@@ -92,9 +92,9 @@ class UserContextScope extends AbstractContextScope
         foreach ($this->getContextsLoaded() as $context) {
             $uxon = $context->exportUxonObject();
             if (! is_null($uxon) && ! $uxon->isEmpty()) {
-                $this->user_context_file_contents->setProperty($context->getAlias(), $uxon);
+                $this->user_context_file_contents->setProperty($context->getAliasWithNamespace(), $uxon);
             } else {
-                $this->removeContext($context->getAlias());
+                $this->removeContext($context->getAliasWithNamespace());
             }
         }
         

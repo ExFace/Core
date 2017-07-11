@@ -3,9 +3,8 @@ namespace exface\Core\Contexts;
 
 use exface\Core\Interfaces\Contexts\ContextScopeInterface;
 use exface\Core\Exceptions\Contexts\ContextRuntimeError;
-use exface\Core\CommonLogic\Contexts\AbstractContext;
-use exface\Core\CommonLogic\Workbench;
 use exface\Core\Exceptions\Contexts\ContextAccessDeniedError;
+use exface\Core\Interfaces\NameResolverInterface;
 
 /**
  * 
@@ -15,9 +14,9 @@ use exface\Core\Exceptions\Contexts\ContextAccessDeniedError;
  */
 class FavoritesContext extends ObjectBasketContext
 {
-    public function __construct(Workbench $exface){
-        parent::__construct($exface);
-        if ($exface->context()->getScopeUser()->isUserAnonymous()){
+    public function __construct(NameResolverInterface $name_resolver){
+        parent::__construct($name_resolver);
+        if ($name_resolver->getWorkbench()->context()->getScopeUser()->isUserAnonymous()){
             throw new ContextAccessDeniedError($this, 'The favorites context cannot be used for anonymous users!');
         }
     }
@@ -41,7 +40,7 @@ class FavoritesContext extends ObjectBasketContext
     public function setScope(ContextScopeInterface $context_scope)
     {
         if ($context_scope != $this->getDefaultScope()){
-            throw new ContextRuntimeError($this, 'Cannot use context scope "' . $context_scope->getName() . '" for context "' . $this->getAlias() . '": only user context scope allowed!');
+            throw new ContextRuntimeError($this, 'Cannot use context scope "' . $context_scope->getName() . '" for context "' . $this->getAliasWithNamespace() . '": only user context scope allowed!');
         }
         return parent::setScope($context_scope);
     }

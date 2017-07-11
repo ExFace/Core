@@ -4,6 +4,7 @@ namespace exface\Core\Interfaces\Contexts;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Interfaces\ExfaceClassInterface;
 use exface\Core\Widgets\Container;
+use exface\Core\Interfaces\AliasInterface;
 
 /**
  * A context is a container for stateful data, that needs to live longer, than
@@ -30,7 +31,7 @@ use exface\Core\Widgets\Container;
  * @author Andrej Kabachnik
  *
  */
-interface ContextInterface extends iCanBeConvertedToUxon, ExfaceClassInterface
+interface ContextInterface extends AliasInterface, iCanBeConvertedToUxon, ExfaceClassInterface
 {
     
     const CONTEXT_BAR_SHOW_ALLWAYS = 'show_allways';
@@ -62,11 +63,12 @@ interface ContextInterface extends iCanBeConvertedToUxon, ExfaceClassInterface
     public function getDefaultScope();
 
     /**
-     * Returns the alias (name) of the context - e.g. "Filter" for the FilterContext, etc.
+     * Returns the alias (name) of the context - e.g. "FilterContext" for the exface.Core.FilterContext, etc.
      *
      * @return string
      */
     public function getAlias();
+    
     
     /**
      * Returns a string indicating the current state of the context.

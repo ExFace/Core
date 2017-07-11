@@ -27,7 +27,7 @@ class FavoritesAdd extends ObjectBasketAdd
      */
     public function getContextAlias()
     {
-        $this->setContextAlias('Favorites');
+        $this->setContextAlias('exface.Core.FavoritesContext');
         return parent::getContextAlias();
     }
 

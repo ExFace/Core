@@ -26,7 +26,7 @@
 	"LOG.PASSTHROUGH_LOG_LEVEL": "error",
 	
 	"CONTEXT_BAR.VISIBILITY": {
-	   "User:Favorites": "show_allways",
-	   "Window:ObjectBasket": "show_allways"
+	   "User:exface.Core.FavoritesContext": "show_allways",
+	   "Window:exface.Core.ObjectBasketContext": "show_allways"
 	}
 }

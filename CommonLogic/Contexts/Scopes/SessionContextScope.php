@@ -56,8 +56,8 @@ class SessionContextScope extends AbstractContextScope
      */
     public function loadContextData(ContextInterface $context)
     {
-        if ($this->getSavedContexts($context->getAlias())) {
-            $context->importUxonObject($this->getSavedContexts($context->getAlias()));
+        if ($this->getSavedContexts($context->getAliasWithNamespace())) {
+            $context->importUxonObject($this->getSavedContexts($context->getAliasWithNamespace()));
         }
         return $this;
     }
@@ -95,9 +95,9 @@ class SessionContextScope extends AbstractContextScope
                 // causes errors when reading the session: all used classes must be declared (included) before the
                 // session is initialized. So as long as we are using the CMS session here, we can only store built-in
                 // types. If ExFace will create own sessions, this can be changed!
-                $this->setSessionData($context->getAlias(), $uxon->toJson());
+                $this->setSessionData($context->getAliasWithNamespace(), $uxon->toJson());
             } else {
-                $this->removeContext($context->getAlias());
+                $this->removeContext($context->getAliasWithNamespace());
             }
         }
         

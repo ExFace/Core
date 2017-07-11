@@ -65,7 +65,7 @@ class ActionContext extends AbstractContext
     {
         // If history not yet loaded, load it now
         if (count($this->action_history_raw) == 0) {
-            $this->importUxonObject($this->getScope()->getSavedContexts($this->getAlias()));
+            $this->importUxonObject($this->getScope()->getSavedContexts($this->getAliasWithNamespace()));
         }
         
         // Put the last $steps_back actions from the history into an array starting with the most recent entry

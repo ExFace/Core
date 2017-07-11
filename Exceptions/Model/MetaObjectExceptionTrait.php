@@ -9,6 +9,8 @@ use exface\Core\Interfaces\Widgets\iSupportLazyLoading;
 use exface\Core\Widgets\ErrorMessage;
 use exface\Core\Widgets\DebugMessage;
 use exface\Core\Factories\DataSheetFactory;
+use exface\Core\Interfaces\Widgets\iHaveToolbars;
+use exface\Core\Widgets\DataToolbar;
 
 /**
  * This trait enables an exception to output meta object specific debug information: properties, attributes, behaviors, etc.

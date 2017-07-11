@@ -25,7 +25,7 @@ class ObjectBasketAdd extends AbstractAction
         $this->setInputRowsMin(1);
         $this->setInputRowsMax(null);
         $this->setIconName('basket');
-        $this->setContextAlias('ObjectBasket');
+        $this->setContextAlias('exface.Core.ObjectBasketContext');
         $this->setContextScope('Window');
     }
 

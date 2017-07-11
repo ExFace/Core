@@ -7,6 +7,8 @@ use exface\Core\Contexts\FilterContext;
 use exface\Core\Contexts\ActionContext;
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\Exceptions\Contexts\ContextNotFoundError;
+use exface\Core\CommonLogic\NameResolver;
+use exface\Core\Factories\ContextFactory;
 
 abstract class AbstractContextScope implements ContextScopeInterface
 {
@@ -45,7 +47,7 @@ abstract class AbstractContextScope implements ContextScopeInterface
      */
     public function getFilterContext()
     {
-        return $this->getContext('Filter');
+        return $this->getContext('exface.Core.FilterContext');
     }
 
     /**
@@ -56,7 +58,7 @@ abstract class AbstractContextScope implements ContextScopeInterface
      */
     public function getActionContext()
     {
-        return $this->getContext('Action');
+        return $this->getContext('exface.Core.ActionContext');
     }
 
     /**
@@ -78,14 +80,13 @@ abstract class AbstractContextScope implements ContextScopeInterface
     {
         // If no context matching the alias exists, try to create one
         if (! $this->active_contexts[$alias]) {
-            $context_class = $this->getClassFromAlias($alias);
-            if (class_exists($context_class)) {
-                $context = new $context_class($this->exface);
-                $context->setScope($this);
+            $name_resolver = NameResolver::createFromString($alias, NameResolver::OBJECT_TYPE_CONTEXT, $this->getWorkbench());            
+            if ($name_resolver->classExists()){
+                $context = ContextFactory::createInScope($name_resolver, $this);
                 $this->loadContextData($context);
                 $this->active_contexts[$alias] = $context;
             } else {
-                throw new ContextNotFoundError('Cannot create context "' . $alias . '": class "' . $context_class . '" not found!', '6T5E24E');
+                throw new ContextNotFoundError('Cannot create context "' . $alias . '": class "' . $name_resolver->getClassNameWithNamespace() . '" not found!', '6T5E24E');
             }
         }
         return $this->active_contexts[$alias];

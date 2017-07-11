@@ -105,7 +105,7 @@ class ContextBar extends Toolbar
         ->setIconName($context->getIcon())
         ->setMetaObject($this->getWorkbench()->model()->getObject('exface.Core.CONTEXT_BASE_OBJECT'));
         
-        $btn->getAction()->setContextAlias($context->getAlias());
+        $btn->getAction()->setContextAlias($context->getAliasWithNamespace());
         $btn->getAction()->setContextScope($context->getScope()->getName());
         
         $this->context_widget_map[$btn->getId()] = $context;
@@ -119,7 +119,7 @@ class ContextBar extends Toolbar
      * @return string
      */
     protected function createButtonIdFromContext(ContextInterface $context){
-        return $this->getId() . UiPage::WIDGET_ID_SEPARATOR . $context->getScope()->getName() . $context->getAlias();
+        return $this->getId() . UiPage::WIDGET_ID_SEPARATOR . str_replace('.', '', $context->getScope()->getName() . $context->getAliasWithNamespace());
     }
     
     /**

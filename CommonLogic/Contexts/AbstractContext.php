@@ -6,11 +6,12 @@ use exface\Core\Interfaces\Contexts\ContextInterface;
 use exface\Core\Interfaces\Contexts\ContextScopeInterface;
 use exface\Core\Exceptions\Contexts\ContextRuntimeError;
 use exface\Core\Widgets\Container;
+use exface\Core\Interfaces\NameResolverInterface;
 
 abstract class AbstractContext implements ContextInterface
 {
 
-    private $exface = null;
+    private $name_resolver = null;
 
     private $scope = null;
 
@@ -25,12 +26,41 @@ abstract class AbstractContext implements ContextInterface
     private $context_bar_visibility = null;
     
     /**
-     * 
+     * @deprecated use ContextFactory instead
      * @param \exface\Core\CommonLogic\Workbench $exface
      */
-    public function __construct(\exface\Core\CommonLogic\Workbench $exface)
+    public function __construct(NameResolverInterface $name_resolver)
     {
-        $this->exface = $exface;
+        $this->name_resolver = $name_resolver;
+    }
+    
+    /**
+     * 
+     * @return NameResolverInterface
+     */
+    public function getNameResolver()
+    {
+        return $this->name_resolver;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\AliasInterface::getNamespace()
+     */
+    public function getNamespace()
+    {
+        return $this->getNameResolver()->getNamespace();
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\AliasInterface::getAliasWithNamespace()
+     */
+    public function getAliasWithNamespace()
+    {
+        return $this->getNameResolver()->getAliasWithNamespace();
     }
 
     /**
@@ -71,7 +101,7 @@ abstract class AbstractContext implements ContextInterface
      */
     public function getWorkbench()
     {
-        return $this->exface;
+        return $this->getNameResolver()->getWorkbench();
     }
 
     /**
@@ -115,10 +145,7 @@ abstract class AbstractContext implements ContextInterface
      */
     public function getAlias()
     {
-        if (! $this->alias) {
-            $this->alias = substr(get_class($this), (strrpos(get_class($this), "\\") + 1), - 7);
-        }
-        return $this->alias;
+        return $this->getNameResolver()->getAlias();
     }
     
     /**
@@ -167,7 +194,7 @@ abstract class AbstractContext implements ContextInterface
         && $value != ContextInterface::CONTEXT_BAR_HIDE_ALLWAYS 
         && $value != ContextInterface::CONTEXT_BAR_SHOW_ALLWAYS 
         && $value != ContextInterface::CONTEXT_BAR_SHOW_IF_NOT_EMPTY) {
-            throw new ContextRuntimeError($this, 'Invalid context_bar_visibility value "' . $value . '" for context "' . $this->getAlias() . '"!');
+            throw new ContextRuntimeError($this, 'Invalid context_bar_visibility value "' . $value . '" for context "' . $this->getAliasWithNamespace() . '"!');
             return;
         }
         $this->context_bar_visibility = $value;
