@@ -24,6 +24,7 @@ use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Interfaces\Widgets\iHaveContextualHelp;
 use exface\Core\Interfaces\Widgets\iHaveToolbars;
 use exface\Core\Widgets\Traits\iHaveButtonsAndToolbarsTrait;
+use exface\Core\Exceptions\Widgets\WidgetLogicError;
 
 /**
  * Data is the base for all widgets displaying tabular data.
@@ -706,8 +707,14 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
             // Otherwise, try to find a suitable relation via generic relation searcher
             // TODO currently this only works for direct relations, not for chained ones.
             if (! $fltr && $rel = $this->getMetaObject()->findRelation($data_sheet->getMetaObject())) {
-                $filter_widget = $this->createFilterFromRelation($rel);
-                $filter_widget->prefill($data_sheet);
+                // If anything goes wrong, log away the error but continue, as
+                // the prefills are not critical in general.
+                try {
+                    $filter_widget = $this->createFilterFromRelation($rel);
+                    $filter_widget->prefill($data_sheet);
+                } catch (\Throwable $e) {
+                    $this->getWorkbench()->getLogger()->logException($e);
+                }
             }
             
             // Apart from trying to prefill a filter, we should also look if we can reuse filters from the given prefill sheet.
@@ -745,7 +752,11 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
             // reverse relations. When the issue is fixed, this if needs to be rewritten.
             if (! $relation->getMainObjectKeyAttribute() && $relation->isReverseRelation()) {
                 $filter_widget = WidgetFactory::createFromUxon($page, $relation->getRelatedObjectKeyAttribute()->getDefaultWidgetUxon(), $this);
-                $filter_widget->setAttributeAlias($relation->getRelatedObjectKeyAlias());
+                if ($filter_widget->getMetaObject()->hasAttribute($relation->getRelatedObjectKeyAlias())){
+                    $filter_widget->setAttributeAlias($relation->getRelatedObjectKeyAlias());
+                } else {
+                    throw new WidgetLogicError($this, 'Cannot automatically create filter for relation "' . $relation->toString() . '" in a "' . $this->getWidgetType() . '" widget based on ' . $this->getMetaObject()->getAliasWithNamespace() . '!');
+                }
             } else {
                 $filter_widget = WidgetFactory::createFromUxon($page, $relation->getMainObjectKeyAttribute()->getDefaultWidgetUxon(), $this);
                 $filter_widget->setAttributeAlias($relation->getForeignKeyAlias());

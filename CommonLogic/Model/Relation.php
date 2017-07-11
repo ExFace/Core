@@ -366,5 +366,16 @@ class Relation implements ExfaceClassInterface
             return false;
         }
     }
+    
+    /**
+     * Returns a string representation of this relation: e.g. "ORDER_POSITION[ORDER_ID] -> ORDER[ID]".
+     * 
+     * This is handy to use in debug printouts and user messages.
+     * 
+     * @return string
+     */
+    public function toString(){
+        return $this->getMainObject()->getAliasWithNamespace() . '[' . $this->getForeignKeyAlias() . '] -> ' . $this->getRelatedObject()->getAliasWithNamespace() . '[' . $this->getRelatedObjectKeyAlias() . ']';
+    }
 }
 ?>

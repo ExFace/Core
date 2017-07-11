@@ -239,6 +239,11 @@ class Text extends AbstractWidget implements iShowSingleAttribute, iHaveValue, i
         if (! $this->getAttributeAlias()) {
             return null;
         }
+        
+        if (! $this->getMetaObject()->hasAttribute($this->getAttributeAlias())){
+            throw new WidgetPropertyInvalidValueError($this, 'Attribute "' . $this->getAttributeAlias() . '" specified for Text widget not found for the widget\'s object "' . $this->getMetaObject()->getAliasWithNamespace() . '"!');
+        }
+        
         return $this->getMetaObject()->getAttribute($this->getAttributeAlias());
     }
 
