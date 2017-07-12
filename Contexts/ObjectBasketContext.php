@@ -219,10 +219,19 @@ class ObjectBasketContext extends AbstractContext
             ->setLazyLoading(false)
             ->setPaginate(false)
             ->setPaginatePageSize(40)
-            ->setHideToolbarTop(true);
+            ->setHideHeader(true);
         
+        // Disable global actions and basket actions because we are looking at
+        // the object basket itself and it does not make sense to put it in
+        // the basket or in the favorites again.
+        $data_list->getToolbarMain()
+            ->setIncludeGlobalActions(false)
+            ->setIncludeObjectBasketActions(false);
+        
+        // Add the title column (the UID column is always there
         $data_list->addColumn(WidgetFactory::create($container->getPage(), 'DataColumn', $data_list)->setAttributeAlias('TITLE'));
         
+        // Fill with content
         $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.CONTEXT_BASE_OBJECT');
         foreach ($this->getFavoritesAll() as $data_sheet) {
             $ds->addRow([
@@ -232,6 +241,7 @@ class ObjectBasketContext extends AbstractContext
         }
         $data_list->setValuesDataSheet($ds);
         
+        // Add the detail button an bind it to the left click
         /* @var $details_button \exface\Core\Widgets\DataButton */
         $details_button = WidgetFactory::create($container->getPage(), $data_list->getButtonWidgetType(), $data_list)
             ->setActionAlias('exface.Core.ObjectBasketShowDialog')

@@ -32,4 +32,11 @@ interface iHaveToolbars extends iHaveChildren
      * @return iHaveToolbars
      */
     public function removeToolbar(Toolbar $toolbar);
+    
+    /**
+     * Returns the default widget types for toolbars
+     * 
+     * @return string
+     */
+    public function getToolbarWidgetType();
 }

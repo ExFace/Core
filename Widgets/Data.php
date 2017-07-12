@@ -33,6 +33,8 @@ use exface\Core\Exceptions\Widgets\WidgetLogicError;
  * by these widgets. Datas are much like tables: you can define columns, sorters, filters, pagination rules, etc.
  * 
  * @method DataButton[] getButtons()
+ * @method DataToolbar[] getToolbars()
+ * @method DataToolbar getToolbarMain()
  *
  * @author Andrej Kabachnik
  *        
@@ -1006,6 +1008,16 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
             return array();
         }
     }
+    
+    /**
+     * Returns TRUE if the data is aggregated and FALSE otherwise.
+     * 
+     * @return boolean
+     */
+    public function hasAggregations()
+    {
+        return count($this->getAggregations()) > 0 ? true : false;
+    }
 
     /**
      * Returns an array of aliases of attributes, that should be used for quick search relative to the meta object of the widget
@@ -1492,6 +1504,16 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
         }
         
         return $uxon;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveToolbars::getToolbarWidgetType()
+     */
+    public function getToolbarWidgetType()
+    {
+        return 'DataToolbar';
     }
 }
 

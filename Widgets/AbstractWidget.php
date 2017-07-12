@@ -25,6 +25,7 @@ use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\Exceptions\UxonMapError;
 use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 use exface\Core\Exceptions\Widgets\WidgetHasNoMetaObjectError;
+use exface\Core\Factories\WidgetFactory;
 
 /**
  * Basic ExFace widget
@@ -1302,6 +1303,16 @@ else {
             }
         }
         return $this->parentByType[$typeName];
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\iCanBeCopied::copy()
+     */
+    public function copy()
+    {
+        return WidgetFactory::createFromUxon($this->getPage(), $this->exportUxonObject());
     }
 }
 ?>

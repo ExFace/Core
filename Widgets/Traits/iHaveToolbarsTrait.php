@@ -26,7 +26,7 @@ trait iHaveToolbarsTrait {
     public function getToolbars()
     {
         if (count($this->toolbars) == 0){
-            $this->addToolbar(WidgetFactory::create($this->getPage(), 'DataToolbar', $this));
+            $this->addToolbar(WidgetFactory::create($this->getPage(), $this->getToolbarWidgetType(), $this));
         }
         return $this->toolbars;
     }
@@ -85,4 +85,13 @@ trait iHaveToolbarsTrait {
         return $this;
     }
     
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveToolbars::getToolbarWidgetType()
+     */
+    public function getToolbarWidgetType()
+    {
+        return 'Toolbar';
+    }
 }

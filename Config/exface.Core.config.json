@@ -27,6 +27,7 @@
 	
 	"CONTEXT_BAR.VISIBILITY": {
 	   "User:exface.Core.FavoritesContext": "show_allways",
-	   "Window:exface.Core.ObjectBasketContext": "show_allways"
+	   "Window:exface.Core.ObjectBasketContext": "show_allways",
+	   "Window:exface.ActionTest.ActionTestContext": "show_allways"
 	}
 }

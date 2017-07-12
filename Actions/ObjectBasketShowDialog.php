@@ -105,7 +105,7 @@ class ObjectBasketShowDialog extends ShowDialog
         $table = WidgetFactory::create($dialog->getPage(), 'DataTable', $dialog);
         $table->setLazyLoading(false);
         $table->setPaginate(false);
-        $table->setHideToolbarBottom(true);
+        $table->setHideFooter(true);
         $table->setMultiSelect(true);
         $table->setMultiSelectAllSelected(true);
         $dialog->addWidget($table);
