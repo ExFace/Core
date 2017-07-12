@@ -112,6 +112,16 @@ class Condition implements iCanBeConvertedToUxon
      */
     public function setComparator($value)
     {
+        try {
+            $this->comparator = static::sanitizeComparator($value);
+        } catch (UnexpectedValueException $e){
+            throw new UnexpectedValueException('Invalid comparator value in condition "' . $this->getExpression()->toString() . ' ' . $value . ' ' . $this->getValue() . '"!', '6W1SD52', $e);
+        }
+        
+        return $this;
+    }
+    
+    public static function sanitizeComparator($value){
         $validated = false;
         foreach (get_defined_constants(true)['user'] as $constant => $comparator) {
             if (substr($constant, 0, 15) === 'EXF_COMPARATOR_') {
@@ -122,12 +132,10 @@ class Condition implements iCanBeConvertedToUxon
                 }
             }
         }
-        $this->comparator = $value;
-        
         if (! $validated) {
-            throw new UnexpectedValueException('Invalid comparator value in condition "' . $this->getExpression()->toString() . ' ' . $value . ' ' . $this->getValue() . '"!');
+            throw new UnexpectedValueException('Invalid comparator value "' . $value . '"!', '6W1SD52');
         }
-        return $this;
+        return $value;
     }
 
     /**

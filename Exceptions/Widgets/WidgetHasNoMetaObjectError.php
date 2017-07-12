@@ -28,7 +28,7 @@ class WidgetHasNoMetaObjectError extends WidgetConfigurationError
         return parent::setWidget($widget);
     }
     
-    public function getAlias()
+    public function getDefaultAlias()
     {
         return '6T9137Y';
     }

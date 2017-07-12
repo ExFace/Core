@@ -16,7 +16,7 @@ class WidgetPropertyInvalidValueError extends UnexpectedValueException implement
 {
     use WidgetExceptionTrait;
     
-    public function getAlias(){
+    public function getDefaultAlias(){
         return '6VYOEGI';
     }
 }

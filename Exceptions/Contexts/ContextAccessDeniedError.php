@@ -16,7 +16,7 @@ class ContextAccessDeniedError extends SecurityException implements ContextExcep
 {
     use ContextExceptionTrait;
     
-    public function getAlias()
+    public function getDefaultAlias()
     {
         return '6VYMG0N';
     }

@@ -14,7 +14,7 @@ class WidgetPropertyUnknownError extends InvalidArgumentException implements Wid
 {
     use WidgetExceptionTrait;
     
-    public function getAlias(){
+    public function getDefaultAlias(){
         return '6VYOFZJ';
     }
 }

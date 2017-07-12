@@ -1288,6 +1288,19 @@
             "ERROR_TEXT": "Unknown widget property specified",
             "DESCRIPTION": "This error indicates, that an illegal or misspelled widget property name was used in the UXON description: see the subtitle for details.\n\nThe most common cause for these errors are typos in the UXON configuration. If you are editing your Screens right know, you can see the UXON-code of the faulty widget in the respective tabs.",
             "LABEL": "exface.Core.6VYOFZJ"
+        },
+        {
+            "CREATED_ON": "2017-07-12 12:11:06",
+            "MODIFIED_ON": "2017-07-12 13:03:49",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e766fb1a6aea498298e4b318306b9a",
+            "FULL_ERROR_CODE": "exface.Core.6W1SD52",
+            "APP": "0x31000000000000000000000000000000",
+            "ERROR_CODE": "6W1SD52",
+            "ERROR_TEXT": "Invalid comparator used!",
+            "DESCRIPTION": "The following expressions are supported as comparators:\n- '[' - in\n- '![' - not in\n- '=' - is (default)\n- '!=' - is not\n- '==' - equals\n- '!==' - equals not\n- '<' - less\n- '<=' - less or equals\n- '>' - greater\n- '>=' - greater or equals",
+            "LABEL": "exface.Core.6W1SD52"
         }
     ],
     "totals_rows": [],

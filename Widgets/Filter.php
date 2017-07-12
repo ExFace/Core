@@ -7,6 +7,9 @@ use exface\Core\Interfaces\Widgets\iCanBeRequired;
 use exface\Core\Interfaces\Widgets\iHaveValue;
 use exface\Core\Interfaces\Widgets\iTakeInput;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
+use exface\Core\Exceptions\UnexpectedValueException;
+use exface\Core\CommonLogic\Model\Condition;
+use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 
 /**
  * A filter is a wrapper widget, which typically consist of one or more input widgets.
@@ -210,9 +213,14 @@ class Filter extends Container implements iCanBeRequired, iShowSingleAttribute
 
     public function setComparator($value)
     {
-        if (! $value)
+        if (! $value){
             return $this;
-        $this->comparator = $value;
+        }
+        try {
+            $this->comparator = Condition::sanitizeComparator($value);
+        } catch (UnexpectedValueException $e){
+            throw new WidgetPropertyInvalidValueError($this, 'Invalid comparator "' . $value . '" used for filter widget!', '6W1SD52', $e);
+        }
         return $this;
     }
 
