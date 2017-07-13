@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\Actions;
 
+use exface\Core\CommonLogic\Constants\Icons;
+
 /**
  * Adds instances from the input data to the favorites basket of the current user.
  *
@@ -16,7 +18,7 @@ class FavoritesAdd extends ObjectBasketAdd
     protected function init()
     {
         parent::init();
-        $this->setIconName('star');
+        $this->setIconName(Icons::STAR);
     }
     
     /**

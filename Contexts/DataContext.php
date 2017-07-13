@@ -6,6 +6,7 @@ use exface\Core\Interfaces\AppInterface;
 use exface\Core\Exceptions\Contexts\ContextSaveError;
 use exface\Core\Exceptions\Contexts\ContextLoadError;
 use exface\Core\CommonLogic\Contexts\AbstractContext;
+use exface\Core\CommonLogic\Constants\Icons;
 
 /**
  * The DataContext provides a unified interface to store arbitrary data in any context scope.
@@ -228,7 +229,7 @@ class DataContext extends AbstractContext
      */
     public function getIcon()
     {
-        return 'save';
+        return Icons::DATABASE;
     }
     
     /**

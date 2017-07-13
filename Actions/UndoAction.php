@@ -4,6 +4,7 @@ namespace exface\Core\Actions;
 use exface\Core\Interfaces\Actions\iUndoActions;
 use exface\Core\CommonLogic\AbstractAction;
 use exface\Core\Exceptions\Actions\ActionUndoFailedError;
+use exface\Core\CommonLogic\Constants\Icons;
 
 /**
  * This action performs an undo operation on one or more other actions from the action context history.
@@ -24,7 +25,7 @@ class UndoAction extends AbstractAction implements iUndoActions
      */
     function init()
     {
-        $this->setIconName('undo');
+        $this->setIconName(Icons::UNDO);
     }
 
     /**

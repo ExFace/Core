@@ -11,6 +11,7 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
+use exface\Core\CommonLogic\Constants\Icons;
 
 class Dialog extends Form implements iAmClosable, iHaveContextualHelp
 {
@@ -88,7 +89,7 @@ class Dialog extends Form implements iAmClosable, iHaveContextualHelp
             $btn = $this->getPage()->createWidget('DialogButton', $this);
             $btn->setCloseDialogAfterActionSucceeds(true);
             $btn->setRefreshInput(false);
-            $btn->setIconName('cancel');
+            $btn->setIconName(Icons::TIMES);
             $btn->setCaption($this->translate('WIDGET.DIALOG.CLOSE_BUTTON_CAPTION'));
             if ($this->getHideCloseButton())
                 $btn->setHidden(true);

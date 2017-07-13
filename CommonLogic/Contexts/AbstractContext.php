@@ -7,6 +7,7 @@ use exface\Core\Interfaces\Contexts\ContextScopeInterface;
 use exface\Core\Exceptions\Contexts\ContextRuntimeError;
 use exface\Core\Widgets\Container;
 use exface\Core\Interfaces\NameResolverInterface;
+use exface\Core\CommonLogic\Constants\Colors;
 
 abstract class AbstractContext implements ContextInterface
 {
@@ -18,6 +19,8 @@ abstract class AbstractContext implements ContextInterface
     private $alias = null;
     
     private $indicator = null;
+    
+    private $indicator_color = null;
     
     private $icon = null;
     
@@ -262,6 +265,31 @@ abstract class AbstractContext implements ContextInterface
         $this->name = $name;
         return $this;
     }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Contexts\ContextInterface::getIndicatorColor()
+     */
+    public function getIndicatorColor()
+    {
+        if (is_null($this->indicator_color)){
+            return Colors::DEFAULT;
+        }
+        return $this->indicator_color;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Contexts\ContextInterface::setIndicatorColor()
+     */
+    public function setIndicatorColor($indicator_color)
+    {
+        $this->indicator_color = $indicator_color;
+        return $this;
+    }
+ 
  
  
 }

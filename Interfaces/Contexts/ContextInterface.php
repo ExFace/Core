@@ -91,6 +91,24 @@ interface ContextInterface extends AliasInterface, iCanBeConvertedToUxon, Exface
     public function setIndicator($indicator);
     
     /**
+     * Returns the color code for the indicator. Colors::DEFAULT by default.
+     *
+     * @return string
+     */
+    public function getIndicatorColor();
+    
+    /**
+     * Changes the color of the indicator of this context.
+     * 
+     * Any color code supported by the templates can be used, althogh the
+     * core colors specified in the Colors::CONSTANTS are recommended.
+     *
+     * @param string $indicator
+     * @return ContextInterface
+     */
+    public function setIndicatorColor($value);
+    
+    /**
      * Returns the visibility value for this context in the context bar.
      *
      * @return string

@@ -5,6 +5,7 @@ use exface\Core\Interfaces\Actions\iExportData;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\CommonLogic\Filemanager;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\CommonLogic\Constants\Icons;
 
 /**
  * This action exports the raw data received by a widget as a file for download.
@@ -30,6 +31,11 @@ class ExportData extends ReadData implements iExportData
     
     private $mimeType = null;
     
+    protected function init()
+    {
+        parent::init();
+        $this->setIconName(Icons::DOWNLOAD);
+    }
     /**
      * 
      * {@inheritDoc}

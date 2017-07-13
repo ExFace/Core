@@ -4,6 +4,7 @@ namespace exface\Core\Actions;
 use exface\Core\Contexts\ObjectBasketContext;
 use exface\Core\CommonLogic\AbstractAction;
 use exface\Core\CommonLogic\Contexts\ContextActionTrait;
+use exface\Core\CommonLogic\Constants\Icons;
 
 /**
  * Adds the input rows to the object basket in a specified context_scope (by default, the window scope)
@@ -24,7 +25,7 @@ class ObjectBasketAdd extends AbstractAction
         parent::init();
         $this->setInputRowsMin(1);
         $this->setInputRowsMax(null);
-        $this->setIconName('basket');
+        $this->setIconName(Icons::SHOPPING_BASKET);
         $this->setContextAlias('exface.Core.ObjectBasketContext');
         $this->setContextScope('Window');
     }

@@ -17,6 +17,7 @@ use exface\Core\Factories\WidgetLinkFactory;
 use exface\Core\Exceptions\Actions\ActionConfigurationError;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
+use exface\Core\CommonLogic\Constants\Icons;
 
 /**
  * The ShowWidget action is the base for all actions, that render widgets.
@@ -51,7 +52,7 @@ class ShowWidget extends AbstractAction implements iShowWidget
     protected function init()
     {
         parent::init();
-        $this->setIconName('link');
+        $this->setIconName(Icons::EXTERNAL_LINK);
     }
 
     protected function perform()

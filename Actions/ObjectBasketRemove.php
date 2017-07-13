@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\Actions;
 
+use exface\Core\CommonLogic\Constants\Icons;
+
 /**
  * Removes meta object instances matching the input data from the object basket in the given context scope (window scope by default)
  *
@@ -15,7 +17,7 @@ class ObjectBasketRemove extends ObjectBasketAdd
         parent::init();
         $this->setInputRowsMin(1);
         $this->setInputRowsMax(null);
-        $this->setIconName('remove');
+        $this->setIconName(Icons::TIMES);
     }
 
     protected function perform()

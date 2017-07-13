@@ -13,6 +13,7 @@ use exface\Core\Factories\WidgetFactory;
 use exface\Core\Factories\UiPageFactory;
 use exface\Core\CommonLogic\UiPage;
 use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\CommonLogic\Constants\Icons;
 
 /**
  * The ObjectBasketContext provides a unified interface to store links to selected instances of meta objects in any context scope.
@@ -203,7 +204,7 @@ class ObjectBasketContext extends AbstractContext
 
     public function getIcon()
     {
-        return 'basket';
+        return Icons::SHOPPING_BASKET;
     }
 
     /**

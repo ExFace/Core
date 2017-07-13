@@ -8,6 +8,7 @@ use exface\Core\Factories\WidgetFactory;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Interfaces\Widgets\iCanBeRequired;
 use exface\Core\Interfaces\Widgets\iCanBeDisabled;
+use exface\Core\CommonLogic\Constants\Icons;
 
 /**
  * This action will show a dialog displaying the default editor of a meta object in read-only mode.
@@ -47,7 +48,7 @@ class ShowObjectDialog extends ShowDialog
         parent::init();
         $this->setInputRowsMin(1);
         $this->setInputRowsMax(1);
-        $this->setIconName('info');
+        $this->setIconName(Icons::INFO_CIRCLE);
         $this->setShowOnlyEditableAttributes(false);
         // Disable prefilling the widget from contexts as we only whant to fill in data that actually comes from the data source
         $this->setPrefillWithFilterContext(false);

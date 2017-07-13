@@ -5,6 +5,7 @@ use exface\Core\Interfaces\Contexts\ContextScopeInterface;
 use exface\Core\Exceptions\Contexts\ContextRuntimeError;
 use exface\Core\Exceptions\Contexts\ContextAccessDeniedError;
 use exface\Core\Interfaces\NameResolverInterface;
+use exface\Core\CommonLogic\Constants\Icons;
 
 /**
  * 
@@ -47,7 +48,7 @@ class FavoritesContext extends ObjectBasketContext
     
     public function getIcon()
     {
-        return 'star';
+        return Icons::STAR;
     }
     
     public function getName()
