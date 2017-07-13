@@ -14,7 +14,7 @@ class DeleteObject extends AbstractAction implements iDeleteData
     {
         $this->setInputRowsMin(1);
         $this->setInputRowsMax(null);
-        $this->setIconName(Icons::TIMES);
+        $this->setIconName(Icons::TRASH_O);
     }
 
     protected function perform()
