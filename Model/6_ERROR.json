@@ -1301,6 +1301,19 @@
             "ERROR_TEXT": "Invalid comparator used!",
             "DESCRIPTION": "The following expressions are supported as comparators:\n- '[' - in\n- '![' - not in\n- '=' - is (default)\n- '!=' - is not\n- '==' - equals\n- '!==' - equals not\n- '<' - less\n- '<=' - less or equals\n- '>' - greater\n- '>=' - greater or equals",
             "LABEL": "exface.Core.6W1SD52"
+        },
+        {
+            "CREATED_ON": "2017-07-13 00:00:00",
+            "MODIFIED_ON": "2017-07-13 00:00:00",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e7678774b5dafc8298e4b318306b9a",
+            "FULL_ERROR_CODE": "exface.Core.6W25AB1",
+            "APP": "0x31000000000000000000000000000000",
+            "ERROR_CODE": "6W25AB1",
+            "ERROR_TEXT": "Invalid date format",
+            "DESCRIPTION": "The following date input formats are supported:\n- 31.12.2017.\n- 2017-12-31.\n- 2017 (2017-01-01 will be assumed).\n- 12.2017 or 12-2017 (2017-12-01 will be assumed).\n- 15.02 or 15-02 (2017-02-15 will be assumed).\n- +1d, +2w, +3m, +4y for adding days, weeks, months or years to the current date.\n- -4d, -3w, -2m, -1y for subtracting days, weeks, months or years from the current date.",
+            "LABEL": "exface.Core.6W25AB1"
         }
     ],
     "totals_rows": [],

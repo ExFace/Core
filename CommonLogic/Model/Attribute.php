@@ -2,14 +2,20 @@
 
 namespace exface\Core\CommonLogic\Model;
 
-use exface\Core\DataTypes\AbstractDataType;
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Factories\RelationPathFactory;
 use exface\Core\Interfaces\ExfaceClassInterface;
 use exface\Core\Interfaces\iCanBeCopied;
+use exface\Core\Exceptions\UnexpectedValueException;
+use exface\Core\Interfaces\Model\DataTypeInterface;
 
+/**
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
 class Attribute implements ExfaceClassInterface, iCanBeCopied
 {
 
@@ -139,20 +145,28 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
     /**
      * Returns the data type of the attribute as an instantiated data type object
      * 
-     * @return AbstractDataType
+     * @return DataTypeInterface
      */
     public function getDataType()
     {
+        if (is_string($this->data_type)){
+            $this->data_type = DataTypeFactory::createFromAlias($this->getWorkbench(), $this->data_type);
+        }
         return $this->data_type;
     }
-
+    
+    /**
+     * 
+     * @param string|DataTypeInterface $object_or_name
+     * @throws UnexpectedValueException
+     * @return \exface\Core\CommonLogic\Model\Attribute
+     */
     public function setDataType($object_or_name)
     {
-        if ($object_or_name instanceof AbstractDataType) {
+        if (is_string($object_or_name) || ($object_or_name instanceof DataTypeInterface)) {
             $this->data_type = $object_or_name;
         } else {
-            $exface = $this->getModel()->getWorkbench();
-            $this->data_type = DataTypeFactory::createFromAlias($exface, $object_or_name);
+            throw new UnexpectedValueException('Invalid data type value given to attribute "' . $this->getAliasWithRelationPath() . '" of object "' . $this->getObject()->getAliasWithNamespace() . '": string or instantiated data type classes expected!');
         }
         return $this;
     }
