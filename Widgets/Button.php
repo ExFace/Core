@@ -455,5 +455,15 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iHaveC
         // TODO What do we do with the action here?
         return $uxon;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\AbstractWidget::getHint()
+     */
+    public function getHint()
+    {
+        return parent::getHint() ? parent::getHint() : $this->getCaption();
+    }
 }
 ?>
