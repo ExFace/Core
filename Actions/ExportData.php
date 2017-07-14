@@ -107,7 +107,7 @@ class ExportData extends ReadData implements iExportData
     {
         $elem = $this->getApp()->getWorkbench()->ui()->getTemplate()->getElement($this->getCalledByWidget());
         $output = $elem->prepareData($dataSheet);
-        $contents = $this->getApp()->getWorkbench()->ui()->getTemplate()->encodeData($output);
+        $contents = $this->getApp()->getWorkbench()->ui()->getTemplate()->encodeData($output, false);
         If (is_null($this->getMimeType())){
             // TODO get the mime type from the template somehow
             $this->setMimeType('application/json');
