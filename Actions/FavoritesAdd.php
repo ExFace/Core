@@ -2,6 +2,7 @@
 namespace exface\Core\Actions;
 
 use exface\Core\CommonLogic\Constants\Icons;
+use exface\Core\Interfaces\Contexts\ContextManagerInterface;
 
 /**
  * Adds instances from the input data to the favorites basket of the current user.
@@ -42,7 +43,7 @@ class FavoritesAdd extends ObjectBasketAdd
      */
     public function getContextScope()
     {
-        $this->setContextScope('User');
+        $this->setContextScope(ContextManagerInterface::CONTEXT_SCOPE_USER);
         return parent::getContextScope();
     }
 }

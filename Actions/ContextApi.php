@@ -6,6 +6,7 @@ use exface\Core\CommonLogic\AbstractAction;
 use exface\Core\Exceptions\Actions\ActionConfigurationError;
 use GuzzleHttp\Psr7\ServerRequest;
 use Psr\Http\Message\ServerRequestInterface;
+use exface\Core\Interfaces\Actions\iModifyContext;
 
 /**
  * This action provides a RESTful API to work with contexts. 
@@ -13,7 +14,7 @@ use Psr\Http\Message\ServerRequestInterface;
  * @author Andrej Kabachnik
  *        
  */
-class ContextApi extends AbstractAction
+class ContextApi extends AbstractAction implements iModifyContext
 {
 
     private $context_alias = null;
