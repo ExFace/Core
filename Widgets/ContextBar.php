@@ -57,32 +57,32 @@ class ContextBar extends Toolbar
                 continue;
             }
             
-            if ($uxon->getProperty('restrict_to_admins') && ! $this->getWorkbench()->context()->getScopeUser()->isUserAdmin()){
+            if ($uxon->getProperty('restrict_only_admins') && ! $this->getWorkbench()->context()->getScopeUser()->isUserAdmin()){
                 $this->getWorkbench()->getLogger()->info('Not adding context "' . $uxon->getProperty('context_scope') . ':' . $uxon->getProperty('context_alias') . '" to ContextBar: it is accessible for admins only!');
                 continue;
             } else {
-                $uxon->unsetProperty('restrict_to_admins');
+                $uxon->unsetProperty('restrict_only_admins');
             }
             
-            if ($uxon->getProperty('restrict_to_authenticated') && $this->getWorkbench()->context()->getScopeUser()->isUserAnonymous()){
+            if ($uxon->getProperty('restrict_only_authenticated') && $this->getWorkbench()->context()->getScopeUser()->isUserAnonymous()){
                 $this->getWorkbench()->getLogger()->info('Not adding context "' . $uxon->getProperty('context_scope') . ':' . $uxon->getProperty('context_alias') . '" to ContextBar: it is accessible for logged in users only!');
                 continue;
             } else {
-                $uxon->unsetProperty('restrict_to_authenticated');
+                $uxon->unsetProperty('restrict_only_authenticated');
             }
             
-            $context = $this->getWorkbench()->context()->getScope($uxon->getProperty('context_scope'))->getContext($uxon->getProperty('context_alias'));
-            $uxon->unsetProperty('context_scope');
-            $uxon->unsetProperty('context_alias');
-            
-            // IDEA Make contexts totally configurable by importing the UXON from
-            // the config into each context. This would need the contexts to be
-            // compatible with the ImportUxonTrait though. Currently many contexts
-            // like ObjectBasketContext, ActionContext, etc. use non-standard
-            // UXON Objects.
-            // $context->importUxonObject($uxon);
-            
             try {
+                $context = $this->getWorkbench()->context()->getScope($uxon->getProperty('context_scope'))->getContext($uxon->getProperty('context_alias'));
+                $uxon->unsetProperty('context_scope');
+                $uxon->unsetProperty('context_alias');
+                
+                // IDEA Make contexts totally configurable by importing the UXON from
+                // the config into each context. This would need the contexts to be
+                // compatible with the ImportUxonTrait though. Currently many contexts
+                // like ObjectBasketContext, ActionContext, etc. use non-standard
+                // UXON Objects.
+                // $context->importUxonObject($uxon);
+                
                 $btn = $this->createButtonForContext($context);
                 
                 switch ($visibility){

@@ -11,11 +11,12 @@ use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\CommonLogic\Log\Handlers\LogfileHandler;
 use exface\Core\CommonLogic\Log\Handlers\DebugMessageFileHandler;
-use exface\Core\CommonLogic\Log\Handlers\LogLevelRangeHandler;
 use exface\Core\Events\ActionEvent;
 use exface\Core\Actions\ShowContextPopup;
 use exface\Core\Actions\ContextApi;
 use exface\Core\CommonLogic\Log\Handlers\BufferingHandler;
+use exface\Core\Interfaces\NameResolverInterface;
+use exface\Core\Exceptions\Contexts\ContextAccessDeniedError;
 
 /**
  * 
@@ -27,6 +28,13 @@ class DebugContext extends AbstractContext
 {
     private $is_debugging = false;
     private $log_handlers = array();
+    
+    public function __construct(NameResolverInterface $name_resolver){
+        parent::__construct($name_resolver);
+        if ($name_resolver->getWorkbench()->context()->getScopeUser()->isUserAnonymous()){
+            throw new ContextAccessDeniedError($this, 'The debug context cannot be used for anonymous users!');
+        }
+    }
     
     /**
      * Returns TRUE if the debugger is active and FALSE otherwise
