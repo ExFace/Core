@@ -676,9 +676,9 @@ class DataTable extends Data implements iHaveHeader, iHaveFooter, iFillEntireCon
             if (!$widget_or_uxon_object->hasProperty('widget_type')){
                 $widget_or_uxon_object->setProperty('widget_type', 'DataItemMenu');
             }
-            WidgetFactory::createFromUxon($this->getPage(), $widget_or_uxon_object, $this);
+            $menu = WidgetFactory::createFromUxon($this->getPage(), $widget_or_uxon_object, $this);
         }
-        $this->context_menu = $widget_or_uxon_object;
+        $this->context_menu = $menu;
         return $this;
     }
     
