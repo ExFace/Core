@@ -13,6 +13,7 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Events\DataSheetEvent;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Events\WidgetEvent;
+use exface\Core\Interfaces\DataSources\DataQueryInterface;
 
 abstract class EventFactory extends AbstractNameResolverFactory
 {
@@ -45,13 +46,15 @@ abstract class EventFactory extends AbstractNameResolverFactory
      * @param DataConnectionInterface $connection            
      * @return DataConnectionEvent
      */
-    public static function createDataConnectionEvent(DataConnectionInterface $connection, $event_name, $current_query = null)
+    public static function createDataConnectionEvent(DataConnectionInterface $connection, $event_name, DataQueryInterface $current_query = null)
     {
         $exface = $connection->getWorkbench();
         $instance = new DataConnectionEvent($exface);
         $instance->setName($event_name);
         $instance->setDataConnection($connection);
-        $instance->setCurrentQuery($current_query);
+        if (! is_null($current_query)){
+            $instance->setCurrentQuery($current_query);
+        }
         return $instance;
     }
 

@@ -72,4 +72,13 @@ class BufferingHandler implements LogHandlerInterface
         $this->disabled = BooleanDataType::parse($true_or_false);
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\ExfaceClassInterface::getWorkbench()
+     */
+    public function getWorkbench()
+    {
+        return $this->handler->getWorkbench();
+    }
 }

@@ -21,6 +21,7 @@
         "symfony/config": "^2.8 || ^3.1",
         "symfony/debug": "^3.3",
         "symfony/var-dumper": "^3.2",
+        "symfony/StopWatch": "^3.1.2",
         "jmikola/Wildcard-Event-Dispatcher": "^1.1",
         "webmozart/path-util": "^2.3",
         "monolog/monolog": "^1.22.1",

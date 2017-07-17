@@ -289,8 +289,15 @@ abstract class AbstractContext implements ContextInterface
         $this->indicator_color = $indicator_color;
         return $this;
     }
- 
- 
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Contexts\ContextInterface::getApp()
+     */
+    public function getApp(){
+        return $this->getWorkbench()->getApp($this->getNameResolver()->getAppAlias());
+    }
  
 }
 ?>
