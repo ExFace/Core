@@ -23,6 +23,9 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\Exceptions\UxonMapError;
+use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
+use exface\Core\Exceptions\Widgets\WidgetHasNoMetaObjectError;
+use exface\Core\Factories\WidgetFactory;
 
 /**
  * Basic ExFace widget
@@ -88,6 +91,8 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
     private $id_space = null;
 
     private $disable_condition = null;
+
+    private $parentByType = [];
 
     /**
      *
@@ -439,7 +444,7 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
         } elseif ($this->getParent()) {
             $obj = $this->getParent()->getMetaObject();
         } else {
-            throw new WidgetConfigurationError($this, 'A widget must have either an object_id, an object_alias or a parent widget with an object reference!', '6T9137Y');
+            throw new WidgetHasNoMetaObjectError($this, 'A widget must have either an object_id, an object_alias or a parent widget with an object reference!');
         }
         $this->setMetaObjectId($obj->getId());
         return $obj;
@@ -762,7 +767,7 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
         if ($ns = $this->getUi()->getWorkbench()->model()->getNamespaceFromQualifiedAlias($full_or_object_alias)) {
             $this->object_qualified_alias = $full_or_object_alias;
             $this->object_alias = $this->getUi()->getWorkbench()->model()->getObjectAliasFromQualifiedAlias($full_or_object_alias);
-        } // ... if the namespace is missing, get it from the app of the parent object
+        }  // ... if the namespace is missing, get it from the app of the parent object
 else {
             if ($this->getParent()) {
                 $ns = $this->getParent()->getMetaObject()->getNamespace();
@@ -1265,6 +1270,49 @@ else {
     {
         $this->disable_condition = $value;
         return $this;
+    }
+
+    /**
+     * Returns the closest parent widget which implements the passed class or interface.
+     * 
+     * Returns null if no such parent widget exists.
+     *
+     * @param string $typeName            
+     * @return AbstractWidget
+     */
+    public function getParentByType(string $typeName)
+    {
+        if (! array_key_exists($typeName, $this->parentByType)) {
+            $widget = $this;
+            while ($widget->getParent()) {
+                $widget = $widget->getParent();
+                
+                // Ein Filter is eher ein Wrapper als ein Container (kann nur ein Widget enthalten).
+                if (($typeName == 'exface\\Core\\Interfaces\\Widgets\\iContainOtherWidgets') && ($widget instanceof $typeName) && ($widget instanceof Filter)) {
+                    continue;
+                }
+                
+                if ($widget instanceof $typeName) {
+                    $this->parentByType[$typeName] = $widget;
+                    break;
+                }
+            }
+            
+            if (! array_key_exists($typeName, $this->parentByType)) {
+                $this->parentByType[$typeName] = null;
+            }
+        }
+        return $this->parentByType[$typeName];
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\iCanBeCopied::copy()
+     */
+    public function copy()
+    {
+        return WidgetFactory::createFromUxon($this->getPage(), $this->exportUxonObject());
     }
 }
 ?>

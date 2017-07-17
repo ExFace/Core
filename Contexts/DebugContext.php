@@ -1,0 +1,258 @@
+<?php
+namespace exface\Core\Contexts;
+
+use exface\Core\CommonLogic\Constants\Icons;
+use exface\Core\CommonLogic\Contexts\AbstractContext;
+use exface\Core\CommonLogic\Constants\Colors;
+use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Widgets\Container;
+use exface\Core\Factories\WidgetFactory;
+use exface\Core\Interfaces\Log\LoggerInterface;
+use exface\Core\CommonLogic\Log\Handlers\LogfileHandler;
+use exface\Core\CommonLogic\Log\Handlers\DebugMessageFileHandler;
+use exface\Core\CommonLogic\Log\Handlers\LogLevelRangeHandler;
+use exface\Core\Events\ActionEvent;
+use exface\Core\Actions\ShowContextPopup;
+use exface\Core\Actions\ContextApi;
+use exface\Core\CommonLogic\Log\Handlers\BufferingHandler;
+
+/**
+ * 
+ *
+ * @author Andrej Kabachnik
+ *        
+ */
+class DebugContext extends AbstractContext
+{
+    private $is_debugging = false;
+    private $log_handlers = array();
+    
+    /**
+     * Returns TRUE if the debugger is active and FALSE otherwise
+     * 
+     * @return boolean
+     */
+    public function isDebugging()
+    {
+        return $this->is_debugging;
+    }
+    
+    /**
+     * 
+     * @param boolean $true_or_false
+     */
+    public function setDebugging($true_or_false)
+    {
+        $value = BooleanDataType::parse($true_or_false);
+        if ($value){
+            $this->startDebugging();
+        } else {
+            $this->stopDebugging();
+        }
+    }
+    /**
+     * Starts the debugger for the current context scope
+     * 
+     * @return DebugContext
+     */
+    public function startDebugging()
+    {
+        $this->is_debugging = true;
+        // Log everything
+        $workbench = $this->getWorkbench();
+        $this->log_handlers = [
+            new BufferingHandler(
+                new LogfileHandler("exface", $this->getTraceFileName(), $workbench, LoggerInterface::DEBUG)
+            ),
+            new BufferingHandler(
+                new DebugMessageFileHandler($workbench, $workbench->filemanager()->getPathToLogDetailsFolder(), ".json", LoggerInterface::DEBUG)
+            )
+        ];
+        foreach ($this->log_handlers as $handler){
+            $workbench->getLogger()->appendHandler($handler);
+        }
+        
+        $workbench->eventManager()->addListener('#.Action.Perform.Before', array(
+            $this,
+            'skipSystemActionsEventHanlder'
+        ));
+        
+        return $this;
+    }
+    
+    public function skipSystemActionsEventHanlder(ActionEvent $e)
+    {
+        $action = $e->getAction();
+        if ((($action instanceof ShowContextPopup) && $action->getContext() === $this)
+        || $action instanceof ContextApi && $action->getContext() === $this){
+            foreach ($this->log_handlers as $handler){
+                $handler->setDisabled(true);
+            }
+        }
+    }
+    
+    /**
+     * 
+     * @return string
+     */
+    protected function getTraceFileName(){
+        $workbench = $this->getWorkbench();
+        $now = \DateTime::createFromFormat('U.u', microtime(true));
+        $time = $now->format("Y-m-d H-i-s-u");
+        return $workbench->filemanager()->getPathToLogFolder() . DIRECTORY_SEPARATOR . 'traces' . DIRECTORY_SEPARATOR . $time . '.csv';
+    }
+    
+    /**
+     * Stops the debugger for the current context scope
+     * 
+     * @return \exface\Core\Contexts\DebugContext
+     */
+    public function stopDebugging()
+    {
+        $this->is_debugging = false;
+        return $this;
+    }
+
+    /**
+     * The favorites context resides in the user scope.
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Contexts\ObjectBasketContext::getDefaultScope()
+     */
+    public function getDefaultScope()
+    {
+        return $this->getWorkbench()->context()->getScopeWindow();
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Contexts\AbstractContext::getIcon()
+     */
+    public function getIcon()
+    {
+        return Icons::BUG;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Contexts\AbstractContext::getName()
+     */
+    public function getName()
+    {
+        return $this->getWorkbench()->getCoreApp()->getTranslator()->translate('CONTEXT.DEBUG.NAME');
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Contexts\AbstractContext::exportUxonObject()
+     */
+    public function exportUxonObject()
+    {
+        $uxon = parent::exportUxonObject();
+        if ($this->isDebugging()){
+            $uxon->setProperty('debugging', true);
+        } else {
+            $uxon->unsetProperty('debugging');
+        }
+        return $uxon;
+    }
+    
+    public function importUxonObject(UxonObject $uxon){
+        if ($uxon->hasProperty('debugging')){
+            $this->setDebugging($uxon->getProperty('debugging'));
+        }
+        return;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Contexts\AbstractContext::getIndicator()
+     */
+    public function getIndicator()
+    {
+        if ($this->isDebugging()){
+            return 'ON';
+        }
+        return 'OFF';
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Contexts\AbstractContext::getColor()
+     */
+    public function getColor()
+    {
+        if ($this->isRecording()){
+            return Colors::RED;
+        }
+        return Colors::DEFAULT;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Contexts\AbstractContext::getContextBarPopup()
+     */
+    public function getContextBarPopup(Container $container)
+    {
+        /* @var $data_list \exface\Core\Widgets\DataList */
+        $data_list = WidgetFactory::create($container->getPage(), 'DataList', $container)
+        ->setMetaObject($this->getWorkbench()->model()->getObject('exface.Core.TRACE_LOG'))
+        ->setCaption($this->getName())
+        ->setLazyLoading(false)
+        ->setPaginate(false)
+        ->setPaginatePageSize(10)
+        ->addSorter('NAME', 'DESC');
+        
+        // Disable global actions and basket action as we know exactly, what we
+        // want to do here
+        $data_list->getToolbarMain()
+        ->setIncludeGlobalActions(false)
+        ->setIncludeObjectBasketActions(false);
+        
+        // Add the filename column (the UID column is always there)
+        $data_list->addColumn(WidgetFactory::create($container->getPage(), 'DataColumn', $data_list)->setAttributeAlias('NAME'));
+        
+        // Add the START button
+        /* @var $button \exface\Core\Widgets\Button */
+        $button = WidgetFactory::create($container->getPage(), $data_list->getButtonWidgetType(), $data_list)
+            ->setActionAlias('exface.Core.ContextApi')
+            ->setCaption($this->getWorkbench()->getCoreApp()->getTranslator()->translate('CONTEXT.DEBUG.START'));
+        $button->getAction()
+            ->setContextScope($this->getScope()->getName())
+            ->setContextAlias($this->getAliasWithNamespace())
+            ->setOperation('startDebugging')
+            ->setIconName(Icons::BUG);
+        $data_list->addButton($button);
+        
+        /* @var $button \exface\Core\Widgets\Button */
+        $button = WidgetFactory::create($container->getPage(), $data_list->getButtonWidgetType(), $data_list)
+            ->setActionAlias('exface.Core.ContextApi')
+            ->setCaption($this->getWorkbench()->getCoreApp()->getTranslator()->translate('CONTEXT.DEBUG.STOP'))
+            ->setIconName(Icons::PAUSE);
+        $button->getAction()
+            ->setContextScope($this->getScope()->getName())
+            ->setContextAlias($this->getAliasWithNamespace())
+            ->setOperation('stopDebugging');
+        $data_list->addButton($button);
+        
+        // Add the detail button an bind it to the left click
+        /* @var $details_button \exface\Core\Widgets\DataButton */
+        $details_button = WidgetFactory::create($container->getPage(), $data_list->getButtonWidgetType(), $data_list)
+        ->setActionAlias('exface.Core.ShowObjectDialog')
+        ->setBindToLeftClick(true)
+        ->setHidden(true);
+        $data_list->addButton($details_button);
+        
+        $container->addWidget($data_list);
+        return $container;
+    }
+    
+}
+?>

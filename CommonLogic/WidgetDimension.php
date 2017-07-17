@@ -78,6 +78,21 @@ class WidgetDimension
     }
 
     /**
+     * Returns TRUE if the dimension was specified in relative units and equals 'max' and
+     * FALSE otherwise.
+     *
+     * @return boolean
+     */
+    public function isMax()
+    {
+        if (! $this->isUndefined() && (strcasecmp($this->getValue(), 'max') == 0)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
      * Returns TRUE if the dimension was specified in template specific units and FALSE otherwise.
      *
      * @return boolean

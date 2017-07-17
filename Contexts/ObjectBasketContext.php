@@ -1,5 +1,5 @@
 <?php
-namespace exface\Core\Contexts\Types;
+namespace exface\Core\Contexts;
 
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\Model\Object;
@@ -7,6 +7,13 @@ use exface\Core\Exceptions\Contexts\ContextOutOfBoundsError;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Exceptions\Contexts\ContextRuntimeError;
+use exface\Core\CommonLogic\Contexts\AbstractContext;
+use exface\Core\Widgets\Container;
+use exface\Core\Factories\WidgetFactory;
+use exface\Core\Factories\UiPageFactory;
+use exface\Core\CommonLogic\UiPage;
+use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\CommonLogic\Constants\Icons;
 
 /**
  * The ObjectBasketContext provides a unified interface to store links to selected instances of meta objects in any context scope.
@@ -111,11 +118,10 @@ class ObjectBasketContext extends AbstractContext
     }
 
     /**
-     * The default scope of the data context is the window.
-     * Most apps will run in the context of a single window,
-     * so two windows running one app are independant in general.
-     *
-     * @see \exface\Core\Contexts\Types\AbstractContext::getDefaultScope()
+     * The object basket context resides in the window scope by default.
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Contexts\AbstractContext::getDefaultScope()
      */
     public function getDefaultScope()
     {
@@ -125,8 +131,7 @@ class ObjectBasketContext extends AbstractContext
     /**
      *
      * {@inheritdoc}
-     *
-     * @see \exface\Core\Contexts\Types\AbstractContext::importUxonObject()
+     * @see \exface\Core\CommonLogic\Contexts\AbstractContext::importUxonObject()
      */
     public function importUxonObject(UxonObject $uxon)
     {
@@ -137,18 +142,17 @@ class ObjectBasketContext extends AbstractContext
 
     /**
      * The favorites context is exported to the following UXON structure:
-     * {
-     * object_id1: {
-     * uid1: { data sheet },
-     * uid2: { data sheet },
-     * ...
-     * }
-     * object_id2: ...
-     * }
+     *  {
+     *      object_id1: {
+     *          uid1: { data sheet },
+     *          uid2: { data sheet },
+     *          ...
+     *      }
+     *      object_id2: ...
+     *  }
      *
      * {@inheritdoc}
-     *
-     * @see \exface\Core\Contexts\Types\AbstractContext::exportUxonObject()
+     * @see \exface\Core\CommonLogic\Contexts\AbstractContext::exportUxonObject()
      */
     public function exportUxonObject()
     {
@@ -164,7 +168,7 @@ class ObjectBasketContext extends AbstractContext
     /**
      *
      * @param string $object_id            
-     * @return \exface\Core\Contexts\Types\ObjectBasketContext
+     * @return \exface\Core\Contexts\ObjectBasketContext
      */
     public function removeInstancesForObjectId($object_id)
     {
@@ -176,12 +180,89 @@ class ObjectBasketContext extends AbstractContext
      *
      * @param string $object_id            
      * @param string $uid            
-     * @return \exface\Core\Contexts\Types\ObjectBasketContext
+     * @return \exface\Core\Contexts\ObjectBasketContext
      */
     public function removeInstance($object_id, $uid)
     {
         $this->getFavoritesByObjectId($object_id)->removeRowsByUid($uid);
         return $this;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Contexts\AbstractContext::getIndicator()
+     */
+    public function getIndicator()
+    {
+        $i = 0;
+        foreach ($this->getFavoritesAll() as $data_sheet) {
+            $i += $data_sheet->countRows();
+        }
+        return $i;
+    }
+
+    public function getIcon()
+    {
+        return Icons::SHOPPING_BASKET;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Contexts\AbstractContext::getContextBarPopup()
+     */
+    public function getContextBarPopup(Container $container)
+    {
+        /* @var $data_list \exface\Core\Widgets\DataList */
+        $data_list = WidgetFactory::create($container->getPage(), 'DataList', $container)
+            ->setCaption($this->getName())
+            ->setLazyLoading(false)
+            ->setPaginate(false)
+            ->setPaginatePageSize(40)
+            ->setHideHeader(true);
+        
+        // Disable global actions and basket actions because we are looking at
+        // the object basket itself and it does not make sense to put it in
+        // the basket or in the favorites again.
+        $data_list->getToolbarMain()
+            ->setIncludeGlobalActions(false)
+            ->setIncludeObjectBasketActions(false);
+        
+        // Add the title column (the UID column is always there
+        $data_list->addColumn(WidgetFactory::create($container->getPage(), 'DataColumn', $data_list)->setAttributeAlias('TITLE'));
+        
+        // Fill with content
+        $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.CONTEXT_BASE_OBJECT');
+        foreach ($this->getFavoritesAll() as $data_sheet) {
+            $ds->addRow([
+                'ID' => $data_sheet->getMetaObject()->getId(),
+                'TITLE' => $data_sheet->countRows() . 'x ' . $data_sheet->getMetaObject()->getName()
+            ]);
+        }
+        $data_list->setValuesDataSheet($ds);
+        
+        // Add the detail button an bind it to the left click
+        /* @var $details_button \exface\Core\Widgets\DataButton */
+        $details_button = WidgetFactory::create($container->getPage(), $data_list->getButtonWidgetType(), $data_list)
+            ->setActionAlias('exface.Core.ObjectBasketShowDialog')
+            ->setBindToLeftClick(true)
+            ->setHidden(true);
+        // Make sure the object basket is generated from the same scope!
+        // This makes it easy to reuse this method for user favorites, that are
+        // simply another object basket in a different scope.
+        $details_button->getAction()->setContextScope($this->getScope()->getName());
+        $details_button->getAction()->setContextAlias($this->getAliasWithNamespace());
+        $data_list->addButton($details_button);
+        
+        // TODO add button to remove from basket here
+        
+        $container->addWidget($data_list);
+        return $container;
+    }
+    
+    public function getName(){
+        return $this->getWorkbench()->getCoreApp()->getTranslator()->translate('CONTEXT.OBJECTBASKET.NAME');
     }
 }
 ?>

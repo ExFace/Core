@@ -57,6 +57,7 @@ class UxonParserError extends RuntimeException implements UxonExceptionInterface
             $uxon_tab = $debug_widget->createTab();
             $uxon_tab->setId('UXON');
             $uxon_tab->setCaption('UXON');
+            $uxon_tab->setNumberOfColumns(1);
             $request_widget = WidgetFactory::create($page, 'Html');
             $uxon_tab->addWidget($request_widget);
             $request_widget->setValue('<pre>' . $this->getUxon()->toJson(true) . '</pre>');

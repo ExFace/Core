@@ -25,10 +25,20 @@ trait WidgetExceptionTrait {
         parent::__construct($message, null, $previous);
         $this->setAlias($alias);
         $this->setWidget($widget);
-        // Ist die Widget-Konfiguration fehlerhaft wird das entsprechende Widget entfernt.
-        // Ueber ein Event (Widget.Remove.After) wird das Element auch aus dem Element-
-        // Cache des Templates entfernt (siehe AbstractAjaxTemplate->init()).
-        $widget->getPage()->removeWidget($widget);
+        $this->cleanupPageCache();        
+    }
+    
+    /**
+     * Ist die Widget-Konfiguration fehlerhaft wird das entsprechende Widget entfernt.
+     * Ueber ein Event (Widget.Remove.After) wird das Element auch aus dem Element-
+     * Cache des Templates entfernt (siehe AbstractAjaxTemplate->init()).
+     * 
+     * @return \exface\Core\Exceptions\Widgets\WidgetExceptionTrait
+     */
+    protected function cleanupPageCache()
+    {
+        $this->getWidget()->getPage()->removeWidget($this->getWidget());
+        return $this;
     }
 
     /**
@@ -61,6 +71,7 @@ trait WidgetExceptionTrait {
             $uxon_tab = $debug_widget->createTab();
             $uxon_tab->setId('widget_uxon_tab');
             $uxon_tab->setCaption('Widget UXON');
+            $uxon_tab->setNumberOfColumns(1);
             $request_widget = WidgetFactory::create($page, 'Html');
             $uxon_tab->addWidget($request_widget);
             $request_widget->setValue('<pre>' . (! $this->getWidget()->exportUxonObjectOriginal()->isEmpty() ? $this->getWidget()->exportUxonObjectOriginal()->toJson(true) : $this->getWidget()->exportUxonObject()->toJson(true)) . '</pre>');

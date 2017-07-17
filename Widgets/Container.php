@@ -7,7 +7,6 @@ use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
-use exface\Core\Interfaces\Widgets\iFillEntireContainer;
 use exface\Core\Interfaces\Widgets\iTakeInput;
 
 /**
@@ -103,6 +102,7 @@ class Container extends AbstractWidget implements iContainOtherWidgets
     }
 
     /**
+     *
      * {@inheritdoc}
      *
      * @see \exface\Core\Widgets\AbstractWidget::getChildren()
@@ -202,6 +202,23 @@ class Container extends AbstractWidget implements iContainOtherWidgets
     public function countWidgets()
     {
         return count($this->getWidgets());
+    }
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::countWidgetsVisible()
+     */
+    public function countWidgetsVisible()
+    {
+        $count = 0;
+        foreach ($this->getWidgets() as $widget) {
+            if (! $widget->isHidden()) {
+                $count ++;
+            }
+        }
+        return $count;
     }
 
     /**

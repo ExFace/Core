@@ -4,7 +4,7 @@ namespace exface\Core\Interfaces;
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\Widgets\AbstractWidget;
 use exface\Core\Interfaces\Actions\ActionInterface;
-use exface\Core\Contexts\Types\DataContext;
+use exface\Core\Contexts\DataContext;
 use exface\Core\Exceptions\Actions\ActionNotFoundError;
 use exface\Core\Exceptions\InvalidArgumentException;
 

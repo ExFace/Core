@@ -12,7 +12,7 @@ class ActionAliasProcessor extends AbstractColumnPositionProcessor
 
     protected function getContent()
     {
-        $currentAction = $this->getWorkbench()->context()->getScopeWindow()->getActionContext()->getCurrentAction();
+        $currentAction = $this->getCurrentAction();
         if ($currentAction) {
             return $currentAction->getAliasWithNamespace();
         }
@@ -23,5 +23,26 @@ class ActionAliasProcessor extends AbstractColumnPositionProcessor
     protected function getIndexColumns()
     {
         return array('actionAlias', 'requestId', 'id');
+    }
+
+    protected function getCurrentAction()
+    {
+        $wb = $this->getWorkbench();
+        if (!$wb)
+            return false;
+
+        $ctx = $wb->context();
+        if (!$ctx)
+            return false;
+
+        $sw = $ctx->getScopeWindow();
+        if (!$sw)
+            return false;
+
+        $aCtx = $sw->getActionContext();
+        if (!$aCtx)
+            return false;
+
+        return $aCtx->getCurrentAction();
     }
 }

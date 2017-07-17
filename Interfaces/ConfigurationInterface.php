@@ -25,7 +25,7 @@ interface ConfigurationInterface extends ExfaceClassInterface, iCanBeConvertedTo
      * @param string $configScope       
      * @param mixed $value_or_object_or_string            
      */
-    public function setOption($key, $value_or_object_or_string, $configScope);
+    public function setOption($key, $value_or_object_or_string, $configScope = null);
 
     /**
      * Loads the configuration stored in a file, overriding already existing

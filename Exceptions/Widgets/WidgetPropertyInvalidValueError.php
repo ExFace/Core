@@ -3,7 +3,6 @@ namespace exface\Core\Exceptions\Widgets;
 
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Interfaces\Exceptions\WidgetExceptionInterface;
-use exface\Core\Interfaces\WidgetInterface;
 
 /**
  * Exception thrown if a widget property is being set to an invalid value.
@@ -15,6 +14,9 @@ use exface\Core\Interfaces\WidgetInterface;
  */
 class WidgetPropertyInvalidValueError extends UnexpectedValueException implements WidgetExceptionInterface
 {
-    
     use WidgetExceptionTrait;
+    
+    public function getDefaultAlias(){
+        return '6VYOEGI';
+    }
 }

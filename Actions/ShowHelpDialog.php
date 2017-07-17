@@ -6,6 +6,7 @@ use exface\Core\Exceptions\Actions\ActionCallingWidgetNotSpecifiedError;
 use exface\Core\Interfaces\Widgets\iTriggerAction;
 use exface\Core\Interfaces\Widgets\iHaveContextualHelp;
 use exface\Core\Exceptions\Actions\ActionLogicError;
+use exface\Core\CommonLogic\Constants\Icons;
 
 /**
  * This action opens a dialog with the auto-generated contextual help for the input widget of it's caller.
@@ -23,7 +24,7 @@ class ShowHelpDialog extends ShowDialog
     protected function init()
     {
         parent::init();
-        $this->setIconName('help');
+        $this->setIconName(Icons::QUESTION_CIRCLE_O);
         $this->setPrefillWithFilterContext(false);
         $this->setPrefillWithInputData(false);
     }

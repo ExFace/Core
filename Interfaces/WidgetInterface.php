@@ -12,7 +12,7 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Widgets\Container;
 
-interface WidgetInterface extends ExfaceClassInterface
+interface WidgetInterface extends ExfaceClassInterface, iCanBeCopied
 {
 
     /**

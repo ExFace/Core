@@ -1,6 +1,9 @@
 <?php
 namespace exface\Core\Actions;
 
+use exface\Core\CommonLogic\Constants\Icons;
+use exface\Core\Interfaces\Contexts\ContextManagerInterface;
+
 /**
  * Adds instances from the input data to the favorites basket of the current user.
  *
@@ -16,7 +19,19 @@ class FavoritesAdd extends ObjectBasketAdd
     protected function init()
     {
         parent::init();
-        $this->setIconName('star');
+        $this->setIconName(Icons::STAR);
+    }
+    
+    /**
+     * The context type for the favorites-actions is allways FavoritesContext
+     *
+     * {@inheritdoc}
+     * @see \exface\Core\Actions\ObjectBasketAdd::getContextScope()
+     */
+    public function getContextAlias()
+    {
+        $this->setContextAlias('exface.Core.FavoritesContext');
+        return parent::getContextAlias();
     }
 
     /**
@@ -24,12 +39,12 @@ class FavoritesAdd extends ObjectBasketAdd
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\Actions\ObjectBasketAdd::getScope()
+     * @see \exface\Core\Actions\ObjectBasketAdd::getContextScope()
      */
-    public function getScope()
+    public function getContextScope()
     {
-        $this->setScope('User');
-        return parent::getScope();
+        $this->setContextScope(ContextManagerInterface::CONTEXT_SCOPE_USER);
+        return parent::getContextScope();
     }
 }
 ?>

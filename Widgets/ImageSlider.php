@@ -1,7 +1,7 @@
 <?php
 namespace exface\Core\Widgets;
 
-class ImageSlider extends DataList
+class ImageSlider extends DataCards
 {
 
     private $image_url_column_id = null;

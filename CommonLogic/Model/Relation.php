@@ -107,6 +107,16 @@ class Relation implements ExfaceClassInterface
     {
         $this->related_object_id = $value;
     }
+    
+    /**
+     * Returns the attribute, that is the foreign key in the main object.
+     * Same as calling getMainObjectKeyAttribute()
+     *
+     * @return Attribute
+     */
+    public function getForeignKeyAttribute(){
+        return $this->getMainObjectKeyAttribute();
+    }
 
     /**
      * Returns the alias of the foreign key in the main object.
@@ -355,6 +365,17 @@ class Relation implements ExfaceClassInterface
         } else {
             return false;
         }
+    }
+    
+    /**
+     * Returns a string representation of this relation: e.g. "ORDER_POSITION[ORDER_ID] -> ORDER[ID]".
+     * 
+     * This is handy to use in debug printouts and user messages.
+     * 
+     * @return string
+     */
+    public function toString(){
+        return $this->getMainObject()->getAliasWithNamespace() . '[' . $this->getForeignKeyAlias() . '] -> ' . $this->getRelatedObject()->getAliasWithNamespace() . '[' . $this->getRelatedObjectKeyAlias() . ']';
     }
 }
 ?>

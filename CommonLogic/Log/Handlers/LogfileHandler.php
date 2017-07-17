@@ -13,6 +13,7 @@ use Monolog\Formatter\NormalizerFormatter;
 use Monolog\Handler\FingersCrossed\ErrorLevelActivationStrategy;
 use Monolog\Handler\FingersCrossedHandler;
 use Monolog\Logger;
+use exface\Core\CommonLogic\Log\Helpers\LogHelper;
 
 class LogfileHandler extends AbstractMonologHandler implements FileHandlerInterface
 {
@@ -72,16 +73,18 @@ class LogfileHandler extends AbstractMonologHandler implements FileHandlerInterf
         // create csv log handler and set formatter with customized date format
         $csvHandler = new CsvHandler($this->filename, $this->level, $this->bubble, $this->filePermission,
             $this->useLocking);
-        $csvHandler->setFormatter(new NormalizerFormatter("Y-m-d H:i:s-v")); // with milliseconds
+        $csvHandler->setFormatter(new NormalizerFormatter("Y-m-d H:i:s.v")); // with milliseconds
 
         $persistLogLevel = $this->workbench->getConfig()->getOption('LOG.PERSIST_LOG_LEVEL');
+        $passthroughLevel = LogHelper::compareLogLevels($this->level, $this->workbench->getConfig()->getOption('LOG.PASSTHROUGH_LOG_LEVEL')) < 0 ? $this->level : $this->workbench->getConfig()->getOption('LOG.PASSTHROUGH_LOG_LEVEL');
+
         $fcHandler = new FingersCrossedHandler(
             $csvHandler,
             new ErrorLevelActivationStrategy(Logger::toMonologLevel($persistLogLevel)),
             0,
             true,
             true,
-            Logger::toMonologLevel($this->level)
+            $passthroughLevel
         );
 
         $logger->pushHandler($fcHandler);

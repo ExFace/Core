@@ -1,5 +1,5 @@
 <?php
-namespace exface\Core\Contexts\Types;
+namespace exface\Core\Contexts;
 
 use exface\Core\CommonLogic\Model\Attribute;
 use exface\Core\CommonLogic\Model\Condition;
@@ -9,6 +9,7 @@ use exface\Core\Factories\ConditionFactory;
 use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;
 use exface\Core\Exceptions\Contexts\ContextLoadError;
+use exface\Core\CommonLogic\Contexts\AbstractContext;
 
 class FilterContext extends AbstractContext
 {
@@ -67,7 +68,7 @@ class FilterContext extends AbstractContext
      * Adds a condition to the current context
      *
      * @param Condition $condition            
-     * @return \exface\Core\Contexts\Types\FilterContext
+     * @return \exface\Core\Contexts\FilterContext
      */
     public function addCondition(Condition $condition)
     {
@@ -79,7 +80,7 @@ class FilterContext extends AbstractContext
      * Removes a given condition from the current context
      *
      * @param Condition $condition            
-     * @return \exface\Core\Contexts\Types\FilterContext
+     * @return \exface\Core\Contexts\FilterContext
      */
     public function removeCondition(Condition $condition)
     {
@@ -91,7 +92,7 @@ class FilterContext extends AbstractContext
      * Removes all conditions based on a certain attribute
      *
      * @param attribute $attribute            
-     * @return \exface\Core\Contexts\Types\FilterContext
+     * @return \exface\Core\Contexts\FilterContext
      */
     public function removeConditionsForAttribute(Attribute $attribute)
     {
@@ -108,7 +109,7 @@ class FilterContext extends AbstractContext
     /**
      * Clears all conditions from this context
      *
-     * @return \exface\Core\Contexts\Types\FilterContext
+     * @return \exface\Core\Contexts\FilterContext
      */
     public function removeAllConditions()
     {
@@ -138,7 +139,7 @@ class FilterContext extends AbstractContext
      *
      * @param UxonObject $uxon            
      * @throws ContextLoadError
-     * @return \exface\Core\Contexts\Types\FilterContext
+     * @return \exface\Core\Contexts\FilterContext
      */
     public function importUxonObject(UxonObject $uxon)
     {
@@ -164,6 +165,26 @@ class FilterContext extends AbstractContext
         } else {
             return true;
         }
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Contexts\AbstractContext::getIcon()
+     */
+    public function getIcon()
+    {
+        return 'filter';
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Contexts\AbstractContext::getName()
+     */
+    public function getName()
+    {
+        return $this->getWorkbench()->getCoreApp()->getTranslator()->translate('CONTEXT.FILTER.NAME');
     }
 }
 ?>

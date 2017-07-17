@@ -35,35 +35,34 @@ use exface\Core\Exceptions\Widgets\WidgetLogicError;
  * the product id does not belong to the default display attributes of the variant, we need to add it to the respective combo
  * manually: just add it next to the ~DEFAULT_DISPLAY attribute group.
  *
- * {
- * "widget_type": "Form",
- * "object_alias": "MY.APP.ORDER_POSITION",
- * ...
- * {
- * "widget_type": "ComboTable",
- * "object_alias": "MY.APP.PRODUCT",
- * "id": "product_selector",
- * "value": "=product_variant_selector!product_id",
- * "display_only": true
- * },
- * {
- * "widget_type": "ComboTable",
- * "attribute_alias: "PRODUCT_VARIANT"
- * "id": "product_variant_selector",
- * "table": {
- * "columns": [
- * { "attribute_group_alias": "~DEFAULT_DISPLAY" },
- * { "attribute_alias": "PRODUCT"}
- * ],
- * "filters": [
- * {
- * "attribute_alias": "PRODUCT"
- * "value": "=product_selector!id"
- * }
- * ]
- * }
- * }
- * }
+ *  {
+ *      "widget_type": "Form",
+ *      "object_alias": "MY.APP.ORDER_POSITION",
+ *      ...
+ *      {
+ *          "widget_type": "ComboTable",
+ *          "object_alias": "MY.APP.PRODUCT",
+ *          "id": "product_selector",
+ *          "value": "=product_variant_selector!product_id",
+ *          "display_only": true
+ *      },
+ *      {
+ *          "widget_type": "ComboTable",
+ *          "attribute_alias: "PRODUCT_VARIANT"
+ *          "id": "product_variant_selector",
+ *          "table": {
+ *              "columns": [
+ *                  { "attribute_group_alias": "~DEFAULT_DISPLAY" },
+ *                  { "attribute_alias": "PRODUCT"}
+ *              ],
+ *          "filters": [
+ *              {
+ *                  "attribute_alias": "PRODUCT"
+ *                  "value": "=product_selector!id"
+ *              }
+ *          ]
+ *      }
+ *  }
  *
  * You can add as many widgets in this chain of live references, as you wish. This way, interactive selectors can be built
  * for very complex hierarchies. If you do not want the lower hierarchy levels to be selectable before the higher levels

@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\Actions;
 
+use exface\Core\CommonLogic\Constants\Icons;
+
 class CreateObjectDialog extends EditObjectDialog
 {
 
@@ -9,7 +11,7 @@ class CreateObjectDialog extends EditObjectDialog
         parent::init();
         $this->setInputRowsMin(null);
         $this->setInputRowsMax(null);
-        $this->setIconName('add');
+        $this->setIconName(Icons::PLUS);
         $this->setSaveActionAlias('exface.Core.CreateData');
         // Do not prefill with input data because we will be creating a new object in any case - regardless of the input data.
         // We can still make prefills setting widget values directly in UXON. Automatic prefills from the context can also be used.

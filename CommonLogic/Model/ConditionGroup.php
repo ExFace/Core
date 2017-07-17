@@ -120,12 +120,18 @@ class ConditionGroup implements iCanBeConvertedToUxon, iCanBeCopied
                 $comparator = EXF_COMPARATOR_IS;
             }
             
-            // a value enclosed in [] is actually a IN-statement
+            // Take care of values with delimited lists
             if (substr($value, 0, 1) == '[' && substr($value, - 1) == ']') {
-                $value = trim($value, '[]');
+                // a value enclosed in [] is actually a IN-statement
+                $value = trim($value, "[]");
                 $comparator = EXF_COMPARATOR_IN;
-            } // if a numeric attribute has a value with commas, it is actually an IN-statement
-elseif (strpos($expression_string, EXF_LIST_SEPARATOR) === false && $base_object->getAttribute($expression_string) && ($base_object->getAttribute($expression_string)->getDataType()->is(EXF_DATA_TYPE_NUMBER) || $base_object->getAttribute($expression_string)->getDataType()->is(EXF_DATA_TYPE_RELATION)) && strpos($value, EXF_LIST_SEPARATOR) !== false) {
+            } elseif (strpos($expression_string, EXF_LIST_SEPARATOR) === false 
+                && $base_object->hasAttribute($expression_string) 
+                && ($base_object->getAttribute($expression_string)->getDataType()->is(EXF_DATA_TYPE_NUMBER) 
+                    || $base_object->getAttribute($expression_string)->getDataType()->is(EXF_DATA_TYPE_RELATION)
+                    ) 
+                && strpos($value, $base_object->getAttribute($expression_string)->getValueListDelimiter()) !== false) {
+                // if a numeric attribute has a value with commas, it is actually an IN-statement
                 $comparator = EXF_COMPARATOR_IN;
             }
         }

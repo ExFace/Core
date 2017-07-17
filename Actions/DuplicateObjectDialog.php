@@ -1,13 +1,15 @@
 <?php
 namespace exface\Core\Actions;
 
+use exface\Core\CommonLogic\Constants\Icons;
+
 class DuplicateObjectDialog extends EditObjectDialog
 {
 
     protected function init()
     {
         parent::init();
-        $this->setIconName('copy');
+        $this->setIconName(Icons::CLONE);
         $this->setSaveActionAlias('exface.Core.CreateData');
     }
 

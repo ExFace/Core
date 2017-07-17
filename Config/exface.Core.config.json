@@ -12,12 +12,43 @@
 	"DEFAULT_DATE_FORMAT": "d.m.Y",
 	"DEFAULT_DATETIME_FORMAT": "d.m.Y H:i:s",
 	"FOLDER_USER_DATA": "UserData",
+	
 	"DEBUG.DISABLE_TEMPLATE_ERROR_HANDLERS": false,
 	"DEBUG.PRETTIFY_ERRORS": true,
 	"DEBUG.SHOW_REQUEST_DUMP": false,
 	"DEBUG.SHOW_META_MODEL_DETAILS": true,
 	"DEBUG.SHOW_ERROR_DETAILS_TO_ADMINS_ONLY": true,
-	"LOG.MINIMUM_LEVEL_TO_LOG": "error",
-	"LOG.MAX_DAYS_TO_KEEP": "3",
-	"LOG.PERSIST_LOG_LEVEL": "error"
+	"DEBUG.SUPPORT_EMAIL_ADDRESS": "support@mydomain.com",
+    
+	"LOG.MINIMUM_LEVEL_TO_LOG": "notice",
+	"LOG.MAX_DAYS_TO_KEEP": "14",
+	"LOG.PERSIST_LOG_LEVEL": "alert",
+	"LOG.PASSTHROUGH_LOG_LEVEL": "error",
+	
+	"CONTEXTBAR": {
+	   "contexts": [
+	       {
+	           "context_scope": "User",
+	           "context_alias": "exface.Core.FavoritesContext",
+	           "visibility": "show_allways"
+	       },
+	       {
+               "context_scope": "Window",
+               "context_alias": "exface.Core.ObjectBasketContext",
+               "visibility": "show_allways"
+           },
+           {
+               "context_scope": "Window",
+               "context_alias": "exface.Core.DebugContext",
+               "visibility": "show_allways",
+               "retstrict_to_admins": true
+           },
+           {
+               "context_scope": "Window",
+               "context_alias": "exface.ActionTest.ActionTestContext",
+               "visibility": "show_allways",
+               "retstrict_to_admins": true
+           }
+	   ]
+	}
 }

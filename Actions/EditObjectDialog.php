@@ -5,6 +5,7 @@ use exface\Core\Widgets\AbstractWidget;
 use exface\Core\Widgets\Dialog;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Widgets\Button;
+use exface\Core\CommonLogic\Constants\Icons;
 
 class EditObjectDialog extends ShowObjectDialog
 {
@@ -14,7 +15,7 @@ class EditObjectDialog extends ShowObjectDialog
     protected function init()
     {
         parent::init();
-        $this->setIconName('edit');
+        $this->setIconName(Icons::PENCIL_SQUARE_O);
         $this->setSaveActionAlias('exface.Core.UpdateData');
         $this->setShowOnlyEditableAttributes(true);
         $this->setDisableEditing(false);

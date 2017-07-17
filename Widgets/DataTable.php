@@ -1,67 +1,72 @@
 <?php
 namespace exface\Core\Widgets;
 
-use exface\Core\Interfaces\Widgets\iHaveTopToolbar;
-use exface\Core\Interfaces\Widgets\iHaveBottomToolbar;
+use exface\Core\Interfaces\Widgets\iHaveHeader;
+use exface\Core\Interfaces\Widgets\iHaveFooter;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Widgets\iFillEntireContainer;
 use exface\Core\Interfaces\Widgets\iSupportMultiSelect;
+use exface\Core\Interfaces\Widgets\iLayoutWidgets;
+use exface\Core\CommonLogic\Model\Attribute;
+use exface\Core\CommonLogic\Traits\WidgetLayoutTrait;
+use exface\Core\CommonLogic\UxonObject;
 
 /**
  * Renders data as a table with filters, columns, and toolbars.
  * Columns of the DataTable can also be made editable.
  *
  * Example:
- * {
- * "id": "attributes",
- * "widget_type": "DataTable",
- * "object_alias": "exface.Core.ATTRIBUTE",
- * "filters": [
- * {
- * "attribute_alias": "OBJECT"
- * },
- * {
- * "attribute_alias": "OBJECT__DATA_SOURCE"
- * }
- * ],
- * "columns": [
- * {
- * "attribute_alias": "OBJECT__LABEL"
- * },
- * {
- * "attribute_alias": "LABEL"
- * },
- * {
- * "attribute_alias": "ALIAS"
- * },
- * {
- * "attribute_alias": "RELATED_OBJ__LABEL",
- * "caption": "Relation to"
- * }
- * ],
- * "buttons": [
- * {
- * "action_alias": "exface.Core.UpdateData"
- * },
- * {
- * "action_alias": "exface.Core.CreateObjectDialog",
- * "caption": "Neu"
- * },
- * {
- * "action_alias": "exface.Core.EditObjectDialog",
- * "bind_to_double_click": true
- * },
- * {
- * "action_alias": "exface.Core.DeleteObject"
- * }
- * ]
- * }
+ *  {
+ *      "id": "attributes",
+ *      "widget_type": "DataTable",
+ *      "object_alias": "exface.Core.ATTRIBUTE",
+ *      "filters": [
+ *          {
+ *              "attribute_alias": "OBJECT"
+ *          },
+ *          {
+ *              "attribute_alias": "OBJECT__DATA_SOURCE"
+ *          }
+ *      ],
+ *      "columns": [
+ *          {
+ *              "attribute_alias": "OBJECT__LABEL"
+ *          },
+ *          {
+ *              "attribute_alias": "LABEL"
+ *          },
+ *          {
+ *              "attribute_alias": "ALIAS"
+ *          },
+ *          {
+ *              "attribute_alias": "RELATED_OBJ__LABEL",
+ *              "caption": "Relation to"
+ *          }
+ *      ],
+ *      "buttons": [
+ *          {
+ *              "action_alias": "exface.Core.UpdateData"
+ *          },
+ *          {
+ *              "action_alias": "exface.Core.CreateObjectDialog"
+ *          },
+ *          {
+ *              "action_alias": "exface.Core.EditObjectDialog",
+ *              "bind_to_double_click": true
+ *          },
+ *          {
+ *              "action_alias": "exface.Core.DeleteObject"
+ *          }
+ *      ]
+ *  }
  *
  * @author Andrej Kabachnik
  *        
  */
-class DataTable extends Data implements iHaveTopToolbar, iHaveBottomToolbar, iFillEntireContainer, iSupportMultiSelect
+class DataTable extends Data implements iHaveHeader, iHaveFooter, iFillEntireContainer, iSupportMultiSelect, iLayoutWidgets
 {
+    
+    use WidgetLayoutTrait;
 
     private $show_filter_row = false;
 
@@ -77,9 +82,9 @@ class DataTable extends Data implements iHaveTopToolbar, iHaveBottomToolbar, iFi
 
     private $auto_row_height = true;
 
-    private $hide_toolbar_top = false;
+    private $hide_header = false;
 
-    private $hide_toolbar_bottom = false;
+    private $hide_footer = false;
 
     private $row_details_container = null;
 
@@ -94,6 +99,8 @@ class DataTable extends Data implements iHaveTopToolbar, iHaveBottomToolbar, iFi
     private $context_menu_enabled = true;
 
     private $header_sort_multiple = false;
+    
+    private $context_menu = null;
 
     function hasRowDetails()
     {
@@ -321,62 +328,41 @@ class DataTable extends Data implements iHaveTopToolbar, iHaveBottomToolbar, iFi
         return $this;
     }
 
-    public function getHideToolbarTop()
+    public function getHideHeader()
     {
-        return $this->hide_toolbar_top;
+        return $this->hide_header;
     }
 
     /**
      * Set to TRUE to hide the top toolbar or FALSE to show it.
      *
-     * @uxon-property hide_toolbar_top
+     * @uxon-property hide_header
      * @uxon-type boolean
      *
-     * @see \exface\Core\Interfaces\Widgets\iHaveTopToolbar::setHideToolbarTop()
+     * @see \exface\Core\Interfaces\Widgets\iHaveHeader::setHideHeader()
      */
-    public function setHideToolbarTop($value)
+    public function setHideHeader($value)
     {
-        $this->hide_toolbar_top = \exface\Core\DataTypes\BooleanDataType::parse($value);
+        $this->hide_header = \exface\Core\DataTypes\BooleanDataType::parse($value);
         return $this;
     }
 
-    public function getHideToolbarBottom()
+    public function getHideFooter()
     {
-        return $this->hide_toolbar_bottom;
+        return $this->hide_footer;
     }
 
     /**
      * Set to TRUE to hide the bottom toolbar or FALSE to show it.
      *
-     * @uxon-property hide_toolbar_bottom
+     * @uxon-property hide_footer
      * @uxon-type boolean
      *
-     * @see \exface\Core\Interfaces\Widgets\iHaveTopToolbar::setHideToolbarTop()
+     * @see \exface\Core\Interfaces\Widgets\iHaveHeader::setHideHeader()
      */
-    public function setHideToolbarBottom($value)
+    public function setHideFooter($value)
     {
-        $this->hide_toolbar_bottom = \exface\Core\DataTypes\BooleanDataType::parse($value);
-        return $this;
-    }
-
-    public function getHideToolbars()
-    {
-        return ($this->getHideToolbarTop() && $this->getHideToolbarBottom());
-    }
-
-    /**
-     * Set to TRUE to hide the all toolbars.
-     * Use hide_toolbar_top and hide_toolbar_bottom to control toolbar individually.
-     *
-     * @uxon-property hide_toolbars
-     * @uxon-type boolean
-     *
-     * @see \exface\Core\Interfaces\Widgets\iHaveTopToolbar::setHideToolbarTop()
-     */
-    public function setHideToolbars($value)
-    {
-        $this->setHideToolbarTop($value);
-        $this->setHideToolbarBottom($value);
+        $this->hide_footer = \exface\Core\DataTypes\BooleanDataType::parse($value);
         return $this;
     }
 
@@ -531,7 +517,7 @@ class DataTable extends Data implements iHaveTopToolbar, iHaveBottomToolbar, iFi
      */
     public function setValuesFromArray(array $values)
     {
-        $this->setValue(implode(EXF_LIST_SEPARATOR, $values));
+        $this->setValue(implode($this->getUidColumn()->getAttribute()->getValueListDelimiter(), $values));
         return $this;
     }
 
@@ -561,5 +547,155 @@ class DataTable extends Data implements iHaveTopToolbar, iHaveBottomToolbar, iFi
         $this->multi_select_all_selected = $true_or_false ? true : false;
         return $this;
     }
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::addWidget()
+     */
+    public function addWidget(AbstractWidget $widget, $position = NULL)
+    {
+        // TODO: Funktion implementieren
+    }
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::addWidgets()
+     */
+    public function addWidgets(array $widgets)
+    {
+        // TODO: Funktion implementieren
+    }
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::getWidgets()
+     */
+    public function getWidgets()
+    {
+        // TODO: Funktion implementieren
+        return [];
+    }
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::getInputWidgets()
+     */
+    public function getInputWidgets($depth = null)
+    {
+        // TODO: Funktion implementieren
+        return [];
+    }
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::removeWidgets()
+     */
+    public function removeWidgets()
+    {
+        // TODO: Funktion implementieren
+    }
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::setWidgets()
+     */
+    public function setWidgets(array $widget_or_uxon_array)
+    {
+        // TODO: Funktion implementieren
+    }
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::countWidgets()
+     */
+    public function countWidgets()
+    {
+        // TODO: Funktion implementieren
+        return 0;
+    }
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::countWidgetsVisible()
+     */
+    public function countWidgetsVisible()
+    {
+        // TODO: Funktion implementieren
+        return 0;
+    }
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::findChildrenByAttribute()
+     */
+    public function findChildrenByAttribute(Attribute $attribute)
+    {
+        // TODO: Funktion implementieren
+    }
+    
+    /**
+     * 
+     * @return DataItemMenu
+     */
+    public function getContextMenu()
+    {
+        if (is_null($this->context_menu)){
+            $this->context_menu = WidgetFactory::create($this->getPage(), 'DataItemMenu', $this);
+        }
+        return $this->context_menu;
+    }
+    
+    /**
+     * 
+     * @param DataItemMenu|UxonObject $widget_or_uxon_object
+     * @return \exface\Core\Widgets\DataTable
+     */
+    public function setContextMenu($widget_or_uxon_object)
+    {
+        if ($widget_or_uxon_object instanceof DataItemMenu){
+            $menu = $widget_or_uxon_object;
+        } elseif ($widget_or_uxon_object instanceof UxonObject){
+            if (!$widget_or_uxon_object->hasProperty('widget_type')){
+                $widget_or_uxon_object->setProperty('widget_type', 'DataItemMenu');
+            }
+            WidgetFactory::createFromUxon($this->getPage(), $widget_or_uxon_object, $this);
+        }
+        $this->context_menu = $widget_or_uxon_object;
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Data::getToolbars()
+     */
+    public function getToolbars(){
+        $toolbars = parent::getToolbars();
+        if ($this->hasAggregations()){
+            $toolbars[0]
+                ->setIncludeGlobalActions(false)
+                ->setIncludeObjectBasketActions(false);
+        }
+        return $toolbars;
+    }
+    
 }
 ?>

@@ -1,10 +1,11 @@
 <?php
-namespace exface\Core\Contexts\Types;
+namespace exface\Core\Contexts;
 
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\ActionFactory;
 use exface\Core\Exceptions\Contexts\ContextLoadError;
+use exface\Core\CommonLogic\Contexts\AbstractContext;
 
 class ActionContext extends AbstractContext
 {
@@ -42,7 +43,7 @@ class ActionContext extends AbstractContext
      * Registers an action in this context
      *
      * @param ActionInterface $action            
-     * @return \exface\Core\Contexts\Types\ActionContext
+     * @return \exface\Core\Contexts\ActionContext
      */
     public function addAction(ActionInterface $action)
     {
@@ -64,7 +65,7 @@ class ActionContext extends AbstractContext
     {
         // If history not yet loaded, load it now
         if (count($this->action_history_raw) == 0) {
-            $this->importUxonObject($this->getScope()->getSavedContexts($this->getAlias()));
+            $this->importUxonObject($this->getScope()->getSavedContexts($this->getAliasWithNamespace()));
         }
         
         // Put the last $steps_back actions from the history into an array starting with the most recent entry
@@ -96,7 +97,7 @@ class ActionContext extends AbstractContext
 
     /**
      *
-     * @see \exface\Core\Contexts\Types\AbstractContext::getDefaultScope()
+     * @see \exface\Core\CommonLogic\Contexts\AbstractContext::getDefaultScope()
      */
     public function getDefaultScope()
     {
@@ -105,7 +106,7 @@ class ActionContext extends AbstractContext
 
     /**
      *
-     * @see \exface\Core\Contexts\Types\AbstractContext::exportUxonObject()
+     * @see \exface\Core\CommonLogic\Contexts\AbstractContext::exportUxonObject()
      */
     public function exportUxonObject()
     {
@@ -140,7 +141,7 @@ class ActionContext extends AbstractContext
 
     /**
      *
-     * @see \exface\Core\Contexts\Types\AbstractContext::importUxonObject()
+     * @see \exface\Core\CommonLogic\Contexts\AbstractContext::importUxonObject()
      */
     public function importUxonObject(UxonObject $uxon)
     {
@@ -150,6 +151,26 @@ class ActionContext extends AbstractContext
             throw new ContextLoadError($this, 'Cannot load action contexts: expecting UXON objects, received ' . gettype($uxon->action_history) . ' instead!');
         }
         return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Contexts\AbstractContext::getIcon()
+     */
+    public function getIcon()
+    {
+        return 'gear';
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Contexts\AbstractContext::getName()
+     */
+    public function getName()
+    {
+        return $this->getWorkbench()->getCoreApp()->getTranslator()->translate('CONTEXT.ACTION.NAME');
     }
 }
 ?>

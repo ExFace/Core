@@ -3,6 +3,7 @@ namespace exface\Core\Actions;
 
 use exface\Core\Interfaces\Actions\iRunTemplateScript;
 use exface\Core\CommonLogic\AbstractAction;
+use exface\Core\CommonLogic\Constants\Icons;
 
 class CustomTemplateScript extends AbstractAction implements iRunTemplateScript
 {
@@ -13,7 +14,7 @@ class CustomTemplateScript extends AbstractAction implements iRunTemplateScript
 
     protected function init()
     {
-        $this->setIconName('script');
+        $this->setIconName(Icons::CODE);
     }
 
     protected function perform()

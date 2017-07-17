@@ -3,6 +3,7 @@ namespace exface\Core\Actions;
 
 use exface\Core\Interfaces\Actions\iDeleteData;
 use exface\Core\CommonLogic\AbstractAction;
+use exface\Core\CommonLogic\Constants\Icons;
 
 class DeleteObject extends AbstractAction implements iDeleteData
 {
@@ -13,7 +14,7 @@ class DeleteObject extends AbstractAction implements iDeleteData
     {
         $this->setInputRowsMin(1);
         $this->setInputRowsMax(null);
-        $this->setIconName('remove');
+        $this->setIconName(Icons::TRASH_O);
     }
 
     protected function perform()

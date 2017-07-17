@@ -7,21 +7,30 @@ interface ContextScopeInterface extends ExfaceClassInterface
 {
 
     /**
-     * Returns an array with all contexts available in this scope.
+     * Returns an array with all contexts already loaded in this scope.
      *
      * @return ContextInterface[]
      */
-    public function getAllContexts();
+    public function getContextsLoaded();
 
     /**
      * Returns the context matching the given alias (like "action", "filter", "test", etc.).
-     * If the context
-     * is not initialized yet, it will be initialized now and saved contexts will be loaded.
+     * 
+     * If the context is not loaded yet, it will be initialized now and saved 
+     * contexts will be loaded.
      *
      * @param string $alias            
      * @return ContextInterface
      */
     public function getContext($alias);
+    
+    /**
+     * Removes the context matching the given alias from the scope
+     * 
+     * @param string $alias
+     * @return ContextScopeInterface
+     */
+    public function removeContext($alias);
 
     /**
      * Saves data of all contexts in the current scope to the scopes storage
@@ -48,7 +57,7 @@ interface ContextScopeInterface extends ExfaceClassInterface
     public function getScopeId();
 
     /**
-     * Returns a human readable name for this context scope
+     * Returns a human readable name for this context scope: e.g. "Window" for the window context scope
      *
      * @return string
      */

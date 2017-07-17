@@ -1,5 +1,5 @@
 <?php
-namespace exface\Core\Contexts\Scopes;
+namespace exface\Core\CommonLogic\Contexts\Scopes;
 
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Contexts\ContextInterface;
@@ -27,7 +27,7 @@ class SessionContextScope extends AbstractContextScope
      * Thus, the session contexts are always loaded on startup, not only once they are
      * actually used. This should be OK, since window contexts will probably be used in every single request.
      *
-     * @see \exface\Core\Contexts\Scopes\AbstractContextScope::init()
+     * @see \exface\Core\CommonLogic\Contexts\Scopes\AbstractContextScope::init()
      */
     protected function init()
     {
@@ -52,21 +52,19 @@ class SessionContextScope extends AbstractContextScope
      * Since the session context ist stored in the $_SESSION, loading contexts simply fetches the contents
      * of the contexts array in the $_SESSION variable and tries to parse it as a UXON object.
      *
-     * @see \exface\Core\Contexts\Scopes\AbstractContextScope::loadContextData()
+     * @see \exface\Core\CommonLogic\Contexts\Scopes\AbstractContextScope::loadContextData()
      */
     public function loadContextData(ContextInterface $context)
     {
-        // Check to see if the session had been started by some other code (e.g. the CMS, etc.)
-        // If not, start it here!
-        if ($this->getSavedContexts($context->getAlias())) {
-            $context->importUxonObject($this->getSavedContexts($context->getAlias()));
+        if ($this->getSavedContexts($context->getAliasWithNamespace())) {
+            $context->importUxonObject($this->getSavedContexts($context->getAliasWithNamespace()));
         }
         return $this;
     }
 
     /**
      *
-     * @see \exface\Core\Contexts\Scopes\AbstractContextScope::getSavedContexts()
+     * @see \exface\Core\CommonLogic\Contexts\Scopes\AbstractContextScope::getSavedContexts()
      * @return \exface\Core\CommonLogic\UxonObject
      */
     public function getSavedContexts($context_alias = null)
@@ -83,23 +81,23 @@ class SessionContextScope extends AbstractContextScope
     /**
      * The session scope saves all it's contexts as UXON objects in the $_SESSION
      *
-     * @see \exface\Core\Contexts\Scopes\AbstractContextScope::saveContexts()
+     * @see \exface\Core\CommonLogic\Contexts\Scopes\AbstractContextScope::saveContexts()
      */
     public function saveContexts()
     {
         // var_dump($_SESSION);
         $this->sessionOpen();
         
-        foreach ($this->getAllContexts() as $context) {
+        foreach ($this->getContextsLoaded() as $context) {
             $uxon = $context->exportUxonObject();
             if (! is_null($uxon) && ! $uxon->isEmpty()) {
                 // Save the context in the session in JSON-Representation, because saving it directly as a UxonObject
                 // causes errors when reading the session: all used classes must be declared (included) before the
                 // session is initialized. So as long as we are using the CMS session here, we can only store built-in
                 // types. If ExFace will create own sessions, this can be changed!
-                $this->setSessionData($context->getAlias(), $uxon->toJson());
+                $this->setSessionData($context->getAliasWithNamespace(), $uxon->toJson());
             } else {
-                $this->removeContext($context->getAlias());
+                $this->removeContext($context->getAliasWithNamespace());
             }
         }
         
@@ -108,11 +106,16 @@ class SessionContextScope extends AbstractContextScope
         
         return $this;
     }
-
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Contexts\Scopes\AbstractContextScope::removeContext()
+     */
     public function removeContext($alias)
     {
         unset($_SESSION['exface']['contexts'][$alias]);
-        return $this;
+        return parent::removeContext($alias);
     }
 
     /**
@@ -120,7 +123,7 @@ class SessionContextScope extends AbstractContextScope
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\Contexts\Scopes\AbstractContextScope::getScopeId()
+     * @see \exface\Core\CommonLogic\Contexts\Scopes\AbstractContextScope::getScopeId()
      */
     public function getScopeId()
     {
@@ -133,7 +136,7 @@ class SessionContextScope extends AbstractContextScope
      * one of them should be used in the session scope.
      *
      * @param string $string            
-     * @return \exface\Core\Contexts\Scopes\SessionContextScope
+     * @return \exface\Core\CommonLogic\Contexts\Scopes\SessionContextScope
      */
     protected function setSessionId($string)
     {
@@ -233,7 +236,7 @@ class SessionContextScope extends AbstractContextScope
      *
      * @param string $key            
      * @param string $value            
-     * @return \exface\Core\Contexts\Scopes\SessionContextScope
+     * @return \exface\Core\CommonLogic\Contexts\Scopes\SessionContextScope
      */
     protected function setSessionData($key, $value)
     {

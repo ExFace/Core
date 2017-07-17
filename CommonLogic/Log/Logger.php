@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\CommonLogic\Log;
 
+use exface\Core\CommonLogic\Log\Helpers\LogHelper;
 use exface\Core\Exceptions\UnderflowException;
 use exface\Core\Interfaces\iCanGenerateDebugWidgets;
 use exface\Core\Interfaces\Log\LoggerInterface;
@@ -167,6 +168,8 @@ class Logger implements LoggerInterface
                 }
                 $context['exception'] = $sender;
                 $context['id']        = $sender->getId();
+            } else {
+                $context['id']        = LogHelper::createId();
             }
 
             foreach ($this->handlers as $handler) {
@@ -186,14 +189,28 @@ class Logger implements LoggerInterface
             $this->setLogging(false);
         }
     }
+    
+    /**
+     * 
+     * @param \Throwable $e
+     * @param string $level
+     */
+    public function logException(\Throwable $e, $level = null)
+    {
+        if ($e instanceof  ExceptionInterface){
+            $this->log((is_null($level) ? $e->getDefaultLogLevel() : $level), $e->getMessage(), [], $e);
+        } else {
+            $this->log((is_null($level) ? LoggerInterface::ALERT : $level), $e->getMessage(), ["exception" => $e]);
+        }
+        return $this;
+    }
 
     /**
-     * Pushes a handler on to the stack.
-     *
-     * @param LogHandlerInterface $handler            
-     * @return LoggerInterface
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Log\LoggerInterface::appendHandler()
      */
-    public function pushHandler(LogHandlerInterface $handler)
+    public function appendHandler(LogHandlerInterface $handler)
     {
         $this->handlers[] = $handler;
         
@@ -201,24 +218,24 @@ class Logger implements LoggerInterface
     }
 
     /**
-     * Pops a handler from the top of the stack and returns it
-     *
-     * @throws UnderflowException if no handlers registered
-     * @return LogHandlerInterface
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Log\LoggerInterface::removeHandler()
      */
-    public function popHandler()
+    public function removeHandler(LogHandlerInterface $handler)
     {
-        if (! $this->handlers) {
-            throw new UnderflowException('Can not pop handler from an empty handler stack.');
+        foreach ($this->handlers as $i => $h){
+            if ($h === $handler){
+                unset($this->handlers[$i]);
+            }
         }
-        
-        return array_shift($this->handlers);
+        return $this;
     }
 
     /**
-     * Returns a numeric array with all log handlers currently registered
-     *
-     * @return LogHandlerInterface[]
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Log\LoggerInterface::getHandlers()
      */
     public function getHandlers()
     {

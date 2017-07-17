@@ -18,6 +18,7 @@ use exface\Core\Exceptions\Actions\ActionObjectNotSpecifiedError;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
+use exface\Core\Exceptions\UnexpectedValueException;
 
 /**
  * The abstract action is the base ActionInterface implementation, that simplifies the creation of custom actions.
@@ -921,16 +922,43 @@ abstract class AbstractAction implements ActionInterface
         $this->transaction = $transaction;
         return $this;
     }
-
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::getAutocommit()
+     */
     public function getAutocommit()
     {
         return $this->autocommit;
     }
-
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::setAutocommit()
+     */
     public function setAutocommit($true_or_false)
     {
         $this->autocommit = $true_or_false ? true : false;
         return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::is()
+     */
+    public function is($action_or_alias)
+    {
+        if ($action_or_alias instanceof ActionInterface){
+            $class = get_class($action_or_alias);
+            return $this instanceof $class;
+        } elseif (is_string($action_or_alias)){
+            return $this->getAliasWithNamespace() === trim($action_or_alias);
+        } else {
+            throw new UnexpectedValueException('Invalid value "' . gettype($action_or_alias) .'" passed to "ActionInterface::is()": instantiated action or action alias with namespace expected!');
+        }
     }
 }
 ?>

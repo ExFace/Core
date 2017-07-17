@@ -3,6 +3,7 @@ namespace exface\Core\Actions;
 
 use exface\Core\Interfaces\Actions\iShowUrl;
 use exface\Core\CommonLogic\AbstractAction;
+use exface\Core\CommonLogic\Constants\Icons;
 
 /**
  * This action opens a URL for a given object instance.
@@ -33,7 +34,7 @@ class GoToUrl extends AbstractAction implements iShowUrl
         parent::init();
         $this->setInputRowsMin(1);
         $this->setInputRowsMax(1);
-        $this->setIconName('link');
+        $this->setIconName(Icons::EXTERNAL_LINK);
         return $this;
     }
 

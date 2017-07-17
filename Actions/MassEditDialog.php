@@ -2,6 +2,7 @@
 namespace exface\Core\Actions;
 
 use exface\Core\Widgets\Dialog;
+use exface\Core\CommonLogic\Constants\Icons;
 
 class MassEditDialog extends ShowDialog
 {
@@ -12,7 +13,7 @@ class MassEditDialog extends ShowDialog
     {
         $this->setInputRowsMin(null);
         $this->setInputRowsMax(null);
-        $this->setIconName('mass-edit');
+        $this->setIconName(Icons::PENCIL_MULTIPLE);
         $this->setPrefillWithInputData(true);
         $this->setPrefillWithFilterContext(false);
     }

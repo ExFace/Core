@@ -54,4 +54,18 @@ interface iHaveButtons extends iHaveChildren
      * @return string
      */
     public function getButtonWidgetType();
+    
+    /**
+     * Returns the number of buttons in the group
+     *
+     * @return number
+     */
+    //public function countButtons();
+    
+    /**
+     * Returns the number of buttons in the group, that are not hidden
+     *
+     * @return number
+     */
+    //public function countButtonsVisible();
 }

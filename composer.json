@@ -24,14 +24,16 @@
         "jmikola/Wildcard-Event-Dispatcher": "^1.1",
         "webmozart/path-util": "^2.3",
         "monolog/monolog": "^1.22.1",
-        "femtopixel/monolog-csvhandler": "~0.1"
+        "femtopixel/monolog-csvhandler": "~0.1",
+        "psr/http-message": "^1.0.1",
+        "guzzlehttp/psr7": "^1.4.2"
     },
     "extra": {
         "app": {
             "app_uid": "0x31000000000000000000000000000000",
             "app_alias": "exface.Core",
-            "model_md5": "196e6c3e888026b6ce65dce2309313c0",
-            "model_timestamp": "2017-06-12 13:18:24"
+            "model_md5": "aa1c4d714fc218e7c9d486e776d35fad",
+            "model_timestamp": "2017-07-13 00:00:00"
         }
     }
 }

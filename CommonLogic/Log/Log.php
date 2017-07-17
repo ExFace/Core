@@ -37,10 +37,10 @@ class Log
             try {
                 $handlers = static::getErrorLogHandlers($workbench);
                 foreach ($handlers as $handler) {
-                    static::$logger->pushHandler($handler);
+                    static::$logger->appendHandler($handler);
                 }
             } catch (\Throwable $t) {
-                static::$logger->pushHandler(static::getFallbackHandler($workbench));
+                static::$logger->appendHandler(static::getFallbackHandler($workbench));
                 static::$logger->critical('Log initialisation failed', array(
                     'exception',
                     $t

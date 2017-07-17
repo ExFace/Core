@@ -3,15 +3,16 @@ namespace exface\Core\Interfaces\Actions;
 
 use exface\Core\Widgets\Dialog;
 
-interface iShowDialog
+/**
+ * 
+ * @method Dialog getResult()
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
+interface iShowDialog extends ActionInterface
 {
 
     public function getDialogWidget();
 
-    /**
-     * The output of an action showing a widget is the widget instance
-     *
-     * @return Dialog
-     */
-    public function getResult();
 }

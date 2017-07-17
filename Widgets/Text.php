@@ -76,6 +76,8 @@ class Text extends AbstractWidget implements iShowSingleAttribute, iHaveValue, i
     public function prepareDataSheetToRead(DataSheetInterface $data_sheet = null)
     {
         $data_sheet = parent::prepareDataSheetToRead($data_sheet);
+        $widget_object = $this->getMetaObject();
+        $prefill_object = $data_sheet->getMetaObject();
         
         // FIXME how to prefill values, that were defined by a widget link???
         /*
@@ -87,7 +89,13 @@ class Text extends AbstractWidget implements iShowSingleAttribute, iHaveValue, i
          *  }
          * } else
          */
-        if ($this->getMetaObject()->is($data_sheet->getMetaObject())) {
+         
+        // See if we are prefilling with the same object as the widget is based
+        // on (or a derivative). E.g. if we are prefilling a widget based on FILE, 
+        // we can use FILE and PDF_FILE objects as both are "files", while a
+        // widget based on PDF_FILE cannot be prefilled with simply FILE.
+        // If it's a different object, than try to find some relation wetween them.
+        if ($prefill_object->is($widget_object)) {
             // If we are looking for attributes of the object of this widget, then just return the attribute_alias
             $data_sheet->getColumns()->addFromExpression($this->getAttributeAlias());
         } else {
@@ -102,11 +110,11 @@ class Text extends AbstractWidget implements iShowSingleAttribute, iHaveValue, i
                 if ($rel_path = $this->getAttribute()->getRelationPath()->toString()) {
                     $rel_parts = RelationPath::relationPathParse($rel_path);
                     if (is_array($rel_parts)) {
-                        $related_obj = $this->getMetaObject();
+                        $related_obj = $widget_object;
                         foreach ($rel_parts as $rel_nr => $rel_part) {
                             $related_obj = $related_obj->getRelatedObject($rel_part);
                             unset($rel_parts[$rel_nr]);
-                            if ($related_obj->isExactly($data_sheet->getMetaObject())) {
+                            if ($related_obj->isExactly($prefill_object)) {
                                 $attr_path = implode(RelationPath::RELATION_SEPARATOR, $rel_parts);
                                 $attr = RelationPath::relationPathAdd($attr_path, $this->getAttribute()->getAlias());
                                 $data_sheet->getColumns()->addFromExpression($attr);
@@ -118,7 +126,7 @@ class Text extends AbstractWidget implements iShowSingleAttribute, iHaveValue, i
                 } // If this widget represents the direct relation attribute, the attribute to display would be the UID of the
                   // of the related object (e.g. trying to fill the order positions attribute "ORDER" relative to the object
                   // "ORDER" should result in the attribute UID of ORDER because it holds the same value)
-                elseif ($this->getAttribute()->isRelation() && $this->getAttribute()->getRelation()->getRelatedObject()->is($data_sheet->getMetaObject())) {
+                elseif ($this->getAttribute()->isRelation() && $prefill_object->is($this->getAttribute()->getRelation()->getRelatedObject())) {
                     $data_sheet->getColumns()->addFromExpression($this->getAttribute()->getRelation()->getRelatedObjectKeyAlias());
                 } // If the attribute is not a relation itself, we still can use it for prefills if we find a relation to access
                   // it from the $data_sheet's object. In order to do this, we need to find relations from the prefill object to
@@ -131,7 +139,7 @@ class Text extends AbstractWidget implements iShowSingleAttribute, iHaveValue, i
                     // Iterate over all forward relations
                     $inherited_rel = null;
                     $direct_rel = null;
-                    foreach ($data_sheet->getMetaObject()->findRelations($this->getMetaObject()->getId(), Relation::RELATION_TYPE_FORWARD) as $rel) {
+                    foreach ($prefill_object->findRelations($widget_object->getId(), Relation::RELATION_TYPE_FORWARD) as $rel) {
                         if ($rel->isInherited() && ! $inherited_rel) {
                             // Remember the first inherited relation in case there will be no direct relations
                             $inherited_rel = $rel;
@@ -147,8 +155,8 @@ class Text extends AbstractWidget implements iShowSingleAttribute, iHaveValue, i
                     // If we found a relation to use, add the attribute prefixed with it's relation path to the data sheet
                     if ($direct_rel) {
                         $rel_path = RelationPath::relationPathAdd($rel->getAlias(), $this->getAttribute()->getAlias());
-                        if ($data_sheet->getMetaObject()->hasAttribute($rel_path)) {
-                            $data_sheet->getColumns()->addFromAttribute($data_sheet->getMetaObject()->getAttribute($rel_path));
+                        if ($prefill_object->hasAttribute($rel_path)) {
+                            $data_sheet->getColumns()->addFromAttribute($prefill_object->getAttribute($rel_path));
                         }
                     }
                 }
@@ -239,6 +247,11 @@ class Text extends AbstractWidget implements iShowSingleAttribute, iHaveValue, i
         if (! $this->getAttributeAlias()) {
             return null;
         }
+        
+        if (! $this->getMetaObject()->hasAttribute($this->getAttributeAlias())){
+            throw new WidgetPropertyInvalidValueError($this, 'Attribute "' . $this->getAttributeAlias() . '" specified for Text widget not found for the widget\'s object "' . $this->getMetaObject()->getAliasWithNamespace() . '"!');
+        }
+        
         return $this->getMetaObject()->getAttribute($this->getAttributeAlias());
     }
 

@@ -55,7 +55,6 @@ class ButtonGroup extends Button implements iHaveButtons
     public function addButton(Button $button_widget)
     {
         $button_widget->setParent($this);
-        $button_widget->setInputWidget($this->getInputWidget());
         $this->buttons[] = $button_widget;
         return $this;
     }
@@ -125,6 +124,32 @@ class ButtonGroup extends Button implements iHaveButtons
         $uxon->setProperty('buttons', $buttons);
         
         return $uxon;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveButtons::countButtons()
+     */
+    public function countButtons()
+    {
+        return count($this->getButtons());
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveButtons::countButtonsVisible()
+     */
+    public function countButtonsVisible()
+    {
+        $cnt = 0;
+        foreach ($this->getButtons() as $btn){
+            if (!$btn->isHidden()){
+                $cnt++;
+            }
+        }
+        return $cnt;
     }
 }
 ?>

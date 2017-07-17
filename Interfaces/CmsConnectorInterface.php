@@ -67,11 +67,18 @@ interface CmsConnectorInterface extends ExfaceClassInterface
     public function removeSystemRequestParams(array $param_array);
 
     /**
-     * Returns the user name of the user currently logged in
+     * Returns the user name if a user is currently logged in and an empty string otherwise.
      *
      * @return string
      */
     public function getUserName();
+    
+    /**
+     * Returns TRUE if there is a named user logged in and FALSE otherwise.
+     * 
+     * @return boolean
+     */
+    public function isUserLoggedIn();
 
     /**
      * Returns TRUE if the current user is an administrator.
@@ -122,5 +129,12 @@ interface CmsConnectorInterface extends ExfaceClassInterface
      * @return CmsConnectorInterface
      */
     public function clearCmsCache();
+    
+    /**
+     * Returns the full URL of the root of the CMS site: e.g. https://www.exface.com/demo
+     * 
+     * @return string
+     */
+    public function getSiteUrl();
 }
 ?>

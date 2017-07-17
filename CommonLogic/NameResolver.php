@@ -48,6 +48,8 @@ class NameResolver extends AbstractExfaceClass implements NameResolverInterface
     const OBJECT_TYPE_BEHAVIOR = 'Behaviors';
 
     const OBJECT_TYPE_TEMPLATE = 'Template';
+    
+    const OBJECT_TYPE_CONTEXT = 'Contexts';
 
     const CLASS_NAMESPACE_SEPARATOR = '\\';
 
@@ -214,6 +216,7 @@ class NameResolver extends AbstractExfaceClass implements NameResolverInterface
     public function getClassNamespace()
     {
         switch ($this->getObjectType()) {
+            case self::OBJECT_TYPE_CONTEXT:
             case self::OBJECT_TYPE_FORMULA:
             case self::OBJECT_TYPE_ACTION:
                 $result = self::APPS_NAMESPACE;

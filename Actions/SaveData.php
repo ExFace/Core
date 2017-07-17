@@ -9,6 +9,7 @@ use exface\Core\Factories\DataSheetFactory;
 use exface\Core\CommonLogic\AbstractAction;
 use exface\Core\Exceptions\Actions\ActionUndoFailedError;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
+use exface\Core\CommonLogic\Constants\Icons;
 
 class SaveData extends AbstractAction implements iModifyData, iCanBeUndone
 {
@@ -19,7 +20,7 @@ class SaveData extends AbstractAction implements iModifyData, iCanBeUndone
 
     function init()
     {
-        $this->setIconName('save');
+        $this->setIconName(Icons::CHECK);
         $this->setInputRowsMin(0);
         $this->setInputRowsMax(null);
     }

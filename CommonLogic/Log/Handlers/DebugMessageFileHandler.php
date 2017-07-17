@@ -8,6 +8,8 @@ use exface\Core\Factories\UiPageFactory;
 use exface\Core\Interfaces\iCanGenerateDebugWidgets;
 use exface\Core\Interfaces\Log\LogHandlerInterface;
 use exface\Core\Widgets\DebugMessage;
+use Monolog\Handler\FingersCrossed\ErrorLevelActivationStrategy;
+use Monolog\Handler\FingersCrossedHandler;
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
 use exface\Core\CommonLogic\Workbench;
@@ -54,7 +56,20 @@ class DebugMessageFileHandler implements LogHandlerInterface
         $logger  = new \Monolog\Logger("Stacktrace");
         $handler = new StreamHandler($this->dir . "/" . $fileName, $this->minLogLevel);
         $handler->setFormatter(new MessageOnlyFormatter());
-        $logger->pushHandler($handler);
+
+        $persistLogLevel = $this->workbench->getConfig()->getOption('LOG.PERSIST_LOG_LEVEL');
+        $passthroughLevel = $this->workbench->getConfig()->getOption('LOG.PASSTHROUGH_LOG_LEVEL');
+
+        $fcHandler = new FingersCrossedHandler(
+            $handler,
+            new ErrorLevelActivationStrategy(Logger::toMonologLevel($persistLogLevel)),
+            0,
+            true,
+            true,
+            $passthroughLevel
+        );
+
+        $logger->pushHandler($fcHandler);
         
         if ($sender) {
             try {
