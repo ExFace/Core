@@ -37,14 +37,13 @@ class FileLimitingLogHandler extends LimitingWrapper
      */
     function __construct(FileHandlerInterface $handler, $filename, $fileNameStatic = "", $maxDays = 0)
     {
-        parent::__construct($handler);
-        
         $this->filename = $filename;
         $this->filenameStatic = $fileNameStatic;
         $this->maxDays = $maxDays;
-        
         $this->filenameFormat = '{filename}{static}{variable}';
         $this->dateFormat = 'Y-m-d';
+        
+        parent::__construct($handler);
     }
 
     protected function callLogger(LogHandlerInterface $handler, $level, $message, array $context = array(), iCanGenerateDebugWidgets $sender = null)
