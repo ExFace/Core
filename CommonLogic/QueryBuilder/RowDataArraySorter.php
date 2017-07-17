@@ -23,7 +23,7 @@ class RowDataArraySorter
 
     public function addCriteria($field, $direction)
     {
-        if ($direction === SORT_DESC || strcasecmp($direction, 'DESC')) {
+        if ($direction === SORT_DESC || strcasecmp($direction, 'DESC') === 0) {
             $direction = SORT_DESC;
         } else {
             $direction = SORT_ASC;
