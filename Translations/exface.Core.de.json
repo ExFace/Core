@@ -5,7 +5,7 @@
 	"ACTION.CREATEDATA.NAME": "Speichern",
 	"ACTION.CREATEOBJECTDIALOG.NAME": "Neu",
     
-    "ACTION.CONTEXTAPI.RESULT": "%operation_name% erfolgreich!",
+    "ACTION.CONTEXTAPI.RESULT": "'%operation_name%' erfolgreich!",
 	
 	"ACTION.CUSTOMDATAQUERY.RESULT": "%number% Zeile gespeichert.|%number% Zeilen gespeichert.",
 

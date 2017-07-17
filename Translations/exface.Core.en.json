@@ -5,7 +5,7 @@
 	"ACTION.CREATEDATA.NAME": "Create",
 	"ACTION.CREATEOBJECTDIALOG.NAME": "New",
 	
-	"ACTION.CONTEXTAPI.RESULT": "%operation_name% completed!",
+	"ACTION.CONTEXTAPI.RESULT": "'%operation_name%' completed!",
     
     "ACTION.CUSTOMDATAQUERY.RESULT": "%number% row affected.|%number% rows affected.",
 	

@@ -65,7 +65,7 @@ class ContextApi extends AbstractAction implements iModifyContext
         } elseif ($return_value instanceof ContextInterface) { 
             $this->setResult('');
             $operation_name = ucfirst(strtolower(preg_replace('/(?<!^)[A-Z]/', ' $0', $this->getOperation())));
-            $this->setResultMessage($this->translate('RESULT', ['operation_name' => $operation_name]));
+            $this->setResultMessage($this->translate('RESULT', ['%operation_name%' => $operation_name]));
         } else {
             $this->setResult($return_value);
         }
