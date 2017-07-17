@@ -7,9 +7,15 @@ use exface\Core\Exceptions\Actions\ActionConfigurationError;
 use GuzzleHttp\Psr7\ServerRequest;
 use Psr\Http\Message\ServerRequestInterface;
 use exface\Core\Interfaces\Actions\iModifyContext;
+use exface\Core\Interfaces\Contexts\ContextInterface;
+use exface\Core\CommonLogic\Contexts\ContextActionTrait;
+use exface\Core\Exceptions\Contexts\ContextScopeNotFoundError;
 
 /**
  * This action provides a RESTful API to work with contexts. 
+ * 
+ * Using this action, you can call any context method using request parameters
+ * or the regular action API.
  *
  * @author Andrej Kabachnik
  *        
@@ -17,48 +23,29 @@ use exface\Core\Interfaces\Actions\iModifyContext;
 class ContextApi extends AbstractAction implements iModifyContext
 {
 
-    private $context_alias = null;
-
-    private $scope = null;
+    use ContextActionTrait {
+        getContextAlias as traitGetContextAlias;
+        getContextScope as traitGetContextScope;
+    }
     
     private $operation = null;
 
     public function getContextAlias()
     {
-        return $this->context_alias;
-    }
-
-    public function setContextAlias($value)
-    {
-        if (is_null($this->context_alias)){
+        if (is_null($this->traitGetContextAlias())){
             $this->setContextAlias($this->getRequest()->getQueryParams()['ctype']);
         }
-        $this->context_alias = $value;
-        return $this;
+        return $this->traitGetContextAlias();
     }
-
-    public function getScope()
+    
+    public function getContextScope()
     {
-        if (is_null($this->scope)){
-            $this->setScope($this->getRequest()->getQueryParams()['cscope']);
+        try{
+            $this->traitGetContextScope();
+        } catch (ContextScopeNotFoundError $e){
+            $this->setContextScope($this->getRequest()->getQueryParams()['cscope']);
         }
-        return $this->scope;
-    }
-
-    public function setScope($value)
-    {
-        $this->scope = $value;
-        return $this;
-    }
-
-    /**
-     * Returns the context addressed in this action
-     *
-     * @return AbstractContext
-     */
-    public function getContext()
-    {
-        return $this->getApp()->getWorkbench()->context()->getScope($this->getScope())->getContext($this->getContextAlias());
+        return $this->traitGetContextScope();
     }
     
     /**
@@ -72,29 +59,41 @@ class ContextApi extends AbstractAction implements iModifyContext
             throw new ActionConfigurationError($this, 'Invalid operation "' . $this->getOperation() . '" for context "' . $this->getContext()->getAlias() . '": method not found!');
         }
         $return_value = call_user_func(array($this->getContext(), $this->getOperation()));
-        $this->setResult($return_value);
+        if (is_string($return_value)){
+            $this->setResult('');
+            $this->setResultMessage($return_value);
+        } elseif ($return_value instanceof ContextInterface) { 
+            $this->setResult('');
+            $this->setResultMessage(ucfirst(strtolower(preg_replace('/(?<!^)[A-Z]/', ' $0', $this->getOperation()))) . ' completed!');
+        } else {
+            $this->setResult($return_value);
+        }
         return;
     }
     
     /**
+     * Returns the method name to be called in the context.
      * 
      * @return string
      */
     public function getOperation()
     {
+        if (is_null($this->operation)){
+            $this->setOperation($this->getRequest()->getQueryParams()['cop']);
+        }
         return $this->operation;
     }
     
     /**
+     * Sets the name of the method in the context to be called.
+     * 
+     * Use the URL parameter "cop=" to specify the operation in a RESTful URL.
      * 
      * @param string $operation
      * @return \exface\Core\Actions\ContextApi
      */
     public function setOperation($method_name)
     {
-        if (is_null($this->operation)){
-            $this->setOperation($this->getRequest()->getQueryParams()['cop']);
-        }
         $this->operation = $method_name;
         return $this;
     }
@@ -109,6 +108,5 @@ class ContextApi extends AbstractAction implements iModifyContext
     public function getRequest(){
         return ServerRequest::fromGlobals();
     }
- 
 }
 ?>
