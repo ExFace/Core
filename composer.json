@@ -37,7 +37,7 @@
         }
     },
     "autoload": {
-        "psr-4": { "exface\\Core": "" },
+        "psr-4": { "exface\\Core\\": "" },
         "exclude-from-classmap": [
             "/Config/",
             "/Translations/",
