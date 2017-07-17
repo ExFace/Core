@@ -971,6 +971,15 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
     {
         $this->sorters = $sorters;
     }
+    
+    public function addSorter($attribute_alias, $direction)
+    {
+        $sorter = new \stdClass();
+        $sorter->attribute_alias = $attribute_alias;
+        $sorter->direction = $direction;
+        $this->sorters[] = $sorter;
+        return $this;
+    }
 
     public function getAggregateByAttributeAlias()
     {
