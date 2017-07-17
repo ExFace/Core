@@ -365,6 +365,13 @@ interface ActionInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
      * @return \exface\Core\CommonLogic\AbstractAction
      */
     public function setResultMessageText($value);
+    
+    /**
+     * Returns TRUE if this action matches the given alias and FALSE otherwise.
+     * 
+     * @return boolean
+     */
+    public function is($action_or_alias);
 }
 
 ?>
