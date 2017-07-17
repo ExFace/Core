@@ -4,7 +4,9 @@
 	"ACTION.CREATEDATA.RESULT": "%number% Objekt erstellt.|%number% Objekte erstellt.",
 	"ACTION.CREATEDATA.NAME": "Speichern",
 	"ACTION.CREATEOBJECTDIALOG.NAME": "Neu",
-
+    
+    "ACTION.CONTEXTAPI.RESULT": "%operation_name% erfolgreich!",
+	
 	"ACTION.CUSTOMDATAQUERY.RESULT": "%number% Zeile gespeichert.|%number% Zeilen gespeichert.",
 
 	"ACTION.DELETEOBJECT.RESULT": "%number% Objekt gelöscht.|%number% Objekte gelöscht.",
@@ -63,9 +65,17 @@
 	"ACTION.UPDATEDATA.RESULT": "%number% Objekt gespeichert.|%number% Objekte gespeichert.",
 	
 	"CONTEXT.ACTIONTEST.NAME": "ActionTest",
+	
     "CONTEXT.DATA.NAME": "Daten",
+    
+    "CONTEXT.DEBUG.NAME": "Debugger",
+    "CONTEXT.DEBUG.START": "Trace starten",
+    "CONTEXT.DEBUG.STOP": "Trace beenden",
+    
     "CONTEXT.FAVORITES.NAME": "Favoriten",
+    
     "CONTEXT.FILTER.NAME": "Filter",
+    
     "CONTEXT.OBJECTBASKET.NAME": "Objektkorb",
     "CONTEXT.OBJECTBASKET.SHOW_DETAILS_DIALOG": "Inhalt anzeigen",
     "CONTEXT.OBJECTBASKET.REMOVE": "Entfernen",

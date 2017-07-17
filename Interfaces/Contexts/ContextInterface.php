@@ -95,7 +95,7 @@ interface ContextInterface extends AliasInterface, iCanBeConvertedToUxon, Exface
      *
      * @return string
      */
-    public function getIndicatorColor();
+    public function getColor();
     
     /**
      * Changes the color of the indicator of this context.
@@ -106,14 +106,14 @@ interface ContextInterface extends AliasInterface, iCanBeConvertedToUxon, Exface
      * @param string $indicator
      * @return ContextInterface
      */
-    public function setIndicatorColor($value);
+    public function setColor($value);
     
     /**
      * Returns the visibility value for this context in the context bar.
      *
      * @return string
      */
-    public function getContextBarVisibility();
+    public function getVisibility();
     
     /**
      * Sets the context_bar_visibility of the context.
@@ -127,7 +127,7 @@ interface ContextInterface extends AliasInterface, iCanBeConvertedToUxon, Exface
      * @param string $context_bar_visibility
      * @return ContextInterface
      */
-    public function setContextBarVisibility($value);
+    public function setVisibility($value);
     
     /**
      * Returns TRUE if the context has no data and FALSE otherwise

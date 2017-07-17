@@ -175,9 +175,9 @@ abstract class AbstractContext implements ContextInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Contexts\ContextInterface::getContextBarVisibility()
+     * @see \exface\Core\Interfaces\Contexts\ContextInterface::getVisibility()
      */
-    public function getContextBarVisibility()
+    public function getVisibility()
     {
         if (is_null($this->context_bar_visibility)){
             $this->setVisibility(ContextInterface::CONTEXT_BAR_SHOW_IF_NOT_EMPTY);
@@ -188,9 +188,9 @@ abstract class AbstractContext implements ContextInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Contexts\ContextInterface::setContextBarVisibility()
+     * @see \exface\Core\Interfaces\Contexts\ContextInterface::setVisibility()
      */
-    public function setContextBarVisibility($value)
+    public function setVisibility($value)
     {
         $value = mb_strtolower($value);
         if ($value != ContextInterface::CONTEXT_BAR_DISABED 
@@ -269,9 +269,9 @@ abstract class AbstractContext implements ContextInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Contexts\ContextInterface::getIndicatorColor()
+     * @see \exface\Core\Interfaces\Contexts\ContextInterface::getColor()
      */
-    public function getIndicatorColor()
+    public function getColor()
     {
         if (is_null($this->indicator_color)){
             return Colors::DEFAULT;
@@ -282,9 +282,9 @@ abstract class AbstractContext implements ContextInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Contexts\ContextInterface::setIndicatorColor()
+     * @see \exface\Core\Interfaces\Contexts\ContextInterface::setColor()
      */
-    public function setIndicatorColor($indicator_color)
+    public function setColor($indicator_color)
     {
         $this->indicator_color = $indicator_color;
         return $this;

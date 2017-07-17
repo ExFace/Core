@@ -7,6 +7,7 @@ use exface\Core\Interfaces\Contexts\ContextInterface;
 use exface\Core\Exceptions\Widgets\WidgetLogicError;
 use exface\Core\Exceptions\Contexts\ContextAccessDeniedError;
 use exface\Core\Interfaces\Log\LoggerInterface;
+use exface\Core\CommonLogic\UxonObject;
 
 /**
  * The context bar shows information about the current context of the workbench.
@@ -39,31 +40,50 @@ class ContextBar extends Toolbar
     public function getButtons()
     {
         if (count(parent::getButtons()) == 0){
-            $this->createButtons();
+            $this->importUxonObject($this->getWorkbench()->getConfig()->getOption('CONTEXTBAR'));
         }
         return parent::getButtons();
     }
     
     /**
-     * Creates a button for every accessible context defined in the context bar
-     * configuration (see core config file).
      * 
-     * @throws WidgetLogicError
+     * @param UxonObject[] $context_uxon_objects
+     * @return ContextBar
      */
-    protected function createButtons()
-    {
-        foreach ($this->getWorkbench()->getConfig()->getOption('CONTEXT_BAR.VISIBILITY') as $context_selector => $visibility){
-            $visibility = strtolower($visibility);
+    public function setContexts(array $context_uxon_objects){
+        foreach ($context_uxon_objects as $uxon){
+            $visibility = strtolower($uxon->getProperty('visibility'));
             if ($visibility == ContextInterface::CONTEXT_BAR_DISABED){
                 continue;
             }
             
-            $context_selector_parts = explode(':', $context_selector);
-            $context_scope_name = $context_selector_parts[0];
-            $context_alias = $context_selector_parts[1];
+            if ($uxon->getProperty('restrict_to_admins') && ! $this->getWorkbench()->context()->getScopeUser()->isUserAdmin()){
+                $this->getWorkbench()->getLogger()->info('Not adding context "' . $uxon->getProperty('context_scope') . ':' . $uxon->getProperty('context_alias') . '" to ContextBar: it is accessible for admins only!');
+                continue;
+            } else {
+                $uxon->unsetProperty('restrict_to_admins');
+            }
+            
+            if ($uxon->getProperty('restrict_to_authenticated') && $this->getWorkbench()->context()->getScopeUser()->isUserAnonymous()){
+                $this->getWorkbench()->getLogger()->info('Not adding context "' . $uxon->getProperty('context_scope') . ':' . $uxon->getProperty('context_alias') . '" to ContextBar: it is accessible for logged in users only!');
+                continue;
+            } else {
+                $uxon->unsetProperty('restrict_to_authenticated');
+            }
+            
+            $context = $this->getWorkbench()->context()->getScope($uxon->getProperty('context_scope'))->getContext($uxon->getProperty('context_alias'));
+            $uxon->unsetProperty('context_scope');
+            $uxon->unsetProperty('context_alias');
+            
+            // IDEA Make contexts totally configurable by importing the UXON from
+            // the config into each context. This would need the contexts to be
+            // compatible with the ImportUxonTrait though. Currently many contexts
+            // like ObjectBasketContext, ActionContext, etc. use non-standard
+            // UXON Objects.
+            // $context->importUxonObject($uxon);
             
             try {
-                $btn = $this->createButtonForContext($this->getWorkbench()->context()->getScope($context_scope_name)->getContext($context_alias));
+                $btn = $this->createButtonForContext($context);
                 
                 switch ($visibility){
                     case ContextInterface::CONTEXT_BAR_SHOW_IF_NOT_EMPTY:
@@ -78,16 +98,17 @@ class ContextBar extends Toolbar
                         $btn->setVisibility(EXF_WIDGET_VISIBILITY_OPTIONAL);
                         break;
                     default:
-                        throw new WidgetLogicError($this, 'Invalid context bar visibility "' . $visibility . '" set for context "' . $context_alias . '"');
+                        throw new WidgetLogicError($this, 'Invalid context bar visibility "' . $visibility . '" set for context "' . $context->getAlias() . '"');
                 }
-            
+                
                 $this->addButton($btn);
             } catch (ContextAccessDeniedError $e){
-                $this->getWorkbench()->getLogger()->logException($e, LoggerInterface::INFO);   
+                $this->getWorkbench()->getLogger()->logException($e, LoggerInterface::INFO);
             } catch (\Throwable $e){
                 $this->getWorkbench()->getLogger()->logException($e);
             }
-        }                
+        }
+        return $this;
     }
     
     /**

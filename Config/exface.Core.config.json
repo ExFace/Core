@@ -25,9 +25,30 @@
 	"LOG.PERSIST_LOG_LEVEL": "alert",
 	"LOG.PASSTHROUGH_LOG_LEVEL": "error",
 	
-	"CONTEXT_BAR.VISIBILITY": {
-	   "User:exface.Core.FavoritesContext": "show_allways",
-	   "Window:exface.Core.ObjectBasketContext": "show_allways",
-	   "Window:exface.ActionTest.ActionTestContext": "show_allways"
+	"CONTEXTBAR": {
+	   "contexts": [
+	       {
+	           "context_scope": "User",
+	           "context_alias": "exface.Core.FavoritesContext",
+	           "visibility": "show_allways"
+	       },
+	       {
+               "context_scope": "Window",
+               "context_alias": "exface.Core.ObjectBasketContext",
+               "visibility": "show_allways"
+           },
+           {
+               "context_scope": "Window",
+               "context_alias": "exface.Core.DebugContext",
+               "visibility": "show_allways",
+               "retstrict_to_admins": true
+           },
+           {
+               "context_scope": "Window",
+               "context_alias": "exface.ActionTest.ActionTestContext",
+               "visibility": "show_allways",
+               "retstrict_to_admins": true
+           }
+	   ]
 	}
 }

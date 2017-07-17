@@ -192,14 +192,15 @@ interface LoggerInterface extends \Psr\Log\LoggerInterface
      * @param LogHandlerInterface $handler            
      * @return LoggerInterface
      */
-    public function pushHandler(LogHandlerInterface $handler);
+    public function appendHandler(LogHandlerInterface $handler);
 
     /**
-     * Pops a handler from the top of the stack and returns it
-     *
-     * @return LogHandlerInterface
+     * Removes the given handler from the handler stack.
+     * 
+     * @param LogHandlerInterface
+     * @return LoggerInterface
      */
-    public function popHandler();
+    public function removeHandler(LogHandlerInterface $handler);
 
     /**
      * Returns a numeric array with all log handlers currently registered

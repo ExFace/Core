@@ -5,7 +5,9 @@
 	"ACTION.CREATEDATA.NAME": "Create",
 	"ACTION.CREATEOBJECTDIALOG.NAME": "New",
 	
-	"ACTION.CUSTOMDATAQUERY.RESULT": "%number% row affected.|%number% rows affected.",
+	"ACTION.CONTEXTAPI.RESULT": "%operation_name% completed!",
+    
+    "ACTION.CUSTOMDATAQUERY.RESULT": "%number% row affected.|%number% rows affected.",
 	
 	"ACTION.DELETEOBJECT.RESULT": "%number% item deleted.|%number% items deleted.",
 	"ACTION.DELETEOBJECT.NAME": "Delete",
@@ -63,9 +65,17 @@
 	"ACTION.UPDATEDATA.RESULT": "%number% item updated.|%number% items updated.",
 	
 	"CONTEXT.ACTIONTEST.NAME": "ActionTest",
+    
     "CONTEXT.DATA.NAME": "Data",
+    
+    "CONTEXT.DEBUG.NAME": "Debugger",
+    "CONTEXT.DEBUG.START": "Start tracing",
+    "CONTEXT.DEBUG.STOP": "Stop tracing",
+    
     "CONTEXT.FAVORITES.NAME": "Favorites",
+    
     "CONTEXT.FILTER.NAME": "Filters",
+    
     "CONTEXT.OBJECTBASKET.NAME": "Object Basket",
     "CONTEXT.OBJECTBASKET.SHOW_DETAILS_DIALOG": "Show content",
     "CONTEXT.OBJECTBASKET.REMOVE": "Remove",

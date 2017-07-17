@@ -206,12 +206,11 @@ class Logger implements LoggerInterface
     }
 
     /**
-     * Pushes a handler on to the stack.
-     *
-     * @param LogHandlerInterface $handler            
-     * @return LoggerInterface
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Log\LoggerInterface::appendHandler()
      */
-    public function pushHandler(LogHandlerInterface $handler)
+    public function appendHandler(LogHandlerInterface $handler)
     {
         $this->handlers[] = $handler;
         
@@ -219,24 +218,24 @@ class Logger implements LoggerInterface
     }
 
     /**
-     * Pops a handler from the top of the stack and returns it
-     *
-     * @throws UnderflowException if no handlers registered
-     * @return LogHandlerInterface
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Log\LoggerInterface::removeHandler()
      */
-    public function popHandler()
+    public function removeHandler(LogHandlerInterface $handler)
     {
-        if (! $this->handlers) {
-            throw new UnderflowException('Can not pop handler from an empty handler stack.');
+        foreach ($this->handlers as $i => $h){
+            if ($h === $handler){
+                unset($this->handlers[$i]);
+            }
         }
-        
-        return array_shift($this->handlers);
+        return $this;
     }
 
     /**
-     * Returns a numeric array with all log handlers currently registered
-     *
-     * @return LogHandlerInterface[]
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Log\LoggerInterface::getHandlers()
      */
     public function getHandlers()
     {
