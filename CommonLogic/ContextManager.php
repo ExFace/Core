@@ -30,11 +30,6 @@ class ContextManager implements ContextManagerInterface
     public function __construct(\exface\Core\CommonLogic\Workbench $exface)
     {
         $this->exface = $exface;
-        $this->user_scope = new UserContextScope($this->exface);
-        $this->application_scope = new ApplicationContextScope($this->exface);
-        $this->session_scope = new SessionContextScope($this->exface);
-        $this->window_scope = new WindowContextScope($this->exface);
-        $this->request_scope = new RequestContextScope($this->exface);
     }
 
     /**
@@ -43,6 +38,9 @@ class ContextManager implements ContextManagerInterface
      */
     public function getScopeWindow()
     {
+        if (is_null($this->window_scope)){
+            $this->window_scope = new WindowContextScope($this->exface);
+        }
         return $this->window_scope;
     }
 
@@ -52,6 +50,9 @@ class ContextManager implements ContextManagerInterface
      */
     public function getScopeSession()
     {
+        if (is_null($this->session_scope)){
+            $this->session_scope = new SessionContextScope($this->exface);
+        }
         return $this->session_scope;
     }
 
@@ -61,6 +62,9 @@ class ContextManager implements ContextManagerInterface
      */
     public function getScopeApplication()
     {
+        if (is_null($this->application_scope)){
+            $this->application_scope = new ApplicationContextScope($this->exface);
+        }
         return $this->application_scope;
     }
 
@@ -70,6 +74,9 @@ class ContextManager implements ContextManagerInterface
      */
     public function getScopeUser()
     {
+        if (is_null($this->user_scope)){
+            $this->user_scope = new UserContextScope($this->exface);
+        }
         return $this->user_scope;
     }
 
@@ -79,6 +86,9 @@ class ContextManager implements ContextManagerInterface
      */
     public function getScopeRequest()
     {
+        if (is_null($this->request_scope)){
+            $this->request_scope = new RequestContextScope($this->exface);
+        }
         return $this->request_scope;
     }
 
