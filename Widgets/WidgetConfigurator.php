@@ -3,6 +3,7 @@ namespace exface\Core\Widgets;
 
 use exface\Core\Interfaces\Widgets\iConfigureWidgets;
 use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\Interfaces\Widgets\iCanBeConfigured;
 
 /**
  *
@@ -11,7 +12,7 @@ use exface\Core\Interfaces\WidgetInterface;
  */
 class WidgetConfigurator extends Tabs implements iConfigureWidgets
 {
-    private $widgetLinks = array();
+    private $widget = null;
     
     /**
      * 
@@ -20,7 +21,10 @@ class WidgetConfigurator extends Tabs implements iConfigureWidgets
      */
     public function getWidget()
     {
-        
+        if (is_null($this->widget)){
+            // TODO search recursively for a parent with iHaveConfigurator
+            return $this->getParent();
+        }
     }
     
     /**
@@ -28,8 +32,10 @@ class WidgetConfigurator extends Tabs implements iConfigureWidgets
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\iConfigureWidgets::setWidget()
      */
-    public function setWidget(WidgetInterface $widget){
-        
+    public function setWidget(iCanBeConfigured $widget)
+    {
+        $this->widget = $widget;
+        return $this;
     }
 }
 ?>

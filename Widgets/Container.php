@@ -138,6 +138,21 @@ class Container extends AbstractWidget implements iContainOtherWidgets
     {
         return $this->widgets;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::hasWidgets()
+     */
+    public function hasWidgets()
+    {
+        return empty($this->widgets) ? false : true;
+    }
+    
+    public function isEmpty()
+    {
+        return ! $this->hasWidgets();
+    }
 
     /**
      *
