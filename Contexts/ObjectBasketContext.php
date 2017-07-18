@@ -233,13 +233,22 @@ class ObjectBasketContext extends AbstractContext
         $data_list->addColumn(WidgetFactory::create($container->getPage(), 'DataColumn', $data_list)->setAttributeAlias('TITLE'));
         
         // Fill with content
-        $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.CONTEXT_BASE_OBJECT');
+        $ds = $data_list->prepareDataSheetToRead();
         foreach ($this->getFavoritesAll() as $data_sheet) {
             $ds->addRow([
                 'ID' => $data_sheet->getMetaObject()->getId(),
                 'TITLE' => $data_sheet->countRows() . 'x ' . $data_sheet->getMetaObject()->getName()
             ]);
         }
+        // IMPORTANT: if the data sheet is empty, mark it's columns as fresh,
+        // otherwise the widget will attempt to load data for the sheet when
+        // rendering
+        if ($ds->isEmpty()){
+            foreach ($ds->getColumns() as $col){
+                $col->setFresh(true);
+            }
+        }
+        
         $data_list->setValuesDataSheet($ds);
         
         // Add the detail button an bind it to the left click

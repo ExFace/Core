@@ -21,6 +21,7 @@
         "symfony/config": "^2.8 || ^3.1",
         "symfony/debug": "^3.3",
         "symfony/var-dumper": "^3.2",
+        "symfony/StopWatch": "^3.1.2",
         "jmikola/Wildcard-Event-Dispatcher": "^1.1",
         "webmozart/path-util": "^2.3",
         "monolog/monolog": "^1.22.1",
@@ -32,8 +33,16 @@
         "app": {
             "app_uid": "0x31000000000000000000000000000000",
             "app_alias": "exface.Core",
-            "model_md5": "aa1c4d714fc218e7c9d486e776d35fad",
+            "model_md5": "2af23f66063f6929101162217352d4bd",
             "model_timestamp": "2017-07-13 00:00:00"
         }
+    },
+    "autoload": {
+        "psr-4": { "exface\\Core\\": "" },
+        "exclude-from-classmap": [
+            "/Config/",
+            "/Translations/",
+            "/Model/"
+        ]
     }
 }

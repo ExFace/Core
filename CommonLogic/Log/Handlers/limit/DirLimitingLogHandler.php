@@ -4,6 +4,8 @@ namespace exface\Core\CommonLogic\Log\Handlers\limit;
 use exface\Core\CommonLogic\Log\Helpers\LogHelper;
 use exface\Core\Interfaces\iCanGenerateDebugWidgets;
 use exface\Core\Interfaces\Log\LogHandlerInterface;
+use exface\Core\Exceptions\Configuration\ConfigOptionNotFoundError;
+use exface\Core\Interfaces\AppInterface;
 
 /**
  * Log handler that uses the given createCallback to instantiate an underlying log handler that logs files with a
@@ -25,13 +27,12 @@ class DirLimitingLogHandler extends LimitingWrapper
 
     function __construct(LogHandlerInterface $handler, $logPath, $staticFileNamePart, $maxDays = 0)
     {
-        parent::__construct($handler);
-        
         $this->logPath = $logPath;
         $this->staticFileNamePart = $staticFileNamePart;
         $this->maxDays = $maxDays;
-        
         $this->filenameFormat = '{filename}{variable}{static}';
+        
+        parent::__construct($handler);
     }
 
     protected function callLogger(LogHandlerInterface $handler, $level, $message, array $context = array(), iCanGenerateDebugWidgets $sender = null)
@@ -46,6 +47,22 @@ class DirLimitingLogHandler extends LimitingWrapper
     {
         // skip GC of old logs if files are unlimited
         if (0 === $this->maxDays) {
+            return;
+        }
+        
+        // Get the time of the last cleanup. There is no need to perform the check
+        // more than once a day as the lifetime of the logs is defined in days.
+        $config = $this->getWorkbench()->getConfig();
+        try {
+            $last_cleanup = $config->getOption('LOG.LAST_CLEANUP');
+        } catch (ConfigOptionNotFoundError $e){
+            // If there was no last cleanup value yet, just set to now and skip the rest
+            $config->setOption('LOG.LAST_CLEANUP', date("Y-m-d H:i:s"), AppInterface::CONFIG_SCOPE_INSTALLATION);
+            return;
+        }
+        
+        // If the last cleanup took place less then a day ago, skip the rest.
+        if (strtotime($last_cleanup) > (time()-(60*60*24))){
             return;
         }
         
@@ -64,5 +81,7 @@ class DirLimitingLogHandler extends LimitingWrapper
                 restore_error_handler();
             }
         }
+        
+        return;
     }
 }

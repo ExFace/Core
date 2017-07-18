@@ -13,6 +13,7 @@
 	"DEFAULT_DATETIME_FORMAT": "d.m.Y H:i:s",
 	"FOLDER_USER_DATA": "UserData",
 	
+	"DEBUG.LIVE_CLASS_AUTOLOADER": false,
 	"DEBUG.DISABLE_TEMPLATE_ERROR_HANDLERS": false,
 	"DEBUG.PRETTIFY_ERRORS": true,
 	"DEBUG.SHOW_REQUEST_DUMP": false,
@@ -41,13 +42,13 @@
                "context_scope": "Window",
                "context_alias": "exface.Core.DebugContext",
                "visibility": "show_allways",
-               "retstrict_to_admins": true
+               "restrict_only_admins": true
            },
            {
                "context_scope": "Window",
                "context_alias": "exface.ActionTest.ActionTestContext",
                "visibility": "show_allways",
-               "retstrict_to_admins": true
+               "restrict_only_admins": true
            }
 	   ]
 	}

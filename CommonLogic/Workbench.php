@@ -64,15 +64,18 @@ class Workbench
         // Determine the absolute path to the vendor folder
         $this->vendor_dir_path = dirname(__FILE__) . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..';
         
-        // Init the class loader
-        require_once 'splClassLoader.php';
-        $classLoader = new \SplClassLoader(null, array(
-            $this->vendor_dir_path
-        ));
-        $classLoader->register();
-        
         // Init composer autoload
         require_once ($this->vendor_dir_path . DIRECTORY_SEPARATOR . 'autoload.php');
+        
+        // If the current config uses the live autoloader, load it right next
+        // to the one from composer.
+        if ($this->getConfig()->getOption('DEBUG.LIVE_CLASS_AUTOLOADER')){
+            require_once 'splClassLoader.php';
+            $classLoader = new \SplClassLoader(null, array(
+                $this->vendor_dir_path
+            ));
+            $classLoader->register();
+        }
         
         // Load the internal constants file
         require_once ('Constants.php');

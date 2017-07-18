@@ -135,7 +135,7 @@ class RelationPath implements \IteratorAggregate
      */
     public function getEndObject()
     {
-        if ($this->countRelations()) {
+        if (! $this->isEmpty()) {
             return $this->getRelationLast()->getRelatedObject();
         } else {
             return $this->getStartObject();
@@ -390,7 +390,7 @@ class RelationPath implements \IteratorAggregate
      */
     public function isEmpty()
     {
-        if (is_null($this->getRelationFirst())) {
+        if (empty($this->relations)) {
             return true;
         } else {
             return false;

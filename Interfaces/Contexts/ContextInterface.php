@@ -5,6 +5,7 @@ use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Interfaces\ExfaceClassInterface;
 use exface\Core\Widgets\Container;
 use exface\Core\Interfaces\AliasInterface;
+use exface\Core\Interfaces\AppInterface;
 
 /**
  * A context is a container for stateful data, that needs to live longer, than
@@ -179,5 +180,12 @@ interface ContextInterface extends AliasInterface, iCanBeConvertedToUxon, Exface
      * @return ContextInterface
      */
     public function setName($name);
+    
+    /**
+     * Returns a running instance of the app, the context belongs to
+     * 
+     * @return AppInterface
+     */
+    public function getApp();
 }
 ?>

@@ -22,16 +22,16 @@ abstract class LimitingWrapper implements LogHandlerInterface
      * @param LogHandlerInterface $handler
      *            the "real" log handler
      */
-    function __construct(LogHandlerInterface $handler)
+    public function __construct(LogHandlerInterface $handler)
     {
         $this->handler = $handler;
+        $this->limit();
     }
-
+    
+    
+    
     public function handle($level, $message, array $context = array(), iCanGenerateDebugWidgets $sender = null)
     {
-        // check and possibly rotate
-        $this->limit();
-        
         $this->callLogger($this->handler, $level, $message, $context, $sender);
     }
 
@@ -55,4 +55,14 @@ abstract class LimitingWrapper implements LogHandlerInterface
      * Log file cleanup.
      */
     protected abstract function limit();
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\ExfaceClassInterface::getWorkbench()
+     */
+    public function getWorkbench()
+    {
+        return $this->handler->getWorkbench();
+    }
 }

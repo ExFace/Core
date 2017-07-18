@@ -566,6 +566,23 @@
             "LABEL": "Formula",
             "ALIAS": "FORMULA",
             "DATA_ADDRESS": "*\/*\/Formulas\/*.php"
+        },
+        {
+            "CREATED_ON": "2017-07-15 00:00:00",
+            "MODIFIED_ON": "2017-06-06 00:00:00",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e76918a96e616299d60205857feb80",
+            "DATA_SOURCE": "0x11e6b09e2002641f8943e4b318306b9a",
+            "long_description": null,
+            "APP": "0x31000000000000000000000000000000",
+            "SHORT_DESCRIPTION": "",
+            "PARENT_OBJECT": "0x11e7359214da6ecbba83e4b318306b9a",
+            "DATA_ADDRESS_PROPS": "{}",
+            "DEFAULT_EDITOR_UXON": "{\"object_alias\":\"exface.Core.LOG_ENTRY\",\"widget_type\":\"DataTable\",\"filters\":[{\"attribute_alias\":\"id\"},{\"attribute_alias\":\"requestId\"},{\"attribute_alias\":\"userName\"},{\"attribute_alias\":\"actionAlias\"},{\"attribute_alias\":\"message\"},{\"attribute_alias\":\"timestamp\",\"comparator\":\">\"},{\"attribute_alias\":\"timestamp\",\"comparator\":\"<\"},{\"attribute_alias\":\"level\",\"multi_select\":true},{\"attribute_alias\":\"logfile\",\"widget_type\":\"InputHidden\"}],\"columns\":[{\"attribute_alias\":\"levelname\"},{\"attribute_alias\":\"timestamp\"},{\"attribute_alias\":\"message\"},{\"attribute_alias\":\"id\"},{\"attribute_alias\":\"requestId\"},{\"attribute_alias\":\"userName\"},{\"attribute_alias\":\"actionAlias\"},{\"attribute_alias\":\"channel\"},{\"attribute_alias\":\"level\"}],\"sorters\":[{\"attribute_alias\":\"timestamp\",\"direction\":\"DESC\"}],\"buttons\":[{\"action\":{\"alias\":\"exface.Core.ShowDialogFromFile\",\"file_path_attribute_alias\":\"id\",\"file_extension\":\"json\",\"folder_path\":\"logs\/details\",\"do_not_prefill\":true},\"bind_to_double_click\":true}]}",
+            "LABEL": "Trace Log",
+            "ALIAS": "TRACE_LOG",
+            "DATA_ADDRESS": "logs\/traces\/*.csv"
         }
     ],
     "totals_rows": [],
