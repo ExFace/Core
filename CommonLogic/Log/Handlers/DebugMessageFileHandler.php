@@ -58,8 +58,8 @@ class DebugMessageFileHandler implements LogHandlerInterface
         $handler->setFormatter(new MessageOnlyFormatter());
 
         $persistLogLevel = $this->workbench->getConfig()->getOption('LOG.PERSIST_LOG_LEVEL');
-        $passthroughLevel = $this->workbench->getConfig()->getOption('LOG.PASSTHROUGH_LOG_LEVEL');
-
+        $passthroughLevel = LogHelper::compareLogLevels($level, $this->workbench->getConfig()->getOption('LOG.PASSTHROUGH_LOG_LEVEL')) < 0 ? $level : $this->workbench->getConfig()->getOption('LOG.PASSTHROUGH_LOG_LEVEL');
+        
         $fcHandler = new FingersCrossedHandler(
             $handler,
             new ErrorLevelActivationStrategy(Logger::toMonologLevel($persistLogLevel)),
