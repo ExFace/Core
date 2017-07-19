@@ -87,6 +87,8 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
     private $hide_help_button = false;
     
     private $configurator = null;
+    
+    private $hide_refresh_button = null;
 
     protected function init()
     {
@@ -1362,6 +1364,31 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
     public function getConfiguratorWidgetType(){
         return 'DataConfigurator';
     }
+    
+    /**
+     * 
+     * @return boolean|null
+     */
+    public function getHideRefreshButton()
+    {
+        return $this->hide_refresh_button;
+    }
+    
+    /**
+     * Set to true to hide the refresh/search button. Default: false.
+     * 
+     * @uxon-property hide_refresh_button
+     * @uxon-type boolean
+     * 
+     * @param boolean $hide_refresh_button
+     * @return \exface\Core\Widgets\Data
+     */
+    public function setHideRefreshButton($true_or_false)
+    {
+        $this->hide_refresh_button = BooleanDataType::parse($true_or_false);
+        return $this;
+    }
+ 
 }
 
 ?>
