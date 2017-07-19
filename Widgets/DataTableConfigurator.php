@@ -43,7 +43,7 @@ class DataTableConfigurator extends DataConfigurator
     {
         $tab = $this->createTab();
         $tab->setCaption($this->translate('WIDGET.DATACONFIGURATOR.COLUMN_TAB_CAPTION'));
-        $tab->setIconName(Icons::COLUMNS);
+        $tab->setIconName(Icons::TABLE);
         // TODO reenable the tab once it has content
         $tab->setDisabled(true);
         return $tab;
@@ -53,7 +53,7 @@ class DataTableConfigurator extends DataConfigurator
      * 
      * @return Tab
      */
-    public function getSorterTab()
+    public function getAggregationTab()
     {
         if (is_null($this->getTab(1))){
             $this->aggregation_tab = $this->createAggregationTab();
@@ -70,7 +70,7 @@ class DataTableConfigurator extends DataConfigurator
     {
         $tab = $this->createTab();
         $tab->setCaption($this->translate('WIDGET.DATACONFIGURATOR.AGGREGATION_TAB_CAPTION'));
-        $tab->setIconName(Icons::GROUP);
+        $tab->setIconName(Icons::OBJECT_GROUP);
         // TODO reenable the tab once it has content
         $tab->setDisabled(true);
         return $tab;
