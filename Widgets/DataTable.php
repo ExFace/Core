@@ -593,5 +593,9 @@ class DataTable extends Data implements iHaveHeader, iHaveFooter, iFillEntireCon
         return $toolbars;
     }
     
+    public function getConfiguratorWidgetType()
+    {
+        return 'DataTableConfigurator';
+    }
 }
 ?>

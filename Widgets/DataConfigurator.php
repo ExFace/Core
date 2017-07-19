@@ -12,7 +12,10 @@ use exface\Core\CommonLogic\Model\Attribute;
 use exface\Core\Exceptions\Widgets\WidgetLogicError;
 
 /**
- *
+ * The configurator for data widgets contains tabs for filters and sorters.
+ * 
+ * @see WidgetConfigurator
+ * 
  * @author Andrej Kabachnik
  *        
  */
@@ -21,6 +24,10 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
     
     /** @var Filter[] */
     private $quick_search_filters = array();
+    
+    private $filter_tab = null;
+    
+    private $sorter_tab = null;
     
     /**
      * Returns an array with all filter widgets.
@@ -199,46 +206,62 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
     }
     
     /**
+     * Returns the configurator tab with filters.
+     * 
      * @return Tab
      */
     public function getFilterTab()
     {
         if (is_null($this->getTab(0))){
-            $this->addTab($this->createFilterTab(), 0);
+            $this->filter_tab = $this->createFilterTab();
+            $this->addTab($this->filter_tab, 0);
         }
-        return $this->getTab(0);
+        return $this->filter_tab;
     }
     
+    /**
+     * Creates an empty filter tab and returns it (without adding to the Tabs widget!)
+     * 
+     * @return Tab
+     */
     protected function createFilterTab()
     {
         $tab = $this->createTab();
-        $tab->setCaption('Filters');
+        $tab->setCaption($this->translate('WIDGET.DATACONFIGURATOR.FILTER_TAB_CAPTION'));
         $tab->setIconName(Icons::FILTER);
         return $tab;
     }
     
     /**
+     * Returns the configurator tab with sorting controls
+     * 
      * @return Tab
      */
     public function getSorterTab()
     {
         if (is_null($this->getTab(1))){
-            $this->addTab($this->createSorterTab(), 1);
+            $this->sorter_tab = $this->createSorterTab();
+            $this->addTab($this->sorter_tab, 1);
         }
-        return $this->getTab(1);
+        return $this->sorter_tab;
     }
     
+    /**
+     * Creates an empty sorter tab and returns it (without adding to the Tabs widget!)
+     *
+     * @return Tab
+     */
     protected function createSorterTab()
     {
         $tab = $this->createTab();
-        $tab->setCaption('Sorting');
+        $tab->setCaption($this->translate('WIDGET.DATACONFIGURATOR.SORTER_TAB_CAPTION'));
         $tab->setIconName(Icons::SORT);
         // TODO reenable the tab once it has content
         $tab->setDisabled(true);
         return $tab;
     }
     
-    public function addSorter()
+    public function addSorter($attribute_alias, $direction)
     {
         $this->getSorterTab();
         return $this;
@@ -372,7 +395,7 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
     protected function setLazyLoadingForFilter(Filter $filter_widget)
     {
         // Disable filters on Relations if lazy loading is disabled
-        if (! $this->getWidget()->getLazyLoading() && $filter_widget->getAttribute() && $filter_widget->getAttribute()->isRelation() && $filter_widget->getWidget()->is('ComboTable')) {
+        if (! $this->getWidgetConfigured()->getLazyLoading() && $filter_widget->getAttribute() && $filter_widget->getAttribute()->isRelation() && $filter_widget->getWidget()->is('ComboTable')) {
             $filter_widget->setDisabled(true);
         }
         return $filter_widget;

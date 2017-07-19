@@ -17,15 +17,13 @@ use exface\Core\CommonLogic\Model\Object;
 use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 use exface\Core\Factories\WidgetLinkFactory;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
-use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Interfaces\Widgets\iHaveContextualHelp;
 use exface\Core\Interfaces\Widgets\iHaveToolbars;
 use exface\Core\Widgets\Traits\iHaveButtonsAndToolbarsTrait;
-use exface\Core\Exceptions\Widgets\WidgetLogicError;
-use exface\Core\Interfaces\Widgets\iCanBeConfigured;
+use exface\Core\Interfaces\Widgets\iHaveConfigurator;
 use exface\Core\Interfaces\Widgets\iConfigureWidgets;
 
 /**
@@ -41,7 +39,7 @@ use exface\Core\Interfaces\Widgets\iConfigureWidgets;
  * @author Andrej Kabachnik
  *        
  */
-class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iHaveToolbars, iHaveButtons, iHaveFilters, iSupportLazyLoading, iHaveContextualHelp, iCanBeConfigured
+class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iHaveToolbars, iHaveButtons, iHaveFilters, iSupportLazyLoading, iHaveContextualHelp, iHaveConfigurator
 {
     use iHaveButtonsAndToolbarsTrait;
 
@@ -1327,7 +1325,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Widgets\iCanBeConfigured::getConfiguratorWidget()
+     * @see \exface\Core\Interfaces\Widgets\iHaveConfigurator::getConfiguratorWidget()
      * @return DataConfigurator
      */
     public function getConfiguratorWidget()
@@ -1341,25 +1339,25 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Widgets\iCanBeConfigured::setConfiguratorWidget()
+     * @see \exface\Core\Interfaces\Widgets\iHaveConfigurator::setConfiguratorWidget()
      */
     public function setConfiguratorWidget($widget_or_uxon_object)
     {
         if ($widget_or_uxon_object instanceof iConfigureWidgets){
-            $this->configurator = $widget_or_uxon_object->setWidget($this);
+            $this->configurator = $widget_or_uxon_object->setWidgetConfigured($this);
         } elseif ($widget_or_uxon_object instanceof UxonObject){
             if (! $widget_or_uxon_object->hasProperty('widget_type')){
                 $widget_or_uxon_object->setProperty('widget_type', $this->getConfiguratorWidgetType());
             }
             $this->configurator = WidgetFactory::createFromUxon($this->getPage(), $widget_or_uxon_object, $this);
-            $this->configurator->setWidget($this);
+            $this->configurator->setWidgetConfigured($this);
         }
     }
     
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Widgets\iCanBeConfigured::getConfiguratorWidgetType()
+     * @see \exface\Core\Interfaces\Widgets\iHaveConfigurator::getConfiguratorWidgetType()
      */
     public function getConfiguratorWidgetType(){
         return 'DataConfigurator';
