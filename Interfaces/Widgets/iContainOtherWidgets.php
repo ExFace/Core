@@ -78,7 +78,19 @@ interface iContainOtherWidgets extends iHaveChildren
      * 
      * @return boolean
      */
-    //public function hasWidgets();
+    public function hasWidgets();
+    
+    /**
+     * Returns TRUE if the container is empty and FALSE otherwise.
+     * 
+     * In contrast to hasWidgets() this will return FALSE even if there are
+     * widgets within this container, but they are part of it's structure. Thus,
+     * a Tabs widget is empty if neither tab has widgets, while hasWidgets()
+     * would return TRUE as soon as at least one tab is created.
+     *
+     * @return boolean
+     */
+    public function isEmpty();
 
     /**
      * Returns an array of direct children, that show the given attribute.

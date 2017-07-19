@@ -50,10 +50,45 @@ class Tabs extends Container implements iFillEntireContainer
     {
         return $this->getWidgets();
     }
-
+    
+    /**
+     * Adds an array of widgets as tabs.
+     * 
+     * @uxon-property tabs
+     * @uxon-type \exface\Core\Widgets\Tab[]
+     * 
+     * @param array|Tab|Container $widget_or_uxon_array
+     * @return Tabs
+     */
     public function setTabs(array $widget_or_uxon_array)
     {
         return $this->setWidgets($widget_or_uxon_array);
+    }
+    
+    /**
+     * Returns TRUE if there is at least one tab and FALSE otherwise.
+     * 
+     * @return boolean
+     */
+    public function hasTabs()
+    {
+        return $this->hasWidgets();
+    }
+    
+    /**
+     * Returns TRUE if at least one tab has at least one widget and FALSE otherwise.
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Container::isEmpty()
+     */
+    public function isEmpty()
+    {
+        foreach ($this->getTabs() as $tab){
+            if (! $tab->isEmpty()) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
