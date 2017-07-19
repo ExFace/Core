@@ -12,24 +12,21 @@ use exface\Core\Interfaces\Widgets\iShowDataSet;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Interfaces\Widgets\iFillEntireContainer;
-use exface\Core\Interfaces\Widgets\iLayoutWidgets;
-use exface\Core\CommonLogic\Model\Attribute;
-use exface\Core\CommonLogic\Traits\WidgetLayoutTrait;
 use exface\Core\Widgets\Traits\iHaveButtonsAndToolbarsTrait;
 use exface\Core\Interfaces\Widgets\iHaveToolbars;
+use exface\Core\Interfaces\Widgets\iHaveConfigurator;
 
 /**
- * A Button is the primary widget for triggering actions.
- * In addition to the general widget attributes it can have
- * an icon and also subwidgets (if the triggered action shows a widget).
+ * A Chart widget draws a chart with upto two axis and any number of series.
+ * 
+ * Every Chart contains a Data widget, that fetches data visualized by the chart.
+ * Chart series as well as axis legends are extracted for columns in that data.
  *
  * @author Andrej Kabachnik
  *        
  */
-class Chart extends AbstractWidget implements iShowDataSet, iHaveToolbars, iHaveButtons, iHaveHeader, iHaveFooter, iSupportLazyLoading, iFillEntireContainer, iLayoutWidgets
+class Chart extends AbstractWidget implements iShowDataSet, iHaveToolbars, iHaveButtons, iHaveHeader, iHaveFooter, iHaveConfigurator, iSupportLazyLoading, iFillEntireContainer
 {
-    
-    use WidgetLayoutTrait;
     use iHaveButtonsAndToolbarsTrait;
 
     /**
@@ -625,108 +622,31 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveToolbars, iHave
     {
         return null;
     }
-
     /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::addWidget()
+     * 
      */
-    public function addWidget(AbstractWidget $widget, $position = NULL)
+    public function getConfiguratorWidget()
     {
-        // TODO: Funktion implementieren
+        return $this->getData()->getConfiguratorWidget();
+    }
+    
+    /**
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveConfigurator::setConfiguratorWidget()
+     */
+    public function setConfiguratorWidget($widget_or_uxon_object)
+    {
+        return $this->getData()->setConfiguratorWidget($widget_or_uxon_object);
+    }
+    
+    /**
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveConfigurator::getConfiguratorWidgetType()
+     */
+    public function getConfiguratorWidgetType()
+    {
+        return 'ChartConfigurator';
     }
 
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::addWidgets()
-     */
-    public function addWidgets(array $widgets)
-    {
-        // TODO: Funktion implementieren
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::getWidgets()
-     */
-    public function getWidgets()
-    {
-        // TODO: Funktion implementieren
-        return [];
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::getInputWidgets()
-     */
-    public function getInputWidgets($depth = null)
-    {
-        // TODO: Funktion implementieren
-        return [];
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::removeWidgets()
-     */
-    public function removeWidgets()
-    {
-        // TODO: Funktion implementieren
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::setWidgets()
-     */
-    public function setWidgets(array $widget_or_uxon_array)
-    {
-        // TODO: Funktion implementieren
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::countWidgets()
-     */
-    public function countWidgets()
-    {
-        // TODO: Funktion implementieren
-        return 0;
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::countWidgetsVisible()
-     */
-    public function countWidgetsVisible()
-    {
-        // TODO: Funktion implementieren
-        return 0;
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::findChildrenByAttribute()
-     */
-    public function findChildrenByAttribute(Attribute $attribute)
-    {
-        // TODO: Funktion implementieren
-    }
 }
 ?>

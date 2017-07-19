@@ -3,19 +3,24 @@ namespace exface\Core\Widgets;
 
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Exceptions\NotImplementedError;
+use exface\Core\Interfaces\Widgets\iHaveIcon;
 
 /**
  * A Tab is a special panel to be used within the tabs widget
+ * 
+ * @method Tabs getParent()
  *
  * @author Andrej Kabachnik
  *        
  */
-class Tab extends Panel
+class Tab extends Panel implements iHaveIcon
 {
 
     private $badge_attribute_alias;
 
     private $badge_value;
+    
+    private $icon = null;
 
     public function getBadgeAttributeAlias()
     {
@@ -81,5 +86,39 @@ class Tab extends Panel
         }
         return $this;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Panel::getIconName()
+     */
+    public function getIconName() {
+        return $this->icon;    
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Panel::setIconName()
+     */
+    public function setIconName($value) {
+        $this->icon = $value;
+        return $this;    
+    }
+    
+    /**
+     * Captions for tabs can be hidden for a particular tab or for all tabs via Tabs::setHideTabCaptions
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\AbstractWidget::getHideCaption()
+     */
+    public function getHideCaption()
+    {
+        if ($this->getParent()->getHideTabsCaptions()){
+            return true;
+        }
+        return parent::getHideCaption();
+    }
+
 }
 ?>

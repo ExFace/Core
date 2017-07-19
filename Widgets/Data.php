@@ -17,14 +17,14 @@ use exface\Core\CommonLogic\Model\Object;
 use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 use exface\Core\Factories\WidgetLinkFactory;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
-use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Interfaces\Widgets\iHaveContextualHelp;
 use exface\Core\Interfaces\Widgets\iHaveToolbars;
 use exface\Core\Widgets\Traits\iHaveButtonsAndToolbarsTrait;
-use exface\Core\Exceptions\Widgets\WidgetLogicError;
+use exface\Core\Interfaces\Widgets\iHaveConfigurator;
+use exface\Core\Interfaces\Widgets\iConfigureWidgets;
 
 /**
  * Data is the base for all widgets displaying tabular data.
@@ -39,7 +39,7 @@ use exface\Core\Exceptions\Widgets\WidgetLogicError;
  * @author Andrej Kabachnik
  *        
  */
-class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iHaveToolbars, iHaveButtons, iHaveFilters, iSupportLazyLoading, iHaveContextualHelp
+class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iHaveToolbars, iHaveButtons, iHaveFilters, iSupportLazyLoading, iHaveContextualHelp, iHaveConfigurator
 {
     use iHaveButtonsAndToolbarsTrait;
 
@@ -63,12 +63,6 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
     /** @var DataToolbar[] */
     private $toolbars = array();
 
-    /** @var Filter[] */
-    private $filters = array();
-
-    /** @var Filter[] */
-    private $quick_search_filters = array();
-
     // other stuff
     /** @var \stdClass[] */
     private $sorters = array();
@@ -91,6 +85,8 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
     private $help_button = null;
 
     private $hide_help_button = false;
+    
+    private $configurator = null;
 
     protected function init()
     {
@@ -226,7 +222,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
             // If trying to prefill with a different object, we need to find a relation to that object somehow.
             // First we check for filters based on the prefill object. If filters exists, we can be sure, that those
             // are the ones to be prefilled.
-            $relevant_filters = $this->findFiltersByObject($data_sheet->getMetaObject());
+            $relevant_filters = $this->getConfiguratorWidget()->findFiltersByObject($data_sheet->getMetaObject());
             $uid_filters_found = false;
             // If there are filters over UIDs of the prefill object, just get data for these filters for the prefill,
             // because it does not make sense to fetch prefill data for UID-filters and attribute filters at the same
@@ -251,7 +247,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
                 // FIXME check, if a filter on the current relation is there already, and add it only in this case
                 /* @var $rel \exface\Core\CommonLogic\Model\relation */
                 if ($rel = $this->getMetaObject()->findRelation($data_sheet->getMetaObject())) {
-                    $fltr = $this->createFilterFromRelation($rel);
+                    $fltr = $this->getConfiguratorWidget()->createFilterFromRelation($rel);
                     $data_sheet = $fltr->prepareDataSheetToPrefill($data_sheet);
                 }
             }
@@ -522,41 +518,30 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
      */
     public function getFilters()
     {
-        if (count($this->filters) == 0) {
+        if (! $this->getConfiguratorWidget()->hasFilters()) {
             $this->addRequiredFilters();
         }
-        return $this->filters;
+        return $this->getConfiguratorWidget()->getFilters();
     }
 
     /**
-     * Returns the filter widget matching the given widget id
-     *
-     * @param string $filter_widget_id            
-     * @return \exface\Core\Widgets\Filter
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveFilters::getFilter()
      */
     public function getFilter($filter_widget_id)
     {
-        foreach ($this->getFilters() as $fltr) {
-            if ($fltr->getId() == $filter_widget_id) {
-                return $fltr;
-            }
-        }
+        return $this->getConfiguratorWidget()->getFilter($filter_widget_id);
     }
 
     /**
-     * Returns all filters, that have values and thus will be applied to the result
-     *
-     * @return \exface\Core\Widgets\AbstractWidget[] array of widgets
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveFilters::getFiltersApplied()
      */
     public function getFiltersApplied()
     {
-        $result = array();
-        foreach ($this->filters as $id => $fltr) {
-            if (! is_null($fltr->getValue())) {
-                $result[$id] = $fltr;
-            }
-        }
-        return $result;
+        return $this->getConfiguratorWidget()->getFiltersApplied();
     }
 
     /**
@@ -580,87 +565,42 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
      * for all columns.
      *
      * Example:
-     * "object_alias": "ORDER_POSITION"
-     * "filters": [
-     * {
-     * "attribute_alias": "ORDER"
-     * },
-     * {
-     * "attribute_alias": "CUSTOMER__CLASS"
-     * },
-     * {
-     * "attribute_alias": "ORDER__ORDER_POSITION__VALUE:SUM",
-     * "caption": "Order total"
-     * },
-     * {
-     * "attribute_alias": "VALUE",
-     * "widget_type": "InputNumberSlider"
-     * }
-     * ]
+     *  {
+     *      "object_alias": "ORDER_POSITION"
+     *      "filters": [
+     *          {
+     *              "attribute_alias": "ORDER"
+     *          },
+     *          {
+     *              "attribute_alias": "CUSTOMER__CLASS"
+     *          },
+     *          {
+     *              "attribute_alias": "ORDER__ORDER_POSITION__VALUE:SUM",
+     *              "caption": "Order total"
+     *          },
+     *          {
+     *              "attribute_alias": "VALUE",
+     *              "widget_type": "InputNumberSlider"
+     *          }
+     *      ]
+     *  }
      *
      * @uxon-property filters
      * @uxon-type Filter[]
      *
-     * @param array $filters_array            
-     * @return boolean
+     * @param UxonObject[] $filters_array
+     * @return Data
      */
-    public function setFilters(array $filters_array)
+    public function setFilters(array $uxon_objects)
     {
-        if (! is_array($filters_array))
-            return false;
-        foreach ($filters_array as $f) {
-            $include_in_quick_search = false;
-            // Add to quick search if required
-            if ($f->include_in_quick_search === true) {
-                $include_in_quick_search = true;
-            }
-            unset($f->include_in_quick_search);
-            
-            $filter = $this->createFilterWidget($f->attribute_alias, $f);
-            $this->addFilter($filter, $include_in_quick_search);
-        }
+        $this->getConfiguratorWidget()->setFilters($uxon_objects);
         $this->addRequiredFilters();
-        return true;
+        return $this;
     }
 
     public function createFilterWidget($attribute_alias = null, \stdClass $uxon_object = null)
     {
-        if (is_null($attribute_alias)) {
-            if ($uxon_object->attribute_alias) {
-                $attribute_alias = $uxon_object->attribute_alias;
-            } elseif ($uxon_object->widget && $uxon_object->widget->attribute_alias) {
-                $attribute_alias = $uxon_object->widget->attribute_alias;
-            }
-        }
-        // a filter can only be applied, if the attribute alias is specified and the attribute exists
-        if (! $attribute_alias)
-            throw new WidgetPropertyInvalidValueError($this, 'Cannot create a filter for an empty attribute alias in widget "' . $this->getId() . '"!', '6T91AR9');
-        try {
-            $attr = $this->getMetaObject()->getAttribute($attribute_alias);
-        } catch (MetaAttributeNotFoundError $e) {
-            throw new WidgetPropertyInvalidValueError($this, 'Cannot create a filter for attribute alias "' . $attribute_alias . '" in widget "' . $this->getId() . '": attribute not found for object "' . $this->getMetaObject()->getAliasWithNamespace() . '"!', '6T91AR9', $e);
-        }
-        // determine the widget for the filter
-        $uxon = $attr->getDefaultWidgetUxon()->copy();
-        if ($uxon_object) {
-            $uxon = $uxon->extend(UxonObject::fromStdClass($uxon_object));
-        }
-        // Set a special caption for filters on relations, which is derived from the relation itself
-        // IDEA this might be obsolete since it probably allways returns the attribute name anyway, but I'm not sure
-        if (! $uxon->hasProperty('caption') && $attr->isRelation()) {
-            $uxon->setProperty('caption', $this->getMetaObject()->getRelation($attribute_alias)->getName());
-        }
-        $page = $this->getPage();
-        if ($uxon->comparator) {
-            $comparator = $uxon->comparator;
-            unset($uxon->comparator);
-        }
-        
-        $filter = $this->getPage()->createWidget('Filter', $this);
-        $filter->setComparator($comparator);
-        $filter->setWidget(WidgetFactory::createFromUxon($page, $uxon, $filter));
-        
-        return $filter;
+        return $this->getConfiguratorWidget()->createFilterWidget($attribute_alias, $uxon_object);
     }
 
     /**
@@ -673,7 +613,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
             // If the prefill data is based on the same object as the widget, inherit the filter conditions from the prefill
             foreach ($data_sheet->getFilters()->getConditions() as $condition) {
                 // For each filter condition look for filters over the same attribute
-                $attribute_filters = $this->findFiltersByAttribute($condition->getExpression()->getAttribute());
+                $attribute_filters = $this->getConfiguratorWidget()->findFiltersByAttribute($condition->getExpression()->getAttribute());
                 // If no filters are there, create one
                 if (count($attribute_filters) == 0) {
                     $filter = $this->createFilterWidget($condition->getExpression()->getAttribute()->getAliasWithRelationPath());
@@ -702,7 +642,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
             // the prefill-object. If so, show only data related to the prefill (= add the prefill object as a filter)
             
             // First look if the user already specified a filter with the object we are looking for
-            foreach ($this->findFiltersByObject($data_sheet->getMetaObject()) as $fltr) {
+            foreach ($this->getConfiguratorWidget()->findFiltersByObject($data_sheet->getMetaObject()) as $fltr) {
                 $fltr->prefill($data_sheet);
             }
             
@@ -712,7 +652,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
                 // If anything goes wrong, log away the error but continue, as
                 // the prefills are not critical in general.
                 try {
-                    $filter_widget = $this->createFilterFromRelation($rel);
+                    $filter_widget = $this->getConfiguratorWidget()->createFilterFromRelation($rel);
                     $filter_widget->prefill($data_sheet);
                 } catch (\Throwable $e) {
                     $this->getWorkbench()->getLogger()->logException($e);
@@ -727,7 +667,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
                     if (! $condition->getExpression()->isMetaAttribute() || ! $condition->getExpression()->getAttribute())
                         continue;
                     // See if there are filters in this widget, that work on the very same attribute
-                    foreach ($this->findFiltersByObject($condition->getExpression()->getAttribute()->getObject()) as $fltr) {
+                    foreach ($this->getConfiguratorWidget()->findFiltersByObject($condition->getExpression()->getAttribute()->getObject()) as $fltr) {
                         if ($fltr->getAttribute()->getObject()->is($condition->getExpression()->getAttribute()->getObject()) && $fltr->getAttribute()->getAlias() == $condition->getExpression()->getAttribute()->getAlias() && ! $fltr->getValue()) {
                             $fltr->setComparator($condition->getComparator());
                             $fltr->setValue($condition->getValue());
@@ -736,100 +676,6 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
                 }
             }
         }
-    }
-
-    /**
-     * Creates and adds a filter based on the given relation
-     *
-     * @param relation $relation            
-     * @return \exface\Core\Widgets\AbstractWidget
-     */
-    protected function createFilterFromRelation(Relation $relation)
-    {
-        $filter_widget = $this->findFilterByRelation($relation);
-        // Create a new hidden filter if there is no such filter already
-        if (! $filter_widget) {
-            $page = $this->getPage();
-            // FIXME This is a workaround for the known issues, that get_main_object_key_attribute() does not work for
-            // reverse relations. When the issue is fixed, this if needs to be rewritten.
-            if (! $relation->getMainObjectKeyAttribute() && $relation->isReverseRelation()) {
-                $filter_widget = WidgetFactory::createFromUxon($page, $relation->getRelatedObjectKeyAttribute()->getDefaultWidgetUxon(), $this);
-                if ($filter_widget->getMetaObject()->hasAttribute($relation->getRelatedObjectKeyAlias())){
-                    $filter_widget->setAttributeAlias($relation->getRelatedObjectKeyAlias());
-                } else {
-                    throw new WidgetLogicError($this, 'Cannot automatically create filter for relation "' . $relation->toString() . '" in a "' . $this->getWidgetType() . '" widget based on ' . $this->getMetaObject()->getAliasWithNamespace() . '!');
-                }
-            } else {
-                $filter_widget = WidgetFactory::createFromUxon($page, $relation->getMainObjectKeyAttribute()->getDefaultWidgetUxon(), $this);
-                $filter_widget->setAttributeAlias($relation->getForeignKeyAlias());
-            }
-            $this->addFilter($filter_widget);
-        }
-        return $filter_widget;
-    }
-
-    /**
-     * Returns an array of filters, that filter over the given attribute.
-     * It will mostly contain only one filter, but if there
-     * are different filters with different comparators (like from+to for numeric or data values), there will be multiple filters
-     * in the list.
-     *
-     * @param Attribute $attribute            
-     * @return Filter[]
-     */
-    protected function findFiltersByAttribute(Attribute $attribute)
-    {
-        $result = array();
-        foreach ($this->getFilters() as $filter_widget) {
-            if ($filter_widget->getAttributeAlias() == $attribute->getAliasWithRelationPath()) {
-                $result[] = $filter_widget;
-            }
-        }
-        return $result;
-    }
-
-    /**
-     * TODO Make the method return an array like find_filters_by_attribute() does
-     *
-     * @param Relation $relation            
-     * @return Filter
-     */
-    protected function findFilterByRelation(Relation $relation)
-    {
-        foreach ($this->getFilters() as $filter_widget) {
-            if ($filter_widget->getAttributeAlias() == $relation->getAlias()) {
-                $found = $filter_widget;
-                break;
-            } else {
-                $found = null;
-            }
-        }
-        if ($found) {
-            return $found;
-        } else {
-            return false;
-        }
-    }
-
-    /**
-     * Returns the first filter based on the given object or it's attributes
-     * TODO Make the method return an array like find_filters_by_attribute() does
-     *
-     * @param Object $object            
-     * @return \exface\Core\Widgets\Filter|boolean
-     */
-    protected function findFiltersByObject(Object $object)
-    {
-        $result = array();
-        foreach ($this->getFilters() as $filter_widget) {
-            $filter_object = $this->getMetaObject()->getAttribute($filter_widget->getAttributeAlias())->getObject();
-            if ($object->is($filter_object)) {
-                $result[] = $filter_widget;
-            } elseif ($filter_widget->getAttribute()->isRelation() && $object->is($filter_widget->getAttribute()->getRelation()->getRelatedObject())) {
-                $result[] = $filter_widget;
-            }
-        }
-        return $result;
     }
 
     /**
@@ -843,29 +689,8 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
      */
     public function addFilter(AbstractWidget $filter_widget, $include_in_quick_search = false)
     {
-        if ($filter_widget instanceof Filter) {
-            $filter = $filter_widget;
-        } else {
-            $filter = $this->getPage()->createWidget('Filter', $this);
-            $filter->setWidget($filter_widget);
-        }
-        
-        $this->setLazyLoadingForFilter($filter);
-        
-        $this->filters[] = $filter;
-        if ($include_in_quick_search) {
-            $this->addQuickSearchFilter($filter);
-        }
+        $this->getConfiguratorWidget()->addFilter($filter_widget, $include_in_quick_search);
         return $this;
-    }
-
-    protected function setLazyLoadingForFilter(Filter $filter_widget)
-    {
-        // Disable filters on Relations if lazy loading is disabled
-        if (! $this->getLazyLoading() && $filter_widget->getAttribute() && $filter_widget->getAttribute()->isRelation() && $filter_widget->getWidget()->is('ComboTable')) {
-            $filter_widget->setDisabled(true);
-        }
-        return $filter_widget;
     }
 
     protected function addRequiredFilters()
@@ -879,13 +704,13 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
             
             // If the placeholder is an attribute, add a required filter on it (or make an existing filter required)
             if ($ph_attr = $this->getMetaObject()->getAttribute($ph)) {
-                if (count($this->filters)) {
-                    $ph_filters = $this->findFiltersByAttribute($ph_attr);
+                if ($this->hasFilters()) {
+                    $ph_filters = $this->getConfiguratorWidget()->findFiltersByAttribute($ph_attr);
                     foreach ($ph_filters as $ph_filter) {
                         $ph_filter->setRequired(true);
                     }
                 } else {
-                    $ph_filter = $this->createFilterWidget($ph);
+                    $ph_filter = $this->getConfiguratorWidget()->createFilterWidget($ph);
                     $ph_filter->setRequired(true);
                     $this->addFilter($ph_filter);
                 }
@@ -896,13 +721,10 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 
     public function hasFilters()
     {
-        if (count($this->filters) == 0) {
+        if (! $this->getConfiguratorWidget()->hasFilters()) {
             $this->addRequiredFilters();
         }
-        if (count($this->filters))
-            return true;
-        else
-            return false;
+        return $this->getConfiguratorWidget()->hasFilters();
     }
 
     public function getChildren()
@@ -965,15 +787,19 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
      * @uxon-property sorters
      * @uxon-type Object[]
      *
-     * @param array $sorters            
+     * @param UxonObject[] $sorters            
      */
     public function setSorters(array $sorters)
     {
-        $this->sorters = $sorters;
+        foreach ($sorters as $uxon){
+            $this->addSorter($uxon->getProperty('attribute_alias'), $uxon->getProperty('direction'));
+        }
+        return $this;
     }
     
     public function addSorter($attribute_alias, $direction)
     {
+        $this->getConfiguratorWidget()->addSorter();
         $sorter = new \stdClass();
         $sorter->attribute_alias = $attribute_alias;
         $sorter->direction = $direction;
@@ -1030,44 +856,18 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 
     /**
      * Returns an array of aliases of attributes, that should be used for quick search relative to the meta object of the widget
+     * 
+     * IDEA move to to configurator?
      *
      * @return array
      */
     public function getAttributesForQuickSearch()
     {
         $aliases = array();
-        foreach ($this->getQuickSearchFilters() as $fltr) {
+        foreach ($this->getConfiguratorWidget()->getQuickSearchFilters() as $fltr) {
             $aliases[] = $fltr->getAttributeAlias();
         }
         return $aliases;
-    }
-
-    public function getQuickSearchFilters()
-    {
-        return $this->quick_search_filters;
-    }
-
-    /**
-     * Replaces the current set of filters used for quick search queries by the given filter array
-     *
-     * @param Filter[] $filters            
-     */
-    public function setQuickSearchFilters(array $filters)
-    {
-        $this->quick_search_filters = $filters;
-        return $this;
-    }
-
-    /**
-     * Registers a filter for the quick search queries.
-     * The filter is passed by reference because it is also contained in the
-     * retular filters.
-     *
-     * @param Filter $widget            
-     */
-    public function addQuickSearchFilter(Filter $widget)
-    {
-        $this->quick_search_filters[] = $widget;
     }
 
     /**
@@ -1109,10 +909,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
     public function setLazyLoading($value)
     {
         $this->lazy_loading = $value;
-        
-        foreach ($this->getFilters() as $filter) {
-            $this->setLazyLoadingForFilter($filter);
-        }
+        $this->getConfiguratorWidget()->setLazyLoading($value);
         return $this;
     }
 
@@ -1523,6 +1320,47 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
     public function getToolbarWidgetType()
     {
         return 'DataToolbar';
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveConfigurator::getConfiguratorWidget()
+     * @return DataConfigurator
+     */
+    public function getConfiguratorWidget()
+    {
+        if (is_null($this->configurator)){
+            $this->configurator = WidgetFactory::create($this->getPage(), $this->getConfiguratorWidgetType(), $this);
+        }
+        return $this->configurator;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveConfigurator::setConfiguratorWidget()
+     */
+    public function setConfiguratorWidget($widget_or_uxon_object)
+    {
+        if ($widget_or_uxon_object instanceof iConfigureWidgets){
+            $this->configurator = $widget_or_uxon_object->setWidgetConfigured($this);
+        } elseif ($widget_or_uxon_object instanceof UxonObject){
+            if (! $widget_or_uxon_object->hasProperty('widget_type')){
+                $widget_or_uxon_object->setProperty('widget_type', $this->getConfiguratorWidgetType());
+            }
+            $this->configurator = WidgetFactory::createFromUxon($this->getPage(), $widget_or_uxon_object, $this);
+            $this->configurator->setWidgetConfigured($this);
+        }
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveConfigurator::getConfiguratorWidgetType()
+     */
+    public function getConfiguratorWidgetType(){
+        return 'DataConfigurator';
     }
 }
 

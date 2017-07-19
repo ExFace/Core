@@ -72,6 +72,13 @@ interface iContainOtherWidgets extends iHaveChildren
      * @return int
      */
     public function countWidgetsVisible();
+    
+    /**
+     * Returns TRUE if the container has at least one widget and FALSE otherwise.
+     * 
+     * @return boolean
+     */
+    //public function hasWidgets();
 
     /**
      * Returns an array of direct children, that show the given attribute.

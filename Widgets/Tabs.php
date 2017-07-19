@@ -17,10 +17,30 @@ use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
  */
 class Tabs extends Container implements iFillEntireContainer
 {
+    const TAB_POSITION_TOP = 'top';
+    
+    const TAB_POSITION_BOTTOM = 'bottom';
+    
+    const TAB_POSITION_LEFT = 'left';
+    
+    const TAB_POSITION_RIGHT = 'right';
+    
+    private $tab_position = null;
+    
+    private $tabs_with_icons_only = false;
 
-    private $tab_position = 'top';
-
-    private $active_tab = 1;
+    private $active_tab = 0;
+    
+    /**
+     * Returns the tab under the given index (starting with 0 from the left/top)
+     * 
+     * @param integer $index
+     * @return \exface\Core\Widgets\Tab|null
+     */
+    public function getTab($index)
+    {
+        return $this->getTabs()[$index];
+    }
 
     /**
      *
@@ -42,16 +62,25 @@ class Tabs extends Container implements iFillEntireContainer
      */
     public function getTabPosition()
     {
+        if (is_null($this->tab_position)){
+            $this->tab_position = static::TAB_POSITION_TOP;
+        }
         return $this->tab_position;
     }
-
+    
+    /**
+     * 
+     * @param unknown $value
+     * @throws WidgetPropertyInvalidValueError
+     * @return \exface\Core\Widgets\Tabs
+     */
     public function setTabPosition($value)
     {
-        if ($value != 'top' && $value != 'bottom' && $value != 'left' && $value != 'right') {
-            throw new WidgetPropertyInvalidValueError($this, 'Tab position accepts only the following values: top, left, right, bottom. "' . $value . '" given!', '6T911YV');
-        } else {
-            $this->tab_position = $value;
+        if (! defined('static::TAB_POSITION_' . mb_strtoupper($value))) {
+            throw new WidgetPropertyInvalidValueError($this, 'Invalid tab_position value "' . $value . '": use "top", "bottom", "left" or "right"!');
         }
+        $this->tab_position = constant('static::TAB_POSITION_' . mb_strtoupper($value));
+        return $this;
     }
 
     /**
@@ -207,5 +236,26 @@ class Tabs extends Container implements iFillEntireContainer
     {
         return $this->getDefaultTab();
     }
+    
+    /**
+     * 
+     * @return boolean
+     */
+    public function getHideTabsCaptions()
+    {
+        return $this->tabs_with_icons_only;
+    }
+    
+    /**
+     * 
+     * @param boolean $true_or_false
+     * @return \exface\Core\Widgets\Tabs
+     */
+    public function setHideTabsCaptions($true_or_false)
+    {
+        $this->tabs_with_icons_only = $true_or_false;
+        return $this;
+    }
+ 
 }
 ?>
