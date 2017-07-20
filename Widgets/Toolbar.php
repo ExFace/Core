@@ -25,6 +25,11 @@ class Toolbar extends ButtonGroup implements iContainButtonGroups
     
     private $button_groups = array();
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iContainButtonGroups::getButtonGroups()
+     */
     public function getButtonGroups()
     {
         if (count($this->button_groups) == 0){
@@ -33,7 +38,11 @@ class Toolbar extends ButtonGroup implements iContainButtonGroups
         return $this->button_groups;
     }
     
-    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iContainButtonGroups::setButtonGroups()
+     */
     public function setButtonGroups(array $button_groups_or_uxon_arrays)
     {
         foreach ($button_groups_or_uxon_arrays as $group){
@@ -70,12 +79,21 @@ class Toolbar extends ButtonGroup implements iContainButtonGroups
         unset($this->button_groups[array_search($button_group, $this->button_groups)]);
         return $this;
     }
- 
+    
+    /**
+     * 
+     * @return ButtonGroup
+     */
     public function getButtonGroupMain()
     {
         return $this->getButtonGroups()[0];
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\ButtonGroup::addButton()
+     */
     public function addButton(Button $button_widget)
     {
         $this->getButtonGroupMain()->addButton($button_widget);

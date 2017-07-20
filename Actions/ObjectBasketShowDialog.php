@@ -56,14 +56,12 @@ class ObjectBasketShowDialog extends ShowDialog
         /* @var $menu \exface\Core\Widgets\MenuButton */
         $menu = WidgetFactory::create($this->getWidget()->getPage(), 'MenuButton', $this->getWidget());
         $menu->setCaption($this->getWorkbench()->getCoreApp()->getTranslator()->translate('GLOBAL.ACTIONS'));
-        $menu->setAlign(EXF_ALIGN_LEFT);
         $menu->setVisibility(EXF_WIDGET_VISIBILITY_PROMOTED);
         $menu->setInputWidget($table);
         foreach ($meta_object->getActions()->getUsedInObjectBasket() as $a) {
             /* @var $button \exface\Core\Widgets\Button */
             $button = WidgetFactory::create($this->getDialogWidget()->getPage(), $this->getDialogWidget()->getButtonWidgetType(), $menu);
             $button->setAction($a);
-            $button->setAlign(EXF_ALIGN_LEFT);
             $menu->addButton($button);
         }
         $this->getDialogWidget()->addButton($menu);
@@ -114,7 +112,6 @@ class ObjectBasketShowDialog extends ShowDialog
         $button = WidgetFactory::create($dialog->getPage(), 'DialogButton', $dialog);
         $button->setActionAlias('exface.Core.ObjectBasketRemove');
         $button->setInputWidget($table);
-        $button->setAlign(EXF_ALIGN_LEFT);
         $button->getAction()->setContextScope($this->getContextScope())->setContextAlias($this->getContextAlias());
         $dialog->addButton($button);
         

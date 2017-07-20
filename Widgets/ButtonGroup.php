@@ -3,6 +3,8 @@ namespace exface\Core\Widgets;
 
 use exface\Core\Interfaces\Widgets\iHaveButtons;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Interfaces\Widgets\iCanBeAligned;
+use exface\Core\Widgets\Traits\iCanBeAlignedTrait;
 
 /**
  * A group of button widgets with a mutual input widget.
@@ -12,9 +14,12 @@ use exface\Core\CommonLogic\UxonObject;
  * @author Andrej Kabachnik
  *        
  */
-class ButtonGroup extends Button implements iHaveButtons
+class ButtonGroup extends Button implements iHaveButtons, iCanBeAligned
 {
-
+    use iCanBeAlignedTrait {
+        getAlign as getAlignDefault;
+    }
+    
     private $buttons = array();
 
     /**
@@ -150,6 +155,19 @@ class ButtonGroup extends Button implements iHaveButtons
             }
         }
         return $cnt;
+    }
+    
+    public function getAlign()
+    {
+        if (is_null($this->getAlignDefault())){
+            foreach ($this->getButtons() as $btn){
+                if ($btn->getAlign()){
+                    $this->setAlign($btn->getAlign());
+                }
+                break;
+            }
+        }
+        return $this->getAlignDefault();
     }
 }
 ?>

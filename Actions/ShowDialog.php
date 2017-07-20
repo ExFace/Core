@@ -5,6 +5,7 @@ use exface\Core\Interfaces\Actions\iShowDialog;
 use exface\Core\Widgets\AbstractWidget;
 use exface\Core\Widgets\Dialog;
 use exface\Core\Interfaces\Widgets\iHaveIcon;
+use exface\Core\CommonLogic\UxonObject;
 
 class ShowDialog extends ShowWidget implements iShowDialog
 {
@@ -161,14 +162,17 @@ class ShowDialog extends ShowWidget implements iShowDialog
      * Adds extra buttons to a dialog.
      *
      * "dialog_buttons": [
-     * {
-     * "widget_type": "DialogButton",
-     * "action_alias": "exface.Core.UpdateData",
-     * "caption": "Speichern"
-     * }
-     * ]
+     *      {
+     *          "widget_type": "DialogButton",
+     *          "action_alias": "exface.Core.UpdateData",
+     *          "caption": "Speichern"
+     *      }
+     *  ]
+     *  
+     * @uxon-property dialog_buttons
+     * @uxon-type \exface\Core\Widgets\Button[]
      *
-     * @param array $uxon_array            
+     * @param UxonObject[] $uxon_array            
      * @return \exface\Core\Actions\ShowDialog
      */
     public function setDialogButtons($uxon_array)

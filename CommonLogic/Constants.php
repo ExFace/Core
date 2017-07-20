@@ -1,7 +1,7 @@
 <?php
 
 /**
- * This files holds all global constants used in ExFace. These are part of the core source code and must not be changed for
+ * This file holds all global constants used in ExFace. These are part of the core source code and must not be changed for
  * customizing reasons! They are jsut here for ease of access and because of backward compatibility to older components.
  */
 
@@ -82,10 +82,16 @@ const EXF_COMPARATOR_GREATER_THAN = '>';
 
 const EXF_COMPARATOR_GREATER_THAN_OR_EQUALS = '>=';
 
-// Lists
+/*
+ * Lists
+ */ 
+
 const EXF_LIST_SEPARATOR = ',';
 
-// Logical operators
+/*
+ * Logical operators
+ */
+
 const EXF_LOGICAL_AND = 'AND';
 
 const EXF_LOGICAL_OR = 'OR';
@@ -94,7 +100,10 @@ const EXF_LOGICAL_XOR = 'XOR';
 
 const EXF_LOGICAL_NOT = 'NOT';
 
-// Aggregator function names
+/*
+ * Aggregator function names
+ */
+
 const EXF_AGGREGATOR_SUM = 'SUM';
 
 const EXF_AGGREGATOR_AVG = 'AVG';
@@ -113,12 +122,23 @@ const EXF_AGGREGATOR_COUNT = 'COUNT';
 
 const EXF_AGGREGATOR_COUNT_DISTINCT = 'COUNT_DISTINCT';
 
-// Alignment options
+/*
+ * Alignment options
+ */
+
+const EXF_ALIGN_DEFAULT = 'default';
+
+const EXF_ALIGN_OPPOSITE = 'opposite';
+
 const EXF_ALIGN_LEFT = 'left';
 
 const EXF_ALIGN_RIGHT = 'right';
 
 const EXF_ALIGN_CENTER = 'center';
+
+/*
+ * Message types
+ */
 
 const EXF_MESSAGE_TYPE_INFO = 'info';
 
@@ -128,6 +148,10 @@ const EXF_MESSAGE_TYPE_ERROR = 'error';
 
 const EXF_MESSAGE_TYPE_SUCCESS = 'success';
 
+/*
+ * Mouse action types
+ */ 
+
 const EXF_MOUSE_ACTION_DOUBLE_CLICK = 'double_click';
 
 const EXF_MOUSE_ACTION_LEFT_CLICK = 'left_click';
@@ -135,6 +159,10 @@ const EXF_MOUSE_ACTION_LEFT_CLICK = 'left_click';
 const EXF_MOUSE_ACTION_RIGHT_CLICK = 'right_click';
 
 const EXF_MOUSE_ACTION_LONG_TAP = 'long_tap';
+
+/*
+ * Text properties
+ */
 
 const EXF_TEXT_SIZE_SMALL = 'small';
 

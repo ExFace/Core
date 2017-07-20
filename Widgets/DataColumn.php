@@ -12,6 +12,7 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Widgets\iShowDataColumn;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\Widgets\Traits\iCanBeAlignedTrait;
 
 /**
  * The DataColumn represents a column in Data-widgets.
@@ -32,7 +33,10 @@ use exface\Core\Interfaces\WidgetInterface;
  */
 class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleAttribute, iShowText
 {
-
+    use iCanBeAlignedTrait {
+        getAlign as getAlignDefault;
+    }
+    
     private $attribute_alias = null;
 
     private $sortable = true;
@@ -228,16 +232,16 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
      */
     public function getAlign()
     {
-        if (! $this->align) {
+        if (is_null($this->getAlignDefault())) {
             if ($this->getDataType()->is(EXF_DATA_TYPE_NUMBER) || $this->getDataType()->is(EXF_DATA_TYPE_PRICE) || $this->getDataType()->is(EXF_DATA_TYPE_DATE)) {
-                $this->align = EXF_ALIGN_RIGHT;
+                $this->setAlign(EXF_ALIGN_OPPOSITE);
             } elseif ($this->getDataType()->is(EXF_DATA_TYPE_BOOLEAN)) {
-                $this->align = EXF_ALIGN_CENTER;
+                $this->setAlign(EXF_ALIGN_CENTER);
             } else {
-                $this->align = EXF_ALIGN_LEFT;
+                $this->setAlign(EXF_ALIGN_DEFAULT);
             }
         }
-        return $this->align;
+        return $this->getAlignDefault();
     }
 
     /**
@@ -268,19 +272,10 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     }
 
     /**
-     * Sets the alignment of values in this column: LEFT, RIGHT or CENTER.
-     *
-     * @uxon-property align
-     * @uxon-type string
-     *
-     * @see \exface\Core\Interfaces\Widgets\iCanBeAligned::setAlign()
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iShowSingleAttribute::getAttribute()
      */
-    public function setAlign($value)
-    {
-        $this->align = $value;
-        return $this;
-    }
-
     function getAttribute()
     {
         try {

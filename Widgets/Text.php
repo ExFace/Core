@@ -10,6 +10,7 @@ use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\CommonLogic\Model\Relation;
+use exface\Core\Widgets\Traits\iCanBeAlignedTrait;
 
 /**
  * The text widget simply shows text with an optional title created from the caption of the widget
@@ -19,12 +20,13 @@ use exface\Core\CommonLogic\Model\Relation;
  */
 class Text extends AbstractWidget implements iShowSingleAttribute, iHaveValue, iShowText
 {
-
+    use iCanBeAlignedTrait {
+        getAlign as getAlignDefault;
+    }
+    
     private $text = NULL;
 
     private $attribute_alias = null;
-
-    private $align = null;
 
     private $data_type = null;
 
@@ -254,50 +256,66 @@ class Text extends AbstractWidget implements iShowSingleAttribute, iHaveValue, i
         
         return $this->getMetaObject()->getAttribute($this->getAttributeAlias());
     }
-
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iShowText::getSize()
+     */
     public function getSize()
     {
         return $this->size;
     }
-
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iShowText::setSize()
+     */
     public function setSize($value)
     {
         $this->size = $value;
         return $this;
     }
-
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iShowText::getStyle()
+     */
     public function getStyle()
     {
         return $this->style;
     }
-
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iShowText::setStyle()
+     */
     public function setStyle($value)
     {
         $this->style = $value;
         return $this;
     }
-
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iCanBeAligned::getAlign()
+     */
     public function getAlign()
     {
-        if (! $this->align) {
+        if (is_null($this->getAlignDefault())) {
             if ($this->getDataType()->is(EXF_DATA_TYPE_NUMBER) || $this->getDataType()->is(EXF_DATA_TYPE_PRICE)) {
-                $this->align = EXF_ALIGN_RIGHT;
+                $this->setAlign(EXF_ALIGN_OPPOSITE);
             } elseif ($this->getDataType()->is(EXF_DATA_TYPE_BOOLEAN)) {
-                $this->align = EXF_ALIGN_CENTER;
+                $this->setAlign(EXF_ALIGN_CENTER);
             } else {
-                $this->align = EXF_ALIGN_LEFT;
+                $this->setAlign(EXF_ALIGN_DEFAULT);
             }
         }
-        return $this->align;
-    }
-
-    public function setAlign($value)
-    {
-        if (! defined('EXF_ALIGN_' . mb_strtoupper($value))) {
-            throw new WidgetPropertyInvalidValueError($this, 'Invalid alignment value "' . $value . '": use "left", "rigth" or "center"!');
-        }
-        $this->align = constant('EXF_ALIGN_' . mb_strtoupper($value));
-        return $this;
+        return $this->getAlignDefault();
     }
 
     /**
