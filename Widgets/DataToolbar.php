@@ -14,11 +14,23 @@ use exface\Core\Factories\WidgetFactory;
  */
 class DataToolbar extends Toolbar
 {    
+    /** @var boolean */
     private $include_global_actions = true;
     
-    private $global_action_button_group = null;
-
+    /** @var boolean */
+    private $include_search_button = true;
+    
+    /** @var boolean */
     private $include_object_basket_actions = false;
+    
+    /** @var ButtonGroup */
+    private $global_action_button_group = null;
+    
+    /** @var Button */
+    private $search_button = null;
+    
+    /** @var ButtonGroup */
+    private $search_button_group = null;
 
     /**
      * 
@@ -98,6 +110,7 @@ class DataToolbar extends Toolbar
     protected function getButtonGroupForGlobalActions(){
         if (is_null($this->global_action_button_group)){
             $this->global_action_button_group = WidgetFactory::create($this->getPage(), 'ButtonGroup', $this);
+            $this->global_action_button_group->setVisibility(EXF_WIDGET_VISIBILITY_OPTIONAL);
             
             foreach ($this->getWorkbench()->getConfig()->getOption('GLOBAL.ACTIONS') as $uxon){
                 /* @var $btn \exface\Core\Widgets\Button */
@@ -117,7 +130,66 @@ class DataToolbar extends Toolbar
         if ($this->getIncludeGlobalActions()){
             $groups[] = $this->getButtonGroupForGlobalActions();
         }
+        if ($this->getIncludeSearchButton()){
+            // FIXME config widget failure
+            // $groups[] = $this->getButtonGroupForSearchButtons();
+        }
         return $groups;
     }
+    
+    /**
+     * Returns TRUE if the search button will added to this toolbar and FALSE otherwise.
+     * 
+     * @return boolean
+     */
+    public function getIncludeSearchButton()
+    {
+        return $this->include_search_button;
+    }
+    
+    /**
+     * Set to FALSE to remove the search button from this toolbar.
+     * 
+     * @uxon-property include_search_button
+     * @uxon-type boolean
+     * 
+     * @param boolean $true_or_false
+     * @return \exface\Core\Widgets\DataToolbar
+     */
+    public function setIncludeSearchButton($true_or_false)
+    {
+        $this->include_search_button = BooleanDataType::parse($true_or_false);
+        return $this;
+    }
+    
+    public function getSearchButton()
+    {
+        if (is_null($this->search_button)){
+            $this->search_button = WidgetFactory::create($this->getPage(), $this->getButtonWidgetType(), $this);
+            $this->search_button
+                ->setActionAlias('exface.Core.RefreshWidget')
+                ->setVisibility(EXF_WIDGET_VISIBILITY_PROMOTED)
+                ->setAlign(EXF_ALIGN_OPPOSITE);
+        }
+        return $this->search_button;
+    }
+    
+    protected function getButtonGroupForSearchButtons()
+    {
+        if (is_null($this->search_button_group)){
+            $this->search_button_group = WidgetFactory::create($this->getPage(), 'ButtonGroup', $this);
+            $this->search_button_group->addButton($this->getSearchButton());
+        }
+        
+        return $this->search_button_group;
+    }
+    
+    /*public function getButtonGroupMain(){
+        $grp = parent::getButtonGroupMain();
+        if (is_null($this->search_button)){
+            //$grp->addButton($this->getSearchButton());
+        }
+        return $grp;
+    }*/
 }
 ?>
