@@ -2,12 +2,25 @@
 namespace exface\Core\CommonLogic\Contexts;
 
 use exface\Core\Interfaces\Contexts\ContextScopeInterface;
+use exface\Core\Exceptions\Actions\ActionInputTypeError;
 
+/**
+ * This trait contains typical methods for actions working with contexts.
+ * 
+ * It is important to use the same UXON syntax for the same properties of
+ * similar actions. Allows to set basic context properties like context_alias
+ * and context scope.
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
 trait ContextActionTrait 
-{  
+{   
+    /** @var string */
     private $context_alias = null;
     
-    private $context_scope_name = null;
+    /** @var ContextScopeInterface */
+    private $context_scope = null;
     
     /**
      * Returns the full alias of the context (with namespace)
@@ -41,7 +54,7 @@ trait ContextActionTrait
      */
     public function getContextScope()
     {
-        return $this->getApp()->getWorkbench()->context()->getScope($this->context_scope_name);
+        return $this->context_scope;
     }
     
     /**
@@ -50,12 +63,18 @@ trait ContextActionTrait
      * @uxon-property context_scope
      * @uxon-type string
      * 
-     * @param string $value
+     * @param ContextScopeInterface|string $scope_or_string_name
      * @return \exface\Core\CommonLogic\Contexts\ContextActionTrait
      */
-    public function setContextScope($value)
+    public function setContextScope($scope_or_string_name)
     {
-        $this->context_scope_name = $value;
+        if (is_string($scope_or_string_name)){
+            $this->context_scope = $this->getWorkbench()->context()->getScope($scope_or_string_name);
+        } elseif ($scope_or_string_name instanceof ContextScopeInterface){
+            $this->context_scope = $scope_or_string_name;
+        } else {
+            throw new ActionInputTypeError($this, 'Cannot set context scope for "' . $this->getAliasWithNamespace() . '": expecting string or instantiated context scope, ' . gettype($scope_or_string_name) . ' given instead!');
+        }
         return $this;
     }
     
