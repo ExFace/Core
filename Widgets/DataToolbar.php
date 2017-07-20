@@ -96,24 +96,17 @@ class DataToolbar extends Toolbar
      * @return Button[]
      */
     protected function getButtonGroupForGlobalActions(){
-        $btns = [];
         if (is_null($this->global_action_button_group)){
             $this->global_action_button_group = WidgetFactory::create($this->getPage(), 'ButtonGroup', $this);
             
-            $btn = WidgetFactory::create($this->getPage(), $this->getButtonWidgetType(), $this);
-            $btn->setActionAlias('exface.Core.ObjectBasketAdd');
-            $btns[] = $btn;
-            
-            $btn = WidgetFactory::create($this->getPage(), $this->getButtonWidgetType(), $this);
-            $btn->setActionAlias('exface.Core.FavoritesAdd');
-            $btns[] = $btn;
-            
-            foreach ($btns as $btn){
+            foreach ($this->getWorkbench()->getConfig()->getOption('GLOBAL.ACTIONS') as $uxon){
+                /* @var $btn \exface\Core\Widgets\Button */
+                $btn = WidgetFactory::create($this->getPage(), $this->getButtonWidgetType(), $this);
+                $btn->setAction($uxon);
                 $btn->setVisibility(EXF_WIDGET_VISIBILITY_OPTIONAL);
                 $this->global_action_button_group->addButton($btn);
             }
         }
-        
         
         return $this->global_action_button_group;
     }

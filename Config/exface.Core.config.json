@@ -51,5 +51,14 @@
                "restrict_only_admins": true
            }
 	   ]
-	}
+	},
+	
+	"GLOBAL.ACTIONS": [
+	   {
+	       "alias": "exface.Core.ObjectBasketAdd"
+	   },
+	   {
+           "alias": "exface.Core.FavoritesAdd"
+       }
+	]
 }
