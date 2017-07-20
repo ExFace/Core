@@ -801,7 +801,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
     
     public function addSorter($attribute_alias, $direction)
     {
-        $this->getConfiguratorWidget()->addSorter();
+        $this->getConfiguratorWidget()->addSorter($attribute_alias, $direction);
         $sorter = new \stdClass();
         $sorter->attribute_alias = $attribute_alias;
         $sorter->direction = $direction;
