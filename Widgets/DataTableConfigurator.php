@@ -28,7 +28,7 @@ class DataTableConfigurator extends DataConfigurator
      */
     public function getColumnTab()
     {
-        if (is_null($this->getTab(0))){
+        if (is_null($this->column_tab)){
             $this->column_tab = $this->createColumnTab();
             $this->addTab($this->column_tab, 3);
         }
@@ -55,7 +55,7 @@ class DataTableConfigurator extends DataConfigurator
      */
     public function getAggregationTab()
     {
-        if (is_null($this->getTab(1))){
+        if (is_null($this->aggregation_tab)){
             $this->aggregation_tab = $this->createAggregationTab();
             $this->addTab($this->aggregation_tab, 4);
         }

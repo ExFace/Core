@@ -212,7 +212,7 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
      */
     public function getFilterTab()
     {
-        if (is_null($this->getTab(0))){
+        if (is_null($this->filter_tab)){
             $this->filter_tab = $this->createFilterTab();
             $this->addTab($this->filter_tab, 0);
         }
@@ -239,7 +239,7 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
      */
     public function getSorterTab()
     {
-        if (is_null($this->getTab(1))){
+        if (is_null($this->sorter_tab)){
             $this->sorter_tab = $this->createSorterTab();
             $this->addTab($this->sorter_tab, 1);
         }

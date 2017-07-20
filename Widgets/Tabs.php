@@ -239,7 +239,7 @@ class Tabs extends Container implements iFillEntireContainer
     public function addWidget(AbstractWidget $widget, $position = null)
     {
         if ($widget instanceof Tab) {
-            return parent::addWidget($widget);
+            return parent::addWidget($widget, $position);
         } else {
             return $this->getDefaultTab()->addWidget($widget);
         }
