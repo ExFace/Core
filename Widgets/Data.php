@@ -1369,7 +1369,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
      * 
      * @return boolean|null
      */
-    public function getHideRefreshButton()
+    public function getHideSearchButton()
     {
         return $this->hide_refresh_button;
     }
@@ -1383,7 +1383,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
      * @param boolean $hide_refresh_button
      * @return \exface\Core\Widgets\Data
      */
-    public function setHideRefreshButton($true_or_false)
+    public function setHideSearchButton($true_or_false)
     {
         $this->hide_refresh_button = BooleanDataType::parse($true_or_false);
         return $this;
