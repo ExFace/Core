@@ -127,7 +127,9 @@ class ContextBar extends Toolbar
                         $btn->setVisibility(EXF_WIDGET_VISIBILITY_OPTIONAL);
                         break;
                     default:
-                        throw new WidgetLogicError($this, 'Invalid context bar visibility "' . $visibility . '" set for context "' . $context->getAlias() . '"');
+                        if (! defined('\\exface\\Core\\Interfaces\\Contexts\\ContextInterface::CONTEXT_BAR_' . mb_strtoupper($visibility))) {
+                            throw new WidgetLogicError($this, 'Invalid context bar visibility "' . $visibility . '" set for context "' . $context->getAlias() . '"');
+                        }
                 }
                 
                 $this->addButton($btn);
