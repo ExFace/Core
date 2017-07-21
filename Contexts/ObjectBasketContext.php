@@ -229,8 +229,10 @@ class ObjectBasketContext extends AbstractContext
             ->setIncludeGlobalActions(false)
             ->setIncludeObjectBasketActions(false);
         
-        // Add the title column (the UID column is always there
-        $data_list->addColumn(WidgetFactory::create($container->getPage(), 'DataColumn', $data_list)->setAttributeAlias('TITLE'));
+        // Add the title and the UID column
+        $data_list
+            ->addColumn(WidgetFactory::create($container->getPage(), 'DataColumn', $data_list)->setAttributeAlias('ID'))
+            ->addColumn(WidgetFactory::create($container->getPage(), 'DataColumn', $data_list)->setAttributeAlias('TITLE'));
         
         // Fill with content
         $ds = $data_list->prepareDataSheetToRead();
