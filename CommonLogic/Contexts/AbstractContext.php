@@ -9,6 +9,13 @@ use exface\Core\Widgets\Container;
 use exface\Core\Interfaces\NameResolverInterface;
 use exface\Core\CommonLogic\Constants\Colors;
 
+/**
+ * This is a basic implementation of common context methods intended to be used
+ * as the base for "real" contexts.
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
 abstract class AbstractContext implements ContextInterface
 {
 
@@ -192,15 +199,10 @@ abstract class AbstractContext implements ContextInterface
      */
     public function setVisibility($value)
     {
-        $value = mb_strtolower($value);
-        if ($value != ContextInterface::CONTEXT_BAR_DISABED 
-        && $value != ContextInterface::CONTEXT_BAR_HIDE_ALLWAYS 
-        && $value != ContextInterface::CONTEXT_BAR_SHOW_ALLWAYS 
-        && $value != ContextInterface::CONTEXT_BAR_SHOW_IF_NOT_EMPTY) {
+        if (! defined('static::CONTEXT_BAR_' . mb_strtoupper($value))) {
             throw new ContextRuntimeError($this, 'Invalid context_bar_visibility value "' . $value . '" for context "' . $this->getAliasWithNamespace() . '"!');
-            return;
         }
-        $this->context_bar_visibility = $value;
+        $this->context_bar_visibility = constant('static::CONTEXT_BAR_' . mb_strtoupper($value));
         return $this;
     }
     

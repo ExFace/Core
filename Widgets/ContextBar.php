@@ -18,6 +18,11 @@ use exface\Core\CommonLogic\UxonObject;
  * 
  * Every context is represented by a button showing a popup. The contents of
  * that popup is defined by the context itself.
+ * 
+ * The context bar can be customized in the core configuration file via the
+ * config option CONTEXTBAR. Just like any other widget, the context bar can
+ * be described via UXON - just in the config files instead of each page 
+ * separately.
  *
  * @author Andrej Kabachnik
  *        
@@ -46,6 +51,30 @@ class ContextBar extends Toolbar
     }
     
     /**
+     * Defines the contexts to be show in the context bar as an array.
+     * 
+     * Each context is represented by a UXON object with the following structure:
+     *  {
+     *      "context_alias": "exface.Core.DebugContext",
+     *      "context_scope": "Window",
+     *      "visibility": "show_always",
+     *      "restrict_only_admins": true,
+     *      "restrict_only_authenticated": true
+     *  }
+     *  
+     * The visibility property takes the following options, that customize the
+     * appearance of the context button depending on the template used.
+     * 
+     * - show_allways - makes the context button always visible
+     * - show_if_not_empty - hides the context button if there is no popup content
+     * - hide_allways - hides the context button allways
+     * - disabled - disables loading of the context into the context bar (this 
+     * way default contexts can be disabled)
+     * - default - leaves showing/hiding the context upto the template
+     * - emphasized
+     * 
+     * @uxon-property contexts
+     * @uxon-type array
      * 
      * @param UxonObject[] $context_uxon_objects
      * @return ContextBar
@@ -91,7 +120,7 @@ class ContextBar extends Toolbar
                             $btn->setVisibility(EXF_WIDGET_VISIBILITY_OPTIONAL);
                             break;
                         }
-                    case ContextInterface::CONTEXT_BAR_SHOW_ALLWAYS:
+                    case ContextInterface::CONTEXT_BAR_EMPHASIZED:
                         $btn->setVisibility(EXF_WIDGET_VISIBILITY_PROMOTED);
                         break;
                     case ContextInterface::CONTEXT_BAR_HIDE_ALLWAYS:

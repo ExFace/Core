@@ -40,6 +40,7 @@ interface ContextInterface extends AliasInterface, iCanBeConvertedToUxon, Exface
     const CONTEXT_BAR_HIDE_ALLWAYS = 'hide_allways';
     const CONTEXT_BAR_DISABED = 'disabled';
     const CONTEXT_BAR_DEFAULT = 'default';
+    const CONTEXT_BAR_EMPHASIZED = 'emphasized';
 
     /**
      * Returns the scope of this speicific context

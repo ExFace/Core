@@ -18,9 +18,18 @@ use exface\Core\CommonLogic\Log\Handlers\BufferingHandler;
 use exface\Core\Interfaces\NameResolverInterface;
 use exface\Core\Exceptions\Contexts\ContextAccessDeniedError;
 use exface\Core\CommonLogic\Profiler;
+use exface\Core\Interfaces\Contexts\ContextInterface;
 
 /**
+ * This context offers usefull debugging tools right in the GUI.
  * 
+ * It's main feature is tracing: while it's enabled, the profiler is run for
+ * every request and trace log files are created. These can be opened right
+ * from the context popup. Thus, you can easily see which data source queries
+ * a page produces, how long they take, etc.
+ * 
+ * NOTE: tracing produces a lot of files and causes performance overhead, so
+ * don't leave it on for long!
  *
  * @author Andrej Kabachnik
  *        
@@ -203,10 +212,22 @@ class DebugContext extends AbstractContext
      */
     public function getColor()
     {
-        if ($this->isRecording()){
+        if ($this->isDebugging()){
             return Colors::RED;
         }
         return Colors::DEFAULT;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Contexts\AbstractContext::getVisibility()
+     */
+    public function getVisibility(){
+        if ($this->isDebugging()){
+            return ContextInterface::CONTEXT_BAR_EMPHASIZED;
+        }
+        return parent::getVisibility();
     }
     
     /**
