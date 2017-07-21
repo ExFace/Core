@@ -231,7 +231,7 @@ class ObjectBasketContext extends AbstractContext
         
         // Add the title and the UID column
         $data_list
-            ->addColumn(WidgetFactory::create($container->getPage(), 'DataColumn', $data_list)->setAttributeAlias('ID'))
+            ->addColumn(WidgetFactory::create($container->getPage(), 'DataColumn', $data_list)->setAttributeAlias('ID')->setHidden(true))
             ->addColumn(WidgetFactory::create($container->getPage(), 'DataColumn', $data_list)->setAttributeAlias('TITLE'));
         
         // Fill with content
