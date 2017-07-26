@@ -32,13 +32,18 @@ trait iHaveToolbarsTrait {
     }
     
     /**
-     * Give the widget one or more toolbars with buttons.
+     * Defines one or more toolbars with buttons for this widget.
      * 
-     * This is a more flexible alternative for the buttons property. While all
-     * buttons specified there will be automatically added to the default
-     * toolbar, specifying each toolbar separately makes it possible to choose
-     * where to place which buttons. Many widgets support multiple toolbars:
-     * top, bottom, perhaps a menu, etc.
+     * Specifying toolbars is a more flexible alternative to filling the buttons
+     * array of a widget. While all buttons specified there will be automatically 
+     * added to the default toolbar, specifying each toolbar separately makes it 
+     * possible to choose where to place which buttons and to control button
+     * grouping within each toolbar. Refer to the description of the Toolbar
+     * widget for more details.
+     * 
+     * Depending on the template used, the position-property of a toolbar can be
+     * used to place it at a specific point of the widget. For example, a
+     * DataTable widget will typically have a top and a bottom toolbar. 
      * 
      * @uxon-property toolbars
      * @uxon-type \exface\Core\Widgets\Toolbar

@@ -5,6 +5,7 @@ use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Factories\WidgetFactory;
+use exface\Core\CommonLogic\Constants\Icons;
 
 /**
  * A special button bar to be used in data widgets for actions.
@@ -18,7 +19,7 @@ class DataToolbar extends Toolbar
     private $include_global_actions = true;
     
     /** @var boolean */
-    private $include_search_button = true;
+    private $include_search_actions = true;
     
     /** @var boolean */
     private $include_object_basket_actions = false;
@@ -39,7 +40,7 @@ class DataToolbar extends Toolbar
      */
     public function setParent(WidgetInterface $widget)
     {
-        if (! $widget instanceof Data
+        if (! $this->is($widget->getToolbarWidgetType())
         && ! $widget instanceof DataToolbar){
             throw new WidgetConfigurationError($this, 'The widget DataToolbar can only be used within Data widgets or other DataToolbars');
         }
@@ -67,7 +68,7 @@ class DataToolbar extends Toolbar
     /**
      *
      * @param boolean $true_or_false
-     * @return \exface\Core\Widgets\DataRowMenu
+     * @return DataToolbar
      */
     public function setIncludeGlobalActions($true_or_false)
     {
@@ -87,7 +88,7 @@ class DataToolbar extends Toolbar
     /**
      *
      * @param boolean $true_or_false
-     * @return \exface\Core\Widgets\DataRowMenu
+     * @return DataToolbar
      */
     public function setIncludeObjectBasketActions($true_or_false)
     {
@@ -127,12 +128,17 @@ class DataToolbar extends Toolbar
     public function getButtonGroups()
     {
         $groups = parent::getButtonGroups();
-        if ($this->getIncludeGlobalActions()){
+        
+        // Add automatic button groups - but only if their parent is still this
+        // toolbar. If they were moved, the parent changes and we don't want
+        // to see them here anymore.
+        // Adding these groups must be done every time, because the must allways
+        // be at the end
+        if ($this->getIncludeGlobalActions() && $this->getButtonGroupForGlobalActions()->getParent() === $this){
             $groups[] = $this->getButtonGroupForGlobalActions();
         }
-        if ($this->getIncludeSearchButton()){
-            // FIXME config widget failure
-            // $groups[] = $this->getButtonGroupForSearchButtons();
+        if ($this->getIncludeSearchActions() && $this->getButtonGroupForSearchActions()->getParent() === $this){
+            $groups[] = $this->getButtonGroupForSearchActions();
         }
         return $groups;
     }
@@ -142,9 +148,9 @@ class DataToolbar extends Toolbar
      * 
      * @return boolean
      */
-    public function getIncludeSearchButton()
+    public function getIncludeSearchActions()
     {
-        return $this->include_search_button;
+        return $this->include_search_actions;
     }
     
     /**
@@ -156,9 +162,9 @@ class DataToolbar extends Toolbar
      * @param boolean $true_or_false
      * @return \exface\Core\Widgets\DataToolbar
      */
-    public function setIncludeSearchButton($true_or_false)
+    public function setIncludeSearchActions($true_or_false)
     {
-        $this->include_search_button = BooleanDataType::parse($true_or_false);
+        $this->include_search_actions = BooleanDataType::parse($true_or_false);
         return $this;
     }
     
@@ -168,13 +174,15 @@ class DataToolbar extends Toolbar
             $this->search_button = WidgetFactory::create($this->getPage(), $this->getButtonWidgetType(), $this);
             $this->search_button
                 ->setActionAlias('exface.Core.RefreshWidget')
+                ->setCaption($this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.READDATA.SEARCH'))
+                ->setIconName(Icons::SEARCH)
                 ->setVisibility(EXF_WIDGET_VISIBILITY_PROMOTED)
                 ->setAlign(EXF_ALIGN_OPPOSITE);
         }
         return $this->search_button;
     }
     
-    protected function getButtonGroupForSearchButtons()
+    protected function getButtonGroupForSearchActions()
     {
         if (is_null($this->search_button_group)){
             $this->search_button_group = WidgetFactory::create($this->getPage(), 'ButtonGroup', $this);
@@ -184,12 +192,9 @@ class DataToolbar extends Toolbar
         return $this->search_button_group;
     }
     
-    /*public function getButtonGroupMain(){
-        $grp = parent::getButtonGroupMain();
-        if (is_null($this->search_button)){
-            //$grp->addButton($this->getSearchButton());
-        }
-        return $grp;
-    }*/
+    public function getButtonWidgetType()
+    {
+        return 'DataButton';
+    }
 }
 ?>

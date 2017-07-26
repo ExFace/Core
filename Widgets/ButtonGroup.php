@@ -5,23 +5,37 @@ use exface\Core\Interfaces\Widgets\iHaveButtons;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Widgets\iCanBeAligned;
 use exface\Core\Widgets\Traits\iCanBeAlignedTrait;
+use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
+use exface\Core\Interfaces\Widgets\iUseInputWidget;
+use exface\Core\Widgets\Traits\iUseInputWidgetTrait;
+use exface\Core\Interfaces\Widgets\iContainButtonGroups;
 
 /**
- * A group of button widgets with a mutual input widget.
+ * A group of button widgets visually separated from the other buttons.
  *
- * Depending on the template, a ButtonGroup can be displayed as a list of buttons or even transformed to a menu.
+ * Button groups are mostly used within toolbars and menus to create visual
+ * boundaries around a set of buttons: in a menu there would be separators
+ * around a button group, while in a toolbar a buttong group might have extra
+ * space around it.
+ * 
+ * Button groups can be aligned within a toolbar. If you have a wide toolbar,
+ * you can put some button groups to the left and others to the right.
+ * 
+ * @method iContainButtonGroups getParent()
  *
  * @author Andrej Kabachnik
  *        
  */
-class ButtonGroup extends Button implements iHaveButtons, iCanBeAligned
+class ButtonGroup extends Container implements iHaveButtons, iCanBeAligned, iUseInputWidget
 {
     use iCanBeAlignedTrait {
         getAlign as getAlignDefault;
     }
     
+    use iUseInputWidgetTrait;
+    
     private $buttons = array();
-
+    
     /**
      * {@inheritdoc}
      *
@@ -31,12 +45,28 @@ class ButtonGroup extends Button implements iHaveButtons, iCanBeAligned
     {
         return $this->buttons;
     }
+    
+    /**
+     * 
+     * @param integer $min_visibility
+     * @param integer $max_visibility
+     */
+    public function getButtonsByVisibility($min_visibility = EXF_WIDGET_VISIBILITY_OPTIONAL, $max_visibility = EXF_WIDGET_VISIBILITY_PROMOTED)
+    {
+        $btns = [];
+        foreach ($this->getButtons() as $button){
+            if ($button->getVisibility() >= $min_visibility && $button->getVisibility() <= $max_visibility){
+                $btns[] = $button;
+            }
+        }
+        return $btns;
+    }
 
     /**
      * Defines the contained buttons via array of button definitions.
      *
      * @uxon-property buttons
-     * @uxon-type Button[]
+     * @uxon-type \exface\Core\Widgets\Button[]
      *
      * {@inheritdoc}
      *
@@ -44,12 +74,21 @@ class ButtonGroup extends Button implements iHaveButtons, iCanBeAligned
      */
     public function setButtons(array $buttons_array)
     {
-        if (! is_array($buttons_array))
-            return false;
         foreach ($buttons_array as $b) {
-            $button = $this->getPage()->createWidget('Button', $this, UxonObject::fromAnything($b));
+            if ($b instanceof Button){
+                $button = $b;
+            } elseif ($b instanceof UxonObject){
+                // If the widget type of the Button is explicitly defined, use it, otherwise fall back to the button widget type of
+                // this widget: i.e. Button for simple Forms, DialogButton for Dialogs, etc.
+                $button_widget_type = $b->hasProperty('widget_type') ? $b->getProperty('widget_type') : $this->getButtonWidgetType();
+                $button = $this->getPage()->createWidget($button_widget_type, $this, UxonObject::fromAnything($b));
+            } else {
+                throw new WidgetPropertyInvalidValueError($this, 'Cannot use "' . gettype($b) . '" as button in ' . $this->getWidgetType() . '": instantiated button widget (or derivative) or corresponding UXON object expected!');
+            }
+            // Add the button to the group
             $this->addButton($button);
         }
+        return $this;
     }
 
     /**
@@ -95,6 +134,11 @@ class ButtonGroup extends Button implements iHaveButtons, iCanBeAligned
      */
     public function getButtonWidgetType()
     {
+        if ($this->getParent() instanceof Toolbar){
+            return $this->getParent()->getButtonWidgetType();
+        } elseif (method_exists($this->getInputWidget(), 'getButtonWidgetType')){
+            return $this->getInputWidget()->getButtonWidgetType();
+        }
         return 'Button';
     }
 

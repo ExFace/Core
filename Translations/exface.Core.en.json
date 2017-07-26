@@ -39,7 +39,9 @@
     "ACTION.OBJECTBASKETREMOVE.RESULT": "%context_name%: %number%x %object_name% removed.",
     "ACTION.OBJECTBASKETREMOVE.RESULT_ALL": "%context_name%: All objects of type %object_name% removed.",
     
-    "ACTION.READDATA.NAME": "Reload",
+    "ACTION.READDATA.NAME": "Search",
+    "ACTION.READDATA.SEARCH": "Search",
+    "ACTION.REFRESHWIDGET.NAME": "Refresh",
 	
 	"ACTION.SAVEDATA.RESULT": "%number% item created or updated.|%number% items created or updated.",
 	"ACTION.SAVEDATA.NAME": "Save",

@@ -39,7 +39,9 @@
     "ACTION.OBJECTBASKETREMOVE.RESULT": "%context_name%: %number%x %object_name% entfernt.",
     "ACTION.OBJECTBASKETREMOVE.RESULT_ALL": "%context_name%: Alle Objekte vom Typ %object_name% entfernt.",
 
-    "ACTION.READDATA.NAME": "Reload",
+    "ACTION.READDATA.NAME": "Suchen",
+    "ACTION.READDATA.SEARCH": "Suchen",
+    "ACTION.REFRESHWIDGET.NAME": "Aktualisieren",
 
 	"ACTION.SAVEDATA.RESULT": "%number% Objekt gespeichert.|%number% Objekte gespeichert.",
 	"ACTION.SAVEDATA.NAME": "Speichern",

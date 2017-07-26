@@ -1,7 +1,6 @@
 <?php
 namespace exface\Core\Interfaces\Widgets;
 
-use exface\Core\Widgets\AbstractWidget;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\Interfaces\WidgetInterface;
@@ -32,19 +31,4 @@ interface iTriggerAction extends WidgetInterface
      * @throws WidgetPropertyInvalidValueError
      */
     public function setAction($action_object_or_uxon_description);
-
-    /**
-     * Returns the widget, that supplies the input data for the action
-     *
-     * @return AbstractWidget $widget
-     */
-    public function getInputWidget();
-
-    /**
-     * Sets the widget, that supplies the input data for the action
-     *
-     * @param AbstractWidget $widget            
-     * @return AbstractWidget
-     */
-    public function setInputWidget(AbstractWidget $widget);
 }

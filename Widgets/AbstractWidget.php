@@ -1046,12 +1046,14 @@ else {
      */
     public function setVisibility($value)
     {
-        $value = mb_strtolower($value);
-        if ($value != EXF_WIDGET_VISIBILITY_HIDDEN && $value != EXF_WIDGET_VISIBILITY_NORMAL && $value != EXF_WIDGET_VISIBILITY_OPTIONAL && $value != EXF_WIDGET_VISIBILITY_PROMOTED) {
-            throw new WidgetPropertyInvalidValueError($this, 'Invalid visibility value "' . $value . '" for widget "' . $this->getWidgetType() . '"!', '6T90UH3');
-            return;
+        if (is_int($value)){
+            $this->visibility = $value;
+        } else {
+            if (! defined('EXF_WIDGET_VISIBILITY_' . mb_strtoupper($value))) {
+                throw new WidgetPropertyInvalidValueError($this, 'Invalid visibility value "' . $value . '" for widget "' . $this->getWidgetType() . '"!', '6T90UH3');
+            }
+            $this->visibility = constant('EXF_WIDGET_VISIBILITY_'. mb_strtoupper($value));
         }
-        $this->visibility = $value;
         return $this;
     }
 

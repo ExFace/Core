@@ -13,7 +13,7 @@ abstract class AbstractUxonFactory extends AbstractFactory
      * Creates an object from a standard class (e.g.
      * the result of json_decode())
      *
-     * @param exface $exface            
+     * @param Workbench $exface            
      * @param \stdClass $json_object            
      */
     public static function createFromStdClass(Workbench $exface, \stdClass $json_object)

@@ -58,8 +58,11 @@ abstract class DataSheetFactory extends AbstractUxonFactory
      */
     public static function createFromUxon(Workbench $exface, UxonObject $uxon)
     {
-        $object_alias = $uxon->getProperty('object_alias') ? $uxon->getProperty('object_alias') : $uxon->getProperty('meta_object_alias');
-        $meta_object = $exface->model()->getObject($object_alias ? $object_alias : $uxon->meta_object_id);
+        $object_ref = $uxon->hasProperty('object_alias') ? $uxon->getProperty('object_alias') : $uxon->getProperty('meta_object_alias');
+        if (!$object_ref){
+            $object_ref = $uxon->hasProperty('meta_object_id') ? $uxon->getProperty('meta_object_id') : $uxon->getProperty('oId');
+        }
+        $meta_object = $exface->model()->getObject($object_ref);
         $data_sheet = self::createFromObject($meta_object);
         $data_sheet->importUxonObject($uxon);
         return $data_sheet;

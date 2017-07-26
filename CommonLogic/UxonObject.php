@@ -1,8 +1,6 @@
 <?php
 namespace exface\Core\CommonLogic;
 
-use exface\Core\Interfaces\iCanBeConvertedToUxon;
-use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\UxonMapError;
 
@@ -39,7 +37,7 @@ class UxonObject extends \stdClass implements \IteratorAggregate
     /**
      * Creates a UXON object from a JSON string
      *
-     * @param unknown $uxon            
+     * @param string $uxon            
      * @return UxonObject
      */
     public static function fromJson($uxon)

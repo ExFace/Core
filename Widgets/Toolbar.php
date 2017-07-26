@@ -6,7 +6,16 @@ use exface\Core\Interfaces\Widgets\iContainButtonGroups;
 use exface\Core\CommonLogic\UxonObject;
 
 /**
- * A button bar displays one or more button groups as a toolbar.
+ * Toolbars are used to organize buttons within widgets.
+ * 
+ * Each toolbar contains one or more button groups, which can be aligned
+ * left or right within the toolbar. The following schematic illustration 
+ * shows a toolbar with three button groups. Note, that grp2 has been 
+ * aligned to the right. 
+ * 
+ * ------------------------------------------------------------------------
+ * | [grp1_btn1] [grp1_btn2] | [grp3_btn1] |    | [grp2_btn1] [grp2_btn2] |
+ * ------------------------------------------------------------------------
  *
  * @author Andrej Kabachnik
  *        
@@ -33,12 +42,33 @@ class Toolbar extends ButtonGroup implements iContainButtonGroups
     public function getButtonGroups()
     {
         if (count($this->button_groups) == 0){
-            $this->button_groups[] = WidgetFactory::create($this->getPage(), 'ButtonGroup', $this);
+            $this->button_groups[] = $this->createButtonGroup();
         }
         return $this->button_groups;
     }
     
     /**
+     * 
+     * @return ButtonGroup
+     */
+    public function createButtonGroup()
+    {
+        return WidgetFactory::create($this->getPage(), 'ButtonGroup', $this)->setAlign(EXF_ALIGN_DEFAULT);
+    }
+    
+    /**
+     * Defines the button groups in this toolbar via array of button group widgets.
+     * 
+     * Each element of the array must be a ButtonGroup widget object or a
+     * derivative. The widget type can also be ommitted. In this case, ButtonGroup
+     * will be assumed.
+     * 
+     * Setting buttong groups specificly is a more flexible alternative to the
+     * buttons-array: you can directly control, which button goes in which group
+     * and specify captions, hints and align-properties for every button group.
+     * 
+     * @uxon-property button_groups
+     * @uxon-type \exface\Core\Widgets\ButtonGroup[]
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\iContainButtonGroups::setButtonGroups()
@@ -60,13 +90,42 @@ class Toolbar extends ButtonGroup implements iContainButtonGroups
      * @param ButtonGroup $button_group
      * @return \exface\Core\Widgets\Toolbar
      */
-    public function addButtonGroup(ButtonGroup $button_group)
+    public function addButtonGroup(ButtonGroup $widget, $index = null)
     {
-        if ($button_group->getParent() !== $this){
-            $button_group->setParent($this);
+        if ($widget->getParent() !== $this){
+            $widget->setParent($this);
         }
-        $this->button_groups[] = $button_group;
+        
+        if (is_null($index) || ! is_numeric($index)) {
+            $this->button_groups[] = $widget;
+        } else {
+            array_splice($this->button_groups, $index, 0, array(
+                $widget
+            ));
+        }
+        
         return $this;
+    }
+    
+    public function getButtonGroupIndex(ButtonGroup $button_group){
+        // Make sure to search in the result of getButtonGroups() as extending
+        // classes might change it's output.
+        return array_search($button_group, $this->getButtonGroups());
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iContainButtonGroups::getButtonGroup()
+     */
+    public function getButtonGroup($index)
+    {
+        if (!is_int($index)){
+            return null;
+        }
+        // Make sure to search in the result of getButtonGroups() as extending
+        // classes might change it's output.
+        return $this->getButtonGroups()[$index];
     }
     
     /**
@@ -76,17 +135,35 @@ class Toolbar extends ButtonGroup implements iContainButtonGroups
      */
     public function removeButtonGroup(ButtonGroup $button_group)
     {
-        unset($this->button_groups[array_search($button_group, $this->button_groups)]);
+        $key = array_search($button_group, $this->button_groups);
+        if ($key !== false){
+            unset($this->button_groups[$key]);
+        }
         return $this;
     }
     
     /**
      * 
-     * @return ButtonGroup
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iContainButtonGroups::getButtonGroupFirst()
      */
-    public function getButtonGroupMain()
+    public function getButtonGroupFirst($alignment = null)
     {
-        return $this->getButtonGroups()[0];
+        $found_grp = false;
+        foreach ($this->getButtonGroups() as $grp){
+            if (is_null($alignment) || $alignment == $grp->getAlign()){
+                $found_grp = true;
+                break;
+            }
+        }
+        if (!$found_grp){
+            $grp = $this->createButtonGroup();
+            if (!is_null($alignment)){
+                $grp->setAlign($alignment);
+            }
+            $this->addButtonGroup($grp);
+        }
+        return $grp;
     }
     
     /**
@@ -96,7 +173,7 @@ class Toolbar extends ButtonGroup implements iContainButtonGroups
      */
     public function addButton(Button $button_widget)
     {
-        $this->getButtonGroupMain()->addButton($button_widget);
+        $this->getButtonGroupFirst($button_widget->getAlign())->addButton($button_widget);
         return $this;
     }
     
@@ -128,13 +205,25 @@ class Toolbar extends ButtonGroup implements iContainButtonGroups
     }
     
     /**
+     * Specifies the buttons in the toolbar via simple array.
+     * 
+     * The buttons will be automatically added to the first buttong group
+     * matching the align-property of the button. Thus, the buttons will be
+     * grouped by their align-property and placed left or right within the
+     * toolbar according to it.
+     * 
+     * A more flexible alternative to the buttons array is the explicit
+     * definition of buttong roups via the button_groups-property.
+     * 
+     * @uxon-property buttons
+     * @uxon-type \exface\Core\Widgets\Button[]
      * 
      * {@inheritDoc}
      * @see \exface\Core\Widgets\ButtonGroup::setButtons()
      */
     public function setButtons(array $buttons)
     {
-        $this->getButtonGroupMain()->setButtons($buttons);
+        $this->getButtonGroupFirst()->setButtons($buttons);
         return $this;
     }
     
@@ -154,16 +243,14 @@ class Toolbar extends ButtonGroup implements iContainButtonGroups
     }
     
     /**
+     * Places the toolbar at a specific position within the widget.
      * 
-     * {@inheritDoc}
-     * @see \exface\Core\Widgets\ButtonGroup::getButtonWidgetType()
-     */
-    public function getButtonWidgetType()
-    {
-        return $this->getInputWidget()->getButtonWidgetType();
-    }
-    
-    /**
+     * Which positions are possible, depends on the widget and on the template
+     * used. As a rule of thumb, most widgets will support "top", "bottom" and 
+     * "menu".
+     * 
+     * @uxon-property position
+     * @uxon-type
      * 
      * @param string $position
      * @return \exface\Core\Widgets\Toolbar
@@ -179,5 +266,9 @@ class Toolbar extends ButtonGroup implements iContainButtonGroups
         return $this;
     }
     
+    public function getButtonWidgetType()
+    {
+        return 'Button';
+    }
 }
 ?>

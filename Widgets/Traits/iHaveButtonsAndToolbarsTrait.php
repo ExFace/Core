@@ -5,7 +5,6 @@ use exface\Core\Widgets\Button;
 
 trait iHaveButtonsAndToolbarsTrait 
 {
-    use iHaveButtonsTrait;
     use iHaveToolbarsTrait;
     
     /**
@@ -46,6 +45,51 @@ trait iHaveButtonsAndToolbarsTrait
     }
     
     /**
+     * Adds buttons to the widget via array of button widgets.
+     * 
+     * The array must contain widget objects with widget_type Button or any 
+     * derivatives. The widget_type canalso be ommitted. It is a good idea to 
+     * only specify an explicit widget type if a special button(e.g. MenuButton) 
+     * is required. For regular buttons it is advisable to let ExFache choose 
+     * the right type.
+     * 
+     * All buttons specified here will be added to the main toolbar of the widget.
+     * Refer to the description of the toolbars-property for details.
+     * 
+     * Depending on the align-attribute of each button it will be automatically
+     * added to the first button group left or right in the main toolbar.
+     * 
+     * Example:
+     *  {
+     *      "buttons": [
+     *          {
+     *              "action_alias": "exface.Core.CreateObjectDialog"
+     *          },
+     *          {
+     *              "widget_type": "MenuButton",
+     *              "caption": "My menu",
+     *              "buttons": [...]
+     *          },
+     *          {
+     *              "action_alias": "exface.Core.RefreshWidget",
+     *              "align": "right"
+     *          }
+     *      ]
+     *  }
+     * 
+     * @uxon-property buttons
+     * @uxon-type \exface\Core\Widgets\Button[]
+     * 
+     * @param array $buttons
+     * @return \exface\Core\Widgets\Traits\iHaveButtonsAndToolbarsTrait
+     */
+    public function setButtons(array $buttons)
+    {
+        $this->getToolbarMain()->setButtons($buttons);
+        return $this;
+    }
+    
+    /**
      * {@inheritdoc}
      *
      * @see \exface\Core\Interfaces\Widgets\iHaveButtons::hasButtons()
@@ -58,6 +102,16 @@ trait iHaveButtonsAndToolbarsTrait
             }
         }
         return false;
+    }
+    
+    /**
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Widgets\iHaveButtons::getButtonWidgetType()
+     */
+    public function getButtonWidgetType()
+    {
+        return $this->getToolbarMain()->getButtonWidgetType();
     }
     
 }

@@ -706,7 +706,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
             
             // If the placeholder is an attribute, add a required filter on it (or make an existing filter required)
             if ($ph_attr = $this->getMetaObject()->getAttribute($ph)) {
-                if ($this->hasFilters()) {
+                if ($this->getConfiguratorWidget()->hasFilters()) {
                     $ph_filters = $this->getConfiguratorWidget()->findFiltersByAttribute($ph_attr);
                     foreach ($ph_filters as $ph_filter) {
                         $ph_filter->setRequired(true);
@@ -731,7 +731,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
 
     public function getChildren()
     {
-        $children = array_merge($this->getFilters(), $this->getButtons(), $this->getColumns());
+        $children = array_merge([$this->getConfiguratorWidget()], $this->getToolbars(), $this->getColumns());
         
         // Add the help button, so pages will be able to find it when dealing with the ShowHelpDialog action.
         // IMPORTANT: Add the help button to the children only if it is not hidden. This is needed to hide the button in

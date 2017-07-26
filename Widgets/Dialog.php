@@ -7,7 +7,6 @@ use exface\Core\CommonLogic\Model\Attribute;
 use exface\Core\Interfaces\Widgets\iHaveContextualHelp;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Factories\WidgetFactory;
-use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
@@ -32,7 +31,7 @@ class Dialog extends Form implements iAmClosable, iHaveContextualHelp
     {
         parent::init();
         $this->setLazyLoading(true);
-        $this->setButtonWidgetType('DialogButton');
+        $this->getToolbarMain()->addButton($this->getCloseButton());
     }
 
     /**
@@ -86,7 +85,7 @@ class Dialog extends Form implements iAmClosable, iHaveContextualHelp
     {
         if (! ($this->close_button instanceof DialogButton)) {
             /* @var $btn DialogButton */
-            $btn = $this->getPage()->createWidget('DialogButton', $this);
+            $btn = $this->getPage()->createWidget('DialogButton', $this->getToolbarMain());
             $btn->setCloseDialogAfterActionSucceeds(true);
             $btn->setRefreshInput(false);
             $btn->setIconName(Icons::TIMES);
@@ -98,20 +97,10 @@ class Dialog extends Form implements iAmClosable, iHaveContextualHelp
         }
         return $this->close_button;
     }
-
-    /**
-     * Returns an array of dialog buttons.
-     * The close button is always added to the end of the button list.
-     * This ensures, that the other buttons can be rearranged without an impact on the close buttons last
-     * position.
-     *
-     * @see \exface\Core\Widgets\Panel::getButtons()
-     */
-    public function getButtons()
+    
+    public function getToolbarWidgetType()
     {
-        $btns = parent::getButtons();
-        array_unshift($btns, $this->getCloseButton());
-        return $btns;
+        return 'DialogToolbar';
     }
 
     /**

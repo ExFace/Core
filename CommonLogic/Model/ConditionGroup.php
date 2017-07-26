@@ -77,76 +77,19 @@ class ConditionGroup implements iCanBeConvertedToUxon, iCanBeCopied
     function addConditionsFromString(Object $base_object, $expression_string, $value, $comparator = null)
     {
         $value = trim($value);
-        // Determine the comparator if it is not given directly.
-        // It can be derived from the value or set to a default value
-        if (is_null($comparator)) {
-            if (strpos($value, '!==') === 0) {
-                $comparator = EXF_COMPARATOR_EQUALS_NOT;
-                $value = substr($value, 3);
-            } elseif (strpos($value, '==') === 0) {
-                $comparator = EXF_COMPARATOR_EQUALS;
-                $value = substr($value, 2);
-            } elseif (strpos($value, '>=') === 0) {
-                $comparator = EXF_COMPARATOR_GREATER_THAN_OR_EQUALS;
-                $value = substr($value, 2);
-            } elseif (strpos($value, '>') === 0) {
-                $comparator = EXF_COMPARATOR_GREATER_THAN;
-                $value = substr($value, 1);
-            } elseif (strpos($value, '[') === 0) {
-                $comparator = EXF_COMPARATOR_IN;
-                if (substr(trim($value), - 1) != ']') {
-                    $value = substr($value, 1);
-                }
-            } elseif (strpos($value, '<=') === 0) {
-                $comparator = EXF_COMPARATOR_LESS_THAN_OR_EQUALS;
-                $value = substr($value, 2);
-            } elseif (strpos($value, '<') === 0) {
-                $comparator = EXF_COMPARATOR_LESS_THAN;
-                $value = substr($value, 1);
-            } elseif (strpos($value, '!=') === 0) {
-                $comparator = EXF_COMPARATOR_IS_NOT;
-                $value = substr($value, 2);
-            } elseif (strpos($value, '=') === 0) {
-                $comparator = EXF_COMPARATOR_IS;
-                $value = substr($value, 1);
-            } elseif (strpos($value, '![') === 0) {
-                $comparator = EXF_COMPARATOR_NOT_IN;
-                if (substr(trim($value), - 1) == ']') {
-                    $value = substr(trim($value), 2, - 1);
-                } else {
-                    $value = substr($value, 2);
-                }
-            } else {
-                $comparator = EXF_COMPARATOR_IS;
-            }
-            
-            // Take care of values with delimited lists
-            if (substr($value, 0, 1) == '[' && substr($value, - 1) == ']') {
-                // a value enclosed in [] is actually a IN-statement
-                $value = trim($value, "[]");
-                $comparator = EXF_COMPARATOR_IN;
-            } elseif (strpos($expression_string, EXF_LIST_SEPARATOR) === false 
-                && $base_object->hasAttribute($expression_string) 
-                && ($base_object->getAttribute($expression_string)->getDataType()->is(EXF_DATA_TYPE_NUMBER) 
-                    || $base_object->getAttribute($expression_string)->getDataType()->is(EXF_DATA_TYPE_RELATION)
-                    ) 
-                && strpos($value, $base_object->getAttribute($expression_string)->getValueListDelimiter()) !== false) {
-                // if a numeric attribute has a value with commas, it is actually an IN-statement
-                $comparator = EXF_COMPARATOR_IN;
-            }
-        }
-        
-        // Another special feature is the possibility to specify a comma separated list of attributes in one element
+                
+        // A special feature for string condition is the possibility to specify a comma separated list of attributes in one element
         // of the filters array, wich means that at least one of the attributes should match the value
+        // IDEA move this logic to the condition, so it can be used generally
         $expression_strings = explode(EXF_LIST_SEPARATOR, $expression_string);
         if (count($expression_strings) > 1) {
             $group = ConditionGroupFactory::createEmpty($this->exface, EXF_LOGICAL_OR);
             foreach ($expression_strings as $f) {
-                $group->addConditionFromExpression($this->exface->model()->parseExpression($f, $base_object), $value, $comparator);
+                $group->addCondition(ConditionFactory::createFromString($base_object, $f, $value, $comparator));
             }
             $this->addNestedGroup($group);
         } elseif (! is_null($value) && $value !== '') {
-            $this->addConditionFromExpression($this->exface->model()->parseExpression($expression_string, $base_object), $value, $comparator);
+            $this->addCondition(ConditionFactory::createFromString($base_object, $expression_string, $value, $comparator));
         }
         
         return $this;

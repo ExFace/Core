@@ -647,6 +647,15 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveToolbars, iHave
     {
         return 'ChartConfigurator';
     }
-
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveToolbars::getToolbarWidgetType()
+     */
+    public function getToolbarWidgetType()
+    {
+        return 'DataToolbar';
+    }
 }
 ?>

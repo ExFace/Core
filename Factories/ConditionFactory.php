@@ -5,13 +5,42 @@ use exface\Core\CommonLogic\Workbench;
 use exface\Core\CommonLogic\Model\Expression;
 use exface\Core\CommonLogic\Model\Condition;
 use exface\Core\Exceptions\UnexpectedValueException;
+use exface\Core\CommonLogic\Model\Object;
 
 abstract class ConditionFactory extends AbstractUxonFactory
 {
 
+    /**
+     * Returns an empty condition
+     * 
+     * @param Workbench $exface
+     * @return \exface\Core\CommonLogic\Model\Condition
+     */
     public static function createEmpty(Workbench $exface)
     {
         return new Condition($exface);
+    }
+    
+    /**
+     * Creates a condition for the given object from an expression string (e.g. attribute alias)
+     * 
+     * @param Object $object
+     * @param string $expression_string
+     * @param string $value
+     * @param string $comparator
+     * 
+     * @return Condition
+     */
+    public static function createFromString(Object $object, $expression_string, $value, $comparator = null)
+    {
+        $workbench = $object->getWorkbench();
+        $condition = static::createEmpty($workbench);
+        $condition->setExpression($workbench->model()->parseExpression($expression_string, $object));
+        $condition->setValue($value);
+        if ($comparator){
+            $condition->setComparator($comparator);
+        }
+        return $condition;
     }
 
     /**
@@ -19,27 +48,28 @@ abstract class ConditionFactory extends AbstractUxonFactory
      * Conditions consist of an expression, a value to
      * compare the expression to and a comparator like "=", ">", "<", etc. Comparators are defined by the EXF_COMPARATOR_xxx constants.
      *
-     * @param
-     *            exface
+     * @param Workbench $exface
      * @param string|\exface\Core\CommonLogic\Model\Expression $expression_or_string            
      * @param string $value            
      * @param string $comparator            
      * @return Condition
      */
-    public static function createFromExpression(Workbench $exface, Expression $expression = NULL, $value = NULL, $comparator = EXF_COMPARATOR_IS)
+    public static function createFromExpression(Workbench $exface, Expression $expression = NULL, $value = NULL, $comparator = null)
     {
         $condition = static::createEmpty($exface);
         if ($expression) {
             $condition->setExpression($expression);
         }
         $condition->setValue($value);
-        $condition->setComparator($comparator);
+        if ($comparator){
+            $condition->setComparator($comparator);
+        }
         return $condition;
     }
 
     /**
      *
-     * @param exface $exface            
+     * @param Workbench $exface            
      * @param array $array_notation            
      * @return Condition
      */
@@ -54,7 +84,7 @@ abstract class ConditionFactory extends AbstractUxonFactory
 
     /**
      *
-     * @param exface $exface            
+     * @param Workbench $exface            
      * @param string|array $uxon_or_array            
      * @throws UnexpectedValueException
      * @return Condition

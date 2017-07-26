@@ -337,12 +337,15 @@ interface WidgetInterface extends ExfaceClassInterface, iCanBeCopied
     /**
      * Returns the current visibility option (one of the EXF_WIDGET_VISIBILITY_xxx constants)
      *
-     * @return string
+     * @return integer
      */
     public function getVisibility();
 
     /**
-     * Sets visibility of the widget (one of the EXF_WIDGET_VISIBILITY_xxx constants)
+     * Sets visibility of the widget. 
+     * 
+     * Accepted values are either one of the EXF_WIDGET_VISIBILITY_xxx or the
+     * the "xxx" part of the constant name as string: e.g. "normal", "promoted".
      *
      * @param string $value            
      * @throws WidgetPropertyInvalidValueError

@@ -33,24 +33,24 @@ const EXF_DATA_TYPE_IMAGE_URL = 'ImageUrl';
 /**
  * @const EXF_WIDGET_VISIBILITY_NORMAL normal visibility within a tempalte
  */
-const EXF_WIDGET_VISIBILITY_NORMAL = 'normal';
+const EXF_WIDGET_VISIBILITY_NORMAL = 50;
 
 /**
  * @const EXF_WIDGET_VISIBILITY_OPTIONAL may be hidden by the template, so the user will need to open popups etc.
  * to see the widget (especially on mobile devices)
  */
-const EXF_WIDGET_VISIBILITY_OPTIONAL = 'optional';
+const EXF_WIDGET_VISIBILITY_OPTIONAL = 30;
 
 /**
  * @const EXF_WIDGET_VISIBILITY_PROMOTED must be desplayed very prominently and be accessible withe extra clicks or so
  */
-const EXF_WIDGET_VISIBILITY_PROMOTED = 'promoted';
+const EXF_WIDGET_VISIBILITY_PROMOTED = 90;
 
 /**
  * @const EXF_WIDGET_VISIBILITY_HIDDEN hidden by default.
  * May be shown programmatically, but not by user
  */
-const EXF_WIDGET_VISIBILITY_HIDDEN = 'hidden';
+const EXF_WIDGET_VISIBILITY_HIDDEN = 10;
 
 /**
  * @const EXF_COMPARATOR_IN compares to each vaule in a list via EXF_COMPARATOR_IS.

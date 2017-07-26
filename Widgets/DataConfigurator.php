@@ -16,6 +16,8 @@ use exface\Core\Exceptions\Widgets\WidgetLogicError;
  * 
  * @see WidgetConfigurator
  * 
+ * @method Data getWidgetConfigured()
+ * 
  * @author Andrej Kabachnik
  *        
  */
@@ -166,7 +168,7 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
                 unset($uxon->comparator);
             }
             
-            $filter = $this->getPage()->createWidget('Filter', $this);
+            $filter = $this->getPage()->createWidget('Filter', $this->getFilterTab());
             $filter->setComparator($comparator);
             $filter->setWidget(WidgetFactory::createFromUxon($page, $uxon, $filter));
             
@@ -187,7 +189,7 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
         if ($filter_widget instanceof Filter) {
             $filter = $filter_widget;
         } else {
-            $filter = $this->getPage()->createWidget('Filter', $this);
+            $filter = $this->getPage()->createWidget('Filter', $this->getFilterTab());
             $filter->setWidget($filter_widget);
         }
         
@@ -407,6 +409,17 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
             $this->setLazyLoadingForFilter($filter);
         }
         return $this;
+    }
+    
+    public function getWidgets()
+    {
+        if (is_null($this->filter_tab)){
+            $this->getFilterTab();
+        }
+        if (is_null($this->sorter_tab)){
+            $this->getSorterTab();
+        }
+        return parent::getWidgets();
     }
 }
 ?>

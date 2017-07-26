@@ -3,6 +3,8 @@ namespace exface\Core\Interfaces\Widgets;
 
 use exface\Core\Widgets\Button;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
+use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 
 interface iHaveButtons extends iHaveChildren
 {
@@ -31,10 +33,9 @@ interface iHaveButtons extends iHaveChildren
     /**
      * Adds multiple buttons from an array of their UXON descriptions
      *
-     * @throws WidgetConfigurationError if the array includes miscofigured widgets or widget, that are not buttons.
-     * @param array $buttons_array
-     *            of UXON descriptions for buttons
-     * @return boolean
+     * @throws WidgetPropertyInvalidValueError if the array includes miscofigured widgets or widget, that are not buttons.
+     * @param Button[]|UxonObject[] $buttons
+     * @return iHaveButtons
      */
     public function setButtons(array $buttons);
 

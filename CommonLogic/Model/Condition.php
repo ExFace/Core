@@ -1,7 +1,6 @@
 <?php
 namespace exface\Core\CommonLogic\Model;
 
-use exface\Core\CommonLogic\Model\Expression;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\AbstractDataType;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
@@ -21,15 +20,15 @@ use exface\Core\Exceptions\UnexpectedValueException;
 class Condition implements iCanBeConvertedToUxon
 {
 
-    private $exface = NULL;
+    private $exface = null;
 
-    private $expression = NULL;
+    private $expression = null;
 
-    private $value = NULL;
+    private $value = null;
 
-    private $comparator = EXF_COMPARATOR_IS;
+    private $comparator = null;
 
-    private $data_type = NULL;
+    private $data_type = null;
 
     /**
      *
@@ -97,9 +96,79 @@ class Condition implements iCanBeConvertedToUxon
     public function getComparator()
     {
         if (is_null($this->comparator)) {
-            $this->comparator = EXF_COMPARATOR_IS;
+            $this->comparator = $this->guessComparator();
         }
         return $this->comparator;
+    }
+    
+    protected function guessComparator()
+    {
+        if (!$base_object = $this->getExpression()->getMetaObject()){
+            return EXF_COMPARATOR_IS;
+        }
+        
+        $value = $this->getValue();
+        $expression_string = $this->getExpression()->toString();
+        
+        // Determine the comparator if it is not given directly.
+        // It can be derived from the value or set to a default value
+        if (strpos($value, '!==') === 0) {
+            $comparator = EXF_COMPARATOR_EQUALS_NOT;
+            $value = substr($value, 3);
+        } elseif (strpos($value, '==') === 0) {
+            $comparator = EXF_COMPARATOR_EQUALS;
+            $value = substr($value, 2);
+        } elseif (strpos($value, '>=') === 0) {
+            $comparator = EXF_COMPARATOR_GREATER_THAN_OR_EQUALS;
+            $value = substr($value, 2);
+        } elseif (strpos($value, '>') === 0) {
+            $comparator = EXF_COMPARATOR_GREATER_THAN;
+            $value = substr($value, 1);
+        } elseif (strpos($value, '[') === 0) {
+            $comparator = EXF_COMPARATOR_IN;
+            if (substr(trim($value), - 1) != ']') {
+                $value = substr($value, 1);
+            }
+        } elseif (strpos($value, '<=') === 0) {
+            $comparator = EXF_COMPARATOR_LESS_THAN_OR_EQUALS;
+            $value = substr($value, 2);
+        } elseif (strpos($value, '<') === 0) {
+            $comparator = EXF_COMPARATOR_LESS_THAN;
+            $value = substr($value, 1);
+        } elseif (strpos($value, '!=') === 0) {
+            $comparator = EXF_COMPARATOR_IS_NOT;
+            $value = substr($value, 2);
+        } elseif (strpos($value, '=') === 0) {
+            $comparator = EXF_COMPARATOR_IS;
+            $value = substr($value, 1);
+        } elseif (strpos($value, '![') === 0) {
+            $comparator = EXF_COMPARATOR_NOT_IN;
+            if (substr(trim($value), - 1) == ']') {
+                $value = substr(trim($value), 2, - 1);
+            } else {
+                $value = substr($value, 2);
+            }
+        } else {
+            $comparator = EXF_COMPARATOR_IS;
+        }
+        $this->setValue($value);
+        
+        // Take care of values with delimited lists
+        if (substr($value, 0, 1) == '[' && substr($value, - 1) == ']') {
+            // a value enclosed in [] is actually a IN-statement
+            $value = trim($value, "[]");
+            $comparator = EXF_COMPARATOR_IN;
+        } elseif (strpos($expression_string, EXF_LIST_SEPARATOR) === false
+            && $base_object->hasAttribute($expression_string)
+            && ($base_object->getAttribute($expression_string)->getDataType()->is(EXF_DATA_TYPE_NUMBER)
+                || $base_object->getAttribute($expression_string)->getDataType()->is(EXF_DATA_TYPE_RELATION)
+                )
+            && strpos($value, $base_object->getAttribute($expression_string)->getValueListDelimiter()) !== false) {
+                // if a numeric attribute has a value with commas, it is actually an IN-statement
+                $comparator = EXF_COMPARATOR_IN;
+        } 
+        
+        return $comparator;
     }
 
     /**

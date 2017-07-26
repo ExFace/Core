@@ -13,6 +13,7 @@ use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\Interfaces\Widgets\iHaveButtons;
 use exface\Core\Interfaces\Widgets\iCanBeAligned;
 use exface\Core\Widgets\Traits\iCanBeAlignedTrait;
+use exface\Core\Interfaces\Widgets\iUseInputWidget;
 
 /**
  * A Button is the primary widget for triggering actions.
@@ -22,7 +23,7 @@ use exface\Core\Widgets\Traits\iCanBeAlignedTrait;
  * @author Andrej Kabachnik
  *        
  */
-class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iHaveChildren, iCanBeAligned
+class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iUseInputWidget, iHaveChildren, iCanBeAligned
 {
     use iCanBeAlignedTrait;
     
@@ -176,10 +177,10 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iHaveC
                 $this->input_widget = $this->getUi()->getWidget($this->input_widget_id, $this->getPageId());
             } elseif ($this->getParent()) {
                 $parent = $this->getParent();
-                while (!(($parent instanceof iHaveButtons) || ($parent instanceof iTriggerAction)) && ! is_null($parent->getParent())) {
+                while (!(($parent instanceof iHaveButtons) || ($parent instanceof iUseInputWidget)) && ! is_null($parent->getParent())) {
                     $parent = $parent->getParent();
                 }
-                if ($parent instanceof iTriggerAction){
+                if ($parent instanceof iUseInputWidget){
                     $this->input_widget = $parent->getInputWidget();
                 } else {
                     $this->input_widget = $parent;

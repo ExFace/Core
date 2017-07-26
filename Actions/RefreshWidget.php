@@ -3,6 +3,7 @@ namespace exface\Core\Actions;
 
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Interfaces\Actions\iRefreshInputWidget;
+use exface\Core\CommonLogic\Constants\Icons;
 
 /**
  * This action refreshes the data in it's input widget - e.g. a DataTable.
@@ -13,6 +14,12 @@ use exface\Core\Interfaces\Actions\iRefreshInputWidget;
 class RefreshWidget extends ReadData implements iRefreshInputWidget
 {
     private $reset_pagination = false;
+    
+    public function init()
+    {
+        parent::init();
+        $this->setIconName(Icons::REFRESH);
+    }
 
     /**
      * 

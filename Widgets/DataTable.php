@@ -9,6 +9,7 @@ use exface\Core\Interfaces\Widgets\iSupportMultiSelect;
 use exface\Core\CommonLogic\Model\Attribute;
 use exface\Core\CommonLogic\Traits\WidgetLayoutTrait;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Interfaces\Widgets\iHaveContextMenu;
 
 /**
  * Renders data as a table with filters, columns, and toolbars.
@@ -62,7 +63,7 @@ use exface\Core\CommonLogic\UxonObject;
  * @author Andrej Kabachnik
  *        
  */
-class DataTable extends Data implements iHaveHeader, iHaveFooter, iFillEntireContainer, iSupportMultiSelect
+class DataTable extends Data implements iHaveHeader, iHaveFooter, iFillEntireContainer, iSupportMultiSelect, iHaveContextMenu
 {
     
     use WidgetLayoutTrait;
