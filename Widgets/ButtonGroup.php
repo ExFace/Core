@@ -96,10 +96,20 @@ class ButtonGroup extends Container implements iHaveButtons, iCanBeAligned, iUse
      *
      * @see \exface\Core\Interfaces\Widgets\iHaveButtons::addButton()
      */
-    public function addButton(Button $button_widget)
+    public function addButton(Button $button_widget, $index = null)
     {
-        $button_widget->setParent($this);
-        $this->buttons[] = $button_widget;
+        if ($button_widget->getParent() !== $this){
+            $button_widget->setParent($this);
+        }
+        
+        if (is_null($index) || ! is_numeric($index)) {
+            $this->buttons[] = $button_widget;
+        } else {
+            array_splice($this->buttons, $index, 0, array(
+                $button_widget
+            ));
+        }
+        
         return $this;
     }
 
@@ -112,6 +122,8 @@ class ButtonGroup extends Container implements iHaveButtons, iCanBeAligned, iUse
     {
         if (($key = array_search($button_widget, $this->buttons)) !== false) {
             unset($this->buttons[$key]);
+            // Reindex the buttons array to avoid index gaps
+            $this->buttons = array_values($this->buttons);
         }
         return $this;
     }
@@ -154,6 +166,29 @@ class ButtonGroup extends Container implements iHaveButtons, iCanBeAligned, iUse
             return true;
         else
             return false;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveButtons::getButtonIndex()
+     */
+    public function getButtonIndex(Button $widget)
+    {
+        return array_search($widget, $this->buttons);
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveButtons::getButton()
+     */
+    public function getButton($index)
+    {
+        if (!is_int($index)){
+            return null;
+        }
+        return $this->buttons[$index];
     }
 
     /**

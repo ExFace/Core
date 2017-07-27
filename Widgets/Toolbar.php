@@ -138,6 +138,8 @@ class Toolbar extends ButtonGroup implements iContainButtonGroups
         $key = array_search($button_group, $this->button_groups);
         if ($key !== false){
             unset($this->button_groups[$key]);
+            // Reindex the array to avoid index gaps
+            $this->button_groups = array_values($this->button_groups);
         }
         return $this;
     }
@@ -171,9 +173,9 @@ class Toolbar extends ButtonGroup implements iContainButtonGroups
      * {@inheritDoc}
      * @see \exface\Core\Widgets\ButtonGroup::addButton()
      */
-    public function addButton(Button $button_widget)
+    public function addButton(Button $button_widget, $index = null)
     {
-        $this->getButtonGroupFirst($button_widget->getAlign())->addButton($button_widget);
+        $this->getButtonGroupFirst($button_widget->getAlign())->addButton($button_widget, $index);
         return $this;
     }
     
@@ -240,6 +242,20 @@ class Toolbar extends ButtonGroup implements iContainButtonGroups
             }
         }
         return false;
+    }
+    
+    /**
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Widgets\iHaveButtons::countButtons()
+     */
+    public function countButtons()
+    {
+        $cnt = 0;
+        foreach ($this->getButtonGroups() as $grp){
+            $cnt += $grp->countButtons();
+        }
+        return $cnt;
     }
     
     /**

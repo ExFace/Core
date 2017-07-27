@@ -12,9 +12,12 @@ interface iHaveButtons extends iHaveChildren
     /**
      * Adds a button to the widget
      *
-     * @param \exface\Core\Widgets\Button $button_widget            
+     * @param \exface\Core\Widgets\Button $button_widget
+     * @param integer $index
+     * 
+     * @return iHaveButtons            
      */
-    public function addButton(Button $button_widget);
+    public function addButton(Button $button_widget, $index = null);
 
     /**
      * Removes a button from the widget
@@ -57,11 +60,26 @@ interface iHaveButtons extends iHaveChildren
     public function getButtonWidgetType();
     
     /**
+     * 
+     * @param Button $widget
+     * 
+     * @return integer|boolean
+     */
+    public function getButtonIndex(Button $widget);
+    
+    /**
+     * 
+     * @param integer $index
+     * @return Button|null
+     */
+    public function getButton($index);
+    
+    /**
      * Returns the number of buttons in the group
      *
      * @return number
      */
-    //public function countButtons();
+    public function countButtons();
     
     /**
      * Returns the number of buttons in the group, that are not hidden

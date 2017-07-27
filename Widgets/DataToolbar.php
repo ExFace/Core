@@ -126,14 +126,13 @@ class DataToolbar extends Toolbar
     }
     
     public function getButtonGroups()
-    {
-        $groups = parent::getButtonGroups();
-        
+    {        
         // Add automatic button groups - but only if their parent is still this
         // toolbar. If they were moved, the parent changes and we don't want
         // to see them here anymore.
         // Adding these groups must be done every time, because the must allways
         // be at the end
+        $groups = parent::getButtonGroups();
         if ($this->getIncludeGlobalActions() && $this->getButtonGroupForGlobalActions()->getParent() === $this){
             $groups[] = $this->getButtonGroupForGlobalActions();
         }
@@ -141,6 +140,23 @@ class DataToolbar extends Toolbar
             $groups[] = $this->getButtonGroupForSearchActions();
         }
         return $groups;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Toolbar::addButtonGroup()
+     */
+    public function addButtonGroup(ButtonGroup $button_group, $index = null)
+    {
+        if ($this->getIncludeGlobalActions()){
+            $global_actions_index = parent::getButtonGroupIndex($this->getButtonGroupForGlobalActions());
+        }
+        if ($this->getIncludeSearchActions()){
+            $search_actions_index = parent::getButtonGroupIndex($this->getButtonGroupForSearchActions());
+        }
+        
+        return parent::addButtonGroup($button_group, ($search_actions_index !== false || $global_actions_index !== false ? min($search_actions_index, $global_actions_index) : null));
     }
     
     /**

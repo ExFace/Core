@@ -12,9 +12,9 @@ trait iHaveButtonsAndToolbarsTrait
      *
      * @see \exface\Core\Interfaces\Widgets\iHaveButtons::addButton()
      */
-    public function addButton(Button $button_widget)
+    public function addButton(Button $button_widget, $index = null)
     {
-        $this->getToolbarMain()->addButton($button_widget);
+        $this->getToolbarMain()->addButton($button_widget, $index);
         return $this;
     }
     
@@ -28,6 +28,28 @@ trait iHaveButtonsAndToolbarsTrait
     {
         $this->getToolbarMain()->removeButton($button_widget);
         return $this;
+    }
+    
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Widgets\iHaveButtons::getButtonIndex()
+     */
+    public function getButtonIndex(Button $button)
+    {
+        return $this->getToolbarMain()->getButtonIndex($button);
+    }
+    
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Widgets\iHaveButtons::getButton()
+     */
+    public function getButton($index)
+    {
+        return $this->getToolbarMain()->getButton($index);
     }
     
     /**
@@ -102,6 +124,20 @@ trait iHaveButtonsAndToolbarsTrait
             }
         }
         return false;
+    }
+    
+    /**
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Widgets\iHaveButtons::countButtons()
+     */
+    public function countButtons()
+    {
+        $cnt = 0;
+        foreach ($this->getToolbars() as $toolbar){
+            $cnt += $toolbar->countButtons();
+        }
+        return $cnt;
     }
     
     /**

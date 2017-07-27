@@ -24,9 +24,9 @@ class FormToolbar extends Toolbar
      * {@inheritDoc}
      * @see \exface\Core\Widgets\Toolbar::addButton()
      */
-    public function addButton(Button $button_widget)
+    public function addButton(Button $button_widget, $index = null)
     {
-        parent::addButton($button_widget);
+        parent::addButton($button_widget, $index);
         $form = $this->getFormWidget();
         // If the button has an action, that is supposed to modify data, we need to make sure, that the panel
         // contains alls system attributes of the base object, because they may be needed by the business logic

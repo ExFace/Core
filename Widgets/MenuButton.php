@@ -89,9 +89,9 @@ class MenuButton extends Button implements iHaveMenu, iHaveButtons
      *
      * @see \exface\Core\Interfaces\Widgets\iHaveButtons::addButton()
      */
-    public function addButton(Button $button_widget)
+    public function addButton(Button $button_widget, $index = null)
     {
-        $this->getMenu()->addButton($button_widget);
+        $this->getMenu()->addButton($button_widget, $index);
         return $this;
     }
 
@@ -161,6 +161,26 @@ class MenuButton extends Button implements iHaveMenu, iHaveButtons
     public function countButtonsVisible()
     {
         return $this->getMenu()->countButtonsVisible();
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveButtons::getButtonIndex()
+     */
+    public function getButtonIndex(Button $widget)
+    {
+        return $this->getMenu()->getButtonIndex($widget);    
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveButtons::getButton()
+     */
+    public function getButton($index)
+    {
+        return $this->getMenu()->getButton($index);
     }
 }
 ?>

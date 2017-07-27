@@ -27,7 +27,7 @@ interface iContainButtonGroups extends iHaveChildren
      * 
      * @return \exface\Core\Widgets\Toolbar
      */
-    public function addButtonGroup(ButtonGroup $button_group, $index);
+    public function addButtonGroup(ButtonGroup $button_group, $index = null);
     
     /**
      *
