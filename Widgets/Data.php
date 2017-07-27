@@ -733,6 +733,11 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
     {
         $children = array_merge([$this->getConfiguratorWidget()], $this->getToolbars(), $this->getColumns());
         
+        // FIXME me adding buttons is currently needed because DataTables opened
+        // in a dialog from the context bar popop sometimes cannot get data: e.g.
+        // the table with details to a recorded debug-trace.
+        $children = array_merge($children, $this->getButtons());
+        
         // Add the help button, so pages will be able to find it when dealing with the ShowHelpDialog action.
         // IMPORTANT: Add the help button to the children only if it is not hidden. This is needed to hide the button in
         // help widgets themselves, because otherwise they would produce their own help widgets, with - in turn - even
