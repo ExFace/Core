@@ -222,12 +222,25 @@ class Object implements ExfaceClassInterface, AliasInterface
 
     /**
      * Returns an attribute matching the given attribute alias.
+     * 
      * Supports aliases with relations (e.g. CUSTOMER__CUSTOMER_GROUP__LABEL).
-     * If an attribute of a related object is requested, it will have a non-empty relation path holding all relations needed to reach
-     * the related object (e.g. CUSTOMER__CUSTOMER_GROUP for CUSTOMER__CUSTOMER_GROUP__NAME): @see Attribute::getRelationPath()
+     * If an attribute of a related object is requested, it will have a non-empty 
+     * relation path holding all relations needed to reach the related object 
+     * (e.g. CUSTOMER__CUSTOMER_GROUP for CUSTOMER__CUSTOMER_GROUP__NAME): 
+     * 
+     * @see Attribute::getRelationPath()
      *
+     * TODO if a related attribute is request, a copy is created with the first
+     * call of the method and that copy is cached. This means, any changes on the
+     * original attribute will not affect the copy anymore. This is dangerous!
+     * To change this, we should replace all $attribute->getRelationPath() with
+     * $object->getRelationPath($attribute) and just use references to attributes
+     * in the cache. 
+     * 
      * @param string $alias            
+     * 
      * @throws MetaAttributeNotFoundError if no matching attribute could be found
+     * 
      * @return Attribute
      */
     public function getAttribute($alias)
