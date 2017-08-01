@@ -8,23 +8,65 @@ use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\CommonLogic\Model\ObjectActionList;
 use exface\Core\Interfaces\NameResolverInstallerInterface;
 use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\Interfaces\Model\ModelInterface;
+use exface\Core\Exceptions\Model\MetaObjectNotFoundError;
+use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
+use exface\Core\CommonLogic\Model\Attribute;
+use exface\Core\CommonLogic\Model\Relation;
+use exface\Core\Exceptions\Model\MetaRelationNotFoundError;
 
 interface ModelLoaderInterface
 {
 
     /**
-     * Fills the given object with model data (attributes, relations, etc.).
-     * NOTE: The object must have an id or a qualified alias at this point!
-     *
-     * @param Object $object            
+     * 
+     * @param AppInterface $app
+     * @param string $object_alias
+     * 
+     * @throws MetaObjectNotFoundError
+     * 
+     * @return Object            
      */
-    public function loadObject(Object $object);
+    public function loadObjectByAlias(AppInterface $app, $object_alias);
+    
+    /**
+     * 
+     * @param string $uid
+     * 
+     * @throws MetaObjectNotFoundError
+     * 
+     * @return Object
+     */
+    public function loadObjectById(ModelInterface $model, $uid);
+    
+    /**
+     * 
+     * 
+     * @param Object $object
+     * 
+     * @throws MetaAttributeNotFoundError
+     * 
+     * @return Attribute
+     */
+    public function loadAttribute(Object $object, $attribute_alias);
+    
+    /**
+     *
+     *
+     * @param Object $object
+     * 
+     * @throws MetaRelationNotFoundError
+     * 
+     * @return Relation
+     */
+    public function loadRelation(Object $object, $relation_alias);
 
     /**
      * Fills th given data source with model data (query builder, connection configuration, user credentials, etc.)
      *
      * @param DataSourceInterface $data_source            
-     * @param string $data_connection_id_or_alias            
+     * @param string $data_connection_id_or_alias   
+     *          
      * @return DataSourceInterface
      */
     public function loadDataSource(DataSourceInterface $data_source, $data_connection_id_or_alias = null);
