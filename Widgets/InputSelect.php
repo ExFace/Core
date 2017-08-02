@@ -72,8 +72,6 @@ class InputSelect extends Input implements iSupportMultiSelect
 
     private $value_attribute_alias = null;
 
-    private $custom_text_attribute_flag = false;
-
     private $options_object = null;
 
     private $options_object_alias = null;
@@ -406,7 +404,6 @@ class InputSelect extends Input implements iSupportMultiSelect
     public function setTextAttributeAlias($value)
     {
         $this->text_attribute_alias = $value;
-        $this->custom_text_attribute_flag = true;
         return $this;
     }
 
@@ -442,25 +439,17 @@ class InputSelect extends Input implements iSupportMultiSelect
     }
 
     /**
-     * Returns TRUE if a text attribute was specified explicitly (e.g.
-     * via UXON-property "text_attribute_alias") and FALSE otherwise.
-     *
-     * @return boolean
-     */
-    public function hasCustomTextAttribute()
-    {
-        return $this->custom_text_attribute_flag;
-    }
-
-    /**
      * Returns TRUE if the options object was specified explicitly (e.g.
      * via UXON-property "options_object_alias") and FALSE otherwise.
      *
      * @return boolean
      */
-    public function hasCustomOptionsObject()
+    public function isOptionsObjectSpecified()
     {
-        return ! ($this->getMetaObject()->isExactly($this->getOptionsObject()));
+        if (is_null($this->options_object) && is_null($this->options_object_alias)){
+            return false;
+        }
+        return true;
     }
 
     public function getOptionsObject()

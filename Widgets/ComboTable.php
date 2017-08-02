@@ -93,8 +93,6 @@ class ComboTable extends InputCombo implements iHaveChildren
 
     private $data_table = null;
 
-    private $table_object = null;
-
     private $table_uxon = null;
 
     /**
@@ -479,7 +477,6 @@ class ComboTable extends InputCombo implements iHaveChildren
      */
     public function setTableObjectAlias($value)
     {
-        $this->table_object = null;
         return $this->setOptionsObjectAlias($value);
     }
 
@@ -491,12 +488,24 @@ class ComboTable extends InputCombo implements iHaveChildren
      */
     public function getTableObject()
     {
-        if (! $this->hasCustomOptionsObject()) {
+        return $this->getOptionsObject();
+    }
+    
+    /**
+     * The options object of a ComboTable is the meta object of the relation it 
+     * represents if not specified explicitly.
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\InputSelect::getOptionsObject()
+     */
+    public function getOptionsObject()
+    {
+        if (! $this->isOptionsObjectSpecified()) {
             if ($this->getAttribute()->isRelation()) {
                 $this->setOptionsObject($this->getMetaObject()->getRelation($this->getAttributeAlias())->getRelatedObject());
             }
         }
-        return $this->getOptionsObject();
+        return parent::getOptionsObject();
     }
 
     /**
