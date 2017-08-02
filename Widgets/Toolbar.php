@@ -53,7 +53,7 @@ class Toolbar extends ButtonGroup implements iContainButtonGroups
      */
     public function createButtonGroup()
     {
-        return WidgetFactory::create($this->getPage(), 'ButtonGroup', $this)->setAlign(EXF_ALIGN_DEFAULT);
+        return WidgetFactory::create($this->getPage(), 'ButtonGroup', $this);
     }
     
     /**
@@ -225,7 +225,20 @@ class Toolbar extends ButtonGroup implements iContainButtonGroups
      */
     public function setButtons(array $buttons)
     {
-        $this->getButtonGroupFirst()->setButtons($buttons);
+        $btn_grps = [];
+        foreach ($buttons as $btn){
+            if ($btn instanceof UxonObject){
+                $btn_grps[$btn->getProperty('align')][] = $btn;
+            } elseif ($btn instanceof Button){
+                $btn_grps[$btn->getAlign()][] = $btn;
+            } else {
+                $btn_grps[null] = $btn;
+            }
+        }
+        
+        foreach ($btn_grps as $align => $btns){
+            $this->getButtonGroupFirst($align)->setButtons($btns);
+        }
         return $this;
     }
     
