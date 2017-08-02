@@ -12,6 +12,7 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\DataSheets\DataSorter;
 use exface\Core\Factories\DataSorterFactory;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
+use exface\Core\Interfaces\DataSheets\DataColumnInterface;
 
 /**
  * A dropdown menu to select from.
@@ -236,9 +237,35 @@ class InputSelect extends Input implements iSupportMultiSelect
         if ($this->getAttribute() && ! $this->countSelectableOptions()) {
             // If the prefill is based on the same object, just look for values of this attribute, add them as selectable options
             // and select all of them
-            if ($data_sheet->getMetaObject()->is($this->getMetaObject()) && $col = $data_sheet->getColumns()->getByAttribute($this->getAttribute())) {
-                $this->setSelectableOptions($col->getValues(false));
-                $this->setValuesFromArray($col->getValues(false));
+            if ($data_sheet->getMetaObject()->is($this->getMetaObject())) {
+                if ($col = $data_sheet->getColumns()->getByAttribute($this->getAttribute())){
+                    $this->setSelectableOptions($col->getValues(false));
+                    $this->setValuesFromArray($col->getValues(false));
+                }
+            } else {
+                // If the prefill data was loaded for another object, there are still multiple possibilities to prefill
+                if ($data_sheet->getMetaObject()->is($this->getOptionsObject())) {
+                    // If the sheet is based upon the object, that is being selected by this Combo, we can use the prefill sheet
+                    // values directly
+                    $values_column = $data_sheet->getColumns()->getByAttribute($this->getValueAttribute());
+                    $texts_column = $data_sheet->getColumns()->getByAttribute($this->getTextAttribute());
+                    
+                    $this->setOptionsFromPrefillColumns($values_column, $texts_column);
+                    return;
+                } elseif ($this->getAttribute()->isRelation()) {
+                    // If it is not the object selected within the combo, than we still can look for columns in the sheet, that
+                    // contain selectors (UIDs) of that object. This means, we need to look for data columns showing relations
+                    // and see if their related object is the same as the related object of the relation represented by the combo.
+                    foreach ($data_sheet->getColumns()->getAll() as $column) {
+                        if ($column->getAttribute() && $column->getAttribute()->isRelation()) {
+                            if ($column->getAttribute()->getRelation()->getRelatedObject()->is($this->getAttribute()->getRelation()->getRelatedObject())) {
+                                // TODO what about texts?
+                                $this->setOptionsFromPrefillColumns($column);
+                                return;
+                            }
+                        }
+                    }
+                }
             }
             
             // Now see if the prefill object can be used to filter values
@@ -256,6 +283,19 @@ class InputSelect extends Input implements iSupportMultiSelect
                 }
             }
         }
+    }
+    
+    protected function setOptionsFromPrefillColumns(DataColumnInterface $value_column, DataColumnInterface $text_column = null)
+    {
+        $values = $value_column->getValues(false);
+        
+        if ($text_column) {
+            $texts = $text_column->getValues(false);
+        }
+        
+        $this->setSelectableOptions($values, $texts);
+        $this->setValuesFromArray($values);
+        return $this;
     }
 
     protected function setOptionsFromDataSheet(DataSheetInterface $data_sheet)

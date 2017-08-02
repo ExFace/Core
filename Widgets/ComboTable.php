@@ -345,7 +345,7 @@ class ComboTable extends InputCombo implements iHaveChildren
         if (! $data_sheet->isEmpty()) {
             $this->setPrefillData($data_sheet);
             if ($data_sheet->getMetaObject()->is($this->getMetaObject()) && $data_sheet->getColumns()->getByExpression($this->getAttributeAlias())) {
-                // If the prefill data is based on the same object, as the widget and has a column matching for
+                // If the prefill data is based on the same object, as the widget and has a column matching
                 // this widgets attribute_alias, simply look for all the required attributes in the prefill data.
                 $this->setValue($data_sheet->getCellValue($this->getAttributeAlias(), 0));
                 
