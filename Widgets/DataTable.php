@@ -7,7 +7,6 @@ use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Widgets\iFillEntireContainer;
 use exface\Core\Interfaces\Widgets\iSupportMultiSelect;
 use exface\Core\CommonLogic\Model\Attribute;
-use exface\Core\CommonLogic\Traits\WidgetLayoutTrait;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Widgets\iHaveContextMenu;
 
@@ -65,8 +64,6 @@ use exface\Core\Interfaces\Widgets\iHaveContextMenu;
  */
 class DataTable extends Data implements iHaveHeader, iHaveFooter, iFillEntireContainer, iSupportMultiSelect, iHaveContextMenu
 {
-    
-    use WidgetLayoutTrait;
 
     private $show_filter_row = false;
 
@@ -99,7 +96,7 @@ class DataTable extends Data implements iHaveHeader, iHaveFooter, iFillEntireCon
     private $context_menu_enabled = true;
 
     private $header_sort_multiple = false;
-    
+
     private $context_menu = null;
 
     function hasRowDetails()
@@ -547,19 +544,19 @@ class DataTable extends Data implements iHaveHeader, iHaveFooter, iFillEntireCon
         $this->multi_select_all_selected = $true_or_false ? true : false;
         return $this;
     }
-    
+
     /**
      * 
      * @return DataItemMenu
      */
     public function getContextMenu()
     {
-        if (is_null($this->context_menu)){
+        if (is_null($this->context_menu)) {
             $this->context_menu = WidgetFactory::create($this->getPage(), 'DataItemMenu', $this);
         }
         return $this->context_menu;
     }
-    
+
     /**
      * 
      * @param DataItemMenu|UxonObject $widget_or_uxon_object
@@ -567,10 +564,10 @@ class DataTable extends Data implements iHaveHeader, iHaveFooter, iFillEntireCon
      */
     public function setContextMenu($widget_or_uxon_object)
     {
-        if ($widget_or_uxon_object instanceof DataItemMenu){
+        if ($widget_or_uxon_object instanceof DataItemMenu) {
             $menu = $widget_or_uxon_object;
-        } elseif ($widget_or_uxon_object instanceof UxonObject){
-            if (!$widget_or_uxon_object->hasProperty('widget_type')){
+        } elseif ($widget_or_uxon_object instanceof UxonObject) {
+            if (! $widget_or_uxon_object->hasProperty('widget_type')) {
                 $widget_or_uxon_object->setProperty('widget_type', 'DataItemMenu');
             }
             $menu = WidgetFactory::createFromUxon($this->getPage(), $widget_or_uxon_object, $this);
@@ -578,22 +575,21 @@ class DataTable extends Data implements iHaveHeader, iHaveFooter, iFillEntireCon
         $this->context_menu = $menu;
         return $this;
     }
-    
+
     /**
      * 
      * {@inheritDoc}
      * @see \exface\Core\Widgets\Data::getToolbars()
      */
-    public function getToolbars(){
+    public function getToolbars()
+    {
         $toolbars = parent::getToolbars();
-        if ($this->hasAggregations()){
-            $toolbars[0]
-                ->setIncludeGlobalActions(false)
-                ->setIncludeObjectBasketActions(false);
+        if ($this->hasAggregations()) {
+            $toolbars[0]->setIncludeGlobalActions(false)->setIncludeObjectBasketActions(false);
         }
         return $toolbars;
     }
-    
+
     public function getConfiguratorWidgetType()
     {
         return 'DataTableConfigurator';
