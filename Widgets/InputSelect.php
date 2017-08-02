@@ -250,7 +250,10 @@ class InputSelect extends Input implements iSupportMultiSelect
                     $values_column = $data_sheet->getColumns()->getByAttribute($this->getValueAttribute());
                     $texts_column = $data_sheet->getColumns()->getByAttribute($this->getTextAttribute());
                     
-                    $this->setOptionsFromPrefillColumns($values_column, $texts_column);
+                    if ($values_column){
+                        $this->setOptionsFromPrefillColumns($values_column, $texts_column ? $texts_column : null);
+                    }
+                    
                     return;
                 } elseif ($this->getAttribute()->isRelation()) {
                     // If it is not the object selected within the combo, than we still can look for columns in the sheet, that
@@ -283,6 +286,17 @@ class InputSelect extends Input implements iSupportMultiSelect
                 }
             }
         }
+    }
+    
+    public function prepareDataSheetToPrefill(DataSheetInterface $data_sheet = null)
+    {
+        $data_sheet = parent::prepareDataSheetToPrefill($data_sheet);
+        
+        if ($data_sheet->getMetaObject()->is($this->getOptionsObject())) {
+            $data_sheet->getColumns()->addFromAttribute($this->getTextAttribute());
+        }
+        
+        return $data_sheet;
     }
     
     protected function setOptionsFromPrefillColumns(DataColumnInterface $value_column, DataColumnInterface $text_column = null)

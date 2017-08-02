@@ -432,7 +432,6 @@ class ComboTable extends InputCombo implements iHaveChildren
             foreach ($this->getTable()->getColumns() as $col) {
                 $data_sheet->getColumns()->addFromExpression($col->getAttributeAlias(), $col->getDataColumnName());
             }
-            // $data_sheet->getColumns()->addFromExpression($this->getTextColumn()->getAttributeAlias(), $this->getTextColumn()->getDataColumnName());
         } else {
             // TODO what if the prefill object is not the one at the end of the current relation?
         }
