@@ -84,10 +84,11 @@ class ShowDialog extends ShowWidget implements iShowDialog
 
     protected function getDialogCaption()
     {
-        if (! $caption = $this->getName()) {
-            if ($this->getCalledByWidget()) {
-                $caption = $this->getCalledByWidget()->getCaption();
-            }
+        if ($this->getCalledByWidget()) {
+            $caption = $this->getCalledByWidget()->getCaption();
+        }
+        if (! $caption) {
+            $caption = $this->getName();
         }
         return $caption;
     }
