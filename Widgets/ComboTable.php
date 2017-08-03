@@ -2,13 +2,13 @@
 namespace exface\Core\Widgets;
 
 use exface\Core\Interfaces\Widgets\iHaveChildren;
-use exface\Core\CommonLogic\Model\Object;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\Widgets\WidgetLogicError;
+use exface\Core\CommonLogic\Model\Condition;
 
 /**
  * A ComboTable is similar to InputCombo, but it uses a DataTable to show the autosuggest values.
@@ -276,7 +276,7 @@ class ComboTable extends InputCombo implements iHaveChildren
      * Returns the column of the DataTable, where the text displayed in the combo will come from
      *
      * @throws WidgetLogicError if no text column can be found
-     * @return exface\Core\Widgets\DataColumn
+     * @return DataColumn
      */
     public function getTextColumn()
     {
@@ -318,7 +318,7 @@ class ComboTable extends InputCombo implements iHaveChildren
      * Returns the column of the DataTable, where the value of the combo will come from
      *
      * @throws WidgetLogicError if no value column defined
-     * @return exface\Core\Widgets\DataColumn
+     * @return DataColumn
      */
     public function getValueColumn()
     {
@@ -327,11 +327,85 @@ class ComboTable extends InputCombo implements iHaveChildren
         }
         return $this->getTable()->getColumn($this->getValueColumnId());
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\InputSelect::doPrefillWithWidgetObject()
+     */
+    protected function doPrefillWithWidgetObject(DataSheetInterface $data_sheet)
+    {
+        if (! $this->getAttributeAlias() || ! $data_sheet->getColumns()->getByExpression($this->getAttributeAlias())){
+            return;
+        }
+        
+        // If the prefill data is based on the same object, as the widget and has a column matching
+        // this widgets attribute_alias, simply look for all the required attributes in the prefill data.
+        $this->setValue($data_sheet->getCellValue($this->getAttributeAlias(), 0));
+        
+        // Be carefull with the value text. If the combo stands for a relation, it can be retrieved from the prefill data,
+        // but if the text comes from an unrelated object, it cannot be part of the prefill data and thus we can not
+        // set it here. In most templates, setting merely the value of the combo well make the template load the
+        // corresponding text by itself (e.g. via lazy loading), so it is not a real problem.
+        if ($this->getAttribute()->isRelation()) {
+            $text_column_name = RelationPath::relationPathAdd($this->getRelation()->getAlias(), $this->getTextColumn()->getAttributeAlias());
+        } elseif ($this->getMetaObject()->isExactly($this->getTable()->getMetaObject())) {
+            $text_column_name = $this->getTextColumn()->getDataColumnName();
+        } else {
+            unset($text_column_name);
+        }
+        if ($text_column_name) {
+            $this->setValueText($data_sheet->getCellValue($text_column_name, 0));
+        }
+        return;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\InputSelect::doPrefillWithOptionsObject()
+     */
+    protected function doPrefillWithOptionsObject(DataSheetInterface $data_sheet)
+    {
+        // If the sheet is based upon the object, that is being selected by this Combo, we can use the prefill sheet
+        // values directly
+        if ($col = $data_sheet->getColumns()->getByAttribute($this->getValueAttribute())) {
+            $this->setValue($col->getCellValue(0));
+        }
+        if ($col = $data_sheet->getColumns()->getByAttribute($this->getTextAttribute())) {
+            $this->setValueText($col->getCellValue(0));
+        }
+        return;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\InputSelect::doPrefillWithRelationsInData()
+     */
+    protected function doPrefillWithRelationsInData(DataSheetInterface $data_sheet)
+    {
+        if (! $this->getRelation()){
+            return;
+        }
+        
+        // If it is not the object selected within the combo, than we still can look for columns in the sheet, that
+        // contain selectors (UIDs) of that object. This means, we need to look for data columns showing relations
+        // and see if their related object is the same as the related object of the relation represented by the combo.
+        foreach ($data_sheet->getColumns()->getAll() as $column) {
+            if ($column->getAttribute() && $column->getAttribute()->isRelation()) {
+                if ($column->getAttribute()->getRelation()->getRelatedObject()->is($this->getRelation()->getRelatedObject())) {
+                    $this->setValuesFromArray($column->getValues(false));
+                    return;
+                }
+            }
+        }
+    }
 
     /**
-     * Prefills a ComboTable with the value it represents and the corresponding text.
-     *
-     * @see \exface\Core\Widgets\Text::prefill()
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\InputSelect::doPrefill()
      */
     protected function doPrefill(DataSheetInterface $data_sheet)
     {
@@ -341,50 +415,16 @@ class ComboTable extends InputCombo implements iHaveChildren
         }
         
         if (! $data_sheet->isEmpty()) {
-            $this->setPrefillData($data_sheet);
-            if ($data_sheet->getMetaObject()->is($this->getMetaObject()) && $data_sheet->getColumns()->getByExpression($this->getAttributeAlias())) {
-                // If the prefill data is based on the same object, as the widget and has a column matching
-                // this widgets attribute_alias, simply look for all the required attributes in the prefill data.
-                $this->setValue($data_sheet->getCellValue($this->getAttributeAlias(), 0));
-                
-                // Be carefull with the value text. If the combo stands for a relation, it can be retrieved from the prefill data,
-                // but if the text comes from an unrelated object, it cannot be part of the prefill data and thus we can not
-                // set it here. In most templates, setting merely the value of the combo well make the template load the
-                // corresponding text by itself (e.g. via lazy loading), so it is not a real problem.
-                if ($this->getAttribute()->isRelation()) {
-                    $text_column_name = RelationPath::relationPathAdd($this->getRelation()->getAlias(), $this->getTextColumn()->getAttributeAlias());
-                } elseif ($this->getMetaObject()->isExactly($this->getTable()->getMetaObject())) {
-                    $text_column_name = $this->getTextColumn()->getDataColumnName();
-                } else {
-                    unset($text_column_name);
-                }
-                if ($text_column_name) {
-                    $this->setValueText($data_sheet->getCellValue($text_column_name, 0));
-                }
+            if ($data_sheet->getMetaObject()->is($this->getMetaObject())) {
+                $this->doPrefillWithWidgetObject($data_sheet);
             } else {
                 // If the prefill data was loaded for another object, there are still multiple possibilities to prefill
                 if ($data_sheet->getMetaObject()->is($this->getTableObject())) {
-                    // If the sheet is based upon the object, that is being selected by this Combo, we can use the prefill sheet
-                    // values directly
-                    if ($col = $data_sheet->getColumns()->getByAttribute($this->getValueAttribute())) {
-                        $this->setValue($col->getCellValue(0));
-                    }
-                    if ($col = $data_sheet->getColumns()->getByAttribute($this->getTextAttribute())) {
-                        $this->setValueText($col->getCellValue(0));
-                    }
+                    $this->doPrefillWithOptionsObject($data_sheet);
                     return;
                 } elseif ($this->getRelation()) {
-                    // If it is not the object selected within the combo, than we still can look for columns in the sheet, that
-                    // contain selectors (UIDs) of that object. This means, we need to look for data columns showing relations
-                    // and see if their related object is the same as the related object of the relation represented by the combo.
-                    foreach ($data_sheet->getColumns()->getAll() as $column) {
-                        if ($column->getAttribute() && $column->getAttribute()->isRelation()) {
-                            if ($column->getAttribute()->getRelation()->getRelatedObject()->is($this->getRelation()->getRelatedObject())) {
-                                $this->setValuesFromArray($column->getValues(false));
-                                return;
-                            }
-                        }
-                    }
+                    $this->doPrefillWithRelationsInData($data_sheet);
+                    return;
                 }
                 // If we are still here, that means, the above checks did not work. We still can try to use the prefill data
                 // to filter the options, so just pass it to the internal data widget
