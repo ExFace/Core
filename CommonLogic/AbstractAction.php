@@ -622,6 +622,7 @@ abstract class AbstractAction implements ActionInterface
     public function setMetaObject(Object $object)
     {
         $this->meta_object = $object;
+        return $this;
     }
 
     /**

@@ -183,16 +183,22 @@ class Text extends AbstractWidget implements iShowSingleAttribute, iHaveValue, i
         return $this->prepareDataSheetToRead($data_sheet);
     }
 
+    /**
+     * A text widget is prefillable if it does not have a value or it's value
+     * is a reference (live reference formula).
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\AbstractWidget::isPrefillable()
+     */
     protected function isPrefillable()
     {
         return ! ($this->getValue() && ! $this->getValueExpression()->isReference());
-        // return !($this->getValue());
     }
 
     /**
-     * Prefills the input with a value taken from the corresponding column of a given data sheet
-     *
-     * @see \exface\Core\Widgets\AbstractWidget::prefill()
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\AbstractWidget::doPrefill()
      */
     protected function doPrefill(\exface\Core\Interfaces\DataSheets\DataSheetInterface $data_sheet)
     {
@@ -210,11 +216,12 @@ class Text extends AbstractWidget implements iShowSingleAttribute, iHaveValue, i
             } else {
                 $value = $data_sheet->getCellValue($col->getName(), 0);
             }
+            // Ignore empty values because otherwise live-references would get overwritten even without a meaningfull prefill value
             if (! is_null($value) && $value != '') {
-                // if empty values are set, live-references get overwritten even without a prefill
                 $this->setValue($value);
             }
         }
+        return;
     }
 
     public function getAggregateFunction()

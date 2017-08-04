@@ -232,7 +232,16 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
         $this->getWorkbench()->eventManager()->dispatch(EventFactory::createWidgetEvent($this, 'Prefill.After'));
         return;
     }
-
+    
+    /**
+     * Prefills the widget using values from the given data sheet.
+     * 
+     * Override this method for custom prefill logic of a widget. By default it
+     * will not do anything at all.
+     * 
+     * @param DataSheetInterface $data_sheet
+     * @return void
+     */
     protected function doPrefill(DataSheetInterface $data_sheet)
     {
         return;
@@ -265,7 +274,11 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
         }
         return $data_sheet;
     }
-
+    
+    /**
+     * Returns TRUE if this widget can be prefilled and FALSE otherwise.
+     * @return boolean
+     */
     protected function isPrefillable()
     {
         return true;

@@ -12,6 +12,8 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\DataSheets\DataSorter;
 use exface\Core\Factories\DataSorterFactory;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
+use exface\Core\Interfaces\DataSheets\DataColumnInterface;
+use exface\Core\CommonLogic\Model\Relation;
 
 /**
  * A dropdown menu to select from.
@@ -70,8 +72,6 @@ class InputSelect extends Input implements iSupportMultiSelect
     private $text_attribute_alias = null;
 
     private $value_attribute_alias = null;
-
-    private $custom_text_attribute_flag = false;
 
     private $options_object = null;
 
@@ -225,37 +225,169 @@ class InputSelect extends Input implements iSupportMultiSelect
         }
         return $number;
     }
+    
+    /**
+     * Prefills the widget with a data sheet based on the same object as the 
+     * widget itself or a derivative of it.
+     * 
+     * @param DataSheetInterface $data_sheet
+     * @return void
+     */
+    protected function doPrefillWithWidgetObject(DataSheetInterface $data_sheet)
+    {
+        if (! $this->getAttribute() || ! $data_sheet->getMetaObject()->is($this->getMetaObject())){
+            return;
+        }
+        
+        if ($col = $data_sheet->getColumns()->getByAttribute($this->getAttribute())){
+            $this->setSelectableOptions($col->getValues(false));
+            $this->setValuesFromArray($col->getValues(false));
+        }
+        return;
+    }
+    
+    /**
+     * Prefills the widget with a data sheet based on the same object as the 
+     * options object or a derivative of it.
+     * 
+     * @param DataSheetInterface $data_sheet
+     * @return void
+     */
+    protected function doPrefillWithOptionsObject(DataSheetInterface $data_sheet)
+    {
+        if (! $data_sheet->getMetaObject()->is($this->getOptionsObject())){
+            return;
+        }
+        
+        // If the sheet is based upon the object, that is being selected by this Combo, we can use the prefill sheet
+        // values directly
+        $values_column = $data_sheet->getColumns()->getByAttribute($this->getValueAttribute());
+        $texts_column = $data_sheet->getColumns()->getByAttribute($this->getTextAttribute());
+        
+        if ($values_column){
+            $this->setOptionsFromPrefillColumns($values_column, $texts_column ? $texts_column : null);
+        }
+        
+        // Now see if the prefill object can be used to filter values
+        if (! $this->getUsePrefillValuesAsOptions() && $this->getUsePrefillToFilterOptions()) {
+            if ($data_sheet->getMetaObject()->is($this->getOptionsObject())) {
+                // TODO which values from the prefill are we going to use here for fitlers? Which columns?
+                // Or maybe use the filter of the prefill sheet? Or even ignore this case completely?
+            }
+        }
+        
+        return;
+    }
+    
+    /**
+     * Prefills the widget if it represents a relation by searching the prefill
+     * data for columns with relations to the same object as the widget's
+     * relation points to.
+     * 
+     * E.g. if we have a select for people responsible for a task and a prefill
+     * is perfomed with data containing the UID of a person in any form (e.g.
+     * a store with it's manager), we can use this UID to prefill our select
+     * even though the data is not directly related.
+     * 
+     * @param DataSheetInterface $data_sheet
+     * @return void
+     */
+    protected function doPrefillWithRelationsInData(DataSheetInterface $data_sheet)
+    {
+        if (! $this->getAttribute() || ! $this->getAttribute()->isRelation()){
+            return;
+        }
+        // If it is not the object selected within the combo, than we still can look for columns in the sheet, that
+        // contain selectors (UIDs) of that object. This means, we need to look for data columns showing relations
+        // and see if their related object is the same as the related object of the relation represented by the combo.
+        foreach ($data_sheet->getColumns()->getAll() as $column) {
+            if ($column->getAttribute() && $column->getAttribute()->isRelation()) {
+                if ($column->getAttribute()->getRelation()->getRelatedObject()->is($this->getAttribute()->getRelation()->getRelatedObject())) {
+                    // TODO what about texts?
+                    $this->setOptionsFromPrefillColumns($column);
+                    return;
+                }
+            }
+        }
+        return;
+    }
+    
+    /**
+     * Prefills the widet with data of another object by using the given relation
+     * from the options object to the prefill object.
+     * 
+     * @param DataSheetInterface $data_sheet
+     * @param Relation $relation_from_options_to_prefill_object
+     * @return void
+     */
+    protected function doPrefillWithRelatedObject(DataSheetInterface $data_sheet, Relation $relation_from_options_to_prefill_object)
+    {
+        
+        // Now see if the prefill object can be used to filter values
+        if (! $this->getUsePrefillValuesAsOptions() && $this->getUsePrefillToFilterOptions()) {
+            // Use this relation as filter to query the data source for selectable options
+            if ($col = $data_sheet->getColumns()->getByExpression($relation_from_options_to_prefill_object->getRelatedObjectKeyAlias())) {
+                $this->getOptionsDataSheet()->addFilterInFromString($relation_from_options_to_prefill_object->getAlias(), $col->getValues(false));
+            }
+        }
+    }
 
     protected function doPrefill(DataSheetInterface $data_sheet)
     {
+        // Do not do anything, if the value is already set explicitly (e.g. a fixed value)
+        if (! $this->isPrefillable()) {
+            return;
+        }
+        
         // First du the regular prefill for an input (setting the value)
         parent::doPrefill($data_sheet);
+        
         // Additionally the InputSelect can use the prefill data to generate selectable options.
         // If the InputSelect is based on a meta attribute and does not have explicitly defined options, we can try to use
         // the prefill values to get the options.
         if ($this->getAttribute() && ! $this->countSelectableOptions()) {
             // If the prefill is based on the same object, just look for values of this attribute, add them as selectable options
             // and select all of them
-            if ($data_sheet->getMetaObject()->is($this->getMetaObject()) && $col = $data_sheet->getColumns()->getByAttribute($this->getAttribute())) {
-                $this->setSelectableOptions($col->getValues(false));
-                $this->setValuesFromArray($col->getValues(false));
-            }
-            
-            // Now see if the prefill object can be used to filter values
-            if (! $this->getUsePrefillValuesAsOptions() && $this->getUsePrefillToFilterOptions()) {
-                // If the prefill object is the options object use prefill values to filter the options
+            if ($data_sheet->getMetaObject()->is($this->getMetaObject())) {
+                $this->doPrefillWithWidgetObject($data_sheet);
+            } else {
+                // If the prefill data was loaded for another object, there are still multiple possibilities to prefill
                 if ($data_sheet->getMetaObject()->is($this->getOptionsObject())) {
-                    // TODO which values from the prefill are we going to use here for fitlers? Which columns?
-                    // Or maybe use the filter of the prefill sheet? Or even ignore this case completely?
-                } // If the prefill object is not the options object (or there was no special options object defined), but a
-                  // relation to it can be found, use this relation as filter to query the data source for selectable options
-                elseif ($rel = $this->getOptionsObject()->findRelation($data_sheet->getMetaObject(), true)) {
-                    if ($col = $data_sheet->getColumns()->getByExpression($rel->getRelatedObjectKeyAlias())) {
-                        $this->getOptionsDataSheet()->addFilterInFromString($rel->getAlias(), $col->getValues(false));
-                    }
+                    $this->doPrefillWithOptionsObject($data_sheet);
+                    return;
+                } elseif ($this->getAttribute()->isRelation()) {
+                    $this->doPrefillWithRelationsInData($data_sheet);
+                    return;
+                } elseif ($rel = $this->getOptionsObject()->findRelation($data_sheet->getMetaObject(), true)){
+                    $this->doPrefillWithRelatedObject($data_sheet, $rel);
                 }
             }
         }
+        return;
+    }
+    
+    public function prepareDataSheetToPrefill(DataSheetInterface $data_sheet = null)
+    {
+        $data_sheet = parent::prepareDataSheetToPrefill($data_sheet);
+        
+        if ($data_sheet->getMetaObject()->is($this->getOptionsObject())) {
+            $data_sheet->getColumns()->addFromAttribute($this->getTextAttribute());
+        }
+        
+        return $data_sheet;
+    }
+    
+    protected function setOptionsFromPrefillColumns(DataColumnInterface $value_column, DataColumnInterface $text_column = null)
+    {
+        $values = $value_column->getValues(false);
+        
+        if ($text_column) {
+            $texts = $text_column->getValues(false);
+        }
+        
+        $this->setSelectableOptions($values, $texts);
+        $this->setValuesFromArray($values);
+        return $this;
     }
 
     protected function setOptionsFromDataSheet(DataSheetInterface $data_sheet)
@@ -352,7 +484,6 @@ class InputSelect extends Input implements iSupportMultiSelect
     public function setTextAttributeAlias($value)
     {
         $this->text_attribute_alias = $value;
-        $this->custom_text_attribute_flag = true;
         return $this;
     }
 
@@ -388,25 +519,17 @@ class InputSelect extends Input implements iSupportMultiSelect
     }
 
     /**
-     * Returns TRUE if a text attribute was specified explicitly (e.g.
-     * via UXON-property "text_attribute_alias") and FALSE otherwise.
-     *
-     * @return boolean
-     */
-    public function hasCustomTextAttribute()
-    {
-        return $this->custom_text_attribute_flag;
-    }
-
-    /**
      * Returns TRUE if the options object was specified explicitly (e.g.
      * via UXON-property "options_object_alias") and FALSE otherwise.
      *
      * @return boolean
      */
-    public function hasCustomOptionsObject()
+    public function isOptionsObjectSpecified()
     {
-        return ! ($this->getMetaObject()->isExactly($this->getOptionsObject()));
+        if (is_null($this->options_object) && is_null($this->options_object_alias)){
+            return false;
+        }
+        return true;
     }
 
     public function getOptionsObject()
