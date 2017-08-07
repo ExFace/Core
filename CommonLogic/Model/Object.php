@@ -286,6 +286,16 @@ class Object implements ExfaceClassInterface, AliasInterface
                     $this->setAttributeCache($alias, $attr);
                     return $attr;
                 } catch (MetaRelationNotFoundError $e) {
+                    // Catch relation error and wrap it into an attribute error. 
+                    // Otherwise it's not clear to the user, at what point the 
+                    // relation was required.
+                    $this->setAttributeCache($alias, false);
+                    throw new MetaAttributeNotFoundError($this, 'Attribute "' . $alias . '" not found for object "' . $this->getAliasWithNamespace() . '"!', null, $e);
+                } catch (MetaAttributeNotFoundError $e) {
+                    // Catch attribute-not-found errors from other objects and
+                    // wrap them into an error for this object. Otherwise it's
+                    // not clear to the user, at what point the attribute was
+                    // required.
                     $this->setAttributeCache($alias, false);
                     throw new MetaAttributeNotFoundError($this, 'Attribute "' . $alias . '" not found for object "' . $this->getAliasWithNamespace() . '"!', null, $e);
                 }
