@@ -53,7 +53,7 @@
 	   ]
 	},
 	
-	"GLOBAL.ACTIONS": [
+	"WIDGET.DATA.GLOBAL_ACTIONS": [
 	   {
 	       "alias": "exface.Core.ObjectBasketAdd"
 	   },
