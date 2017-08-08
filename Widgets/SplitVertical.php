@@ -2,6 +2,7 @@
 namespace exface\Core\Widgets;
 
 use exface\Core\Factories\WidgetFactory;
+use exface\Core\Interfaces\Widgets\iFillEntireContainer;
 
 /**
  * A Split consists of multiple panels aligned vertically or horizontally.
@@ -77,7 +78,9 @@ class SplitVertical extends Container
             if (! ($widget instanceof SplitPanel)) {
                 $panel = $this->createSplitPanel();
                 $panel->setHeight($widget->getHeight());
+                $widget->setHeight('100%');
                 $panel->setWidth($widget->getWidth());
+                $widget->setWidth('100%');
                 $panel->addWidget($widget);
                 $widgets[] = $panel;
             } else {
