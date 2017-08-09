@@ -14,7 +14,7 @@ class Date extends \exface\Core\CommonLogic\Model\Formula
     function formatDate($date, $format = '')
     {
         if (! $format)
-            $format = $this->getWorkbench()->getConfig()->getOption('DEFAULT_DATE_FORMAT');
+            $format = $this->getWorkbench()->getCoreApp()->getTranslator()->translate('GLOBAL.DEFAULT_DATE_FORMAT');
         try {
             $date = new \DateTime($date);
         } catch (\Exception $e) {

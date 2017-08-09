@@ -20,7 +20,7 @@ use exface\Core\CommonLogic\UxonObject;
  * that popup is defined by the context itself.
  * 
  * The context bar can be customized in the core configuration file via the
- * config option CONTEXTBAR. Just like any other widget, the context bar can
+ * config option WIDGET.CONTEXTBAR. Just like any other widget, the context bar can
  * be described via UXON - just in the config files instead of each page 
  * separately.
  *
@@ -45,7 +45,7 @@ class ContextBar extends Toolbar
     public function getButtons()
     {
         if (count(parent::getButtons()) == 0){
-            $this->importUxonObject($this->getWorkbench()->getConfig()->getOption('CONTEXTBAR'));
+            $this->importUxonObject($this->getWorkbench()->getConfig()->getOption('WIDGET.CONTEXTBAR'));
         }
         return parent::getButtons();
     }

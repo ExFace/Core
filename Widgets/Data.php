@@ -1368,32 +1368,7 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
      */
     public function getConfiguratorWidgetType(){
         return 'DataConfigurator';
-    }
-    
-    /**
-     * 
-     * @return boolean|null
-     */
-    public function getHideSearchButton()
-    {
-        return $this->hide_refresh_button;
-    }
-    
-    /**
-     * Set to true to hide the refresh/search button. Default: false.
-     * 
-     * @uxon-property hide_refresh_button
-     * @uxon-type boolean
-     * 
-     * @param boolean $hide_refresh_button
-     * @return \exface\Core\Widgets\Data
-     */
-    public function setHideSearchButton($true_or_false)
-    {
-        $this->hide_refresh_button = BooleanDataType::parse($true_or_false);
-        return $this;
-    }
- 
+    } 
 }
 
 ?>

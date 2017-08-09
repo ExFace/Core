@@ -10,7 +10,7 @@ class DateTime extends \exface\Core\CommonLogic\Model\Formula
         if (! $date)
             return;
         if (! $format)
-            $format = $exface->getConfig()->getOption('DEFAULT_DATETIME_FORMAT');
+            $format = $exface->getCoreApp()->getTranslator()->translate('GLOBAL.DEFAULT_DATETIME_FORMAT');
         try {
             $date = new \DateTime($date);
         } catch (\Exception $e) {
