@@ -3,7 +3,7 @@ namespace exface\Core\Widgets;
 
 use exface\Core\Behaviors\StateMachineState;
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\Exceptions\MetaModelBehaviorException;
+use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
 
 class StateMenuButton extends MenuButton
 {
@@ -18,13 +18,13 @@ class StateMenuButton extends MenuButton
      *
      * @see \exface\Core\Widgets\MenuButton::getButtons()
      */
-    public function getButtons()
+    public function getButtons(callable $filter_callback = null)
     {
         // Falls am Objekt ein StateMachineBehavior haengt wird versucht den momentanen Status aus
         // dem Objekt auszulesen und die entsprechenden Buttons aus dem Behavior hinzuzufuegen.
         if (! $this->smb_buttons_set) {
             if (is_null($smb = $this->getMetaObject()->getBehaviors()->getByAlias('exface.Core.Behaviors.StateMachineBehavior'))) {
-                throw new MetaModelBehaviorException('StateMenuButton: The object ' . $this->getMetaObject()->getAliasWithNamespace() . ' has no StateMachineBehavior attached.');
+                throw new BehaviorConfigurationError('StateMenuButton: The object ' . $this->getMetaObject()->getAliasWithNamespace() . ' has no StateMachineBehavior attached.');
             }
             
             if (($data_sheet = $this->getPrefillData()) && ($state_column = $data_sheet->getColumnValues($smb->getStateAttributeAlias()))) {
@@ -63,7 +63,7 @@ class StateMenuButton extends MenuButton
             $this->smb_buttons_set = true;
         }
         
-        return parent::getButtons();
+        return parent::getButtons($filter_callback);
     }
 
     /**

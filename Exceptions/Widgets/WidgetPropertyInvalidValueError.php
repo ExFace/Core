@@ -19,4 +19,13 @@ class WidgetPropertyInvalidValueError extends UnexpectedValueException implement
     public function getDefaultAlias(){
         return '6VYOEGI';
     }
+    
+    /**
+     *
+     * @see WidgetExceptionTrait::mustDestroyWidget()
+     */
+    protected function mustDestroyWidget()
+    {
+        return true;
+    }
 }

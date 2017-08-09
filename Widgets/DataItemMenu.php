@@ -22,7 +22,12 @@ class DataItemMenu extends Menu
         return $this->getInputWidget();
     } 
     
-    public function getButtons()
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Toolbar::getButtons()
+     */
+    public function getButtons(callable $filter_callback = null)
     {
         if (!parent::hasButtons()){
             foreach ($this->getDataWidget()->getToolbars() as $toolbar){
@@ -31,7 +36,7 @@ class DataItemMenu extends Menu
                 }
             }
         }
-        return parent::getButtons();
+        return parent::getButtons($filter_callback);
     }
 }
 ?>

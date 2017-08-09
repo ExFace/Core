@@ -496,18 +496,6 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveToolbars, iHave
     }
 
     /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Widgets\iHaveButtons::getButtons()
-     * @return DataButton
-     */
-    public function getButtons()
-    {
-        return $this->buttons;
-    }
-
-    /**
      * Returns an array of button widgets, that are explicitly bound to a double click on a data element
      *
      * @param string $mouse_action            

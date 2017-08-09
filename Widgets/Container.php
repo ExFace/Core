@@ -8,6 +8,9 @@ use exface\Core\Factories\WidgetFactory;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 use exface\Core\Interfaces\Widgets\iTakeInput;
+use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\Exceptions\Widgets\WidgetChildNotFoundError;
+use exface\Core\Exceptions\UnderflowException;
 
 /**
  * The Container is a basic widget, that contains other widgets - typically simple ones like inputs.
@@ -77,7 +80,10 @@ class Container extends AbstractWidget implements iContainOtherWidgets
      */
     public function addWidget(AbstractWidget $widget, $position = NULL)
     {
-        $widget->setParent($this);
+        if ($widget->getParent() !== $this){
+            $widget->setParent($this);
+        }
+        
         if (is_null($position) || ! is_numeric($position)) {
             $this->widgets[] = $widget;
         } else {
@@ -116,9 +122,9 @@ class Container extends AbstractWidget implements iContainOtherWidgets
      * Returns the direct child widget with the given id or boolean FALSE if there is no matching child.
      *
      * @param string $widget_id            
-     * @return \exface\Core\Widgets\WidgetInterface|boolean
+     * @return WidgetInterface|boolean
      */
-    public function getChild($widget_id)
+    public function findChildById($widget_id)
     {
         foreach ($this->getChildren() as $child) {
             if (strcasecmp($child->getId(), $widget_id) === 0) {
@@ -134,9 +140,38 @@ class Container extends AbstractWidget implements iContainOtherWidgets
      *
      * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::getWidgets()
      */
-    public function getWidgets()
+    public function getWidgets(callable $filter = null)
     {
+        if (!is_null($filter)){
+            return array_filter($this->widgets, $filter);
+        }
         return $this->widgets;
+    }
+    
+    
+    public function getWidget($index)
+    {
+        if (!is_int($index)){
+            throw new \UnexpectedValueException('Invalid index "' . $index . '" used to search for a child widget!');
+        }
+        
+        $widgets = $this->getWidgets();
+        
+        if (! array_key_exists($index, $widgets)){
+            throw new WidgetChildNotFoundError($this, 'No child widget found with index "' . $index . '" in ' . $this->getWidgetType() . '!');
+        }
+        
+        return $widgets[$index];
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::getWidgetIndex()
+     */
+    public function getWidgetIndex(WidgetInterface $widget)
+    {
+        return array_search($widget, $this->getWidgets());
     }
     
     /**
@@ -164,6 +199,32 @@ class Container extends AbstractWidget implements iContainOtherWidgets
     {
         $this->widgets = array();
         return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::removeWidget()
+     */
+    public function removeWidget(WidgetInterface $widget)
+    {
+        $key = array_search($widget, $this->widgets);
+        if ($key !== false){
+            unset($this->widgets[$key]);
+            // Reindex the array to avoid index gaps
+            $this->widgets = array_values($this->widgets);
+        }
+        return $this;
+    }
+    
+    public function getWidgetFirst(callable $filter = null)
+    {
+        foreach ($this->getWidgets() as $widget){
+            if (is_null($filter) || $filter($widget) === true){
+                return $widget;
+            }
+        }
+        throw new UnderflowException('Cannot get first widget from ' . $this->getWidgetType() . ': no widgets matching the filter were found!');
     }
 
     /**
@@ -214,9 +275,9 @@ class Container extends AbstractWidget implements iContainOtherWidgets
      *
      * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::countWidgets()
      */
-    public function countWidgets()
+    public function countWidgets(callable $filter = null)
     {
-        return count($this->getWidgets());
+        return count($this->getWidgets($filter));
     }
 
     /**

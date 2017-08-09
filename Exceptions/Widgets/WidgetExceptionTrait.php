@@ -25,7 +25,20 @@ trait WidgetExceptionTrait {
         parent::__construct($message, null, $previous);
         $this->setAlias($alias);
         $this->setWidget($widget);
-        $this->cleanupPageCache();        
+        if ($this->mustDestroyWidget()){
+            $this->cleanupPageCache(); 
+        }
+    }
+    
+    /**
+     * Returns TRUE if this is a critical exception and the widget must be destroyed 
+     * and caches cleaned up.
+     * 
+     * @return boolean
+     */
+    protected function mustDestroyWidget()
+    {
+        return false;
     }
     
     /**
@@ -66,7 +79,7 @@ trait WidgetExceptionTrait {
     public function createDebugWidget(DebugMessage $debug_widget)
     {
         $debug_widget = $this->parentCreateDebugWidget($debug_widget);
-        if ($debug_widget->getChild('widget_uxon_tab') === false) {
+        if ($debug_widget->findChildById('widget_uxon_tab') === false) {
             $page = $debug_widget->getPage();
             $uxon_tab = $debug_widget->createTab();
             $uxon_tab->setId('widget_uxon_tab');

@@ -15,6 +15,14 @@ use exface\Core\Interfaces\Exceptions\WidgetExceptionInterface;
  */
 class WidgetConfigurationError extends RuntimeException implements WidgetExceptionInterface
 {
-    
     use WidgetExceptionTrait;
+    
+    /**
+     * 
+     * @see WidgetExceptionTrait::mustDestroyWidget()
+     */
+    protected function mustDestroyWidget()
+    {
+        return true;
+    }
 }

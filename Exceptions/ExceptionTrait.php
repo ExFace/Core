@@ -112,7 +112,7 @@ trait ExceptionTrait {
     {
         $page = $debug_widget->getPage();
         // Add a tab with a user-friendly error description
-        if ($debug_widget->getChild('error_tab') === false) {
+        if ($debug_widget->findChildById('error_tab') === false) {
             $error_tab = $debug_widget->createTab();
             $error_tab->setId('error_tab');
             $error_tab->setCaption($debug_widget->getWorkbench()->getCoreApp()->getTranslator()->translate('ERROR.CAPTION'));
@@ -142,7 +142,7 @@ trait ExceptionTrait {
         }
         
         // Add a tab with the exception printout
-        if ($debug_widget->getChild('stacktrace_tab') === false) {
+        if ($debug_widget->findChildById('stacktrace_tab') === false) {
             $stacktrace_tab = $debug_widget->createTab();
             $stacktrace_tab->setId('stacktrace_tab');
             $stacktrace_tab->setCaption($debug_widget->getWorkbench()->getCoreApp()->getTranslator()->translate('ERROR.STACKTRACE_CAPTION'));
@@ -154,7 +154,7 @@ trait ExceptionTrait {
         }
         
         // Add a tab with the request printout
-        if ($page->getWorkbench()->getConfig()->getOption('DEBUG.SHOW_REQUEST_DUMP') && $debug_widget->getChild('request_tab') === false) {
+        if ($page->getWorkbench()->getConfig()->getOption('DEBUG.SHOW_REQUEST_DUMP') && $debug_widget->findChildById('request_tab') === false) {
             $request_tab = $debug_widget->createTab();
             $request_tab->setId('request_tab');
             $request_tab->setCaption($page->getWorkbench()->getCoreApp()->getTranslator()->translate('ERROR.REQUEST_CAPTION'));
@@ -166,7 +166,7 @@ trait ExceptionTrait {
         }
         
         // Context tab
-        if ($debug_widget->getChild('context_tab') === false){
+        if ($debug_widget->findChildById('context_tab') === false){
             $context_dump = array();
             foreach ($page->getWorkbench()->context()->getScopes() as $context_scope){
                 $context_dump[$context_scope->getName()]['id'] = $context_scope->getScopeId();

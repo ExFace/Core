@@ -103,7 +103,12 @@ class DataTableToolbar extends DataToolbar
         return $this->global_action_button_group;
     }
     
-    public function getButtonGroups()
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Container::getWidgets()
+     */
+    public function getButtonGroups(callable $filter_callback = null)
     {        
         // Add automatic button groups - but only if their parent is still this
         // toolbar. If they were moved, the parent changes and we don't want
@@ -117,7 +122,20 @@ class DataTableToolbar extends DataToolbar
         if ($this->getIncludeSearchActions() && $this->getButtonGroupForSearchActions()->getParent() === $this){
             $groups[] = $this->getButtonGroupForSearchActions();
         }
+        if (! is_null($filter_callback)){
+            return array_filter($groups, $filter_callback);
+        } 
+        
         return $groups;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iContainButtonGroups::getButtonGroupIndex()
+     */
+    public function getButtonGroupIndex(ButtonGroup $button_group){
+        return array_search($button_group, $this->getButtonGroups());
     }
     
     /**

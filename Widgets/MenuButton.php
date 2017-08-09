@@ -65,9 +65,9 @@ class MenuButton extends Button implements iHaveMenu, iHaveButtons
      *
      * @see \exface\Core\Interfaces\Widgets\iHaveButtons::getButtons()
      */
-    public function getButtons()
+    public function getButtons(callable $filter_callback = null)
     {
-        return $this->getMenu()->getButtons();
+        return $this->getMenu()->getButtons($filter_callback);
     }
 
     /**
@@ -149,9 +149,9 @@ class MenuButton extends Button implements iHaveMenu, iHaveButtons
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\iHaveButtons::countButtons()
      */
-    public function countButtons()
+    public function countButtons(callable $filter_callback = null)
     {
-        return $this->getMenu()->countButtons();
+        return $this->getMenu()->countButtons($filter_callback);
     }
     
     /**

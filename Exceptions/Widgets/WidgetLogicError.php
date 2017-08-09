@@ -19,4 +19,13 @@ class WidgetLogicError extends LogicException implements WidgetExceptionInterfac
     {
         return '6VCYEUC';
     }
+    
+    /**
+     *
+     * @see WidgetExceptionTrait::mustDestroyWidget()
+     */
+    protected function mustDestroyWidget()
+    {
+        return true;
+    }
 }
