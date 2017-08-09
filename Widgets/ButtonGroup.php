@@ -270,7 +270,7 @@ class ButtonGroup extends Container implements iHaveButtons, iCanBeAligned, iUse
      * {@inheritDoc}
      * @see \exface\Core\Widgets\Container::addWidget()
      */
-    public function addWidget(AbstractWidget $widget, $index)
+    public function addWidget(AbstractWidget $widget, $index = null)
     {
         return $this->addButton($widget, $index);
     }
