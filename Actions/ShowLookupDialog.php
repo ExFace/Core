@@ -71,7 +71,7 @@ class ShowLookupDialog extends ShowDialog
         }
         
         // @var $save_button \exface\Core\Widgets\Button
-        $save_button = $page->createWidget('DialogButton', $dialog);
+        $save_button = $dialog->createButton();
         $save_button->setCaption($this->getWorkbench()->getCoreApp()->getTranslator()->translate("ACTION.SHOWLOOKUPDIALOG.SAVE_BUTTON"));
         $save_button->setVisibility(EXF_WIDGET_VISIBILITY_PROMOTED);
         

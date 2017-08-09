@@ -8,7 +8,17 @@ use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 
 interface iHaveButtons extends iHaveChildren
 {
-
+    /**
+     * Instantiates a button with the correct type for this widget optionally 
+     * loading a UXON descrption.
+     * 
+     * NOTE: the button is not automatically added to the group - it's just created!
+     * 
+     * @param UxonObject $uxon
+     * @return Button
+     */
+    public function createButton(UxonObject $uxon = null);
+    
     /**
      * Adds a button to the widget
      *

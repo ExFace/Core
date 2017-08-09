@@ -742,7 +742,7 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
         // FIXME me adding buttons is currently needed because DataTables opened
         // in a dialog from the context bar popop sometimes cannot get data: e.g.
         // the table with details to a recorded debug-trace.
-        $children = array_merge($children, $this->getButtons());
+        //$children = array_merge($children, $this->getButtons());
         
         // Add the help button, so pages will be able to find it when dealing with the ShowHelpDialog action.
         // IMPORTANT: Add the help button to the children only if it is not hidden. This is needed to hide the button in
@@ -1326,7 +1326,11 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
     }
     
     /**
-     *
+     * The generic Data widget has a simple toolbar, that should merely be a 
+     * container for potential buttons. This makes sure all widgets using data
+     * internally (like ComboTables, Charts, etc.) do not have to create complex
+     * toolbars, that get automatically generated for DataTables, etc.
+     * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\iHaveToolbars::getToolbarWidgetType()
      */

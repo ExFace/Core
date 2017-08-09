@@ -526,20 +526,6 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveToolbars, iHave
 
     /**
      *
-     * @see \exface\Core\Interfaces\Widgets\iHaveButtons::setButtons()
-     */
-    public function setButtons(array $buttons_array)
-    {
-        if (! is_array($buttons_array))
-            return false;
-        foreach ($buttons_array as $b) {
-            $button = $this->getPage()->createWidget('DataButton', $this, UxonObject::fromAnything($b));
-            $this->addButton($button);
-        }
-    }
-
-    /**
-     *
      * {@inheritdoc}
      *
      * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::getLazyLoading()
@@ -655,7 +641,7 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveToolbars, iHave
      */
     public function getToolbarWidgetType()
     {
-        return 'DataToolbar';
+        return 'DataTableToolbar';
     }
 }
 ?>

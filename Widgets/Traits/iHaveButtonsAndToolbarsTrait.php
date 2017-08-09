@@ -2,6 +2,7 @@
 namespace exface\Core\Widgets\Traits;
 
 use exface\Core\Widgets\Button;
+use exface\Core\CommonLogic\UxonObject;
 
 trait iHaveButtonsAndToolbarsTrait 
 {
@@ -150,4 +151,13 @@ trait iHaveButtonsAndToolbarsTrait
         return $this->getToolbarMain()->getButtonWidgetType();
     }
     
+    /**
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Widgets\iHaveButtons::createButton()
+     */
+    public function createButton(UxonObject $uxon = null)
+    {
+        return $this->getToolbarMain()->createButton($uxon);
+    }
 }

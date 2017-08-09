@@ -150,7 +150,7 @@ class ContextBar extends Toolbar
     protected function createButtonForContext(ContextInterface $context)
     {   
         /* @var $btn \exface\Core\Widgets\Button */
-        $btn = WidgetFactory::create($this->getPage(), $this->getButtonWidgetType(), $this)
+        $btn = $this->createButton()
         ->setId($this->createButtonIdFromContext($context))
         ->setActionAlias('exface.Core.ShowContextPopup')
         ->setHint($context->getName())

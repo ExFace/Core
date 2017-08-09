@@ -9,6 +9,7 @@ use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\Interfaces\Widgets\iUseInputWidget;
 use exface\Core\Widgets\Traits\iUseInputWidgetTrait;
 use exface\Core\Interfaces\Widgets\iContainButtonGroups;
+use exface\Core\Factories\WidgetFactory;
 
 /**
  * A group of button widgets visually separated from the other buttons.
@@ -78,10 +79,7 @@ class ButtonGroup extends Container implements iHaveButtons, iCanBeAligned, iUse
             if ($b instanceof Button){
                 $button = $b;
             } elseif ($b instanceof UxonObject){
-                // If the widget type of the Button is explicitly defined, use it, otherwise fall back to the button widget type of
-                // this widget: i.e. Button for simple Forms, DialogButton for Dialogs, etc.
-                $button_widget_type = $b->hasProperty('widget_type') ? $b->getProperty('widget_type') : $this->getButtonWidgetType();
-                $button = $this->getPage()->createWidget($button_widget_type, $this, UxonObject::fromAnything($b));
+                $button = WidgetFactory::createFromUxon($this->getPage(), UxonObject::fromAnything($b), $this, $this->getButtonWidgetType());
             } else {
                 throw new WidgetPropertyInvalidValueError($this, 'Cannot use "' . gettype($b) . '" as button in ' . $this->getWidgetType() . '": instantiated button widget (or derivative) or corresponding UXON object expected!');
             }
@@ -247,6 +245,20 @@ class ButtonGroup extends Container implements iHaveButtons, iCanBeAligned, iUse
             }
         }
         return $this->getAlignDefault();
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveButtons::createButton()
+     */
+    public function createButton(UxonObject $uxon = null)
+    {
+        if (is_null($uxon)){
+            return WidgetFactory::create($this->getPage(), $this->getButtonWidgetType(), $this);
+        } else {
+            return WidgetFactory::createFromUxon($this->getPage(), $uxon, $this, $this->getButtonWidgetType());
+        }
     }
 }
 ?>

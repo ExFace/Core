@@ -5,6 +5,7 @@ use exface\Core\Interfaces\Widgets\iHaveMenu;
 use exface\Core\Interfaces\Widgets\iHaveButtons;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
+use exface\Core\CommonLogic\UxonObject;
 
 /**
  * A button with a menu, containing other buttons.
@@ -181,6 +182,16 @@ class MenuButton extends Button implements iHaveMenu, iHaveButtons
     public function getButton($index)
     {
         return $this->getMenu()->getButton($index);
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveButtons::createButton()
+     */
+    public function createButton(UxonObject $uxon = null)
+    {
+        return $this->getMenu()->createButton($uxon);
     }
 }
 ?>

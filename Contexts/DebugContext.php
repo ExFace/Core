@@ -257,7 +257,7 @@ class DebugContext extends AbstractContext
         
         // Add the START button
         /* @var $button \exface\Core\Widgets\Button */
-        $button = WidgetFactory::create($container->getPage(), $data_list->getButtonWidgetType(), $data_list)
+        $button = $data_list->createButton()
             ->setActionAlias('exface.Core.ContextApi')
             ->setCaption($this->getWorkbench()->getCoreApp()->getTranslator()->translate('CONTEXT.DEBUG.START'));
         $button->getAction()
@@ -268,7 +268,7 @@ class DebugContext extends AbstractContext
         $data_list->addButton($button);
         
         /* @var $button \exface\Core\Widgets\Button */
-        $button = WidgetFactory::create($container->getPage(), $data_list->getButtonWidgetType(), $data_list)
+        $button = $data_list->createButton()
             ->setActionAlias('exface.Core.ContextApi')
             ->setCaption($this->getWorkbench()->getCoreApp()->getTranslator()->translate('CONTEXT.DEBUG.STOP'))
             ->setIconName(Icons::PAUSE);
@@ -280,10 +280,10 @@ class DebugContext extends AbstractContext
         
         // Add the detail button an bind it to the left click
         /* @var $details_button \exface\Core\Widgets\DataButton */
-        $details_button = WidgetFactory::create($container->getPage(), $data_list->getButtonWidgetType(), $data_list)
-        ->setActionAlias('exface.Core.ShowObjectDialog')
-        ->setBindToLeftClick(true)
-        ->setHidden(true);
+        $details_button = $data_list->createButton()
+            ->setActionAlias('exface.Core.ShowObjectDialog')
+            ->setBindToLeftClick(true)
+            ->setHidden(true);
         $data_list->addButton($details_button);
         
         $container->addWidget($data_list);

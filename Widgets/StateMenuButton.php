@@ -35,7 +35,6 @@ class StateMenuButton extends MenuButton
             
             $states = $smb->getStates();
             
-            $button_widget = $this->getInputWidget()->getButtonWidgetType();
             foreach ($smb->getStateButtons($current_state) as $target_state => $smb_button) {
                 // Ist show_states leer werden alle Buttons hinzugefuegt (default)
                 // sonst wird der Knopf nur hinzugefuegt wenn er in show_states enthalten ist.
@@ -45,12 +44,12 @@ class StateMenuButton extends MenuButton
                     // werden entfernt.
                     /* @var $uxon \exface\Core\CommonLogic\UxonObject */
                     $uxon = $this->exportUxonObjectOriginal()->extend(UxonObject::fromAnything($smb_button)->copy());
+                    $uxon->unsetProperty('widget_type');
                     $uxon->unsetProperty('show_states');
                     $uxon->unsetProperty('buttons');
                     $uxon->unsetProperty('menu');
                     
-                    $button = $this->getPage()->createWidget($button_widget, $this->getMenu(), $uxon);
-                    
+                    $button = $this->createButton($uxon);
                     /** @var StateMachineState $stateObject */
                     $stateObject = $states[$target_state];
                     $name = $stateObject->getStateName($this->getMetaObject()->getApp()->getTranslator());

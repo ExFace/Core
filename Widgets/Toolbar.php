@@ -79,7 +79,7 @@ class Toolbar extends ButtonGroup implements iContainButtonGroups
             if ($group instanceof ButtonGroup){
                 $this->addButtonGroup($group);
             } elseif ($group instanceof UxonObject){
-                $this->addButton(WidgetFactory::createFromUxon($this->getPage(), $group, $this));
+                $this->addButtonGroup(WidgetFactory::createFromUxon($this->getPage(), $group, $this, 'ButtonGroup'));
             }
         }
         return $this;
@@ -298,6 +298,16 @@ class Toolbar extends ButtonGroup implements iContainButtonGroups
     public function getButtonWidgetType()
     {
         return 'Button';
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\ButtonGroup::createButton()
+     */
+    public function createButton(UxonObject $uxon = null)
+    {
+        return $this->getButtonGroupFirst()->createButton($uxon);
     }
 }
 ?>
