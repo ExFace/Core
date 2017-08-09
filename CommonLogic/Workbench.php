@@ -21,6 +21,7 @@ use exface\Core\Interfaces\DebuggerInterface;
 use exface\Core\CoreApp;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\NameResolverInterface;
+use exface\Core\Exceptions\Configuration\ConfigOptionNotFoundError;
 
 class Workbench
 {
@@ -444,11 +445,18 @@ class Workbench
      */
     protected function autorun()
     {
-        foreach ($this->getConfig()->getOption('AUTORUN_APPS') as $app_alias => $flag){
+        try {
+            $autoruns = $this->getConfig()->getOption('AUTORUN_APPS');
+        } catch (ConfigOptionNotFoundError $e){
+            $this->getLogger()->logException($e);
+        }
+        
+        foreach ($autoruns as $app_alias => $flag){
             if ($flag){
                 $this->getApp($app_alias);
             }
         }
+        
         return $this;
     }
 }
