@@ -157,16 +157,6 @@ class MenuButton extends Button implements iHaveMenu, iHaveButtons
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Widgets\iHaveButtons::countButtonsVisible()
-     */
-    public function countButtonsVisible()
-    {
-        return $this->getMenu()->countButtonsVisible();
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\iHaveButtons::getButtonIndex()
      */
     public function getButtonIndex(Button $widget)

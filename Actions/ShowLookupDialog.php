@@ -62,7 +62,7 @@ class ShowLookupDialog extends ShowDialog
         $dialog = parent::enhanceDialogWidget($dialog);
         $page = $this->getCalledOnUiPage();
         
-        if ($dialog->countWidgets() == 0) {
+        if ($dialog->isEmpty()) {
             $data_table = WidgetFactory::create($page, 'DataTable', $dialog);
             $data_table->setMetaObject($this->getMetaObject());
             $dialog->addWidget($data_table);

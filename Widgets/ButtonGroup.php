@@ -218,22 +218,6 @@ class ButtonGroup extends Container implements iHaveButtons, iCanBeAligned, iUse
         return count($this->getButtons());
     }
     
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Widgets\iHaveButtons::countButtonsVisible()
-     */
-    public function countButtonsVisible()
-    {
-        $cnt = 0;
-        foreach ($this->getButtons() as $btn){
-            if (!$btn->isHidden()){
-                $cnt++;
-            }
-        }
-        return $cnt;
-    }
-    
     public function getAlign()
     {
         if (is_null($this->getAlignDefault())){
@@ -259,6 +243,36 @@ class ButtonGroup extends Container implements iHaveButtons, iCanBeAligned, iUse
         } else {
             return WidgetFactory::createFromUxon($this->getPage(), $uxon, $this, $this->getButtonWidgetType());
         }
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Container::getWidgets()
+     */
+    public function getWidgets()
+    {
+        return $this->getButtons();
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Container::countWidgets()
+     */
+    public function countWidgets()
+    {
+        return $this->countButtons();
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Container::addWidget()
+     */
+    public function addWidget(AbstractWidget $widget, $index)
+    {
+        return $this->addButton($widget, $index);
     }
 }
 ?>

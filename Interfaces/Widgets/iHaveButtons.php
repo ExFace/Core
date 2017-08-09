@@ -90,11 +90,4 @@ interface iHaveButtons extends iHaveChildren
      * @return number
      */
     public function countButtons();
-    
-    /**
-     * Returns the number of buttons in the group, that are not hidden
-     *
-     * @return number
-     */
-    //public function countButtonsVisible();
 }

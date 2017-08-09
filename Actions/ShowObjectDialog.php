@@ -134,7 +134,7 @@ class ShowObjectDialog extends ShowDialog
         elseif ($default_editor_uxon && ! $default_editor_uxon->isEmpty()) {
             if (! $default_editor_uxon->getProperty('widget_type') || $default_editor_uxon->getProperty('widget_type') == 'Dialog') {
                 $dialog->importUxonObject($default_editor_uxon);
-                if ($dialog->countWidgets() == 0) {
+                if ($dialog->isEmpty()) {
                     $dialog->addWidgets($this->createWidgetsForAttributes($dialog));
                 }
             } else {
