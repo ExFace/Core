@@ -122,12 +122,14 @@ class Workbench
         $model_loader->setDataConnection($model_connection);
         $this->model()->setModelLoader($model_loader);
         
-        // load the context
+        // Load the context
         $this->context = new ContextManager($this);
         
-        $this->autorun();
-        
+        // Now the workbench is fully loaded and operational
         $this->started = true;
+        
+        // Finally load the autoruns
+        $this->autorun();
     }
 
     /**
@@ -157,7 +159,7 @@ class Workbench
      */
     public function getConfig()
     {
-        return $this->getApp('exface.Core')->getConfig();
+        return $this->getCoreApp()->getConfig();
     }
 
     public function model()
