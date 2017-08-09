@@ -92,7 +92,7 @@ trait MetaObjectExceptionTrait {
                 // the object of the ErrorMessage in this case
                 $tab->setMetaObject($tab->getMetaObject());
                 
-                foreach ($tab->getChildren() as $child) {
+                foreach ($tab->getChildrenRecursive() as $child) {
                     // Remove all buttons, as the ErrorMessage is read-only
                     if ($child instanceof iHaveButtons) {
                         foreach ($child->getButtons() as $button) {
