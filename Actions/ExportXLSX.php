@@ -3,11 +3,13 @@ namespace exface\Core\Actions;
 
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 
-class ExportXLSX extends ExportData
+class ExportXLSX extends ExportDataFile
 {
-
-    private $requestRows = 30000;
-
+    
+    // Der Name des Sheets in der Excel-Datei
+    private $excelSheetName = 'Sheet1';
+    
+    // Bildet alexa UI-Datentypen auf Excel-Datentypen ab
     private $typeMap = [
         'Boolean' => '',
         'Date' => 'DD.MM.YYYY',
@@ -28,50 +30,30 @@ class ExportXLSX extends ExportData
         'Uxon' => 'string'
     ];
 
-    protected function perform()
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Actions\ExportDataFile::writeHeader()
+     */
+    protected function writeHeader(DataSheetInterface $dataSheet)
     {
-        $dataSheetMaster = $this->getInputDataSheet()->copy();
-        if ($this->getCalledByWidget() && $this->getCalledByWidget()->is('Button')) {
-            $this->getCalledByWidget()->getInputWidget()->prepareDataSheetToRead($dataSheetMaster);
-        }
-        $dataSheetMaster->removeRows();
-        
-        // $this->setAffectedRows($dataSheet->removeRows()->dataRead());
-        // $this->setResultDataSheet($dataSheet);
-        
-        $rowsOnPage = $this->getRequestRows();
-        $rowOffset = 0;
-        do {
-            $dataSheet = $dataSheetMaster->copy();
-            $dataSheet->setRowsOnPage($rowsOnPage);
-            $dataSheet->setRowOffset($rowOffset);
-            $dataSheet->dataRead();
-            
-            $rowOffset += $rowsOnPage;
-        } while (count($dataSheet->getRows()) == $rowsOnPage);
-        
-        $url = $this->export($this->getResultDataSheet());
-        $this->setResult($url);
-        $this->setResultMessage('Download ready. If not id does not start automatically, click <a href="' . $url . '">here</a>.');
-    }
-
-    protected function export(DataSheetInterface $dataSheet)
-    {
-        file_put_contents('C:\test.txt', 'Write XLSX: ' . date('Y-m-d H:i:s', time()) . "\n", FILE_APPEND);
-        require_once MODX_BASE_PATH . 'exface' . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'exface' . DIRECTORY_SEPARATOR . 'Core' . DIRECTORY_SEPARATOR . 'Actions' . DIRECTORY_SEPARATOR . 'xlsxwriter.class.php';
-        $xlsxWriter = new XLSXWriter();
-        
-        // Header schreiben
         $header = [];
         foreach ($dataSheet->getColumns() as $col) {
             if (! $col->getHidden()) {
                 $header[$col->getName()] = $this->typeMap[$col->getDataType()->getName()];
             }
         }
-        $xlsxWriter->writeSheetHeader('Sheet1', $header);
-        
-        // Zeilen schreiben
-        $headerKeys = array_keys($header);
+        $this->getWriter()->writeSheetHeader($this->getExcelSheetName(), $header);
+        return array_keys($header);
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Actions\ExportDataFile::writeRows()
+     */
+    protected function writeRows(DataSheetInterface $dataSheet, array $headerKeys)
+    {
         foreach ($dataSheet->getRows() as $row) {
             $rowKeys = array_keys($row);
             $outRow = [];
@@ -82,27 +64,50 @@ class ExportXLSX extends ExportData
                     $outRow[] = null;
                 }
             }
-            $xlsxWriter->writeSheetRow('Sheet1', $outRow);
+            $this->getWriter()->writeSheetRow($this->getExcelSheetName(), $outRow);
         }
-        
-        // Excel-Sheet erzeugen
-        $contents = $xlsxWriter->writeToString();
-        
-        // Zum Download bereitstellen
-        $this->setMimeType('application/vnd.openxmlformats-officedocument. spreadsheetml.sheet');
-        file_put_contents('C:\test.txt', 'Write XLSX: ' . date('Y-m-d H:i:s', time()) . "\n", FILE_APPEND);
-        return $this->createDownload($contents);
     }
 
-    public function getRequestRows()
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Actions\ExportDataFile::writeFileResult()
+     */
+    protected function writeFileResult()
     {
-        return $this->requestRows;
+        $this->getWriter()->writeToFile($this->getPathname());
     }
 
-    public function setRequestRows($value)
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Actions\ExportDataFile::getWriter()
+     */
+    protected function getWriter()
     {
-        $this->requestRows = $value;
-        return $this;
+        if (is_null($this->writer)) {
+            $this->writer = new \XLSXWriter();
+        }
+        return $this->writer;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Actions\ExportData::getMimeType()
+     */
+    public function getMimeType()
+    {
+        return 'application/vnd.openxmlformats-officedocument. spreadsheetml.sheet';
+    }
+
+    /**
+     *
+     * @return string
+     */
+    protected function getExcelSheetName()
+    {
+        return $this->excelSheetName;
     }
 }
 ?>

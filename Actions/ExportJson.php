@@ -2,11 +2,12 @@
 namespace exface\Core\Actions;
 
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use League\Csv\Writer;
 
-class ExportCSV extends ExportDataFile
+class ExportJson extends ExportDataFile
 {
 
+    private $firstRowWritten = false;
+    
     /**
      * 
      * {@inheritDoc}
@@ -20,7 +21,6 @@ class ExportCSV extends ExportDataFile
                 $header[] = $col->getName();
             }
         }
-        $this->getWriter()->insertOne($header);
         return $header;
     }
 
@@ -29,19 +29,24 @@ class ExportCSV extends ExportDataFile
      * {@inheritDoc}
      * @see \exface\Core\Actions\ExportDataFile::writeRows()
      */
-    protected function writeRows(DataSheetInterface $dataSheet, array $headerKeys)
+    protected function writeRows(DataSheetInterface $dataSheet, array $columnNames)
     {
         foreach ($dataSheet->getRows() as $row) {
             $rowKeys = array_keys($row);
-            $outRow = [];
-            foreach ($headerKeys as $key) {
+            $outRow = new \stdClass();
+            foreach ($columnNames as $key) {
                 if (! (array_search($key, $rowKeys) === false)) {
-                    $outRow[] = $row[$key];
+                    $outRow->$key = $row[$key];
                 } else {
-                    $outRow[] = null;
+                    $outRow->$key = null;
                 }
             }
-            $this->getWriter()->insertOne($outRow);
+            if ($this->firstRowWritten) {
+                fwrite($this->getWriter(), ',' . json_encode($outRow, JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_QUOT));
+            } else {
+                fwrite($this->getWriter(), json_encode($outRow, JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_QUOT));
+                $this->firstRowWritten = true;
+            }
         }
     }
 
@@ -51,7 +56,10 @@ class ExportCSV extends ExportDataFile
      * @see \exface\Core\Actions\ExportDataFile::writeFileResult()
      */
     protected function writeFileResult()
-    {}
+    {
+        fwrite($this->getWriter(), ']');
+        fclose($this->getWriter());
+    }
 
     /**
      * 
@@ -61,19 +69,20 @@ class ExportCSV extends ExportDataFile
     protected function getWriter()
     {
         if (is_null($this->writer)) {
-            $this->writer = Writer::createFromPath($this->getPathname(), 'x+');
+            $this->writer = fopen($this->getPathname(), 'x+');
+            fwrite($this->writer, '[');
         }
         return $this->writer;
     }
 
     /**
-     * 
+     *
      * {@inheritDoc}
      * @see \exface\Core\Actions\ExportData::getMimeType()
      */
     public function getMimeType()
     {
-        return 'text/csv';
+        return 'application/json';
     }
 }
 ?>

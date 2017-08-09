@@ -18,6 +18,11 @@
 	"ACTION.EDITOBJECTDIALOG.NAME": "Bearbeiten",
 	"ACTION.EDITOBJECTDIALOG.NO_EDITABLE_ATTRIBUTES": "Keine editierbaren Attribute gefunden!",
 
+	"ACTION.EXPORTCSV.NAME": "Als CSV exportieren",
+	"ACTION.EXPORTDATA.NAME": "Exportieren",
+	"ACTION.EXPORTJSON.NAME": "Als JSON exportieren",
+	"ACTION.EXPORTXLSX.NAME": "Als XLSX exportieren",
+
 	"ACTION.FAVORITESADD.NAME": "In die Favoriten",
     "ACTION.FAVORITESADD.RESULT": "%number% Objekt zu Favoriten hinzugefügt.|%number% Objekte zu Favoriten hinzugefügt.",
     
