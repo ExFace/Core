@@ -93,7 +93,7 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveToolbars, iHave
         if (! $this->getDataWidgetLink()) {
             $children[] = $this->getData();
         }
-        $children = array_merge($children, $this->getAxes(), $this->getSeries());
+        $children = array_merge($children, $this->getAxes(), $this->getSeries(), $this->getToolbars());
         return $children;
     }
 
