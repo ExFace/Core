@@ -158,7 +158,7 @@ class TimeStampingBehavior extends AbstractBehavior
                          * (with milliseconds). This would cause the Check to fail, if the attribute with the timestamp had a formatter. The
                          * formatter would change the timestamp in the GUI, thus the comparison would naturally fail. This should not be
                          * neccessary as long as timestamping attributes do not use formatters. The lines should be removed after some testing.
-                         * $format = $this->getWorkbench()->getConfig()->getOption('DEFAULT_DATETIME_FORMAT');
+                         * $format = $this->getWorkbench()->getCoreApp()->getTranslator()->translate('GLOBAL.DEFAULT_DATETIME_FORMAT');
                          * $v_date = new \DateTime($val);
                          * $val_date = new \DateTime($v_date->format($format));
                          * $c_date = new \DateTime($check_val);

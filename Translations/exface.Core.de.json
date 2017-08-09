@@ -84,7 +84,9 @@
     "CONTEXT.OBJECTBASKET.REMOVE_ALL": "Alle entfernen",
     
     "GLOBAL.ACTIONS": "Aktionen",
-
+    "GLOBAL.DEFAULT_DATE_FORMAT": "d.m.Y",
+    "GLOBAL.DEFAULT_DATETIME_FORMAT": "d.m.Y H:i:s",
+    
 	"WIDGET.SELECT_ALL": "Alle",
 	"WIDGET.SELECT_YES": "Ja",
 	"WIDGET.SELECT_NO": "Nein",

@@ -2,16 +2,6 @@
 	"MODEL_DATA_CONNECTOR": "exface/ModxCmsConnector/DataConnectors/ModxDb.php",
 	"MODEL_LOADER": "exface/SqlDataConnector/ModelLoaders/SqlModelLoader.php",
 	"CMS_CONNECTOR": "exface/ModxCmsConnector/CmsConnectors/Modx.php",
-	"DEFAULT_UI_TEMPLATE": "exface.JEasyUiTemplate",
-	"WIDGET_FOR_UNKNOWN_DATA_TYPES" : "Input",
-	"RELATION_SEPARATOR": "__",
-	"AGGREGATION_SEPARATOR": ":",
-	"NAMESPACE_SEPARATOR": ".",
-	"WIDGET_ID_SEPARATOR": "_",
-	"OBJECT_LABEL_ALIAS": "LABEL",
-	"DEFAULT_DATE_FORMAT": "d.m.Y",
-	"DEFAULT_DATETIME_FORMAT": "d.m.Y H:i:s",
-	"FOLDER_USER_DATA": "UserData",
 	
 	"AUTORUN_APPS": {},
 	
@@ -27,6 +17,11 @@
 	"LOG.MAX_DAYS_TO_KEEP": "14",
 	"LOG.PERSIST_LOG_LEVEL": "alert",
 	"LOG.PASSTHROUGH_LOG_LEVEL": "error",
+	
+	"METAMODEL.OBJECT_LABEL_ALIAS": "LABEL",
+	
+	"TEMPLATES.DEFAULT_UI_TEMPLATE": "exface.JEasyUiTemplate",
+    "TEMPLATES.WIDGET_FOR_UNKNOWN_DATA_TYPES" : "Input",
 	
 	"WIDGET.CONTEXTBAR": {
 	   "contexts": [
