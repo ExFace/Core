@@ -125,6 +125,8 @@ class Workbench
         // load the context
         $this->context = new ContextManager($this);
         
+        $this->autorun();
+        
         $this->started = true;
     }
 
@@ -392,6 +394,59 @@ class Workbench
         // Clear main cache folder
         $filemanager = $this->filemanager();
         $filemanager->emptyDir($filemanager->getPathToCacheFolder());
+        return $this;
+    }
+    
+    /**
+     * Makes the given app get automatically instantiated every time the workbench
+     * is started.
+     * 
+     * The app will be added to the AUTORUN_APPS config option of the installation
+     * scope. 
+     * 
+     * NOTE: Autorun apps can be temporarily disabled in the config by changing 
+     * their respective value to FALSE.
+     * 
+     * @param AppInterface $app
+     * @return \exface\Core\CommonLogic\Workbench
+     */
+    public function addAutorunApp(AppInterface $app)
+    {
+        $autoruns = $this->getConfig()->getOption('AUTORUN_APPS');
+        $autoruns->setProperty($app->getAliasWithNamespace(), true);
+        $this->getConfig()->setOption('AUTORUN_APPS', $autoruns, AppInterface::CONFIG_SCOPE_INSTALLATION);
+        return $this;
+    }
+    
+    /**
+     * Removes the give app from the AUTORUN_APPS config option in the installation scope.
+     * 
+     * NOTE: this will completely the remove the app from the list. To disable
+     * the autorun temporarily, it's flag-value in the config can be set to FALSE.
+     * 
+     * @param AppInterface $app
+     * @return \exface\Core\CommonLogic\Workbench
+     */
+    public function removeAutorunApp(AppInterface $app)
+    {
+        $autoruns = $this->getConfig()->getOption('AUTORUN_APPS');
+        $autoruns->unsetProperty($app->getAliasWithNamespace());
+        $this->getConfig()->setOption('AUTORUN_APPS', $autoruns, AppInterface::CONFIG_SCOPE_INSTALLATION);
+        return $this;
+    }
+    
+    /**
+     * Instantiates all apps in the AUTORUN_APPS config option.
+     * 
+     * @return \exface\Core\CommonLogic\Workbench
+     */
+    protected function autorun()
+    {
+        foreach ($this->getConfig()->getOption('AUTORUN_APPS') as $app_alias => $flag){
+            if ($flag){
+                $this->getApp($app_alias);
+            }
+        }
         return $this;
     }
 }
