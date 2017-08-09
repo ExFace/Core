@@ -25,6 +25,8 @@ use exface\Core\Interfaces\Widgets\iHaveToolbars;
 use exface\Core\Widgets\Traits\iHaveButtonsAndToolbarsTrait;
 use exface\Core\Interfaces\Widgets\iHaveConfigurator;
 use exface\Core\Interfaces\Widgets\iConfigureWidgets;
+use exface\Core\Interfaces\Widgets\iHaveHeader;
+use exface\Core\Interfaces\Widgets\iHaveFooter;
 
 /**
  * Data is the base for all widgets displaying tabular data.
@@ -39,7 +41,7 @@ use exface\Core\Interfaces\Widgets\iConfigureWidgets;
  * @author Andrej Kabachnik
  *        
  */
-class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iHaveToolbars, iHaveButtons, iHaveFilters, iSupportLazyLoading, iHaveContextualHelp, iHaveConfigurator
+class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColumns, iHaveColumnGroups, iHaveToolbars, iHaveButtons, iHaveFilters, iSupportLazyLoading, iHaveContextualHelp, iHaveConfigurator
 {
     use iHaveButtonsAndToolbarsTrait;
 
@@ -89,6 +91,10 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
     private $configurator = null;
     
     private $hide_refresh_button = null;
+
+    private $hide_header = false;
+    
+    private $hide_footer = false;
 
     protected function init()
     {
@@ -1369,6 +1375,44 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
     public function getConfiguratorWidgetType(){
         return 'DataConfigurator';
     } 
+    
+    public function getHideHeader()
+    {
+        return $this->hide_header;
+    }
+    
+    /**
+     * Set to TRUE to hide the top toolbar or FALSE to show it.
+     *
+     * @uxon-property hide_header
+     * @uxon-type boolean
+     *
+     * @see \exface\Core\Interfaces\Widgets\iHaveHeader::setHideHeader()
+     */
+    public function setHideHeader($value)
+    {
+        $this->hide_header = \exface\Core\DataTypes\BooleanDataType::parse($value);
+        return $this;
+    }
+    
+    public function getHideFooter()
+    {
+        return $this->hide_footer;
+    }
+    
+    /**
+     * Set to TRUE to hide the bottom toolbar or FALSE to show it.
+     *
+     * @uxon-property hide_footer
+     * @uxon-type boolean
+     *
+     * @see \exface\Core\Interfaces\Widgets\iHaveHeader::setHideHeader()
+     */
+    public function setHideFooter($value)
+    {
+        $this->hide_footer = \exface\Core\DataTypes\BooleanDataType::parse($value);
+        return $this;
+    }
 }
 
 ?>
