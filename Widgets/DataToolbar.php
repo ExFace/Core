@@ -111,12 +111,12 @@ class DataToolbar extends Toolbar
      *
      * @return Button[]
      */
-    protected function getButtonGroupForGlobalActions(){
+    public function getButtonGroupForGlobalActions(){
         if (is_null($this->global_action_button_group)){
             $this->global_action_button_group = WidgetFactory::create($this->getPage(), 'ButtonGroup', $this);
             $this->global_action_button_group->setVisibility(EXF_WIDGET_VISIBILITY_OPTIONAL);
             
-            foreach ($this->getWorkbench()->getConfig()->getOption('WIDGET.DATA.GLOBAL_ACTIONS') as $uxon){
+            foreach ($this->getWorkbench()->getConfig()->getOption('WIDGET.DATATOOLBAR.GLOBAL_ACTIONS') as $uxon){
                 /* @var $btn \exface\Core\Widgets\Button */
                 $btn = WidgetFactory::create($this->getPage(), $this->getButtonWidgetType(), $this);
                 $btn->setAction($uxon);
@@ -204,7 +204,7 @@ class DataToolbar extends Toolbar
         return $this->search_button;
     }
     
-    protected function getButtonGroupForSearchActions()
+    public function getButtonGroupForSearchActions()
     {
         if (is_null($this->search_button_group)){
             $this->search_button_group = WidgetFactory::create($this->getPage(), 'ButtonGroup', $this);
