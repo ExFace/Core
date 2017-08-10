@@ -119,10 +119,9 @@ class Container extends AbstractWidget implements iContainOtherWidgets
     }
 
     /**
-     * Returns the direct child widget with the given id or boolean FALSE if there is no matching child.
-     *
-     * @param string $widget_id            
-     * @return WidgetInterface|boolean
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::findChildById()
      */
     public function findChildById($widget_id)
     {
@@ -148,7 +147,11 @@ class Container extends AbstractWidget implements iContainOtherWidgets
         return $this->widgets;
     }
     
-    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::getWidget()
+     */
     public function getWidget($index)
     {
         if (!is_int($index)){
@@ -184,6 +187,11 @@ class Container extends AbstractWidget implements iContainOtherWidgets
         return empty($this->widgets) ? false : true;
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::isEmpty()
+     */
     public function isEmpty()
     {
         return ! $this->hasWidgets();
@@ -217,6 +225,11 @@ class Container extends AbstractWidget implements iContainOtherWidgets
         return $this;
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::getWidgetFirst()
+     */
     public function getWidgetFirst(callable $filter = null)
     {
         foreach ($this->getWidgets() as $widget){
@@ -232,8 +245,8 @@ class Container extends AbstractWidget implements iContainOtherWidgets
      *
      * Widgets will be displayed in the order of definition. By default all widgets will inherit the container's meta object.
      *
-     * @uxon-property disabled
-     * @uxon-type boolean
+     * @uxon-property widgets
+     * @uxon-type \exface\Core\Widgets\AbstractWidget
      *
      * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::setWidgets()
      */

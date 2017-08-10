@@ -40,14 +40,24 @@ class ContextBar extends Toolbar
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Widgets\ButtonGroup::getButtons()
+     * @see \exface\Core\Widgets\Container::getWidgets()
      */
-    public function getButtons(callable $filter_callback = null)
+    public function getWidgets(callable $filter_callback = null)
     {
-        if (!parent::hasButtons()){
+        if (! parent::hasWidgets()){
             $this->importUxonObject($this->getWorkbench()->getConfig()->getOption('WIDGET.CONTEXTBAR'));
         }
-        return parent::getButtons($filter_callback);
+        return parent::getWidgets($filter_callback);
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Container::getChildren()
+     */
+    public function getChildren()
+    {
+        return $this->getButtons();
     }
     
     /**

@@ -240,7 +240,7 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveToolbars, iHave
         // not be shown anyway. The Chart has it's own toolbars.
         // IDEA why create two sets of toolbars? Maybe we can reuse the data
         // toolbars in the chart?
-        $data->getToolbarMain()->setDoNotAutoincludeActions(true);
+        $data->getToolbarMain()->setIncludeNoExtraActions(true);
         
         $this->data = $data;
         return $this;
@@ -627,6 +627,11 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveToolbars, iHave
     public function getConfiguratorWidgetType()
     {
         return 'ChartConfigurator';
+    }
+    
+    public function getToolbarWidgetType()
+    {
+        return 'DataToolbar';
     }
 }
 ?>

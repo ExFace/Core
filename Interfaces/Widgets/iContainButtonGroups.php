@@ -33,6 +33,15 @@ interface iContainButtonGroups extends iHaveChildren
     public function addButtonGroup(ButtonGroup $button_group, $index = null);
     
     /**
+     * Returns a new empty button group suitable for this container, but not yet
+     * part of it.
+     * 
+     * @param UxonObject $uxon
+     * @return ButtonGroup
+     */
+    public function createButtonGroup(UxonObject $uxon = null);
+    
+    /**
      *
      * @param ButtonGroup $button_group
      * @return iContainButtonGroups
@@ -41,6 +50,9 @@ interface iContainButtonGroups extends iHaveChildren
     
     /**
      * Returns the first (= main) button group in the toolbar.
+     * 
+     * If the toolbar is empty, a new empty button group will be created 
+     * automatically via createButtonGroup().
      * 
      * If the alignment parameter is passed, the first buttong group with the
      * given alignment will be returned.

@@ -146,6 +146,11 @@ class ButtonGroup extends Container implements iHaveButtons, iCanBeAligned, iUse
         return count($this->getButtons($filter_callback));
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iCanBeAligned::getAlign()
+     */
     public function getAlign()
     {
         if (is_null($this->getAlignDefault())){

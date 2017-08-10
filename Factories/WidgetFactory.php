@@ -18,9 +18,10 @@ abstract class WidgetFactory extends AbstractFactory
      *
      * @param UiPageInterface $page            
      * @param string $widget_type            
-     * @param WidgetInterface $parent_widget            
-     * @param string $widget_id            
-     * @throws UnexpectedValueException
+     * @param WidgetInterface $parent_widget
+     *            
+     * @throws UnexpectedValueException if an unknown widget type is passed
+     * 
      * @return WidgetInterface
      */
     public static function create(UiPageInterface $page, $widget_type, WidgetInterface $parent_widget = null)

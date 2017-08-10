@@ -46,18 +46,19 @@ class Toolbar extends Container implements iHaveButtons, iContainButtonGroups, i
      */
     public function getButtonGroups(callable $filter_callback = null)
     {
-        if (!$this->hasWidgets()){
-            $this->addButtonGroup($this->createButtonGroup());
-        }
         return $this->getWidgets($filter_callback);
     }
     
     /**
      * 
-     * @return ButtonGroup
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iContainButtonGroups::createButtonGroup()
      */
-    public function createButtonGroup()
+    public function createButtonGroup(UxonObject $uxon = null)
     {
+        if (!is_null($uxon)){
+            return WidgetFactory::createFromUxon($this->getPage(), $uxon, $this, 'ButtonGroup');
+        }
         return WidgetFactory::create($this->getPage(), 'ButtonGroup', $this);
     }
     
@@ -135,7 +136,12 @@ class Toolbar extends Container implements iHaveButtons, iContainButtonGroups, i
      * @see \exface\Core\Interfaces\Widgets\iContainButtonGroups::getButtonGroupFirst()
      */
     public function getButtonGroupFirst($alignment = null)
-    {         
+    {        
+        // If the underlying container is empty, add the first button group.
+        if (! parent::hasWidgets()){
+            $this->addButtonGroup($this->createButtonGroup());
+        }
+        
         try {
             $filter = is_null($alignment) ? null : function(ButtonGroup $grp) use ($alignment) {return $grp->getAlign() !== $grp->getAlign();};
             $grp = $this->getWidgetFirst($filter);
@@ -253,6 +259,20 @@ class Toolbar extends Container implements iHaveButtons, iContainButtonGroups, i
     }
     
     /**
+     * Returns the position of this toolbar: values depend on the widget, that
+     * contains the toolbar.
+     * 
+     * @return string
+     */
+    public function getPosition()
+    {
+        if (is_null($this->position)){
+            $this->setPosition(static::POSITION_DEFAULT);
+        }
+        return $this->position;
+    }
+    
+    /**
      * Places the toolbar at a specific position within the widget.
      * 
      * Which positions are possible, depends on the widget and on the template
@@ -260,7 +280,7 @@ class Toolbar extends Container implements iHaveButtons, iContainButtonGroups, i
      * "menu".
      * 
      * @uxon-property position
-     * @uxon-type
+     * @uxon-type string
      * 
      * @param string $position
      * @return \exface\Core\Widgets\Toolbar

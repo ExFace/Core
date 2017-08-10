@@ -141,4 +141,12 @@ interface iContainOtherWidgets extends iHaveChildren
      * @return WidgetInterface[]
      */
     public function findChildrenByAttribute(Attribute $attribute);
+    
+    /**
+     * Returns the direct child widget with the given id or boolean FALSE if there is no matching child.
+     *
+     * @param string $widget_id
+     * @return WidgetInterface|boolean
+     */
+    public function findChildById($widget_id);
 }
