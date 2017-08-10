@@ -14,6 +14,9 @@ use exface\Core\CommonLogic\Constants\Icons;
 class DataTableToolbar extends DataToolbar
 {    
     /** @var boolean */
+    private $disable_autoinclude_actions = false;
+
+    /** @var boolean */
     private $include_global_actions = null;
     
     /** @var boolean */
@@ -25,12 +28,29 @@ class DataTableToolbar extends DataToolbar
     /** @var ButtonGroup */
     private $global_action_button_group = null;
     
-    /** @var Button */
-    private $search_button = null;
-    
     /** @var ButtonGroup */
     private $search_button_group = null;
     
+    /**
+     * 
+     * @return boolean $disable_autoinclude_actions
+     */
+    public function getDoNotAutoincludeActions()
+    {
+        return $this->disable_autoinclude_actions;
+    }
+
+    /**
+     * 
+     * @param boolean $disable_autoinclude_actions
+     * @return DataTableToolbar
+     */
+    public function setDoNotAutoincludeActions($true_or_false)
+    {
+        $this->disable_autoinclude_actions = BooleanDataType::parse($true_or_false);
+        return $this;
+    }
+
     /**
      *
      * @return boolean
@@ -93,7 +113,7 @@ class DataTableToolbar extends DataToolbar
             
             foreach ($this->getWorkbench()->getConfig()->getOption('WIDGET.DATATOOLBAR.GLOBAL_ACTIONS') as $uxon){
                 /* @var $btn \exface\Core\Widgets\Button */
-                $btn = $this->createButton();
+                $btn = $this->global_action_button_group->createButton();
                 $btn->setAction($uxon);
                 $btn->setVisibility(EXF_WIDGET_VISIBILITY_OPTIONAL);
                 $this->global_action_button_group->addButton($btn);
@@ -104,18 +124,24 @@ class DataTableToolbar extends DataToolbar
     }
     
     /**
+     * The DataToolbar creates additional button groups automatically unless the
+     * group is disabled via setInclude...Action(false). 
      * 
      * {@inheritDoc}
      * @see \exface\Core\Widgets\Container::getWidgets()
      */
-    public function getButtonGroups(callable $filter_callback = null)
+    public function getWidgets(callable $filter_callback = null)
     {        
+        if ($this->getDoNotAutoincludeActions()){
+            return parent::getWidgets($filter_callback);
+        }
+        
         // Add automatic button groups - but only if their parent is still this
         // toolbar. If they were moved, the parent changes and we don't want
         // to see them here anymore.
         // Adding these groups must be done every time, because the must allways
         // be at the end
-        $groups = parent::getButtonGroups();
+        $groups = parent::getWidgets();
         if ($this->getIncludeGlobalActions() && $this->getButtonGroupForGlobalActions()->getParent() === $this){
             $groups[] = $this->getButtonGroupForGlobalActions();
         }
@@ -127,15 +153,6 @@ class DataTableToolbar extends DataToolbar
         } 
         
         return $groups;
-    }
-    
-    /**
-     *
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Widgets\iContainButtonGroups::getButtonGroupIndex()
-     */
-    public function getButtonGroupIndex(ButtonGroup $button_group){
-        return array_search($button_group, $this->getButtonGroups());
     }
     
     /**
@@ -183,25 +200,20 @@ class DataTableToolbar extends DataToolbar
         return $this;
     }
     
-    public function getSearchButton()
-    {
-        if (is_null($this->search_button)){
-            $this->search_button = WidgetFactory::create($this->getPage(), $this->getButtonWidgetType(), $this);
-            $this->search_button
-                ->setActionAlias('exface.Core.RefreshWidget')
-                ->setCaption($this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.READDATA.SEARCH'))
-                ->setIconName(Icons::SEARCH)
-                ->setVisibility(EXF_WIDGET_VISIBILITY_PROMOTED)
-                ->setAlign(EXF_ALIGN_OPPOSITE);
-        }
-        return $this->search_button;
-    }
-    
     public function getButtonGroupForSearchActions()
     {
         if (is_null($this->search_button_group)){
             $this->search_button_group = WidgetFactory::create($this->getPage(), 'ButtonGroup', $this);
-            $this->search_button_group->addButton($this->getSearchButton());
+            
+            $search_button = $this->search_button_group->createButton();
+            $search_button
+            ->setActionAlias('exface.Core.RefreshWidget')
+            ->setCaption($this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.READDATA.SEARCH'))
+            ->setIconName(Icons::SEARCH)
+            ->setVisibility(EXF_WIDGET_VISIBILITY_PROMOTED)
+            ->setAlign(EXF_ALIGN_OPPOSITE);
+            
+            $this->search_button_group->addButton($search_button);
         }
         
         return $this->search_button_group;

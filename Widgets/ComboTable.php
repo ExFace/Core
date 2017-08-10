@@ -138,6 +138,7 @@ class ComboTable extends InputCombo implements iHaveChildren
         $table->setMetaObject($this->getTableObject());
         $table->setUidColumnId($this->getValueColumnId());
         $table->setHeaderSortMultiple(false);
+        $table->getToolbarMain()->setDoNotAutoincludeActions(true);
         $this->data_table = $table;
         
         // Now see if the user had already defined a table in UXON

@@ -8,10 +8,7 @@ use exface\Core\Widgets\Traits\iCanBeAlignedTrait;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\Interfaces\Widgets\iUseInputWidget;
 use exface\Core\Widgets\Traits\iUseInputWidgetTrait;
-use exface\Core\Interfaces\Widgets\iContainButtonGroups;
 use exface\Core\Factories\WidgetFactory;
-use exface\Core\Exceptions\UnexpectedValueException;
-use exface\Core\Exceptions\Widgets\WidgetChildNotFoundError;
 
 /**
  * A group of button widgets visually separated from the other buttons.
