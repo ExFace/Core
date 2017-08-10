@@ -18,11 +18,11 @@
 	"ACTION.EDITOBJECTDIALOG.NAME": "Edit",
 	"ACTION.EDITOBJECTDIALOG.NO_EDITABLE_ATTRIBUTES": "No editable attributes found!",
 
-	"ACTION.EXPORTCSV.NAME": "Export as CSV",
+	"ACTION.EXPORTCSV.NAME": "Export CSV",
 	"ACTION.EXPORTDATA.NAME": "Export",
 	"ACTION.EXPORTDATA.ROWOVERFLOW": "The maximum number of %number% entries was written to the file. ",
-	"ACTION.EXPORTJSON.NAME": "Export as JSON",
-	"ACTION.EXPORTXLSX.NAME": "Export as XLSX",
+	"ACTION.EXPORTJSON.NAME": "Export JSON",
+	"ACTION.EXPORTXLSX.NAME": "Export Excel",
 
 	"ACTION.FAVORITESADD.NAME": "Add to favorites",
     "ACTION.FAVORITESADD.RESULT": "%number% objects added to favorites.",
