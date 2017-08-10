@@ -4,14 +4,17 @@ namespace exface\Core\Interfaces\Widgets;
 use exface\Core\Interfaces\Widgets\iHaveChildren;
 use exface\Core\Widgets\ButtonGroup;
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\Widgets\Button;
+use exface\Core\Exceptions\Widgets\WidgetChildNotFoundError;
 
 interface iContainButtonGroups extends iHaveChildren
 {
     /**
+     * 
+     * @param callable $filter_callback
+     * 
      * @return ButtonGroup[]
      */
-    public function getButtonGroups();
+    public function getButtonGroups(callable $filter_callback = null);
     
     /**
      * 
@@ -60,7 +63,9 @@ interface iContainButtonGroups extends iHaveChildren
      * 
      * @param integer $index
      * 
-     * @return Button|null
+     * @throws WidgetChildNotFoundError if a given index cannot be found
+     * 
+     * @return ButtonGroup
      */
     public function getButtonGroup($index);
 }

@@ -1,8 +1,6 @@
 <?php
 namespace exface\Core\Widgets;
 
-use exface\Core\Interfaces\Widgets\iHaveHeader;
-use exface\Core\Interfaces\Widgets\iHaveFooter;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Widgets\iFillEntireContainer;
 use exface\Core\Interfaces\Widgets\iSupportMultiSelect;
@@ -62,7 +60,7 @@ use exface\Core\Interfaces\Widgets\iHaveContextMenu;
  * @author Andrej Kabachnik
  *        
  */
-class DataTable extends Data implements iHaveHeader, iHaveFooter, iFillEntireContainer, iSupportMultiSelect, iHaveContextMenu
+class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelect, iHaveContextMenu
 {
 
     private $show_filter_row = false;
@@ -78,10 +76,6 @@ class DataTable extends Data implements iHaveHeader, iHaveFooter, iFillEntireCon
     private $nowrap = true;
 
     private $auto_row_height = true;
-
-    private $hide_header = false;
-
-    private $hide_footer = false;
 
     private $row_details_container = null;
 
@@ -325,44 +319,6 @@ class DataTable extends Data implements iHaveHeader, iHaveFooter, iFillEntireCon
         return $this;
     }
 
-    public function getHideHeader()
-    {
-        return $this->hide_header;
-    }
-
-    /**
-     * Set to TRUE to hide the top toolbar or FALSE to show it.
-     *
-     * @uxon-property hide_header
-     * @uxon-type boolean
-     *
-     * @see \exface\Core\Interfaces\Widgets\iHaveHeader::setHideHeader()
-     */
-    public function setHideHeader($value)
-    {
-        $this->hide_header = \exface\Core\DataTypes\BooleanDataType::parse($value);
-        return $this;
-    }
-
-    public function getHideFooter()
-    {
-        return $this->hide_footer;
-    }
-
-    /**
-     * Set to TRUE to hide the bottom toolbar or FALSE to show it.
-     *
-     * @uxon-property hide_footer
-     * @uxon-type boolean
-     *
-     * @see \exface\Core\Interfaces\Widgets\iHaveHeader::setHideHeader()
-     */
-    public function setHideFooter($value)
-    {
-        $this->hide_footer = \exface\Core\DataTypes\BooleanDataType::parse($value);
-        return $this;
-    }
-
     public function getShowRowNumbers()
     {
         return $this->show_row_numbers;
@@ -589,7 +545,12 @@ class DataTable extends Data implements iHaveHeader, iHaveFooter, iFillEntireCon
         }
         return $toolbars;
     }
-
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Data::getConfiguratorWidgetType()
+     */
     public function getConfiguratorWidgetType()
     {
         return 'DataTableConfigurator';

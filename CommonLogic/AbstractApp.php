@@ -179,9 +179,21 @@ abstract class AbstractApp implements AppInterface
     public function getConfig()
     {
         if (is_null($this->config)) {
-            $this->config = $this->loadConfigFiles();
+            $this->setConfig($this->loadConfigFiles());
         }
         return $this->config;
+    }
+    
+    /**
+     * Replaces the current configuration for this app by the given one.
+     * 
+     * @param ConfigurationInterface $configuration
+     * @return \exface\Core\CommonLogic\AbstractApp
+     */
+    protected function setConfig(ConfigurationInterface $configuration)
+    {
+        $this->config = $configuration;
+        return $this;
     }
 
     /**
@@ -224,13 +236,17 @@ abstract class AbstractApp implements AppInterface
      * @param string $file_suffix            
      * @return string
      */
-    public function getConfigFileName($file_suffix = 'config')
+    public function getConfigFileName($config_name = null, $file_suffix = '.config')
     {
         if (is_null($file_suffix)) {
             $file_suffix = static::CONFIG_FILE_SUFFIX;
         }
-        $file_suffix = $file_suffix ? '.' . $file_suffix : '';
-        return $this->getAliasWithNamespace() . $file_suffix . static::CONFIG_FILE_EXTENSION;
+        
+        if (is_null($config_name)){
+            $config_name = $this->getAliasWithNamespace();
+        }
+        
+        return $config_name . $file_suffix . static::CONFIG_FILE_EXTENSION;
     }
 
     /**

@@ -3,7 +3,7 @@ namespace exface\Core\Widgets;
 
 use exface\Core\Behaviors\StateMachineState;
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\Exceptions\MetaModelBehaviorException;
+use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
 
 class StateMenuButton extends MenuButton
 {
@@ -18,13 +18,13 @@ class StateMenuButton extends MenuButton
      *
      * @see \exface\Core\Widgets\MenuButton::getButtons()
      */
-    public function getButtons()
+    public function getButtons(callable $filter_callback = null)
     {
         // Falls am Objekt ein StateMachineBehavior haengt wird versucht den momentanen Status aus
         // dem Objekt auszulesen und die entsprechenden Buttons aus dem Behavior hinzuzufuegen.
         if (! $this->smb_buttons_set) {
             if (is_null($smb = $this->getMetaObject()->getBehaviors()->getByAlias('exface.Core.Behaviors.StateMachineBehavior'))) {
-                throw new MetaModelBehaviorException('StateMenuButton: The object ' . $this->getMetaObject()->getAliasWithNamespace() . ' has no StateMachineBehavior attached.');
+                throw new BehaviorConfigurationError('StateMenuButton: The object ' . $this->getMetaObject()->getAliasWithNamespace() . ' has no StateMachineBehavior attached.');
             }
             
             if (($data_sheet = $this->getPrefillData()) && ($state_column = $data_sheet->getColumnValues($smb->getStateAttributeAlias()))) {
@@ -35,7 +35,6 @@ class StateMenuButton extends MenuButton
             
             $states = $smb->getStates();
             
-            $button_widget = $this->getInputWidget()->getButtonWidgetType();
             foreach ($smb->getStateButtons($current_state) as $target_state => $smb_button) {
                 // Ist show_states leer werden alle Buttons hinzugefuegt (default)
                 // sonst wird der Knopf nur hinzugefuegt wenn er in show_states enthalten ist.
@@ -45,12 +44,12 @@ class StateMenuButton extends MenuButton
                     // werden entfernt.
                     /* @var $uxon \exface\Core\CommonLogic\UxonObject */
                     $uxon = $this->exportUxonObjectOriginal()->extend(UxonObject::fromAnything($smb_button)->copy());
+                    $uxon->unsetProperty('widget_type');
                     $uxon->unsetProperty('show_states');
                     $uxon->unsetProperty('buttons');
                     $uxon->unsetProperty('menu');
                     
-                    $button = $this->getPage()->createWidget($button_widget, $this->getMenu(), $uxon);
-                    
+                    $button = $this->createButton($uxon);
                     /** @var StateMachineState $stateObject */
                     $stateObject = $states[$target_state];
                     $name = $stateObject->getStateName($this->getMetaObject()->getApp()->getTranslator());
@@ -64,7 +63,7 @@ class StateMenuButton extends MenuButton
             $this->smb_buttons_set = true;
         }
         
-        return parent::getButtons();
+        return parent::getButtons($filter_callback);
     }
 
     /**

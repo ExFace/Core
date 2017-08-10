@@ -11,6 +11,8 @@ use exface\Core\Exceptions\InvalidArgumentException;
 interface AppInterface extends ExfaceClassInterface, AliasInterface
 {
     
+    const CONFIG_SCOPE_SYSTEM = 'SYSTEM';
+    
     const CONFIG_SCOPE_INSTALLATION = 'INSTALLATION';
     
     const CONFIG_SCOPE_USER = 'USER';

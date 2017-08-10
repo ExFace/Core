@@ -255,7 +255,7 @@ class ObjectBasketContext extends AbstractContext
         
         // Add the detail button an bind it to the left click
         /* @var $details_button \exface\Core\Widgets\DataButton */
-        $details_button = WidgetFactory::create($container->getPage(), $data_list->getButtonWidgetType(), $data_list)
+        $details_button = $data_list->createButton()
             ->setActionAlias('exface.Core.ObjectBasketShowDialog')
             ->setBindToLeftClick(true)
             ->setHidden(true);

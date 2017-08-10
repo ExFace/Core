@@ -5,6 +5,7 @@ use exface\Core\Interfaces\Widgets\iHaveMenu;
 use exface\Core\Interfaces\Widgets\iHaveButtons;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
+use exface\Core\CommonLogic\UxonObject;
 
 /**
  * A button with a menu, containing other buttons.
@@ -64,9 +65,9 @@ class MenuButton extends Button implements iHaveMenu, iHaveButtons
      *
      * @see \exface\Core\Interfaces\Widgets\iHaveButtons::getButtons()
      */
-    public function getButtons()
+    public function getButtons(callable $filter_callback = null)
     {
-        return $this->getMenu()->getButtons();
+        return $this->getMenu()->getButtons($filter_callback);
     }
 
     /**
@@ -148,19 +149,9 @@ class MenuButton extends Button implements iHaveMenu, iHaveButtons
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\iHaveButtons::countButtons()
      */
-    public function countButtons()
+    public function countButtons(callable $filter_callback = null)
     {
-        return $this->getMenu()->countButtons();
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Widgets\iHaveButtons::countButtonsVisible()
-     */
-    public function countButtonsVisible()
-    {
-        return $this->getMenu()->countButtonsVisible();
+        return $this->getMenu()->countButtons($filter_callback);
     }
     
     /**
@@ -181,6 +172,16 @@ class MenuButton extends Button implements iHaveMenu, iHaveButtons
     public function getButton($index)
     {
         return $this->getMenu()->getButton($index);
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveButtons::createButton()
+     */
+    public function createButton(UxonObject $uxon = null)
+    {
+        return $this->getMenu()->createButton($uxon);
     }
 }
 ?>

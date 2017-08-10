@@ -85,7 +85,7 @@ class Dialog extends Form implements iAmClosable, iHaveContextualHelp
     {
         if (! ($this->close_button instanceof DialogButton)) {
             /* @var $btn DialogButton */
-            $btn = $this->getPage()->createWidget('DialogButton', $this->getToolbarMain());
+            $btn = $this->createButton();
             $btn->setCloseDialogAfterActionSucceeds(true);
             $btn->setRefreshInput(false);
             $btn->setIconName(Icons::TIMES);

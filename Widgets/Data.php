@@ -25,6 +25,8 @@ use exface\Core\Interfaces\Widgets\iHaveToolbars;
 use exface\Core\Widgets\Traits\iHaveButtonsAndToolbarsTrait;
 use exface\Core\Interfaces\Widgets\iHaveConfigurator;
 use exface\Core\Interfaces\Widgets\iConfigureWidgets;
+use exface\Core\Interfaces\Widgets\iHaveHeader;
+use exface\Core\Interfaces\Widgets\iHaveFooter;
 
 /**
  * Data is the base for all widgets displaying tabular data.
@@ -39,7 +41,7 @@ use exface\Core\Interfaces\Widgets\iConfigureWidgets;
  * @author Andrej Kabachnik
  *        
  */
-class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iHaveToolbars, iHaveButtons, iHaveFilters, iSupportLazyLoading, iHaveContextualHelp, iHaveConfigurator
+class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColumns, iHaveColumnGroups, iHaveToolbars, iHaveButtons, iHaveFilters, iSupportLazyLoading, iHaveContextualHelp, iHaveConfigurator
 {
     use iHaveButtonsAndToolbarsTrait;
 
@@ -89,6 +91,10 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
     private $configurator = null;
     
     private $hide_refresh_button = null;
+
+    private $hide_header = false;
+    
+    private $hide_footer = false;
 
     protected function init()
     {
@@ -733,11 +739,6 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
     {
         $children = array_merge([$this->getConfiguratorWidget()], $this->getToolbars(), $this->getColumns());
         
-        // FIXME me adding buttons is currently needed because DataTables opened
-        // in a dialog from the context bar popop sometimes cannot get data: e.g.
-        // the table with details to a recorded debug-trace.
-        $children = array_merge($children, $this->getButtons());
-        
         // Add the help button, so pages will be able to find it when dealing with the ShowHelpDialog action.
         // IMPORTANT: Add the help button to the children only if it is not hidden. This is needed to hide the button in
         // help widgets themselves, because otherwise they would produce their own help widgets, with - in turn - even
@@ -1320,7 +1321,11 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
     }
     
     /**
-     *
+     * The generic Data widget has a simple toolbar, that should merely be a 
+     * container for potential buttons. This makes sure all widgets using data
+     * internally (like ComboTables, Charts, etc.) do not have to create complex
+     * toolbars, that get automatically generated for DataTables, etc.
+     * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\iHaveToolbars::getToolbarWidgetType()
      */
@@ -1369,6 +1374,44 @@ class Data extends AbstractWidget implements iHaveColumns, iHaveColumnGroups, iH
     public function getConfiguratorWidgetType(){
         return 'DataConfigurator';
     } 
+    
+    public function getHideHeader()
+    {
+        return $this->hide_header;
+    }
+    
+    /**
+     * Set to TRUE to hide the top toolbar or FALSE to show it.
+     *
+     * @uxon-property hide_header
+     * @uxon-type boolean
+     *
+     * @see \exface\Core\Interfaces\Widgets\iHaveHeader::setHideHeader()
+     */
+    public function setHideHeader($value)
+    {
+        $this->hide_header = \exface\Core\DataTypes\BooleanDataType::parse($value);
+        return $this;
+    }
+    
+    public function getHideFooter()
+    {
+        return $this->hide_footer;
+    }
+    
+    /**
+     * Set to TRUE to hide the bottom toolbar or FALSE to show it.
+     *
+     * @uxon-property hide_footer
+     * @uxon-type boolean
+     *
+     * @see \exface\Core\Interfaces\Widgets\iHaveHeader::setHideHeader()
+     */
+    public function setHideFooter($value)
+    {
+        $this->hide_footer = \exface\Core\DataTypes\BooleanDataType::parse($value);
+        return $this;
+    }
 }
 
 ?>

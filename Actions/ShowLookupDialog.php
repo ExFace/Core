@@ -62,7 +62,7 @@ class ShowLookupDialog extends ShowDialog
         $dialog = parent::enhanceDialogWidget($dialog);
         $page = $this->getCalledOnUiPage();
         
-        if ($dialog->countWidgets() == 0) {
+        if ($dialog->isEmpty()) {
             $data_table = WidgetFactory::create($page, 'DataTable', $dialog);
             $data_table->setMetaObject($this->getMetaObject());
             $dialog->addWidget($data_table);
@@ -71,7 +71,7 @@ class ShowLookupDialog extends ShowDialog
         }
         
         // @var $save_button \exface\Core\Widgets\Button
-        $save_button = $page->createWidget('DialogButton', $dialog);
+        $save_button = $dialog->createButton();
         $save_button->setCaption($this->getWorkbench()->getCoreApp()->getTranslator()->translate("ACTION.SHOWLOOKUPDIALOG.SAVE_BUTTON"));
         $save_button->setVisibility(EXF_WIDGET_VISIBILITY_PROMOTED);
         

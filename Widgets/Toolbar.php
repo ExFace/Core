@@ -4,6 +4,11 @@ namespace exface\Core\Widgets;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Widgets\iContainButtonGroups;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Exceptions\Widgets\WidgetChildNotFoundError;
+use exface\Core\Interfaces\Widgets\iHaveButtons;
+use exface\Core\Interfaces\Widgets\iUseInputWidget;
+use exface\Core\Widgets\Traits\iUseInputWidgetTrait;
+use exface\Core\Exceptions\UnderflowException;
 
 /**
  * Toolbars are used to organize buttons within widgets.
@@ -20,7 +25,7 @@ use exface\Core\CommonLogic\UxonObject;
  * @author Andrej Kabachnik
  *        
  */
-class Toolbar extends ButtonGroup implements iContainButtonGroups
+class Toolbar extends Container implements iHaveButtons, iContainButtonGroups, iUseInputWidget
 {
     const POSITION_DEFAULT = 'default';
     
@@ -32,19 +37,19 @@ class Toolbar extends ButtonGroup implements iContainButtonGroups
     
     private $position = null;
     
-    private $button_groups = array();
+    use iUseInputWidgetTrait;
     
     /**
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\iContainButtonGroups::getButtonGroups()
      */
-    public function getButtonGroups()
+    public function getButtonGroups(callable $filter_callback = null)
     {
-        if (count($this->button_groups) == 0){
-            $this->button_groups[] = $this->createButtonGroup();
+        if (!$this->hasWidgets()){
+            $this->addButtonGroup($this->createButtonGroup());
         }
-        return $this->button_groups;
+        return $this->getWidgets($filter_callback);
     }
     
     /**
@@ -79,7 +84,7 @@ class Toolbar extends ButtonGroup implements iContainButtonGroups
             if ($group instanceof ButtonGroup){
                 $this->addButtonGroup($group);
             } elseif ($group instanceof UxonObject){
-                $this->addButton(WidgetFactory::createFromUxon($this->getPage(), $group, $this));
+                $this->addButtonGroup(WidgetFactory::createFromUxon($this->getPage(), $group, $this, 'ButtonGroup'));
             }
         }
         return $this;
@@ -87,30 +92,21 @@ class Toolbar extends ButtonGroup implements iContainButtonGroups
     
     /**
      * 
-     * @param ButtonGroup $button_group
-     * @return \exface\Core\Widgets\Toolbar
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iContainButtonGroups::addButtonGroup()
      */
     public function addButtonGroup(ButtonGroup $widget, $index = null)
-    {
-        if ($widget->getParent() !== $this){
-            $widget->setParent($this);
-        }
-        
-        if (is_null($index) || ! is_numeric($index)) {
-            $this->button_groups[] = $widget;
-        } else {
-            array_splice($this->button_groups, $index, 0, array(
-                $widget
-            ));
-        }
-        
-        return $this;
+    {        
+        return $this->addWidget($widget, $index);
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iContainButtonGroups::getButtonGroupIndex()
+     */
     public function getButtonGroupIndex(ButtonGroup $button_group){
-        // Make sure to search in the result of getButtonGroups() as extending
-        // classes might change it's output.
-        return array_search($button_group, $this->getButtonGroups());
+        return $this->getWidgetIndex($button_group);
     }
     
     /**
@@ -120,12 +116,7 @@ class Toolbar extends ButtonGroup implements iContainButtonGroups
      */
     public function getButtonGroup($index)
     {
-        if (!is_int($index)){
-            return null;
-        }
-        // Make sure to search in the result of getButtonGroups() as extending
-        // classes might change it's output.
-        return $this->getButtonGroups()[$index];
+        return $this->getWidget($index);
     }
     
     /**
@@ -135,13 +126,7 @@ class Toolbar extends ButtonGroup implements iContainButtonGroups
      */
     public function removeButtonGroup(ButtonGroup $button_group)
     {
-        $key = array_search($button_group, $this->button_groups);
-        if ($key !== false){
-            unset($this->button_groups[$key]);
-            // Reindex the array to avoid index gaps
-            $this->button_groups = array_values($this->button_groups);
-        }
-        return $this;
+        return $this->removeWidget($button_group);
     }
     
     /**
@@ -150,17 +135,13 @@ class Toolbar extends ButtonGroup implements iContainButtonGroups
      * @see \exface\Core\Interfaces\Widgets\iContainButtonGroups::getButtonGroupFirst()
      */
     public function getButtonGroupFirst($alignment = null)
-    {
-        $found_grp = false;
-        foreach ($this->getButtonGroups() as $grp){
-            if (is_null($alignment) || $alignment == $grp->getAlign()){
-                $found_grp = true;
-                break;
-            }
-        }
-        if (!$found_grp){
+    {         
+        try {
+            $filter = is_null($alignment) ? null : function(ButtonGroup $grp) use ($alignment) {return $grp->getAlign() !== $grp->getAlign();};
+            $grp = $this->getWidgetFirst($filter);
+        } catch (UnderflowException $e){
             $grp = $this->createButtonGroup();
-            if (!is_null($alignment)){
+            if ($alignment){
                 $grp->setAlign($alignment);
             }
             $this->addButtonGroup($grp);
@@ -197,11 +178,11 @@ class Toolbar extends ButtonGroup implements iContainButtonGroups
      * {@inheritDoc}
      * @see \exface\Core\Widgets\ButtonGroup::getButtons()
      */
-    public function getButtons()
+    public function getButtons(callable $filter_callback = null)
     {
         $buttons = [];
         foreach ($this->getButtonGroups() as $grp){
-            $buttons = array_merge($buttons, $grp->getButtons());
+            $buttons = array_merge($buttons, $grp->getButtons($filter_callback));
         }
         return $buttons;
     }
@@ -262,11 +243,11 @@ class Toolbar extends ButtonGroup implements iContainButtonGroups
      *
      * @see \exface\Core\Interfaces\Widgets\iHaveButtons::countButtons()
      */
-    public function countButtons()
+    public function countButtons(callable $filter_callback = null)
     {
         $cnt = 0;
         foreach ($this->getButtonGroups() as $grp){
-            $cnt += $grp->countButtons();
+            $cnt += $grp->countButtons($filter_callback);
         }
         return $cnt;
     }
@@ -299,5 +280,46 @@ class Toolbar extends ButtonGroup implements iContainButtonGroups
     {
         return 'Button';
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveButtons::createButton()
+     */
+    public function createButton(UxonObject $uxon = null)
+    {
+        return $this->getButtonGroupFirst()->createButton($uxon);
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveButtons::getButtonIndex()
+     */
+    public function getButtonIndex(Button $widget)
+    {
+        return array_search($widget, $this->getButtons());
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveButtons::getButton()
+     */
+    public function getButton($index)
+    {
+        if (!is_int($index)){
+            throw new \UnexpectedValueException('Invalid index "' . $index . '" used to search for a child widget!');
+        }
+        
+        $widgets = $this->getButtons();
+        
+        if (! array_key_exists($index, $widgets)){
+            throw new WidgetChildNotFoundError($this, 'No child widget found with index "' . $index . '" in ' . $this->getWidgetType() . '!');
+        }
+        
+        return $widgets[$index];
+    }
+
 }
 ?>

@@ -8,7 +8,7 @@ use exface\Core\Widgets\Traits\iCanBeAlignedTrait;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\Interfaces\Widgets\iUseInputWidget;
 use exface\Core\Widgets\Traits\iUseInputWidgetTrait;
-use exface\Core\Interfaces\Widgets\iContainButtonGroups;
+use exface\Core\Factories\WidgetFactory;
 
 /**
  * A group of button widgets visually separated from the other buttons.
@@ -34,32 +34,14 @@ class ButtonGroup extends Container implements iHaveButtons, iCanBeAligned, iUse
     
     use iUseInputWidgetTrait;
     
-    private $buttons = array();
-    
     /**
      * {@inheritdoc}
      *
      * @see \exface\Core\Interfaces\Widgets\iHaveButtons::getButtons()
      */
-    public function getButtons()
+    public function getButtons(callable $filter_callback = null)
     {
-        return $this->buttons;
-    }
-    
-    /**
-     * 
-     * @param integer $min_visibility
-     * @param integer $max_visibility
-     */
-    public function getButtonsByVisibility($min_visibility = EXF_WIDGET_VISIBILITY_OPTIONAL, $max_visibility = EXF_WIDGET_VISIBILITY_PROMOTED)
-    {
-        $btns = [];
-        foreach ($this->getButtons() as $button){
-            if ($button->getVisibility() >= $min_visibility && $button->getVisibility() <= $max_visibility){
-                $btns[] = $button;
-            }
-        }
-        return $btns;
+        return $this->getWidgets($filter_callback);
     }
 
     /**
@@ -78,10 +60,7 @@ class ButtonGroup extends Container implements iHaveButtons, iCanBeAligned, iUse
             if ($b instanceof Button){
                 $button = $b;
             } elseif ($b instanceof UxonObject){
-                // If the widget type of the Button is explicitly defined, use it, otherwise fall back to the button widget type of
-                // this widget: i.e. Button for simple Forms, DialogButton for Dialogs, etc.
-                $button_widget_type = $b->hasProperty('widget_type') ? $b->getProperty('widget_type') : $this->getButtonWidgetType();
-                $button = $this->getPage()->createWidget($button_widget_type, $this, UxonObject::fromAnything($b));
+                $button = WidgetFactory::createFromUxon($this->getPage(), UxonObject::fromAnything($b), $this, $this->getButtonWidgetType());
             } else {
                 throw new WidgetPropertyInvalidValueError($this, 'Cannot use "' . gettype($b) . '" as button in ' . $this->getWidgetType() . '": instantiated button widget (or derivative) or corresponding UXON object expected!');
             }
@@ -92,50 +71,23 @@ class ButtonGroup extends Container implements iHaveButtons, iCanBeAligned, iUse
     }
 
     /**
-     * Adds a button to the group
-     *
+     * 
+     * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\iHaveButtons::addButton()
      */
     public function addButton(Button $button_widget, $index = null)
     {
-        if ($button_widget->getParent() !== $this){
-            $button_widget->setParent($this);
-        }
-        
-        if (is_null($index) || ! is_numeric($index)) {
-            $this->buttons[] = $button_widget;
-        } else {
-            array_splice($this->buttons, $index, 0, array(
-                $button_widget
-            ));
-        }
-        
-        return $this;
+        return $this->addWidget($button_widget, $index);
     }
 
     /**
-     * Removes a button from the group
-     *
+     * 
+     * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\iHaveButtons::removeButton()
      */
     public function removeButton(Button $button_widget)
     {
-        if (($key = array_search($button_widget, $this->buttons)) !== false) {
-            unset($this->buttons[$key]);
-            // Reindex the buttons array to avoid index gaps
-            $this->buttons = array_values($this->buttons);
-        }
-        return $this;
-    }
-
-    /**
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Widgets\AbstractWidget::getChildren()
-     */
-    public function getChildren()
-    {
-        return array_merge(parent::getChildren(), $this->getButtons());
+        return $this->removeWidget($button_widget);
     }
 
     /**
@@ -157,15 +109,11 @@ class ButtonGroup extends Container implements iHaveButtons, iCanBeAligned, iUse
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\Widgets\iHaveButtons::hasButtons()
      */
     public function hasButtons()
     {
-        if (count($this->buttons))
-            return true;
-        else
-            return false;
+        return $this->hasWidgets();
     }
     
     /**
@@ -175,7 +123,7 @@ class ButtonGroup extends Container implements iHaveButtons, iCanBeAligned, iUse
      */
     public function getButtonIndex(Button $widget)
     {
-        return array_search($widget, $this->buttons);
+        return $this->getWidgetIndex($widget);
     }
     
     /**
@@ -185,29 +133,7 @@ class ButtonGroup extends Container implements iHaveButtons, iCanBeAligned, iUse
      */
     public function getButton($index)
     {
-        if (!is_int($index)){
-            return null;
-        }
-        return $this->buttons[$index];
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Widgets\Button::exportUxonObject()
-     */
-    public function exportUxonObject()
-    {
-        $uxon = parent::exportUxonObject();
-        
-        $buttons = array();
-        foreach ($this->getButtons() as $button) {
-            $buttons[] = $button->exportUxonObject();
-        }
-        $uxon->setProperty('buttons', $buttons);
-        
-        return $uxon;
+        return $this->getWidget($index);
     }
     
     /**
@@ -215,25 +141,9 @@ class ButtonGroup extends Container implements iHaveButtons, iCanBeAligned, iUse
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\iHaveButtons::countButtons()
      */
-    public function countButtons()
+    public function countButtons(callable $filter_callback = null)
     {
-        return count($this->getButtons());
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Widgets\iHaveButtons::countButtonsVisible()
-     */
-    public function countButtonsVisible()
-    {
-        $cnt = 0;
-        foreach ($this->getButtons() as $btn){
-            if (!$btn->isHidden()){
-                $cnt++;
-            }
-        }
-        return $cnt;
+        return count($this->getButtons($filter_callback));
     }
     
     public function getAlign()
@@ -247,6 +157,20 @@ class ButtonGroup extends Container implements iHaveButtons, iCanBeAligned, iUse
             }
         }
         return $this->getAlignDefault();
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveButtons::createButton()
+     */
+    public function createButton(UxonObject $uxon = null)
+    {
+        if (is_null($uxon)){
+            return WidgetFactory::create($this->getPage(), $this->getButtonWidgetType(), $this);
+        } else {
+            return WidgetFactory::createFromUxon($this->getPage(), $uxon, $this, $this->getButtonWidgetType());
+        }
     }
 }
 ?>

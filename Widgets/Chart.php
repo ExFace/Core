@@ -93,7 +93,7 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveToolbars, iHave
         if (! $this->getDataWidgetLink()) {
             $children[] = $this->getData();
         }
-        $children = array_merge($children, $this->getAxes(), $this->getSeries());
+        $children = array_merge($children, $this->getAxes(), $this->getSeries(), $this->getToolbars());
         return $children;
     }
 
@@ -236,7 +236,14 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveToolbars, iHave
         $data = $this->getPage()->createWidget('Data', $this);
         $data->setMetaObjectId($this->getMetaObjectId());
         $data->importUxonObject($uxon_object);
+        // Do not add action automatically as the internal data toolbar will
+        // not be shown anyway. The Chart has it's own toolbars.
+        // IDEA why create two sets of toolbars? Maybe we can reuse the data
+        // toolbars in the chart?
+        $data->getToolbarMain()->setDoNotAutoincludeActions(true);
+        
         $this->data = $data;
+        return $this;
     }
 
     /**
@@ -496,18 +503,6 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveToolbars, iHave
     }
 
     /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Widgets\iHaveButtons::getButtons()
-     * @return DataButton
-     */
-    public function getButtons()
-    {
-        return $this->buttons;
-    }
-
-    /**
      * Returns an array of button widgets, that are explicitly bound to a double click on a data element
      *
      * @param string $mouse_action            
@@ -522,20 +517,6 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveToolbars, iHave
             }
         }
         return $result;
-    }
-
-    /**
-     *
-     * @see \exface\Core\Interfaces\Widgets\iHaveButtons::setButtons()
-     */
-    public function setButtons(array $buttons_array)
-    {
-        if (! is_array($buttons_array))
-            return false;
-        foreach ($buttons_array as $b) {
-            $button = $this->getPage()->createWidget('DataButton', $this, UxonObject::fromAnything($b));
-            $this->addButton($button);
-        }
     }
 
     /**
@@ -646,16 +627,6 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveToolbars, iHave
     public function getConfiguratorWidgetType()
     {
         return 'ChartConfigurator';
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Widgets\iHaveToolbars::getToolbarWidgetType()
-     */
-    public function getToolbarWidgetType()
-    {
-        return 'DataToolbar';
     }
 }
 ?>

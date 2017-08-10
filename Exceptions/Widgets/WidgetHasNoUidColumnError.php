@@ -16,6 +16,15 @@ class WidgetHasNoUidColumnError extends UnexpectedValueException implements Widg
 {
     
     use WidgetExceptionTrait;
+    
+    /**
+     *
+     * @see WidgetExceptionTrait::mustDestroyWidget()
+     */
+    protected function mustDestroyWidget()
+    {
+        return true;
+    }
 
     public function getDefaultAlias()
     {

@@ -10,6 +10,7 @@ use exface\Core\CommonLogic\Model\Object;
 use exface\Core\CommonLogic\Model\Relation;
 use exface\Core\CommonLogic\Model\Attribute;
 use exface\Core\Exceptions\Widgets\WidgetLogicError;
+use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 
 /**
  * The configurator for data widgets contains tabs for filters and sorters.
@@ -170,7 +171,7 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
             
             $filter = $this->getPage()->createWidget('Filter', $this->getFilterTab());
             $filter->setComparator($comparator);
-            $filter->setWidget(WidgetFactory::createFromUxon($page, $uxon, $filter));
+            $filter->setInputWidget(WidgetFactory::createFromUxon($page, $uxon, $filter));
             
             return $filter;
     }
@@ -190,7 +191,7 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
             $filter = $filter_widget;
         } else {
             $filter = $this->getPage()->createWidget('Filter', $this->getFilterTab());
-            $filter->setWidget($filter_widget);
+            $filter->setInputWidget($filter_widget);
         }
         
         $this->setLazyLoadingForFilter($filter);
@@ -397,7 +398,7 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
     protected function setLazyLoadingForFilter(Filter $filter_widget)
     {
         // Disable filters on Relations if lazy loading is disabled
-        if (! $this->getWidgetConfigured()->getLazyLoading() && $filter_widget->getAttribute() && $filter_widget->getAttribute()->isRelation() && $filter_widget->getWidget()->is('ComboTable')) {
+        if (! $this->getWidgetConfigured()->getLazyLoading() && $filter_widget->getAttribute() && $filter_widget->getAttribute()->isRelation() && $filter_widget->getInputWidget()->is('ComboTable')) {
             $filter_widget->setDisabled(true);
         }
         return $filter_widget;
@@ -411,7 +412,12 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
         return $this;
     }
     
-    public function getWidgets()
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Container::getWidgets()
+     */
+    public function getWidgets(callable $filter_callback = null)
     {
         if (is_null($this->filter_tab)){
             $this->getFilterTab();
@@ -419,7 +425,7 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
         if (is_null($this->sorter_tab)){
             $this->getSorterTab();
         }
-        return parent::getWidgets();
+        return parent::getWidgets($filter_callback);
     }
 }
 ?>

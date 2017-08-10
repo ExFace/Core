@@ -5,10 +5,21 @@ use exface\Core\Widgets\Button;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
+use exface\Core\Exceptions\Widgets\WidgetChildNotFoundError;
 
 interface iHaveButtons extends iHaveChildren
 {
-
+    /**
+     * Instantiates a button with the correct type for this widget optionally 
+     * loading a UXON descrption.
+     * 
+     * NOTE: the button is not automatically added to the group - it's just created!
+     * 
+     * @param UxonObject $uxon
+     * @return Button
+     */
+    public function createButton(UxonObject $uxon = null);
+    
     /**
      * Adds a button to the widget
      *
@@ -27,11 +38,13 @@ interface iHaveButtons extends iHaveChildren
     public function removeButton(Button $button_widget);
 
     /**
-     * Returs an array of button widgets
+     * Returs an array of button widgets with all buttons optionally filtered by the given callback.
      *
+     * @param callable $filter_callback
+     * 
      * @return Button[]
      */
-    public function getButtons();
+    public function getButtons(callable $filter_callback = null);
 
     /**
      * Adds multiple buttons from an array of their UXON descriptions
@@ -70,21 +83,17 @@ interface iHaveButtons extends iHaveChildren
     /**
      * 
      * @param integer $index
-     * @return Button|null
+     * @throws WidgetChildNotFoundError if the index cannot be found.
+     * @return Button
      */
     public function getButton($index);
     
     /**
-     * Returns the number of buttons in the group
-     *
+     * Returns the number of buttons in the group optionally filtering them
+     * 
+     * @param callable $filter_callback
+     * 
      * @return number
      */
-    public function countButtons();
-    
-    /**
-     * Returns the number of buttons in the group, that are not hidden
-     *
-     * @return number
-     */
-    //public function countButtonsVisible();
+    public function countButtons(callable $filter_callback = null);
 }

@@ -98,8 +98,7 @@ class Log
             $minLogLevel     = $config->getOption('LOG.MINIMUM_LEVEL_TO_LOG');
             $maxDaysToKeep   = $config->getOption('LOG.MAX_DAYS_TO_KEEP');
 
-            static::$errorLogHandlers["filelog"] = new FileLimitingLogHandler(new LogfileHandler("exface", "", $workbench, $minLogLevel), // real file name is determined late by FileLimitingLogHandler
-$coreLogFilePath, '', $maxDaysToKeep);
+            static::$errorLogHandlers["filelog"] = new FileLimitingLogHandler(new LogfileHandler("exface", "", $workbench, $minLogLevel), $coreLogFilePath, '', $maxDaysToKeep);
 
             static::$errorLogHandlers["detaillog"] = new DirLimitingLogHandler(new DebugMessageFileHandler($workbench, $detailsLogBasePath, ".json", $minLogLevel), $detailsLogBasePath, ".json", $maxDaysToKeep);
         }
@@ -107,9 +106,8 @@ $coreLogFilePath, '', $maxDaysToKeep);
         return static::$errorLogHandlers;
     }
 
-    protected static function getFallbackHandler($workbench)
+    protected static function getFallbackHandler(Workbench $workbench)
     {
-        return new FileLimitingLogHandler(new LogfileHandler("exface", "", LogLevel::DEBUG), // real file name is determined late by FileLimitingLogHandler
-Filemanager::pathNormalize($workbench->filemanager()->getPathToBaseFolder()) . '/logs/fallback.log', '-', 3);
+        return new FileLimitingLogHandler(new LogfileHandler("exface", "", $workbench, LogLevel::DEBUG), Filemanager::pathNormalize($workbench->filemanager()->getPathToBaseFolder()) . '/logs/fallback.log', '-', 3);
     }
 }

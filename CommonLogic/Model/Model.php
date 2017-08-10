@@ -55,12 +55,20 @@ class Model implements ModelInterface
      */
     public function getObjectByAlias($object_alias, $namespace = null)
     {
-        if (! $namespace){
-            $namespace = $this->getDefaultNamespace();
+        if ($namespace){
+            $app_alias = $namespace;
+        } else {
+            $app_alias = $this->getDefaultNamespace();
         }
         
-        if (! $obj = $this->getObjectFromCache($this->getObjectIdFromAlias($object_alias, $namespace))) {
-            $obj = $this->getModelLoader()->loadObjectByAlias($this->getWorkbench()->getApp($namespace), $object_alias);
+        if (! $obj = $this->getObjectFromCache($this->getObjectIdFromAlias($object_alias, $app_alias))) {
+            try {
+                $obj = $this->getModelLoader()->loadObjectByAlias($this->getWorkbench()->getApp($app_alias), $object_alias);
+            } catch (MetaObjectNotFoundError $e){
+                if (!$namespace){
+                    throw new MetaObjectNotFoundError('Requested meta object "' . $object_alias . '" without an namespace (app alias)! Currently running app "' . $app_alias . '" did not contain the object either.', null, $e);
+                }
+            }
             $this->cacheObject($obj);
         }
         return $obj;

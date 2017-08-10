@@ -52,7 +52,7 @@ class UxonParserError extends RuntimeException implements UxonExceptionInterface
     public function createDebugWidget(DebugMessage $debug_widget)
     {
         $debug_widget = $this->parentCreateDebugWidget($debug_widget);
-        if ($debug_widget->getChild('uxon_tab') === false) {
+        if ($debug_widget->findChildById('uxon_tab') === false) {
             $page = $debug_widget->getPage();
             $uxon_tab = $debug_widget->createTab();
             $uxon_tab->setId('UXON');

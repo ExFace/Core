@@ -2,6 +2,7 @@
 namespace exface\Core\Widgets\Traits;
 
 use exface\Core\Widgets\Button;
+use exface\Core\CommonLogic\UxonObject;
 
 trait iHaveButtonsAndToolbarsTrait 
 {
@@ -57,11 +58,11 @@ trait iHaveButtonsAndToolbarsTrait
      *
      * @see \exface\Core\Interfaces\Widgets\iHaveButtons::getButtons()
      */
-    public function getButtons()
+    public function getButtons(callable $filter_callback = null)
     {
         $buttons = [];
         foreach ($this->getToolbars() as $toolbar){
-            $buttons = array_merge($buttons, $toolbar->getButtons());
+            $buttons = array_merge($buttons, $toolbar->getButtons($filter_callback));
         }
         return $buttons;
     }
@@ -131,11 +132,11 @@ trait iHaveButtonsAndToolbarsTrait
      *
      * @see \exface\Core\Interfaces\Widgets\iHaveButtons::countButtons()
      */
-    public function countButtons()
+    public function countButtons(callable $filter_callback = null)
     {
         $cnt = 0;
         foreach ($this->getToolbars() as $toolbar){
-            $cnt += $toolbar->countButtons();
+            $cnt += $toolbar->countButtons($filter_callback);
         }
         return $cnt;
     }
@@ -150,4 +151,13 @@ trait iHaveButtonsAndToolbarsTrait
         return $this->getToolbarMain()->getButtonWidgetType();
     }
     
+    /**
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\Widgets\iHaveButtons::createButton()
+     */
+    public function createButton(UxonObject $uxon = null)
+    {
+        return $this->getToolbarMain()->createButton($uxon);
+    }
 }

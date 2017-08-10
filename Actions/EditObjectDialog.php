@@ -44,10 +44,9 @@ class EditObjectDialog extends ShowObjectDialog
     protected function createDialogWidget(AbstractWidget $contained_widget = NULL)
     {
         $dialog = parent::createDialogWidget($contained_widget);
-        $page = $this->getCalledOnUiPage();
         // TODO add save button via followup actions in the init() method instead of the button directly
         /* @var $save_button \exface\Core\Widgets\Button */
-        $save_button = $page->createWidget('DialogButton', $dialog);
+        $save_button = $dialog->createButton();
         $save_button
             ->setActionAlias($this->getSaveActionAlias())
             ->setCaption($this->getWorkbench()->getCoreApp()->getTranslator()->translate("ACTION.EDITOBJECTDIALOG.SAVE_BUTTON"))
