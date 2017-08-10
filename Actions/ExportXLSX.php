@@ -3,7 +3,8 @@ namespace exface\Core\Actions;
 
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\CommonLogic\Constants\Icons;
-use exface\Core\Exceptions\Actions\ActionExportDataRowOverflowError;
+use exface\Core\Widgets\DataTable;
+use exface\Core\Exceptions\Actions\ActionExportDataError;
 
 /**
  * Exports data to an xlsx file.
@@ -58,25 +59,52 @@ class ExportXLSX extends ExportDataFile
      */
     protected function writeHeader(DataSheetInterface $dataSheet)
     {
+        /** @var DataTable $inputWidget */
+        $inputWidget = $this->getCalledByWidget()->getInputWidget();
+        
         $header = [];
+        $headerTypes = [];
+        $output = [];
+        
         foreach ($dataSheet->getColumns() as $col) {
             if (! $col->getHidden()) {
+                // determine name
+                if ($this->getWriteReadableHeader()) {
+                    if (($dataTableCol = $inputWidget->getColumnByAttributeAlias($col->getAttributeAlias())) || ($dataTableCol = $inputWidget->getColumnByDataColumnName($col->getName()))) {
+                        $colName = $dataTableCol->getCaption();
+                    } else {
+                        $colName = $col->getAttribute()->getName();
+                    }
+                } else {
+                    $colName = $col->getName();
+                }
+                
+                // determine datatype
                 switch ($col->getDataType()->getName()) {
                     case 'Number':
                         if ($col->getName() == 'UID') {
                             // UIDs sind hexadecimal und werden als String ausgegeben.
-                            $header[$col->getName()] = $this->typeMap['String'];
+                            $colDataType = $this->typeMap['String'];
                         } else {
-                            $header[$col->getName()] = $this->typeMap[$col->getDataType()->getName()];
+                            $colDataType = $this->typeMap[$col->getDataType()->getName()];
                         }
                         break;
                     default:
-                        $header[$col->getName()] = $this->typeMap[$col->getDataType()->getName()];
+                        $colDataType = $this->typeMap[$col->getDataType()->getName()];
                 }
+                
+                $header[] = $colName;
+                $headerTypes[] = $colDataType;
+                $output[] = $col->getName();
             }
         }
-        $this->getWriter()->writeSheetHeader($this->getExcelSheetName(), $header);
-        return array_keys($header);
+        
+        // Schreibe erst die Headertypen ohne Headerzeile, dann die Headerzeile. Auch
+        // beides zusammen waere moeglich gibt aber Probleme bei mehreren identischen
+        // (z.B. mehreren leeren) Headern.
+        $this->getWriter()->writeSheetHeader($this->getExcelSheetName(), $headerTypes, true);
+        $this->getWriter()->writeSheetRow($this->getExcelSheetName(), $header, '');
+        return $output;
     }
 
     /**
@@ -97,7 +125,7 @@ class ExportXLSX extends ExportDataFile
                 }
             }
             if ($this->rowNumberWritten >= $this->getWriter()::EXCEL_2007_MAX_ROW) {
-                throw new ActionExportDataRowOverflowError($this, $this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.EXPORTDATA.ROWOVERFLOW', array(
+                throw new ActionExportDataError($this, $this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.EXPORTDATA.ROWOVERFLOW', array(
                     '%number%' => $this->getWriter()::EXCEL_2007_MAX_ROW
                 )));
             }

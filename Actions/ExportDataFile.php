@@ -4,6 +4,7 @@ namespace exface\Core\Actions;
 use exface\Core\CommonLogic\Filemanager;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Exceptions\Actions\ActionExportDataError;
+use exface\Core\Exceptions\Actions\ActionConfigurationError;
 
 /**
  * This action is the base class for a number of actions, which export raw data as a file
@@ -18,6 +19,8 @@ abstract class ExportDataFile extends ExportData
     private $pathname = null;
 
     private $writer = null;
+
+    private $writeReadableHeader = true;
 
     private $requestRowNumber = 30000;
 
@@ -155,7 +158,13 @@ abstract class ExportDataFile extends ExportData
      */
     public function setRequestRowNumber($value)
     {
-        $this->requestRowNumber = intval($value);
+        if (is_int($value)) {
+            $this->requestRowNumber = $value;
+        } else if (is_string($value)) {
+            $this->requestRowNumber = intval($value);
+        } else {
+            throw new ActionConfigurationError($this, 'Can not set request_row_number for "' . $this->getAliasWithNamespace() . '": the argument passed to setRequestRowNumber() is neither an integer nor a string!');
+        }
         return $this;
     }
 
@@ -185,7 +194,53 @@ abstract class ExportDataFile extends ExportData
      */
     public function setRequestTimelimit($value)
     {
-        $this->requestTimelimit = intval($value);
+        if (is_int($value)) {
+            $this->requestTimelimit = $value;
+        } else if (is_string($value)) {
+            $this->requestTimelimit = intval($value);
+        } else {
+            throw new ActionConfigurationError($this, 'Can not set request_timelimit for "' . $this->getAliasWithNamespace() . '": the argument passed to setRequestTimelimit() is neither an integer nor a string!');
+        }
+        return $this;
+    }
+
+    /**
+     * Returns if the header of the output file contains human readable text or
+     * column names. 
+     * 
+     * @return boolean
+     */
+    public function getWriteReadableHeader()
+    {
+        return $this->writeReadableHeader;
+    }
+
+    /**
+     * Determines if the header of the output file contains human readable text or
+     * column names (default true -> human readable text).
+     * 
+     * @uxon-property write_readable_header
+     * @uxon-type boolean
+     * 
+     * @param boolean|string $value
+     * @throws ActionConfigurationError
+     * @return \exface\Core\Actions\ExportDataFile
+     */
+    public function setWriteReadableHeader($value)
+    {
+        if (is_bool($value)) {
+            $this->writeReadableHeader = $value;
+        } else if (is_string($value)) {
+            if (strcasecmp('true', $value) == 0) {
+                $this->writeReadableHeader = true;
+            } else if (strcasecmp('false', $value) == 0) {
+                $this->writeReadableHeader = false;
+            } else {
+                $this->writeReadableHeader = boolval($value);
+            }
+        } else {
+            throw new ActionConfigurationError($this, 'Can not set write_readable_header for "' . $this->getAliasWithNamespace() . '": the argument passed to setWriteReadableHeader() is neither a boolean nor a string!');
+        }
         return $this;
     }
 }
