@@ -3,6 +3,7 @@ namespace exface\Core\Actions;
 
 use exface\Core\CommonLogic\Filemanager;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\Exceptions\Actions\ActionExportDataError;
 
 /**
  * This action is the base class for a number of actions, which export raw data as a file
@@ -39,39 +40,43 @@ abstract class ExportDataFile extends ExportData
             $this->getCalledByWidget()->getInputWidget()->prepareDataSheetToRead($dataSheetMaster);
         }
         $dataSheetMaster->removeRows();
-
+        
         // Datei erzeugen und schreiben
         $columnNames = $this->writeHeader($dataSheetMaster);
         $rowsOnPage = $this->getRequestRowNumber();
         $rowOffset = 0;
-        do {
-            $dataSheet = $dataSheetMaster->copy();
-            $dataSheet->setRowsOnPage($rowsOnPage);
-            $dataSheet->setRowOffset($rowOffset);
-            $dataSheet->dataRead();
-
-            // Das DataSheet kommt hier nur gestueckelt an, daher schwierig affectedRows
-            // und resultDataSheet zu setzen.
-            // $this->setAffectedRows($dataSheet->removeRows()->dataRead());
-            // $this->setResultDataSheet($dataSheet);
-
-            $this->writeRows($dataSheet, $columnNames);
-
-            $rowOffset += $rowsOnPage;
-            // Das Zeitlimit wird bei jedem Schleifendurchlauf neu gesetzt, so dass es immer
-            // nur fuer einen Durchlauf gilt. Sonst kommt es bei groesseren Abfragen schnell
-            // zu einem fatal error: maximum execution time exceeded.
-            set_time_limit($this->getRequestTimelimit());
-        } while (count($dataSheet->getRows()) == $rowsOnPage);
-
+        try {
+            do {
+                $dataSheet = $dataSheetMaster->copy();
+                $dataSheet->setRowsOnPage($rowsOnPage);
+                $dataSheet->setRowOffset($rowOffset);
+                $dataSheet->dataRead();
+                
+                // Das DataSheet kommt hier nur gestueckelt an, daher schwierig affectedRows
+                // und resultDataSheet zu setzen.
+                // $this->setAffectedRows($dataSheet->removeRows()->dataRead());
+                // $this->setResultDataSheet($dataSheet);
+                
+                $this->writeRows($dataSheet, $columnNames);
+                
+                $rowOffset += $rowsOnPage;
+                // Das Zeitlimit wird bei jedem Schleifendurchlauf neu gesetzt, so dass es immer
+                // nur fuer einen Durchlauf gilt. Sonst kommt es bei groesseren Abfragen schnell
+                // zu einem fatal error: maximum execution time exceeded.
+                set_time_limit($this->getRequestTimelimit());
+            } while (count($dataSheet->getRows()) == $rowsOnPage);
+        } catch (ActionExportDataError $aede) {
+            $resultMessage = $aede->getMessage();
+        }
+        
         // Speicher frei machen
         $dataSheet = null;
-
+        
         // Datei abschliessen und zum Download bereitstellen
         $this->writeFileResult();
         $url = $this->getWorkbench()->getCMS()->createLinkToFile($this->getPathname());
         $this->setResult($url);
-        $this->setResultMessage('Download ready. If it does not start automatically, click <a href="' . $url . '">here</a>.');
+        $this->setResultMessage($resultMessage . 'Download ready. If it does not start automatically, click <a href="' . $url . '">here</a>.');
     }
 
     /**

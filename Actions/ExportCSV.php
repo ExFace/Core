@@ -3,9 +3,27 @@ namespace exface\Core\Actions;
 
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use League\Csv\Writer;
+use exface\Core\CommonLogic\Constants\Icons;
 
+/**
+ * Exports data to a csv file.
+ *
+ * @author SFL
+ *
+ */
 class ExportCSV extends ExportDataFile
 {
+
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Actions\ExportData::init()
+     */
+    protected function init()
+    {
+        parent::init();
+        $this->setIconName(Icons::FILE_TEXT_O);
+    }
 
     /**
      * 

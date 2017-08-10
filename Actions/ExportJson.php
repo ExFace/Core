@@ -2,12 +2,30 @@
 namespace exface\Core\Actions;
 
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\CommonLogic\Constants\Icons;
 
+/**
+ * Exports data to a json file.
+ *
+ * @author SFL
+ *
+ */
 class ExportJson extends ExportDataFile
 {
 
     private $firstRowWritten = false;
-    
+
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Actions\ExportData::init()
+     */
+    protected function init()
+    {
+        parent::init();
+        $this->setIconName(Icons::FILE_TEXT_O);
+    }
+
     /**
      * 
      * {@inheritDoc}

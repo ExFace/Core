@@ -2,33 +2,54 @@
 namespace exface\Core\Actions;
 
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\CommonLogic\Constants\Icons;
+use exface\Core\Exceptions\Actions\ActionExportDataRowOverflowError;
 
+/**
+ * Exports data to an xlsx file.
+ * 
+ * @author SFL
+ *
+ */
 class ExportXLSX extends ExportDataFile
 {
-    
+
     // Der Name des Sheets in der Excel-Datei
     private $excelSheetName = 'Sheet1';
-    
+
     // Bildet alexa UI-Datentypen auf Excel-Datentypen ab
     private $typeMap = [
-        'Boolean' => '',
+        'Boolean' => 'integer',
         'Date' => 'DD.MM.YYYY',
-        'FlagTreeFolder' => '',
+        'FlagTreeFolder' => 'string',
         'Html' => 'string',
         'ImageUrl' => 'string',
         'Integer' => 'integer',
         'Json' => 'string',
-        'Number' => '',
+        'Number' => '', // Komma wird automatisch angezeigt oder ausgeblendet
         'Price' => 'price',
-        'PropertySet' => '',
-        'Relation' => 'integer',
-        'RelationHierarchy' => '',
+        'PropertySet' => 'string',
+        'Relation' => 'string',
+        'RelationHierarchy' => 'string',
         'String' => 'string',
         'Text' => 'string',
         'Timestamp' => 'DD.MM.YYYY HH:MM:SS',
         'Url' => 'string',
         'Uxon' => 'string'
     ];
+
+    private $rowNumberWritten = 0;
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Actions\ExportData::init()
+     */
+    protected function init()
+    {
+        parent::init();
+        $this->setIconName(Icons::FILE_EXCEL_O);
+    }
 
     /**
      * 
@@ -40,7 +61,18 @@ class ExportXLSX extends ExportDataFile
         $header = [];
         foreach ($dataSheet->getColumns() as $col) {
             if (! $col->getHidden()) {
-                $header[$col->getName()] = $this->typeMap[$col->getDataType()->getName()];
+                switch ($col->getDataType()->getName()) {
+                    case 'Number':
+                        if ($col->getName() == 'UID') {
+                            // UIDs sind hexadecimal und werden als String ausgegeben.
+                            $header[$col->getName()] = $this->typeMap['String'];
+                        } else {
+                            $header[$col->getName()] = $this->typeMap[$col->getDataType()->getName()];
+                        }
+                        break;
+                    default:
+                        $header[$col->getName()] = $this->typeMap[$col->getDataType()->getName()];
+                }
             }
         }
         $this->getWriter()->writeSheetHeader($this->getExcelSheetName(), $header);
@@ -64,7 +96,13 @@ class ExportXLSX extends ExportDataFile
                     $outRow[] = null;
                 }
             }
+            if ($this->rowNumberWritten >= $this->getWriter()::EXCEL_2007_MAX_ROW) {
+                throw new ActionExportDataRowOverflowError($this, $this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.EXPORTDATA.ROWOVERFLOW', array(
+                    '%number%' => $this->getWriter()::EXCEL_2007_MAX_ROW
+                )));
+            }
             $this->getWriter()->writeSheetRow($this->getExcelSheetName(), $outRow);
+            $this->rowNumberWritten ++;
         }
     }
 

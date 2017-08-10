@@ -20,6 +20,7 @@
 
 	"ACTION.EXPORTCSV.NAME": "Als CSV exportieren",
 	"ACTION.EXPORTDATA.NAME": "Exportieren",
+	"ACTION.EXPORTDATA.ROWOVERFLOW": "Es wurde die maximale Anzahl von %number% Einträgen in die Datei geschrieben. ",
 	"ACTION.EXPORTJSON.NAME": "Als JSON exportieren",
 	"ACTION.EXPORTXLSX.NAME": "Als XLSX exportieren",
 
