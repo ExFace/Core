@@ -42,8 +42,7 @@ class Log
             } catch (\Throwable $t) {
                 static::$logger->appendHandler(static::getFallbackHandler($workbench));
                 static::$logger->critical('Log initialisation failed', array(
-                    'exception',
-                    $t
+                    'exception' => $t
                 ));
             }
         }
