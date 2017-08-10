@@ -236,7 +236,14 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveToolbars, iHave
         $data = $this->getPage()->createWidget('Data', $this);
         $data->setMetaObjectId($this->getMetaObjectId());
         $data->importUxonObject($uxon_object);
+        // Do not add action automatically as the internal data toolbar will
+        // not be shown anyway. The Chart has it's own toolbars.
+        // IDEA why create two sets of toolbars? Maybe we can reuse the data
+        // toolbars in the chart?
+        $data->getToolbarMain()->setDoNotAutoincludeActions(true);
+        
         $this->data = $data;
+        return $this;
     }
 
     /**
@@ -620,16 +627,6 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveToolbars, iHave
     public function getConfiguratorWidgetType()
     {
         return 'ChartConfigurator';
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Widgets\iHaveToolbars::getToolbarWidgetType()
-     */
-    public function getToolbarWidgetType()
-    {
-        return 'DataTableToolbar';
     }
 }
 ?>

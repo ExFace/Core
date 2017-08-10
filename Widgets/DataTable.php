@@ -547,16 +547,10 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
     }
     
     /**
-     * DataTables have special toolbars with automatically included actions.
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Widgets\Data::getToolbarWidgetType()
+     * @see \exface\Core\Widgets\Data::getConfiguratorWidgetType()
      */
-    public function getToolbarWidgetType()
-    {
-        return 'DataTableToolbar';
-    }
-
     public function getConfiguratorWidgetType()
     {
         return 'DataTableConfigurator';
