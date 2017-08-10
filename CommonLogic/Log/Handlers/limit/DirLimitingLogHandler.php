@@ -57,7 +57,7 @@ class DirLimitingLogHandler extends LimitingWrapper
             $last_cleanup = $config->getOption('LOG.LAST_CLEANUP');
         } catch (ConfigOptionNotFoundError $e){
             // If there was no last cleanup value yet, just set to now and skip the rest
-            $config->setOption('LOG.LAST_CLEANUP', date("Y-m-d H:i:s"), AppInterface::CONFIG_SCOPE_INSTALLATION);
+            $config->setOption('LOG.LAST_CLEANUP', date("Y-m-d H:i:s"), AppInterface::CONFIG_SCOPE_SYSTEM);
             return;
         }
         
