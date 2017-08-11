@@ -24,7 +24,7 @@ abstract class ExportDataFile extends ExportData
 
     private $requestRowNumber = 30000;
 
-    private $requestTimelimit = 120;
+    private $requestTimelimit = 300;
 
     /**
      * 
@@ -49,6 +49,7 @@ abstract class ExportDataFile extends ExportData
         $rowsOnPage = $this->getRequestRowNumber();
         $rowOffset = 0;
         try {
+            set_time_limit($this->getRequestTimelimit());
             do {
                 $dataSheet = $dataSheetMaster->copy();
                 $dataSheet->setRowsOnPage($rowsOnPage);
@@ -76,7 +77,7 @@ abstract class ExportDataFile extends ExportData
         $dataSheet = null;
         
         // Datei abschliessen und zum Download bereitstellen
-        $this->writeFileResult();
+        $this->writeFileResult($dataSheetMaster);
         $url = $this->getWorkbench()->getCMS()->createLinkToFile($this->getPathname());
         $this->setResult($url);
         $this->setResultMessage($resultMessage . 'Download ready. If it does not start automatically, click <a href="' . $url . '">here</a>.');
@@ -107,7 +108,7 @@ abstract class ExportDataFile extends ExportData
     /**
      * Writes the terminated file to the harddrive.
      */
-    abstract protected function writeFileResult();
+    abstract protected function writeFileResult(DataSheetInterface $dataSheet);
 
     /**
      * Returns the writer for the file.
@@ -179,7 +180,7 @@ abstract class ExportDataFile extends ExportData
     }
 
     /**
-     * Sets the time limit per request (in seconds) (default 120).
+     * Sets the time limit per request (in seconds) (default 300).
      *
      * If the processing of one request takes longer than the time limit, php assumes that
      * some kind of error occured and stops the execution of the code. If a fatal error:
@@ -206,7 +207,7 @@ abstract class ExportDataFile extends ExportData
 
     /**
      * Returns if the header of the output file contains human readable text or
-     * column names. 
+     * column names.
      * 
      * @return boolean
      */

@@ -23,6 +23,10 @@
 	"ACTION.EXPORTDATA.ROWOVERFLOW": "The maximum number of %number% entries was written to the file. ",
 	"ACTION.EXPORTJSON.NAME": "Export JSON",
 	"ACTION.EXPORTXLSX.NAME": "Export Excel",
+	"ACTION.EXPORTXLSX.USERNAME": "Username",
+	"ACTION.EXPORTXLSX.TIMESTAMP": "Date and time of export",
+	"ACTION.EXPORTXLSX.OBJECT": "Exported object",
+	"ACTION.EXPORTXLSX.FILTER": "Used filters",
 
 	"ACTION.FAVORITESADD.NAME": "Add to favorites",
     "ACTION.FAVORITESADD.RESULT": "%number% objects added to favorites.",
@@ -88,6 +92,11 @@
     "CONTEXT.OBJECTBASKET.SHOW_DETAILS_DIALOG": "Show content",
     "CONTEXT.OBJECTBASKET.REMOVE": "Remove",
     "CONTEXT.OBJECTBASKET.REMOVE_ALL": "Remove all",
+	
+	"DATE.FORMAT.SCREEN.EXCEL": "YYYY-MM-DD",
+	"DATE.FORMAT.SCREEN.PHP": "Y-m-d",
+	"DATETIME.FORMAT.SCREEN.EXCEL": "YYYY-MM-DD HH:MM:SS",
+	"DATETIME.FORMAT.SCREEN.PHP": "Y-m-d H:i:s",
 	
 	"GLOBAL.ACTIONS": "Actions",
 	"GLOBAL.DEFAULT_DATE_FORMAT": "d.m.Y",
