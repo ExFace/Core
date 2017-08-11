@@ -13,6 +13,9 @@ trait iCanBeAlignedTrait {
      */
     public function getAlign()
     {
+        if ($this->align == null) {
+            $this->setAlign('default'); 
+        }
         return $this->align;
     }
     
