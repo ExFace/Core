@@ -10,6 +10,7 @@ use exface\Core\Exceptions\Widgets\WidgetIdConflictError;
 use exface\Core\Interfaces\Widgets\iHaveChildren;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Factories\EventFactory;
+use exface\Core\Exceptions\Widgets\WidgetNotFoundError;
 
 class UiPage implements UiPageInterface
 {
@@ -98,7 +99,7 @@ class UiPage implements UiPageInterface
             } else {
                 // If the page is empty, no widget can be found ;) ...except the widget, that are always there
                 if ($this->isEmpty()) {
-                    return null;
+                    throw new WidgetNotFoundError('Widget "' . $id . '" not found in page "' . $this->getId() . '": page empty!');
                 }
                 $parent = $this->getWidgetRoot();
             }
@@ -113,6 +114,16 @@ class UiPage implements UiPageInterface
         }
     }
 
+    /**
+     * 
+     * @param string $id
+     * @param string $id_space
+     * @param WidgetInterface $parent
+     * 
+     * @throws WidgetNotFoundError if no matching widget was found
+     * 
+     * @return WidgetInterface
+     */
     private function getWidgetFromIdSpace($id, $id_space, WidgetInterface $parent)
     {
         $id_with_namespace = static::addIdSpace($id_space, $id);
@@ -143,8 +154,10 @@ class UiPage implements UiPageInterface
                     return $child;
                 } else {
                     if (! $id_is_path || StringDataType::startsWith($id_with_namespace, $child_id . self::WIDGET_ID_SEPARATOR)) {
-                        if ($found = $this->getWidgetFromIdSpace($id, $id_space, $child)) {
-                            return $found;
+                        try {
+                            return $this->getWidgetFromIdSpace($id, $id_space, $child);
+                        } catch (WidgetNotFoundError $e){
+                            // Continue with next branch of the tree
                         }
                     } elseif ($id_is_path) {
                         continue;
@@ -153,7 +166,9 @@ class UiPage implements UiPageInterface
             }
         }
         
-        return null;
+        throw new WidgetNotFoundError('Widget "' . $id . '" not found in id space "' . $id_space . '" within parent "' . $parent->getId() . '" on page "' . $this->getId() . '"!');
+        
+        return;
     }
 
     private static function addIdSpace($id_space, $id)

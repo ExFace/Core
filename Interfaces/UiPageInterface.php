@@ -3,6 +3,7 @@ namespace exface\Core\Interfaces;
 
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Widgets\ContextBar;
+use exface\Core\Exceptions\Widgets\WidgetNotFoundError;
 
 interface UiPageInterface extends ExfaceClassInterface
 {
@@ -28,7 +29,10 @@ interface UiPageInterface extends ExfaceClassInterface
      * can optionally be restricted to the children of another widget.
      *
      * @param string $widget_id            
-     * @param WidgetInterface $parent            
+     * @param WidgetInterface $parent  
+     * 
+     * @throws WidgetNotFoundError if no widget with such an id was found
+     *           
      * @return WidgetInterface|null
      */
     public function getWidget($widget_id, WidgetInterface $parent = null);

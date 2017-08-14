@@ -627,6 +627,10 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
                     $filter = $this->createFilterWidget($condition->getExpression()->getAttribute()->getAliasWithRelationPath());
                     $this->addFilter($filter);
                     $filter->setValue($condition->getValue());
+                    // Disable the filter because if the user changes it, the
+                    // prefill will not be consistent anymore (some prefilled
+                    // widgets may have different prefill-filters than others)
+                    $filter->setDisabled(true);
                 } else {
                     // If matching filters were found, prefill them
                     $prefilled = false;
