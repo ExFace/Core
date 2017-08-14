@@ -36,7 +36,7 @@ class ExportJson extends ExportDataFile
         $header = [];
         foreach ($dataSheet->getColumns() as $col) {
             if (! $col->getHidden()) {
-                $header[] = $col->getName();
+                $header[$col->getName()] = $col->getName();
             }
         }
         return $header;
@@ -52,11 +52,11 @@ class ExportJson extends ExportDataFile
         foreach ($dataSheet->getRows() as $row) {
             $rowKeys = array_keys($row);
             $outRow = new \stdClass();
-            foreach ($columnNames as $key) {
+            foreach ($columnNames as $key => $name) {
                 if (! (array_search($key, $rowKeys) === false)) {
-                    $outRow->$key = $row[$key];
+                    $outRow->$name = $row[$key];
                 } else {
-                    $outRow->$key = null;
+                    $outRow->$name = null;
                 }
             }
             if ($this->firstRowWritten) {
@@ -73,7 +73,7 @@ class ExportJson extends ExportDataFile
      * {@inheritDoc}
      * @see \exface\Core\Actions\ExportDataFile::writeFileResult()
      */
-    protected function writeFileResult()
+    protected function writeFileResult(DataSheetInterface $dataSheet)
     {
         fwrite($this->getWriter(), ']');
         fclose($this->getWriter());

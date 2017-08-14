@@ -370,7 +370,7 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
     public function getColumnByDataColumnName($data_sheet_column_name)
     {
         foreach ($this->getColumns() as $col) {
-            if ($col->getAttributeAlias() === $data_sheet_column_name) {
+            if ($col->getDataColumnName() === $data_sheet_column_name) {
                 return $col;
             }
         }
