@@ -76,6 +76,15 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iUseIn
     {
         if ($action_object_or_uxon_description instanceof ActionInterface) {
             $this->action = $action_object_or_uxon_description;
+            // Let the action know, it was (or will be) called by this button
+            // unless the action already has a called-by-widget. This would be
+            // the case if the same action is assigned to multiple buttons. 
+            // Although this feature is currently not explicitly used, it seems
+            // a decent idea to share an action between buttons: e.g. a toolbar
+            // button and a menu button which actually do exactly the same thing.
+            if (! $this->action->getCalledByWidget()){
+                $this->action->setCalledByWidget($this);
+            }
         } elseif ($action_object_or_uxon_description instanceof \stdClass) {
             $this->setActionAlias($action_object_or_uxon_description->alias);
             $this->setActionOptions($action_object_or_uxon_description);

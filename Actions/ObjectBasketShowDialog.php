@@ -1,12 +1,11 @@
 <?php
 namespace exface\Core\Actions;
 
-use exface\Core\CommonLogic\Model\Object;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Factories\UiPageFactory;
-use exface\Core\Exceptions\Actions\ActionInputInvalidObjectError;
 use exface\Core\CommonLogic\Contexts\ContextActionTrait;
 use exface\Core\Widgets\AbstractWidget;
+use exface\Core\CommonLogic\UxonObject;
 
 /**
  * Displays a popup-table with all instances of a meta object in the object basket.
@@ -30,58 +29,8 @@ class ObjectBasketShowDialog extends ShowDialog
     }
 
     /**
-     * When the action is performed, the empty ObjectBasketDialog created by
-     * createDialogWidget() is assigned the meta object from the input data
-     * sheet and filled with instances of this object stored in the object 
-     * basket.
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Actions\ShowWidget::perform()
-     */
-    protected function perform()
-    {
-        
-        if ($this->getInputDataSheet() && $this->getInputDataSheet()->getMetaObject()->is('exface.Core.CONTEXT_BASE_OBJECT')) {
-            $meta_object = $this->getWorkbench()->model()->getObject($this->getInputDataSheet()->getCellValue('ID', 0));
-        } else {
-            throw new ActionInputInvalidObjectError($this, 'Missing or invalid input data object: expecting exface.Core.CONTEXT_BASE_OBJECT or derivatives!');
-        }
-        
-        $this->getDialogWidget()->setMetaObject($meta_object);
-        $table = $this->getDialogWidget()->getWidgets()[0];
-        $table->setMetaObject($meta_object);
-        $table->prefill($this->getContext()->getFavoritesByObject($meta_object));
-        
-        // Add actions menu
-        /* @var $menu \exface\Core\Widgets\MenuButton */
-        $menu = WidgetFactory::create($this->getWidget()->getPage(), 'MenuButton', $this->getWidget());
-        $menu->setCaption($this->getWorkbench()->getCoreApp()->getTranslator()->translate('GLOBAL.ACTIONS'));
-        $menu->setVisibility(EXF_WIDGET_VISIBILITY_PROMOTED);
-        $menu->setInputWidget($table);
-        foreach ($meta_object->getActions()->getUsedInObjectBasket() as $a) {
-            /* @var $button \exface\Core\Widgets\Button */
-            $button = $menu->createButton();
-            $button->setAction($a);
-            $menu->addButton($button);
-        }
-        $this->getDialogWidget()->addButton($menu);
-        
-        parent::perform();
-    }
-
-    /**
-     * By default the ObjectBasketDialog contains an empty table with a remove-button.
-     * The actual contents can only be rendered when the action is actually
-     * performed as only at that time we know, which object we are interested in.
-     * 
-     * The empty dialog must be created before the action is performed in order
-     * for the containing page to find it's widgets. 
-     * 
-     * This means, that all buttons, that do not depend on the meta object shown
-     * should be added here while buttons that only work with specific object
-     * must be created in the perform(). Those buttons cannot be found by id
-     * references though, so basically only model actions or actions with default
-     * parameters are supported.
+     * The ObjectBasketDialog auto-creates a table with a remove-button and a
+     * MenuButton for action marked to be used in the object basket.
      * 
      * {@inheritDoc}
      * @see \exface\Core\Actions\ShowDialog::createDialogWidget()
@@ -95,7 +44,6 @@ class ObjectBasketShowDialog extends ShowDialog
         }
         /* @var $dialog \exface\Core\Widgets\Dialog */
         $dialog = WidgetFactory::create($page, 'Dialog', $this->getCalledByWidget());
-        $dialog->setId('object_basket');
         $dialog->setCaption($this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.OBJECTBASKET'));
         $dialog->setLazyLoading(false);
         
@@ -106,7 +54,15 @@ class ObjectBasketShowDialog extends ShowDialog
         $table->setHideFooter(true);
         $table->setMultiSelect(true);
         $table->setMultiSelectAllSelected(true);
+        $table->getConfiguratorWidget()->addFilter(
+            $table->getConfiguratorWidget()->createFilterWidget($table->getMetaObject()->getUidAlias(), UxonObject::fromArray(['widget_type' => 'InputHidden']))
+        );
         $dialog->addWidget($table);
+        
+        // Prefill table
+        $ds = $this->getContext()->getFavoritesByObject($this->getMetaObject())->copy();
+        $table->prepareDataSheetToPrefill($ds);
+        $table->prefill($ds);
         
         // Add remove button
         $button = $dialog->createButton();
@@ -114,6 +70,20 @@ class ObjectBasketShowDialog extends ShowDialog
         $button->setInputWidget($table);
         $button->getAction()->setContextScope($this->getContextScope())->setContextAlias($this->getContextAlias());
         $dialog->addButton($button);
+        
+        // Add actions menu
+        /* @var $menu \exface\Core\Widgets\MenuButton */
+        $menu = $dialog->createButton(UxonObject::fromArray(['widget_type' => 'MenuButton']));
+        $menu->setCaption($this->getWorkbench()->getCoreApp()->getTranslator()->translate('GLOBAL.ACTIONS'));
+        $menu->setVisibility(EXF_WIDGET_VISIBILITY_PROMOTED);
+        $menu->setInputWidget($table);
+        foreach ($this->getMetaObject()->getActions()->getUsedInObjectBasket() as $a) {
+            /* @var $button \exface\Core\Widgets\Button */
+            $button = $menu->createButton();
+            $button->setAction($a);
+            $menu->addButton($button);
+        }
+        $dialog->addButton($menu);
         
         return $dialog;
     }

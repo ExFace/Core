@@ -51,23 +51,43 @@ interface ActionInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
     public function setAlias($value);
 
     /**
-     * Returns the widget, that called the action (typically a button) or null, if the action was called internally or via AJAX.
+     * Returns the widget, that called the action (typically a button) or the
+     * widget that will call the action if it was not called yet.
+     * 
+     * May return null if the calling widget is not known.
+     * 
+     * NOTE: if the action was not really called yet, this method returns the
+     * widget, that instantiated the action: i.e. the first button on the page,
+     * that will call this action.
+     * 
+     * IDEA Returning NULL in certain cases does not feel right. We had to add 
+     * the called_by_widget() method to be able to determine the meta_object
+     * of the dialog even if the action does not have an input data sheet yet 
+     * (when drawing the dialog in ajax templates). At that point, the action 
+     * does not know, what object it is going to be performed upon. I don't feel 
+     * comfortable with this solution though, since called_by_widget will be 
+     * null when performing the action via AJAX (or the entire page would need 
+     * to be instantiated).
+     * 
+     * Here are the choices I had:
+     * 
+     * - I could create the Dialog when the action is really called an import 
+     * the entire dialog via AJAX.
+     * 
+     * - I could also pass the meta object as a separate parameter to the action:
+     * $action->set_target_meta_object() - may be a good idea since an action 
+     * could also have a built it meta_object, which should not be overridden
+     * or action->set_called_by_widget - enables the action to create widgets 
+     * with real parents, but produces overhead whe called via AJAX and is not 
+     * needed for actions within workflows (or is it?)
      *
-     * @return WidgetInterface IDEA Returning NULL in certain cases does not feel right. We had to add the called_by_widget() method to be able to determine the meta_object
-     *         of the dialog even if the action does not have an input data sheet yet (when drawing the dialog in ajax templates). At that point,
-     *         the action does not know, what object it is going to be performed upon. I don't feel comfortable with this solution though, since called_by_widget
-     *         will be null when performing the action via AJAX (or the entire page would need to be instantiated).
-     *         Here are the choices I had:
-     *         - I could create the Dialog when the action is really called an import the entire dialog via AJAX.
-     *         - I could also pass the meta object as a separate parameter to the action:
-     *         action->set_target_meta_object() - may be a good idea since an action could also have a built it meta_object, which should not be overridden
-     *         or action->set_called_by_widget - enables the action to create widgets with real parents, but produces overhead whe called via AJAX and
-     *         is not needed for actions within workflows (or is it?)
+     * @return WidgetInterface|null 
      */
     public function getCalledByWidget();
 
     /**
-     * Sets the widget, that called the action: either taking an instantiated widget object or a widget link (text, uxon or object)
+     * Sets the widget, that called the action: either taking an instantiated 
+     * widget object or a widget link (text, uxon or object)
      *
      * @param
      *            AbstractWidget || WidgetLink || string $widget_or_widget_link

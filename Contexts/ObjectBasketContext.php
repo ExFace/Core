@@ -213,62 +213,28 @@ class ObjectBasketContext extends AbstractContext
      * @see \exface\Core\CommonLogic\Contexts\AbstractContext::getContextBarPopup()
      */
     public function getContextBarPopup(Container $container)
-    {
-        /* @var $data_list \exface\Core\Widgets\DataList */
-        $data_list = WidgetFactory::create($container->getPage(), 'DataList', $container)
-            ->setCaption($this->getName())
-            ->setLazyLoading(false)
-            ->setPaginate(false)
-            ->setPaginatePageSize(40)
-            ->setHideHeader(true);
+    {       
+        /* @var $menu \exface\Core\Widgets\Menu */
+        $menu = WidgetFactory::create($container->getPage(), 'Menu', $container);
         
-        // Disable global actions and basket actions because we are looking at
-        // the object basket itself and it does not make sense to put it in
-        // the basket or in the favorites again.
-        $data_list->getToolbarMain()
-            ->setIncludeGlobalActions(false)
-            ->setIncludeObjectBasketActions(false);
-        
-        // Add the title and the UID column
-        $data_list
-            ->addColumn(WidgetFactory::create($container->getPage(), 'DataColumn', $data_list)->setAttributeAlias('ID')->setHidden(true))
-            ->addColumn(WidgetFactory::create($container->getPage(), 'DataColumn', $data_list)->setAttributeAlias('TITLE'));
-        
-        // Fill with content
-        $ds = $data_list->prepareDataSheetToRead();
+        // Fill with buttons
         foreach ($this->getFavoritesAll() as $data_sheet) {
-            $ds->addRow([
-                'ID' => $data_sheet->getMetaObject()->getId(),
-                'TITLE' => $data_sheet->countRows() . 'x ' . $data_sheet->getMetaObject()->getName()
-            ]);
+            $btn = $menu->createButton();
+            $btn->setMetaObject($data_sheet->getMetaObject());
+            $btn->setActionAlias('exface.Core.ObjectBasketShowDialog');
+            $btn->setCaption($data_sheet->countRows() . 'x ' . $data_sheet->getMetaObject()->getName());
+            
+            $btn->getAction()->setMetaObject($data_sheet->getMetaObject());
+            
+            $btn->getAction()->setContextScope($this->getScope()->getName());
+            $btn->getAction()->setContextAlias($this->getAliasWithNamespace());
+            $menu->addButton($btn);
         }
-        // IMPORTANT: if the data sheet is empty, mark it's columns as fresh,
-        // otherwise the widget will attempt to load data for the sheet when
-        // rendering
-        if ($ds->isEmpty()){
-            foreach ($ds->getColumns() as $col){
-                $col->setFresh(true);
-            }
-        }
-        
-        $data_list->setValuesDataSheet($ds);
-        
-        // Add the detail button an bind it to the left click
-        /* @var $details_button \exface\Core\Widgets\DataButton */
-        $details_button = $data_list->createButton()
-            ->setActionAlias('exface.Core.ObjectBasketShowDialog')
-            ->setBindToLeftClick(true)
-            ->setHidden(true);
-        // Make sure the object basket is generated from the same scope!
-        // This makes it easy to reuse this method for user favorites, that are
-        // simply another object basket in a different scope.
-        $details_button->getAction()->setContextScope($this->getScope()->getName());
-        $details_button->getAction()->setContextAlias($this->getAliasWithNamespace());
-        $data_list->addButton($details_button);
         
         // TODO add button to remove from basket here
         
-        $container->addWidget($data_list);
+        $container->addWidget($menu);
+        
         return $container;
     }
     
