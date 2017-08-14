@@ -13,8 +13,8 @@ trait iCanBeAlignedTrait {
      */
     public function getAlign()
     {
-        if ($this->align == null) {
-            $this->setAlign('default'); 
+        if (is_null($this->align)) {
+            return EXF_ALIGN_DEFAULT;
         }
         return $this->align;
     }
@@ -37,5 +37,13 @@ trait iCanBeAlignedTrait {
         }
         $this->align = constant('EXF_ALIGN_' . mb_strtoupper($value));
         return $this;
+    }
+    
+    public function isAlignSet()
+    {
+        if (is_null($this->align)){
+            return false;
+        }
+        return true;
     }
 }

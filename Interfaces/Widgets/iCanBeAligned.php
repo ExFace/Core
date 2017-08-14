@@ -23,4 +23,11 @@ interface iCanBeAligned extends WidgetInterface
      * @return iCanBeAligned
      */
     public function setAlign($value);
+    
+    /**
+     * Returns TRUE if the alignment valie of this widget was set and FALSE otherwise.
+     * 
+     * @return boolean
+     */
+    public function isAlignSet();
 }

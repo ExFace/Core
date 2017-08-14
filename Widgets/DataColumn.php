@@ -232,7 +232,7 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
      */
     public function getAlign()
     {
-        if (is_null($this->getAlignDefault())) {
+        if (! $this->isAlignSet()) {
             if ($this->getDataType()->is(EXF_DATA_TYPE_NUMBER) || $this->getDataType()->is(EXF_DATA_TYPE_PRICE) || $this->getDataType()->is(EXF_DATA_TYPE_DATE)) {
                 $this->setAlign(EXF_ALIGN_OPPOSITE);
             } elseif ($this->getDataType()->is(EXF_DATA_TYPE_BOOLEAN)) {
