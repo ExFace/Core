@@ -5,24 +5,34 @@ use exface\Core\Behaviors\StateMachineState;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
 
+/**
+ * A special MenuButton, which displays a menu with state transitions from it's meta objects StateMachineBehavior.
+ * 
+ * If the button widget is prefilled with data containing information about
+ * the current state of it's object, only the state transitions availabl in this
+ * state will be shown. 
+ * 
+ * @author Stefan Leupold
+ *
+ */
 class StateMenuButton extends MenuButton
 {
-
-    private $smb_buttons_set = false;
 
     private $show_states = [];
 
     /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Widgets\MenuButton::getButtons()
+     * The menu of a state menu button is created automatically from the states
+     * of the meta object assigned to the button.
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\MenuButton::getMenu()
      */
-    public function getButtons(callable $filter_callback = null)
+    public function getMenu()
     {
+        $menu = parent::getMenu();
         // Falls am Objekt ein StateMachineBehavior haengt wird versucht den momentanen Status aus
         // dem Objekt auszulesen und die entsprechenden Buttons aus dem Behavior hinzuzufuegen.
-        if (! $this->smb_buttons_set) {
+        if ($menu->isEmpty()) {
             if (is_null($smb = $this->getMetaObject()->getBehaviors()->getByAlias('exface.Core.Behaviors.StateMachineBehavior'))) {
                 throw new BehaviorConfigurationError('StateMenuButton: The object ' . $this->getMetaObject()->getAliasWithNamespace() . ' has no StateMachineBehavior attached.');
             }
@@ -49,21 +59,19 @@ class StateMenuButton extends MenuButton
                     $uxon->unsetProperty('buttons');
                     $uxon->unsetProperty('menu');
                     
-                    $button = $this->createButton($uxon);
+                    $button = $menu->createButton($uxon);
                     /** @var StateMachineState $stateObject */
                     $stateObject = $states[$target_state];
                     $name = $stateObject->getStateName($this->getMetaObject()->getApp()->getTranslator());
                     if ($name)
                         $button->setCaption($name);
-                    
-                    $this->addButton($button);
+                        
+                        $menu->addButton($button);
                 }
             }
-            
-            $this->smb_buttons_set = true;
         }
         
-        return parent::getButtons($filter_callback);
+        return parent::getMenu();        
     }
 
     /**
@@ -106,10 +114,16 @@ class StateMenuButton extends MenuButton
     }
 
     /**
-     * Defines a number of states for which transition buttons are shown.
-     * By default all buttons defined for the current state are shown.
+     * Only transitions to states from the given array of state ids will be displayed.
+     * 
+     * By default all state transitions will be displayed. If the MenuButton was
+     * prefilled, buttons for state transitions not allowed for the current 
+     * state of the (first) prefill object will be disabled.
+     * 
+     * @uxon-property show_states
+     * @uxon-type array
      *
-     * @param integer[]|string[] $value            
+     * @param string[] $value            
      * @return \exface\Core\Widgets\StateMenuButton
      */
     public function setShowStates($value)
