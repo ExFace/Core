@@ -1,5 +1,5 @@
 <?php
-namespace exface\Core\CommonLogic;
+namespace exface\Core\CommonLogic\Model;
 
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Factories\ActionFactory;
@@ -11,53 +11,49 @@ use exface\Core\Interfaces\TranslationInterface;
 use exface\Core\Interfaces\InstallerInterface;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Exceptions\Actions\ActionNotFoundError;
+use exface\Core\Interfaces\NameResolverInterface;
+use exface\Core\CommonLogic\NameResolver;
+use exface\Core\CommonLogic\Translation;
+use exface\Core\CommonLogic\AppInstallerContainer;
 
-abstract class AbstractApp implements AppInterface
+class App implements AppInterface
 {
-
+    
     const CONFIG_FOLDER_IN_APP = 'Config';
     
     const CONFIG_FOLDER_IN_USER_DATA = '.config';
-
+    
     const CONFIG_FILE_SUFFIX = 'config';
-
+    
     const CONFIG_FILE_EXTENSION = '.json';
-
+    
     const TRANSLATIONS_FOLDER_IN_APP = 'Translations';
-
-    private $exface = null;
-
-    private $uid = null;
-
-    private $vendor = null;
-
-    private $alias = null;
-
-    private $alias_with_namespace = '';
-
-    private $directory = '';
-
+    
     private $name_resolver = null;
-
+    
+    private $uid = null;
+    
+    private $vendor = null;
+    
+    private $directory = '';
+    
     private $config = null;
-
+    
     private $context_data_default_scope = null;
-
+    
     private $translator = null;
-
+    
     /**
      *
-     * @param \exface\Core\CommonLogic\Workbench $exface            
+     * @param NameResolverInterface $name_resolver
      * @deprecated use AppFactory instead!
      */
-    public function __construct(\exface\Core\CommonLogic\Workbench $exface)
+    public function __construct(NameResolverInterface $name_resolver)
     {
-        $this->exface = $exface;
-        // Create an alias from the class (e.g. "exface.core" from "exface\Core\Core\CoreApp")
-        $this->alias_with_namespace = str_replace(NameResolver::CLASS_NAMESPACE_SEPARATOR, NameResolver::NAMESPACE_SEPARATOR, substr(get_class($this), 0, strrpos(get_class($this), NameResolver::CLASS_NAMESPACE_SEPARATOR)));
+        $this->name_resolver = $name_resolver;
         $this->init();
     }
-
+    
     /**
      * This ist the startup-method for apps.
      * Anything put here will be run right after the app is instantiated. By default it does not do anything!
@@ -67,7 +63,7 @@ abstract class AbstractApp implements AppInterface
      */
     protected function init()
     {}
-
+    
     /**
      *
      * {@inheritdoc}
@@ -85,7 +81,7 @@ abstract class AbstractApp implements AppInterface
         }
         return $action;
     }
-
+    
     /**
      *
      * {@inheritdoc}
@@ -94,9 +90,9 @@ abstract class AbstractApp implements AppInterface
      */
     public function getAliasWithNamespace()
     {
-        return $this->alias_with_namespace;
+        return $this->getNameResolver()->getAliasWithNamespace();
     }
-
+    
     /**
      *
      * {@inheritdoc}
@@ -105,12 +101,9 @@ abstract class AbstractApp implements AppInterface
      */
     public function getAlias()
     {
-        if (is_null($this->alias)) {
-            $this->alias = str_replace($this->getVendor() . DIRECTORY_SEPARATOR, '', $this->getAliasWithNamespace());
-        }
-        return $this->alias;
+        return $this->getNameResolver()->getAlias();
     }
-
+    
     /**
      *
      * {@inheritdoc}
@@ -124,7 +117,7 @@ abstract class AbstractApp implements AppInterface
         }
         return $this->directory;
     }
-
+    
     /**
      *
      * {@inheritdoc}
@@ -135,17 +128,17 @@ abstract class AbstractApp implements AppInterface
     {
         return $this->getWorkbench()->filemanager()->getPathToVendorFolder() . DIRECTORY_SEPARATOR . $this->getDirectory();
     }
-
+    
     public function getNamespace()
     {
         return substr($this->getAliasWithNamespace(), 0, mb_strripos($this->getAliasWithNamespace(), NameResolver::NAMESPACE_SEPARATOR));
     }
-
+    
     public function getClassNamespace()
     {
         return str_replace(NameResolver::NAMESPACE_SEPARATOR, '\\', $this->getAliasWithNamespace());
     }
-
+    
     /**
      * Return the applications vendor (first part of the namespace)
      *
@@ -158,7 +151,7 @@ abstract class AbstractApp implements AppInterface
         }
         return $this->vendor;
     }
-
+    
     /**
      *
      * {@inheritdoc}
@@ -167,9 +160,9 @@ abstract class AbstractApp implements AppInterface
      */
     public function getWorkbench()
     {
-        return $this->exface;
+        return $this->getNameResolver()->getWorkbench();
     }
-
+    
     /**
      *
      * {@inheritdoc}
@@ -186,16 +179,16 @@ abstract class AbstractApp implements AppInterface
     
     /**
      * Replaces the current configuration for this app by the given one.
-     * 
+     *
      * @param ConfigurationInterface $configuration
-     * @return \exface\Core\CommonLogic\AbstractApp
+     * @return AppInterface
      */
     protected function setConfig(ConfigurationInterface $configuration)
     {
         $this->config = $configuration;
         return $this;
     }
-
+    
     /**
      * Loads configuration files from the app folder and the installation config folder and merges the respecitve config options
      * into the given configuration object.
@@ -203,7 +196,7 @@ abstract class AbstractApp implements AppInterface
      * This method is handy if an app needs to create some custom base config object and load the config files on that. In this case,
      * simply overwrite the getConfig() method to pass a non-empty $base_config.
      *
-     * @param ConfigurationInterface $base_config            
+     * @param ConfigurationInterface $base_config
      * @return \exface\Core\Interfaces\ConfigurationInterface
      */
     protected function loadConfigFiles(ConfigurationInterface $base_config = null)
@@ -226,14 +219,14 @@ abstract class AbstractApp implements AppInterface
         
         return $config;
     }
-
+    
     /**
      * Returns the file name for configurations of this app.
      * By default it is [vendor].[app_alias].[file_suffix].json.
      * The app will look for files with this name in all configuration folders. If your app needs a custom file name, overwrite this method.
      * Using different file suffixes allows the developer to have separate configuration files for app specific purposes.
      *
-     * @param string $file_suffix            
+     * @param string $file_suffix
      * @return string
      */
     public function getConfigFileName($config_name = null, $file_suffix = '.config')
@@ -248,7 +241,7 @@ abstract class AbstractApp implements AppInterface
         
         return $config_name . $file_suffix . static::CONFIG_FILE_EXTENSION;
     }
-
+    
     /**
      * Returns the absolute path to the config folder of this app.
      * Overwrite this if you want your app configs to be placed somewhere else.
@@ -259,7 +252,7 @@ abstract class AbstractApp implements AppInterface
     {
         return $this->getWorkbench()->filemanager()->getPathToVendorFolder() . DIRECTORY_SEPARATOR . $this->getDirectory() . DIRECTORY_SEPARATOR . static::CONFIG_FOLDER_IN_APP;
     }
-
+    
     /**
      *
      * {@inheritdoc}
@@ -269,25 +262,25 @@ abstract class AbstractApp implements AppInterface
     public function getUid()
     {
         if (is_null($this->uid)) {
-            $ds = DataSheetFactory::createFromObjectIdOrAlias($this->exface, 'exface.Core.APP');
+            $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.APP');
             $ds->addFilterFromString('ALIAS', $this->getAliasWithNamespace());
             $ds->dataRead();
             $this->uid = $ds->getUidColumn()->getCellValue(0);
         }
         return $this->uid;
     }
-
+    
     public function getNameResolver()
     {
         return $this->name_resolver;
     }
-
+    
     public function setNameResolver(NameResolver $value)
     {
         $this->name_resolver = $value;
         return $this;
     }
-
+    
     /**
      *
      * {@inheritdoc}
@@ -301,7 +294,7 @@ abstract class AbstractApp implements AppInterface
         }
         return $this->context_data_default_scope;
     }
-
+    
     /**
      *
      * {@inheritdoc}
@@ -313,7 +306,7 @@ abstract class AbstractApp implements AppInterface
         $this->context_data_default_scope = $scope_alias;
         return $this;
     }
-
+    
     /**
      *
      * {@inheritdoc}
@@ -327,7 +320,7 @@ abstract class AbstractApp implements AppInterface
         }
         return $this->getWorkbench()->context()->getScope($scope)->getContext('Data');
     }
-
+    
     /**
      *
      * {@inheritdoc}
@@ -338,7 +331,7 @@ abstract class AbstractApp implements AppInterface
     {
         return $this->getContextData($scope)->getVariableForApp($this, $variable_name);
     }
-
+    
     /**
      *
      * {@inheritdoc}
@@ -349,7 +342,7 @@ abstract class AbstractApp implements AppInterface
     {
         return $this->getContextData($scope)->setVariableForApp($this, $variable_name, $value);
     }
-
+    
     /**
      *
      * {@inheritdoc}
@@ -360,7 +353,7 @@ abstract class AbstractApp implements AppInterface
     {
         return $this->getContextData($scope)->unsetVariableForApp($this, $variable_name);
     }
-
+    
     public function getTranslator()
     {
         if (is_null($this->translator)) {
@@ -373,7 +366,7 @@ abstract class AbstractApp implements AppInterface
         }
         return $this->translator;
     }
-
+    
     protected function loadTranslationFiles(TranslationInterface $translator)
     {
         $locales = array_unique(array_merge(array(
@@ -398,12 +391,12 @@ abstract class AbstractApp implements AppInterface
         
         return $translator;
     }
-
+    
     protected function getTranslationsFolder()
     {
         return $this->getWorkbench()->filemanager()->getPathToVendorFolder() . DIRECTORY_SEPARATOR . $this->getDirectory() . DIRECTORY_SEPARATOR . static::TRANSLATIONS_FOLDER_IN_APP;
     }
-
+    
     /**
      *
      * {@inheritdoc}
@@ -420,7 +413,7 @@ abstract class AbstractApp implements AppInterface
         }
         return $app_installer;
     }
-
+    
     /**
      * By default a class is conscidered part of an app if it is in the namespace of the app.
      *

@@ -1,7 +1,6 @@
 <?php
 namespace exface\Core\Interfaces;
 
-use exface\Core\CommonLogic\Workbench;
 use exface\Core\Widgets\AbstractWidget;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Contexts\DataContext;
@@ -17,12 +16,6 @@ interface AppInterface extends ExfaceClassInterface, AliasInterface
     
     const CONFIG_SCOPE_USER = 'USER';
     
-    /**
-     * 
-     * @param Workbench $exface
-     */
-    public function __construct(Workbench $exface);
-
     /**
      * Returns an action object
      *

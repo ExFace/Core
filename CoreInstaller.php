@@ -14,10 +14,9 @@ class CoreInstaller extends AbstractAppInstaller
 {
 
     /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\CommonLogic\AbstractApp::install()
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\InstallerInterface::install()
      */
     public function install($source_absolute_path)
     {
