@@ -72,6 +72,12 @@ class ObjectBasketShowDialog extends ShowDialog
         $button->getAction()->setContextScope($this->getContextScope())->setContextAlias($this->getContextAlias());
         $dialog->addButton($button);
         
+        // Add info button
+        $info_button = $dialog->createButton();
+        $info_button->setActionAlias('exface.Core.ShowObjectDialog');
+        $info_button->setInputWidget($table);
+        $dialog->addButton($info_button);
+        
         // Add actions menu
         /* @var $menu \exface\Core\Widgets\MenuButton */
         $menu = $dialog->createButton(UxonObject::fromArray(['widget_type' => 'MenuButton']));
@@ -85,6 +91,11 @@ class ObjectBasketShowDialog extends ShowDialog
             $menu->addButton($button);
         }
         $dialog->addButton($menu);
+        
+        // Add actions menu to info dialog too
+        // FIXME change to $info_button->getAction()->getDialogWidget()->getToolbarMain()->setIncludeObjectBasketActions(true);
+        // because the input widget for the menu still is the table (see above)
+        $info_button->getAction()->getWidget()->addButton($menu);
         
         return $dialog;
     }
