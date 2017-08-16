@@ -95,7 +95,7 @@
             "UID": "0x32000000000000000000000000000000",
             "APP": "0x31000000000000000000000000000000",
             "DEFAULT_CONNECTION": "",
-            "DEFAULT_QUERY_BUILDER": "exface\/SqlDataConnector\/QueryBuilders\/MySQL.php",
+            "DEFAULT_QUERY_BUILDER": "exface\/Core\/QueryBuilders\/MySqlBuilder.php",
             "BASE_OBJECT": "0x32370000000000000000000000000000",
             "READONLY": "0",
             "LABEL": "ExFace DB",

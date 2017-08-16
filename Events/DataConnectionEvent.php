@@ -8,7 +8,7 @@ use exface\Core\Interfaces\DataSources\DataQueryInterface;
 /**
  * Data connection event names consist of the alias of the connector followed 
  * by "DataConnection" and the respective event type: e.g.
- * exface.sqlDataConnector.DataConnectors.MySQL.DataConnection.Query.Before, etc.
+ * exface.sqlDataConnector.DataConnectors.MySqlConnector.DataConnection.Query.Before, etc.
  *
  * @author Andrej Kabachnik
  *        

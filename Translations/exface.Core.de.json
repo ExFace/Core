@@ -102,6 +102,9 @@
     "GLOBAL.DEFAULT_DATE_FORMAT": "d.m.Y",
     "GLOBAL.DEFAULT_DATETIME_FORMAT": "d.m.Y H:i:s",
     
+    "INSTALLER.SQLSCHEMA.SUCCESS": "%counter% SQL-Schema-Update wurde installiert|%counter% SQL-Schema-Updates wurden installiert",
+    "INSTALLER.SQLSCHEMA.FAILED": "SQL-Schema-Update Nr. %first_failed_id% fehlerhaft: %error_text%|%counter% SQL-Schema-Updates wurden abgebrochen angefangen mit Update Nr. %first_failed_id%: %error_text%", 
+    
 	"WIDGET.SELECT_ALL": "Alle",
 	"WIDGET.SELECT_YES": "Ja",
 	"WIDGET.SELECT_NO": "Nein",

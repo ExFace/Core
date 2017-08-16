@@ -14,7 +14,7 @@ use exface\Core\Exceptions\Actions\ActionNotFoundError;
 use exface\Core\Interfaces\NameResolverInterface;
 use exface\Core\CommonLogic\NameResolver;
 use exface\Core\CommonLogic\Translation;
-use exface\Core\CommonLogic\AppInstallerContainer;
+use exface\Core\CommonLogic\AppInstallers\AppInstallerContainer;
 
 /**
  * This is the base implementation of the AppInterface aimed at providing an

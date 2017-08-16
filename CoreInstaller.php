@@ -1,7 +1,7 @@
 <?php
 namespace exface\Core;
 
-use exface\Core\CommonLogic\AbstractAppInstaller;
+use exface\Core\CommonLogic\AppInstallers\AbstractAppInstaller;
 
 /**
  *
