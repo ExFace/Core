@@ -39,12 +39,6 @@
 	   },
 	   {
            "alias": "exface.Core.FavoritesAdd"
-       },
-       {
-           "alias": "exface.Core.ExportXLSX"
-       },
-       {
-           "alias": "exface.Core.ExportCSV"
        }
 	]
 }
