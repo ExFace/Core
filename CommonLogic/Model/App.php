@@ -16,6 +16,18 @@ use exface\Core\CommonLogic\NameResolver;
 use exface\Core\CommonLogic\Translation;
 use exface\Core\CommonLogic\AppInstallerContainer;
 
+/**
+ * The app class provieds access to actions, configs, translations, etc. of
+ * an ExFace application.
+ * 
+ * In a sence, it is the junction point for the meta model, the code and all
+ * kinds of configuration. There is an instance of the app classe for every
+ * app in the meta model. This instance knows, where the app folder is, which
+ * hardcoded actions exist, etc.
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
 class App implements AppInterface
 {
     
