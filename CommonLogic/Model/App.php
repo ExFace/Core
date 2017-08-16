@@ -17,13 +17,12 @@ use exface\Core\CommonLogic\Translation;
 use exface\Core\CommonLogic\AppInstallerContainer;
 
 /**
- * The app class provieds access to actions, configs, translations, etc. of
- * an ExFace application.
+ * This is the base implementation of the AppInterface aimed at providing an
+ * app instance for apps defined in the meta model.
  * 
- * In a sence, it is the junction point for the meta model, the code and all
- * kinds of configuration. There is an instance of the app classe for every
- * app in the meta model. This instance knows, where the app folder is, which
- * hardcoded actions exist, etc.
+ * If an app requires extra features (i.e. custom installers), it should get
+ * it's own app class (appfolder\appaliasApp.php), which extends this class and
+ * overrides methods or introduces new ones.
  * 
  * @author Andrej Kabachnik
  *
