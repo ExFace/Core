@@ -7,7 +7,7 @@ use exface\Core\Exceptions\DataSources\DataConnectionCommitFailedError;
 use exface\Core\Exceptions\DataSources\DataConnectionRollbackFailedError;
 use exface\Core\CommonLogic\QueryBuilder\SqlDataQuery;
 use exface\Core\Exceptions\DataSources\DataQueryFailedError;
-use exface\Core\DataConnectors\Modelizers\OracleSqlModelizer;
+use exface\Core\CommonLogic\Modelizers\OracleSqlModelizer;
 
 /**
  * Datbase API object of OracleSQL

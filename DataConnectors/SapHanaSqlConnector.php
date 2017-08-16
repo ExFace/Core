@@ -1,7 +1,7 @@
 <?php
 namespace exface\Core\DataConnectors;
 
-use exface\Core\DataConnectors\Modelizers\SapHanaSqlModelizer;
+use exface\Core\CommonLogic\Modelizers\SapHanaSqlModelizer;
 
 /**
  * SQL connector for SAP HANA based on ODBC

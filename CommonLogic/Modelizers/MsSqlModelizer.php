@@ -1,5 +1,5 @@
 <?php
-namespace exface\Core\DataConnectors\Modelizers;
+namespace exface\Core\CommonLogic\Modelizers;
 
 use exface\Core\CommonLogic\Model\Object;
 

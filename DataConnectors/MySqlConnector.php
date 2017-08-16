@@ -8,7 +8,7 @@ use exface\Core\Exceptions\DataSources\DataConnectionCommitFailedError;
 use exface\Core\Exceptions\DataSources\DataConnectionRollbackFailedError;
 use exface\Core\CommonLogic\QueryBuilder\SqlDataQuery;
 use exface\Core\Exceptions\DataSources\DataQueryFailedError;
-use exface\Core\DataConnectors\Modelizers\MySqlModelizer;
+use exface\Core\CommonLogic\Modelizers\MySqlModelizer;
 
 /**
  * Data source connector for MySQL databases
