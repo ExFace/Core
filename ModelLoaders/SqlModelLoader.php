@@ -492,9 +492,8 @@ class SqlModelLoader implements ModelLoaderInterface
 
     public function getInstaller()
     {
-        $installer = new SqlSchemaInstaller(NameResolver::createFromString('exface.SqlDataConnector', NameResolver::OBJECT_TYPE_APP, $this->getDataConnection()->getWorkbench()));
+        $installer = new SqlSchemaInstaller(NameResolver::createFromString('exface.Core', NameResolver::OBJECT_TYPE_APP, $this->getDataConnection()->getWorkbench()));
         $installer->setDataConnection($this->getDataConnection());
-        $installer->setLastUpdateIdConfigOption('LAST_PERFORMED_MODEL_SOURCE_UPDATE_ID');
         return $installer;
     }
     

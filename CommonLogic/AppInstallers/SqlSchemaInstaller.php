@@ -278,12 +278,12 @@ class SqlSchemaInstaller extends AbstractAppInstaller
         }
         
         if ($installed_counter = count($updates_installed)) {
-            $result = $this->getSqlConnectorApp()->getTranslator()->translate('INSTALLER.SQLSCHEMA.SUCCESS', array(
+            $result = $this->getInstallerApp()->getTranslator()->translate('INSTALLER.SQLSCHEMA.SUCCESS', array(
                 '%counter%' => $installed_counter
             ), $installed_counter);
         }
         if ($failed_counter = count($updates_failed)) {
-            $result_failed = $this->getSqlConnectorApp()->getTranslator()->translate('INSTALLER.SQLSCHEMA.FAILED', array(
+            $result_failed = $this->getInstallerApp()->getTranslator()->translate('INSTALLER.SQLSCHEMA.FAILED', array(
                 '%counter%' => $failed_counter,
                 '%first_failed_id%' => reset($updates_failed),
                 '%error_text%' => $error_text
@@ -311,13 +311,9 @@ class SqlSchemaInstaller extends AbstractAppInstaller
         return $this;
     }
 
-    /**
-     *
-     * @return SqlDataConnectorApp
-     */
-    protected function getSqlConnectorApp()
+    protected function getInstallerApp()
     {
-        return $this->getWorkbench()->getApp('exface.SqlDataConnector');
+        return $this->getWorkbench()->getCoreApp();
     }
 
     /**
