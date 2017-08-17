@@ -1,5 +1,5 @@
 <?php
-namespace exface\Core\CommonLogic;
+namespace exface\Core\CommonLogic\DataQueries;
 
 use exface\Core\Interfaces\DataSources\DataQueryInterface;
 use exface\Core\Widgets\DebugMessage;

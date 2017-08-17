@@ -3,7 +3,7 @@ namespace exface\Core\DataConnectors;
 
 use exface\Core\CommonLogic\AbstractDataConnector;
 use exface\Core\Interfaces\DataSources\SqlDataConnectorInterface;
-use exface\Core\CommonLogic\QueryBuilder\SqlDataQuery;
+use exface\Core\CommonLogic\DataQueries\SqlDataQuery;
 use exface\Core\Interfaces\DataSources\DataQueryInterface;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Exceptions\NotImplementedError;

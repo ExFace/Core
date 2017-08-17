@@ -5,7 +5,7 @@ use exface\Core\CommonLogic\AbstractDataConnector;
 use exface\Core\Exceptions\DataSources\DataConnectionFailedError;
 use exface\Core\Exceptions\DataSources\DataConnectionCommitFailedError;
 use exface\Core\Exceptions\DataSources\DataConnectionRollbackFailedError;
-use exface\Core\CommonLogic\QueryBuilder\SqlDataQuery;
+use exface\Core\CommonLogic\DataQueries\SqlDataQuery;
 use exface\Core\Exceptions\DataSources\DataQueryFailedError;
 
 /**

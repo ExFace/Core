@@ -1431,6 +1431,19 @@
             "ERROR_TEXT": "Invalid widget alignment value",
             "DESCRIPTION": "The \"align\" property of an alignable widget takes the following values:\n\n- left\n- right\n- center\n- default (the default alignment for the widget type in the current template)\n- opposite (the inverse to the default alignment: e.g. \"right\" if the default is \"left\")",
             "LABEL": "exface.Core.6W5WLSA"
+        },
+         {
+            "CREATED_ON": "2017-05-10 14:35:36",
+            "MODIFIED_ON": "2017-05-10 14:35:36",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e7358dc7c794afba83e4b318306b9a",
+            "FULL_ERROR_CODE": "exface.FileSystemConnector.6V5FK1J",
+            "APP": "0x31000000000000000000000000000000",
+            "ERROR_CODE": "6V5FK1J",
+            "ERROR_TEXT": "Missing values for placeholders in the file path",
+            "DESCRIPTION": "This error indicates, that a required file path contains one or more placeholders, that could not be resolved from the current set of filters.",
+            "LABEL": "exface.FileSystemConnector.6V5FK1J"
         }
     ],
     "totals_rows": [],

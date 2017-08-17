@@ -21,6 +21,7 @@
         "symfony/config": "^2.8 || ^3.1",
         "symfony/debug": "^3.3",
         "symfony/var-dumper": "^3.2",
+        "symfony/finder": "~3.1.7",
         "symfony/StopWatch": "^3.1.2",
         "jmikola/Wildcard-Event-Dispatcher": "^1.1",
         "webmozart/path-util": "^2.3",
@@ -29,7 +30,9 @@
         "psr/http-message": "^1.0.1",
         "guzzlehttp/psr7": "^1.4.2",
         "mk-j/PHP_XLSXWriter": "^0.32",
-        "league/csv": "^8.0"
+        "wingu/reflection": "~1.0.5",
+        "league/csv": "^8.0",
+        "jdorn/sql-formatter": "~1.2.17"
     },
     "extra": {
         "app": {
