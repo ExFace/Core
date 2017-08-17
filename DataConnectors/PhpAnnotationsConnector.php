@@ -1,5 +1,5 @@
 <?php
-namespace exface\FileSystemConnector\DataConnectors;
+namespace exface\Core\DataConnectors;
 
 use exface\Core\CommonLogic\DataQueries\PhpAnnotationsDataQuery;
 use Wingu\OctopusCore\Reflection\ReflectionClass;

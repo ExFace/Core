@@ -1,5 +1,5 @@
 <?php
-namespace exface\FileSystemConnector\QueryBuilders;
+namespace exface\Core\QueryBuilders;
 
 use exface\Core\CommonLogic\DataQueries\FileFinderDataQuery;
 use Symfony\Component\Finder\SplFileInfo;

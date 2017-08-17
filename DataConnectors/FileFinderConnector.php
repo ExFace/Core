@@ -1,5 +1,5 @@
 <?php
-namespace exface\FileSystemConnector\DataConnectors;
+namespace exface\Core\DataConnectors;
 
 use exface\Core\CommonLogic\Filemanager;
 use exface\Core\CommonLogic\DataQueries\FileFinderDataQuery;
@@ -102,7 +102,7 @@ class FileFinderConnector extends TransparentConnector
      * @uxon-type string
      *
      * @param unknown $value            
-     * @return \exface\FileSystemConnector\DataConnectors\FileFinderConnector
+     * @return \exface\Core\DataConnectors\FileFinderConnector
      */
     public function setBasePath($value)
     {
@@ -131,7 +131,7 @@ class FileFinderConnector extends TransparentConnector
      * @uxon-type boolean
      *
      * @param boolean $value            
-     * @return \exface\FileSystemConnector\DataConnectors\FileFinderConnector
+     * @return \exface\Core\DataConnectors\FileFinderConnector
      */
     public function setUseVendorFolderAsBase($value)
     {

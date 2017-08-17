@@ -1,5 +1,5 @@
 <?php
-namespace exface\FileSystemConnector\DataConnectors;
+namespace exface\Core\DataConnectors;
 
 use exface\Core\CommonLogic\DataQueries\FileContentsDataQuery;
 use exface\Core\DataConnectors\TransparentConnector;
@@ -77,7 +77,7 @@ class FileContentsConnector extends TransparentConnector
      * @uxon-type string
      *
      * @param string $value            
-     * @return \exface\FileSystemConnector\DataConnectors\FileContentsConnector
+     * @return \exface\Core\DataConnectors\FileContentsConnector
      */
     public function setBasePath($value)
     {

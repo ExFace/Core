@@ -296,6 +296,23 @@
             "DATA_ADDRESS": "exf_object_behaviors"
         },
         {
+            "CREATED_ON": "2016-11-21 10:54:56",
+            "MODIFIED_ON": "2017-05-04 11:22:11",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e6afd8efb4743f8943e4b318306b9a",
+            "DATA_SOURCE": "0x11e6b09e2002641f8943e4b318306b9a",
+            "long_description": "",
+            "APP": "0x31000000000000000000000000000000",
+            "SHORT_DESCRIPTION": "",
+            "PARENT_OBJECT": "",
+            "DATA_ADDRESS_PROPS": "{}",
+            "DEFAULT_EDITOR_UXON": "{}",
+            "LABEL": "File",
+            "ALIAS": "FILE",
+            "DATA_ADDRESS": ""
+        },
+        {
             "CREATED_ON": "2016-11-21 11:14:15",
             "MODIFIED_ON": "2017-06-05 06:05:46",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
@@ -379,6 +396,23 @@
             "LABEL": "Action",
             "ALIAS": "ACTION",
             "DATA_ADDRESS": "*\/*\/Actions\/*.php"
+        },
+        {
+            "CREATED_ON": "2016-12-05 11:58:55",
+            "MODIFIED_ON": "2016-12-09 12:18:25",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e6bae2326c99b59ee0e4b318306b9a",
+            "DATA_SOURCE": "0x11e6bbc75f27b3a29ee0e4b318306b9a",
+            "long_description": "",
+            "APP": "0x31000000000000000000000000000000",
+            "SHORT_DESCRIPTION": "",
+            "PARENT_OBJECT": "",
+            "DATA_ADDRESS_PROPS": "{\"annotation_level\":\"class\"}",
+            "DEFAULT_EDITOR_UXON": "{}",
+            "LABEL": "PHP annotation base object",
+            "ALIAS": "PHP_ANNOTATION",
+            "DATA_ADDRESS": "[#FILE#]"
         },
         {
             "CREATED_ON": "2016-12-07 11:50:05",
@@ -583,40 +617,6 @@
             "LABEL": "Trace Log",
             "ALIAS": "TRACE_LOG",
             "DATA_ADDRESS": "logs\/traces\/*.csv"
-        },
-        {
-            "CREATED_ON": "2016-11-21 10:54:56",
-            "MODIFIED_ON": "2017-05-04 11:22:11",
-            "CREATED_BY_USER": "0x31000000000000000000000000000000",
-            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
-            "UID": "0x11e6afd8efb4743f8943e4b318306b9a",
-            "DATA_SOURCE": "0x11e6b09e2002641f8943e4b318306b9a",
-            "long_description": "",
-            "APP": "0x31000000000000000000000000000000",
-            "SHORT_DESCRIPTION": "",
-            "PARENT_OBJECT": "",
-            "DATA_ADDRESS_PROPS": "{}",
-            "DEFAULT_EDITOR_UXON": "{}",
-            "LABEL": "File",
-            "ALIAS": "FILE",
-            "DATA_ADDRESS": ""
-        },
-        {
-            "CREATED_ON": "2016-12-05 11:58:55",
-            "MODIFIED_ON": "2016-12-09 12:18:25",
-            "CREATED_BY_USER": "0x31000000000000000000000000000000",
-            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
-            "UID": "0x11e6bae2326c99b59ee0e4b318306b9a",
-            "DATA_SOURCE": "0x11e6bbc75f27b3a29ee0e4b318306b9a",
-            "long_description": "",
-            "APP": "0x31000000000000000000000000000000",
-            "SHORT_DESCRIPTION": "",
-            "PARENT_OBJECT": "",
-            "DATA_ADDRESS_PROPS": "{\"annotation_level\":\"class\"}",
-            "DEFAULT_EDITOR_UXON": "{}",
-            "LABEL": "PHP annotation base object",
-            "ALIAS": "PHP_ANNOTATION",
-            "DATA_ADDRESS": "[#FILE#]"
         }
     ],
     "totals_rows": [],

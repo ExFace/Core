@@ -9,10 +9,10 @@ use exface\Core\Factories\AbstractNameResolverFactory;
  * The name resolver normalizes different forms of references to PHP classes within ExFace and resolves the corresponding class name.
  *
  * There are three types of references, the name resolver can convert to class names:
- * - The dot-notation - e.g. exface.FileSystemConnector.FileFinderConnector (case insensitive!)
- * - File path relative to the vendor folder - e.g. exface\FileSystemConnector\DataConnectors\FileFinderConnector.php (case sensitive)
- * - Qualified PHP class name (with namespace) - e.g. \exface\FileSystemConnector\DataConnectors\FileFinderConnector (case sensitive)
- * All the above examples will be resolved to \exface\FileSystemConnector\DataConnectors\FileFinderConnector
+ * - The dot-notation - e.g. exface.Core.FileFinderConnector (case insensitive!)
+ * - File path relative to the vendor folder - e.g. exface\Core\DataConnectors\FileFinderConnector.php (case sensitive)
+ * - Qualified PHP class name (with namespace) - e.g. \exface\Core\DataConnectors\FileFinderConnector (case sensitive)
+ * All the above examples will be resolved to \exface\Core\DataConnectors\FileFinderConnector
  *
  * The name resolver must know, what type of object is to be resolved: a query builder, a data connector, an app, etc. This allows
  * a nice and short dot-notation, which is used whenever the reference needs to be entered by a user. Programmatic references, on
@@ -61,7 +61,7 @@ interface NameResolverInterface extends ExfaceClassInterface
 
     /**
      * Returns the alias without the namespace (e.g.
-     * FileFinderConnectcor for exface.FileSystemConnector.FileFinderConnector)
+     * FileFinderConnectcor for exface.Core.FileFinderConnector)
      *
      * @return string
      */
@@ -69,7 +69,7 @@ interface NameResolverInterface extends ExfaceClassInterface
 
     /**
      * Returns the namespace (e.g.
-     * exface.FileSystemConnector for exface.FileSystemConnector.FileFinderConnector)
+     * exface.Core for exface.Core.FileFinderConnector)
      *
      * @return string
      */
@@ -77,7 +77,7 @@ interface NameResolverInterface extends ExfaceClassInterface
 
     /**
      * Returns the qualified alias (including namespace) in the default dot-notation (e.g.
-     * exface.FileSystemConnector.FileFinderConnector)
+     * exface.Core.FileFinderConnector)
      *
      * @return string
      */
@@ -85,7 +85,7 @@ interface NameResolverInterface extends ExfaceClassInterface
 
     /**
      * Returns the vendor name (e.g.
-     * exface for exface.FileSystemConnector.FileFinderConnector)
+     * exface for exface.Core.FileFinderConnector)
      *
      * @return string
      */
@@ -93,7 +93,7 @@ interface NameResolverInterface extends ExfaceClassInterface
 
     /**
      * Returns the resolved class name in PSR-1 notation (e.g.
-     * \exface\FileSystemConnector\DataConnectors\FileFinderConnector for exface.FileSystemConnector.FileFinderConnector)
+     * \exface\Core\DataConnectors\FileFinderConnector for exface.Core.FileFinderConnector)
      *
      * @return string
      */
@@ -101,7 +101,7 @@ interface NameResolverInterface extends ExfaceClassInterface
 
     /**
      * Returns the PHP namespace of the resolved class (e.g.
-     * \exface\FileSystemConnector\DataConnectors for exface.FileSystemConnector.FileFinderConnector)
+     * \exface\Core\DataConnectors for exface.Core.FileFinderConnector)
      *
      * @return string
      */
@@ -109,7 +109,7 @@ interface NameResolverInterface extends ExfaceClassInterface
 
     /**
      * Returns the path to the resolved class relative to the vendor folder (e.g.
-     * \exface\FileSystemConnector\DataConnectors for exface.FileSystemConnector.FileFinderConnector)
+     * \exface\Core\DataConnectors for exface.Core.FileFinderConnector)
      *
      * @return string
      */
