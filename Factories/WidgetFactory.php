@@ -4,9 +4,9 @@ namespace exface\Core\Factories;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Exceptions\UxonParserError;
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\Interfaces\UiPageInterface;
+use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Factories\WidgetLinkFactory;
-use exface\Core\CommonLogic\UiPage;
+use exface\Core\CommonLogic\Model\UiPage;
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 

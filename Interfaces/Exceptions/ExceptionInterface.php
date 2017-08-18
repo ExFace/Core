@@ -2,7 +2,7 @@
 namespace exface\Core\Interfaces\Exceptions;
 
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
-use exface\Core\Interfaces\UiPageInterface;
+use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Widgets\ErrorMessage;
 use exface\Core\Interfaces\iCanGenerateDebugWidgets;
 

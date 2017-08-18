@@ -10,9 +10,6 @@ use exface\Core\Exceptions\Contexts\ContextRuntimeError;
 use exface\Core\CommonLogic\Contexts\AbstractContext;
 use exface\Core\Widgets\Container;
 use exface\Core\Factories\WidgetFactory;
-use exface\Core\Factories\UiPageFactory;
-use exface\Core\CommonLogic\UiPage;
-use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\CommonLogic\Constants\Icons;
 
 /**

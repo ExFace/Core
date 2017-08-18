@@ -1,10 +1,25 @@
 <?php
-namespace exface\Core\Interfaces;
+namespace exface\Core\Interfaces\Model;
 
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Widgets\ContextBar;
 use exface\Core\Exceptions\Widgets\WidgetNotFoundError;
+use exface\Core\Interfaces\ExfaceClassInterface;
+use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\Interfaces\UiManagerInterface;
 
+/**
+ * A page represents on screen of the UI and is basically the model for a web page in most cases.
+ * 
+ * Pages can contain any number of widgets. Although multiple widget trees 
+ * (multiple root containers) are supported, one of them must be set as the
+ * main root widget. Additionally there are certain widgets added to every
+ * page automatically like the ContextBar. These can never be used as root
+ * widgets.
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
 interface UiPageInterface extends ExfaceClassInterface
 {
 
@@ -46,7 +61,7 @@ interface UiPageInterface extends ExfaceClassInterface
     /**
      *
      * @param string $value            
-     * @return \exface\Core\CommonLogic\UiPage
+     * @return \exface\Core\CommonLogic\Model\UiPage
      */
     public function setId($value);
 
@@ -58,7 +73,7 @@ interface UiPageInterface extends ExfaceClassInterface
      *     
      * @param string $widget_id            
      * @param boolean $remove_children_too            
-     * @return \exface\Core\CommonLogic\UiPage
+     * @return \exface\Core\CommonLogic\Model\UiPage
      */
     public function removeWidgetById($widget_id);
 
