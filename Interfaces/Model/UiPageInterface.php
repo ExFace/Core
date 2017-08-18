@@ -7,6 +7,10 @@ use exface\Core\Exceptions\Widgets\WidgetNotFoundError;
 use exface\Core\Interfaces\ExfaceClassInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\UiManagerInterface;
+use exface\Core\Interfaces\AliasInterface;
+use exface\Core\Interfaces\iCanBeConvertedToUxon;
+use exface\Core\Interfaces\AppInterface;
+use exface\Core\Exceptions\RuntimeException;
 
 /**
  * A page represents on screen of the UI and is basically the model for a web page in most cases.
@@ -20,7 +24,7 @@ use exface\Core\Interfaces\UiManagerInterface;
  * @author Andrej Kabachnik
  *
  */
-interface UiPageInterface extends ExfaceClassInterface
+interface UiPageInterface extends ExfaceClassInterface, AliasInterface, iCanBeConvertedToUxon
 {
 
     /**
@@ -120,6 +124,117 @@ interface UiPageInterface extends ExfaceClassInterface
      * @return ContextBar
      */
     public function getContextBar();
+    
+    /**
+     * Returns the app, this page belongs to.
+     * 
+     * @throws RuntimeException if the page is not part of any app
+     * 
+     * @return AppInterface
+     */
+    public function getApp();
+    
+    /**
+     * Returns FALSE if the page should not be updated automatically when its
+     * app is updated and TRUE otherwise (default).
+     */
+    public function isUpdateable();
+    
+    /**
+     * If FALSE is passed, the page will not be updated with its app anymore.
+     * 
+     * @param boolean $true_or_false
+     * @return UiPageInterface
+     */
+    public function setUpdateable($true_or_false);
+    
+    /**
+     * Returns the alias of the parent page or NULL if this page has no alias.
+     * 
+     * @return string|null
+     */
+    public function getParentPageAlias();
+    
+    /**
+     * 
+     * 
+     * @param string $alias_with_namespace
+     * @return UiPageInterface
+     */
+    public function setParentPageAlias($alias_with_namespace);
+    
+    /**
+     * Returns the parent ui page or NULL if this page has no parent
+     * 
+     * @return UiPageInterface|null
+     */
+    public function getParentPage();
+    
+    /**
+     * Sets the given page as parent for the current one.
+     * 
+     * @param UiPageInterface $page
+     * 
+     * @return UiPageInterface
+     */
+    public function setParentPage(UiPageInterface $page);
+    
+    /**
+     * Returns the unique id of the page.
+     * 
+     * This id is unique across all apps!
+     * 
+     * @return string
+     */
+    public function getId();
+    
+    /**
+     * Overwrites the unique id of the page
+     * 
+     * @param string $uid
+     * @return \exface\Core\CommonLogic\Model\UiPage
+     */
+    public function setId($uid);
+    
+    /**
+     * Returns the name of the page.
+     * 
+     * The name is what most templates will show as header and menu title.
+     * 
+     * @return string
+     */
+    public function getName();
+    
+    /**
+     * Overwrites the name of the page.
+     * 
+     * @param string $string
+     * 
+     * @return UiPageInterface
+     */
+    public function setName($string);
+    
+    /**
+     * Returns a short description of the page.
+     * 
+     * The short description will be used as menu hint or intro-text by most
+     * templates.
+     * 
+     * @return string
+     */
+    public function getShortDescription();
+    
+    /**
+     * Overwrites the short description of the page.
+     * 
+     * The short description will be used as menu hint or intro-text by most
+     * templates.
+     * 
+     * @param string $string
+     * 
+     * @return UiPageInterface
+     */
+    public function setShortDescription($string);
 }
 
 ?>

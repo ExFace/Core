@@ -389,6 +389,135 @@ class UiPage implements UiPageInterface
         }
         return $this->context_bar;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::setName()
+     */
+    public function setName($string)
+    {}
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::setShortDescription()
+     */
+    public function setShortDescription($string)
+    {}
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::getName()
+     */
+    public function getName()
+    {}
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::setParentPageAlias()
+     */
+    public function setParentPageAlias($alias_with_namespace)
+    {}
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::exportUxonObject()
+     */
+    public function exportUxonObject()
+    {}
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::setParentPage()
+     */
+    public function setParentPage(UiPageInterface $page)
+    {}
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::getParentPageAlias()
+     */
+    public function getParentPageAlias()
+    {}
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::isUpdateable()
+     */
+    public function isUpdateable()
+    {}
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::setUpdateable()
+     */
+    public function setUpdateable($true_or_false)
+    {}
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::getApp()
+     */
+    public function getApp()
+    {}
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::getParentPage()
+     */
+    public function getParentPage()
+    {}
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::importUxonObject()
+     */
+    public function importUxonObject(UxonObject $uxon)
+    {}
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\AliasInterface::getAliasWithNamespace()
+     */
+    public function getAliasWithNamespace()
+    {}
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::getShortDescription()
+     */
+    public function getShortDescription()
+    {}
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\AliasInterface::getNamespace()
+     */
+    public function getNamespace()
+    {}
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\AliasInterface::getAlias()
+     */
+    public function getAlias()
+    {}
+
 }
 
 ?>
