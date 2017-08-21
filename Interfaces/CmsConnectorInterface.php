@@ -1,11 +1,15 @@
 <?php
 namespace exface\Core\Interfaces;
 
+use exface\Core\Interfaces\Model\UiPageInterface;
+
 interface CmsConnectorInterface extends ExfaceClassInterface
 {
 
     /**
      * Returns the contents of the page specified by the given id
+     * 
+     * @deprecated use getPage()->getWidgetRoot() instead
      *
      * @param string $id            
      */
@@ -13,6 +17,8 @@ interface CmsConnectorInterface extends ExfaceClassInterface
 
     /**
      * Returns the id of the current page in the CMS
+     * 
+     * @deprecated use getCmsPageId(UiPageInterface $page) instead
      *
      * @return string
      */
@@ -21,6 +27,8 @@ interface CmsConnectorInterface extends ExfaceClassInterface
     /**
      * Returns the title of the CMS page with the given id.
      * If no id specified, the title of the current CMS page is returned.
+     * 
+     * @deprecated use getPage()->getName() instead
      *
      * @param unknown $resource_id            
      */
@@ -136,5 +144,44 @@ interface CmsConnectorInterface extends ExfaceClassInterface
      * @return string
      */
     public function getSiteUrl();
+    
+    /**
+     * 
+     * @param string $page_id_or_alias
+     * @return UiPageInterface
+     */
+    public function loadPage($page_id_or_alias);
+    
+    /**
+     *
+     * @param string $alias_with_namespace
+     * @return UiPageInterface
+     */
+    public function loadPageByAlias($alias_with_namespace);
+    
+    /**
+     * 
+     * @param string $uid_or_cms_page_id
+     * @return UiPageInterface
+     */
+    public function loadPageById($uid_or_cms_page_id);
+    
+    /**
+     * Saves the given page to the CMS database.
+     * 
+     * @param UiPageInterface $page
+     * 
+     * @return CmsConnectorInterface
+     */
+    public function savePage(UiPageInterface $page);
+    
+    /**
+     * Returns the internal page id assigned to the given page by the CMS.
+     * 
+     * @param UiPageInterface $page
+     * 
+     * @return string
+     */
+    public function getCmsPageId(UiPageInterface $page);
 }
 ?>

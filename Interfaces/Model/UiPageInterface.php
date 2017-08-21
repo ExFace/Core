@@ -57,19 +57,6 @@ interface UiPageInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
     public function getWidget($widget_id, WidgetInterface $parent = null);
 
     /**
-     *
-     * @return string
-     */
-    public function getId();
-
-    /**
-     *
-     * @param string $value            
-     * @return \exface\Core\CommonLogic\Model\UiPage
-     */
-    public function setId($value);
-
-    /**
      * Removes the widget with the given id from this page.
      * This will not remove child widgets!
      *
@@ -235,6 +222,7 @@ interface UiPageInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
      * @return UiPageInterface
      */
     public function setShortDescription($string);
+    
 }
 
 ?>

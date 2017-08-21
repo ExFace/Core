@@ -233,8 +233,9 @@ class UiPage implements UiPageInterface
     }
 
     /**
-     *
-     * @return string
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::getId()
      */
     public function getId()
     {
@@ -242,9 +243,9 @@ class UiPage implements UiPageInterface
     }
 
     /**
-     *
-     * @param string $value            
-     * @return \exface\Core\CommonLogic\Model\UiPage
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::setId()
      */
     public function setId($value)
     {
