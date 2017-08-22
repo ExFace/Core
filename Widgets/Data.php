@@ -115,6 +115,11 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
     {
         return $this->getColumnGroupMain()->createColumnFromAttribute($attribute, $caption, $hidden);
     }
+    
+    public function createColumnFromUxon(UxonObject $uxon)
+    {
+        return $this->getColumnGroupMain()->createColumnFromUxon($uxon);
+    }
 
     /**
      * Returns the id of the column holding the UID of each row.
@@ -173,7 +178,7 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
         $data_sheet = parent::prepareDataSheetToRead($data_sheet);
         
         // Columns & Totals
-        if ($this->getMetaObjectId() == $data_sheet->getMetaObject()->getId()) {
+        if ($data_sheet->getMetaObject()->is($this->getMetaObject())) {
             foreach ($this->getColumns() as $col) {
                 // Only add columns, that actually have content. The other columns exist only in the widget
                 // TODO This check will get more complicated, once the content can be specified not only via attribute_alias
@@ -188,11 +193,20 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
                     $data_column->getTotals()->add($total);
                 }
             }
+            
+            if (! $data_sheet->hasUidColumn()){
+                $data_sheet->getColumns()->addFromAttribute($data_sheet->getMetaObject()->getUidAttribute());
+            }
         }
         
         // Aggregations
         foreach ($this->getAggregations() as $attr) {
             $data_sheet->getAggregators()->addFromString($attr);
+        }
+        
+        // Pagination
+        if ($this->getPaginatePageSize()){
+            $data_sheet->setRowsOnPage($this->getPaginatePageSize());
         }
         
         // Filters and sorters only if lazy loading is disabled!

@@ -6,6 +6,7 @@ use exface\Core\Interfaces\Widgets\iHaveColumns;
 use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Exceptions\Widgets\WidgetHasNoUidColumnError;
 use exface\Core\Exceptions\Model\MetaObjectHasNoUidAttributeError;
+use exface\Core\CommonLogic\UxonObject;
 
 /**
  * The DataColumnGroup is a group of columns in a data widget from one side and at the same time a full featured data widget on the other.
@@ -223,36 +224,47 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
     public function setColumns(array $columns)
     {
         foreach ($columns as $c) {
-            $caption = null;
             if ($c->attribute_group_alias) {
                 foreach ($this->getMetaObject()->getAttributeGroup($c->attribute_group_alias)->getAttributes() as $attr) {
                     $this->addColumn($this->createColumnFromAttribute($attr));
                 }
                 continue;
             }
-            // preset some column properties based on meta attributes
-            
-            // Set the caption to the attribute name or the relation name, if the attribute is the label of a related object.
-            // This preset caption will get overwritten by one specified in UXON once the UXON object is overloaded
-            if (! $c->caption && $this->getMetaObject()->hasAttribute($c->attribute_alias)) {
-                $attr = $this->getMetaObject()->getAttribute($c->attribute_alias);
-                if ($attr->isLabel() && $attr->getRelationPath()->toString()) {
-                    $caption = $this->getMetaObject()->getRelation($attr->getRelationPath()->toString())->getName();
-                } else {
-                    $caption = $attr->getName();
-                }
-            }
-            
-            // Create the column
-            $column_type = $c->widget_type ? $c->widget_type : 'DataColumn';
-            $column = $this->getPage()->createWidget($column_type, $this);
-            $column->setCaption($caption);
-            $column->importUxonObject($c);
-            
-            // Add the column to the widget
-            $this->addColumn($column);
+            $this->addColumn($this->createColumnFromUxon($c));
         }
         return $this;
+    }
+    
+    /**
+     * 
+     * 
+     * @param UxonObject $uxon
+     * @return DataColumn
+     */
+    public function createColumnFromUxon(UxonObject $uxon)
+    {
+        $caption = null;
+        
+        // preset some column properties based on meta attributes
+        
+        // Set the caption to the attribute name or the relation name, if the attribute is the label of a related object.
+        // This preset caption will get overwritten by one specified in UXON once the UXON object is overloaded
+        if (! $uxon->caption && $this->getMetaObject()->hasAttribute($uxon->attribute_alias)) {
+            $attr = $this->getMetaObject()->getAttribute($uxon->attribute_alias);
+            if ($attr->isLabel() && $attr->getRelationPath()->toString()) {
+                $caption = $this->getMetaObject()->getRelation($attr->getRelationPath()->toString())->getName();
+            } else {
+                $caption = $attr->getName();
+            }
+        }
+        
+        // Create the column
+        $column_type = $uxon->widget_type ? $uxon->widget_type : 'DataColumn';
+        $column = $this->getPage()->createWidget($column_type, $this);
+        $column->setCaption($caption);
+        $column->importUxonObject($uxon);
+        
+        return $column;
     }
 
     /**
