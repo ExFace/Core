@@ -604,7 +604,7 @@ abstract class AbstractAjaxTemplate extends AbstractTemplate
     public function getRequestFilters()
     {
         // Filters a passed as request values with a special prefix: fltr01_, fltr02_, etc.
-        if (count($this->request_filters_array) == 0) {
+        if (empty($this->request_filters_array)) {
             foreach ($this->getWorkbench()->getRequestParams() as $var => $val) {
                 if (strpos($var, 'fltr') === 0) {
                     $this->request_filters_array[urldecode(substr($var, 7))][] = urldecode($val);
