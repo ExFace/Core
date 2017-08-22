@@ -1251,6 +1251,20 @@ class DataSheet implements DataSheetInterface
     {
         return $this->getColumns()->get($this->getUidColumnName());
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::hasUidColumn()
+     */
+    public function hasUidColumn()
+    {
+        if (is_null($this->getUidColumn())){
+            return false;
+        }
+        
+        return true;
+    }
 
     public function getMetaObject()
     {

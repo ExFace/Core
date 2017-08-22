@@ -266,6 +266,13 @@ interface DataSheetInterface extends ExfaceClassInterface, iCanBeCopied, iCanBeC
      * @return \exface\Core\Interfaces\DataSheets\DataColumnInterface
      */
     public function getUidColumn();
+    
+    /**
+     * Returns TRUE if the sheet has a UID column and FALSE otherwise.
+     * 
+     * @return boolean
+     */
+    public function hasUidColumn();
 
     /**
      *
