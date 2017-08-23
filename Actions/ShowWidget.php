@@ -18,6 +18,7 @@ use exface\Core\Exceptions\Actions\ActionConfigurationError;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 use exface\Core\CommonLogic\Constants\Icons;
+use exface\Core\Interfaces\Actions\iReferenceWidget;
 
 /**
  * The ShowWidget action is the base for all actions, that render widgets.
@@ -25,7 +26,7 @@ use exface\Core\CommonLogic\Constants\Icons;
  * @author Andrej Kabachnik
  *        
  */
-class ShowWidget extends AbstractAction implements iShowWidget
+class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
 {
 
     private $widget = null;
@@ -271,6 +272,11 @@ class ShowWidget extends AbstractAction implements iShowWidget
         return $this;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\iReferenceWidget::getWidgetId()
+     */
     public function getWidgetId()
     {
         if ($this->getWidget()) {
@@ -281,14 +287,14 @@ class ShowWidget extends AbstractAction implements iShowWidget
     }
     
     /**
-     * Sets the id of the widget to be shown. If not set, the main widget of the
+     * Specifies the id of the widget to be shown. If not set, the main widget of the
      * page will be used.
      * 
      * @uxon-property widget_id
      * @uxon-type string
      * 
-     * @param string $value
-     * @return ShowWidget
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\iReferenceWidget::setWidgetId()
      */
     public function setWidgetId($value)
     {
@@ -377,7 +383,8 @@ class ShowWidget extends AbstractAction implements iShowWidget
     
     /**
      * 
-     * @return string
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\iReferenceWidget::getPageId()
      */
     public function getPageId()
     {
@@ -388,19 +395,49 @@ class ShowWidget extends AbstractAction implements iShowWidget
     }
     
     /**
-     * Which page to get the widget from. If only page_id is specified, the
-     * action will use the main root widget of that page.
+     * The if of the page to get the widget from. 
+     * 
+     * You can specify either the UID of the page (0x...) or the CMS-Id (visible
+     * in the CMS and mostly numeric). Alternatively you can also specify the 
+     * alias of the page via the page_alias property.
      * 
      * @uxon-property page_id
      * @uxon-type string
      * 
-     * @param unknown $value
-     * @return \exface\Core\Actions\ShowWidget
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\iReferenceWidget::setPageId()
      */
     public function setPageId($value)
     {
         $this->page_id = $value;
         return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\iReferenceWidget::getPageAlias()
+     */
+    public function getPageAlias()
+    {
+        // TODO #ui-page-installer
+    }
+    
+    /**
+     * Namespaced alias of the page to get the widget from.
+     *
+     * This is a more comfortable alternative to specifying the page_id as the
+     * alias is mostly directly visible in the URL of the page.
+     *
+     * @uxon-property page_alias
+     * @uxon-type string
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\iReferenceWidget::setPageAlias()
+     */
+    public function setPageAlias()
+    {
+        // TODO #ui-page-installer
     }
     
     /**

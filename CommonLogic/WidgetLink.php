@@ -323,5 +323,24 @@ class WidgetLink implements WidgetLinkInterface
         $this->widget_id_space = $value;
         return $this;
     }
+    
+    /**
+     * TODO #ui-page-installer
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\WidgetLinkInterface::getPageAlias()
+     */
+    public function getPageAlias()
+    {}
+
+    /**
+     * TODO #ui-page-installer
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\WidgetLinkInterface::setPageAlias()
+     */
+    public function setPageAlias($alias_with_namespace)
+    {}
+
 }
 ?>

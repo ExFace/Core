@@ -21,6 +21,11 @@ use exface\Core\Exceptions\RuntimeException;
  * page automatically like the ContextBar. These can never be used as root
  * widgets.
  * 
+ * Pages are abstract models. Their actual look is determined by the template, that
+ * renders the page. Templates - in turn - are managed by the CMS. Thus, depending
+ * on the template selection strategy of the CMS every page can be rendered as
+ * a mobile or desktop application or even as a REST-API.
+ * 
  * @author Andrej Kabachnik
  *
  */

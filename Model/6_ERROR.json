@@ -1444,6 +1444,19 @@
             "ERROR_TEXT": "Invalid widget alignment value",
             "DESCRIPTION": "The \"align\" property of an alignable widget takes the following values:\n\n- left\n- right\n- center\n- default (the default alignment for the widget type in the current template)\n- opposite (the inverse to the default alignment: e.g. \"right\" if the default is \"left\")",
             "LABEL": "exface.Core.6W5WLSA"
+        },
+        {
+            "CREATED_ON": "2017-08-23 09:28:58",
+            "MODIFIED_ON": "2017-08-23 09:25:40",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e787e57c67827cbb5fe4b318306b9a",
+            "FULL_ERROR_CODE": "exface.Core.6WNC22Z",
+            "APP": "0x31000000000000000000000000000000",
+            "ERROR_CODE": "6WNC22Z",
+            "ERROR_TEXT": "UI page not found",
+            "DESCRIPTION": "This error means, that a referenced page cannot be found.\n\nThis mostly happens due to misspelled page references in widget links or references to pages that were not installed or deleted on the current installation. \n\nIf this error happens when editing a page, make sure all pages, you specified widget links to, really exist in the CMS!",
+            "LABEL": "exface.Core.6WNC22Z"
         }
     ],
     "totals_rows": [],

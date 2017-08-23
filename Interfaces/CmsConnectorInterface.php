@@ -2,7 +2,18 @@
 namespace exface\Core\Interfaces;
 
 use exface\Core\Interfaces\Model\UiPageInterface;
+use exface\Core\Exceptions\UiPageNotFoundError;
 
+/**
+ * A CMS-connector provides a generic interface for ExFace to communicate with
+ * the CMS, that manages and displays web pages containing the widgets.
+ * 
+ * In particular, a CMS-connector provides methods to load and save UI pages,
+ * get information about the currently logged on user, etc.
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
 interface CmsConnectorInterface extends ExfaceClassInterface
 {
 
@@ -146,28 +157,68 @@ interface CmsConnectorInterface extends ExfaceClassInterface
     public function getSiteUrl();
     
     /**
+     * Returns the page matching the given identifier: UID, namespaced alias or
+     * CMS-ID.
+     * 
+     * Although there is extremely low probability, that identifiers of different 
+     * types take the same value, it is still possible. The search is performed
+     * in the follwing order: UID -> alias -> CMS-ID. Thus, if a value matches
+     * the alias of one page and the CMS-ID of another, the page with the matching
+     * alias will be returned by this method.
      * 
      * @param string $page_id_or_alias
+     * 
+     * @throws UiPageNotFoundError if no matching page can be found
+     * 
      * @return UiPageInterface
      */
     public function loadPage($page_id_or_alias);
     
     /**
-     *
+     * Returns the page matching the given alias (case insensitive!)
+     * 
      * @param string $alias_with_namespace
+     * 
+     * @throws UiPageNotFoundError if no matching page can be found
+     * 
      * @return UiPageInterface
      */
     public function loadPageByAlias($alias_with_namespace);
     
     /**
+     * Returns the page matching the given UID (case insensitive!)
      * 
-     * @param string $uid_or_cms_page_id
+     * @param string $uid
+     * 
+     * @throws UiPageNotFoundError if no matching page can be found
+     * 
      * @return UiPageInterface
      */
-    public function loadPageById($uid_or_cms_page_id);
+    public function loadPageById($uid);
     
     /**
-     * Saves the given page to the CMS database.
+     * Returns the page matching the given CMS page id (case sensitive!)
+     * 
+     * @param string $cms_page_id
+     *
+     * @throws UiPageNotFoundError if no matching page can be found
+     *
+     * @return UiPageInterface
+     */
+    public function loadPageByCmsId($cms_page_id);
+    
+    /**
+     * Returns the internal page id assigned to the given page by the CMS.
+     *
+     * @param UiPageInterface $page
+     *
+     * @return string
+     */
+    public function getCmsPageId(UiPageInterface $page);
+    
+    /**
+     * Saves the given page to the CMS database by creating a new one or updating
+     * an existing page if the UID already exists.
      * 
      * @param UiPageInterface $page
      * 
@@ -176,12 +227,32 @@ interface CmsConnectorInterface extends ExfaceClassInterface
     public function savePage(UiPageInterface $page);
     
     /**
-     * Returns the internal page id assigned to the given page by the CMS.
-     * 
+     * Creates a new page in the CMS for the given page model
+     *
+     * @param UiPageInterface $page
+     *
+     * @return CmsConnectorInterface
+     */
+    public function createPage(UiPageInterface $page);
+    
+    /**
+     * Updates the given page in the CMS.
+     *
      * @param UiPageInterface $page
      * 
-     * @return string
+     * @throws UiPageNotFoundError if no page with a matching UID is found in the CMS
+     *
+     * @return CmsConnectorInterface
      */
-    public function getCmsPageId(UiPageInterface $page);
+    public function updatePage(UiPageInterface $page);
+    
+    /**
+     * Saves the given page to the CMS database.
+     *
+     * @param UiPageInterface $page
+     *
+     * @return CmsConnectorInterface
+     */
+    public function deletePage(UiPageInterface $page);
 }
 ?>

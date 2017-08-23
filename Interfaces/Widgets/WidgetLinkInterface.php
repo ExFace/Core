@@ -6,6 +6,7 @@ use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Exceptions\RuntimeException;
 
 /**
  *
@@ -23,23 +24,54 @@ interface WidgetLinkInterface extends ExfaceClassInterface, iCanBeConvertedToUxo
     public function parseLinkString($string);
 
     /**
-     *
+     * Returns page id specified with setPageId() or the page_id UXON property
+     * respectively or the UID of the target-page, if no id was specified explicitly.
+     * 
      * @return string
      */
     public function getPageId();
+    
+    /**
+     * Returns the qualified alias of the page, the link points to.
+     * 
+     * @return string
+     */
+    public function getPageAlias();
 
     /**
+     * Returns the target-page of the link.
      *
      * @return UiPageInterface
      */
     public function getPage();
 
     /**
+     * Specifies the target-page for the link via page UID or CMS-id.
+     * 
+     * Widget links accept the internal UIDs of pages as well as CMS-page ids
+     * here because the users do not really know the difference and will attempt
+     * to spceify the id, they see first. Since most CMS show their internal
+     * ids, that typically are not UUIDs, we just allow both ids here. Note,
+     * that the method getPageId() will allways return the UID thogh!
      *
      * @param string $value            
+     * 
+     * @throws RuntimeException if a page alias is defined too and does not match the id
+     * 
      * @return WidgetLinkInterface
      */
     public function setPageId($value);
+    
+    /**
+     * Specifies the target-page for the link via qualified page alias.
+     * 
+     * @param string $alias_with_namespace
+     * 
+     * @throws RuntimeException if a page id is defined too and does not match the alias
+     * 
+     * @return WidgetLinkInterface
+     */
+    public function setPageAlias($alias_with_namespace);
 
     /**
      * Retruns the id of the linked widget within the linked page.
