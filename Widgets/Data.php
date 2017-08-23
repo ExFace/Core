@@ -194,7 +194,7 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
                 }
             }
             
-            if (! $data_sheet->hasUidColumn()){
+            if (! $data_sheet->hasUidColumn() && $data_sheet->getMetaObject()->hasUidAttribute()){
                 $data_sheet->getColumns()->addFromAttribute($data_sheet->getMetaObject()->getUidAttribute());
             }
         }
