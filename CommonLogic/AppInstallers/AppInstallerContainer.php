@@ -5,7 +5,6 @@ use exface\Core\Interfaces\AppInstallerInterface;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Interfaces\InstallerInterface;
 use exface\Core\Interfaces\InstallerContainerInterface;
-use exface\Core\CommonLogic\NameResolver;
 
 /**
  *
