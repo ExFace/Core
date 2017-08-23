@@ -534,6 +534,27 @@ class UiPage implements UiPageInterface
      */
     public function getAlias()
     {}
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::setReplacesPageAlias()
+     */
+    public function setReplacesPageAlias($alias_with_namespace)
+    {
+        // TODO #ui-page-installer
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::getReplacesPageAlias()
+     */
+    public function getReplacesPageAlias()
+    {    
+        // TODO #ui-page-installer
+    }
+
 
 }
 

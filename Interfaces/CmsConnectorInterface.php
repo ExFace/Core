@@ -3,6 +3,7 @@ namespace exface\Core\Interfaces;
 
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Exceptions\UiPageNotFoundError;
+use exface\Core\Exceptions\RuntimeException;
 
 /**
  * A CMS-connector provides a generic interface for ExFace to communicate with
@@ -160,6 +161,9 @@ interface CmsConnectorInterface extends ExfaceClassInterface
      * Returns the page matching the given identifier: UID, namespaced alias or
      * CMS-ID.
      * 
+     * NOTE: If there is a page in the CMS, that replaces the matching page, the 
+     * replacement will be returned unless $ignore_replacements is TRUE. 
+     * 
      * Although there is extremely low probability, that identifiers of different 
      * types take the same value, it is still possible. The search is performed
      * in the follwing order: UID -> alias -> CMS-ID. Thus, if a value matches
@@ -167,45 +171,62 @@ interface CmsConnectorInterface extends ExfaceClassInterface
      * alias will be returned by this method.
      * 
      * @param string $page_id_or_alias
+     * @param boolean $ignore_replacements
      * 
      * @throws UiPageNotFoundError if no matching page can be found
+     * @throws RuntimeException if there are multiple pages replacing this page
      * 
      * @return UiPageInterface
      */
-    public function loadPage($page_id_or_alias);
+    public function loadPage($page_id_or_alias, $ignore_replacements = false);
     
     /**
      * Returns the page matching the given alias (case insensitive!)
      * 
+     * NOTE: If there is a page in the CMS, that replaces the matching page, the 
+     * replacement will be returned unless $ignore_replacements is TRUE. 
+     * 
      * @param string $alias_with_namespace
+     * @param boolean $ignore_replacements
      * 
      * @throws UiPageNotFoundError if no matching page can be found
+     * @throws RuntimeException if there are multiple pages replacing this page
      * 
      * @return UiPageInterface
      */
-    public function loadPageByAlias($alias_with_namespace);
+    public function loadPageByAlias($alias_with_namespace, $ignore_replacements = false);
     
     /**
      * Returns the page matching the given UID (case insensitive!)
      * 
+     * NOTE: If there is a page in the CMS, that replaces the matching page, the 
+     * replacement will be returned unless $ignore_replacements is TRUE. 
+     * 
      * @param string $uid
+     * @param boolean $ignore_replacements
      * 
      * @throws UiPageNotFoundError if no matching page can be found
+     * @throws RuntimeException if there are multiple pages replacing this page
      * 
      * @return UiPageInterface
      */
-    public function loadPageById($uid);
+    public function loadPageById($uid, $ignore_replacements = false);
     
     /**
      * Returns the page matching the given CMS page id (case sensitive!)
      * 
+     * NOTE: If there is a page in the CMS, that replaces the matching page, the 
+     * replacement will be returned unless $ignore_replacements is TRUE. 
+     * 
      * @param string $cms_page_id
-     *
+     * @param boolean $ignore_replacements
+     * 
      * @throws UiPageNotFoundError if no matching page can be found
-     *
+     * @throws RuntimeException if there are multiple pages replacing this page
+     * 
      * @return UiPageInterface
      */
-    public function loadPageByCmsId($cms_page_id);
+    public function loadPageByCmsId($cms_page_id, $ignore_replacements = false);
     
     /**
      * Returns the internal page id assigned to the given page by the CMS.
@@ -254,5 +275,13 @@ interface CmsConnectorInterface extends ExfaceClassInterface
      * @return CmsConnectorInterface
      */
     public function deletePage(UiPageInterface $page);
+    
+    /**
+     * Returns all pages assigned to the given app.
+     * 
+     * @param AppInterface $app
+     * @return UiPageInterface[]
+     */
+    public function getPagesForApp(AppInterface $app);
 }
 ?>

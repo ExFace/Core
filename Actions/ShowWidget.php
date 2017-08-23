@@ -427,7 +427,7 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
      * Namespaced alias of the page to get the widget from.
      *
      * This is a more comfortable alternative to specifying the page_id as the
-     * alias is mostly directly visible in the URL of the page.
+     * alias is mostly directly visible in the URL of the page. 
      *
      * @uxon-property page_alias
      * @uxon-type string

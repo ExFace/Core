@@ -228,6 +228,30 @@ interface UiPageInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
      */
     public function setShortDescription($string);
     
+    /**
+     * Returns the qualified alias of the page, this one should replace when resolving widget links.
+     * 
+     * @return string
+     */
+    public function getReplacesPageAlias();
+    
+    /**
+     * Specifies the alias of the page, this one will replace when resolving widget links.
+     * 
+     * If the page with the specified alias is referenced by a widget link or
+     * an action, this page will be returned instead of the original one, thus
+     * replacing it on the fly.
+     * 
+     * Using this replacement mechanism users can replace pages in an app by
+     * their own version without having to modify the incoming links or the
+     * original page itself - similarly to replacing a meta object.
+     * 
+     * @param string $alias_with_namespace
+     * 
+     * @return UiPageInterface
+     */
+    public function setReplacesPageAlias($alias_with_namespace);
+    
 }
 
 ?>
