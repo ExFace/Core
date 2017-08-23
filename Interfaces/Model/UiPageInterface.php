@@ -145,7 +145,7 @@ interface UiPageInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
      * 
      * @return string|null
      */
-    public function getParentPageAlias();
+    public function getMenuParentAlias();
     
     /**
      * 
@@ -153,14 +153,14 @@ interface UiPageInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
      * @param string $alias_with_namespace
      * @return UiPageInterface
      */
-    public function setParentPageAlias($alias_with_namespace);
+    public function setMenuParentAlias($alias_with_namespace);
     
     /**
      * Returns the parent ui page or NULL if this page has no parent
      * 
      * @return UiPageInterface|null
      */
-    public function getParentPage();
+    public function getMenuParentPage();
     
     /**
      * Sets the given page as parent for the current one.
@@ -169,7 +169,26 @@ interface UiPageInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
      * 
      * @return UiPageInterface
      */
-    public function setParentPage(UiPageInterface $page);
+    public function setMenuParentPage(UiPageInterface $page);
+    
+    /**
+     * Returns the index (position number starting with 0) of this page in the 
+     * submenu of its parent.
+     * 
+     * Defaults to 0 if not set explicitly.
+     *  
+     * @return integer
+     */
+    public function getMenuIndex();
+    
+    /**
+     * Sets the index (position number starting with 0) of this page in the 
+     * submenu of its parent.
+     *
+     * @param integer $number
+     * @return UiPageInterface
+     */
+    public function setMenuIndex($number);
     
     /**
      * Returns the unique id of the page.

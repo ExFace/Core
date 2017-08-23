@@ -422,9 +422,9 @@ class UiPage implements UiPageInterface
      * TODO #ui-page-installer
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\UiPageInterface::setParentPageAlias()
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::setMenuParentAlias()
      */
-    public function setParentPageAlias($alias_with_namespace)
+    public function setMenuParentAlias($alias_with_namespace)
     {}
 
     /**
@@ -440,18 +440,18 @@ class UiPage implements UiPageInterface
      * TODO #ui-page-installer
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\UiPageInterface::setParentPage()
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::setMenuParentPage()
      */
-    public function setParentPage(UiPageInterface $page)
+    public function setMenuParentPage(UiPageInterface $page)
     {}
 
     /**
      * TODO #ui-page-installer
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\UiPageInterface::getParentPageAlias()
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::getMenuParentAlias()
      */
-    public function getParentPageAlias()
+    public function getMenuParentAlias()
     {}
 
     /**
@@ -485,9 +485,9 @@ class UiPage implements UiPageInterface
      * TODO #ui-page-installer
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\UiPageInterface::getParentPage()
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::getMenuParentPage()
      */
-    public function getParentPage()
+    public function getMenuParentPage()
     {}
 
     /**
