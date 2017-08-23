@@ -554,7 +554,26 @@ class UiPage implements UiPageInterface
     {    
         // TODO #ui-page-installer
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::getContents()
+     */
+    public function getContents()
+    {
+        // TODO #ui-page-installer
+    }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::setContents()
+     */
+    public function setContents($string)
+    {
+        // TODO #ui-page-installer
+    }
 
 }
 

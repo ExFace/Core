@@ -252,6 +252,30 @@ interface UiPageInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
      */
     public function setReplacesPageAlias($alias_with_namespace);
     
+    /**
+     * Returns the raw contents of the UI page, that is stored in the CMS (stringified UXON).
+     * 
+     * NOTE: although similar to getWidgetRoot()->exportUxonOriginal() there
+     * still can be differences as the code can create widgets from UXON on
+     * the fly. 
+     * 
+     * @return string
+     */
+    public function getContents();
+    
+    /**
+     * Replaces the raw contents of the UI page (stringified UXON).
+     * 
+     * The new contents will be parsed immediately and all widgets in the page
+     * will be recreated.
+     * 
+     * NOTE: This does not change the page in the CMS right away! Use savePage()
+     * to save changes permanently!
+     *
+     * @return string
+     */
+    public function setContents($string);
+    
 }
 
 ?>
