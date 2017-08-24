@@ -750,7 +750,9 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
      */
     public function setValueListDelimiter($string)
     {
-        $this->value_list_delimiter = $string;
+        if (!is_null($string) && $string !== ''){
+            $this->value_list_delimiter = $string;
+        }
         return $this;
     }
  
