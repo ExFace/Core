@@ -374,8 +374,8 @@ JS;
 			$('#{$this->getId()} tbody tr').on('contextmenu', function(e){
 				{$this->getId()}_table.row($(e.target).closest('tr')).select();
 			});
-			$('#{$this->getId()}').closest('.exf_grid_item').trigger('resize');
-			context.attach('#{$this->getId()} tbody tr', [{$this->buildJsContextMenu()}]);
+			$('#{$this->getId()}').closest('.fitem').trigger('resize');
+            context.attach('#{$this->getId()} tbody tr', [{$this->buildJsContextMenu()}]);
 			if({$this->getId()}_table){
 				{$this->getId()}_drawPagination();
 				{$this->getId()}_table.columns.adjust();
