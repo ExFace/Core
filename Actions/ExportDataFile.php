@@ -80,7 +80,7 @@ abstract class ExportDataFile extends ExportData
         $this->writeFileResult($dataSheetMaster);
         $url = $this->getWorkbench()->getCMS()->createLinkToFile($this->getPathname());
         $this->setResult($url);
-        $this->setResultMessage($resultMessage . 'Download ready. If it does not start automatically, click <a href="' . $url . '">here</a>.');
+        $this->setResultMessage($resultMessage ? $resultMessage : 'Download ready. If it does not start automatically, click <a href="' . $url . '">here</a>.');
     }
 
     /**
@@ -125,11 +125,7 @@ abstract class ExportDataFile extends ExportData
     public function getPathname()
     {
         if (is_null($this->pathname)) {
-            $filemanager = $this->getWorkbench()->filemanager();
-            $this->pathname = Filemanager::pathJoin([
-                $filemanager->getPathToCacheFolder(),
-                $this->getFilename() . '.' . $this->getFileExtension()
-            ]);
+            $this->pathname = $this->getWorkbench()->getCMS()->getPathDownload() . $this->getFilename() . '.' . $this->getFileExtension();
         }
         return $this->pathname;
     }
