@@ -67,9 +67,7 @@ class HttpConnectorRequestError extends DataConnectorError
     {
         $this->setHttpStatusCode($httpStatusCode);
         $this->setHttpReasonPhrase($httpReasonPhrase);
-        $parentMessage = 'HTTP-Statuscode: ' . $this->getHttpStatusCode() . ' ' . $this->getHttpReasonPhrase() . ((is_null($message) || $message == '') ? '' : ', ' . $message);
-        $parentAlias = (is_null($alias) || $alias == '') ? $this->getDefaultAlias() : $alias;
-        parent::__construct($connector, $parentMessage, $parentAlias, $previous);
+        parent::__construct($connector, $message, (is_null($alias) || $alias == '') ? $this->getDefaultAlias() : $alias, $previous);
     }
 
     public function getHttpStatusCode()
