@@ -5,8 +5,7 @@ use Symfony\Component\Debug\Exception\FlattenException;
 use exface\Core\Interfaces\Exceptions\iContainCustomTrace;
 
 /**
- * Erweitert die FlattenException-Klasse um Fehler mit custom Stacktraces zu
- * ermoeglichen.
+ * Extends the FlattenException-class to support errors with custom stack traces.
  * 
  * @author SFL
  *
