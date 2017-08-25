@@ -3,6 +3,13 @@ namespace exface\Core\Exceptions\DataSources;
 
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 
+/**
+ * Error which can be thrown when an HTTP client returns a HTTP status code indicating
+ * an error (4xx or 5xx).
+ * 
+ * @author SFL
+ *
+ */
 class HttpConnectorRequestError extends DataConnectorError
 {
 
@@ -10,6 +17,7 @@ class HttpConnectorRequestError extends DataConnectorError
 
     private $httpReasonPhrase = null;
 
+    // Default Reason Phrases fuer verschiedene HTTP Statuscodes
     private $defaultReasonPhrase = [
         400 => 'Bad Request',
         401 => 'Unauthorized',
@@ -54,6 +62,7 @@ class HttpConnectorRequestError extends DataConnectorError
         'unknown' => 'Unknown'
     ];
 
+    // Default Fehler Aliase fuer verschiedene HTTP Statuscodes
     protected $defaultAlias = [
         0 => '6UY95WR',
         400 => '6UY4L3E',
@@ -63,6 +72,15 @@ class HttpConnectorRequestError extends DataConnectorError
         'unknown' => '6UY88MN'
     ];
 
+    /**
+     * 
+     * @param DataConnectionInterface $connector
+     * @param int $httpStatusCode
+     * @param string $httpReasonPhrase
+     * @param string $message
+     * @param string $alias
+     * @param \Throwable $previous
+     */
     public function __construct(DataConnectionInterface $connector, $httpStatusCode, $httpReasonPhrase = null, $message = null, $alias = null, $previous = null)
     {
         $this->setHttpStatusCode($httpStatusCode);
@@ -70,16 +88,31 @@ class HttpConnectorRequestError extends DataConnectorError
         parent::__construct($connector, $message, (is_null($alias) || $alias == '') ? $this->getDefaultAlias() : $alias, $previous);
     }
 
+    /**
+     * Returns the HTTP status code. (e.g. 400)
+     * 
+     * @return int
+     */
     public function getHttpStatusCode()
     {
         return $this->httpStatusCode;
     }
 
+    /**
+     * Sets the HTTP status code. (e.g. 400)
+     * 
+     * @param int $httpStatusCode
+     */
     public function setHttpStatusCode($httpStatusCode)
     {
         $this->httpStatusCode = $httpStatusCode;
     }
 
+    /**
+     * Returns the HTTP reason phrase. (e.g. 'Bad request')
+     * 
+     * @return string
+     */
     public function getHttpReasonPhrase()
     {
         if (is_null($this->httpReasonPhrase) || $this->httpReasonPhrase == '') {
@@ -88,16 +121,33 @@ class HttpConnectorRequestError extends DataConnectorError
         return $this->httpReasonPhrase;
     }
 
+    /**
+     * Sets the HTTP reason phrase. (e.g. 'Bad request')
+     * 
+     * @param string $httpReasonPhrase
+     */
     public function setHttpReasonPhrase($httpReasonPhrase)
     {
         $this->httpReasonPhrase = $httpReasonPhrase;
     }
 
+    /**
+     * Returns the default HTTP reason phrase for the passed HTTP status code.
+     * (e.g. 'Bad Request' for 400)
+     * 
+     * @param int $httpStatusCode
+     * @return string
+     */
     protected function getDefaultReasonPhrase($httpStatusCode)
     {
         return array_key_exists($httpStatusCode, $this->defaultReasonPhrase) ? $this->defaultReasonPhrase[$httpStatusCode] : $this->defaultReasonPhrase['unknown'];
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Exceptions\RuntimeException::getDefaultAlias()
+     */
     public function getDefaultAlias()
     {
         return array_key_exists($this->getHttpStatusCode(), $this->defaultAlias) ? $this->defaultAlias[$this->getHttpStatusCode()] : $this->defaultAlias['unknown'];
