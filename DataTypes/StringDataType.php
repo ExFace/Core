@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\DataTypes;
 
+use exface\Core\CommonLogic\Constants\SortingDirections;
+
 class StringDataType extends AbstractDataType
 {
 
@@ -78,6 +80,16 @@ class StringDataType extends AbstractDataType
         } else {
             return '';
         }
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\DataTypes\AbstractDataType::getDefaultSortingDirection()
+     */
+    public function getDefaultSortingDirection()
+    {
+        return SortingDirections::ASC();
     }
 }
 ?>

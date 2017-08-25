@@ -3,6 +3,7 @@ namespace exface\Core\DataTypes;
 
 use exface\Core\Exceptions\DataTypeValidationError;
 use exface\Core\Exceptions\UnexpectedValueException;
+use exface\Core\CommonLogic\Constants\SortingDirections;
 
 class DateDataType extends AbstractDataType
 {
@@ -84,6 +85,16 @@ class DateDataType extends AbstractDataType
     
     public static function formatDate(\DateTime $date){
         return $date->format('Y-m-d');
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\DataTypes\AbstractDataType::getDefaultSortingDirection()
+     */
+    public function getDefaultSortingDirection()
+    {
+        return SortingDirections::DESC();
     }
 }
 ?>

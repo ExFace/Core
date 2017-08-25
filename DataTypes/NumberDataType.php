@@ -2,6 +2,7 @@
 namespace exface\Core\DataTypes;
 
 use exface\Core\Exceptions\DataTypeValidationError;
+use exface\Core\CommonLogic\Constants\SortingDirections;
 
 class NumberDataType extends AbstractDataType
 {
@@ -33,6 +34,16 @@ class NumberDataType extends AbstractDataType
             throw new DataTypeValidationError('Cannot convert "' . $string . '" to a number!');
             return '';
         }
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\DataTypes\AbstractDataType::getDefaultSortingDirection()
+     */
+    public function getDefaultSortingDirection()
+    {
+        return SortingDirections::DESC();
     }
 }
 ?>

@@ -4,6 +4,7 @@ namespace exface\Core\Interfaces\Model;
 use exface\Core\Exceptions\DataTypeValidationError;
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\CommonLogic\Model\Model;
+use exface\Core\CommonLogic\Constants\SortingDirections;
 
 interface DataTypeInterface extends \exface\Core\Interfaces\ExfaceClassInterface
 {
@@ -56,5 +57,11 @@ interface DataTypeInterface extends \exface\Core\Interfaces\ExfaceClassInterface
      * @return boolean
      */
     public static function validate($string);
+    
+    /**
+     * 
+     * @return SortingDirections
+     */
+    public function getDefaultSortingDirection();
 }
 ?>
