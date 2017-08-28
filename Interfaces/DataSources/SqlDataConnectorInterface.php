@@ -1,7 +1,6 @@
 <?php
 namespace exface\Core\Interfaces\DataSources;
 
-use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 use exface\Core\CommonLogic\DataQueries\SqlDataQuery;
 
 interface SqlDataConnectorInterface extends DataConnectionInterface
