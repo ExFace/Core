@@ -10,7 +10,7 @@ class CreateData extends SaveData implements iCreateData
 
     protected function perform()
     {
-        $data_sheet = $this->getInputDataSheet()->copy();
+        $data_sheet = $this->getInputDataSheet();
         $this->setAffectedRows($data_sheet->dataCreate(true, $this->getTransaction()));
         $this->setUndoDataSheet($data_sheet);
         $this->setResultDataSheet($data_sheet);

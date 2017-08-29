@@ -14,7 +14,7 @@ class ReadData extends AbstractAction implements iReadData
 
     protected function perform()
     {
-        $data_sheet = $this->getInputDataSheet()->copy();
+        $data_sheet = $this->getInputDataSheet();
         $this->setAffectedRows($data_sheet->removeRows()->dataRead());
         
         // Replace the filter conditions in the current window context by the ones in this data sheet
