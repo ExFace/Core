@@ -67,6 +67,8 @@ class Model implements ModelInterface
             } catch (MetaObjectNotFoundError $e){
                 if (!$namespace){
                     throw new MetaObjectNotFoundError('Requested meta object "' . $object_alias . '" without an namespace (app alias)! Currently running app "' . $app_alias . '" did not contain the object either.', null, $e);
+                } else {
+                    throw $e;
                 }
             }
             $this->cacheObject($obj);

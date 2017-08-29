@@ -143,7 +143,13 @@ class Toolbar extends Container implements iHaveButtons, iContainButtonGroups, i
         }
         
         try {
-            $filter = is_null($alignment) ? null : function(ButtonGroup $grp) use ($alignment) {return $grp->getAlign() !== $grp->getAlign();};
+            if (is_null($alignment)){
+                $filter = null;
+            } else {
+                $filter = function(ButtonGroup $grp) use ($alignment) {
+                    return $grp->getAlign() === $alignment;
+                };
+            }
             $grp = $this->getWidgetFirst($filter);
         } catch (UnderflowException $e){
             $grp = $this->createButtonGroup();
@@ -215,11 +221,11 @@ class Toolbar extends Container implements iHaveButtons, iContainButtonGroups, i
         $btn_grps = [];
         foreach ($buttons as $btn){
             if ($btn instanceof UxonObject){
-                $btn_grps[$btn->getProperty('align')][] = $btn;
+                $btn_grps[$btn->hasProperty('align') ? $btn->getProperty('align') : EXF_ALIGN_DEFAULT][] = $btn;
             } elseif ($btn instanceof Button){
                 $btn_grps[$btn->getAlign()][] = $btn;
             } else {
-                $btn_grps[null] = $btn;
+                $btn_grps[EXF_ALIGN_DEFAULT] = $btn;
             }
         }
         

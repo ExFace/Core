@@ -21,7 +21,7 @@ interface EventInterface extends ExfaceClassInterface
     public function setName($value);
 
     /**
-     * Returns the events fully qualified name (like exface.SqlDataConnector.DataConnection.BeforeQuery)
+     * Returns the events fully qualified name (like exface.UrlDataConnector.DataConnection.BeforeQuery)
      *
      * @return string
      */

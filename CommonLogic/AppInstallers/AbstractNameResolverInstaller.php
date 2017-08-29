@@ -1,5 +1,5 @@
 <?php
-namespace exface\Core\CommonLogic;
+namespace exface\Core\CommonLogic\AppInstallers;
 
 use exface\Core\Interfaces\NameResolverInterface;
 use exface\Core\Interfaces\NameResolverInstallerInterface;

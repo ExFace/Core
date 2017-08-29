@@ -11,7 +11,7 @@ use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\CommonLogic\NameResolver;
 use exface\Core\CommonLogic\Model\Object;
 use exface\Core\Factories\WidgetDimensionFactory;
-use exface\Core\Interfaces\UiPageInterface;
+use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Factories\RelationPathFactory;
 use exface\Core\Exceptions\Widgets\WidgetIdConflictError;

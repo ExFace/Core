@@ -313,7 +313,7 @@ class Text extends AbstractWidget implements iShowSingleAttribute, iHaveValue, i
      */
     public function getAlign()
     {
-        if (is_null($this->getAlignDefault())) {
+        if (! $this->isAlignSet()) {
             if ($this->getDataType()->is(EXF_DATA_TYPE_NUMBER) || $this->getDataType()->is(EXF_DATA_TYPE_PRICE)) {
                 $this->setAlign(EXF_ALIGN_OPPOSITE);
             } elseif ($this->getDataType()->is(EXF_DATA_TYPE_BOOLEAN)) {

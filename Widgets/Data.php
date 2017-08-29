@@ -115,6 +115,11 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
     {
         return $this->getColumnGroupMain()->createColumnFromAttribute($attribute, $caption, $hidden);
     }
+    
+    public function createColumnFromUxon(UxonObject $uxon)
+    {
+        return $this->getColumnGroupMain()->createColumnFromUxon($uxon);
+    }
 
     /**
      * Returns the id of the column holding the UID of each row.
@@ -173,7 +178,7 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
         $data_sheet = parent::prepareDataSheetToRead($data_sheet);
         
         // Columns & Totals
-        if ($this->getMetaObjectId() == $data_sheet->getMetaObject()->getId()) {
+        if ($data_sheet->getMetaObject()->is($this->getMetaObject())) {
             foreach ($this->getColumns() as $col) {
                 // Only add columns, that actually have content. The other columns exist only in the widget
                 // TODO This check will get more complicated, once the content can be specified not only via attribute_alias
@@ -193,6 +198,11 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
         // Aggregations
         foreach ($this->getAggregations() as $attr) {
             $data_sheet->getAggregators()->addFromString($attr);
+        }
+        
+        // Pagination
+        if ($this->getPaginatePageSize()){
+            $data_sheet->setRowsOnPage($this->getPaginatePageSize());
         }
         
         // Filters and sorters only if lazy loading is disabled!
@@ -627,6 +637,10 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
                     $filter = $this->createFilterWidget($condition->getExpression()->getAttribute()->getAliasWithRelationPath());
                     $this->addFilter($filter);
                     $filter->setValue($condition->getValue());
+                    // Disable the filter because if the user changes it, the
+                    // prefill will not be consistent anymore (some prefilled
+                    // widgets may have different prefill-filters than others)
+                    $filter->setDisabled(true);
                 } else {
                     // If matching filters were found, prefill them
                     $prefilled = false;

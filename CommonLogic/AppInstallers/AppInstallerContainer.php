@@ -1,5 +1,5 @@
 <?php
-namespace exface\Core\CommonLogic;
+namespace exface\Core\CommonLogic\AppInstallers;
 
 use exface\Core\Interfaces\AppInstallerInterface;
 use exface\Core\Interfaces\AppInterface;
@@ -73,20 +73,30 @@ class AppInstallerContainer implements AppInstallerInterface, InstallerContainer
         return $result;
     }
 
+    /**
+     * Creates the given backup path if neccessary, copies the entire app folder
+     * there and runs the backup-procedures of all installers in the container
+     * afterwards.
+     * 
+     * Thus, the backup folder will contain the current state of the app including
+     * it's meta model, pages, etc. at the time of backup.
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\InstallerInterface::backup()
+     */
     public final function backup($destination_absolute_path)
     {
         $exface = $this->getWorkbench();
         $app = $this->getApp();
-        $appAlias = $app->getAlias();
-        $appNameResolver = NameResolver::createFromString($appAlias, NameResolver::OBJECT_TYPE_APP, $exface);
+        $appNameResolver = $app->getNameResolver();
         $appPath = $exface->filemanager()->getPathToVendorFolder() . $appNameResolver->getClassDirectory();
         $result = '';
         $app->getWorkbench()->filemanager()->pathConstruct($destination_absolute_path);
         // TODO Dispatch App.Backup.Before
+        $exface->filemanager()->copyDir($appPath, $destination_absolute_path);
         foreach ($this->getInstallers() as $installer) {
             $result .= $installer->backup($destination_absolute_path);
         }
-        $exface->filemanager()->copyDir($appPath, $destination_absolute_path);
         // TODO Dispatch App.Backup.After
         $result .= '';
         return $result;

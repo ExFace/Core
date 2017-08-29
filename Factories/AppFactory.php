@@ -1,7 +1,6 @@
 <?php
 namespace exface\Core\Factories;
 
-use exface;
 use exface\Core\CommonLogic\NameResolver;
 use exface\Core\Interfaces\NameResolverInterface;
 use exface\Core\Interfaces\AppInterface;
@@ -19,13 +18,12 @@ abstract class AppFactory extends AbstractNameResolverFactory
      */
     public static function create(NameResolverInterface $name_resolver)
     {
-        $exface = $name_resolver->getWorkbench();
         $class = $name_resolver->getClassNameWithNamespace();
         if (! class_exists($class)) {
-            throw new AppNotFoundError('No class found for app "' . $name_resolver->getAliasWithNamespace() . '"!', '6T5DXWP');
+            $class = '\\exface\\Core\\CommonLogic\\Model\\App';
+            //throw new AppNotFoundError('No class found for app "' . $name_resolver->getAliasWithNamespace() . '"!', '6T5DXWP');
         }
-        $app = new $class($exface);
-        $app->setNameResolver($name_resolver);
+        $app = new $class($name_resolver);
         return $app;
     }
 

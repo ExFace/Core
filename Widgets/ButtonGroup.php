@@ -153,7 +153,7 @@ class ButtonGroup extends Container implements iHaveButtons, iCanBeAligned, iUse
      */
     public function getAlign()
     {
-        if (is_null($this->getAlignDefault())){
+        if (! $this->isAlignSet()){
             foreach ($this->getButtons() as $btn){
                 if ($btn->getAlign()){
                     $this->setAlign($btn->getAlign());

@@ -19,6 +19,7 @@ use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\Exceptions\UnexpectedValueException;
+use exface\Core\Interfaces\AppInterface;
 
 /**
  * The abstract action is the base ActionInterface implementation, that simplifies the creation of custom actions.
@@ -128,10 +129,10 @@ abstract class AbstractAction implements ActionInterface
     /**
      *
      * @deprecated use ActionFactory instead
-     * @param \exface\Core\CommonLogic\AbstractApp $app            
+     * @param AppInterface $app            
      * @param WidgetInterface $called_by_widget            
      */
-    function __construct(\exface\Core\CommonLogic\AbstractApp $app, WidgetInterface $called_by_widget = null)
+    function __construct(AppInterface $app, WidgetInterface $called_by_widget = null)
     {
         $this->app = $app;
         $this->exface = $app->getWorkbench();

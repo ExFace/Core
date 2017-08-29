@@ -2,7 +2,7 @@
 namespace exface\Core\Widgets;
 
 use exface\Core\Factories\WidgetFactory;
-use exface\Core\CommonLogic\UiPage;
+use exface\Core\CommonLogic\Model\UiPage;
 use exface\Core\Interfaces\Contexts\ContextInterface;
 use exface\Core\Exceptions\Widgets\WidgetLogicError;
 use exface\Core\Exceptions\Contexts\ContextAccessDeniedError;

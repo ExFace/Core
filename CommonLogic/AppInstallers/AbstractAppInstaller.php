@@ -1,5 +1,5 @@
 <?php
-namespace exface\Core\CommonLogic;
+namespace exface\Core\CommonLogic\AppInstallers;
 
 use exface\Core\Interfaces\AppInstallerInterface;
 
@@ -53,7 +53,7 @@ abstract class AbstractAppInstaller extends AbstractNameResolverInstaller implem
      * Changes the name of the folder, that contains installation files for this app.
      *
      * @param string $path_relative_to_app_folder            
-     * @return \exface\Core\CommonLogic\AbstractAppInstaller
+     * @return \exface\Core\CommonLogic\AppInstallers\AbstractAppInstaller
      */
     public function setInstallFolderName($path_relative_to_app_folder)
     {

@@ -1,12 +1,12 @@
 <?php
 namespace exface\Core;
 
-use exface\Core\CommonLogic\AbstractApp;
 use exface\Core\Interfaces\InstallerInterface;
 use exface\Core\Factories\ConfigurationFactory;
 use exface\Core\Interfaces\AppInterface;
+use exface\Core\CommonLogic\Model\App;
 
-class CoreApp extends AbstractApp
+class CoreApp extends App
 {
     const CONFIG_FILENAME_SYSTEM = 'System';
     
@@ -35,7 +35,7 @@ class CoreApp extends AbstractApp
      * and contains all the other options - i.e. those not critical for startup.
      * 
      * {@inheritDoc}
-     * @see \exface\Core\CommonLogic\AbstractApp::getConfig()
+     * @see App::getConfig()
      */
     public function getConfig()
     {

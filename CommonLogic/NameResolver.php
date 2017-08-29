@@ -73,7 +73,7 @@ class NameResolver extends AbstractExfaceClass implements NameResolverInterface
      * NOTE: This is the ExFace-namespace. To get the PHP-namespace use get_class_namespace() instead.
      *
      * @param string $string            
-     * @param exface $exface            
+     * @param Workbench $exface            
      * @return string
      */
     protected static function getNamespaceFromString($string, $separator = self::NAMESPACE_SEPARATOR, $object_type = null)
@@ -100,7 +100,7 @@ class NameResolver extends AbstractExfaceClass implements NameResolverInterface
      * "OBJECT" for "exface.Core.OBJECT")
      *
      * @param string $string            
-     * @param exface $exface            
+     * @param Workbench $exface            
      * @return string
      */
     protected static function getAliasFromString($string, $separator = self::NAMESPACE_SEPARATOR)

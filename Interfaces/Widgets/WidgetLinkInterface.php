@@ -4,7 +4,7 @@ namespace exface\Core\Interfaces\Widgets;
 use exface\Core\Interfaces\ExfaceClassInterface;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Interfaces\WidgetInterface;
-use exface\Core\Interfaces\UiPageInterface;
+use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\CommonLogic\UxonObject;
 
 /**

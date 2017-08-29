@@ -1,13 +1,26 @@
 <?php
 namespace exface\Core\Interfaces;
 
-use exface\Core\CommonLogic\Workbench;
 use exface\Core\Widgets\AbstractWidget;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Contexts\DataContext;
 use exface\Core\Exceptions\Actions\ActionNotFoundError;
 use exface\Core\Exceptions\InvalidArgumentException;
 
+/**
+ * The app class provieds access to actions, configs, translations, etc. of
+ * an ExFace application.
+ *
+ * In a sence, it is the junction point for the meta model, the code and all
+ * kinds of configuration. There is an instance of the app classe for every
+ * app in the meta model. This instance knows, where the app folder is, which
+ * hardcoded actions exist, etc.
+ *
+ * It is also the responsibility of the app class to load configs and translations.
+ *
+ * @author Andrej Kabachnik
+ *
+ */
 interface AppInterface extends ExfaceClassInterface, AliasInterface
 {
     
@@ -17,12 +30,6 @@ interface AppInterface extends ExfaceClassInterface, AliasInterface
     
     const CONFIG_SCOPE_USER = 'USER';
     
-    /**
-     * 
-     * @param Workbench $exface
-     */
-    public function __construct(Workbench $exface);
-
     /**
      * Returns an action object
      *
@@ -143,5 +150,12 @@ interface AppInterface extends ExfaceClassInterface, AliasInterface
      * @return boolean
      */
     public function containsClass($object_or_class_name);
+    
+    /**
+     * Returns the name resolver, that can be used to instantiate the app
+     * 
+     * @return NameResolverInterface
+     */
+    public function getNameResolver();
 }
 ?>

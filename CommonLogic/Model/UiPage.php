@@ -1,7 +1,7 @@
 <?php
-namespace exface\Core\CommonLogic;
+namespace exface\Core\CommonLogic\Model;
 
-use exface\Core\Interfaces\UiPageInterface;
+use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\TemplateInterface;
 use exface\Core\Factories\WidgetFactory;
@@ -10,7 +10,22 @@ use exface\Core\Exceptions\Widgets\WidgetIdConflictError;
 use exface\Core\Interfaces\Widgets\iHaveChildren;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Factories\EventFactory;
+use exface\Core\Exceptions\Widgets\WidgetNotFoundError;
+use exface\Core\CommonLogic\UxonObject;
 
+/**
+ * This is the default implementation of the UiPageInterface.
+ * 
+ * The first widget without a parent added to the page is concidered to be the
+ * main root widget.
+ * 
+ * Widgets get cached in an internal array.
+ * 
+ * @see UiPageInterface
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
 class UiPage implements UiPageInterface
 {
 
@@ -44,7 +59,7 @@ class UiPage implements UiPageInterface
      *
      * @param WidgetInterface $widget            
      * @throws WidgetIdConflictError
-     * @return \exface\Core\CommonLogic\UiPage
+     * @return \exface\Core\CommonLogic\Model\UiPage
      */
     public function addWidget(WidgetInterface $widget)
     {
@@ -76,7 +91,7 @@ class UiPage implements UiPageInterface
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\Interfaces\UiPageInterface::getWidget()
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::getWidget()
      */
     public function getWidget($id, WidgetInterface $parent = null)
     {
@@ -98,7 +113,7 @@ class UiPage implements UiPageInterface
             } else {
                 // If the page is empty, no widget can be found ;) ...except the widget, that are always there
                 if ($this->isEmpty()) {
-                    return null;
+                    throw new WidgetNotFoundError('Widget "' . $id . '" not found in page "' . $this->getId() . '": page empty!');
                 }
                 $parent = $this->getWidgetRoot();
             }
@@ -113,6 +128,16 @@ class UiPage implements UiPageInterface
         }
     }
 
+    /**
+     * 
+     * @param string $id
+     * @param string $id_space
+     * @param WidgetInterface $parent
+     * 
+     * @throws WidgetNotFoundError if no matching widget was found
+     * 
+     * @return WidgetInterface
+     */
     private function getWidgetFromIdSpace($id, $id_space, WidgetInterface $parent)
     {
         $id_with_namespace = static::addIdSpace($id_space, $id);
@@ -143,8 +168,10 @@ class UiPage implements UiPageInterface
                     return $child;
                 } else {
                     if (! $id_is_path || StringDataType::startsWith($id_with_namespace, $child_id . self::WIDGET_ID_SEPARATOR)) {
-                        if ($found = $this->getWidgetFromIdSpace($id, $id_space, $child)) {
-                            return $found;
+                        try {
+                            return $this->getWidgetFromIdSpace($id, $id_space, $child);
+                        } catch (WidgetNotFoundError $e){
+                            // Continue with next branch of the tree
                         }
                     } elseif ($id_is_path) {
                         continue;
@@ -153,7 +180,9 @@ class UiPage implements UiPageInterface
             }
         }
         
-        return null;
+        throw new WidgetNotFoundError('Widget "' . $id . '" not found in id space "' . $id_space . '" within parent "' . $parent->getId() . '" on page "' . $this->getId() . '"!');
+        
+        return;
     }
 
     private static function addIdSpace($id_space, $id)
@@ -215,7 +244,7 @@ class UiPage implements UiPageInterface
     /**
      *
      * @param string $value            
-     * @return \exface\Core\CommonLogic\UiPage
+     * @return \exface\Core\CommonLogic\Model\UiPage
      */
     public function setId($value)
     {
@@ -239,7 +268,7 @@ class UiPage implements UiPageInterface
     /**
      *
      * @param TemplateInterface $template            
-     * @return \exface\Core\CommonLogic\UiPage
+     * @return \exface\Core\CommonLogic\Model\UiPage
      */
     protected function setTemplate(TemplateInterface $template)
     {
@@ -252,7 +281,7 @@ class UiPage implements UiPageInterface
      * @param string $widget_type            
      * @param WidgetInterface $parent_widget            
      * @param string $widget_id            
-     * @return unknown
+     * @return WidgetInterface
      */
     public function createWidget($widget_type, WidgetInterface $parent_widget = null, UxonObject $uxon = null)
     {
@@ -268,7 +297,7 @@ class UiPage implements UiPageInterface
     /**
      *
      * @param string $widget_id            
-     * @return \exface\Core\CommonLogic\UiPage
+     * @return \exface\Core\CommonLogic\Model\UiPage
      */
     public function removeWidgetById($widget_id)
     {
@@ -280,7 +309,7 @@ class UiPage implements UiPageInterface
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\Interfaces\UiPageInterface::removeWidget()
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::removeWidget()
      */
     public function removeWidget(WidgetInterface $widget, $remove_children_too = true)
     {
@@ -321,7 +350,7 @@ class UiPage implements UiPageInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\UiPageInterface::getWidgetIdSeparator()
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::getWidgetIdSeparator()
      */
     public function getWidgetIdSeparator()
     {
@@ -331,7 +360,7 @@ class UiPage implements UiPageInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\UiPageInterface::getWidgetIdSpaceSeparator()
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::getWidgetIdSpaceSeparator()
      */
     public function getWidgetIdSpaceSeparator()
     {
@@ -341,7 +370,7 @@ class UiPage implements UiPageInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\UiPageInterface::isEmpty()
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::isEmpty()
      */
     public function isEmpty()
     {
@@ -351,7 +380,7 @@ class UiPage implements UiPageInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\UiPageInterface::getContextBar()
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::getContextBar()
      */
     public function getContextBar()
     {

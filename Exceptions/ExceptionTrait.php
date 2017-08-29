@@ -4,7 +4,7 @@ namespace exface\Core\Exceptions;
 use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Exceptions\WarningExceptionInterface;
-use exface\Core\Interfaces\UiPageInterface;
+use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Widgets\ErrorMessage;
 use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;

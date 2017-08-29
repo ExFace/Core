@@ -2,7 +2,7 @@
 namespace exface\Core\Factories;
 
 use exface\Core\Interfaces\TemplateInterface;
-use exface\Core\CommonLogic\UiPage;
+use exface\Core\CommonLogic\Model\UiPage;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\UiManagerInterface;
 use exface\Core\Exceptions\UiPageNotFoundError;
@@ -14,7 +14,7 @@ class UiPageFactory extends AbstractFactory
      *
      * @param TemplateInterface $template            
      * @throws UiPageNotFoundError if the page id is invalid (i.e. not a number or a string)
-     * @return \exface\Core\CommonLogic\UiPage
+     * @return \exface\Core\CommonLogic\Model\UiPage
      */
     public static function create(UiManagerInterface $ui, $page_id)
     {
@@ -31,7 +31,7 @@ class UiPageFactory extends AbstractFactory
      *
      * @param UiManagerInterface $ui            
      * @param number $page_id            
-     * @return \exface\Core\CommonLogic\UiPage
+     * @return \exface\Core\CommonLogic\Model\UiPage
      */
     public static function createEmpty(UiManagerInterface $ui, $page_id = 0)
     {
@@ -46,7 +46,7 @@ class UiPageFactory extends AbstractFactory
      * @param TemplateInterface $template            
      * @param string $page_id            
      * @param string $page_text            
-     * @return \exface\Core\CommonLogic\UiPage
+     * @return \exface\Core\CommonLogic\Model\UiPage
      */
     public static function createFromString(UiManagerInterface $ui, $page_id, $page_text)
     {
@@ -61,7 +61,7 @@ class UiPageFactory extends AbstractFactory
      * @param TemplateInterface $template            
      * @param string $page_id            
      * @throws UiPageNotFoundError if no CMS page can be found by the given id
-     * @return \exface\Core\CommonLogic\UiPage
+     * @return \exface\Core\CommonLogic\Model\UiPage
      */
     public static function createFromCmsPage(UiManagerInterface $ui, $page_id)
     {
