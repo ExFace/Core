@@ -68,6 +68,12 @@ class Workbench
         // Init composer autoload
         require_once ($this->vendor_dir_path . DIRECTORY_SEPARATOR . 'autoload.php');
         
+        // If SERVER_BASE_PATH exists, set the paths accordingly.
+        if (! is_null($serverBasePath = $this->getConfig()->getOption("SERVER_BASE_PATH")) && $serverBasePath != '') {
+            $this->installation_path = $serverBasePath . DIRECTORY_SEPARATOR . 'exface';
+            $this->vendor_dir_path = $this->installation_path . DIRECTORY_SEPARATOR . 'vendor';
+        }
+        
         // If the current config uses the live autoloader, load it right next
         // to the one from composer.
         if ($this->getConfig()->getOption('DEBUG.LIVE_CLASS_AUTOLOADER')){

@@ -136,12 +136,5 @@ interface CmsConnectorInterface extends ExfaceClassInterface
      * @return string
      */
     public function getSiteUrl();
-    
-    /**
-     * Returns the path to a download folder that is accessible from the web.
-     * 
-     * @return string
-     */
-    public function getPathDownload();
 }
 ?>

@@ -125,7 +125,11 @@ abstract class ExportDataFile extends ExportData
     public function getPathname()
     {
         if (is_null($this->pathname)) {
-            $this->pathname = $this->getWorkbench()->getCMS()->getPathDownload() . $this->getFilename() . '.' . $this->getFileExtension();
+            $filemanager = $this->getWorkbench()->filemanager();
+            $this->pathname = Filemanager::pathJoin([
+                $filemanager->getPathToCacheFolder(),
+                $this->getFilename() . '.' . $this->getFileExtension()
+            ]);
         }
         return $this->pathname;
     }

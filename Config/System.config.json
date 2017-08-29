@@ -14,5 +14,7 @@
     "LOG.MINIMUM_LEVEL_TO_LOG": "notice",
     "LOG.MAX_DAYS_TO_KEEP": "14",
     "LOG.PERSIST_LOG_LEVEL": "alert",
-    "LOG.PASSTHROUGH_LOG_LEVEL": "error"
+    "LOG.PASSTHROUGH_LOG_LEVEL": "error",
+    
+    "SERVER_BASE_PATH": "C:\\wamp\\www\\alexa-ui\\50"
 }
