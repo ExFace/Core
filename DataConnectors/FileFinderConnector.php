@@ -81,7 +81,7 @@ class FileFinderConnector extends TransparentConnector
         // finder will throw an error. Just remove all non-existant paths as the definitely
         // do not contain files.
         foreach ($paths as $nr => $path){
-            if (strpos('*', $path) === false && ! is_dir($path)){
+            if (strpos($path, '*') === false && ! is_dir($path)){
                 unset($paths[$nr]);
             }
         }
