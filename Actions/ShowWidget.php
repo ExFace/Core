@@ -212,12 +212,23 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
                         
                         // IDEA do we also need to check for conflicts with rows?
                         
-                        // Add the filter values as columns (because the objects are the same)
+                        // Add the filter values as columns to use them in forms
+                        // Sinsce the objects of the widget and the prefill are
+                        // the same, context filters can be used in two different 
+                        // ways: either to prefill filter or to prefill inputs.
+                        // How exactly, depends on the widget, so we put them
+                        // in both places here.
+                        // IDEA Perhaps, we should only place filters in filters
+                        // of the data sheet and change the widget to look in 
+                        // columns as well as in filters...
                         try {
                             $col = $data_sheet->getColumns()->addFromExpression($condition->getExpression());
-                            $col->setValues(array(
-                                $condition->getValue()
-                            ));
+                            // Add the value of the filter (if there) as cell value
+                            if (! is_null($condition->getValue()) && $condition->getValue() !== ''){
+                                $col->setValues(array(
+                                    $condition->getValue()
+                                ));
+                            }
                         } catch (\Exception $e) {
                             // Do nothing if anything goes wrong. After all the context prefills are just an attempt the help
                             // the user. It's not a good Idea to throw a real error here!

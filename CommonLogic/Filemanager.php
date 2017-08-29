@@ -199,18 +199,19 @@ class Filemanager extends Filesystem implements ExfaceClassInterface
      * Copies a complete folder to a new location including all sub folders
      *
      * @param string $originDir            
-     * @param string $destinationDir            
+     * @param string $destinationDir  
+     * @param boolean $overWriteNewerFiles          
      */
-    public function copyDir($originDir, $destinationDir, $override = false)
+    public function copyDir($originDir, $destinationDir, $overWriteNewerFiles = false)
     {
         $dir = opendir($originDir);
         @mkdir($destinationDir);
         while (false !== ($file = readdir($dir))) {
             if (($file != '.') && ($file != '..')) {
                 if (is_dir($originDir . DIRECTORY_SEPARATOR . $file)) {
-                    $this->copyDir($originDir . DIRECTORY_SEPARATOR . $file, $destinationDir . DIRECTORY_SEPARATOR . $file);
+                    $this->copyDir($originDir . DIRECTORY_SEPARATOR . $file, $destinationDir . DIRECTORY_SEPARATOR . $file, $overWriteNewerFiles);
                 } else {
-                    $this->copy($originDir . DIRECTORY_SEPARATOR . $file, $destinationDir . DIRECTORY_SEPARATOR . $file, $override);
+                    $this->copy($originDir . DIRECTORY_SEPARATOR . $file, $destinationDir . DIRECTORY_SEPARATOR . $file, $overWriteNewerFiles);
                 }
             }
         }
