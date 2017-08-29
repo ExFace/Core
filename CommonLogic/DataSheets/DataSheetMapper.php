@@ -39,13 +39,43 @@ class DataSheetMapper implements DataSheetMapperInterface {
             throw new DataSheetMapperInvalidInputError($fromSheet, $this, 'Input data sheet based on "' . $fromSheet->getMetaObject()->getAliasWithNamespace() . '" does not match the input object of the mapper "' . $this->getFromMetaObject()->getAliasWithNamespace() . '"!');
         }
         
+        // Make sure, the from-sheet has everything needed
+        $fromSheet = $this->prepareFromSheet($fromSheet);
+        
+        // Create an empty to-sheet
         $toSheet = DataSheetFactory::createFromObject($this->getToMetaObject());
         
+        // Fill the to-sheet with the mappings
         foreach ($this->getExpressionMaps() as $map){
             $toSheet = $map->map($fromSheet, $toSheet);
         }
         
         return $toSheet;
+    }
+    
+    /**
+     * Checks if all required columns are in the from-sheet and tries to add missing ones and reload the data.
+     * 
+     * @param DataSheetInterface $data_sheet
+     * 
+     * @return \exface\Core\Interfaces\DataSheets\DataSheetInterface
+     */
+    protected function prepareFromSheet(DataSheetInterface $data_sheet)
+    {
+        // Only try to add new columns if the sheet has a UID column and is fresh (no values changed)
+        if ($data_sheet->hasUidColumn() && $data_sheet->isFresh()){
+            foreach ($this->getExpressionMaps() as $map){
+                $from_expression = $map->getFromExpression();
+                if (! $data_sheet->getColumns()->getByExpression($from_expression)){
+                    $data_sheet->getColumns()->addFromExpression($from_expression);
+                }
+            }
+            if (! $data_sheet->isFresh()){
+                $data_sheet->addFilterFromColumnValues($data_sheet->getUidColumn());
+                $data_sheet->dataRead();
+            }
+        }
+        return $data_sheet;
     }
     
     /**
