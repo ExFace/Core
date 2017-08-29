@@ -9,6 +9,7 @@ use exface\Core\CommonLogic\Model\Attribute;
 use exface\Core\CommonLogic\EntityList;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\CommonLogic\Model\Expression;
 
 /**
  *
@@ -134,11 +135,11 @@ class DataColumnList extends EntityList implements DataColumnListInterface
      */
     public function getByExpression($expression_or_string)
     {
-        if ($expression_or_string instanceof expression) {
+        if ($expression_or_string instanceof Expression) {
             $expression_or_string = $expression_or_string->toString();
         }
         foreach ($this->getAll() as $col) {
-            if ($col->getExpressionObj()->toString() == $expression_or_string) {
+            if ($col->getExpressionObj()->toString() === $expression_or_string) {
                 return $col;
             }
         }
