@@ -48,6 +48,7 @@ class DataSheetMapperError extends RuntimeException implements DataSheetMapperEx
     
     public function createDebugWidget(DebugMessage $debug_widget)
     {
+        $debug_widget = parent::createDebugWidget($debug_widget);
         // TODO
         return $debug_widget;
     }
