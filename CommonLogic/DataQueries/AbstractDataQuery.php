@@ -4,6 +4,7 @@ namespace exface\Core\CommonLogic\DataQueries;
 use exface\Core\Interfaces\DataSources\DataQueryInterface;
 use exface\Core\Widgets\DebugMessage;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
+use exface\Core\CommonLogic\UxonObject;
 
 /**
  * This is the base class for data queries.

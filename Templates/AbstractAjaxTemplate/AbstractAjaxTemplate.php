@@ -16,7 +16,7 @@ use exface\Core\Templates\AbstractAjaxTemplate\Elements\AbstractJqueryElement;
 use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;
 use Symfony\Component\Debug\Exception\FatalThrowableError;
 use exface\Core\Exceptions\Templates\TemplateOutputError;
-use exface\Core\Interfaces\UiPageInterface;
+use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Factories\UiPageFactory;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Exceptions\Templates\TemplateRequestParsingError;
@@ -604,7 +604,7 @@ abstract class AbstractAjaxTemplate extends AbstractTemplate
     public function getRequestFilters()
     {
         // Filters a passed as request values with a special prefix: fltr01_, fltr02_, etc.
-        if (count($this->request_filters_array) == 0) {
+        if (empty($this->request_filters_array)) {
             foreach ($this->getWorkbench()->getRequestParams() as $var => $val) {
                 if (strpos($var, 'fltr') === 0) {
                     $this->request_filters_array[urldecode(substr($var, 7))][] = urldecode($val);

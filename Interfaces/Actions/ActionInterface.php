@@ -6,7 +6,7 @@ use exface\Core\Interfaces\AliasInterface;
 use exface\Core\CommonLogic\Model\Object;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\AppInterface;
-use exface\Core\Interfaces\UiPageInterface;
+use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\TemplateInterface;
 use exface\Core\Exceptions\Actions\ActionObjectNotSpecifiedError;
 use exface\Core\Exceptions\Actions\ActionInputError;

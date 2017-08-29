@@ -99,7 +99,7 @@ class SqlSchemaInstaller extends AbstractAppInstaller
      */
     public function backup($destination_absolute_path)
     {
-        return 'SQL Backup not implemented for ' . $this->getNameResolver()->getAliasWithNamespace() . '!';
+        return 'SQL Backup not implemented for installer "' . $this->getNameResolver()->getAliasWithNamespace() . '"!';
     }
 
     /**

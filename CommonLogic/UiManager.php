@@ -5,7 +5,7 @@ use exface\Core\Widgets\AbstractWidget;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Factories\UiPageFactory;
 use exface\Core\Interfaces\TemplateInterface;
-use exface\Core\Interfaces\UiPageInterface;
+use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\UiManagerInterface;
 use exface\Core\Factories\TemplateFactory;
 use exface\Core\Exceptions\UiPageFoundError;
@@ -126,7 +126,7 @@ class UiManager implements UiManagerInterface
 
     /**
      *
-     * @return \exface\Core\Interfaces\UiPageInterface
+     * @return \exface\Core\Interfaces\Model\UiPageInterface
      */
     public function getPageCurrent()
     {

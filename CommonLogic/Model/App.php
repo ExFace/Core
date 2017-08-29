@@ -281,6 +281,11 @@ class App implements AppInterface
         return $this->uid;
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\AppInterface::getNameResolver()
+     */
     public function getNameResolver()
     {
         return $this->name_resolver;
