@@ -998,6 +998,55 @@ abstract class AbstractAction implements ActionInterface
     }
     
     /**
+     * Defines transformation rules for input datasheets if they are not based on the object of the action.
+     * 
+     * Input mappers can be used to perform an action on an object, that it was
+     * not explicitly made for - even if the objects are not related in any way.
+     * 
+     * You can define as many mappers as you like - each containing rules to
+     * map data of its form-object to its to-object. These rules basically
+     * define simple mappings from one expression to another.
+     * 
+     * For example, if you want to have an action, that will create a support
+     * ticket for a selected purchase order, you will probably use a the
+     * action CreateObjectDialog (or a derivative) based on the ticket object.
+     * Now, you can use input mappers to prefill it with data from the (totally
+     * unrelated) purchase order object:
+     * 
+     * {
+     *  "input_mappers": [
+     *      {
+     *          "from_object_alias": "my.App.PurchaseOrder",
+     *          "expression_maps": [
+     *              {
+     *                  "from": "LABEL",
+     *                  "to": "TITLE"
+     *              },{
+     *                  "from": "CUSTOMER__PRIORITY__LEVEL",
+     *                  "to": "PRIORITY__LEVEL"
+     *              }
+     *          ]
+     *      }
+     *  ]
+     * }
+     * 
+     * In this example we map the label-attribute of the purchase order to the
+     * title of the ticket. This will probably prefill our title field with
+     * the order number and date (or whatever is set as label). We also map
+     * the priority of the customer of the order to the ticket priority.
+     * Assuming both attributes have identical numeric levels (probably 1, 2, 3),
+     * this will result in high priority tickets for high priority customers.
+     * 
+     * You can now create an action in the model of your purchase orers, so
+     * users can create tickets from every page showing orders. 
+     * 
+     * Alternatively you could create an action in the model of your tickets
+     * with multiple mappers from different business objects: every time
+     * the ticket-dialog opens, the system would see, if there is a suitable
+     * mapper for the current input object and use it.
+     * 
+     * @uxon-property input_mappers
+     * @uxon-type \exface\Core\CommonLogic\DataSheet\DataSheetMapper[]
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Actions\ActionInterface::setInputMappers()
