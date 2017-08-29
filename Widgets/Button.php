@@ -377,7 +377,8 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iUseIn
     public function getChildren()
     {
         $children = array();
-        if ($this->getAction() && $this->getAction()->implementsInterface('iShowWidget') && $this->getAction()->getWidget()) {
+        $action = $this->getAction();
+        if ($action && $action->implementsInterface('iShowWidget') && $action->isWidgetDefined()) {
             $children[] = $this->getAction()->getWidget();
         }
         return $children;

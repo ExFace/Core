@@ -168,12 +168,14 @@ class UiPage implements UiPageInterface
                     return $child;
                 } else {
                     if (! $id_is_path || StringDataType::startsWith($id_with_namespace, $child_id . self::WIDGET_ID_SEPARATOR)) {
+                        // If we are looking for a non-path id or the path includes the id of the child, look within the child
                         try {
                             return $this->getWidgetFromIdSpace($id, $id_space, $child);
                         } catch (WidgetNotFoundError $e){
-                            // Continue with next branch of the tree
+                            continue;
                         }
                     } elseif ($id_is_path) {
+                        // If the id is a path, but did not include the child id, continie with the next child
                         continue;
                     }
                 }

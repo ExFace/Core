@@ -10,7 +10,6 @@ use exface\Core\Factories\ActionFactory;
 use exface\Core\Factories\EventFactory;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\WidgetInterface;
-use exface\Core\Events\ActionEvent;
 use exface\Core\Factories\WidgetLinkFactory;
 use exface\Core\Exceptions\Model\MetaObjectNotFoundError;
 use exface\Core\Exceptions\Actions\ActionOutputError;
@@ -20,6 +19,11 @@ use exface\Core\DataTypes\StringDataType;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Interfaces\AppInterface;
+use exface\Core\Interfaces\DataSheets\DataSheetMapperInterface;
+use exface\Core\CommonLogic\DataSheets\DataSheetMapper;
+use exface\Core\Factories\DataSheetMapperFactory;
+use exface\Core\Exceptions\Actions\ActionConfigurationError;
+use exface\Core\Exceptions\DataSheets\DataSheetMapperError;
 
 /**
  * The abstract action is the base ActionInterface implementation, that simplifies the creation of custom actions.
@@ -81,6 +85,8 @@ abstract class AbstractAction implements ActionInterface
      * @var DataSheetInterface
      */
     private $input_data_sheet = null;
+    
+    private $input_mappers = [];
 
     /**
      * @uxon template_alias Qualified alias of the template to be used to render the output of this action
@@ -526,9 +532,18 @@ abstract class AbstractAction implements ActionInterface
      *
      * @see \exface\Core\Interfaces\Actions\ActionInterface::getInputDataSheet()
      */
-    public function getInputDataSheet()
-    {
-        return $this->input_data_sheet;
+    public function getInputDataSheet($apply_mappers = true)
+    {        
+        if ($apply_mappers && $this->input_data_sheet){
+            foreach ($this->getInputMappers() as $mapper){
+                if ($mapper->getFromMetaObject()->is($this->input_data_sheet->getMetaObject())){
+                    return $mapper->map($this->input_data_sheet);
+                    break;
+                }
+            }
+        }
+        
+        return $this->input_data_sheet ? $this->input_data_sheet->copy() : $this->input_data_sheet;
     }
 
     protected function setResultDataSheet(DataSheetInterface $data_sheet)
@@ -726,7 +741,7 @@ abstract class AbstractAction implements ActionInterface
     }
 
     /**
-     * Returns a loadable UXON-representation of the action
+     * Returns a loadable UXON-representation of the action including the input data
      *
      * @return UxonObject
      */
@@ -738,8 +753,17 @@ abstract class AbstractAction implements ActionInterface
             $uxon->called_by_widget = $this->getCalledByWidget()->createWidgetLink()->exportUxonObject();
         }
         $uxon->template_alias = $this->getTemplateAlias();
-        $uxon->input_data_sheet = $this->getInputDataSheet()->exportUxonObject();
+        $uxon->input_data_sheet = $this->getInputDataSheet(false)->exportUxonObject();
         $uxon->disabled_behaviors = UxonObject::fromArray($this->getDisabledBehaviors());
+        
+        if (empty($this->getInputMappers())){
+            $input_mappers = new UxonObject();
+            foreach ($this->getInputMappers() as $nr => $mapper){
+                $input_mappers->setProperty($nr, $mapper->exportUxonObject());
+            }
+            $uxon->setProperty('input_mappers', $input_mappers);
+        }
+        
         return $uxon;
     }
 
@@ -961,6 +985,54 @@ abstract class AbstractAction implements ActionInterface
         } else {
             throw new UnexpectedValueException('Invalid value "' . gettype($action_or_alias) .'" passed to "ActionInterface::is()": instantiated action or action alias with namespace expected!');
         }
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::getInputMappers()
+     */
+    public function getInputMappers()
+    {
+        return $this->input_mappers;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::setInputMappers()
+     */
+    public function setInputMappers(array $data_sheet_mappers_or_uxon_objects)
+    {
+        foreach ($data_sheet_mappers_or_uxon_objects as $instance){
+            if ($instance instanceof DataSheetMapper){
+                $mapper = $instance;
+            } elseif ($instance instanceof UxonObject){
+                $mapper = DataSheetMapperFactory::createFromUxon($this->getWorkbench(), $instance);
+            } else {
+                throw new ActionConfigurationError($this, 'Error in specification of input mappers: expecting array of mappers or their UXON descriptions - "' . gettype($instance) . '" given instead!');
+            }
+            
+            // TODO this will fail if the mappers are placed in the UXON before the object alias.
+            try {
+                $mapper->getToMetaObject();
+            } catch (DataSheetMapperError $e){
+                $mapper->setToMetaObject($this->getMetaObject());
+            }
+            
+            $this->addInputMapper($mapper);
+        }
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::addInputMapper()
+     */
+    public function addInputMapper(DataSheetMapperInterface $mapper)
+    {
+        $this->input_mappers[] = $mapper;
+        return $this;
     }
 }
 ?>

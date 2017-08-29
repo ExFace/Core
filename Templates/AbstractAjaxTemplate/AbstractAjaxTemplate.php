@@ -473,7 +473,7 @@ abstract class AbstractAjaxTemplate extends AbstractTemplate
                 }
             }
             // Check, if the action has a widget. If not, give it the widget from the request
-            if ($action->implementsInterface('iShowWidget') && ! $action->getWidget() && $widget) {
+            if ($action->implementsInterface('iShowWidget') && ! $action->isWidgetDefined() && $widget) {
                 $action->setWidget($widget);
             }
             

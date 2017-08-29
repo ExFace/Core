@@ -12,6 +12,9 @@ use exface\Core\Exceptions\Actions\ActionObjectNotSpecifiedError;
 use exface\Core\Exceptions\Actions\ActionInputError;
 use exface\Core\Interfaces\iCanBeCopied;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Interfaces\DataSheets\DataSheetMapperInterface;
 
 interface ActionInterface extends ExfaceClassInterface, AliasInterface, iCanBeCopied
 {
@@ -159,21 +162,45 @@ interface ActionInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
     /**
      * Sets the data sheet, the action is supposed to be performed upon.
      *
-     * @param
-     *            DataSheet || UxonObject || string $data_sheet_or_uxon
+     * @param DataSheetInterface||UxonObject||string $data_sheet_or_uxon
+     * 
      * @throws ActionInputError if the passed input data is of an unsupported type
+     * 
      * @return \exface\Core\Interfaces\Actions\ActionInterface
      */
     public function setInputDataSheet($data_sheet_or_uxon);
 
     /**
-     * Returns the data sheet, the action is performed upon.
-     * It remains untouched even after
-     * the action is performed, so you can always return to the input data.
+     * Returns a copy of the data sheet, the action is performed upon.
+     * 
+     * This is what the action logic uses as input. By default input mappers are
+     * automatically applied - to get the raw input data, that was originally
+     * passed to the action, set the parameter $apply_mappers to FALSE.
      *
+     * @param boolean $apply_mappers
+     * 
      * @return DataSheetInterface
      */
-    public function getInputDataSheet();
+    public function getInputDataSheet($apply_mappers = true);
+    
+    /**
+     * @return DataSheetMapperInterface[]
+     */
+    public function getInputMappers();
+    
+    /**
+     *
+     * @param DataSheetMapperInterface[]|UxonObject[] $data_sheet_mappers_or_uxon_objects
+     * @return ActionInterface
+     */
+    public function setInputMappers(array $data_sheet_mappers_or_uxon_objects);
+    
+    /**
+     * 
+     * @param DataSheetMapperInterface $mapper
+     * @return ActionInterface
+     */
+    public function addInputMapper(DataSheetMapperInterface $mapper);
 
     /**
      * Returns the minimum number of rows the action expects in the input data sheet.
@@ -224,7 +251,7 @@ interface ActionInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
 
     /**
      *
-     * @param unknown $qualified_alias            
+     * @param string $qualified_alias            
      * @return ActionInputInterface
      */
     public function setObjectAlias($qualified_alias);

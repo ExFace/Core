@@ -4,6 +4,8 @@ namespace exface\Core\Exceptions\DataSheets;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Interfaces\DataSheets\DataSheetMapperInterface;
 use exface\Core\Widgets\DebugMessage;
+use exface\Core\Interfaces\Exceptions\DataSheetMapperExceptionInterface;
+use exface\Core\Exceptions\ExceptionTrait;
 
 /**
  * Exception thrown on general errors in data sheet mappers.
@@ -11,9 +13,11 @@ use exface\Core\Widgets\DebugMessage;
  * @author Andrej Kabachnik
  *
  */
-class DataSheetMapperError extends RuntimeException {
+class DataSheetMapperError extends RuntimeException implements DataSheetMapperExceptionInterface {
     
-    private $data_sheet = null;
+    private $mapper = null;
+    
+    use ExceptionTrait;
     
     public function __construct(DataSheetMapperInterface $mapper, $message, $alias = null, $previous = null)
     {
