@@ -23,7 +23,6 @@ use exface\Core\Interfaces\DataSheets\DataSheetMapperInterface;
 use exface\Core\CommonLogic\DataSheets\DataSheetMapper;
 use exface\Core\Factories\DataSheetMapperFactory;
 use exface\Core\Exceptions\Actions\ActionConfigurationError;
-use exface\Core\Exceptions\DataSheets\DataSheetMapperError;
 
 /**
  * The abstract action is the base ActionInterface implementation, that simplifies the creation of custom actions.
@@ -96,22 +95,16 @@ abstract class AbstractAction implements ActionInterface
     private $template_alias = null;
 
     /**
-     * @uxon
-     *
-     * @var unknown
+     * @var string
      */
     private $icon_name = null;
 
     /**
-     * @uxon
-     *
-     * @var integer
+     *@var integer
      */
     private $input_rows_min = 0;
 
     /**
-     * @uxon
-     *
      * @var integer
      */
     private $input_rows_max = null;
@@ -254,9 +247,17 @@ abstract class AbstractAction implements ActionInterface
     }
 
     /**
+     * Sets the icon to be used for this action.
+     * 
+     * This icon will be used on buttons and menu items with this action unless they have
+     * their own icons defined.
+     * 
+     * By default all icons from font awsome (http://fontawesome.io/icons/) are supported.
+     *
+     * @uxon-property icon_name
+     * @uxon-type string
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\Actions\ActionInterface::setIconName()
      */
     public function setIconName($value)
@@ -265,9 +266,7 @@ abstract class AbstractAction implements ActionInterface
     }
 
     /**
-     *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\Actions\ActionInterface::getCalledByWidget()
      */
     public function getCalledByWidget()
@@ -577,9 +576,12 @@ abstract class AbstractAction implements ActionInterface
     }
 
     /**
+     * Sets the minimum number of rows the input data sheet must have for this action.
+     *
+     * @uxon-property input_rows_min
+     * @uxon-type integer
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\Actions\ActionInterface::setInputRowsMin()
      */
     public function setInputRowsMin($value)
@@ -588,9 +590,7 @@ abstract class AbstractAction implements ActionInterface
     }
 
     /**
-     *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\Actions\ActionInterface::getInputRowsMax()
      */
     public function getInputRowsMax()
@@ -599,9 +599,12 @@ abstract class AbstractAction implements ActionInterface
     }
 
     /**
+     * Sets the maximum number of rows the input data sheet must have for this action.
      *
+     * @uxon-property input_rows_max
+     * @uxon-type integer
+     * 
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\Actions\ActionInterface::setInputRowsMax()
      */
     public function setInputRowsMax($value)
@@ -642,9 +645,15 @@ abstract class AbstractAction implements ActionInterface
     }
 
     /**
+     * Defines the object, that this action is to be performed upon (alias with namespace).
+     * 
+     * If not explicitly defined, the object of the widget calling the action (e.g. a button)
+     * will be used automatically.
+     *
+     * @uxon-property object_alias
+     * @uxon-type string
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\Actions\ActionInterface::setObjectAlias()
      */
     public function setObjectAlias($qualified_alias)
