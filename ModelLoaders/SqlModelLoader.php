@@ -282,7 +282,9 @@ class SqlModelLoader implements ModelLoaderInterface
         $attr->setDefaultValue($row['default_value']);
         $attr->setFixedValue($row['fixed_value']);
         $attr->setFormula($row['attribute_formula']);
-        $attr->setDefaultSorterDir($row['default_sorter_dir']);
+        if ($row['default_sorter_dir']){
+            $attr->setDefaultSorterDir($row['default_sorter_dir']);
+        }
         $attr->setShortDescription($row['attribute_short_description']);
         $attr->setDefaultAggregateFunction($row['default_aggregate_function']);
         $attr->setValueListDelimiter($row['value_list_delimiter']);

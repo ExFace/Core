@@ -13,10 +13,11 @@ use exface\Core\Interfaces\Widgets\iShowDataColumn;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Widgets\Traits\iCanBeAlignedTrait;
+use exface\Core\CommonLogic\Constants\SortingDirections;
+use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 
 /**
- * The DataColumn represents a column in Data-widgets.
- * The most common usecase are DataTable columns.
+ * The DataColumn represents a column in Data-widgets a DataTable.
  *
  * DataColumns are not always visible as columns. But they are always there, when tabular data is needed
  * for a widget. A DataColumn has a caption (header), an expression for it's contents (an attribute alias,
@@ -48,8 +49,8 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     private $editor = null;
 
     private $editable = false;
-
-    private $align = null;
+    
+    private $default_sorting_direction = null;
 
     private $aggregate_function = null;
 
@@ -452,6 +453,47 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
         $uxon = parent::exportUxonObject();
         // TODO add properties specific to this widget here
         return $uxon;
+    }
+    
+    /**
+     * 
+     * @return \exface\Core\CommonLogic\Constants\SortingDirections
+     */
+    public function getDefaultSortingDirection()
+    {
+        if(is_null($this->default_sorting_direction)){
+            return $this->getDataType()->getDefaultSortingDirection();
+        }
+        return $this->default_sorting_direction;
+    }
+    
+    /**
+     * Defines the default sorting direction for this column: ASC or DESC.
+     * 
+     * The default direction is used if sorting the column without a
+     * direction being explicitly specified: e.g. when clicking on a
+     * sortable table header.
+     * 
+     * If not set, the default sorting direction of the attribute will
+     * be used for columns representing attributes or the default sorting
+     * direction of the data type of the columns expression.
+     * 
+     * @uxon-property default_sorting_direction
+     * @uxon-type [ASC,DESC]
+     * 
+     * @param SortingDirections|string $asc_or_desc
+     */
+    public function setDefaultSortingDirection($asc_or_desc)
+    {
+        if ($asc_or_desc instanceof SortingDirections){
+            // Everything OK. Just proceed
+        } elseif (SortingDirections::isValid(strtolower($asc_or_desc))){
+            $asc_or_desc = new SortingDirections(strtolower($asc_or_desc));
+        } else {
+            throw new WidgetPropertyInvalidValueError($this, 'Invalid value "' . $asc_or_desc . '" for default sorting direction in data column: use ASC or DESC');
+        }
+        $this->default_sorting_direction = $asc_or_desc;
+        return $this;
     }
 }
 ?>

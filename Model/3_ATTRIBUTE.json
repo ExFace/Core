@@ -1047,7 +1047,7 @@
         },
         {
             "CREATED_ON": "2007-01-01 00:00:00",
-            "MODIFIED_ON": "2017-06-05 05:49:38",
+            "MODIFIED_ON": "2017-08-25 11:38:19",
             "CREATED_BY_USER": "",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x31333600000000000000000000000000",
@@ -1072,11 +1072,11 @@
             "SORTERPOS": null,
             "SORTERDIR": "",
             "RELATED_OBJ_ATTR": "",
-            "SHORT_DESCRIPTION": "Direction of sorting if this attribute is used for sorting by default",
+            "SHORT_DESCRIPTION": "Which way to sort this attribute by default. If not set, the default sorting direction of the data type will be used.",
             "DATA_ADDRESS_PROPS": "{}",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "DEFAULT_EDITOR_UXON": "{}"
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"InputSelect\",\"selectable_options\":[\"ASC\",\"DESC\"]}"
         },
         {
             "CREATED_ON": "2007-01-01 00:00:00",

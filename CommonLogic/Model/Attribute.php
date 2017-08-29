@@ -10,6 +10,8 @@ use exface\Core\Interfaces\ExfaceClassInterface;
 use exface\Core\Interfaces\iCanBeCopied;
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Interfaces\Model\DataTypeInterface;
+use exface\Core\CommonLogic\Constants\SortingDirections;
+use exface\Core\Exceptions\Model\MetaObjectModelError;
 
 /**
  * 
@@ -392,14 +394,31 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
         $this->fixed_value = $value;
     }
 
+    /**
+     * 
+     * @return \exface\Core\CommonLogic\Constants\SortingDirections
+     */
     public function getDefaultSorterDir()
     {
-        return $this->default_sorter_dir;
+        return $this->default_sorter_dir ? $this->default_sorter_dir : $this->getDataType()->getDefaultSortingDirection();
     }
 
+    /**
+     * 
+     * @param SortingDirections|string $value
+     */
     public function setDefaultSorterDir($value)
-    {
+    {        
+        if ($value instanceof SortingDirections){
+            // everything is OK
+        } elseif (SortingDirections::isValid(strtolower($value))){
+            $value = new SortingDirections(strtolower($value));
+        } else {
+            throw new UnexpectedValueException('Invalid value "' . $value . '" for default sorting direction in attribute "' . $this->getName() . '": use ASC or DESC');
+        }
+        
         $this->default_sorter_dir = $value;
+        return $this;
     }
 
     public function getObjectId()

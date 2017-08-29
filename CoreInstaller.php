@@ -5,7 +5,7 @@ use exface\Core\CommonLogic\AppInstallers\AbstractAppInstaller;
 
 /**
  *
- * @method CoreApp get_app()
+ * @method CoreApp getApp()
  *        
  * @author Andrej Kabachnik
  *        
