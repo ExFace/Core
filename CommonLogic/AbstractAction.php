@@ -1008,16 +1008,9 @@ abstract class AbstractAction implements ActionInterface
             if ($instance instanceof DataSheetMapper){
                 $mapper = $instance;
             } elseif ($instance instanceof UxonObject){
-                $mapper = DataSheetMapperFactory::createFromUxon($this->getWorkbench(), $instance);
+                $mapper = DataSheetMapperFactory::createFromUxon($this->getWorkbench(), $instance, null, $this->getMetaObject());
             } else {
                 throw new ActionConfigurationError($this, 'Error in specification of input mappers: expecting array of mappers or their UXON descriptions - "' . gettype($instance) . '" given instead!');
-            }
-            
-            // TODO this will fail if the mappers are placed in the UXON before the object alias.
-            try {
-                $mapper->getToMetaObject();
-            } catch (DataSheetMapperError $e){
-                $mapper->setToMetaObject($this->getMetaObject());
             }
             
             $this->addInputMapper($mapper);

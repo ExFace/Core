@@ -31,7 +31,7 @@ abstract class AbstractUxonFactory extends AbstractFactory
      * If the business object implements iCanBeConvertedToUxon, this method
      * will work automatically. Otherwise it needs to be overridden in the specific factory.
      *
-     * @param exface $exface            
+     * @param Workbench $exface            
      * @param UxonObject $uxon            
      * @throws UnexpectedValueException
      */
