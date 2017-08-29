@@ -73,8 +73,25 @@ class FileFinderConnector extends TransparentConnector
         }
         
         // If no paths could be found anywhere (= the query object did not have any folders defined), use the base path
-        if (count($paths) == 0) {
+        if (empty($paths)) {
             $paths[] = $query->getBasePath();
+        }
+        
+        // Now doublecheck if all explicit (non-wildcard) paths exists because otherwise
+        // finder will throw an error. Just remove all non-existant paths as the definitely
+        // do not contain files.
+        foreach ($paths as $nr => $path){
+            if (strpos($path, '*') === false && ! is_dir($path)){
+                unset($paths[$nr]);
+            }
+        }
+        
+        // If there are no paths at this point, we don't have any existing folder to look in,
+        // so add an empty result to the finder and return it. We must call in() or append()
+        // to be able to iterate over the finder!
+        if (empty($paths)){
+            $query->getFinder()->append([]);
+            return $query;
         }
         
         // Perform the search. This will fill the file and folder iterators in the finder instance. Thus, the resulting

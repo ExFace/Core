@@ -67,7 +67,7 @@ class ActionChain extends AbstractAction
         
         $result = null;
         $output = '';
-        $data = $this->getInputDataSheet()->copy();
+        $data = $this->getInputDataSheet();
         foreach ($this->getActions() as $action) {
             // Prepare the action
             // All actions obviously run in the same template

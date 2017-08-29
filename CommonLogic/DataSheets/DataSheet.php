@@ -37,7 +37,7 @@ use exface\Core\CommonLogic\Model\Relation;
 /**
  * Internal data respresentation object in exface.
  * Similar to an Excel-table:
- * |Column1|Column2|Column3|
+ *   |Column1|Column2|Column3|
  * 1 | value | value | value | \
  * 2 | value | value | value | > data rows: each one is an array(column=>value)
  * 3 | value | value | value | /

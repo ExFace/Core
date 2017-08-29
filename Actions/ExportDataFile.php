@@ -34,7 +34,7 @@ abstract class ExportDataFile extends ExportData
     protected function perform()
     {
         // DataSheet vorbereiten
-        $dataSheetMaster = $this->getInputDataSheet()->copy();
+        $dataSheetMaster = $this->getInputDataSheet();
         // Make sure, the input data has all the columns required for the widget
         // we export from. Generally this will not be the case, because the
         // widget calling the action is a button and it normally does not know

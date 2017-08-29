@@ -4,6 +4,7 @@ namespace exface\Core\DataTypes;
 use exface\Core\Interfaces\Model\DataTypeInterface;
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\Exceptions\DataTypeValidationError;
+use exface\Core\CommonLogic\Constants\SortingDirections;
 
 abstract class AbstractDataType implements DataTypeInterface
 {
@@ -96,6 +97,16 @@ abstract class AbstractDataType implements DataTypeInterface
             return false;
         }
         return true;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\DataTypeInterface::getDefaultSortingDirection()
+     */
+    public function getDefaultSortingDirection()
+    {
+        return SortingDirections::DESC();
     }
 }
 ?>

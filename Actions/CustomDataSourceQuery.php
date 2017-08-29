@@ -87,7 +87,7 @@ class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuer
     protected function perform()
     {
         $counter = 0;
-        $data_sheet = $this->getInputDataSheet()->copy();
+        $data_sheet = $this->getInputDataSheet();
         // Check if the action is aplicable to the input object
         if ($this->getAplicableToObjectAlias()) {
             if (! $data_sheet->getMetaObject()->is($this->getAplicableToObjectAlias())) {

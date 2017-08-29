@@ -193,10 +193,6 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
                     $data_column->getTotals()->add($total);
                 }
             }
-            
-            if (! $data_sheet->hasUidColumn()){
-                $data_sheet->getColumns()->addFromAttribute($data_sheet->getMetaObject()->getUidAttribute());
-            }
         }
         
         // Aggregations

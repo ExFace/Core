@@ -150,5 +150,12 @@ interface AppInterface extends ExfaceClassInterface, AliasInterface
      * @return boolean
      */
     public function containsClass($object_or_class_name);
+    
+    /**
+     * Returns the name resolver, that can be used to instantiate the app
+     * 
+     * @return NameResolverInterface
+     */
+    public function getNameResolver();
 }
 ?>

@@ -15,7 +15,7 @@ abstract class DataSheetFactory extends AbstractUxonFactory
      * Creates a data sheet for a give object.
      * The object can be passed directly or specified by it's fully qualified alias (with namespace!)
      *
-     * @param exface $exface            
+     * @param Workbench $exface            
      * @param Object|string $meta_object_or_alias            
      * @return DataSheetInterface
      */
@@ -31,7 +31,7 @@ abstract class DataSheetFactory extends AbstractUxonFactory
 
     /**
      *
-     * @param exface $exface            
+     * @param Workbench $exface            
      * @return DataSheetInterface
      */
     public static function createEmpty(Workbench $exface)
@@ -52,7 +52,7 @@ abstract class DataSheetFactory extends AbstractUxonFactory
 
     /**
      *
-     * @param exface $exface            
+     * @param Workbench $exface            
      * @param UxonObject $uxon            
      * @return DataSheetInterface
      */
@@ -70,8 +70,8 @@ abstract class DataSheetFactory extends AbstractUxonFactory
 
     /**
      *
-     * @param exface $exface            
-     * @param unknown $data_sheet_or_uxon            
+     * @param Workbench $exface            
+     * @param DataSheetInterface|UxonObject|\stdClass $data_sheet_or_uxon            
      * @throws InvalidArgumentException
      * @return DataSheetInterface
      */

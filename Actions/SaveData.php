@@ -27,7 +27,7 @@ class SaveData extends AbstractAction implements iModifyData, iCanBeUndone
 
     protected function perform()
     {
-        $data_sheet = $this->getInputDataSheet()->copy();
+        $data_sheet = $this->getInputDataSheet();
         $this->setAffectedRows($data_sheet->dataSave($this->getTransaction()));
         $this->setResultDataSheet($data_sheet);
         $this->setResult('');
