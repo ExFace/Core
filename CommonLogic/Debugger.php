@@ -3,8 +3,6 @@ namespace exface\Core\CommonLogic;
 
 use exface\Core\Interfaces\DebuggerInterface;
 use exface\Core\Interfaces\Log\LoggerInterface;
-use Symfony\Component\Debug\Debug;
-use Symfony\Component\Debug\Exception\FlattenException;
 use Symfony\Component\Debug\ErrorHandler;
 use Symfony\Component\VarDumper\Dumper\HtmlDumper;
 use Symfony\Component\VarDumper\Cloner\VarCloner;
@@ -31,7 +29,7 @@ class Debugger implements DebuggerInterface
     public function printException(\Throwable $exception, $use_html = true)
     {
         $handler = new DebuggerExceptionHandler();        
-        $flattened_exception = FlattenException::create($exception);
+        $flattened_exception = FlattenExceptionExface::create($exception);
         if ($use_html) {
             $output = <<<HTML
     <style>
