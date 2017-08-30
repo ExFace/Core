@@ -47,6 +47,14 @@ interface ConfigurationInterface extends ExfaceClassInterface, iCanBeConvertedTo
      * @return ConfigurationInterface
      */
     public function loadConfigUxon(UxonObject $uxon);
+    
+    /**
+     * Returns TRUE if a config option matching the given key exists and FALSE otherwise.
+     * 
+     * @param string $key
+     * @return boolean
+     */
+    public function hasOption($key);
 }
 
 ?>

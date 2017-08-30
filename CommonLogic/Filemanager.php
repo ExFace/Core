@@ -4,6 +4,7 @@ namespace exface\Core\CommonLogic;
 use Symfony\Component\Filesystem\Filesystem;
 use exface\Core\Interfaces\ExfaceClassInterface;
 use Webmozart\PathUtil\Path;
+use exface\Core\Exceptions\Configuration\ConfigOptionNotFoundError;
 
 class Filemanager extends Filesystem implements ExfaceClassInterface
 {
@@ -78,9 +79,18 @@ class Filemanager extends Filesystem implements ExfaceClassInterface
     public function getPathToUserDataFolder()
     {
         if (is_null($this->path_to_user_data_folder)) {
-            $this->path_to_user_data_folder = $this->getPathToBaseFolder() . DIRECTORY_SEPARATOR . static::FOLDER_NAME_USER_DATA;
+            /* TODO configurable userdata folder path did not work because Workbench::getConfig() also
+             * attempts to get the userdata folder to look for configs there, resulting in an infinite 
+             * loop. 
+             *
+            try {
+                $path = $this->getWorkbench()->getConfig()->getOption('FOLDERS.USERDATA_PATH_ABSOLUTE');
+            } catch (ConfigOptionNotFoundError $e) {
+                $path = '';
+            }*/
+            $this->path_to_user_data_folder = $path ? $path : $this->getPathToBaseFolder() . DIRECTORY_SEPARATOR . static::FOLDER_NAME_USER_DATA;
             if (! is_dir($this->path_to_user_data_folder)) {
-                mkdir($this->path_to_user_data_folder);
+                static::pathConstruct($this->path_to_user_data_folder);
             }
         }
         return $this->path_to_user_data_folder;
@@ -95,9 +105,15 @@ class Filemanager extends Filesystem implements ExfaceClassInterface
     public function getPathToCacheFolder()
     {
         if (is_null($this->path_to_cache_folder)) {
-            $this->path_to_cache_folder = $this->getPathToBaseFolder() . DIRECTORY_SEPARATOR . static::FOLDER_NAME_CACHE;
+            try {
+                $path = $this->getWorkbench()->getConfig()->getOption('FOLDERS.CACHE_PATH_ABSOLUTE');
+            } catch (ConfigOptionNotFoundError $e) {
+                $path = '';
+            }
+            
+            $this->path_to_cache_folder = $path ? $path : $this->getPathToBaseFolder() . DIRECTORY_SEPARATOR . static::FOLDER_NAME_CACHE;
             if (! is_dir($this->path_to_cache_folder)) {
-                mkdir($this->path_to_cache_folder);
+                static::pathConstruct($this->path_to_cache_folder);
             }
         }
         return $this->path_to_cache_folder;
@@ -145,9 +161,14 @@ class Filemanager extends Filesystem implements ExfaceClassInterface
     public function getPathToLogFolder()
     {
         if (is_null($this->path_to_log_folder)) {
-            $this->path_to_log_folder = $this->getPathToBaseFolder() . DIRECTORY_SEPARATOR . static::FOLDER_NAME_LOG;
+            try {
+                $path = $this->getWorkbench()->getConfig()->getOption('FOLDERS.LOGS_PATH_ABSOLUTE');
+            } catch (ConfigOptionNotFoundError $e) {
+                $path = '';
+            }
+            $this->path_to_log_folder = $path ? $path : $this->getPathToBaseFolder() . DIRECTORY_SEPARATOR . static::FOLDER_NAME_LOG;
             if (! is_dir($this->path_to_log_folder)) {
-                mkdir($this->path_to_log_folder);
+                static::pathConstruct($this->path_to_log_folder);
             }
         }
         return $this->path_to_log_folder;
@@ -187,9 +208,14 @@ class Filemanager extends Filesystem implements ExfaceClassInterface
     public function getPathToBackupFolder()
     {
         if (is_null($this->path_to_backup_folder)) {
-            $this->path_to_backup_folder = $this->getPathToBaseFolder() . DIRECTORY_SEPARATOR . static::FOLDER_NAME_BACKUP;
+            try {
+                $path = $this->getWorkbench()->getConfig()->getOption('FOLDERS.BACKUP_PATH_ABSOLUTE');
+            } catch (ConfigOptionNotFoundError $e) {
+                $path = '';
+            }
+            $this->path_to_backup_folder = $path ? $path : $this->getPathToBaseFolder() . DIRECTORY_SEPARATOR . static::FOLDER_NAME_BACKUP;
             if (! is_dir($this->path_to_backup_folder)) {
-                mkdir($this->path_to_backup_folder);
+                static::pathConstruct($this->path_to_backup_folder);
             }
         }
         return $this->path_to_backup_folder;
