@@ -80,7 +80,7 @@ abstract class ExportDataFile extends ExportData
         $this->writeFileResult($dataSheetMaster);
         $url = $this->getWorkbench()->getCMS()->createLinkToFile($this->getPathname());
         $this->setResult($url);
-        $this->setResultMessage($resultMessage . 'Download ready. If it does not start automatically, click <a href="' . $url . '">here</a>.');
+        $this->setResultMessage($resultMessage ? $resultMessage : 'Download ready. If it does not start automatically, click <a href="' . $url . '">here</a>.');
     }
 
     /**
