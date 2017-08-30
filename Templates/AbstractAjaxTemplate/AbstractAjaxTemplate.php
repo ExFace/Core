@@ -3,7 +3,6 @@ namespace exface\Core\Templates\AbstractAjaxTemplate;
 
 use exface\Core\CommonLogic\AbstractTemplate;
 use exface\Core\Interfaces\Actions\ActionInterface;
-use exface\Core\Widgets\Data;
 use exface\Core\Widgets\AbstractWidget;
 use exface\Core\Interfaces\Widgets\iTriggerAction;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
@@ -23,9 +22,7 @@ use exface\Core\Exceptions\Templates\TemplateRequestParsingError;
 use exface\Core\Events\WidgetEvent;
 use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 use exface\Core\Exceptions\InternalError;
-use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\Interfaces\Actions\iModifyContext;
-use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 
 abstract class AbstractAjaxTemplate extends AbstractTemplate
 {
@@ -213,9 +210,9 @@ abstract class AbstractAjaxTemplate extends AbstractTemplate
      * It's just a shortcut in case you do not have the widget object at
      * hand, but know it's ID and the resource, where it resides.
      *
-     * @param strig $widget_id            
+     * @param string $widget_id            
      * @param string $page_id            
-     * @return \exface\Templates\jeasyui\Widgets\jeasyuiAbstractWidget
+     * @return AbstractJqueryElement
      */
     public function getElementByWidgetId($widget_id, $page_id)
     {
