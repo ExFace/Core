@@ -18,6 +18,8 @@ use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\NameResolverInterface;
 use exface\Core\Exceptions\Configuration\ConfigOptionNotFoundError;
 use exface\Core\Interfaces\DataSources\DataManagerInterface;
+use exface\Core\Exceptions\UnexpectedValueException;
+use exface\Core\Exceptions\RuntimeException;
 
 class Workbench
 {
@@ -60,6 +62,11 @@ class Workbench
         
         // Init composer autoload
         require_once ($this->getVendorDirPath() . DIRECTORY_SEPARATOR . 'autoload.php');
+        
+        // If the config overrides the installation path, use the config value, otherwise go one level up from the vendor folder.
+        if ($this->getConfig()->hasOption('FOLDERS.INSTALLATION_PATH_ABSOLUTE') && $installation_path = $this->getConfig()->getOption("FOLDERS.INSTALLATION_PATH_ABSOLUTE")) {
+            $this->setInstallationPath($installation_path);
+        } 
         
         // If the current config uses the live autoloader, load it right next
         // to the one from composer.
@@ -337,16 +344,30 @@ class Workbench
     public function getInstallationPath()
     {
         if (is_null($this->installation_path)) {
-            // If the config overrides the installation path, use the config value, otherwise go one level up from the vendor folder.
-            if ($this->getConfig()->hasOption('FOLDERS.INSTALLATION_PATH_ABSOLUTE') && $installation_path = $this->getConfig()->getOption("FOLDERS.INSTALLATION_PATH_ABSOLUTE")) {
-                // NOTE: overriding the installation path in the config will also change the vendor path!!!
-                $this->installation_path = $installation_path;
-                $this->vendor_dir_path = $installation_path . DIRECTORY_SEPARATOR . Filemanager::FOLDER_NAME_VENDOR;
-            } else {
-                $this->installation_path = Filemanager::pathNormalize($this->getVendorDirPath() . DIRECTORY_SEPARATOR . '..', DIRECTORY_SEPARATOR);
-            }
+            $this->installation_path = Filemanager::pathNormalize($this->getVendorDirPath() . DIRECTORY_SEPARATOR . '..', DIRECTORY_SEPARATOR);
         }
         return $this->installation_path;
+    }
+    
+    /**
+     * Changes the path to the installation folder and the vendor folder for this instance.
+     * 
+     * @param string $absolute_path
+     * @return Workbench
+     */
+    private function setInstallationPath($absolute_path)
+    {
+        if ($this->isStarted()){
+            throw new RuntimeException('Cannot override installation path after the workbench has started!');
+        }
+        
+        if (! is_dir($absolute_path)){
+            throw new UnexpectedValueException('Cannot override default installation path with "' . $absolute_path . '": folder does not exist!');
+        }
+        
+        $this->installation_path = $absolute_path;
+        $this->vendor_dir_path = $absolute_path . DIRECTORY_SEPARATOR . Filemanager::FOLDER_NAME_VENDOR;
+        return $this;
     }
     
     private function getVendorDirPath()
