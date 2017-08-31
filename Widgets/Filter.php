@@ -277,7 +277,7 @@ class Filter extends Container implements iCanBeRequired, iShowSingleAttribute
         $uxon = parent::exportUxonObject();
         $uxon->setProperty('comparator', $this->getComparator());
         $uxon->setProperty('required', $this->isRequired());
-        $uxon->setProperty('widget', $this->getInputWidget()->exportUxonObject());
+        $uxon->setProperty('input_widget', $this->getInputWidget()->exportUxonObject());
         return $uxon;
     }
 }
