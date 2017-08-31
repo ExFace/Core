@@ -1,7 +1,6 @@
 <?php
 namespace exface\Core\CommonLogic\DataSheets;
 
-use exface\Core\CommonLogic\Model\Attribute;
 use exface\Core\CommonLogic\Model\Expression;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\CommonLogic\Model\Formula;
@@ -20,7 +19,7 @@ use exface\Core\Exceptions\UnexpectedValueException;
 class DataColumn implements DataColumnInterface
 {
 
-    const COLUMN_NAME_VALIDATOR = '[^A-Za-z0-9_\.]';
+    const COLUMN_NAME_VALIDATOR = '[^A-Za-z0-9_]';
 
     // Properties, _not_ to be dublicated on copy()
     private $data_sheet = null;
