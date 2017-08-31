@@ -354,6 +354,10 @@ JS;
 				}';
         }
         
+        if ($widget->getContextMenuEnabled() && $widget->hasButtons()){
+            $context_menu_js = "context.attach('#{$this->getId()} tbody tr', {$this->buildJsContextMenu($widget->getButtons())});";
+        }
+        
         return <<<JS
 
     $('#{$this->getId()}').DataTable( {
@@ -375,7 +379,7 @@ JS;
 				{$this->getId()}_table.row($(e.target).closest('tr')).select();
 			});
 			$('#{$this->getId()}').closest('.fitem').trigger('resize');
-            context.attach('#{$this->getId()} tbody tr', [{$this->buildJsContextMenu()}]);
+            {$context_menu_js}
 			if({$this->getId()}_table){
 				{$this->getId()}_drawPagination();
 				{$this->getId()}_table.columns.adjust();
