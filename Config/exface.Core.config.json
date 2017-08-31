@@ -34,17 +34,17 @@
 	},
 	
 	"WIDGET.DATATOOLBAR.GLOBAL_ACTIONS": [
-	   {
-	       "alias": "exface.Core.ObjectBasketAdd"
-	   },
-	   {
-           "alias": "exface.Core.FavoritesAdd"
-       },
-        {
-            "alias": "exface.Core.ExportXLSX"
-        },
-        {
-            "alias": "exface.Core.ExportCSV"
-        }
+	    {
+	        "alias": "exface.Core.ObjectBasketAdd"
+	    },
+	    {
+	        "alias": "exface.Core.FavoritesAdd"
+	    },
+		{
+		    "alias": "exface.Core.ExportXLSX"
+		},
+		{
+		    "alias": "exface.Core.ExportCSV"
+		}
 	]
 }
