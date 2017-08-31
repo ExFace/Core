@@ -213,6 +213,7 @@ class ObjectBasketContext extends AbstractContext
     {       
         /* @var $menu \exface\Core\Widgets\Menu */
         $menu = WidgetFactory::create($container->getPage(), 'Menu', $container);
+        $menu->setCaption($this->getName());
         
         // Fill with buttons
         foreach ($this->getFavoritesAll() as $data_sheet) {
