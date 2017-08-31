@@ -11,6 +11,7 @@ use exface\Core\Interfaces\AliasInterface;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Exceptions\RuntimeException;
+use exface\Core\CommonLogic\Model\UiPage;
 
 /**
  * A page represents on screen of the UI and is basically the model for a web page in most cases.
@@ -129,6 +130,8 @@ interface UiPageInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
     /**
      * Returns FALSE if the page should not be updated automatically when its
      * app is updated and TRUE otherwise (default).
+     * 
+     * @return boolean
      */
     public function isUpdateable();
     
@@ -138,7 +141,7 @@ interface UiPageInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
      * @param boolean $true_or_false
      * @return UiPageInterface
      */
-    public function setUpdateable($true_or_false);
+    public function setUpdateable(bool $true_or_false);
     
     /**
      * Returns the alias of the parent page or NULL if this page has no alias.
@@ -156,6 +159,21 @@ interface UiPageInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
     public function setMenuParentAlias($alias_with_namespace);
     
     /**
+     * Returns the id of the parent page that the CMS uses.
+     * 
+     * @return string
+     */
+    public function getMenuParentIdCms();
+    
+    /**
+     * Sets the id of the parent page that the CMS uses.
+     * 
+     * @param string $menuParentIdCms
+     * @return UiPageInterface
+     */
+    public function setMenuParentIdCms($menuParentIdCms);
+    
+    /**
      * Returns the parent ui page or NULL if this page has no parent
      * 
      * @return UiPageInterface|null
@@ -166,7 +184,6 @@ interface UiPageInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
      * Sets the given page as parent for the current one.
      * 
      * @param UiPageInterface $page
-     * 
      * @return UiPageInterface
      */
     public function setMenuParentPage(UiPageInterface $page);
@@ -203,9 +220,24 @@ interface UiPageInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
      * Overwrites the unique id of the page
      * 
      * @param string $uid
-     * @return \exface\Core\CommonLogic\Model\UiPage
+     * @return UiPageInterface
      */
     public function setId($uid);
+    
+    /**
+     * Returns the id of the page that the CMS uses.
+     * 
+     * @return string
+     */
+    public function getIdCms();
+    
+    /**
+     * Sets the id of the page that the CMS uses.
+     * 
+     * @param string $idCms
+     * @return UiPageInterface
+     */
+    public function setIdCms($idCms);
     
     /**
      * Returns the name of the page.
@@ -220,7 +252,6 @@ interface UiPageInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
      * Overwrites the name of the page.
      * 
      * @param string $string
-     * 
      * @return UiPageInterface
      */
     public function setName($string);
@@ -242,7 +273,6 @@ interface UiPageInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
      * templates.
      * 
      * @param string $string
-     * 
      * @return UiPageInterface
      */
     public function setShortDescription($string);
@@ -266,7 +296,6 @@ interface UiPageInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
      * original page itself - similarly to replacing a meta object.
      * 
      * @param string $alias_with_namespace
-     * 
      * @return UiPageInterface
      */
     public function setReplacesPageAlias($alias_with_namespace);
@@ -291,7 +320,8 @@ interface UiPageInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
      * NOTE: This does not change the page in the CMS right away! Use savePage()
      * to save changes permanently!
      *
-     * @return string
+     * @param string $string
+     * @return UiPageInterface
      */
     public function setContents($string);
     

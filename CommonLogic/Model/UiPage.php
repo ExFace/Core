@@ -12,6 +12,7 @@ use exface\Core\DataTypes\StringDataType;
 use exface\Core\Factories\EventFactory;
 use exface\Core\Exceptions\Widgets\WidgetNotFoundError;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Exceptions\RuntimeException;
 
 /**
  * This is the default implementation of the UiPageInterface.
@@ -31,8 +32,6 @@ class UiPage implements UiPageInterface
 
     private $widgets = array();
 
-    private $id = null;
-
     private $template = null;
 
     private $ui = null;
@@ -44,7 +43,33 @@ class UiPage implements UiPageInterface
     const WIDGET_ID_SEPARATOR = '_';
 
     const WIDGET_ID_SPACE_SEPARATOR = '.';
+    
+    private $appAlias = null;
+    
+    private $updateable = true;
 
+    private $menuParentAlias = null;
+    
+    private $menuParentCmsId = null;
+    
+    private $menuParentPage = null;
+    
+    private $menuIndex = 0;
+    
+    private $id = null;
+    
+    private $idCms = null;
+    
+    private $name = null;
+    
+    private $shortDescription = null;
+    
+    private $replacesPageAlias = null;
+    
+    private $contents = null;
+    
+    private $alias = null;
+    
     /**
      *
      * @deprecated use UiPageFactory::create() instead!
@@ -234,26 +259,7 @@ class UiPage implements UiPageInterface
         return $string;
     }
 
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\UiPageInterface::getId()
-     */
-    public function getId()
-    {
-        return $this->id;
-    }
-
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\UiPageInterface::setId()
-     */
-    public function setId($value)
-    {
-        $this->id = $value;
-        return $this;
-    }
+    
 
     /**
      *
@@ -395,38 +401,311 @@ class UiPage implements UiPageInterface
     
     /**
      * TODO #ui-page-installer
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::getApp()
+     */
+    public function getApp()
+    {
+        if (! is_null($this->getAppAlias())) {
+            
+        } else {
+            throw new RuntimeException('This page is not part of any app!');
+        }
+    }
+    
+    /**
+     * 
+     * @return string
+     */
+    public function getAppAlias()
+    {
+        return $this->appAlias;
+    }
+    
+    /**
+     * 
+     * @param string $appAlias
+     * @return \exface\Core\CommonLogic\Model\UiPage
+     */
+    public function setAppAlias($appAlias)
+    {
+        $this->appAlias = $appAlias;
+        return $this;
+    }
+    
+    /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\UiPageInterface::setName()
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::isUpdateable()
      */
-    public function setName($string)
-    {}
-
+    public function isUpdateable()
+    {
+        return $this->updateable;
+    }
+    
     /**
-     * TODO #ui-page-installer
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\UiPageInterface::setShortDescription()
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::setUpdateable()
      */
-    public function setShortDescription($string)
-    {}
-
+    public function setUpdateable(bool $true_or_false)
+    {
+        $this->updateable = $true_or_false;
+        return $this;
+    }
+    
     /**
-     * TODO #ui-page-installer
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\UiPageInterface::getName()
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::getMenuParentAlias()
      */
-    public function getName()
-    {}
-
+    public function getMenuParentAlias()
+    {
+        return $this->menuParentAlias;
+    }
+    
     /**
-     * TODO #ui-page-installer
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\UiPageInterface::setMenuParentAlias()
      */
     public function setMenuParentAlias($alias_with_namespace)
+    {
+        $this->menuParentAlias = $alias_with_namespace;
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::getMenuParentIdCms()
+     */
+    public function getMenuParentIdCms()
+    {
+        return $this->menuParentCmsId;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::setMenuParentIdCms()
+     */
+    public function setMenuParentIdCms($menuParentIdCms)
+    {
+        $this->menuParentCmsId = $menuParentIdCms;
+        return $this;
+    }
+    
+    /**
+     * TODO #ui-page-installer
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::getMenuParentPage()
+     */
+    public function getMenuParentPage()
+    {}
+    
+    /**
+     * TODO #ui-page-installer
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::setMenuParentPage()
+     */
+    public function setMenuParentPage(UiPageInterface $page)
+    {}
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::getMenuIndex()
+     */
+    public function getMenuIndex()
+    {
+        return $this->menuIndex;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::setMenuIndex()
+     */
+    public function setMenuIndex($number)
+    {
+        $this->menuIndex = $number;
+        return $this;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::getId()
+     */
+    public function getId()
+    {
+        return $this->id;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::setId()
+     */
+    public function setId($uid)
+    {
+        $this->id = $uid;
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::getIdCms()
+     */
+    public function getIdCms()
+    {
+        return $this->idCms;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::setIdCms()
+     */
+    public function setIdCms($idCms)
+    {
+        $this->idCms = $idCms;
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::getName()
+     */
+    public function getName()
+    {
+        return $this->name;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::setName()
+     */
+    public function setName($string)
+    {
+        $this->name = $string;
+        return $this;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::getShortDescription()
+     */
+    public function getShortDescription()
+    {
+        return $this->shortDescription;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::setShortDescription()
+     */
+    public function setShortDescription($string)
+    {
+        $this->shortDescription = $string;
+        return $this;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::getReplacesPageAlias()
+     */
+    public function getReplacesPageAlias()
+    {
+        return $this->replacesPageAlias;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::setReplacesPageAlias()
+     */
+    public function setReplacesPageAlias($alias_with_namespace)
+    {
+        $this->replacesPageAlias = $alias_with_namespace;
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::getContents()
+     */
+    public function getContents()
+    {
+        return $this->contents;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::setContents()
+     */
+    public function setContents($string)
+    {
+        $this->contents = $string;
+        
+        // TODO The new contents will be parsed immediately and all widgets in the page
+        // will be recreated.
+        
+        return $this;
+    }
+    
+    /**
+     * TODO #ui-page-installer
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\AliasInterface::getAlias()
+     */
+    public function getAlias()
+    {
+        return $this->alias;
+    }
+    
+    /**
+     *
+     * @param string $alias
+     * @return UiPageInterface
+     */
+    public function setAlias($alias)
+    {
+        $this->alias = $alias;
+        return $this;
+    }
+    
+    /**
+     * TODO #ui-page-installer
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\AliasInterface::getAliasWithNamespace()
+     */
+    public function getAliasWithNamespace()
+    {
+        return $this->alias;
+    }
+    
+    /**
+     * TODO #ui-page-installer
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\AliasInterface::getNamespace()
+     */
+    public function getNamespace()
     {}
 
     /**
@@ -442,141 +721,10 @@ class UiPage implements UiPageInterface
      * TODO #ui-page-installer
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\UiPageInterface::setMenuParentPage()
-     */
-    public function setMenuParentPage(UiPageInterface $page)
-    {}
-
-    /**
-     * TODO #ui-page-installer
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\UiPageInterface::getMenuParentAlias()
-     */
-    public function getMenuParentAlias()
-    {}
-
-    /**
-     * TODO #ui-page-installer
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\UiPageInterface::isUpdateable()
-     */
-    public function isUpdateable()
-    {}
-
-    /**
-     * TODO #ui-page-installer
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\UiPageInterface::setUpdateable()
-     */
-    public function setUpdateable($true_or_false)
-    {}
-
-    /**
-     * TODO #ui-page-installer
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\UiPageInterface::getApp()
-     */
-    public function getApp()
-    {}
-
-    /**
-     * TODO #ui-page-installer
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\UiPageInterface::getMenuParentPage()
-     */
-    public function getMenuParentPage()
-    {}
-
-    /**
-     * TODO #ui-page-installer
-     * 
-     * {@inheritDoc}
      * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::importUxonObject()
      */
     public function importUxonObject(UxonObject $uxon)
     {}
-
-    /**
-     * TODO #ui-page-installer
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\AliasInterface::getAliasWithNamespace()
-     */
-    public function getAliasWithNamespace()
-    {}
-
-    /**
-     * TODO #ui-page-installer
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\UiPageInterface::getShortDescription()
-     */
-    public function getShortDescription()
-    {}
-
-    /**
-     * TODO #ui-page-installer
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\AliasInterface::getNamespace()
-     */
-    public function getNamespace()
-    {}
-
-    /**
-     * TODO #ui-page-installer
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\AliasInterface::getAlias()
-     */
-    public function getAlias()
-    {}
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\UiPageInterface::setReplacesPageAlias()
-     */
-    public function setReplacesPageAlias($alias_with_namespace)
-    {
-        // TODO #ui-page-installer
-    }
-
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\UiPageInterface::getReplacesPageAlias()
-     */
-    public function getReplacesPageAlias()
-    {    
-        // TODO #ui-page-installer
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\UiPageInterface::getContents()
-     */
-    public function getContents()
-    {
-        // TODO #ui-page-installer
-    }
-
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\UiPageInterface::setContents()
-     */
-    public function setContents($string)
-    {
-        // TODO #ui-page-installer
-    }
-
 }
 
 ?>
