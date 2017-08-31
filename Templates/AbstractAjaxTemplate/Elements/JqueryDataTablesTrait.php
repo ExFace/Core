@@ -368,7 +368,7 @@ JS;
 		{$paging_options}
 		"scrollX": true,
 		"scrollXollapse": true,
-		{$this->buildJsDataSource($filters_ajax)}
+		{$this->buildJsDataSource()}
 		"language": {
             "zeroRecords": "{$widget->getEmptyText()}"
         },
