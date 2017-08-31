@@ -9,8 +9,18 @@ use exface\Core\CommonLogic\Workbench;
 use exface\Core\Exceptions\DataSheets\DataSheetMapperError;
 use exface\Core\Exceptions\DataSheets\DataSheetMapperInvalidInputError;
 use exface\Core\Factories\DataSheetFactory;
+use exface\Core\Interfaces\DataSheets\DataMappingInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetMapperInterface;
+use exface\Core\Interfaces\DataSheets\DataColumnMappingInterface;
 
+/**
+ * Maps data from one data sheet to another using mappers for columns, filters, sorters, etc.
+ * 
+ * @see DataSheetMapperInterface
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
 class DataSheetMapper implements DataSheetMapperInterface {
     
     use ImportUxonObjectTrait;
@@ -21,7 +31,7 @@ class DataSheetMapper implements DataSheetMapperInterface {
     
     private $toMetaObject = null;
     
-    private $ExpressionMaps = [];
+    private $columnMappings = [];
     
     public function __construct(Workbench $workbench)
     {
@@ -46,7 +56,7 @@ class DataSheetMapper implements DataSheetMapperInterface {
         $toSheet = DataSheetFactory::createFromObject($this->getToMetaObject());
         
         // Fill the to-sheet with the mappings
-        foreach ($this->getExpressionMaps() as $map){
+        foreach ($this->getColumnMappings() as $map){
             $toSheet = $map->map($fromSheet, $toSheet);
         }
         
@@ -64,7 +74,7 @@ class DataSheetMapper implements DataSheetMapperInterface {
     {
         // Only try to add new columns if the sheet has a UID column and is fresh (no values changed)
         if ($data_sheet->hasUidColumn() && $data_sheet->isFresh()){
-            foreach ($this->getExpressionMaps() as $map){
+            foreach ($this->getColumnMappings() as $map){
                 $from_expression = $map->getFromExpression();
                 if (! $data_sheet->getColumns()->getByExpression($from_expression)){
                     $data_sheet->getColumns()->addFromExpression($from_expression);
@@ -92,7 +102,8 @@ class DataSheetMapper implements DataSheetMapperInterface {
     
     /**
      * 
-     * @return Object
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetMapperInterface::getFromMetaObject()
      */
     public function getFromMetaObject()
     {
@@ -105,8 +116,9 @@ class DataSheetMapper implements DataSheetMapperInterface {
     }
 
     /**
-     * @param Object $object
-     * @return DataSheetMapper
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetMapperInterface::setFromMetaObject()
      */
     public function setFromMetaObject(Object $object)
     {
@@ -116,8 +128,8 @@ class DataSheetMapper implements DataSheetMapperInterface {
     
     /**
      * 
-     * @param string $alias_with_namespace
-     * @return DataSheetMapper
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetMapperInterface::setFromObjectAlias()
      */
     public function setFromObjectAlias($alias_with_namespace)
     {
@@ -126,7 +138,8 @@ class DataSheetMapper implements DataSheetMapperInterface {
     
     /**
      * 
-     * @return \exface\Core\CommonLogic\Workbench
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\ExfaceClassInterface::getWorkbench()
      */
     public function getWorkbench()
     {
@@ -134,7 +147,9 @@ class DataSheetMapper implements DataSheetMapperInterface {
     }
     
     /**
-     * @return Object
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetMapperInterface::getToMetaObject()
      */
     public function getToMetaObject()
     {
@@ -146,7 +161,9 @@ class DataSheetMapper implements DataSheetMapperInterface {
     }
 
     /**
-     * @param Object $toMetaObject
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetMapperInterface::setToMetaObject()
      */
     public function setToMetaObject(Object $toMetaObject)
     {
@@ -155,52 +172,76 @@ class DataSheetMapper implements DataSheetMapperInterface {
     }
 
     /**
-     * @return DataSheetExpressionMap[]
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetMapperInterface::getColumnMappings()
      */
-    public function getExpressionMaps()
+    public function getColumnMappings()
     {
-        return $this->ExpressionMaps;
+        return $this->columnMappings;
     }
 
     /**
      * 
-     * @param DataSheetExpressionMap[]|UxonObject[]
-     * @return DataSheetMapper
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetMapperInterface::setColumnMappings()
      */
-    public function setExpressionMaps(array $expressionMapsOrUxonObjects)
+    public function setColumnMappings(array $ColumnMappingsOrUxonObjects)
     {
-        foreach ($expressionMapsOrUxonObjects as $instance){
-            if ($instance instanceof DataSheetExpressionMap){
+        foreach ($ColumnMappingsOrUxonObjects as $instance){
+            if ($instance instanceof DataColumnMappingInterface){
                 $map = $instance;
             } elseif ($instance instanceof UxonObject){
-                $map = $this->createExpressionMap();
-                $map->importUxonObject($instance);                
+                $map = $this->createDataColumnMapping($instance);            
             } else {
-                throw new DataSheetMapperError($this, 'Invalid format "' . gettype($instance) . '" of expression mapping given: expecting instantiated DataSheetExpressionMap or its UXON description!');
+                throw new DataSheetMapperError($this, 'Invalid format "' . gettype($instance) . '" of column mapping given: expecting instantiated DataColumnMapping or its UXON description!');
             }
             
-            $this->addExpressionMap($map);
+            $this->addColumnMapping($map);
         }
         return $this;
     }
     
     /**
-     * @return DataSheetExpressionMap
+     * @return DataColumnMappingInterface
      */
-    protected function createExpressionMap()
+    protected function createDataColumnMapping(UxonObject $uxon = null)
     {
-        return new DataSheetExpressionMap($this);
+        $mapping = new DataColumnMapping($this);
+        if (!is_null($uxon)){
+            $mapping->importUxonObject($uxon);
+        }
+        return $mapping;
     }
     
+   /**
+    * 
+    * {@inheritDoc}
+    * @see \exface\Core\Interfaces\DataSheets\DataSheetMapperInterface::addColumnMapping()
+    */
+    public function addColumnMapping(DataColumnMappingInterface $map)
+    {
+        $this->columnMappings[] = $map;
+        return $this;
+    }
+
     /**
      * 
-     * @param DataSheetExpressionMap $map
-     * @return \exface\Core\CommonLogic\DataSheets\DataSheetMapper
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetMapperInterface::setExpressionMappings()
      */
-    public function addExpressionMap(DataSheetExpressionMap $map)
+    public function setExpressionMappings(array $uxonObjects)
     {
-        $this->ExpressionMaps[] = $map;
-        return $this;
+        foreach ($uxonObjects as $instance){
+            if ($instance instanceof UxonObject){
+                $column = $this->createDataColumnMapping($instance);
+                $this->addColumnMapping($column);
+                
+                // TODO map filters, sorters and aggregators
+            } else {
+                throw new DataSheetMapperError($this, 'Invalid format "' . gettype($instance) . '" of expression mapping given: expecting UXON mapping description!');
+            }
+        }
     }
     
 }

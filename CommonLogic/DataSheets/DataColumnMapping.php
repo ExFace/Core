@@ -2,18 +2,24 @@
 namespace exface\Core\CommonLogic\DataSheets;
 
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\CommonLogic\Model\Expression;
 use exface\Core\Factories\ExpressionFactory;
-use exface\Core\Interfaces\ExfaceClassInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\Exceptions\DataSheets\DataSheetMapperError;
+use exface\Core\Interfaces\DataSheets\DataColumnMappingInterface;
 
-class DataSheetExpressionMap implements iCanBeConvertedToUxon, ExfaceClassInterface {
+/**
+ * Maps one data sheet column to another column of another sheet.
+ * 
+ * @see DataColumnMappingInterface
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
+class DataColumnMapping implements DataColumnMappingInterface {
     
     use ImportUxonObjectTrait;
-    
-    private $workbench = null;
     
     private $mapper = null;
     
@@ -39,7 +45,9 @@ class DataSheetExpressionMap implements iCanBeConvertedToUxon, ExfaceClassInterf
     }
     
     /**
-     * @return Expression
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataColumnMappingInterface::getFromExpression()
      */
     public function getFromExpression()
     {
@@ -47,19 +55,29 @@ class DataSheetExpressionMap implements iCanBeConvertedToUxon, ExfaceClassInterf
     }
 
     /**
-     * 
-     * @param Expression $stringOrExpression
-     * @return DataSheetExpressionMap
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataColumnMappingInterface::setFromExpression()
      */
-    public function setFromExpression($stringOrExpression)
+    public function setFromExpression(Expression $expression)
     {
-        $this->fromExpression = $stringOrExpression;
+        if ($expression->isReference()){
+            throw new DataSheetMapperError($this->getMapper(), 'Cannot use widget links as expressions in data mappers!');
+        }
+        $this->fromExpression = $expression;
         return $this;
     }
     
     /**
+     * Any use of this expression in the data sheet will be transformed to the to-expression in the mapped sheet.
      * 
-     * @param string $string
+     * The expression can be an attribute alias, a constant or a formula.
+     * 
+     * @uxon-property from
+     * @uxon-type string
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataMappingInterface::setFrom()
      */
     public function setFrom($string)
     {
@@ -69,8 +87,8 @@ class DataSheetExpressionMap implements iCanBeConvertedToUxon, ExfaceClassInterf
 
     /**
      * 
-     * @return DataSheetExpressionMap
-     * @return Expression
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataColumnMappingInterface::getToExpression()
      */
     public function getToExpression()
     {
@@ -79,18 +97,26 @@ class DataSheetExpressionMap implements iCanBeConvertedToUxon, ExfaceClassInterf
 
     /**
      * 
-     * @param Expression $stringOrExpression
-     * @return DataSheetExpressionMap
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataColumnMappingInterface::setToExpression()
      */
-    public function setToExpression($stringOrExpression)
+    public function setToExpression(Expression $expression)
     {
-        $this->toExpression = $stringOrExpression;
+        if ($expression->isReference()){
+            throw new DataSheetMapperError($this->getMapper(), 'Cannot use widget links as expressions in data mappers!');
+        }
+        $this->toExpression = $expression;
         return $this;
     }
     
     /**
-     *
-     * @param string $string
+     * This is the expression, that the from-expression is going to be translated to.
+     * 
+     * @uxon-property from
+     * @uxon-type string
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataMappingInterface::setTo()
      */
     public function setTo($string)
     {
@@ -101,7 +127,8 @@ class DataSheetExpressionMap implements iCanBeConvertedToUxon, ExfaceClassInterf
    
     /**
      * 
-     * @return \exface\Core\CommonLogic\DataSheets\DataSheetMapper
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataMappingInterface::getMapper()
      */
     public function getMapper()
     {
@@ -120,17 +147,14 @@ class DataSheetExpressionMap implements iCanBeConvertedToUxon, ExfaceClassInterf
     
     /**
      * 
-     * @param DataSheetInterface $fromSheet
-     * @param DataSheetInterface $toSheet
-     * @return $this;
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataMappingInterface::map()
      */
     public function map(DataSheetInterface $fromSheet, DataSheetInterface $toSheet)
     {
         if ($fromCol = $fromSheet->getColumns()->getByExpression($this->getFromExpression())){
             $toSheet->getColumns()->addFromExpression($this->getToExpression(), '', $fromCol->getHidden())->setValues($fromCol->getValues(false));
         }
-        
-        // TODO map filters, sorters and aggregators
         
         return $toSheet;
     }
