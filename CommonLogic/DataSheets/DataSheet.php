@@ -1693,6 +1693,21 @@ class DataSheet implements DataSheetInterface
             return false;
         }
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::hasColumTotals()
+     */
+    public function hasColumTotals()
+    {
+        foreach ($this->getColumns() as $col){
+            if ($col->hasTotals()){
+                return true;
+            }
+        }
+        return false;
+    }
 }
 
 ?>

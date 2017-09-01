@@ -969,16 +969,14 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
      *
      * @return boolean
      */
-    public function hasFooter()
+    public function hasColumnFooters()
     {
-        $result = false;
         foreach ($this->getColumns() as $col) {
             if ($col->hasFooter()) {
-                $result = true;
-                break;
+                return true;
             }
         }
-        return $result;
+        return false;
     }
 
     public function getEmptyText()

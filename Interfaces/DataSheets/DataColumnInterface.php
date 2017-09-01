@@ -241,6 +241,13 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
      * @return DataColumnTotalsListInterface
      */
     public function getTotals();
+    
+    /**
+     * Returns TRUE if the column has at least one total function and FALSE otherwise.
+     * 
+     * @return boolean
+     */
+    public function hasTotals();
 
     /**
      * Returns FALSE if the column contains at least one data row and TRUE otherwise

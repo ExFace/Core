@@ -441,6 +441,13 @@ interface DataSheetInterface extends ExfaceClassInterface, iCanBeCopied, iCanBeC
      * @return DataSheetInterface
      */
     public function dataMarkInvalid();
+    
+    /**
+     * Returns TRUE if at least one column has a footer and FALSE otherwise.
+     * 
+     * @return boolean
+     */
+    public function hasColumTotals();
 }
 
 ?>

@@ -35,7 +35,7 @@ class DataColumn implements DataColumnInterface
 
     private $fresh = false;
 
-    private $totals = array();
+    private $totals = null;
 
     private $ignore_fixed_values = false;
 
@@ -50,11 +50,9 @@ class DataColumn implements DataColumnInterface
 
     function __construct($expression, $name = '', DataSheetInterface $data_sheet)
     {
-        $exface = $data_sheet->getWorkbench();
         $this->data_sheet = $data_sheet;
         $this->setExpression($expression);
         $this->setName($name ? $name : $this->getExpressionObj()->toString());
-        $this->totals = EntityListFactory::createWithEntityFactory($exface, $this, 'DataColumnTotalsFactory');
     }
 
     /**
@@ -385,7 +383,7 @@ class DataColumn implements DataColumnInterface
         if ($this->attribute_alias) {
             $uxon->attribute_alias = $this->attribute_alias;
         }
-        if (! $this->getTotals()->isEmpty()) {
+        if ($this->hasTotals()) {
             $uxon->totals = $this->getTotals()->exportUxonObject();
         }
         return $uxon;
@@ -578,7 +576,22 @@ class DataColumn implements DataColumnInterface
      */
     public function getTotals()
     {
+        if (is_null($this->totals)){
+            $this->totals = EntityListFactory::createWithEntityFactory($this->getWorkbench(), $this, 'DataColumnTotalsFactory');
+        }
         return $this->totals;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::hasTotals()
+     */
+    public function hasTotals(){
+        if (! is_null($this->totals) && ! $this->getTotals()->isEmpty()){
+            return true;
+        }
+        return false;
     }
 
     /**
