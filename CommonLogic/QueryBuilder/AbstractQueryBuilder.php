@@ -574,4 +574,22 @@ abstract class AbstractQueryBuilder
         }
         return array_slice($row_array, $this->getOffset(), $this->getLimit());
     }
+    
+    protected function replacePlaceholdersByFilterValues($string)
+    {
+        foreach ($this->getWorkbench()->utils()->findPlaceholdersInString($string) as $ph) {
+            if ($ph_filter = $this->getFilter($ph)) {
+                if (! is_null($ph_filter->getCompareValue())) {
+                    $string = str_replace('[#' . $ph . '#]', $ph_filter->getCompareValue(), $string);
+                } else {
+                    // If at least one filter does not have a value, return false
+                    throw new QueryBuilderException('Missing filter value in "' . $ph_filter->getAlias() . '" needed for placeholder "' . $ph . '" in SQL "' . $string . '"!');
+                }
+            } else {
+                // If at least one placeholder does not have a corresponding filter, return false
+                throw new QueryBuilderException('Missing filter for placeholder "' . $ph . '" in SQL "' . $string . '"!');
+            }
+        }
+        return $string;
+    }
 }

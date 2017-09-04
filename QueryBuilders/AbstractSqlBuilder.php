@@ -20,6 +20,27 @@ use exface\Core\CommonLogic\DataSheets\DataAggregator;
 /**
  * A query builder for generic SQL syntax.
  * 
+ * # Data addresses
+ * =====================
+ * 
+ * The data address of an object stored in an SQL database can be a table name,
+ * or any SQL usable within the FROM clause. Placeholders for filters can
+ * be used as usual (e.g. [#my_attribute_alias#] for the value of a filter on
+ * the attribute my_attribute_alias of the current object - making it a
+ * mandatory filter).
+ * 
+ * The data address of an attribute stored in an SQL database can be a column
+ * name or any SQL usable in the SELECT clause. Custom SQL should be enclosed
+ * in regular brackets "()" to ensure it is correctly distinguished from column
+ * names. Within the data address the placeholder [#alias#] can be used to 
+ * represent the alias of the current object. THis is especially usefull to
+ * prevent table alias collisions in custom subselect: 
+ * 
+ * "(SELECT mt_[#alias#].my_column FROM my_table mt_[#alias#] WHERE ... )"
+ * 
+ * This way you can control which uses of my_table are unique within the
+ * generated SQL.
+ * 
  * # Data source options
  * =====================
  * 
@@ -871,8 +892,13 @@ else {
 
     protected function buildSqlFrom()
     {
-        // here we simply have to replace the placeholders in case the from-clause ist a custom sql statement
-        return str_replace('[#alias#]', $this->getMainObject()->getAlias(), $this->getMainObject()->getDataAddress()) . ' ' . $this->getShortAlias($this->getMainObject()->getAlias() . $this->getQueryId());
+        // Replace static placeholders
+        $from = str_replace('[#alias#]', $this->getMainObject()->getAlias(), $this->getMainObject()->getDataAddress()) . ' ' . $this->getShortAlias($this->getMainObject()->getAlias() . $this->getQueryId());
+        
+        // Replace dynamic palceholder
+        $from = $this->replacePlaceholdersByFilterValues($from);
+        
+        return $from;
     }
 
     /**
