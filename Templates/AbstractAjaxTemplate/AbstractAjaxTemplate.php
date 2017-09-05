@@ -271,7 +271,7 @@ abstract class AbstractAjaxTemplate extends AbstractTemplate
             $filters = $this->getRequestFilters();
             // Add filters for quick search
             if ($widget && $quick_search = $this->getRequestQuickSearchValue()) {
-                $quick_search_filter = $widget->getMetaObject()->getLabelAlias();
+                $quick_search_filter = $widget->getMetaObject()->getLabelAttributeAlias();
                 if ($widget->is('Data') && count($widget->getAttributesForQuickSearch()) > 0) {
                     foreach ($widget->getAttributesForQuickSearch() as $attr) {
                         $quick_search_filter .= ($quick_search_filter ? EXF_LIST_SEPARATOR : '') . $attr;
@@ -577,7 +577,7 @@ abstract class AbstractAjaxTemplate extends AbstractTemplate
                 $prefill_data = $widget_to_prefill->prepareDataSheetToPrefill($prefill_data);
                 // If new colums are added, the sheet is marked as outdated, so we need to fetch the data from the data source
                 if (! $prefill_data->isFresh()) {
-                    $prefill_data->addFilterInFromString($prefill_data->getMetaObject()->getUidAlias(), $prefill_data->getColumnValues($prefill_data->getMetaObject()->getUidAlias()));
+                    $prefill_data->addFilterInFromString($prefill_data->getMetaObject()->getUidAttributeAlias(), $prefill_data->getColumnValues($prefill_data->getMetaObject()->getUidAttributeAlias()));
                     $prefill_data->dataRead();
                 }
                 

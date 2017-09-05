@@ -92,9 +92,9 @@ else {
             }
             // if the query has a GROUP BY, we need to put the UID-Attribute in the core select as well as in the enrichment select
             // otherwise the enrichment joins won't work!
-            if ($group_by && $qpart->getAttribute()->getAlias() === $qpart->getAttribute()->getObject()->getUidAlias() && ! $has_attributes_with_reverse_relations) {
+            if ($group_by && $qpart->getAttribute()->getAlias() === $qpart->getAttribute()->getObject()->getUidAttributeAlias() && ! $has_attributes_with_reverse_relations) {
                 $selects[] = $this->buildSqlSelect($qpart, null, null, null, 'MAX');
-                $enrichment_select .= ', ' . $this->buildSqlSelect($qpart, 'EXFCOREQ', $qpart->getAttribute()->getObject()->getUidAlias());
+                $enrichment_select .= ', ' . $this->buildSqlSelect($qpart, 'EXFCOREQ', $qpart->getAttribute()->getObject()->getUidAttributeAlias());
                 $group_safe_attribute_aliases[] = $qpart->getAttribute()->getAliasWithRelationPath();
             } // If we are not aggregating or the attribute has a group function, add it regulary
 elseif (! $group_by || $qpart->getAggregateFunction() || $this->getAggregation($qpart->getAlias())) {
@@ -188,7 +188,7 @@ elseif (! $group_by || $qpart->getAggregateFunction() || $this->getAggregation($
         }
         
         if ($group_by) {
-            $totals_core_selects[] = $this->buildSqlSelect($this->getAttribute($this->getMainObject()->getUidAlias()), null, null, null, 'MAX');
+            $totals_core_selects[] = $this->buildSqlSelect($this->getAttribute($this->getMainObject()->getUidAttributeAlias()), null, null, null, 'MAX');
         }
         
         // filters -> WHERE

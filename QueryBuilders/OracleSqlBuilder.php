@@ -135,7 +135,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
                     // Workaround to ensure, the UID is always in the query!
                     // If we are grouping, we will not select any fields, that could be ambigous, thus
                     // we can use MAX(UID), since all other values are the same within the group.
-                    if ($group_by && $qpart->getAlias() == $this->getMainObject()->getUidAlias() && ! $qpart->getAggregateFunction()) {
+                    if ($group_by && $qpart->getAlias() == $this->getMainObject()->getUidAttributeAlias() && ! $qpart->getAggregateFunction()) {
                         $qpart->setAggregateFunction('MAX');
                     }
                     // If we are grouping, we can only select valid GROUP BY expressions from the core table.
@@ -266,7 +266,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
             foreach ($this->getAttributes() as $qpart) {
                 // if the query has a GROUP BY, we need to put the UID-Attribute in the core select as well as in the enrichment select
                 // otherwise the enrichment joins won't work!
-                if ($group_by && $qpart->getAttribute()->getAlias() === $qpart->getAttribute()->getObject()->getUidAlias()) {
+                if ($group_by && $qpart->getAttribute()->getAlias() === $qpart->getAttribute()->getObject()->getUidAttributeAlias()) {
                     $select .= ', ' . $this->buildSqlSelect($qpart, null, null, null, 'MAX');
                     $enrichment_select .= ', ' . $this->buildSqlSelect($qpart, 'EXFCOREQ');
                 } // if we are aggregating, leave only attributes, that have an aggregate function,
@@ -327,7 +327,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
         }
         
         if ($group_by) {
-            $totals_core_selects[] = $this->buildSqlSelect($this->getAttribute($this->getMainObject()->getUidAlias()), null, null, null, 'MAX');
+            $totals_core_selects[] = $this->buildSqlSelect($this->getAttribute($this->getMainObject()->getUidAttributeAlias()), null, null, null, 'MAX');
         }
         
         // filters -> WHERE

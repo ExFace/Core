@@ -160,7 +160,7 @@ class SqlModelLoader implements ModelLoaderInterface
                 if ($row['object_oid'] == $object->getId()) {
                     // save the label attribute alias in object head
                     if ($row['object_label_flag']) {
-                        $object->setLabelAlias($row['attribute_alias']);
+                        $object->setLabelAttributeAlias($row['attribute_alias']);
                         // always add a LABEL attribute if it is not already called LABEL (widgets always need to show the LABEL!)
                         // IDEA cleaner code does not work for some reason. Didn't have time to check out why...
                         /*
@@ -190,7 +190,7 @@ class SqlModelLoader implements ModelLoaderInterface
                     
                     // check if an attribute is marked as unique id for this object
                     if ($row['object_uid_flag']) {
-                        $object->setUidAlias($row['attribute_alias']);
+                        $object->setUidAttributeAlias($row['attribute_alias']);
                         $row['system_flag'] = true;
                     }
                     

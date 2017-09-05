@@ -235,7 +235,7 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
         if ($data_sheet->getMetaObject()->getId() == $this->getMetaObjectId()) {
             // If trying to prefill with an instance of the same object, we actually just need the uid column in the resulting prefill
             // data sheet. It will probably be there anyway, but we still add it here (just in case).
-            $data_sheet->getColumns()->addFromExpression($this->getMetaObject()->getUidAlias());
+            $data_sheet->getColumns()->addFromExpression($this->getMetaObject()->getUidAttributeAlias());
         } else {
             // If trying to prefill with a different object, we need to find a relation to that object somehow.
             // First we check for filters based on the prefill object. If filters exists, we can be sure, that those

@@ -55,7 +55,7 @@ trait JqueryDataTablesTrait {
 		}
 		else {
 			// Open this row
-			row.child('<div id="detail'+row.data().{$widget->getMetaObject()->getUidAlias()}+'"></div>').show();
+			row.child('<div id="detail'+row.data().{$widget->getMetaObject()->getUidAttributeAlias()}+'"></div>').show();
 			$.ajax({
 				url: '{$this->getAjaxUrl()}',
 				method: 'post',
@@ -66,15 +66,15 @@ trait JqueryDataTablesTrait {
 					prefill: {
 						oId:"{$widget->getMetaObjectId()}",
 						rows:[
-							{ {$widget->getMetaObject()->getUidAlias()}: row.data().{$widget->getMetaObject()->getUidAlias()} }
+							{ {$widget->getMetaObject()->getUidAttributeAlias()}: row.data().{$widget->getMetaObject()->getUidAttributeAlias()} }
 						],
 						filters: {$this->buildJsDataFilters()}
 					},
-					exfrid: row.data().{$widget->getMetaObject()->getUidAlias()}
+					exfrid: row.data().{$widget->getMetaObject()->getUidAttributeAlias()}
 				},
 				dataType: "html",
 				success: function(data){
-					$('#detail'+row.data().{$widget->getMetaObject()->getUidAlias()}).append(data);
+					$('#detail'+row.data().{$widget->getMetaObject()->getUidAttributeAlias()}).append(data);
 					{$this->getId()}_table.columns.adjust();
 				},
 				error: function(jqXHR, textStatus, errorThrown ){
@@ -167,7 +167,7 @@ JS;
             // TODO
         }
         if (is_null($column)) {
-            $column = $this->getWidget()->getMetaObject()->getUidAlias();
+            $column = $this->getWidget()->getMetaObject()->getUidAttributeAlias();
         } else {
             // TODO
         }

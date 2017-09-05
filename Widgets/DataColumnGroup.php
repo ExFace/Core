@@ -59,7 +59,7 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
     function createColumnFromAttribute(MetaAttributeInterface $attribute, $caption = null, $hidden = null)
     {
         if ($attribute->isRelation()) {
-            $attribute = $this->getMetaObject()->getAttribute(RelationPath::relationPathAdd($attribute->getAlias(), $this->getMetaObject()->getRelatedObject($attribute->getAlias())->getLabelAlias()));
+            $attribute = $this->getMetaObject()->getAttribute(RelationPath::relationPathAdd($attribute->getAlias(), $this->getMetaObject()->getRelatedObject($attribute->getAlias())->getLabelAttributeAlias()));
         }
         
         $c = $this->getPage()->createWidget('DataColumn', $this);
@@ -251,7 +251,7 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
         // This preset caption will get overwritten by one specified in UXON once the UXON object is overloaded
         if (! $uxon->caption && $this->getMetaObject()->hasAttribute($uxon->attribute_alias)) {
             $attr = $this->getMetaObject()->getAttribute($uxon->attribute_alias);
-            if ($attr->isLabel() && $attr->getRelationPath()->toString()) {
+            if ($attr->isLabelForObject() && $attr->getRelationPath()->toString()) {
                 $caption = $this->getMetaObject()->getRelation($attr->getRelationPath()->toString())->getName();
             } else {
                 $caption = $attr->getName();

@@ -247,7 +247,7 @@ class Relation implements MetaRelationInterface
             if ($this->related_object_key_attribute_id) {
                 $this->related_object_key_alias = $this->getRelatedObject()->getAttributes()->getByAttributeId($this->related_object_key_attribute_id)->getAlias();
             } else {
-                $this->related_object_key_alias = $this->getRelatedObject()->getUidAlias();
+                $this->related_object_key_alias = $this->getRelatedObject()->getUidAttributeAlias();
             }
         }
         return $this->related_object_key_alias;

@@ -117,7 +117,7 @@ trait MetaObjectExceptionTrait {
         
         // Prefill the debug widget with data of the current meta object
         $object_data = DataSheetFactory::createFromObject($object_object);
-        $object_data->addFilterFromString($object_object->getUidAlias(), $this->getMetaObject()->getId(), EXF_COMPARATOR_EQUALS);
+        $object_data->addFilterFromString($object_object->getUidAttributeAlias(), $this->getMetaObject()->getId(), EXF_COMPARATOR_EQUALS);
         $object_data = $error_message->prepareDataSheetToPrefill($object_data);
         $object_data->dataRead();
         $error_message->prefill($object_data);

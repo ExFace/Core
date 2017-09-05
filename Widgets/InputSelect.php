@@ -509,9 +509,9 @@ class InputSelect extends Input implements iSupportMultiSelect
                 $this->text_attribute_alias = $this->getAttributeAlias();
             } else {
                 if ($this->getOptionsObject()->getLabelAttribute()) {
-                    $this->text_attribute_alias = $this->getOptionsObject()->getLabelAlias();
+                    $this->text_attribute_alias = $this->getOptionsObject()->getLabelAttributeAlias();
                 } else {
-                    $this->text_attribute_alias = $this->getOptionsObject()->getUidAlias();
+                    $this->text_attribute_alias = $this->getOptionsObject()->getUidAttributeAlias();
                 }
             }
         }
@@ -582,8 +582,8 @@ class InputSelect extends Input implements iSupportMultiSelect
             // unless it is a self-reference-relation, which should be treated just like a relation to other objects
             if ($this->getOptionsObject()->isExactly($this->getMetaObject()) && ! ($this->getAttribute() && $this->getAttribute()->isRelation())) {
                 $this->value_attribute_alias = $this->getAttributeAlias();
-            } elseif ($this->getOptionsObject()->getUidAlias()) {
-                $this->value_attribute_alias = $this->getOptionsObject()->getUidAlias();
+            } elseif ($this->getOptionsObject()->getUidAttributeAlias()) {
+                $this->value_attribute_alias = $this->getOptionsObject()->getUidAttributeAlias();
             } else {
                 throw new WidgetConfigurationError($this, 'Cannot create ' . $this->getWidgetType() . ': there is no value attribute defined and the options object "' . $this->getOptionsObject()->getAliasWithNamespace() . '" has no UID attribute!', '6V5FGYF');
             }

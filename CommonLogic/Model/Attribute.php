@@ -533,9 +533,9 @@ class Attribute implements MetaAttributeInterface
      * 
      * @return boolean
      */
-    public function isLabel()
+    public function isLabelForObject()
     {
-        if ($this->getAlias() == $this->getObject()->getLabelAlias()) {
+        if ($this->getAlias() == $this->getObject()->getLabelAttributeAlias()) {
             return true;
         } else {
             return false;
@@ -549,7 +549,7 @@ class Attribute implements MetaAttributeInterface
      */
     public function isUidForObject()
     {
-        if ($this->getObject()->getUidAlias() === $this->getAlias()) {
+        if ($this->getObject()->getUidAttributeAlias() === $this->getAlias()) {
             return true;
         } else {
             return false;

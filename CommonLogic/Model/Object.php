@@ -470,8 +470,8 @@ class Object implements MetaObjectInterface
         $this->setDefaultEditorUxon($default_editor_uxon);
         
         // Inherit some object properties originating from attributes
-        $this->setUidAlias($parent->getUidAlias());
-        $this->setLabelAlias($parent->getLabelAlias());
+        $this->setUidAttributeAlias($parent->getUidAttributeAlias());
+        $this->setLabelAttributeAlias($parent->getLabelAttributeAlias());
         
         // Inherit description
         $this->setShortDescription($parent->getShortDescription());
@@ -634,12 +634,12 @@ class Object implements MetaObjectInterface
         return $result;
     }
 
-    public function getUidAlias()
+    public function getUidAttributeAlias()
     {
         return $this->uid_alias;
     }
 
-    public function setUidAlias($value)
+    public function setUidAttributeAlias($value)
     {
         $this->uid_alias = $value;
     }
@@ -652,10 +652,10 @@ class Object implements MetaObjectInterface
      */
     public function getUidAttribute()
     {
-        if (! $this->getUidAlias()) {
+        if (! $this->getUidAttributeAlias()) {
             throw new MetaObjectHasNoUidAttributeError($this, 'No UID attribute defined for object "' . $this->getAliasWithNamespace() . '"!');
         }
-        return $this->getAttribute($this->getUidAlias());
+        return $this->getAttribute($this->getUidAttributeAlias());
     }
 
     /**
@@ -673,12 +673,12 @@ class Object implements MetaObjectInterface
         return true;
     }
 
-    public function getLabelAlias()
+    public function getLabelAttributeAlias()
     {
         return $this->label;
     }
 
-    public function setLabelAlias($value)
+    public function setLabelAttributeAlias($value)
     {
         $this->label = $value;
     }
@@ -690,10 +690,10 @@ class Object implements MetaObjectInterface
      */
     public function getLabelAttribute()
     {
-        if (! $this->getLabelAlias()) {
+        if (! $this->getLabelAttributeAlias()) {
             return null;
         }
-        return $this->getAttribute($this->getLabelAlias());
+        return $this->getAttribute($this->getLabelAttributeAlias());
     }
 
     public function getDataSourceId()
@@ -942,11 +942,6 @@ class Object implements MetaObjectInterface
     {
         return $this->getNamespace() . NameResolver::NAMESPACE_SEPARATOR . $this->getAlias();
         ;
-    }
-
-    public function setAliasWithNamespace($value)
-    {
-        $this->qualified_alias = $value;
     }
 
     public function getNamespace()

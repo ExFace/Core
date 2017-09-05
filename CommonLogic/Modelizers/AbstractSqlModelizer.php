@@ -77,8 +77,8 @@ abstract class AbstractSqlModelizer implements ModelizerInterface
         if (! $this->data_types) {
             $this->data_types = DataSheetFactory::createFromObject($this->getDataConnection()->getWorkbench()->model()->getObject('exface.Core.DATATYPE'));
             $this->data_types->getColumns()->addMultiple(array(
-                $this->data_types->getMetaObject()->getUidAlias(),
-                $this->data_types->getMetaObject()->getLabelAlias()
+                $this->data_types->getMetaObject()->getUidAttributeAlias(),
+                $this->data_types->getMetaObject()->getLabelAttributeAlias()
             ));
             $this->data_types->dataRead(0, 0);
         }

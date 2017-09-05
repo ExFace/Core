@@ -222,9 +222,9 @@ interface MetaObjectInterface extends ExfaceClassInterface, AliasInterface
      */
     public function findAttributesByDataAddress($data_address);
     
-    public function getUidAlias();
+    public function getUidAttributeAlias();
     
-    public function setUidAlias($value);
+    public function setUidAttributeAlias($value);
     
     /**
      * Returns the meta attribute with the unique ID of the object.
@@ -241,9 +241,9 @@ interface MetaObjectInterface extends ExfaceClassInterface, AliasInterface
      */
     public function hasUidAttribute();
     
-    public function getLabelAlias();
+    public function getLabelAttributeAlias();
     
-    public function setLabelAlias($value);
+    public function setLabelAttributeAlias($value);
     
     /**
      * Returns the meta attribute with the label of the object
@@ -378,8 +378,6 @@ interface MetaObjectInterface extends ExfaceClassInterface, AliasInterface
     public function getShortDescription();
     
     public function setShortDescription($value);
-    
-    public function setAliasWithNamespace($value);
     
     public function setNamespace($value);
     

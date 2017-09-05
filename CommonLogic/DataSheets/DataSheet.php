@@ -658,8 +658,8 @@ class DataSheet implements DataSheetInterface
             }
             
             // Use the UID column as a filter to make sure, only these rows are affected
-            if ($column->getAttribute()->getAliasWithRelationPath() == $this->getMetaObject()->getUidAlias()) {
-                $query->addFilterFromString($this->getMetaObject()->getUidAlias(), implode($this->getMetaObject()->getUidAttribute()->getValueListDelimiter(), array_unique($column->getValues(false))), EXF_COMPARATOR_IN);
+            if ($column->getAttribute()->getAliasWithRelationPath() == $this->getMetaObject()->getUidAttributeAlias()) {
+                $query->addFilterFromString($this->getMetaObject()->getUidAttributeAlias(), implode($this->getMetaObject()->getUidAttribute()->getValueListDelimiter(), array_unique($column->getValues(false))), EXF_COMPARATOR_IN);
             } else {
                 // Add all other columns to values
                 
@@ -672,7 +672,7 @@ class DataSheet implements DataSheetInterface
                         throw new DataSheetWriteError($this, 'Updating attributes from reverse relations ("' . $column->getExpressionObj()->toString() . '") is not supported yet!', '6T5V4HW');
                     }
                 } else {
-                    $uid_column_alias = $this->getMetaObject()->getUidAlias();
+                    $uid_column_alias = $this->getMetaObject()->getUidAttributeAlias();
                 }
                 
                 // If it is a direct attribute, add it to the query
@@ -687,9 +687,9 @@ class DataSheet implements DataSheetInterface
                     if (! $uid_column = $this->getColumn($uid_column_alias)) {
                         $uid_data_sheet = $this->copy();
                         $uid_data_sheet->getColumns()->removeAll();
-                        $uid_data_sheet->getColumns()->addFromExpression($this->getMetaObject()->getUidAlias());
+                        $uid_data_sheet->getColumns()->addFromExpression($this->getMetaObject()->getUidAttributeAlias());
                         $uid_data_sheet->getColumns()->addFromExpression($uid_column_alias);
-                        $uid_data_sheet->addFilterFromString($this->getMetaObject()->getUidAlias(), implode($this->getUidColumn()->getValues(), $this->getUidColumn()->getAttribute()->getValueListDelimiter()), EXF_COMPARATOR_IN);
+                        $uid_data_sheet->addFilterFromString($this->getMetaObject()->getUidAttributeAlias(), implode($this->getUidColumn()->getValues(), $this->getUidColumn()->getAttribute()->getValueListDelimiter()), EXF_COMPARATOR_IN);
                         $uid_data_sheet->dataRead();
                         $uid_column = $uid_data_sheet->getColumn($uid_column_alias);
                     }
@@ -856,7 +856,7 @@ class DataSheet implements DataSheetInterface
             }
             
             // Check the uid column for values. If there, it's an update!
-            if ($column->getAttribute()->getAlias() == $this->getMetaObject()->getUidAlias() && $update_if_uid_found) {
+            if ($column->getAttribute()->getAlias() == $this->getMetaObject()->getUidAttributeAlias() && $update_if_uid_found) {
                 // TODO
             } else {
                 // If at least one column has values, remember this.
@@ -888,7 +888,7 @@ class DataSheet implements DataSheetInterface
         }
         
         // Save the new UIDs in the data sheet
-        $this->setColumnValues($this->getMetaObject()->getUidAlias(), $new_uids);
+        $this->setColumnValues($this->getMetaObject()->getUidAttributeAlias(), $new_uids);
         
         $this->getWorkbench()->eventManager()->dispatch(EventFactory::createDataSheetEvent($this, 'CreateData.After'));
         
@@ -1567,7 +1567,7 @@ class DataSheet implements DataSheetInterface
         // to dublicate them!
         
         // Merge columns
-        $this->joinLeft($other_sheet, $this->getMetaObject()->getUidAlias(), $this->getMetaObject()->getUidAlias());
+        $this->joinLeft($other_sheet, $this->getMetaObject()->getUidAttributeAlias(), $this->getMetaObject()->getUidAttributeAlias());
         
         return $this;
     }
@@ -1619,7 +1619,7 @@ class DataSheet implements DataSheetInterface
     public function getUidColumnName()
     {
         if (! $this->uid_column_name) {
-            $this->uid_column_name = $this->getMetaObject()->getUidAlias();
+            $this->uid_column_name = $this->getMetaObject()->getUidAttributeAlias();
         }
         return $this->uid_column_name;
     }

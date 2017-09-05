@@ -255,7 +255,7 @@ interface MetaAttributeInterface extends ExfaceClassInterface, iCanBeCopied
      *
      * @return boolean
      */
-    public function isLabel();
+    public function isLabelForObject();
     
     /**
      * Returns TRUE if this attribute is used as UID for it's object and FALSE otherwise

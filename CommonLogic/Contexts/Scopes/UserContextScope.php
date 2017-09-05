@@ -134,7 +134,7 @@ class UserContextScope extends AbstractContextScope
         if (is_null($this->user_data)) {
             $user_object = $this->getWorkbench()->model()->getObject('exface.Core.USER');
             $ds = DataSheetFactory::createFromObject($user_object);
-            $ds->getColumns()->addFromExpression($user_object->getUidAlias());
+            $ds->getColumns()->addFromExpression($user_object->getUidAttributeAlias());
             $ds->getColumns()->addFromExpression('USERNAME');
             $ds->getColumns()->addFromExpression('FIRST_NAME');
             $ds->getColumns()->addFromExpression('LAST_NAME');

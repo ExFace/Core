@@ -71,7 +71,7 @@ class MySqlBuilder extends AbstractSqlBuilder
             $group_by .= ', ' . $this->buildSqlGroupBy($qpart);
             if (! $group_uid_alias) {
                 if ($rel_path = $qpart->getAttribute()->getRelationPath()->toString()) {
-                    $group_uid_alias = RelationPath::relationPathAdd($rel_path, $this->getMainObject()->getRelatedObject($rel_path)->getUidAlias());
+                    $group_uid_alias = RelationPath::relationPathAdd($rel_path, $this->getMainObject()->getRelatedObject($rel_path)->getUidAttributeAlias());
                 }
             }
         }
@@ -88,7 +88,7 @@ class MySqlBuilder extends AbstractSqlBuilder
                 $this->addBinaryColumn($qpart->getAlias());
             }
             
-            if ($group_by && $qpart->getAttribute()->getAlias() === $qpart->getAttribute()->getObject()->getUidAlias() && ! $qpart->getAggregateFunction()) {
+            if ($group_by && $qpart->getAttribute()->getAlias() === $qpart->getAttribute()->getObject()->getUidAttributeAlias() && ! $qpart->getAggregateFunction()) {
                 // If the query has a GROUP BY, we need to put the UID-Attribute in the core select as well as in the enrichment select
                 // otherwise the enrichment joins won't work! Be carefull to apply this rule only to the plain UID column, not to columns
                 // using the UID with aggregate functions
@@ -170,7 +170,7 @@ class MySqlBuilder extends AbstractSqlBuilder
         }
         
         if ($group_by) {
-            $totals_core_selects[] = $this->buildSqlSelect($this->getAttribute($this->getMainObject()->getUidAlias()), null, null, null, 'MAX');
+            $totals_core_selects[] = $this->buildSqlSelect($this->getAttribute($this->getMainObject()->getUidAttributeAlias()), null, null, null, 'MAX');
         }
         
         // filters -> WHERE

@@ -173,7 +173,7 @@ class Diagram extends Container implements iSupportLazyLoading
             $widget_or_uxon->widget_type = $widget_or_uxon->widget_type ? $widget_or_uxon->widget_type : 'ComboTable';
             $widget = $this->getPage()->createWidget($widget_or_uxon->widget_type, $this, $widget_or_uxon);
             $widget->setMetaObjectId($this->getMetaObject()->getId());
-            $widget->setAttributeAlias($this->getMetaObject()->getUidAlias());
+            $widget->setAttributeAlias($this->getMetaObject()->getUidAttributeAlias());
             $widget->setTableObjectAlias($this->getMetaObject()->getAliasWithNamespace());
             $widget->setCaption($this->getMetaObject()->getName());
             $widget->setDisabled(false);

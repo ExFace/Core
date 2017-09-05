@@ -932,7 +932,7 @@ else {
                 // the core query again, after pagination, so possible back references within the custom select can
                 // still be resolved.
                 $right_table_alias = $this->getShortAlias($this->getMainObject()->getAlias() . $this->getQueryId());
-                $joins[$right_table_alias] = "\n LEFT JOIN " . str_replace('[#alias#]', $right_table_alias, $this->getMainObject()->getDataAddress()) . ' ' . $right_table_alias . ' ON ' . $left_table_alias . '.' . $this->getMainObject()->getUidAlias() . ' = ' . $right_table_alias . '.' . $this->getMainObject()->getUidAlias();
+                $joins[$right_table_alias] = "\n LEFT JOIN " . str_replace('[#alias#]', $right_table_alias, $this->getMainObject()->getDataAddress()) . ' ' . $right_table_alias . ' ON ' . $left_table_alias . '.' . $this->getMainObject()->getUidAttributeAlias() . ' = ' . $right_table_alias . '.' . $this->getMainObject()->getUidAttributeAlias();
             } else {
                 // In most cases we will build joins for attributes of related objects.
                 $left_table_alias = $this->getShortAlias(($left_table_alias ? $left_table_alias : $this->getMainObject()->getAlias()) . $this->getQueryId());
@@ -1355,7 +1355,7 @@ else {
                 $relq->addFilterFromString($rel_filter, $qpart->getCompareValue(), $qpart->getComparator());
                 // FIXME add support for related_object_special_key_alias
                 if (! $prefix_rel_path->isEmpty()) {
-                    $prefix_rel_qpart = new QueryPartSelect(RelationPath::relationPathAdd($prefix_rel_path->toString(), $this->getMainObject()->getRelatedObject($prefix_rel_path->toString())->getUidAlias()), $this);
+                    $prefix_rel_qpart = new QueryPartSelect(RelationPath::relationPathAdd($prefix_rel_path->toString(), $this->getMainObject()->getRelatedObject($prefix_rel_path->toString())->getUidAttributeAlias()), $this);
                     $junction = $this->buildSqlSelect($prefix_rel_qpart, null, null, '');
                 } else {
                     $junction = $this->getShortAlias($this->getMainObject()->getAlias() . $this->getQueryId()) . '.' . $this->getMainObject()->getUidAttribute()->getDataAddress();
