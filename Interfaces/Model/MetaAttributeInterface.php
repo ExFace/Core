@@ -9,7 +9,7 @@ use exface\Core\CommonLogic\Constants\SortingDirections;
 
 interface MetaAttributeInterface extends ExfaceClassInterface, iCanBeCopied
 {
-    public function __construct(ModelInterface $model);
+    public function __construct(MetaObjectInterface $object);
     
     /**
      * Marks this attribute as a relation
@@ -113,8 +113,6 @@ interface MetaAttributeInterface extends ExfaceClassInterface, iCanBeCopied
      */
     public function getRelationPath();
     
-    public function setRelationPath(MetaRelationPathInterface $path);
-    
     /**
      * Returns the meta object to which this attributes belongs to.
      * If the attribute has a relation path, this
@@ -129,7 +127,8 @@ interface MetaAttributeInterface extends ExfaceClassInterface, iCanBeCopied
     
     /**
      * Returns the object, this attribute was inherited from.
-     * If the attribute was not inherited, returns it's regular object (same as get_object()).
+     * 
+     * If the attribute was not inherited this returns it's regular object (same as get_object()).
      *
      * If the attribute was inherited multiple times, this method will go back exactly one step. For example, if we have a base object
      * of a data source, that is extended by OBJECT1, which in turn, is extended by OBJECT2, calling get_object_extended_from() on an
@@ -191,11 +190,7 @@ interface MetaAttributeInterface extends ExfaceClassInterface, iCanBeCopied
     
     public function getObjectId();
     
-    public function setObjectId($value);
-    
     public function getModel();
-    
-    public function setModel(\exface\Core\CommonLogic\Model\Model $model);
     
     public function getShortDescription();
     

@@ -262,10 +262,7 @@ class SqlModelLoader implements ModelLoaderInterface
     protected function createAttributeFromDbRow(MetaObjectInterface $object, array $row)
     {
         $model = $object->getModel();
-        $attr = new Attribute($model);
-        // ensure the attributes all have the correct parent object (because inherited attributes actually would
-        // have another object_id in their row data)
-        $attr->setObjectId($object->getId());
+        $attr = new Attribute($object);
         $attr->setId($row['oid']);
         $attr->setAlias($row['attribute_alias']);
         $attr->setName($row['attribute_name']);

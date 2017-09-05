@@ -10,9 +10,9 @@ use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Interfaces\Model\DataTypeInterface;
 use exface\Core\CommonLogic\Constants\SortingDirections;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
-use exface\Core\Interfaces\Model\ModelInterface;
 use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 use exface\Core\Interfaces\Model\MetaRelationInterface;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 
 /**
  * 
@@ -24,8 +24,6 @@ class Attribute implements MetaAttributeInterface
 
     // Properties to be dublicated on copy()
     private $id;
-
-    private $object_id;
 
     private $inherited_from_object_id = null;
 
@@ -81,11 +79,11 @@ class Attribute implements MetaAttributeInterface
 
     // Properties NOT to be dublicated on copy()
     /** @var Model */
-    private $model;
+    private $object;
 
-    public function __construct(ModelInterface $model)
+    public function __construct(MetaObjectInterface $object)
     {
-        $this->model = $model;
+        $this->object = $object;
     }
 
     /**
@@ -296,7 +294,13 @@ class Attribute implements MetaAttributeInterface
      */
     public function getObject()
     {
-        return $this->getModel()->getObject($this->getObjectId());
+        return $this->object;
+    }
+    
+    public function setObject(MetaObjectInterface $object)
+    {
+        $this->object = $object;
+        return $this;
     }
 
     /**
@@ -317,7 +321,8 @@ class Attribute implements MetaAttributeInterface
             return $this->getObject();
         }
     }
-
+    
+    
     /**
      * Returns a UXON object for the default editor widget for this attribute.
      * 
@@ -424,22 +429,12 @@ class Attribute implements MetaAttributeInterface
 
     public function getObjectId()
     {
-        return $this->object_id;
-    }
-
-    public function setObjectId($value)
-    {
-        $this->object_id = $value;
+        return $this->getObject()->getId();
     }
 
     public function getModel()
     {
-        return $this->model;
-    }
-
-    public function setModel(\exface\Core\CommonLogic\Model\Model $model)
-    {
-        $this->model = $model;
+        return $this->getObject()->getModel();
     }
 
     public function getShortDescription()
