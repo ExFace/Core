@@ -1,11 +1,11 @@
 <?php
 namespace exface\Core\Factories;
 
-use exface;
 use exface\Core\CommonLogic\NameResolver;
 use exface\Core\CommonLogic\AbstractDataConnector;
 use exface\Core\Interfaces\NameResolverInterface;
 use exface\Core\Exceptions\DataSources\DataConnectionNotFoundError;
+use exface\Core\CommonLogic\Workbench;
 
 abstract class DataConnectorFactory extends AbstractNameResolverFactory
 {
@@ -35,12 +35,12 @@ abstract class DataConnectorFactory extends AbstractNameResolverFactory
      * - ExFace alias with namespace
      * - class name
      *
-     * @param exface\Core\CommonLogic\Workbench $exface            
+     * @param Workbench $exface            
      * @param string $path_or_qualified_alias            
      * @param array $config            
      * @return AbstractDataConnector
      */
-    public static function createFromAlias(exface\Core\CommonLogic\Workbench $exface, $path_or_qualified_alias, array $config = null)
+    public static function createFromAlias(Workbench $exface, $path_or_qualified_alias, array $config = null)
     {
         $name_resolver = $exface->createNameResolver($path_or_qualified_alias, NameResolver::OBJECT_TYPE_DATA_CONNECTOR);
         return static::create($name_resolver, $config);

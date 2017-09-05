@@ -5,7 +5,7 @@ use exface\Core\CommonLogic\Workbench;
 use exface\Core\Interfaces\DataSheets\DataSheetMapperInterface;
 use exface\Core\CommonLogic\DataSheets\DataSheetMapper;
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\CommonLogic\Model\Object;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 
 abstract class DataSheetMapperFactory extends AbstractUxonFactory
 {
@@ -20,7 +20,7 @@ abstract class DataSheetMapperFactory extends AbstractUxonFactory
         return new DataSheetMapper($workbench);
     }
     
-    public static function createFromUxon(Workbench $workbench, UxonObject $uxon, Object $from_object = null, Object $to_object = null)
+    public static function createFromUxon(Workbench $workbench, UxonObject $uxon, MetaObjectInterface $from_object = null, MetaObjectInterface $to_object = null)
     {
         $mapper = static::createEmpty($workbench);
         

@@ -1,11 +1,11 @@
 <?php
 namespace exface\Core\Interfaces\DataSources;
 
-use exface\Core\CommonLogic\Model\Object;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\CommonLogic\Model\AppActionList;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Interfaces\Actions\ActionInterface;
-use exface\Core\CommonLogic\Model\ObjectActionList;
+use exface\Core\Interfaces\Model\MetaObjectActionListInterface;
 use exface\Core\Interfaces\NameResolverInstallerInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Model\ModelInterface;
@@ -25,7 +25,7 @@ interface ModelLoaderInterface
      * 
      * @throws MetaObjectNotFoundError
      * 
-     * @return Object            
+     * @return MetaObjectInterface            
      */
     public function loadObjectByAlias(AppInterface $app, $object_alias);
     
@@ -35,31 +35,31 @@ interface ModelLoaderInterface
      * 
      * @throws MetaObjectNotFoundError
      * 
-     * @return Object
+     * @return MetaObjectInterface
      */
     public function loadObjectById(ModelInterface $model, $uid);
     
     /**
      * 
      * 
-     * @param Object $object
+     * @param MetaObjectInterface $object
      * 
      * @throws MetaAttributeNotFoundError
      * 
      * @return Attribute
      */
-    public function loadAttribute(Object $object, $attribute_alias);
+    public function loadAttribute(MetaObjectInterface $object, $attribute_alias);
     
     /**
      *
      *
-     * @param Object $object
+     * @param MetaObjectInterface $object
      * 
      * @throws MetaRelationNotFoundError
      * 
      * @return Relation
      */
-    public function loadRelation(Object $object, $relation_alias);
+    public function loadRelation(MetaObjectInterface $object, $relation_alias);
 
     /**
      * Fills th given data source with model data (query builder, connection configuration, user credentials, etc.)
@@ -89,10 +89,10 @@ interface ModelLoaderInterface
     /**
      * Loads the object specific action definitions into the given meta object.
      *
-     * @param ObjectActionList $empty_list            
-     * @return ObjectActionList
+     * @param MetaObjectActionListInterface $empty_list            
+     * @return MetaObjectActionListInterface
      */
-    public function loadObjectActions(ObjectActionList $empty_list);
+    public function loadObjectActions(MetaObjectActionListInterface $empty_list);
 
     /**
      * Loads the object specific action definitions into the action list.

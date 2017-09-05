@@ -305,7 +305,7 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
     /**
      * Returns the meta object of this data column
      *
-     * @return \exface\Core\CommonLogic\Model\Object
+     * @return \exface\Core\Interfaces\Model\MetaObjectInterface
      */
     public function getMetaObject();
 }

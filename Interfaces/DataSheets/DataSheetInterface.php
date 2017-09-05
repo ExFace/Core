@@ -3,7 +3,7 @@ namespace exface\Core\Interfaces\DataSheets;
 
 use exface\Core\CommonLogic\Model\ConditionGroup;
 use exface\Core\CommonLogic\Model\Condition;
-use exface\Core\CommonLogic\Model\Object;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\DataSheets\DataColumnInterface;
@@ -276,7 +276,7 @@ interface DataSheetInterface extends ExfaceClassInterface, iCanBeCopied, iCanBeC
 
     /**
      *
-     * @return Object
+     * @return MetaObjectInterface
      */
     public function getMetaObject();
 
@@ -394,7 +394,7 @@ interface DataSheetInterface extends ExfaceClassInterface, iCanBeCopied, iCanBeC
      */
     public function merge(DataSheetInterface $other_sheet);
 
-    public function getMetaObjectRelationPath(Object $related_object);
+    public function getMetaObjectRelationPath(MetaObjectInterface $related_object);
 
     /**
      * Clones the data sheet and returns the new copy.

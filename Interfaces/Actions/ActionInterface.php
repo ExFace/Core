@@ -3,7 +3,7 @@ namespace exface\Core\Interfaces\Actions;
 
 use exface\Core\Interfaces\ExfaceClassInterface;
 use exface\Core\Interfaces\AliasInterface;
-use exface\Core\CommonLogic\Model\Object;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Interfaces\Model\UiPageInterface;
@@ -238,16 +238,16 @@ interface ActionInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
      * data will be the input (i.e. after an ajax-request).
      *
      * @throws ActionObjectNotSpecifiedError if neither input data nor calling widget are known
-     * @return Object
+     * @return MetaObjectInterface
      */
     public function getMetaObject();
 
     /**
      *
-     * @param Object $object            
+     * @param MetaObjectInterface $object            
      * @return ActionInterface
      */
-    public function setMetaObject(Object $object);
+    public function setMetaObject(MetaObjectInterface $object);
 
     /**
      *

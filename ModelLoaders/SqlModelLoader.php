@@ -5,7 +5,7 @@ namespace exface\Core\ModelLoaders;
 use exface\Core\Interfaces\DataSources\ModelLoaderInterface;
 use exface\Core\CommonLogic\Model\Attribute;
 use exface\Core\CommonLogic\Model\Relation;
-use exface\Core\CommonLogic\Model\Object;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\DataSorterFactory;
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
@@ -16,7 +16,7 @@ use exface\Core\Factories\BehaviorFactory;
 use exface\Core\Exceptions\RangeException;
 use exface\Core\Exceptions\Model\MetaObjectNotFoundError;
 use exface\Core\Exceptions\Model\MetaModelLoadingFailedError;
-use exface\Core\CommonLogic\Model\ObjectActionList;
+use exface\Core\Interfaces\Model\MetaObjectActionListInterface;
 use exface\Core\CommonLogic\Model\ActionList;
 use exface\Core\CommonLogic\Model\AppActionList;
 use exface\Core\Factories\ActionFactory;
@@ -25,6 +25,7 @@ use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\CommonLogic\AppInstallers\SqlSchemaInstaller;
 use exface\Core\CommonLogic\NameResolver;
 use exface\Core\Interfaces\Model\ModelInterface;
+use exface\Core\CommonLogic\Model\Object;
 
 class SqlModelLoader implements ModelLoaderInterface
 {
@@ -38,7 +39,7 @@ class SqlModelLoader implements ModelLoaderInterface
      */
     public function loadObjectById(ModelInterface $model, $object_id)
     {
-        $obj = new \exface\Core\CommonLogic\Model\Object($model);
+        $obj = new Object($model);
         $obj->setId($object_id);
         return $this->loadObject($obj);
     }
@@ -50,7 +51,7 @@ class SqlModelLoader implements ModelLoaderInterface
      */
     public function loadObjectByAlias(AppInterface $app, $object_alias)
     {
-        $obj = new \exface\Core\CommonLogic\Model\Object($app->getWorkbench()->model());
+        $obj = new Object($app->getWorkbench()->model());
         $obj->setAlias($object_alias);
         $obj->setNamespace($app->getAliasWithNamespace());
         return $this->loadObject($obj);        
@@ -59,10 +60,10 @@ class SqlModelLoader implements ModelLoaderInterface
     /**
      * Loads metamodel data into the given object
      * 
-     * @param Object $object
-     * @return Object
+     * @param MetaObjectInterface $object
+     * @return MetaObjectInterface
      */
-    protected function loadObject(Object $object)
+    protected function loadObject(MetaObjectInterface $object)
     {
         $exface = $object->getWorkbench();
         $load_behaviors = false;
@@ -256,7 +257,7 @@ class SqlModelLoader implements ModelLoaderInterface
         return $object;
     }
 
-    protected function createAttributeFromDbRow(Object $object, array $row)
+    protected function createAttributeFromDbRow(MetaObjectInterface $object, array $row)
     {
         $model = $object->getModel();
         $attr = new Attribute($model);
@@ -425,7 +426,7 @@ class SqlModelLoader implements ModelLoaderInterface
      *
      * @see \exface\Core\Interfaces\DataSources\ModelLoaderInterface::loadObjectActions()
      */
-    public function loadObjectActions(ObjectActionList $empty_list)
+    public function loadObjectActions(MetaObjectActionListInterface $empty_list)
     {
         $object_id_list = implode(',', $empty_list->getMetaObject()->getParentObjectsIds());
         $object_id_list = $empty_list->getMetaObject()->getId() . ($object_id_list ? ',' . $object_id_list : '');
@@ -454,7 +455,7 @@ class SqlModelLoader implements ModelLoaderInterface
      */
     protected function loadActionsFromModel(ActionList $action_list, $sql_where, WidgetInterface $called_by_widget = null)
     {
-        $basket_aliases = ($action_list instanceof ObjectActionList) ? $action_list->getObjectBasketActionAliases() : array();
+        $basket_aliases = ($action_list instanceof MetaObjectActionListInterface) ? $action_list->getObjectBasketActionAliases() : array();
         
         $query = $this->getDataConnection()->runSql('
 				SELECT
@@ -474,7 +475,7 @@ class SqlModelLoader implements ModelLoaderInterface
                     $action_uxon = UxonObject::fromAnything($row['config_uxon']);
                 }
                 $app = $action_list->getWorkbench()->getApp($row['app_alias']);
-                $object = $action_list instanceof ObjectActionList ? $action_list->getMetaObject() : $action_list->getWorkbench()->model()->getObjectById($row['object_oid']);
+                $object = $action_list instanceof MetaObjectActionListInterface ? $action_list->getMetaObject() : $action_list->getWorkbench()->model()->getObjectById($row['object_oid']);
                 $a = ActionFactory::createFromModel($row['action'], $row['alias'], $app, $object, $action_uxon, $called_by_widget);
                 $a->setName($row['name']);
                 $action_list->add($a);
@@ -485,7 +486,7 @@ class SqlModelLoader implements ModelLoaderInterface
             }
         }
         
-        if ($action_list instanceof ObjectActionList) {
+        if ($action_list instanceof MetaObjectActionListInterface) {
             $action_list->setObjectBasketActionAliases($basket_aliases);
         }
         
@@ -502,9 +503,9 @@ class SqlModelLoader implements ModelLoaderInterface
     /**
      *
      *
-     * @param Object $object
+     * @param MetaObjectInterface $object
      */
-    public function loadAttribute(Object $object, $attribute_alias)
+    public function loadAttribute(MetaObjectInterface $object, $attribute_alias)
     {
         return $object->getAttribute($attribute_alias);
     }
@@ -512,9 +513,9 @@ class SqlModelLoader implements ModelLoaderInterface
     /**
      *
      *
-     * @param Object $object
+     * @param MetaObjectInterface $object
      */
-    public function loadRelation(Object $object, $relation_alias)
+    public function loadRelation(MetaObjectInterface $object, $relation_alias)
     {
         return $object->getRelation($relation_alias);   
     }

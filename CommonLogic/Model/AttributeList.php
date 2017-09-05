@@ -3,6 +3,7 @@ namespace exface\Core\CommonLogic\Model;
 
 use exface\Core\CommonLogic\EntityList;
 use exface\Core\Factories\AttributeListFactory;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 
 /**
  *
@@ -46,7 +47,7 @@ class AttributeList extends EntityList
         return $this->getParent();
     }
 
-    public function setMetaObject(Object $meta_object)
+    public function setMetaObject(MetaObjectInterface $meta_object)
     {
         return $this->setParent($meta_object);
     }

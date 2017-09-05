@@ -4,7 +4,7 @@ namespace exface\Core\CommonLogic\DataSheets;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\Core\CommonLogic\Model\Object;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\Exceptions\DataSheets\DataSheetMapperError;
 use exface\Core\Exceptions\DataSheets\DataSheetMapperInvalidInputError;
@@ -120,7 +120,7 @@ class DataSheetMapper implements DataSheetMapperInterface {
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSheets\DataSheetMapperInterface::setFromMetaObject()
      */
-    public function setFromMetaObject(Object $object)
+    public function setFromMetaObject(MetaObjectInterface $object)
     {
         $this->fromMetaObject = $object;
         return $this;
@@ -165,7 +165,7 @@ class DataSheetMapper implements DataSheetMapperInterface {
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSheets\DataSheetMapperInterface::setToMetaObject()
      */
-    public function setToMetaObject(Object $toMetaObject)
+    public function setToMetaObject(MetaObjectInterface $toMetaObject)
     {
         $this->toMetaObject = $toMetaObject;
         return $this;

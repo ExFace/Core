@@ -2,7 +2,6 @@
 namespace exface\Core\Factories;
 
 use exface\Core\CommonLogic\Workbench;
-use exface\Core\CommonLogic\Model\Condition;
 use exface\Core\CommonLogic\Model\ConditionGroup;
 use exface\Core\Exceptions\UnexpectedValueException;
 
@@ -12,7 +11,7 @@ abstract class ConditionGroupFactory extends AbstractUxonFactory
     /**
      * Returns an empty condition group
      *
-     * @param exface $exface            
+     * @param Workbench $exface            
      * @param string $group_operator            
      * @return ConditionGroup
      */
@@ -27,7 +26,7 @@ abstract class ConditionGroupFactory extends AbstractUxonFactory
      * [ OPERATOR1, [ CONDITION1 ], [ CONDITION2 ], [ OPERATOR2, [ CONDITION3 ], [ CONDITION4] ], ...
      * ]
      *
-     * @param exface $exface            
+     * @param Workbench $exface            
      * @param array $array_notation            
      * @return ConditionGroup
      */
@@ -58,7 +57,7 @@ abstract class ConditionGroupFactory extends AbstractUxonFactory
 
     /**
      *
-     * @param exface $exface            
+     * @param Workbench $exface            
      * @param string|array $uxon_or_array            
      * @throws UnexpectedValueException
      * @return ConditionGroup

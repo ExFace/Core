@@ -11,7 +11,7 @@ use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Exceptions\UxonParserError;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Exceptions\Actions\ActionNotFoundError;
-use exface\Core\CommonLogic\Model\Object;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\WidgetInterface;
 
 abstract class ActionFactory extends AbstractNameResolverFactory
@@ -100,12 +100,12 @@ abstract class ActionFactory extends AbstractNameResolverFactory
      * @param string $base_action_alias_or_class_or_file            
      * @param string $action_alias            
      * @param AppInterface $app            
-     * @param Object $object            
+     * @param MetaObjectInterface $object            
      * @param UxonObject $uxon_description            
      * @throws ActionNotFoundError if the class name of the base action cannot be resolved
      * @return \exface\Core\Interfaces\Actions\ActionInterface
      */
-    public static function createFromModel($base_action_alias_or_class_or_file, $action_alias, AppInterface $app, Object $object, UxonObject $uxon_description = null, WidgetInterface $called_by_widget = null)
+    public static function createFromModel($base_action_alias_or_class_or_file, $action_alias, AppInterface $app, MetaObjectInterface $object, UxonObject $uxon_description = null, WidgetInterface $called_by_widget = null)
     {
         $name_resolver = static::getNameResolverFromString($app->getWorkbench(), $base_action_alias_or_class_or_file);
         $action = static::createEmpty($name_resolver, $app, $called_by_widget);

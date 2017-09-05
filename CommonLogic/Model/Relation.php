@@ -149,7 +149,7 @@ class Relation implements ExfaceClassInterface
         return $this->getModel()->getObject($this->main_object_id);
     }
 
-    public function setMainObject(\exface\Core\CommonLogic\Model\Object $obj)
+    public function setMainObject(\exface\Core\Interfaces\Model\MetaObjectInterface $obj)
     {
         $this->main_object_id = $obj->getId();
     }

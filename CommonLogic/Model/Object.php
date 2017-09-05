@@ -9,8 +9,6 @@ use exface\Core\Factories\AttributeListFactory;
 use exface\Core\CommonLogic\DataSheets\DataAggregator;
 use exface\Core\CommonLogic\EntityList;
 use exface\Core\Factories\EntityListFactory;
-use exface\Core\Interfaces\ExfaceClassInterface;
-use exface\Core\Interfaces\AliasInterface;
 use exface\Core\Exceptions\Model\MetaRelationNotFoundError;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\CommonLogic\Workbench;
@@ -18,8 +16,11 @@ use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Exceptions\Model\MetaObjectNotFoundError;
 use exface\Core\Exceptions\Model\MetaObjectHasNoUidAttributeError;
 use exface\Core\Exceptions\InvalidArgumentException;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
+use exface\Core\Interfaces\Model\ModelInterface;
+use exface\Core\Interfaces\Model\MetaObjectActionListInterface;
 
-class Object implements ExfaceClassInterface, AliasInterface
+class Object implements MetaObjectInterface
 {
 
     private $id;
@@ -66,7 +67,7 @@ class Object implements ExfaceClassInterface, AliasInterface
 
     private $actions = array();
 
-    function __construct(\exface\Core\CommonLogic\Model\Model $model)
+    function __construct(ModelInterface $model)
     {
         $exface = $model->getWorkbench();
         $this->model = $model;
@@ -332,7 +333,7 @@ class Object implements ExfaceClassInterface, AliasInterface
      * @param string $alias
      * @param Attribute|boolean|null $value
      * @throws InvalidArgumentException
-     * @return \exface\Core\CommonLogic\Model\Object
+     * @return \exface\Core\Interfaces\Model\MetaObjectInterface
      */
     protected function setAttributeCache($alias, $value = null)
     {
@@ -384,7 +385,7 @@ class Object implements ExfaceClassInterface, AliasInterface
      * Returns the object related to the current one via the given relation path string
      *
      * @param string $relation_path_string            
-     * @return Object
+     * @return MetaObjectInterface
      */
     function getRelatedObject($relation_path_string)
     {
@@ -405,7 +406,7 @@ class Object implements ExfaceClassInterface, AliasInterface
      * specify which of the two reverse relation to use (e.g. LOCATION->ADDRESS[SHIPPING_ADDRESS] or something)
      *
      * @param relation $relation            
-     * @return Object
+     * @return MetaObjectInterface
      */
     function addRelation(Relation $relation)
     {
@@ -526,10 +527,10 @@ class Object implements ExfaceClassInterface, AliasInterface
      *
      * @see find_relation_path()
      *
-     * @param Object $related_object            
+     * @param MetaObjectInterface $related_object            
      * @return Relation
      */
-    public function findRelation(Object $related_object, $prefer_direct_relations = false)
+    public function findRelation(MetaObjectInterface $related_object, $prefer_direct_relations = false)
     {
         $first_relation = false;
         foreach ($this->getRelations() as $rel) {
@@ -584,12 +585,12 @@ class Object implements ExfaceClassInterface, AliasInterface
      *
      * @see find_relation()
      *
-     * @param object $related_object            
+     * @param MetaObjectInterface $related_object            
      * @param number $max_depth            
      * @param RelationPath $start_path            
      * @return RelationPath | boolean
      */
-    public function findRelationPath(Object $related_object, $max_depth = 3, RelationPath $start_path = null)
+    public function findRelationPath(MetaObjectInterface $related_object, $max_depth = 3, RelationPath $start_path = null)
     {
         $path = $start_path ? $start_path : new RelationPath($this);
         
@@ -727,7 +728,7 @@ class Object implements ExfaceClassInterface, AliasInterface
      * This way, the default connection for the data source can be overridden!
      *
      * @param string $alias            
-     * @return \exface\Core\CommonLogic\Model\Object
+     * @return \exface\Core\Interfaces\Model\MetaObjectInterface
      */
     function setDataConnectionAlias($alias)
     {
@@ -818,7 +819,7 @@ class Object implements ExfaceClassInterface, AliasInterface
      *
      * @param string $id            
      * @param string $value            
-     * @return Object
+     * @return MetaObjectInterface
      */
     public function setDataAddressProperty($id, $value)
     {
@@ -829,31 +830,12 @@ class Object implements ExfaceClassInterface, AliasInterface
     /**
      *
      * @param UxonObject $uxon            
-     * @return Object
+     * @return MetaObjectInterface
      */
     public function setDataAddressProperties(UxonObject $uxon)
     {
         $this->data_address_properties = $uxon;
         return $this;
-    }
-
-    /**
-     * DEPRECATED!
-     * Parses a string with data address properties to an assotiative array
-     *
-     * @param unknown $string            
-     * @return array
-     */
-    public function parseDataAddressProperties($string)
-    {
-        $props = array();
-        if (! empty($string)) {
-            $props = @json_decode($string, true);
-        }
-        if (! $props) {
-            $props = array();
-        }
-        return $props;
     }
 
     /**
@@ -868,7 +850,7 @@ class Object implements ExfaceClassInterface, AliasInterface
     /**
      * Returns all objects, this one inherits from as an array
      *
-     * @return object[]
+     * @return MetaObjectInterface[]
      */
     public function getParentObjects()
     {
@@ -902,7 +884,7 @@ class Object implements ExfaceClassInterface, AliasInterface
      * This includes distant relatives, that inherit
      * from other objects, inheriting from the current one.
      *
-     * @return object[]
+     * @return MetaObjectInterface[]
      */
     public function getInheritingObjects()
     {
@@ -993,7 +975,7 @@ class Object implements ExfaceClassInterface, AliasInterface
      * to build the EditObjectDialog)
      *
      * @param UxonObject $value            
-     * @return Object
+     * @return MetaObjectInterface
      */
     public function setDefaultEditorUxon(UxonObject $value)
     {
@@ -1051,7 +1033,7 @@ class Object implements ExfaceClassInterface, AliasInterface
      * Returns TRUE if this object is exactly the one given or inherits from it and FALSE otherwise - similarly to the behavior of PHP instance_of.
      * E.g. if you have an object SPECIAL_FILE, which extends FILE, SPECIAL_FILE->is(FILE) = true, but FILE->is(SPECIAL_FILE) = false.
      *
-     * @param Object|string $object_or_alias_or_id            
+     * @param MetaObjectInterface|string $object_or_alias_or_id            
      * @return boolean
      *
      * @see is_exactly()
@@ -1070,7 +1052,7 @@ class Object implements ExfaceClassInterface, AliasInterface
      * Checks if this object matches the given object identifier: if so, returns TRUE and FALSE otherwise.
      * The identifier may be a qualified alias, a UID or an instantiated object.
      *
-     * @param Object|string $alias_with_relation_path            
+     * @param MetaObjectInterface|string $alias_with_relation_path            
      * @return boolean
      *
      * @see is()
@@ -1078,7 +1060,7 @@ class Object implements ExfaceClassInterface, AliasInterface
      */
     public function isExactly($object_or_alias_or_id)
     {
-        if ($object_or_alias_or_id instanceof Object) {
+        if ($object_or_alias_or_id instanceof MetaObjectInterface) {
             if ($object_or_alias_or_id->getId() == $this->getId()) {
                 return true;
             }
@@ -1098,7 +1080,7 @@ class Object implements ExfaceClassInterface, AliasInterface
      * Returns TRUE if this object is extended from the given object identifier.
      * The identifier may be a qualified alias, a UID or an instantiated object.
      *
-     * @param Object|string $object_or_alias_or_id            
+     * @param MetaObjectInterface|string $object_or_alias_or_id            
      * @return boolean
      *
      * @see is_exactly()
@@ -1121,11 +1103,11 @@ class Object implements ExfaceClassInterface, AliasInterface
 
     /**
      *
-     * @return ObjectActionList|ActionInterface[]
+     * @return MetaObjectActionListInterface|ActionInterface[]
      */
     public function getActions()
     {
-        if (! ($this->actions instanceof ObjectActionList)) {
+        if (! ($this->actions instanceof MetaObjectActionListInterface)) {
             $this->actions = $this->getModel()->getModelLoader()->loadObjectActions(new ObjectActionList($this->getWorkbench(), $this));
         }
         return $this->actions;

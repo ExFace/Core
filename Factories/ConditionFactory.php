@@ -5,7 +5,7 @@ use exface\Core\CommonLogic\Workbench;
 use exface\Core\CommonLogic\Model\Expression;
 use exface\Core\CommonLogic\Model\Condition;
 use exface\Core\Exceptions\UnexpectedValueException;
-use exface\Core\CommonLogic\Model\Object;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 
 abstract class ConditionFactory extends AbstractUxonFactory
 {
@@ -24,14 +24,14 @@ abstract class ConditionFactory extends AbstractUxonFactory
     /**
      * Creates a condition for the given object from an expression string (e.g. attribute alias)
      * 
-     * @param Object $object
+     * @param MetaObjectInterface $object
      * @param string $expression_string
      * @param string $value
      * @param string $comparator
      * 
      * @return Condition
      */
-    public static function createFromString(Object $object, $expression_string, $value, $comparator = null)
+    public static function createFromString(MetaObjectInterface $object, $expression_string, $value, $comparator = null)
     {
         $workbench = $object->getWorkbench();
         $condition = static::createEmpty($workbench);

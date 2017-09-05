@@ -2,7 +2,7 @@
 namespace exface\Core\Interfaces;
 
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\Core\CommonLogic\Model\Object;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\CommonLogic\WidgetLink;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\CommonLogic\WidgetDimension;
@@ -172,16 +172,16 @@ interface WidgetInterface extends ExfaceClassInterface, iCanBeCopied
     /**
      *
      * @throws WidgetConfigurationError
-     * @return \exface\Core\CommonLogic\Model\Object
+     * @return \exface\Core\Interfaces\Model\MetaObjectInterface
      */
     public function getMetaObject();
 
     /**
      * Sets the given object as the new base object for this widget
      *
-     * @param Object $object            
+     * @param MetaObjectInterface $object            
      */
-    public function setMetaObject(Object $object);
+    public function setMetaObject(MetaObjectInterface $object);
 
     /**
      * Returns the id of this widget

@@ -5,7 +5,7 @@ use exface\Core\Interfaces\Widgets\iSupportMultiSelect;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Factories\DataSheetFactory;
-use exface\Core\CommonLogic\Model\Object;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\CommonLogic\Model\Condition;
 use exface\Core\Factories\ConditionFactory;
 use exface\Core\CommonLogic\UxonObject;
@@ -544,7 +544,7 @@ class InputSelect extends Input implements iSupportMultiSelect
         return $this->options_object;
     }
 
-    public function setOptionsObject(Object $value)
+    public function setOptionsObject(MetaObjectInterface $value)
     {
         $this->options_object = $value;
         return $this;

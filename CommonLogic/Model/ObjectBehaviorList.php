@@ -4,6 +4,7 @@ namespace exface\Core\CommonLogic\Model;
 use exface\Core\CommonLogic\EntityList;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Interfaces\Model\BehaviorListInterface;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 
 /**
  *
@@ -35,7 +36,7 @@ class ObjectBehaviorList extends EntityList implements BehaviorListInterface
 
     /**
      *
-     * @return Object
+     * @return MetaObjectInterface
      */
     public function getObject()
     {
@@ -59,10 +60,10 @@ class ObjectBehaviorList extends EntityList implements BehaviorListInterface
 
     /**
      *
-     * @param Object $value            
+     * @param MetaObjectInterface $value            
      * @return ObjectBehaviorList
      */
-    public function setObject(Object $value)
+    public function setObject(MetaObjectInterface $value)
     {
         $this->setParent($value);
         return $this;

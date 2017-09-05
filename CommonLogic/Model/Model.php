@@ -6,6 +6,7 @@ use exface\Core\CommonLogic\NameResolver;
 use exface\Core\Interfaces\DataSources\ModelLoaderInterface;
 use exface\Core\Interfaces\Model\ModelInterface;
 use exface\Core\Exceptions\Model\MetaObjectNotFoundError;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 
 class Model implements ModelInterface
 {
@@ -13,7 +14,7 @@ class Model implements ModelInterface
     /** @var \exface\Core\CommonLogic\Workbench */
     private $exface;
 
-    /** @var \exface\Core\CommonLogic\Model\Object[] [ id => object ] */
+    /** @var \exface\Core\Interfaces\Model\MetaObjectInterface[] [ id => object ] */
     private $loaded_objects = array();
 
     /** @var array [ namespace => [ object_alias => object_id ] ] */
@@ -119,7 +120,7 @@ class Model implements ModelInterface
      * Returns false if the object is not in the cache.
      *
      * @param int $object_id            
-     * @return \exface\Core\CommonLogic\Model\Object
+     * @return \exface\Core\Interfaces\Model\MetaObjectInterface
      */
     private function getObjectFromCache($object_id)
     {
@@ -134,10 +135,10 @@ class Model implements ModelInterface
      * Adds the object to the model cache.
      * Also sets the default namespace, if it is the first object loaded.
      *
-     * @param \exface\Core\CommonLogic\Model\Object $obj            
+     * @param \exface\Core\Interfaces\Model\MetaObjectInterface $obj            
      * @return boolean
      */
-    private function cacheObject(\exface\Core\CommonLogic\Model\Object $obj)
+    private function cacheObject(\exface\Core\Interfaces\Model\MetaObjectInterface $obj)
     {
         $this->loaded_objects[$obj->getId()] = $obj;
         $this->object_library[$obj->getNamespace()][$obj->getAlias()] = $obj->getId();
@@ -206,7 +207,7 @@ class Model implements ModelInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\ModelInterface::parseExpression()
      */
-    public function parseExpression($expression, Object $object = null)
+    public function parseExpression($expression, MetaObjectInterface $object = null)
     {
         $expr = ExpressionFactory::createFromString($this->exface, $expression, $object);
         return $expr;

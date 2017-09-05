@@ -4,6 +4,7 @@ namespace exface\Core\Factories;
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\CommonLogic\Model\Expression;
 use exface\Core\CommonLogic\Model\Attribute;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 
 abstract class ExpressionFactory
 {
@@ -14,9 +15,9 @@ abstract class ExpressionFactory
      * attribute_aliases cannot be parsed properly.
      * TODO Make the object a mandatory parameter. This requires a lot of changes to formulas, however. Probably will do that when rewriting the formula parser.
      *
-     * @param exface $exface            
+     * @param Workbench $exface            
      * @param string $expression            
-     * @param object $object            
+     * @param MetaObjectInterface $object            
      * @return Expression
      */
     public static function createFromString(Workbench $exface, $string, $meta_object = null)

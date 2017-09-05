@@ -1,7 +1,7 @@
 <?php
 namespace exface\Core\Factories;
 
-use exface\Core\CommonLogic\Model\Object;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\CommonLogic\Model\AttributeGroup;
 
 abstract class AttributeGroupFactory extends AbstractFactory
@@ -9,11 +9,11 @@ abstract class AttributeGroupFactory extends AbstractFactory
 
     /**
      *
-     * @param Object $object            
+     * @param MetaObjectInterface $object            
      * @param string $alias            
      * @return AttributeGroup
      */
-    public static function createForObject(Object $object, $alias = null)
+    public static function createForObject(MetaObjectInterface $object, $alias = null)
     {
         $exface = $object->getWorkbench();
         $group = new AttributeGroup($exface, $object);

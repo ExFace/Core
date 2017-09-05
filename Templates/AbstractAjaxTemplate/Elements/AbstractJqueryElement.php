@@ -6,7 +6,7 @@ use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Templates\AbstractAjaxTemplate\AbstractAjaxTemplate;
 use exface\Core\Exceptions\Configuration\ConfigOptionNotFoundError;
-use exface\Core\CommonLogic\Model\Object;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\ExfaceClassInterface;
 use exface\Core\CommonLogic\Translation;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
@@ -142,7 +142,7 @@ abstract class AbstractJqueryElement implements ExfaceClassInterface
     /**
      * Returns the meta object of the widget, that this element represents.
      *
-     * @return Object
+     * @return MetaObjectInterface
      */
     public function getMetaObject()
     {

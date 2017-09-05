@@ -9,6 +9,7 @@ use exface\Core\Exceptions\Model\MetaRelationNotFoundError;
 use exface\Core\Exceptions\Model\ExpressionRebaseImpossibleError;
 use exface\Core\Interfaces\ExfaceClassInterface;
 use exface\Core\Interfaces\iCanBeCopied;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 
 class Expression implements ExfaceClassInterface, iCanBeCopied
 {
@@ -341,7 +342,7 @@ class Expression implements ExfaceClassInterface, iCanBeCopied
         return $this->meta_object;
     }
 
-    public function setMetaObject(Object $object)
+    public function setMetaObject(MetaObjectInterface $object)
     {
         $this->meta_object = $object;
     }

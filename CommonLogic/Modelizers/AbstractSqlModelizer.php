@@ -1,7 +1,7 @@
 <?php
 namespace exface\Core\CommonLogic\Modelizers;
 
-use exface\Core\CommonLogic\Model\Object;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\DataSources\SqlDataConnectorInterface;
 use exface\Core\Interfaces\DataSources\ModelizerInterface;
 use exface\Core\Factories\DataSheetFactory;
@@ -18,7 +18,7 @@ abstract class AbstractSqlModelizer implements ModelizerInterface
         $this->data_connector = $data_connector;
     }
 
-    abstract public function getAttributePropertiesFromTable(Object $meta_object, $table_name);
+    abstract public function getAttributePropertiesFromTable(MetaObjectInterface $meta_object, $table_name);
 
     /**
      *

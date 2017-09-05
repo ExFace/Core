@@ -3,7 +3,7 @@ namespace exface\Core\Contexts;
 
 use exface\Core\CommonLogic\Model\Attribute;
 use exface\Core\CommonLogic\Model\Condition;
-use exface\Core\CommonLogic\Model\Object;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\ConditionFactory;
 use exface\Core\Factories\ExpressionFactory;
@@ -19,11 +19,11 @@ class FilterContext extends AbstractContext
     /**
      * Returns an array with all conditions from the current context
      *
-     * @param object $object            
+     * @param MetaObjectInterface $object            
      * @return Condition[] TODO Modify to look for possible related objects and rebase() their conditions!
      *         Ccurrently we only look for conitions based on direct attributes of the object given.
      */
-    public function getConditions(Object $object = NULL)
+    public function getConditions(MetaObjectInterface $object = NULL)
     {
         $array = array();
         if ($object) {

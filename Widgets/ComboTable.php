@@ -525,7 +525,7 @@ class ComboTable extends InputCombo implements iHaveChildren
      * Returns the meta object, that the table within the combo will show
      *
      * @throws WidgetConfigurationError
-     * @return object
+     * @return MetaObjectInterface
      */
     public function getTableObject()
     {

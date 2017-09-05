@@ -11,7 +11,6 @@ use exface\Core\Interfaces\iCanBeCopied;
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Interfaces\Model\DataTypeInterface;
 use exface\Core\CommonLogic\Constants\SortingDirections;
-use exface\Core\Exceptions\Model\MetaObjectModelError;
 
 /**
  * 
@@ -291,7 +290,7 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
      * If the attribute is inherited, the inheriting object will be returned. To get the base object, the
      * attribute was inherited from, use getObjectInheritedFrom().
      *
-     * @return \exface\Core\CommonLogic\Model\Object
+     * @return \exface\Core\Interfaces\Model\MetaObjectInterface
      */
     public function getObject()
     {
@@ -306,7 +305,7 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
      * of a data source, that is extended by OBJECT1, which in turn, is extended by OBJECT2, calling get_object_extended_from() on an
      * attribute of OBJECT2 will return OBJECT1, while doing so for OBJECT1 will return the base object.
      *
-     * @return \exface\Core\CommonLogic\Model\Object
+     * @return \exface\Core\Interfaces\Model\MetaObjectInterface
      */
     public function getObjectInheritedFrom()
     {

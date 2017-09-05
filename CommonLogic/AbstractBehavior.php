@@ -3,7 +3,7 @@ namespace exface\Core\CommonLogic;
 
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Model\BehaviorInterface;
-use exface\Core\CommonLogic\Model\Object;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Model\BehaviorListInterface;
 use exface\Core\Interfaces\NameResolverInterface;
 
@@ -25,7 +25,7 @@ abstract class AbstractBehavior implements BehaviorInterface
 
     private $name_resolver = false;
 
-    public function __construct(Object $object)
+    public function __construct(MetaObjectInterface $object)
     {
         $this->setObject($object);
     }
@@ -71,7 +71,7 @@ abstract class AbstractBehavior implements BehaviorInterface
         return $this->object;
     }
 
-    public function setObject(Object $value)
+    public function setObject(MetaObjectInterface $value)
     {
         $this->object = $value;
         return $this;

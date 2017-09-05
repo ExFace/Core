@@ -2,7 +2,7 @@
 namespace exface\Core\CommonLogic;
 
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\Core\CommonLogic\Model\Object;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Actions\iCanBeUndone;
 use exface\Core\Interfaces\Actions\iModifyData;
 use exface\Core\Factories\DataSheetFactory;
@@ -638,7 +638,7 @@ abstract class AbstractAction implements ActionInterface
      *
      * @see \exface\Core\Interfaces\Actions\ActionInterface::setMetaObject()
      */
-    public function setMetaObject(Object $object)
+    public function setMetaObject(MetaObjectInterface $object)
     {
         $this->meta_object = $object;
         return $this;

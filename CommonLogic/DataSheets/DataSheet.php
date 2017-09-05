@@ -4,7 +4,7 @@ namespace exface\Core\CommonLogic\DataSheets;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\Model\ConditionGroup;
 use exface\Core\CommonLogic\Model\Condition;
-use exface\Core\CommonLogic\Model\Object;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Exceptions\DataSheets\DataSheetMergeError;
 use exface\Core\Factories\QueryBuilderFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
@@ -87,7 +87,7 @@ class DataSheet implements DataSheetInterface
 
     private $meta_object;
 
-    public function __construct(\exface\Core\CommonLogic\Model\Object $meta_object)
+    public function __construct(\exface\Core\Interfaces\Model\MetaObjectInterface $meta_object)
     {
         $this->exface = $meta_object->getModel()->getWorkbench();
         $this->meta_object = $meta_object;
@@ -1575,7 +1575,7 @@ class DataSheet implements DataSheetInterface
         return $this;
     }
 
-    public function getMetaObjectRelationPath(Object $related_object)
+    public function getMetaObjectRelationPath(MetaObjectInterface $related_object)
     {
         // TODO First try to determine the path by searching for the related object among columns, filters, sorters, etc.
         // It is verly likely, that the user is interested in exactly the one relation already used! This is expecially important for

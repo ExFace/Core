@@ -6,7 +6,7 @@ use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\CommonLogic\Constants\Icons;
-use exface\Core\CommonLogic\Model\Object;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\CommonLogic\Model\Relation;
 use exface\Core\CommonLogic\Model\Attribute;
 use exface\Core\Exceptions\Widgets\WidgetLogicError;
@@ -348,10 +348,10 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
     /**
      * Returns the first filter based on the given object or it's attributes
      *
-     * @param Object $object
+     * @param MetaObjectInterface $object
      * @return \exface\Core\Widgets\Filter|boolean
      */
-    public function findFiltersByObject(Object $object)
+    public function findFiltersByObject(MetaObjectInterface $object)
     {
         $result = array();
         foreach ($this->getFilters() as $filter_widget) {

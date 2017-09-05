@@ -7,6 +7,7 @@ use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\Exceptions\Model\ExpressionRebaseImpossibleError;
 use exface\Core\Interfaces\iCanBeCopied;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 
 /**
  * A condition group contains one or more conditions and/or other (nested) condition groups combined by one logical operator,
@@ -74,7 +75,7 @@ class ConditionGroup implements iCanBeConvertedToUxon, iCanBeCopied
      * @param string $comparator            
      * @return ConditionGroup
      */
-    function addConditionsFromString(Object $base_object, $expression_string, $value, $comparator = null)
+    function addConditionsFromString(MetaObjectInterface $base_object, $expression_string, $value, $comparator = null)
     {
         $value = trim($value);
                 

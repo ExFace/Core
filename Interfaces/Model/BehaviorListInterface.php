@@ -2,7 +2,7 @@
 namespace exface\Core\Interfaces\Model;
 
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
-use exface\Core\CommonLogic\Model\Object;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\EntityListInterface;
 
 interface BehaviorListInterface extends iCanBeConvertedToUxon, \IteratorAggregate
@@ -10,16 +10,16 @@ interface BehaviorListInterface extends iCanBeConvertedToUxon, \IteratorAggregat
 
     /**
      *
-     * @return Object
+     * @return MetaObjectInterface
      */
     public function getObject();
 
     /**
      *
-     * @param Object $value            
+     * @param MetaObjectInterface $value            
      * @return BehaviorListInterface
      */
-    public function setObject(Object $value);
+    public function setObject(MetaObjectInterface $value);
 
     /**
      *

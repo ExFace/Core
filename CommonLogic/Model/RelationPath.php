@@ -5,6 +5,7 @@ use exface\Core\Factories\RelationPathFactory;
 use exface\Core\Exceptions\Model\MetaRelationNotFoundError;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Exceptions\OutOfRangeException;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 
 /**
  * The relation path object holds all relations needed to reach the end object from the start object.
@@ -32,7 +33,7 @@ class RelationPath implements \IteratorAggregate
     /* Properties NOT to be dublicated on copy() */
     private $start_object = null;
 
-    public function __construct(Object $start_object)
+    public function __construct(MetaObjectInterface $start_object)
     {
         $this->start_object = $start_object;
     }
@@ -131,7 +132,7 @@ class RelationPath implements \IteratorAggregate
     /**
      * Returns the last object in the relation path (the related object of the last relation)
      *
-     * @return Object
+     * @return MetaObjectInterface
      */
     public function getEndObject()
     {
@@ -244,10 +245,10 @@ class RelationPath implements \IteratorAggregate
      * used in the context of a PRODUCT.
      *
      * @param string $relation_path            
-     * @param object $meta_object            
+     * @param MetaObjectInterface $meta_object            
      * @return string
      */
-    public static function relationPathReverse($relation_path, Object $meta_object)
+    public static function relationPathReverse($relation_path, MetaObjectInterface $meta_object)
     {
         $output = '';
         // Parse the relation path to get an array of relation aliases

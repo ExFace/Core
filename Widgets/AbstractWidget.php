@@ -9,7 +9,7 @@ use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\CommonLogic\WidgetLink;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\CommonLogic\NameResolver;
-use exface\Core\CommonLogic\Model\Object;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Factories\WidgetDimensionFactory;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\CommonLogic\Model\RelationPath;
@@ -469,7 +469,7 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
      *
      * @see \exface\Core\Interfaces\WidgetInterface::setMetaObject()
      */
-    function setMetaObject(Object $object)
+    function setMetaObject(MetaObjectInterface $object)
     {
         return $this->setMetaObjectId($object->getId());
     }

@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\CommonLogic\Traits;
 
+use exface\Core\DataTypes\BooleanDataType;
+
 /**
  * Trait for widgets that implemenent the interface iLayoutWidgets.
  *

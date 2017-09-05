@@ -13,7 +13,7 @@ use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Interfaces\Widgets\iHaveColumnGroups;
 use exface\Core\Factories\DataColumnTotalsFactory;
 use exface\Core\Factories\WidgetFactory;
-use exface\Core\CommonLogic\Model\Object;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 use exface\Core\Factories\WidgetLinkFactory;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
