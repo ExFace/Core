@@ -496,7 +496,7 @@ class Object implements MetaObjectInterface
                 // create/update-timestamp, it will often be inherited from some base object of the data source - perhaps the same base object, the
                 // widget's object inherits from as well. In this case, there is no way to know, whose UID it is, unless the object_id of the inherited
                 // attribute points to the object it directly belongs to (working example in Administration > Core > App > Button "Show Objects").
-                $attr_clone->setObjectId($this->getId());
+                $attr_clone->setObject($this);
             }
             $this->getAttributes()->add($attr_clone);
         }

@@ -10,7 +10,6 @@ use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Interfaces\Model\DataTypeInterface;
 use exface\Core\CommonLogic\Constants\SortingDirections;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
-use exface\Core\Interfaces\Model\ModelInterface;
 use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 use exface\Core\Interfaces\Model\MetaRelationInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
