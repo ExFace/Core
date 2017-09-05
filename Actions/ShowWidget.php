@@ -213,7 +213,7 @@ class ShowWidget extends AbstractAction implements iShowWidget
                 /* @var $condition \exface\Core\CommonLogic\Model\Condition */
                 foreach ($context_conditions as $condition) {                    
                     /*
-                     * if ($this->getWidget() && $condition->getExpression()->getMetaObject()->getId() == $this->getWidget()->getMetaObjectId()){
+                     * if ($this->getWidget() && $condition->getExpression()->getMetaObject()->getId() == $this->getWidget()->getMetaObject()->getId()){
                      * // If the expressions belong to the same object, as the one being displayed, use them as filters
                      * // TODO Building the prefill sheet from context in different ways depending on the object of the top widget
                      * // is somewhat ugly (shouldn't the children widgets get the chance, to decide themselves, what they do with the prefill)

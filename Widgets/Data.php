@@ -232,7 +232,7 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
     public function prepareDataSheetToPrefill(DataSheetInterface $data_sheet = null)
     {
         $data_sheet = parent::prepareDataSheetToPrefill($data_sheet);
-        if ($data_sheet->getMetaObject()->getId() == $this->getMetaObjectId()) {
+        if ($data_sheet->getMetaObject()->isExactly($this->getMetaObject())) {
             // If trying to prefill with an instance of the same object, we actually just need the uid column in the resulting prefill
             // data sheet. It will probably be there anyway, but we still add it here (just in case).
             $data_sheet->getColumns()->addFromExpression($this->getMetaObject()->getUidAttributeAlias());

@@ -185,7 +185,7 @@ class Tabs extends Container implements iFillEntireContainer
         // If any contained widget is specified, add it to the tab an inherit some of it's attributes
         if ($contents) {
             $widget->addWidget($contents);
-            $widget->setMetaObjectId($contents->getMetaObjectId());
+            $widget->setMetaObject($contents->getMetaObject());
             $widget->setCaption($contents->getCaption());
         }
         

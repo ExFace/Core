@@ -27,7 +27,7 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
 
     public function addColumn(DataColumn $column)
     {
-        $column->setMetaObjectId($this->getMetaObjectId());
+        $column->setMetaObject($this->getMetaObject());
         if ($column->isEditable()) {
             $this->getParent()->setEditable(true);
             $this->getParent()->addColumnsForSystemAttributes();

@@ -23,9 +23,9 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\Exceptions\UxonMapError;
-use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 use exface\Core\Exceptions\Widgets\WidgetHasNoMetaObjectError;
 use exface\Core\Factories\WidgetFactory;
+use exface\Core\Interfaces\Model\ExpressionInterface;
 
 /**
  * Basic ExFace widget
@@ -48,8 +48,8 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
     private $hint = null;
 
     private $widget_type = null;
-
-    private $meta_object_id = null;
+    
+    private $meta_object = null;
 
     private $object_alias = null;
 
@@ -320,32 +320,7 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
         $this->caption = $caption;
         return $this;
     }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\WidgetInterface::getMetaObjectId()
-     */
-    function getMetaObjectId()
-    {
-        if (! $this->meta_object_id)
-            return $this->getMetaObject()->getId();
-        return $this->meta_object_id;
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\WidgetInterface::setMetaObjectId()
-     */
-    function setMetaObjectId($id)
-    {
-        $this->meta_object_id = $id;
-        return $this;
-    }
-
+    
     /**
      * Explicitly specifies the ID of the widget.
      * The ID must be unique on every page containing the widget and can be used in widget links
@@ -450,17 +425,17 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
      */
     function getMetaObject()
     {
-        if ($this->meta_object_id) {
-            $obj = $this->getUi()->getWorkbench()->model()->getObject($this->meta_object_id);
-        } elseif ($this->getObjectQualifiedAlias()) {
-            $obj = $this->getUi()->getWorkbench()->model()->getObject($this->getObjectQualifiedAlias());
-        } elseif ($this->getParent()) {
-            $obj = $this->getParent()->getMetaObject();
-        } else {
-            throw new WidgetHasNoMetaObjectError($this, 'A widget must have either an object_id, an object_alias or a parent widget with an object reference!');
+        if (is_null($this->meta_object)) {
+            if ($this->getObjectQualifiedAlias()) {
+                $obj = $this->getUi()->getWorkbench()->model()->getObject($this->getObjectQualifiedAlias());
+            } elseif ($this->getParent()) {
+                $obj = $this->getParent()->getMetaObject();
+            } else {
+                throw new WidgetHasNoMetaObjectError($this, 'A widget must have either an object_id, an object_alias or a parent widget with an object reference!');
+            }
+            $this->setMetaObject($obj);
         }
-        $this->setMetaObjectId($obj->getId());
-        return $obj;
+        return $this->meta_object;
     }
 
     /**
@@ -471,7 +446,7 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
      */
     function setMetaObject(MetaObjectInterface $object)
     {
-        return $this->setMetaObjectId($object->getId());
+        return $this->meta_object = $object;
     }
 
     /**

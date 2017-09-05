@@ -234,7 +234,7 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveToolbars, iHave
     public function setData(\stdClass $uxon_object)
     {
         $data = $this->getPage()->createWidget('Data', $this);
-        $data->setMetaObjectId($this->getMetaObjectId());
+        $data->setMetaObject($this->getMetaObject());
         $data->importUxonObject($uxon_object);
         // Do not add action automatically as the internal data toolbar will
         // not be shown anyway. The Chart has it's own toolbars.

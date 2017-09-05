@@ -78,7 +78,7 @@ class Tab extends Panel implements iHaveIcon
     {
         parent::doPrefill($data_sheet);
         if ($this->getBadgeAttributeAlias()) {
-            if ($this->getMetaObjectId() == $data_sheet->getMetaObject()->getId()) {
+            if ($this->getMetaObject()->isExactly($data_sheet->getMetaObject())) {
                 $this->setBadgeValue($data_sheet->getCellValue($this->getBadgeAttributeAlias(), 0));
             } else {
                 throw new NotImplementedError('Prefilling Tab badges with data sheets from related objects not implemented!');

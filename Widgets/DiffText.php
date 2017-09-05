@@ -75,7 +75,7 @@ class DiffText extends AbstractWidget
             return;
         }
         
-        if ($this->getMetaObjectId() == $data_sheet->getMetaObject()->getId()) {
+        if ($this->getMetaObject()->isExactly($data_sheet->getMetaObject())) {
             $this->setLeftValue($data_sheet->getCellValue($this->getLeftAttributeAlias(), 0));
             $this->setRightValue($data_sheet->getCellValue($this->getRightAttributeAlias(), 0));
         } else {
@@ -94,7 +94,7 @@ class DiffText extends AbstractWidget
     {
         $data_sheet = parent::prepareDataSheetToRead($data_sheet);
         
-        if ($this->getMetaObjectId() == $data_sheet->getMetaObject()->getId()) {
+        if ($this->getMetaObject()->isExactly($data_sheet->getMetaObject())) {
             // If we are looking for attributes of the object of this widget, then just return the attribute_alias
             $data_sheet->getColumns()->addFromExpression($this->getLeftAttributeAlias());
             $data_sheet->getColumns()->addFromExpression($this->getRightAttributeAlias());

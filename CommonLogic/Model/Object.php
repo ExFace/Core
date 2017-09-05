@@ -1053,7 +1053,7 @@ class Object implements MetaObjectInterface
     public function isExactly($object_or_alias_or_id)
     {
         if ($object_or_alias_or_id instanceof MetaObjectInterface) {
-            if ($object_or_alias_or_id->getId() == $this->getId()) {
+            if ($object_or_alias_or_id->getId() === $this->getId()) {
                 return true;
             }
         } elseif (mb_stripos($object_or_alias_or_id, '0x') === 0) {

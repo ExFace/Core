@@ -46,7 +46,7 @@ class Container extends AbstractWidget implements iContainOtherWidgets
     {
         $data_sheet = parent::prepareDataSheetToRead($data_sheet);
         
-        if ($this->getMetaObjectId() == $data_sheet->getMetaObject()->getId()) {
+        if ($this->getMetaObject()->isExactly($data_sheet->getMetaObject())) {
             foreach ($this->getChildren() as $widget) {
                 $data_sheet = $widget->prepareDataSheetToRead($data_sheet);
             }

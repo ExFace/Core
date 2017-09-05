@@ -72,19 +72,6 @@ interface WidgetInterface extends ExfaceClassInterface, iCanBeCopied
     public function setCaption($caption);
 
     /**
-     * Returns the UID of the base meta object for this widget
-     *
-     * @return string
-     */
-    public function getMetaObjectId();
-
-    /**
-     *
-     * @param string $id            
-     */
-    public function setMetaObjectId($id);
-
-    /**
      * Returns the widget id specified for this widget explicitly (e.g.
      * in the UXON description). Returns NULL if there was no id
      * explicitly specified! Use get_id() instead, if you just need the currently valid widget id.

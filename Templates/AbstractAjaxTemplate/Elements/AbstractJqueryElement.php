@@ -560,7 +560,7 @@ abstract class AbstractJqueryElement implements ExfaceClassInterface
         } else {
             $alias = $this->getWidget()->getMetaObject()->getAliasWithNamespace();
         }
-        return "{oId: '" . $this->getWidget()->getMetaObjectId() . "', rows: [{'" . $alias . "': " . $this->buildJsValueGetter() . "}]}";
+        return "{oId: '" . $this->getWidget()->getMetaObject()->getId() . "', rows: [{'" . $alias . "': " . $this->buildJsValueGetter() . "}]}";
     }
 
     /**

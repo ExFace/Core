@@ -94,7 +94,7 @@ class DataTree extends DataTable
         if (! $this->tree_parent_id_attribute_alias) {
             $found_one = false;
             foreach ($this->getMetaObject()->getRelationsArray() as $rel) {
-                if ($rel->getRelatedObjectId() == $this->getMetaObjectId() && $rel->isForwardRelation()) {
+                if ($rel->getRelatedObjectId() == $this->getMetaObject()->getId() && $rel->isForwardRelation()) {
                     if ($found_one === true) {
                         throw new WidgetConfigurationError($this, 'More than one recursive relations found for the treeGrid "' . $this->getId() . '". Please specify "tree_parent_id_attribute_alias" in the description of the widget!', '6T91BRG');
                     }

@@ -157,7 +157,7 @@ trait JqueryButtonTrait {
 									action: '" . $widget->getActionAlias() . "',
 									resource: '" . $widget->getPageId() . "',
 									element: '" . $widget->getId() . "',
-									object: '" . $widget->getMetaObjectId() . "',
+									object: '" . $widget->getMetaObject()->getId() . "',
 									data: requestData
 								},
 								success: function(data, textStatus, jqXHR) {
@@ -217,7 +217,7 @@ trait JqueryButtonTrait {
     					prefillRows.push({{$widget->getMetaObject()->getUidAttributeAlias()}: requestData.rows[0]["{$widget->getMetaObject()->getUidAttributeAlias()}"]});
     				}
 JS;
-                $prefill_param = '&prefill={"meta_object_id":"'.$widget->getMetaObjectId().'","rows": \' + JSON.stringify(prefillRows) + \'}';
+                $prefill_param = '&prefill={"meta_object_id":"'.$widget->getMetaObject()->getId().'","rows": \' + JSON.stringify(prefillRows) + \'}';
             } 
             
             if ($action instanceof GoToPage){

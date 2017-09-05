@@ -64,7 +64,7 @@ trait JqueryDataTablesTrait {
 					resource: '{$this->getPageId()}',
 					element: '{$widget->getRowDetailsContainer()->getId()}',
 					prefill: {
-						oId:"{$widget->getMetaObjectId()}",
+						oId:"{$widget->getMetaObject()->getId()}",
 						rows:[
 							{ {$widget->getMetaObject()->getUidAttributeAlias()}: row.data().{$widget->getMetaObject()->getUidAttributeAlias()} }
 						],
@@ -114,7 +114,7 @@ JS;
         } else {
             $rows = "Array.prototype.slice.call(" . $this->getId() . "_table.rows({selected: true}).data())";
         }
-        return "{oId: '" . $this->getWidget()->getMetaObjectId() . "', rows: " . $rows . "}";
+        return "{oId: '" . $this->getWidget()->getMetaObject()->getId() . "', rows: " . $rows . "}";
     }
     
     public function buildJsRefresh($keep_pagination_position = false)
