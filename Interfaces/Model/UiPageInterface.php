@@ -128,6 +128,21 @@ interface UiPageInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
     public function getApp();
     
     /**
+     * Returns the app-alias, this page belongs to.
+     * 
+     * @return null|string
+     */
+    public function getAppAlias();
+    
+    /**
+     * Sets the app-alias, this page belongs to.
+     * 
+     * @param string $appAlias
+     * @return UiPageInterface
+     */
+    public function setAppAlias($appAlias);
+    
+    /**
      * Returns FALSE if the page should not be updated automatically when its
      * app is updated and TRUE otherwise (default).
      * 
@@ -144,19 +159,19 @@ interface UiPageInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
     public function setUpdateable(bool $true_or_false);
     
     /**
-     * Returns the alias of the parent page or NULL if this page has no alias.
+     * Returns the uid of the parent page.
      * 
-     * @return string|null
+     * @return string
      */
-    public function getMenuParentAlias();
+    public function getMenuParentId();
     
     /**
+     * Sets the parent of the page by setting a UID.
      * 
-     * 
-     * @param string $alias_with_namespace
+     * @param string $menuParentId
      * @return UiPageInterface
      */
-    public function setMenuParentAlias($alias_with_namespace);
+    public function setMenuParentId($menuParentId);
     
     /**
      * Returns the id of the parent page that the CMS uses.
@@ -166,12 +181,27 @@ interface UiPageInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
     public function getMenuParentIdCms();
     
     /**
-     * Sets the id of the parent page that the CMS uses.
+     * Sets the parent of the page by setting a CMS-ID.
      * 
      * @param string $menuParentIdCms
      * @return UiPageInterface
      */
     public function setMenuParentIdCms($menuParentIdCms);
+    
+    /**
+     * Returns the alias of the parent page or NULL if this page has no alias.
+     * 
+     * @return string|null
+     */
+    public function getMenuParentAlias();
+    
+    /**
+     * Sets the parent of the page by setting an alias.
+     * 
+     * @param string $alias_with_namespace
+     * @return UiPageInterface
+     */
+    public function setMenuParentAlias($alias_with_namespace);
     
     /**
      * Returns the parent ui page or NULL if this page has no parent

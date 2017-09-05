@@ -268,13 +268,22 @@ interface CmsConnectorInterface extends ExfaceClassInterface
     public function updatePage(UiPageInterface $page);
     
     /**
-     * Saves the given page to the CMS database.
+     * Deletes the given page from the CMS database.
      *
      * @param UiPageInterface $page
+     * 
+     * @throws UiPageNotFoundError if no page with a matching UID is found in the CMS
      *
      * @return CmsConnectorInterface
      */
     public function deletePage(UiPageInterface $page);
+    
+    /**
+     * Clears the recycle bin of the CMS (if present)
+     * 
+     * @return CmsConnectorInterface
+     */
+    public function clearCMSRecycleBin();
     
     /**
      * Returns all pages assigned to the given app.
