@@ -3,7 +3,6 @@ namespace exface\Core\Interfaces\Model;
 
 use exface\Core\Interfaces\ExfaceClassInterface;
 use exface\Core\Interfaces\Model\MetaRelationInterface;
-use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\iCanBeCopied;
 use exface\Core\Exceptions\UnexpectedValueException;
@@ -111,11 +110,11 @@ interface MetaAttributeInterface extends ExfaceClassInterface, iCanBeCopied
      * path.
      * Returns NULL if the attribute belongs to the object itself.
      *
-     * @return RelationPath
+     * @return MetaRelationPathInterface
      */
     public function getRelationPath();
     
-    public function setRelationPath(RelationPath $path);
+    public function setRelationPath(MetaRelationPathInterface $path);
     
     /**
      * Returns the meta object to which this attributes belongs to.
@@ -296,10 +295,10 @@ interface MetaAttributeInterface extends ExfaceClassInterface, iCanBeCopied
      * Creates a copy of the attribute relative to a given relation path.
      * This is usefull if you want to rebase an attribute.
      *
-     * @param RelationPath $path
+     * @param MetaRelationInterface $path
      * @return \exface\Core\Interfaces\Model\MetaAttributeInterface
      */
-    public function rebase(RelationPath $path);
+    public function rebase(MetaRelationInterface $path);
     
     /**
      * Returns TRUE if this attribute is a system attribute.

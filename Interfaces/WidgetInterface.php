@@ -11,6 +11,7 @@ use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Widgets\Container;
+use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 
 interface WidgetInterface extends ExfaceClassInterface, iCanBeCopied
 {
@@ -257,7 +258,7 @@ interface WidgetInterface extends ExfaceClassInterface, iCanBeCopied
      * If both widgets are based on the
      * same object or no valid path can be found, an empty path will be returned.
      *
-     * @return RelationPath
+     * @return MetaRelationPathInterface
      */
     public function getObjectRelationPathFromParent();
 
@@ -272,7 +273,7 @@ interface WidgetInterface extends ExfaceClassInterface, iCanBeCopied
      * If both widgets are based on the
      * same object or no valid path can be found, an empty path will be returned.
      *
-     * @return RelationPath
+     * @return MetaRelationPathInterface
      */
     public function getObjectRelationPathToParent();
 

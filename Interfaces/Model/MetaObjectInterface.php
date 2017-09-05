@@ -5,13 +5,11 @@ use exface\Core\Interfaces\ExfaceClassInterface;
 use exface\Core\Interfaces\Model\MetaRelationInterface;
 use exface\Core\Exceptions\Model\MetaRelationNotFoundError;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
-use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Exceptions\Model\MetaObjectHasNoUidAttributeError;
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 use exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\EntityListInterface;
-use exface\Core\CommonLogic\Model\AttributeGroup;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Interfaces\AliasInterface;
@@ -210,10 +208,10 @@ interface MetaObjectInterface extends ExfaceClassInterface, AliasInterface
      *
      * @param MetaObjectInterface $related_object
      * @param number $max_depth
-     * @param RelationPath $start_path
-     * @return RelationPath | boolean
+     * @param MetaRelationPathInterface $start_path
+     * @return MetaRelationPathInterface|boolean
      */
-    public function findRelationPath(MetaObjectInterface $related_object, $max_depth = 3, RelationPath $start_path = null);
+    public function findRelationPath(MetaObjectInterface $related_object, $max_depth = 3, MetaRelationPathInterface $start_path = null);
     
     /**
      * Returns an array with all attributes of this object having the specified data address (e.g.

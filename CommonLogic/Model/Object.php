@@ -23,6 +23,7 @@ use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Model\MetaRelationInterface;
 use exface\Core\Interfaces\Model\MetaAttributeListInterface;
 use exface\Core\Interfaces\Model\MetaAttributeGroupInterface;
+use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 
 class Object implements MetaObjectInterface
 {
@@ -591,8 +592,8 @@ class Object implements MetaObjectInterface
      *
      * @param MetaObjectInterface $related_object            
      * @param number $max_depth            
-     * @param RelationPath $start_path            
-     * @return RelationPath | boolean
+     * @param MetaRelationPathInterface $start_path            
+     * @return MetaRelationPathInterface|boolean
      */
     public function findRelationPath(MetaObjectInterface $related_object, $max_depth = 3, RelationPath $start_path = null)
     {

@@ -11,6 +11,7 @@ use exface\Core\Interfaces\Model\DataTypeInterface;
 use exface\Core\CommonLogic\Constants\SortingDirections;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Model\ModelInterface;
+use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 
 /**
  * 
@@ -74,7 +75,7 @@ class Attribute implements MetaAttributeInterface
     /** @var UxonObject */
     private $default_widget_uxon;
 
-    /** @var RelationPath */
+    /** @var MetaRelationPathInterface */
     private $relation_path;
 
     // Properties NOT to be dublicated on copy()
@@ -267,7 +268,7 @@ class Attribute implements MetaAttributeInterface
      * path.
      * Returns NULL if the attribute belongs to the object itself.
      *
-     * @return RelationPath
+     * @return MetaRelationPathInterface
      */
     public function getRelationPath()
     {
@@ -606,10 +607,10 @@ class Attribute implements MetaAttributeInterface
      * Creates a copy of the attribute relative to a given relation path.
      * This is usefull if you want to rebase an attribute.
      *
-     * @param RelationPath $path            
+     * @param MetaRelationPathInterface $path            
      * @return \exface\Core\Interfaces\Model\MetaAttributeInterface
      */
-    public function rebase(RelationPath $path)
+    public function rebase(MetaRelationPathInterface $path)
     {
         $copy = clone $this;
         

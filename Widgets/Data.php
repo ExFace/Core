@@ -339,7 +339,7 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
         // add the default columns
         $def_attrs = $this->getMetaObject()->getAttributes()->getDefaultDisplayList();
         foreach ($def_attrs as $attr) {
-            $alias = ($attr->getRelationPath()->toString() ? $attr->getRelationPath()->toString() . RelationPath::RELATION_SEPARATOR : '') . $attr->getAlias();
+            $alias = ($attr->getRelationPath()->toString() ? $attr->getRelationPath()->toString() . RelationPath::getRelationSeparator() : '') . $attr->getAlias();
             $attr = $this->getMetaObject()->getAttribute($alias);
             $this->addColumn($this->createColumnFromAttribute($attr, null, $attr->isHidden()));
         }

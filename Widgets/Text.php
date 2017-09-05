@@ -117,7 +117,7 @@ class Text extends AbstractWidget implements iShowSingleAttribute, iHaveValue, i
                             $related_obj = $related_obj->getRelatedObject($rel_part);
                             unset($rel_parts[$rel_nr]);
                             if ($related_obj->isExactly($prefill_object)) {
-                                $attr_path = implode(RelationPath::RELATION_SEPARATOR, $rel_parts);
+                                $attr_path = implode(RelationPath::getRelationSeparator(), $rel_parts);
                                 $attr = RelationPath::relationPathAdd($attr_path, $this->getAttribute()->getAlias());
                                 $data_sheet->getColumns()->addFromExpression($attr);
                             }

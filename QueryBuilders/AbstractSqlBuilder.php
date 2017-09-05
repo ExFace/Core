@@ -16,6 +16,7 @@ use exface\Core\CommonLogic\DataQueries\SqlDataQuery;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartSelect;
 use exface\Core\Interfaces\Model\MetaRelationInterface;
 use exface\Core\CommonLogic\DataSheets\DataAggregator;
+use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 
 /**
  * A query builder for generic SQL syntax.
@@ -791,9 +792,9 @@ else {
          * reference this example in the comments below.
          */
         $rel_path = $qpart->getAttribute()->getRelationPath();
-        /** @var RelationPath $reg_rel_path part of the relation part up to the first reverse relation */
+        /** @var MetaRelationPathInterface $reg_rel_path part of the relation part up to the first reverse relation */
         $reg_rel_path = $rel_path->getSubpath(0, $rel_path->getIndexOf($rev_rel));
-        /** @var RelationPath complete path of the first reverse relation */
+        /** @var MetaRelationPathInterface complete path of the first reverse relation */
         $rev_rel_path = $reg_rel_path->copy()->appendRelation($rev_rel);
         
         // build a subquery
@@ -806,7 +807,7 @@ else {
         $relq->setQueryId($this->getNextSubqueryId());
         
         // Add the key alias relative to the first reverse relation (TYPE->LABEL for the above example)
-        $relq->addAttribute(str_replace($rev_rel_path->toString() . RelationPath::RELATION_SEPARATOR, '', $qpart->getAlias()));
+        $relq->addAttribute(str_replace($rev_rel_path->toString() . RelationPath::getRelationSeparator(), '', $qpart->getAlias()));
         
         // Set the filters of the subquery to all filters of the main query, that need to be applied to objects beyond the reverse relation.
         // In our examplte, those would be any filter on ORDER->CUSTOMER<-CUSTOMER_CARD or ORDER->CUSTOMER<-CUSTOMER_CARD->TYPE, etc. Filters
@@ -1327,7 +1328,7 @@ else {
         
         if ($start_rel) {
             $qpart_rel_path = $qpart->getAttribute()->getRelationPath();
-            /** @var RelationPath $prefix_rel_path part of the relation part up to the first reverse relation */
+            /** @var MetaRelationPathInterface $prefix_rel_path part of the relation part up to the first reverse relation */
             $prefix_rel_path = $qpart_rel_path->getSubpath(0, $qpart_rel_path->getIndexOf($start_rel));
             
             // build a subquery
