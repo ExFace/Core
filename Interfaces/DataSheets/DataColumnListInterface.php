@@ -52,7 +52,7 @@ interface DataColumnListInterface extends EntityListInterface
     /**
      * Adds a new column from an instatiated expression object or a string expression and returns it.
      *
-     * @param \exface\Core\CommonLogic\Model\Expression|string $expression            
+     * @param \exface\Core\Interfaces\Model\ExpressionInterface|string $expression            
      * @param string $name            
      * @param string $hidden            
      * @return DataColumnInterface

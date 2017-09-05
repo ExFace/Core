@@ -6,6 +6,7 @@ use exface\Core\CommonLogic\Model\Expression;
 use exface\Core\CommonLogic\Model\Condition;
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
+use exface\Core\Interfaces\Model\ExpressionInterface;
 
 abstract class ConditionFactory extends AbstractUxonFactory
 {
@@ -49,12 +50,12 @@ abstract class ConditionFactory extends AbstractUxonFactory
      * compare the expression to and a comparator like "=", ">", "<", etc. Comparators are defined by the EXF_COMPARATOR_xxx constants.
      *
      * @param Workbench $exface
-     * @param string|\exface\Core\CommonLogic\Model\Expression $expression_or_string            
+     * @param string|\exface\Core\Interfaces\Model\ExpressionInterface $expression_or_string            
      * @param string $value            
      * @param string $comparator            
      * @return Condition
      */
-    public static function createFromExpression(Workbench $exface, Expression $expression = NULL, $value = NULL, $comparator = null)
+    public static function createFromExpression(Workbench $exface, ExpressionInterface $expression = NULL, $value = NULL, $comparator = null)
     {
         $condition = static::createEmpty($exface);
         if ($expression) {

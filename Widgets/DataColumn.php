@@ -420,7 +420,7 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
 
     /**
      *
-     * @return Expression
+     * @return ExpressionInterface
      */
     public function getExpression()
     {

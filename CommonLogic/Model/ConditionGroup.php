@@ -8,6 +8,7 @@ use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\Exceptions\Model\ExpressionRebaseImpossibleError;
 use exface\Core\Interfaces\iCanBeCopied;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
+use exface\Core\Interfaces\Model\ExpressionInterface;
 
 /**
  * A condition group contains one or more conditions and/or other (nested) condition groups combined by one logical operator,
@@ -57,7 +58,7 @@ class ConditionGroup implements iCanBeConvertedToUxon, iCanBeCopied
      * @param string $comparator            
      * @return \exface\Core\CommonLogic\Model\ConditionGroup
      */
-    public function addConditionFromExpression(Expression $expression, $value = NULL, $comparator = EXF_COMPARATOR_IS)
+    public function addConditionFromExpression(ExpressionInterface $expression, $value = NULL, $comparator = EXF_COMPARATOR_IS)
     {
         if (! is_null($value) && $value !== '') {
             $condition = ConditionFactory::createFromExpression($this->exface, $expression, $value, $comparator);

@@ -595,7 +595,7 @@ class Object implements MetaObjectInterface
      * @param MetaRelationPathInterface $start_path            
      * @return MetaRelationPathInterface|boolean
      */
-    public function findRelationPath(MetaObjectInterface $related_object, $max_depth = 3, RelationPath $start_path = null)
+    public function findRelationPath(MetaObjectInterface $related_object, $max_depth = 3, MetaRelationPathInterface $start_path = null)
     {
         $path = $start_path ? $start_path : new RelationPath($this);
         

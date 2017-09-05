@@ -18,7 +18,7 @@ abstract class ExpressionFactory
      * @param Workbench $exface            
      * @param string $expression            
      * @param MetaObjectInterface $object            
-     * @return Expression
+     * @return ExpressionInterface
      */
     public static function createFromString(Workbench $exface, $string, $meta_object = null)
     {
@@ -28,7 +28,7 @@ abstract class ExpressionFactory
     /**
      *
      * @param MetaAttributeInterface $attribute            
-     * @return Expression
+     * @return ExpressionInterface
      */
     public static function createFromAttribute(MetaAttributeInterface $attribute)
     {

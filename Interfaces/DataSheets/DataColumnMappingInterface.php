@@ -1,7 +1,7 @@
 <?php
 namespace exface\Core\Interfaces\DataSheets;
 
-use exface\Core\CommonLogic\Model\Expression;
+use exface\Core\Interfaces\Model\ExpressionInterface;
 
 /**
  * Maps one data sheet column to another column of another sheet.
@@ -14,26 +14,26 @@ use exface\Core\CommonLogic\Model\Expression;
 interface DataColumnMappingInterface extends DataMappingInterface
 {
     /**
-     * @return Expression
+     * @return ExpressionInterface
      */
     public function getFromExpression();
     
     /**
      *
-     * @param Expression $expression
+     * @param ExpressionInterface $expression
      * @return DataColumnMappingInterface
      */
-    public function setFromExpression(Expression $expression);
+    public function setFromExpression(ExpressionInterface $expression);
     
     /**
-     * @return Expression
+     * @return ExpressionInterface
      */
     public function getToExpression();
     
     /**
      *
-     * @param Expression $expression
+     * @param ExpressionInterface $expression
      * @return DataColumnMappingInterface
      */
-    public function setToExpression(Expression $expression);
+    public function setToExpression(ExpressionInterface $expression);
 }

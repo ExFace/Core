@@ -3,11 +3,11 @@ namespace exface\Core\CommonLogic\DataSheets;
 
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
-use exface\Core\CommonLogic\Model\Expression;
 use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Exceptions\DataSheets\DataSheetMapperError;
 use exface\Core\Interfaces\DataSheets\DataColumnMappingInterface;
+use exface\Core\Interfaces\Model\ExpressionInterface;
 
 /**
  * Maps one data sheet column to another column of another sheet.
@@ -59,7 +59,7 @@ class DataColumnMapping implements DataColumnMappingInterface {
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSheets\DataColumnMappingInterface::setFromExpression()
      */
-    public function setFromExpression(Expression $expression)
+    public function setFromExpression(ExpressionInterface $expression)
     {
         if ($expression->isReference()){
             throw new DataSheetMapperError($this->getMapper(), 'Cannot use widget links as expressions in data mappers!');
@@ -100,7 +100,7 @@ class DataColumnMapping implements DataColumnMappingInterface {
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSheets\DataColumnMappingInterface::setToExpression()
      */
-    public function setToExpression(Expression $expression)
+    public function setToExpression(ExpressionInterface $expression)
     {
         if ($expression->isReference()){
             throw new DataSheetMapperError($this->getMapper(), 'Cannot use widget links as expressions in data mappers!');

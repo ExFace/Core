@@ -2,7 +2,6 @@
 namespace exface\Core\Interfaces\Model;
 
 use exface\Core\Interfaces\ExfaceClassInterface;
-use exface\Core\Interfaces\Model\MetaRelationInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\iCanBeCopied;
 use exface\Core\Exceptions\UnexpectedValueException;
@@ -163,7 +162,7 @@ interface MetaAttributeInterface extends ExfaceClassInterface, iCanBeCopied
      * Returns an expression for the default value of this attribute, which is to be used, when saving the attribute without an explicit value given in the data sheet.
      *
      * @see getFixedValue() in contrast to the fixed value, the default value is always overridden by any value in the data sheet.
-     * @return \exface\Core\CommonLogic\Model\Expression
+     * @return \exface\Core\Interfaces\Model\ExpressionInterface
      */
     public function getDefaultValue();
     
@@ -172,7 +171,7 @@ interface MetaAttributeInterface extends ExfaceClassInterface, iCanBeCopied
     /**
      * Returns an expression for value of this attribute, which is to be set or updated every time the attribute is saved to the data source.
      *
-     * @return \exface\Core\CommonLogic\Model\Expression
+     * @return \exface\Core\Interfaces\Model\ExpressionInterface
      */
     public function getFixedValue();
     
@@ -295,10 +294,10 @@ interface MetaAttributeInterface extends ExfaceClassInterface, iCanBeCopied
      * Creates a copy of the attribute relative to a given relation path.
      * This is usefull if you want to rebase an attribute.
      *
-     * @param MetaRelationInterface $path
+     * @param MetaRelationPathInterface $path
      * @return \exface\Core\Interfaces\Model\MetaAttributeInterface
      */
-    public function rebase(MetaRelationInterface $path);
+    public function rebase(MetaRelationPathInterface $path);
     
     /**
      * Returns TRUE if this attribute is a system attribute.

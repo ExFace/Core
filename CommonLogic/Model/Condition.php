@@ -7,6 +7,7 @@ use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Exceptions\RangeException;
 use exface\Core\Exceptions\UnexpectedValueException;
+use exface\Core\Interfaces\Model\ExpressionInterface;
 
 /**
  * .
@@ -43,7 +44,7 @@ class Condition implements iCanBeConvertedToUxon
     /**
      * Returns the expression to filter
      *
-     * @return Expression
+     * @return ExpressionInterface
      */
     public function getExpression()
     {
@@ -53,9 +54,9 @@ class Condition implements iCanBeConvertedToUxon
     /**
      * Sets the expression that will be compared to the value
      *
-     * @param Expression $expression            
+     * @param ExpressionInterface $expression            
      */
-    public function setExpression(Expression $expression)
+    public function setExpression(ExpressionInterface $expression)
     {
         $this->expression = $expression;
     }

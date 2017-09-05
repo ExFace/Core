@@ -1,7 +1,6 @@
 <?php
 namespace exface\Core\CommonLogic\DataSheets;
 
-use exface\Core\CommonLogic\Model\Expression;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\CommonLogic\Model\Formula;
 use exface\Core\Factories\ExpressionFactory;
@@ -15,6 +14,7 @@ use exface\Core\Exceptions\DataSheets\DataSheetDiffError;
 use exface\Core\Exceptions\DataSheets\DataSheetRuntimeError;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\Exceptions\UnexpectedValueException;
+use exface\Core\Interfaces\Model\ExpressionInterface;
 
 class DataColumn implements DataColumnInterface
 {
@@ -39,13 +39,13 @@ class DataColumn implements DataColumnInterface
 
     private $ignore_fixed_values = false;
 
-    /** @var Expression */
+    /** @var ExpressionInterface */
     private $expression = null;
 
     /** @var Formula */
     private $formula = null;
 
-    /** @var Expression */
+    /** @var ExpressionInterface */
     private $formatter = null;
 
     function __construct($expression, $name = '', DataSheetInterface $data_sheet)
@@ -85,7 +85,7 @@ class DataColumn implements DataColumnInterface
      */
     public function setExpression($expression_or_string)
     {
-        if (! ($expression_or_string instanceof Expression)) {
+        if (! ($expression_or_string instanceof ExpressionInterface)) {
             $exface = $this->getWorkbench();
             $expression = ExpressionFactory::createFromString($exface, $expression_or_string, $this->getMetaObject());
         } else {
@@ -214,7 +214,7 @@ class DataColumn implements DataColumnInterface
      */
     public function setFormatter($expression)
     {
-        if (! ($expression instanceof expression)) {
+        if (! ($expression instanceof ExpressionInterface)) {
             $expression = $this->getWorkbench()->model()->parseExpression($expression);
         }
         $this->formatter = $expression;
@@ -309,7 +309,7 @@ class DataColumn implements DataColumnInterface
      *
      * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::setValuesByExpression()
      */
-    public function setValuesByExpression(Expression $expression, $overwrite = true)
+    public function setValuesByExpression(ExpressionInterface $expression, $overwrite = true)
     {
         if ($overwrite || $this->isEmpty()) {
             $this->setValues($expression->evaluate($this->getDataSheet(), $this->getName()));
@@ -526,7 +526,7 @@ class DataColumn implements DataColumnInterface
     public function setFormula($expression_or_string)
     {
         if ($expression_or_string) {
-            if ($expression_or_string instanceof Expression) {
+            if ($expression_or_string instanceof ExpressionInterface) {
                 $expression = $expression_or_string;
             } else {
                 $exface = $this->getWorkbench();

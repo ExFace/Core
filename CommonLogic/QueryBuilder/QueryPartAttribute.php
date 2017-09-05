@@ -109,7 +109,7 @@ class QueryPartAttribute extends QueryPart
     /**
      * Parses the alias of this query part as an ExFace expression and returns the expression object
      *
-     * @return \exface\Core\CommonLogic\Model\Expression
+     * @return \exface\Core\Interfaces\Model\ExpressionInterface
      */
     public function getExpression()
     {

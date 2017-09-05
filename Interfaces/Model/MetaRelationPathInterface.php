@@ -56,8 +56,6 @@ interface MetaRelationPathInterface extends \IteratorAggregate, iCanBeCopied
      */
     public function appendRelationsFromStringPath($relation_path_string);
     
-    protected static function getFirstRelationFromStringPath($string_relation_path);
-    
     public function toString();
     
     public function getWorkbench();

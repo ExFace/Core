@@ -606,7 +606,7 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
     /**
      * TODO Move to iHaveValue-Widgets or trait
      *
-     * @return Expression
+     * @return ExpressionInterface
      */
     public function getValueExpression()
     {
@@ -635,7 +635,7 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
      *
      * TODO Move to iHaveValue-Widgets or trait
      *
-     * @param Expression|string $expression_or_string            
+     * @param ExpressionInterface|string $expression_or_string            
      */
     public function setValue($expression_or_string)
     {

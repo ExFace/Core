@@ -57,7 +57,7 @@ interface ModelInterface extends ExfaceClassInterface
      *
      * @param string $expression            
      * @param MetaObjectInterface $object            
-     * @return \exface\Core\CommonLogic\Model\Expression
+     * @return \exface\Core\Interfaces\Model\ExpressionInterface
      */
     public function parseExpression($expression, MetaObjectInterface $object = null);
 

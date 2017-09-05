@@ -12,6 +12,7 @@ use exface\Core\CommonLogic\Constants\SortingDirections;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Model\ModelInterface;
 use exface\Core\Interfaces\Model\MetaRelationPathInterface;
+use exface\Core\Interfaces\Model\MetaRelationInterface;
 
 /**
  * 
@@ -278,7 +279,7 @@ class Attribute implements MetaAttributeInterface
         return $this->relation_path;
     }
 
-    public function setRelationPath(RelationPath $path)
+    public function setRelationPath(MetaRelationPathInterface $path)
     {
         $this->relation_path = $path;
     }
@@ -359,7 +360,7 @@ class Attribute implements MetaAttributeInterface
      * Returns an expression for the default value of this attribute, which is to be used, when saving the attribute without an explicit value given in the data sheet.
      * 
      * @see getFixedValue() in contrast to the fixed value, the default value is always overridden by any value in the data sheet.
-     * @return \exface\Core\CommonLogic\Model\Expression
+     * @return \exface\Core\Interfaces\Model\ExpressionInterface
      */
     public function getDefaultValue()
     {
@@ -379,7 +380,7 @@ class Attribute implements MetaAttributeInterface
     /**
      * Returns an expression for value of this attribute, which is to be set or updated every time the attribute is saved to the data source.
      * 
-     * @return \exface\Core\CommonLogic\Model\Expression
+     * @return \exface\Core\Interfaces\Model\ExpressionInterface
      */
     public function getFixedValue()
     {

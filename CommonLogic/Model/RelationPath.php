@@ -236,7 +236,7 @@ class RelationPath implements MetaRelationPathInterface
      * {@inheritdoc}
      * @see \exface\Core\Interfaces\Model\MetaRelationPathInterface::combine()
      */
-    public function combine(RelationPath $path_to_append)
+    public function combine(MetaRelationPathInterface $path_to_append)
     {
         $result = $this->copy();
         foreach ($path_to_append as $relation) {

@@ -15,13 +15,13 @@ interface iHaveValue extends WidgetInterface
 
     /**
      *
-     * @param Expression|string $expression_or_string            
+     * @param ExpressionInterface|string $expression_or_string            
      */
     public function setValue($value);
 
     /**
      *
-     * @return Expression
+     * @return ExpressionInterface
      */
     public function getValueExpression();
 
