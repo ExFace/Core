@@ -2,7 +2,7 @@
 namespace exface\Core\Interfaces\Model;
 
 use exface\Core\Interfaces\ExfaceClassInterface;
-use exface\Core\CommonLogic\Model\Relation;
+use exface\Core\Interfaces\Model\MetaRelationInterface;
 use exface\Core\Exceptions\Model\MetaRelationNotFoundError;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\CommonLogic\Model\RelationPath;
@@ -27,7 +27,7 @@ interface MetaObjectInterface extends ExfaceClassInterface, AliasInterface
      * relations (of different types), the respective element of the relations array will be an array in
      * turn.
      *
-     * @return Relation[] [relation_alias => relation | relation[]]
+     * @return MetaRelationInterface[] [relation_alias => relation | relation[]]
      */
     public function getRelationsArray();
     
@@ -35,7 +35,7 @@ interface MetaObjectInterface extends ExfaceClassInterface, AliasInterface
      * Returns all direct relations of this object as a flat array.
      * Optionally filtered by relation type.
      *
-     * @return Relation[]
+     * @return MetaRelationInterface[]
      */
     public function getRelations($relation_type = null);
     
@@ -68,7 +68,7 @@ interface MetaObjectInterface extends ExfaceClassInterface, AliasInterface
      * @param string $alias
      * @param string $foreign_key_alias
      * @throws MetaRelationNotFoundError if no matching relation found
-     * @return Relation
+     * @return MetaRelationInterface
      */
     public function getRelation($alias, $foreign_key_alias = '');
     
@@ -145,10 +145,10 @@ interface MetaObjectInterface extends ExfaceClassInterface, AliasInterface
      * where it comes from). I like this kind of naming, but it needs to be extended by the possibility to
      * specify which of the two reverse relation to use (e.g. LOCATION->ADDRESS[SHIPPING_ADDRESS] or something)
      *
-     * @param Relation $relation
+     * @param MetaRelationInterface $relation
      * @return MetaObjectInterface
      */
-    public function addRelation(Relation $relation);
+    public function addRelation(MetaRelationInterface $relation);
     
     /**
      * Inherits all attributes, relations and actions from the given parent object.
@@ -180,7 +180,7 @@ interface MetaObjectInterface extends ExfaceClassInterface, AliasInterface
      * @see find_relation_path()
      *
      * @param MetaObjectInterface $related_object
-     * @return Relation
+     * @return MetaRelationInterface
      */
     public function findRelation(MetaObjectInterface $related_object, $prefer_direct_relations = false);
     
@@ -195,8 +195,8 @@ interface MetaObjectInterface extends ExfaceClassInterface, AliasInterface
      *
      * @param string $related_object_id
      * @param string $relation_type
-     *            one of the Relation::RELATION_TYPE_xxx constants
-     * @return Relation[]
+     *            one of the MetaRelationInterface::RELATION_TYPE_xxx constants
+     * @return MetaRelationInterface[]
      */
     public function findRelations($related_object_id, $relation_type = null);
     

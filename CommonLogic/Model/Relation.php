@@ -1,18 +1,13 @@
 <?php
 namespace exface\Core\CommonLogic\Model;
 
-use exface\Core\Interfaces\ExfaceClassInterface;
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
+use exface\Core\Interfaces\Model\MetaRelationInterface;
+use exface\Core\Exceptions\RuntimeException;
 
-class Relation implements ExfaceClassInterface
+class Relation implements MetaRelationInterface
 {
-
-    const RELATION_TYPE_FORWARD = 'n1';
-
-    const RELATION_TYPE_REVERSE = '1n';
-
-    const RELATION_TYPE_ONE_TO_ONE = '11';
 
     // Properties to be dublicated on copy()
     private $id;
@@ -33,7 +28,7 @@ class Relation implements ExfaceClassInterface
 
     private $foreign_key_alias;
 
-    private $type = self::RELATION_TYPE_FORWARD;
+    private $type = MetaRelationInterface::RELATION_TYPE_FORWARD;
 
     private $inherited_from_object_id = null;
 
@@ -49,7 +44,7 @@ class Relation implements ExfaceClassInterface
      * @param unknown $foreign_key_alias            
      * @param unknown $related_object_id            
      * @param string $type
-     *            one of the Relation::RELATION_TYPE_xxx constants
+     *            one of the MetaRelationInterface::RELATION_TYPE_xxx constants
      */
     function __construct(Workbench $workbench, $relation_id, $alias, $name, $main_object_id, $foreign_key_alias, $related_object_id, $related_object_key_attribute_id = null, $type = 'n1')
     {
@@ -63,116 +58,189 @@ class Relation implements ExfaceClassInterface
         $this->related_object_key_attribute_id = $related_object_key_attribute_id;
         $this->type = $type;
     }
-
-    function getRelatedObject()
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::getRelatedObject()
+     */
+    public function getRelatedObject()
     {
         return $this->getModel()->getObject($this->related_object_id, $this->getAlias());
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::getId()
+     */
     public function getId()
     {
         return $this->id;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::setId()
+     */
     public function setId($value)
     {
         $this->id = $value;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::getAlias()
+     */
     public function getAlias()
     {
         return $this->alias;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::setAlias()
+     */
     public function setAlias($value)
     {
         $this->alias = $value;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::getName()
+     */
     public function getName()
     {
         return $this->name;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::setName()
+     */
     public function setName($value)
     {
         $this->name = $value;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::getRelatedObjectId()
+     */
     public function getRelatedObjectId()
     {
         return $this->related_object_id;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::setRelatedObjectId()
+     */
     public function setRelatedObjectId($value)
     {
         $this->related_object_id = $value;
     }
     
     /**
-     * Returns the attribute, that is the foreign key in the main object.
-     * Same as calling getMainObjectKeyAttribute()
-     *
-     * @return MetaAttributeInterface
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::getForeignKeyAttribute()
      */
     public function getForeignKeyAttribute(){
         return $this->getMainObjectKeyAttribute();
     }
 
     /**
-     * Returns the alias of the foreign key in the main object.
-     * E.g. for the relation ORDER->USER it would return USER_UID, which is a attribute of the object ORDER.
-     *
-     * @return string
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::getForeignKeyAlias()
      */
     public function getForeignKeyAlias()
     {
         return $this->foreign_key_alias;
     }
 
+    /**
+     * 
+     */
     public function setForeignKeyAlias($value)
     {
         $this->foreign_key_alias = $value;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::getJoinType()
+     */
     public function getJoinType()
     {
         return $this->join_type;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::setJoinType()
+     */
     public function setJoinType($value)
     {
         $this->join_type = $value;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::getMainObject()
+     */
     public function getMainObject()
     {
         return $this->getModel()->getObject($this->main_object_id);
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::setMainObject()
+     */
     public function setMainObject(\exface\Core\Interfaces\Model\MetaObjectInterface $obj)
     {
         $this->main_object_id = $obj->getId();
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::getType()
+     */
     public function getType()
     {
         return $this->type;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::setType()
+     */
     public function setType($value)
     {
         $this->type = $value;
     }
 
-    /**
-     * Returns the alias of the attribute, that identifies the related object in this relation.
-     * In most cases it is the UID
-     * of the related object, but can also be another attribute.
-     * E.g. for the relation ORDER->USER it would return UID, which is the alias of the id attribute of the object USER.
-     *
-     * @return string
-     */
+   /**
+    * 
+    * {@inheritDoc}
+    * @see \exface\Core\Interfaces\Model\MetaRelationInterface::getRelatedObjectKeyAlias()
+    */
     public function getRelatedObjectKeyAlias()
     {
         // If there is no special related_object_key_alias set, use the UID
@@ -186,18 +254,22 @@ class Relation implements ExfaceClassInterface
         return $this->related_object_key_alias;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::setRelatedObjectKeyAlias()
+     */
     public function setRelatedObjectKeyAlias($value)
     {
         $this->related_object_key_alias = $value;
     }
-
+    
     /**
-     * Returns the foreign key attribute or NULL if there is no key attribute
-     *
      * FIXME Fix Reverse relations key bug. For some reason, the foreign key is set incorrectly: e.g. for exface.Core.WIDGET__PHP_ANNOTATION the
      * foreign key is FILE, but there is no FILE attribute in the WIDGET object (the UID is PATHNAME_RELATIVE).
      *
-     * @return \exface\Core\Interfaces\Model\MetaAttributeInterface
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::getMainObjectKeyAttribute()
      */
     public function getMainObjectKeyAttribute()
     {
@@ -208,6 +280,11 @@ class Relation implements ExfaceClassInterface
         }
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::getRelatedObjectKeyAttribute()
+     */
     public function getRelatedObjectKeyAttribute()
     {
         return $this->getRelatedAttribute($this->getRelatedObjectKeyAlias());
@@ -216,9 +293,9 @@ class Relation implements ExfaceClassInterface
     }
 
     /**
-     * Returns the UID of the object, this attribute was inherited from or NULL if it is a direct attribute of it's object
-     *
-     * @return string
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::getInheritedFromObjectId()
      */
     public function getInheritedFromObjectId()
     {
@@ -226,8 +303,9 @@ class Relation implements ExfaceClassInterface
     }
 
     /**
-     *
-     * @param string $value            
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::setInheritedFromObjectId()
      */
     public function setInheritedFromObjectId($value)
     {
@@ -235,9 +313,9 @@ class Relation implements ExfaceClassInterface
     }
 
     /**
-     * Returns TRUE if this Relation was inherited from a parent object
-     *
-     * @return boolean
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::isInherited()
      */
     public function isInherited()
     {
@@ -245,11 +323,9 @@ class Relation implements ExfaceClassInterface
     }
 
     /**
-     * Returns a related attribute as if it was queried via $object->getAttribute("this_relation_alias->attribute_alias").
-     * An attribute returned by this function has a relation path relative to the main object of this relation!
-     *
-     * @param string $attribute_alias            
-     * @return \exface\Core\Interfaces\Model\MetaAttributeInterface
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::getRelatedAttribute()
      */
     public function getRelatedAttribute($attribute_alias)
     {
@@ -257,30 +333,30 @@ class Relation implements ExfaceClassInterface
     }
 
     /**
-     * Returns the relation in the opposite direction: ORDER->POSITION will become POSITION->ORDER
-     *
-     * @return \exface\Core\CommonLogic\Model\relation | boolean
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::getReversedRelation()
      */
     public function getReversedRelation()
     {
-        if ($this->getType() == self::RELATION_TYPE_FORWARD) {
+        if ($this->getType() == MetaRelationInterface::RELATION_TYPE_FORWARD) {
             // If it is a regular relation, it will be a reverse one from the point of view of the related object. That is identified by the
             // alias of the object it leads to (in our case, the current object)
             $reverse = $this->getRelatedObject()->getRelation($this->getMainObject()->getAlias(), $this->getAlias());
-        } elseif ($this->getType() == self::RELATION_TYPE_REVERSE || $this->getType() == self::RELATION_TYPE_ONE_TO_ONE) {
+        } elseif ($this->getType() == MetaRelationInterface::RELATION_TYPE_REVERSE || $this->getType() == MetaRelationInterface::RELATION_TYPE_ONE_TO_ONE) {
             // If it is a reverse relation, it will be a regular one from the point of view of the related object. That is identified by its alias.
             // TODO Will it also work for one-to-one relations?
             $reverse = $this->getRelatedObject()->getRelation($this->getForeignKeyAlias());
         } else {
-            $reverse = false;
+            throw new RuntimeException('Cannot reverse relation "' . $this->toString() . '" of meta object "' . $this->getMainObject()->getAliasWithNamespace() . '": invalid relation type!');
         }
         return $reverse;
     }
 
     /**
-     * Clones the attribute keeping the model and object
-     *
-     * @return Relation
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::copy()
      */
     public function copy()
     {
@@ -290,7 +366,6 @@ class Relation implements ExfaceClassInterface
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\ExfaceClassInterface::getWorkbench()
      */
     public function getWorkbench()
@@ -299,8 +374,9 @@ class Relation implements ExfaceClassInterface
     }
 
     /**
-     *
-     * @return \exface\Core\CommonLogic\Model\Model
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::getModel()
      */
     public function getModel()
     {
@@ -308,58 +384,51 @@ class Relation implements ExfaceClassInterface
     }
 
     /**
-     * Returns TRUE if this is a reverse relation and FALSE otherwise
-     *
-     * @return boolean
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::isReverseRelation()
      */
     public function isReverseRelation()
     {
-        return $this->getType() == self::RELATION_TYPE_REVERSE ? true : false;
+        return $this->getType() == MetaRelationInterface::RELATION_TYPE_REVERSE ? true : false;
     }
 
     /**
-     * Returns TRUE if this is a regular (forward) relation and FALSE otherwise
-     *
-     * @return boolean
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::isForwardRelation()
      */
     public function isForwardRelation()
     {
-        return $this->getType() == self::RELATION_TYPE_FORWARD ? true : false;
+        return $this->getType() == MetaRelationInterface::RELATION_TYPE_FORWARD ? true : false;
     }
 
     /**
-     * Returns TRUE if this is a one-to-one relation and FALSE otherwise
-     *
-     * @return boolean
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::isOneToOneRelation()
      */
     public function isOneToOneRelation()
     {
-        return $this->getType() == self::RELATION_TYPE_ONE_TO_ONE ? true : false;
+        return $this->getType() == MetaRelationInterface::RELATION_TYPE_ONE_TO_ONE ? true : false;
     }
 
     /**
-     * Returns TRUE if this relation equals the given relation or is derived (inherited) from it and FALSE otherwise.
-     *
-     * This method will return TRUE for rel1::is(rel2) if rel1 belongs to object1 and was inherited by object2 to form
-     * rel2. These relations are the same (have the same definition and the same UID), but belong to different objects.
-     * The method is_exaclty() would return FALSE in this situation.
-     *
-     * @param Relation $other_relation            
-     * @return boolean
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::is()
      */
-    public function is(Relation $other_relation)
+    public function is(MetaRelationInterface $other_relation)
     {
         return $this->getId() === $other_relation->getId() && $this->getType() === $other_relation->getType() ? true : false;
     }
 
     /**
-     * Returns TRUE if this relation is exactly the same as the given one and belongs to the same object.
-     * Otherwise returns FALSE.
-     *
-     * @param Relation $other_relation            
-     * @return boolean
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::isExactly()
      */
-    public function isExactly(Relation $other_relation)
+    public function isExactly(MetaRelationInterface $other_relation)
     {
         if ($this->is($other_relation) && $this->getMainObject()->isExactly($other_relation->getMainObject())) {
             return true;
@@ -369,11 +438,9 @@ class Relation implements ExfaceClassInterface
     }
     
     /**
-     * Returns a string representation of this relation: e.g. "ORDER_POSITION[ORDER_ID] -> ORDER[ID]".
      * 
-     * This is handy to use in debug printouts and user messages.
-     * 
-     * @return string
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::toString()
      */
     public function toString(){
         return $this->getMainObject()->getAliasWithNamespace() . '[' . $this->getForeignKeyAlias() . '] -> ' . $this->getRelatedObject()->getAliasWithNamespace() . '[' . $this->getRelatedObjectKeyAlias() . ']';

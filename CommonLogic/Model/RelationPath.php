@@ -7,6 +7,7 @@ use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Exceptions\OutOfRangeException;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
+use exface\Core\Interfaces\Model\MetaRelationInterface;
 
 /**
  * The relation path object holds all relations needed to reach the end object from the start object.
@@ -52,10 +53,10 @@ class RelationPath implements \IteratorAggregate
     /**
      * Adds the given relation to the right end of the path
      *
-     * @param Relation $relation            
+     * @param MetaRelationInterface $relation            
      * @return \exface\Core\CommonLogic\Model\RelationPath
      */
-    public function appendRelation(Relation $relation)
+    public function appendRelation(MetaRelationInterface $relation)
     {
         $this->relations[] = $relation;
         return $this;
@@ -64,10 +65,10 @@ class RelationPath implements \IteratorAggregate
     /**
      * Adds the given relation to the left end of the path
      *
-     * @param Relation $relation            
+     * @param MetaRelationInterface $relation            
      * @return \exface\Core\CommonLogic\Model\RelationPath
      */
-    public function prependRelation(Relation $relation)
+    public function prependRelation(MetaRelationInterface $relation)
     {
         array_unshift($this->relations, $relation);
         return $this;
@@ -148,7 +149,7 @@ class RelationPath implements \IteratorAggregate
      * Returns the nth relation in the path (starting with 0 for the first relation).
      *
      * @param integer $sequence_number            
-     * @return Relation
+     * @return MetaRelationInterface
      */
     public function getRelation($index)
     {
@@ -158,7 +159,7 @@ class RelationPath implements \IteratorAggregate
     /**
      * Returns the first relation of the path or NULL if the path is empty
      *
-     * @return Relation
+     * @return MetaRelationInterface
      */
     public function getRelationFirst()
     {
@@ -168,7 +169,7 @@ class RelationPath implements \IteratorAggregate
     /**
      * Returns the last relation of the path or NULL if the path is empty
      *
-     * @return Relation
+     * @return MetaRelationInterface
      */
     public function getRelationLast()
     {
@@ -302,7 +303,7 @@ class RelationPath implements \IteratorAggregate
         }
         
         if (! is_null($length) && ! is_numeric($length)) {
-            throw new InvalidArgumentException('Non-numeric length for Relation::subpath($start_index, $length) given!');
+            throw new InvalidArgumentException('Non-numeric length for MetaRelationInterface::subpath($start_index, $length) given!');
         }
         
         if ($start_index < 0) {
@@ -338,11 +339,11 @@ class RelationPath implements \IteratorAggregate
     /**
      * Returns the numeric index of the first occurrence of the given relation in the path or FALSE if the relation was not found.
      *
-     * @param Relation $relation            
+     * @param MetaRelationInterface $relation            
      * @param boolean $exact_match            
      * @return integer|boolean
      */
-    public function getIndexOf(Relation $relation, $exact_match = false)
+    public function getIndexOf(MetaRelationInterface $relation, $exact_match = false)
     {
         foreach ($this->getRelations() as $index => $rel) {
             if ($exact_match && $rel->isExactly($relation)) {

@@ -29,7 +29,7 @@ use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\Exceptions\DataSheets\DataSheetReadError;
 use exface\Core\Exceptions\DataSheets\DataSheetMissingRequiredValueError;
 use exface\Core\Interfaces\Exceptions\ExceptionInterface;
-use exface\Core\CommonLogic\Model\Relation;
+use exface\Core\Interfaces\Model\MetaRelationInterface;
 
 /**
  * Internal data respresentation object in exface.
@@ -977,8 +977,8 @@ class DataSheet implements DataSheetInterface
         // Check if there are dependent objects, that require cascading deletes
         // This is the case, if the deleted object has reverse relations (1-to-many), where the relation is a mandatory
         // attribute of the related object (that is, if the related object cannot exist without the one we are deleting)
-        /* @var $rel \exface\Core\CommonLogic\Model\Relation */
-        foreach ($this->getMetaObject()->getRelations(Relation::RELATION_TYPE_REVERSE) as $rel) {
+        /* @var $rel \exface\Core\Interfaces\Model\MetaRelationInterface */
+        foreach ($this->getMetaObject()->getRelations(MetaRelationInterface::RELATION_TYPE_REVERSE) as $rel) {
             // FIXME use $rel->getRelatedObjectKeyAttribute() here instead. This must be fixed first though, as it returns false now
             if (! $rel->getRelatedObject()->getAttribute($rel->getForeignKeyAlias())->isRequired()) {
                 // FIXME Throw a warning here! Need to be able to show warning along with success messages!

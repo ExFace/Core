@@ -20,6 +20,7 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Model\ModelInterface;
 use exface\Core\Interfaces\Model\MetaObjectActionListInterface;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
+use exface\Core\Interfaces\Model\MetaRelationInterface;
 
 class Object implements MetaObjectInterface
 {
@@ -94,13 +95,13 @@ class Object implements MetaObjectInterface
      * Returns all direct relations of this object as a flat array.
      * Optionally filtered by relation type.
      *
-     * @return Relation[]
+     * @return MetaRelationInterface[]
      */
     function getRelations($relation_type = null)
     {
         $result = array();
         foreach ($this->getRelationsArray() as $rel) {
-            if (is_null($relation_type) || (is_array($rel) && $relation_type == Relation::RELATION_TYPE_REVERSE) || $relation_type == $rel->getType()) {
+            if (is_null($relation_type) || (is_array($rel) && $relation_type == MetaRelationInterface::RELATION_TYPE_REVERSE) || $relation_type == $rel->getType()) {
                 if (is_array($rel)) {
                     $result = array_merge($result, $rel);
                 } else {
@@ -140,7 +141,7 @@ class Object implements MetaObjectInterface
      * @param string $alias            
      * @param string $foreign_key_alias            
      * @throws MetaRelationNotFoundError if no matching relation found
-     * @return Relation
+     * @return MetaRelationInterface
      */
     public function getRelation($alias, $foreign_key_alias = '')
     {
@@ -409,7 +410,7 @@ class Object implements MetaObjectInterface
      * @param relation $relation            
      * @return MetaObjectInterface
      */
-    function addRelation(Relation $relation)
+    function addRelation(MetaRelationInterface $relation)
     {
         // If there already is a relation with this alias, add another one, making it an array of relations
         // Make sure, this only happens to reverse relation!!! Direct relation MUST have different aliases!
@@ -529,7 +530,7 @@ class Object implements MetaObjectInterface
      * @see find_relation_path()
      *
      * @param MetaObjectInterface $related_object            
-     * @return Relation
+     * @return MetaRelationInterface
      */
     public function findRelation(MetaObjectInterface $related_object, $prefer_direct_relations = false)
     {
@@ -559,8 +560,8 @@ class Object implements MetaObjectInterface
      *
      * @param string $related_object_id            
      * @param string $relation_type
-     *            one of the Relation::RELATION_TYPE_xxx constants
-     * @return Relation[]
+     *            one of the MetaRelationInterface::RELATION_TYPE_xxx constants
+     * @return MetaRelationInterface[]
      */
     public function findRelations($related_object_id, $relation_type = null)
     {

@@ -2,7 +2,7 @@
 namespace exface\Core\CommonLogic\QueryBuilder;
 
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
-use exface\Core\CommonLogic\Model\Relation;
+use exface\Core\Interfaces\Model\MetaRelationInterface;
 
 class QueryPart
 {
@@ -60,7 +60,7 @@ class QueryPart
      * If $relation_type is given, only returns relations of this type.
      *
      * @param string $relations_type            
-     * @return Relation[]
+     * @return MetaRelationInterface[]
      */
     public function getUsedRelations($relation_type = null)
     {
@@ -72,7 +72,7 @@ class QueryPart
      * If $relation_type is ommitted, returns the very first relation regardless of it's type.
      *
      * @param string $relations_type            
-     * @return Relation
+     * @return MetaRelationInterface
      */
     public function getFirstRelation($relations_type = null)
     {

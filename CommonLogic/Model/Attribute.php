@@ -111,7 +111,7 @@ class Attribute implements MetaAttributeInterface
     /**
      * Returns the relation, this attribute represents if it is a relation attribute and NULL otherwise
      * 
-     * @return Relation
+     * @return MetaRelationInterface
      */
     public function getRelation()
     {

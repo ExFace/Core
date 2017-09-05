@@ -2,8 +2,7 @@
 namespace exface\Core\Interfaces\Model;
 
 use exface\Core\Interfaces\ExfaceClassInterface;
-use exface\Core\CommonLogic\Model\Relation;
-use exface\Core\Interfaces\Model\MetaAttributeInterface;
+use exface\Core\Interfaces\Model\MetaRelationInterface;
 use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\iCanBeCopied;
@@ -33,7 +32,7 @@ interface MetaAttributeInterface extends ExfaceClassInterface, iCanBeCopied
     /**
      * Returns the relation, this attribute represents if it is a relation attribute and NULL otherwise
      *
-     * @return Relation
+     * @return MetaRelationInterface
      */
     public function getRelation();
     

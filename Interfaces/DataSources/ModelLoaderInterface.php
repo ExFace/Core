@@ -12,7 +12,7 @@ use exface\Core\Interfaces\Model\ModelInterface;
 use exface\Core\Exceptions\Model\MetaObjectNotFoundError;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
-use exface\Core\CommonLogic\Model\Relation;
+use exface\Core\Interfaces\Model\MetaRelationInterface;
 use exface\Core\Exceptions\Model\MetaRelationNotFoundError;
 
 interface ModelLoaderInterface
@@ -57,7 +57,7 @@ interface ModelLoaderInterface
      * 
      * @throws MetaRelationNotFoundError
      * 
-     * @return Relation
+     * @return MetaRelationInterface
      */
     public function loadRelation(MetaObjectInterface $object, $relation_alias);
 

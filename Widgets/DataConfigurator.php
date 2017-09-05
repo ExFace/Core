@@ -7,7 +7,7 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
-use exface\Core\CommonLogic\Model\Relation;
+use exface\Core\Interfaces\Model\MetaRelationInterface;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Exceptions\Widgets\WidgetLogicError;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
@@ -325,10 +325,10 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
     /**
      * TODO Make the method return an array like find_filters_by_attribute() does
      *
-     * @param Relation $relation
+     * @param MetaRelationInterface $relation
      * @return Filter
      */
-    public function findFilterByRelation(Relation $relation)
+    public function findFilterByRelation(MetaRelationInterface $relation)
     {
         foreach ($this->getFilters() as $filter_widget) {
             if ($filter_widget->getAttributeAlias() == $relation->getAlias()) {
@@ -371,7 +371,7 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
      * @param relation $relation
      * @return \exface\Core\Widgets\AbstractWidget
      */
-    public function createFilterFromRelation(Relation $relation)
+    public function createFilterFromRelation(MetaRelationInterface $relation)
     {
         $filter_widget = $this->findFilterByRelation($relation);
         // Create a new hidden filter if there is no such filter already

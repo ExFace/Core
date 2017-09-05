@@ -3,7 +3,7 @@
 namespace exface\Core\ModelLoaders;
 
 use exface\Core\Interfaces\DataSources\ModelLoaderInterface;
-use exface\Core\CommonLogic\Model\Relation;
+use exface\Core\Interfaces\Model\MetaRelationInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\DataSorterFactory;
@@ -26,6 +26,7 @@ use exface\Core\CommonLogic\NameResolver;
 use exface\Core\Interfaces\Model\ModelInterface;
 use exface\Core\CommonLogic\Model\Object;
 use exface\Core\CommonLogic\Model\Attribute;
+use exface\Core\CommonLogic\Model\Relation;
 
 class SqlModelLoader implements ModelLoaderInterface
 {
@@ -228,11 +229,11 @@ class SqlModelLoader implements ModelLoaderInterface
                             $row['attribute_alias'], // foreign key in the main object
                             $row['object_oid'], // related object
                             null, // related object key attribute (uid)
-                            Relation::RELATION_TYPE_REVERSE); // relation type
+                            MetaRelationInterface::RELATION_TYPE_REVERSE); // relation type
                     } elseif ($attr) {
                         // At this point, we know, it is a direct relation. This can only happen if the object has a corresponding direct
                         // attribute. This is why the elseif($attr) is there.
-                        $rel = new Relation($exface, $attr->getId(), $attr->getAlias(), $attr->getName(), $object->getId(), $attr->getAlias(), $row['related_object_oid'], $row['related_object_special_key_attribute_oid'], Relation::RELATION_TYPE_FORWARD);
+                        $rel = new Relation($exface, $attr->getId(), $attr->getAlias(), $attr->getName(), $object->getId(), $attr->getAlias(), $row['related_object_oid'], $row['related_object_special_key_attribute_oid'], MetaRelationInterface::RELATION_TYPE_FORWARD);
                     }
                     
                     if ($rel) {

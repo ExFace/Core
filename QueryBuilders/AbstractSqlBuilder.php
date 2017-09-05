@@ -14,7 +14,7 @@ use exface\Core\DataTypes\NumberDataType;
 use exface\Core\DataConnectors\AbstractSqlConnector;
 use exface\Core\CommonLogic\DataQueries\SqlDataQuery;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartSelect;
-use exface\Core\CommonLogic\Model\Relation;
+use exface\Core\Interfaces\Model\MetaRelationInterface;
 use exface\Core\CommonLogic\DataSheets\DataAggregator;
 
 /**
@@ -688,7 +688,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         if (! $select_from) {
             // if it's a relation, we need to select from a joined table except for reverse relations
             if ($select_from = $attribute->getRelationPath()->toString()) {
-                if ($rev_rel = $qpart->getFirstRelation(Relation::RELATION_TYPE_REVERSE)) {
+                if ($rev_rel = $qpart->getFirstRelation(MetaRelationInterface::RELATION_TYPE_REVERSE)) {
                     // In case of reverse relations, $select_from is used to connect the subselects.
                     // Here we use the table of the last regular relation relation before the reversed one.
                     $select_from = $attribute->getRelationPath()->getSubpath(0, $attribute->getRelationPath()->getIndexOf($rev_rel))->toString();
@@ -707,7 +707,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         $group_function = ! is_null($group_function) ? $group_function : $qpart->getAggregateFunction();
         
         // build subselects for reverse relations if the body of the select is not specified explicitly
-        if (! $select_column && $qpart->getUsedRelations(Relation::RELATION_TYPE_REVERSE)) {
+        if (! $select_column && $qpart->getUsedRelations(MetaRelationInterface::RELATION_TYPE_REVERSE)) {
             $output = $this->buildSqlSelectSubselect($qpart, $select_from);
             $add_nvl = true;
         } // build grouping function if necessary
@@ -777,7 +777,7 @@ else {
      */
     protected function buildSqlSelectSubselect(\exface\Core\CommonLogic\QueryBuilder\QueryPart $qpart, $select_from = null)
     {
-        $rev_rel = $qpart->getFirstRelation(Relation::RELATION_TYPE_REVERSE);
+        $rev_rel = $qpart->getFirstRelation(MetaRelationInterface::RELATION_TYPE_REVERSE);
         if (! $rev_rel)
             return '';
         
@@ -1131,7 +1131,7 @@ else {
      */
     protected function checkFilterBelongsInHavingClause(QueryPartFilter $qpart, $rely_on_joins = true)
     {
-        return $qpart->getAggregateFunction() && ! $qpart->getFirstRelation(Relation::RELATION_TYPE_REVERSE) ? true : false;
+        return $qpart->getAggregateFunction() && ! $qpart->getFirstRelation(MetaRelationInterface::RELATION_TYPE_REVERSE) ? true : false;
     }
 
     /**
@@ -1180,7 +1180,7 @@ else {
             return false;
         }
         
-        if ($qpart->getFirstRelation(Relation::RELATION_TYPE_REVERSE) || ($rely_on_joins == false && count($qpart->getUsedRelations()) > 0)) {
+        if ($qpart->getFirstRelation(MetaRelationInterface::RELATION_TYPE_REVERSE) || ($rely_on_joins == false && count($qpart->getUsedRelations()) > 0)) {
             // Use subqueries for attributes with reverse relations and in case we know, tha main query will not have any joins (e.g. UPDATE queries)
             $output = $this->buildSqlWhereSubquery($qpart, $rely_on_joins);
         } else {
@@ -1319,7 +1319,7 @@ else {
         // This is implicitly also the case, if there are no joins needed (= the data in the main query will be sufficient in any case)
         if ($rely_on_joins || count($qpart->getUsedRelations()) === 0) {
             // If so, just need to include those relations in the subquery, which follow a reverse relation
-            $start_rel = $qpart->getFirstRelation(Relation::RELATION_TYPE_REVERSE);
+            $start_rel = $qpart->getFirstRelation(MetaRelationInterface::RELATION_TYPE_REVERSE);
         } else {
             // Otherwise, all relations (starting from the first one) must be put into the subquery, because there are no joins in the main one
             $start_rel = $qpart->getFirstRelation();
@@ -1504,7 +1504,7 @@ else {
     {
         $result = array();
         foreach ($this->getAttributes() as $alias => $qpart) {
-            if ($qpart->getUsedRelations(Relation::RELATION_TYPE_REVERSE)) {
+            if ($qpart->getUsedRelations(MetaRelationInterface::RELATION_TYPE_REVERSE)) {
                 $result[$alias] = $qpart;
             }
         }

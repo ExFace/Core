@@ -4,7 +4,7 @@ namespace exface\Core\QueryBuilders;
 use exface\Core\DataTypes\AbstractDataType;
 use exface\Core\CommonLogic\AbstractDataConnector;
 use exface\Core\Exceptions\QueryBuilderException;
-use exface\Core\CommonLogic\Model\Relation;
+use exface\Core\Interfaces\Model\MetaRelationInterface;
 
 /**
  * A query builder for Oracle SQL.
@@ -150,7 +150,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
                     // they should be done after pagination as they are potentially very time consuming
                     if ($this->checkForSqlStatement($qpart->getAttribute()->getDataAddress()) && (! $group_by || ! $qpart->getAggregateFunction())) {
                         continue;
-                    } elseif ($qpart->getUsedRelations(Relation::RELATION_TYPE_REVERSE) && ! $this->getAggregation($qpart->getAlias())) {
+                    } elseif ($qpart->getUsedRelations(MetaRelationInterface::RELATION_TYPE_REVERSE) && ! $this->getAggregation($qpart->getAlias())) {
                         // Also skip selects with reverse relations, as they will be fetched via subselects later
                         // Selecting them in the core query would only slow it down. The filtering ist done explicitly in build_sql_where_condition()
                         // FIXME This only works if the reverse relation can be joined onto something coming out of the GROUP BY. If we need UIDs of

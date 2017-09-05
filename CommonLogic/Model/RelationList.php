@@ -21,7 +21,7 @@ class RelationList extends EntityList
      * {@inheritdoc}
      *
      * @see \exface\Core\CommonLogic\EntityList::add()
-     * @param Relation $attribute            
+     * @param MetaRelationInterface $attribute            
      */
     public function add($relaion, $key = null)
     {
@@ -56,7 +56,7 @@ class RelationList extends EntityList
 
     /**
      *
-     * @return Relation[]
+     * @return MetaRelationInterface[]
      */
     public function getAll()
     {

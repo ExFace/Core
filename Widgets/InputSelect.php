@@ -13,7 +13,7 @@ use exface\Core\CommonLogic\DataSheets\DataSorter;
 use exface\Core\Factories\DataSorterFactory;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Interfaces\DataSheets\DataColumnInterface;
-use exface\Core\CommonLogic\Model\Relation;
+use exface\Core\Interfaces\Model\MetaRelationInterface;
 
 /**
  * A dropdown menu to select from.
@@ -317,10 +317,10 @@ class InputSelect extends Input implements iSupportMultiSelect
      * from the options object to the prefill object.
      * 
      * @param DataSheetInterface $data_sheet
-     * @param Relation $relation_from_options_to_prefill_object
+     * @param MetaRelationInterface $relation_from_options_to_prefill_object
      * @return void
      */
-    protected function doPrefillWithRelatedObject(DataSheetInterface $data_sheet, Relation $relation_from_options_to_prefill_object)
+    protected function doPrefillWithRelatedObject(DataSheetInterface $data_sheet, MetaRelationInterface $relation_from_options_to_prefill_object)
     {
         
         // Now see if the prefill object can be used to filter values
