@@ -286,8 +286,9 @@ class Object implements MetaObjectInterface
             if ($rel_parts = RelationPath::relationPathParse($alias, 1)) {
                 try {
                     $rel_attr = $this->getRelatedObject($rel_parts[0])->getAttribute($rel_parts[1]);
-                    $attr = $rel_attr->copy();
                     $rel = $this->getRelation($rel_parts[0]);
+                    $attr = new RelatedAttribute($this, $rel_attr);
+                    //$attr = $rel_attr->copy();
                     $attr->getRelationPath()->prependRelation($rel);
                     $this->setAttributeCache($alias, $attr);
                     return $attr;
@@ -313,7 +314,8 @@ class Object implements MetaObjectInterface
                 if ($rev_rel->isReverseRelation()) {
                     try {
                         $rel_attr = $rev_rel->getRelatedObject()->getAttribute($rev_rel->getForeignKeyAlias());
-                        $attr = $rel_attr->copy();
+                        //$attr = $rel_attr->copy();
+                        $attr = new RelatedAttribute($this, $rel_attr);
                         $attr->getRelationPath()->prependRelation($rev_rel);
                         $this->setAttributeCache($alias, $attr);
                         return $attr;
@@ -480,7 +482,7 @@ class Object implements MetaObjectInterface
         foreach ($parent->getAttributes() as $attr) {
             $attr_clone = $attr->copy();
             // Save the parent's id, if there isn't one already (that would mean, that the parent inherited the attribute too)
-            if (is_null($attr->getInheritedFromObjectId())) {
+            if (! $attr->isInherited()) {
                 $attr_clone->setInheritedFromObjectId($parent_object_id);
                 // TODO Is it a good idea to set the object id of the inheridted attribute to the inheriting object? Would it be
                 // better, if we only do this for objects, that do not have their own data address and merely are containers for attributes?

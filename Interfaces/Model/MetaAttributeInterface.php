@@ -127,7 +127,8 @@ interface MetaAttributeInterface extends ExfaceClassInterface, iCanBeCopied
     
     /**
      * Returns the object, this attribute was inherited from.
-     * If the attribute was not inherited, returns it's regular object (same as get_object()).
+     * 
+     * If the attribute was not inherited this returns it's regular object (same as get_object()).
      *
      * If the attribute was inherited multiple times, this method will go back exactly one step. For example, if we have a base object
      * of a data source, that is extended by OBJECT1, which in turn, is extended by OBJECT2, calling get_object_extended_from() on an

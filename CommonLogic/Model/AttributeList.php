@@ -162,8 +162,9 @@ class AttributeList extends EntityList implements MetaAttributeListInterface
                     $rel_obj = $object->getRelatedObject($rel_path);
                     $rel_attr = $object->getAttribute(RelationPath::relationPathAdd($rel_path, $rel_obj->getLabelAttributeAlias()));
                     // Leave the name of the relation as attribute name and ensure, that it is visible
-                    $rel_attr->setName($attr->getName());
-                    $rel_attr->setHidden(false);
+                    // FIXME #RelatedAttribute
+                    //$rel_attr->setName($attr->getName());
+                    //$rel_attr->setHidden(false);
                     $defs->add($rel_attr, $attr->getDefaultDisplayOrder());
                 } else {
                     $defs->add($attr, $attr->getDefaultDisplayOrder());

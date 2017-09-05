@@ -292,6 +292,12 @@ class Attribute implements MetaAttributeInterface
     {
         return $this->object;
     }
+    
+    public function setObject(MetaObjectInterface $object)
+    {
+        $this->object = $object;
+        return $this;
+    }
 
     /**
      * Returns the object, this attribute was inherited from.
@@ -311,7 +317,8 @@ class Attribute implements MetaAttributeInterface
             return $this->getObject();
         }
     }
-
+    
+    
     /**
      * Returns a UXON object for the default editor widget for this attribute.
      * 
