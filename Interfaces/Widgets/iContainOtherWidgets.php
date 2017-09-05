@@ -2,7 +2,7 @@
 namespace exface\Core\Interfaces\Widgets;
 
 use exface\Core\Interfaces\Widgets\iHaveChildren;
-use exface\Core\CommonLogic\Model\Attribute;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Widgets\AbstractWidget;
 use exface\Core\Exceptions\Widgets\WidgetChildNotFoundError;
@@ -137,10 +137,10 @@ interface iContainOtherWidgets extends iHaveChildren
      * The array will contain only widgets implementing the interface
      * iShowSingleAttribute.
      *
-     * @param Attribute $attribute            
+     * @param MetaAttributeInterface $attribute            
      * @return WidgetInterface[]
      */
-    public function findChildrenByAttribute(Attribute $attribute);
+    public function findChildrenByAttribute(MetaAttributeInterface $attribute);
     
     /**
      * Returns the direct child widget with the given id or boolean FALSE if there is no matching child.

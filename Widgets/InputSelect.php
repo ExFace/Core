@@ -457,7 +457,7 @@ class InputSelect extends Input implements iSupportMultiSelect
 
     /**
      *
-     * @return \exface\Core\CommonLogic\Model\Attribute
+     * @return \exface\Core\Interfaces\Model\MetaAttributeInterface
      */
     public function getTextAttribute()
     {

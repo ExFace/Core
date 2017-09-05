@@ -1,7 +1,7 @@
 <?php
 namespace exface\Core\Interfaces\DataSheets;
 
-use exface\Core\CommonLogic\Model\Attribute;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\CommonLogic\Model\Expression;
 use exface\Core\DataTypes\AbstractDataType;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
@@ -98,7 +98,7 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
      * represents anything else, like a forumula, a constant, etc.
      *
      * @throws MetaAttributeNotFoundError if it is expected to be an attribute, but is not found for the object of the column
-     * @return Attribute
+     * @return MetaAttributeInterface
      */
     public function getAttribute();
 

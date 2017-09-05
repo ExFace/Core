@@ -6,6 +6,7 @@ use exface\Core\Exceptions\Model\MetaRelationNotFoundError;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Exceptions\OutOfRangeException;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
 
 /**
  * The relation path object holds all relations needed to reach the end object from the start object.
@@ -208,8 +209,8 @@ class RelationPath implements \IteratorAggregate
     /**
      * DEPRECATED! Use combine() instead!
      *
-     * @param unknown $relation_alias_1            
-     * @param unknown $relation_alias_2            
+     * @param string $relation_alias_1            
+     * @param string $relation_alias_2            
      */
     public static function relationPathAdd($relation_alias_1, $relation_alias_2)
     {
@@ -303,9 +304,6 @@ class RelationPath implements \IteratorAggregate
         if (! is_null($length) && ! is_numeric($length)) {
             throw new InvalidArgumentException('Non-numeric length for Relation::subpath($start_index, $length) given!');
         }
-        
-        // Save the originally passed index for error reporting before doing calculations with it
-        $passed_index = $start_index;
         
         if ($start_index < 0) {
             $start_index = $this->countRelations() - $start_index;
@@ -424,7 +422,7 @@ class RelationPath implements \IteratorAggregate
      * E.g. calling getAttributeOfEndObject('POSITION_NO') on the relation path ORDER<-POSITION will return ORDER__POSITION__POSITION_NO
      *
      * @param string $attribute_alias            
-     * @return Attribute
+     * @return MetaAttributeInterface
      */
     public function getAttributeOfEndObject($attribute_alias)
     {

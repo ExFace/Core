@@ -3,12 +3,10 @@ namespace exface\Core\CommonLogic\DataSheets;
 
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\Model\ConditionGroup;
-use exface\Core\CommonLogic\Model\Condition;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Exceptions\DataSheets\DataSheetMergeError;
 use exface\Core\Factories\QueryBuilderFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Factories\ConditionFactory;
 use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\Factories\DataColumnFactory;
@@ -19,7 +17,6 @@ use exface\Core\Interfaces\DataSheets\DataAggregatorListInterface;
 use exface\Core\Interfaces\DataSheets\DataSorterListInterface;
 use exface\Core\Interfaces\DataSheets\DataColumnInterface;
 use exface\Core\Factories\EventFactory;
-use exface\Core\Events\DataSheetEvent;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Exceptions\DataSheets\DataSheetJoinError;
@@ -619,7 +616,7 @@ class DataSheet implements DataSheetInterface
             $rel_path = $col->getAttribute()->getRelationPath()->toString();
             if ($processed_relations[$rel_path])
                 continue;
-            /* @var $attr \exface\Core\CommonLogic\Model\Attribute */
+            /* @var $attr \exface\Core\Interfaces\Model\MetaAttributeInterface */
             foreach ($col->getAttribute()->getObject()->getAttributes() as $attr) {
                 if ($expr = $attr->getFixedValue()) {
                     $alias_with_relation_path = RelationPath::relationPathAdd($rel_path, $attr->getAlias());
@@ -1019,7 +1016,7 @@ class DataSheet implements DataSheetInterface
      * remove this method here.
      *
      * @param string $column_name            
-     * @param ambiguos $value            
+     * @param mixed $value            
      * @param string $comparator            
      */
     function addFilterFromString($expression_string, $value, $comparator = null)
@@ -1604,8 +1601,9 @@ class DataSheet implements DataSheetInterface
     }
 
     /**
-     *
-     * @return exface
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\ExfaceClassInterface::getWorkbench()
      */
     public function getWorkbench()
     {

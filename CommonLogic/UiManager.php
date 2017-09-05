@@ -8,7 +8,6 @@ use exface\Core\Interfaces\TemplateInterface;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\UiManagerInterface;
 use exface\Core\Factories\TemplateFactory;
-use exface\Core\Exceptions\UiPageFoundError;
 
 class UiManager implements UiManagerInterface
 {

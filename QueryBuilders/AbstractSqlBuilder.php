@@ -517,7 +517,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     {
         $queries = array();
         foreach ($qparts as $qpart) {
-            /* @var $attr \exface\Core\CommonLogic\Model\Attribute */
+            /* @var $attr \exface\Core\Interfaces\Model\MetaAttributeInterface */
             $attr = $qpart->getAttribute();
             if (! $queries[$attr->getRelationPath()->toString()]) {
                 $q = clone $this;

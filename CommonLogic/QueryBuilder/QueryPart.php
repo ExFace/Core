@@ -1,7 +1,7 @@
 <?php
 namespace exface\Core\CommonLogic\QueryBuilder;
 
-use exface\Core\CommonLogic\Model\Attribute;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\CommonLogic\Model\Relation;
 
 class QueryPart
@@ -83,7 +83,7 @@ class QueryPart
 
     /**
      *
-     * @return \exface\Core\CommonLogic\Model\Attribute
+     * @return \exface\Core\Interfaces\Model\MetaAttributeInterface
      */
     public function getAttribute()
     {
@@ -92,9 +92,9 @@ class QueryPart
 
     /**
      *
-     * @param \exface\Core\CommonLogic\Model\Attribute $value            
+     * @param \exface\Core\Interfaces\Model\MetaAttributeInterface $value            
      */
-    public function setAttribute(Attribute $value)
+    public function setAttribute(MetaAttributeInterface $value)
     {
         $this->attribute = $value;
     }

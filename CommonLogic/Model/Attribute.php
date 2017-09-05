@@ -6,18 +6,18 @@ use exface\Core\CommonLogic\Workbench;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Factories\RelationPathFactory;
-use exface\Core\Interfaces\ExfaceClassInterface;
-use exface\Core\Interfaces\iCanBeCopied;
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Interfaces\Model\DataTypeInterface;
 use exface\Core\CommonLogic\Constants\SortingDirections;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
+use exface\Core\Interfaces\Model\ModelInterface;
 
 /**
  * 
  * @author Andrej Kabachnik
  *
  */
-class Attribute implements ExfaceClassInterface, iCanBeCopied
+class Attribute implements MetaAttributeInterface
 {
 
     // Properties to be dublicated on copy()
@@ -81,7 +81,7 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
     /** @var Model */
     private $model;
 
-    public function __construct(Model $model)
+    public function __construct(ModelInterface $model)
     {
         $this->model = $model;
     }
@@ -160,7 +160,7 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
      * 
      * @param string|DataTypeInterface $object_or_name
      * @throws UnexpectedValueException
-     * @return \exface\Core\CommonLogic\Model\Attribute
+     * @return \exface\Core\Interfaces\Model\MetaAttributeInterface
      */
     public function setDataType($object_or_name)
     {
@@ -277,7 +277,7 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
         return $this->relation_path;
     }
 
-    protected function setRelationPath(RelationPath $path)
+    public function setRelationPath(RelationPath $path)
     {
         $this->relation_path = $path;
     }
@@ -496,7 +496,7 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
     /**
      *
      * @param UxonObject $value            
-     * @return Attribute
+     * @return MetaAttributeInterface
      */
     public function setDataAddressProperties(UxonObject $value)
     {
@@ -518,7 +518,7 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
      *
      * @param string $id            
      * @param mixed $value            
-     * @return \exface\Core\CommonLogic\Model\Attribute
+     * @return \exface\Core\Interfaces\Model\MetaAttributeInterface
      */
     public function setDataAddressProperty($id, $value)
     {
@@ -560,10 +560,10 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
      * This method will also return TRUE if the attributes have differen relations paths.
      * NOTE: comparing the UID is not enough, as inherited attributes will keep their UID.
      *
-     * @param Attribute $attribute            
+     * @param MetaAttributeInterface $attribute            
      * @return boolean
      */
-    public function isExactly(Attribute $attribute)
+    public function isExactly(MetaAttributeInterface $attribute)
     {
         if ($this->getId() == $attribute->getId() && $this->getObject()->isExactly($attribute->getObject())) {
             return true;
@@ -581,10 +581,10 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
      * - BASE__UID->is(BASE__UID) = TRUE
      * - OBJECT1__UID->is(OBJECT1__UID) = TRUE
      *
-     * @param Attribute $attribute            
+     * @param MetaAttributeInterface $attribute            
      * @return boolean
      */
-    public function is(Attribute $attribute)
+    public function is(MetaAttributeInterface $attribute)
     {
         if (strcasecmp($this->getAlias(), $attribute->getAlias()) === 0 && $this->getObject()->is($attribute->getObject())) {
             return true;
@@ -595,7 +595,7 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
     /**
      * Creates an exact copy of the attribute
      *
-     * @return Attribute
+     * @return MetaAttributeInterface
      */
     public function copy()
     {
@@ -607,7 +607,7 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
      * This is usefull if you want to rebase an attribute.
      *
      * @param RelationPath $path            
-     * @return \exface\Core\CommonLogic\Model\Attribute
+     * @return \exface\Core\Interfaces\Model\MetaAttributeInterface
      */
     public function rebase(RelationPath $path)
     {
@@ -638,7 +638,7 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
      * in all data sheets
      *
      * @param boolean $value            
-     * @return Attribute
+     * @return MetaAttributeInterface
      */
     public function setSystem($value)
     {
@@ -667,7 +667,7 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
     /**
      *
      * @param string $value            
-     * @return \exface\Core\CommonLogic\Model\Attribute
+     * @return \exface\Core\Interfaces\Model\MetaAttributeInterface
      */
     public function setDefaultAggregateFunction($value)
     {
@@ -687,7 +687,7 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
     /**
      *
      * @param boolean $value            
-     * @return \exface\Core\CommonLogic\Model\Attribute
+     * @return \exface\Core\Interfaces\Model\MetaAttributeInterface
      */
     public function setSortable($value)
     {
@@ -707,7 +707,7 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
     /**
      *
      * @param boolean $value            
-     * @return \exface\Core\CommonLogic\Model\Attribute
+     * @return \exface\Core\Interfaces\Model\MetaAttributeInterface
      */
     public function setFilterable($value)
     {
@@ -727,7 +727,7 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
     /**
      *
      * @param boolean $value            
-     * @return \exface\Core\CommonLogic\Model\Attribute
+     * @return \exface\Core\Interfaces\Model\MetaAttributeInterface
      */
     public function setAggregatable($value)
     {
@@ -764,7 +764,7 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
      * turn - is very unlikely to be included in a longer text.
      * 
      * @param string $string
-     * @return \exface\Core\CommonLogic\Model\Attribute
+     * @return \exface\Core\Interfaces\Model\MetaAttributeInterface
      */
     public function setValueListDelimiter($string)
     {

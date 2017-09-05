@@ -2,7 +2,7 @@
 namespace exface\Core\Widgets;
 
 use exface\Core\Factories\WidgetFactory;
-use exface\Core\CommonLogic\Model\Attribute;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Widgets\iCanBeRequired;
 use exface\Core\Interfaces\Widgets\iHaveValue;
 use exface\Core\Interfaces\Widgets\iTakeInput;
@@ -117,7 +117,7 @@ class Filter extends Container implements iCanBeRequired, iShowSingleAttribute
 
     /**
      *
-     * @return Attribute
+     * @return MetaAttributeInterface
      */
     public function getAttribute()
     {

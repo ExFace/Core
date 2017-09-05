@@ -3,6 +3,7 @@ namespace exface\Core\CommonLogic\Model;
 
 use exface\Core\Interfaces\ExfaceClassInterface;
 use exface\Core\CommonLogic\Workbench;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
 
 class Relation implements ExfaceClassInterface
 {
@@ -112,7 +113,7 @@ class Relation implements ExfaceClassInterface
      * Returns the attribute, that is the foreign key in the main object.
      * Same as calling getMainObjectKeyAttribute()
      *
-     * @return Attribute
+     * @return MetaAttributeInterface
      */
     public function getForeignKeyAttribute(){
         return $this->getMainObjectKeyAttribute();
@@ -196,7 +197,7 @@ class Relation implements ExfaceClassInterface
      * FIXME Fix Reverse relations key bug. For some reason, the foreign key is set incorrectly: e.g. for exface.Core.WIDGET__PHP_ANNOTATION the
      * foreign key is FILE, but there is no FILE attribute in the WIDGET object (the UID is PATHNAME_RELATIVE).
      *
-     * @return \exface\Core\CommonLogic\Model\Attribute
+     * @return \exface\Core\Interfaces\Model\MetaAttributeInterface
      */
     public function getMainObjectKeyAttribute()
     {
@@ -248,7 +249,7 @@ class Relation implements ExfaceClassInterface
      * An attribute returned by this function has a relation path relative to the main object of this relation!
      *
      * @param string $attribute_alias            
-     * @return \exface\Core\CommonLogic\Model\Attribute
+     * @return \exface\Core\Interfaces\Model\MetaAttributeInterface
      */
     public function getRelatedAttribute($attribute_alias)
     {

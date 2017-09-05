@@ -174,7 +174,7 @@ class DiagramShape extends Form implements iShowDataSet, iHaveBorders
 
     /**
      *
-     * @return \exface\Core\CommonLogic\Model\Attribute
+     * @return \exface\Core\Interfaces\Model\MetaAttributeInterface
      */
     public function getShapeOptionsAttribute()
     {
@@ -222,7 +222,7 @@ class DiagramShape extends Form implements iShowDataSet, iHaveBorders
 
     /**
      *
-     * @return \exface\Core\CommonLogic\Model\Attribute
+     * @return \exface\Core\Interfaces\Model\MetaAttributeInterface
      */
     public function getShapeCaptionAttribute()
     {

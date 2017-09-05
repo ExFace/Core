@@ -2,7 +2,7 @@
 namespace exface\Core\Widgets;
 
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\Core\CommonLogic\Model\Attribute;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\CommonLogic\UxonObject;
@@ -316,7 +316,7 @@ class Container extends AbstractWidget implements iContainOtherWidgets
      *
      * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::findChildrenByAttribute()
      */
-    public function findChildrenByAttribute(Attribute $attribute)
+    public function findChildrenByAttribute(MetaAttributeInterface $attribute)
     {
         $result = array();
         

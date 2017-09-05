@@ -82,7 +82,7 @@ class StateMachineBehavior extends AbstractBehavior
      * Determines the state attribute from the alias and the attached object and
      * returns it.
      *
-     * @return \exface\Core\CommonLogic\Model\Attribute
+     * @return \exface\Core\Interfaces\Model\MetaAttributeInterface
      */
     public function getStateAttribute()
     {

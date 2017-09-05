@@ -3,7 +3,6 @@
 namespace exface\Core\ModelLoaders;
 
 use exface\Core\Interfaces\DataSources\ModelLoaderInterface;
-use exface\Core\CommonLogic\Model\Attribute;
 use exface\Core\CommonLogic\Model\Relation;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\CommonLogic\UxonObject;
@@ -26,6 +25,7 @@ use exface\Core\CommonLogic\AppInstallers\SqlSchemaInstaller;
 use exface\Core\CommonLogic\NameResolver;
 use exface\Core\Interfaces\Model\ModelInterface;
 use exface\Core\CommonLogic\Model\Object;
+use exface\Core\CommonLogic\Model\Attribute;
 
 class SqlModelLoader implements ModelLoaderInterface
 {

@@ -1,8 +1,8 @@
 <?php
 namespace exface\Core\CommonLogic\Model;
 
-use exface\Core\CommonLogic\Workbench;
 use exface\Core\Factories\AttributeGroupFactory;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
 
 /**
  * An attribute group contains groups any number of attributes of a single object (including inherited attributes!).
@@ -47,7 +47,7 @@ class AttributeGroup extends AttributeList
     /**
      * This is an alias for AttributeList->getAll()
      *
-     * @return Attribute[]
+     * @return MetaAttributeInterface[]
      */
     public function getAttributes()
     {

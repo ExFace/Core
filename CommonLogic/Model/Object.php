@@ -19,6 +19,7 @@ use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Model\ModelInterface;
 use exface\Core\Interfaces\Model\MetaObjectActionListInterface;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
 
 class Object implements MetaObjectInterface
 {
@@ -214,7 +215,7 @@ class Object implements MetaObjectInterface
     /**
      * Returns a list of all direct attributes of this object (including inherited ones!)
      *
-     * @return AttributeList
+     * @return AttributeList|MetaAttributeInterface[]
      */
     function getAttributes()
     {
@@ -242,7 +243,7 @@ class Object implements MetaObjectInterface
      * 
      * @throws MetaAttributeNotFoundError if no matching attribute could be found
      * 
-     * @return Attribute
+     * @return MetaAttributeInterface
      */
     public function getAttribute($alias)
     {
@@ -251,7 +252,7 @@ class Object implements MetaObjectInterface
         // - if it's a MISS, search for the attribute
         // - if it's a HIT, but the value is FALSE skip the searching an head to the exception trowing
         $attr = $this->getAttributeCache($alias);
-        if ($attr instanceof Attribute){
+        if ($attr instanceof MetaAttributeInterface){
             return $attr;
         } elseif ($attr !== false){
             // Now check, if it is a direct attribute. This is the simplest case and the fastets one too
@@ -331,13 +332,13 @@ class Object implements MetaObjectInterface
      * this alias.
      * 
      * @param string $alias
-     * @param Attribute|boolean|null $value
+     * @param MetaAttributeInterface|boolean|null $value
      * @throws InvalidArgumentException
      * @return \exface\Core\Interfaces\Model\MetaObjectInterface
      */
     protected function setAttributeCache($alias, $value = null)
     {
-        if ($value === false || is_null($value) || $value instanceof Attribute){
+        if ($value === false || is_null($value) || $value instanceof MetaAttributeInterface){
             $this->attributes_alias_cache[$alias] = $value;
         } else {
             throw new InvalidArgumentException('Invalid value passed to attribute cache: expecting Attribute or FALSE, "' . gettype($value) . '" received!');
@@ -350,7 +351,7 @@ class Object implements MetaObjectInterface
      * is no attribute matching the alias or NULL if it's a cache miss.
      * 
      * @param string $alias
-     * @return Attribute|boolean|null
+     * @return MetaAttributeInterface|boolean|null
      */
     protected function getAttributeCache($alias)
     {
@@ -369,7 +370,7 @@ class Object implements MetaObjectInterface
         $cache = $this->getAttributeCache($alias);
         if ($cache === false){
             return false;
-        } elseif ($cache instanceof Attribute){
+        } elseif ($cache instanceof MetaAttributeInterface){
             return $cache;
         }
         
@@ -643,7 +644,7 @@ class Object implements MetaObjectInterface
      * Returns the meta attribute with the unique ID of the object.
      *
      * @throws MetaObjectHasNoUidAttributeError if no UID attribute defined for this object
-     * @return \exface\Core\CommonLogic\Model\Attribute
+     * @return \exface\Core\Interfaces\Model\MetaAttributeInterface
      */
     public function getUidAttribute()
     {
@@ -681,7 +682,7 @@ class Object implements MetaObjectInterface
     /**
      * Returns the meta attribute with the label of the object
      *
-     * @return Attribute
+     * @return MetaAttributeInterface
      */
     public function getLabelAttribute()
     {

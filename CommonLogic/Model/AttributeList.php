@@ -4,13 +4,14 @@ namespace exface\Core\CommonLogic\Model;
 use exface\Core\CommonLogic\EntityList;
 use exface\Core\Factories\AttributeListFactory;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
 
 /**
  *
  * @author Andrej Kabachnik
  *        
  * @method Attribute[] getAll()
- * @method AttributeList|Attribute[] getIterator()
+ * @method AttributeList|MetaAttributeInterface[] getIterator()
  *        
  */
 class AttributeList extends EntityList
@@ -23,7 +24,7 @@ class AttributeList extends EntityList
      * {@inheritdoc}
      *
      * @see \exface\Core\CommonLogic\EntityList::add()
-     * @param Attribute $attribute            
+     * @param MetaAttributeInterface $attribute            
      */
     public function add($attribute, $key = null)
     {
@@ -56,7 +57,7 @@ class AttributeList extends EntityList
      * Returns the attribute matching the given alias or FALSE if no such attribute is found
      *
      * @param string $alias            
-     * @return Attribute|boolean
+     * @return MetaAttributeInterface|boolean
      */
     public function getByAttributeAlias($alias)
     {
@@ -77,7 +78,7 @@ class AttributeList extends EntityList
      * Returns the attribute matching the given UID or FALSE if no such attribute is found
      *
      * @param string $uid            
-     * @return Attribute|boolean
+     * @return MetaAttributeInterface|boolean
      */
     public function getByAttributeId($uid)
     {
@@ -93,7 +94,7 @@ class AttributeList extends EntityList
      * Returns a new attribute list with all attributes of the given data type
      *
      * @param string $data_type_alias            
-     * @return AttributeList|Attribute[]
+     * @return AttributeList|MetaAttributeInterface[]
      */
     public function getByDataTypeAlias($data_type_alias)
     {
@@ -110,7 +111,7 @@ class AttributeList extends EntityList
     /**
      * Returns a new attribute list containig only attributes marked as required
      *
-     * @return AttributeList|Attribute[]
+     * @return AttributeList|MetaAttributeInterface[]
      */
     function getRequired()
     {
@@ -127,7 +128,7 @@ class AttributeList extends EntityList
     /**
      * Returns system attributes.
      *
-     * @return AttributeList|Attribute[]
+     * @return AttributeList|MetaAttributeInterface[]
      */
     public function getSystem()
     {
@@ -146,7 +147,7 @@ class AttributeList extends EntityList
      * The list can then be easily used to create widgets to display the object without the user having to
      * specify which particular attributes to display.
      *
-     * @return AttributeList|Attribute[]
+     * @return AttributeList|MetaAttributeInterface[]
      */
     function getDefaultDisplayList()
     {

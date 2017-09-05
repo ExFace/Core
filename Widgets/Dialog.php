@@ -3,7 +3,7 @@ namespace exface\Core\Widgets;
 
 use exface\Core\Interfaces\Widgets\iAmClosable;
 use exface\Core\Interfaces\Widgets\iFillEntireContainer;
-use exface\Core\CommonLogic\Model\Attribute;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Widgets\iHaveContextualHelp;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Factories\WidgetFactory;
@@ -154,7 +154,7 @@ class Dialog extends Form implements iAmClosable, iHaveContextualHelp
      *
      * @see \exface\Core\Widgets\Container::findChildrenByAttribute()
      */
-    public function findChildrenByAttribute(Attribute $attribute)
+    public function findChildrenByAttribute(MetaAttributeInterface $attribute)
     {
         // If the container has a single filling child, which is a container itself, search that child
         if ($this->countWidgets() == 1) {
@@ -242,10 +242,10 @@ class Dialog extends Form implements iAmClosable, iHaveContextualHelp
      * the given attribute.
      * The inforation is derived from the attributes meta model.
      *
-     * @param Attribute $attr            
+     * @param MetaAttributeInterface $attr            
      * @return string[]
      */
-    protected function getHelpRowFromAttribute(Attribute $attr)
+    protected function getHelpRowFromAttribute(MetaAttributeInterface $attr)
     {
         $row = array();
         $row['DESCRIPTION'] = $attr->getShortDescription() ? rtrim(trim($attr->getShortDescription()), ".") . '.' : '';

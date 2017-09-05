@@ -1,10 +1,10 @@
 <?php
 namespace exface\Core\CommonLogic\Model;
 
-use exface\Core\CommonLogic\Workbench;
 use exface\Core\CommonLogic\EntityList;
 use exface\Core\Factories\AttributeListFactory;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
 
 /**
  *
@@ -67,7 +67,7 @@ class RelationList extends EntityList
      * Returns the attribute matching the given alias or FALSE if no such attribute is found
      *
      * @param string $alias            
-     * @return Attribute|boolean
+     * @return MetaAttributeInterface|boolean
      */
     public function getByAttributeAlias($alias)
     {
@@ -88,7 +88,7 @@ class RelationList extends EntityList
      * Returns the attribute matching the given UID or FALSE if no such attribute is found
      *
      * @param string $uid            
-     * @return Attribute|boolean
+     * @return MetaAttributeInterface|boolean
      */
     public function getByAttributeId($uid)
     {

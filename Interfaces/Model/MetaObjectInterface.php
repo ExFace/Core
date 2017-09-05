@@ -4,8 +4,6 @@ namespace exface\Core\Interfaces\Model;
 use exface\Core\Interfaces\ExfaceClassInterface;
 use exface\Core\CommonLogic\Model\Relation;
 use exface\Core\Exceptions\Model\MetaRelationNotFoundError;
-use exface\Core\CommonLogic\Model\AttributeList;
-use exface\Core\CommonLogic\Model\Attribute;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Exceptions\Model\MetaObjectHasNoUidAttributeError;
@@ -17,6 +15,7 @@ use exface\Core\CommonLogic\Model\AttributeGroup;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Interfaces\AliasInterface;
+use exface\Core\CommonLogic\Model\AttributeList;
 
 interface MetaObjectInterface extends ExfaceClassInterface, AliasInterface
 {
@@ -100,7 +99,7 @@ interface MetaObjectInterface extends ExfaceClassInterface, AliasInterface
      * relation path holding all relations needed to reach the related object
      * (e.g. CUSTOMER__CUSTOMER_GROUP for CUSTOMER__CUSTOMER_GROUP__NAME):
      *
-     * @see Attribute::getRelationPath()
+     * @see MetaAttributeInterface::getRelationPath()
      *
      * TODO if a related attribute is request, a copy is created with the first
      * call of the method and that copy is cached. This means, any changes on the
@@ -113,7 +112,7 @@ interface MetaObjectInterface extends ExfaceClassInterface, AliasInterface
      *
      * @throws MetaAttributeNotFoundError if no matching attribute could be found
      *
-     * @return Attribute
+     * @return MetaAttributeInterface
      */
     public function getAttribute($alias);
     
@@ -222,7 +221,7 @@ interface MetaObjectInterface extends ExfaceClassInterface, AliasInterface
      * SQL column name)
      *
      * @param string $data_address
-     * @return Attribute[]
+     * @return MetaAttributeInterface[]
      */
     public function findAttributesByDataAddress($data_address);
     
@@ -234,7 +233,7 @@ interface MetaObjectInterface extends ExfaceClassInterface, AliasInterface
      * Returns the meta attribute with the unique ID of the object.
      *
      * @throws MetaObjectHasNoUidAttributeError if no UID attribute defined for this object
-     * @return \exface\Core\CommonLogic\Model\Attribute
+     * @return \exface\Core\Interfaces\Model\MetaAttributeInterface
      */
     public function getUidAttribute();
     
@@ -252,7 +251,7 @@ interface MetaObjectInterface extends ExfaceClassInterface, AliasInterface
     /**
      * Returns the meta attribute with the label of the object
      *
-     * @return Attribute
+     * @return MetaAttributeInterface
      */
     public function getLabelAttribute();
     

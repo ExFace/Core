@@ -31,7 +31,7 @@ class FormToolbar extends Toolbar
         // If the button has an action, that is supposed to modify data, we need to make sure, that the panel
         // contains alls system attributes of the base object, because they may be needed by the business logic
         if ($button_widget->getAction() && $button_widget->getAction()->getMetaObject()->is($form->getMetaObject()) && $button_widget->getAction()->implementsInterface('iModifyData')) {
-            /* @var $attr \exface\Core\CommonLogic\Model\Attribute */
+            /* @var $attr \exface\Core\Interfaces\Model\MetaAttributeInterface */
             foreach ($form->getMetaObject()->getAttributes()->getSystem() as $attr) {
                 if (count($form->findChildrenByAttribute($attr)) <= 0) {
                     $widget = $form->getPage()->createWidget('InputHidden', $form);

@@ -4,7 +4,7 @@ namespace exface\Core\Widgets;
 use exface\Core\Interfaces\Widgets\iHaveColumns;
 use exface\Core\Interfaces\Widgets\iHaveButtons;
 use exface\Core\Interfaces\Widgets\iHaveFilters;
-use exface\Core\CommonLogic\Model\Attribute;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\CommonLogic\Model\Relation;
 use exface\Core\Interfaces\Widgets\iSupportLazyLoading;
 use exface\Core\CommonLogic\UxonObject;
@@ -111,7 +111,7 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
         return $this;
     }
 
-    public function createColumnFromAttribute(Attribute $attribute, $caption = null, $hidden = null)
+    public function createColumnFromAttribute(MetaAttributeInterface $attribute, $caption = null, $hidden = null)
     {
         return $this->getColumnGroupMain()->createColumnFromAttribute($attribute, $caption, $hidden);
     }
@@ -1250,10 +1250,10 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
      * the given attribute.
      * The inforation is derived from the attributes meta model.
      *
-     * @param Attribute $attr            
+     * @param MetaAttributeInterface $attr            
      * @return string[]
      */
-    protected function getHelpRowFromAttribute(Attribute $attr)
+    protected function getHelpRowFromAttribute(MetaAttributeInterface $attr)
     {
         $row = array();
         $row['DESCRIPTION'] = $attr->getShortDescription() ? rtrim(trim($attr->getShortDescription()), ".") . '.' : '';

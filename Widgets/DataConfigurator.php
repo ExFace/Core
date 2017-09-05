@@ -8,7 +8,7 @@ use exface\Core\Factories\WidgetFactory;
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\CommonLogic\Model\Relation;
-use exface\Core\CommonLogic\Model\Attribute;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Exceptions\Widgets\WidgetLogicError;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 
@@ -308,10 +308,10 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
      * are different filters with different comparators (like from+to for numeric or data values), there will be multiple filters
      * in the list.
      *
-     * @param Attribute $attribute
+     * @param MetaAttributeInterface $attribute
      * @return Filter[]
      */
-    public function findFiltersByAttribute(Attribute $attribute)
+    public function findFiltersByAttribute(MetaAttributeInterface $attribute)
     {
         $result = array();
         foreach ($this->getFilters() as $filter_widget) {

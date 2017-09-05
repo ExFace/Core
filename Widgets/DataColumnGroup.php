@@ -1,7 +1,7 @@
 <?php
 namespace exface\Core\Widgets;
 
-use exface\Core\CommonLogic\Model\Attribute;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Widgets\iHaveColumns;
 use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Exceptions\Widgets\WidgetHasNoUidColumnError;
@@ -56,7 +56,7 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
      * @param attribute $attribute            
      * @return \exface\Core\Widgets\DataColumn
      */
-    function createColumnFromAttribute(Attribute $attribute, $caption = null, $hidden = null)
+    function createColumnFromAttribute(MetaAttributeInterface $attribute, $caption = null, $hidden = null)
     {
         if ($attribute->isRelation()) {
             $attribute = $this->getMetaObject()->getAttribute(RelationPath::relationPathAdd($attribute->getAlias(), $this->getMetaObject()->getRelatedObject($attribute->getAlias())->getLabelAlias()));

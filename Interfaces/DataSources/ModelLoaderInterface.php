@@ -11,7 +11,7 @@ use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Model\ModelInterface;
 use exface\Core\Exceptions\Model\MetaObjectNotFoundError;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
-use exface\Core\CommonLogic\Model\Attribute;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\CommonLogic\Model\Relation;
 use exface\Core\Exceptions\Model\MetaRelationNotFoundError;
 
@@ -46,7 +46,7 @@ interface ModelLoaderInterface
      * 
      * @throws MetaAttributeNotFoundError
      * 
-     * @return Attribute
+     * @return MetaAttributeInterface
      */
     public function loadAttribute(MetaObjectInterface $object, $attribute_alias);
     

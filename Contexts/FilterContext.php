@@ -1,7 +1,7 @@
 <?php
 namespace exface\Core\Contexts;
 
-use exface\Core\CommonLogic\Model\Attribute;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\CommonLogic\Model\Condition;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\CommonLogic\UxonObject;
@@ -94,7 +94,7 @@ class FilterContext extends AbstractContext
      * @param attribute $attribute            
      * @return \exface\Core\Contexts\FilterContext
      */
-    public function removeConditionsForAttribute(Attribute $attribute)
+    public function removeConditionsForAttribute(MetaAttributeInterface $attribute)
     {
         if (is_array($this->conditions_by_object[$attribute->getObjectId()])) {
             foreach ($this->conditions_by_object[$attribute->getObjectId()] as $id => $condition) {

@@ -3,7 +3,7 @@ namespace exface\Core\Factories;
 
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\CommonLogic\Model\Expression;
-use exface\Core\CommonLogic\Model\Attribute;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 
 abstract class ExpressionFactory
@@ -27,10 +27,10 @@ abstract class ExpressionFactory
 
     /**
      *
-     * @param Attribute $attribute            
+     * @param MetaAttributeInterface $attribute            
      * @return Expression
      */
-    public static function createFromAttribute(Attribute $attribute)
+    public static function createFromAttribute(MetaAttributeInterface $attribute)
     {
         $exface = $attribute->getObject()->getWorkbench();
         return self::createFromString($exface, $attribute->getAliasWithRelationPath(), $attribute->getRelationPath()->getStartObject());

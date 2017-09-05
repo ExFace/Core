@@ -5,7 +5,7 @@ use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Factories\DataColumnFactory;
 use exface\Core\Interfaces\DataSheets\DataColumnListInterface;
 use exface\Core\Interfaces\DataSheets\DataColumnInterface;
-use exface\Core\CommonLogic\Model\Attribute;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\CommonLogic\EntityList;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
@@ -122,7 +122,7 @@ class DataColumnList extends EntityList implements DataColumnListInterface
      *
      * @see \exface\Core\Interfaces\DataSheets\DataColumnListInterface::addFromAttribute()
      */
-    public function addFromAttribute(Attribute $attribute)
+    public function addFromAttribute(MetaAttributeInterface $attribute)
     {
         return $this->addFromExpression($attribute->getAliasWithRelationPath());
     }
@@ -150,10 +150,10 @@ class DataColumnList extends EntityList implements DataColumnListInterface
      * Returns the first column, that shows the specified attribute explicitly (not within a formula).
      * Returns FALSE if no column is found.
      *
-     * @param Attribute $attribute            
+     * @param MetaAttributeInterface $attribute            
      * @return DataColumnInterface|boolean
      */
-    public function getByAttribute(Attribute $attribute)
+    public function getByAttribute(MetaAttributeInterface $attribute)
     {
         foreach ($this->getAll() as $col) {
             if ($col->getAttribute() && $col->getAttribute()->getAliasWithRelationPath() == $attribute->getAliasWithRelationPath()) {
