@@ -27,6 +27,7 @@ use exface\Core\Interfaces\Model\ModelInterface;
 use exface\Core\CommonLogic\Model\Object;
 use exface\Core\CommonLogic\Model\Attribute;
 use exface\Core\CommonLogic\Model\Relation;
+use exface\Core\Interfaces\ActionListInterface;
 
 class SqlModelLoader implements ModelLoaderInterface
 {
@@ -450,11 +451,11 @@ class SqlModelLoader implements ModelLoaderInterface
 
     /**
      *
-     * @param ActionList $action_list            
+     * @param ActionListInterface $action_list            
      * @param string $sql_where            
      * @return \exface\Core\CommonLogic\Model\ActionList
      */
-    protected function loadActionsFromModel(ActionList $action_list, $sql_where, WidgetInterface $called_by_widget = null)
+    protected function loadActionsFromModel(ActionListInterface $action_list, $sql_where, WidgetInterface $called_by_widget = null)
     {
         $basket_aliases = ($action_list instanceof MetaObjectActionListInterface) ? $action_list->getObjectBasketActionAliases() : array();
         

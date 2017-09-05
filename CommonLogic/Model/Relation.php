@@ -2,7 +2,6 @@
 namespace exface\Core\CommonLogic\Model;
 
 use exface\Core\CommonLogic\Workbench;
-use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Model\MetaRelationInterface;
 use exface\Core\Exceptions\RuntimeException;
 

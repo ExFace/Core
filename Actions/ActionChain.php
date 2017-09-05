@@ -8,6 +8,7 @@ use exface\Core\CommonLogic\Model\ActionList;
 use exface\Core\Exceptions\Actions\ActionConfigurationError;
 use exface\Core\Interfaces\Actions\iShowWidget;
 use exface\Core\Interfaces\Actions\iRunTemplateScript;
+use exface\Core\Interfaces\ActionListInterface;
 
 /**
  * This action chains other actions together and performs them one after another.
@@ -104,7 +105,7 @@ class ActionChain extends AbstractAction
 
     /**
      *
-     * @return ActionList|ActionInterface[]
+     * @return ActionListInterface|ActionInterface[]
      */
     public function getActions()
     {
@@ -113,7 +114,7 @@ class ActionChain extends AbstractAction
 
     public function setActions($array_or_uxon_or_action_list)
     {
-        if ($array_or_uxon_or_action_list instanceof ActionList) {
+        if ($array_or_uxon_or_action_list instanceof ActionListInterface) {
             $this->actions = $array_or_uxon_or_action_list;
         } elseif ($array_or_uxon_or_action_list instanceof \stdClass) {
             // TODO
