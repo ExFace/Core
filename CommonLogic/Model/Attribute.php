@@ -13,6 +13,7 @@ use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Model\ModelInterface;
 use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 use exface\Core\Interfaces\Model\MetaRelationInterface;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 
 /**
  * 
@@ -24,8 +25,6 @@ class Attribute implements MetaAttributeInterface
 
     // Properties to be dublicated on copy()
     private $id;
-
-    private $object_id;
 
     private $inherited_from_object_id = null;
 
@@ -81,11 +80,11 @@ class Attribute implements MetaAttributeInterface
 
     // Properties NOT to be dublicated on copy()
     /** @var Model */
-    private $model;
+    private $object;
 
-    public function __construct(ModelInterface $model)
+    public function __construct(MetaObjectInterface $object)
     {
-        $this->model = $model;
+        $this->object = $object;
     }
 
     /**
@@ -279,11 +278,6 @@ class Attribute implements MetaAttributeInterface
         return $this->relation_path;
     }
 
-    public function setRelationPath(MetaRelationPathInterface $path)
-    {
-        $this->relation_path = $path;
-    }
-
     /**
      * Returns the meta object to which this attributes belongs to.
      * If the attribute has a relation path, this
@@ -296,7 +290,7 @@ class Attribute implements MetaAttributeInterface
      */
     public function getObject()
     {
-        return $this->getModel()->getObject($this->getObjectId());
+        return $this->object;
     }
 
     /**
@@ -424,22 +418,12 @@ class Attribute implements MetaAttributeInterface
 
     public function getObjectId()
     {
-        return $this->object_id;
-    }
-
-    public function setObjectId($value)
-    {
-        $this->object_id = $value;
+        return $this->getObject()->getId();
     }
 
     public function getModel()
     {
-        return $this->model;
-    }
-
-    public function setModel(\exface\Core\CommonLogic\Model\Model $model)
-    {
-        $this->model = $model;
+        return $this->getObject()->getModel();
     }
 
     public function getShortDescription()
@@ -613,6 +597,10 @@ class Attribute implements MetaAttributeInterface
      */
     public function rebase(MetaRelationPathInterface $path)
     {
+        if ($path->isEmpty()){
+            return $this;
+        }
+        
         $copy = clone $this;
         
         // Explicitly copy properties, that are objects themselves

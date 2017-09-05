@@ -9,7 +9,7 @@ use exface\Core\CommonLogic\Constants\SortingDirections;
 
 interface MetaAttributeInterface extends ExfaceClassInterface, iCanBeCopied
 {
-    public function __construct(ModelInterface $model);
+    public function __construct(MetaObjectInterface $object);
     
     /**
      * Marks this attribute as a relation
@@ -113,8 +113,6 @@ interface MetaAttributeInterface extends ExfaceClassInterface, iCanBeCopied
      */
     public function getRelationPath();
     
-    public function setRelationPath(MetaRelationPathInterface $path);
-    
     /**
      * Returns the meta object to which this attributes belongs to.
      * If the attribute has a relation path, this
@@ -191,11 +189,7 @@ interface MetaAttributeInterface extends ExfaceClassInterface, iCanBeCopied
     
     public function getObjectId();
     
-    public function setObjectId($value);
-    
     public function getModel();
-    
-    public function setModel(\exface\Core\CommonLogic\Model\Model $model);
     
     public function getShortDescription();
     
