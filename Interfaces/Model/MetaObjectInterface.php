@@ -417,10 +417,10 @@ interface MetaObjectInterface extends ExfaceClassInterface, AliasInterface
     /**
      * Returns the attribute group specified by the given alias or NULL if no such group exists.
      * Apart from explicitly defined attribute groups, built-in groups can be used. Built-in groups have aliases starting with "~".
-     * For every built-in alias there is a constant in the AttributeGroup class (e.g. AttributeGroup::ALL, etc.)
+     * For every built-in alias there is a constant in the MetaAttributeGroupInterface (e.g. MetaAttributeGroupInterface::ALL, etc.)
      *
      * @param string $alias
-     * @return AttributeGroup
+     * @return MetaAttributeGroupInterface
      */
     public function getAttributeGroup($alias);
     

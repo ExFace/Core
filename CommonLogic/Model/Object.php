@@ -22,6 +22,7 @@ use exface\Core\Interfaces\Model\MetaObjectActionListInterface;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Model\MetaRelationInterface;
 use exface\Core\Interfaces\Model\MetaAttributeListInterface;
+use exface\Core\Interfaces\Model\MetaAttributeGroupInterface;
 
 class Object implements MetaObjectInterface
 {
@@ -1017,12 +1018,9 @@ class Object implements MetaObjectInterface
     }
 
     /**
-     * Returns the attribute group specified by the given alias or NULL if no such group exists.
-     * Apart from explicitly defined attribute groups, built-in groups can be used. Built-in groups have aliases starting with "~".
-     * For every built-in alias there is a constant in the AttributeGroup class (e.g. AttributeGroup::ALL, etc.)
-     *
-     * @param string $alias            
-     * @return AttributeGroup
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaObjectInterface::getAttributeGroup()
      */
     public function getAttributeGroup($alias)
     {
@@ -1033,14 +1031,9 @@ class Object implements MetaObjectInterface
     }
 
     /**
-     * Returns TRUE if this object is exactly the one given or inherits from it and FALSE otherwise - similarly to the behavior of PHP instance_of.
-     * E.g. if you have an object SPECIAL_FILE, which extends FILE, SPECIAL_FILE->is(FILE) = true, but FILE->is(SPECIAL_FILE) = false.
-     *
-     * @param MetaObjectInterface|string $object_or_alias_or_id            
-     * @return boolean
-     *
-     * @see is_exactly()
-     * @see is_extended_from()
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaObjectInterface::is()
      */
     public function is($object_or_alias_or_id)
     {
