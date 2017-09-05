@@ -21,6 +21,7 @@ use exface\Core\Interfaces\Model\ModelInterface;
 use exface\Core\Interfaces\Model\MetaObjectActionListInterface;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Model\MetaRelationInterface;
+use exface\Core\Interfaces\Model\MetaAttributeListInterface;
 
 class Object implements MetaObjectInterface
 {
@@ -216,7 +217,7 @@ class Object implements MetaObjectInterface
     /**
      * Returns a list of all direct attributes of this object (including inherited ones!)
      *
-     * @return AttributeList|MetaAttributeInterface[]
+     * @return MetaAttributeListInterface|MetaAttributeInterface[]
      */
     function getAttributes()
     {

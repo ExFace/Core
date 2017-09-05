@@ -15,7 +15,6 @@ use exface\Core\CommonLogic\Model\AttributeGroup;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Interfaces\AliasInterface;
-use exface\Core\CommonLogic\Model\AttributeList;
 
 interface MetaObjectInterface extends ExfaceClassInterface, AliasInterface
 {
@@ -87,7 +86,7 @@ interface MetaObjectInterface extends ExfaceClassInterface, AliasInterface
     /**
      * Returns a list of all direct attributes of this object (including inherited ones!)
      *
-     * @return AttributeList
+     * @return MetaAttributeListInterface
      */
     public function getAttributes();
     
