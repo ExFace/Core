@@ -250,10 +250,8 @@ class Container extends AbstractWidget implements iContainOtherWidgets
      *
      * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::setWidgets()
      */
-    public function setWidgets(array $widget_or_uxon_array)
+    public function setWidgets($widget_or_uxon_array)
     {
-        if (! is_array($widget_or_uxon_array))
-            return false;
         foreach ($widget_or_uxon_array as $w) {
             if ($w instanceof WidgetInterface) {
                 $this->addWidget($w);

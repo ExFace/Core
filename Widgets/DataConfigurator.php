@@ -120,7 +120,7 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
      * @param UxonObject[] $uxon_objects
      * @return DataConfigurator
      */
-    public function setFilters(array $uxon_objects)
+    public function setFilters(UxonObject $uxon_objects)
     {
         foreach ($uxon_objects as $f) {
             $include_in_quick_search = false;
@@ -156,7 +156,7 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
             // determine the widget for the filter
             $uxon = $attr->getDefaultWidgetUxon()->copy();
             if ($uxon_object) {
-                $uxon = $uxon->extend(UxonObject::fromStdClass($uxon_object));
+                $uxon = $uxon->extend($uxon_object);
             }
             // Set a special caption for filters on relations, which is derived from the relation itself
             // IDEA this might be obsolete since it probably allways returns the attribute name anyway, but I'm not sure

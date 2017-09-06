@@ -106,9 +106,9 @@ interface ActionInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
 
     /**
      *
-     * @param ActionInterface[] $actions_array            
+     * @param ActionInterface[]|UxonObject $actions_array            
      */
-    public function setFollowupActions(array $actions_array);
+    public function setFollowupActions($actions_array);
 
     /**
      *
@@ -193,7 +193,7 @@ interface ActionInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
      * @param DataSheetMapperInterface[]|UxonObject[] $data_sheet_mappers_or_uxon_objects
      * @return ActionInterface
      */
-    public function setInputMappers(array $data_sheet_mappers_or_uxon_objects);
+    public function setInputMappers($data_sheet_mappers_or_uxon_objects);
     
     /**
      * 
@@ -301,7 +301,7 @@ interface ActionInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
      *
      * @param array $behavior_aliases            
      */
-    public function setDisabledBehaviors(array $behavior_aliases);
+    public function setDisabledBehaviors(UxonObject $behavior_aliases);
 
     /**
      *

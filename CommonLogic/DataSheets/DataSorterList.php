@@ -40,24 +40,12 @@ class DataSorterList extends EntityList implements DataSorterListInterface
      */
     public function importUxonObject(UxonObject $uxon)
     {
-        if (is_array($uxon->getProperty('sorters'))) {
-            $this->importUxonArray($uxon->getProperty('sorters'));
-        }
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\DataSheets\DataSorterListInterface::importUxonArray()
-     */
-    public function importUxonArray(array $uxon)
-    {
         $data_sheet = $this->getParent();
         foreach ($uxon as $u) {
-            $aggr = DataSorterFactory::createFromUxon($data_sheet, $u);
-            $this->add($aggr);
+            $instance = DataSorterFactory::createFromUxon($data_sheet, $u);
+            $this->add($instance);
         }
+        return;
     }
 
     /**

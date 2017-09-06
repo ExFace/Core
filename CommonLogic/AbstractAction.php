@@ -310,9 +310,9 @@ abstract class AbstractAction implements ActionInterface
      *
      * @see \exface\Core\Interfaces\Actions\ActionInterface::setFollowupActions()
      */
-    public function setFollowupActions(array $actions_array)
+    public function setFollowupActions($actions_array)
     {
-        $this->followup_actions = $actions_array;
+        // TODO
     }
 
     public function addFollowupAction(ActionInterface $action)
@@ -811,9 +811,9 @@ abstract class AbstractAction implements ActionInterface
      *
      * @see \exface\Core\Interfaces\Actions\ActionInterface::setDisabledBehaviors()
      */
-    public function setDisabledBehaviors(array $behavior_aliases)
+    public function setDisabledBehaviors(UxonObject $behavior_aliases)
     {
-        $this->disabled_behaviors = $behavior_aliases;
+        $this->disabled_behaviors = $behavior_aliases->toArray();
         return $this;
     }
 
@@ -1061,7 +1061,7 @@ abstract class AbstractAction implements ActionInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Actions\ActionInterface::setInputMappers()
      */
-    public function setInputMappers(array $data_sheet_mappers_or_uxon_objects)
+    public function setInputMappers($data_sheet_mappers_or_uxon_objects)
     {
         foreach ($data_sheet_mappers_or_uxon_objects as $instance){
             if ($instance instanceof DataSheetMapper){

@@ -222,7 +222,7 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
      *
      * @see \exface\Core\Interfaces\Widgets\iHaveColumns::setColumns()
      */
-    public function setColumns(array $columns)
+    public function setColumns(UxonObject $columns)
     {
         foreach ($columns as $c) {
             if ($c->hasProperty('attribute_group_alias')) {

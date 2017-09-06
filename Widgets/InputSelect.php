@@ -185,29 +185,32 @@ class InputSelect extends Input implements iSupportMultiSelect
     {
         $options = array();
         
-        // Add the specified options
+        // Transform the options into an array
         if ($array_or_object instanceof UxonObject) {
-            $options = $array_or_object->toArray();
+            $array = $array_or_object->toArray();
         } elseif (is_array($array_or_object)) {
+            $array = $array_or_object;
+        } else {
+            throw new WidgetPropertyInvalidValueError($this, 'Wrong data type for possible values of ' . $this->getWidgetType() . '! Expecting array or object, ' . gettype($array_or_object) . ' given.', '6T91S9G');
+        }
+        
+        // If it is not an assosiative array, attemt to transform it to one
+        if (array_values($array) === $options) {
             if (is_array($options_texts_array)) {
-                if (count($array_or_object) != count($options_texts_array)) {
-                    throw new WidgetPropertyInvalidValueError($this, 'Number of possible values (' . count($array_or_object) . ') differs from the number of keys (' . count($options_texts_array) . ') for widget "' . $this->getId() . '"!', '6T91S9G');
+                if (count($options) != count($options_texts_array)) {
+                    throw new WidgetPropertyInvalidValueError($this, 'Number of possible values (' . count($array) . ') differs from the number of keys (' . count($options_texts_array) . ') for widget "' . $this->getId() . '"!', '6T91S9G');
                 } else {
-                    foreach ($array_or_object as $nr => $id) {
+                    foreach ($array as $nr => $id) {
                         $options[$id] = $options_texts_array[$nr];
                     }
                 }
             } else {
-                // See if it is an assotiative array
-                if (array_keys($array_or_object)[0] === 0 && array_keys($array_or_object)[count($array_or_object) - 1] == (count($array_or_object) - 1)) {
-                    $options = array_combine($array_or_object, $array_or_object);
-                } else {
-                    $options = $array_or_object;
-                }
-            }
+                $options = array_combine($array, $array);
+            } 
         } else {
-            throw new WidgetPropertyInvalidValueError($this, 'Wrong data type for possible values of ' . $this->getWidgetType() . '! Expecting array or object, ' . gettype($array_or_object) . ' given.', '6T91S9G');
+            $options = $array;
         }
+        
         $this->selectable_options = $options;
         return $this;
     }
@@ -689,10 +692,10 @@ class InputSelect extends Input implements iSupportMultiSelect
      * @uxon-property filters
      * @uxon-type \exface\Core\CommonLogic\Model\Condition
      *
-     * @param Condition[]|UxonObject[] $conditions_or_uxon_objects            
+     * @param Condition[]|UxonObject $conditions_or_uxon_objects            
      * @return \exface\Core\Widgets\InputSelect
      */
-    public function setFilters(array $conditions_or_uxon_objects)
+    public function setFilters($conditions_or_uxon_objects)
     {
         foreach ($conditions_or_uxon_objects as $condition_or_uxon_object) {
             if ($condition_or_uxon_object instanceof Condition) {

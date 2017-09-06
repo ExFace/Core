@@ -32,7 +32,7 @@ class DataAggregatorList extends EntityList implements DataAggregatorListInterfa
      */
     public function importUxonObject(UxonObject $uxon)
     {
-        if (is_array($uxon->getProperty('aggregators'))) {
+        if ($uxon->hasProperty('aggregators')) {
             $this->importUxonArray($uxon->getProperty('aggregators'));
         }
     }

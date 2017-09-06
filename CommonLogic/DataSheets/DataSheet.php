@@ -1367,7 +1367,7 @@ class DataSheet implements DataSheetInterface
     {
         
         // Columns
-        if (is_array($uxon->getProperty('columns'))) {
+        if ($uxon->hasProperty('columns')) {
             foreach ($uxon->getProperty('columns') as $col) {
                 if ($col instanceof UxonObject) {
                     $column = DataColumnFactory::createFromUxon($this, $col);
@@ -1379,34 +1379,35 @@ class DataSheet implements DataSheetInterface
         }
         
         // Rows
-        if ($rows = $uxon->getProperty('rows')) {
-            if (is_array($rows) || ($rows instanceof UxonObject && ! $rows->isEmpty())) {
-                $this->addRows((array) $rows);
+        if ($uxon->hasProperty('rows')) {
+            $rows = $uxon->getProperty('rows')->toArray();
+            if (! empty($rows)) {
+                $this->addRows($rows);
             }
         }
         
         // Totals - ony for backwards compatibilty for times, where the totals functions were
         // defined outside the column definition.
         // IMPORTANT: This must happen AFTER columns and row were created, since totals are added to existing columns!
-        if (is_array($uxon->getProperty('totals_functions')) || $uxon->getProperty('totals_functions') instanceof UxonObject) {
-            foreach ((array) $uxon->getProperty('totals_functions') as $column_name => $functions) {
+        if ($uxon->hasProperty('totals_functions')) {
+            foreach ($uxon->getProperty('totals_functions') as $column_name => $functions) {
                 if (! $column = $this->getColumns()->get($column_name)) {
                     $column = $this->getColumns()->addFromExpression($column_name);
                 }
-                if (is_array($functions)) {
+                if ($functions instanceof UxonObject) {
                     foreach ($functions as $func) {
-                        $total = DataColumnTotalsFactory::createFromString($column, $func->function);
+                        $total = DataColumnTotalsFactory::createFromString($column, $func->getProperty('function'));
                         $column->getTotals()->add($total);
                     }
                 } else {
-                    $total = DataColumnTotalsFactory::createFromString($column, $func->function);
+                    $total = DataColumnTotalsFactory::createFromString($column, $func->getProperty('function'));
                     $column->getTotals()->add($total);
                 }
             }
         }
         
         if ($uxon->hasProperty('filters')) {
-            $this->setFilters(ConditionGroupFactory::createFromObjectOrArray($this->exface, $uxon->getProperty('filters')));
+            $this->setFilters(ConditionGroupFactory::createFromUxon($this->exface, $uxon->getProperty('filters')));
         }
         
         if ($uxon->hasProperty('rows_on_page')) {
@@ -1417,11 +1418,11 @@ class DataSheet implements DataSheetInterface
             $this->setRowOffset($uxon->getProperty('row_offset'));
         }
         
-        if (is_array($uxon->getProperty('sorters'))) {
-            $this->getSorters()->importUxonArray($uxon->getProperty('sorters'));
+        if ($uxon->hasProperty('sorters')) {
+            $this->getSorters()->importUxonObject($uxon->getProperty('sorters'));
         }
-        if (is_array($uxon->getProperty('aggregators'))) {
-            $this->getAggregators()->importUxonArray($uxon->getProperty('aggregators'));
+        if ($uxon->hasProperty('aggregators')) {
+            $this->getAggregators()->importUxonObject($uxon->getProperty('aggregators'));
         }
     }
 

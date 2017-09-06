@@ -210,22 +210,24 @@ class StateMachineBehavior extends AbstractBehavior
         $this->uxon_states = UxonObject::fromAnything($value);
         
         if ($value instanceof UxonObject) {
-            $this->states = [];
-            $states = get_object_vars($this->uxon_states);
-            foreach ($states as $state => $uxon_smstate) {
-                $smstate = new StateMachineState();
-                $smstate->setStateId($state);
-                if ($uxon_smstate) {
-                    try {
-                        $uxon_smstate->mapToClassSetters($smstate);
-                    } catch (UxonMapError $e) {
-                        throw new BehaviorConfigurationError($this->getObject(), 'Cannot load UXON configuration for state machine state. ' . $e->getMessage(), '6TG2ZFI', $e);
+            if ($value->isArray()) {
+                $this->states = $value->toArray();
+            } else {
+                $this->states = [];
+                $states = get_object_vars($this->uxon_states);
+                foreach ($states as $state => $uxon_smstate) {
+                    $smstate = new StateMachineState();
+                    $smstate->setStateId($state);
+                    if ($uxon_smstate) {
+                        try {
+                            $uxon_smstate->mapToClassSetters($smstate);
+                        } catch (UxonMapError $e) {
+                            throw new BehaviorConfigurationError($this->getObject(), 'Cannot load UXON configuration for state machine state. ' . $e->getMessage(), '6TG2ZFI', $e);
+                        }
                     }
+                    $this->addState($smstate);
                 }
-                $this->addState($smstate);
             }
-        } elseif (is_array($value)) {
-            $this->states = $value;
         } else {
             throw new BehaviorConfigurationError($this->getObject(), 'Can not set states for "' . $this->getObject()->getAliasWithNamespace() . '": the argument passed to setStates() is neither an UxonObject nor an array!', '6TG2ZFI');
         }
@@ -433,13 +435,15 @@ class StateMachineBehavior extends AbstractBehavior
     {
         $uxonColorMap = UxonObject::fromAnything($progress_bar_color_map);
         if ($uxonColorMap instanceof UxonObject) {
-            $colorMap = array();
-            foreach ($uxonColorMap as $progressBarValue => $color) {
-                $colorMap[$progressBarValue] = $color;
+            if (is_array($uxonColorMap)) {
+                $this->progress_bar_color_map = $uxonColorMap->toArray();
+            } else {
+                $colorMap = array();
+                foreach ($uxonColorMap as $progressBarValue => $color) {
+                    $colorMap[$progressBarValue] = $color;
+                }
+                $this->progress_bar_color_map = $colorMap;
             }
-            $this->progress_bar_color_map = $colorMap;
-        } elseif (is_array($progress_bar_color_map)) {
-            $this->progress_bar_color_map = $progress_bar_color_map;
         } else {
             throw new BehaviorConfigurationError($this->getObject(), 'Can not set progress_bar_color_map for "' . $this->getObject()->getAliasWithNamespace() . '": the argument passed to set_progress_bar_color_map() is neither an UxonObject nor an array!', '6TG2ZFI');
         }

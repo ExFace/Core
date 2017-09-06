@@ -114,12 +114,12 @@ class ActionChain extends AbstractAction
         return $this->actions;
     }
 
-    public function setActions($array_of_uxon_or_action_list)
+    public function setActions($uxon_array_or_action_list)
     {
-        if ($array_of_uxon_or_action_list instanceof ActionListInterface) {
-            $this->actions = $array_of_uxon_or_action_list;
-        } elseif (is_array($array_of_uxon_or_action_list)) {
-            foreach ($array_of_uxon_or_action_list as $nr => $action_or_uxon) {
+        if ($uxon_array_or_action_list instanceof ActionListInterface) {
+            $this->actions = $uxon_array_or_action_list;
+        } elseif ($uxon_array_or_action_list instanceof UxonObject) {
+            foreach ($uxon_array_or_action_list as $nr => $action_or_uxon) {
                 if ($action_or_uxon instanceof UxonObject) {
                     $action = ActionFactory::createFromUxon($this->getWorkbench(), $action_or_uxon);
                 } elseif ($action_or_uxon instanceof ActionInterface) {
@@ -130,7 +130,7 @@ class ActionChain extends AbstractAction
                 $this->addAction($action);
             }
         } else {
-            throw new WidgetPropertyInvalidValueError('Cannot set actions for ' . $this->getAliasWithNamespace() . ': invalid format ' . gettype($array_of_uxon_or_action_list) . ' given instead of and instantiated condition or its UXON description.');
+            throw new WidgetPropertyInvalidValueError('Cannot set actions for ' . $this->getAliasWithNamespace() . ': invalid format ' . gettype($uxon_array_or_action_list) . ' given instead of and instantiated condition or its UXON description.');
         }
         
         return $this;

@@ -62,10 +62,10 @@ interface DataSheetMapperInterface extends iCanBeConvertedToUxon, ExfaceClassInt
     
     /**
      *
-     * @param DataColumnMappingInterface[]|UxonObject[]
+     * @param DataColumnMappingInterface[]|UxonObject
      * @return DataSheetMapperInterface
      */
-    public function setColumnMappings(array $ColumnMappingsOrUxonObjects);
+    public function setColumnMappings($ColumnMappingsOrUxonObjects);
     
     /**
      *
@@ -80,6 +80,6 @@ interface DataSheetMapperInterface extends iCanBeConvertedToUxon, ExfaceClassInt
      * @param UxonObject[]
      * @return DataSheetMapperInterface
      */
-    public function setExpressionMappings(array $ExpressionMappingsOrUxonObjects);
+    public function setExpressionMappings($uxonObject);
    
 }

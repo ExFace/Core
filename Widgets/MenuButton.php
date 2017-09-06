@@ -50,10 +50,12 @@ class MenuButton extends Button implements iHaveMenu, iHaveButtons
         if ($menu_widget_or_uxon_or_array instanceof Menu) {
             $this->menu = $menu_widget_or_uxon_or_array;
             $this->menu->setParent($this);
-        } elseif (is_array($menu_widget_or_uxon_or_array)) {
-            $this->getMenu()->setButtons($menu_widget_or_uxon_or_array);
         } elseif ($menu_widget_or_uxon_or_array instanceof UxonObject) {
-            $this->getMenu()->importUxonObject($menu_widget_or_uxon_or_array);
+            if ($menu_widget_or_uxon_or_array->isArray()) {
+                $this->getMenu()->setButtons($menu_widget_or_uxon_or_array);
+            } else {
+                $this->getMenu()->importUxonObject($menu_widget_or_uxon_or_array);
+            }
         } else {
             throw new WidgetPropertyInvalidValueError($this, 'Invalid menu configuration for MenuButton "' . $this->getId() . '"!');
         }
@@ -80,7 +82,7 @@ class MenuButton extends Button implements iHaveMenu, iHaveButtons
      *
      * @see \exface\Core\Interfaces\Widgets\iHaveButtons::setButtons()
      */
-    public function setButtons(array $buttons_array)
+    public function setButtons($buttons_array)
     {
         return $this->getMenu()->setButtons($buttons_array);
     }

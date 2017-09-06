@@ -243,7 +243,7 @@ abstract class AbstractJqueryElement implements ExfaceClassInterface
     public function buildJsFunctionPrefix()
     {
         if (is_null($this->function_prefix)) {
-            $this->function_prefix = str_replace($this->getTemplate()->getConfig()->getOption('FORBIDDEN_CHARS_IN_FUNCTION_PREFIX'), '_', $this->getId()) . '_';
+            $this->function_prefix = str_replace($this->getTemplate()->getConfig()->getOption('FORBIDDEN_CHARS_IN_FUNCTION_PREFIX')->toArray(), '_', $this->getId()) . '_';
         }
         return $this->function_prefix;
     }
@@ -298,7 +298,7 @@ abstract class AbstractJqueryElement implements ExfaceClassInterface
      */
     public function cleanId($id)
     {
-        return str_replace($this->getTemplate()->getConfig()->getOption('FORBIDDEN_CHARS_IN_ELEMENT_ID'), '_', $id);
+        return str_replace($this->getTemplate()->getConfig()->getOption('FORBIDDEN_CHARS_IN_ELEMENT_ID')->toArray(), '_', $id);
     }
 
     /**

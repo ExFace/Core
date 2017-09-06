@@ -214,7 +214,7 @@ class DataContext extends AbstractContext
     protected function importUxonForVariable($namespace, $variable_name, $value)
     {
         if (is_array($value) || $value instanceof UxonObject) {
-            $this->setVariable($namespace, $variable_name, (array) $value);
+            $this->setVariable($namespace, $variable_name, is_array($value) ? $value : $value->toArray());
         } elseif (! is_object($value)) {
             $this->setVariable($namespace, $variable_name, $value);
         } else {

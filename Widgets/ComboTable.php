@@ -554,32 +554,30 @@ class ComboTable extends InputCombo implements iHaveChildren
      *
      * For example, if we have a ComboTable for customer ids, but we only wish to show customers of a certain
      * class (assuming every custer hase a relation "CUSOMTER_CLASS"), we would need the following ComboTable:
-     * {
-     * "options_object_alias": "my.app.CUSTOMER",
-     * "filters":
-     * [
-     * {"attribute_alias": "CUSTOMER_CLASS__ID", "value": "VIP", "comparator": "="}
-     * ]
-     * }
+     *  {
+     *      "options_object_alias": "my.app.CUSTOMER",
+     *      "filters": [
+     *          {"attribute_alias": "CUSTOMER_CLASS__ID", "value": "VIP", "comparator": "="}
+     *      ]
+     *  }
      *
      * We can even use widget references to get the filters. Imagine, the ComboTable for customers above is
      * placed in a form, where the customer class can be selected explicitly in another ComboTable or a InputSelect
      * with the id "customer_class_selector".
-     * {
-     * "options_object_alias": "my.app.CUSTOMER",
-     * "filters":
-     * [
-     * {"attribute_alias": "CUSTOMER_CLASS__ID", "value": "=customer_class_selector!ID"}
-     * ]
-     * }
+     *  {
+     *      "options_object_alias": "my.app.CUSTOMER",
+     *      "filters": [
+     *          {"attribute_alias": "CUSTOMER_CLASS__ID", "value": "=customer_class_selector!ID"}
+     *      ]
+     *  }
      *
      * @uxon-property filters
      * @uxon-type \exface\Core\CommonLogic\Model\Condition
      *
-     * @param Condition[]|UxonObject[] $conditions_or_uxon_objects            
+     * @param Condition[]|UxonObject $conditions_or_uxon_objects            
      * @return \exface\Core\Widgets\InputSelect
      */
-    public function setFilters(array $conditions_or_uxon_objects)
+    public function setFilters($conditions_or_uxon_objects)
     {
         if (! $this->getTableUxon()->hasProperty('filters')) {
             $this->getTableUxon()->setProperty('filters', array());
@@ -592,6 +590,8 @@ class ComboTable extends InputCombo implements iHaveChildren
                 $this->getTableUxon()->setProperty('filters', array_merge($this->getTableUxon()->getProperty('filters'), array(
                     $condition_or_uxon_object
                 )));
+            } else {
+                throw new WidgetPropertyInvalidValueError($this, 'Cannot set filters of ' . $this->getWidgetType() . ': expecting instantiated conditions or their UXON descriptions - ' . gettype($condition_or_uxon_object) . ' given instead!');
             }
         }
         return $this;

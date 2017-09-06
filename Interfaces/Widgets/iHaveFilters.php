@@ -24,5 +24,5 @@ interface iHaveFilters extends iHaveChildren
      * @param UxonObject[] $uxon_objects
      * @return iHaveFilters
      */
-    public function setFilters(array $uxon_objects);
+    public function setFilters(UxonObject $uxon_objects);
 }

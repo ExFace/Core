@@ -145,7 +145,7 @@ class FilterContext extends AbstractContext
     public function importUxonObject(UxonObject $uxon)
     {
         $exface = $this->getWorkbench();
-        if (is_array($uxon->getProperty('conditions'))) {
+        if ($uxon->hasProperty('conditions')) {
             foreach ($uxon->getProperty('conditions') as $uxon_condition) {
                 try {
                     $this->addCondition(ConditionFactory::createFromUxon($exface, $uxon_condition));
@@ -153,8 +153,6 @@ class FilterContext extends AbstractContext
                     // ignore context that cannot be instantiated!
                 }
             }
-        } elseif ($uxon->hasProperty('conditions')) {
-            throw new ContextLoadError($this, 'Cannot load filter contexts: Expecting an array of UXON objects, ' . gettype($uxon->getProperty('conditions')) . ' given instead!');
         }
         return $this;
     }

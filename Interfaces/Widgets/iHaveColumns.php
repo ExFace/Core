@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\Interfaces\Widgets;
 
+use exface\Core\CommonLogic\UxonObject;
+
 interface iHaveColumns extends iHaveChildren
 {
 
@@ -8,5 +10,5 @@ interface iHaveColumns extends iHaveChildren
 
     public function getColumns();
 
-    public function setColumns(array $columns);
+    public function setColumns(UxonObject $columns);
 }

@@ -374,9 +374,6 @@ class SqlModelLoader implements ModelLoaderInterface
         $data_source->setConnectionId($ds['data_connection_oid']);
         $config = UxonObject::fromJson($ds['data_connector_config']);
         $config = $config->extend(UxonObject::fromJson($ds['user_connector_config']));
-        if (is_object($config)) {
-            $config = (array) $config;
-        }
         $data_source->setConnectionConfig($config);
         
         return $data_source;

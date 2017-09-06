@@ -198,28 +198,26 @@ class WidgetLink implements WidgetLinkInterface
 
     /**
      *
-     * @param UxonObject|array $uxon
+     * @param UxonObject $uxon
      * @param string $widget_id            
      * @return UxonObject|boolean
      */
-    private function findWidgetIdInUxon($uxon, $widget_id)
+    private function findWidgetIdInUxon(UxonObject $uxon, $widget_id)
     {
         $result = false;
-        if ($uxon instanceof UxonObject) {
+        
+        if ($uxon->hasProperty('id')){
             if ($uxon->getProperty('id') == $widget_id) {
                 $result = $uxon;
-            } else {
-                $array = get_object_vars($uxon);
             }
-        } elseif (is_array($uxon)) {
-            $array = $uxon;
         }
         
-        if (is_array($array)) {
-            foreach ($array as $prop) {
-                if ($result = $this->findWidgetIdInUxon($prop, $widget_id)) {
-                    return $result;
-                }
+        foreach ($uxon as $prop) {
+            if (! ($prop instanceof UxonObject)){
+                continue;
+            }
+            if ($result = $this->findWidgetIdInUxon($prop, $widget_id)) {
+                return $result;
             }
         }
         

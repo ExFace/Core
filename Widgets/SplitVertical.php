@@ -43,7 +43,7 @@ class SplitVertical extends Container
         return $this->getWidgets();
     }
 
-    public function setPanels(array $widget_or_uxon_array)
+    public function setPanels($widget_or_uxon_array)
     {
         return $this->setWidgets($widget_or_uxon_array);
     }
@@ -56,7 +56,7 @@ class SplitVertical extends Container
      *
      * @see \exface\Core\Widgets\Container::setWidgets()
      */
-    public function setWidgets(array $widget_or_uxon_array)
+    public function setWidgets($widget_or_uxon_array)
     {
         $widgets = array();
         foreach ($widget_or_uxon_array as $w) {

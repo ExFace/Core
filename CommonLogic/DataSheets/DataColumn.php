@@ -401,7 +401,7 @@ class DataColumn implements DataColumnInterface
         $this->setDataType($uxon->getProperty('data_type'));
         $this->setFormula($uxon->getProperty('formula'));
         $this->setAttributeAlias($uxon->getProperty('attribute_alias'));
-        if (is_array($uxon->getProperty('totals'))) {
+        if ($uxon->hasProperty('totals')) {
             foreach ($uxon->getProperty('totals') as $u) {
                 $total = DataColumnTotalsFactory::createFromUxon($this, $u);
                 $this->getTotals()->add($total);

@@ -145,10 +145,8 @@ class ActionContext extends AbstractContext
      */
     public function importUxonObject(UxonObject $uxon)
     {
-        if (is_array($uxon->getProperty('action_history'))) {
+        if ($uxon->hasProperty('action_history')){
             $this->action_history_raw = $uxon->getProperty('action_history');
-        } elseif ($uxon->hasProperty('action_history')) {
-            throw new ContextLoadError($this, 'Cannot load action contexts: expecting UXON objects, received ' . gettype($uxon->getProperty('action_history')) . ' instead!');
         }
         return $this;
     }

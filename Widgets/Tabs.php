@@ -58,10 +58,10 @@ class Tabs extends Container implements iFillEntireContainer
      * @uxon-property tabs
      * @uxon-type \exface\Core\Widgets\Tab[]
      * 
-     * @param array|Tab|Container $widget_or_uxon_array
+     * @param UxonObject|Tab|Container $widget_or_uxon_array
      * @return Tabs
      */
-    public function setTabs(array $widget_or_uxon_array)
+    public function setTabs($widget_or_uxon_array)
     {
         return $this->setWidgets($widget_or_uxon_array);
     }
@@ -142,7 +142,7 @@ class Tabs extends Container implements iFillEntireContainer
      *
      * @see \exface\Core\Widgets\Container::setWidgets()
      */
-    public function setWidgets(array $widget_or_uxon_array)
+    public function setWidgets($widget_or_uxon_array)
     {
         $widgets = array();
         foreach ($widget_or_uxon_array as $w) {

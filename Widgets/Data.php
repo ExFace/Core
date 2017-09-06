@@ -443,7 +443,7 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
      *
      * @see \exface\Core\Interfaces\Widgets\iHaveColumns::setColumns()
      */
-    public function setColumns(array $columns)
+    public function setColumns(UxonObject $columns)
     {
         $column_groups = array();
         $last_element_was_a_column_group = false;
@@ -465,14 +465,14 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
         // the groups, not each column separately. The actual instantiation of the corresponding widgets will
         // follow in the next step.
         foreach ($columns as $c) {
-            if (is_array($c)) {
-                // If the element is an array itself (nested in columns), it is a column group
-                $column_groups[] = $c;
-                $last_element_was_a_column_group = true;
-            } elseif ($c instanceof UxonObject) {
-                // If not, check to see if it's widget type is DataColumnGroup or it has an array of columns itself
-                // If so, it still is a column group
-                if (strcasecmp($c->getProperty('widget_type'), 'DataColumnGroup') === 0 || is_array($c->getProperty('columns'))) {
+            if ($c instanceof UxonObject) {
+                if ($c->isArray()) {
+                    // If the element is an array itself (nested in columns), it is a column group
+                    $column_groups[] = $c;
+                    $last_element_was_a_column_group = true;
+                } elseif (strcasecmp($c->getProperty('widget_type'), 'DataColumnGroup') === 0 || $c->hasProperty('columns')) {
+                    // If not, check to see if it's widget type is DataColumnGroup or it has an array of columns itself
+                    // If so, it still is a column group
                     $column_groups[] = $c;
                     $last_element_was_a_column_group = true;
                 } else {
@@ -602,12 +602,12 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
      *  }
      *
      * @uxon-property filters
-     * @uxon-type Filter[]
+     * @uxon-type \exface\Core\Widgets\Filter[]
      *
-     * @param UxonObject[] $uxon_objects
+     * @param UxonObject $uxon_objects
      * @return Data
      */
-    public function setFilters(array $uxon_objects)
+    public function setFilters(UxonObject $uxon_objects)
     {
         $this->getConfiguratorWidget()->setFilters($uxon_objects);
         $this->addRequiredFilters();
@@ -794,22 +794,26 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
      * Defines sorters for the data via array of sorter objects.
      *
      * Example:
-     * |"sorters": [
-     * | {
-     * | "attribute_alias": "MY_ALIAS",
-     * | "direction": "ASC"
-     * | },
-     * | {
-     * | ...
-     * | }
-     * |]
+     *  {
+     *      "sorters": [
+     *          {
+     *              "attribute_alias": "MY_ALIAS",
+     *              "direction": "ASC"
+     *          },
+     *          {
+     *              ...
+     *          }
+     *      ]
+     *  }
      *
      * @uxon-property sorters
      * @uxon-type Object[]
      *
-     * @param UxonObject[] $sorters            
+     * TODO use special sorter widgets here instead of plain uxon objects
+     * 
+     * @param UxonObject $sorters            
      */
-    public function setSorters(array $sorters)
+    public function setSorters(UxonObject $sorters)
     {
         foreach ($sorters as $uxon){
             $this->addSorter($uxon->getProperty('attribute_alias'), $uxon->getProperty('direction'));

@@ -433,7 +433,7 @@ class ShowWidget extends AbstractAction implements iShowWidget
      * @uxon-property page_id
      * @uxon-type string
      * 
-     * @param unknown $value
+     * @param string $value
      * @return \exface\Core\Actions\ShowWidget
      */
     public function setPageId($value)
