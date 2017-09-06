@@ -177,8 +177,7 @@ class Logger implements LoggerInterface
                     $handler->handle($level, $message, $context, $sender);
                 } catch (\Throwable $e) {
                     try {
-                        $this->log(LoggerInterface::ERROR, $e->getMessage(), array(),
-                            new InternalError($e->getMessage(), null, $e));
+                        $this->log(LoggerInterface::ALERT, $e->getMessage(), array('exception' => $e), new InternalError($e->getMessage(), null, $e));
                     } catch (\Throwable $ee) {
                         // do nothing if even logging fails
                     }
@@ -197,7 +196,7 @@ class Logger implements LoggerInterface
      */
     public function logException(\Throwable $e, $level = null)
     {
-        if ($e instanceof  ExceptionInterface){
+        if ($e instanceof ExceptionInterface){
             $this->log((is_null($level) ? $e->getDefaultLogLevel() : $level), $e->getMessage(), [], $e);
         } else {
             $this->log((is_null($level) ? LoggerInterface::ALERT : $level), $e->getMessage(), ["exception" => $e]);

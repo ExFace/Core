@@ -7,6 +7,7 @@ use Symfony\Component\Debug\ErrorHandler;
 use Symfony\Component\VarDumper\Dumper\HtmlDumper;
 use Symfony\Component\VarDumper\Cloner\VarCloner;
 use Symfony\Component\VarDumper\Dumper\CliDumper;
+use exface\Core\Exceptions\RuntimeException;
 
 class Debugger implements DebuggerInterface
 {
@@ -28,7 +29,15 @@ class Debugger implements DebuggerInterface
      */
     public function printException(\Throwable $exception, $use_html = true)
     {
-        $handler = new DebuggerExceptionHandler();        
+        $handler = new DebuggerExceptionHandler();    
+        if (! $exception instanceof \Exception){
+            if ($exception instanceof \Error){
+                $error = $exception;
+                $exception = new \ErrorException('Legacy PHP error detected: see description below!', $error->getCode(), null, $error->getFile(), $error->getLine(), $error);
+            } else {
+                throw new RuntimeException('Cannot print exception of type ' . gettype($exception) . ' (' . get_class($exception) . ')!');
+            }
+        }
         $flattened_exception = FlattenExceptionExface::create($exception);
         if ($use_html) {
             $output = <<<HTML

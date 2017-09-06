@@ -14,6 +14,7 @@ use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\Interfaces\Exceptions\ExceptionInterface;
+use exface\Core\CommonLogic\UxonObject;
 
 class DebugMessageFileHandler implements LogHandlerInterface
 {
@@ -84,7 +85,7 @@ class DebugMessageFileHandler implements LogHandlerInterface
                 } else {
                     $exception = $e;
                 }
-                $debugWidgetData = $this->createFallbackWidgetUxon($this->getWorkbench()->getDebugger()->printException($exception, true));
+                $debugWidgetData = $this->createHtmlFallback($this->getWorkbench()->getDebugger()->printException($exception, true));
             }
             $logger->log($level, $debugWidgetData);
         } elseif ($context['exception'] instanceof \Throwable){
@@ -108,10 +109,10 @@ class DebugMessageFileHandler implements LogHandlerInterface
      * @return string
      */
     protected function createHtmlFallback($html){
-        $uxon = new \stdClass();
-        $uxon->widget_type = 'Html';
-        $uxon->html = $html;
-        return json_encode($uxon, JSON_PRETTY_PRINT);
+        $uxon = new UxonObject();
+        $uxon->setProperty('widget_type', 'Html');
+        $uxon->setProperty('html', $html);
+        return $uxon->toJson(true);
     }
     
     /**
