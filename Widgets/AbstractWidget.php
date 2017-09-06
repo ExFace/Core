@@ -446,7 +446,8 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
      */
     function setMetaObject(MetaObjectInterface $object)
     {
-        return $this->meta_object = $object;
+        $this->meta_object = $object;
+        return $this;
     }
 
     /**
