@@ -132,7 +132,7 @@ class ObjectBasketContext extends AbstractContext
      */
     public function importUxonObject(UxonObject $uxon)
     {
-        foreach ((array) $uxon as $object_id => $data_uxon) {
+        foreach ($uxon as $object_id => $data_uxon) {
             $this->favorites[$object_id] = DataSheetFactory::createFromUxon($this->getWorkbench(), $data_uxon);
         }
     }

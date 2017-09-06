@@ -89,7 +89,7 @@ class ContextBar extends Toolbar
      * @param UxonObject $context_uxon_objects
      * @return ContextBar
      */
-    public function setContexts($context_uxon_objects){
+    public function setContexts(UxonObject $context_uxon_objects){
         foreach ($context_uxon_objects as $uxon){
             $visibility = strtolower($uxon->getProperty('visibility'));
             if ($visibility == ContextInterface::CONTEXT_BAR_DISABED){
