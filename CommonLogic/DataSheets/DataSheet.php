@@ -1348,13 +1348,17 @@ class DataSheet implements DataSheetInterface
         $uxon->setProperty('filters', $this->getFilters()->exportUxonObject());
         $uxon->setProperty('rows_on_page', $this->getRowsOnPage());
         $uxon->setProperty('row_offset', $this->getRowOffset());
+        
         if ($this->hasSorters()) {
+            $sorters = [];
             foreach ($this->getSorters() as $sorter) {
                 $sorters[] = $sorter->exportUxonObject();
             }
             $uxon->setProperty('sorters', $sorters);
         }
+        
         if ($this->hasAggregators()) {
+            $aggregators = [];
             foreach ($this->getAggregators() as $aggr) {
                 $aggregators[] = $aggr->exportUxonObject();
             }
@@ -1421,6 +1425,7 @@ class DataSheet implements DataSheetInterface
         if ($uxon->hasProperty('sorters')) {
             $this->getSorters()->importUxonObject($uxon->getProperty('sorters'));
         }
+        
         if ($uxon->hasProperty('aggregators')) {
             $this->getAggregators()->importUxonObject($uxon->getProperty('aggregators'));
         }
