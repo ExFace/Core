@@ -85,7 +85,7 @@ class DebugMessageFileHandler implements LogHandlerInterface
                 } else {
                     $exception = $e;
                 }
-                $debugWidgetData = $this->createFallbackWidgetUxon($this->getWorkbench()->getDebugger()->printException($exception, true));
+                $debugWidgetData = $this->createHtmlFallback($this->getWorkbench()->getDebugger()->printException($exception, true));
             }
             $logger->log($level, $debugWidgetData);
         } elseif ($context['exception'] instanceof \Throwable){
@@ -112,7 +112,7 @@ class DebugMessageFileHandler implements LogHandlerInterface
         $uxon = new UxonObject();
         $uxon->setProperty('widget_type', 'Html');
         $uxon->setProperty('html', $html);
-        return json_encode($uxon, JSON_PRETTY_PRINT);
+        return $uxon->toJson(true);
     }
     
     /**
