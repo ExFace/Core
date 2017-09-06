@@ -213,19 +213,19 @@ abstract class AbstractAction implements ActionInterface
     }
 
     /**
-     * Loads data from a standard UXON object (stdClass) into any action using setter functions.
+     * Loads data from a standard UXON object into any action using setter functions.
      * E.g. calls $this->setId($source->id) for every property of the source object. Thus the behaviour of this
      * function like error handling, input checks, etc. can easily be customized by programming good
      * setters.
      *
-     * @param \stdClass $source            
+     * @param UxonObject $source            
      */
-    public function importUxonObject(\stdClass $uxon)
+    public function importUxonObject(UxonObject $uxon)
     {
         // Skip alias property if found because it was processed already to instantiate the right action class.
         // Setting the alias after instantiation is currently not possible beacuase it would mean recreating
         // the entire action.
-        return $this->importUxonObjectDefault(UxonObject::fromStdClass($uxon), array(
+        return $this->importUxonObjectDefault($uxon, array(
             'alias'
         ));
     }

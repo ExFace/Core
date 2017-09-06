@@ -26,6 +26,7 @@ use exface\Core\Exceptions\UxonMapError;
 use exface\Core\Exceptions\Widgets\WidgetHasNoMetaObjectError;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Model\ExpressionInterface;
+use exface\Core\CommonLogic\Translation;
 
 /**
  * Basic ExFace widget
@@ -138,10 +139,8 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
      *
      * @see \exface\Core\Interfaces\WidgetInterface::importUxonObject()
      */
-    function importUxonObject(\stdClass $source)
+    function importUxonObject(UxonObject $uxon)
     {
-        $uxon = UxonObject::fromAnything($source);
-        
         // Save the original UXON description
         $this->uxon_original = $uxon->copy();
         
@@ -161,7 +160,7 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
         }
         
         try {
-            return $this->importUxonObjectDefault(UxonObject::fromStdClass($source));
+            return $this->importUxonObjectDefault($uxon);
         } catch (UxonMapError $e) {
             throw new WidgetPropertyUnknownError($this, 'Unknown UXON property found for widget "' . $this->getWidgetType() . '": ' . $e->getMessage(), '6UNTXJE', $e);
         }

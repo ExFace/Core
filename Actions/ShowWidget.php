@@ -127,7 +127,7 @@ class ShowWidget extends AbstractAction implements iShowWidget
     {
         if ($widget_or_uxon_object instanceof WidgetInterface) {
             $widget = $widget_or_uxon_object;
-        } elseif ($widget_or_uxon_object instanceof \stdClass) {
+        } elseif ($widget_or_uxon_object instanceof UxonObject) {
             $this->setWidgetUxon($widget_or_uxon_object);
             $widget = null;
         } else {

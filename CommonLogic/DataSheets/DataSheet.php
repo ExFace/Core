@@ -1379,7 +1379,7 @@ class DataSheet implements DataSheetInterface
         // Totals - ony for backwards compatibilty for times, where the totals functions were
         // defined outside the column definition.
         // IMPORTANT: This must happen AFTER columns and row were created, since totals are added to existing columns!
-        if (is_array($uxon->getProperty('totals_functions')) || $uxon->getProperty('totals_functions') instanceof \stdClass) {
+        if (is_array($uxon->getProperty('totals_functions')) || $uxon->getProperty('totals_functions') instanceof UxonObject) {
             foreach ((array) $uxon->getProperty('totals_functions') as $column_name => $functions) {
                 if (! $column = $this->getColumns()->get($column_name)) {
                     $column = $this->getColumns()->addFromExpression($column_name);

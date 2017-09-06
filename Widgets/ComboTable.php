@@ -196,7 +196,7 @@ class ComboTable extends InputCombo implements iHaveChildren
     {
         if ($widget_or_uxon_object instanceof DataTable) {
             $this->data_table = $widget_or_uxon_object;
-        } elseif ($widget_or_uxon_object instanceof \stdClass) {
+        } elseif ($widget_or_uxon_object instanceof UxonObject) {
             // Do noting, the table will be initialized later, when all the other UXON properties have been processed.
             // TODO this works fine with creating widgets from UXON but will not work if a UXON object is being passed
             // programmatically - need to save the given UXON in an extra variable if we are to support this.
@@ -588,7 +588,7 @@ class ComboTable extends InputCombo implements iHaveChildren
         foreach ($conditions_or_uxon_objects as $condition_or_uxon_object) {
             if ($condition_or_uxon_object instanceof Condition) {
                 // TODO
-            } elseif ($condition_or_uxon_object instanceof \stdClass) {
+            } elseif ($condition_or_uxon_object instanceof UxonObject) {
                 $this->getTableUxon()->setProperty('filters', array_merge($this->getTableUxon()->getProperty('filters'), array(
                     $condition_or_uxon_object
                 )));

@@ -231,7 +231,7 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveToolbars, iHave
      *
      * @see \exface\Core\Interfaces\Widgets\iShowDataSet::setData()
      */
-    public function setData(\stdClass $uxon_object)
+    public function setData(UxonObject $uxon_object)
     {
         $data = $this->getPage()->createWidget('Data', $this);
         $data->setMetaObject($this->getMetaObject());
@@ -331,10 +331,10 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveToolbars, iHave
     /**
      *
      * @param string $chart_type            
-     * @param \stdClass $uxon            
+     * @param UxonObject $uxon            
      * @return ChartSeries
      */
-    public function createSeries($chart_type = null, \stdClass $uxon = null)
+    public function createSeries($chart_type = null, UxonObject $uxon = null)
     {
         $series = $this->getPage()->createWidget('ChartSeries', $this);
         if ($uxon) {

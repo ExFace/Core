@@ -216,7 +216,7 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
         // wich would be the easiest way to set it editable and the editor would be optional then.
         $page = $this->getPage();
         $editor = WidgetFactory::createFromUxon($page, UxonObject::fromAnything($uxon_object), $this);
-        if ($uxon_object->widget_type && $editor) {
+        if ($uxon_object->hasProperty('widget_type') && $editor) {
             $editor->setAttributeAlias($this->getAttributeAlias());
             $this->editor = $editor;
             $this->editable = true;

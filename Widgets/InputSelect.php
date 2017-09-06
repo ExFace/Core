@@ -176,7 +176,7 @@ class InputSelect extends Input implements iSupportMultiSelect
      *
      * When adding options programmatically, separate arrays with equal length can be used: one for values and one for the text labels.
      *
-     * @param array|stdClass $array_or_object            
+     * @param array|UxonObject $array_or_object            
      * @param array $options_texts_array            
      * @throws WidgetPropertyInvalidValueError
      * @return InputSelect
@@ -186,8 +186,8 @@ class InputSelect extends Input implements iSupportMultiSelect
         $options = array();
         
         // Add the specified options
-        if ($array_or_object instanceof \stdClass) {
-            $options = (array) $array_or_object;
+        if ($array_or_object instanceof UxonObject) {
+            $options = $array_or_object->toArray();
         } elseif (is_array($array_or_object)) {
             if (is_array($options_texts_array)) {
                 if (count($array_or_object) != count($options_texts_array)) {

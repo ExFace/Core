@@ -4,6 +4,7 @@ namespace exface\Core\Factories;
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\CommonLogic\Model\ConditionGroup;
 use exface\Core\Exceptions\UnexpectedValueException;
+use exface\Core\CommonLogic\UxonObject;
 
 abstract class ConditionGroupFactory extends AbstractUxonFactory
 {
@@ -58,14 +59,14 @@ abstract class ConditionGroupFactory extends AbstractUxonFactory
     /**
      *
      * @param Workbench $exface            
-     * @param string|array $uxon_or_array            
+     * @param UxonObject|array $uxon_or_array            
      * @throws UnexpectedValueException
      * @return ConditionGroup
      */
     public static function createFromObjectOrArray(Workbench $exface, $uxon_or_array)
     {
-        if ($uxon_or_array instanceof \stdClass) {
-            return self::createFromStdClass($exface, $uxon_or_array);
+        if ($uxon_or_array instanceof UxonObject) {
+            return self::createFromUxon($exface, $uxon_or_array);
         } elseif (is_array($uxon_or_array)) {
             return self::createFromArray($exface, $uxon_or_array);
         } else {

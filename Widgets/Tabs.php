@@ -4,6 +4,7 @@ namespace exface\Core\Widgets;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Widgets\iFillEntireContainer;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
+use exface\Core\CommonLogic\UxonObject;
 
 /**
  * Tabs is a special container widget, that holds one or more Tab widgets allowing the
@@ -145,13 +146,12 @@ class Tabs extends Container implements iFillEntireContainer
     {
         $widgets = array();
         foreach ($widget_or_uxon_array as $w) {
-            if ($w instanceof \stdClass || $w instanceof AbstractWidget) {
-                if ($w instanceof \stdClass && ! isset($w->widget_type)) {
-                    $w->widget_type = 'Tab';
-                }
+            if ($w instanceof UxonObject) {
                 // If we have a UXON or instantiated widget object, use the widget directly
                 $page = $this->getPage();
-                $widget = WidgetFactory::createFromAnything($page, $w, $this);
+                $widget = WidgetFactory::createFromUxon($page, $w, $this, 'Tab');
+            } elseif ($w instanceof AbstractWidget){
+                $widget = $w;
             } else {
                 // If it is something else, just add it to the result and let the parent object deal with it
                 $widgets[] = $w;

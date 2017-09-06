@@ -9,6 +9,8 @@ use exface\Core\Exceptions\Actions\ActionConfigurationError;
 use exface\Core\Interfaces\Actions\iShowWidget;
 use exface\Core\Interfaces\Actions\iRunTemplateScript;
 use exface\Core\Interfaces\ActionListInterface;
+use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 
 /**
  * This action chains other actions together and performs them one after another.
@@ -112,15 +114,13 @@ class ActionChain extends AbstractAction
         return $this->actions;
     }
 
-    public function setActions($array_or_uxon_or_action_list)
+    public function setActions($array_of_uxon_or_action_list)
     {
-        if ($array_or_uxon_or_action_list instanceof ActionListInterface) {
-            $this->actions = $array_or_uxon_or_action_list;
-        } elseif ($array_or_uxon_or_action_list instanceof \stdClass) {
-            // TODO
-        } elseif (is_array($array_or_uxon_or_action_list)) {
-            foreach ($array_or_uxon_or_action_list as $nr => $action_or_uxon) {
-                if ($action_or_uxon instanceof \stdClass) {
+        if ($array_of_uxon_or_action_list instanceof ActionListInterface) {
+            $this->actions = $array_of_uxon_or_action_list;
+        } elseif (is_array($array_of_uxon_or_action_list)) {
+            foreach ($array_of_uxon_or_action_list as $nr => $action_or_uxon) {
+                if ($action_or_uxon instanceof UxonObject) {
                     $action = ActionFactory::createFromUxon($this->getWorkbench(), $action_or_uxon);
                 } elseif ($action_or_uxon instanceof ActionInterface) {
                     $action = $action_or_uxon;
@@ -129,6 +129,8 @@ class ActionChain extends AbstractAction
                 }
                 $this->addAction($action);
             }
+        } else {
+            throw new WidgetPropertyInvalidValueError('Cannot set actions for ' . $this->getAliasWithNamespace() . ': invalid format ' . gettype($array_of_uxon_or_action_list) . ' given instead of and instantiated condition or its UXON description.');
         }
         
         return $this;

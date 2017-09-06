@@ -2,7 +2,8 @@
 namespace exface\Core\Widgets;
 
 use exface\Core\Factories\WidgetFactory;
-use exface\Core\Interfaces\Widgets\iFillEntireContainer;
+use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Interfaces\WidgetInterface;
 
 /**
  * A Split consists of multiple panels aligned vertically or horizontally.
@@ -59,14 +60,10 @@ class SplitVertical extends Container
     {
         $widgets = array();
         foreach ($widget_or_uxon_array as $w) {
-            if ($w instanceof \stdClass) {
-                // If we have a UXON object, instantiate the widget first
-                if (! $w->widget_type) {
-                    $w->widget_type = 'SplitPanel';
-                }
+            if ($w instanceof UxonObject) {
                 $page = $this->getPage();
-                $widget = WidgetFactory::createFromAnything($page, $w, $this);
-            } elseif ($w instanceof AbstractWidget) {
+                $widget = WidgetFactory::createFromUxon($page, $w, $this, 'SplitPanel');
+            } elseif ($w instanceof WidgetInterface) {
                 // If it is already a widget, take it for further checks
                 $widget = $w;
             } else {

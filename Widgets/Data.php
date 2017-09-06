@@ -5,7 +5,6 @@ use exface\Core\Interfaces\Widgets\iHaveColumns;
 use exface\Core\Interfaces\Widgets\iHaveButtons;
 use exface\Core\Interfaces\Widgets\iHaveFilters;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
-use exface\Core\Interfaces\Model\MetaRelationInterface;
 use exface\Core\Interfaces\Widgets\iSupportLazyLoading;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
@@ -13,7 +12,6 @@ use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Interfaces\Widgets\iHaveColumnGroups;
 use exface\Core\Factories\DataColumnTotalsFactory;
 use exface\Core\Factories\WidgetFactory;
-use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 use exface\Core\Factories\WidgetLinkFactory;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
@@ -66,7 +64,7 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
     private $toolbars = array();
 
     // other stuff
-    /** @var \stdClass[] */
+    /** @var UxonObject[] */
     private $sorters = array();
 
     /** @var boolean */
@@ -482,7 +480,7 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
                     // We start a new group, if the last element added was a columnt group or append it to the last
                     // group if that was built from single columns already
                     if (! count($column_groups) || $last_element_was_a_column_group) {
-                        $column_groups[] = new \stdClass();
+                        $column_groups[] = [];
                     }
                     $column_groups[(count($column_groups) - 1)]->columns[] = $c;
                     $last_element_was_a_column_group = false;
@@ -612,7 +610,7 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
         return $this;
     }
 
-    public function createFilterWidget($attribute_alias = null, \stdClass $uxon_object = null)
+    public function createFilterWidget($attribute_alias = null, UxonObject $uxon_object = null)
     {
         return $this->getConfiguratorWidget()->createFilterWidget($attribute_alias, $uxon_object);
     }
@@ -781,7 +779,7 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
     /**
      * Returns an all data sorters applied to this sheet as an array.
      *
-     * @return \stdClass[]
+     * @return UxonObject[]
      */
     public function getSorters()
     {
@@ -818,7 +816,8 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
     public function addSorter($attribute_alias, $direction)
     {
         $this->getConfiguratorWidget()->addSorter($attribute_alias, $direction);
-        $sorter = new \stdClass();
+        // TODO move sorters completely to configuration widget!
+        $sorter = new UxonObject();
         $sorter->attribute_alias = $attribute_alias;
         $sorter->direction = $direction;
         $this->sorters[] = $sorter;

@@ -23,7 +23,7 @@ abstract class ActionFactory extends AbstractNameResolverFactory
      * @param NameResolver $name_resolver            
      * @return ActionInterface
      */
-    public static function create(NameResolverInterface $name_resolver, AbstractWidget $called_by_widget = null, \stdClass $uxon_description = null)
+    public static function create(NameResolverInterface $name_resolver, AbstractWidget $called_by_widget = null, UxonObject $uxon_description = null)
     {
         $app = $name_resolver->getWorkbench()->getApp($name_resolver->getNamespace());
         if ($name_resolver->classExists()) {
@@ -34,7 +34,7 @@ abstract class ActionFactory extends AbstractNameResolverFactory
                 throw new ActionNotFoundError('Cannot find action "' . $name_resolver->getAliasWithNamespace() . '"!');
             }
         }
-        if ($uxon_description instanceof \stdClass) {
+        if ($uxon_description instanceof UxonObject) {
             $action->importUxonObject($uxon_description);
         }
         return $action;
@@ -42,16 +42,16 @@ abstract class ActionFactory extends AbstractNameResolverFactory
 
     /**
      *
-     * @param exface $exface            
+     * @param Workbench $exface            
      * @param UxonObject $uxon_description            
      * @param AbstractWidget $called_by_widget            
      * @throws UnexpectedValueException
      * @return ActionInterface
      */
-    public static function createFromUxon(Workbench $exface, \stdClass $uxon_description, AbstractWidget $called_by_widget = null)
+    public static function createFromUxon(Workbench $exface, UxonObject $uxon_description, AbstractWidget $called_by_widget = null)
     {
-        if ($action_alias = $uxon_description->alias) {
-            unset($uxon_description->alias);
+        if ($action_alias = $uxon_description->getProperty('alias')) {
+            $uxon_description->unsetProperty('alias');
         } else {
             throw new UxonParserError($uxon_description, 'Cannot instantiate action from UXON: no action alias found!');
         }
@@ -62,7 +62,7 @@ abstract class ActionFactory extends AbstractNameResolverFactory
 
     /**
      *
-     * @param exface $exface            
+     * @param Workbench $exface            
      * @param string $qualified_action_alias            
      * @param UxonParserError $called_by_widget            
      * @return ActionInterface

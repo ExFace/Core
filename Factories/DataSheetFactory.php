@@ -71,7 +71,7 @@ abstract class DataSheetFactory extends AbstractUxonFactory
     /**
      *
      * @param Workbench $exface            
-     * @param DataSheetInterface|UxonObject|\stdClass $data_sheet_or_uxon            
+     * @param DataSheetInterface|UxonObject $data_sheet_or_uxon            
      * @throws InvalidArgumentException
      * @return DataSheetInterface
      */
@@ -79,8 +79,8 @@ abstract class DataSheetFactory extends AbstractUxonFactory
     {
         if ($data_sheet_or_uxon instanceof DataSheetInterface) {
             return $data_sheet_or_uxon;
-        } elseif ($data_sheet_or_uxon instanceof \stdClass) {
-            return static::createFromStdClass($exface, $data_sheet_or_uxon);
+        } elseif ($data_sheet_or_uxon instanceof UxonObject) {
+            return static::createFromUxon($exface, $data_sheet_or_uxon);
         } elseif (! is_object($data_sheet_or_uxon)) {
             return static::createFromUxon($exface, UxonObject::fromJson($data_sheet_or_uxon));
         } else {

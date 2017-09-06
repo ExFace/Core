@@ -14,6 +14,7 @@ use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\Interfaces\Exceptions\ExceptionInterface;
+use exface\Core\CommonLogic\UxonObject;
 
 class DebugMessageFileHandler implements LogHandlerInterface
 {
@@ -108,7 +109,7 @@ class DebugMessageFileHandler implements LogHandlerInterface
      * @return string
      */
     protected function createHtmlFallback($html){
-        $uxon = new \stdClass();
+        $uxon = new UxonObject();
         $uxon->setProperty('widget_type', 'Html');
         $uxon->setProperty('html', $html);
         return json_encode($uxon, JSON_PRETTY_PRINT);

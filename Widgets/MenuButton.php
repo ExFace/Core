@@ -52,7 +52,7 @@ class MenuButton extends Button implements iHaveMenu, iHaveButtons
             $this->menu->setParent($this);
         } elseif (is_array($menu_widget_or_uxon_or_array)) {
             $this->getMenu()->setButtons($menu_widget_or_uxon_or_array);
-        } elseif ($menu_widget_or_uxon_or_array instanceof \stdClass) {
+        } elseif ($menu_widget_or_uxon_or_array instanceof UxonObject) {
             $this->getMenu()->importUxonObject($menu_widget_or_uxon_or_array);
         } else {
             throw new WidgetPropertyInvalidValueError($this, 'Invalid menu configuration for MenuButton "' . $this->getId() . '"!');

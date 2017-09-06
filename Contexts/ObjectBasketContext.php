@@ -82,7 +82,7 @@ class ObjectBasketContext extends AbstractContext
     {
         if (! $this->favorites[$object_id]) {
             $this->favorites[$object_id] = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), $object_id);
-        } elseif (($this->favorites[$object_id] instanceof \stdClass) || is_array($this->favorites[$object_id])) {
+        } elseif (($this->favorites[$object_id] instanceof UxonObject) || is_array($this->favorites[$object_id])) {
             $this->favorites[$object_id] = DataSheetFactory::createFromAnything($this->getWorkbench(), $this->favorites[$object_id]);
         }
         return $this->favorites[$object_id];
