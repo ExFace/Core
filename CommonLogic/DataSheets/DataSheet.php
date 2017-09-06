@@ -1326,32 +1326,41 @@ class DataSheet implements DataSheetInterface
      */
     public function exportUxonObject()
     {
-        $output = new UxonObject();
-        $output->object_alias = $this->getMetaObject()->getAliasWithNamespace();
+        $uxon = new UxonObject();
+        $uxon->setProperty('object_alias', $this->getMetaObject()->getAliasWithNamespace());
         
+        $columns = [];
         foreach ($this->getColumns() as $col) {
-            $output->columns[] = $col->exportUxonObject();
+            $columns[] = $col->exportUxonObject();
+        }
+        if (! empty($columns)){
+            $uxon->setProperty('columns', $columns);
         }
         
         if (! $this->isEmpty()) {
-            $output->rows = $this->getRows();
+            $rows = $this->getRows();
+        }
+        if (! empty($rows)){
+            $uxon->setProperty('rows', $rows);
         }
         
-        $output->totals_rows = $this->getTotalsRows();
-        $output->filters = $this->getFilters()->exportUxonObject();
-        $output->rows_on_page = $this->getRowsOnPage();
-        $output->row_offset = $this->getRowOffset();
+        $uxon->setProperty('totals_rows', $this->getTotalsRows());
+        $uxon->setProperty('filters', $this->getFilters()->exportUxonObject());
+        $uxon->setProperty('rows_on_page', $this->getRowsOnPage());
+        $uxon->setProperty('row_offset', $this->getRowOffset());
         if ($this->hasSorters()) {
             foreach ($this->getSorters() as $sorter) {
-                $output->sorters[] = $sorter->exportUxonObject();
+                $sorters[] = $sorter->exportUxonObject();
             }
+            $uxon->setProperty('sorters', $sorters);
         }
         if ($this->hasAggregators()) {
             foreach ($this->getAggregators() as $aggr) {
-                $output->aggregators[] = $aggr->exportUxonObject();
+                $aggregators[] = $aggr->exportUxonObject();
             }
+            $uxon->setProperty('aggregators', $aggregators);
         }
-        return $output;
+        return $uxon;
     }
 
     public function importUxonObject(UxonObject $uxon)
