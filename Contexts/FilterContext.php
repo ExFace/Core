@@ -148,7 +148,7 @@ class FilterContext extends AbstractContext
         if (is_array($uxon->getProperty('conditions'))) {
             foreach ($uxon->getProperty('conditions') as $uxon_condition) {
                 try {
-                    $this->addCondition(ConditionFactory::createFromStdClass($exface, $uxon_condition));
+                    $this->addCondition(ConditionFactory::createFromUxon($exface, $uxon_condition));
                 } catch (ErrorExceptionInterface $e) {
                     // ignore context that cannot be instantiated!
                 }

@@ -193,6 +193,14 @@ class UxonObject extends \stdClass implements \IteratorAggregate
         }
         return $this;
     }
+    
+    public function append($property_name, $value_or_object_or_string)
+    {
+        $array = $this->getProperty($property_name);
+        $array[] = $value_or_object_or_string;
+        $this->setProperty($property_name, $array);
+        return $this;
+    }
 
     /**
      * Extends this UXON object with properties of the given one.

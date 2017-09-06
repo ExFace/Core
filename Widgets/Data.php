@@ -469,7 +469,7 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
                 // If the element is an array itself (nested in columns), it is a column group
                 $column_groups[] = $c;
                 $last_element_was_a_column_group = true;
-            } elseif (is_object($c)) {
+            } elseif ($c instanceof UxonObject) {
                 // If not, check to see if it's widget type is DataColumnGroup or it has an array of columns itself
                 // If so, it still is a column group
                 if (strcasecmp($c->getProperty('widget_type'), 'DataColumnGroup') === 0 || is_array($c->getProperty('columns'))) {
@@ -480,9 +480,13 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
                     // We start a new group, if the last element added was a columnt group or append it to the last
                     // group if that was built from single columns already
                     if (! count($column_groups) || $last_element_was_a_column_group) {
-                        $column_groups[] = [];
+                        $group = new UxonObject();
+                        $group->setProperty('columns', []);
+                        $column_groups[] = $group;
+                    } else {
+                        $group = $column_groups[(count($column_groups) - 1)];
                     }
-                    $column_groups[(count($column_groups) - 1)]->columns[] = $c;
+                    $group->append('columns', $c);
                     $last_element_was_a_column_group = false;
                 }
             } else {
