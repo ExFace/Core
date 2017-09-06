@@ -2,6 +2,7 @@
 namespace exface\Core\Interfaces\Widgets;
 
 use exface\Core\Widgets\Filter;
+use exface\Core\CommonLogic\UxonObject;
 
 interface iHaveFilters extends iHaveChildren
 {
@@ -19,5 +20,9 @@ interface iHaveFilters extends iHaveChildren
      */
     public function getFiltersApplied();
 
-    public function setFilters(array $filters);
+    /**
+     * @param UxonObject[] $uxon_objects
+     * @return iHaveFilters
+     */
+    public function setFilters(array $uxon_objects);
 }

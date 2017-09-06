@@ -109,8 +109,8 @@ class DebugMessageFileHandler implements LogHandlerInterface
      */
     protected function createHtmlFallback($html){
         $uxon = new \stdClass();
-        $uxon->widget_type = 'Html';
-        $uxon->html = $html;
+        $uxon->setProperty('widget_type', 'Html');
+        $uxon->setProperty('html', $html);
         return json_encode($uxon, JSON_PRETTY_PRINT);
     }
     

@@ -404,10 +404,10 @@ class ShowWidget extends AbstractAction implements iShowWidget
     public function exportUxonObject()
     {
         $uxon = parent::exportUxonObject();
-        $uxon->widget_id = $this->getWidgetId();
-        $uxon->page_id = $this->getCalledOnUiPage()->getId();
-        $uxon->prefill_with_filter_context = $this->getPrefillWithFilterContext();
-        $uxon->prefill_with_input_data = $this->getPrefillWithInputData();
+        $uxon->setProperty('widget_id', $this->getWidgetId());
+        $uxon->setProperty('page_id', $this->getCalledOnUiPage()->getId());
+        $uxon->setProperty('prefill_with_filter_context', $this->getPrefillWithFilterContext());
+        $uxon->setProperty('prefill_with_input_data', $this->getPrefillWithInputData());
         if ($this->getPrefillDataSheet()) {
             $uxon->setProperty('prefill_data_sheet', $this->getPrefillDataSheet()->exportUxonObject());
         }

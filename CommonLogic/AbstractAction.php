@@ -757,13 +757,13 @@ abstract class AbstractAction implements ActionInterface
     public function exportUxonObject()
     {
         $uxon = $this->getWorkbench()->createUxonObject();
-        $uxon->alias = $this->getAliasWithNamespace();
+        $uxon->setProperty('alias', $this->getAliasWithNamespace());
         if ($this->getCalledByWidget()) {
-            $uxon->called_by_widget = $this->getCalledByWidget()->createWidgetLink()->exportUxonObject();
+            $uxon->setProperty('called_by_widget', $this->getCalledByWidget()->createWidgetLink()->exportUxonObject());
         }
-        $uxon->template_alias = $this->getTemplateAlias();
-        $uxon->input_data_sheet = $this->getInputDataSheet(false)->exportUxonObject();
-        $uxon->disabled_behaviors = UxonObject::fromArray($this->getDisabledBehaviors());
+        $uxon->setProperty('template_alias', $this->getTemplateAlias());
+        $uxon->setProperty('input_data_sheet',  $this->getInputDataSheet(false)->exportUxonObject());
+        $uxon->setProperty('disabled_behaviors', UxonObject::fromArray($this->getDisabledBehaviors()));
         
         if (empty($this->getInputMappers())){
             $input_mappers = new UxonObject();

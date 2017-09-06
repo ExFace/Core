@@ -84,9 +84,9 @@ class ActionContext extends AbstractContext
         $result = array();
         foreach ($result_raw as $uxon) {
             $exface = $this->getWorkbench();
-            $action = ActionFactory::createFromUxon($exface, $uxon->action);
-            if ($uxon->undo_data) {
-                $action->setUndoData($uxon->undo_data);
+            $action = ActionFactory::createFromUxon($exface, $uxon->getProperty('action'));
+            if ($uxon->hasProperty('undo_data')) {
+                $action->setUndoData($uxon->getProperty('undo_data'));
             }
             $result[] = $action;
         }
@@ -119,9 +119,9 @@ class ActionContext extends AbstractContext
                 continue;
             // Otherwise create a new UXON object to hold the action itself and the undo data, if the action is undoable.
             $uxon = new UxonObject();
-            $uxon->action = $action->exportUxonObject();
+            $uxon->setProperty('action', $action->exportUxonObject());
             if ($action->isUndoable()) {
-                $uxon->undo_data = $action->getUndoDataSerializable();
+                $uxon->setProperty('undo_data', $action->getUndoDataSerializable());
             }
             $array[] = $uxon;
         }
@@ -134,7 +134,7 @@ class ActionContext extends AbstractContext
         // Pack into a uxon object
         $uxon = $this->getWorkbench()->createUxonObject();
         if (count($array) > 0) {
-            $uxon->action_history = $array;
+            $uxon->setProperty('action_history', $array);
         }
         return $uxon;
     }
@@ -145,10 +145,10 @@ class ActionContext extends AbstractContext
      */
     public function importUxonObject(UxonObject $uxon)
     {
-        if (is_array($uxon->action_history)) {
-            $this->action_history_raw = $uxon->action_history;
-        } elseif (! is_null($uxon->action_history)) {
-            throw new ContextLoadError($this, 'Cannot load action contexts: expecting UXON objects, received ' . gettype($uxon->action_history) . ' instead!');
+        if (is_array($uxon->getProperty('action_history'))) {
+            $this->action_history_raw = $uxon->getProperty('action_history');
+        } elseif ($uxon->hasProperty('action_history')) {
+            throw new ContextLoadError($this, 'Cannot load action contexts: expecting UXON objects, received ' . gettype($uxon->getProperty('action_history')) . ' instead!');
         }
         return $this;
     }

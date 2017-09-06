@@ -255,11 +255,11 @@ class Container extends AbstractWidget implements iContainOtherWidgets
         if (! is_array($widget_or_uxon_array))
             return false;
         foreach ($widget_or_uxon_array as $w) {
-            if ($w instanceof AbstractWidget) {
+            if ($w instanceof WidgetInterface) {
                 $this->addWidget($w);
             } else {
                 $page = $this->getPage();
-                $widget = WidgetFactory::createFromUxon($page, UxonObject::fromAnything($w), $this);
+                $widget = WidgetFactory::createFromUxon($page, $w, $this);
                 $this->addWidget($widget);
             }
         }

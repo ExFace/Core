@@ -697,12 +697,14 @@ class InputSelect extends Input implements iSupportMultiSelect
         foreach ($conditions_or_uxon_objects as $condition_or_uxon_object) {
             if ($condition_or_uxon_object instanceof Condition) {
                 $this->getOptionsDataSheet()->getFilters()->addCondition($condition_or_uxon_object);
-            } elseif ($condition_or_uxon_object instanceof \stdClass) {
-                $uxon = UxonObject::fromAnything($condition_or_uxon_object);
+            } elseif ($condition_or_uxon_object instanceof UxonObject) {
+                $uxon = $condition_or_uxon_object;
                 if (! $uxon->hasProperty('object_alias')) {
                     $uxon->setProperty('object_alias', $this->getMetaObject()->getAliasWithNamespace());
                 }
                 $this->getOptionsDataSheet()->getFilters()->addCondition(ConditionFactory::createFromUxon($this->getWorkbench(), $uxon));
+            } else {
+                throw new WidgetPropertyInvalidValueError('Cannot set filters for ' . $this->getWidgetType() . ': invalid format ' . gettype($condition_or_uxon_object) . ' given instead of and instantiated condition or its UXON description.');
             }
         }
         return $this;
@@ -734,9 +736,11 @@ class InputSelect extends Input implements iSupportMultiSelect
         foreach ($data_sorters_or_uxon_objects as $sorter_or_uxon) {
             if ($sorter_or_uxon instanceof DataSorter) {
                 $this->getOptionsDataSheet()->getSorters()->add($sorter_or_uxon);
-            } elseif ($sorter_or_uxon instanceof \stdClass) {
-                $uxon = UxonObject::fromAnything($sorter_or_uxon);
+            } elseif ($sorter_or_uxon instanceof UxonObject) {
+                $uxon = $sorter_or_uxon;
                 $this->getOptionsDataSheet()->getSorters()->add(DataSorterFactory::createFromUxon($this->getOptionsDataSheet(), $uxon));
+            } else {
+                throw new WidgetPropertyInvalidValueError('Cannot set sorters for ' . $this->getWidgetType() . ': invalid format ' . gettype($sorter_or_uxon) . ' given instead of and instantiated DataSorter or its UXON description.');
             }
         }
         return $this;

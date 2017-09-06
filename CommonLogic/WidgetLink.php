@@ -187,7 +187,7 @@ class WidgetLink implements WidgetLinkInterface
     {
         $resource = $this->exface->getCMS()->getPageContents($this->getPageId());
         $uxon = UxonObject::fromJson($resource);
-        if ($this->getWidgetId() && $uxon->widget_id != $this->getWidgetId()) {
+        if ($this->getWidgetId() && $uxon->getProperty('widget_id') != $this->getWidgetId()) {
             $uxon = $this->findWidgetIdInUxon($uxon, $this->getWidgetId());
             if ($uxon === false) {
                 $uxon = $this->exface->createUxonObject();
@@ -207,7 +207,7 @@ class WidgetLink implements WidgetLinkInterface
     {
         $result = false;
         if ($uxon instanceof \stdClass) {
-            if ($uxon->id == $widget_id) {
+            if ($uxon->getProperty('id') == $widget_id) {
                 $result = $uxon;
             } else {
                 $array = get_object_vars($uxon);
@@ -236,11 +236,11 @@ class WidgetLink implements WidgetLinkInterface
     public function exportUxonObject()
     {
         $uxon = $this->exface->createUxonObject();
-        $uxon->widget_id = $this->widget_id;
-        $uxon->page_id = $this->page_id;
-        $uxon->widget_id_space = $this->widget_id_space;
-        $uxon->column_id = $this->column_id;
-        $uxon->row_number = $this->row_number;
+        $uxon->setProperty('widget_id', $this->widget_id);
+        $uxon->setProperty('page_id', $this->page_id);
+        $uxon->setProperty('widget_id_space', $this->widget_id_space);
+        $uxon->setProperty('column_id', $this->column_id);
+        $uxon->setProperty('row_number', $this->row_number);
         return $uxon;
     }
 

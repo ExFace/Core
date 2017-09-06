@@ -126,10 +126,11 @@ class FilterContext extends AbstractContext
     {
         $uxon = $this->getWorkbench()->createUxonObject();
         if (! $this->isEmpty()) {
-            $uxon->conditions = array();
+            $conditions = array();
             foreach ($this->getConditions() as $condition) {
-                $uxon->conditions[] = $condition->exportUxonObject();
+                $conditions[] = $condition->exportUxonObject();
             }
+            $uxon->setProperty('conditions', $conditions);
         }
         return $uxon;
     }
@@ -144,16 +145,16 @@ class FilterContext extends AbstractContext
     public function importUxonObject(UxonObject $uxon)
     {
         $exface = $this->getWorkbench();
-        if (is_array($uxon->conditions)) {
-            foreach ($uxon->conditions as $uxon_condition) {
+        if (is_array($uxon->getProperty('conditions'))) {
+            foreach ($uxon->getProperty('conditions') as $uxon_condition) {
                 try {
                     $this->addCondition(ConditionFactory::createFromStdClass($exface, $uxon_condition));
                 } catch (ErrorExceptionInterface $e) {
                     // ignore context that cannot be instantiated!
                 }
             }
-        } elseif (! is_null($uxon->conditions)) {
-            throw new ContextLoadError($this, 'Cannot load filter contexts: Expecting an array of UXON objects, ' . gettype($uxon->conditions) . ' given instead!');
+        } elseif ($uxon->hasProperty('conditions')) {
+            throw new ContextLoadError($this, 'Cannot load filter contexts: Expecting an array of UXON objects, ' . gettype($uxon->getProperty('conditions')) . ' given instead!');
         }
         return $this;
     }

@@ -474,7 +474,7 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
             } elseif (is_object($c)) {
                 // If not, check to see if it's widget type is DataColumnGroup or it has an array of columns itself
                 // If so, it still is a column group
-                if ($c->widget_type == 'DataColumnGroup' || is_array($c->columns)) {
+                if (strcasecmp($c->getProperty('widget_type'), 'DataColumnGroup') === 0 || is_array($c->getProperty('columns'))) {
                     $column_groups[] = $c;
                     $last_element_was_a_column_group = true;
                 } else {
@@ -500,12 +500,8 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
             if ($nr == 0 && count($this->getColumnGroups()) > 0) {
                 $this->getColumnGroupMain()->importUxonObject($group);
             } else {
-                // Set the widget type explicitly if it was not defined by the user
-                if (! $group->widget_type) {
-                    $group->widget_type = 'DataColumnGroup';
-                }
                 $page = $this->getPage();
-                $column_group = WidgetFactory::createFromUxon($page, UxonObject::fromAnything($group), $this);
+                $column_group = WidgetFactory::createFromUxon($page, UxonObject::fromAnything($group), $this, 'DataColumnGroup');
                 $this->addColumnGroup($column_group);
             }
         }
@@ -606,7 +602,7 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
      * @uxon-property filters
      * @uxon-type Filter[]
      *
-     * @param UxonObject[] $filters_array
+     * @param UxonObject[] $uxon_objects
      * @return Data
      */
     public function setFilters(array $uxon_objects)

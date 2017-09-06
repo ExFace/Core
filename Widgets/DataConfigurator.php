@@ -115,9 +115,9 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
      *  }
      *  
      * @uxon-property filters
-     * @uxon-type Filter[]
+     * @uxon-type exface\Core\Widgets\Filter[]
      *
-     * @param UxonObject $filters_array
+     * @param UxonObject[] $uxon_objects
      * @return DataConfigurator
      */
     public function setFilters(array $uxon_objects)
@@ -136,13 +136,13 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
         return $this;
     }
     
-    public function createFilterWidget($attribute_alias = null, \stdClass $uxon_object = null)
+    public function createFilterWidget($attribute_alias = null, UxonObject $uxon_object = null)
     {
         if (is_null($attribute_alias)) {
-            if ($uxon_object->attribute_alias) {
-                $attribute_alias = $uxon_object->attribute_alias;
-            } elseif ($uxon_object->widget && $uxon_object->widget->attribute_alias) {
-                $attribute_alias = $uxon_object->widget->attribute_alias;
+            if ($uxon_object->hasProperty('attribute_alias')) {
+                $attribute_alias = $uxon_object->getProperty('attribute_alias');
+            } elseif (($uxon_object->getProperty('input_widget') instanceof UxonObject) && $uxon_object->getProperty('input_widget')->hasProperty('attribute_alias')) {
+                $attribute_alias = $uxon_object->getProperty('input_widget')->getProperty('attribute_alias');
             }
         }
         // a filter can only be applied, if the attribute alias is specified and the attribute exists
@@ -164,9 +164,9 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
                 $uxon->setProperty('caption', $this->getMetaObject()->getRelation($attribute_alias)->getName());
             }
             $page = $this->getPage();
-            if ($uxon->comparator) {
-                $comparator = $uxon->comparator;
-                unset($uxon->comparator);
+            if ($uxon->hasProperty('comparator')) {
+                $comparator = $uxon->getProperty('comparator');
+                $uxon->unsetProperty('comparator');
             }
             
             $filter = $this->getPage()->createWidget('Filter', $this->getFilterTab());
