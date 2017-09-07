@@ -59,7 +59,7 @@ class ButtonGroup extends Container implements iHaveButtons, iCanBeAligned, iUse
             if ($b instanceof Button){
                 $button = $b;
             } elseif ($b instanceof UxonObject){
-                $button = WidgetFactory::createFromUxon($this->getPage(), UxonObject::fromAnything($b), $this, $this->getButtonWidgetType());
+                $button = WidgetFactory::createFromUxon($this->getPage(), $b, $this, $this->getButtonWidgetType());
             } else {
                 throw new WidgetPropertyInvalidValueError($this, 'Cannot use "' . gettype($b) . '" as button in ' . $this->getWidgetType() . '": instantiated button widget (or derivative) or corresponding UXON object expected!');
             }

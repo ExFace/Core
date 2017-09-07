@@ -130,6 +130,18 @@ class UxonObject implements \IteratorAggregate
             return false;
         }
     }
+    
+    /**
+     * Returns the key holding the given value or FALSE if nothing was found.
+     * 
+     * @param mixed $value
+     * 
+     * @return string|boolean
+     */
+    public function search($value)
+    {
+        return array_search($value, $this->array);
+    }
 
     /**
      * Returns all properties of this UXON object as an assotiative array
@@ -263,18 +275,18 @@ class UxonObject implements \IteratorAggregate
             throw new UxonMapError($this, 'Cannot import UXON configuration to "' . gettype($target_class_instance) . '": only instantiated PHP classes supported!');
         }
         
-        foreach ($this->array as $var => $val) {
+        foreach (array_keys($this->array) as $var) {
             $setterCamelCased = 'set' . StringDataType::convertCaseUnderscoreToPascal($var);
             if (method_exists($target_class_instance, $setterCamelCased)) {
                 call_user_func(array(
                     $target_class_instance,
                     $setterCamelCased
-                ), $val);
+                ), $this->getProperty($var));
             } elseif (method_exists($target_class_instance, 'set_' . $var)) {
                 call_user_func(array(
                     $target_class_instance,
                     'set_' . $var
-                ), $val);
+                ), $this->getProperty($var));
             } else {
                 throw new UxonMapError($this, 'No setter method found for UXON property "' . $var . '" in "' . get_class($target_class_instance) . '"!');
             }

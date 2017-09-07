@@ -212,28 +212,23 @@ class StateMachineBehavior extends AbstractBehavior
      */
     public function setStates($value)
     {
-        $value = UxonObject::fromAnything($value);
-        $this->uxon_states = $value;
-        
-        if ($value instanceof UxonObject) {
-            if ($value->isArray()) {
-                $this->states = $value->toArray();
-            } else {
-                $this->states = [];
-                $states = get_object_vars($this->uxon_states);
-                foreach ($states as $state => $uxon_smstate) {
-                    $smstate = new StateMachineState();
-                    $smstate->setStateId($state);
-                    if ($uxon_smstate) {
-                        try {
-                            $uxon_smstate->mapToClassSetters($smstate);
-                        } catch (UxonMapError $e) {
-                            throw new BehaviorConfigurationError($this->getObject(), 'Cannot load UXON configuration for state machine state. ' . $e->getMessage(), '6TG2ZFI', $e);
-                        }
+        if ($value instanceof UxonObject) { 
+            $this->uxon_states = $value;
+            $this->states = [];
+            foreach ($value as $state => $uxon_smstate) {
+                $smstate = new StateMachineState();
+                $smstate->setStateId($state);
+                if ($uxon_smstate) {
+                    try {
+                        $uxon_smstate->mapToClassSetters($smstate);
+                    } catch (UxonMapError $e) {
+                        throw new BehaviorConfigurationError($this->getObject(), 'Cannot load UXON configuration for state machine state. ' . $e->getMessage(), '6TG2ZFI', $e);
                     }
-                    $this->addState($smstate);
                 }
+                $this->addState($smstate);
             }
+        } elseif (is_array($value)) {
+            $this->states = $value;
         } else {
             throw new BehaviorConfigurationError($this->getObject(), 'Can not set states for "' . $this->getObject()->getAliasWithNamespace() . '": the argument passed to setStates() is neither an UxonObject nor an array!', '6TG2ZFI');
         }
