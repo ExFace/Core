@@ -176,7 +176,7 @@ class InputSelect extends Input implements iSupportMultiSelect
      *
      * When adding options programmatically, separate arrays with equal length can be used: one for values and one for the text labels.
      *
-     * @param array|stdClass $array_or_object            
+     * @param array|UxonObject $array_or_object            
      * @param array $options_texts_array            
      * @throws WidgetPropertyInvalidValueError
      * @return InputSelect
@@ -185,29 +185,32 @@ class InputSelect extends Input implements iSupportMultiSelect
     {
         $options = array();
         
-        // Add the specified options
-        if ($array_or_object instanceof \stdClass) {
-            $options = (array) $array_or_object;
+        // Transform the options into an array
+        if ($array_or_object instanceof UxonObject) {
+            $array = $array_or_object->toArray();
         } elseif (is_array($array_or_object)) {
+            $array = $array_or_object;
+        } else {
+            throw new WidgetPropertyInvalidValueError($this, 'Wrong data type for possible values of ' . $this->getWidgetType() . '! Expecting array or object, ' . gettype($array_or_object) . ' given.', '6T91S9G');
+        }
+        
+        // If it is not an assosiative array, attemt to transform it to one
+        if (array_values($array) === $array) {
             if (is_array($options_texts_array)) {
-                if (count($array_or_object) != count($options_texts_array)) {
-                    throw new WidgetPropertyInvalidValueError($this, 'Number of possible values (' . count($array_or_object) . ') differs from the number of keys (' . count($options_texts_array) . ') for widget "' . $this->getId() . '"!', '6T91S9G');
+                if (count($array) !== count($options_texts_array)) {
+                    throw new WidgetPropertyInvalidValueError($this, 'Number of possible values (' . count($array) . ') differs from the number of keys (' . count($options_texts_array) . ') for widget "' . $this->getId() . '"!', '6T91S9G');
                 } else {
-                    foreach ($array_or_object as $nr => $id) {
+                    foreach ($array as $nr => $id) {
                         $options[$id] = $options_texts_array[$nr];
                     }
                 }
             } else {
-                // See if it is an assotiative array
-                if (array_keys($array_or_object)[0] === 0 && array_keys($array_or_object)[count($array_or_object) - 1] == (count($array_or_object) - 1)) {
-                    $options = array_combine($array_or_object, $array_or_object);
-                } else {
-                    $options = $array_or_object;
-                }
-            }
+                $options = array_combine($array, $array);
+            } 
         } else {
-            throw new WidgetPropertyInvalidValueError($this, 'Wrong data type for possible values of ' . $this->getWidgetType() . '! Expecting array or object, ' . gettype($array_or_object) . ' given.', '6T91S9G');
+            $options = $array;
         }
+        
         $this->selectable_options = $options;
         return $this;
     }
@@ -689,20 +692,22 @@ class InputSelect extends Input implements iSupportMultiSelect
      * @uxon-property filters
      * @uxon-type \exface\Core\CommonLogic\Model\Condition
      *
-     * @param Condition[]|UxonObject[] $conditions_or_uxon_objects            
+     * @param Condition[]|UxonObject $conditions_or_uxon_objects            
      * @return \exface\Core\Widgets\InputSelect
      */
-    public function setFilters(array $conditions_or_uxon_objects)
+    public function setFilters($conditions_or_uxon_objects)
     {
         foreach ($conditions_or_uxon_objects as $condition_or_uxon_object) {
             if ($condition_or_uxon_object instanceof Condition) {
                 $this->getOptionsDataSheet()->getFilters()->addCondition($condition_or_uxon_object);
-            } elseif ($condition_or_uxon_object instanceof \stdClass) {
-                $uxon = UxonObject::fromAnything($condition_or_uxon_object);
+            } elseif ($condition_or_uxon_object instanceof UxonObject) {
+                $uxon = $condition_or_uxon_object;
                 if (! $uxon->hasProperty('object_alias')) {
                     $uxon->setProperty('object_alias', $this->getMetaObject()->getAliasWithNamespace());
                 }
                 $this->getOptionsDataSheet()->getFilters()->addCondition(ConditionFactory::createFromUxon($this->getWorkbench(), $uxon));
+            } else {
+                throw new WidgetPropertyInvalidValueError('Cannot set filters for ' . $this->getWidgetType() . ': invalid format ' . gettype($condition_or_uxon_object) . ' given instead of and instantiated condition or its UXON description.');
             }
         }
         return $this;
@@ -734,9 +739,11 @@ class InputSelect extends Input implements iSupportMultiSelect
         foreach ($data_sorters_or_uxon_objects as $sorter_or_uxon) {
             if ($sorter_or_uxon instanceof DataSorter) {
                 $this->getOptionsDataSheet()->getSorters()->add($sorter_or_uxon);
-            } elseif ($sorter_or_uxon instanceof \stdClass) {
-                $uxon = UxonObject::fromAnything($sorter_or_uxon);
+            } elseif ($sorter_or_uxon instanceof UxonObject) {
+                $uxon = $sorter_or_uxon;
                 $this->getOptionsDataSheet()->getSorters()->add(DataSorterFactory::createFromUxon($this->getOptionsDataSheet(), $uxon));
+            } else {
+                throw new WidgetPropertyInvalidValueError('Cannot set sorters for ' . $this->getWidgetType() . ': invalid format ' . gettype($sorter_or_uxon) . ' given instead of and instantiated DataSorter or its UXON description.');
             }
         }
         return $this;

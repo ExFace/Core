@@ -256,10 +256,10 @@ class Condition implements iCanBeConvertedToUxon
     public function exportUxonObject()
     {
         $uxon = new UxonObject();
-        $uxon->expression = $this->getExpression()->toString();
-        $uxon->comparator = $this->getComparator();
-        $uxon->value = $this->getValue();
-        $uxon->object_alias = $this->getExpression()->getMetaObject()->getAliasWithNamespace();
+        $uxon->setProperty('expression', $this->getExpression()->toString());
+        $uxon->setProperty('comparator', $this->getComparator());
+        $uxon->setProperty('value', $this->getValue());
+        $uxon->setProperty('object_alias', $this->getExpression()->getMetaObject()->getAliasWithNamespace());
         return $uxon;
     }
 

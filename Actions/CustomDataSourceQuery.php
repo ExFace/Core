@@ -9,6 +9,7 @@ use exface\Core\CommonLogic\DataSheets\DataColumn;
 use exface\Core\Exceptions\Actions\ActionInputMissingError;
 use exface\Core\Exceptions\Actions\ActionInputInvalidObjectError;
 use exface\Core\CommonLogic\Constants\Icons;
+use exface\Core\CommonLogic\UxonObject;
 
 class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuery
 {
@@ -34,9 +35,9 @@ class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuer
         return $this->queries;
     }
 
-    public function setQueries(array $strings)
+    public function setQueries(UxonObject $query_strings)
     {
-        $this->queries = $strings;
+        $this->queries = $query_strings->toArray();
         return $this;
     }
 

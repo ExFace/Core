@@ -536,11 +536,15 @@ abstract class AbstractAjaxTemplate extends AbstractTemplate
         } catch (\Throwable $e) {
             // If anything goes wrong when trying to prettify the original error, drop prettifying
             // and throw the original exception wrapped in a notice about the failed prettification
-            throw new RuntimeException('Failed to create error report widget: "' . $e->getMessage() . '"! See orignal error detail below.', null, $exception);
+            $this->getWorkbench()->getLogger()->logException($e);
+            $log_id = $e instanceof ExceptionInterface ? $e->getId() : '';
+            throw new RuntimeException('Failed to create error report widget: "' . $e->getMessage() . '" - see ' . ($log_id ? 'log ID ' . $log_id : 'logs') . ' for more details! Find the orignal error detail below.', null, $exception);
         } catch (FatalThrowableError $e) {
             // If anything goes wrong when trying to prettify the original error, drop prettifying
             // and throw the original exception wrapped in a notice about the failed prettification
-            throw new RuntimeException('Failed to create error report widget: "' . $e->getMessage() . '"! See orignal error detail below.', null, $exception);
+            $this->getWorkbench()->getLogger()->logException($e);
+            $log_id = $e instanceof ExceptionInterface ? $e->getId() : '';
+            throw new RuntimeException('Failed to create error report widget: "' . $e->getMessage() . '" - see ' . ($log_id ? 'log ID ' . $log_id : 'logs') . ' for more details! Find the orignal error detail below.', null, $exception);
         }
         
         $this->getWorkbench()->getLogger()->log($exception->getLogLevel(), $exception->getMessage(), array(), $exception);

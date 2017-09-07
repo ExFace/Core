@@ -373,18 +373,18 @@ class DataColumn implements DataColumnInterface
     public function exportUxonObject()
     {
         $uxon = $this->getDataSheet()->getWorkbench()->createUxonObject();
-        $uxon->expression = $this->getExpressionObj()->toString();
-        $uxon->name = $this->getName();
-        $uxon->hidden = $this->getHidden();
-        $uxon->data_type = $this->getDataType()->getName();
+        $uxon->setProperty('expression', $this->getExpressionObj()->toString());
+        $uxon->setProperty('name', $this->getName());
+        $uxon->setProperty('hidden', $this->getHidden());
+        $uxon->setProperty('data_type', $this->getDataType()->getName());
         if ($this->formula) {
-            $uxon->formula = $this->getFormula()->toString();
+            $uxon->setProperty('formula', $this->getFormula()->toString());
         }
         if ($this->attribute_alias) {
-            $uxon->attribute_alias = $this->attribute_alias;
+            $uxon->setProperty('attribute_alias', $this->attribute_alias);
         }
         if ($this->hasTotals()) {
-            $uxon->totals = $this->getTotals()->exportUxonObject();
+            $uxon->setProperty('totals', $this->getTotals()->exportUxonObject());
         }
         return $uxon;
     }
@@ -397,12 +397,12 @@ class DataColumn implements DataColumnInterface
      */
     public function importUxonObject(UxonObject $uxon)
     {
-        $this->setHidden($uxon->hidden);
-        $this->setDataType($uxon->data_type);
-        $this->setFormula($uxon->formula);
-        $this->setAttributeAlias($uxon->attribute_alias);
-        if (is_array($uxon->totals)) {
-            foreach ($uxon->totals as $u) {
+        $this->setHidden($uxon->getProperty('hidden'));
+        $this->setDataType($uxon->getProperty('data_type'));
+        $this->setFormula($uxon->getProperty('formula'));
+        $this->setAttributeAlias($uxon->getProperty('attribute_alias'));
+        if ($uxon->hasProperty('totals')) {
+            foreach ($uxon->getProperty('totals') as $u) {
                 $total = DataColumnTotalsFactory::createFromUxon($this, $u);
                 $this->getTotals()->add($total);
             }

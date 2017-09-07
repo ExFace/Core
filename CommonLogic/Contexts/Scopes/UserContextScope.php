@@ -100,8 +100,8 @@ class UserContextScope extends AbstractContextScope
         
         // Now save the cached version of the file. 
         // NOTE: if nothing was cached, than we don't need to change anything.
-        if (!is_null($this->user_context_file_contents)){
-            if (!$this->user_context_file_contents->isEmpty()){
+        if (! is_null($this->user_context_file_contents)){
+            if (! $this->user_context_file_contents->isEmpty()){
                 file_put_contents($this->getFilename(), $this->user_context_file_contents->toJson());
             } elseif (file_exists($this->getFilename())){
                 unlink($this->getFilename());

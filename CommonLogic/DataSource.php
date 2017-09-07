@@ -3,6 +3,7 @@ namespace exface\Core\CommonLogic;
 
 use exface\Core\Interfaces\DataSources\DataSourceInterface;
 use exface\Core\CommonLogic\Model\Model;
+use exface\Core\DataTypes\UxonDataType;
 
 class DataSource implements DataSourceInterface
 {
@@ -149,7 +150,7 @@ class DataSource implements DataSourceInterface
      */
     public function getConnectionConfig()
     {
-        return is_array($this->connection_config) ? $this->connection_config : array();
+        return $this->connection_config instanceof UxonObject ? $this->connection_config : new UxonObject();
     }
 
     /**
@@ -158,7 +159,7 @@ class DataSource implements DataSourceInterface
      *
      * @see \exface\Core\Interfaces\DataSources\DataSourceInterface::setConnectionConfig()
      */
-    public function setConnectionConfig($value)
+    public function setConnectionConfig(UxonObject $value)
     {
         $this->connection_config = $value;
     }

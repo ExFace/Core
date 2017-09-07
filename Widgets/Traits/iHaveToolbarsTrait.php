@@ -4,6 +4,7 @@ namespace exface\Core\Widgets\Traits;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Widgets\Toolbar;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 
 trait iHaveToolbarsTrait {
     
@@ -25,7 +26,7 @@ trait iHaveToolbarsTrait {
      */
     public function getToolbars()
     {
-        if (count($this->toolbars) == 0){
+        if (empty($this->toolbars)){
             $this->addToolbar(WidgetFactory::create($this->getPage(), $this->getToolbarWidgetType(), $this));
         }
         return $this->toolbars;
@@ -51,7 +52,7 @@ trait iHaveToolbarsTrait {
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\iHaveToolbars::setToolbars()
      */
-    public function setToolbars(array $widgets_or_uxon_objects)
+    public function setToolbars($widgets_or_uxon_objects)
     {
         foreach ($widgets_or_uxon_objects as $toolbar){
             if ($toolbar instanceof Toolbar){
@@ -61,6 +62,8 @@ trait iHaveToolbarsTrait {
                     $toolbar->setProperty('widget_type', 'DataToolbar');
                 }
                 $this->addToolbar(WidgetFactory::createFromUxon($this->getPage(), $toolbar, $this));
+            } else {
+                throw new WidgetPropertyInvalidValueError($this, 'Cannot set toolbars of ' . $this->getWidgetType() . ': expecting instantiated Toolbar widgets or their UXON descriptions - ' . gettype($widgets_or_uxon_objects) . ' given instead!');
             }
         }
         return $this;

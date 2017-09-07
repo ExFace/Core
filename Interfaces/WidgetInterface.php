@@ -6,25 +6,23 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\CommonLogic\WidgetLink;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\CommonLogic\WidgetDimension;
-use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\Widgets\Container;
 use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 
 interface WidgetInterface extends ExfaceClassInterface, iCanBeCopied
 {
 
     /**
-     * Loads data from a standard object (stdClass) into any widget using setter functions.
+     * Loads data from a standard object into any widget using setter functions.
      * E.g. calls $this->setId($source->id) for every property of the source object. Thus the behaviour of this
      * function like error handling, input checks, etc. can easily be customized by programming good
      * setters.
      *
-     * @param \stdClass $source            
+     * @param UxonObject $source            
      */
-    public function importUxonObject(\stdClass $source);
+    public function importUxonObject(UxonObject $source);
 
     /**
      * Returns the UXON description of the widget.

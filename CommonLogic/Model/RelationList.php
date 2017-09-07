@@ -163,7 +163,7 @@ class RelationList extends EntityList
         }
         
         // Use the label attribute if there are no defaults defined
-        if ($defs->count() == 0 && $label_attribute = $object->getLabelAttribute()) {
+        if ($defs->isEmpty() && $label_attribute = $object->getLabelAttribute()) {
             $defs->add($label_attribute);
         }
         

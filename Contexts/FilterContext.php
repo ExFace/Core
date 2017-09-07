@@ -28,9 +28,7 @@ class FilterContext extends AbstractContext
         $array = array();
         if ($object) {
             // Get object ids of the given object and all its parents
-            $ids = array_merge(array(
-                $object->getId()
-            ), $object->getParentObjectsIds());
+            $ids = array_merge(array($object->getId()), $object->getParentObjectsIds());
             // Look for filter conditions for these objects
             foreach ($ids as $object_id) {
                 if (is_array($this->conditions_by_object[$object_id])) {
@@ -124,11 +122,10 @@ class FilterContext extends AbstractContext
      */
     public function exportUxonObject()
     {
-        $uxon = $this->getWorkbench()->createUxonObject();
+        $uxon = new UxonObject();
         if (! $this->isEmpty()) {
-            $uxon->conditions = array();
             foreach ($this->getConditions() as $condition) {
-                $uxon->conditions[] = $condition->exportUxonObject();
+                $uxon->appendToProperty('conditions', $condition->exportUxonObject());
             }
         }
         return $uxon;
@@ -144,27 +141,21 @@ class FilterContext extends AbstractContext
     public function importUxonObject(UxonObject $uxon)
     {
         $exface = $this->getWorkbench();
-        if (is_array($uxon->conditions)) {
-            foreach ($uxon->conditions as $uxon_condition) {
+        if ($uxon->hasProperty('conditions')) {
+            foreach ($uxon->getProperty('conditions') as $uxon_condition) {
                 try {
-                    $this->addCondition(ConditionFactory::createFromStdClass($exface, $uxon_condition));
+                    $this->addCondition(ConditionFactory::createFromUxon($exface, $uxon_condition));
                 } catch (ErrorExceptionInterface $e) {
                     // ignore context that cannot be instantiated!
                 }
             }
-        } elseif (! is_null($uxon->conditions)) {
-            throw new ContextLoadError($this, 'Cannot load filter contexts: Expecting an array of UXON objects, ' . gettype($uxon->conditions) . ' given instead!');
         }
         return $this;
     }
 
     public function isEmpty()
     {
-        if (count($this->conditions_by_object) > 0) {
-            return false;
-        } else {
-            return true;
-        }
+        return empty($this->conditions_by_object) ? true : false;
     }
     
     /**

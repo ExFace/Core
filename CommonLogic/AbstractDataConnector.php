@@ -1,7 +1,6 @@
 <?php
 namespace exface\Core\CommonLogic;
 
-use exface\Core\CommonLogic\Workbench;
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 use exface\Core\Interfaces\NameResolverInterface;
 use exface\Core\Factories\EventFactory;
@@ -25,11 +24,11 @@ abstract class AbstractDataConnector implements DataConnectionInterface
      *
      * @deprecated Use DataConnectorFactory instead!
      */
-    function __construct(Workbench $exface, array $config = null)
+    function __construct(Workbench $exface, UxonObject $config = null)
     {
         $this->exface = $exface;
         if ($config) {
-            $this->importUxonObject(UxonObject::fromArray($config));
+            $this->importUxonObject($config);
         }
     }
 

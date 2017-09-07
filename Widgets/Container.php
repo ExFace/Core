@@ -250,16 +250,14 @@ class Container extends AbstractWidget implements iContainOtherWidgets
      *
      * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::setWidgets()
      */
-    public function setWidgets(array $widget_or_uxon_array)
+    public function setWidgets($widget_or_uxon_array)
     {
-        if (! is_array($widget_or_uxon_array))
-            return false;
         foreach ($widget_or_uxon_array as $w) {
-            if ($w instanceof AbstractWidget) {
+            if ($w instanceof WidgetInterface) {
                 $this->addWidget($w);
             } else {
                 $page = $this->getPage();
-                $widget = WidgetFactory::createFromUxon($page, UxonObject::fromAnything($w), $this);
+                $widget = WidgetFactory::createFromUxon($page, $w, $this);
                 $this->addWidget($widget);
             }
         }
@@ -361,12 +359,8 @@ class Container extends AbstractWidget implements iContainOtherWidgets
     public function exportUxonObject()
     {
         $uxon = parent::exportUxonObject();
-        $widgets_array = array();
         foreach ($this->getWidgets() as $widget) {
-            $widgets_array[] = $widget->exportUxonObject();
-        }
-        if (count($widgets_array) > 0) {
-            $uxon->setProperty('widgets', UxonObject::fromArray($widgets_array));
+            $uxon->appendToProperty('widgets', $widget->exportUxonObject());
         }
         return $uxon;
     }

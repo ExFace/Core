@@ -121,11 +121,11 @@ class DiagramShape extends Form implements iShowDataSet, iHaveBorders
         return $this;
     }
 
-    public function setData(\stdClass $uxon_object)
+    public function setData(UxonObject $uxon_object)
     {
         // Force the data to be a DiagramShapeData widget
         $data = $this->getPage()->createWidget('DiagramShapeData', $this);
-        unset($uxon_object->widget_type);
+        $uxon_object->unsetProperty('widget_type');
         // Import it's uxon definition
         $data->importUxonObject($uxon_object);
         $this->data = $data;

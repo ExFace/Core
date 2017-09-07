@@ -103,10 +103,9 @@ trait iHaveButtonsAndToolbarsTrait
      * @uxon-property buttons
      * @uxon-type \exface\Core\Widgets\Button[]
      * 
-     * @param array $buttons
-     * @return \exface\Core\Widgets\Traits\iHaveButtonsAndToolbarsTrait
+     * @see \exface\Core\Interfaces\Widgets\iHaveButtons::setButtons()
      */
-    public function setButtons(array $buttons)
+    public function setButtons($buttons)
     {
         $this->getToolbarMain()->setButtons($buttons);
         return $this;

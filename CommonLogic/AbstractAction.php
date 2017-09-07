@@ -213,19 +213,19 @@ abstract class AbstractAction implements ActionInterface
     }
 
     /**
-     * Loads data from a standard UXON object (stdClass) into any action using setter functions.
+     * Loads data from a standard UXON object into any action using setter functions.
      * E.g. calls $this->setId($source->id) for every property of the source object. Thus the behaviour of this
      * function like error handling, input checks, etc. can easily be customized by programming good
      * setters.
      *
-     * @param \stdClass $source            
+     * @param UxonObject $source            
      */
-    public function importUxonObject(\stdClass $uxon)
+    public function importUxonObject(UxonObject $uxon)
     {
         // Skip alias property if found because it was processed already to instantiate the right action class.
         // Setting the alias after instantiation is currently not possible beacuase it would mean recreating
         // the entire action.
-        return $this->importUxonObjectDefault(UxonObject::fromStdClass($uxon), array(
+        return $this->importUxonObjectDefault($uxon, array(
             'alias'
         ));
     }
@@ -310,9 +310,9 @@ abstract class AbstractAction implements ActionInterface
      *
      * @see \exface\Core\Interfaces\Actions\ActionInterface::setFollowupActions()
      */
-    public function setFollowupActions(array $actions_array)
+    public function setFollowupActions($actions_array)
     {
-        $this->followup_actions = $actions_array;
+        // TODO
     }
 
     public function addFollowupAction(ActionInterface $action)
@@ -757,13 +757,13 @@ abstract class AbstractAction implements ActionInterface
     public function exportUxonObject()
     {
         $uxon = $this->getWorkbench()->createUxonObject();
-        $uxon->alias = $this->getAliasWithNamespace();
+        $uxon->setProperty('alias', $this->getAliasWithNamespace());
         if ($this->getCalledByWidget()) {
-            $uxon->called_by_widget = $this->getCalledByWidget()->createWidgetLink()->exportUxonObject();
+            $uxon->setProperty('called_by_widget', $this->getCalledByWidget()->createWidgetLink()->exportUxonObject());
         }
-        $uxon->template_alias = $this->getTemplateAlias();
-        $uxon->input_data_sheet = $this->getInputDataSheet(false)->exportUxonObject();
-        $uxon->disabled_behaviors = UxonObject::fromArray($this->getDisabledBehaviors());
+        $uxon->setProperty('template_alias', $this->getTemplateAlias());
+        $uxon->setProperty('input_data_sheet',  $this->getInputDataSheet(false)->exportUxonObject());
+        $uxon->setProperty('disabled_behaviors', UxonObject::fromArray($this->getDisabledBehaviors()));
         
         if (empty($this->getInputMappers())){
             $input_mappers = new UxonObject();
@@ -811,9 +811,9 @@ abstract class AbstractAction implements ActionInterface
      *
      * @see \exface\Core\Interfaces\Actions\ActionInterface::setDisabledBehaviors()
      */
-    public function setDisabledBehaviors(array $behavior_aliases)
+    public function setDisabledBehaviors(UxonObject $behavior_aliases)
     {
-        $this->disabled_behaviors = $behavior_aliases;
+        $this->disabled_behaviors = $behavior_aliases->toArray();
         return $this;
     }
 
@@ -1061,7 +1061,7 @@ abstract class AbstractAction implements ActionInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Actions\ActionInterface::setInputMappers()
      */
-    public function setInputMappers(array $data_sheet_mappers_or_uxon_objects)
+    public function setInputMappers($data_sheet_mappers_or_uxon_objects)
     {
         foreach ($data_sheet_mappers_or_uxon_objects as $instance){
             if ($instance instanceof DataSheetMapper){

@@ -70,7 +70,7 @@ class UiPage implements UiPageInterface
         }
         
         // Remember the first widget added automatically as the root widget of the page
-        if (count($this->widgets) === 0 && !$widget->is('ContextBar')) {
+        if (empty($this->widgets) && ! $widget->is('ContextBar')) {
             $this->widget_root = $widget;
         }
         

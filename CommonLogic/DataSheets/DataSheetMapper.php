@@ -186,7 +186,7 @@ class DataSheetMapper implements DataSheetMapperInterface {
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSheets\DataSheetMapperInterface::setColumnMappings()
      */
-    public function setColumnMappings(array $ColumnMappingsOrUxonObjects)
+    public function setColumnMappings($ColumnMappingsOrUxonObjects)
     {
         foreach ($ColumnMappingsOrUxonObjects as $instance){
             if ($instance instanceof DataColumnMappingInterface){
@@ -230,7 +230,7 @@ class DataSheetMapper implements DataSheetMapperInterface {
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSheets\DataSheetMapperInterface::setExpressionMappings()
      */
-    public function setExpressionMappings(array $uxonObjects)
+    public function setExpressionMappings(UxonObject $uxonObjects)
     {
         foreach ($uxonObjects as $instance){
             if ($instance instanceof UxonObject){

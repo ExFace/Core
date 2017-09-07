@@ -127,7 +127,7 @@ class ShowWidget extends AbstractAction implements iShowWidget
     {
         if ($widget_or_uxon_object instanceof WidgetInterface) {
             $widget = $widget_or_uxon_object;
-        } elseif ($widget_or_uxon_object instanceof \stdClass) {
+        } elseif ($widget_or_uxon_object instanceof UxonObject) {
             $this->setWidgetUxon($widget_or_uxon_object);
             $widget = null;
         } else {
@@ -404,10 +404,10 @@ class ShowWidget extends AbstractAction implements iShowWidget
     public function exportUxonObject()
     {
         $uxon = parent::exportUxonObject();
-        $uxon->widget_id = $this->getWidgetId();
-        $uxon->page_id = $this->getCalledOnUiPage()->getId();
-        $uxon->prefill_with_filter_context = $this->getPrefillWithFilterContext();
-        $uxon->prefill_with_input_data = $this->getPrefillWithInputData();
+        $uxon->setProperty('widget_id', $this->getWidgetId());
+        $uxon->setProperty('page_id', $this->getCalledOnUiPage()->getId());
+        $uxon->setProperty('prefill_with_filter_context', $this->getPrefillWithFilterContext());
+        $uxon->setProperty('prefill_with_input_data', $this->getPrefillWithInputData());
         if ($this->getPrefillDataSheet()) {
             $uxon->setProperty('prefill_data_sheet', $this->getPrefillDataSheet()->exportUxonObject());
         }
@@ -433,7 +433,7 @@ class ShowWidget extends AbstractAction implements iShowWidget
      * @uxon-property page_id
      * @uxon-type string
      * 
-     * @param unknown $value
+     * @param string $value
      * @return \exface\Core\Actions\ShowWidget
      */
     public function setPageId($value)

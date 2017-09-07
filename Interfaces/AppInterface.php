@@ -6,6 +6,7 @@ use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Contexts\DataContext;
 use exface\Core\Exceptions\Actions\ActionNotFoundError;
 use exface\Core\Exceptions\InvalidArgumentException;
+use exface\Core\CommonLogic\UxonObject;
 
 /**
  * The app class provieds access to actions, configs, translations, etc. of
@@ -33,11 +34,15 @@ interface AppInterface extends ExfaceClassInterface, AliasInterface
     /**
      * Returns an action object
      *
-     * @param string $action_alias            
+     * @param string $action_alias 
+     * @param WidgetInterface $called_by_widget
+     * @param UxonObject $uxon_description
+     *           
      * @throws ActionNotFoundError if the alias cannot be resolved
+     * 
      * @return ActionInterface
      */
-    public function getAction($action_alias, AbstractWidget $called_by_widget = null, \stdClass $uxon_description = null);
+    public function getAction($action_alias, WidgetInterface $called_by_widget = null, UxonObject $uxon_description = null);
 
     /**
      * Returns the path to the app's folder relative to the vendor folder

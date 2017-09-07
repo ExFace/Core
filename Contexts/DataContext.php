@@ -153,7 +153,7 @@ class DataContext extends AbstractContext
     public function importUxonObject(UxonObject $uxon)
     {
         foreach ($uxon as $namespace => $vars) {
-            if (! $vars || count($vars) <= 0) {
+            if (! ($vars instanceof UxonObject) || $vars->isEmpty()) {
                 continue;
             }
             
@@ -182,7 +182,7 @@ class DataContext extends AbstractContext
     {
         $uxon = $this->getWorkbench()->createUxonObject();
         foreach ($this->getNamespacesActive() as $namespace) {
-            if (count($this->getVariablesFromNamespace($namespace)) <= 0) {
+            if (count($this->getVariablesFromNamespace($namespace)) === 0) {
                 continue;
             }
             
@@ -213,8 +213,8 @@ class DataContext extends AbstractContext
 
     protected function importUxonForVariable($namespace, $variable_name, $value)
     {
-        if (is_array($value) || $value instanceof \stdClass) {
-            $this->setVariable($namespace, $variable_name, (array) $value);
+        if ($value instanceof UxonObject) {
+            $this->setVariable($namespace, $variable_name, $value->toArray());
         } elseif (! is_object($value)) {
             $this->setVariable($namespace, $variable_name, $value);
         } else {

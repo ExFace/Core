@@ -32,19 +32,6 @@ class DataAggregatorList extends EntityList implements DataAggregatorListInterfa
      */
     public function importUxonObject(UxonObject $uxon)
     {
-        if (is_array($uxon->getProperty('aggregators'))) {
-            $this->importUxonArray($uxon->getProperty('aggregators'));
-        }
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\DataSheets\DataAggregatorListInterface::importUxonArray()
-     */
-    public function importUxonArray(array $uxon)
-    {
         $data_sheet = $this->getParent();
         foreach ($uxon as $u) {
             $aggr = DataAggregatorFactory::createFromUxon($data_sheet, $u);

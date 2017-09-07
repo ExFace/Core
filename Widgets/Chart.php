@@ -113,21 +113,25 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveToolbars, iHave
      * @uxon-property axis_x
      * @uxon-type \exface\Core\Widget\ChartAxis[]
      *
-     * @param ChartAxis|UxonObject|array $axis_or_uxon_object_or_array            
+     * @param ChartAxis|UxonObject $axis_or_uxon_object            
      * @return \exface\Core\Widgets\Chart
      */
-    public function setAxisX($axis_or_uxon_object_or_array)
+    public function setAxisX($axis_or_uxon_object)
     {
-        if ($axis_or_uxon_object_or_array instanceof ChartAxis) {
-            $this->addAxis('x', $axis_or_uxon_object_or_array);
-        } elseif (is_array($axis_or_uxon_object_or_array)) {
-            foreach ($axis_or_uxon_object_or_array as $axis) {
-                $this->setAxisX($axis);
+        if ($axis_or_uxon_object instanceof ChartAxis) {
+            $this->addAxis('x', $axis_or_uxon_object);
+        } elseif ($axis_or_uxon_object instanceof UxonObject) {
+            if ($axis_or_uxon_object->isArray()) {
+                foreach ($axis_or_uxon_object as $axis) {
+                    $this->setAxisX($axis);
+                }
+            } else {
+                $axis = $this->getPage()->createWidget('ChartAxis', $this);
+                $axis->importUxonObject($axis_or_uxon_object);
+                $this->addAxis('x', $axis);
             }
         } else {
-            $axis = $this->getPage()->createWidget('ChartAxis', $this);
-            $axis->importUxonObject($axis_or_uxon_object_or_array);
-            $this->addAxis('x', $axis);
+            throw new WidgetPropertyInvalidValueError($this, 'Cannot set X axis of ' . $this->getWidgetType() . ': expecting instantiated axis widget or its UXON description or an array of UXON descriptions for multiple axes - ' . gettype($axis_or_uxon_object) . ' given instead!');
         }
         return $this;
     }
@@ -164,21 +168,25 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveToolbars, iHave
      * @uxon-property axis_y
      * @uxon-type \exface\Core\Widget\ChartAxis[]
      *
-     * @param unknown $axis_or_uxon_object_or_array            
+     * @param ChartAxis|UxonObject $axis_or_uxon_object_or_array            
      * @return \exface\Core\Widgets\Chart
      */
-    public function setAxisY($axis_or_uxon_object_or_array)
+    public function setAxisY($axis_or_uxon_object)
     {
-        if ($axis_or_uxon_object_or_array instanceof ChartAxis) {
-            $this->addAxis('y', $axis_or_uxon_object_or_array);
-        } elseif (is_array($axis_or_uxon_object_or_array)) {
-            foreach ($axis_or_uxon_object_or_array as $axis) {
-                $this->setAxisY($axis);
+        if ($axis_or_uxon_object instanceof ChartAxis) {
+            $this->addAxis('y', $axis_or_uxon_object);
+        } elseif ($axis_or_uxon_object instanceof UxonObject) {
+            if ($axis_or_uxon_object->isArray()) {
+                foreach ($axis_or_uxon_object as $axis) {
+                    $this->setAxisY($axis);
+                }
+            } else {
+                $axis = $this->getPage()->createWidget('ChartAxis', $this);
+                $axis->importUxonObject($axis_or_uxon_object);
+                $this->addAxis('y', $axis);
             }
         } else {
-            $axis = $this->getPage()->createWidget('ChartAxis', $this);
-            $axis->importUxonObject($axis_or_uxon_object_or_array);
-            $this->addAxis('y', $axis);
+            throw new WidgetPropertyInvalidValueError($this, 'Cannot set Y axis of ' . $this->getWidgetType() . ': expecting instantiated axis widget or its UXON description or an array of UXON descriptions for multiple axes - ' . gettype($axis_or_uxon_object) . ' given instead!');
         }
         return $this;
     }
@@ -231,7 +239,7 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveToolbars, iHave
      *
      * @see \exface\Core\Interfaces\Widgets\iShowDataSet::setData()
      */
-    public function setData(\stdClass $uxon_object)
+    public function setData(UxonObject $uxon_object)
     {
         $data = $this->getPage()->createWidget('Data', $this);
         $data->setMetaObject($this->getMetaObject());
@@ -310,20 +318,24 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveToolbars, iHave
      * @uxon-property series
      * @uxon-type \exface\Core\Widget\ChartSeries[]
      *
-     * @param unknown $series_or_uxon_object_or_array            
+     * @param ChartSeries|UxonObject $series_or_uxon_object            
      * @return \exface\Core\Widgets\Chart
      */
-    public function setSeries($series_or_uxon_object_or_array)
+    public function setSeries($series_or_uxon_object)
     {
-        if ($series_or_uxon_object_or_array instanceof ChartAxis) {
-            $this->addSeries($series_or_uxon_object_or_array);
-        } elseif (is_array($series_or_uxon_object_or_array)) {
-            foreach ($series_or_uxon_object_or_array as $series) {
-                $this->setSeries($series);
+        if ($series_or_uxon_object instanceof ChartSeries) {
+            $this->addSeries($series_or_uxon_object);
+        } elseif ($series_or_uxon_object instanceof UxonObject) {
+            if ($series_or_uxon_object->isArray()){
+                foreach ($series_or_uxon_object as $series){
+                    $this->setSeries($series);
+                }
+            } else {
+                $series = $this->createSeries(null, $series_or_uxon_object);
+                $this->addSeries($series);
             }
         } else {
-            $series = $this->createSeries(null, $series_or_uxon_object_or_array);
-            $this->addSeries($series);
+            throw new WidgetPropertyInvalidValueError($this, 'Cannot set series in ' . $this->getWidgetType() . ': expecting instantiated ChartSeries widget or its UXON description or an array of UXON descriptions for multiple series - ' . gettype($series_or_uxon_object) . ' given instead!');
         }
         return $this;
     }
@@ -331,10 +343,10 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveToolbars, iHave
     /**
      *
      * @param string $chart_type            
-     * @param \stdClass $uxon            
+     * @param UxonObject $uxon            
      * @return ChartSeries
      */
-    public function createSeries($chart_type = null, \stdClass $uxon = null)
+    public function createSeries($chart_type = null, UxonObject $uxon = null)
     {
         $series = $this->getPage()->createWidget('ChartSeries', $this);
         if ($uxon) {

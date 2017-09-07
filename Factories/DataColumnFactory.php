@@ -42,7 +42,7 @@ abstract class DataColumnFactory extends AbstractFactory
      */
     public static function createFromUxon(DataSheetInterface $data_sheet, UxonObject $uxon)
     {
-        $result = self::createFromString($data_sheet, ($uxon->expression ? $uxon->expression : $uxon->attribute_alias), $uxon->name);
+        $result = self::createFromString($data_sheet, ($uxon->hasProperty('expression') ? $uxon->getProperty('expression') : $uxon->getProperty('attribute_alias')), $uxon->getProperty('name'));
         $result->importUxonObject($uxon);
         return $result;
     }

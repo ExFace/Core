@@ -51,10 +51,9 @@ class ButtonGroup extends Container implements iHaveButtons, iCanBeAligned, iUse
      * @uxon-type \exface\Core\Widgets\Button[]
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\Widgets\iHaveButtons::setButtons()
      */
-    public function setButtons(array $buttons_array)
+    public function setButtons($buttons_array)
     {
         foreach ($buttons_array as $b) {
             if ($b instanceof Button){
