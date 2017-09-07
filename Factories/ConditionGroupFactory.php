@@ -44,10 +44,10 @@ abstract class ConditionGroupFactory extends AbstractUxonFactory
                     case EXF_LOGICAL_NOT:
                     case EXF_LOGICAL_OR:
                     case EXF_LOGICAL_XOR:
-                        $group->addNestedGroup(self::createFromObjectOrArray($exface, $part));
+                        $group->addNestedGroup(self::createFromUxonOrArray($exface, $part));
                         break;
                     default:
-                        $group->addCondition(ConditionFactory::createFromObjectOrArray($exface, $part));
+                        $group->addCondition(ConditionFactory::createFromUxonOrArray($exface, $part));
                 }
             } else {
                 throw new UnexpectedValueException('Cannot parse condition "' . print_r($part) . '" of condition group "' . print_r($array_notation) . '"!');
@@ -63,7 +63,7 @@ abstract class ConditionGroupFactory extends AbstractUxonFactory
      * @throws UnexpectedValueException
      * @return ConditionGroup
      */
-    public static function createFromObjectOrArray(Workbench $exface, $uxon_or_array)
+    public static function createFromUxonOrArray(Workbench $exface, $uxon_or_array)
     {
         if ($uxon_or_array instanceof UxonObject) {
             return self::createFromUxon($exface, $uxon_or_array);

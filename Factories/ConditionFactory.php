@@ -2,7 +2,6 @@
 namespace exface\Core\Factories;
 
 use exface\Core\CommonLogic\Workbench;
-use exface\Core\CommonLogic\Model\Expression;
 use exface\Core\CommonLogic\Model\Condition;
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
@@ -91,7 +90,7 @@ abstract class ConditionFactory extends AbstractUxonFactory
      * @throws UnexpectedValueException
      * @return Condition
      */
-    public static function createFromObjectOrArray(Workbench $exface, $uxon_or_array)
+    public static function createFromUxonOrArray(Workbench $exface, $uxon_or_array)
     {
         if ($uxon_or_array instanceof UxonObject) {
             return self::createFromUxon($exface, $uxon_or_array);
