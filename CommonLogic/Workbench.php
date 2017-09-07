@@ -170,6 +170,8 @@ class Workbench
 
     /**
      *
+     * @throws RuntimeException if the context manager was not started yet
+     * 
      * @return ContextManager
      */
     public function context()
