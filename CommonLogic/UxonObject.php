@@ -155,8 +155,13 @@ class UxonObject implements \IteratorAggregate
      */
     public function setProperty($property_name, $scalar_or_uxon)
     {
-        $this->array[$property_name] = $scalar_or_uxon;
+        $this->array[$property_name] = $this->sanitizePropertyValue($scalar_or_uxon);
         return $this;
+    }
+    
+    protected function sanitizePropertyValue($scalar_or_uxon)
+    {
+        return $scalar_or_uxon instanceof UxonObject ? $scalar_or_uxon->toArray() : $scalar_or_uxon;
     }
     
     /**
@@ -173,13 +178,13 @@ class UxonObject implements \IteratorAggregate
         } elseif (is_scalar($this->array[$property_name])){
             throw new UxonParserError($this, 'Cannot append "' . $scalar_or_uxon . '" to UXON property "' . $property_name . '": the property is a of a scalar type!');
         }
-        $this->array[$property_name][] = $scalar_or_uxon;
+        $this->array[$property_name][] = $this->sanitizePropertyValue($scalar_or_uxon);
         return $this;
     }
     
     public function append($scalar_or_uxon)
     {
-        $this->array[] = $scalar_or_uxon;
+        $this->array[] = $this->sanitizePropertyValue($scalar_or_uxon);
         return $this;
     }
     
