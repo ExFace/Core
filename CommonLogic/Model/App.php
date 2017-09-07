@@ -221,10 +221,8 @@ class App implements AppInterface
         // Load the installation config of the app
         $config->loadConfigFile($this->getWorkbench()->filemanager()->getPathToConfigFolder() . DIRECTORY_SEPARATOR . $this->getConfigFileName(), AppInterface::CONFIG_SCOPE_INSTALLATION);
         
-        // Load the user config if there is one
-        // IDEA Enable user-configs for the core app too: currently custom configs are not possible for the core app,
-        // because it's config is loaded before the context.
-        if ($this->getWorkbench()->context()) {
+        // Load the user config if the workbench is already fully started and thus the user is known
+        if ($this->getWorkbench()->isStarted()) {
             $config->loadConfigFile($this->getWorkbench()->context()->getScopeUser()->getUserDataFolderAbsolutePath() . DIRECTORY_SEPARATOR . static::CONFIG_FOLDER_IN_USER_DATA . DIRECTORY_SEPARATOR . $this->getConfigFileName(), AppInterface::CONFIG_SCOPE_USER);
         }
         
