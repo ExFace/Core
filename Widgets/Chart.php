@@ -328,7 +328,7 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveToolbars, iHave
         } elseif ($series_or_uxon_object instanceof UxonObject) {
             if ($series_or_uxon_object->isArray()){
                 foreach ($series_or_uxon_object as $series){
-                    $this->addSeries($series);
+                    $this->setSeries($series);
                 }
             } else {
                 $series = $this->createSeries(null, $series_or_uxon_object);
