@@ -111,6 +111,8 @@ class ActionContext extends AbstractContext
      */
     public function exportUxonObject()
     {
+        $uxon = new UxonObject();
+        
         // First, grab the raw history
         $array = $this->action_history_raw;
         // ... and add the actions performed in the current request to the end of ist
@@ -119,12 +121,12 @@ class ActionContext extends AbstractContext
             if (! $action->isDataModified())
                 continue;
             // Otherwise create a new UXON object to hold the action itself and the undo data, if the action is undoable.
-            $uxon = new UxonObject();
-            $uxon->setProperty('action', $action->exportUxonObject());
+            $action_uxon = new UxonObject();
+            $action_uxon->setProperty('action', $action->exportUxonObject());
             if ($action->isUndoable()) {
-                $uxon->setProperty('undo_data', $action->getUndoDataSerializable());
+                $action_uxon->setProperty('undo_data', $action->getUndoDataSerializable());
             }
-            $array[] = $uxon;
+            $array[] = $action_uxon;
         }
         
         // Make sure, the array is not bigger, than the limit
@@ -133,9 +135,8 @@ class ActionContext extends AbstractContext
         }
         
         // Pack into a uxon object
-        $uxon = $this->getWorkbench()->createUxonObject();
         if (count($array) > 0) {
-            $uxon->setProperty('action_history', $array);
+            $uxon->setProperty('action_history', new UxonObject($array));
         }
         return $uxon;
     }

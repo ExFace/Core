@@ -5,6 +5,7 @@ use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\UxonMapError;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Exceptions\UxonParserError;
+use exface\Core\DataTypes\UxonDataType;
 
 class UxonObject implements \IteratorAggregate
 {

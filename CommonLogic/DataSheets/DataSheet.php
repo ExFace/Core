@@ -1329,19 +1329,12 @@ class DataSheet implements DataSheetInterface
         $uxon = new UxonObject();
         $uxon->setProperty('object_alias', $this->getMetaObject()->getAliasWithNamespace());
         
-        $columns = [];
         foreach ($this->getColumns() as $col) {
-            $columns[] = $col->exportUxonObject();
-        }
-        if (! empty($columns)){
-            $uxon->setProperty('columns', $columns);
+            $uxon->appendToProperty('columns', $col->exportUxonObject());
         }
         
         if (! $this->isEmpty()) {
-            $rows = $this->getRows();
-        }
-        if (! empty($rows)){
-            $uxon->setProperty('rows', $rows);
+            $uxon->setProperty('rows', $this->getRows());
         }
         
         $uxon->setProperty('totals_rows', $this->getTotalsRows());
@@ -1349,21 +1342,14 @@ class DataSheet implements DataSheetInterface
         $uxon->setProperty('rows_on_page', $this->getRowsOnPage());
         $uxon->setProperty('row_offset', $this->getRowOffset());
         
-        if ($this->hasSorters()) {
-            $sorters = [];
-            foreach ($this->getSorters() as $sorter) {
-                $sorters[] = $sorter->exportUxonObject();
-            }
-            $uxon->setProperty('sorters', $sorters);
+        foreach ($this->getSorters() as $sorter) {
+            $uxon->appendToProperty('sorters', $sorter->exportUxonObject());
         }
         
-        if ($this->hasAggregators()) {
-            $aggregators = [];
-            foreach ($this->getAggregators() as $aggr) {
-                $aggregators[] = $aggr->exportUxonObject();
-            }
-            $uxon->setProperty('aggregators', $aggregators);
+        foreach ($this->getAggregators() as $aggr) {
+            $uxon->appendToProperty('aggregators', $aggr->exportUxonObject());
         }
+        
         return $uxon;
     }
 

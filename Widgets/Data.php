@@ -1305,25 +1305,19 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
         $uxon->setProperty('lazy_loading_action', $this->getLazyLoadingAction());
         $uxon->setProperty('lazy_loading_group_id', $this->getLazyLoadingGroupId());
         
-        $col_groups = array();
         foreach ($this->getColumnGroups() as $col_group) {
-            $col_groups[] = $col_group->exportUxonObject();
+            $uxon->appendToProperty('columns', $col_group->exportUxonObject());
         }
-        $uxon->setProperty('columns', $col_groups);
         
         // TODO export toolbars to UXON instead of buttons. Currently all
         // information about toolbars is lost.
-        $buttons = array();
         foreach ($this->getButtons() as $button) {
-            $buttons[] = $button->exportUxonObject();
+            $uxon->appendToProperty('buttons', $button->exportUxonObject());
         }
-        $uxon->setProperty('buttons', $buttons);
         
-        $filters = array();
         foreach ($this->getFilters() as $filter) {
-            $filters[] = $filter->exportUxonObject();
+            $uxon->appendToProperty('filters', $filter->exportUxonObject());
         }
-        $uxon->setProperty('filters', $filters);
         
         $uxon->setProperty('sorters', $this->getSorters());
         

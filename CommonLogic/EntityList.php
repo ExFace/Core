@@ -47,13 +47,13 @@ class EntityList extends AbstractExfaceClass implements EntityListInterface
 
     public function exportUxonObject()
     {
-        $result = array();
+        $uxon = new UxonObject();
         foreach ($this->getAll() as $object) {
             if ($object instanceof iCanBeConvertedToUxon) {
-                $result[] = $object->exportUxonObject();
+                $uxon->append($object->exportUxonObject());
             }
         }
-        return $result;
+        return $uxon;
     }
 
     /**
