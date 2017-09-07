@@ -282,13 +282,22 @@ class UxonObject implements \IteratorAggregate
         return $this;
     }
     
-    public function isArray()
+    public function isArray($ignore_gaps_in_keys = false)
     {
+        if ($this->isEmpty()){
+            return true;
+        }
+        
         foreach (array_keys($this->array) as $key){
             if (!is_numeric($key)){
                 return false;
             }
         }
+        
+        if ($ignore_gaps_in_keys == false){
+            return array_keys($this->array) === range(0, count($this->array) - 1);
+        }
+        
         return true;
     }
     

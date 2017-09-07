@@ -160,43 +160,48 @@ class StateMachineBehavior extends AbstractBehavior
      * The states are set by a JSON object or array with state ids for keys and an objects describing the state for values.
      *
      * Example:
-     * "states": {
-     * "10": {
-     * "buttons": {
-     * "10": {
-     * "caption": "20 Annahme bestätigen",
-     * "action": {
-     * "alias": "exface.Core.UpdateData",
-     * "input_data_sheet": {
-     * "object_alias": "alexa.RMS.CUSTOMER_COMPLAINT",
-     * "columns": [
-     * {
-     * "attribute_alias": "STATE_ID",
-     * "formula": "=NumberValue('20')"
-     * },
-     * {
-     * "attribute_alias": "TS_UPDATE"
-     * }
-     * ]
-     * }
-     * }
-     * }
-     * },
-     * "disabled_attributes_aliases": [
-     * "COMPLAINT_NO"
-     * ],
-     * "transitions": [
-     * 10,
-     * 20,
-     * 30,
-     * 50,
-     * 60,
-     * 70,
-     * 90,
-     * 99
-     * ]
-     * }
-     * }
+     *  "states": {
+     *      "10": {
+     *          "buttons": {
+     *              "10": {
+     *                  "caption": "20 Annahme bestätigen",
+     *                  "action": {
+     *                      "alias": "exface.Core.UpdateData",
+     *                      "input_data_sheet": {
+     *                          "object_alias": "alexa.RMS.CUSTOMER_COMPLAINT",
+     *                          "columns": [
+     *                              {
+     *                                  "attribute_alias": "STATE_ID",
+     *                                  "formula": "=NumberValue('20')"
+     *                              },
+     *                              {
+     *                                  "attribute_alias": "TS_UPDATE"
+     *                              }
+     *                          ]
+     *                      }
+     *                  }
+     *              }
+     *          },
+     *          "disabled_attributes_aliases": [
+     *              "COMPLAINT_NO"
+     *          ],
+     *          "transitions": [
+     *              10,
+     *              20,
+     *              30,
+     *              50,
+     *              60,
+     *              70,
+     *              90,
+     *              99
+     *          ]
+     *      },
+     *      "20": {
+     *          "buttons": ...,
+     *          "transitions": ...,
+     *          ...
+     *      }
+     *  }
      *
      * @uxon-property states
      * @uxon-type object
@@ -207,7 +212,8 @@ class StateMachineBehavior extends AbstractBehavior
      */
     public function setStates($value)
     {
-        $this->uxon_states = UxonObject::fromAnything($value);
+        $value = UxonObject::fromAnything($value);
+        $this->uxon_states = $value;
         
         if ($value instanceof UxonObject) {
             if ($value->isArray()) {
