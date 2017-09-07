@@ -152,8 +152,13 @@ class DataColumnMapping implements DataColumnMappingInterface {
      */
     public function map(DataSheetInterface $fromSheet, DataSheetInterface $toSheet)
     {
-        if ($fromCol = $fromSheet->getColumns()->getByExpression($this->getFromExpression())){
-            $toSheet->getColumns()->addFromExpression($this->getToExpression(), '', $fromCol->getHidden())->setValues($fromCol->getValues(false));
+        $fromExpr = $this->getFromExpression();
+        $toExpr = $this->getToExpression();
+        
+        if ($fromExpr->isString()){
+            $toSheet->getColumns()->addFromExpression($toExpr)->setValuesByExpression($fromExpr);
+        } elseif ($fromCol = $fromSheet->getColumns()->getByExpression($fromExpr)){
+            $toSheet->getColumns()->addFromExpression($toExpr, '', $fromCol->getHidden())->setValues($fromCol->getValues(false));
         }
         
         return $toSheet;
