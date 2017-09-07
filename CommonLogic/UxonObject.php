@@ -171,8 +171,6 @@ class UxonObject implements \IteratorAggregate
      */
     public function extend(UxonObject $extend_by_uxon)
     {
-        // FIXME For some reason array_merge_recursive produces very strange nested arrays here if the second array
-        // should overwrite values from the first one with the same value
         // return self::fromStdClass((object) array_merge((array) $this, (array) $extend_by_uxon));
         return new self(array_replace_recursive($this->array, $extend_by_uxon->toArray()));
     }

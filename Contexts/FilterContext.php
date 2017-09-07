@@ -28,9 +28,7 @@ class FilterContext extends AbstractContext
         $array = array();
         if ($object) {
             // Get object ids of the given object and all its parents
-            $ids = array_merge(array(
-                $object->getId()
-            ), $object->getParentObjectsIds());
+            $ids = array_merge(array($object->getId()), $object->getParentObjectsIds());
             // Look for filter conditions for these objects
             foreach ($ids as $object_id) {
                 if (is_array($this->conditions_by_object[$object_id])) {
