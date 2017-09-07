@@ -2,7 +2,6 @@
 namespace exface\Core\CommonLogic;
 
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
-use exface\Core\CommonLogic\Workbench;
 use exface\Core\Interfaces\EntityListInterface;
 use exface\Core\Interfaces\NameResolverInterface;
 use exface\Core\Interfaces\iCanBeCopied;
@@ -37,7 +36,7 @@ class EntityList extends AbstractExfaceClass implements EntityListInterface
     /**
      * An EntityList is alway attached to some parent object, so a reference to that object is required in the constructor
      *
-     * @param exface $exface            
+     * @param Workbench $exface            
      * @param mixed $parent_object            
      */
     public function __construct(Workbench $exface, $parent_object)
@@ -95,34 +94,6 @@ class EntityList extends AbstractExfaceClass implements EntityListInterface
         $exface = $this->getWorkbench();
         foreach ($uxon as $u) {
             $this->add($factory_class_name::from_uxon($exface, $u));
-        }
-    }
-
-    /**
-     * The generic entity list can automatically instantiate any list of UXON objects if a factory class is provided
-     * or had been registered for this entity list via set_entity_factory_name().
-     * If so, factory::createFromUxon($exface, $uxon)
-     * will be called for each element of the array. The resultin entities will be added to the list. This, of course,
-     * only works if the entities have a factory, that supports this kind of instantiation.
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\EntityListInterface::importUxonArray()
-     */
-    public function importUxonArray(array $uxon, $factory_class_name = null)
-    {
-        if (is_null($factory_class_name)) {
-            $factory_class_name = $this->getEntityFactoryName();
-        }
-        if (is_null($factory_class_name)) {
-            throw new UnexpectedValueException('Cannot instantiate EntityList from UXON: factory class for contained objects not speicified!');
-        }
-        if (! class_exists($factory_class_name)) {
-            $factory_class_name = '\\exface\\Core\\Factories\\' . $factory_class_name;
-        }
-        $exface = $this->getWorkbench();
-        foreach ($uxon as $u) {
-            $this->add($factory_class_name::createFromUxon($exface, $u));
         }
     }
 

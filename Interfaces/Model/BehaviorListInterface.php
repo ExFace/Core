@@ -53,15 +53,5 @@ interface BehaviorListInterface extends iCanBeConvertedToUxon, \IteratorAggregat
      * @return boolean
      */
     public function isEmpty();
-
-    /**
-     * Uses the given array of UXON objects to populate the entity list.
-     * Each UXON object in the array
-     * will be instantiated and added to the list.
-     *
-     * @param array $uxon            
-     * @return void
-     */
-    public function importUxonArray(array $uxon);
 }
 ?>
