@@ -93,7 +93,7 @@ class EntityList extends AbstractExfaceClass implements EntityListInterface
             $factory_class_name = '\\exface\\Core\\Factories\\' . $factory_class_name;
         }
         $exface = $this->getWorkbench();
-        foreach ((array) $uxon as $u) {
+        foreach ($uxon as $u) {
             $this->add($factory_class_name::from_uxon($exface, $u));
         }
     }
@@ -121,7 +121,7 @@ class EntityList extends AbstractExfaceClass implements EntityListInterface
             $factory_class_name = '\\exface\\Core\\Factories\\' . $factory_class_name;
         }
         $exface = $this->getWorkbench();
-        foreach ((array) $uxon as $u) {
+        foreach ($uxon as $u) {
             $this->add($factory_class_name::createFromUxon($exface, $u));
         }
     }
@@ -133,7 +133,7 @@ class EntityList extends AbstractExfaceClass implements EntityListInterface
      *
      * @param mixed $entity            
      * @param mixed $key            
-     * @return UxonObjectList
+     * @return EntityList
      */
     public function add($entity, $key = null)
     {
