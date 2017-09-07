@@ -35,7 +35,7 @@ class WidgetLink implements WidgetLinkInterface
     public function parseLink($string_or_object)
     {
         if ($string_or_object instanceof UxonObject) {
-            return $this->parseLinkObject($string_or_object);
+            return $this->parseLinkUxon($string_or_object);
         } else {
             return $this->parseLinkString($string_or_object);
         }
@@ -88,10 +88,10 @@ class WidgetLink implements WidgetLinkInterface
         return $this;
     }
 
-    public function parseLinkObject(UxonObject $object)
+    public function parseLinkUxon(UxonObject $object)
     {
-        $this->setPageId($object->page_id);
-        $this->setWidgetId($object->widget_id);
+        $this->setPageId($object->getProperty('page_id'));
+        $this->setWidgetId($object->getProperty('widget_id'));
         return $this;
     }
 
@@ -103,7 +103,7 @@ class WidgetLink implements WidgetLinkInterface
      */
     public function importUxonObject(UxonObject $uxon)
     {
-        return $this->parseLinkObject($uxon);
+        return $this->parseLinkUxon($uxon);
     }
 
     /**
@@ -208,7 +208,7 @@ class WidgetLink implements WidgetLinkInterface
         
         if ($uxon->hasProperty('id')){
             if ($uxon->getProperty('id') == $widget_id) {
-                $result = $uxon;
+                return $uxon;
             }
         }
         
