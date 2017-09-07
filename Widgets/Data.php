@@ -825,8 +825,8 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
         $this->getConfiguratorWidget()->addSorter($attribute_alias, $direction);
         // TODO move sorters completely to configuration widget!
         $sorter = new UxonObject();
-        $sorter->attribute_alias = $attribute_alias;
-        $sorter->direction = $direction;
+        $sorter->setProperty('attribute_alias', $attribute_alias);
+        $sorter->setProperty('direction', $direction);
         $this->sorters[] = $sorter;
         return $this;
     }

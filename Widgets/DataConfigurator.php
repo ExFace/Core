@@ -122,15 +122,15 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
      */
     public function setFilters(UxonObject $uxon_objects)
     {
-        foreach ($uxon_objects as $f) {
+        foreach ($uxon_objects as $uxon) {
             $include_in_quick_search = false;
             // Add to quick search if required
-            if ($f->include_in_quick_search === true) {
+            if ($uxon->getProperty('include_in_quick_search') === true) {
                 $include_in_quick_search = true;
             }
-            unset($f->include_in_quick_search);
+            $uxon->unsetProperty('include_in_quick_search');
             
-            $filter = $this->createFilterWidget($f->attribute_alias, $f);
+            $filter = $this->createFilterWidget($uxon->getProperty('attribute_alias'), $uxon);
             $this->addFilter($filter, $include_in_quick_search);
         }
         return $this;
