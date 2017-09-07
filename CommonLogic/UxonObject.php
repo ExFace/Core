@@ -203,7 +203,7 @@ class UxonObject implements \IteratorAggregate
      */
     public function extend(UxonObject $extend_by_uxon)
     {
-        // return self::fromStdClass((object) array_merge((array) $this, (array) $extend_by_uxon));
+        // before new UxonObject: return self::fromStdClass((object) array_merge((array) $this, (array) $extend_by_uxon));
         return new self(array_replace_recursive($this->array, $extend_by_uxon->toArray()));
     }
 
