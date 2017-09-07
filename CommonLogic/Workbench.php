@@ -174,6 +174,9 @@ class Workbench
      */
     public function context()
     {
+        if (is_null($this->context)){
+            throw new RuntimeException('Workbench not started: missing context manager! Did you forget Workbench->start()?');
+        }
         return $this->context;
     }
 
