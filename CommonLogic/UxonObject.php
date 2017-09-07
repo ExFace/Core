@@ -3,9 +3,8 @@ namespace exface\Core\CommonLogic;
 
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\UxonMapError;
-use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Exceptions\UxonParserError;
-use exface\Core\DataTypes\UxonDataType;
+use exface\Core\Exceptions\LogicException;
 
 class UxonObject implements \IteratorAggregate
 {
@@ -292,4 +291,16 @@ class UxonObject implements \IteratorAggregate
         }
         return true;
     }
+    
+    public function __get($name)
+    {
+        throw new LogicException('Direct access to properties of a UxonObject is not supported anymore!');
+    }
+    
+    public function __set($name, $value)
+    {
+        throw new LogicException('Direct access to properties of a UxonObject is not supported anymore!');
+    }
+    
+    
 }
