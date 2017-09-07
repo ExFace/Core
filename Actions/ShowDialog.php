@@ -106,9 +106,6 @@ class ShowDialog extends ShowWidget implements iShowDialog
     {
         $widget = parent::getWidget();
         if (! ($widget instanceof Dialog)) {
-            if (!is_null($widget)){
-                $this->getWorkbench()->getLogger()->warning('Widget of type ' . $widget->getWidgetType() . ' used for action ' . $this->getAliasWithNamespace() . '! This is known to cause issues with AJAX requests: use dialog-widgets instead.');
-            }
             $widget = $this->createDialogWidget($widget);
             $this->setWidget($widget);
         }
