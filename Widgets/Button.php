@@ -227,7 +227,7 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iUseIn
                 $action_options->setProperty($attr, $val);
             }
         }
-        if (count((array) $action_options)) {
+        if (! $action_options->isEmpty()) {
             $uxon->setProperty('action_options', $action_options);
         }
         parent::importUxonObject($uxon);
