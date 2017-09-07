@@ -26,7 +26,7 @@ trait iHaveToolbarsTrait {
      */
     public function getToolbars()
     {
-        if (count($this->toolbars) == 0){
+        if (empty($this->toolbars)){
             $this->addToolbar(WidgetFactory::create($this->getPage(), $this->getToolbarWidgetType(), $this));
         }
         return $this->toolbars;

@@ -122,13 +122,11 @@ class FilterContext extends AbstractContext
      */
     public function exportUxonObject()
     {
-        $uxon = $this->getWorkbench()->createUxonObject();
+        $uxon = new UxonObject();
         if (! $this->isEmpty()) {
-            $conditions = array();
             foreach ($this->getConditions() as $condition) {
-                $conditions[] = $condition->exportUxonObject();
+                $uxon->appendToProperty('conditions', $condition->exportUxonObject());
             }
-            $uxon->setProperty('conditions', $conditions);
         }
         return $uxon;
     }
@@ -157,11 +155,7 @@ class FilterContext extends AbstractContext
 
     public function isEmpty()
     {
-        if (count($this->conditions_by_object) > 0) {
-            return false;
-        } else {
-            return true;
-        }
+        return empty($this->conditions_by_object) ? true : false;
     }
     
     /**

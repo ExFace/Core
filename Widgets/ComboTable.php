@@ -153,7 +153,7 @@ class ComboTable extends InputCombo implements iHaveChildren
         }
         
         // Add default attributes
-        if (! $table_uxon->hasProperty('columns') || count($table_uxon->getProperty('columns')) == 0) {
+        if (! $table_uxon->hasProperty('columns') || $table_uxon->getProperty('columns')->isEmpty()) {
             $table->addColumnsForDefaultDisplayAttributes();
         }
         

@@ -281,11 +281,7 @@ class EntityList extends AbstractExfaceClass implements EntityListInterface
      */
     public function isEmpty()
     {
-        if ($this->count() > 0) {
-            return false;
-        } else {
-            return true;
-        }
+        return empty($this->content_array) ? true : false;
     }
 
     /**

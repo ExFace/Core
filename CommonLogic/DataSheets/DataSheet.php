@@ -118,7 +118,7 @@ class DataSheet implements DataSheetInterface
      */
     public function addRow(array $row, $merge_uid_dublicates = false)
     {
-        if (count($row) > 0) {
+        if (! empty($row)) {
             if ($merge_uid_dublicates && $this->getUidColumn() && $uid = $row[$this->getUidColumn()->getName()]) {
                 $uid_row_nr = $this->getUidColumn()->findRowByValue($uid);
                 if ($uid_row_nr !== false) {
@@ -585,7 +585,7 @@ class DataSheet implements DataSheetInterface
                 $uid_check_ds->addFilterFromColumnValues($this->getUidColumn());
                 $uid_check_ds->dataRead();
                 $missing_uids = $this->getUidColumn()->diffValues($uid_check_ds->getUidColumn());
-                if (count($missing_uids) > 0) {
+                if (! empty($missing_uids)) {
                     $create_ds = $this->copy()->removeRows();
                     foreach ($missing_uids as $missing_uid) {
                         $create_ds->addRow($this->getRowByColumnValue($this->getUidColumn()->getName(), $missing_uid));
@@ -752,7 +752,7 @@ class DataSheet implements DataSheetInterface
                 $redundant_rows_ds->getColumns()->add($uid_column);
                 $redundant_rows_ds->dataRead();
                 $redundant_rows = $redundant_rows_ds->getUidColumn()->diffValues($this->getUidColumn());
-                if (count($redundant_rows) > 0) {
+                if (! empty($redundant_rows)) {
                     $delete_ds = DataSheetFactory::createFromObject($this->getMetaObject());
                     $delete_col = $uid_column->copy();
                     $delete_ds->getColumns()->add($delete_col);
@@ -991,7 +991,7 @@ class DataSheet implements DataSheetInterface
                 // only affect the loaded rows and nothing "invisible" to the user!
                 if ($this->getUidColumn()) {
                     $uids = $this->getUidColumn()->getValues(false);
-                    if (count($uids) > 0) {
+                    if (! empty($uids)) {
                         $ds->addFilterInFromString($this->getUidColumn()->getExpressionObj()->rebase($rel->getAlias())->toString(), $uids);
                     }
                 }
@@ -1089,7 +1089,7 @@ class DataSheet implements DataSheetInterface
      */
     public function hasSorters()
     {
-        if ($this->getSorters()->count() > 0) {
+        if (! $this->getSorters()->isEmpty()) {
             return true;
         } else {
             return false;
@@ -1207,7 +1207,7 @@ class DataSheet implements DataSheetInterface
     {
         foreach (array_keys($this->getRows()) as $id) {
             unset($this->rows[$id][$column_name]);
-            if (count($this->rows[$id]) == 0) {
+            if (empty($this->rows[$id])) {
                 $this->removeRow($id);
             }
         }
@@ -1284,7 +1284,7 @@ class DataSheet implements DataSheetInterface
      */
     public function hasAggregators()
     {
-        if ($this->getAggregators()->count() > 0) {
+        if (! $this->getAggregators()->isEmpty()) {
             return true;
         } else {
             return false;
@@ -1487,7 +1487,7 @@ class DataSheet implements DataSheetInterface
      */
     public function isEmpty()
     {
-        if (count($this->getRows()) < 1) {
+        if (empty($this->rows)) {
             return true;
         } else {
             return false;

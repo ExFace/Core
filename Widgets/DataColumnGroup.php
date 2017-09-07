@@ -163,11 +163,7 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
 
     public function isEmpty()
     {
-        if (count($this->columns) > 0) {
-            return false;
-        } else {
-            return true;
-        }
+        return empty($this->columns) ? true : false;
     }
 
     public function getColumns()

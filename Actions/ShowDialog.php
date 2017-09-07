@@ -14,7 +14,7 @@ class ShowDialog extends ShowWidget implements iShowDialog
 
     private $widget_was_enhanced = false;
 
-    private $dialog_buttons_uxon = [];
+    private $dialog_buttons_uxon = null;
 
     /**
      * Creates the dialog widget.
@@ -75,7 +75,7 @@ class ShowDialog extends ShowWidget implements iShowDialog
             $dialog->setCaption($this->getDialogCaption());
         }
         
-        if (count($this->getDialogButtonsUxon()) > 0) {
+        if (! $this->getDialogButtonsUxon()->isEmpty()) {
             $dialog->setButtons($this->getDialogButtonsUxon());
         }
         
@@ -169,8 +169,15 @@ class ShowDialog extends ShowWidget implements iShowDialog
         return $this;
     }
 
+    /**
+     * 
+     * @return \exface\Core\CommonLogic\UxonObject
+     */
     public function getDialogButtonsUxon()
     {
+        if (is_null($this->dialog_buttons_uxon)){
+            $this->dialog_buttons_uxon = new UxonObject();
+        }
         return $this->dialog_buttons_uxon;
     }
 
@@ -188,12 +195,12 @@ class ShowDialog extends ShowWidget implements iShowDialog
      * @uxon-property dialog_buttons
      * @uxon-type \exface\Core\Widgets\Button[]
      *
-     * @param UxonObject[] $uxon_array            
+     * @param UxonObject $uxon            
      * @return \exface\Core\Actions\ShowDialog
      */
-    public function setDialogButtons($uxon_array)
+    public function setDialogButtons(UxonObject $uxon)
     {
-        $this->dialog_buttons_uxon = $uxon_array;
+        $this->dialog_buttons_uxon = $uxon;
         return $this;
     }
 }

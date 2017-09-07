@@ -172,7 +172,7 @@ class AttributeList extends EntityList implements MetaAttributeListInterface
         }
         
         // Use the label attribute if there are no defaults defined
-        if ($defs->count() == 0 && $label_attribute = $object->getLabelAttribute()) {
+        if (empty($defs) && $label_attribute = $object->getLabelAttribute()) {
             $defs->add($label_attribute);
         }
         

@@ -33,7 +33,7 @@ class FormToolbar extends Toolbar
         if ($button_widget->getAction() && $button_widget->getAction()->getMetaObject()->is($form->getMetaObject()) && $button_widget->getAction()->implementsInterface('iModifyData')) {
             /* @var $attr \exface\Core\Interfaces\Model\MetaAttributeInterface */
             foreach ($form->getMetaObject()->getAttributes()->getSystem() as $attr) {
-                if (count($form->findChildrenByAttribute($attr)) <= 0) {
+                if (count($form->findChildrenByAttribute($attr)) === 0) {
                     $widget = $form->getPage()->createWidget('InputHidden', $form);
                     $widget->setAttributeAlias($attr->getAlias());
                     if ($attr->isUidForObject()) {

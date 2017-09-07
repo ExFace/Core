@@ -86,7 +86,7 @@ class DataSorterList extends EntityList implements DataSorterListInterface
                     $attribute_alias = $col->getExpressionObj()->toString();
                 } else {
                     $attrs = $col->getExpressionObj()->getRequiredAttributes();
-                    if (count($attrs) > 0) {
+                    if (! empty($attrs)) {
                         $attribute_alias = reset($attrs);
                     }
                 }

@@ -195,9 +195,9 @@ class InputSelect extends Input implements iSupportMultiSelect
         }
         
         // If it is not an assosiative array, attemt to transform it to one
-        if (array_values($array) === $options) {
+        if (array_values($array) === $array) {
             if (is_array($options_texts_array)) {
-                if (count($options) != count($options_texts_array)) {
+                if (count($array) !== count($options_texts_array)) {
                     throw new WidgetPropertyInvalidValueError($this, 'Number of possible values (' . count($array) . ') differs from the number of keys (' . count($options_texts_array) . ') for widget "' . $this->getId() . '"!', '6T91S9G');
                 } else {
                     foreach ($array as $nr => $id) {

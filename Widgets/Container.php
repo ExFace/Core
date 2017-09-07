@@ -359,12 +359,8 @@ class Container extends AbstractWidget implements iContainOtherWidgets
     public function exportUxonObject()
     {
         $uxon = parent::exportUxonObject();
-        $widgets_array = array();
         foreach ($this->getWidgets() as $widget) {
-            $widgets_array[] = $widget->exportUxonObject();
-        }
-        if (count($widgets_array) > 0) {
-            $uxon->setProperty('widgets', UxonObject::fromArray($widgets_array));
+            $uxon->appendToProperty('widgets', $widget->exportUxonObject());
         }
         return $uxon;
     }
