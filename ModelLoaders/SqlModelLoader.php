@@ -352,12 +352,12 @@ class SqlModelLoader implements ModelLoaderInterface
             $data_source->setConnectionId($ds['data_connection_oid']);
             $data_source->setReadOnly(($ds['data_source_read_only'] || $ds['connection_read_only']) ? true : false);
             // Some data connections may have their own filter context. Add them to the application context scope
-            if ($ds['filter_context_uxon'] && $filter_context = json_decode($ds['filter_context_uxon'])) {
-                if (! is_array($filter_context)) {
-                    $filter_context = array(
-                        $filter_context
-                    );
+            if ($ds['filter_context_uxon'] && $filter_context = UxonObject::fromJson($ds['filter_context_uxon'])) {
+                // If there is only one filter, make an array out of it (needed for backwards compatibility)
+                if (! $filter_context->isArray()){
+                    $filter_context = new UxonObject([$filter_context->toArray()]);
                 }
+                // Register the filters in the application context scope
                 foreach ($filter_context as $filter) {
                     $condition = ConditionFactory::createFromObjectOrArray($exface, $filter);
                     $data_source->getWorkbench()->context()->getScopeApplication()->getFilterContext()->addCondition($condition);

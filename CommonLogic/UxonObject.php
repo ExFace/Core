@@ -3,6 +3,8 @@ namespace exface\Core\CommonLogic;
 
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\UxonMapError;
+use exface\Core\Exceptions\RuntimeException;
+use exface\Core\Exceptions\UxonParserError;
 
 class UxonObject implements \IteratorAggregate
 {
@@ -20,11 +22,12 @@ class UxonObject implements \IteratorAggregate
      */
     public function isEmpty()
     {
-        if (empty($this->array)) {
-            return true;
-        } else {
-            return false;
-        }
+        return empty($this->array) ? true : false;
+    }
+    
+    public function isPropertyEmpty($property_name)
+    {
+        return empty($this->array[$property_name]) ? true : false;
     }
 
     /**
@@ -147,18 +150,42 @@ class UxonObject implements \IteratorAggregate
      * Property values may be scalars, arrays, stdClasses or other UxonObjects
      *
      * @param string $property_name            
-     * @param mixed $value_or_object_or_string            
+     * @param UxonObject|string $scalar_or_uxon   
+     * @return \exface\Core\CommonLogic\UxonObject         
      */
-    public function setProperty($property_name, $value_or_object_or_string)
+    public function setProperty($property_name, $scalar_or_uxon)
     {
-        $this->array[$property_name] = $value_or_object_or_string;
+        $this->array[$property_name] = $scalar_or_uxon;
         return $this;
     }
     
-    public function append($property_name, $value_or_object_or_string)
+    /**
+     * 
+     * @param string $property_name
+     * @param UxonObject|string $scalar_or_uxon
+     * @throws UxonParserError
+     * @return \exface\Core\CommonLogic\UxonObject
+     */
+    public function appendToProperty($property_name, $scalar_or_uxon)
     {
-        $this->array[$property_name][] = $value_or_object_or_string;
+        if (! array_key_exists($property_name, $this->array)){
+            $this->array[$property_name] = [];
+        } elseif (is_scalar($this->array[$property_name])){
+            throw new UxonParserError($this, 'Cannot append "' . $scalar_or_uxon . '" to UXON property "' . $property_name . '": the property is a of a scalar type!');
+        }
+        $this->array[$property_name][] = $scalar_or_uxon;
         return $this;
+    }
+    
+    public function append($scalar_or_uxon)
+    {
+        $this->array[] = $scalar_or_uxon;
+        return $this;
+    }
+    
+    public function countProperties()
+    {
+        return count($this->array);
     }
 
     /**

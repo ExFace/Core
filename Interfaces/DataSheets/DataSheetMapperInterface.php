@@ -5,6 +5,7 @@ use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Interfaces\ExfaceClassInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Exceptions\DataSheets\DataSheetMapperError;
+use exface\Core\CommonLogic\UxonObject;
 
 /**
  * Maps data from one data sheet to another using mappers for columns, filters, sorters, etc.
@@ -77,9 +78,9 @@ interface DataSheetMapperInterface extends iCanBeConvertedToUxon, ExfaceClassInt
     /**
      * Creates all types of mappings, that can be derived from expressions: mappings for columns, filters, sorters, aggregators, etc.
      * 
-     * @param UxonObject[]
+     * @param UxonObject
      * @return DataSheetMapperInterface
      */
-    public function setExpressionMappings($uxonObject);
+    public function setExpressionMappings(UxonObject $uxonObject);
    
 }

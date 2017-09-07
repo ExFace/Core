@@ -82,7 +82,8 @@ class ActionContext extends AbstractContext
         
         // Now instantiate actions for every entry of the array holding the required amount of history steps
         $result = array();
-        foreach ($result_raw as $uxon) {
+        foreach ($result_raw as $step_raw) {
+            $uxon = new UxonObject($step_raw);
             $exface = $this->getWorkbench();
             $action = ActionFactory::createFromUxon($exface, $uxon->getProperty('action'));
             if ($uxon->hasProperty('undo_data')) {
@@ -146,7 +147,7 @@ class ActionContext extends AbstractContext
     public function importUxonObject(UxonObject $uxon)
     {
         if ($uxon->hasProperty('action_history')){
-            $this->action_history_raw = $uxon->getProperty('action_history');
+            $this->action_history_raw = $uxon->getProperty('action_history')->toArray();
         }
         return $this;
     }

@@ -481,12 +481,11 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
                     // group if that was built from single columns already
                     if (! count($column_groups) || $last_element_was_a_column_group) {
                         $group = new UxonObject();
-                        $group->setProperty('columns', []);
                         $column_groups[] = $group;
                     } else {
                         $group = $column_groups[(count($column_groups) - 1)];
                     }
-                    $group->append('columns', $c);
+                    $group->appendToProperty('columns', $c);
                     $last_element_was_a_column_group = false;
                 }
             } else {
