@@ -1,7 +1,7 @@
 <?php
 namespace exface\Core\Interfaces\DataSources;
 
-use exface\Core\CommonLogic\Model\Object;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 
 interface ModelizerInterface
 {
@@ -10,11 +10,11 @@ interface ModelizerInterface
 
     /**
      *
-     * @param Object $meta_object            
+     * @param MetaObjectInterface $meta_object            
      * @param string $table_name            
      *
      */
-    public function getAttributePropertiesFromTable(Object $meta_object, $table_name);
+    public function getAttributePropertiesFromTable(MetaObjectInterface $meta_object, $table_name);
 
     /**
      *

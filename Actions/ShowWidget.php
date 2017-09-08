@@ -130,7 +130,7 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
     {
         if ($widget_or_uxon_object instanceof WidgetInterface) {
             $widget = $widget_or_uxon_object;
-        } elseif ($widget_or_uxon_object instanceof \stdClass) {
+        } elseif ($widget_or_uxon_object instanceof UxonObject) {
             $this->setWidgetUxon($widget_or_uxon_object);
             $widget = null;
         } else {
@@ -216,7 +216,7 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
                 /* @var $condition \exface\Core\CommonLogic\Model\Condition */
                 foreach ($context_conditions as $condition) {                    
                     /*
-                     * if ($this->getWidget() && $condition->getExpression()->getMetaObject()->getId() == $this->getWidget()->getMetaObjectId()){
+                     * if ($this->getWidget() && $condition->getExpression()->getMetaObject()->getId() == $this->getWidget()->getMetaObject()->getId()){
                      * // If the expressions belong to the same object, as the one being displayed, use them as filters
                      * // TODO Building the prefill sheet from context in different ways depending on the object of the top widget
                      * // is somewhat ugly (shouldn't the children widgets get the chance, to decide themselves, what they do with the prefill)
@@ -412,11 +412,11 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
     public function exportUxonObject()
     {
         $uxon = parent::exportUxonObject();
-        $uxon->widget_id = $this->getWidgetId();
-        $uxon->page_id = $this->getPageId() ? $this->getPageId() : $this->getCalledOnUiPage()->getId();
-        $uxon->page_alias = $this->getPageAlias() ? $this->getPageAlias() : $this->getCalledOnUiPage()->getAliasWithNamespace();
-        $uxon->prefill_with_filter_context = $this->getPrefillWithFilterContext();
-        $uxon->prefill_with_input_data = $this->getPrefillWithInputData();
+        $uxon->setProperty('widget_id', $this->getWidgetId());
+        $uxon->setProperty('page_id', $this->getPageId() ? $this->getPageId() : $this->getCalledOnUiPage()->getId());
+        $uxon->setProperty('page_alias', $this->getPageAlias() ? $this->getPageAlias() : $this->getCalledOnUiPage()->getAliasWithNamespace());
+        $uxon->setProperty('prefill_with_filter_context', $this->getPrefillWithFilterContext());
+        $uxon->setProperty('prefill_with_input_data', $this->getPrefillWithInputData());
         if ($this->getPrefillDataSheet()) {
             $uxon->setProperty('prefill_data_sheet', $this->getPrefillDataSheet()->exportUxonObject());
         }

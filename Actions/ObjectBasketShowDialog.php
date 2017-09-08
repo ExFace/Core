@@ -55,7 +55,7 @@ class ObjectBasketShowDialog extends ShowDialog
         $table->setMultiSelect(true);
         $table->setMultiSelectAllSelected(true);
         $table->getConfiguratorWidget()->addFilter(
-            $table->getConfiguratorWidget()->createFilterWidget($table->getMetaObject()->getUidAlias(), UxonObject::fromArray(['widget_type' => 'InputHidden']))
+            $table->getConfiguratorWidget()->createFilterWidget($table->getMetaObject()->getUidAttributeAlias(), UxonObject::fromArray(['widget_type' => 'InputHidden']))
         );
         $dialog->addWidget($table);
         

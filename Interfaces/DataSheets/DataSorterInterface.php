@@ -19,7 +19,7 @@ interface DataSorterInterface extends iCanBeConvertedToUxon, iCanBeCopied
 
     /**
      *
-     * @param unknown $value            
+     * @param string $value            
      * @return DataSorterInterface
      */
     public function setAttributeAlias($value);

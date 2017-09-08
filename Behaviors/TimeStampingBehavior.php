@@ -2,7 +2,7 @@
 namespace exface\Core\Behaviors;
 
 use exface\Core\CommonLogic\AbstractBehavior;
-use exface\Core\CommonLogic\Model\Attribute;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Events\DataSheetEvent;
 use exface\Core\Interfaces\Actions\iUndoActions;
 use exface\Core\CommonLogic\DataSheets\DataColumn;
@@ -68,7 +68,7 @@ class TimeStampingBehavior extends AbstractBehavior
 
     /**
      *
-     * @return Attribute
+     * @return MetaAttributeInterface
      */
     public function getCreatedOnAttribute()
     {
@@ -77,7 +77,7 @@ class TimeStampingBehavior extends AbstractBehavior
 
     /**
      *
-     * @return Attribute
+     * @return MetaAttributeInterface
      */
     public function getUpdatedOnAttribute()
     {

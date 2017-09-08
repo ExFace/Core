@@ -50,10 +50,10 @@ interface iHaveButtons extends iHaveChildren
      * Adds multiple buttons from an array of their UXON descriptions
      *
      * @throws WidgetPropertyInvalidValueError if the array includes miscofigured widgets or widget, that are not buttons.
-     * @param Button[]|UxonObject[] $buttons
+     * @param Button[]|UxonObject $buttons
      * @return iHaveButtons
      */
-    public function setButtons(array $buttons);
+    public function setButtons($buttons);
 
     /**
      *

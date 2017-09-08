@@ -1,12 +1,13 @@
 <?php
 namespace exface\Core\Widgets;
 
-use exface\Core\CommonLogic\Model\Attribute;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Widgets\iHaveColumns;
 use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Exceptions\Widgets\WidgetHasNoUidColumnError;
 use exface\Core\Exceptions\Model\MetaObjectHasNoUidAttributeError;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Factories\WidgetFactory;
 
 /**
  * The DataColumnGroup is a group of columns in a data widget from one side and at the same time a full featured data widget on the other.
@@ -27,7 +28,7 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
 
     public function addColumn(DataColumn $column)
     {
-        $column->setMetaObjectId($this->getMetaObjectId());
+        $column->setMetaObject($this->getMetaObject());
         if ($column->isEditable()) {
             $this->getParent()->setEditable(true);
             $this->getParent()->addColumnsForSystemAttributes();
@@ -56,10 +57,10 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
      * @param attribute $attribute            
      * @return \exface\Core\Widgets\DataColumn
      */
-    function createColumnFromAttribute(Attribute $attribute, $caption = null, $hidden = null)
+    function createColumnFromAttribute(MetaAttributeInterface $attribute, $caption = null, $hidden = null)
     {
         if ($attribute->isRelation()) {
-            $attribute = $this->getMetaObject()->getAttribute(RelationPath::relationPathAdd($attribute->getAlias(), $this->getMetaObject()->getRelatedObject($attribute->getAlias())->getLabelAlias()));
+            $attribute = $this->getMetaObject()->getAttribute(RelationPath::relationPathAdd($attribute->getAlias(), $this->getMetaObject()->getRelatedObject($attribute->getAlias())->getLabelAttributeAlias()));
         }
         
         $c = $this->getPage()->createWidget('DataColumn', $this);
@@ -162,11 +163,7 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
 
     public function isEmpty()
     {
-        if (count($this->columns) > 0) {
-            return false;
-        } else {
-            return true;
-        }
+        return empty($this->columns) ? true : false;
     }
 
     public function getColumns()
@@ -221,11 +218,11 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
      *
      * @see \exface\Core\Interfaces\Widgets\iHaveColumns::setColumns()
      */
-    public function setColumns(array $columns)
+    public function setColumns(UxonObject $columns)
     {
         foreach ($columns as $c) {
-            if ($c->attribute_group_alias) {
-                foreach ($this->getMetaObject()->getAttributeGroup($c->attribute_group_alias)->getAttributes() as $attr) {
+            if ($c->hasProperty('attribute_group_alias')) {
+                foreach ($this->getMetaObject()->getAttributeGroup($c->getProperty('attribute_group_alias'))->getAttributes() as $attr) {
                     $this->addColumn($this->createColumnFromAttribute($attr));
                 }
                 continue;
@@ -249,9 +246,9 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
         
         // Set the caption to the attribute name or the relation name, if the attribute is the label of a related object.
         // This preset caption will get overwritten by one specified in UXON once the UXON object is overloaded
-        if (! $uxon->caption && $this->getMetaObject()->hasAttribute($uxon->attribute_alias)) {
-            $attr = $this->getMetaObject()->getAttribute($uxon->attribute_alias);
-            if ($attr->isLabel() && $attr->getRelationPath()->toString()) {
+        if (! $uxon->hasProperty('caption') && $this->getMetaObject()->hasAttribute($uxon->getProperty('attribute_alias'))) {
+            $attr = $this->getMetaObject()->getAttribute($uxon->getProperty('attribute_alias'));
+            if ($attr->isLabelForObject() && $attr->getRelationPath()->toString()) {
                 $caption = $this->getMetaObject()->getRelation($attr->getRelationPath()->toString())->getName();
             } else {
                 $caption = $attr->getName();
@@ -259,8 +256,7 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
         }
         
         // Create the column
-        $column_type = $uxon->widget_type ? $uxon->widget_type : 'DataColumn';
-        $column = $this->getPage()->createWidget($column_type, $this);
+        $column = WidgetFactory::createFromUxon($this->getPage(), $uxon, $this, 'DataColumn');
         $column->setCaption($caption);
         $column->importUxonObject($uxon);
         

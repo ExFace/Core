@@ -1,8 +1,8 @@
 <?php
 namespace exface\Core\CommonLogic\Model;
 
-use exface\Core\CommonLogic\Workbench;
 use exface\Core\Factories\AttributeGroupFactory;
+use exface\Core\Interfaces\Model\MetaAttributeGroupInterface;
 
 /**
  * An attribute group contains groups any number of attributes of a single object (including inherited attributes!).
@@ -18,26 +18,26 @@ use exface\Core\Factories\AttributeGroupFactory;
  * @author Andrej Kabachnik
  *        
  */
-class AttributeGroup extends AttributeList
+class AttributeGroup extends AttributeList implements MetaAttributeGroupInterface
 {
 
     private $alias = NULL;
 
-    const ALL = '~ALL';
-
-    const VISIBLE = '~VISIBLE';
-
-    const REQUIRED = '~REQUIRED';
-
-    const EDITABLE = '~EDITABLE';
-
-    const DEFAULT_DISPLAY = '~DEFAULT_DISPLAY';
-
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeGroupInterface::getAlias()
+     */
     public function getAlias()
     {
         return $this->alias;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeGroupInterface::setAlias()
+     */
     public function setAlias($value)
     {
         $this->alias = $value;
@@ -45,9 +45,9 @@ class AttributeGroup extends AttributeList
     }
 
     /**
-     * This is an alias for AttributeList->getAll()
-     *
-     * @return Attribute[]
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeGroupInterface::getAttributes()
      */
     public function getAttributes()
     {
@@ -55,11 +55,9 @@ class AttributeGroup extends AttributeList
     }
 
     /**
-     * Returns a new attribute group, that contains all attributes of the object, that were not present in the original group
-     * E.g.
-     * group(~VISIBLE)->getInvertedAttributeGroup() will hold all hidden attributes.
-     *
-     * @return \exface\Core\CommonLogic\Model\AttributeGroup
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeGroupInterface::getInvertedAttributeGroup()
      */
     public function getInvertedAttributeGroup()
     {

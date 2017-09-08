@@ -81,7 +81,7 @@ trait JqueryContainerTrait {
         if (count($data_getters) > 0) {
             // Merge all the JS data objects, but remember to overwrite the head oId in the resulting object with the object id
             // of the container itself at the end! Otherwise the object id of the last widget in the container would win!
-            return "$.extend(true, {},\n" . implode(",\n", $data_getters) . ",\n{oId: '" . $widget->getMetaObjectId() . "'}\n)";
+            return "$.extend(true, {},\n" . implode(",\n", $data_getters) . ",\n{oId: '" . $widget->getMetaObject()->getId() . "'}\n)";
         } else {
             return '{}';
         }

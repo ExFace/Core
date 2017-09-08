@@ -7,6 +7,7 @@ use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Exceptions\RangeException;
 use exface\Core\Exceptions\UnexpectedValueException;
+use exface\Core\Interfaces\Model\ExpressionInterface;
 
 /**
  * .
@@ -43,7 +44,7 @@ class Condition implements iCanBeConvertedToUxon
     /**
      * Returns the expression to filter
      *
-     * @return Expression
+     * @return ExpressionInterface
      */
     public function getExpression()
     {
@@ -53,9 +54,9 @@ class Condition implements iCanBeConvertedToUxon
     /**
      * Sets the expression that will be compared to the value
      *
-     * @param Expression $expression            
+     * @param ExpressionInterface $expression            
      */
-    public function setExpression(Expression $expression)
+    public function setExpression(ExpressionInterface $expression)
     {
         $this->expression = $expression;
     }
@@ -148,7 +149,13 @@ class Condition implements iCanBeConvertedToUxon
             } else {
                 $value = substr($value, 2);
             }
-        } else {
+        } elseif ($value === '__') {
+            $comparator = EXF_COMPARATOR_IS_EMPTY;
+            $value = '';
+        } elseif ($value === '!__') {
+            $comparator = EXF_COMPARATOR_IS_NOT_EMPTY;
+            $value = '';
+        }else {
             $comparator = EXF_COMPARATOR_IS;
         }
         $this->setValue($value);
@@ -255,10 +262,10 @@ class Condition implements iCanBeConvertedToUxon
     public function exportUxonObject()
     {
         $uxon = new UxonObject();
-        $uxon->expression = $this->getExpression()->toString();
-        $uxon->comparator = $this->getComparator();
-        $uxon->value = $this->getValue();
-        $uxon->object_alias = $this->getExpression()->getMetaObject()->getAliasWithNamespace();
+        $uxon->setProperty('expression', $this->getExpression()->toString());
+        $uxon->setProperty('comparator', $this->getComparator());
+        $uxon->setProperty('value', $this->getValue());
+        $uxon->setProperty('object_alias', $this->getExpression()->getMetaObject()->getAliasWithNamespace());
         return $uxon;
     }
 

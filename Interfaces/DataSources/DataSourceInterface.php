@@ -4,6 +4,7 @@ namespace exface\Core\Interfaces\DataSources;
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\CommonLogic\Model\Model;
 use exface\Core\Interfaces\ExfaceClassInterface;
+use exface\Core\CommonLogic\UxonObject;
 
 interface DataSourceInterface extends ExfaceClassInterface
 {
@@ -63,18 +64,18 @@ interface DataSourceInterface extends ExfaceClassInterface
     public function setQueryBuilderAlias($value);
 
     /**
-     * Returns an assotiative array with configuration options for this connections (e.g.
+     * Returns a UXON object with configuration options for this connections (e.g.
      * [user => user_value, password => password_value, ...]
      *
-     * @return array
+     * @return UxonObject
      */
     public function getConnectionConfig();
 
     /**
      *
-     * @param string $value            
+     * @param UxonObject $value            
      */
-    public function setConnectionConfig($value);
+    public function setConnectionConfig(UxonObject $value);
 
     /**
      * Returns TRUE, if the data source or it's connection is marked as read only or FALSE otherwise.

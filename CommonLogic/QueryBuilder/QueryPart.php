@@ -1,8 +1,8 @@
 <?php
 namespace exface\Core\CommonLogic\QueryBuilder;
 
-use exface\Core\CommonLogic\Model\Attribute;
-use exface\Core\CommonLogic\Model\Relation;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
+use exface\Core\Interfaces\Model\MetaRelationInterface;
 
 class QueryPart
 {
@@ -60,7 +60,7 @@ class QueryPart
      * If $relation_type is given, only returns relations of this type.
      *
      * @param string $relations_type            
-     * @return Relation[]
+     * @return MetaRelationInterface[]
      */
     public function getUsedRelations($relation_type = null)
     {
@@ -72,7 +72,7 @@ class QueryPart
      * If $relation_type is ommitted, returns the very first relation regardless of it's type.
      *
      * @param string $relations_type            
-     * @return Relation
+     * @return MetaRelationInterface
      */
     public function getFirstRelation($relations_type = null)
     {
@@ -83,7 +83,7 @@ class QueryPart
 
     /**
      *
-     * @return \exface\Core\CommonLogic\Model\Attribute
+     * @return \exface\Core\Interfaces\Model\MetaAttributeInterface
      */
     public function getAttribute()
     {
@@ -92,9 +92,9 @@ class QueryPart
 
     /**
      *
-     * @param \exface\Core\CommonLogic\Model\Attribute $value            
+     * @param \exface\Core\Interfaces\Model\MetaAttributeInterface $value            
      */
-    public function setAttribute(Attribute $value)
+    public function setAttribute(MetaAttributeInterface $value)
     {
         $this->attribute = $value;
     }

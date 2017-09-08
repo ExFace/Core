@@ -63,7 +63,7 @@ class ShowObjectDialog extends ShowDialog
     {
         $editors = array();
         $cnt = 0;
-        /* @var $attr \exface\Core\CommonLogic\Model\Attribute */
+        /* @var $attr \exface\Core\Interfaces\Model\MetaAttributeInterface */
         foreach ($this->getMetaObject()->getAttributes() as $attr) {
             $cnt ++;
             // Ignore hidden attributes if they are not system attributes

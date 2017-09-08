@@ -4,6 +4,7 @@ namespace exface\Core\Widgets;
 use exface\Core\Behaviors\StateMachineState;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
+use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 
 /**
  * A special MenuButton, which displays a menu with state transitions from it's meta objects StateMachineBehavior.
@@ -106,7 +107,7 @@ class StateMenuButton extends MenuButton
     /**
      * Returns the states that are shown.
      *
-     * @return integer[]|string[]
+     * @return array
      */
     public function getShowStates()
     {
@@ -123,12 +124,19 @@ class StateMenuButton extends MenuButton
      * @uxon-property show_states
      * @uxon-type array
      *
-     * @param string[] $value            
+     * @param string[]|UxonObject $value            
      * @return \exface\Core\Widgets\StateMenuButton
      */
     public function setShowStates($value)
     {
-        $this->show_states = $value;
+        if ($value instanceof UxonObject){
+            $array = $value->toArray();
+        } elseif (is_array($value)){
+            $array = $value;
+        } else {
+            throw new WidgetPropertyInvalidValueError($this, 'Invalid value for show_states property of ' . $this->getWidgetType() . ' widget: expecting array with state ids!');
+        }
+        $this->show_states = $array;
         return $this;
     }
 }

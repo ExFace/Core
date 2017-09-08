@@ -100,8 +100,8 @@ class UserContextScope extends AbstractContextScope
         
         // Now save the cached version of the file. 
         // NOTE: if nothing was cached, than we don't need to change anything.
-        if (!is_null($this->user_context_file_contents)){
-            if (!$this->user_context_file_contents->isEmpty()){
+        if (! is_null($this->user_context_file_contents)){
+            if (! $this->user_context_file_contents->isEmpty()){
                 file_put_contents($this->getFilename(), $this->user_context_file_contents->toJson());
             } elseif (file_exists($this->getFilename())){
                 unlink($this->getFilename());
@@ -134,7 +134,7 @@ class UserContextScope extends AbstractContextScope
         if (is_null($this->user_data)) {
             $user_object = $this->getWorkbench()->model()->getObject('exface.Core.USER');
             $ds = DataSheetFactory::createFromObject($user_object);
-            $ds->getColumns()->addFromExpression($user_object->getUidAlias());
+            $ds->getColumns()->addFromExpression($user_object->getUidAttributeAlias());
             $ds->getColumns()->addFromExpression('USERNAME');
             $ds->getColumns()->addFromExpression('FIRST_NAME');
             $ds->getColumns()->addFromExpression('LAST_NAME');

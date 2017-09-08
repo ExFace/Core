@@ -1,9 +1,9 @@
 <?php
 namespace exface\Core\Contexts;
 
-use exface\Core\CommonLogic\Model\Attribute;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\CommonLogic\Model\Condition;
-use exface\Core\CommonLogic\Model\Object;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\ConditionFactory;
 use exface\Core\Factories\ExpressionFactory;
@@ -19,18 +19,16 @@ class FilterContext extends AbstractContext
     /**
      * Returns an array with all conditions from the current context
      *
-     * @param object $object            
+     * @param MetaObjectInterface $object            
      * @return Condition[] TODO Modify to look for possible related objects and rebase() their conditions!
      *         Ccurrently we only look for conitions based on direct attributes of the object given.
      */
-    public function getConditions(Object $object = NULL)
+    public function getConditions(MetaObjectInterface $object = NULL)
     {
         $array = array();
         if ($object) {
             // Get object ids of the given object and all its parents
-            $ids = array_merge(array(
-                $object->getId()
-            ), $object->getParentObjectsIds());
+            $ids = array_merge(array($object->getId()), $object->getParentObjectsIds());
             // Look for filter conditions for these objects
             foreach ($ids as $object_id) {
                 if (is_array($this->conditions_by_object[$object_id])) {
@@ -94,7 +92,7 @@ class FilterContext extends AbstractContext
      * @param attribute $attribute            
      * @return \exface\Core\Contexts\FilterContext
      */
-    public function removeConditionsForAttribute(Attribute $attribute)
+    public function removeConditionsForAttribute(MetaAttributeInterface $attribute)
     {
         if (is_array($this->conditions_by_object[$attribute->getObjectId()])) {
             foreach ($this->conditions_by_object[$attribute->getObjectId()] as $id => $condition) {
@@ -124,11 +122,10 @@ class FilterContext extends AbstractContext
      */
     public function exportUxonObject()
     {
-        $uxon = $this->getWorkbench()->createUxonObject();
+        $uxon = new UxonObject();
         if (! $this->isEmpty()) {
-            $uxon->conditions = array();
             foreach ($this->getConditions() as $condition) {
-                $uxon->conditions[] = $condition->exportUxonObject();
+                $uxon->appendToProperty('conditions', $condition->exportUxonObject());
             }
         }
         return $uxon;
@@ -144,27 +141,21 @@ class FilterContext extends AbstractContext
     public function importUxonObject(UxonObject $uxon)
     {
         $exface = $this->getWorkbench();
-        if (is_array($uxon->conditions)) {
-            foreach ($uxon->conditions as $uxon_condition) {
+        if ($uxon->hasProperty('conditions')) {
+            foreach ($uxon->getProperty('conditions') as $uxon_condition) {
                 try {
-                    $this->addCondition(ConditionFactory::createFromStdClass($exface, $uxon_condition));
+                    $this->addCondition(ConditionFactory::createFromUxon($exface, $uxon_condition));
                 } catch (ErrorExceptionInterface $e) {
                     // ignore context that cannot be instantiated!
                 }
             }
-        } elseif (! is_null($uxon->conditions)) {
-            throw new ContextLoadError($this, 'Cannot load filter contexts: Expecting an array of UXON objects, ' . gettype($uxon->conditions) . ' given instead!');
         }
         return $this;
     }
 
     public function isEmpty()
     {
-        if (count($this->conditions_by_object) > 0) {
-            return false;
-        } else {
-            return true;
-        }
+        return empty($this->conditions_by_object) ? true : false;
     }
     
     /**

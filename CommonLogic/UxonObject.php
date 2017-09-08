@@ -3,9 +3,17 @@ namespace exface\Core\CommonLogic;
 
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\UxonMapError;
+use exface\Core\Exceptions\UxonParserError;
+use exface\Core\Exceptions\LogicException;
 
-class UxonObject extends \stdClass implements \IteratorAggregate
+class UxonObject implements \IteratorAggregate
 {
+    private $array = [];
+    
+    public function __construct(array $properties = [])
+    {
+        $this->array = $properties;
+    }
 
     /**
      * Returns true if there are not properties in the UXON object
@@ -14,12 +22,12 @@ class UxonObject extends \stdClass implements \IteratorAggregate
      */
     public function isEmpty()
     {
-        $array = (array) $this;
-        if (empty($array)) {
-            return true;
-        } else {
-            return false;
-        }
+        return empty($this->array) ? true : false;
+    }
+    
+    public function isPropertyEmpty($property_name)
+    {
+        return empty($this->array[$property_name]) ? true : false;
     }
 
     /**
@@ -31,7 +39,7 @@ class UxonObject extends \stdClass implements \IteratorAggregate
     public function toJson($prettify = false)
     {
         $options = $prettify ? JSON_PRETTY_PRINT : null;
-        return json_encode($this, $options);
+        return json_encode($this->toArray(), $options);
     }
 
     /**
@@ -42,30 +50,12 @@ class UxonObject extends \stdClass implements \IteratorAggregate
      */
     public static function fromJson($uxon)
     {
-        $obj = json_decode($uxon);
-        $result = new self();
-        if ($obj) {
-            foreach (get_object_vars($obj) as $var => $val) {
-                $result->setProperty($var, $val);
-            }
+        $array = json_decode($uxon, true);
+        if (is_array($array)){
+            return static::fromArray($array);
+        } else {
+            return new self();
         }
-        return $result;
-    }
-
-    /**
-     * Creates a UXON object from a standard class object (e.g.
-     * the result of json_decode())
-     *
-     * @param \stdClass $uxon            
-     * @return UxonObject
-     */
-    public static function fromStdClass(\stdClass $uxon)
-    {
-        $result = new self();
-        foreach (get_object_vars($uxon) as $var => $val) {
-            $result->setProperty($var, $val);
-        }
-        return $result;
     }
 
     /**
@@ -73,36 +63,12 @@ class UxonObject extends \stdClass implements \IteratorAggregate
      * The resulting UXON will be an array itself, but alle elements will get transformed
      * to UXON objects.
      *
-     * @param array $uxon            
-     * @return array
+     * @param array $array            
+     * @return UxonObject
      */
-    public static function fromArray(array $uxon)
+    public static function fromArray(array $array)
     {
-        $result = array();
-        foreach ($uxon as $var => $val) {
-            // If at some point we find a non-numeric key, we stop and try handling the array as an assotiative one
-            if (! is_numeric($var)) {
-                return static::fromArrayAssotiative($uxon);
-            }
-            
-            if (is_array($val)) {
-                $result[$var] = self::fromArray($val);
-            } elseif ($val instanceof \stdClass) {
-                $result[$var] = self::fromStdClass($val);
-            } else {
-                $result[$var] = $val;
-            }
-        }
-        return $result;
-    }
-
-    protected static function fromArrayAssotiative(array $uxon)
-    {
-        $result = new self();
-        foreach ($uxon as $var => $val) {
-            $result->setProperty($var, $val);
-        }
-        return $result;
+        return new self($array);
     }
 
     /**
@@ -117,8 +83,6 @@ class UxonObject extends \stdClass implements \IteratorAggregate
             return $string_or_array_or_object->copy();
         } elseif (is_array($string_or_array_or_object)) {
             return self::fromArray($string_or_array_or_object);
-        } elseif ($string_or_array_or_object instanceof \stdClass) {
-            return self::fromStdClass($string_or_array_or_object);
         } else {
             return self::fromJson($string_or_array_or_object);
         }
@@ -132,7 +96,8 @@ class UxonObject extends \stdClass implements \IteratorAggregate
      */
     public function getProperty($name)
     {
-        return $this->$name;
+        $val = $this->array[$name];
+        return is_array($val) ? new self($val) : $val;
     }
 
     /**
@@ -142,7 +107,7 @@ class UxonObject extends \stdClass implements \IteratorAggregate
      */
     public function hasProperty($name)
     {
-        return property_exists($this, $name);
+        return array_key_exists($name, $this->array);
     }
 
     /**
@@ -156,13 +121,26 @@ class UxonObject extends \stdClass implements \IteratorAggregate
         if ($this->hasProperty($name)) {
             return $name;
         } else {
-            $property_names = array_keys(get_object_vars($this));
+            $property_names = array_keys($this->array);
             foreach ($property_names as $property_name) {
-                if (strcasecmp($name, $property_name) == 0)
+                if (strcasecmp($name, $property_name) === 0){
                     return $property_name;
+                }
             }
             return false;
         }
+    }
+    
+    /**
+     * Returns the key holding the given value or FALSE if nothing was found.
+     * 
+     * @param mixed $value
+     * 
+     * @return string|boolean
+     */
+    public function search($value)
+    {
+        return array_search($value, $this->array);
     }
 
     /**
@@ -172,7 +150,11 @@ class UxonObject extends \stdClass implements \IteratorAggregate
      */
     public function getPropertiesAll()
     {
-        return get_object_vars($this);
+        $array = [];
+        foreach ($this->array as $var => $val){
+            $array[$var] = $this->getProperty($var);
+        }
+        return $array;
     }
 
     /**
@@ -180,18 +162,47 @@ class UxonObject extends \stdClass implements \IteratorAggregate
      * Property values may be scalars, arrays, stdClasses or other UxonObjects
      *
      * @param string $property_name            
-     * @param mixed $value_or_object_or_string            
+     * @param UxonObject|string $scalar_or_uxon   
+     * @return \exface\Core\CommonLogic\UxonObject         
      */
-    public function setProperty($property_name, $value_or_object_or_string)
+    public function setProperty($property_name, $scalar_or_uxon)
     {
-        if (is_array($value_or_object_or_string)) {
-            $this->$property_name = UxonObject::fromArray($value_or_object_or_string);
-        } elseif (is_object($value_or_object_or_string) && ! ($value_or_object_or_string instanceof UxonObject)) {
-            $this->$property_name = UxonObject::fromStdClass($value_or_object_or_string);
-        } else {
-            $this->$property_name = $value_or_object_or_string;
-        }
+        $this->array[$property_name] = $this->sanitizePropertyValue($scalar_or_uxon);
         return $this;
+    }
+    
+    protected function sanitizePropertyValue($scalar_or_uxon)
+    {
+        return $scalar_or_uxon instanceof UxonObject ? $scalar_or_uxon->toArray() : $scalar_or_uxon;
+    }
+    
+    /**
+     * 
+     * @param string $property_name
+     * @param UxonObject|string $scalar_or_uxon
+     * @throws UxonParserError
+     * @return \exface\Core\CommonLogic\UxonObject
+     */
+    public function appendToProperty($property_name, $scalar_or_uxon)
+    {
+        if (! array_key_exists($property_name, $this->array)){
+            $this->array[$property_name] = [];
+        } elseif (is_scalar($this->array[$property_name])){
+            throw new UxonParserError($this, 'Cannot append "' . $scalar_or_uxon . '" to UXON property "' . $property_name . '": the property is a of a scalar type!');
+        }
+        $this->array[$property_name][] = $this->sanitizePropertyValue($scalar_or_uxon);
+        return $this;
+    }
+    
+    public function append($scalar_or_uxon)
+    {
+        $this->array[] = $this->sanitizePropertyValue($scalar_or_uxon);
+        return $this;
+    }
+    
+    public function countProperties()
+    {
+        return count($this->array);
     }
 
     /**
@@ -202,11 +213,10 @@ class UxonObject extends \stdClass implements \IteratorAggregate
      * @param UxonObject $extend_by_uxon            
      * @return UxonObject
      */
-    public function extend(\stdClass $extend_by_uxon)
+    public function extend(UxonObject $extend_by_uxon)
     {
-        // FIXME For some reason array_merge_recursive produces very strange nested arrays here if the second array
-        // should overwrite values from the first one with the same value
-        return self::fromStdClass((object) array_merge((array) $this, (array) $extend_by_uxon));
+        // before new UxonObject: return self::fromStdClass((object) array_merge((array) $this, (array) $extend_by_uxon));
+        return new self(array_replace_recursive($this->array, $extend_by_uxon->toArray()));
     }
 
     /**
@@ -218,19 +228,18 @@ class UxonObject extends \stdClass implements \IteratorAggregate
      */
     public function copy()
     {
-        return self::fromArrayAssotiative($this->toArray());
+        return new self($this->array);
     }
 
     /**
      *
      * {@inheritdoc}
      *
-     * @see IteratorAggregate::getIterator()
+     * @see \IteratorAggregate::getIterator()
      */
     public function getIterator()
     {
-        $array = $this->isEmpty() ? array() : (array) $this;
-        return new \ArrayIterator($array);
+        return new \ArrayIterator($this->getPropertiesAll());
     }
 
     /**
@@ -241,21 +250,13 @@ class UxonObject extends \stdClass implements \IteratorAggregate
      */
     public function unsetProperty($name)
     {
-        unset($this->$name);
+        unset($this->array[$name]);
         return $this;
     }
 
     public function toArray()
     {
-        $array = array();
-        foreach ($this->getPropertiesAll() as $key => $prop) {
-            if ($prop instanceof UxonObject) {
-                $array[$key] = $prop->toArray();
-            } else {
-                $array[$key] = $prop;
-            }
-        }
-        return $array;
+        return $this->array;
     }
 
     /**
@@ -274,22 +275,53 @@ class UxonObject extends \stdClass implements \IteratorAggregate
             throw new UxonMapError($this, 'Cannot import UXON configuration to "' . gettype($target_class_instance) . '": only instantiated PHP classes supported!');
         }
         
-        foreach ($this->getPropertiesAll() as $var => $val) {
+        foreach (array_keys($this->array) as $var) {
             $setterCamelCased = 'set' . StringDataType::convertCaseUnderscoreToPascal($var);
             if (method_exists($target_class_instance, $setterCamelCased)) {
                 call_user_func(array(
                     $target_class_instance,
                     $setterCamelCased
-                ), $val);
+                ), $this->getProperty($var));
             } elseif (method_exists($target_class_instance, 'set_' . $var)) {
                 call_user_func(array(
                     $target_class_instance,
                     'set_' . $var
-                ), $val);
+                ), $this->getProperty($var));
             } else {
                 throw new UxonMapError($this, 'No setter method found for UXON property "' . $var . '" in "' . get_class($target_class_instance) . '"!');
             }
         }
         return $this;
     }
+    
+    public function isArray($ignore_gaps_in_keys = false)
+    {
+        if ($this->isEmpty()){
+            return true;
+        }
+        
+        foreach (array_keys($this->array) as $key){
+            if (!is_numeric($key)){
+                return false;
+            }
+        }
+        
+        if ($ignore_gaps_in_keys == false){
+            return array_keys($this->array) === range(0, count($this->array) - 1);
+        }
+        
+        return true;
+    }
+    
+    public function __get($name)
+    {
+        throw new LogicException('Direct access to properties of a UxonObject is not supported anymore!');
+    }
+    
+    public function __set($name, $value)
+    {
+        throw new LogicException('Direct access to properties of a UxonObject is not supported anymore!');
+    }
+    
+    
 }

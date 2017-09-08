@@ -49,7 +49,7 @@ class QueryPartAttribute extends QueryPart
                     $last_alias = '';
                     foreach ($rel_aliases as $alias) {
                         $rels[$last_alias . $alias] = $this->getQuery()->getMainObject()->getRelation($last_alias . $alias);
-                        $last_alias .= $alias . RelationPath::RELATION_SEPARATOR;
+                        $last_alias .= $alias . RelationPath::getRelationSeparator();
                     }
                 }
             }
@@ -109,7 +109,7 @@ class QueryPartAttribute extends QueryPart
     /**
      * Parses the alias of this query part as an ExFace expression and returns the expression object
      *
-     * @return \exface\Core\CommonLogic\Model\Expression
+     * @return \exface\Core\Interfaces\Model\ExpressionInterface
      */
     public function getExpression()
     {

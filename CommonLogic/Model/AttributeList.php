@@ -3,26 +3,24 @@ namespace exface\Core\CommonLogic\Model;
 
 use exface\Core\CommonLogic\EntityList;
 use exface\Core\Factories\AttributeListFactory;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
+use exface\Core\Interfaces\Model\MetaAttributeListInterface;
 
 /**
  *
  * @author Andrej Kabachnik
  *        
- * @method Attribute[] getAll()
- * @method AttributeList|Attribute[] getIterator()
+ * @method MetaAttributeInterface[] getAll()
+ * @method MetaAttributeListInterface|MetaAttributeInterface[] getIterator()
  *        
  */
-class AttributeList extends EntityList
+class AttributeList extends EntityList implements MetaAttributeListInterface
 {
 
     /**
-     * An attribute list stores attributes with their aliases for keys unless the keys are explicitly specified.
-     * Using the alias with relation path ensures, that adding related attributes will never lead to dublicates here!
-     *
+     * 
      * {@inheritdoc}
-     *
-     * @see \exface\Core\CommonLogic\EntityList::add()
-     * @param Attribute $attribute            
+     * @see MetaAttributeListInterface::add()
      */
     public function add($attribute, $key = null)
     {
@@ -34,28 +32,38 @@ class AttributeList extends EntityList
 
     /**
      *
-     * @return model
+     * {@inheritdoc}
+     * @see MetaAttributeListInterface::getModel()
      */
     public function getModel()
     {
         return $this->getMetaObject()->getModel();
     }
 
+    /**
+     *
+     * {@inheritdoc}
+     * @see MetaAttributeListInterface::getMetaObject()
+     */
     public function getMetaObject()
     {
         return $this->getParent();
     }
-
-    public function setMetaObject(Object $meta_object)
+    
+    /**
+     *
+     * {@inheritdoc}
+     * @see MetaAttributeListInterface::setMetaObject()
+     */
+    public function setMetaObject(MetaObjectInterface $meta_object)
     {
         return $this->setParent($meta_object);
     }
 
     /**
-     * Returns the attribute matching the given alias or FALSE if no such attribute is found
      *
-     * @param string $alias            
-     * @return Attribute|boolean
+     * {@inheritdoc}
+     * @see MetaAttributeListInterface::getByAttributeAlias()
      */
     public function getByAttributeAlias($alias)
     {
@@ -73,10 +81,9 @@ class AttributeList extends EntityList
     }
 
     /**
-     * Returns the attribute matching the given UID or FALSE if no such attribute is found
-     *
-     * @param string $uid            
-     * @return Attribute|boolean
+     * 
+     * {@inheritdoc}
+     * @see MetaAttributeListInterface::getByAttributeId()
      */
     public function getByAttributeId($uid)
     {
@@ -89,10 +96,9 @@ class AttributeList extends EntityList
     }
 
     /**
-     * Returns a new attribute list with all attributes of the given data type
-     *
-     * @param string $data_type_alias            
-     * @return AttributeList|Attribute[]
+     * 
+     * {@inheritdoc}
+     * @see MetaAttributeListInterface::getByDataTypeAlias()
      */
     public function getByDataTypeAlias($data_type_alias)
     {
@@ -107,11 +113,11 @@ class AttributeList extends EntityList
     }
 
     /**
-     * Returns a new attribute list containig only attributes marked as required
-     *
-     * @return AttributeList|Attribute[]
+     * 
+     * {@inheritdoc}
+     * @see MetaAttributeListInterface::getRequired()
      */
-    function getRequired()
+    public function getRequired()
     {
         $object = $this->getMetaObject();
         $output = AttributeListFactory::createForObject($object);
@@ -124,9 +130,9 @@ class AttributeList extends EntityList
     }
 
     /**
-     * Returns system attributes.
-     *
-     * @return AttributeList|Attribute[]
+     * 
+     * {@inheritdoc}
+     * @see MetaAttributeListInterface::getSystem()
      */
     public function getSystem()
     {
@@ -141,13 +147,11 @@ class AttributeList extends EntityList
     }
 
     /**
-     * Returns a list with all attributes, marked for the default display of the object sorted by default_display_order
-     * The list can then be easily used to create widgets to display the object without the user having to
-     * specify which particular attributes to display.
-     *
-     * @return AttributeList|Attribute[]
+     * 
+     * {@inheritdoc}
+     * @see MetaAttributeListInterface::getDefaultDisplayList()
      */
-    function getDefaultDisplayList()
+    public function getDefaultDisplayList()
     {
         $object = $this->getMetaObject();
         $defs = AttributeListFactory::createForObject($object);
@@ -156,7 +160,7 @@ class AttributeList extends EntityList
                 if ($attr->isRelation()) {
                     $rel_path = $attr->getAlias();
                     $rel_obj = $object->getRelatedObject($rel_path);
-                    $rel_attr = $object->getAttribute(RelationPath::relationPathAdd($rel_path, $rel_obj->getLabelAlias()));
+                    $rel_attr = $object->getAttribute(RelationPath::relationPathAdd($rel_path, $rel_obj->getLabelAttributeAlias()));
                     // Leave the name of the relation as attribute name and ensure, that it is visible
                     $rel_attr->setName($attr->getName());
                     $rel_attr->setHidden(false);
@@ -168,7 +172,7 @@ class AttributeList extends EntityList
         }
         
         // Use the label attribute if there are no defaults defined
-        if ($defs->count() == 0 && $label_attribute = $object->getLabelAttribute()) {
+        if (empty($defs) && $label_attribute = $object->getLabelAttribute()) {
             $defs->add($label_attribute);
         }
         

@@ -1,8 +1,12 @@
 <?php
 namespace exface\Core\Templates\AbstractAjaxTemplate\Elements;
 
+use exface\Core\CommonLogic\Workbench;
+
 /**
  *
+ * @method Workbench getWorkbench()
+ * 
  * @author SFL
  *        
  */
@@ -50,7 +54,7 @@ trait JqueryInputDateTrait {
      */
     protected function buildDateJsLocaleFilename()
     {
-        $dateJsBasepath = MODX_BASE_PATH . 'exface' . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'npm-asset' . DIRECTORY_SEPARATOR . 'datejs' . DIRECTORY_SEPARATOR . 'build' . DIRECTORY_SEPARATOR . 'production' . DIRECTORY_SEPARATOR;
+        $dateJsBasepath = $this->getWorkbench()->filemanager()->getPathToVendorFolder() . DIRECTORY_SEPARATOR . 'npm-asset' . DIRECTORY_SEPARATOR . 'datejs' . DIRECTORY_SEPARATOR . 'build' . DIRECTORY_SEPARATOR . 'production' . DIRECTORY_SEPARATOR;
         
         $locale = $this->getTemplate()->getApp()->getTranslator()->getLocale();
         $filename = 'date-' . str_replace("_", "-", $locale) . '.min.js';

@@ -4,8 +4,7 @@ namespace exface\Core\Widgets;
 use exface\Core\Interfaces\Widgets\iHaveColumns;
 use exface\Core\Interfaces\Widgets\iHaveButtons;
 use exface\Core\Interfaces\Widgets\iHaveFilters;
-use exface\Core\CommonLogic\Model\Attribute;
-use exface\Core\CommonLogic\Model\Relation;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Widgets\iSupportLazyLoading;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
@@ -13,7 +12,6 @@ use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Interfaces\Widgets\iHaveColumnGroups;
 use exface\Core\Factories\DataColumnTotalsFactory;
 use exface\Core\Factories\WidgetFactory;
-use exface\Core\CommonLogic\Model\Object;
 use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 use exface\Core\Factories\WidgetLinkFactory;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
@@ -66,7 +64,7 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
     private $toolbars = array();
 
     // other stuff
-    /** @var \stdClass[] */
+    /** @var UxonObject[] */
     private $sorters = array();
 
     /** @var boolean */
@@ -111,7 +109,7 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
         return $this;
     }
 
-    public function createColumnFromAttribute(Attribute $attribute, $caption = null, $hidden = null)
+    public function createColumnFromAttribute(MetaAttributeInterface $attribute, $caption = null, $hidden = null)
     {
         return $this->getColumnGroupMain()->createColumnFromAttribute($attribute, $caption, $hidden);
     }
@@ -232,10 +230,10 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
     public function prepareDataSheetToPrefill(DataSheetInterface $data_sheet = null)
     {
         $data_sheet = parent::prepareDataSheetToPrefill($data_sheet);
-        if ($data_sheet->getMetaObject()->getId() == $this->getMetaObjectId()) {
+        if ($data_sheet->getMetaObject()->isExactly($this->getMetaObject())) {
             // If trying to prefill with an instance of the same object, we actually just need the uid column in the resulting prefill
             // data sheet. It will probably be there anyway, but we still add it here (just in case).
-            $data_sheet->getColumns()->addFromExpression($this->getMetaObject()->getUidAlias());
+            $data_sheet->getColumns()->addFromExpression($this->getMetaObject()->getUidAttributeAlias());
         } else {
             // If trying to prefill with a different object, we need to find a relation to that object somehow.
             // First we check for filters based on the prefill object. If filters exists, we can be sure, that those
@@ -339,7 +337,7 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
         // add the default columns
         $def_attrs = $this->getMetaObject()->getAttributes()->getDefaultDisplayList();
         foreach ($def_attrs as $attr) {
-            $alias = ($attr->getRelationPath()->toString() ? $attr->getRelationPath()->toString() . RelationPath::RELATION_SEPARATOR : '') . $attr->getAlias();
+            $alias = ($attr->getRelationPath()->toString() ? $attr->getRelationPath()->toString() . RelationPath::getRelationSeparator() : '') . $attr->getAlias();
             $attr = $this->getMetaObject()->getAttribute($alias);
             $this->addColumn($this->createColumnFromAttribute($attr, null, $attr->isHidden()));
         }
@@ -445,7 +443,7 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
      *
      * @see \exface\Core\Interfaces\Widgets\iHaveColumns::setColumns()
      */
-    public function setColumns(array $columns)
+    public function setColumns(UxonObject $columns)
     {
         $column_groups = array();
         $last_element_was_a_column_group = false;
@@ -467,14 +465,14 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
         // the groups, not each column separately. The actual instantiation of the corresponding widgets will
         // follow in the next step.
         foreach ($columns as $c) {
-            if (is_array($c)) {
-                // If the element is an array itself (nested in columns), it is a column group
-                $column_groups[] = $c;
-                $last_element_was_a_column_group = true;
-            } elseif (is_object($c)) {
-                // If not, check to see if it's widget type is DataColumnGroup or it has an array of columns itself
-                // If so, it still is a column group
-                if ($c->widget_type == 'DataColumnGroup' || is_array($c->columns)) {
+            if ($c instanceof UxonObject) {
+                if ($c->isArray()) {
+                    // If the element is an array itself (nested in columns), it is a column group
+                    $column_groups[] = $c;
+                    $last_element_was_a_column_group = true;
+                } elseif (strcasecmp($c->getProperty('widget_type'), 'DataColumnGroup') === 0 || $c->hasProperty('columns')) {
+                    // If not, check to see if it's widget type is DataColumnGroup or it has an array of columns itself
+                    // If so, it still is a column group
                     $column_groups[] = $c;
                     $last_element_was_a_column_group = true;
                 } else {
@@ -482,9 +480,12 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
                     // We start a new group, if the last element added was a columnt group or append it to the last
                     // group if that was built from single columns already
                     if (! count($column_groups) || $last_element_was_a_column_group) {
-                        $column_groups[] = new \stdClass();
+                        $group = new UxonObject();
+                        $column_groups[] = $group;
+                    } else {
+                        $group = $column_groups[(count($column_groups) - 1)];
                     }
-                    $column_groups[(count($column_groups) - 1)]->columns[] = $c;
+                    $group->appendToProperty('columns', $c);
                     $last_element_was_a_column_group = false;
                 }
             } else {
@@ -500,12 +501,8 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
             if ($nr == 0 && count($this->getColumnGroups()) > 0) {
                 $this->getColumnGroupMain()->importUxonObject($group);
             } else {
-                // Set the widget type explicitly if it was not defined by the user
-                if (! $group->widget_type) {
-                    $group->widget_type = 'DataColumnGroup';
-                }
                 $page = $this->getPage();
-                $column_group = WidgetFactory::createFromUxon($page, UxonObject::fromAnything($group), $this);
+                $column_group = WidgetFactory::createFromUxon($page, UxonObject::fromAnything($group), $this, 'DataColumnGroup');
                 $this->addColumnGroup($column_group);
             }
         }
@@ -604,19 +601,19 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
      *  }
      *
      * @uxon-property filters
-     * @uxon-type Filter[]
+     * @uxon-type \exface\Core\Widgets\Filter[]
      *
-     * @param UxonObject[] $filters_array
+     * @param UxonObject $uxon_objects
      * @return Data
      */
-    public function setFilters(array $uxon_objects)
+    public function setFilters(UxonObject $uxon_objects)
     {
         $this->getConfiguratorWidget()->setFilters($uxon_objects);
         $this->addRequiredFilters();
         return $this;
     }
 
-    public function createFilterWidget($attribute_alias = null, \stdClass $uxon_object = null)
+    public function createFilterWidget($attribute_alias = null, UxonObject $uxon_object = null)
     {
         return $this->getConfiguratorWidget()->createFilterWidget($attribute_alias, $uxon_object);
     }
@@ -785,7 +782,7 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
     /**
      * Returns an all data sorters applied to this sheet as an array.
      *
-     * @return \stdClass[]
+     * @return UxonObject[]
      */
     public function getSorters()
     {
@@ -796,22 +793,26 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
      * Defines sorters for the data via array of sorter objects.
      *
      * Example:
-     * |"sorters": [
-     * | {
-     * | "attribute_alias": "MY_ALIAS",
-     * | "direction": "ASC"
-     * | },
-     * | {
-     * | ...
-     * | }
-     * |]
+     *  {
+     *      "sorters": [
+     *          {
+     *              "attribute_alias": "MY_ALIAS",
+     *              "direction": "ASC"
+     *          },
+     *          {
+     *              ...
+     *          }
+     *      ]
+     *  }
      *
      * @uxon-property sorters
      * @uxon-type Object[]
      *
-     * @param UxonObject[] $sorters            
+     * TODO use special sorter widgets here instead of plain uxon objects
+     * 
+     * @param UxonObject $sorters            
      */
-    public function setSorters(array $sorters)
+    public function setSorters(UxonObject $sorters)
     {
         foreach ($sorters as $uxon){
             $this->addSorter($uxon->getProperty('attribute_alias'), $uxon->getProperty('direction'));
@@ -822,9 +823,10 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
     public function addSorter($attribute_alias, $direction)
     {
         $this->getConfiguratorWidget()->addSorter($attribute_alias, $direction);
-        $sorter = new \stdClass();
-        $sorter->attribute_alias = $attribute_alias;
-        $sorter->direction = $direction;
+        // TODO move sorters completely to configuration widget!
+        $sorter = new UxonObject();
+        $sorter->setProperty('attribute_alias', $attribute_alias);
+        $sorter->setProperty('direction', $direction);
         $this->sorters[] = $sorter;
         return $this;
     }
@@ -969,16 +971,14 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
      *
      * @return boolean
      */
-    public function hasFooter()
+    public function hasColumnFooters()
     {
-        $result = false;
         foreach ($this->getColumns() as $col) {
             if ($col->hasFooter()) {
-                $result = true;
-                break;
+                return true;
             }
         }
-        return $result;
+        return false;
     }
 
     public function getEmptyText()
@@ -1252,10 +1252,10 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
      * the given attribute.
      * The inforation is derived from the attributes meta model.
      *
-     * @param Attribute $attr            
+     * @param MetaAttributeInterface $attr            
      * @return string[]
      */
-    protected function getHelpRowFromAttribute(Attribute $attr)
+    protected function getHelpRowFromAttribute(MetaAttributeInterface $attr)
     {
         $row = array();
         $row['DESCRIPTION'] = $attr->getShortDescription() ? rtrim(trim($attr->getShortDescription()), ".") . '.' : '';
@@ -1305,25 +1305,19 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
         $uxon->setProperty('lazy_loading_action', $this->getLazyLoadingAction());
         $uxon->setProperty('lazy_loading_group_id', $this->getLazyLoadingGroupId());
         
-        $col_groups = array();
         foreach ($this->getColumnGroups() as $col_group) {
-            $col_groups[] = $col_group->exportUxonObject();
+            $uxon->appendToProperty('columns', $col_group->exportUxonObject());
         }
-        $uxon->setProperty('columns', $col_groups);
         
         // TODO export toolbars to UXON instead of buttons. Currently all
         // information about toolbars is lost.
-        $buttons = array();
         foreach ($this->getButtons() as $button) {
-            $buttons[] = $button->exportUxonObject();
+            $uxon->appendToProperty('buttons', $button->exportUxonObject());
         }
-        $uxon->setProperty('buttons', $buttons);
         
-        $filters = array();
         foreach ($this->getFilters() as $filter) {
-            $filters[] = $filter->exportUxonObject();
+            $uxon->appendToProperty('filters', $filter->exportUxonObject());
         }
-        $uxon->setProperty('filters', $filters);
         
         $uxon->setProperty('sorters', $this->getSorters());
         

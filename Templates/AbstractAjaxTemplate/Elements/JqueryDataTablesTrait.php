@@ -55,7 +55,7 @@ trait JqueryDataTablesTrait {
 		}
 		else {
 			// Open this row
-			row.child('<div id="detail'+row.data().{$widget->getMetaObject()->getUidAlias()}+'"></div>').show();
+			row.child('<div id="detail'+row.data().{$widget->getMetaObject()->getUidAttributeAlias()}+'"></div>').show();
 			$.ajax({
 				url: '{$this->getAjaxUrl()}',
 				method: 'post',
@@ -64,17 +64,17 @@ trait JqueryDataTablesTrait {
 					resource: '{$this->getPageAlias()}',
 					element: '{$widget->getRowDetailsContainer()->getId()}',
 					prefill: {
-						oId:"{$widget->getMetaObjectId()}",
+						oId:"{$widget->getMetaObject()->getId()}",
 						rows:[
-							{ {$widget->getMetaObject()->getUidAlias()}: row.data().{$widget->getMetaObject()->getUidAlias()} }
+							{ {$widget->getMetaObject()->getUidAttributeAlias()}: row.data().{$widget->getMetaObject()->getUidAttributeAlias()} }
 						],
 						filters: {$this->buildJsDataFilters()}
 					},
-					exfrid: row.data().{$widget->getMetaObject()->getUidAlias()}
+					exfrid: row.data().{$widget->getMetaObject()->getUidAttributeAlias()}
 				},
 				dataType: "html",
 				success: function(data){
-					$('#detail'+row.data().{$widget->getMetaObject()->getUidAlias()}).append(data);
+					$('#detail'+row.data().{$widget->getMetaObject()->getUidAttributeAlias()}).append(data);
 					{$this->getId()}_table.columns.adjust();
 				},
 				error: function(jqXHR, textStatus, errorThrown ){
@@ -114,7 +114,7 @@ JS;
         } else {
             $rows = "Array.prototype.slice.call(" . $this->getId() . "_table.rows({selected: true}).data())";
         }
-        return "{oId: '" . $this->getWidget()->getMetaObjectId() . "', rows: " . $rows . "}";
+        return "{oId: '" . $this->getWidget()->getMetaObject()->getId() . "', rows: " . $rows . "}";
     }
     
     public function buildJsRefresh($keep_pagination_position = false)
@@ -167,7 +167,7 @@ JS;
             // TODO
         }
         if (is_null($column)) {
-            $column = $this->getWidget()->getMetaObject()->getUidAlias();
+            $column = $this->getWidget()->getMetaObject()->getUidAttributeAlias();
         } else {
             // TODO
         }
@@ -293,9 +293,9 @@ JS;
         foreach ($widget->getSorters() as $sorter) {
             $column_exists = false;
             foreach ($widget->getColumns() as $nr => $col) {
-                if ($col->getAttributeAlias() == $sorter->attribute_alias) {
+                if ($col->getAttributeAlias() == $sorter->getProperty('attribute_alias')) {
                     $column_exists = true;
-                    $default_sorters .= '[ ' . ($nr + $column_number_offset) . ', "' . $sorter->direction . '" ], ';
+                    $default_sorters .= '[ ' . ($nr + $column_number_offset) . ', "' . $sorter->getProperty('direction') . '" ], ';
                 }
             }
             if (! $column_exists) {
@@ -354,6 +354,10 @@ JS;
 				}';
         }
         
+        if ($widget->getContextMenuEnabled() && $widget->hasButtons()){
+            $context_menu_js = "context.attach('#{$this->getId()} tbody tr', {$this->buildJsContextMenu($widget->getButtons())});";
+        }
+        
         return <<<JS
 
     $('#{$this->getId()}').DataTable( {
@@ -364,7 +368,7 @@ JS;
 		{$paging_options}
 		"scrollX": true,
 		"scrollXollapse": true,
-		{$this->buildJsDataSource($filters_ajax)}
+		{$this->buildJsDataSource()}
 		"language": {
             "zeroRecords": "{$widget->getEmptyText()}"
         },
@@ -375,7 +379,7 @@ JS;
 				{$this->getId()}_table.row($(e.target).closest('tr')).select();
 			});
 			$('#{$this->getId()}').closest('.fitem').trigger('resize');
-            context.attach('#{$this->getId()} tbody tr', [{$this->buildJsContextMenu()}]);
+            {$context_menu_js}
 			if({$this->getId()}_table){
 				{$this->getId()}_drawPagination();
 				{$this->getId()}_table.columns.adjust();

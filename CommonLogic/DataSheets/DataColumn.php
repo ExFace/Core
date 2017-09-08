@@ -1,8 +1,6 @@
 <?php
 namespace exface\Core\CommonLogic\DataSheets;
 
-use exface\Core\CommonLogic\Model\Attribute;
-use exface\Core\CommonLogic\Model\Expression;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\CommonLogic\Model\Formula;
 use exface\Core\Factories\ExpressionFactory;
@@ -16,11 +14,12 @@ use exface\Core\Exceptions\DataSheets\DataSheetDiffError;
 use exface\Core\Exceptions\DataSheets\DataSheetRuntimeError;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\Exceptions\UnexpectedValueException;
+use exface\Core\Interfaces\Model\ExpressionInterface;
 
 class DataColumn implements DataColumnInterface
 {
 
-    const COLUMN_NAME_VALIDATOR = '[^A-Za-z0-9_\.]';
+    const COLUMN_NAME_VALIDATOR = '[^A-Za-z0-9_]';
 
     // Properties, _not_ to be dublicated on copy()
     private $data_sheet = null;
@@ -36,26 +35,24 @@ class DataColumn implements DataColumnInterface
 
     private $fresh = false;
 
-    private $totals = array();
+    private $totals = null;
 
     private $ignore_fixed_values = false;
 
-    /** @var Expression */
+    /** @var ExpressionInterface */
     private $expression = null;
 
     /** @var Formula */
     private $formula = null;
 
-    /** @var Expression */
+    /** @var ExpressionInterface */
     private $formatter = null;
 
     function __construct($expression, $name = '', DataSheetInterface $data_sheet)
     {
-        $exface = $data_sheet->getWorkbench();
         $this->data_sheet = $data_sheet;
         $this->setExpression($expression);
         $this->setName($name ? $name : $this->getExpressionObj()->toString());
-        $this->totals = EntityListFactory::createWithEntityFactory($exface, $this, 'DataColumnTotalsFactory');
     }
 
     /**
@@ -88,7 +85,7 @@ class DataColumn implements DataColumnInterface
      */
     public function setExpression($expression_or_string)
     {
-        if (! ($expression_or_string instanceof Expression)) {
+        if (! ($expression_or_string instanceof ExpressionInterface)) {
             $exface = $this->getWorkbench();
             $expression = ExpressionFactory::createFromString($exface, $expression_or_string, $this->getMetaObject());
         } else {
@@ -217,7 +214,7 @@ class DataColumn implements DataColumnInterface
      */
     public function setFormatter($expression)
     {
-        if (! ($expression instanceof expression)) {
+        if (! ($expression instanceof ExpressionInterface)) {
             $expression = $this->getWorkbench()->model()->parseExpression($expression);
         }
         $this->formatter = $expression;
@@ -312,7 +309,7 @@ class DataColumn implements DataColumnInterface
      *
      * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::setValuesByExpression()
      */
-    public function setValuesByExpression(Expression $expression, $overwrite = true)
+    public function setValuesByExpression(ExpressionInterface $expression, $overwrite = true)
     {
         if ($overwrite || $this->isEmpty()) {
             $this->setValues($expression->evaluate($this->getDataSheet(), $this->getName()));
@@ -376,18 +373,18 @@ class DataColumn implements DataColumnInterface
     public function exportUxonObject()
     {
         $uxon = $this->getDataSheet()->getWorkbench()->createUxonObject();
-        $uxon->expression = $this->getExpressionObj()->toString();
-        $uxon->name = $this->getName();
-        $uxon->hidden = $this->getHidden();
-        $uxon->data_type = $this->getDataType()->getName();
+        $uxon->setProperty('expression', $this->getExpressionObj()->toString());
+        $uxon->setProperty('name', $this->getName());
+        $uxon->setProperty('hidden', $this->getHidden());
+        $uxon->setProperty('data_type', $this->getDataType()->getName());
         if ($this->formula) {
-            $uxon->formula = $this->getFormula()->toString();
+            $uxon->setProperty('formula', $this->getFormula()->toString());
         }
         if ($this->attribute_alias) {
-            $uxon->attribute_alias = $this->attribute_alias;
+            $uxon->setProperty('attribute_alias', $this->attribute_alias);
         }
-        if (! $this->getTotals()->isEmpty()) {
-            $uxon->totals = $this->getTotals()->exportUxonObject();
+        if ($this->hasTotals()) {
+            $uxon->setProperty('totals', $this->getTotals()->exportUxonObject());
         }
         return $uxon;
     }
@@ -400,12 +397,12 @@ class DataColumn implements DataColumnInterface
      */
     public function importUxonObject(UxonObject $uxon)
     {
-        $this->setHidden($uxon->hidden);
-        $this->setDataType($uxon->data_type);
-        $this->setFormula($uxon->formula);
-        $this->setAttributeAlias($uxon->attribute_alias);
-        if (is_array($uxon->totals)) {
-            foreach ($uxon->totals as $u) {
+        $this->setHidden($uxon->getProperty('hidden'));
+        $this->setDataType($uxon->getProperty('data_type'));
+        $this->setFormula($uxon->getProperty('formula'));
+        $this->setAttributeAlias($uxon->getProperty('attribute_alias'));
+        if ($uxon->hasProperty('totals')) {
+            foreach ($uxon->getProperty('totals') as $u) {
                 $total = DataColumnTotalsFactory::createFromUxon($this, $u);
                 $this->getTotals()->add($total);
             }
@@ -529,7 +526,7 @@ class DataColumn implements DataColumnInterface
     public function setFormula($expression_or_string)
     {
         if ($expression_or_string) {
-            if ($expression_or_string instanceof Expression) {
+            if ($expression_or_string instanceof ExpressionInterface) {
                 $expression = $expression_or_string;
             } else {
                 $exface = $this->getWorkbench();
@@ -579,7 +576,22 @@ class DataColumn implements DataColumnInterface
      */
     public function getTotals()
     {
+        if (is_null($this->totals)){
+            $this->totals = EntityListFactory::createWithEntityFactory($this->getWorkbench(), $this, 'DataColumnTotalsFactory');
+        }
         return $this->totals;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::hasTotals()
+     */
+    public function hasTotals(){
+        if (! is_null($this->totals) && ! $this->getTotals()->isEmpty()){
+            return true;
+        }
+        return false;
     }
 
     /**

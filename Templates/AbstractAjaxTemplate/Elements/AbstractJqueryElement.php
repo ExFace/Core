@@ -6,7 +6,7 @@ use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Templates\AbstractAjaxTemplate\AbstractAjaxTemplate;
 use exface\Core\Exceptions\Configuration\ConfigOptionNotFoundError;
-use exface\Core\CommonLogic\Model\Object;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\ExfaceClassInterface;
 use exface\Core\CommonLogic\Translation;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
@@ -142,7 +142,7 @@ abstract class AbstractJqueryElement implements ExfaceClassInterface
     /**
      * Returns the meta object of the widget, that this element represents.
      *
-     * @return Object
+     * @return MetaObjectInterface
      */
     public function getMetaObject()
     {
@@ -253,7 +253,7 @@ abstract class AbstractJqueryElement implements ExfaceClassInterface
     public function buildJsFunctionPrefix()
     {
         if (is_null($this->function_prefix)) {
-            $this->function_prefix = str_replace($this->getTemplate()->getConfig()->getOption('FORBIDDEN_CHARS_IN_FUNCTION_PREFIX'), '_', $this->getId()) . '_';
+            $this->function_prefix = str_replace($this->getTemplate()->getConfig()->getOption('FORBIDDEN_CHARS_IN_FUNCTION_PREFIX')->toArray(), '_', $this->getId()) . '_';
         }
         return $this->function_prefix;
     }
@@ -308,7 +308,7 @@ abstract class AbstractJqueryElement implements ExfaceClassInterface
      */
     public function cleanId($id)
     {
-        return str_replace($this->getTemplate()->getConfig()->getOption('FORBIDDEN_CHARS_IN_ELEMENT_ID'), '_', $id);
+        return str_replace($this->getTemplate()->getConfig()->getOption('FORBIDDEN_CHARS_IN_ELEMENT_ID')->toArray(), '_', $id);
     }
 
     /**
@@ -570,7 +570,7 @@ abstract class AbstractJqueryElement implements ExfaceClassInterface
         } else {
             $alias = $this->getWidget()->getMetaObject()->getAliasWithNamespace();
         }
-        return "{oId: '" . $this->getWidget()->getMetaObjectId() . "', rows: [{'" . $alias . "': " . $this->buildJsValueGetter() . "}]}";
+        return "{oId: '" . $this->getWidget()->getMetaObject()->getId() . "', rows: [{'" . $alias . "': " . $this->buildJsValueGetter() . "}]}";
     }
 
     /**

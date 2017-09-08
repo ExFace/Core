@@ -51,12 +51,12 @@ trait JqueryLiveReferenceTrait {
     public function buildJsDisableCondition()
     {
         $output = '';
-        if (($condition = $this->getWidget()->getDisableCondition()) && $condition->widget_link) {
-            $link = WidgetLinkFactory::createFromAnything($this->getWorkbench(), $condition->widget_link);
+        if (($condition = $this->getWidget()->getDisableCondition()) && $condition->getProperty('widget_link')) {
+            $link = WidgetLinkFactory::createFromAnything($this->getWorkbench(), $condition->getProperty('widget_link'));
             $link->setWidgetIdSpace($this->getWidget()->getIdSpace());
             $linked_element = $this->getTemplate()->getElementByWidgetId($link->getWidgetId(), $this->getPageAlias());
             if ($linked_element) {
-                switch ($condition->comparator) {
+                switch ($condition->getProperty('comparator')) {
                     case EXF_COMPARATOR_IS_NOT: // !=
                     case EXF_COMPARATOR_EQUALS: // ==
                     case EXF_COMPARATOR_EQUALS_NOT: // !==
@@ -68,7 +68,7 @@ trait JqueryLiveReferenceTrait {
                         
                         $output = <<<JS
 
-						if ({$linked_element->buildJsValueGetter($link->getColumnId())} {$condition->comparator} "{$condition->value}") {
+						if ({$linked_element->buildJsValueGetter($link->getColumnId())} {$condition->getProperty('comparator')} "{$condition->getProperty('value')}") {
 							{$this->buildJsDisabler()};
 						} else {
 							{$enable_widget_script}
@@ -95,12 +95,13 @@ JS;
     public function buildJsDisableConditionInitializer()
     {
         $output = '';
-        if (($condition = $this->getWidget()->getDisableCondition()) && $condition->widget_link) {
-            $link = WidgetLinkFactory::createFromAnything($this->getWorkbench(), $condition->widget_link);
+        /* @var $condition \exface\Core\CommonLogic\UxonObject */
+        if (($condition = $this->getWidget()->getDisableCondition()) && $condition->hasProperty('widget_link')) {
+            $link = WidgetLinkFactory::createFromAnything($this->getWorkbench(), $condition->getProperty('widget_link'));
             $link->setWidgetIdSpace($this->getWidget()->getIdSpace());
             $linked_element = $this->getTemplate()->getElementByWidgetId($link->getWidgetId(), $this->getPageAlias());
             if ($linked_element) {
-                switch ($condition->comparator) {
+                switch ($condition->getProperty('comparator')) {
                     case EXF_COMPARATOR_IS_NOT: // !=
                     case EXF_COMPARATOR_EQUALS: // ==
                     case EXF_COMPARATOR_EQUALS_NOT: // !==
@@ -113,7 +114,7 @@ JS;
 						// Man muesste eigentlich schauen ob ein bestimmter Wert vorhanden ist: build_js_value_getter(link->getColumnId()).
 						// Da nach einem Prefill dann aber normalerweise ein leerer Wert zurueckkommt, wird beim initialisieren
 						// momentan einfach geschaut ob irgendein Wert vorhanden ist.
-						if ({$linked_element->buildJsValueGetter()} {$condition->comparator} "{$condition->value}") {
+						if ({$linked_element->buildJsValueGetter()} {$condition->getProperty('comparator')} "{$condition->getProperty('value')}") {
 							{$this->buildJsDisabler()};
 						}
 JS;
@@ -151,8 +152,8 @@ JS;
     public function getDisableConditionTemplateElement()
     {
         $linked_element = null;
-        if (($condition = $this->getWidget()->getDisableCondition()) && $condition->widget_link) {
-            $link = WidgetLinkFactory::createFromAnything($this->getWorkbench(), $condition->widget_link);
+        if (($condition = $this->getWidget()->getDisableCondition()) && $condition->hasProperty('widget_link')) {
+            $link = WidgetLinkFactory::createFromAnything($this->getWorkbench(), $condition->getProperty('widget_link'));
             $link->setWidgetIdSpace($this->getWidget()->getIdSpace());
             $linked_element = $this->getTemplate()->getElementByWidgetId($link->getWidgetId(), $this->getPageAlias());
         }

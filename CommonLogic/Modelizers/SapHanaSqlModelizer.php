@@ -1,12 +1,12 @@
 <?php
 namespace exface\Core\CommonLogic\Modelizers;
 
-use exface\Core\CommonLogic\Model\Object;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 
 class SapHanaSqlModelizer extends AbstractSqlModelizer
 {
 
-    public function getAttributePropertiesFromTable(Object $meta_object, $table_name)
+    public function getAttributePropertiesFromTable(MetaObjectInterface $meta_object, $table_name)
     {
         $columns_sql = "SELECT * FROM TABLE_COLUMNS WHERE SCHEMA_NAME = '" . static::getSchemaFromAlias($table_name) . "' AND TABLE_NAME = '" . static::getTableNameFromAlias($table_name) . "' ORDER BY POSITION";
         

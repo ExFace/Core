@@ -4,7 +4,7 @@ namespace exface\Core\Widgets;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Widgets\iFillEntireContainer;
 use exface\Core\Interfaces\Widgets\iSupportMultiSelect;
-use exface\Core\CommonLogic\Model\Attribute;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Widgets\iHaveContextMenu;
 
@@ -126,17 +126,13 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
      * @uxon-property row_details
      * @uxon-type \exface\Core\Widgets\Container
      *
-     * @param
-     *            $detail_widget
+     * @param UxonObject $detail_widget
      * @return boolean
      */
-    function setRowDetails(\stdClass $detail_widget)
+    public function setRowDetails(UxonObject $detail_widget)
     {
         $page = $this->getPage();
-        if (! $detail_widget->widget_type) {
-            $detail_widget->widget_type = 'Container';
-        }
-        $widget = WidgetFactory::createFromUxon($page, $detail_widget, $this);
+        $widget = WidgetFactory::createFromUxon($page, $detail_widget, $this, 'Container');
         if ($widget instanceof Container) {
             $container = $widget;
         } else {
@@ -191,11 +187,13 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
      *
      * @uxon-property group_rows
      * @uxon-type Object
+     * 
+     * TODO create a separate DataRowGroup-widget
      *
-     * @param \stdClass $uxon_description_object            
+     * @param UxonObject $uxon_description_object            
      * @return DataTable
      */
-    public function setGroupRows(\stdClass $uxon_description_object)
+    public function setGroupRows(UxonObject $uxon_description_object)
     {
         if (isset($uxon_description_object->group_by_column_id))
             $this->setRowGroupsByColumnId($uxon_description_object->group_by_column_id);

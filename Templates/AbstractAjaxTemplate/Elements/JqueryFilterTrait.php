@@ -7,7 +7,7 @@ use exface\Core\Widgets\Filter;
  *
  * @method Filter getWidget()
  *        
- * @author aka
+ * @author Andrej Kabachnik
  *        
  */
 trait JqueryFilterTrait {
@@ -15,7 +15,20 @@ trait JqueryFilterTrait {
     public function buildJsConditionGetter()
     {
         $widget = $this->getWidget();
-        return '{expression: "' . $widget->getAttributeAlias() . '", comparator: "' . $widget->getComparator() . '", value: ' . $this->buildJsValueGetter() . ', object_alias: "' . $widget->getMetaObject()->getAliasWithNamespace() . '"}';
+        return '{expression: "' . $widget->getAttributeAlias() . '", comparator: ' . $this->buildJsComparatorGetter() . ', value: ' . $this->buildJsValueGetter() . ', object_alias: "' . $widget->getMetaObject()->getAliasWithNamespace() . '"}';
+    }
+    
+    public function buildJsComparatorGetter()
+    {
+        $widget = $this->getWidget();
+        switch ($widget->getInputWidget()->getWidgetType()){
+            case 'InputSelect':
+                if (! $widget->getComparator() || $widget->getComparator() === EXF_COMPARATOR_IS){
+                    return '(' . $this->buildJsValueGetter() . ' === "' . EXF_COMPARATOR_IS_EMPTY . '" ? "' . EXF_COMPARATOR_IS_EMPTY . '" : "' . EXF_COMPARATOR_IS . '")';
+                } 
+            default:
+                return '"' . $widget->getComparator() . '"';
+        }
     }
 
     public function generateHtml()

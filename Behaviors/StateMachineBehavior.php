@@ -82,7 +82,7 @@ class StateMachineBehavior extends AbstractBehavior
      * Determines the state attribute from the alias and the attached object and
      * returns it.
      *
-     * @return \exface\Core\CommonLogic\Model\Attribute
+     * @return \exface\Core\Interfaces\Model\MetaAttributeInterface
      */
     public function getStateAttribute()
     {
@@ -160,43 +160,48 @@ class StateMachineBehavior extends AbstractBehavior
      * The states are set by a JSON object or array with state ids for keys and an objects describing the state for values.
      *
      * Example:
-     * "states": {
-     * "10": {
-     * "buttons": {
-     * "10": {
-     * "caption": "20 Annahme bestätigen",
-     * "action": {
-     * "alias": "exface.Core.UpdateData",
-     * "input_data_sheet": {
-     * "object_alias": "alexa.RMS.CUSTOMER_COMPLAINT",
-     * "columns": [
-     * {
-     * "attribute_alias": "STATE_ID",
-     * "formula": "=NumberValue('20')"
-     * },
-     * {
-     * "attribute_alias": "TS_UPDATE"
-     * }
-     * ]
-     * }
-     * }
-     * }
-     * },
-     * "disabled_attributes_aliases": [
-     * "COMPLAINT_NO"
-     * ],
-     * "transitions": [
-     * 10,
-     * 20,
-     * 30,
-     * 50,
-     * 60,
-     * 70,
-     * 90,
-     * 99
-     * ]
-     * }
-     * }
+     *  "states": {
+     *      "10": {
+     *          "buttons": {
+     *              "10": {
+     *                  "caption": "20 Annahme bestätigen",
+     *                  "action": {
+     *                      "alias": "exface.Core.UpdateData",
+     *                      "input_data_sheet": {
+     *                          "object_alias": "alexa.RMS.CUSTOMER_COMPLAINT",
+     *                          "columns": [
+     *                              {
+     *                                  "attribute_alias": "STATE_ID",
+     *                                  "formula": "=NumberValue('20')"
+     *                              },
+     *                              {
+     *                                  "attribute_alias": "TS_UPDATE"
+     *                              }
+     *                          ]
+     *                      }
+     *                  }
+     *              }
+     *          },
+     *          "disabled_attributes_aliases": [
+     *              "COMPLAINT_NO"
+     *          ],
+     *          "transitions": [
+     *              10,
+     *              20,
+     *              30,
+     *              50,
+     *              60,
+     *              70,
+     *              90,
+     *              99
+     *          ]
+     *      },
+     *      "20": {
+     *          "buttons": ...,
+     *          "transitions": ...,
+     *          ...
+     *      }
+     *  }
      *
      * @uxon-property states
      * @uxon-type object
@@ -207,12 +212,10 @@ class StateMachineBehavior extends AbstractBehavior
      */
     public function setStates($value)
     {
-        $this->uxon_states = UxonObject::fromAnything($value);
-        
-        if ($value instanceof UxonObject) {
+        if ($value instanceof UxonObject) { 
+            $this->uxon_states = $value;
             $this->states = [];
-            $states = get_object_vars($this->uxon_states);
-            foreach ($states as $state => $uxon_smstate) {
+            foreach ($value as $state => $uxon_smstate) {
                 $smstate = new StateMachineState();
                 $smstate->setStateId($state);
                 if ($uxon_smstate) {
@@ -433,13 +436,15 @@ class StateMachineBehavior extends AbstractBehavior
     {
         $uxonColorMap = UxonObject::fromAnything($progress_bar_color_map);
         if ($uxonColorMap instanceof UxonObject) {
-            $colorMap = array();
-            foreach ($uxonColorMap as $progressBarValue => $color) {
-                $colorMap[$progressBarValue] = $color;
+            if (is_array($uxonColorMap)) {
+                $this->progress_bar_color_map = $uxonColorMap->toArray();
+            } else {
+                $colorMap = array();
+                foreach ($uxonColorMap as $progressBarValue => $color) {
+                    $colorMap[$progressBarValue] = $color;
+                }
+                $this->progress_bar_color_map = $colorMap;
             }
-            $this->progress_bar_color_map = $colorMap;
-        } elseif (is_array($progress_bar_color_map)) {
-            $this->progress_bar_color_map = $progress_bar_color_map;
         } else {
             throw new BehaviorConfigurationError($this->getObject(), 'Can not set progress_bar_color_map for "' . $this->getObject()->getAliasWithNamespace() . '": the argument passed to set_progress_bar_color_map() is neither an UxonObject nor an array!', '6TG2ZFI');
         }

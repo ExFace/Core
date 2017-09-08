@@ -9,7 +9,7 @@ use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\Factories\DataSheetFactory;
-use exface\Core\CommonLogic\Model\Relation;
+use exface\Core\Interfaces\Model\MetaRelationInterface;
 use exface\Core\Widgets\Traits\iCanBeAlignedTrait;
 
 /**
@@ -117,7 +117,7 @@ class Text extends AbstractWidget implements iShowSingleAttribute, iHaveValue, i
                             $related_obj = $related_obj->getRelatedObject($rel_part);
                             unset($rel_parts[$rel_nr]);
                             if ($related_obj->isExactly($prefill_object)) {
-                                $attr_path = implode(RelationPath::RELATION_SEPARATOR, $rel_parts);
+                                $attr_path = implode(RelationPath::getRelationSeparator(), $rel_parts);
                                 $attr = RelationPath::relationPathAdd($attr_path, $this->getAttribute()->getAlias());
                                 $data_sheet->getColumns()->addFromExpression($attr);
                             }
@@ -144,7 +144,7 @@ class Text extends AbstractWidget implements iShowSingleAttribute, iHaveValue, i
                     // Iterate over all forward relations
                     $inherited_rel = null;
                     $direct_rel = null;
-                    foreach ($prefill_object->findRelations($widget_object->getId(), Relation::RELATION_TYPE_FORWARD) as $rel) {
+                    foreach ($prefill_object->findRelations($widget_object->getId(), MetaRelationInterface::RELATION_TYPE_FORWARD) as $rel) {
                         if ($rel->isInherited() && ! $inherited_rel) {
                             // Remember the first inherited relation in case there will be no direct relations
                             $inherited_rel = $rel;

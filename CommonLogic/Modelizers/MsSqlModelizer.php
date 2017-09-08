@@ -1,12 +1,12 @@
 <?php
 namespace exface\Core\CommonLogic\Modelizers;
 
-use exface\Core\CommonLogic\Model\Object;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 
 class MSSqlModelizer extends AbstractSqlModelizer
 {
 
-    public function getAttributePropertiesFromTable(Object $meta_object, $table_name)
+    public function getAttributePropertiesFromTable(MetaObjectInterface $meta_object, $table_name)
     {
         $table_name_parts = explode('.', $table_name);
         if (count($table_name_parts) == 2) {

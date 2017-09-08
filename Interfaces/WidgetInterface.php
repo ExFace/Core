@@ -2,28 +2,27 @@
 namespace exface\Core\Interfaces;
 
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\Core\CommonLogic\Model\Object;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\CommonLogic\WidgetLink;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\CommonLogic\WidgetDimension;
-use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\Widgets\Container;
+use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 
 interface WidgetInterface extends ExfaceClassInterface, iCanBeCopied
 {
 
     /**
-     * Loads data from a standard object (stdClass) into any widget using setter functions.
+     * Loads data from a standard object into any widget using setter functions.
      * E.g. calls $this->setId($source->id) for every property of the source object. Thus the behaviour of this
      * function like error handling, input checks, etc. can easily be customized by programming good
      * setters.
      *
-     * @param \stdClass $source            
+     * @param UxonObject $source            
      */
-    public function importUxonObject(\stdClass $source);
+    public function importUxonObject(UxonObject $source);
 
     /**
      * Returns the UXON description of the widget.
@@ -69,19 +68,6 @@ interface WidgetInterface extends ExfaceClassInterface, iCanBeCopied
      * @param string $caption            
      */
     public function setCaption($caption);
-
-    /**
-     * Returns the UID of the base meta object for this widget
-     *
-     * @return string
-     */
-    public function getMetaObjectId();
-
-    /**
-     *
-     * @param string $id            
-     */
-    public function setMetaObjectId($id);
 
     /**
      * Returns the widget id specified for this widget explicitly (e.g.
@@ -172,16 +158,16 @@ interface WidgetInterface extends ExfaceClassInterface, iCanBeCopied
     /**
      *
      * @throws WidgetConfigurationError
-     * @return \exface\Core\CommonLogic\Model\Object
+     * @return \exface\Core\Interfaces\Model\MetaObjectInterface
      */
     public function getMetaObject();
 
     /**
      * Sets the given object as the new base object for this widget
      *
-     * @param Object $object            
+     * @param MetaObjectInterface $object            
      */
-    public function setMetaObject(Object $object);
+    public function setMetaObject(MetaObjectInterface $object);
 
     /**
      * Returns the id of this widget
@@ -257,7 +243,7 @@ interface WidgetInterface extends ExfaceClassInterface, iCanBeCopied
      * If both widgets are based on the
      * same object or no valid path can be found, an empty path will be returned.
      *
-     * @return RelationPath
+     * @return MetaRelationPathInterface
      */
     public function getObjectRelationPathFromParent();
 
@@ -272,7 +258,7 @@ interface WidgetInterface extends ExfaceClassInterface, iCanBeCopied
      * If both widgets are based on the
      * same object or no valid path can be found, an empty path will be returned.
      *
-     * @return RelationPath
+     * @return MetaRelationPathInterface
      */
     public function getObjectRelationPathToParent();
 

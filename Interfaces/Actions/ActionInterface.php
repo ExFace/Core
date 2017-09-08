@@ -3,7 +3,7 @@ namespace exface\Core\Interfaces\Actions;
 
 use exface\Core\Interfaces\ExfaceClassInterface;
 use exface\Core\Interfaces\AliasInterface;
-use exface\Core\CommonLogic\Model\Object;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Interfaces\Model\UiPageInterface;
@@ -106,9 +106,9 @@ interface ActionInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
 
     /**
      *
-     * @param ActionInterface[] $actions_array            
+     * @param ActionInterface[]|UxonObject $actions_array            
      */
-    public function setFollowupActions(array $actions_array);
+    public function setFollowupActions($actions_array);
 
     /**
      *
@@ -193,7 +193,7 @@ interface ActionInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
      * @param DataSheetMapperInterface[]|UxonObject[] $data_sheet_mappers_or_uxon_objects
      * @return ActionInterface
      */
-    public function setInputMappers(array $data_sheet_mappers_or_uxon_objects);
+    public function setInputMappers($data_sheet_mappers_or_uxon_objects);
     
     /**
      * 
@@ -238,16 +238,16 @@ interface ActionInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
      * data will be the input (i.e. after an ajax-request).
      *
      * @throws ActionObjectNotSpecifiedError if neither input data nor calling widget are known
-     * @return Object
+     * @return MetaObjectInterface
      */
     public function getMetaObject();
 
     /**
      *
-     * @param Object $object            
+     * @param MetaObjectInterface $object            
      * @return ActionInterface
      */
-    public function setMetaObject(Object $object);
+    public function setMetaObject(MetaObjectInterface $object);
 
     /**
      *
@@ -301,7 +301,7 @@ interface ActionInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
      *
      * @param array $behavior_aliases            
      */
-    public function setDisabledBehaviors(array $behavior_aliases);
+    public function setDisabledBehaviors(UxonObject $behavior_aliases);
 
     /**
      *

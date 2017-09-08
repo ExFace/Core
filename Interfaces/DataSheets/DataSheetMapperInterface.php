@@ -3,10 +3,18 @@ namespace exface\Core\Interfaces\DataSheets;
 
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Interfaces\ExfaceClassInterface;
-use exface\Core\CommonLogic\DataSheets\DataSheetExpressionMap;
-use exface\Core\CommonLogic\Model\Object;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Exceptions\DataSheets\DataSheetMapperError;
+use exface\Core\CommonLogic\UxonObject;
 
+/**
+ * Maps data from one data sheet to another using mappers for columns, filters, sorters, etc.
+ * 
+ * TODO add mappers for filters, sorters and aggregators similarly to column mappers.
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
 interface DataSheetMapperInterface extends iCanBeConvertedToUxon, ExfaceClassInterface
 {
 
@@ -21,15 +29,15 @@ interface DataSheetMapperInterface extends iCanBeConvertedToUxon, ExfaceClassInt
      *
      * @throws DataSheetMapperError if no from-object set
      * 
-     * @return Object
+     * @return MetaObjectInterface
      */
     public function getFromMetaObject();
     
     /**
-     * @param Object $object
+     * @param MetaObjectInterface $object
      * @return DataSheetMapperInterface
      */
-    public function setFromMetaObject(Object $object);
+    public function setFromMetaObject(MetaObjectInterface $object);
     
     /**
      *
@@ -39,32 +47,40 @@ interface DataSheetMapperInterface extends iCanBeConvertedToUxon, ExfaceClassInt
     public function setFromObjectAlias($alias_with_namespace);
     
     /**
-     * @return Object
+     * @return MetaObjectInterface
      */
     public function getToMetaObject();
     
     /**
-     * @param Object $toMetaObject
+     * @param MetaObjectInterface $toMetaObject
      */
-    public function setToMetaObject(Object $toMetaObject);
+    public function setToMetaObject(MetaObjectInterface $toMetaObject);
     
     /**
-     * @return DataSheetExpressionMap[]
+     * @return DataColumnMappingInterface[]
      */
-    public function getExpressionMaps();
-    
-    /**
-     *
-     * @param DataSheetExpressionMap[]|UxonObject[]
-     * @return DataSheetMapperInterface
-     */
-    public function setExpressionMaps(array $expressionMapsOrUxonObjects);
+    public function getColumnMappings();
     
     /**
      *
-     * @param DataSheetExpressionMap $map
+     * @param DataColumnMappingInterface[]|UxonObject
      * @return DataSheetMapperInterface
      */
-    public function addExpressionMap(DataSheetExpressionMap $map);
+    public function setColumnMappings($ColumnMappingsOrUxonObjects);
+    
+    /**
+     *
+     * @param DataColumnMappingInterface $map
+     * @return DataSheetMapperInterface
+     */
+    public function addColumnMapping(DataColumnMappingInterface $map);
+    
+    /**
+     * Creates all types of mappings, that can be derived from expressions: mappings for columns, filters, sorters, aggregators, etc.
+     * 
+     * @param UxonObject
+     * @return DataSheetMapperInterface
+     */
+    public function setExpressionMappings(UxonObject $uxonObject);
    
 }

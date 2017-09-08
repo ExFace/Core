@@ -1,7 +1,7 @@
 <?php
 namespace exface\Core\CommonLogic\Modelizers;
 
-use exface\Core\CommonLogic\Model\Object;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\DataSources\SqlDataConnectorInterface;
 use exface\Core\Interfaces\DataSources\ModelizerInterface;
 use exface\Core\Factories\DataSheetFactory;
@@ -18,7 +18,7 @@ abstract class AbstractSqlModelizer implements ModelizerInterface
         $this->data_connector = $data_connector;
     }
 
-    abstract public function getAttributePropertiesFromTable(Object $meta_object, $table_name);
+    abstract public function getAttributePropertiesFromTable(MetaObjectInterface $meta_object, $table_name);
 
     /**
      *
@@ -77,8 +77,8 @@ abstract class AbstractSqlModelizer implements ModelizerInterface
         if (! $this->data_types) {
             $this->data_types = DataSheetFactory::createFromObject($this->getDataConnection()->getWorkbench()->model()->getObject('exface.Core.DATATYPE'));
             $this->data_types->getColumns()->addMultiple(array(
-                $this->data_types->getMetaObject()->getUidAlias(),
-                $this->data_types->getMetaObject()->getLabelAlias()
+                $this->data_types->getMetaObject()->getUidAttributeAlias(),
+                $this->data_types->getMetaObject()->getLabelAttributeAlias()
             ));
             $this->data_types->dataRead(0, 0);
         }

@@ -3,6 +3,7 @@ namespace exface\Core\Behaviors;
 
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\TranslationInterface;
+use exface\Core\Exceptions\UnexpectedValueException;
 
 /**
  * Defines a state for the StateMachineBehavior.
@@ -94,16 +95,23 @@ class StateMachineState
      * Defines the disabled attributes aliases for the state.
      *
      * Example:
-     * [
-     * "COMPLAINT_NO"
-     * ]
+     *  [
+     *      "COMPLAINT_NO"
+     *  ]
      *
-     * @param string[] $value            
+     * @param UxonObject|string[] $value            
      * @return \exface\Core\Behaviors\StateMachineState
      */
     public function setDisabledAttributesAliases($value)
     {
-        $this->disabled_attributes_aliases = $value;
+        if ($value instanceof UxonObject){
+            $array = $value->toArray();
+        } elseif (is_array($value)){
+            $array = $value;
+        } else {
+            throw new UnexpectedValueException('Invalid format for disabled attribute aliases for StateMachineBehavior! Array expected!');
+        }
+        $this->disabled_attributes_aliases = $array;
         return $this;
     }
 
@@ -142,12 +150,19 @@ class StateMachineState
      * 99
      * ]
      *
-     * @param integer[] $value            
+     * @param UxonObject|integer[] $value            
      * @return \exface\Core\Behaviors\StateMachineState
      */
     public function setTransitions($value)
     {
-        $this->transitions = $value;
+        if ($value instanceof UxonObject){
+            $array = $value->toArray();
+        } elseif (is_array($value)){
+            $array = $value;
+        } else {
+            throw new UnexpectedValueException('Invalid format for transitions definition ins StateMachineBehavior! Array expected!');
+        }
+        $this->transitions = $array;
         return $this;
     }
 

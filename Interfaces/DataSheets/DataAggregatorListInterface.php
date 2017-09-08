@@ -1,7 +1,6 @@
 <?php
 namespace exface\Core\Interfaces\DataSheets;
 
-use exface\Core\CommonLogic\Workbench;
 use exface\Core\Interfaces\DataSheets\DataAggregatorInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\EntityListInterface;
@@ -23,7 +22,7 @@ interface DataAggregatorListInterface extends EntityListInterface
      * {@inheritdoc}
      *
      * @see \exface\Core\Interfaces\EntityListInterface::get()
-     * @return DataAggregator
+     * @return DataAggregatorInterface
      */
     public function get($key);
 
@@ -32,7 +31,7 @@ interface DataAggregatorListInterface extends EntityListInterface
      * {@inheritdoc}
      *
      * @see \exface\Core\Interfaces\EntityListInterface::getFirst()
-     * @return DataAggregator
+     * @return DataAggregatorInterface
      */
     public function getFirst();
 
@@ -41,7 +40,7 @@ interface DataAggregatorListInterface extends EntityListInterface
      * {@inheritdoc}
      *
      * @see \exface\Core\Interfaces\EntityListInterface::getLast()
-     * @return DataAggregator
+     * @return DataAggregatorInterface
      */
     public function getLast();
 
@@ -50,7 +49,7 @@ interface DataAggregatorListInterface extends EntityListInterface
      * {@inheritdoc}
      *
      * @see \exface\Core\Interfaces\EntityListInterface::getNth()
-     * @return DataAggregator
+     * @return DataAggregatorInterface
      */
     public function getNth($number);
 
@@ -66,15 +65,8 @@ interface DataAggregatorListInterface extends EntityListInterface
     /**
      *
      * @param string $attribute_alias            
-     * @return DataAggregatorList
+     * @return DataAggregatorListInterface
      */
     public function addFromString($attribute_alias);
-
-    /**
-     *
-     * @param array $uxon            
-     * @return void
-     */
-    public function importUxonArray(array $uxon);
 }
 ?>

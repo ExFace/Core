@@ -157,7 +157,7 @@ trait JqueryButtonTrait {
 									action: '" . $widget->getActionAlias() . "',
 									resource: '" . $widget->getPageAlias() . "',
 									element: '" . $widget->getId() . "',
-									object: '" . $widget->getMetaObjectId() . "',
+									object: '" . $widget->getMetaObject()->getId() . "',
 									data: requestData
 								},
 								success: function(data, textStatus, jqXHR) {
@@ -213,11 +213,11 @@ trait JqueryButtonTrait {
     				{$this->buildJsRequestDataCollector($action, $input_element)}
     				{$input_element->buildJsBusyIconShow()}
     				var prefillRows = [];
-    				if (requestData.rows[0]["{$widget->getMetaObject()->getUidAlias()}"]){
-    					prefillRows.push({{$widget->getMetaObject()->getUidAlias()}: requestData.rows[0]["{$widget->getMetaObject()->getUidAlias()}"]});
+    				if (requestData.rows[0]["{$widget->getMetaObject()->getUidAttributeAlias()}"]){
+    					prefillRows.push({{$widget->getMetaObject()->getUidAttributeAlias()}: requestData.rows[0]["{$widget->getMetaObject()->getUidAttributeAlias()}"]});
     				}
 JS;
-                $prefill_param = '&prefill={"meta_object_id":"'.$widget->getMetaObjectId().'","rows": \' + JSON.stringify(prefillRows) + \'}';
+                $prefill_param = '&prefill={"meta_object_id":"'.$widget->getMetaObject()->getId().'","rows": \' + JSON.stringify(prefillRows) + \'}';
             } 
             
             if ($action instanceof GoToPage){

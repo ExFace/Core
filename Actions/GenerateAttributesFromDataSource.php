@@ -32,7 +32,7 @@ class GenerateAttributesFromDataSource extends AbstractAction
         $result_data_sheet = $this->getWorkbench()->data()->createDataSheet($this->getWorkbench()->model()->getObject('exface.Core.ATTRIBUTE'));
         $skipped_columns = 0;
         foreach ($this->getInputDataSheet()->getRows() as $input_row) {
-            /* @var $target_obj \exface\Core\CommonLogic\Model\Object */
+            /* @var $target_obj \exface\Core\Interfaces\Model\MetaObjectInterface */
             $target_obj = $this->getWorkbench()->model()->getObject($input_row[$this->getInputDataSheet()->getUidColumn()->getName()]);
             $target_obj_connection = $target_obj->getDataConnection();
             if (! ($target_obj_connection instanceof SqlDataConnectorInterface)) {

@@ -80,11 +80,11 @@ abstract class AbstractQueryBuilder
     /**
      * Set the main object for the query
      *
-     * @param \exface\Core\CommonLogic\Model\Object $meta_object            
+     * @param \exface\Core\Interfaces\Model\MetaObjectInterface $meta_object            
      * @throws MetaObjectDataConnectionNotFoundError if the data connection for the object cannot be established
      * @return \exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder
      */
-    public function setMainObject(\exface\Core\CommonLogic\Model\Object $meta_object)
+    public function setMainObject(\exface\Core\Interfaces\Model\MetaObjectInterface $meta_object)
     {
         $this->main_object = $meta_object;
         // Instantiate the data connection for the object here to make sure, all it's settings, contexts, etc. are applied before the query is built!
@@ -97,7 +97,7 @@ abstract class AbstractQueryBuilder
     /**
      * Returns the main meta object of the query
      *
-     * @return \exface\Core\CommonLogic\Model\Object
+     * @return \exface\Core\Interfaces\Model\MetaObjectInterface
      */
     public function getMainObject()
     {
@@ -573,5 +573,23 @@ abstract class AbstractQueryBuilder
             return $row_array;
         }
         return array_slice($row_array, $this->getOffset(), $this->getLimit());
+    }
+    
+    protected function replacePlaceholdersByFilterValues($string)
+    {
+        foreach ($this->getWorkbench()->utils()->findPlaceholdersInString($string) as $ph) {
+            if ($ph_filter = $this->getFilter($ph)) {
+                if (! is_null($ph_filter->getCompareValue())) {
+                    $string = str_replace('[#' . $ph . '#]', $ph_filter->getCompareValue(), $string);
+                } else {
+                    // If at least one filter does not have a value, return false
+                    throw new QueryBuilderException('Missing filter value in "' . $ph_filter->getAlias() . '" needed for placeholder "' . $ph . '" in SQL "' . $string . '"!');
+                }
+            } else {
+                // If at least one placeholder does not have a corresponding filter, return false
+                throw new QueryBuilderException('Missing filter for placeholder "' . $ph . '" in SQL "' . $string . '"!');
+            }
+        }
+        return $string;
     }
 }

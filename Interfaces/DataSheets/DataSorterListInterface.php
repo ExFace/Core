@@ -68,12 +68,5 @@ interface DataSorterListInterface extends EntityListInterface
      * @return DataSorterListInterface
      */
     public function addFromString($attribute_alias, $direction = 'ASC');
-
-    /**
-     *
-     * @param array $uxon            
-     * @return void
-     */
-    public function importUxonArray(array $uxon);
 }
 ?>

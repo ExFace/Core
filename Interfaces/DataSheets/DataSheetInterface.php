@@ -3,7 +3,7 @@ namespace exface\Core\Interfaces\DataSheets;
 
 use exface\Core\CommonLogic\Model\ConditionGroup;
 use exface\Core\CommonLogic\Model\Condition;
-use exface\Core\CommonLogic\Model\Object;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\DataSheets\DataColumnInterface;
@@ -276,7 +276,7 @@ interface DataSheetInterface extends ExfaceClassInterface, iCanBeCopied, iCanBeC
 
     /**
      *
-     * @return Object
+     * @return MetaObjectInterface
      */
     public function getMetaObject();
 
@@ -390,11 +390,11 @@ interface DataSheetInterface extends ExfaceClassInterface, iCanBeCopied, iCanBeC
      * Merges the current data sheet with another one.
      * Values of the other sheet will overwrite values of identical columns of the current one!
      *
-     * @param DataSheet $other_sheet            
+     * @param DataSheetInterface $other_sheet            
      */
     public function merge(DataSheetInterface $other_sheet);
 
-    public function getMetaObjectRelationPath(Object $related_object);
+    public function getMetaObjectRelationPath(MetaObjectInterface $related_object);
 
     /**
      * Clones the data sheet and returns the new copy.
@@ -441,6 +441,13 @@ interface DataSheetInterface extends ExfaceClassInterface, iCanBeCopied, iCanBeC
      * @return DataSheetInterface
      */
     public function dataMarkInvalid();
+    
+    /**
+     * Returns TRUE if at least one column has a footer and FALSE otherwise.
+     * 
+     * @return boolean
+     */
+    public function hasColumTotals();
 }
 
 ?>

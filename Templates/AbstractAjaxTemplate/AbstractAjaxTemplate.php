@@ -3,7 +3,6 @@ namespace exface\Core\Templates\AbstractAjaxTemplate;
 
 use exface\Core\CommonLogic\AbstractTemplate;
 use exface\Core\Interfaces\Actions\ActionInterface;
-use exface\Core\Widgets\Data;
 use exface\Core\Widgets\AbstractWidget;
 use exface\Core\Interfaces\Widgets\iTriggerAction;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
@@ -211,9 +210,9 @@ abstract class AbstractAjaxTemplate extends AbstractTemplate
      * It's just a shortcut in case you do not have the widget object at
      * hand, but know it's ID and the resource, where it resides.
      *
-     * @param strig $widget_id            
+     * @param string $widget_id            
      * @param string $page_alias            
-     * @return \exface\Templates\jeasyui\Widgets\jeasyuiAbstractWidget
+     * @return AbstractJqueryElement
      */
     public function getElementByWidgetId($widget_id, $page_alias)
     {
@@ -272,7 +271,7 @@ abstract class AbstractAjaxTemplate extends AbstractTemplate
             $filters = $this->getRequestFilters();
             // Add filters for quick search
             if ($widget && $quick_search = $this->getRequestQuickSearchValue()) {
-                $quick_search_filter = $widget->getMetaObject()->getLabelAlias();
+                $quick_search_filter = $widget->getMetaObject()->getLabelAttributeAlias();
                 if ($widget->is('Data') && count($widget->getAttributesForQuickSearch()) > 0) {
                     foreach ($widget->getAttributesForQuickSearch() as $attr) {
                         $quick_search_filter .= ($quick_search_filter ? EXF_LIST_SEPARATOR : '') . $attr;
@@ -537,11 +536,15 @@ abstract class AbstractAjaxTemplate extends AbstractTemplate
         } catch (\Throwable $e) {
             // If anything goes wrong when trying to prettify the original error, drop prettifying
             // and throw the original exception wrapped in a notice about the failed prettification
-            throw new RuntimeException('Failed to create error report widget: "' . $e->getMessage() . '"! See orignal error detail below.', null, $exception);
+            $this->getWorkbench()->getLogger()->logException($e);
+            $log_id = $e instanceof ExceptionInterface ? $e->getId() : '';
+            throw new RuntimeException('Failed to create error report widget: "' . $e->getMessage() . '" - see ' . ($log_id ? 'log ID ' . $log_id : 'logs') . ' for more details! Find the orignal error detail below.', null, $exception);
         } catch (FatalThrowableError $e) {
             // If anything goes wrong when trying to prettify the original error, drop prettifying
             // and throw the original exception wrapped in a notice about the failed prettification
-            throw new RuntimeException('Failed to create error report widget: "' . $e->getMessage() . '"! See orignal error detail below.', null, $exception);
+            $this->getWorkbench()->getLogger()->logException($e);
+            $log_id = $e instanceof ExceptionInterface ? $e->getId() : '';
+            throw new RuntimeException('Failed to create error report widget: "' . $e->getMessage() . '" - see ' . ($log_id ? 'log ID ' . $log_id : 'logs') . ' for more details! Find the orignal error detail below.', null, $exception);
         }
         
         $this->getWorkbench()->getLogger()->log($exception->getLogLevel(), $exception->getMessage(), array(), $exception);
@@ -578,7 +581,7 @@ abstract class AbstractAjaxTemplate extends AbstractTemplate
                 $prefill_data = $widget_to_prefill->prepareDataSheetToPrefill($prefill_data);
                 // If new colums are added, the sheet is marked as outdated, so we need to fetch the data from the data source
                 if (! $prefill_data->isFresh()) {
-                    $prefill_data->addFilterInFromString($prefill_data->getMetaObject()->getUidAlias(), $prefill_data->getColumnValues($prefill_data->getMetaObject()->getUidAlias()));
+                    $prefill_data->addFilterInFromString($prefill_data->getMetaObject()->getUidAttributeAlias(), $prefill_data->getColumnValues($prefill_data->getMetaObject()->getUidAttributeAlias()));
                     $prefill_data->dataRead();
                 }
                 
