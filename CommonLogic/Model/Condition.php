@@ -149,7 +149,13 @@ class Condition implements iCanBeConvertedToUxon
             } else {
                 $value = substr($value, 2);
             }
-        } else {
+        } elseif ($value === '__') {
+            $comparator = EXF_COMPARATOR_IS_EMPTY;
+            $value = '';
+        } elseif ($value === '!__') {
+            $comparator = EXF_COMPARATOR_IS_NOT_EMPTY;
+            $value = '';
+        }else {
             $comparator = EXF_COMPARATOR_IS;
         }
         $this->setValue($value);

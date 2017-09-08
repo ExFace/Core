@@ -63,7 +63,7 @@ class Filter extends Container implements iCanBeRequired, iShowSingleAttribute
         }
         
         // Set a default comparator
-        if (is_null($this->getComparator())) {
+        if (is_null($this->comparator)) {
             // If the input widget will produce multiple values, use the IN comparator
             if ($this->widget->implementsInterface('iSupportMultiselect') && $this->widget->getMultiSelect()) {
                 $this->setComparator(EXF_COMPARATOR_IN);
@@ -209,6 +209,9 @@ class Filter extends Container implements iCanBeRequired, iShowSingleAttribute
 
     public function getComparator()
     {
+        // IDEA give the comparator a default value. But make sure, setInputWidget() retains the possibility
+        // to detect, that the comparator is not set and set one based on the input widget (or, perhaps even
+        // better, move that logic here).
         return $this->comparator;
     }
 

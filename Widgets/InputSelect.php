@@ -17,7 +17,8 @@ use exface\Core\Interfaces\Model\MetaRelationInterface;
 
 /**
  * A dropdown menu to select from.
- * Each menu item has a value and a text. Optional support for selecting multiple items.
+ * 
+ * Each menu item has a value and a text. Multiple selection can be enabled with select_multiple: true.
  *
  * The selectable options can either be specified directly (via the property "selectable_options") or generated from
  * the data source. In the latter case, attributes for text and values can be specified via text_attribute_alias and
@@ -48,11 +49,19 @@ use exface\Core\Interfaces\Model\MetaRelationInterface;
  *      "text_attribute_alias": "CLASSIFICATION_NAME"
  *  }
  *
- * By turning "use_prefill_to_filter_options" on or off, the prefill behavior can be customized. By default, the values
- * from the prefill data will be used as options in the select automatically.
+ * By turning "use_prefill_to_filter_options" on or off, the prefill 
+ * behavior can be customized. By default, the values from the prefill 
+ * data will be used as options in the select automatically.
+ * 
+ * The widget will also add some generic menu items automatically:
+ * - an option to empty the selection if the widget is not required 
+ * (the value of this option is an empty string)
+ * - an option to select empty values if the widget is based on an 
+ * attribute which is not required (the value is the empty-comparator "__")
  *
- * InputSelects should be used for small data sets, as not all frameworks will support searching for values or
- * lazy loading. If you have a large amount of data, use an InputCombo instead!
+ * InputSelects should be used for small data sets, as not all frameworks 
+ * will support searching for values or lazy loading. If you have a large 
+ * amount of data, use an InputCombo instead!
  *
  * @author Andrej Kabachnik
  */
@@ -157,14 +166,18 @@ class InputSelect extends Input implements iSupportMultiSelect
             $this->setOptionsFromDataSheet($this->getOptionsDataSheet());
         }
         
-        // Add unselected uption
-        if (! $this->isRequired() && ! array_key_exists('', $this->selectable_options) && ! ($this->isDisabled() && $this->getValue())) {
-            $options = array(
-                '' => $this->translate('WIDGET.SELECT_NONE')
-            ) + $this->selectable_options;
-        } else {
-            $options = $this->selectable_options;
+        // Add generic options
+        $generic_options =  [];
+        // Unselect option if the input is not required and not disabled with a fixed value
+        if (! $this->isRequired() && ! ($this->isDisabled() && $this->getValue()) && ! array_key_exists('', $this->selectable_options)) {
+            $generic_options[''] = $this->translate('WIDGET.SELECT_NONE');
+        } 
+        // Select empty option if based on an attribute that is not required
+        if ($this->getAttribute() && ! $this->getAttribute()->isRequired()){
+            $generic_options[EXF_COMPARATOR_IS_EMPTY] = $this->translate('WIDGET.SELECT_EMPTY');
         }
+        
+        $options = $generic_options + $this->selectable_options;
         return $options;
     }
 

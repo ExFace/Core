@@ -1243,15 +1243,21 @@ else {
                 $value = '';
                 // $values = explode($value_list_delimiter, trim($value, $value_list_delimiter));
                 foreach ($values as $nr => $val) {
-                    // If there is an empty string among the values, this means that the value may be empty (NULL). NULL is not a valid
+                    // If there is an empty string among the values or one of the empty-comparators, 
+                    // this means that the value may or may not be empty (NULL). NULL is not a valid
                     // value for an IN-statement, though, so we need to append an "OR IS NULL" here.
-                    if ($val === '') {
+                    if ($val === '' || $val === '__') {
                         unset($values[$nr]);
                         $value = $subject . ($comparator == EXF_COMPARATOR_IN ? ' IS NULL' : ' IS NOT NULL');
                         continue;
                     }
+                    if ($val === '!__') {
+                        unset($values[$nr]);
+                        $value = $subject . ($comparator == EXF_COMPARATOR_IN ? ' IS NOT NULL' : ' IS NULL');
+                        continue;
+                    }
                     // Normalize non-empty values
-                    $values[$nr] = $data_type::parse($val);
+                    $values[$nr] = $this->prepareWhereValue($val, $data_type, $sql_data_type);
                 }
                 $value = '(' . implode(',', $values) . ')' . ($value ? ' OR ' . $value : '');
             }
@@ -1284,6 +1290,13 @@ else {
                 break;
             case EXF_COMPARATOR_IS_NOT:
                 $output = 'UPPER(' . $subject . ") NOT LIKE '%" . $this->prepareWhereValue(strtoupper($value), $data_type) . "%'";
+                break;
+            case EXF_COMPARATOR_IS_EMPTY:
+                $output = $subject . ' IS NULL';
+                break;
+            case EXF_COMPARATOR_IS_NOT_EMPTY:
+                $output = $subject . ' IS NOT NULL';
+                break;
             case EXF_COMPARATOR_IS:
             default:
                 $output = 'UPPER(' . $subject . ") LIKE '%" . $this->prepareWhereValue(strtoupper($value), $data_type) . "%'";
