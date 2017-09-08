@@ -178,6 +178,10 @@ interface CmsConnectorInterface extends ExfaceClassInterface
      * the alias of one page and the CMS-ID of another, the page with the matching
      * alias will be returned by this method.
      * 
+     * NOTE: Instead of directly calling loadPage($page_id_or_alias) you should
+     * call exface->ui()->getPage($page_id_or_alias) because the pages are cached
+     * there.
+     * 
      * @param string $page_id_or_alias
      * @param boolean $ignore_replacements
      * 
@@ -193,6 +197,10 @@ interface CmsConnectorInterface extends ExfaceClassInterface
      * 
      * NOTE: If there is a page in the CMS, that replaces the matching page, the 
      * replacement will be returned unless $ignore_replacements is TRUE. 
+     * 
+     * NOTE: Instead of directly calling loadPageByAlias($alias_with_namespace)
+     * you should call exface->ui()->getPage($alias_with_namespace) because the
+     * pages are cached there.
      * 
      * @param string $alias_with_namespace
      * @param boolean $ignore_replacements
@@ -210,6 +218,9 @@ interface CmsConnectorInterface extends ExfaceClassInterface
      * NOTE: If there is a page in the CMS, that replaces the matching page, the 
      * replacement will be returned unless $ignore_replacements is TRUE. 
      * 
+     * NOTE: Instead of directly calling loadPageById($uid) you should call
+     * exface->ui()->getPage($uid) because the pages are cached there.
+     * 
      * @param string $uid
      * @param boolean $ignore_replacements
      * 
@@ -225,6 +236,10 @@ interface CmsConnectorInterface extends ExfaceClassInterface
      * 
      * NOTE: If there is a page in the CMS, that replaces the matching page, the 
      * replacement will be returned unless $ignore_replacements is TRUE. 
+     * 
+     * NOTE: Instead of directly calling loadPageByIdCms($page_id_cms) you should
+     * call exface->ui()->getPage($page_id_cms) because the pages are cached
+     * there.
      * 
      * @param string $page_id_cms
      * @param boolean $ignore_replacements

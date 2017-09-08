@@ -659,15 +659,15 @@ class UiPage implements UiPageInterface
     {
         if (is_null($this->menuParentPage)) {
             if ($this->menuParentId) {
-                $this->menuParentPage = $this->getWorkbench()->getCMS()->loadPageById($this->menuParentId);
+                $this->menuParentPage = $this->getWorkbench()->ui()->getPage($this->menuParentId);
                 $this->setMenuParentIdCms($this->menuParentPage->getIdCms());
                 $this->setMenuParentAlias($this->menuParentPage->getAliasWithNamespace());
             } elseif ($this->menuParentIdCms) {
-                $this->menuParentPage = $this->getWorkbench()->getCMS()->loadPageByIdCms($this->menuParentIdCms);
+                $this->menuParentPage = $this->getWorkbench()->ui()->getPage($this->menuParentIdCms);
                 $this->setMenuParentId($this->menuParentPage->getId());
                 $this->setMenuParentAlias($this->menuParentPage->getAliasWithNamespace());
             } elseif ($this->menuParentAlias) {
-                $this->menuParentPage = $this->getWorkbench()->getCMS()->loadPageByAlias($this->menuParentAlias);
+                $this->menuParentPage = $this->getWorkbench()->ui()->getPage($this->menuParentAlias);
                 $this->setMenuParentId($this->menuParentPage->getId());
                 $this->setMenuParentIdCms($this->menuParentPage->getIdCms());
             }
