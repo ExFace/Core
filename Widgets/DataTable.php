@@ -129,13 +129,10 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
      * @param UxonObject $detail_widget
      * @return boolean
      */
-    function setRowDetails(UxonObject $detail_widget)
+    public function setRowDetails(UxonObject $detail_widget)
     {
         $page = $this->getPage();
-        if (! $detail_widget->widget_type) {
-            $detail_widget->widget_type = 'Container';
-        }
-        $widget = WidgetFactory::createFromUxon($page, $detail_widget, $this);
+        $widget = WidgetFactory::createFromUxon($page, $detail_widget, $this, 'Container');
         if ($widget instanceof Container) {
             $container = $widget;
         } else {
