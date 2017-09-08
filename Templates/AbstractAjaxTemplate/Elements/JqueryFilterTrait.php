@@ -24,7 +24,7 @@ trait JqueryFilterTrait {
         switch ($widget->getInputWidget()->getWidgetType()){
             case 'InputSelect':
                 if (! $widget->getComparator() || $widget->getComparator() === EXF_COMPARATOR_IS){
-                    return '(' . $this->buildJsValueGetter() . ' === "_" ? "' . EXF_COMPARATOR_IS_EMPTY . '" : "' . EXF_COMPARATOR_IS . '")';
+                    return '(' . $this->buildJsValueGetter() . ' === "' . EXF_COMPARATOR_IS_EMPTY . '" ? "' . EXF_COMPARATOR_IS_EMPTY . '" : "' . EXF_COMPARATOR_IS . '")';
                 } 
             default:
                 return '"' . $widget->getComparator() . '"';
