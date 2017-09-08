@@ -49,6 +49,8 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
     private $filter_contexts = array();
 
     private $page_id = null;
+    
+    private $page_alias = null;
 
     protected function init()
     {
@@ -80,13 +82,13 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
         if (is_null($this->widget)) {
             if ($this->getWidgetUxon()) {
                 $this->widget = WidgetFactory::createFromUxon($this->getCalledOnUiPage(), $this->getWidgetUxon(), $this->getCalledByWidget(), $this->getDefaultWidgetType());
-            } elseif ($this->widget_id && ! $this->page_id) {
-                $this->widget = $this->getApp()->getWorkbench()->ui()->getWidget($this->widget_id, $this->getCalledOnUiPage()->getId());
-            } elseif ($this->page_id && ! $this->widget_id) {
+            } elseif ($this->widget_id && ! ($this->page_alias || $this->page_id)) {
+                $this->widget = $this->getApp()->getWorkbench()->ui()->getWidget($this->widget_id, $this->getCalledOnUiPage()->getAliasWithNamespace());
+            } elseif (($this->page_alias || $this->page_id) && ! $this->widget_id) {
                 // TODO this causes problems with simple links to other pages, as the action attempts to load them here...
-                // $this->widget = $this->getApp()->getWorkbench()->ui()->getPage($this->page_id)->getWidgetRoot();
-            } elseif ($this->page_id && $this->widget_id) {
-                $this->widget = $this->getApp()->getWorkbench()->ui()->getWidget($this->widget_id, $this->page_id);
+                // $this->widget = $this->getApp()->getWorkbench()->ui()->getPage($this->page_alias ? $this->page_alias : $this->page_id)->getWidgetRoot();
+            } elseif (($this->page_alias || $this->page_id) && $this->widget_id) {
+                $this->widget = $this->getApp()->getWorkbench()->ui()->getWidget($this->widget_id, ($this->page_alias ? $this->page_alias : $this->page_id));
             }
         }
         return $this->widget;
@@ -411,7 +413,8 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
     {
         $uxon = parent::exportUxonObject();
         $uxon->widget_id = $this->getWidgetId();
-        $uxon->page_id = $this->getCalledOnUiPage()->getId();
+        $uxon->page_id = $this->getPageId() ? $this->getPageId() : $this->getCalledOnUiPage()->getId();
+        $uxon->page_alias = $this->getPageAlias() ? $this->getPageAlias() : $this->getCalledOnUiPage()->getAliasWithNamespace();
         $uxon->prefill_with_filter_context = $this->getPrefillWithFilterContext();
         $uxon->prefill_with_input_data = $this->getPrefillWithInputData();
         if ($this->getPrefillDataSheet()) {
@@ -434,7 +437,7 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
     }
     
     /**
-     * The if of the page to get the widget from. 
+     * The id of the page to get the widget from. 
      * 
      * You can specify either the UID of the page (0x...) or the CMS-Id (visible
      * in the CMS and mostly numeric). Alternatively you can also specify the 
@@ -453,13 +456,38 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
     }
     
     /**
+     * Returns the CMS specific page-id.
+     * 
+     * @return string|null
+     */
+    public function getPageIdCms()
+    {
+        if ($this->isWidgetDefined()) {
+            return $this->getWidget()->getPage()->getIdCms();
+        } elseif ($this->page_alias) {
+            return $this->getWorkbench()->ui()->getPage($this->page_alias)->getIdCms();
+        } elseif ($this->page_id) {
+            if (substr($this->page_id, 0, 2) == '0x') {
+                return $this->getWorkbench()->ui()->getPage($this->page_id)->getIdCms();
+            } else {
+                return $this->page_id;
+            }
+        } else {
+            return null;
+        }
+    }
+    
+    /**
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Actions\iReferenceWidget::getPageAlias()
      */
     public function getPageAlias()
     {
-        // TODO #ui-page-installer
+        if ($this->isWidgetDefined()) {
+            return $this->getWidget()->getPageAlias();
+        }
+        return $this->page_alias;
     }
     
     /**
@@ -474,9 +502,10 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Actions\iReferenceWidget::setPageAlias()
      */
-    public function setPageAlias()
+    public function setPageAlias($value)
     {
-        // TODO #ui-page-installer
+        $this->page_alias = $value;
+        return $this;
     }
     
     /**

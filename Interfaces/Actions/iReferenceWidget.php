@@ -21,11 +21,11 @@ interface iReferenceWidget
     public function getPageId();
     
     /**
-     * The if of the page to get the widget from.
+     * The id of the page to get the widget from.
      *
      * Widget links accept the internal UIDs of pages as well as CMS-page ids
      * here because the users do not really know the difference and will attempt
-     * to spceify the id, they see first. Since most CMS show their internal
+     * to specify the id, they see first. Since most CMS show their internal
      * ids, that typically are not UUIDs, we just allow both ids here. Note,
      * that the method getPageId() will allways return the UID thogh!
      *
@@ -50,7 +50,7 @@ interface iReferenceWidget
      * @param string $value
      * @return iReferenceWidget
      */
-    public function setPageAlias();
+    public function setPageAlias($value);
     
     /**
      * @return string

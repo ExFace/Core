@@ -21,7 +21,7 @@ interface CmsConnectorInterface extends ExfaceClassInterface
     /**
      * Returns the contents of the page specified by the given id
      * 
-     * @deprecated use getPage()->getWidgetRoot() instead
+     * @deprecated use loadPage($id)->getContents() instead
      *
      * @param string $id            
      */
@@ -30,7 +30,8 @@ interface CmsConnectorInterface extends ExfaceClassInterface
     /**
      * Returns the id of the current page in the CMS
      * 
-     * @deprecated use getCmsPageId(UiPageInterface $page) instead
+     * @deprecated use getCurrentPageAlias() or
+     * getPageIdCms(UiPageInterface $page|string $resource_id) instead
      *
      * @return string
      */
@@ -40,12 +41,19 @@ interface CmsConnectorInterface extends ExfaceClassInterface
      * Returns the title of the CMS page with the given id.
      * If no id specified, the title of the current CMS page is returned.
      * 
-     * @deprecated use getPage()->getName() instead
+     * @deprecated use loadPage($resource_id)->getName() instead
      *
-     * @param unknown $resource_id            
+     * @param string $resource_id            
      */
-    public function getPageTitle($page_id = null);
+    public function getPageTitle($resource_id = null);
 
+    /**
+     * Returns the alias of the currentpage in the CMS.
+     * 
+     * @return string
+     */
+    public function getCurrentPageAlias();
+    
     /**
      * Returns an href-link generated from document id an URL parameters.
      *
@@ -218,7 +226,7 @@ interface CmsConnectorInterface extends ExfaceClassInterface
      * NOTE: If there is a page in the CMS, that replaces the matching page, the 
      * replacement will be returned unless $ignore_replacements is TRUE. 
      * 
-     * @param string $cms_page_id
+     * @param string $page_id_cms
      * @param boolean $ignore_replacements
      * 
      * @throws UiPageNotFoundError if no matching page can be found
@@ -226,16 +234,16 @@ interface CmsConnectorInterface extends ExfaceClassInterface
      * 
      * @return UiPageInterface
      */
-    public function loadPageByCmsId($cms_page_id, $ignore_replacements = false);
+    public function loadPageByIdCms($page_id_cms, $ignore_replacements = false);
     
     /**
      * Returns the internal page id assigned to the given page by the CMS.
      *
-     * @param UiPageInterface $page
+     * @param UiPageInterface|string $page_or_id
      *
      * @return string
      */
-    public function getCmsPageId(UiPageInterface $page);
+    public function getPageIdCms($page_or_id);
     
     /**
      * Saves the given page to the CMS database by creating a new one or updating
@@ -270,13 +278,13 @@ interface CmsConnectorInterface extends ExfaceClassInterface
     /**
      * Deletes the given page from the CMS database.
      *
-     * @param UiPageInterface $page
+     * @param UiPageInterface|string $page_or_id
      * 
      * @throws UiPageNotFoundError if no page with a matching UID is found in the CMS
      *
      * @return CmsConnectorInterface
      */
-    public function deletePage(UiPageInterface $page);
+    public function deletePage($page_or_id);
     
     /**
      * Clears the recycle bin of the CMS (if present)
@@ -284,6 +292,17 @@ interface CmsConnectorInterface extends ExfaceClassInterface
      * @return CmsConnectorInterface
      */
     public function clearCMSRecycleBin();
+    
+    /**
+     * Returns if the page (defined by its UID) exists in the CMS. Returns false if the
+     * UID is null.
+     * 
+     * @param UiPageInterface|string $page_or_id
+     * @throws RuntimeException if more than one page with the given UID is defined in
+     * the CMS.
+     * @return boolean
+     */
+    public function existPage($page_or_id);
     
     /**
      * Returns all pages assigned to the given app.

@@ -61,7 +61,7 @@ trait JqueryDataTablesTrait {
 				method: 'post',
 				data: {
 					action: '{$widget->getRowDetailsAction()}',
-					resource: '{$this->getPageId()}',
+					resource: '{$this->getPageAlias()}',
 					element: '{$widget->getRowDetailsContainer()->getId()}',
 					prefill: {
 						oId:"{$widget->getMetaObjectId()}",
@@ -205,7 +205,7 @@ JS;
 				{$this->buildJsBusyIconShow()}
 				var filtersOn = false;
 				d.action = '{$widget->getLazyLoadingAction()}';
-				d.resource = "{$this->getPageId()}";
+				d.resource = "{$this->getPageAlias()}";
 				d.element = "{$widget->getId()}";
 				d.object = "{$this->getWidget()->getMetaObject()->getId()}";
                 d.q = $('#{$this->getId()}_quickSearch').val();

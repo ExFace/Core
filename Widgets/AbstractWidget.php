@@ -934,6 +934,16 @@ else {
     {
         return $this->getPage()->getId();
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\WidgetInterface::getPageAlias()
+     */
+    public function getPageAlias()
+    {
+        return $this->getPage()->getAliasWithNamespace();
+    }
 
     /**
      *
@@ -1199,6 +1209,7 @@ else {
         $link = new WidgetLink($exface);
         $link->setWidgetId($this->getId());
         $link->setPageId($this->getPageId());
+        $link->setPageAlias($this->getPageAlias());
         return $link;
     }
 

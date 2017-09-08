@@ -443,6 +443,12 @@ interface WidgetInterface extends ExfaceClassInterface, iCanBeCopied
      * @return string
      */
     public function getPageId();
+    
+    /**
+     * 
+     * @return string
+     */
+    public function getPageAlias();
 
     /**
      * Returns the orignal UXON description of this widget specified by the user, that is without any automatic enhancements

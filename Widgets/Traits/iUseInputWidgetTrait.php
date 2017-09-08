@@ -33,7 +33,7 @@ trait iUseInputWidgetTrait {
     {
         if (is_null($this->input_widget)) {
             if ($this->input_widget_id) {
-                $this->input_widget = $this->getUi()->getWidget($this->input_widget_id, $this->getPageId());
+                $this->input_widget = $this->getUi()->getWidget($this->input_widget_id, $this->getPageAlias());
             } elseif ($this->getParent()) {
                 $parent = $this->getParent();
                 while (!(($parent instanceof iHaveButtons) || ($parent instanceof iUseInputWidget)) && ! is_null($parent->getParent())) {

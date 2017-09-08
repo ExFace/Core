@@ -9,7 +9,7 @@ trait JqueryLiveReferenceTrait {
     {
         $output = '';
         if ($link = $this->getWidget()->getValueWidgetLink()) {
-            $linked_element = $this->getTemplate()->getElementByWidgetId($link->getWidgetId(), $this->getPageId());
+            $linked_element = $this->getTemplate()->getElementByWidgetId($link->getWidgetId(), $this->getPageAlias());
             if ($linked_element) {
                 $output = '
 						' . $this->buildJsValueSetter($linked_element->buildJsValueGetter($link->getColumnId())) . ';';
@@ -35,7 +35,7 @@ trait JqueryLiveReferenceTrait {
     {
         $linked_element = null;
         if ($link = $this->getWidget()->getValueWidgetLink()) {
-            $linked_element = $this->getTemplate()->getElementByWidgetId($link->getWidgetId(), $this->getPageId());
+            $linked_element = $this->getTemplate()->getElementByWidgetId($link->getWidgetId(), $this->getPageAlias());
         }
         return $linked_element;
     }
@@ -54,7 +54,7 @@ trait JqueryLiveReferenceTrait {
         if (($condition = $this->getWidget()->getDisableCondition()) && $condition->widget_link) {
             $link = WidgetLinkFactory::createFromAnything($this->getWorkbench(), $condition->widget_link);
             $link->setWidgetIdSpace($this->getWidget()->getIdSpace());
-            $linked_element = $this->getTemplate()->getElementByWidgetId($link->getWidgetId(), $this->getPageId());
+            $linked_element = $this->getTemplate()->getElementByWidgetId($link->getWidgetId(), $this->getPageAlias());
             if ($linked_element) {
                 switch ($condition->comparator) {
                     case EXF_COMPARATOR_IS_NOT: // !=
@@ -98,7 +98,7 @@ JS;
         if (($condition = $this->getWidget()->getDisableCondition()) && $condition->widget_link) {
             $link = WidgetLinkFactory::createFromAnything($this->getWorkbench(), $condition->widget_link);
             $link->setWidgetIdSpace($this->getWidget()->getIdSpace());
-            $linked_element = $this->getTemplate()->getElementByWidgetId($link->getWidgetId(), $this->getPageId());
+            $linked_element = $this->getTemplate()->getElementByWidgetId($link->getWidgetId(), $this->getPageAlias());
             if ($linked_element) {
                 switch ($condition->comparator) {
                     case EXF_COMPARATOR_IS_NOT: // !=
@@ -154,7 +154,7 @@ JS;
         if (($condition = $this->getWidget()->getDisableCondition()) && $condition->widget_link) {
             $link = WidgetLinkFactory::createFromAnything($this->getWorkbench(), $condition->widget_link);
             $link->setWidgetIdSpace($this->getWidget()->getIdSpace());
-            $linked_element = $this->getTemplate()->getElementByWidgetId($link->getWidgetId(), $this->getPageId());
+            $linked_element = $this->getTemplate()->getElementByWidgetId($link->getWidgetId(), $this->getPageAlias());
         }
         return $linked_element;
     }

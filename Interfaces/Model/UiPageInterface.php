@@ -270,6 +270,14 @@ interface UiPageInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
     public function setIdCms($idCms);
     
     /**
+     * Sets the alias of the page.
+     *
+     * @param string $aliasWithNamespace
+     * @return UiPageInterface
+     */
+    public function setAliasWithNamespace($aliasWithNamespace);
+    
+    /**
      * Returns the name of the page.
      * 
      * The name is what most templates will show as header and menu title.
@@ -335,7 +343,7 @@ interface UiPageInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
      * 
      * NOTE: although similar to getWidgetRoot()->exportUxonOriginal() there
      * still can be differences as the code can create widgets from UXON on
-     * the fly. 
+     * the fly.
      * 
      * @return string
      */
@@ -349,7 +357,7 @@ interface UiPageInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
      * 
      * NOTE: This does not change the page in the CMS right away! Use savePage()
      * to save changes permanently!
-     *
+     * 
      * @param string $string
      * @return UiPageInterface
      */

@@ -14,7 +14,7 @@ trait JqueryButtonTrait {
     {
         $js = ($widget->getRefreshInput() && $input_element->buildJsRefresh() ? $input_element->buildJsRefresh(true) . ";" : "");
         if ($link = $widget->getRefreshWidgetLink()) {
-            if ($link->getPageId() == $widget->getPageId() && $linked_element = $this->getTemplate()->getElement($link->getWidget())) {
+            if ($link->getPageAlias() == $widget->getPageAlias() && $linked_element = $this->getTemplate()->getElement($link->getWidget())) {
                 $js .= "\n" . $linked_element->buildJsRefresh(true);
             }
         }
@@ -155,7 +155,7 @@ trait JqueryButtonTrait {
 								url: '" . $this->getAjaxUrl() . "',
 								data: {	
 									action: '" . $widget->getActionAlias() . "',
-									resource: '" . $widget->getPageId() . "',
+									resource: '" . $widget->getPageAlias() . "',
 									element: '" . $widget->getId() . "',
 									object: '" . $widget->getMetaObjectId() . "',
 									data: requestData
@@ -207,7 +207,7 @@ trait JqueryButtonTrait {
         $output = '';
         $prefill_param = '';
         $filters_param = '';
-        if ($action->getPageId() != $this->getPageId()) {
+        if ($action->getPageAlias() != $this->getPageAlias()) {
             if ($action->getPrefillWithPrefillData()){
                 $output = <<<JS
     				{$this->buildJsRequestDataCollector($action, $input_element)}
@@ -230,7 +230,7 @@ JS;
             
             $output .= <<<JS
             {$input_element->buildJsBusyIconShow()}
-			window.location.href = '{$this->getTemplate()->createLinkInternal($action->getPageId())}?{$prefill_param}{$filters_param}';
+			window.location.href = '{$this->getTemplate()->createLinkInternal($action->getPageIdCms())}?{$prefill_param}{$filters_param}';
 JS;
         }
         return $output;
@@ -279,7 +279,7 @@ JS;
     {
         $widget = $this->getWidget();
         if ($action->isUndoable()) {
-            $undo_url = $this->getAjaxUrl() . "&action=exface.Core.UndoAction&resource=" . $widget->getPageId() . "&element=" . $widget->getId();
+            $undo_url = $this->getAjaxUrl() . "&action=exface.Core.UndoAction&resource=" . $widget->getPageAlias() . "&element=" . $widget->getId();
         }
         return $undo_url;
     }

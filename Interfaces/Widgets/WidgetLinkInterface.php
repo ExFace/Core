@@ -19,7 +19,7 @@ interface WidgetLinkInterface extends ExfaceClassInterface, iCanBeConvertedToUxo
     public function parseLink($string_or_object);
 
     /**
-     * Parse expressions like [page_id]widget_id!column$row
+     * Parse expressions like [page_id_or_alias]widget_id!column$row
      */
     public function parseLinkString($string);
 
@@ -40,7 +40,7 @@ interface WidgetLinkInterface extends ExfaceClassInterface, iCanBeConvertedToUxo
 
     /**
      * Returns the target-page of the link.
-     *
+     * 
      * @return UiPageInterface
      */
     public function getPage();
@@ -50,13 +50,14 @@ interface WidgetLinkInterface extends ExfaceClassInterface, iCanBeConvertedToUxo
      * 
      * Widget links accept the internal UIDs of pages as well as CMS-page ids
      * here because the users do not really know the difference and will attempt
-     * to spceify the id, they see first. Since most CMS show their internal
+     * to specify the id, they see first. Since most CMS show their internal
      * ids, that typically are not UUIDs, we just allow both ids here. Note,
-     * that the method getPageId() will allways return the UID thogh!
-     *
-     * @param string $value            
+     * that the method getPageId() will allways return the UID though!
      * 
-     * @throws RuntimeException if a page alias is defined too and does not match the id
+     * If both a page-id and a page-alias is specified then the page-alias will
+     * be used.
+     * 
+     * @param string $value
      * 
      * @return WidgetLinkInterface
      */
@@ -65,25 +66,26 @@ interface WidgetLinkInterface extends ExfaceClassInterface, iCanBeConvertedToUxo
     /**
      * Specifies the target-page for the link via qualified page alias.
      * 
-     * @param string $alias_with_namespace
+     * If both a page-id and a page-alias is specified then the page-alias will
+     * be used.
      * 
-     * @throws RuntimeException if a page id is defined too and does not match the alias
+     * @param string $alias_with_namespace
      * 
      * @return WidgetLinkInterface
      */
     public function setPageAlias($alias_with_namespace);
 
     /**
-     * Retruns the id of the linked widget within the linked page.
-     *
-     * If an id space is set, this will return the fully qualified widget id includig the id space.
-     *
+     * Returns the id of the linked widget within the linked page.
+     * 
+     * If an id space is set, this will return the fully qualified widget id including the id space.
+     * 
      * @return string
      */
     public function getWidgetId();
 
     /**
-     *
+     * 
      * @param string $value            
      * @return WidgetLinkInterface
      */
@@ -91,39 +93,39 @@ interface WidgetLinkInterface extends ExfaceClassInterface, iCanBeConvertedToUxo
 
     /**
      * Returns the widget instance referenced by this link
-     *
+     * 
      * @throws uiWidgetNotFoundException if no widget with a matching id can be found in the specified resource
      * @return WidgetInterface
      */
     public function getWidget();
 
     /**
-     *
+     * 
      * @return UxonObject
      */
     public function getWidgetUxon();
 
     /**
-     *
+     * 
      * @return string
      */
     public function getColumnId();
 
     /**
-     *
+     * 
      * @param string $value            
      * @return WidgetLinkInterface
      */
     public function setColumnId($value);
 
     /**
-     *
+     * 
      * @return integer
      */
     public function getRowNumber();
 
     /**
-     *
+     * 
      * @param integer $value            
      * @return WidgetLinkInterface
      */
@@ -131,17 +133,17 @@ interface WidgetLinkInterface extends ExfaceClassInterface, iCanBeConvertedToUxo
 
     /**
      * Sets the id space - a subnamespace of the page, for the widget ids to be resolved in.
-     *
+     * 
      * If a page has multiple id spaces, the same widget id can exist in each of the independently.
-     *
+     * 
      * @return string
      */
     public function getWidgetIdSpace();
 
     /**
      * Returns the id space of this widget link: an empty string by default.
-     *
-     * @param string $value            
+     * 
+     * @param string $value
      * @return WidgetLinkInterface
      */
     public function setWidgetIdSpace($value);

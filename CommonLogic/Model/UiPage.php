@@ -13,6 +13,7 @@ use exface\Core\Factories\EventFactory;
 use exface\Core\Exceptions\Widgets\WidgetNotFoundError;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\RuntimeException;
+use exface\Core\CommonLogic\NameResolver;
 
 /**
  * This is the default implementation of the UiPageInterface.
@@ -70,7 +71,11 @@ class UiPage implements UiPageInterface
 
     private $contents = null;
 
+    private $aliasWithNamespace = null;
+    
     private $alias = null;
+    
+    private $namespace = null;
 
     /**
      *
@@ -334,6 +339,22 @@ class UiPage implements UiPageInterface
         
         return $result;
     }
+    
+    /**
+     * 
+     * @return \exface\Core\CommonLogic\Model\UiPage
+     */
+    public function removeAllWidgets()
+    {
+        foreach ($this->widgets as $cached_widget) {
+            $this->removeWidgetById($cached_widget->getId());
+            $this->getWorkbench()->eventManager()->dispatch(EventFactory::createWidgetEvent($cached_widget, 'Remove.After'));
+        }
+        $this->widgets = [];
+        $this->widget_root = null;
+        
+        return $this;
+    }
 
     /**
      *
@@ -399,14 +420,15 @@ class UiPage implements UiPageInterface
     }
 
     /**
-     * TODO #ui-page-installer
-     *
+     * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\UiPageInterface::getApp()
      */
     public function getApp()
     {
-        if (! is_null($this->getAppAlias())) {} else {
+        if (! is_null($this->getAppAlias())) {
+            return $this->getWorkbench()->getApp($this->getAppAlias());
+        } else {
             throw new RuntimeException('This page is not part of any app!');
         }
     }
@@ -460,11 +482,10 @@ class UiPage implements UiPageInterface
      */
     public function getMenuParentId()
     {
-        if (! is_null($this->menuParentId)) {
-            return $this->menuParentId;
-        } else {
-            return $this->getMenuParentPage()->getMenuParentId();
+        if (is_null($this->menuParentId) && ! is_null($this->getMenuParentPage())) {
+            $this->menuParentId = $this->getMenuParentPage()->getMenuParentId();
         }
+        return $this->menuParentId;
     }
 
     /**
@@ -485,11 +506,10 @@ class UiPage implements UiPageInterface
      */
     public function getMenuParentIdCms()
     {
-        if (! is_null($this->menuParentIdCms)) {
-            return $this->menuParentIdCms;
-        } else {
-            return $this->getMenuParentPage()->getMenuParentIdCms();
+        if (is_null($this->menuParentIdCms) && ! is_null($this->getMenuParentPage())) {
+            $this->menuParentIdCms = $this->getMenuParentPage()->getMenuParentIdCms();
         }
+        return $this->menuParentIdCms;
     }
 
     /**
@@ -510,11 +530,10 @@ class UiPage implements UiPageInterface
      */
     public function getMenuParentAlias()
     {
-        if (! is_null($this->menuParentAlias)) {
-            return $this->menuParentAlias;
-        } else {
-            return $this->getMenuParentPage()->getAliasWithNamespace();
+        if (is_null($this->menuParentAlias) && ! is_null($this->getMenuParentPage())) {
+            $this->menuParentAlias = $this->getMenuParentPage()->getAliasWithNamespace();
         }
+        return $this->menuParentAlias;
     }
 
     /**
@@ -529,8 +548,7 @@ class UiPage implements UiPageInterface
     }
 
     /**
-     * TODO #ui-page-installer
-     *
+     * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\UiPageInterface::getMenuParentPage()
      */
@@ -538,32 +556,33 @@ class UiPage implements UiPageInterface
     {
         if (is_null($this->menuParentPage)) {
             if ($this->menuParentId) {
-                //TODO hier gehts weiter
-                //$this->getWorkbench()->ui()->
-                //$this->menuParentPage = 
+                $this->menuParentPage = $this->getWorkbench()->getCMS()->loadPageById($this->menuParentId);
+                $this->setMenuParentIdCms($this->menuParentPage->getIdCms());
+                $this->setMenuParentAlias($this->menuParentPage->getAliasWithNamespace());
             } elseif ($this->menuParentIdCms) {
-                
+                $this->menuParentPage = $this->getWorkbench()->getCMS()->loadPageByIdCms($this->menuParentIdCms);
+                $this->setMenuParentId($this->menuParentPage->getId());
+                $this->setMenuParentAlias($this->menuParentPage->getAliasWithNamespace());
             } elseif ($this->menuParentAlias) {
-                
+                $this->menuParentPage = $this->getWorkbench()->getCMS()->loadPageByAlias($this->menuParentAlias);
+                $this->setMenuParentId($this->menuParentPage->getId());
+                $this->setMenuParentIdCms($this->menuParentPage->getIdCms());
             }
         }
-        
         return $this->menuParentPage;
     }
 
     /**
-     * TODO #ui-page-installer
-     *
+     * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\UiPageInterface::setMenuParentPage()
      */
     public function setMenuParentPage(UiPageInterface $page)
     {
+        $this->menuParentPage = $page;
         $this->setMenuParentId($page->getId());
         $this->setMenuParentIdCms($page->getIdCms());
         $this->setMenuParentAlias($page->getAliasWithNamespace());
-        $this->menuParentPage = $page;
-        
         return $this;
     }
 
@@ -711,72 +730,102 @@ class UiPage implements UiPageInterface
     public function setContents($string)
     {
         $this->contents = $string;
-        
-        // TODO The new contents will be parsed immediately and all widgets in the page
-        // will be recreated.
-        
+        $this->removeAllWidgets();
+        $string = trim($string);
+        if (substr($string, 0, 1) == '{' && substr($string, -1) == '}') {
+            WidgetFactory::createFromUxon($this, UxonObject::fromAnything($string));
+        }
         return $this;
     }
 
     /**
-     * TODO #ui-page-installer
-     *
+     * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\AliasInterface::getAlias()
      */
     public function getAlias()
     {
+        if (is_null($this->alias) && ! is_null($this->getAliasWithNamespace())) {
+            if (($sepPos = strrpos($this->getAliasWithNamespace(), NameResolver::NAMESPACE_SEPARATOR)) !== false) {
+                $this->alias = substr($this->getAliasWithNamespace(), $sepPos + 1);
+            } else {
+                $this->alias = $this->getAliasWithNamespace();
+            }
+        }
         return $this->alias;
     }
 
     /**
-     *
-     * @param string $alias
-     * @return UiPageInterface
-     */
-    public function setAlias($alias)
-    {
-        $this->alias = $alias;
-        return $this;
-    }
-
-    /**
-     * TODO #ui-page-installer
-     *
+     * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\AliasInterface::getAliasWithNamespace()
      */
     public function getAliasWithNamespace()
     {
-        return $this->alias;
+        return $this->aliasWithNamespace;
     }
 
     /**
-     * TODO #ui-page-installer
-     *
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::setAliasWithNamespace()
+     */
+    public function setAliasWithNamespace($aliasWithNamespace)
+    {
+        $this->aliasWithNamespace = $aliasWithNamespace;
+        return $this;
+    }
+
+    /**
+     * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\AliasInterface::getNamespace()
      */
     public function getNamespace()
-    {}
+    {
+        if (is_null($this->namespace) && ! is_null($this->getAliasWithNamespace())) {
+            if (($sepPos = strrpos($this->getAliasWithNamespace(), NameResolver::NAMESPACE_SEPARATOR)) !== false) {
+                $this->namespace = substr($this->getAliasWithNamespace(), 0, $sepPos);
+            } else {
+                $this->namespace = '';
+            }
+        }
+        return $this->namespace;
+    }
 
     /**
-     * TODO #ui-page-installer
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::exportUxonObject()
      */
     public function exportUxonObject()
-    {}
+    {
+        /** @var UxonObject $uxon */
+        $uxon = $this->getWorkbench()->createUxonObject();
+        $uxon->setProperty('id', $this->getId());
+        $uxon->setProperty('alias', $this->getAliasWithNamespace());
+        $uxon->setProperty('app_alias', $this->getAppAlias());
+        $uxon->setProperty('updateable', $this->isUpdateable());
+        $uxon->setProperty('menu_parent_id', $this->getMenuParentId());
+        $uxon->setProperty('menu_parent_alias', $this->getMenuParentAlias());
+        $uxon->setProperty('menu_index', $this->getMenuIndex());
+        $uxon->setProperty('name', $this->getName());
+        $uxon->setProperty('short_description', $this->getShortDescription());
+        $uxon->setProperty('replaces_page_alias', $this->getReplacesPageAlias());
+        $uxon->setProperty('contents', $this->getContents());
+        
+        return $uxon;
+    }
 
     /**
-     * TODO #ui-page-installer
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::importUxonObject()
      */
     public function importUxonObject(UxonObject $uxon)
-    {}
+    {
+        $uxon->mapToClassSetters($this);
+    }
 }
 
 ?>
