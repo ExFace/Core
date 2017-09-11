@@ -229,8 +229,7 @@ class DataColumn implements DataColumnInterface
     public function getDataType()
     {
         if (is_null($this->data_type)) {
-            $exface = $this->getDataSheet()->getWorkbench();
-            $this->data_type = DataTypeFactory::createFromAlias($exface, EXF_DATA_TYPE_STRING);
+            $this->data_type = DataTypeFactory::createBaseDataType($this->getWorkbench());
         }
         return $this->data_type;
     }
@@ -376,7 +375,7 @@ class DataColumn implements DataColumnInterface
         $uxon->setProperty('expression', $this->getExpressionObj()->toString());
         $uxon->setProperty('name', $this->getName());
         $uxon->setProperty('hidden', $this->getHidden());
-        $uxon->setProperty('data_type', $this->getDataType()->getName());
+        $uxon->setProperty('data_type', $this->getDataType()->getAliasWithNamespace());
         if ($this->formula) {
             $uxon->setProperty('formula', $this->getFormula()->toString());
         }

@@ -2,8 +2,10 @@
 namespace exface\Core\Factories;
 
 use exface\Core\CommonLogic\Workbench;
-use exface\Core\DataTypes\AbstractDataType;
 use exface\Core\Interfaces\NameResolverInterface;
+use exface\Core\Exceptions\DataTypeNotFoundError;
+use exface\Core\CommonLogic\NameResolver;
+use exface\Core\Interfaces\Model\DataTypeInterface;
 
 abstract class DataTypeFactory extends AbstractNameResolverFactory
 {
@@ -11,34 +13,44 @@ abstract class DataTypeFactory extends AbstractNameResolverFactory
     /**
      *
      * @param NameResolverInterface $name_resolver            
-     * @return AbstractDataType
+     * @return DataTypeInterface
      */
     public static function create(NameResolverInterface $name_resolver)
     {
-        // TODO
-        return parent::create($name_resolver);
+        if ($name_resolver->classExists()){
+            $class = $name_resolver->getClassNameWithNamespace();
+            return new $class($name_resolver);
+        } else {
+            throw new DataTypeNotFoundError('Data type "' . $name_resolver->getAliasWithNamespace() . '" not found in class "' . $name_resolver->getClassNameWithNamespace() . '"!');
+        }
     }
 
     /**
-     * TODO Make data types compatible to the name resolver, so they can also be added by app developers!
-     *
-     * @param exface $exface            
-     * @param string $data_type_alias            
-     * @return AbstractDataType
+     * 
+     * @param Workbench $exface            
+     * @param string $alias_with_namespace            
+     * @return DataTypeInterface
      */
-    public static function createFromAlias(Workbench $exface, $data_type_alias)
+    public static function createFromAlias(Workbench $workbench, $alias_with_namespace)
     {
-        $class = static::getClassNameFromAlias($data_type_alias);
-        if (! class_exists($class)) {
-            $data_type_alias = ucfirst(mb_strtolower($data_type_alias));
-            $class = static::getClassNameFromAlias($data_type_alias);
-        }
-        return new $class($exface);
+        $name_resolver = NameResolver::createFromString($alias_with_namespace, NameResolver::OBJECT_TYPE_DATATYPE, $workbench);
+        return static::create($name_resolver);
     }
-
-    protected static function getClassNameFromAlias($data_type_alias)
+    
+    /**
+     * 
+     * @param Workbench $workbench
+     * @return DataTypeInterface
+     */
+    public static function createBaseDataType(Workbench $workbench)
     {
-        return 'exface\\Core\\DataTypes\\' . $data_type_alias . 'DataType';
+        $name_resolver = NameResolver::createFromString('String', NameResolver::OBJECT_TYPE_DATATYPE, $workbench);
+        return static::create($name_resolver);
+    }
+    
+    public static function createFromPrototype(Workbench $workbench, $resolvable_name)
+    {
+        return static::createFromAlias($workbench, $resolvable_name);
     }
 }
 ?>

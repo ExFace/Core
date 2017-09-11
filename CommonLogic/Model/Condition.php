@@ -8,6 +8,8 @@ use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Exceptions\RangeException;
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Interfaces\Model\ExpressionInterface;
+use exface\Core\DataTypes\NumberDataType;
+use exface\Core\DataTypes\RelationDataType;
 
 /**
  * .
@@ -167,8 +169,8 @@ class Condition implements iCanBeConvertedToUxon
             $comparator = EXF_COMPARATOR_IN;
         } elseif (strpos($expression_string, EXF_LIST_SEPARATOR) === false
             && $base_object->hasAttribute($expression_string)
-            && ($base_object->getAttribute($expression_string)->getDataType()->is(EXF_DATA_TYPE_NUMBER)
-                || $base_object->getAttribute($expression_string)->getDataType()->is(EXF_DATA_TYPE_RELATION)
+            && ($base_object->getAttribute($expression_string)->getDataType() instanceof NumberDataType
+                || $base_object->getAttribute($expression_string)->getDataType() instanceof RelationDataType
                 )
             && strpos($value, $base_object->getAttribute($expression_string)->getValueListDelimiter()) !== false) {
                 // if a numeric attribute has a value with commas, it is actually an IN-statement
@@ -221,7 +223,7 @@ class Condition implements iCanBeConvertedToUxon
     public function getDataType()
     {
         if (is_null($this->data_type)) {
-            $this->data_type = DataTypeFactory::createFromAlias($this->exface, EXF_DATA_TYPE_STRING);
+            $this->data_type = DataTypeFactory::createBaseDataType($this->exface);
         }
         return $this->data_type;
     }

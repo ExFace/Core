@@ -15,6 +15,10 @@ use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Widgets\Traits\iCanBeAlignedTrait;
 use exface\Core\CommonLogic\Constants\SortingDirections;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
+use exface\Core\DataTypes\NumberDataType;
+use exface\Core\DataTypes\PriceDataType;
+use exface\Core\DataTypes\DateDataType;
+use exface\Core\DataTypes\BooleanDataType;
 
 /**
  * The DataColumn represents a column in Data-widgets a DataTable.
@@ -234,9 +238,9 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     public function getAlign()
     {
         if (! $this->isAlignSet()) {
-            if ($this->getDataType()->is(EXF_DATA_TYPE_NUMBER) || $this->getDataType()->is(EXF_DATA_TYPE_PRICE) || $this->getDataType()->is(EXF_DATA_TYPE_DATE)) {
+            if ($this->getDataType() instanceof NumberDataType || $this->getDataType() instanceof PriceDataType || $this->getDataType() instanceof DateDataType) {
                 $this->setAlign(EXF_ALIGN_OPPOSITE);
-            } elseif ($this->getDataType()->is(EXF_DATA_TYPE_BOOLEAN)) {
+            } elseif ($this->getDataType() instanceof BooleanDataType) {
                 $this->setAlign(EXF_ALIGN_CENTER);
             } else {
                 $this->setAlign(EXF_ALIGN_DEFAULT);
@@ -246,10 +250,10 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     }
 
     /**
-     * Returns the data type of the column as a constant (e.g.
-     * EXF_DATA_TYPE_NUMBER). The column's
-     * data_type can either be set explicitly by UXON, or is derived from the shown meta attribute.
-     * If there is neither an attribute bound to the column, nor an explicit data_type EXF_DATA_TYPE_STRING
+     * Returns the data type of the column. 
+     * 
+     * The column's data_type can either be set explicitly by UXON, or is derived from the shown meta attribute.
+     * If there is neither an attribute bound to the column, nor an explicit data_type, the base data type
      * is returned.
      *
      * @return AbstractDataType
@@ -261,8 +265,7 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
         } elseif ($attr = $this->getAttribute()) {
             return $attr->getDataType();
         } else {
-            $exface = $this->getWorkbench();
-            return DataTypeFactory::createFromAlias($exface, EXF_DATA_TYPE_STRING);
+            return DataTypeFactory::createBaseDataType($this->getWorkbench());
         }
     }
 

@@ -2,6 +2,7 @@
 namespace exface\Core\Formulas;
 
 use exface\Core\Factories\DataTypeFactory;
+use exface\Core\DataTypes\PriceDataType;
 
 /**
  * Formats prices based on a currency meta object.
@@ -52,7 +53,7 @@ class Price extends \exface\Core\CommonLogic\Model\Formula
     public function getDataType()
     {
         $exface = $this->getDataSheet()->getWorkbench();
-        return DataTypeFactory::createFromAlias($exface, EXF_DATA_TYPE_PRICE);
+        return DataTypeFactory::createFromPrototype($exface, PriceDataType::getPrototypeClassName());
     }
 }
 ?>

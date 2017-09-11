@@ -14,6 +14,7 @@ use exface\Core\Factories\DataSorterFactory;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Interfaces\DataSheets\DataColumnInterface;
 use exface\Core\Interfaces\Model\MetaRelationInterface;
+use exface\Core\DataTypes\BooleanDataType;
 
 /**
  * A dropdown menu to select from.
@@ -150,7 +151,7 @@ class InputSelect extends Input implements iSupportMultiSelect
     {
         // If there are no selectable options set explicitly, try to determine them from the meta model. Otherwise the select box would be empty.
         if (empty($this->selectable_options) && $this->getAttribute()) {
-            if ($this->getAttribute()->getDataType()->is(EXF_DATA_TYPE_BOOLEAN)) {
+            if ($this->getAttribute()->getDataType() instanceof BooleanDataType) {
                 $this->setSelectableOptions(array(
                     1,
                     0

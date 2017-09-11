@@ -11,6 +11,11 @@ use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\Model\MetaRelationInterface;
 use exface\Core\Widgets\Traits\iCanBeAlignedTrait;
+use exface\Core\DataTypes\NumberDataType;
+use exface\Core\DataTypes\DateDataType;
+use exface\Core\DataTypes\PriceDataType;
+use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\Interfaces\Model\DataTypeInterface;
 
 /**
  * The text widget simply shows text with an optional title created from the caption of the widget
@@ -317,9 +322,9 @@ class Text extends AbstractWidget implements iShowSingleAttribute, iHaveValue, i
     public function getAlign()
     {
         if (! $this->isAlignSet()) {
-            if ($this->getDataType()->is(EXF_DATA_TYPE_NUMBER) || $this->getDataType()->is(EXF_DATA_TYPE_PRICE)) {
+            if ($this->getDataType() instanceof NumberDataType || $this->getDataType() instanceof PriceDataType) {
                 $this->setAlign(EXF_ALIGN_OPPOSITE);
-            } elseif ($this->getDataType()->is(EXF_DATA_TYPE_BOOLEAN)) {
+            } elseif ($this->getDataType() instanceof BooleanDataType) {
                 $this->setAlign(EXF_ALIGN_CENTER);
             } else {
                 $this->setAlign(EXF_ALIGN_DEFAULT);
@@ -329,13 +334,13 @@ class Text extends AbstractWidget implements iShowSingleAttribute, iHaveValue, i
     }
 
     /**
-     * Returns the data type of the column as a constant (e.g.
-     * EXF_DATA_TYPE_NUMBER). The column's
-     * data_type can either be set explicitly by UXON, or is derived from the shown meta attribute.
-     * If there is neither an attribute bound to the column, nor an explicit data_type EXF_DATA_TYPE_STRING
-     * is returned.
+     * Returns the data type of the widget. 
+     * 
+     * The data type can either be set explicitly by UXON, or is derived from the shown meta attribute.
+     * If there is neither an attribute bound to the column, nor an explicit data_type, the base data
+     * type is returned.
      *
-     * @return AbstractDataType
+     * @return DataTypeInterface
      */
     public function getDataType()
     {
@@ -344,8 +349,7 @@ class Text extends AbstractWidget implements iShowSingleAttribute, iHaveValue, i
         } elseif ($attr = $this->getAttribute()) {
             return $attr->getDataType();
         } else {
-            $exface = $this->getWorkbench();
-            return DataTypeFactory::createFromAlias($exface, EXF_DATA_TYPE_STRING);
+            return DataTypeFactory::createBaseDataType($this->getWorkbench());
         }
     }
 

@@ -3,6 +3,7 @@ namespace exface\Core\Widgets;
 
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
+use exface\Core\DataTypes\FlagTreeFolderDataType;
 
 class DataTree extends DataTable
 {
@@ -59,7 +60,7 @@ class DataTree extends DataTable
     public function getTreeFolderFlagAttributeAlias()
     {
         if (! $this->tree_folder_flag_attribute_alias) {
-            $flags = $this->getMetaObject()->getAttributes()->getByDataTypeAlias(EXF_DATA_TYPE_FLAG_TREE_FOLDER);
+            $flags = $this->getMetaObject()->getAttributes()->getByDataPrototypeClass(FlagTreeFolderDataType::getPrototypeClassName());
             if ($flags->count() == 1) {
                 $flag = $flags->getFirst();
                 $this->setTreeFolderFlagAttributeAlias($flag->getAlias());

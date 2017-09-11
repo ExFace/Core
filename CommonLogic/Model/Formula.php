@@ -147,8 +147,7 @@ abstract class Formula implements FormulaInterface
     public function getDataType()
     {
         if (is_null($this->data_type)) {
-            $exface = $this->getDataSheet()->getWorkbench();
-            $this->data_type = DataTypeFactory::createFromAlias($exface, EXF_DATA_TYPE_STRING);
+            $this->data_type = DataTypeFactory::createBaseDataType($this->getWorkbench());
         }
         return $this->data_type;
     }

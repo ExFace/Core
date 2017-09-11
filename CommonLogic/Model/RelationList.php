@@ -101,24 +101,6 @@ class RelationList extends EntityList
     }
 
     /**
-     * Returns a new attribute list with all attributes of the given data type
-     *
-     * @param string $data_type_alias            
-     * @return AttributeList
-     */
-    public function getByDataTypeAlias($data_type_alias)
-    {
-        $object = $this->getMetaObject();
-        $result = AttributeListFactory::createForObject($object);
-        foreach ($this->getAll() as $key => $attr) {
-            if (strcasecmp($attr->getDataType()->getName(), $data_type_alias) == 0) {
-                $result->add($attr, $key);
-            }
-        }
-        return $result;
-    }
-
-    /**
      * Returns a new attribute list containig only attributes marked as required
      *
      * @return AttributeList

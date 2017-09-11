@@ -5,6 +5,7 @@ use exface\Core\Exceptions\QueryBuilderException;
 use exface\Core\DataTypes\AbstractDataType;
 use exface\Core\CommonLogic\AbstractDataConnector;
 use exface\Core\CommonLogic\Model\RelationPath;
+use exface\Core\DataTypes\DateDataType;
 
 /**
  * A query builder for MySQL.
@@ -211,7 +212,7 @@ class MySqlBuilder extends AbstractSqlBuilder
 
     protected function prepareWhereValue($value, AbstractDataType $data_type, $sql_data_type = NULL)
     {
-        if ($data_type->is(EXF_DATA_TYPE_DATE)) {
+        if ($data_type instanceof DateDataType) {
             $output = "{ts '" . $value . "'}";
         } else {
             $output = parent::prepareWhereValue($value, $data_type, $sql_data_type);

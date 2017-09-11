@@ -5,6 +5,8 @@ use exface\Core\DataTypes\AbstractDataType;
 use exface\Core\CommonLogic\AbstractDataConnector;
 use exface\Core\Exceptions\QueryBuilderException;
 use exface\Core\Interfaces\Model\MetaRelationInterface;
+use exface\Core\DataTypes\DateDataType;
+use exface\Core\DataTypes\TimestampDataType;
 
 /**
  * A query builder for Oracle SQL.
@@ -450,7 +452,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
 
     protected function prepareInputValue($value, AbstractDataType $data_type, $sql_data_type = NULL)
     {
-        if ($data_type->is(EXF_DATA_TYPE_DATE) || $data_type->is(EXF_DATA_TYPE_TIMESTAMP)) {
+        if ($data_type instanceof DateDataType || $data_type instanceof TimestampDataType) {
             $value = "TO_DATE('" . $this->escapeString($value) . "', 'yyyy-mm-dd hh24:mi:ss')";
         } else {
             $value = parent::prepareInputValue($value, $data_type, $sql_data_type);
@@ -460,7 +462,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
 
     protected function prepareWhereValue($value, AbstractDataType $data_type, $sql_data_type = NULL)
     {
-        if ($data_type->is(EXF_DATA_TYPE_DATE) || $data_type->is(EXF_DATA_TYPE_TIMESTAMP)) {
+        if ($data_type instanceof DateDataType || $data_type instanceof TimestampDataType) {
             $output = "TO_DATE('" . $value . "', 'yyyy-mm-dd hh24:mi:ss')";
         } else {
             $output = parent::prepareWhereValue($value, $data_type);
