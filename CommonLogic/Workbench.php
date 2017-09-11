@@ -428,9 +428,15 @@ class Workbench
         
         // TODO clear other caches
         
-        // Clear main cache folder
-        $filemanager = $this->filemanager();
-        $filemanager->emptyDir($filemanager->getPathToCacheFolder());
+        // Clear main cache folder. Mute errors since this is method is often called in background
+        // IDEA introduce a special exception instead of muting to give dependants
+        // more control.
+        try {
+            $filemanager = $this->filemanager();
+            $filemanager->emptyDir($this->filemanager()->getPathToCacheFolder());
+        } catch (\Throwable $e){
+            $this->getLogger()->logException($e);
+        }
         return $this;
     }
     
