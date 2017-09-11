@@ -252,7 +252,7 @@ class Filemanager extends Filesystem implements ExfaceClassInterface
     public function emptyDir($absolutePath, $removeHiddenFiles = true){
         $absolutePath = rtrim(static::pathNormalize($absolutePath, '/'), "/");
         if ($removeHiddenFiles){
-            $files = glob('path/to/temp/{,.}*', GLOB_BRACE);
+            $files = glob($absolutePath . '/{,.}[!.,!..]*', GLOB_MARK|GLOB_BRACE);
         } else {
             $files = glob($absolutePath . '/*');
         }
