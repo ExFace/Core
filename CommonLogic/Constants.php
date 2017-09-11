@@ -5,31 +5,6 @@
  * customizing reasons! They are jsut here for ease of access and because of backward compatibility to older components.
  */
 
-// data types
-// IDEA if data types will become separate php files or classes, move the constants to the respective
-// files. This will enable the developer on the data type to add the constant himself!
-const EXF_DATA_TYPE_STRING = 'String';
-
-const EXF_DATA_TYPE_NUMBER = 'Number';
-
-const EXF_DATA_TYPE_DATE = 'Date';
-
-const EXF_DATA_TYPE_TIMESTAMP = 'Timestamp';
-
-const EXF_DATA_TYPE_RELATION = 'Relation';
-
-const EXF_DATA_TYPE_RELATION_HIERARCHY = 'RelationTree';
-
-const EXF_DATA_TYPE_PRICE = 'Price';
-
-const EXF_DATA_TYPE_BOOLEAN = 'Boolean';
-
-const EXF_DATA_TYPE_FLAG_TREE_FOLDER = 'FlagTreeFolder';
-
-const EXF_DATA_TYPE_HTML = 'HTML';
-
-const EXF_DATA_TYPE_IMAGE_URL = 'ImageUrl';
-
 /**
  * @const EXF_WIDGET_VISIBILITY_NORMAL normal visibility within a tempalte
  */

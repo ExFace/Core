@@ -94,18 +94,19 @@ class AttributeList extends EntityList implements MetaAttributeListInterface
         }
         return false;
     }
-
+    
     /**
      * 
-     * {@inheritdoc}
-     * @see MetaAttributeListInterface::getByDataTypeAlias()
+     * 
+     * @param string $classname
+     * @return \exface\Core\CommonLogic\Model\AttributeList
      */
-    public function getByDataTypeAlias($data_type_alias)
+    public function getByDataPrototypeClass($classname)
     {
         $object = $this->getMetaObject();
         $result = AttributeListFactory::createForObject($object);
         foreach ($this->getAll() as $key => $attr) {
-            if (strcasecmp($attr->getDataType()->getName(), $data_type_alias) == 0) {
+            if ($attr->getDataType()->getPrototypeClassName() === $classname) {
                 $result->add($attr, $key);
             }
         }

@@ -43,14 +43,6 @@ interface MetaAttributeListInterface extends EntityListInterface
     public function getByAttributeId($uid);
     
     /**
-     * Returns a new attribute list with all attributes of the given data type
-     *
-     * @param string $data_type_alias
-     * @return MetaAttributeListInterface|MetaAttributeInterface[]
-     */
-    public function getByDataTypeAlias($data_type_alias);
-    
-    /**
      * Returns a new attribute list containig only attributes marked as required
      *
      * @return MetaAttributeListInterface|MetaAttributeInterface[]

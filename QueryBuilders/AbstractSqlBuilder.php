@@ -17,6 +17,11 @@ use exface\Core\CommonLogic\QueryBuilder\QueryPartSelect;
 use exface\Core\Interfaces\Model\MetaRelationInterface;
 use exface\Core\CommonLogic\DataSheets\DataAggregator;
 use exface\Core\Interfaces\Model\MetaRelationPathInterface;
+use exface\Core\DataTypes\StringDataType;
+use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\DataTypes\DateDataType;
+use exface\Core\DataTypes\RelationDataType;
+use exface\Core\Exceptions\DataTypeNotFoundError;
 
 /**
  * A query builder for generic SQL syntax.
@@ -551,19 +556,19 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     protected function prepareInputValue($value, AbstractDataType $data_type, $sql_data_type = NULL)
     {
         $value = $data_type::parse($value);
-        if ($data_type->is(EXF_DATA_TYPE_STRING)) {
+        if ($data_type instanceof StringDataType) {
             $value = "'" . $this->escapeString($value) . "'";
-        } elseif ($data_type->is(EXF_DATA_TYPE_BOOLEAN)) {
+        } elseif ($data_type instanceof BooleanDataType) {
             $value = $value ? 1 : 0;
-        } elseif ($data_type->is(EXF_DATA_TYPE_NUMBER)) {
+        } elseif ($data_type instanceof NumberDataType) {
             $value = ($value == '' ? 'NULL' : $value);
-        } elseif ($data_type->is(EXF_DATA_TYPE_DATE)) {
+        } elseif ($data_type instanceof DateDataType) {
             if (! $value) {
                 $value = 'NULL';
             } else {
                 $value = "'" . $this->escapeString($value) . "'";
             }
-        } elseif ($data_type->is(EXF_DATA_TYPE_RELATION)) {
+        } elseif ($data_type instanceof RelationDataType) {
             if ($value == '') {
                 $value = 'NULL';
             } else {
@@ -742,7 +747,7 @@ else {
         if ($add_nvl) {
             // do some prettyfying
             // return zero for number fields if the subquery does not return anything
-            if ($attribute->getDataType()->is(EXF_DATA_TYPE_NUMBER)) {
+            if ($attribute->getDataType() instanceof NumberDataType) {
                 $output = $this->buildSqlSelectNullCheck($output, 0);
             }
         }
@@ -1159,13 +1164,13 @@ else {
             $comp = EXF_COMPARATOR_EQUALS;
         } elseif ($attr->isExactly($this->getMainObject()->getUidAttribute()) && $comp != EXF_COMPARATOR_IN && ! $qpart->getAggregateFunction()) {
             $comp = EXF_COMPARATOR_EQUALS;
-        } elseif ($attr->getDataType()->is(EXF_DATA_TYPE_NUMBER) && $comp == EXF_COMPARATOR_IS && is_numeric($val)) {
+        } elseif (($attr->getDataType() instanceof NumberDataType) && $comp == EXF_COMPARATOR_IS && is_numeric($val)) {
             // also use equals for the NUMBER data type, but make sure, the value to compare to is really a number (otherwise the query will fail!)
             $comp = EXF_COMPARATOR_EQUALS;
-        } elseif ($attr->getDataType()->is(EXF_DATA_TYPE_BOOLEAN) && $comp == EXF_COMPARATOR_IS) {
+        } elseif (($attr->getDataType() instanceof BooleanDataType) && $comp == EXF_COMPARATOR_IS) {
             // also use equals for the BOOLEAN data type
             $comp = EXF_COMPARATOR_EQUALS;
-        } elseif ($attr->getDataType()->is(EXF_DATA_TYPE_DATE) && $comp == EXF_COMPARATOR_IS) {
+        } elseif (($attr->getDataType() instanceof DateDataType) && $comp == EXF_COMPARATOR_IS) {
             // also use equals for the NUMBER data type, but make sure, the value to compare to is really a number (otherwise the query will fail!)
             $comp = EXF_COMPARATOR_EQUALS;
         }
@@ -1259,7 +1264,7 @@ else {
                     // Normalize non-empty values
                     $values[$nr] = $this->prepareWhereValue($val, $data_type, $sql_data_type);
                 }
-                $value = '(' . implode(',', $values) . ')' . ($value ? ' OR ' . $value : '');
+                $value = '(' . (! empty($values) ? implode(',', $values) : 'NULL') . ')' . ($value ? ' OR ' . $value : '');
             }
         } catch (DataTypeValidationError $e) {
             // If the data type is incompatible with the value, return a WHERE clause, that is always false.
@@ -1307,7 +1312,7 @@ else {
     protected function prepareWhereValue($value, AbstractDataType $data_type, $sql_data_type = NULL)
     {
         // IDEA some data type specific procession here
-        if ($data_type->is(EXF_DATA_TYPE_BOOLEAN)) {
+        if ($data_type instanceof BooleanDataType) {
             $output = $value ? 1 : 0;
         } else {
             $output = $this->escapeString($value);
