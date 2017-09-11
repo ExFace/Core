@@ -250,13 +250,27 @@ class Filemanager extends Filesystem implements ExfaceClassInterface
      * @param boolean $removeHiddenFiles
      */
     public function emptyDir($absolutePath, $removeHiddenFiles = true){
-        $absolutePath = rtrim(static::pathNormalize($absolutePath, '/'), "/");
+        $absolutePath = static::pathNormalize($absolutePath, DIRECTORY_SEPARATOR);
+        if (substr($absolutePath, -1) !== DIRECTORY_SEPARATOR){
+            $absolutePath .= DIRECTORY_SEPARATOR;
+        }
+        
+        // First empty subfolders
         if ($removeHiddenFiles){
-            $files = glob($absolutePath . '/{,.}[!.,!..]*', GLOB_MARK|GLOB_BRACE);
+            $subfolders = glob($absolutePath . '{,.}[!.,!..]*', GLOB_MARK|GLOB_BRACE|GLOB_ONLYDIR);
         } else {
-            $files = glob($absolutePath . '/*');
+            $subfolders = glob($absolutePath . '*', GLOB_ONLYDIR);
+        }
+        array_map('self::emptyDir', $subfolders);
+        
+        // Now delete subfolders and files
+        if ($removeHiddenFiles){
+            $files = glob($absolutePath . '{,.}[!.,!..]*', GLOB_MARK|GLOB_BRACE);
+        } else {
+            $files = glob($absolutePath . '*');
         }
         array_map('unlink', $files);
+        
         return;
     }
 
