@@ -375,7 +375,7 @@ class DataColumn implements DataColumnInterface
         $uxon->setProperty('expression', $this->getExpressionObj()->toString());
         $uxon->setProperty('name', $this->getName());
         $uxon->setProperty('hidden', $this->getHidden());
-        $uxon->setProperty('data_type', $this->getDataType()->getName());
+        $uxon->setProperty('data_type', $this->getDataType()->getAliasWithNamespace());
         if ($this->formula) {
             $uxon->setProperty('formula', $this->getFormula()->toString());
         }

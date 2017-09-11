@@ -269,7 +269,8 @@ class SqlModelLoader implements ModelLoaderInterface
         $attr->setDataAddress($row['data']);
         $attr->setDataAddressProperties(UxonObject::fromJson($row['data_properties']));
         $attr->setFormatter($row['attribute_formatter']);
-        $attr->setDataType($row['data_type_alias']);
+        // FIXME #datatypes replace by the real data type app alias or (better) load data types separately
+        $attr->setDataType('exface.Core.' . $row['data_type_alias']);
         $attr->setRequired($row['attribute_required_flag']);
         $attr->setEditable($row['attribute_editable_flag']);
         $attr->setHidden($row['attribute_hidden_flag']);
