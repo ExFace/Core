@@ -98,7 +98,7 @@
             "PROTOTYPE": "exface\/Core\/DataTypes\/StringDataType.php",
             "DEFAULT_WIDGET_UXON": "{\"widget_type\": \"Input\"}",
             "ALIAS": "String",
-            "SHORT_DESCRIPTION": null,
+            "SHORT_DESCRIPTION": "",
             "LABEL": "String"
         },
         {
@@ -117,17 +117,17 @@
         },
         {
             "CREATED_ON": "0000-00-00 00:00:00",
-            "MODIFIED_ON": "0000-00-00 00:00:00",
+            "MODIFIED_ON": "2017-09-11 12:00:44",
             "CREATED_BY_USER": "",
-            "MODIFIED_BY_USER": "",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x31300000000000000000000000000000",
             "APP": "0x31000000000000000000000000000000",
-            "NAME": "PropertySet",
+            "NAME": "Property Set",
             "PROTOTYPE": "exface\/Core\/DataTypes\/PropertySetDataType.php",
-            "DEFAULT_WIDGET_UXON": "{\"widget_type\": \"InputPropertyTable\"}",
+            "DEFAULT_WIDGET_UXON": "{\"widget_type\":\"InputPropertyTable\"}",
             "ALIAS": "PropertySet",
             "SHORT_DESCRIPTION": "Property sets can be used to store multiple options in one data field, like connection settings (user, password, address, etc.)",
-            "LABEL": "PropertySet"
+            "LABEL": "Property Set"
         },
         {
             "CREATED_ON": "0000-00-00 00:00:00",
@@ -168,7 +168,7 @@
             "PROTOTYPE": "exface\/Core\/DataTypes\/JsonDataType.php",
             "DEFAULT_WIDGET_UXON": "{\"widget_type\": \"InputJson\", \"width\": \"2\", \"height\": \"6\"}",
             "ALIAS": "Json",
-            "SHORT_DESCRIPTION": null,
+            "SHORT_DESCRIPTION": "",
             "LABEL": "Json"
         },
         {
@@ -182,22 +182,22 @@
             "PROTOTYPE": "exface\/Core\/DataTypes\/HTMLDataType.php",
             "DEFAULT_WIDGET_UXON": "{\"widget_type\": \"InputText\"}",
             "ALIAS": "HTML",
-            "SHORT_DESCRIPTION": null,
+            "SHORT_DESCRIPTION": "",
             "LABEL": "HTML"
         },
         {
             "CREATED_ON": "0000-00-00 00:00:00",
-            "MODIFIED_ON": "0000-00-00 00:00:00",
+            "MODIFIED_ON": "2017-09-11 12:00:54",
             "CREATED_BY_USER": "",
-            "MODIFIED_BY_USER": "",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x31350000000000000000000000000000",
             "APP": "0x31000000000000000000000000000000",
-            "NAME": "ImageUrl",
+            "NAME": "Image URL",
             "PROTOTYPE": "exface\/Core\/DataTypes\/ImageUrlDataType.php",
             "DEFAULT_WIDGET_UXON": "{\"widget_type\":\"Input\"}",
             "ALIAS": "ImageUrl",
             "SHORT_DESCRIPTION": "",
-            "LABEL": "ImageUrl"
+            "LABEL": "Image URL"
         },
         {
             "CREATED_ON": "0000-00-00 00:00:00",
@@ -210,7 +210,7 @@
             "PROTOTYPE": "exface\/Core\/DataTypes\/DateDataType.php",
             "DEFAULT_WIDGET_UXON": "{\"widget_type\": \"InputDate\"}",
             "ALIAS": "Date",
-            "SHORT_DESCRIPTION": null,
+            "SHORT_DESCRIPTION": "",
             "LABEL": "Date"
         },
         {
@@ -224,7 +224,7 @@
             "PROTOTYPE": "exface\/Core\/DataTypes\/TimestampDataType.php",
             "DEFAULT_WIDGET_UXON": "{\"widget_type\": \"InputDateTime\"}",
             "ALIAS": "Timestamp",
-            "SHORT_DESCRIPTION": null,
+            "SHORT_DESCRIPTION": "",
             "LABEL": "Timestamp"
         },
         {
@@ -252,7 +252,7 @@
             "PROTOTYPE": "exface\/Core\/DataTypes\/RelationDataType.php",
             "DEFAULT_WIDGET_UXON": "{\"widget_type\": \"ComboTable\"}",
             "ALIAS": "Relation",
-            "SHORT_DESCRIPTION": null,
+            "SHORT_DESCRIPTION": "",
             "LABEL": "Relation"
         },
         {
@@ -266,36 +266,36 @@
             "PROTOTYPE": "exface\/Core\/DataTypes\/BooleanDataType.php",
             "DEFAULT_WIDGET_UXON": "{\"widget_type\": \"CheckBox\"}",
             "ALIAS": "Boolean",
-            "SHORT_DESCRIPTION": null,
+            "SHORT_DESCRIPTION": "",
             "LABEL": "Boolean"
         },
         {
             "CREATED_ON": "0000-00-00 00:00:00",
-            "MODIFIED_ON": "0000-00-00 00:00:00",
+            "MODIFIED_ON": "2017-09-11 12:00:39",
             "CREATED_BY_USER": "",
-            "MODIFIED_BY_USER": "",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x38000000000000000000000000000000",
             "APP": "0x31000000000000000000000000000000",
-            "NAME": "RelationHierarchy",
+            "NAME": "Relation Hierarchy",
             "PROTOTYPE": "exface\/Core\/DataTypes\/RelationHierarchyDataType.php",
-            "DEFAULT_WIDGET_UXON": "{\"widget_type\": \"ComboTable\"}",
+            "DEFAULT_WIDGET_UXON": "{\"widget_type\":\"ComboTable\"}",
             "ALIAS": "RelationHierarchy",
             "SHORT_DESCRIPTION": "Special data type for hierarchies of object of the same type. It should be used for the relation to the parent object. Setting this data type enables the framework to build trees for these hierarchies automatically. ",
-            "LABEL": "RelationHierarchy"
+            "LABEL": "Relation Hierarchy"
         },
         {
             "CREATED_ON": "0000-00-00 00:00:00",
-            "MODIFIED_ON": "0000-00-00 00:00:00",
+            "MODIFIED_ON": "2017-09-11 12:00:33",
             "CREATED_BY_USER": "",
-            "MODIFIED_BY_USER": "",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x39000000000000000000000000000000",
             "APP": "0x31000000000000000000000000000000",
-            "NAME": "FlagTreeFolder",
+            "NAME": "Tree Folder Flag",
             "PROTOTYPE": "exface\/Core\/DataTypes\/FlagTreeFolderDataType.php",
-            "DEFAULT_WIDGET_UXON": "{\"widget_type\": \"CheckBox\"}",
+            "DEFAULT_WIDGET_UXON": "{\"widget_type\":\"CheckBox\"}",
             "ALIAS": "FlagTreeFolder",
-            "SHORT_DESCRIPTION": null,
-            "LABEL": "FlagTreeFolder"
+            "SHORT_DESCRIPTION": "",
+            "LABEL": "Tree Folder Flag"
         }
     ],
     "totals_rows": [],
