@@ -1,0 +1,325 @@
+{
+    "object_alias": "exface.Core.DATATYPE",
+    "columns": [
+        {
+            "expression": "CREATED_ON",
+            "name": "CREATED_ON",
+            "hidden": false,
+            "data_type": "exface.Core.Timestamp",
+            "attribute_alias": "CREATED_ON"
+        },
+        {
+            "expression": "MODIFIED_ON",
+            "name": "MODIFIED_ON",
+            "hidden": false,
+            "data_type": "exface.Core.Timestamp",
+            "attribute_alias": "MODIFIED_ON"
+        },
+        {
+            "expression": "CREATED_BY_USER",
+            "name": "CREATED_BY_USER",
+            "hidden": false,
+            "data_type": "exface.Core.Relation",
+            "attribute_alias": "CREATED_BY_USER"
+        },
+        {
+            "expression": "MODIFIED_BY_USER",
+            "name": "MODIFIED_BY_USER",
+            "hidden": false,
+            "data_type": "exface.Core.Relation",
+            "attribute_alias": "MODIFIED_BY_USER"
+        },
+        {
+            "expression": "UID",
+            "name": "UID",
+            "hidden": false,
+            "data_type": "exface.Core.Number",
+            "attribute_alias": "UID"
+        },
+        {
+            "expression": "APP",
+            "name": "APP",
+            "hidden": false,
+            "data_type": "exface.Core.Relation",
+            "attribute_alias": "APP"
+        },
+        {
+            "expression": "NAME",
+            "name": "NAME",
+            "hidden": false,
+            "data_type": "exface.Core.String",
+            "attribute_alias": "NAME"
+        },
+        {
+            "expression": "PROTOTYPE",
+            "name": "PROTOTYPE",
+            "hidden": false,
+            "data_type": "exface.Core.Relation",
+            "attribute_alias": "PROTOTYPE"
+        },
+        {
+            "expression": "DEFAULT_WIDGET_UXON",
+            "name": "DEFAULT_WIDGET_UXON",
+            "hidden": false,
+            "data_type": "exface.Core.Json",
+            "attribute_alias": "DEFAULT_WIDGET_UXON"
+        },
+        {
+            "expression": "ALIAS",
+            "name": "ALIAS",
+            "hidden": false,
+            "data_type": "exface.Core.String",
+            "attribute_alias": "ALIAS"
+        },
+        {
+            "expression": "SHORT_DESCRIPTION",
+            "name": "SHORT_DESCRIPTION",
+            "hidden": false,
+            "data_type": "exface.Core.String",
+            "attribute_alias": "SHORT_DESCRIPTION"
+        },
+        {
+            "expression": "LABEL",
+            "name": "LABEL",
+            "hidden": false,
+            "data_type": "exface.Core.String",
+            "attribute_alias": "LABEL"
+        }
+    ],
+    "rows": [
+        {
+            "CREATED_ON": "0000-00-00 00:00:00",
+            "MODIFIED_ON": "0000-00-00 00:00:00",
+            "CREATED_BY_USER": "",
+            "MODIFIED_BY_USER": "",
+            "UID": "0x30000000000000000000000000000000",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "String",
+            "PROTOTYPE": "exface\/Core\/DataTypes\/StringDataType.php",
+            "DEFAULT_WIDGET_UXON": "{\"widget_type\": \"Input\"}",
+            "ALIAS": "String",
+            "SHORT_DESCRIPTION": null,
+            "LABEL": "String"
+        },
+        {
+            "CREATED_ON": "0000-00-00 00:00:00",
+            "MODIFIED_ON": "2017-09-11 10:25:27",
+            "CREATED_BY_USER": "",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x31000000000000000000000000000000",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Number",
+            "PROTOTYPE": "exface\/Core\/DataTypes\/NumberDataType.php",
+            "DEFAULT_WIDGET_UXON": "{\"widget_type\":\"InputNumber\"}",
+            "ALIAS": "Number",
+            "SHORT_DESCRIPTION": "",
+            "LABEL": "Number"
+        },
+        {
+            "CREATED_ON": "0000-00-00 00:00:00",
+            "MODIFIED_ON": "0000-00-00 00:00:00",
+            "CREATED_BY_USER": "",
+            "MODIFIED_BY_USER": "",
+            "UID": "0x31300000000000000000000000000000",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "PropertySet",
+            "PROTOTYPE": "exface\/Core\/DataTypes\/PropertySetDataType.php",
+            "DEFAULT_WIDGET_UXON": "{\"widget_type\": \"InputPropertyTable\"}",
+            "ALIAS": "PropertySet",
+            "SHORT_DESCRIPTION": "Property sets can be used to store multiple options in one data field, like connection settings (user, password, address, etc.)",
+            "LABEL": "PropertySet"
+        },
+        {
+            "CREATED_ON": "0000-00-00 00:00:00",
+            "MODIFIED_ON": "0000-00-00 00:00:00",
+            "CREATED_BY_USER": "",
+            "MODIFIED_BY_USER": "",
+            "UID": "0x31310000000000000000000000000000",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Text",
+            "PROTOTYPE": "exface\/Core\/DataTypes\/TextDataType.php",
+            "DEFAULT_WIDGET_UXON": "{\"widget_type\": \"InputText\"}",
+            "ALIAS": "Text",
+            "SHORT_DESCRIPTION": "A text field is longer than a string an may contain multiple lines",
+            "LABEL": "Text"
+        },
+        {
+            "CREATED_ON": "0000-00-00 00:00:00",
+            "MODIFIED_ON": "0000-00-00 00:00:00",
+            "CREATED_BY_USER": "",
+            "MODIFIED_BY_USER": "",
+            "UID": "0x31320000000000000000000000000000",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "URL",
+            "PROTOTYPE": "exface\/Core\/DataTypes\/URLDataType.php",
+            "DEFAULT_WIDGET_UXON": "{\"widget_type\":\"Input\"}",
+            "ALIAS": "URL",
+            "SHORT_DESCRIPTION": "URL, File-Links, etc.",
+            "LABEL": "URL"
+        },
+        {
+            "CREATED_ON": "0000-00-00 00:00:00",
+            "MODIFIED_ON": "0000-00-00 00:00:00",
+            "CREATED_BY_USER": "",
+            "MODIFIED_BY_USER": "",
+            "UID": "0x31330000000000000000000000000000",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Json",
+            "PROTOTYPE": "exface\/Core\/DataTypes\/JsonDataType.php",
+            "DEFAULT_WIDGET_UXON": "{\"widget_type\": \"InputJson\", \"width\": \"2\", \"height\": \"6\"}",
+            "ALIAS": "Json",
+            "SHORT_DESCRIPTION": null,
+            "LABEL": "Json"
+        },
+        {
+            "CREATED_ON": "0000-00-00 00:00:00",
+            "MODIFIED_ON": "0000-00-00 00:00:00",
+            "CREATED_BY_USER": "",
+            "MODIFIED_BY_USER": "",
+            "UID": "0x31340000000000000000000000000000",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "HTML",
+            "PROTOTYPE": "exface\/Core\/DataTypes\/HTMLDataType.php",
+            "DEFAULT_WIDGET_UXON": "{\"widget_type\": \"InputText\"}",
+            "ALIAS": "HTML",
+            "SHORT_DESCRIPTION": null,
+            "LABEL": "HTML"
+        },
+        {
+            "CREATED_ON": "0000-00-00 00:00:00",
+            "MODIFIED_ON": "0000-00-00 00:00:00",
+            "CREATED_BY_USER": "",
+            "MODIFIED_BY_USER": "",
+            "UID": "0x31350000000000000000000000000000",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "ImageUrl",
+            "PROTOTYPE": "exface\/Core\/DataTypes\/ImageUrlDataType.php",
+            "DEFAULT_WIDGET_UXON": "{\"widget_type\":\"Input\"}",
+            "ALIAS": "ImageUrl",
+            "SHORT_DESCRIPTION": "",
+            "LABEL": "ImageUrl"
+        },
+        {
+            "CREATED_ON": "0000-00-00 00:00:00",
+            "MODIFIED_ON": "0000-00-00 00:00:00",
+            "CREATED_BY_USER": "",
+            "MODIFIED_BY_USER": "",
+            "UID": "0x32000000000000000000000000000000",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Date",
+            "PROTOTYPE": "exface\/Core\/DataTypes\/DateDataType.php",
+            "DEFAULT_WIDGET_UXON": "{\"widget_type\": \"InputDate\"}",
+            "ALIAS": "Date",
+            "SHORT_DESCRIPTION": null,
+            "LABEL": "Date"
+        },
+        {
+            "CREATED_ON": "0000-00-00 00:00:00",
+            "MODIFIED_ON": "0000-00-00 00:00:00",
+            "CREATED_BY_USER": "",
+            "MODIFIED_BY_USER": "",
+            "UID": "0x33000000000000000000000000000000",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Timestamp",
+            "PROTOTYPE": "exface\/Core\/DataTypes\/TimestampDataType.php",
+            "DEFAULT_WIDGET_UXON": "{\"widget_type\": \"InputDateTime\"}",
+            "ALIAS": "Timestamp",
+            "SHORT_DESCRIPTION": null,
+            "LABEL": "Timestamp"
+        },
+        {
+            "CREATED_ON": "0000-00-00 00:00:00",
+            "MODIFIED_ON": "2016-03-18 14:43:57",
+            "CREATED_BY_USER": "",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x34000000000000000000000000000000",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Price",
+            "PROTOTYPE": "exface\/Core\/DataTypes\/PriceDataType.php",
+            "DEFAULT_WIDGET_UXON": "{\"widget_type\":\"InputNumber\",\"precision\":2}",
+            "ALIAS": "Price",
+            "SHORT_DESCRIPTION": "",
+            "LABEL": "Price"
+        },
+        {
+            "CREATED_ON": "0000-00-00 00:00:00",
+            "MODIFIED_ON": "0000-00-00 00:00:00",
+            "CREATED_BY_USER": "",
+            "MODIFIED_BY_USER": "",
+            "UID": "0x35000000000000000000000000000000",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Relation",
+            "PROTOTYPE": "exface\/Core\/DataTypes\/RelationDataType.php",
+            "DEFAULT_WIDGET_UXON": "{\"widget_type\": \"ComboTable\"}",
+            "ALIAS": "Relation",
+            "SHORT_DESCRIPTION": null,
+            "LABEL": "Relation"
+        },
+        {
+            "CREATED_ON": "0000-00-00 00:00:00",
+            "MODIFIED_ON": "0000-00-00 00:00:00",
+            "CREATED_BY_USER": "",
+            "MODIFIED_BY_USER": "",
+            "UID": "0x37000000000000000000000000000000",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Boolean",
+            "PROTOTYPE": "exface\/Core\/DataTypes\/BooleanDataType.php",
+            "DEFAULT_WIDGET_UXON": "{\"widget_type\": \"CheckBox\"}",
+            "ALIAS": "Boolean",
+            "SHORT_DESCRIPTION": null,
+            "LABEL": "Boolean"
+        },
+        {
+            "CREATED_ON": "0000-00-00 00:00:00",
+            "MODIFIED_ON": "0000-00-00 00:00:00",
+            "CREATED_BY_USER": "",
+            "MODIFIED_BY_USER": "",
+            "UID": "0x38000000000000000000000000000000",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "RelationHierarchy",
+            "PROTOTYPE": "exface\/Core\/DataTypes\/RelationHierarchyDataType.php",
+            "DEFAULT_WIDGET_UXON": "{\"widget_type\": \"ComboTable\"}",
+            "ALIAS": "RelationHierarchy",
+            "SHORT_DESCRIPTION": "Special data type for hierarchies of object of the same type. It should be used for the relation to the parent object. Setting this data type enables the framework to build trees for these hierarchies automatically. ",
+            "LABEL": "RelationHierarchy"
+        },
+        {
+            "CREATED_ON": "0000-00-00 00:00:00",
+            "MODIFIED_ON": "0000-00-00 00:00:00",
+            "CREATED_BY_USER": "",
+            "MODIFIED_BY_USER": "",
+            "UID": "0x39000000000000000000000000000000",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "FlagTreeFolder",
+            "PROTOTYPE": "exface\/Core\/DataTypes\/FlagTreeFolderDataType.php",
+            "DEFAULT_WIDGET_UXON": "{\"widget_type\": \"CheckBox\"}",
+            "ALIAS": "FlagTreeFolder",
+            "SHORT_DESCRIPTION": null,
+            "LABEL": "FlagTreeFolder"
+        }
+    ],
+    "totals_rows": [],
+    "filters": {
+        "operator": "AND",
+        "conditions": [
+            {
+                "expression": "APP",
+                "comparator": "=",
+                "value": "0x31000000000000000000000000000000",
+                "object_alias": "exface.Core.DATATYPE"
+            }
+        ]
+    },
+    "rows_on_page": null,
+    "row_offset": 0,
+    "sorters": [
+        {
+            "attribute_alias": "CREATED_ON",
+            "direction": "ASC"
+        },
+        {
+            "attribute_alias": "UID",
+            "direction": "ASC"
+        }
+    ]
+}
