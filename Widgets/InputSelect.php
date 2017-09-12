@@ -175,7 +175,7 @@ class InputSelect extends Input implements iSupportMultiSelect
         } 
         // Select empty option if based on an attribute that is not required
         if ($this->getAttribute() && ! $this->getAttribute()->isRequired()){
-            $generic_options[EXF_COMPARATOR_IS_EMPTY] = $this->translate('WIDGET.SELECT_EMPTY');
+            $generic_options[EXF_LOGICAL_NULL] = $this->translate('WIDGET.SELECT_EMPTY');
         }
         
         $options = $generic_options + $this->selectable_options;

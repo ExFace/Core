@@ -100,7 +100,9 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         '-',
         '(',
         ')',
-        ':'
+        ':',
+        ' ',
+        '='
     );
 
     // forbidden chars in SELECT AS aliases
@@ -1259,14 +1261,9 @@ else {
                     // If there is an empty string among the values or one of the empty-comparators, 
                     // this means that the value may or may not be empty (NULL). NULL is not a valid
                     // value for an IN-statement, though, so we need to append an "OR IS NULL" here.
-                    if ($val === '' || $val === '__') {
+                    if ($val === '' || $val === EXF_LOGICAL_NULL) {
                         unset($values[$nr]);
                         $value = $subject . ($comparator == EXF_COMPARATOR_IN ? ' IS NULL' : ' IS NOT NULL');
-                        continue;
-                    }
-                    if ($val === '!__') {
-                        unset($values[$nr]);
-                        $value = $subject . ($comparator == EXF_COMPARATOR_IN ? ' IS NOT NULL' : ' IS NULL');
                         continue;
                     }
                     // Normalize non-empty values
@@ -1279,6 +1276,16 @@ else {
             // A comparison of a date field with a string or a number field with
             // a string simply cannot result in TRUE.
             return '1 = 0 /* ' . $subject . ' cannot pass comparison to "' . $value . '" via comparator "' . $comparator . '": wrong data type! */';
+        }
+        
+        if (is_null($value) || $this->prepareWhereValue($value, $data_type) === EXF_LOGICAL_NULL){
+            switch ($comparator) {
+                case EXF_COMPARATOR_EQUALS:
+                case EXF_COMPARATOR_IS:
+                    return $subject . ' IS NULL';
+                default:
+                    return $subject . ' IS NOT NULL';
+            }
         }
         
         // If everything is OK, build the SQL
@@ -1304,12 +1311,6 @@ else {
             case EXF_COMPARATOR_IS_NOT:
                 $output = 'UPPER(' . $subject . ") NOT LIKE '%" . $this->prepareWhereValue(strtoupper($value), $data_type) . "%'";
                 break;
-            case EXF_COMPARATOR_IS_EMPTY:
-                $output = $subject . ' IS NULL';
-                break;
-            case EXF_COMPARATOR_IS_NOT_EMPTY:
-                $output = $subject . ' IS NOT NULL';
-                break;
             case EXF_COMPARATOR_IS:
             default:
                 $output = 'UPPER(' . $subject . ") LIKE '%" . $this->prepareWhereValue(strtoupper($value), $data_type) . "%'";
@@ -1322,6 +1323,8 @@ else {
         // IDEA some data type specific procession here
         if ($data_type instanceof BooleanDataType) {
             $output = $value ? 1 : 0;
+        } elseif (strcasecmp($value, EXF_LOGICAL_NULL) === 0) {
+            return EXF_LOGICAL_NULL;
         } else {
             $output = $this->escapeString($value);
         }

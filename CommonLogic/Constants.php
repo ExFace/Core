@@ -42,10 +42,6 @@ const EXF_COMPARATOR_IS = '=';
 
 const EXF_COMPARATOR_IS_NOT = '!=';
 
-const EXF_COMPARATOR_IS_EMPTY = '__';
-
-const EXF_COMPARATOR_IS_NOT_EMPTY = '!__';
-
 /**
  * @const EXF_COMPARATOR_EQUALS compares to a single value of the same data type
  */
@@ -78,6 +74,8 @@ const EXF_LOGICAL_OR = 'OR';
 const EXF_LOGICAL_XOR = 'XOR';
 
 const EXF_LOGICAL_NOT = 'NOT';
+
+const EXF_LOGICAL_NULL = 'NULL';
 
 /*
  * Aggregator function names
