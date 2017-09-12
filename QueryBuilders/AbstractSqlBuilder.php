@@ -890,6 +890,14 @@ else {
             case 'COUNT_DISTINCT':
                 $output = "COUNT(DISTINCT " . $select . ")";
                 break;
+            case 'COUNT_IF':
+                $cond = $args[0];
+                list($if_comp, $if_val) = explode(' ', $cond, 2);
+                if (!$if_comp || is_null($if_val)) {
+                    throw new QueryBuilderException('Invalid argument for COUNT_IF aggregator: "' . $cond . '"!', '6WXNHMN');
+                }
+                $output = "SUM(" . $this->buildSqlWhereComparator($select,  $if_comp, $if_val, $qpart->getAttribute()->getDataType()). ")";
+                break;
             default:
                 break;
         }
