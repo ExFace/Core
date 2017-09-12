@@ -299,13 +299,13 @@ class Condition implements iCanBeConvertedToUxon
     }
     
     /**
-     * Returns TRUE if a value was set for the condition and FALSE otherwise.
+     * Returns TRUE if the condition does not affect anything and FALSE otherwise.
      * 
      * @return boolean
      */
-    public function isSet()
+    public function isEmpty()
     {
-        return $this->value_set;
+        return ! $this->value_set;
     }
     
     /**
@@ -313,9 +313,9 @@ class Condition implements iCanBeConvertedToUxon
      * 
      * @return Condition
      */
-    public function unset()
+    public function empty()
     {
         $this->value = null;
-        $this->value_set = null;
+        $this->value_set = false;
     }
 }

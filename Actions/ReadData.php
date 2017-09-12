@@ -35,7 +35,7 @@ class ReadData extends AbstractAction implements iReadData
         $context = $this->getApp()->getWorkbench()->context()->getScopeWindow()->getFilterContext();
         $context->removeAllConditions();
         foreach ($data_sheet->getFilters()->getConditions() as $condition) {
-            if ($condition->isSet()){
+            if (! $condition->isEmpty()){
                 $context->addCondition($condition);
             } 
         }
