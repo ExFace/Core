@@ -28,6 +28,8 @@ class Condition implements iCanBeConvertedToUxon
     private $expression = null;
 
     private $value = null;
+    
+    private $value_set = false;
 
     private $comparator = null;
 
@@ -81,11 +83,13 @@ class Condition implements iCanBeConvertedToUxon
      */
     public function setValue($value)
     {
+        $this->value_set = true;
         try {
             $value = $this->getDataType()->parse($value);
         } catch (\Throwable $e) {
             throw new RangeException('Illegal filter value "' . $value . '" for attribute "' . $this->getAttributeAlias() . '" of data type "' . $this->getExpression()->getAttribute()->getDataType()->getName() . '": ' . $e->getMessage(), '6T5WBNB', $e);
             $value = null;
+            $this->unset();
         }
         $this->value = $value;
     }
@@ -281,11 +285,37 @@ class Condition implements iCanBeConvertedToUxon
         if ($uxon_object->hasProperty('comparator') && $uxon_object->getProperty('comparator')) {
             $this->setComparator($uxon_object->getProperty('comparator'));
         }
-        $this->setValue($uxon_object->getProperty('value'));
+        if ($uxon_object->hasProperty('value')){
+            $value = $uxon_object->getProperty('value');
+            if (! is_null($value) && $value !== ''){
+                $this->setValue($value);
+            }
+        }
     }
 
     public function getModel()
     {
         return $this->exface->model();
+    }
+    
+    /**
+     * Returns TRUE if a value was set for the condition and FALSE otherwise.
+     * 
+     * @return boolean
+     */
+    public function isSet()
+    {
+        return $this->value_set;
+    }
+    
+    /**
+     * Unsets the value of the condition making query builders etc. ignore it.
+     * 
+     * @return Condition
+     */
+    public function unset()
+    {
+        $this->value = null;
+        $this->value_set = null;
     }
 }
