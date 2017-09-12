@@ -7,6 +7,7 @@ use exface\Core\Exceptions\QueryBuilderException;
 use exface\Core\Interfaces\Model\MetaRelationInterface;
 use exface\Core\DataTypes\DateDataType;
 use exface\Core\DataTypes\TimestampDataType;
+use exface\Core\DataTypes\NumberDataType;
 
 /**
  * A query builder for Oracle SQL.
@@ -389,6 +390,13 @@ class OracleSqlBuilder extends AbstractSqlBuilder
             $output = ($select_from ? $select_from : $this->getShortAlias($qpart->getAttribute()->getRelationPath()->toString())) . '.' . $qpart->getDataAddressProperty("ORDER_BY");
         } else {
             $output = '"' . $this->getShortAlias($qpart->getAlias()) . '"';
+            
+            // Make sure, NULLs are treated as 0 in numeric columns. Otherwise
+            // they will be put at the beginning or the end of the result making
+            // sorting loose it's value.
+            if ($qpart->getAttribute()->getDataType() instanceof NumberDataType){
+                $output = 'NVL(' . $output . ',0)';
+            }
         }
         $output .= ' ' . $qpart->getOrder();
         return $output;
@@ -396,7 +404,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
 
     /**
      *
-     * @see \exface\DataSources\QueryBuilders\sql_abstractSQL
+     * @see \exface\Core\QueryBuilders\AbstractSqlBuilder
      * @param \exface\Core\CommonLogic\QueryBuilder\QueryPart $qpart            
      * @param string $select_from            
      * @param string $select_column            

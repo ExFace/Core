@@ -1414,7 +1414,7 @@ else {
      * @return string
      */
     protected function buildSqlOrderBy(\exface\Core\CommonLogic\QueryBuilder\QueryPartSorter $qpart)
-    {
+    {        
         if ($qpart->getDataAddressProperty("ORDER_BY")) {
             $output = $this->getShortAlias($this->getMainObject()->getAlias()) . '.' . $qpart->getDataAddressProperty("ORDER_BY");
         } else {

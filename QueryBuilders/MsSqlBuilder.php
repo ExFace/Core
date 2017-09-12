@@ -27,7 +27,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
      * to distinguish between core and enrichment elements in order to join enrchichment stuff after all
      * the aggregating had been done.
      *
-     * @see \exface\DataSources\QueryBuilders\sql_abstractSQL::buildSqlQuerySelect()
+     * @see \exface\Core\QueryBuilders\AbstractSqlBuilder::buildSqlQuerySelect()
      */
     public function buildSqlQuerySelect()
     {
