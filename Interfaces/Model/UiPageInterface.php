@@ -358,10 +358,10 @@ interface UiPageInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
      * NOTE: This does not change the page in the CMS right away! Use savePage()
      * to save changes permanently!
      * 
-     * @param string $string
+     * @param string|UxonObject $contents
      * @return UiPageInterface
      */
-    public function setContents($string);
+    public function setContents($contents);
     
 }
 

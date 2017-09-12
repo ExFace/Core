@@ -14,6 +14,7 @@ use exface\Core\Exceptions\Widgets\WidgetNotFoundError;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\CommonLogic\NameResolver;
+use exface\Core\Exceptions\InvalidArgumentException;
 
 /**
  * This is the default implementation of the UiPageInterface.
@@ -586,7 +587,7 @@ class UiPage implements UiPageInterface
     public function getMenuParentId()
     {
         if (is_null($this->menuParentId) && ! is_null($this->getMenuParentPage())) {
-            $this->menuParentId = $this->getMenuParentPage()->getMenuParentId();
+            $this->menuParentId = $this->getMenuParentPage()->getId();
         }
         return $this->menuParentId;
     }
@@ -830,13 +831,21 @@ class UiPage implements UiPageInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\UiPageInterface::setContents()
      */
-    public function setContents($string)
+    public function setContents($contents)
     {
-        $this->contents = $string;
-        $this->removeAllWidgets();
-        $string = trim($string);
-        if (substr($string, 0, 1) == '{' && substr($string, -1) == '}') {
-            WidgetFactory::createFromUxon($this, UxonObject::fromAnything($string));
+        if (is_string($contents)) {
+            $this->contents = $contents;
+            $this->removeAllWidgets();
+            $contents = trim($contents);
+            if (substr($contents, 0, 1) == '{' && substr($contents, -1) == '}') {
+                WidgetFactory::createFromUxon($this, UxonObject::fromAnything($contents));
+            }
+        } elseif ($contents instanceof UxonObject) {
+            $this->contents = $contents->toJson();
+            $this->removeAllWidgets();
+            WidgetFactory::createFromUxon($this, $contents);
+        } else {
+            throw new InvalidArgumentException('Cannot set contents from ' . gettype($contents) . ': expecting string or UxonObject!');
         }
         return $this;
     }
@@ -906,16 +915,17 @@ class UiPage implements UiPageInterface
         /** @var UxonObject $uxon */
         $uxon = $this->getWorkbench()->createUxonObject();
         $uxon->setProperty('id', $this->getId());
-        $uxon->setProperty('alias', $this->getAliasWithNamespace());
-        $uxon->setProperty('app_alias', $this->getAppAlias());
-        $uxon->setProperty('updateable', $this->isUpdateable());
+        $uxon->setProperty('alias_with_namespace', $this->getAliasWithNamespace());
         $uxon->setProperty('menu_parent_id', $this->getMenuParentId());
-        $uxon->setProperty('menu_parent_alias', $this->getMenuParentAlias());
         $uxon->setProperty('menu_index', $this->getMenuIndex());
         $uxon->setProperty('name', $this->getName());
         $uxon->setProperty('short_description', $this->getShortDescription());
         $uxon->setProperty('replaces_page_alias', $this->getReplacesPageAlias());
-        $uxon->setProperty('contents', $this->getContents());
+        $contents = UxonObject::fromAnything($this->getContents());
+        if ($contents->isEmpty()) {
+            $contents = '';
+        }
+        $uxon->setProperty('contents', $contents);
         
         return $uxon;
     }

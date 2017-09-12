@@ -4,6 +4,7 @@ namespace exface\Core\Interfaces;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Exceptions\UiPageNotFoundError;
 use exface\Core\Exceptions\RuntimeException;
+use exface\Core\Exceptions\UiPageIdNotUniqueError;
 
 /**
  * A CMS-connector provides a generic interface for ExFace to communicate with
@@ -254,11 +255,11 @@ interface CmsConnectorInterface extends ExfaceClassInterface
     /**
      * Returns the internal page id assigned to the given page by the CMS.
      *
-     * @param UiPageInterface|string $page_or_id
+     * @param UiPageInterface|string $page_or_id_or_alias
      *
      * @return string
      */
-    public function getPageIdCms($page_or_id);
+    public function getPageIdCms($page_or_id_or_alias);
     
     /**
      * Saves the given page to the CMS database by creating a new one or updating
@@ -293,13 +294,13 @@ interface CmsConnectorInterface extends ExfaceClassInterface
     /**
      * Deletes the given page from the CMS database.
      *
-     * @param UiPageInterface|string $page_or_id
+     * @param UiPageInterface|string $page_or_id_or_alias
      * 
-     * @throws UiPageNotFoundError if no page with a matching UID is found in the CMS
+     * @throws UiPageNotFoundError if no matching page is found in the CMS
      *
      * @return CmsConnectorInterface
      */
-    public function deletePage($page_or_id);
+    public function deletePage($page_or_id_or_alias);
     
     /**
      * Clears the recycle bin of the CMS (if present)
@@ -309,15 +310,13 @@ interface CmsConnectorInterface extends ExfaceClassInterface
     public function clearCMSRecycleBin();
     
     /**
-     * Returns if the page (defined by its UID) exists in the CMS. Returns false if the
-     * UID is null.
+     * Returns if the page exists in the CMS. Returns false if null is passed as id or alias.
      * 
-     * @param UiPageInterface|string $page_or_id
-     * @throws RuntimeException if more than one page with the given UID is defined in
-     * the CMS.
+     * @param UiPageInterface|string $page_or_id_or_alias
+     * @throws UiPageIdNotUniqueError if several matching pages are defined in the CMS.
      * @return boolean
      */
-    public function existPage($page_or_id);
+    public function existPage($page_or_id_or_alias);
     
     /**
      * Returns all pages assigned to the given app.
