@@ -213,7 +213,7 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
             }
             // Add sorters
             foreach ($this->getSorters() as $sorter_obj) {
-                $data_sheet->getSorters()->addFromString($sorter_obj->attribute_alias, $sorter_obj->direction);
+                $data_sheet->getSorters()->addFromString($sorter_obj->getProperty('attribute_alias'), $sorter_obj->getProperty('direction'));
             }
         }
         
