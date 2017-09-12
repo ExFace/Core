@@ -34,7 +34,7 @@ class MySqlBuilder extends AbstractSqlBuilder
      * to distinguish between core and enrichment elements in order to join enrchichment stuff after all
      * the aggregating had been done.
      *
-     * @see \exface\DataSources\QueryBuilders\sql_abstractSQL::buildSqlQuerySelect()
+     * @see AbstractSqlBuilder::buildSqlQuerySelect()
      */
     public function buildSqlQuerySelect()
     {
@@ -227,7 +227,7 @@ class MySqlBuilder extends AbstractSqlBuilder
 
     /**
      *
-     * @see \exface\DataSources\QueryBuilders\sql_abstractSQL
+     * @see AbstractSqlBuilder::buildSqlGroupFunction
      * @param \exface\Core\CommonLogic\QueryBuilder\QueryPart $qpart            
      * @param string $select_from            
      * @param string $select_column            
@@ -250,23 +250,13 @@ class MySqlBuilder extends AbstractSqlBuilder
         }
         
         switch ($func) {
-            case 'SUM':
-            case 'AVG':
-            case 'COUNT':
-            case 'MAX':
-            case 'MIN':
-                $output = $func . '(' . $select . ')';
-                break;
             case 'LIST_DISTINCT':
             case 'LIST':
                 $output = "GROUP_CONCAT(" . ($func == 'LIST_DISTINCT' ? 'DISTINCT ' : '') . $select . " SEPARATOR " . ($args[0] ? $args[0] : "', '") . ")";
                 $qpart->getQuery()->addAggregation($qpart->getAttribute()->getAliasWithRelationPath());
                 break;
-            case 'COUNT_DISTINCT':
-                $output = "COUNT(DISTINCT " . $select . ")";
-                break;
             default:
-                break;
+                return parent::buildSqlGroupFunction($qpart, $select_from, $select_column, $select_as, $group_function);
         }
         return $output;
     }
@@ -275,7 +265,7 @@ class MySqlBuilder extends AbstractSqlBuilder
      * Special DELETE builder for MySQL because MySQL does not support table aliases in the DELETE query.
      * Thus, they must be removed from all the generated filters and other parts of the query.
      *
-     * @see \exface\DataSources\QueryBuilders\sql_abstractSQL::delete()
+     * @see AbstractSqlBuilder::delete()
      */
     function delete(AbstractDataConnector $data_connection = null)
     {
