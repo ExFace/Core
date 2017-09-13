@@ -73,6 +73,10 @@ class QueryPartAttribute extends QueryPart
     }
 
     /**
+     * Returns the aggregator used to calculate values in this query part.
+     * 
+     * E.g. for POSITION__VALUE:SUM it would return SUM (in the form of an
+     * instantiated aggregator).
      * 
      * @return AggregatorInterface
      */

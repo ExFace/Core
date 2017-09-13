@@ -658,6 +658,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     protected function buildSqlSelect(QueryPartAttribute $qpart, $select_from = null, $select_column = null, $select_as = null, $aggregator = null, $make_groupable = false)
     {
         $output = '';
+        $comment = "\n-- buildSqlSelect(" . $qpart->getAlias() . ", " . $select_from . ", " . $select_as . ", " . $aggregator . ", " . $make_groupable . ")\n";
         $add_nvl = false;
         $attribute = $qpart->getAttribute();
         
@@ -742,7 +743,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         if ($select_as) {
             $output = "\n" . $output . ' AS "' . $select_as . '"';
         }
-        return "\n-- selecting " . $qpart->getAlias() . "\n" . $output;
+        return $comment . $output;
     }
 
     /**

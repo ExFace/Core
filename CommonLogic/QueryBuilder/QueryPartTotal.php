@@ -40,6 +40,12 @@ class QueryPartTotal extends QueryPartAttribute
     }
 
     /**
+     * Returns the aggregator used to calculate a total for the query part (not to be 
+     * confused with the one in the actual expression!).
+     * 
+     * Assuming the results of the query to be a table, this aggregator aggregates values 
+     * from the cells of the column represented by this query part, while the one from 
+     * getAggregator() is used to calculate each cell's value.
      * 
      * @param AggregatorInterface $value
      * @return QueryPartTotal

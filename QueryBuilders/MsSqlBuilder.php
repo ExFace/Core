@@ -184,7 +184,7 @@ elseif (! $group_by || $qpart->getAggregator() || $this->getAggregation($qpart->
         if (count($this->getTotals()) > 0) {
             // determine all joins, needed to perform the totals functions
             foreach ($this->getTotals() as $qpart) {
-                $totals_selects[] = $this->buildSqlSelect($qpart, 'EXFCOREQ', $this->getShortAlias($qpart->getAlias()), null, $qpart->getAggregator());
+                $totals_selects[] = $this->buildSqlSelect($qpart, 'EXFCOREQ', $this->getShortAlias($qpart->getAlias()), null, $qpart->getTotalAggregator());
                 $totals_core_selects[] = $this->buildSqlSelect($qpart);
                 $totals_joins = array_merge($totals_joins, $this->buildSqlJoins($qpart));
             }
