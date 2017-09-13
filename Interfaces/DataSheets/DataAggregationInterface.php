@@ -6,7 +6,7 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\iCanBeCopied;
 use exface\Core\CommonLogic\UxonObject;
 
-interface DataAggregatorInterface extends iCanBeConvertedToUxon, iCanBeCopied
+interface DataAggregationInterface extends iCanBeConvertedToUxon, iCanBeCopied
 {
 
     function __construct(DataSheetInterface $data_sheet);

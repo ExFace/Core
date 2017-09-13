@@ -15,7 +15,7 @@ use exface\Core\DataConnectors\AbstractSqlConnector;
 use exface\Core\CommonLogic\DataQueries\SqlDataQuery;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartSelect;
 use exface\Core\Interfaces\Model\MetaRelationInterface;
-use exface\Core\CommonLogic\DataSheets\DataAggregator;
+use exface\Core\CommonLogic\DataSheets\DataAggregation;
 use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\DataTypes\BooleanDataType;
@@ -1368,7 +1368,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                     // IDEA HAVING-subqueries can be very slow. Perhaps we can optimize the subquery a litte in certain cases:
                     // e.g. if we are filtering over a SUM of natural numbers with "> 0", we could simply add a "> 0" filter 
                     // without any aggregation and it should yield the same results
-                    $rel_filter .= DataAggregator::AGGREGATION_SEPARATOR . $qpart->getAggregator();
+                    $rel_filter .= DataAggregation::AGGREGATION_SEPARATOR . $qpart->getAggregator()->exportString();
                     $relq->addAggregation($start_rel->getForeignKeyAlias());
                 }
                 $relq->addAttribute($start_rel->getForeignKeyAlias());

@@ -1,11 +1,9 @@
 <?php
 namespace exface\Core\Interfaces\DataSheets;
 
-use exface\Core\Interfaces\DataSheets\DataAggregatorInterface;
-use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\EntityListInterface;
 
-interface DataAggregatorListInterface extends EntityListInterface
+interface DataAggregationListInterface extends EntityListInterface
 {
 
     /**
@@ -13,7 +11,7 @@ interface DataAggregatorListInterface extends EntityListInterface
      * {@inheritdoc}
      *
      * @see \exface\Core\Interfaces\EntityListInterface::getAll()
-     * @return DataAggregatorInterface[]
+     * @return DataAggregationInterface[]
      */
     public function getAll();
 
@@ -22,7 +20,7 @@ interface DataAggregatorListInterface extends EntityListInterface
      * {@inheritdoc}
      *
      * @see \exface\Core\Interfaces\EntityListInterface::get()
-     * @return DataAggregatorInterface
+     * @return DataAggregationInterface
      */
     public function get($key);
 
@@ -31,7 +29,7 @@ interface DataAggregatorListInterface extends EntityListInterface
      * {@inheritdoc}
      *
      * @see \exface\Core\Interfaces\EntityListInterface::getFirst()
-     * @return DataAggregatorInterface
+     * @return DataAggregationInterface
      */
     public function getFirst();
 
@@ -40,7 +38,7 @@ interface DataAggregatorListInterface extends EntityListInterface
      * {@inheritdoc}
      *
      * @see \exface\Core\Interfaces\EntityListInterface::getLast()
-     * @return DataAggregatorInterface
+     * @return DataAggregationInterface
      */
     public function getLast();
 
@@ -49,7 +47,7 @@ interface DataAggregatorListInterface extends EntityListInterface
      * {@inheritdoc}
      *
      * @see \exface\Core\Interfaces\EntityListInterface::getNth()
-     * @return DataAggregatorInterface
+     * @return DataAggregationInterface
      */
     public function getNth($number);
 
@@ -65,7 +63,7 @@ interface DataAggregatorListInterface extends EntityListInterface
     /**
      *
      * @param string $attribute_alias            
-     * @return DataAggregatorListInterface
+     * @return DataAggregationListInterface
      */
     public function addFromString($attribute_alias);
 }

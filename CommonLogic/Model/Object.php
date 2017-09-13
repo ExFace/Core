@@ -6,7 +6,7 @@ use exface\Core\CommonLogic\NameResolver;
 use exface\Core\Factories\RelationPathFactory;
 use exface\Core\Factories\AttributeGroupFactory;
 use exface\Core\Factories\AttributeListFactory;
-use exface\Core\CommonLogic\DataSheets\DataAggregator;
+use exface\Core\CommonLogic\DataSheets\DataAggregation;
 use exface\Core\CommonLogic\EntityList;
 use exface\Core\Factories\EntityListFactory;
 use exface\Core\Exceptions\Model\MetaRelationNotFoundError;
@@ -272,9 +272,9 @@ class Object implements MetaObjectInterface
             }
             
             // check for aggregate functions and remove them
-            if ($aggr = DataAggregator::getAggregatorFromAlias($alias)) {
+            if ($aggr = DataAggregation::getAggregatorFromAlias($alias)) {
                 $aggr_string = $aggr->exportString();
-                $alias = substr($alias, 0, strlen(DataAggregator::AGGREGATION_SEPARATOR . $aggr_string) * (- 1));
+                $alias = substr($alias, 0, strlen(DataAggregation::AGGREGATION_SEPARATOR . $aggr_string) * (- 1));
                 // check if it is a direct attribute again (now, as the aggregator was removed)
                 if ($attr = $this->getAttributes()->get($alias)) {
                     $this->setAttributeCache($alias, $attr);

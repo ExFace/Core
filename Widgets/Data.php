@@ -195,7 +195,7 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
         
         // Aggregations
         foreach ($this->getAggregations() as $attr) {
-            $data_sheet->getAggregators()->addFromString($attr);
+            $data_sheet->getAggregations()->addFromString($attr);
         }
         
         // Pagination

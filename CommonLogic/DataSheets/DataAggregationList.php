@@ -1,12 +1,12 @@
 <?php
 namespace exface\Core\CommonLogic\DataSheets;
 
-use exface\Core\Factories\DataAggregatorFactory;
-use exface\Core\Interfaces\DataSheets\DataAggregatorListInterface;
+use exface\Core\Factories\DataAggregationFactory;
+use exface\Core\Interfaces\DataSheets\DataAggregationListInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\EntityList;
 
-class DataAggregatorList extends EntityList implements DataAggregatorListInterface
+class DataAggregationList extends EntityList implements DataAggregationListInterface
 {
 
     /**
@@ -34,7 +34,7 @@ class DataAggregatorList extends EntityList implements DataAggregatorListInterfa
     {
         $data_sheet = $this->getParent();
         foreach ($uxon as $u) {
-            $aggr = DataAggregatorFactory::createFromUxon($data_sheet, $u);
+            $aggr = DataAggregationFactory::createFromUxon($data_sheet, $u);
             $this->add($aggr);
         }
     }
@@ -43,12 +43,12 @@ class DataAggregatorList extends EntityList implements DataAggregatorListInterfa
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\Interfaces\DataSheets\DataAggregatorListInterface::addFromString()
+     * @see \exface\Core\Interfaces\DataSheets\DataAggregationListInterface::addFromString()
      */
     public function addFromString($attribute_alias)
     {
         $data_sheet = $this->getParent();
-        $aggr = DataAggregatorFactory::createForDataSheet($data_sheet);
+        $aggr = DataAggregationFactory::createForDataSheet($data_sheet);
         $aggr->setAttributeAlias($attribute_alias);
         $this->add($aggr);
         return $this;

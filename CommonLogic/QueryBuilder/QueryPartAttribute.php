@@ -3,7 +3,7 @@ namespace exface\Core\CommonLogic\QueryBuilder;
 
 use exface\Core\Exceptions\QueryBuilderException;
 use exface\Core\CommonLogic\Model\RelationPath;
-use exface\Core\CommonLogic\DataSheets\DataAggregator;
+use exface\Core\CommonLogic\DataSheets\DataAggregation;
 use exface\Core\Interfaces\Model\AggregatorInterface;
 
 class QueryPartAttribute extends QueryPart
@@ -23,7 +23,7 @@ class QueryPartAttribute extends QueryPart
             $this->setAttribute($attr);
         }
         
-        if ($aggr = DataAggregator::getAggregatorFromAlias($alias)){
+        if ($aggr = DataAggregation::getAggregatorFromAlias($alias)){
             $this->aggregator = $aggr;
         }
     }

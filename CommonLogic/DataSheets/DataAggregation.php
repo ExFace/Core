@@ -7,7 +7,7 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Model\AggregatorInterface;
 use exface\Core\CommonLogic\Model\Aggregator;
 
-class DataAggregator implements iCanBeConvertedToUxon
+class DataAggregation implements iCanBeConvertedToUxon
 {
 
     const AGGREGATION_SEPARATOR = ':';

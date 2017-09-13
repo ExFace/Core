@@ -13,7 +13,7 @@ use exface\Core\Factories\DataColumnFactory;
 use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Factories\DataSheetSubsheetFactory;
 use exface\Core\Factories\DataColumnTotalsFactory;
-use exface\Core\Interfaces\DataSheets\DataAggregatorListInterface;
+use exface\Core\Interfaces\DataSheets\DataAggregationListInterface;
 use exface\Core\Interfaces\DataSheets\DataSorterListInterface;
 use exface\Core\Interfaces\DataSheets\DataColumnInterface;
 use exface\Core\Factories\EventFactory;
@@ -90,7 +90,7 @@ class DataSheet implements DataSheetInterface
         $this->meta_object = $meta_object;
         $this->filters = ConditionGroupFactory::createEmpty($this->exface, EXF_LOGICAL_AND);
         $this->cols = new DataColumnList($this->exface, $this);
-        $this->aggregation_columns = new DataAggregatorList($this->exface, $this);
+        $this->aggregation_columns = new DataAggregationList($this->exface, $this);
         $this->sorters = new DataSorterList($this->exface, $this);
         // IDEA Can we use the generic EntityListFactory here or do we need a dedicated factory for subsheet lists?
         $this->subsheets = new DataSheetList($this->exface, $this);
@@ -400,7 +400,7 @@ class DataSheet implements DataSheetInterface
             if ($attribute->getFormatter()) {
                 $col->setFormatter($attribute->getFormatter());
                 $col->getFormatter()->setRelationPath($attribute->getRelationPath()->toString());
-                if ($aggregator = DataAggregator::getAggregatorFromAlias($col->getExpressionObj()->toString())) {
+                if ($aggregator = DataAggregation::getAggregatorFromAlias($col->getExpressionObj()->toString())) {
                     $col->getFormatter()->mapAttribute(str_replace(':' . $aggregator->exportString(), '', $col->getExpressionObj()->toString()), $col->getExpressionObj()->toString());
                 }
                 foreach ($col->getFormatter()->getRequiredAttributes() as $req) {
@@ -450,8 +450,8 @@ class DataSheet implements DataSheetInterface
         foreach ($this->getMetaObject()->getAttributes()->getSystem()->getAll() as $attr) {
             if (! $this->getColumns()->getByAttribute($attr)) {
                 // Check if the system attribute has a default aggregator if the data sheet is being aggregated
-                if ($this->hasAggregators() && $attr->getDefaultAggregateFunction()) {
-                    $col = $this->getColumns()->addFromExpression($attr->getAlias() . DataAggregator::AGGREGATION_SEPARATOR . $attr->getDefaultAggregateFunction());
+                if ($this->hasAggregations() && $attr->getDefaultAggregateFunction()) {
+                    $col = $this->getColumns()->addFromExpression($attr->getAlias() . DataAggregation::AGGREGATION_SEPARATOR . $attr->getDefaultAggregateFunction());
                 } else {
                     $col = $this->getColumns()->addFromAttribute($attr);
                 }
@@ -467,7 +467,7 @@ class DataSheet implements DataSheetInterface
         }
         
         // set aggregations
-        foreach ($this->getAggregators() as $aggr) {
+        foreach ($this->getAggregations() as $aggr) {
             $query->addAggregation($aggr->getAttributeAlias());
         }
         
@@ -652,7 +652,7 @@ class DataSheet implements DataSheetInterface
                 // Skip columns, that reference non existing attributes
                 // TODO Is throwing an exception appropriate here?
                 throw new MetaAttributeNotFoundError($this->getMetaObject(), 'Attribute "' . $column->getExpressionObj()->toString() . '" of object "' . $this->getMetaObject()->getAliasWithNamespace() . '" not found!');
-            } elseif (DataAggregator::getAggregatorFromAlias($column->getExpressionObj()->toString())) {
+            } elseif (DataAggregation::getAggregatorFromAlias($column->getExpressionObj()->toString())) {
                 // Skip columns with aggregate functions
                 continue;
             }
@@ -1270,9 +1270,9 @@ class DataSheet implements DataSheetInterface
 
     /**
      *
-     * @return DataAggregatorListInterface
+     * @return DataAggregationListInterface
      */
-    public function getAggregators()
+    public function getAggregations()
     {
         return $this->aggregation_columns;
     }
@@ -1282,9 +1282,9 @@ class DataSheet implements DataSheetInterface
      *
      * @return boolean
      */
-    public function hasAggregators()
+    public function hasAggregations()
     {
-        if (! $this->getAggregators()->isEmpty()) {
+        if (! $this->getAggregations()->isEmpty()) {
             return true;
         } else {
             return false;
@@ -1346,7 +1346,7 @@ class DataSheet implements DataSheetInterface
             $uxon->appendToProperty('sorters', $sorter->exportUxonObject());
         }
         
-        foreach ($this->getAggregators() as $aggr) {
+        foreach ($this->getAggregations() as $aggr) {
             $uxon->appendToProperty('aggregators', $aggr->exportUxonObject());
         }
         
@@ -1413,7 +1413,7 @@ class DataSheet implements DataSheetInterface
         }
         
         if ($uxon->hasProperty('aggregators')) {
-            $this->getAggregators()->importUxonObject($uxon->getProperty('aggregators'));
+            $this->getAggregations()->importUxonObject($uxon->getProperty('aggregators'));
         }
     }
 
