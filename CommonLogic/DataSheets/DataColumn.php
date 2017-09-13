@@ -15,6 +15,8 @@ use exface\Core\Exceptions\DataSheets\DataSheetRuntimeError;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Interfaces\Model\ExpressionInterface;
+use exface\Core\Interfaces\Model\AggregatorInterface;
+use exface\Core\CommonLogic\Constants\AggregatorFunctions;
 
 class DataColumn implements DataColumnInterface
 {
@@ -690,65 +692,59 @@ class DataColumn implements DataColumnInterface
      *
      * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::aggregate()
      */
-    public function aggregate($aggregate_function_name)
+    public function aggregate(AggregatorInterface $aggregator)
     {
         $result = '';
         $values = $this->getValues(false);
         try {
-            $result = static::aggregateValues($values, $aggregate_function_name);
+            $result = static::aggregateValues($values, $aggregator);
         } catch (\Throwable $e) {
-            throw new DataSheetRuntimeError($this->getDataSheet(), 'Cannot aggregate over column "' . $this->getName() . '" of a data sheet of "' . $this->getMetaObject()->getAliasWithNamespace() . '": unknown aggregator function "' . $aggregate_function_name . '"!', '6T5UXLD', $e);
+            throw new DataSheetRuntimeError($this->getDataSheet(), 'Cannot aggregate over column "' . $this->getName() . '" of a data sheet of "' . $this->getMetaObject()->getAliasWithNamespace() . '": unknown aggregator function "' . $aggregator . '"!', '6T5UXLD', $e);
         }
         return $result;
     }
 
     /**
-     * Reduces the given array of values to a single value by applying the given aggregator function.
-     * If no function is specified,
-     * returns the first value.
+     * Reduces the given array of values to a single value by applying the given aggregator.
+     * If no aggregator is specified, returns the first value.
      *
-     * @param array $row_array            
+     * @param array $row_array  
+     * @param AggregatorInterface $aggregator          
      * @return array
      */
-    public static function aggregateValues(array $row_array, $group_function = null)
+    public static function aggregateValues(array $row_array, AggregatorInterface $aggregator = null)
     {
-        $group_function = trim($group_function);
-        $args = array();
-        if ($args_pos = strpos($group_function, '(')) {
-            $func = substr($group_function, 0, $args_pos);
-            $args = explode(',', substr($group_function, ($args_pos + 1), - 1));
-        } else {
-            $func = $group_function;
-        }
+        $func = $aggregator->getFunctionName();
+        $args = $aggregator->getArguments();
         
         $output = '';
-        switch (mb_strtoupper($func)) {
-            case EXF_AGGREGATOR_LIST:
+        switch ($func) {
+            case AggregatorFunctions::LIST():
                 $output = implode(($args[0] ? $args[0] : ', '), $row_array);
                 break;
-            case EXF_AGGREGATOR_LIST_DISTINCT:
+            case AggregatorFunctions::LIST_DISTINCT():
                 $output = implode(($args[0] ? $args[0] : ', '), array_unique($row_array));
                 break;
-            case EXF_AGGREGATOR_MIN:
+            case AggregatorFunctions::MIN():
                 $output = count($row_array) > 0 ? min($row_array) : 0;
                 break;
-            case EXF_AGGREGATOR_MAX:
+            case AggregatorFunctions::MAX():
                 $output = count($row_array) > 0 ? max($row_array) : 0;
                 break;
-            case EXF_AGGREGATOR_COUNT:
+            case AggregatorFunctions::COUNT():
                 $output = count($row_array);
                 break;
-            case EXF_AGGREGATOR_COUNT_DISTINCT:
+            case AggregatorFunctions::COUNT_DISTINCT():
                 $output = count(array_unique($row_array));
                 break;
-            case EXF_AGGREGATOR_SUM:
+            case AggregatorFunctions::SUM():
                 $output = array_sum($row_array);
                 break;
-            case EXF_AGGREGATOR_AVG:
+            case AggregatorFunctions::AVG():
                 $output = count($row_array) > 0 ? array_sum($row_array) / count($row_array) : 0;
                 break;
             default:
-                throw new UnexpectedValueException('Invalid aggregator function "' . $group_function . '"!');
+                throw new UnexpectedValueException('Unsupported aggregator function "' . $func . '"!');
         }
         return $output;
     }

@@ -1,11 +1,11 @@
 <?php
 namespace exface\Core\Factories;
 
-use exface\Core\CommonLogic\Workbench;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\DataSheets\DataColumnInterface;
 use exface\Core\Interfaces\DataSheets\DataColumnTotalInterface;
 use exface\Core\CommonLogic\DataSheets\DataColumnTotal;
+use exface\Core\Interfaces\Model\AggregatorInterface;
 
 abstract class DataColumnTotalsFactory extends AbstractFactory
 {
@@ -24,13 +24,13 @@ abstract class DataColumnTotalsFactory extends AbstractFactory
     /**
      *
      * @param DataColumnInterface $data_column            
-     * @param string $function_name            
+     * @param AggregatorInterface|string $function_name            
      * @return DataColumnTotalInterface
      */
-    public static function createFromString(DataColumnInterface $data_column, $function_name)
+    public static function createFromString(DataColumnInterface $data_column, $aggregator_or_string)
     {
         $result = static::createEmpty($data_column);
-        $result->setFunction($function_name);
+        $result->setAggregator($aggregator_or_string);
         return $result;
     }
 

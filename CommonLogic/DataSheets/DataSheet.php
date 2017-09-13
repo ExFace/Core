@@ -69,7 +69,7 @@ class DataSheet implements DataSheetInterface
 
     private $subsheets = array();
 
-    private $aggregators = array();
+    private $aggregation_columns = array();
 
     private $rows_on_page = NULL;
 
@@ -90,7 +90,7 @@ class DataSheet implements DataSheetInterface
         $this->meta_object = $meta_object;
         $this->filters = ConditionGroupFactory::createEmpty($this->exface, EXF_LOGICAL_AND);
         $this->cols = new DataColumnList($this->exface, $this);
-        $this->aggregators = new DataAggregatorList($this->exface, $this);
+        $this->aggregation_columns = new DataAggregatorList($this->exface, $this);
         $this->sorters = new DataSorterList($this->exface, $this);
         // IDEA Can we use the generic EntityListFactory here or do we need a dedicated factory for subsheet lists?
         $this->subsheets = new DataSheetList($this->exface, $this);
@@ -400,8 +400,8 @@ class DataSheet implements DataSheetInterface
             if ($attribute->getFormatter()) {
                 $col->setFormatter($attribute->getFormatter());
                 $col->getFormatter()->setRelationPath($attribute->getRelationPath()->toString());
-                if ($aggregator = DataAggregator::getAggregateFunctionFromAlias($col->getExpressionObj()->toString())) {
-                    $col->getFormatter()->mapAttribute(str_replace(':' . $aggregator, '', $col->getExpressionObj()->toString()), $col->getExpressionObj()->toString());
+                if ($aggregator = DataAggregator::getAggregatorFromAlias($col->getExpressionObj()->toString())) {
+                    $col->getFormatter()->mapAttribute(str_replace(':' . $aggregator->exportString(), '', $col->getExpressionObj()->toString()), $col->getExpressionObj()->toString());
                 }
                 foreach ($col->getFormatter()->getRequiredAttributes() as $req) {
                     if (! $this->getColumn($req)) {
@@ -439,7 +439,7 @@ class DataSheet implements DataSheetInterface
         foreach ($this->getColumns() as $col) {
             $this->getDataForColumn($col, $query);
             foreach ($col->getTotals()->getAll() as $row => $total) {
-                $query->addTotal($col->getAttributeAlias(), $total->getFunction(), $row);
+                $query->addTotal($col->getAttributeAlias(), $total->getAggregator(), $row);
             }
         }
         
@@ -652,7 +652,7 @@ class DataSheet implements DataSheetInterface
                 // Skip columns, that reference non existing attributes
                 // TODO Is throwing an exception appropriate here?
                 throw new MetaAttributeNotFoundError($this->getMetaObject(), 'Attribute "' . $column->getExpressionObj()->toString() . '" of object "' . $this->getMetaObject()->getAliasWithNamespace() . '" not found!');
-            } elseif (DataAggregator::getAggregateFunctionFromAlias($column->getExpressionObj()->toString())) {
+            } elseif (DataAggregator::getAggregatorFromAlias($column->getExpressionObj()->toString())) {
                 // Skip columns with aggregate functions
                 continue;
             }
@@ -1274,7 +1274,7 @@ class DataSheet implements DataSheetInterface
      */
     public function getAggregators()
     {
-        return $this->aggregators;
+        return $this->aggregation_columns;
     }
 
     /**

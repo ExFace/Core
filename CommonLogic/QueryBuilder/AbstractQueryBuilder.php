@@ -7,6 +7,7 @@ use exface\Core\CommonLogic\AbstractDataConnector;
 use exface\Core\Exceptions\QueryBuilderException;
 use exface\Core\Factories\ConditionFactory;
 use exface\Core\Exceptions\Model\MetaObjectDataConnectionNotFoundError;
+use exface\Core\Interfaces\Model\AggregatorInterface;
 
 abstract class AbstractQueryBuilder
 {
@@ -141,18 +142,16 @@ abstract class AbstractQueryBuilder
      * Adds a total row to the query (i.e.
      * for the footers)
      *
-     * @param string $attribute
-     *            attribute_alias
-     * @param string $function
-     *            like SUM, AVG, etc.
+     * @param string $attribute_alias
+     * @param AggregatorInterface $aggregator
      * @param int $place_in_row
      *            row number within a multi-row footer for this total
      */
-    public function addTotal($attribute, $function, $place_in_row = 0)
+    public function addTotal($attribute_alias, AggregatorInterface $aggregator, $place_in_row = 0)
     {
-        $qpart = new QueryPartTotal($attribute, $this);
-        $qpart->setAlias($attribute);
-        $qpart->setFunction($function);
+        $qpart = new QueryPartTotal($attribute_alias, $this);
+        $qpart->setAlias($attribute_alias);
+        $qpart->setTotalAggregator($aggregator);
         $qpart->setRow($place_in_row);
         $this->totals[] = $qpart;
         return $qpart;
@@ -166,8 +165,8 @@ abstract class AbstractQueryBuilder
     /**
      * Creates and adds a single filter to the query
      *
-     * @param unknown $attribute_alias            
-     * @param unknown $value            
+     * @param string $attribute_alias            
+     * @param string $value            
      * @param string $comparator            
      * @return \exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder
      */

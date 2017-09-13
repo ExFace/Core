@@ -4,11 +4,12 @@ namespace exface\Core\CommonLogic\QueryBuilder;
 use exface\Core\Exceptions\QueryBuilderException;
 use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\CommonLogic\DataSheets\DataAggregator;
+use exface\Core\Interfaces\Model\AggregatorInterface;
 
 class QueryPartAttribute extends QueryPart
 {
 
-    private $aggregate_function;
+    private $aggregator;
 
     private $used_relations = null;
 
@@ -22,7 +23,9 @@ class QueryPartAttribute extends QueryPart
             $this->setAttribute($attr);
         }
         
-        $this->aggregate_function = DataAggregator::getAggregateFunctionFromAlias($alias);
+        if ($aggr = DataAggregator::getAggregatorFromAlias($alias)){
+            $this->aggregator = $aggr;
+        }
     }
 
     /**
@@ -69,14 +72,18 @@ class QueryPartAttribute extends QueryPart
         return $rels;
     }
 
-    public function getAggregateFunction()
+    /**
+     * 
+     * @return AggregatorInterface
+     */
+    public function getAggregator()
     {
-        return $this->aggregate_function;
+        return $this->aggregator;
     }
 
-    public function setAggregateFunction($value)
+    public function setAggregator(AggregatorInterface $value)
     {
-        $this->aggregate_function = $value;
+        $this->aggregator = $value;
     }
 
     public function getDataAddressProperty($property_key)

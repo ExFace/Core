@@ -9,6 +9,7 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\iCanBeCopied;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\Interfaces\Model\ExpressionInterface;
+use exface\Core\Interfaces\Model\AggregatorInterface;
 
 interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
 {
@@ -292,14 +293,12 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
     public function removeRows();
 
     /**
-     * Aggregates all values in this column using the given function.
-     * The function names are the same, as in
-     * the column definitions (e.g. attribute_alias:SUM)
+     * Aggregates all values in this column using the given aggregator.
      *
-     * @param string $aggregate_function            
+     * @param AggregatorInterface $aggregator            
      * @return string
      */
-    public function aggregate($aggregate_function_name);
+    public function aggregate(AggregatorInterface $aggregator);
 
     /**
      * Returns the meta object of this data column

@@ -78,30 +78,6 @@ const EXF_LOGICAL_NOT = 'NOT';
 const EXF_LOGICAL_NULL = 'NULL';
 
 /*
- * Aggregator function names
- */
-
-const EXF_AGGREGATOR_SUM = 'SUM';
-
-const EXF_AGGREGATOR_AVG = 'AVG';
-
-const EXF_AGGREGATOR_AVERAGE = 'AVERAGE';
-
-const EXF_AGGREGATOR_MIN = 'MIN';
-
-const EXF_AGGREGATOR_MAX = 'MAX';
-
-const EXF_AGGREGATOR_LIST = 'LIST';
-
-const EXF_AGGREGATOR_LIST_DISTINCT = 'LIST_DISTINCT';
-
-const EXF_AGGREGATOR_COUNT = 'COUNT';
-
-const EXF_AGGREGATOR_COUNT_DISTINCT = 'COUNT_DISTINCT';
-
-const EXF_AGGREGATOR_COUNT_IF = 'COUNT_IF';
-
-/*
  * Alignment options
  */
 

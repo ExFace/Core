@@ -29,5 +29,5 @@ interface DataAggregatorInterface extends iCanBeConvertedToUxon, iCanBeCopied
      * @param string $attribute_alias            
      * @return string|boolean
      */
-    public static function getAggregateFunctionFromAlias($attribute_alias);
+    public static function getAggregatorFromAlias($attribute_alias);
 }

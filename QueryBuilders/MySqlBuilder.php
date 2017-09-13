@@ -6,6 +6,8 @@ use exface\Core\DataTypes\AbstractDataType;
 use exface\Core\CommonLogic\AbstractDataConnector;
 use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\DataTypes\DateDataType;
+use exface\Core\CommonLogic\Model\Aggregator;
+use exface\Core\CommonLogic\Constants\AggregatorFunctions;
 
 /**
  * A query builder for MySQL.
@@ -89,13 +91,13 @@ class MySqlBuilder extends AbstractSqlBuilder
                 $this->addBinaryColumn($qpart->getAlias());
             }
             
-            if ($group_by && $qpart->getAttribute()->getAlias() === $qpart->getAttribute()->getObject()->getUidAttributeAlias() && ! $qpart->getAggregateFunction()) {
+            if ($group_by && $qpart->getAttribute()->getAlias() === $qpart->getAttribute()->getObject()->getUidAttributeAlias() && ! $qpart->getAggregator()) {
                 // If the query has a GROUP BY, we need to put the UID-Attribute in the core select as well as in the enrichment select
                 // otherwise the enrichment joins won't work! Be carefull to apply this rule only to the plain UID column, not to columns
                 // using the UID with aggregate functions
-                $selects[] = $this->buildSqlSelect($qpart, null, null, null, 'MAX');
+                $selects[] = $this->buildSqlSelect($qpart, null, null, null, new Aggregator(AggregatorFunctions::MAX));
                 $enrichment_select .= ', ' . $this->buildSqlSelect($qpart, 'EXFCOREQ', $this->getShortAlias($qpart->getAlias()));
-            } elseif (! $group_by || $qpart->getAggregateFunction() || $this->getAggregation($qpart->getAlias())) {
+            } elseif (! $group_by || $qpart->getAggregator() || $this->getAggregation($qpart->getAlias())) {
                 // If we are not aggregating or the attribute has a group function, add it regulary
                 $selects[] = $this->buildSqlSelect($qpart);
                 $joins = array_merge($joins, $this->buildSqlJoins($qpart));
@@ -108,7 +110,7 @@ class MySqlBuilder extends AbstractSqlBuilder
                     $first_rel = reset($rels);
                     $first_rel_qpart = $this->addAttribute($first_rel->getAlias());
                     // IDEA this does not support relations based on custom sql. Perhaps this needs to change
-                    $selects[] = $this->buildSqlSelect($first_rel_qpart, null, null, $first_rel_qpart->getAttribute()->getDataAddress(), ($group_by ? 'MAX' : null));
+                    $selects[] = $this->buildSqlSelect($first_rel_qpart, null, null, $first_rel_qpart->getAttribute()->getDataAddress(), ($group_by ? new Aggregator(AggregatorFunctions::MAX) : null));
                 }
                 $enrichment_select .= ', ' . $this->buildSqlSelect($qpart);
                 $enrichment_joins = array_merge($enrichment_joins, $this->buildSqlJoins($qpart, 'exfcoreq'));
@@ -117,7 +119,7 @@ class MySqlBuilder extends AbstractSqlBuilder
             } elseif ($group_by && $this->getAggregation($qpart->getAttribute()->getRelationPath()->toString())) {
                 // If aggregating, also add attributes, that belong directly to objects, we are aggregating 
                 // over (they can be assumed unique too, since their object is unique per row)
-                $selects[] = $this->buildSqlSelect($qpart, null, null, null, 'MAX');
+                $selects[] = $this->buildSqlSelect($qpart, null, null, null, new Aggregator(AggregatorFunctions::MAX));
                 $joins = array_merge($joins, $this->buildSqlJoins($qpart));
                 $group_safe_attribute_aliases[] = $qpart->getAttribute()->getAliasWithRelationPath();
             }
@@ -164,14 +166,14 @@ class MySqlBuilder extends AbstractSqlBuilder
         if (count($this->getTotals()) > 0) {
             // determine all joins, needed to perform the totals functions
             foreach ($this->getTotals() as $qpart) {
-                $totals_selects[] = $this->buildSqlSelect($qpart, 'EXFCOREQ', $this->getShortAlias($qpart->getAlias()), null, $qpart->getFunction());
+                $totals_selects[] = $this->buildSqlSelect($qpart, 'EXFCOREQ', $this->getShortAlias($qpart->getAlias()), null, $qpart->getAggregator());
                 $totals_core_selects[] = $this->buildSqlSelect($qpart);
                 $totals_joins = array_merge($totals_joins, $this->buildSqlJoins($qpart));
             }
         }
         
         if ($group_by) {
-            $totals_core_selects[] = $this->buildSqlSelect($this->getAttribute($this->getMainObject()->getUidAttributeAlias()), null, null, null, 'MAX');
+            $totals_core_selects[] = $this->buildSqlSelect($this->getAttribute($this->getMainObject()->getUidAttributeAlias()), null, null, null, new Aggregator(AggregatorFunctions::MAX));
         }
         
         // filters -> WHERE
