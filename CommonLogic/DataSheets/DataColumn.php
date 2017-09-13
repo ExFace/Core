@@ -714,7 +714,7 @@ class DataColumn implements DataColumnInterface
      */
     public static function aggregateValues(array $row_array, AggregatorInterface $aggregator = null)
     {
-        $func = $aggregator->getFunctionName();
+        $func = $aggregator->getFunction();
         $args = $aggregator->getArguments();
         
         $output = '';
