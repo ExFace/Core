@@ -220,46 +220,10 @@ class MySqlBuilder extends AbstractSqlBuilder
         return $output;
     }
 
-    protected function buildSqlSelectNullCheck($select_statement, $value_if_null)
+    protected function buildSqlSelectNullCheckFunctionName()
     {
-        return 'IFNULL(' . $select_statement . ', ' . (is_numeric($value_if_null) ? $value_if_null : '"' . $value_if_null . '"') . ')';
-    }
-
-    /**
-     *
-     * @see AbstractSqlBuilder::buildSqlGroupFunction
-     * @param \exface\Core\CommonLogic\QueryBuilder\QueryPart $qpart            
-     * @param string $select_from            
-     * @param string $select_column            
-     * @param string $select_as            
-     * @param string $group_function            
-     * @return string
-     */
-    protected function buildSqlGroupFunction(\exface\Core\CommonLogic\QueryBuilder\QueryPart $qpart, $select_from = null, $select_column = null, $select_as = null, $group_function = null)
-    {
-        $output = '';
-        $group_function = ! is_null($group_function) ? $group_function : $qpart->getAggregateFunction();
-        $group_function = trim($group_function);
-        $select = $this->buildSqlSelect($qpart, $select_from, $select_column, false, false);
-        $args = array();
-        if ($args_pos = strpos($group_function, '(')) {
-            $func = substr($group_function, 0, $args_pos);
-            $args = explode(',', substr($group_function, ($args_pos + 1), - 1));
-        } else {
-            $func = $group_function;
-        }
-        
-        switch ($func) {
-            case 'LIST_DISTINCT':
-            case 'LIST':
-                $output = "GROUP_CONCAT(" . ($func == 'LIST_DISTINCT' ? 'DISTINCT ' : '') . $select . " SEPARATOR " . ($args[0] ? $args[0] : "', '") . ")";
-                $qpart->getQuery()->addAggregation($qpart->getAttribute()->getAliasWithRelationPath());
-                break;
-            default:
-                return parent::buildSqlGroupFunction($qpart, $select_from, $select_column, $select_as, $group_function);
-        }
-        return $output;
-    }
+        return 'IFNULL';
+    }    
 
     /**
      * Special DELETE builder for MySQL because MySQL does not support table aliases in the DELETE query.

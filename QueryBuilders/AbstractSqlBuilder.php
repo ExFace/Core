@@ -22,6 +22,7 @@ use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\DataTypes\DateDataType;
 use exface\Core\DataTypes\RelationDataType;
 use exface\Core\Exceptions\DataTypeNotFoundError;
+use exface\Core\CommonLogic\QueryBuilder\QueryPart;
 
 /**
  * A query builder for generic SQL syntax.
@@ -681,9 +682,11 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      *            set to false or '' to remove the "AS xxx" part completely
      * @param string $group_function
      *            set to false or '' to remove grouping completely
+     * @param boolean $make_groupable
+     *            set to TRUE to force the result to be compatible with GROUP BY
      * @return string
      */
-    protected function buildSqlSelect(\exface\Core\CommonLogic\QueryBuilder\QueryPart $qpart, $select_from = null, $select_column = null, $select_as = null, $group_function = null)
+    protected function buildSqlSelect(QueryPartAttribute $qpart, $select_from = null, $select_column = null, $select_as = null, $group_function = null, $make_groupable = false)
     {
         $output = '';
         $add_nvl = false;
@@ -717,13 +720,26 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         // build subselects for reverse relations if the body of the select is not specified explicitly
         if (! $select_column && $qpart->getUsedRelations(MetaRelationInterface::RELATION_TYPE_REVERSE)) {
             $output = $this->buildSqlSelectSubselect($qpart, $select_from);
+            if ($make_groupable && $group_function){
+                if ($group_function && $group_function === $qpart->getAggregateFunction()){
+                    switch ($group_function){
+                        case EXF_AGGREGATOR_COUNT:
+                        case EXF_AGGREGATOR_COUNT_IF:
+                        case EXF_AGGREGATOR_COUNT_DISTINCT:
+                            $group_function = EXF_AGGREGATOR_SUM;
+                            break;
+                    }
+                }
+                $output = $this->buildSqlGroupByFunction($qpart, $output, $group_function);
+            } else {
+                $add_nvl = true;
+            }
+        }  elseif ($group_function) {
+            // build grouping function if necessary
+            $output = $this->buildSqlSelectGrouped($qpart, $select_from, $select_column, $select_as, $group_function);
             $add_nvl = true;
-        } // build grouping function if necessary
-elseif ($group_function) {
-            $output = $this->buildSqlGroupFunction($qpart, $select_from, $select_column, $select_as, $group_function);
-            $add_nvl = true;
-        } // otherwise create a regular select
-else {
+        } else {
+            // otherwise create a regular select
             if ($select_column) {
                 // if the column to select is explicitly defined, just select it
                 $output = $select_from . '.' . $select_column;
@@ -757,7 +773,7 @@ else {
         if ($select_as) {
             $output = "\n" . $output . ' AS "' . $select_as . '"';
         }
-        return $output;
+        return "\n-- selecting " . $qpart->getAlias() . "\n" . $output;
     }
 
     /**
@@ -770,7 +786,11 @@ else {
      */
     protected function buildSqlSelectNullCheck($select_statement, $value_if_null)
     {
-        return 'COALESCE(' . $select_statement . ', ' . (is_numeric($value_if_null) ? $value_if_null : '"' . $value_if_null . '"') . ')';
+        return $this->buildSqlSelectNullCheckFunctionName() . '(' . $select_statement . ', ' . (is_numeric($value_if_null) ? $value_if_null : '"' . $value_if_null . '"') . ')';
+    }
+    
+    protected function buildSqlSelectNullCheckFunctionName(){
+        return 'COALESCE';
     }
 
     /**
@@ -859,9 +879,8 @@ else {
      * @param string $group_function            
      * @return string
      */
-    protected function buildSqlGroupFunction(\exface\Core\CommonLogic\QueryBuilder\QueryPart $qpart, $select_from = null, $select_column = null, $select_as = null, $group_function = null)
+    protected function buildSqlSelectGrouped(\exface\Core\CommonLogic\QueryBuilder\QueryPart $qpart, $select_from = null, $select_column = null, $select_as = null, $group_function = null)
     {
-        $output = '';
         $group_function = ! is_null($group_function) ? $group_function : $qpart->getAggregateFunction();
         $group_function = trim($group_function);
         $select = $this->buildSqlSelect($qpart, $select_from, $select_column, false, false);
@@ -873,36 +892,49 @@ else {
             $func = $group_function;
         }
         
-        switch ($func) {
+        return $this->buildSqlGroupByFunction($qpart, $select, $func, $args);
+    }
+    
+    /**
+     * 
+     * @param QueryPartAttribute $qpart
+     * @param string $sql
+     * @param string $function_name
+     * @param array $function_arguments
+     * @throws QueryBuilderException
+     * @return string
+     */
+    protected function buildSqlGroupByFunction(QueryPartAttribute $qpart, $sql, $function_name, array $function_arguments = []){
+        $output = '';
+        
+        switch ($function_name) {
             case 'SUM':
             case 'AVG':
             case 'COUNT':
             case 'MAX':
             case 'MIN':
-                $output = $func . '(' . $select . ')';
-                break;
-            case 'LIST':
-                $output = "ListAgg(" . $select . ", " . ($args[0] ? $args[0] : "', '") . ") WITHIN GROUP (order by " . $select . ")";
-                $qpart->getQuery()->addAggregation($qpart->getAttribute()->getAliasWithRelationPath());
+                $output = $function_name . '(' . $sql . ')';
                 break;
             case 'LIST_DISTINCT':
-                $output = "ListAggDistinct(" . $select . ")";
+            case 'LIST':
+                $output = "GROUP_CONCAT(" . ($function_name == 'LIST_DISTINCT' ? 'DISTINCT ' : '') . $sql . " SEPARATOR " . ($function_arguments[0] ? $function_arguments[0] : "', '") . ")";
                 $qpart->getQuery()->addAggregation($qpart->getAttribute()->getAliasWithRelationPath());
                 break;
             case 'COUNT_DISTINCT':
-                $output = "COUNT(DISTINCT " . $select . ")";
+                $output = "COUNT(DISTINCT " . $sql . ")";
                 break;
             case 'COUNT_IF':
-                $cond = $args[0];
+                $cond = $function_arguments[0];
                 list($if_comp, $if_val) = explode(' ', $cond, 2);
                 if (!$if_comp || is_null($if_val)) {
                     throw new QueryBuilderException('Invalid argument for COUNT_IF aggregator: "' . $cond . '"!', '6WXNHMN');
                 }
-                $output = "SUM(" . $this->buildSqlWhereComparator($select,  $if_comp, $if_val, $qpart->getAttribute()->getDataType()). ")";
+                $output = "SUM(" . $this->buildSqlWhereComparator($sql,  $if_comp, $if_val, $qpart->getAttribute()->getDataType()). ")";
                 break;
             default:
                 break;
         }
+        
         return $output;
     }
 
@@ -1041,7 +1073,7 @@ else {
         $comp = $qpart->getComparator();
         $delimiter = $qpart->getValueListDelimiter();
         
-        $select = $this->buildSqlGroupFunction($qpart);
+        $select = $this->buildSqlSelectGrouped($qpart);
         $where = $qpart->getDataAddressProperty('WHERE');
         $object_alias = ($attr->getRelationPath()->toString() ? $attr->getRelationPath()->toString() : $this->getMainObject()->getAlias());
         

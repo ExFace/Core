@@ -99,6 +99,8 @@ const EXF_AGGREGATOR_COUNT = 'COUNT';
 
 const EXF_AGGREGATOR_COUNT_DISTINCT = 'COUNT_DISTINCT';
 
+const EXF_AGGREGATOR_COUNT_IF = 'COUNT_IF';
+
 /*
  * Alignment options
  */

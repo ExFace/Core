@@ -229,9 +229,9 @@ elseif (! $group_by || $qpart->getAggregateFunction() || $this->getAggregation($
         return $totals_query;
     }
 
-    protected function buildSqlSelectNullCheck($select_statement, $value_if_null)
+    protected function buildSqlSelectNullCheckFunctionName()
     {
-        return 'ISNULL(' . $select_statement . ', ' . (is_numeric($value_if_null) ? $value_if_null : '"' . $value_if_null . '"') . ')';
+        return 'ISNULL';
     }
 }
 ?>
