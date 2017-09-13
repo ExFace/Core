@@ -11,7 +11,7 @@ abstract class AbstractSqlModelizer implements ModelizerInterface
 
     private $data_connector = null;
 
-    private $data_types = NULL;
+    private $data_types = null;
 
     public function __construct(SqlDataConnectorInterface $data_connector)
     {
@@ -74,16 +74,16 @@ abstract class AbstractSqlModelizer implements ModelizerInterface
 
     public function getDataTypeId($data_type_alias)
     {
-        if (! $this->data_types) {
+        if (is_null($this->data_types)) {
             $this->data_types = DataSheetFactory::createFromObject($this->getDataConnection()->getWorkbench()->model()->getObject('exface.Core.DATATYPE'));
             $this->data_types->getColumns()->addMultiple(array(
                 $this->data_types->getMetaObject()->getUidAttributeAlias(),
-                $this->data_types->getMetaObject()->getLabelAttributeAlias()
+                'ALIAS'
             ));
             $this->data_types->dataRead(0, 0);
         }
         
-        return $this->data_types->getUidColumn()->getCellValue($this->data_types->getColumns()->get('LABEL')->findRowByValue($data_type_alias));
+        return $this->data_types->getUidColumn()->getCellValue($this->data_types->getColumns()->get('ALIAS')->findRowByValue($data_type_alias));
     }
 
     /**
