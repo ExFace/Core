@@ -272,9 +272,8 @@ class Object implements MetaObjectInterface
             }
             
             // check for aggregate functions and remove them
-            if ($aggr = DataAggregation::getAggregatorFromAlias($alias)) {
-                $aggr_string = $aggr->exportString();
-                $alias = substr($alias, 0, strlen(DataAggregation::AGGREGATION_SEPARATOR . $aggr_string) * (- 1));
+            if (($alias_without_aggregator = DataAggregation::stripAggregator($alias)) !== $alias) {
+                $alias = $alias_without_aggregator;
                 // check if it is a direct attribute again (now, as the aggregator was removed)
                 if ($attr = $this->getAttributes()->get($alias)) {
                     $this->setAttributeCache($alias, $attr);

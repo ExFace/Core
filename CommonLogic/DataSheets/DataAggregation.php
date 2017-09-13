@@ -70,6 +70,16 @@ class DataAggregation implements iCanBeConvertedToUxon
             return false;
         }
     }
+    
+    public static function stripAggregator($attribute_alias)
+    {
+        $aggregator_pos = strpos($attribute_alias, self::AGGREGATION_SEPARATOR);
+        if ($aggregator_pos !== false){
+            return substr($attribute_alias, 0, $aggregator_pos);
+        } else {
+            return $attribute_alias;
+        }
+    }
 
     /**
      * Returns a copy of this sorter still belonging to the same data sheet
