@@ -584,16 +584,5 @@ class OracleSqlBuilder extends AbstractSqlBuilder
         
         return $insert_ids;
     }
-    
-    protected function isQpartRelatedToAggregator(QueryPartAttribute $qpart)
-    {
-        $related_to_aggregator = false;
-        foreach ($this->getAggregations() as $aggr) {
-            if (strpos($qpart->getAlias(), $aggr->getAlias()) === 0) {
-                $related_to_aggregator = true;
-            }
-        }
-        return $related_to_aggregator;
-    }
 }
 ?>

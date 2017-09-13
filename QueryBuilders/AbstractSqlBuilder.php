@@ -1563,5 +1563,21 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     {
         return $original_where_statement . ($original_where_statement ? ' ' . $operator . ' ' : '') . str_replace('[#alias#]', ($table_alias ? $table_alias : $this->getShortAlias($this->getMainObject()->getAlias())), $custom_statement);
     }
+    
+    /**
+     * 
+     * @param QueryPartAttribute $qpart
+     * @return boolean
+     */
+    protected function isQpartRelatedToAggregator(QueryPartAttribute $qpart)
+    {
+        $related_to_aggregator = false;
+        foreach ($this->getAggregations() as $aggr) {
+            if (strpos($qpart->getAlias(), $aggr->getAlias()) === 0) {
+                $related_to_aggregator = true;
+            }
+        }
+        return $related_to_aggregator;
+    }
 }
 ?>
