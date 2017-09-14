@@ -238,6 +238,21 @@ interface UiPageInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
     public function setMenuIndex($number);
     
     /**
+     * Returns if the page is visible in the menu.
+     * 
+     * @return boolean
+     */
+    public function getMenuVisible();
+    
+    /**
+     * Sets if the page is shown in the menu. (Default: true)
+     * 
+     * @param boolean $menuVisible
+     * @return UiPageInterface
+     */
+    public function setMenuVisible(bool $menuVisible);
+    
+    /**
      * Returns the unique id of the page.
      * 
      * This id is unique across all apps!

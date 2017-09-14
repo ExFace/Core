@@ -59,6 +59,8 @@ class UiPage implements UiPageInterface
     private $menuParentPage = null;
 
     private $menuIndex = 0;
+    
+    private $menuVisible = true;
 
     private $id = null;
 
@@ -710,6 +712,27 @@ class UiPage implements UiPageInterface
         $this->menuIndex = $number;
         return $this;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::getMenuVisible()
+     */
+    public function getMenuVisible()
+    {
+        return $this->menuVisible;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::setMenuVisible()
+     */
+    public function setMenuVisible(bool $menuVisible)
+    {
+        $this->menuVisible = $menuVisible;
+        return $this;
+    }
 
     /**
      *
@@ -841,7 +864,7 @@ class UiPage implements UiPageInterface
                 WidgetFactory::createFromUxon($this, UxonObject::fromAnything($contents));
             }
         } elseif ($contents instanceof UxonObject) {
-            $this->contents = $contents->toJson();
+            $this->contents = json_encode($contents->toArray(), JSON_UNESCAPED_UNICODE);
             $this->removeAllWidgets();
             WidgetFactory::createFromUxon($this, $contents);
         } else {
@@ -918,6 +941,7 @@ class UiPage implements UiPageInterface
         $uxon->setProperty('alias_with_namespace', $this->getAliasWithNamespace());
         $uxon->setProperty('menu_parent_id', $this->getMenuParentId());
         $uxon->setProperty('menu_index', $this->getMenuIndex());
+        $uxon->setProperty('menu_visible', $this->getMenuVisible());
         $uxon->setProperty('name', $this->getName());
         $uxon->setProperty('short_description', $this->getShortDescription());
         $uxon->setProperty('replaces_page_alias', $this->getReplacesPageAlias());
