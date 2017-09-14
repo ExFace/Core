@@ -1,0 +1,42 @@
+{
+    "id": "0xb863f248949e11e7917c028037ec0200",
+    "alias_with_namespace": "exface.core.data-connectors",
+    "menu_parent_id": "0xa7760458949e11e7a353028037ec0200",
+    "menu_index": "1",
+    "menu_visible": true,
+    "name": "Data Connectors",
+    "short_description": "",
+    "replaces_page_alias": "",
+    "contents": {
+        "object_alias": "exface.core.DATA_CONNECTOR",
+        "widget_type": "DataTable",
+        "filters": [
+            {
+                "attribute_alias": "NAME"
+            },
+            {
+                "attribute_alias": "PATHNAME_RELATIVE"
+            }
+        ],
+        "columns": [
+            {
+                "attribute_alias": "NAME"
+            },
+            {
+                "attribute_alias": "PATHNAME_RELATIVE"
+            },
+            {
+                "attribute_alias": "PATHNAME_ABSOLUTE"
+            },
+            {
+                "attribute_alias": "SIZE"
+            }
+        ],
+        "buttons": [
+            {
+                "action_alias": "exface.Core.ShowObjectDialog",
+                "bind_to_double_click": true
+            }
+        ]
+    }
+}

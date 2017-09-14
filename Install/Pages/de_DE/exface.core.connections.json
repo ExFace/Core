@@ -1,0 +1,73 @@
+{
+    "id": "0xa05b7202949e11e7acc3028037ec0200",
+    "alias_with_namespace": "exface.core.connections",
+    "menu_parent_id": "0x8f9e3238949e11e7aa5f028037ec0200",
+    "menu_index": "1",
+    "menu_visible": true,
+    "name": "Verbindungen",
+    "short_description": "",
+    "replaces_page_alias": "",
+    "contents": {
+        "object_alias": "exface.Core.CONNECTION",
+        "widget_type": "DataTable",
+        "filters": [
+            {
+                "attribute_alias": "LABEL"
+            },
+            {
+                "attribute_alias": "CONFIG",
+                "widget_type": "Input"
+            },
+            {
+                "attribute_alias": "CONNECTOR"
+            },
+            {
+                "attribute_alias": "APP"
+            }
+        ],
+        "columns": [
+            {
+                "attribute_alias": "APP__LABEL"
+            },
+            {
+                "attribute_alias": "ALIAS"
+            },
+            {
+                "attribute_alias": "LABEL"
+            },
+            {
+                "attribute_alias": "CONNECTOR"
+            },
+            {
+                "attribute_alias": "READONLY"
+            },
+            {
+                "attribute_alias": "CONFIG"
+            },
+            {
+                "attribute_alias": "CREATED_BY_USER__LABEL"
+            }
+        ],
+        "sorters": [
+            {
+                "attribute_alias": "LABEL",
+                "direction": "ASC"
+            }
+        ],
+        "buttons": [
+            {
+                "action_alias": "exface.Core.CreateObjectDialog"
+            },
+            {
+                "action_alias": "exface.Core.EditObjectDialog",
+                "bind_to_double_click": true
+            },
+            {
+                "action_alias": "exface.Core.DuplicateObjectDialog"
+            },
+            {
+                "action_alias": "exface.Core.DeleteObject"
+            }
+        ]
+    }
+}

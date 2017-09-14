@@ -1,0 +1,113 @@
+{
+    "id": "0xa7760458949e11e7a353028037ec0200",
+    "alias_with_namespace": "exface.core.apps",
+    "menu_parent_id": "0x8f9e3238949e11e7aa5f028037ec0200",
+    "menu_index": "2",
+    "menu_visible": true,
+    "name": "Apps",
+    "short_description": "",
+    "replaces_page_alias": "",
+    "contents": {
+        "object_alias": "exface.Core.APP",
+        "widget_type": "DataTable",
+        "id": "apps",
+        "multi_select": true,
+        "filters": [
+            {
+                "attribute_alias": "NAME"
+            },
+            {
+                "attribute_alias": "ALIAS"
+            }
+        ],
+        "sorters": [
+            {
+                "attribute_alias": "ALIAS",
+                "direction": "ASC"
+            }
+        ],
+        "columns": [
+            {
+                "attribute_alias": "NAME"
+            },
+            {
+                "attribute_alias": "ALIAS"
+            },
+            {
+                "attribute_alias": "PACKAGE"
+            },
+            {
+                "attribute_alias": "PACKAGE__version"
+            },
+            {
+                "attribute_alias": "MODIFIED_ON",
+                "caption": "Model date"
+            },
+            {
+                "attribute_alias": "PACKAGE__model_timestamp"
+            },
+            {
+                "attribute_alias": "OBJECT__UID:COUNT",
+                "caption": "Objects"
+            },
+            {
+                "attribute_alias": "DATASRC__UID:COUNT",
+                "caption": "Data Sources"
+            },
+            {
+                "attribute_alias": "CONNECTION__UID:COUNT",
+                "caption": "Connections"
+            }
+        ],
+        "buttons": [
+            {
+                "action_alias": "exface.Core.CreateObjectDialog"
+            },
+            {
+                "action_alias": "exface.Core.EditObjectDialog"
+            },
+            {
+                "action_alias": "exface.Core.DeleteObject"
+            },
+            {
+                "action_alias": "exface.Core.GoToPage",
+                "action_page_alias": "exface.core.objects",
+                "caption": "Objekte"
+            },
+            {
+                "action_alias": "axenox.PackageManager.ExportAppModel"
+            },
+            {
+                "action_alias": "axenox.PackageManager.InstallApp",
+                "caption": "Reparieren"
+            },
+            {
+                "action_alias": "axenox.PackageManager.ImportAppModel"
+            },
+            {
+                "action_alias": "axenox.PackageManager.ComposerCleanupPreviousActions",
+                "caption": "Composer aufr\u00e4umen"
+            },
+            {
+                "action": {
+                    "alias": "exface.Core.ShowDialog",
+                    "widget": {
+                        "widget_type": "Dialog",
+                        "object_alias": "exface.Core.APP",
+                        "widgets": [
+                            {
+                                "attribute_alias": "ALIAS"
+                            }
+                        ],
+                        "Buttons": [
+                            {
+                                "action_alias": "axenox.PackageManager.InstallApp"
+                            }
+                        ]
+                    }
+                },
+                "caption": "App installieren"
+            }
+        ]
+    }
+}
