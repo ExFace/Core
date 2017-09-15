@@ -161,9 +161,17 @@ class UiManager implements UiManagerInterface
         if ($uiPage->getAliasWithNamespace()) {
             $this->pagesByAlias[$uiPage->getAliasWithNamespace()] = $uiPage;
         }
-        if ($uiPage != $page_id_or_alias) {
+        // Pruefen ob die Seite durch eine andere ersetzt wird. Wenn ja die Seite auch unter
+        // ihrer urspruenglichen Bezeichnung cachen.
+        if (substr($page_id_or_alias, 0, 2) == '0x' && $uiPage->getId() != $page_id_or_alias) {
+            // Die Seite wird durch eine andere ersetzt.
+            $this->pagesById[$page_id_or_alias] = $uiPage;
+        } elseif (! is_numeric($page_id_or_alias) && $uiPage->getAliasWithNamespace() != $page_id_or_alias) {
             // Die Seite wird durch eine andere ersetzt.
             $this->pagesByAlias[$page_id_or_alias] = $uiPage;
+        } elseif ($uiPage->getIdCms() != $page_id_or_alias) {
+            // Die Seite wird durch eine andere ersetzt.
+            $this->pagesByIdCms[$page_id_or_alias] = $uiPage;
         }
     }
 
