@@ -37,6 +37,8 @@ trait JqueryDataTablesTrait {
     {
         $output = '';
         $widget = $this->getWidget();
+        $collapse_icon_selector = '.' . str_replace(' ', '.', $this->getRowDetailsCollapseIcon());
+        $expand_icon_selector = '.' . str_replace(' ', '.', $this->getRowDetailsExpandIcon());
         
         if ($widget->hasRowDetails()) {
             $output = <<<JS
@@ -49,11 +51,10 @@ trait JqueryDataTablesTrait {
 			// This row is already open - close it
 			row.child.hide();
 			tr.removeClass('shown');
-			tr.find('.{$this->getRowDetailsCollapseIcon()}').removeClass('{$this->getRowDetailsCollapseIcon()}').addClass('{$this->getRowDetailsExpandIcon()}');
+			tr.find('{$collapse_icon_selector}').removeClass('{$this->getRowDetailsCollapseIcon()}').addClass('{$this->getRowDetailsExpandIcon()}');
 			$('#detail'+row.data().id).remove();
 			{$this->getId()}_table.columns.adjust();
-		}
-		else {
+		} else {
 			// Open this row
 			row.child('<div id="detail'+row.data().{$widget->getMetaObject()->getUidAttributeAlias()}+'"></div>').show();
 			$.ajax({
@@ -83,7 +84,7 @@ trait JqueryDataTablesTrait {
 			});
 			tr.next().addClass('detailRow unselectable');
 			tr.addClass('shown');
-			tr.find('.{$this->getRowDetailsExpandIcon()}').removeClass('{$this->getRowDetailsExpandIcon()}').addClass('{$this->getRowDetailsCollapseIcon()}');
+			tr.find('{$expand_icon_selector}').removeClass('{$this->getRowDetailsExpandIcon()}').addClass('{$this->getRowDetailsCollapseIcon()}');
 		}
 	} );
 JS;
