@@ -674,7 +674,9 @@ abstract class AbstractAction implements ActionInterface
      */
     public function implementsInterface($interface)
     {
-        $interface = '\\exface\\Core\\Interfaces\\Actions\\' . $interface;
+        if (! interface_exists($interface)){
+            $interface = '\\exface\\Core\\Interfaces\\Actions\\' . $interface;
+        }
         if ($this instanceof $interface) {
             return true;
         } else {

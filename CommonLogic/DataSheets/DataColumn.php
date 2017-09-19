@@ -533,7 +533,7 @@ class DataColumn implements DataColumnInterface
                 $exface = $this->getWorkbench();
                 $expression = ExpressionFactory::createFromString($exface, $expression_or_string);
             }
-            if (! $expression->isFormula() && ! $expression->isReference()) {
+            if (! $expression->isString() && ! $expression->isFormula() && ! $expression->isReference()) {
                 throw new DataSheetRuntimeError($this->getDataSheet(), 'Invalid formula "' . $expression->toString() . 'given to data sheet column "' . $this->getName() . '"!', '6T5UW0E');
             }
             $this->formula = $expression;

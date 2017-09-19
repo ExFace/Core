@@ -185,9 +185,18 @@ class DataSheet implements DataSheetInterface
             throw new DataSheetImportRowError($this, 'Cannot replace rows for object "' . $this->getMetaObject()->getAliasWithNamespace() . '" with rows from "' . $other_sheet->getMetaObject()->getAliasWithNamespace() . '": replacing rows only possible for identical objects!', '6T5V1DR');
         }
         
+        // Make sure, the UID is present in the result if it is there in the other sheet
         if (! $this->getUidColumn() && $other_sheet->getUidColumn()) {
             $uid_column = $other_sheet->getUidColumn()->copy();
             $this->getColumns()->add($uid_column);
+        }
+        
+        // Make sure, all columns for system attributes are copied too
+        foreach ($this->getMetaObject()->getAttributes()->getSystem() as $attr){
+            if (! $this->getColumns()->getByAttribute($attr) && $col = $other_sheet->getColumns()->getByAttribute($attr)) {
+                $sys_col = $col->copy();
+                $this->getColumns()->add($sys_col);
+            }
         }
         
         $columns_with_formulas = array();
@@ -1220,8 +1229,7 @@ class DataSheet implements DataSheetInterface
      * FIXME Remove in favor of get_columns()->get($name). This method is just temporarily here as long as the
      * strange bug with the wrong parent sheet is not fixed.
      *
-     * @param
-     *            string column name
+     * @param string $name
      * @return DataColumn
      */
     public function getColumn($name)

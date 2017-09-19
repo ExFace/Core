@@ -256,7 +256,7 @@ interface DataSheetInterface extends ExfaceClassInterface, iCanBeCopied, iCanBeC
     /**
      * Returns an array of DataColumns
      *
-     * @return DataColumn[]|DataColumnListInterface
+     * @return DataColumnListInterface|DataColumn[]
      */
     public function getColumns();
 

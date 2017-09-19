@@ -93,6 +93,8 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
     private $hide_header = false;
     
     private $hide_footer = false;
+    
+    private $has_system_columns = false;
 
     protected function init()
     {
@@ -272,22 +274,6 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
     }
 
     /**
-     * IDEA Separate DataColumnFooter widget??
-     *
-     * @return NULL[]
-     */
-    public function getTotals()
-    {
-        $totals = array();
-        foreach ($this->columns as $col) {
-            if ($col->hasFooter()) {
-                $totals[$col->getAttributeAlias()] = $col->getFooter();
-            }
-        }
-        return $totals;
-    }
-
-    /**
      * Returns an array with all columns of the grid.
      * If no columns have been added yet,
      * default display attributes of the meta object are added as columns automatically.
@@ -309,6 +295,7 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
                 $columns = array_merge($columns, $group->getColumns());
             }
         }
+        
         return $columns;
     }
 
@@ -325,6 +312,21 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
             $count += $group->countColumns();
         }
         return $count;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveColumns::hasColumns()
+     */
+    public function hasColumns()
+    {
+        foreach ($this->getColumnGroups() as $group){
+            if ($group->hasColumns()){
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -1052,11 +1054,17 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
             // empty data widgets, we would automatically trigger the creation of default columns, which is absolute nonsense
             // at this point - especially since add_columns_for_system_attributes() can get called before all column defintions
             // in UXON are processed.
-            if ($this->countColumns() == 0 || ! $this->getColumnByAttributeAlias($system_alias)) {
+            if (! $this->has_system_columns || ! $this->getColumnByAttributeAlias($system_alias)) {
                 $col = $this->createColumnFromAttribute($this->getMetaObject()->getAttribute($system_alias), null, true);
                 $this->addColumn($col);
             }
         }
+        
+        if (is_null($relation_path)){
+            $this->has_system_columns = true;
+        }
+        
+        return $this;
     }
 
     /**

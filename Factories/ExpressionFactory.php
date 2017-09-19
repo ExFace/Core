@@ -5,6 +5,7 @@ use exface\Core\CommonLogic\Workbench;
 use exface\Core\CommonLogic\Model\Expression;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
+use exface\Core\Interfaces\Model\ExpressionInterface;
 
 abstract class ExpressionFactory
 {
