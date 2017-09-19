@@ -15,9 +15,11 @@ class Expression implements ExpressionInterface
 {
 
     // Expression types
-    // const FORMULA = 'formula';
-    // const ATTRIBUTE = 'attribute';
-    // const STRING = 'string';
+    const TYPE_FORMULA = 'formula';
+    const TYPE_ATTRIBUTE = 'attribute_alias';
+    const TYPE_CONSTANT = 'constant';
+    const TYPE_REFERENCE = 'reference';
+    
     private $attributes = array();
 
     private $formula = null;
@@ -63,24 +65,24 @@ class Expression implements ExpressionInterface
         // see, what type of expression it is. Depending on the type, the evaluate() method will give different results.
         $str = $this->parseQuotedString($expression);
         if (! $expression || $str !== false) {
-            $this->type = 'string';
+            $this->type = self::TYPE_CONSTANT;
             $this->value = $str;
         } elseif (strpos($expression, '=') === 0) {
             if (strpos($expression, '(') !== false && strpos($expression, ')') !== false) {
-                $this->type = 'formula';
+                $this->type = self::TYPE_FORMULA;
                 $this->formula = $this->parseFormula($expression);
                 $this->attributes = array_merge($this->attributes, $this->formula->getRequiredAttributes());
             } else {
-                $this->type = 'reference';
+                $this->type = self::TYPE_REFERENCE;
                 $this->widget_link = WidgetLinkFactory::createFromAnything($this->exface, substr($expression, 1));
             }
         } else { // attribute_alias
             if (! $this->getMetaObject() || ($this->getMetaObject() && $this->getMetaObject()->hasAttribute($expression))) {
-                $this->type = 'attribute_alias';
+                $this->type = self::TYPE_ATTRIBUTE;
                 $this->attribute_alias = $expression;
                 $this->attributes[] = $expression;
             } else {
-                $this->type = 'string';
+                $this->type = self::TYPE_CONSTANT;
                 $this->value = $str === false ? '' : $str;
             }
         }
@@ -94,7 +96,7 @@ class Expression implements ExpressionInterface
      */
     public function isMetaAttribute()
     {
-        if ($this->type == 'attribute_alias')
+        if ($this->type === self::TYPE_ATTRIBUTE)
             return true;
         else
             return false;
@@ -106,7 +108,7 @@ class Expression implements ExpressionInterface
      */
     public function isFormula()
     {
-        if ($this->type == 'formula')
+        if ($this->type === SELF::TYPE_FORMULA)
             return true;
         else
             return false;
@@ -114,11 +116,11 @@ class Expression implements ExpressionInterface
 
     /**
      * {@inheritdoc}
-     * @see \exface\Core\Interfaces\Model\ExpressionInterface::isString()
+     * @see \exface\Core\Interfaces\Model\ExpressionInterface::isConstant()
      */
-    public function isString()
+    public function isConstant()
     {
-        if ($this->type == 'string')
+        if ($this->type === self::TYPE_CONSTANT)
             return true;
         else
             return false;
@@ -140,7 +142,7 @@ class Expression implements ExpressionInterface
      */
     public function isReference()
     {
-        if ($this->type == 'reference')
+        if ($this->type === SELF::TYPE_REFERENCE)
             return true;
         else
             return false;
@@ -243,9 +245,9 @@ class Expression implements ExpressionInterface
             return $result;
         }
         switch ($this->type) {
-            case 'attribute_alias':
+            case self::TYPE_ATTRIBUTE:
                 return $data_sheet->getCellValue($this->attribute_alias, $row_number);
-            case 'formula':
+            case self::TYPE_FORMULA:
                 return $this->formula->evaluate($data_sheet, $column_name, $row_number);
             default:
                 return $this->value;
@@ -343,13 +345,13 @@ class Expression implements ExpressionInterface
     {
         if (is_null($this->data_type)) {
             switch ($this->type) {
-                case 'formula':
+                case self::TYPE_FORMULA:
                     $this->data_type = $this->formula->getDataType();
                     break;
-                case 'attribute_alias':
+                case self::TYPE_ATTRIBUTE:
                     // FIXME How to get the attribute by alias, if we do not know the object here???
                     break;
-                case 'string':
+                case self::TYPE_CONSTANT:
                     $this->data_type = DataTypeFactory::createFromAlias($this->exface, 'String');
                     break;
                 default:

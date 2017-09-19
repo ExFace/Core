@@ -34,7 +34,7 @@ interface ExpressionInterface extends ExfaceClassInterface, iCanBeCopied
     /**
      * @return boolean
      */
-    public function isString();
+    public function isConstant();
     
     /**
      * Returns TRUE if the expression has no value (expression->toString() = NULL) and FALSE otherwise
