@@ -1268,7 +1268,8 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             // If the data type is incompatible with the value, return a WHERE clause, that is always false.
             // A comparison of a date field with a string or a number field with
             // a string simply cannot result in TRUE.
-            return '1 = 0 /* ' . $subject . ' cannot pass comparison to "' . $value . '" via comparator "' . $comparator . '": wrong data type! */';
+            return '/* ' . $subject . ' cannot pass comparison to "' . $value . '" via comparator "' . $comparator . '": wrong data type! */' . "\n"
+                    . '1 = 0';
         }
         
         if (is_null($value) || $this->prepareWhereValue($value, $data_type) === EXF_LOGICAL_NULL){
