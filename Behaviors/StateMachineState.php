@@ -245,12 +245,27 @@ class StateMachineState
         return false;
     }
     
+    /**
+     * Sets a custom color for this state (used in all sorts of indicators like progress bars).
+     * 
+     * You can use hexadecimal color codes or HTML color names.
+     * 
+     * @uxon-property color
+     * @uxon-type string
+     * 
+     * @param string $color_name_or_code
+     * @return StateMachineState
+     */
     public function setColor($color_name_or_code)
     {
         $this->color = $color_name_or_code;
         return $this;
     }
     
+    /**
+     * 
+     * @return string
+     */
     public function getColor()
     {
         return $this->color;
