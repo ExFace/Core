@@ -50,7 +50,7 @@ class DateDataType extends AbstractDataType
         $year_period = 'Y';
         
         $matches = [];
-        if (preg_match('/^([\+-]?[0-9]+)([dDmMwWyY])$/', $string, $matches)){
+        if (preg_match('/^([\+-]?[0-9]+)([dDmMwWyY]?)$/', $string, $matches)){
             $period = $matches[2];
             $quantifier = intval($matches[1]);
             $interval_spec = 'P' . abs($quantifier);
