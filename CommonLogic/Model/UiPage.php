@@ -227,7 +227,7 @@ class UiPage implements UiPageInterface
         }
         
         $id_is_path = false;
-        if ($use_id_path && StringDataType::startsWith($id_with_namespace, $parent->getId() . self::WIDGET_ID_SEPARATOR)) {
+        if (StringDataType::startsWith($id_with_namespace, $parent->getId() . self::WIDGET_ID_SEPARATOR)) {
             $id_is_path = true;
         }
         
@@ -237,7 +237,7 @@ class UiPage implements UiPageInterface
                 if ($child_id == $id_with_namespace) {
                     return $child;
                 } else {
-                    if (! $id_is_path || StringDataType::startsWith($id_with_namespace, $child_id . self::WIDGET_ID_SEPARATOR)) {
+                    if (! $use_id_path || ! $id_is_path || StringDataType::startsWith($id_with_namespace, $child_id . self::WIDGET_ID_SEPARATOR)) {
                         // If we are looking for a non-path id or the path includes the id of the child, look within the child
                         try {
                             // Note, the child may deside itself, whe
