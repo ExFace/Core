@@ -39,7 +39,7 @@ class Progressbar extends Formula
      */
     function run($value, $text = '', $min = 0, $max = 100, array $colorMap = null)
     {
-        if (! $value){
+        if (is_null($value) || $value === ''){
             return '';
         }
         
