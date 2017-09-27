@@ -42,10 +42,6 @@ const EXF_COMPARATOR_IS = '=';
 
 const EXF_COMPARATOR_IS_NOT = '!=';
 
-const EXF_COMPARATOR_IS_EMPTY = '__';
-
-const EXF_COMPARATOR_IS_NOT_EMPTY = '!__';
-
 /**
  * @const EXF_COMPARATOR_EQUALS compares to a single value of the same data type
  */
@@ -79,27 +75,7 @@ const EXF_LOGICAL_XOR = 'XOR';
 
 const EXF_LOGICAL_NOT = 'NOT';
 
-/*
- * Aggregator function names
- */
-
-const EXF_AGGREGATOR_SUM = 'SUM';
-
-const EXF_AGGREGATOR_AVG = 'AVG';
-
-const EXF_AGGREGATOR_AVERAGE = 'AVERAGE';
-
-const EXF_AGGREGATOR_MIN = 'MIN';
-
-const EXF_AGGREGATOR_MAX = 'MAX';
-
-const EXF_AGGREGATOR_LIST = 'LIST';
-
-const EXF_AGGREGATOR_LIST_DISTINCT = 'LIST_DISTINCT';
-
-const EXF_AGGREGATOR_COUNT = 'COUNT';
-
-const EXF_AGGREGATOR_COUNT_DISTINCT = 'COUNT_DISTINCT';
+const EXF_LOGICAL_NULL = 'NULL';
 
 /*
  * Alignment options

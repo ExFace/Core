@@ -16,6 +16,8 @@ use exface\Core\DataTypes\DateDataType;
 use exface\Core\DataTypes\PriceDataType;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Interfaces\Model\DataTypeInterface;
+use exface\Core\CommonLogic\Model\Aggregator;
+use exface\Core\Interfaces\Model\AggregatorInterface;
 
 /**
  * The text widget simply shows text with an optional title created from the caption of the widget
@@ -219,8 +221,8 @@ class Text extends AbstractWidget implements iShowSingleAttribute, iHaveValue, i
         // and set it as the value of our input.
         $prefill_columns = $this->prepareDataSheetToPrefill(DataSheetFactory::createFromObject($data_sheet->getMetaObject()))->getColumns();
         if ($col = $prefill_columns->getFirst()) {
-            if (count($data_sheet->getColumnValues($col->getName(false))) > 1 && $this->getAggregateFunction()) {
-                $value = \exface\Core\CommonLogic\DataSheets\DataColumn::aggregateValues($data_sheet->getColumnValues($col->getName(false)), $this->getAggregateFunction());
+            if (count($data_sheet->getColumnValues($col->getName(false))) > 1 && $this->getAggregator()) {
+                $value = \exface\Core\CommonLogic\DataSheets\DataColumn::aggregateValues($data_sheet->getColumnValues($col->getName(false)), $this->getAggregator());
             } else {
                 $value = $data_sheet->getCellValue($col->getName(), 0);
             }
@@ -232,14 +234,24 @@ class Text extends AbstractWidget implements iShowSingleAttribute, iHaveValue, i
         return;
     }
 
-    public function getAggregateFunction()
+    public function getAggregator()
     {
         return $this->aggregate_function;
     }
 
-    public function setAggregateFunction($value)
+    /**
+     * 
+     * @param string|AggregatorInterface $aggregator_or_string
+     * @return \exface\Core\Widgets\Text
+     */
+    public function setAggregator($aggregator_or_string)
     {
-        $this->aggregate_function = $value;
+        if ($aggregator_or_string instanceof AggregatorInterface){
+            $aggregator = $aggregator_or_string;
+        } else {
+            $aggregator = new Aggregator($aggregator_or_string);
+        }
+        $this->aggregate_function = $aggregator;
         return $this;
     }
 

@@ -464,7 +464,7 @@ abstract class AbstractAjaxTemplate extends AbstractTemplate
             $data_sheet = $this->getDataSheetFromRequest($object_id, $widget);
             if ($data_sheet) {
                 if ($action->getInputDataSheet()) {
-                    $action->getInputDataSheet()->importRows($data_sheet);
+                    $action->setInputDataSheet($action->getInputDataSheet()->importRows($data_sheet));
                 } else {
                     $action->setInputDataSheet($data_sheet);
                 }

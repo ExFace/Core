@@ -28,6 +28,8 @@ class Condition implements iCanBeConvertedToUxon
     private $expression = null;
 
     private $value = null;
+    
+    private $value_set = false;
 
     private $comparator = null;
 
@@ -81,11 +83,13 @@ class Condition implements iCanBeConvertedToUxon
      */
     public function setValue($value)
     {
+        $this->value_set = true;
         try {
             $value = $this->getDataType()->parse($value);
         } catch (\Throwable $e) {
             throw new RangeException('Illegal filter value "' . $value . '" for attribute "' . $this->getAttributeAlias() . '" of data type "' . $this->getExpression()->getAttribute()->getDataType()->getName() . '": ' . $e->getMessage(), '6T5WBNB', $e);
             $value = null;
+            $this->unset();
         }
         $this->value = $value;
     }
@@ -151,13 +155,7 @@ class Condition implements iCanBeConvertedToUxon
             } else {
                 $value = substr($value, 2);
             }
-        } elseif ($value === '__') {
-            $comparator = EXF_COMPARATOR_IS_EMPTY;
-            $value = '';
-        } elseif ($value === '!__') {
-            $comparator = EXF_COMPARATOR_IS_NOT_EMPTY;
-            $value = '';
-        }else {
+        } else {
             $comparator = EXF_COMPARATOR_IS;
         }
         $this->setValue($value);
@@ -287,11 +285,37 @@ class Condition implements iCanBeConvertedToUxon
         if ($uxon_object->hasProperty('comparator') && $uxon_object->getProperty('comparator')) {
             $this->setComparator($uxon_object->getProperty('comparator'));
         }
-        $this->setValue($uxon_object->getProperty('value'));
+        if ($uxon_object->hasProperty('value')){
+            $value = $uxon_object->getProperty('value');
+            if (! is_null($value) && $value !== ''){
+                $this->setValue($value);
+            }
+        }
     }
 
     public function getModel()
     {
         return $this->exface->model();
+    }
+    
+    /**
+     * Returns TRUE if the condition does not affect anything and FALSE otherwise.
+     * 
+     * @return boolean
+     */
+    public function isEmpty()
+    {
+        return ! $this->value_set;
+    }
+    
+    /**
+     * Unsets the value of the condition making query builders etc. ignore it.
+     * 
+     * @return Condition
+     */
+    public function empty()
+    {
+        $this->value = null;
+        $this->value_set = false;
     }
 }

@@ -19,6 +19,8 @@ use exface\Core\DataTypes\NumberDataType;
 use exface\Core\DataTypes\PriceDataType;
 use exface\Core\DataTypes\DateDataType;
 use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\Interfaces\Model\AggregatorInterface;
+use exface\Core\CommonLogic\Model\Aggregator;
 
 /**
  * The DataColumn represents a column in Data-widgets a DataTable.
@@ -290,14 +292,25 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
         }
     }
 
-    public function getAggregateFunction()
+    public function getAggregator()
     {
         return $this->aggregate_function;
     }
 
-    public function setAggregateFunction($value)
+    /**
+     * 
+     * @param AggregatorInterface|string $aggregator_or_string
+     * @return \exface\Core\Widgets\DataColumn
+     */
+    public function setAggregator($aggregator_or_string)
     {
-        $this->aggregate_function = $value;
+        if ($aggregator_or_string instanceof AggregatorInterface){
+            $aggregator = $aggregator_or_string;
+        } else {
+            $aggregator = new Aggregator($aggregator_or_string);
+        }
+        $this->aggregate_function = $aggregator;
+        return $this;
     }
 
     public function getIncludeInQuickSearch()

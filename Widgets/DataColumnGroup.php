@@ -13,6 +13,8 @@ use exface\Core\Factories\WidgetFactory;
  * The DataColumnGroup is a group of columns in a data widget from one side and at the same time a full featured data widget on the other.
  * This duality makes it possible to define custom filters and even aggregators for each column group. If not done so, it will just be
  * a group of columns with it's own caption, etc.
+ * 
+ * @method Data getParent()
  *
  * @author Andrej Kabachnik
  *        
@@ -54,7 +56,7 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
      * Creates a DataColumn from a meta attribute.
      * For relations the column will automatically show the label of the related object
      *
-     * @param attribute $attribute            
+     * @param MetaAttributeInterface $attribute            
      * @return \exface\Core\Widgets\DataColumn
      */
     function createColumnFromAttribute(MetaAttributeInterface $attribute, $caption = null, $hidden = null)
@@ -174,7 +176,7 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
     /**
      * Returns the data column matching the given id.
      *
-     * @param unknown $column_id            
+     * @param string $column_id            
      * @return \exface\Core\Widgets\DataColumn|boolean
      */
     public function getColumn($column_id, $use_data_column_names_as_fallback = true)
@@ -283,6 +285,16 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
     public function countColumns()
     {
         return count($this->getColumns());
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveColumns::hasColumns()
+     */
+    public function hasColumns()
+    {
+        return empty($this->columns) ? false : true;
     }
 
     /**

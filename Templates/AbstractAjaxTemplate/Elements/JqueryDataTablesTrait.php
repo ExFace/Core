@@ -24,6 +24,56 @@ trait JqueryDataTablesTrait {
     private $row_details_collapse_icon = 'fa-minus-square-o';
     
     private $on_load_success = '';
+    
+    /**
+     * 
+     * @return string
+     */
+    protected function buildHtmlTable($css_class = '')
+    {
+        $widget = $this->getWidget();
+        $thead = '';
+        $tfoot = '';
+        
+        // Column headers
+        /* @var $col \exface\Core\Widgets\DataColumn */
+        foreach ($widget->getColumns() as $col) {
+            $thead .= '<th title="' . $col->getHint() . '">' . $col->getCaption() . '</th>';
+            if ($widget->hasColumnFooters()) {
+                $tfoot .= '<th class="text-right"></th>';
+            }
+        }
+        
+        // Extra column for the multiselect-checkbox
+        if ($widget->getMultiSelect()) {
+            $checkbox_header = '<th onclick="javascript: if(!$(this).parent().hasClass(\'selected\')) {' . $this->getId() . '_table.rows().select(); $(\'#' . $this->getId() . '_wrapper\').find(\'th.select-checkbox\').parent().addClass(\'selected\');} else{' . $this->getId() . '_table.rows().deselect(); $(\'#' . $this->getId() . '_wrapper\').find(\'th.select-checkbox\').parent().removeClass(\'selected\');}"></th>';
+            $thead = $checkbox_header . $thead;
+            if ($tfoot) {
+                $tfoot = $checkbox_header . $tfoot;
+            }
+        }
+        
+        // Extra column for expand-button if rows have details
+        if ($widget->hasRowDetails()) {
+            $thead = '<th></th>' . $thead;
+            if ($tfoot) {
+                $tfoot = '<th></th>' . $tfoot;
+            }
+        }
+        
+        if ($tfoot) {
+            $tfoot = '<tfoot>' . $tfoot . '</tfoot>';
+        }
+        
+        return <<<HTML
+        <table id="{$this->getId()}" class="{$css_class}" cellspacing="0" width="100%">
+            <thead>
+                {$thead}
+            </thead>
+            {$tfoot}
+        </table>
+HTML;
+    }
 
     /**
      * Returns JS code adding a click-event handler to the expand-cell of each row of a table with row details,
@@ -37,6 +87,8 @@ trait JqueryDataTablesTrait {
     {
         $output = '';
         $widget = $this->getWidget();
+        $collapse_icon_selector = '.' . str_replace(' ', '.', $this->getRowDetailsCollapseIcon());
+        $expand_icon_selector = '.' . str_replace(' ', '.', $this->getRowDetailsExpandIcon());
         
         if ($widget->hasRowDetails()) {
             $output = <<<JS
@@ -49,11 +101,10 @@ trait JqueryDataTablesTrait {
 			// This row is already open - close it
 			row.child.hide();
 			tr.removeClass('shown');
-			tr.find('.{$this->getRowDetailsCollapseIcon()}').removeClass('{$this->getRowDetailsCollapseIcon()}').addClass('{$this->getRowDetailsExpandIcon()}');
+			tr.find('{$collapse_icon_selector}').removeClass('{$this->getRowDetailsCollapseIcon()}').addClass('{$this->getRowDetailsExpandIcon()}');
 			$('#detail'+row.data().id).remove();
 			{$this->getId()}_table.columns.adjust();
-		}
-		else {
+		} else {
 			// Open this row
 			row.child('<div id="detail'+row.data().{$widget->getMetaObject()->getUidAttributeAlias()}+'"></div>').show();
 			$.ajax({
@@ -83,7 +134,7 @@ trait JqueryDataTablesTrait {
 			});
 			tr.next().addClass('detailRow unselectable');
 			tr.addClass('shown');
-			tr.find('.{$this->getRowDetailsExpandIcon()}').removeClass('{$this->getRowDetailsExpandIcon()}').addClass('{$this->getRowDetailsCollapseIcon()}');
+			tr.find('{$expand_icon_selector}').removeClass('{$this->getRowDetailsExpandIcon()}').addClass('{$this->getRowDetailsCollapseIcon()}');
 		}
 	} );
 JS;
@@ -355,7 +406,7 @@ JS;
         }
         
         if ($widget->getContextMenuEnabled() && $widget->hasButtons()){
-            $context_menu_js = "context.attach('#{$this->getId()} tbody tr', {$this->buildJsContextMenu($widget->getButtons())});";
+            $context_menu_js = $this->buildJsContextMenu();
         }
         
         return <<<JS

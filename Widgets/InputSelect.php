@@ -167,19 +167,41 @@ class InputSelect extends Input implements iSupportMultiSelect
             $this->setOptionsFromDataSheet($this->getOptionsDataSheet());
         }
         
-        // Add generic options
+        $options = $this->getSelectableGenericOptions() + $this->selectable_options;
+        
+        return $options;
+    }
+    
+    /**
+     * Returns generic options like "none" or "empty"
+     * 
+     * @return string[]
+     */
+    protected function getSelectableGenericOptions()
+    {
         $generic_options =  [];
         // Unselect option if the input is not required and not disabled with a fixed value
         if (! $this->isRequired() && ! ($this->isDisabled() && $this->getValue()) && ! array_key_exists('', $this->selectable_options)) {
             $generic_options[''] = $this->translate('WIDGET.SELECT_NONE');
-        } 
-        // Select empty option if based on an attribute that is not required
-        if ($this->getAttribute() && ! $this->getAttribute()->isRequired()){
-            $generic_options[EXF_COMPARATOR_IS_EMPTY] = $this->translate('WIDGET.SELECT_EMPTY');
         }
-        
-        $options = $generic_options + $this->selectable_options;
-        return $options;
+        // Select empty option if based on an attribute that is not required
+        if ($this->getAttribute() && ! $this->getAttribute()->isRequired() && ! $this->isRequired()){
+            $generic_options[EXF_LOGICAL_NULL] = $this->translate('WIDGET.SELECT_EMPTY');
+        }
+        return $generic_options;
+    }
+    
+    /**
+     * Returns TRUE if there are selectable options currently defined (not generic ones!)
+     * 
+     * @return boolean
+     */
+    public function hasOptions()
+    {
+        if (! empty($this->selectable_options)){
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -234,13 +256,9 @@ class InputSelect extends Input implements iSupportMultiSelect
      *
      * @return integer
      */
-    public function countSelectableOptions()
+    public function countSelectableOptions($include_generic_options = false)
     {
-        $number = count($this->getSelectableOptions());
-        if (array_key_exists('', $this->getSelectableOptions())) {
-            $number --;
-        }
-        return $number;
+        return count($this->getSelectableOptions()) - ($include_generic_options ? 0 : count($this->getSelectableGenericOptions()));
     }
     
     /**
@@ -732,25 +750,24 @@ class InputSelect extends Input implements iSupportMultiSelect
      *
      * For example, if we have a select for sizes of a product and we only wish to show sort the ascendingly,
      * we would need the following config:
-     * {
-     * "options_object_alias": "my.app.product",
-     * "value_attribute_alias": "SIZE_ID",
-     * "text_attribute_alias": "SIZE_TEXT",
-     * "sorters":
-     * [
-     * {"attribute_alias": "SIZE_TEXT", "direction": "ASC"}
-     * ]
-     * }
+     *  {
+     *      "options_object_alias": "my.app.product",
+     *      "value_attribute_alias": "SIZE_ID",
+     *      "text_attribute_alias": "SIZE_TEXT",
+     *      "sorters": [
+     *          {"attribute_alias": "SIZE_TEXT", "direction": "ASC"}
+     *      ]
+     *  }
      *
      * @uxon-property sorters
      * @uxon-type \exface\Core\CommonLogic\DataSheets\DataSorter
      *
-     * @param DataSorter[]|UxonObject[] $data_sorters_or_uxon_objects            
+     * @param DataSorter[]|UxonObject $data_sorters_or_uxon_object            
      * @return \exface\Core\Widgets\InputSelect
      */
-    public function setSorters(array $data_sorters_or_uxon_objects)
+    public function setSorters(UxonObject $data_sorters_or_uxon_object)
     {
-        foreach ($data_sorters_or_uxon_objects as $sorter_or_uxon) {
+        foreach ($data_sorters_or_uxon_object as $sorter_or_uxon) {
             if ($sorter_or_uxon instanceof DataSorter) {
                 $this->getOptionsDataSheet()->getSorters()->add($sorter_or_uxon);
             } elseif ($sorter_or_uxon instanceof UxonObject) {

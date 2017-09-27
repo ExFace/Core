@@ -256,7 +256,7 @@ interface DataSheetInterface extends ExfaceClassInterface, iCanBeCopied, iCanBeC
     /**
      * Returns an array of DataColumns
      *
-     * @return DataColumn[]|DataColumnListInterface
+     * @return DataColumnListInterface|DataColumn[]
      */
     public function getColumns();
 
@@ -282,16 +282,16 @@ interface DataSheetInterface extends ExfaceClassInterface, iCanBeCopied, iCanBeC
 
     /**
      *
-     * @return DataAggregatorListInterface
+     * @return DataAggregationListInterface
      */
-    public function getAggregators();
+    public function getAggregations();
 
     /**
      * Returns TRUE if the data sheet has at least one aggregator and FALSE otherwise
      *
      * @return boolean
      */
-    public function hasAggregators();
+    public function hasAggregations();
 
     /**
      * Returns the root condition group with all filters of the data sheet

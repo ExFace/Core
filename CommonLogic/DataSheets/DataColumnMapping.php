@@ -155,7 +155,7 @@ class DataColumnMapping implements DataColumnMappingInterface {
         $fromExpr = $this->getFromExpression();
         $toExpr = $this->getToExpression();
         
-        if ($fromExpr->isString()){
+        if ($fromExpr->isConstant()){
             $toSheet->getColumns()->addFromExpression($toExpr)->setValuesByExpression($fromExpr);
         } elseif ($fromCol = $fromSheet->getColumns()->getByExpression($fromExpr)){
             $toSheet->getColumns()->addFromExpression($toExpr, '', $fromCol->getHidden())->setValues($fromCol->getValues(false));

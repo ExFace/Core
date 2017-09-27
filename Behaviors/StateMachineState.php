@@ -4,6 +4,7 @@ namespace exface\Core\Behaviors;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\TranslationInterface;
 use exface\Core\Exceptions\UnexpectedValueException;
+use exface\Core\CommonLogic\Constants\Colors;
 
 /**
  * Defines a state for the StateMachineBehavior.
@@ -24,6 +25,8 @@ class StateMachineState
     private $name = null;
 
     private $name_translation_key = null;
+    
+    private $color = null;
 
     /**
      * Returns the state id.
@@ -61,26 +64,26 @@ class StateMachineState
      * Defines the buttons for the state.
      *
      * Example:
-     * {
-     * "20": {
-     * "caption": "20 Annahme best�tigen",
-     * "action": {
-     * "alias": "exface.Core.UpdateData",
-     * "input_data_sheet": {
-     * "object_alias": "alexa.RMS.CUSTOMER_COMPLAINT",
-     * "columns": [
-     * {
-     * "attribute_alias": "STATE_ID",
-     * "formula": "=NumberValue('20')"
-     * },
-     * {
-     * "attribute_alias": "TS_UPDATE"
-     * }
-     * ]
-     * }
-     * }
-     * }
-     * }
+     *  {
+     *      "20": {
+     *          "caption": "20 Annahme bestätigen",
+     *          "action": {
+     *              "alias": "exface.Core.UpdateData",
+     *              "input_data_sheet": {
+     *                  "object_alias": "alexa.RMS.CUSTOMER_COMPLAINT",
+     *                  "columns": [
+     *                      {
+     *                          "attribute_alias": "STATE_ID",
+     *                          "formula": "=NumberValue('20')"
+     *                      },
+     *                      {
+     *                          "attribute_alias": "TS_UPDATE"
+     *                      }
+     *                  ]
+     *              }
+     *          }
+     *      }
+     *  }
      *
      * @param UxonObject $value            
      * @return \exface\Core\Behaviors\StateMachineState
@@ -138,17 +141,29 @@ class StateMachineState
     /**
      * Defines the allowed transitions for the state.
      *
-     * Example:
-     * [
-     * 10,
-     * 20,
-     * 30,
-     * 50,
-     * 60,
-     * 70,
-     * 90,
-     * 99
-     * ]
+     * The below example illustrates a state machine with the following rules. 
+     * From state 10 any state can be reached except 80. In state 20 too, but
+     * there is no going back to 10. From only transitions to 80 or 99 are
+     * allowed. In 80 an object can be saved, but the state cannot change,
+     * while in state 99 no writing to the instance is possible (even without
+     * changing the state!).
+     *  {
+     *      10: {
+     *          transitions: [ 10, 20, 50, 99 ]
+     *      },
+     *      20: {
+     *          transitions: [ 20, 50, 99 ]
+     *      },
+     *      50: {
+     *          transitions: [ 80, 99 ]
+     *      },
+     *      80: {
+     *          transitions: [ 80 ]
+     *      },
+     *      99: {
+     *          transitions: []
+     *      }
+     *  } 
      *
      * @param UxonObject|integer[] $value            
      * @return \exface\Core\Behaviors\StateMachineState
@@ -228,6 +243,32 @@ class StateMachineState
         }
         
         return false;
+    }
+    
+    /**
+     * Sets a custom color for this state (used in all sorts of indicators like progress bars).
+     * 
+     * You can use hexadecimal color codes or HTML color names.
+     * 
+     * @uxon-property color
+     * @uxon-type string
+     * 
+     * @param string $color_name_or_code
+     * @return StateMachineState
+     */
+    public function setColor($color_name_or_code)
+    {
+        $this->color = $color_name_or_code;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return string
+     */
+    public function getColor()
+    {
+        return $this->color;
     }
 }
 ?>

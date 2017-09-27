@@ -1457,6 +1457,19 @@
             "ERROR_TEXT": "UI page not found",
             "DESCRIPTION": "This error means, that a referenced page cannot be found.\n\nThis mostly happens due to misspelled page references in widget links or references to pages that were not installed or deleted on the current installation. \n\nIf this error happens when editing a page, make sure all pages, you specified widget links to, really exist in the CMS!",
             "LABEL": "exface.Core.6WNC22Z"
+        },
+        {
+            "CREATED_ON": "2017-09-12 10:51:31",
+            "MODIFIED_ON": "2017-09-12 10:46:34",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e797a84016c686b6e3e4b318306b9a",
+            "FULL_ERROR_CODE": "exface.Core.6WXNHMN",
+            "APP": "0x31000000000000000000000000000000",
+            "ERROR_CODE": "6WXNHMN",
+            "ERROR_TEXT": "Invalid argument in aggregator COUNT_IF",
+            "DESCRIPTION": "This error means, that the condition passed as argument to the COUNT_IF aggregator is invalid. \n\nThis aggregator counts values of the attribute it is applied to, that match the specified condition. The condition MUST contain a comparator and a value separated by a space. \n\nValid examples:\n\n- Count products with a price of 10 or more: PRODUCTS__PRICE:COUNT(>= 10)\n- Count completed tasks: TASKS__COMPLETED_FLAG(= 1) ",
+            "LABEL": "exface.Core.6WXNHMN"
         }
     ],
     "totals_rows": [],

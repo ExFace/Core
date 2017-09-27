@@ -4,8 +4,10 @@ namespace exface\Core\CommonLogic\DataSheets;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Interfaces\Model\AggregatorInterface;
+use exface\Core\CommonLogic\Model\Aggregator;
 
-class DataAggregator implements iCanBeConvertedToUxon
+class DataAggregation implements iCanBeConvertedToUxon
 {
 
     const AGGREGATION_SEPARATOR = ':';
@@ -57,15 +59,25 @@ class DataAggregator implements iCanBeConvertedToUxon
      * PRODUCT->SIZE:CONCAT(',') --> CONCAT(',')
      *
      * @param string $attribute_alias            
-     * @return string|boolean
+     * @return AggregatorInterface|boolean
      */
-    public static function getAggregateFunctionFromAlias($attribute_alias)
+    public static function getAggregatorFromAlias($attribute_alias)
     {
         $aggregator_pos = strpos($attribute_alias, self::AGGREGATION_SEPARATOR);
         if ($aggregator_pos !== false) {
-            return substr($attribute_alias, $aggregator_pos + 1);
+            return new Aggregator(substr($attribute_alias, $aggregator_pos + 1));
         } else {
             return false;
+        }
+    }
+    
+    public static function stripAggregator($attribute_alias)
+    {
+        $aggregator_pos = strpos($attribute_alias, self::AGGREGATION_SEPARATOR);
+        if ($aggregator_pos !== false){
+            return substr($attribute_alias, 0, $aggregator_pos);
+        } else {
+            return $attribute_alias;
         }
     }
 

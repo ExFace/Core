@@ -116,7 +116,7 @@ class Input extends Text implements iTakeInput, iHaveDefaultValue
         if (! $this->getIgnoreDefaultValue() && $default_expr = $this->getDefaultValueExpression()) {
             if ($data_sheet = $this->getPrefillData()) {
                 $value = $default_expr->evaluate($data_sheet, \exface\Core\CommonLogic\DataSheets\DataColumn::sanitizeColumnName($this->getAttribute()->getAlias()), 0);
-            } elseif ($default_expr->isString()) {
+            } elseif ($default_expr->isConstant()) {
                 $value = $default_expr->getRawValue();
             }
         }

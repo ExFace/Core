@@ -11,6 +11,7 @@ use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
 use exface\Core\Exceptions\UxonMapError;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
+use exface\Core\DataTypes\BooleanDataType;
 
 /**
  * A behavior that defines states and transitions between these states for an objects.
@@ -29,6 +30,8 @@ class StateMachineBehavior extends AbstractBehavior
     private $states = null;
 
     private $progress_bar_color_map = null;
+    
+    private $use_percentual_color_map = null;
 
     /**
      *
@@ -452,12 +455,91 @@ class StateMachineBehavior extends AbstractBehavior
 
     /**
      * Returns color map for use in for instance ProgressBar formula.
+     * 
+     * Example (default percentual color map):
+     *  [
+     *      10: "#FFEF9C",
+     *      20: "#EEEA99",
+     *      30: "#DDE595",
+     *      40: "#CBDF91",
+     *      50: "#BADA8E",
+     *      60: "#A9D48A",
+     *      70: "#97CF86",
+     *      80: "#86C983",
+     *      90: "#75C47F",
+     *      100: "#63BE7B"
+     *  ]
+     * 
+     * @uxon-property progress_bar_color_map
+     * @uxon-type array
      *
      * @return array
      */
     public function getProgressBarColorMap()
     {
+        if (is_null($this->progress_bar_color_map)){
+            if ($this->getUsePercentualColorMap()){
+                $this->progress_bar_color_map = $this->getProgressBarColorMapPercentual();
+            }
+            foreach ($this->getStates() as $state){
+                if ($color = $state->getColor()){
+                    $this->progress_bar_color_map[$state->getStateId()] = $color;
+                }
+            }
+        }
         return $this->progress_bar_color_map;
+    }
+    
+    /**
+     * Set to TRUE to use the default color map for percentual progress bars.
+     * 
+     * If not set, the system will try to pick a suitable color map based
+     * on the state id values.
+     * 
+     * @uxon-property use_percentual_color_map
+     * @uxon-type boolean
+     * 
+     * @param boolean $true_or_false
+     * @return \exface\Core\Behaviors\StateMachineBehavior
+     */
+    public function setUsePercentualColorMap($true_or_false)
+    {
+        $this->use_percentual_color_map = BooleanDataType::parse($true_or_false);
+        return $this;
+    }
+    
+    /**
+     * Returns TRUE if the default percentual color map should be used for progress bars
+     * based on the states of this state machine.
+     * 
+     * @return boolean
+     */
+    public function getUsePercentualColorMap()
+    {
+        if (is_null($this->use_percentual_color_map)){
+            $state_ids = array_keys($this->getStates());
+            if (count(array_filter($state_ids, 'is_string')) === 0){
+                if (min($state_ids) <= 10 && min($state_ids) >= 0 && max($state_ids) >= 90 && max($state_ids) <= 100){
+                    return true;
+                }
+            }
+            return false;
+        }
+        return $this->use_percentual_color_map;
+    }
+    
+    protected function getProgressBarColorMapPercentual(){
+        return array(
+            10 => "#FFEF9C",
+            20 => "#EEEA99",
+            30 => "#DDE595",
+            40 => "#CBDF91",
+            50 => "#BADA8E",
+            60 => "#A9D48A",
+            70 => "#97CF86",
+            80 => "#86C983",
+            90 => "#75C47F",
+            100 => "#63BE7B");
     }
 }
 

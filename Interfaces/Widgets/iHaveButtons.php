@@ -89,7 +89,7 @@ interface iHaveButtons extends iHaveChildren
     public function getButton($index);
     
     /**
-     * Returns the number of buttons in the group optionally filtering them
+     * Returns the number of buttons in the group optionally filtering them.
      * 
      * @param callable $filter_callback
      * 

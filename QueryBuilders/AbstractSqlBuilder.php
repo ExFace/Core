@@ -15,13 +15,17 @@ use exface\Core\DataConnectors\AbstractSqlConnector;
 use exface\Core\CommonLogic\DataQueries\SqlDataQuery;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartSelect;
 use exface\Core\Interfaces\Model\MetaRelationInterface;
-use exface\Core\CommonLogic\DataSheets\DataAggregator;
+use exface\Core\CommonLogic\DataSheets\DataAggregation;
 use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\DataTypes\DateDataType;
 use exface\Core\DataTypes\RelationDataType;
 use exface\Core\Exceptions\DataTypeNotFoundError;
+use exface\Core\CommonLogic\QueryBuilder\QueryPart;
+use exface\Core\Interfaces\Model\AggregatorInterface;
+use exface\Core\CommonLogic\Constants\AggregatorFunctions;
+use exface\Core\CommonLogic\Model\Aggregator;
 
 /**
  * A query builder for generic SQL syntax.
@@ -100,7 +104,9 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         '-',
         '(',
         ')',
-        ':'
+        ':',
+        ' ',
+        '='
     );
 
     // forbidden chars in SELECT AS aliases
@@ -614,10 +620,9 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         
         return $query->countAffectedRows();
     }
-
     /**
      * Creats a SELECT statement for an attribute (qpart).
-     * The parameters override certain parts of the statement: $group_function( $select_from.$select_column AS $select_as ).
+     * The parameters override certain parts of the statement: $aggregator( $select_from.$select_column AS $select_as ).
      * Set parameters to null to disable them. Other values (like '') do not disable them!
      *
      * TODO multiple reverse relations in line cause trouble, as the group by only groups the last of them, not the ones
@@ -644,46 +649,16 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      * @param string $select_column            
      * @param string $select_as
      *            set to false or '' to remove the "AS xxx" part completely
-     * @param string $group_function
-     *            set to false or '' to remove grouping completely
+     * @param boolean|AggregatorInterface $aggregator
+     *            set to FALSE to remove grouping completely
+     * @param boolean $make_groupable
+     *            set to TRUE to force the result to be compatible with GROUP BY
      * @return string
      */
-    /**
-     * Creats a SELECT statement for an attribute (qpart).
-     * The parameters override certain parts of the statement: $group_function( $select_from.$select_column AS $select_as ).
-     * Set parameters to null to disable them. Other values (like '') do not disable them!
-     *
-     * TODO multiple reverse relations in line cause trouble, as the group by only groups the last of them, not the ones
-     * in the middle. A possible solutions would be joining the tables starting from the last reverse relation in line back to
-     * the first one.
-     * Bad:
-     * (SELECT
-     * (SELECT SUM(POS_TRANSACTIONS.AMOUNT) AS "SALES_QTY_SUM1"
-     * FROM PCD_TABLE POS_TRANSACTIONS
-     * WHERE POS_TRANSACTIONS.ARTICLE_IDENT = ARTI.OID
-     * ) AS "POS_TRANSACTIONS__SALES_QTY_S1"
-     * FROM ARTICLE_IDENT ARTI
-     * WHERE ARTI.ARTICLE_COLOR_OID = EXFCOREQ.OID
-     * ) AS "ARTI__POS_TRANSACTIONS__SALES1"
-     * Good:
-     * (SELECT SUM(POS_TRANSACTIONS.AMOUNT) AS "SALES_QTY_SUM1"
-     * FROM PCD_TABLE POS_TRANSACTIONS
-     * LEFT JOIN ARTICLE_IDENT ARTI ON POS_TRANSACTIONS.ARTICLE_IDENT = ARTI.OID
-     * WHERE ARTI.ARTICLE_COLOR_OID = EXFCOREQ.OID) AS "ARTI__POS_TRANSACTIONS__SALES1"
-     * Another idea might be to enforce grouping after every reverse relation. Don't know, how it would look like in SQL though...
-     *
-     * @param \exface\Core\CommonLogic\QueryBuilder\QueryPart $qpart            
-     * @param string $select_from            
-     * @param string $select_column            
-     * @param string $select_as
-     *            set to false or '' to remove the "AS xxx" part completely
-     * @param string $group_function
-     *            set to false or '' to remove grouping completely
-     * @return string
-     */
-    protected function buildSqlSelect(\exface\Core\CommonLogic\QueryBuilder\QueryPart $qpart, $select_from = null, $select_column = null, $select_as = null, $group_function = null)
+    protected function buildSqlSelect(QueryPartAttribute $qpart, $select_from = null, $select_column = null, $select_as = null, $aggregator = null, $make_groupable = false)
     {
         $output = '';
+        $comment = "\n-- buildSqlSelect(" . $qpart->getAlias() . ", " . $select_from . ", " . $select_as . ", " . $aggregator . ", " . $make_groupable . ")\n";
         $add_nvl = false;
         $attribute = $qpart->getAttribute();
         
@@ -710,18 +685,31 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             $select_as = $qpart->getAlias();
         $select_from = $this->getShortAlias($select_from);
         $select_as = $this->getShortAlias($select_as);
-        $group_function = ! is_null($group_function) ? $group_function : $qpart->getAggregateFunction();
+        $aggregator = ! is_null($aggregator) ? $aggregator : $qpart->getAggregator();
         
         // build subselects for reverse relations if the body of the select is not specified explicitly
         if (! $select_column && $qpart->getUsedRelations(MetaRelationInterface::RELATION_TYPE_REVERSE)) {
             $output = $this->buildSqlSelectSubselect($qpart, $select_from);
+            if ($make_groupable && $aggregator){
+                if ($aggregator && $aggregator === $qpart->getAggregator()){
+                    switch ($aggregator->getFunction()){
+                        case AggregatorFunctions::COUNT():
+                        case AggregatorFunctions::COUNT_IF():
+                        case AggregatorFunctions::COUNT_DISTINCT():
+                            $aggregator = new Aggregator(AggregatorFunctions::SUM);
+                            break;
+                    }
+                }
+                $output = $this->buildSqlGroupByExpression($qpart, $output, $aggregator);
+            } else {
+                $add_nvl = true;
+            }
+        }  elseif ($aggregator) {
+            // build grouping function if necessary
+            $output = $this->buildSqlSelectGrouped($qpart, $select_from, $select_column, $select_as, $aggregator);
             $add_nvl = true;
-        } // build grouping function if necessary
-elseif ($group_function) {
-            $output = $this->buildSqlGroupFunction($qpart, $select_from, $select_column, $select_as, $group_function);
-            $add_nvl = true;
-        } // otherwise create a regular select
-else {
+        } else {
+            // otherwise create a regular select
             if ($select_column) {
                 // if the column to select is explicitly defined, just select it
                 $output = $select_from . '.' . $select_column;
@@ -755,7 +743,7 @@ else {
         if ($select_as) {
             $output = "\n" . $output . ' AS "' . $select_as . '"';
         }
-        return $output;
+        return $comment . $output;
     }
 
     /**
@@ -768,17 +756,18 @@ else {
      */
     protected function buildSqlSelectNullCheck($select_statement, $value_if_null)
     {
-        return 'COALESCE(' . $select_statement . ', ' . (is_numeric($value_if_null) ? $value_if_null : '"' . $value_if_null . '"') . ')';
+        return $this->buildSqlSelectNullCheckFunctionName() . '(' . $select_statement . ', ' . (is_numeric($value_if_null) ? $value_if_null : '"' . $value_if_null . '"') . ')';
+    }
+    
+    protected function buildSqlSelectNullCheckFunctionName(){
+        return 'COALESCE';
     }
 
     /**
      * Builds subselects for reversed relations
      *
      * @param \exface\Core\CommonLogic\QueryBuilder\QueryPart $qpart            
-     * @param string $select_from            
-     * @param string $select_column            
-     * @param string $select_as            
-     * @param string $group_function            
+     * @param string $select_from       
      * @return string
      */
     protected function buildSqlSelectSubselect(\exface\Core\CommonLogic\QueryBuilder\QueryPart $qpart, $select_from = null)
@@ -854,45 +843,59 @@ else {
      * @param string $select_from            
      * @param string $select_column            
      * @param string $select_as            
-     * @param string $group_function            
+     * @param AggregatorInterface $aggregator            
      * @return string
      */
-    protected function buildSqlGroupFunction(\exface\Core\CommonLogic\QueryBuilder\QueryPart $qpart, $select_from = null, $select_column = null, $select_as = null, $group_function = null)
+    protected function buildSqlSelectGrouped(\exface\Core\CommonLogic\QueryBuilder\QueryPart $qpart, $select_from = null, $select_column = null, $select_as = null, AggregatorInterface $aggregator = null)
     {
-        $output = '';
-        $group_function = ! is_null($group_function) ? $group_function : $qpart->getAggregateFunction();
-        $group_function = trim($group_function);
+        $aggregator = ! is_null($aggregator) ? $aggregator : $qpart->getAggregator();
         $select = $this->buildSqlSelect($qpart, $select_from, $select_column, false, false);
-        $args = array();
-        if ($args_pos = strpos($group_function, '(')) {
-            $func = substr($group_function, 0, $args_pos);
-            $args = explode(',', substr($group_function, ($args_pos + 1), - 1));
-        } else {
-            $func = $group_function;
-        }
         
-        switch ($func) {
-            case 'SUM':
-            case 'AVG':
-            case 'COUNT':
-            case 'MAX':
-            case 'MIN':
-                $output = $func . '(' . $select . ')';
+        return $this->buildSqlGroupByExpression($qpart, $select, $aggregator);
+    }
+    
+    /**
+     * 
+     * @param QueryPartAttribute $qpart
+     * @param string $sql
+     * @param AggregatorInterface $aggregator
+     * @throws QueryBuilderException
+     * @return string
+     */
+    protected function buildSqlGroupByExpression(QueryPartAttribute $qpart, $sql, AggregatorInterface $aggregator){
+        $output = '';
+        
+        $args = $aggregator->getArguments();
+        $function_name = $aggregator->getFunction();
+        
+        switch ($aggregator->getFunction()) {
+            case AggregatorFunctions::SUM():
+            case AggregatorFunctions::AVG():
+            case AggregatorFunctions::COUNT():
+            case AggregatorFunctions::MAX():
+            case AggregatorFunctions::MIN():
+                $output = $function_name . '(' . $sql . ')';
                 break;
-            case 'LIST':
-                $output = "ListAgg(" . $select . ", " . ($args[0] ? $args[0] : "', '") . ") WITHIN GROUP (order by " . $select . ")";
+            case AggregatorFunctions::LIST_DISTINCT():
+            case AggregatorFunctions::LIST():
+                $output = "GROUP_CONCAT(" . ($function_name == 'LIST_DISTINCT' ? 'DISTINCT ' : '') . $sql . " SEPARATOR " . ($args[0] ? $args[0] : "', '") . ")";
                 $qpart->getQuery()->addAggregation($qpart->getAttribute()->getAliasWithRelationPath());
                 break;
-            case 'LIST_DISTINCT':
-                $output = "ListAggDistinct(" . $select . ")";
-                $qpart->getQuery()->addAggregation($qpart->getAttribute()->getAliasWithRelationPath());
+            case AggregatorFunctions::COUNT_DISTINCT():
+                $output = "COUNT(DISTINCT " . $sql . ")";
                 break;
-            case 'COUNT_DISTINCT':
-                $output = "COUNT(DISTINCT " . $select . ")";
+            case AggregatorFunctions::COUNT_IF():
+                $cond = $args[0];
+                list($if_comp, $if_val) = explode(' ', $cond, 2);
+                if (!$if_comp || is_null($if_val)) {
+                    throw new QueryBuilderException('Invalid argument for COUNT_IF aggregator: "' . $cond . '"!', '6WXNHMN');
+                }
+                $output = "SUM(" . $this->buildSqlWhereComparator($sql,  $if_comp, $if_val, $qpart->getAttribute()->getDataType()). ")";
                 break;
             default:
                 break;
         }
+        
         return $output;
     }
 
@@ -1031,7 +1034,7 @@ else {
         $comp = $qpart->getComparator();
         $delimiter = $qpart->getValueListDelimiter();
         
-        $select = $this->buildSqlGroupFunction($qpart);
+        $select = $this->buildSqlSelectGrouped($qpart);
         $where = $qpart->getDataAddressProperty('WHERE');
         $object_alias = ($attr->getRelationPath()->toString() ? $attr->getRelationPath()->toString() : $this->getMainObject()->getAlias());
         
@@ -1137,7 +1140,7 @@ else {
      */
     protected function checkFilterBelongsInHavingClause(QueryPartFilter $qpart, $rely_on_joins = true)
     {
-        return $qpart->getAggregateFunction() && ! $qpart->getFirstRelation(MetaRelationInterface::RELATION_TYPE_REVERSE) ? true : false;
+        return $qpart->getAggregator() && ! $qpart->getFirstRelation(MetaRelationInterface::RELATION_TYPE_REVERSE) ? true : false;
     }
 
     /**
@@ -1162,7 +1165,7 @@ else {
         if ($attr->isRelation() && $comp != EXF_COMPARATOR_IN) {
             // always use the equals comparator for foreign keys! It's faster!
             $comp = EXF_COMPARATOR_EQUALS;
-        } elseif ($attr->isExactly($this->getMainObject()->getUidAttribute()) && $comp != EXF_COMPARATOR_IN && ! $qpart->getAggregateFunction()) {
+        } elseif ($attr->isExactly($this->getMainObject()->getUidAttribute()) && $comp != EXF_COMPARATOR_IN && ! $qpart->getAggregator()) {
             $comp = EXF_COMPARATOR_EQUALS;
         } elseif (($attr->getDataType() instanceof NumberDataType) && $comp == EXF_COMPARATOR_IS && is_numeric($val)) {
             // also use equals for the NUMBER data type, but make sure, the value to compare to is really a number (otherwise the query will fail!)
@@ -1251,14 +1254,9 @@ else {
                     // If there is an empty string among the values or one of the empty-comparators, 
                     // this means that the value may or may not be empty (NULL). NULL is not a valid
                     // value for an IN-statement, though, so we need to append an "OR IS NULL" here.
-                    if ($val === '' || $val === '__') {
+                    if ($val === '' || $val === EXF_LOGICAL_NULL) {
                         unset($values[$nr]);
                         $value = $subject . ($comparator == EXF_COMPARATOR_IN ? ' IS NULL' : ' IS NOT NULL');
-                        continue;
-                    }
-                    if ($val === '!__') {
-                        unset($values[$nr]);
-                        $value = $subject . ($comparator == EXF_COMPARATOR_IN ? ' IS NOT NULL' : ' IS NULL');
                         continue;
                     }
                     // Normalize non-empty values
@@ -1270,7 +1268,18 @@ else {
             // If the data type is incompatible with the value, return a WHERE clause, that is always false.
             // A comparison of a date field with a string or a number field with
             // a string simply cannot result in TRUE.
-            return '1 = 0 /* ' . $subject . ' cannot pass comparison to "' . $value . '" via comparator "' . $comparator . '": wrong data type! */';
+            return '/* ' . $subject . ' cannot pass comparison to "' . $value . '" via comparator "' . $comparator . '": wrong data type! */' . "\n"
+                    . '1 = 0';
+        }
+        
+        if (is_null($value) || $this->prepareWhereValue($value, $data_type) === EXF_LOGICAL_NULL){
+            switch ($comparator) {
+                case EXF_COMPARATOR_EQUALS:
+                case EXF_COMPARATOR_IS:
+                    return $subject . ' IS NULL';
+                default:
+                    return $subject . ' IS NOT NULL';
+            }
         }
         
         // If everything is OK, build the SQL
@@ -1282,7 +1291,11 @@ else {
                 $output = "(" . $subject . " NOT IN " . $value . ")";
                 break; // The braces are needed if there is a OR IS NULL addition (see above)
             case EXF_COMPARATOR_EQUALS:
-                $output = $subject . " = " . $this->prepareWhereValue($value, $data_type, $sql_data_type);
+                if ($data_type instanceof StringDataType) {
+                    $output = $subject . " = '" . $this->prepareWhereValue($value, $data_type, $sql_data_type) . "'";
+                } else {
+                    $output = $subject . " = " . $this->prepareWhereValue($value, $data_type, $sql_data_type);
+                }
                 break;
             case EXF_COMPARATOR_EQUALS_NOT:
                 $output = $subject . " != " . $this->prepareWhereValue($value, $data_type, $sql_data_type);
@@ -1296,12 +1309,6 @@ else {
             case EXF_COMPARATOR_IS_NOT:
                 $output = 'UPPER(' . $subject . ") NOT LIKE '%" . $this->prepareWhereValue(strtoupper($value), $data_type) . "%'";
                 break;
-            case EXF_COMPARATOR_IS_EMPTY:
-                $output = $subject . ' IS NULL';
-                break;
-            case EXF_COMPARATOR_IS_NOT_EMPTY:
-                $output = $subject . ' IS NOT NULL';
-                break;
             case EXF_COMPARATOR_IS:
             default:
                 $output = 'UPPER(' . $subject . ") LIKE '%" . $this->prepareWhereValue(strtoupper($value), $data_type) . "%'";
@@ -1314,6 +1321,8 @@ else {
         // IDEA some data type specific procession here
         if ($data_type instanceof BooleanDataType) {
             $output = $value ? 1 : 0;
+        } elseif (strcasecmp($value, EXF_LOGICAL_NULL) === 0) {
+            return EXF_LOGICAL_NULL;
         } else {
             $output = $this->escapeString($value);
         }
@@ -1361,11 +1370,11 @@ else {
                 $rel_filter = $qpart->getAttribute()->rebase($qpart_rel_path->getSubpath($qpart_rel_path->getIndexOf($start_rel) + 1))->getAliasWithRelationPath();
                 // Remember to keep the aggregator of the attribute filtered over. Since we are interested in a list of keys, the
                 // subquery should GROUP BY these kees.
-                if ($qpart->getAggregateFunction()) {
+                if ($qpart->getAggregator()) {
                     // IDEA HAVING-subqueries can be very slow. Perhaps we can optimize the subquery a litte in certain cases:
                     // e.g. if we are filtering over a SUM of natural numbers with "> 0", we could simply add a "> 0" filter 
                     // without any aggregation and it should yield the same results
-                    $rel_filter .= DataAggregator::AGGREGATION_SEPARATOR . $qpart->getAggregateFunction();
+                    $rel_filter .= DataAggregation::AGGREGATION_SEPARATOR . $qpart->getAggregator()->exportString();
                     $relq->addAggregation($start_rel->getForeignKeyAlias());
                 }
                 $relq->addAttribute($start_rel->getForeignKeyAlias());
@@ -1403,7 +1412,7 @@ else {
      * @return string
      */
     protected function buildSqlOrderBy(\exface\Core\CommonLogic\QueryBuilder\QueryPartSorter $qpart)
-    {
+    {        
         if ($qpart->getDataAddressProperty("ORDER_BY")) {
             $output = $this->getShortAlias($this->getMainObject()->getAlias()) . '.' . $qpart->getDataAddressProperty("ORDER_BY");
         } else {
@@ -1559,6 +1568,22 @@ else {
     protected function appendCustomWhere($original_where_statement, $custom_statement, $table_alias = null, $operator = 'AND')
     {
         return $original_where_statement . ($original_where_statement ? ' ' . $operator . ' ' : '') . str_replace('[#alias#]', ($table_alias ? $table_alias : $this->getShortAlias($this->getMainObject()->getAlias())), $custom_statement);
+    }
+    
+    /**
+     * 
+     * @param QueryPartAttribute $qpart
+     * @return boolean
+     */
+    protected function isQpartRelatedToAggregator(QueryPartAttribute $qpart)
+    {
+        $related_to_aggregator = false;
+        foreach ($this->getAggregations() as $aggr) {
+            if (strpos($qpart->getAlias(), $aggr->getAlias()) === 0) {
+                $related_to_aggregator = true;
+            }
+        }
+        return $related_to_aggregator;
     }
 }
 ?>
