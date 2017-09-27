@@ -58,7 +58,7 @@ interface UiPageInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
      * 
      * @throws WidgetNotFoundError if no widget with such an id was found
      *           
-     * @return WidgetInterface|null
+     * @return WidgetInterface
      */
     public function getWidget($widget_id, WidgetInterface $parent = null);
 
