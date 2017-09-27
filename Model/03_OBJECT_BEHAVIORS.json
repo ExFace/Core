@@ -56,6 +56,13 @@
             "hidden": false,
             "data_type": "exface.Core.Relation",
             "attribute_alias": "OBJECT"
+        },
+        {
+            "expression": "APP",
+            "name": "APP",
+            "hidden": false,
+            "data_type": "exface.Core.Relation",
+            "attribute_alias": "APP"
         }
     ],
     "rows": [
@@ -67,7 +74,8 @@
             "UID": "0x11e60ad972bdb21689840050568905af",
             "BEHAVIOR": "exface\/Core\/Behaviors\/TimeStampingBehavior.php",
             "CONFIG_UXON": "{\"created_on_attribute_alias\":\"CREATED_ON\",\"updated_on_attribute_alias\":\"MODIFIED_ON\"}",
-            "OBJECT": "0x32370000000000000000000000000000"
+            "OBJECT": "0x32370000000000000000000000000000",
+            "APP": "0x31000000000000000000000000000000"
         },
         {
             "CREATED_ON": "2017-06-05 06:43:28",
@@ -77,7 +85,8 @@
             "UID": "0x11e749ba34408e51b797e4b318306b9a",
             "BEHAVIOR": "exface\/Core\/Behaviors\/CacheClearingBehavior.php",
             "CONFIG_UXON": "{}",
-            "OBJECT": "0x32370000000000000000000000000000"
+            "OBJECT": "0x32370000000000000000000000000000",
+            "APP": "0x31000000000000000000000000000000"
         }
     ],
     "totals_rows": [],
@@ -85,7 +94,7 @@
         "operator": "AND",
         "conditions": [
             {
-                "expression": "OBJECT__APP",
+                "expression": "APP",
                 "comparator": "=",
                 "value": "0x31000000000000000000000000000000",
                 "object_alias": "exface.Core.OBJECT_BEHAVIORS"
