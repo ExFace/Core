@@ -1291,7 +1291,11 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 $output = "(" . $subject . " NOT IN " . $value . ")";
                 break; // The braces are needed if there is a OR IS NULL addition (see above)
             case EXF_COMPARATOR_EQUALS:
-                $output = $subject . " = " . $this->prepareWhereValue($value, $data_type, $sql_data_type);
+                if ($data_type instanceof StringDataType) {
+                    $output = $subject . " = '" . $this->prepareWhereValue($value, $data_type, $sql_data_type) . "'";
+                } else {
+                    $output = $subject . " = " . $this->prepareWhereValue($value, $data_type, $sql_data_type);
+                }
                 break;
             case EXF_COMPARATOR_EQUALS_NOT:
                 $output = $subject . " != " . $this->prepareWhereValue($value, $data_type, $sql_data_type);
