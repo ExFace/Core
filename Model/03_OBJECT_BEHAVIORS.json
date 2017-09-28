@@ -78,6 +78,36 @@
             "BEHAVIOR": "exface\/Core\/Behaviors\/CacheClearingBehavior.php",
             "CONFIG_UXON": "{}",
             "OBJECT": "0x32370000000000000000000000000000"
+        },
+        {
+            "CREATED_ON": "2017-09-27 14:44:56",
+            "MODIFIED_ON": "2017-09-28 07:38:51",
+            "CREATED_BY_USER": "0x11e7a1cdce842573b8e974e5434dc47d",
+            "MODIFIED_BY_USER": "0x11e7a1cdce842573b8e974e5434dc47d",
+            "UID": "0x11e7a3926de90b2d89ec74e5434dc47d",
+            "BEHAVIOR": "exface\/Core\/Behaviors\/CallActionBehavior.php",
+            "CONFIG_UXON": "{\"object_event_alias\":\"DataSheet.CreateData.After\",\"action\":{\"alias\":\"exface.ModxCmsConnector.ModxUserSave\"}}",
+            "OBJECT": "0x31343400000000000000000000000000"
+        },
+        {
+            "CREATED_ON": "2017-09-27 16:07:59",
+            "MODIFIED_ON": "2017-09-28 07:39:02",
+            "CREATED_BY_USER": "0x11e7a1cdce842573b8e974e5434dc47d",
+            "MODIFIED_BY_USER": "0x11e7a1cdce842573b8e974e5434dc47d",
+            "UID": "0x11e7a39e08454b8b89ec74e5434dc47d",
+            "BEHAVIOR": "exface\/Core\/Behaviors\/CallActionBehavior.php",
+            "CONFIG_UXON": "{\"object_event_alias\":\"DataSheet.UpdateData.Before\",\"action\":{\"alias\":\"exface.ModxCmsConnector.ModxUserSave\"}}",
+            "OBJECT": "0x31343400000000000000000000000000"
+        },
+        {
+            "CREATED_ON": "2017-09-27 16:09:10",
+            "MODIFIED_ON": "2017-09-28 09:28:36",
+            "CREATED_BY_USER": "0x11e7a1cdce842573b8e974e5434dc47d",
+            "MODIFIED_BY_USER": "0x11e7a1cdce842573b8e974e5434dc47d",
+            "UID": "0x11e7a39e328f724289ec74e5434dc47d",
+            "BEHAVIOR": "exface\/Core\/Behaviors\/CallActionBehavior.php",
+            "CONFIG_UXON": "{\"object_event_alias\":\"DataSheet.DeleteData.Before\",\"action\":{\"alias\":\"exface.ModxCmsConnector.ModxUserDelete\"}}",
+            "OBJECT": "0x31343400000000000000000000000000"
         }
     ],
     "totals_rows": [],
