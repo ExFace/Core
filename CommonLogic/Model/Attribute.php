@@ -13,6 +13,7 @@ use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 use exface\Core\Interfaces\Model\MetaRelationInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
+use exface\Core\DataTypes\BooleanDataType;
 
 /**
  * 
@@ -198,7 +199,7 @@ class Attribute implements MetaAttributeInterface
 
     public function setEditable($value)
     {
-        $this->editable = $value;
+        $this->editable = BooleanDataType::parse($value);
     }
 
     /**
@@ -226,7 +227,7 @@ class Attribute implements MetaAttributeInterface
 
     public function setHidden($value)
     {
-        $this->hidden = $value;
+        $this->hidden = BooleanDataType::parse($value);
     }
 
     public function getName()
@@ -246,7 +247,7 @@ class Attribute implements MetaAttributeInterface
 
     public function setRequired($value)
     {
-        $this->required = $value;
+        $this->required = BooleanDataType::parse($value);
     }
 
     public function getDataAddress()

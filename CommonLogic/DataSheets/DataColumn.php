@@ -17,6 +17,7 @@ use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\Interfaces\Model\AggregatorInterface;
 use exface\Core\CommonLogic\Constants\AggregatorFunctions;
+use exface\Core\DataTypes\BooleanDataType;
 
 class DataColumn implements DataColumnInterface
 {
@@ -194,7 +195,8 @@ class DataColumn implements DataColumnInterface
      */
     public function setHidden($value)
     {
-        $this->hidden = $value;
+        $this->hidden = BooleanDataType::parse($value);
+        return $this;
     }
 
     /**

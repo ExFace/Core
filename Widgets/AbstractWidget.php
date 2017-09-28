@@ -1001,6 +1001,7 @@ else {
      */
     public function setHidden($value)
     {
+        $value = BooleanDataType::parse($value);
         if ($value) {
             $this->setVisibility(EXF_WIDGET_VISIBILITY_HIDDEN);
         } else {
