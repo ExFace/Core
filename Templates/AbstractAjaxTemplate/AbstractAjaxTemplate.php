@@ -243,8 +243,8 @@ abstract class AbstractAjaxTemplate extends AbstractTemplate
             // Look for actual data rows in the request
             if ($this->getWorkbench()->getRequestParams()['data']) {
                 if (! is_array($this->getWorkbench()->getRequestParams()['data'])) {
-                    if ($decoded = @json_decode($this->getWorkbench()->getRequestParams()['data'], true));
-                    $this->getWorkbench()->setRequestParam('data', $decoded);
+                    if ($decoded = @json_decode($this->getWorkbench()->getRequestParams()['data'], true))
+                        $this->getWorkbench()->setRequestParam('data', $decoded);
                 }
                 $request_data = $this->getWorkbench()->getRequestParams()['data'];
                 // If there is a data request parameter, create a data sheet from it
