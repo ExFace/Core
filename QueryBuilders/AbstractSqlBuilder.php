@@ -268,7 +268,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         foreach ($this->getValues() as $qpart) {
             $attr = $qpart->getAttribute();
             if ($attr->getRelationPath()->toString()) {
-                throw new QueryBuilderException('Cannot create attribute "' . $attr->getAlias() . '" of object "' . $this->getMainObject()->getAlias() . '". Attributes of related objects cannot be created within the same SQL query!');
+                throw new QueryBuilderException('Cannot create attribute "' . $attr->getAliasWithRelationPath() . '" of object "' . $this->getMainObject()->getAliasWithNamespace() . '". Attributes of related objects cannot be created within the same SQL query!');
                 continue;
             }
             // Ignore attributes, that do not reference an sql column (= do not have a data address at all)
