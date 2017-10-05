@@ -12,6 +12,8 @@ use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\DataSheets\DataMappingInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetMapperInterface;
 use exface\Core\Interfaces\DataSheets\DataColumnMappingInterface;
+use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\Factories\DataColumnFactory;
 
 /**
  * Maps data from one data sheet to another using mappers for columns, filters, sorters, etc.
@@ -32,6 +34,8 @@ class DataSheetMapper implements DataSheetMapperInterface {
     private $toMetaObject = null;
     
     private $columnMappings = [];
+    
+    private $inheritColumns = null;
     
     public function __construct(Workbench $workbench)
     {
@@ -54,6 +58,13 @@ class DataSheetMapper implements DataSheetMapperInterface {
         
         // Create an empty to-sheet
         $toSheet = DataSheetFactory::createFromObject($this->getToMetaObject());
+        
+        if ($this->getInheritColumns()){
+            foreach ($fromSheet->getColumns() as $fromCol){
+                $toSheet->getColumns()->add(DataColumnFactory::createFromUxon($toSheet, $fromCol->exportUxonObject()));
+            }
+            $toSheet->importRows($fromSheet);
+        }
         
         // Fill the to-sheet with the mappings
         foreach ($this->getColumnMappings() as $map){
@@ -242,6 +253,64 @@ class DataSheetMapper implements DataSheetMapperInterface {
                 throw new DataSheetMapperError($this, 'Invalid format "' . gettype($instance) . '" of expression mapping given: expecting UXON mapping description!');
             }
         }
+    }
+    
+    /**
+     * Returns TRUE if columns of the from-sheet should be inherited by the to-sheet.
+     * 
+     * By default, this will be TRUE if the to-sheet is based on the same object as the 
+     * from-sheet or a derivative and FALSE otherwise.
+     * 
+     * @return boolean
+     */
+    public function getInheritColumns()
+    {
+        if (is_null($this->inheritColumns)){
+            if ($this->canInheritColumns()){
+                return true;
+            } else {
+                return false;
+            }
+        }
+        return $this->inheritColumns;
+    }
+    
+    /**
+     * Set to FALSE to prevent the to-sheet from inheriting compatible columns from the from-sheet.
+     * 
+     * If the to-sheet is based on the same object as the from-sheet or a derivative,
+     * the mapper will copy all columns by default and apply the mapping afterwards.
+     * This option can prevent this behavior.
+     * 
+     * @uxon-property inherit_columns
+     * @uxon-type boolean
+     * 
+     * @param boolean $true_or_false
+     * @throws DataSheetMapperError
+     * @return \exface\Core\CommonLogic\DataSheets\DataSheetMapper
+     */
+    public function setInheritColumns($true_or_false)
+    {
+        $value = BooleanDataType::parse($true_or_false);
+        
+        if ($value){
+            if (! $this->canInheritColumns()) {
+                throw new DataSheetMapperError($this, 'Data sheets of object "' . $this->getToMetaObject()->getAliasWithNamespace() . '" cannot inherit columns from sheets of "' . $this->getFromMetaObject() . '"!');
+            }
+        }
+        
+        $this->inheritColumns = $value;
+        return $this;
+    }
+    
+    /**
+     * Returns TRUE if columns of the from-sheet sheet can be inherited by the to-sheet.
+     * 
+     * @return boolean
+     */
+    protected function canInheritColumns()
+    {
+        return $this->getToMetaObject()->is($this->getFromMetaObject());
     }
     
 }
