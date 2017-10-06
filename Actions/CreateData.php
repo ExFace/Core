@@ -15,14 +15,19 @@ class CreateData extends SaveData implements iCreateData
         $data_sheet = $this->getInputDataSheet();
         
         if ($this->getIgnoreRelatedObjectsInInputData()){
-            foreach ($data_sheet->getColumns() as $col){
+            $clean_sheet = $data_sheet->copy();
+            foreach ($clean_sheet->getColumns() as $col){
                 if ($col->getExpressionObj()->isMetaAttribute() && ! $col->getAttribute()->getRelationPath()->isEmpty()){
-                    $data_sheet->getColumns()->remove($col);
+                    $clean_sheet->getColumns()->remove($col);
                 }
             }
+            $result = $clean_sheet->dataCreate(true, $this->getTransaction());
+            $data_sheet->merge($clean_sheet);
+        } else {
+            $result = $data_sheet->dataCreate(true, $this->getTransaction());
         }
         
-        $this->setAffectedRows($data_sheet->dataCreate(true, $this->getTransaction()));
+        $this->setAffectedRows($result);
         $this->setUndoDataSheet($data_sheet);
         $this->setResultDataSheet($data_sheet);
         $this->setResult('');
@@ -46,10 +51,13 @@ class CreateData extends SaveData implements iCreateData
     }
     
     /**
-     * Strips off all columns with relations from the input data sheet before creating - if set to TRUE.
+     * Strips off all columns with relations from the input data sheet before creating data.
      * 
      * This is usefull if you have related columns in your data for some reason,
      * but do not want to update them when creating new data rows.
+     * 
+     * Note, that related columns will only be ignored in the create operation.
+     * The result data sheet will still contain them!
      * 
      * @uxon-property ignore_related_objects_in_input_data
      * @uxon-type boolean
