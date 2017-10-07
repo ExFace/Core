@@ -579,7 +579,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 $value = 'NULL';
             } else {
                 try {
-                    $parsed_value = NumberDataType::parse($value);
+                    $parsed_value = NumberDataType::cast($value);
                 } catch (DataTypeValidationError $e){
                     $parsed_value = "'" . $this->escapeString($value) . "'";
                 }
