@@ -1470,6 +1470,19 @@
             "ERROR_TEXT": "Invalid argument in aggregator COUNT_IF",
             "DESCRIPTION": "This error means, that the condition passed as argument to the COUNT_IF aggregator is invalid. \n\nThis aggregator counts values of the attribute it is applied to, that match the specified condition. The condition MUST contain a comparator and a value separated by a space. \n\nValid examples:\n\n- Count products with a price of 10 or more: PRODUCTS__PRICE:COUNT(>= 10)\n- Count completed tasks: TASKS__COMPLETED_FLAG(= 1) ",
             "LABEL": "exface.Core.6WXNHMN"
+        },
+        {
+            "CREATED_ON": "2017-10-07 15:26:16",
+            "MODIFIED_ON": "2017-10-07 15:26:16",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e7ab73d9bbbbf28a670205857feb80",
+            "FULL_ERROR_CODE": "exface.Core.6XALZHW",
+            "APP": "0x31000000000000000000000000000000",
+            "ERROR_CODE": "6XALZHW",
+            "ERROR_TEXT": "Invalid numeric data type configuration",
+            "DESCRIPTION": "Numeric data types (based on the NumberDataType prototype) take the following configuration values:\n\n- min - minimum valid value (must be less or equal, than max)\n- max - maximum valid value (must be greater or equal than min)\n- precision_min - minimum number of decimal places (must be less or equal, than precision_max)\n- precision_max - maximum number of decimal places (must be greater or equal, than presision_min)\n- precision - fixed precision (the same as setting the same value for precision_min and precision_max)",
+            "LABEL": "exface.Core.6XALZHW"
         }
     ],
     "totals_rows": [],
