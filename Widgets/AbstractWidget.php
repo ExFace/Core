@@ -647,7 +647,7 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
      */
     public function setDisabled($value)
     {
-        $this->disabled = \exface\Core\DataTypes\BooleanDataType::parse($value);
+        $this->disabled = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;
     }
 
@@ -1001,7 +1001,7 @@ else {
      */
     public function setHidden($value)
     {
-        $value = BooleanDataType::parse($value);
+        $value = BooleanDataType::cast($value);
         if ($value) {
             $this->setVisibility(EXF_WIDGET_VISIBILITY_HIDDEN);
         } else {
@@ -1225,7 +1225,7 @@ else {
 
     public function setDoNotPrefill($value)
     {
-        $this->do_not_prefill = BooleanDataType::parse($value);
+        $this->do_not_prefill = BooleanDataType::cast($value);
         return $this;
     }
 

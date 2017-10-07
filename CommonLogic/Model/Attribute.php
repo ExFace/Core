@@ -199,7 +199,7 @@ class Attribute implements MetaAttributeInterface
 
     public function setEditable($value)
     {
-        $this->editable = BooleanDataType::parse($value);
+        $this->editable = BooleanDataType::cast($value);
     }
 
     /**
@@ -227,7 +227,7 @@ class Attribute implements MetaAttributeInterface
 
     public function setHidden($value)
     {
-        $this->hidden = BooleanDataType::parse($value);
+        $this->hidden = BooleanDataType::cast($value);
     }
 
     public function getName()
@@ -247,7 +247,7 @@ class Attribute implements MetaAttributeInterface
 
     public function setRequired($value)
     {
-        $this->required = BooleanDataType::parse($value);
+        $this->required = BooleanDataType::cast($value);
     }
 
     public function getDataAddress()
@@ -640,7 +640,7 @@ class Attribute implements MetaAttributeInterface
      */
     public function setSystem($value)
     {
-        $this->system = \exface\Core\DataTypes\BooleanDataType::parse($value);
+        $this->system = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;
     }
 
@@ -689,7 +689,7 @@ class Attribute implements MetaAttributeInterface
      */
     public function setSortable($value)
     {
-        $this->sortable = \exface\Core\DataTypes\BooleanDataType::parse($value);
+        $this->sortable = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;
     }
 
@@ -709,7 +709,7 @@ class Attribute implements MetaAttributeInterface
      */
     public function setFilterable($value)
     {
-        $this->filterable = \exface\Core\DataTypes\BooleanDataType::parse($value);
+        $this->filterable = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;
     }
 
@@ -729,7 +729,7 @@ class Attribute implements MetaAttributeInterface
      */
     public function setAggregatable($value)
     {
-        $this->aggregatable = \exface\Core\DataTypes\BooleanDataType::parse($value);
+        $this->aggregatable = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;
     }
     

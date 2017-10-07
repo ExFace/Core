@@ -195,7 +195,7 @@ class DataColumn implements DataColumnInterface
      */
     public function setHidden($value)
     {
-        $this->hidden = BooleanDataType::parse($value);
+        $this->hidden = BooleanDataType::cast($value);
         return $this;
     }
 

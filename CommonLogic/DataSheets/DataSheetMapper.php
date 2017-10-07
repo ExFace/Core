@@ -291,7 +291,7 @@ class DataSheetMapper implements DataSheetMapperInterface {
      */
     public function setInheritColumns($true_or_false)
     {
-        $value = BooleanDataType::parse($true_or_false);
+        $value = BooleanDataType::cast($true_or_false);
         
         if ($value){
             if (! $this->canInheritColumns()) {

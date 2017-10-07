@@ -101,7 +101,7 @@ class Input extends Text implements iTakeInput, iHaveDefaultValue
      */
     public function setReadonly($value)
     {
-        $this->readonly = \exface\Core\DataTypes\BooleanDataType::parse($value);
+        $this->readonly = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;
     }
 
@@ -158,7 +158,7 @@ class Input extends Text implements iTakeInput, iHaveDefaultValue
      */
     public function setIgnoreDefaultValue($value)
     {
-        $this->ignore_default_value = \exface\Core\DataTypes\BooleanDataType::parse($value);
+        $this->ignore_default_value = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;
     }
 
@@ -201,7 +201,7 @@ class Input extends Text implements iTakeInput, iHaveDefaultValue
      */
     public function setDisplayOnly($value)
     {
-        $this->display_only = BooleanDataType::parse($value);
+        $this->display_only = BooleanDataType::cast($value);
         return $this;
     }
 

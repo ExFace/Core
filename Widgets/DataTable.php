@@ -252,7 +252,7 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
      */
     public function setContextMenuEnabled($value)
     {
-        $this->context_menu_enabled = \exface\Core\DataTypes\BooleanDataType::parse($value);
+        $this->context_menu_enabled = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;
     }
 
@@ -274,7 +274,7 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
      */
     public function setShowFilterRow($value)
     {
-        $this->show_filter_row = \exface\Core\DataTypes\BooleanDataType::parse($value);
+        $this->show_filter_row = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;
     }
 
@@ -294,7 +294,7 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
      */
     public function setHeaderSortMultiple($value)
     {
-        $this->header_sort_multiple = \exface\Core\DataTypes\BooleanDataType::parse($value);
+        $this->header_sort_multiple = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;
     }
 
@@ -354,7 +354,7 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
      */
     public function setNowrap($value)
     {
-        $this->nowrap = \exface\Core\DataTypes\BooleanDataType::parse($value);
+        $this->nowrap = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;
     }
 
@@ -374,7 +374,7 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
      */
     public function setStriped($value)
     {
-        $this->striped = \exface\Core\DataTypes\BooleanDataType::parse($value);
+        $this->striped = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;
     }
 
@@ -399,7 +399,7 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
      */
     public function setAutoRowHeight($value)
     {
-        $this->auto_row_height = \exface\Core\DataTypes\BooleanDataType::parse($value);
+        $this->auto_row_height = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;
     }
 

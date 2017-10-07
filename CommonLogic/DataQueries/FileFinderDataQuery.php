@@ -64,7 +64,7 @@ class FileFinderDataQuery extends AbstractDataQuery
 
     public function setFullScanRequired($value)
     {
-        $this->fullScanRequired = \exface\Core\DataTypes\BooleanDataType::parse($value);
+        $this->fullScanRequired = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;
     }
 

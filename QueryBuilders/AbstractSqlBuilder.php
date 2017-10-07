@@ -561,7 +561,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      */
     protected function prepareInputValue($value, AbstractDataType $data_type, $sql_data_type = NULL)
     {
-        $value = $data_type::parse($value);
+        $value = $data_type::cast($value);
         if ($data_type instanceof StringDataType) {
             $value = "'" . $this->escapeString($value) . "'";
         } elseif ($data_type instanceof BooleanDataType) {
@@ -578,7 +578,12 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             if ($value == '') {
                 $value = 'NULL';
             } else {
-                $value = NumberDataType::validate($value) ? $value : "'" . $this->escapeString($value) . "'";
+                try {
+                    $parsed_value = NumberDataType::parse($value);
+                } catch (DataTypeValidationError $e){
+                    $parsed_value = "'" . $this->escapeString($value) . "'";
+                }
+                $value = $parsed_value;
             }
         } else {
             $value = "'" . $this->escapeString($value) . "'";
@@ -1245,7 +1250,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             // Pay attention to comparators expecting concatennated values (like IN) - the concatennated value will not validate against
             // the data type, but the separated parts should
             if ($comparator != EXF_COMPARATOR_IN && $comparator != EXF_COMPARATOR_NOT_IN) {
-                $value = $data_type::parse($value);
+                $value = $data_type::cast($value);
             } else {
                 $values = explode($value_list_delimiter, $value);
                 $value = '';

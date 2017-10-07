@@ -60,7 +60,7 @@ class Panel extends Container implements iLayoutWidgets, iSupportLazyLoading, iH
      */
     public function setCollapsible($value)
     {
-        $this->collapsible = BooleanDataType::parse($value);
+        $this->collapsible = BooleanDataType::cast($value);
     }
 
     /**
@@ -104,7 +104,7 @@ class Panel extends Container implements iLayoutWidgets, iSupportLazyLoading, iH
      */
     public function setLazyLoading($value)
     {
-        $this->lazy_loading = BooleanDataType::parse($value);
+        $this->lazy_loading = BooleanDataType::cast($value);
     }
 
     /**

@@ -68,7 +68,7 @@ class DebugContext extends AbstractContext
      */
     public function setDebugging($true_or_false)
     {
-        $value = BooleanDataType::parse($true_or_false);
+        $value = BooleanDataType::cast($true_or_false);
         if ($value){
             $this->startDebugging();
         } else {

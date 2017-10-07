@@ -133,7 +133,7 @@ class Dialog extends Form implements iAmClosable, iHaveContextualHelp
 
     public function setMaximizable($value)
     {
-        $this->maximizable = BooleanDataType::parse($value);
+        $this->maximizable = BooleanDataType::cast($value);
         return $this;
     }
 
@@ -144,7 +144,7 @@ class Dialog extends Form implements iAmClosable, iHaveContextualHelp
 
     public function setMaximized($value)
     {
-        $this->maximized = BooleanDataType::parse($value);
+        $this->maximized = BooleanDataType::cast($value);
         return $this;
     }
 
@@ -283,7 +283,7 @@ class Dialog extends Form implements iAmClosable, iHaveContextualHelp
      */
     public function setHideHelpButton($value)
     {
-        $this->hide_help_button = BooleanDataType::parse($value);
+        $this->hide_help_button = BooleanDataType::cast($value);
         return $this;
     }
 

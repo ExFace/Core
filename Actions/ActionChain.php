@@ -157,7 +157,7 @@ class ActionChain extends AbstractAction
 
     public function setUseSingleTransaction($value)
     {
-        $this->use_single_transaction = \exface\Core\DataTypes\BooleanDataType::parse($value);
+        $this->use_single_transaction = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;
     }
 

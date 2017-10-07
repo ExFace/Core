@@ -777,7 +777,7 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
      */
     public function setPaginate($value)
     {
-        $this->paginate = \exface\Core\DataTypes\BooleanDataType::parse($value);
+        $this->paginate = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;
     }
 
@@ -1088,7 +1088,7 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
      */
     public function setEditable($value = true)
     {
-        $this->editable = \exface\Core\DataTypes\BooleanDataType::parse($value);
+        $this->editable = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;
     }
 
@@ -1298,7 +1298,7 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
      */
     public function setHideHelpButton($value)
     {
-        $this->hide_help_button = BooleanDataType::parse($value);
+        $this->hide_help_button = BooleanDataType::cast($value);
         return $this;
     }
 
@@ -1406,7 +1406,7 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
      */
     public function setHideHeader($value)
     {
-        $this->hide_header = \exface\Core\DataTypes\BooleanDataType::parse($value);
+        $this->hide_header = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;
     }
     
@@ -1425,7 +1425,7 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
      */
     public function setHideFooter($value)
     {
-        $this->hide_footer = \exface\Core\DataTypes\BooleanDataType::parse($value);
+        $this->hide_footer = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;
     }
 }

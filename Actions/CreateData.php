@@ -67,7 +67,7 @@ class CreateData extends SaveData implements iCreateData
      */
     public function setIgnoreRelatedObjectsInInputData($true_or_false)
     {
-        $this->ingnore_related_objects_in_input_data = BooleanDataType::parse($true_or_false);
+        $this->ingnore_related_objects_in_input_data = BooleanDataType::cast($true_or_false);
         return $this;
     }
 }

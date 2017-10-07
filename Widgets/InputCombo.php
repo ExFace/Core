@@ -99,7 +99,7 @@ class InputCombo extends InputSelect implements iSupportLazyLoading
      */
     public function setAllowNewValues($value)
     {
-        $this->allow_new_values = \exface\Core\DataTypes\BooleanDataType::parse($value);
+        $this->allow_new_values = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;
     }
 
@@ -139,7 +139,7 @@ class InputCombo extends InputSelect implements iSupportLazyLoading
      */
     public function setAutoselectSingleSuggestion($value)
     {
-        $this->autoselect_single_suggestion = \exface\Core\DataTypes\BooleanDataType::parse($value);
+        $this->autoselect_single_suggestion = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;
     }
 
