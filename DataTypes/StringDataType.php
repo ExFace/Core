@@ -9,6 +9,26 @@ class StringDataType extends AbstractDataType
     private $lengthMin = 0;
     
     private $lengthMax = null;
+    
+    private $regexValidator = null;
+
+    /**
+     * @return string|null
+     */
+    public function getRegexValidator()
+    {
+        return $this->regexValidator;
+    }
+
+    /**
+     * @param string $regularExpression
+     * @return StringDataType
+     */
+    public function setRegexValidator($regularExpression)
+    {
+        $this->regexValidator = $regularExpression;
+        return $this;
+    }
 
     /**
      * Converts a string from under_score (snake_case) to camelCase.
@@ -86,6 +106,34 @@ class StringDataType extends AbstractDataType
         }
         
         return $result;
+    }
+    
+    public function parse($string){
+        $value = parent::parse($string);
+        
+        // validate length
+        $length = mb_strlen($value);
+        if ($this->getLengtMin() > 0 && $length < $this->getLengtMin()){
+            throw new DataTypeValidationError('The lenght of the string "' . $value . '" (' . $length . ') is less, than the minimum length required for data type ' . $this->getAliasWithNamespace() . ' (' . $this->getLengtMin() . ')!');
+        }
+        if ($this->getLengthMax() && $length > $this->getLengthMax()){
+            $value = substr($value, 0, $this->getLengthMax());
+        }
+        
+        // validate against regex
+        if ($this->getRegexValidator()){
+            try {
+                $match = preg_match("'" . $this->getRegexValidator() . "'", $value);
+            } catch (\Throwable $e) {
+                $match = 0;
+            }
+            
+            if (! $match){
+                throw new DataTypeValidationError('Value "' . $value . '" does not match the regular expression mask "' . $this->getRegexValidator() . '" of data type ' . $this->getAliasWithNamespace() . '!');
+            }
+        }
+        
+        return $value;        
     }
     
     /**

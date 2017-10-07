@@ -3,9 +3,17 @@ namespace exface\Core\DataTypes;
 
 use exface\Core\Exceptions\DataTypeValidationError;
 use exface\Core\CommonLogic\Constants\SortingDirections;
+use exface\Core\Exceptions\DataTypes\DataTypeConfigurationError;
 
 class NumberDataType extends AbstractDataType
 {
+    private $precisionMin = 0;
+    
+    private $precisionMax = null;
+    
+    private $min = null;
+    
+    private $max = null;
 
     public static function cast($string)
     {
@@ -45,5 +53,91 @@ class NumberDataType extends AbstractDataType
     {
         return SortingDirections::DESC();
     }
+    /**
+     * @return integer
+     */
+    public function getPrecisionMin()
+    {
+        return $this->precisionMin;
+    }
+
+    /**
+     * @param integer $precisionMin
+     */
+    public function setPrecisionMin($precisionMin)
+    {
+        $value = intval($precisionMin);
+        if ($this->getPrecisionMax() && $value > $this->getPrecisionMax()){
+            throw new DataTypeConfigurationError($this, 'Maximum precision ("' . $value . '") of ' . $this->getAliasWithNamespace() . ' greater than minimum precision ("' . $this->getPrecisionMin() . '")!', '6XALZHW');
+        }
+        $this->precisionMin = $value;
+        return $this;
+    }
+
+    /**
+     * @return integer
+     */
+    public function getPrecisionMax()
+    {
+        return $this->precisionMax;
+    }
+
+    /**
+     * @param integer $precisionMax
+     * @return NumberDataType
+     */
+    public function setPrecisionMax($precisionMax)
+    {
+        $value = intval($precisionMax);
+        if ($this->getPrecisionMin() && $value < $this->getPrecisionMin()){
+            throw new DataTypeConfigurationError($this, 'Minimum precision ("' . $value . '") of ' . $this->getAliasWithNamespace() . ' less than maximum precision ("' . $this->getPrecisionMax() . '")!', '6XALZHW');
+        }
+        $this->precisionMax = $value;
+        return $this;
+    }
+    
+    public function setPrecision($number)
+    {
+        $this->precisionMax = intval($number);
+        $this->precisionMin = intval($number);
+        return $this;
+    }
+
+    /**
+     * @return number
+     */
+    public function getMin()
+    {
+        return $this->min;
+    }
+
+    /**
+     * @param number $min
+     * @return NumberDataType
+     */
+    public function setMin($min)
+    {
+        $this->min = $min;
+        return $this;
+    }
+
+    /**
+     * @return number
+     */
+    public function getMax()
+    {
+        return $this->max;
+    }
+
+    /**
+     * @param number $max
+     * @return NumberDataType
+     */
+    public function setMax($max)
+    {
+        $this->max = $max;
+        return $this;
+    }
+
 }
 ?>
