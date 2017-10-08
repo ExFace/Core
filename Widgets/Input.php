@@ -96,7 +96,6 @@ class Input extends Text implements iTakeInput, iHaveDefaultValue
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\Widgets\iTakeInput::setReadonly()
      */
     public function setReadonly($value)
