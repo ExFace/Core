@@ -11,6 +11,9 @@ use exface\Core\Events\DataSheetEvent;
 /**
  * Attachable to DataSheetEvents, calls any action.
  * 
+ * For this behavior to work, it has to be attached to an object in the metamodel. The event-
+ * alias and the action have to be configured in the behavior configuration.
+ * 
  * @author SFL
  *
  */
@@ -58,7 +61,8 @@ class CallActionBehavior extends AbstractBehavior
     }
 
     /**
-     * 
+     * Sets the event alias upon which the configured action is executed
+     * (e.g. 'DataSheet.CreateData.After').
      * 
      * @uxon-property object_event_alias
      * @uxon-type string
@@ -82,6 +86,7 @@ class CallActionBehavior extends AbstractBehavior
     }
 
     /**
+     * Sets the action which is executed upon the configured event.
      * 
      * @uxon-property action
      * @uxon-type object
@@ -96,6 +101,8 @@ class CallActionBehavior extends AbstractBehavior
     }
 
     /**
+     * The method which is called when the configured event is fired, which executes the
+     * configured action. 
      * 
      * @param DataSheetEvent $event
      */
