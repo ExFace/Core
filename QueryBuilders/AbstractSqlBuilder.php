@@ -42,11 +42,11 @@ use exface\Core\CommonLogic\Model\Aggregator;
  * The data address of an attribute stored in an SQL database can be a column
  * name or any SQL usable in the SELECT clause. Custom SQL should be enclosed
  * in regular brackets "()" to ensure it is correctly distinguished from column
- * names. Within the data address the placeholder [#alias#] can be used to 
+ * names. Within the data address the placeholder [#~alias#] can be used to 
  * represent the alias of the current object. THis is especially usefull to
  * prevent table alias collisions in custom subselect: 
  * 
- * "(SELECT mt_[#alias#].my_column FROM my_table mt_[#alias#] WHERE ... )"
+ * "(SELECT mt_[#~alias#].my_column FROM my_table mt_[#~alias#] WHERE ... )"
  * 
  * This way you can control which uses of my_table are unique within the
  * generated SQL.
@@ -63,8 +63,8 @@ use exface\Core\CommonLogic\Model\Aggregator;
  * usage instructions.
  * 
  * - **SQL_SELECT** - custom SQL statement for the value in a SELECT statement.
- * The placeholders [#alias#] and [#value#] are supported. This is usefull to
- * write wrappers for values (e.g. "NVL('[#value#]', 0)". If the wrapper is
+ * The placeholders [#~alias#] and [#~value#] are supported. This is usefull to
+ * write wrappers for values (e.g. "NVL('[#~value#]', 0)". If the wrapper is
  * placed here, it data address would remain writable, while replacing the
  * column name with a custom SQL statement in the data address itself, would
  * cause an error when writing to it.
@@ -72,12 +72,12 @@ use exface\Core\CommonLogic\Model\Aggregator;
  * - **SQL_SELECT_DATA_ADDRESS** - replaces the data address for SELECT queries
  * 
  * - **SQL_INSERT** - custom SQL statement for the value in an INSERT statement.
- * The placeholders [#alias#] and [#value#] are supported. This is usefull to
- * write wrappers for values (e.g. "to_clob('[#value#]')" to save a string value 
+ * The placeholders [#~alias#] and [#~value#] are supported. This is usefull to
+ * write wrappers for values (e.g. "to_clob('[#~value#]')" to save a string value 
  * to an Oracle CLOB column) or generators (e.g. you could use "UUID()" in MySQL 
  * to have a column always created with a UUID). If you need to use a generator
  * only if no value is given explicitly, use something like this: 
- * IF([#value#]!='', [#value#], UUID())
+ * IF([#~value#]!='', [#~value#], UUID())
  * 
  * - **SQL_INSERT_DATA_ADDRESS** - replaces the data address for INSERT queries
  * 
@@ -85,7 +85,7 @@ use exface\Core\CommonLogic\Model\Aggregator;
  * Works similarly to SQL_INSERT.
  * 
  * - **SQL_UPDATE_DATA_ADDRESS** - replaces the data address for INSERT queries.
- * Supports the placeholder [#alias#]
+ * Supports the placeholder [#~alias#]
  *
  * @author Andrej Kabachnik
  *        
@@ -293,10 +293,10 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                     // will make it impossible to save values passed to the query
                     // via setValues() - they will always be replaced by the 
                     // custom SQL. To allow explicitly set values too, the
-                    // INSERT_SQL must include something like IF('[#value#]'!=''...)
+                    // INSERT_SQL must include something like IF('[#~value#]'!=''...)
                     $values[$row][$attr->getDataAddress()] = str_replace(array(
-                        '[#alias#]',
-                        '[#value#]'
+                        '[#~alias#]',
+                        '[#~value#]'
                     ), array(
                         $this->getMainObject()->getAlias(),
                         $value
@@ -313,8 +313,8 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         // show up as a value here. Still that value is required!
         if (is_null($uid_qpart) && $uid_generator = $this->getMainObject()->getUidAttribute()->getDataAddressProperty('SQL_INSERT')) {
             $uid_generator = str_replace(array(
-                '[#alias#]',
-                '[#value#]'
+                '[#~alias#]',
+                '[#~value#]'
             ), array(
                 $this->getMainObject()->getAlias(),
                 $this->prepareInputValue('', $this->getMainObject()->getUidAttribute()->getDataType(), $this->getMainObject()->getUidAttribute()->getDataAddressProperty('SQL_DATA_TYPE'))
@@ -434,7 +434,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             }
             
             if ($qpart->getDataAddressProperty('SQL_UPDATE_DATA_ADDRESS')){
-                $column = str_replace('[#alias#]', $this->getShortAlias($this->getMainObject()->getAlias()), $qpart->getDataAddressProperty('SQL_UPDATE_DATA_ADDRESS'));
+                $column = str_replace('[#~alias#]', $this->getShortAlias($this->getMainObject()->getAlias()), $qpart->getDataAddressProperty('SQL_UPDATE_DATA_ADDRESS'));
             } else {
                 $column = $this->getShortAlias($this->getMainObject()->getAlias()) . '.' . $attr->getDataAddress();
             }
@@ -506,8 +506,8 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     
     public function buildSqlUpdateCustomValue($statement, $table_alias, $value){
         return str_replace(array(
-            '[#alias#]',
-            '[#value#]'
+            '[#~alias#]',
+            '[#~value#]'
         ), array(
             $table_alias,
             $value
@@ -721,12 +721,12 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             } elseif ($this->checkForSqlStatement($attribute->getDataAddress())) {
                 // see if the attribute is a statement. If so, just replace placeholders
                 $output = '(' . str_replace(array(
-                    '[#alias#]'
+                    '[#~alias#]'
                 ), $select_from, $attribute->getDataAddress()) . ')';
             } elseif ($custom_select = $attribute->getDataAddressProperty('SQL_SELECT')){
                 // IF there is a custom SQL_SELECT statement, use it.
                 $output = '(' . str_replace(array(
-                    '[#alias#]'
+                    '[#~alias#]'
                 ), $select_from, $custom_select) . ')';
             } else {
                 // otherwise get the select from the attribute
@@ -907,7 +907,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     protected function buildSqlFrom()
     {
         // Replace static placeholders
-        $from = str_replace('[#alias#]', $this->getMainObject()->getAlias(), $this->getMainObject()->getDataAddress()) . ' ' . $this->getShortAlias($this->getMainObject()->getAlias() . $this->getQueryId());
+        $from = str_replace('[#~alias#]', $this->getMainObject()->getAlias(), $this->getMainObject()->getDataAddress()) . ' ' . $this->getShortAlias($this->getMainObject()->getAlias() . $this->getQueryId());
         
         // Replace dynamic palceholder
         $from = $this->replacePlaceholdersByFilterValues($from);
@@ -945,7 +945,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 // the core query again, after pagination, so possible back references within the custom select can
                 // still be resolved.
                 $right_table_alias = $this->getShortAlias($this->getMainObject()->getAlias() . $this->getQueryId());
-                $joins[$right_table_alias] = "\n LEFT JOIN " . str_replace('[#alias#]', $right_table_alias, $this->getMainObject()->getDataAddress()) . ' ' . $right_table_alias . ' ON ' . $left_table_alias . '.' . $this->getMainObject()->getUidAttributeAlias() . ' = ' . $right_table_alias . '.' . $this->getMainObject()->getUidAttributeAlias();
+                $joins[$right_table_alias] = "\n LEFT JOIN " . str_replace('[#~alias#]', $right_table_alias, $this->getMainObject()->getDataAddress()) . ' ' . $right_table_alias . ' ON ' . $left_table_alias . '.' . $this->getMainObject()->getUidAttributeAlias() . ' = ' . $right_table_alias . '.' . $this->getMainObject()->getUidAttributeAlias();
             } else {
                 // In most cases we will build joins for attributes of related objects.
                 $left_table_alias = $this->getShortAlias(($left_table_alias ? $left_table_alias : $this->getMainObject()->getAlias()) . $this->getQueryId());
@@ -957,7 +957,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                         // generate the join sql
                         $left_join_on = $this->buildSqlJoinSide($left_obj->getAttribute($rel->getForeignKeyAlias())->getDataAddress(), $left_table_alias);
                         $right_join_on = $this->buildSqlJoinSide($rel->getRelatedObjectKeyAttribute()->getDataAddress(), $right_table_alias);
-                        $joins[$right_table_alias] = "\n " . $rel->getJoinType() . ' JOIN ' . str_replace('[#alias#]', $right_table_alias, $right_obj->getDataAddress()) . ' ' . $right_table_alias . ' ON ' . $left_join_on . ' = ' . $right_join_on;
+                        $joins[$right_table_alias] = "\n " . $rel->getJoinType() . ' JOIN ' . str_replace('[#~alias#]', $right_table_alias, $right_obj->getDataAddress()) . ' ' . $right_table_alias . ' ON ' . $left_join_on . ' = ' . $right_join_on;
                         // continue with the related object
                         $left_table_alias = $right_table_alias;
                         $left_obj = $right_obj;
@@ -977,7 +977,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     {
         $join_side = $data_address;
         if ($this->checkForSqlStatement($join_side)) {
-            $join_side = str_replace('[#alias#]', $table_alias, $join_side);
+            $join_side = str_replace('[#~alias#]', $table_alias, $join_side);
         } else {
             $join_side = $table_alias . '.' . $join_side;
         }
@@ -1053,8 +1053,8 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         if ($where) {
             // check if it has an explicit where clause. If not try to filter based on the select clause
             $output = str_replace(array(
-                '[#alias#]',
-                '[#value#]'
+                '[#~alias#]',
+                '[#~value#]'
             ), array(
                 $this->getShortAlias($object_alias . $this->getQueryId()),
                 $val
@@ -1063,7 +1063,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             // Determine, what we are going to compare to the value: a subquery or a column
             if ($this->checkForSqlStatement($attr->getDataAddress())) {
                 $subj = str_replace(array(
-                    '[#alias#]'
+                    '[#~alias#]'
                 ), array(
                     $this->getShortAlias($object_alias . $this->getQueryId()) 
                 ), $select);
@@ -1202,8 +1202,8 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             if ($where) {
                 // check if it has an explicit where clause. If not try to filter based on the select clause
                 $output = str_replace(array(
-                    '[#alias#]',
-                    '[#value#]'
+                    '[#~alias#]',
+                    '[#~value#]'
                 ), array(
                     $this->getShortAlias($object_alias . $this->getQueryId()),
                     $val
@@ -1211,7 +1211,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 return $output;
             } elseif($where_data_address) {
                 $subj = str_replace(array(
-                    '[#alias#]'
+                    '[#~alias#]'
                 ), array(
                     $this->getShortAlias($object_alias . $this->getQueryId())
                 ), $where_data_address);
@@ -1219,7 +1219,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 // Determine, what we are going to compare to the value: a subquery or a column
                 if ($this->checkForSqlStatement($attr->getDataAddress())) {
                     $subj = str_replace(array(
-                        '[#alias#]'
+                        '[#~alias#]'
                     ), array(
                         $this->getShortAlias($object_alias . $this->getQueryId())
                     ), $select);
@@ -1562,7 +1562,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
 
     /**
      * Appends a custom where statement pattern to the given original where statement.
-     * Replaces the [#alias#] placeholder with the $table_alias if given or the main table alias otherwise
+     * Replaces the [#~alias#] placeholder with the $table_alias if given or the main table alias otherwise
      *
      * @param string $original_where_statement            
      * @param string $custom_statement            
@@ -1572,7 +1572,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      */
     protected function appendCustomWhere($original_where_statement, $custom_statement, $table_alias = null, $operator = 'AND')
     {
-        return $original_where_statement . ($original_where_statement ? ' ' . $operator . ' ' : '') . str_replace('[#alias#]', ($table_alias ? $table_alias : $this->getShortAlias($this->getMainObject()->getAlias())), $custom_statement);
+        return $original_where_statement . ($original_where_statement ? ' ' . $operator . ' ' : '') . str_replace('[#~alias#]', ($table_alias ? $table_alias : $this->getShortAlias($this->getMainObject()->getAlias())), $custom_statement);
     }
     
     /**

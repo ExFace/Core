@@ -30,8 +30,8 @@ use exface\Core\Interfaces\Model\AggregatorInterface;
  * direct selects for this object (not if the object's table is joined!). 
  * Usefull for generic tables, where different meta objects are stored and 
  * distinguished by specific keys in a special column. The value of 
- * SQL_SELECT_WHERE should contain the [#alias#] placeholder: e.g. 
- * [#alias#].mycolumn = 'myvalue'.
+ * SQL_SELECT_WHERE should contain the [#~alias#] placeholder: e.g. 
+ * [#~alias#].mycolumn = 'myvalue'.
  * 
  * @see AbstractSqlBuilder
  *
@@ -504,8 +504,8 @@ class OracleSqlBuilder extends AbstractSqlBuilder
                 if ($custom_insert_sql) {
                     // If there is a custom insert SQL for the attribute, use it
                     $values[$row][$column] = str_replace(array(
-                        '[#alias#]',
-                        '[#value#]'
+                        '[#~alias#]',
+                        '[#~value#]'
                     ), array(
                         $this->getMainObject()->getAlias(),
                         $value

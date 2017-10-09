@@ -27,7 +27,7 @@ class SapHanaSqlBuilder extends MySqlBuilder
             if (is_null($select_from)) {
                 $select_from = $qpart->getAttribute()->getRelationPath()->toString() ? $qpart->getAttribute()->getRelationPath()->toString() : $this->getMainObject()->getAlias();
             }
-            $output = str_replace('[#alias#]', $select_from, $qpart->getAttribute()->getDataAddress());
+            $output = str_replace('[#~alias#]', $select_from, $qpart->getAttribute()->getDataAddress());
         } else {
             $output = parent::buildSqlGroupBy($qpart, $select_from);
         }
