@@ -2,9 +2,13 @@
 namespace exface\Core\DataTypes;
 
 use exface\Core\CommonLogic\Constants\SortingDirections;
+use exface\Core\Exceptions\DataTypeValidationError;
 
 class StringDataType extends AbstractDataType
 {
+    private $lengthMin = 0;
+    
+    private $lengthMax = null;
 
     /**
      * Converts a string from under_score (snake_case) to camelCase.
@@ -69,17 +73,19 @@ class StringDataType extends AbstractDataType
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\DataTypes\AbstractDataType::parse()
+     * @see \exface\Core\DataTypes\AbstractDataType::cast()
      */
-    public static function parse($string)
+    public static function cast($string)
     {
         if (is_scalar($string)){
-            return $string;
+            $result = $string;
         } elseif (is_array($string)){
-            return implode(EXF_LIST_SEPARATOR, $string);
+            $result = implode(EXF_LIST_SEPARATOR, $string);
         } else {
-            return '';
+            $result =  '';
         }
+        
+        return $result;
     }
     
     /**
@@ -91,5 +97,41 @@ class StringDataType extends AbstractDataType
     {
         return SortingDirections::ASC();
     }
+    /**
+     * @return integer
+     */
+    public function getLengtMin()
+    {
+        return $this->lengthin;
+    }
+
+    /**
+     * @param integer $number
+     * @return StringDataType
+     */
+    public function setLengthMin($number)
+    {
+        $this->lengthin = $number;
+        return $this;
+    }
+
+    /**
+     * @return integer
+     */
+    public function getLengthMax()
+    {
+        return $this->lengthMax;
+    }
+
+    /**
+     * @param integer $number
+     * @return StringDataType
+     */
+    public function setLengthMax($number)
+    {
+        $this->lengthMax = $number;
+        return $this;
+    }
+
 }
 ?>

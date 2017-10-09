@@ -226,10 +226,13 @@ class ComboTable extends InputCombo implements iHaveChildren
                 // If the table already has a lable column, use it
                 $this->setTextColumnId($text_column->getId());
             } else {
-                // If there is no label column yet, add it, but make it hidden, because the regular columns are what the user actually
-                // wants to see - they will probably already contain the label data, but, perhaps, split into multiple columns.
+                // If there is no label column yet, add it...
                 $text_column = $table->createColumnFromAttribute($table_meta_object->getAttribute($this->getTextAttributeAlias()));
-                $text_column->setHidden(true);
+                // ...but make it hidden if there are other columns there, because the regular columns are what the user actually
+                // wants to see - they will probably already contain the label data, but, perhaps, split into multiple columns.
+                if ($table->hasColumns()){
+                    $text_column->setHidden(true);
+                }
                 $table->addColumn($text_column);
                 $this->setTextColumnId($text_column->getId());
             }

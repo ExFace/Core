@@ -56,6 +56,13 @@
             "hidden": false,
             "data_type": "exface.Core.Relation",
             "attribute_alias": "OBJECT"
+        },
+        {
+            "expression": "APP",
+            "name": "APP",
+            "hidden": false,
+            "data_type": "exface.Core.Relation",
+            "attribute_alias": "APP"
         }
     ],
     "rows": [
@@ -67,7 +74,8 @@
             "UID": "0x11e60ad972bdb21689840050568905af",
             "BEHAVIOR": "exface\/Core\/Behaviors\/TimeStampingBehavior.php",
             "CONFIG_UXON": "{\"created_on_attribute_alias\":\"CREATED_ON\",\"updated_on_attribute_alias\":\"MODIFIED_ON\"}",
-            "OBJECT": "0x32370000000000000000000000000000"
+            "OBJECT": "0x32370000000000000000000000000000",
+            "APP": "0x31000000000000000000000000000000"
         },
         {
             "CREATED_ON": "2017-06-05 06:43:28",
@@ -77,37 +85,8 @@
             "UID": "0x11e749ba34408e51b797e4b318306b9a",
             "BEHAVIOR": "exface\/Core\/Behaviors\/CacheClearingBehavior.php",
             "CONFIG_UXON": "{}",
-            "OBJECT": "0x32370000000000000000000000000000"
-        },
-        {
-            "CREATED_ON": "2017-09-27 14:44:56",
-            "MODIFIED_ON": "2017-09-28 07:38:51",
-            "CREATED_BY_USER": "0x11e7a1cdce842573b8e974e5434dc47d",
-            "MODIFIED_BY_USER": "0x11e7a1cdce842573b8e974e5434dc47d",
-            "UID": "0x11e7a3926de90b2d89ec74e5434dc47d",
-            "BEHAVIOR": "exface\/Core\/Behaviors\/CallActionBehavior.php",
-            "CONFIG_UXON": "{\"object_event_alias\":\"DataSheet.CreateData.After\",\"action\":{\"alias\":\"exface.ModxCmsConnector.ModxUserSave\"}}",
-            "OBJECT": "0x31343400000000000000000000000000"
-        },
-        {
-            "CREATED_ON": "2017-09-27 16:07:59",
-            "MODIFIED_ON": "2017-09-28 07:39:02",
-            "CREATED_BY_USER": "0x11e7a1cdce842573b8e974e5434dc47d",
-            "MODIFIED_BY_USER": "0x11e7a1cdce842573b8e974e5434dc47d",
-            "UID": "0x11e7a39e08454b8b89ec74e5434dc47d",
-            "BEHAVIOR": "exface\/Core\/Behaviors\/CallActionBehavior.php",
-            "CONFIG_UXON": "{\"object_event_alias\":\"DataSheet.UpdateData.Before\",\"action\":{\"alias\":\"exface.ModxCmsConnector.ModxUserSave\"}}",
-            "OBJECT": "0x31343400000000000000000000000000"
-        },
-        {
-            "CREATED_ON": "2017-09-27 16:09:10",
-            "MODIFIED_ON": "2017-09-28 09:28:36",
-            "CREATED_BY_USER": "0x11e7a1cdce842573b8e974e5434dc47d",
-            "MODIFIED_BY_USER": "0x11e7a1cdce842573b8e974e5434dc47d",
-            "UID": "0x11e7a39e328f724289ec74e5434dc47d",
-            "BEHAVIOR": "exface\/Core\/Behaviors\/CallActionBehavior.php",
-            "CONFIG_UXON": "{\"object_event_alias\":\"DataSheet.DeleteData.Before\",\"action\":{\"alias\":\"exface.ModxCmsConnector.ModxUserDelete\"}}",
-            "OBJECT": "0x31343400000000000000000000000000"
+            "OBJECT": "0x32370000000000000000000000000000",
+            "APP": "0x31000000000000000000000000000000"
         }
     ],
     "totals_rows": [],
@@ -115,7 +94,7 @@
         "operator": "AND",
         "conditions": [
             {
-                "expression": "OBJECT__APP",
+                "expression": "APP",
                 "comparator": "=",
                 "value": "0x31000000000000000000000000000000",
                 "object_alias": "exface.Core.OBJECT_BEHAVIORS"

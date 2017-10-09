@@ -7,7 +7,7 @@ use exface\Core\CommonLogic\Constants\SortingDirections;
 class NumberDataType extends AbstractDataType
 {
 
-    public static function parse($string)
+    public static function cast($string)
     {
         if (is_numeric($string)) {
             // Decimal numbers

@@ -194,7 +194,7 @@ else {
 
     public function setDisableEditing($value)
     {
-        $this->disable_editing = BooleanDataType::parse($value);
+        $this->disable_editing = BooleanDataType::cast($value);
         return $this;
     }
 }

@@ -171,7 +171,7 @@ class SqlModelLoader implements ModelLoaderInterface
                          * $object->getAttributes()->add($label_attribute);
                          * }
                          */
-                        if ($row['attribute_alias'] != $object->getModel()->getWorkbench()->getConfig()->getOption('METAMODEL.OBJECT_LABEL_ALIAS')) {
+                        if ($row['attribute_alias'] != $object->getWorkbench()->getConfig()->getOption('METAMODEL.OBJECT_LABEL_ALIAS')) {
                             $label_attribute = $row;
                             $label_attribute['attribute_alias'] = $object->getModel()->getWorkbench()->getConfig()->getOption('METAMODEL.OBJECT_LABEL_ALIAS');
                             $label_attribute['attribute_hidden_flag'] = '1';

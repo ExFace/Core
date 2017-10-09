@@ -9,7 +9,7 @@ class NumberValue extends \exface\Core\CommonLogic\Model\Formula
     function run($string)
     {
         try {
-            $number = NumberDataType::parse($string);
+            $number = NumberDataType::cast($string);
         } catch (\exface\Core\Exceptions\DataTypeValidationError $e) {
             return '';
         }

@@ -504,7 +504,7 @@ class ShowWidget extends AbstractAction implements iShowWidget
      */
     public function setDoNotPrefill($value)
     {
-        $value = BooleanDataType::parse($value) ? false : true;
+        $value = BooleanDataType::cast($value) ? false : true;
         $this->setPrefillWithFilterContext($value);
         $this->setPrefillWithInputData($value);
         return $this;

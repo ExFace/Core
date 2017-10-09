@@ -13,6 +13,7 @@ use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 use exface\Core\Interfaces\Model\MetaRelationInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
+use exface\Core\DataTypes\BooleanDataType;
 
 /**
  * 
@@ -198,7 +199,7 @@ class Attribute implements MetaAttributeInterface
 
     public function setEditable($value)
     {
-        $this->editable = $value;
+        $this->editable = BooleanDataType::cast($value);
     }
 
     /**
@@ -226,7 +227,7 @@ class Attribute implements MetaAttributeInterface
 
     public function setHidden($value)
     {
-        $this->hidden = $value;
+        $this->hidden = BooleanDataType::cast($value);
     }
 
     public function getName()
@@ -246,7 +247,7 @@ class Attribute implements MetaAttributeInterface
 
     public function setRequired($value)
     {
-        $this->required = $value;
+        $this->required = BooleanDataType::cast($value);
     }
 
     public function getDataAddress()
@@ -639,7 +640,7 @@ class Attribute implements MetaAttributeInterface
      */
     public function setSystem($value)
     {
-        $this->system = \exface\Core\DataTypes\BooleanDataType::parse($value);
+        $this->system = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;
     }
 
@@ -688,7 +689,7 @@ class Attribute implements MetaAttributeInterface
      */
     public function setSortable($value)
     {
-        $this->sortable = \exface\Core\DataTypes\BooleanDataType::parse($value);
+        $this->sortable = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;
     }
 
@@ -708,7 +709,7 @@ class Attribute implements MetaAttributeInterface
      */
     public function setFilterable($value)
     {
-        $this->filterable = \exface\Core\DataTypes\BooleanDataType::parse($value);
+        $this->filterable = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;
     }
 
@@ -728,7 +729,7 @@ class Attribute implements MetaAttributeInterface
      */
     public function setAggregatable($value)
     {
-        $this->aggregatable = \exface\Core\DataTypes\BooleanDataType::parse($value);
+        $this->aggregatable = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;
     }
     

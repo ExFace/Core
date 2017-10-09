@@ -170,7 +170,7 @@ class DataSheet implements DataSheetInterface
         } else {
             throw new DataSheetJoinError($this, 'Cannot join data sheets, if only one key column specified!', '6T5V0GU');
         }
-        return true;
+        return $this;
     }
 
     /**
@@ -307,6 +307,7 @@ class DataSheet implements DataSheetInterface
         
         // Set the cell valu in the data matrix
         $this->rows[$row_number][$column_name] = $value;
+        return $this;
     }
 
     /**
@@ -420,6 +421,7 @@ class DataSheet implements DataSheetInterface
                 }
             }
         }
+        return $this;
     }
 
     /**
@@ -1056,6 +1058,7 @@ class DataSheet implements DataSheetInterface
             $value = $value_list;
         }
         $this->addFilterFromString($column, $value, EXF_COMPARATOR_IN);
+        return $this;
     }
 
     /**
@@ -1079,6 +1082,7 @@ class DataSheet implements DataSheetInterface
             $value = $value_list;
         }
         $this->addFilterFromString($column, $value, EXF_COMPARATOR_IN);
+        return $this;
     }
 
     /**
@@ -1108,6 +1112,7 @@ class DataSheet implements DataSheetInterface
     function setCounterRowsAll($count)
     {
         $this->total_row_count = intval($count);
+        return $this;
     }
 
     /**
@@ -1312,6 +1317,7 @@ class DataSheet implements DataSheetInterface
     public function setFilters(ConditionGroup $condition_group)
     {
         $this->filters = $condition_group;
+        return $this;
     }
 
     /**

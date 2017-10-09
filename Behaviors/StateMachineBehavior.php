@@ -504,7 +504,7 @@ class StateMachineBehavior extends AbstractBehavior
      */
     public function setUsePercentualColorMap($true_or_false)
     {
-        $this->use_percentual_color_map = BooleanDataType::parse($true_or_false);
+        $this->use_percentual_color_map = BooleanDataType::cast($true_or_false);
         return $this;
     }
     

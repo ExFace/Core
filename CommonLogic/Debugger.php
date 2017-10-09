@@ -72,7 +72,7 @@ HTML;
      */
     public function setPrettifyErrors($value)
     {
-        $this->prettify_errors = \exface\Core\DataTypes\BooleanDataType::parse($value);
+        $this->prettify_errors = \exface\Core\DataTypes\BooleanDataType::cast($value);
         if ($this->prettify_errors) {
             $this->registerHandler();
         }

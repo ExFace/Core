@@ -8,7 +8,7 @@ use exface\Core\CommonLogic\Constants\SortingDirections;
 class DateDataType extends AbstractDataType
 {
 
-    public static function parse($string)
+    public static function cast($string)
     {
         $string = trim($string);
         

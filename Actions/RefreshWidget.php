@@ -37,7 +37,7 @@ class RefreshWidget extends ReadData implements iRefreshInputWidget
      */
     public function setResetPagination($true_or_false)
     {
-        $this->reset_pagination = BooleanDataType::parse($true_or_false);
+        $this->reset_pagination = BooleanDataType::cast($true_or_false);
         return $this;
     }
 }

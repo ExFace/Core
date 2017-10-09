@@ -83,11 +83,21 @@ abstract class AbstractDataType implements DataTypeInterface
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\Interfaces\Model\DataTypeInterface::parse()
+     * @see \exface\Core\Interfaces\Model\DataTypeInterface::cast()
      */
-    public static function parse($string)
+    public static function cast($string)
     {
         return $string;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\DataTypeInterface::parse()
+     */
+    public function parse($string)
+    {
+        return static::cast($string);
     }
 
     /**
@@ -99,7 +109,7 @@ abstract class AbstractDataType implements DataTypeInterface
     public static function validate($string)
     {
         try {
-            static::parse($string);
+            static::cast($string);
         } catch (DataTypeValidationError $e) {
             return false;
         }
