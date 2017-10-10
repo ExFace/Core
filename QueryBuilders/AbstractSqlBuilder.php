@@ -1604,9 +1604,13 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             $ph_attribute_alias = RelationPath::relationPathAdd($prefix, $ph);
             if (! $qpart = $this->getAttribute($ph_attribute_alias)) {
                 try {
-                    $qpart = $this->addAttribute($ph_attribute_alias);
+                    $qpart = new QueryPartSelect($ph_attribute_alias, $this);
                 } catch (MetaAttributeNotFoundError $e){
-                    throw new QueryBuilderException('Cannot use placeholder [#' . $ph . '#] in data address "' . $original_data_address . '": no matching attribute found for query base object ' . $this->getMainObject()->getAliasWithNamespace() . '!', null, $e);
+                    throw new QueryBuilderException('Cannot use placeholder [#' . $ph . '#] in data address "' . $original_data_address . '": no attribute "' . $ph_attribute_alias . '" found for query base object ' . $this->getMainObject()->getAliasWithNamespace() . '!', null, $e);
+                }
+                
+                if (count($qpart->getUsedRelations()) > 0){
+                    throw new QueryBuilderException('Cannot use placeholder [#' . $ph . '#] in data address "' . $original_data_address . '": placeholders for related attributes currently not supported in SQL query builders unless all required attributes are explicitly selected in the query too.');
                 }
             }
             $data_address = str_replace('[#' . $ph . '#]', $this->buildSqlSelect($qpart, $select_from, null, false), $data_address);
