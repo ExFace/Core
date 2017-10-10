@@ -108,7 +108,8 @@ abstract class AbstractQueryBuilder
     /**
      * Adds an attribute to be fetched by the query
      *
-     * @param string $attribute_alias            
+     * @param string $attribute_alias 
+     * @return QueryPartAttribute           
      */
     public function addAttribute($alias)
     {

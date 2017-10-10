@@ -28,15 +28,15 @@ class Input extends Text implements iTakeInput, iHaveDefaultValue
     }
 
     /**
+     * Input widgets are considered as required if they are explicitly marked as such or if the represent a meta attribute,
+     * that is a required one.
+     *              
+     * IDEA It's not quite clear, if automatically marking an input as required depending on it's attribute being required,
+     * is a good idea. This works well for forms creating objects, but what if the form is used for something else? If there
+     * will be problems with this feature, the alternative would be making the EditObjectAction loop through it's widgets
+     * and set the required flag depending on attribute setting.
      *
-     * {@inheritdoc} Input widgets are considered as required if they are explicitly marked as such or if the represent a meta attribute,
-     *               that is a required one.
-     *              
-     *               IDEA It's not quite clear, if automatically marking an input as required depending on it's attribute being required,
-     *               is a good idea. This works well for forms creating objects, but what if the form is used for something else? If there
-     *               will be problems with this feature, the alternative would be making the EditObjectAction loop through it's widgets
-     *               and set the required flag depending on attribute setting.
-     *              
+     * {@inheritdoc}
      * @see \exface\Core\Interfaces\Widgets\iTakeInput::isRequired()
      */
     public function isRequired()
@@ -81,11 +81,30 @@ class Input extends Text implements iTakeInput, iHaveDefaultValue
         }
         return $disabled;
     }
+    
+    /**
+     * Set to TRUE to make the input inactive, while still being regarded as action input.
+     * 
+     * Input widgets are automatically disabled if they display a non-editable attribute.
+     * 
+     * The following states of input widgets are available:
+     * - display_only = true - active (user can interact with the widget), but not considered as input for actions
+     * - disabled = true - inactive (user cannot interact with the widget), but considered as input for action
+     * - readonly = true - inactive and not considered as action input (same as display_only + disabled)
+     * 
+     * If a widget is readonly, will also get display-only and disabled automatically.
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\AbstractWidget::setDisabled()
+     */
+    public function setDisabled($value)
+    {
+        return parent::setDisabled($value);
+    }
 
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\Widgets\iTakeInput::isReadonly()
      */
     public function isReadonly()
@@ -94,9 +113,16 @@ class Input extends Text implements iTakeInput, iHaveDefaultValue
     }
 
     /**
-     *
+     * Set to TRUE to make the widget inactive and ignored by actions - FALSE by default.
+     * 
+     * The following states of input widgets are available:
+     * - display_only = true - active (user can interact with the widget), but not considered as input for actions
+     * - disabled = true - inactive (user cannot interact with the widget), but considered as input for action
+     * - readonly = true - inactive and not considered as action input (same as display_only + disabled)
+     * 
+     * If a widget is readonly, will also get display-only and disabled automatically.
+     * 
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\Widgets\iTakeInput::setReadonly()
      */
     public function setReadonly($value)
@@ -182,7 +208,6 @@ class Input extends Text implements iTakeInput, iHaveDefaultValue
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\Widgets\iTakeInput::isDisplayOnly()
      */
     public function isDisplayOnly()
@@ -194,9 +219,18 @@ class Input extends Text implements iTakeInput, iHaveDefaultValue
     }
 
     /**
-     *
-     * {@inheritdoc}
-     *
+     * Makes the widget display-only if set to TRUE (= interactive, but being ignored by most actions) - FALSE by default.
+     * 
+     * The following states of input widgets are available:
+     * - display_only = true - active (user can interact with the widget), but not considered as input for actions
+     * - disabled = true - inactive (user cannot interact with the widget), but considered as input for action
+     * - readonly = true - inactive and not considered as action input (same as display_only + disabled)
+     * 
+     * If a widget is readonly, will also get display-only and disabled automatically.
+     * 
+     * @uxon-property display_only
+     * @uxon-type boolean
+     * 
      * @see \exface\Core\Interfaces\Widgets\iTakeInput::setDisplayOnly()
      */
     public function setDisplayOnly($value)
