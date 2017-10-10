@@ -1603,13 +1603,18 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         foreach ($this->getWorkbench()->utils()->findPlaceholdersInString($data_address) as $ph) {
             $ph_attribute_alias = RelationPath::relationPathAdd($prefix, $ph);
             if (! $qpart = $this->getAttribute($ph_attribute_alias)) {
+                // Throw an error if the attribute cannot be resolved relative to the main object of the query
                 try {
                     $qpart = new QueryPartSelect($ph_attribute_alias, $this);
                 } catch (MetaAttributeNotFoundError $e){
                     throw new QueryBuilderException('Cannot use placeholder [#' . $ph . '#] in data address "' . $original_data_address . '": no attribute "' . $ph_attribute_alias . '" found for query base object ' . $this->getMainObject()->getAliasWithNamespace() . '!', null, $e);
                 }
-                
-                if (count($qpart->getUsedRelations()) > 0){
+                // Throw an error if the placeholder contains a relation path (relative to the object of the
+                // attribute, where it was used.
+                // TODO it would be really cool to support relations in placeholders, but how to add corresponding
+                // joins? An attempt was made in feature/sql-placeholders-with-relation, but without ultimate success.
+                // Alternatively we could add the query parts to the query and restart it's generation...
+                if (! $relation_path->getEndObject()->getAttribute($ph)->getRelationPath()->isEmpty()){
                     throw new QueryBuilderException('Cannot use placeholder [#' . $ph . '#] in data address "' . $original_data_address . '": placeholders for related attributes currently not supported in SQL query builders unless all required attributes are explicitly selected in the query too.');
                 }
             }
