@@ -190,19 +190,19 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
      * 
      * TODO create a separate DataRowGroup-widget
      *
-     * @param UxonObject $uxon_description_object            
+     * @param UxonObject $uxon            
      * @return DataTable
      */
-    public function setGroupRows(UxonObject $uxon_description_object)
+    public function setGroupRows(UxonObject $uxon)
     {
-        if (isset($uxon_description_object->group_by_column_id))
-            $this->setRowGroupsByColumnId($uxon_description_object->group_by_column_id);
-        if (isset($uxon_description_object->expand))
-            $this->setRowGroupsExpand($uxon_description_object->expand);
-        if (isset($uxon_description_object->show_count))
-            $this->setRowGroupsShowCount($uxon_description_object->show_count);
-        if (isset($uxon_description_object->action_alias))
-            $this->setRowDetailsAction($uxon_description_object->action_alias);
+        if ($uxon->hasProperty('group_by_column_id'))
+            $this->setRowGroupsByColumnId($uxon->getProperty('group_by_column_id'));
+        if ($uxon->hasProperty('expand'))
+            $this->setRowGroupsExpand($uxon->getProperty('expand'));
+        if ($uxon->hasProperty('show_count'))
+            $this->setRowGroupsShowCount($uxon->getProperty('show_count'));
+        if ($uxon->hasProperty('action_alias'))
+            $this->setRowDetailsAction($uxon->getProperty('action_alias'));
         return $this;
     }
 

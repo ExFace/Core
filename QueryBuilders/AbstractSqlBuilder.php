@@ -26,6 +26,7 @@ use exface\Core\CommonLogic\QueryBuilder\QueryPart;
 use exface\Core\Interfaces\Model\AggregatorInterface;
 use exface\Core\CommonLogic\Constants\AggregatorFunctions;
 use exface\Core\CommonLogic\Model\Aggregator;
+use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 
 /**
  * A query builder for generic SQL syntax.
@@ -41,15 +42,31 @@ use exface\Core\CommonLogic\Model\Aggregator;
  * 
  * The data address of an attribute stored in an SQL database can be a column
  * name or any SQL usable in the SELECT clause. Custom SQL should be enclosed
- * in regular brackets "()" to ensure it is correctly distinguished from column
- * names. Within the data address the placeholder [#~alias#] can be used to 
- * represent the alias of the current object. THis is especially usefull to
- * prevent table alias collisions in custom subselect: 
+ * in regular braces "()" to ensure it is correctly distinguished from column
+ * names. 
+ * 
+ * Placeholders can be used within these custom data addresses. On object level
+ * the [#~alias#] placehloder will be replaced by the alias of the current object. 
+ * This is especially usefull to prevent table alias collisions in custom 
+ * subselects:
  * 
  * "(SELECT mt_[#~alias#].my_column FROM my_table mt_[#~alias#] WHERE ... )"
  * 
  * This way you can control which uses of my_table are unique within the
  * generated SQL.
+ * 
+ * On attribute level any other attribute alias can be used as placeholder
+ * additionally to [#~alias#]. Thus, attribute addresses can be reused. This
+ * is handy if an attribute builds upon other attributes. E.g. a precentage
+ * would be an attribute being calculated from two other attributes. This can
+ * easily be done via attribute placeholders in it's data address: 
+ * 
+ * "([#RELATION_TO_OBJECT1__ATTRIBUTE1#]/[#RELATION_TO_OBJECT2__ATTRIBUTE2#])"
+ * 
+ * You can even use relation paths here! It will even work if the placeholders
+ * point to attributes, that are based on custom SQL statements themselves.
+ * Just keep in mind, that these expressions may easily become complex and
+ * kill query performance if used uncarefully.
  * 
  * # Data source options
  * =====================
@@ -62,30 +79,50 @@ use exface\Core\CommonLogic\Model\Aggregator;
  * LOB, etc. Refer to the description of the specific query builder for concrete
  * usage instructions.
  * 
- * - **SQL_SELECT** - custom SQL statement for the value in a SELECT statement.
- * The placeholders [#~alias#] and [#~value#] are supported. This is usefull to
- * write wrappers for values (e.g. "NVL('[#~value#]', 0)". If the wrapper is
- * placed here, it data address would remain writable, while replacing the
- * column name with a custom SQL statement in the data address itself, would
- * cause an error when writing to it.
+ * - **SQL_SELECT** - custom SQL SELECT statement. It replaces the entire select
+ * generator and will be used as-is except for replacing placeholders. The
+ * placeholder [#~alias#] is supported as well as placeholders for other attributes. 
+ * This is usefull to write wrappers for columns (e.g. "NVL([#~value#].MY_COLUMN, 0)". 
+ * If the wrapper is placed here, the data address would remain writable, while 
+ * replacing the column name with a custom SQL statement in the data address itself, 
+ * would cause an SQL error when writing to it (unless SQL_UPDATE and SQL_INSERT
+ * are used, of course). Note, that since this is a complete replacement, the
+ * table to select from must be specified manually or via [#~alias#] placeholder.
  * 
- * - **SQL_SELECT_DATA_ADDRESS** - replaces the data address for SELECT queries
+ * - **SQL_SELECT_DATA_ADDRESS** - replaces the data address for SELECT queries.
+ * In contrast to SQL_SELECT, this property will be processed by the generator
+ * just like a data address would be (including all placeholders). In particular,
+ * the table alias will be generated automatically, while in SQL_SELECT it
+ * must be defined by the user.
  * 
- * - **SQL_INSERT** - custom SQL statement for the value in an INSERT statement.
- * The placeholders [#~alias#] and [#~value#] are supported. This is usefull to
- * write wrappers for values (e.g. "to_clob('[#~value#]')" to save a string value 
- * to an Oracle CLOB column) or generators (e.g. you could use "UUID()" in MySQL 
- * to have a column always created with a UUID). If you need to use a generator
- * only if no value is given explicitly, use something like this: 
- * IF([#~value#]!='', [#~value#], UUID())
+ * - **SQL_INSERT** - custom SQL INSERT statement used instead of the generator.
+ * The placeholders [#~alias#] and [#~value#] are supported in addition to 
+ * attribute placeholders. This is usefull to write wrappers for values 
+ * (e.g. "to_clob('[#~value#]')" to save a string value to an Oracle CLOB column) 
+ * or generators (e.g. you could use "UUID()" in MySQL to have a column always created 
+ * with a UUID). If you need to use a generator only if no value is given explicitly, 
+ * use something like this: IF([#~value#]!='', [#~value#], UUID()).
  * 
- * - **SQL_INSERT_DATA_ADDRESS** - replaces the data address for INSERT queries
+ * - **SQL_UPDATE** - custom SQL for UPDATE statement. It replaces the generator
+ * completely and must include the data address and the value. In contrast to
+ * this, using SQL_UPDATE_DATA_ADDRESS will only replace the data address, while
+ * the value will be generated automatically. SQL_UPDATE supports the placeholders
+ * [#~alias#] and [#~value#] in addition to placeholders for other attributes.
+ * The SQL_UPDATE property is usefull to write wrappers for values (e.g. 
+ * "to_clob('[#~value#]')" to save a string value to an Oracle CLOB column) or 
+ * generators (e.g. you could use "NOW()" in MySQL to have a column always updated 
+ * with the current date). If you need to use a generator only if no value is given 
+ * explicitly, use something like this: IF([#~value#]!='', [#~value#], UUID()).
  * 
- * - **SQL_UPDATE** - custom SQL statement for the value in an UPDATE statement.
- * Works similarly to SQL_INSERT.
+ * - **SQL_UPDATE_DATA_ADDRESS** - replaces the data address for UPDATE queries.
+ * In contrast to SQL_UPDATE, the value will be added automatically via generator.
+ * SQL_UPDATE_DATA_ADDRESS supports the placeholder [#~alias#] only!
  * 
- * - **SQL_UPDATE_DATA_ADDRESS** - replaces the data address for INSERT queries.
- * Supports the placeholder [#~alias#]
+ * - **SQL_WHERE_DATA_ADDRESS** - replaces the data address in the WHERE clause.
+ * The comparator and the value will added automatically be the generator. 
+ * Supports the [#~alias#] placeholder in addition to placeholders for other
+ * attributes. This is usefull to write wrappers to be used in filters: e.g.
+ * "NVL([#~alias#].MY_COLUMN, 10)" to change comparing behavior of NULL values.
  *
  * @author Andrej Kabachnik
  *        
@@ -294,16 +331,11 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                     // via setValues() - they will always be replaced by the 
                     // custom SQL. To allow explicitly set values too, the
                     // INSERT_SQL must include something like IF('[#~value#]'!=''...)
-                    $values[$row][$attr->getDataAddress()] = str_replace(array(
-                        '[#~alias#]',
-                        '[#~value#]'
-                    ), array(
-                        $this->getMainObject()->getAlias(),
-                        $value
-                    ), $custom_insert_sql);
+                    $insert_sql = $this->replacePlaceholdersInSqlAddress($custom_insert_sql, null, ['~alias' => $this->getMainObject()->getAlias(), '~value' => $value], $this->getMainObject()->getAlias());
                 } else {
-                    $values[$row][$attr->getDataAddress()] = $value;
+                    $insert_sql = $value;
                 }
+                $values[$row][$attr->getDataAddress()] = $insert_sql;
             }
         }
         
@@ -412,7 +444,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         }
         
         // Attributes -> SET
-        
+        $table_alias = $this->getShortAlias($this->getMainObject()->getAlias());
         // Array of SET statements for the single-value-query which updates all rows matching the given filters
         // [ 'data_address = value' ]
         $updates_by_filter = array();
@@ -428,15 +460,15 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 continue;
             }
             
-            // Ignore attributes, that do not reference an sql column (= do not have a data address at all)
-            if (!$qpart->getDataAddressProperty('SQL_UPDATE') && $this->checkForSqlStatement($attr->getDataAddress())) {
+            // Ignore attributes, that do not reference an sql column (or do not have a data address at all)
+            if (! $qpart->getDataAddressProperty('SQL_UPDATE') && ! $qpart->getDataAddressProperty('SQL_UPDATE_DATA_ADDRESS') && $this->checkForSqlStatement($attr->getDataAddress())) {
                 continue;
             }
             
             if ($qpart->getDataAddressProperty('SQL_UPDATE_DATA_ADDRESS')){
-                $column = str_replace('[#~alias#]', $this->getShortAlias($this->getMainObject()->getAlias()), $qpart->getDataAddressProperty('SQL_UPDATE_DATA_ADDRESS'));
+                $column = str_replace('[#~alias#]', $table_alias, $qpart->getDataAddressProperty('SQL_UPDATE_DATA_ADDRESS'));
             } else {
-                $column = $this->getShortAlias($this->getMainObject()->getAlias()) . '.' . $attr->getDataAddress();
+                $column = $table_alias . '.' . $attr->getDataAddress();
             }
             
             $custom_update_sql = $qpart->getDataAddressProperty('SQL_UPDATE');
@@ -447,7 +479,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 if ($custom_update_sql) {
                     // If there is a custom update SQL for the attribute, use it ONLY if there is no value
                     // Otherwise there would not be any possibility to save explicit values
-                    $updates_by_filter[]= $column . ' = ' . $this->buildSqlUpdateCustomValue($custom_update_sql, $this->getShortAlias($this->getMainObject()->getAlias()), $value);
+                    $updates_by_filter[]= $column . ' = ' . $this->replacePlaceholdersInSqlAddress($custom_update_sql, null, ['~alias' => $table_alias, '~value' => $value], $table_alias);
                 } else {
                     $updates_by_filter[] = $column . ' = ' . $value;
                 }
@@ -463,7 +495,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                     if ($custom_update_sql) {
                         // If there is a custom update SQL for the attribute, use it ONLY if there is no value
                         // Otherwise there would not be any possibility to save explicit values
-                        $updates_by_uid[$qpart->getUids()[$row_nr]][$column] = $column . ' = ' . $this->buildSqlUpdateCustomValue($custom_update_sql, $this->getShortAlias($this->getMainObject()->getAlias()), $value);
+                        $updates_by_uid[$qpart->getUids()[$row_nr]][$column] = $column . ' = ' . $this->replacePlaceholdersInSqlAddress($custom_update_sql, null, ['~alias' => $table_alias, '~value' => $value], $table_alias);
                     } else {
                         /*
                          * IDEA In earlier versions multi-value-updates generated a single query with a CASE statement for each attribute.
@@ -502,16 +534,6 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         }
         
         return $affected_rows;
-    }
-    
-    public function buildSqlUpdateCustomValue($statement, $table_alias, $value){
-        return str_replace(array(
-            '[#~alias#]',
-            '[#~value#]'
-        ), array(
-            $table_alias,
-            $value
-        ), $statement);
     }
 
     /**
@@ -720,14 +742,10 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 $output = $select_from . '.' . $select_column;
             } elseif ($this->checkForSqlStatement($attribute->getDataAddress())) {
                 // see if the attribute is a statement. If so, just replace placeholders
-                $output = '(' . str_replace(array(
-                    '[#~alias#]'
-                ), $select_from, $attribute->getDataAddress()) . ')';
+                $output = $this->replacePlaceholdersInSqlAddress($attribute->getDataAddress(), $qpart->getAttribute()->getRelationPath(), ['~alias' => $select_from], $select_from);
             } elseif ($custom_select = $attribute->getDataAddressProperty('SQL_SELECT')){
                 // IF there is a custom SQL_SELECT statement, use it.
-                $output = '(' . str_replace(array(
-                    '[#~alias#]'
-                ), $select_from, $custom_select) . ')';
+                $output = $this->replacePlaceholdersInSqlAddress($custom_select, $qpart->getAttribute()->getRelationPath(), ['~alias' => $select_from], $select_from);
             } else {
                 // otherwise get the select from the attribute
                 if (! $data_address = $attribute->getDataAddressProperty('SQL_SELECT_DATA_ADDRESS')){
@@ -1042,7 +1060,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         $select = $this->buildSqlSelectGrouped($qpart);
         $where = $qpart->getDataAddressProperty('WHERE');
         $object_alias = ($attr->getRelationPath()->toString() ? $attr->getRelationPath()->toString() : $this->getMainObject()->getAlias());
-        
+        $table_alias = $this->getShortAlias($object_alias . $this->getQueryId());
         // doublecheck that the attribut is known
         if (! ($select || $where) || $val === '') {
             throw new QueryBuilderException('Illegal filter on object "' . $this->getMainObject()->getAlias() . ', expression "' . $qpart->getAlias() . '", Value: "' . $val . '".');
@@ -1052,21 +1070,11 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         // build the having
         if ($where) {
             // check if it has an explicit where clause. If not try to filter based on the select clause
-            $output = str_replace(array(
-                '[#~alias#]',
-                '[#~value#]'
-            ), array(
-                $this->getShortAlias($object_alias . $this->getQueryId()),
-                $val
-            ), $where);
+            $output = $this->replacePlaceholdersInSqlAddress($where, $qpart->getAttribute()->getRelationPath(), ['~alias' => $table_alias, '~value' => $val], $table_alias);
         } else {
             // Determine, what we are going to compare to the value: a subquery or a column
             if ($this->checkForSqlStatement($attr->getDataAddress())) {
-                $subj = str_replace(array(
-                    '[#~alias#]'
-                ), array(
-                    $this->getShortAlias($object_alias . $this->getQueryId()) 
-                ), $select);
+                $subj = $this->replacePlaceholdersInSqlAddress($select, $qpart->getAttribute()->getRelationPath(), ['~alias' => $table_alias], $table_alias);
             } else {
                 $subj = $select;
             }
@@ -1187,6 +1195,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         $where = $qpart->getDataAddressProperty('WHERE');
         $where_data_address = $qpart->getDataAddressProperty('SQL_WHERE_DATA_ADDRESS');
         $object_alias = ($attr->getRelationPath()->toString() ? $attr->getRelationPath()->toString() : $this->getMainObject()->getAlias());
+        $table_alias = $this->getShortAlias($object_alias . $this->getQueryId());
         
         // doublecheck that the attribute is known
         if (! ($select || $where) || $val === '') {
@@ -1201,30 +1210,16 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             // build the where
             if ($where) {
                 // check if it has an explicit where clause. If not try to filter based on the select clause
-                $output = str_replace(array(
-                    '[#~alias#]',
-                    '[#~value#]'
-                ), array(
-                    $this->getShortAlias($object_alias . $this->getQueryId()),
-                    $val
-                ), $where);
+                $output = $this->replacePlaceholdersInSqlAddress($where, $qpart->getAttribute()->getRelationPath(), ['~alias' => $table_alias, '~value' => $val], $table_alias);
                 return $output;
             } elseif($where_data_address) {
-                $subj = str_replace(array(
-                    '[#~alias#]'
-                ), array(
-                    $this->getShortAlias($object_alias . $this->getQueryId())
-                ), $where_data_address);
+                $subj = $this->replacePlaceholdersInSqlAddress($where_data_address, $qpart->getAttribute()->getRelationPath(), ['~alias' => $table_alias], $table_alias);
             } else {
                 // Determine, what we are going to compare to the value: a subquery or a column
                 if ($this->checkForSqlStatement($attr->getDataAddress())) {
-                    $subj = str_replace(array(
-                        '[#~alias#]'
-                    ), array(
-                        $this->getShortAlias($object_alias . $this->getQueryId())
-                    ), $select);
+                    $subj = $this->replacePlaceholdersInSqlAddress($select, $qpart->getAttribute()->getRelationPath(), ['~alias' => $table_alias], $table_alias);
                 } else {
-                    $subj = $this->getShortAlias($object_alias . $this->getQueryId()) . '.' . $select;
+                    $subj = $table_alias . '.' . $select;
                 }
             }
             // Do the actual comparing
@@ -1589,6 +1584,43 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             }
         }
         return $related_to_aggregator;
+    }
+    
+    protected function replacePlaceholdersInSqlAddress($data_address, RelationPath $relation_path = null, array $static_placeholders = null, $select_from = null)
+    {
+        $original_data_address = $data_address;
+        
+        if (! empty($static_placeholders)){
+            $static_phs = array_map(function($ph){return '[#' . $ph . '#]';}, array_keys($static_placeholders));
+            $static_values = array_values($static_placeholders);
+            $data_address = str_replace($static_phs, $static_values, $data_address);
+        }
+        
+        if ($relation_path){
+            $prefix = $relation_path->toString();
+        }
+        
+        foreach ($this->getWorkbench()->utils()->findPlaceholdersInString($data_address) as $ph) {
+            $ph_attribute_alias = RelationPath::relationPathAdd($prefix, $ph);
+            if (! $qpart = $this->getAttribute($ph_attribute_alias)) {
+                // Throw an error if the attribute cannot be resolved relative to the main object of the query
+                try {
+                    $qpart = new QueryPartSelect($ph_attribute_alias, $this);
+                } catch (MetaAttributeNotFoundError $e){
+                    throw new QueryBuilderException('Cannot use placeholder [#' . $ph . '#] in data address "' . $original_data_address . '": no attribute "' . $ph_attribute_alias . '" found for query base object ' . $this->getMainObject()->getAliasWithNamespace() . '!', null, $e);
+                }
+                // Throw an error if the placeholder contains a relation path (relative to the object of the
+                // attribute, where it was used.
+                // TODO it would be really cool to support relations in placeholders, but how to add corresponding
+                // joins? An attempt was made in feature/sql-placeholders-with-relation, but without ultimate success.
+                // Alternatively we could add the query parts to the query and restart it's generation...
+                if (! $relation_path->getEndObject()->getAttribute($ph)->getRelationPath()->isEmpty()){
+                    throw new QueryBuilderException('Cannot use placeholder [#' . $ph . '#] in data address "' . $original_data_address . '": placeholders for related attributes currently not supported in SQL query builders unless all required attributes are explicitly selected in the query too.');
+                }
+            }
+            $data_address = str_replace('[#' . $ph . '#]', $this->buildSqlSelect($qpart, $select_from, null, false), $data_address);
+        }
+        return $data_address;
     }
 }
 ?>
