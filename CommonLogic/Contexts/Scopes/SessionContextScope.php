@@ -254,7 +254,7 @@ class SessionContextScope extends AbstractContextScope
     public function getSessionLocale()
     {
         if (is_null($this->session_locale)) {
-            return $this->getContextManager()->getScopeUser()->getUserLocale();
+            return $this->getContextManager()->getScopeUser()->getUserCurrent()->getLocale();
         }
         return $this->session_locale;
     }
