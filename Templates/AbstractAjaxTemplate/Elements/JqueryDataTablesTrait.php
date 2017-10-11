@@ -94,7 +94,7 @@ HTML;
             $output = <<<JS
 	// Add event listener for opening and closing details
 	$('#{$this->getId()} tbody').on('click', 'td.details-control', function () {
-		var tr = $(this).closest('tr');
+		var tr = $(this).closest('{{$this->buildCssSelectorDataRows()}}');
 		var row = {$this->getId()}_table.row( tr );
 		
 		if ( row.child.isShown() ) {
@@ -333,7 +333,7 @@ JS;
 						"width": "10px",
 						"orderable": false,
 						"data": null,
-						"defaultContent": \'<i class="fa ' . $this->row_details_expand_icon . '"></i>\'
+						"defaultContent": \'<i class="fa ' . $this->getRowDetailsExpandIcon() . '"></i>\'
 					}
 					';
             $column_number_offset ++;
@@ -366,9 +366,9 @@ JS;
         
         // configure pagination
         if ($widget->getPaginate()) {
-            $paging_options = '"pageLength": ' . (!is_null($widget->getPaginatePageSize()) ? $widget->getPaginatePageSize() : $this->getTemplate()->getConfig()->getOption('WIDGET.DATATABLE.PAGE_SIZE')) . ',';
+            $paging_options = ', pageLength: ' . (!is_null($widget->getPaginatePageSize()) ? $widget->getPaginatePageSize() : $this->getTemplate()->getConfig()->getOption('WIDGET.DATATABLE.PAGE_SIZE'));
         } else {
-            $paging_options = '"paging": false,';
+            $paging_options = ', paging: false';
         }
         
         // columns && their footers
@@ -391,43 +391,67 @@ JS;
         
         if ($footer_callback) {
             $footer_callback = '
-				, "footerCallback": function ( row, data, start, end, display ) {
-					var api = this.api(), data;
-                
-		            // Remove the formatting to get integer data for summation
-		            var intVal = function ( i ) {
-		                return typeof i === \'string\' ?
-		                    i.replace(/[\$,]/g, \'\')*1 :
-		                    typeof i === \'number\' ?
-		                        i : 0;
-		            };
-					' . $footer_callback . '
-				}';
+		, "footerCallback": function ( row, data, start, end, display ) {
+			var api = this.api(), data;
+        
+            // Remove the formatting to get integer data for summation
+            var intVal = function ( i ) {
+                return typeof i === \'string\' ?
+                    i.replace(/[\$,]/g, \'\')*1 :
+                    typeof i === \'number\' ?
+                        i : 0;
+            };
+			' . $footer_callback . '
+		}';
         }
         
         if ($widget->getContextMenuEnabled() && $widget->hasButtons()){
             $context_menu_js = $this->buildJsContextMenu();
         }
         
+        if ($widget->hasRowGroups()){
+            if ($widget->getRowGroupsShowCount()){
+                $rowGroupConter = "' ('+rows.count()+')'";
+            } else {
+                $rowGroupConter = "''";
+            }
+            
+            if ($widget->getRowGroupsExpand() == 'all'){
+                // TODO
+            }
+            
+            $rowGroup = <<<JS
+        , "rowGroup": {
+            dataSrc: '{$widget->getRowGroupsByColumnId()}',
+            startRender: function ( rows, group ) {
+                var counter = {$rowGroupConter} ;
+                return $('<tr onclick="{$this->buildJsFunctionPrefix()}RowGroupToggle(this);"/>')
+                    .append( '<td colspan="'+{$this->getId()}_table.columns(':visible').count()+'"><i class="{$this->getRowDetailsCollapseIcon()}"></i> '+group+counter+'</td>' );
+            }
+        }
+JS;
+        }
+        
         return <<<JS
 
     $('#{$this->getId()}').DataTable( {
-		"dom": 't',
-		"deferRender": true,
-		"processing": true,
-		"select": { {$select_options} },
+		"dom": 't'
+		, deferRender: true
+		, processing: true
+		, select: { {$select_options} }
 		{$paging_options}
-		"scrollX": true,
-		"scrollXollapse": true,
-		{$this->buildJsDataSource()}
-		"language": {
-            "zeroRecords": "{$widget->getEmptyText()}"
-        },
-		"columns": [{$columns}],
-		"order": [ {$default_sorters} ],
-		"drawCallback": function(settings, json) {
+		, scrollX: true
+		, scrollXollapse: true
+		, {$this->buildJsDataSource()}
+		language: {
+            zeroRecords: "{$widget->getEmptyText()}"
+        }
+		, columns: [{$columns}]
+		, order: [ {$default_sorters} ]
+        {$rowGroup}
+		, drawCallback: function(settings, json) {
 			$('#{$this->getId()} tbody tr').on('contextmenu', function(e){
-				{$this->getId()}_table.row($(e.target).closest('tr')).select();
+				{$this->getId()}_table.row($(e.target).closest('{$this->buildCssSelectorDataRows()}')).select();
 			});
 			$('#{$this->getId()}').closest('.fitem').trigger('resize');
             {$context_menu_js}
@@ -437,6 +461,7 @@ JS;
 			}
 			{$this->buildJsDisableTextSelection()}
 			{$this->buildJsBusyIconHide()}
+			{$this->getOnLoadSuccess()}
 		}
 		{$footer_callback}
 	} );
@@ -481,19 +506,24 @@ JS;
 
         return <<<JS
 
-	$('#{$this->getId()} tbody').on( 'click', 'tr', function () {
+	$('#{$this->getId()} tbody').on( 'click', '{$this->buildCssSelectorDataRows()}', function () {
 		{$leftclick_script}
     } );
     
-    $('#{$this->getId()} tbody').on( 'dblclick', 'tr', function(e){
+    $('#{$this->getId()} tbody').on( 'dblclick', '{$this->buildCssSelectorDataRows()}', function(e){
 		{$dblclick_script}
 	});
 	
-	$('#{$this->getId()} tbody').on( 'rightclick', 'tr', function(e){
+	$('#{$this->getId()} tbody').on( 'rightclick', '{$this->buildCssSelectorDataRows()}', function(e){
 		{$rightclick_script}
 	});
 
 JS;
+    }
+		
+    protected function buildCssSelectorDataRows()
+    {
+        return 'tr:not(.group)';
     }
     
     /**
@@ -523,6 +553,28 @@ JS;
 	});
 JS;
 		return $output;
+    }
+    
+    protected function buildJsRowGroupFunctions()
+    {
+        if (! $this->getWidget()->hasRowGroups()){
+            return '';
+        }
+        
+        return <<<JS
+
+    function {$this->buildJsFunctionPrefix()}RowGroupToggle(row){
+        var jqRow = $(row);
+        if (jqRow.hasClass('collapsed')){
+            jqRow.removeClass('collapsed').nextUntil('.group').show();
+            jqRow.find('i').removeClass().addClass('{$this->getRowDetailsCollapseIcon()}');
+        } else {
+            jqRow.addClass('collapsed').nextUntil('.group').hide();
+            jqRow.find('i').removeClass().addClass('{$this->getRowDetailsExpandIcon()}');
+        }
+    }
+
+JS;
     }
 }
 ?>
