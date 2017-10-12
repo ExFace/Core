@@ -146,8 +146,11 @@ class UserContextScope extends AbstractContextScope
     }
 
     /**
+     * Returns the Exface user defined by the passed username.
      * 
      * @param string $username
+     * @throws UserNotFoundError
+     * @throws UserNotUniqueError
      * @return User
      */
     public function getUserByName($username)
@@ -174,8 +177,11 @@ class UserContextScope extends AbstractContextScope
     }
 
     /**
+     * Returns the Exface user defined by the passed UID.
      * 
      * @param string $uid
+     * @throws UserNotFoundError
+     * @throws UserNotUniqueError
      * @return User
      */
     public function getUserById($uid)
@@ -202,6 +208,9 @@ class UserContextScope extends AbstractContextScope
     }
 
     /**
+     * Returns the Exface user which is currently logged in in the CMS.
+     * 
+     * If no user is logged in in the CMS, an anonymous user is returned.
      * 
      * @return User
      */
@@ -211,37 +220,47 @@ class UserContextScope extends AbstractContextScope
             if ($this->getWorkbench()->getCMS()->isUserLoggedIn()) {
                 $this->user = $this->getUserByName($this->getWorkbench()->getCMS()->getUserName());
             } else {
-                throw new UserNotFoundError('No logged in Exface user.');
+                // TODO
+                //throw new UserNotFoundError('No logged in Exface user.');
             }
         }
         return $this->user;
     }
 
     /**
+     * Creates the passed Exface user.
      * 
      * @param User $user
+     * @return UserContextScope
      */
     public function createUser(User $user)
     {
         $user->exportDataSheet()->dataCreate();
+        return $this;
     }
 
     /**
+     * Updates the passed Exface user.
      * 
      * @param User $user
+     * @return UserContextScope
      */
     public function updateUser(User $user)
     {
         $user->exportDataSheet()->dataUpdate();
+        return $this;
     }
 
     /**
+     * Deletes the passed Exface user.
      * 
      * @param User $user
+     * @return UserContextScope
      */
     public function deleteUser(User $user)
     {
         $user->exportDataSheet()->dataDelete();
+        return $this;
     }
 }
 ?>
