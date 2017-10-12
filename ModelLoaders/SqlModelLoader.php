@@ -343,20 +343,40 @@ class SqlModelLoader implements ModelLoaderInterface
                 $select_user_credentials = ', uc.data_connector_config AS user_connector_config';
             }
             
-            $sql = '
-				SELECT 
+            // The following IF is needed to install SQL update 8 introducing new columns in the
+            // data source table. If the updated had not yet been installed, these columns are
+            // not selected.
+            // TODO remove the IF leaving only the ELSE after 01.01.2018
+            if ($data_source->getWorkbench()->getConfig()->getOption('INSTALLER.SQL_UPDATE_LAST_PERFORMED_ID' < 8)){
+                $sql = '
+				SELECT
 					ds.custom_query_builder,
-					ds.default_query_builder, 
-					ds.readable_flag AS data_source_readable, 
-					ds.writable_flag AS data_source_writable, 
-					dc.read_only_flag AS connection_read_only, 
-					CONCAT(\'0x\', HEX(dc.oid)) AS data_connection_oid, 
-					dc.name, 
-					dc.data_connector, 
-					dc.data_connector_config, 
-					dc.filter_context_uxon' . $select_user_credentials . ' 
-				FROM exf_data_source ds LEFT JOIN exf_data_connection dc ON ' . $join_on . $join_user_credentials . ' 
+					ds.default_query_builder,
+					dc.read_only_flag AS connection_read_only,
+					CONCAT(\'0x\', HEX(dc.oid)) AS data_connection_oid,
+					dc.name,
+					dc.data_connector,
+					dc.data_connector_config,
+					dc.filter_context_uxon' . $select_user_credentials . '
+				FROM exf_data_source ds LEFT JOIN exf_data_connection dc ON ' . $join_on . $join_user_credentials . '
 				WHERE ds.oid = ' . $data_source->getId();
+            } else {
+                $sql = '
+				SELECT
+					ds.custom_query_builder,
+					ds.default_query_builder,
+					ds.readable_flag AS data_source_readable,
+					ds.writable_flag AS data_source_writable,
+					dc.read_only_flag AS connection_read_only,
+					CONCAT(\'0x\', HEX(dc.oid)) AS data_connection_oid,
+					dc.name,
+					dc.data_connector,
+					dc.data_connector_config,
+					dc.filter_context_uxon' . $select_user_credentials . '
+				FROM exf_data_source ds LEFT JOIN exf_data_connection dc ON ' . $join_on . $join_user_credentials . '
+				WHERE ds.oid = ' . $data_source->getId();
+            }
+            
             $query = $this->getDataConnection()->runSql($sql);
             $ds = $query->getResultArray();
             if (count($ds) > 1) {
