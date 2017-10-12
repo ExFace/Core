@@ -39,6 +39,10 @@ class Attribute implements MetaAttributeInterface
     private $data_type;
 
     private $formatter;
+    
+    private $readable = true;
+    
+    private $writable = null;
 
     private $required = false;
 
@@ -191,7 +195,7 @@ class Attribute implements MetaAttributeInterface
      */
     public function isEditable()
     {
-        if ($this->getObject()->getDataSource()->isReadOnly()) {
+        if (! $this->getObject()->isWritable()) {
             return false;
         }
         return $this->editable;
@@ -238,6 +242,48 @@ class Attribute implements MetaAttributeInterface
     public function setName($value)
     {
         $this->name = $value;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::isReadable()
+     */
+    public function isReadable()
+    {
+        return $this->readable;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setReadable()
+     */
+    public function setReadable($true_or_false)
+    {
+        $this->readable = BooleanDataType::cast($true_or_false);
+        return $this;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::isWritable()
+     */
+    public function isWritable()
+    {
+        return $this->writable;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setWritable()
+     */
+    public function setWritable($true_or_false)
+    {
+        $this->writable = BooleanDataType::cast($true_or_false);
+        return $this;
     }
 
     public function isRequired()

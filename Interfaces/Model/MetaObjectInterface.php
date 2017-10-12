@@ -470,4 +470,42 @@ interface MetaObjectInterface extends ExfaceClassInterface, AliasInterface
      * @return AppInterface
      */
     public function getApp();
+    
+    /**
+     * Returns TRUE if writing operations on the data source of the object are allowed 
+     * and FALSE otherwise (e.g. for a DB view).
+     * 
+     * Note: an object is considered not writable regardless of its own settings
+     * if its data source is not writable.
+     * 
+     * @return boolean
+     */
+    public function isWritable();
+    
+    /**
+     * Marks the object as writable (TRUE) or not (FALSE).
+     * 
+     * @param boolean $true_or_false
+     * @return MetaObjectInterface
+     */
+    public function setWritable($true_or_false);
+    
+    /**
+     * Returns TRUE if reading operations on the data source of the object are allowed
+     * and FALSE otherwise (e.g. for a one-way webservice like sending an SMS).
+     *
+     * Note: an object is considered not readable regardless of its own settings
+     * if its data source is not readable.
+     *
+     * @return boolean
+     */
+    public function isReadable();
+    
+    /**
+     * Marks the object as writable (TRUE) or not (FALSE).
+     *
+     * @param boolean $true_or_false
+     * @return MetaObjectInterface
+     */
+    public function setReadable($true_or_false);
 }

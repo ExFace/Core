@@ -4,6 +4,7 @@ namespace exface\Core\CommonLogic;
 use exface\Core\Interfaces\DataSources\DataSourceInterface;
 use exface\Core\CommonLogic\Model\Model;
 use exface\Core\DataTypes\UxonDataType;
+use exface\Core\DataTypes\BooleanDataType;
 
 class DataSource implements DataSourceInterface
 {
@@ -20,7 +21,9 @@ class DataSource implements DataSourceInterface
 
     private $connection_config = array();
 
-    private $read_only = false;
+    private $readable = true;
+    
+    private $writable = true;
 
     function __construct(Model $model)
     {
@@ -165,26 +168,46 @@ class DataSource implements DataSourceInterface
     }
 
     /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\DataSources\DataSourceInterface::isReadOnly()
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSources\DataSourceInterface::isReadable()
      */
-    public function isReadOnly()
+    public function isReadable()
     {
-        return $this->read_only;
+        return $this->readable;
     }
 
     /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\DataSources\DataSourceInterface::setReadOnly()
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSources\DataSourceInterface::setReadable()
      */
-    public function setReadOnly($value)
+    public function setReadable($true_or_false)
     {
-        $this->read_only = $value;
+        $this->readable = BooleanDataType::cast($true_or_false);
         return $this;
     }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSources\DataSourceInterface::isWritable()
+     */
+    public function isWritable()
+    {
+        return $this->writable;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSources\DataSourceInterface::setWritable()
+     */
+    public function setWritable($true_or_false)
+    {
+        $this->writable = BooleanDataType::cast($true_or_false);
+        return $this;
+    }
+
 }
 ?>
