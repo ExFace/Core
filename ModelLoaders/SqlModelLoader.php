@@ -376,7 +376,6 @@ class SqlModelLoader implements ModelLoaderInterface
 				FROM exf_data_source ds LEFT JOIN exf_data_connection dc ON ' . $join_on . $join_user_credentials . '
 				WHERE ds.oid = ' . $data_source->getId();
             }
-            
             $query = $this->getDataConnection()->runSql($sql);
             $ds = $query->getResultArray();
             if (count($ds) > 1) {
