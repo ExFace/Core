@@ -126,26 +126,6 @@ class UserContextScope extends AbstractContextScope
     }
 
     /**
-     * Returns TRUE if the user currently logged in is an administrator and FALSE otherwise.
-     * 
-     * @return boolean
-     */
-    public function isUserAdmin()
-    {
-        return $this->getWorkbench()->getCMS()->isUserAdmin();
-    }
-
-    /**
-     * Returns TRUE if no named user is logged in and FALSE otherwise.
-     * 
-     * @return boolean
-     */
-    public function isUserAnonymous()
-    {
-        return $this->getWorkbench()->getCMS()->isUserLoggedIn() ? false : true;
-    }
-
-    /**
      * Returns the Exface user defined by the passed username.
      * 
      * @param string $username
@@ -220,8 +200,7 @@ class UserContextScope extends AbstractContextScope
             if ($this->getWorkbench()->getCMS()->isUserLoggedIn()) {
                 $this->user = $this->getUserByName($this->getWorkbench()->getCMS()->getUserName());
             } else {
-                // TODO
-                //throw new UserNotFoundError('No logged in Exface user.');
+                $this->user = UserFactory::createAnonymous($this->getWorkbench());
             }
         }
         return $this->user;

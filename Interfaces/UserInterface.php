@@ -95,4 +95,21 @@ interface UserInterface extends ExfaceClassInterface
      * @return DataSheetInterface
      */
     public function exportDataSheet();
+
+    /**
+     * Returns TRUE if the user currently logged in is an administrator and FALSE otherwise.
+     *
+     * @return boolean
+     */
+    public function isUserAdmin();
+
+    /**
+     * Returns TRUE if the user is anonymous and FALSE otherwise.
+     * 
+     * An anonymous user is returned if the currently logged in user is requested but no
+     * named user is logged in.
+     *
+     * @return boolean
+     */
+    public function isUserAnonymous();
 }
