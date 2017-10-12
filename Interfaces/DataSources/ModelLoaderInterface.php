@@ -14,6 +14,7 @@ use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Model\MetaRelationInterface;
 use exface\Core\Exceptions\Model\MetaRelationNotFoundError;
+use exface\Core\Interfaces\Model\DataTypeInterface;
 
 interface ModelLoaderInterface
 {
@@ -101,6 +102,13 @@ interface ModelLoaderInterface
      * @return AppActionList
      */
     public function loadAppActions(AppActionList $empty_list);
+    
+    /**
+     * 
+     * @param string $uid
+     * @return DataTypeInterface
+     */
+    public function loadDataType($uid);
 
     /**
      * Loads an action defined in the meta model.

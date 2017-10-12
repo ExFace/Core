@@ -516,6 +516,10 @@ class SqlModelLoader implements ModelLoaderInterface
     {
         return $object->getRelation($relation_alias);   
     }
+    
+    public function loadDataType($uid){
+        // TODO
+    }
 }
 
 ?>
