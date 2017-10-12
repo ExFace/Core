@@ -347,7 +347,7 @@ class SqlModelLoader implements ModelLoaderInterface
             // data source table. If the updated had not yet been installed, these columns are
             // not selected.
             // TODO remove the IF leaving only the ELSE after 01.01.2018
-            if ($data_source->getWorkbench()->getConfig()->getOption('INSTALLER.SQL_UPDATE_LAST_PERFORMED_ID' < 8)){
+            if ($data_source->getWorkbench()->getConfig()->getOption('INSTALLER.SQL_UPDATE_LAST_PERFORMED_ID') < 8){
                 $sql = '
 				SELECT
 					ds.custom_query_builder,
