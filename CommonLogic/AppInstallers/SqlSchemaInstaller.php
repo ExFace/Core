@@ -253,6 +253,7 @@ class SqlSchemaInstaller extends AbstractAppInstaller
                     $updates_failed[] = $id;
                     continue;
                 }
+                $this->getWorkbench()->getLogger()->debug('Installing SQL schema update No.' . $id);
                 $sql = file_get_contents($updates_folder . DIRECTORY_SEPARATOR . $file);
                 // Strip comments
                 $sql= preg_replace('!/\*.*?\*/!s', '', $sql);
