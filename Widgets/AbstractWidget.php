@@ -1242,11 +1242,13 @@ else {
      * Sets a condition to disable the widget.
      *
      * E.g.:
-     * "disable_condition": {
-     * "widget_link": "consumer!CONSUMER_MAIL_PHONE",
-     * "comparator": "!=",
-     * "value": ""
-     * }
+     *  
+     *  "disable_condition": {
+     *      "widget_link": "consumer!CONSUMER_MAIL_PHONE",
+     *      "comparator": "!=",
+     *      "value": ""
+     *  }
+     * 
      * means the current widget is disabled when the column CONSUMER_MAIL_PHONE of
      * widget consumer is not empty. Can be usefully combined with a value-reference
      * to the same widget and column.
