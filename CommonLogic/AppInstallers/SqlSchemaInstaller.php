@@ -270,6 +270,7 @@ class SqlSchemaInstaller extends AbstractAppInstaller
                 } catch (\Throwable $e) {
                     $updates_failed[] = $id;
                     $error_text = $e->getMessage();
+                    $this->getWorkbench()->getLogger()->logException($e);
                 }
             }
         }
