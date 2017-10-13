@@ -4,6 +4,7 @@ namespace exface\Core\CommonLogic\AppInstallers;
 use exface\Core\Interfaces\DataSources\SqlDataConnectorInterface;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Exceptions\Configuration\ConfigOptionNotFoundError;
+use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 
 /**
  * This creates and manages SQL databases and performs SQL updates.
@@ -269,7 +270,7 @@ class SqlSchemaInstaller extends AbstractAppInstaller
                     $updates_installed[] = $id;
                 } catch (\Throwable $e) {
                     $updates_failed[] = $id;
-                    $error_text = $e->getMessage();
+                    $error_text = $e->getMessage() . ($e instanceof ExceptionInterface ? ' (log ID ' . $e->getId() . ')' : '');
                     $this->getWorkbench()->getLogger()->logException($e);
                 }
             }
