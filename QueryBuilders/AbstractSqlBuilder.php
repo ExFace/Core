@@ -602,7 +602,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             } else {
                 try {
                     $parsed_value = NumberDataType::cast($value);
-                } catch (DataTypeValidationError $e){
+                } catch (DataTypeCastingError $e){
                     $parsed_value = "'" . $this->escapeString($value) . "'";
                 }
                 $value = $parsed_value;
@@ -1264,7 +1264,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 }
                 $value = '(' . (! empty($values) ? implode(',', $values) : 'NULL') . ')' . ($value ? ' OR ' . $value : '');
             }
-        } catch (DataTypeValidationError $e) {
+        } catch (DataTypeCastingError $e) {
             // If the data type is incompatible with the value, return a WHERE clause, that is always false.
             // A comparison of a date field with a string or a number field with
             // a string simply cannot result in TRUE.

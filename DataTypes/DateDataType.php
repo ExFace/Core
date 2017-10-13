@@ -23,7 +23,7 @@ class DateDataType extends AbstractDataType
         try {
             $date = new \DateTime($string);
         } catch (\Exception $e) {
-            throw new DataTypeValidationError('Cannot convert "' . $string . '" to a date!', '6W25AB1', $e);
+            throw new DataTypeCastingError('Cannot convert "' . $string . '" to a date!', '6W25AB1', $e);
         }
         return static::formatDate($date);
     }

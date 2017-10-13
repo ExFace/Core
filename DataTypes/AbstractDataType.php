@@ -129,7 +129,7 @@ abstract class AbstractDataType implements DataTypeInterface
     {
         try {
             static::cast($string);
-        } catch (DataTypeValidationError $e) {
+        } catch (DataTypeCastingError $e) {
             return false;
         }
         return true;
@@ -186,7 +186,7 @@ abstract class AbstractDataType implements DataTypeInterface
      * @see \exface\Core\Interfaces\AliasInterface::getNamespace()
      */
     public function getNamespace(){
-        return $this->getApp() ? $this->getApp()->getAliasWithNamespace() : $this->getNameResolver()->getNamespace();
+        return $this->getApp()->getAliasWithNamespace();
     }
     
     /**
@@ -196,7 +196,7 @@ abstract class AbstractDataType implements DataTypeInterface
      */
     public function getApp()
     {
-        return $this->app ? $this->app : $this->getWorkbench()->getApp($this->getNameResolver()->getAppAlias());
+        return is_null($this->app) ? $this->getWorkbench()->getApp($this->getNameResolver()->getAppAlias()) : $this->app;
     }
     
     public function setApp(AppInterface $app)

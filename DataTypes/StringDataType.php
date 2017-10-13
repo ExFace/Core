@@ -4,6 +4,15 @@ namespace exface\Core\DataTypes;
 use exface\Core\CommonLogic\Constants\SortingDirections;
 use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
 
+/**
+ * Basic data type for textual values.
+ * 
+ * Strings can contain any characters, but can be restricted in length and
+ * validating using regular expressions.
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
 class StringDataType extends AbstractDataType
 {
     private $lengthMin = 0;
@@ -15,16 +24,25 @@ class StringDataType extends AbstractDataType
     /**
      * @return string|null
      */
-    public function getRegexValidator()
+    public function getValidatorRegex()
     {
         return $this->regexValidator;
     }
 
     /**
+     * Defines a regular expression to validate values of this data type.
+     * 
+     * Use regular expressions compatible with PHP preg_match(). A good
+     * tool to create and test regular expressions can be found here:
+     * https://regex101.com/.
+     * 
+     * @uxon-property validator_regex
+     * @uxon-type string
+     * 
      * @param string $regularExpression
      * @return StringDataType
      */
-    public function setRegexValidator($regularExpression)
+    public function setValidatorRegex($regularExpression)
     {
         $this->regexValidator = $regularExpression;
         return $this;
@@ -130,22 +148,22 @@ class StringDataType extends AbstractDataType
         // validate length
         $length = mb_strlen($value);
         if ($this->getLengtMin() > 0 && $length < $this->getLengtMin()){
-            throw new DataTypeValidationError('The lenght of the string "' . $value . '" (' . $length . ') is less, than the minimum length required for data type ' . $this->getAliasWithNamespace() . ' (' . $this->getLengtMin() . ')!');
+            throw new DataTypeCastingError('The lenght of the string "' . $value . '" (' . $length . ') is less, than the minimum length required for data type ' . $this->getAliasWithNamespace() . ' (' . $this->getLengtMin() . ')!');
         }
         if ($this->getLengthMax() && $length > $this->getLengthMax()){
             $value = substr($value, 0, $this->getLengthMax());
         }
         
         // validate against regex
-        if ($this->getRegexValidator()){
+        if ($this->getValidatorRegex()){
             try {
-                $match = preg_match("'" . $this->getRegexValidator() . "'", $value);
+                $match = preg_match("'" . $this->getValidatorRegex() . "'", $value);
             } catch (\Throwable $e) {
                 $match = 0;
             }
             
             if (! $match){
-                throw new DataTypeValidationError('Value "' . $value . '" does not match the regular expression mask "' . $this->getRegexValidator() . '" of data type ' . $this->getAliasWithNamespace() . '!');
+                throw new DataTypeCastingError('Value "' . $value . '" does not match the regular expression mask "' . $this->getValidatorRegex() . '" of data type ' . $this->getAliasWithNamespace() . '!');
             }
         }
         
@@ -170,6 +188,11 @@ class StringDataType extends AbstractDataType
     }
 
     /**
+     * Minimum legnth of the string in characters - defaults to 0.
+     * 
+     * @uxon-property length_min
+     * @uxon-type integer
+     * 
      * @param integer $number
      * @return StringDataType
      */
@@ -188,6 +211,11 @@ class StringDataType extends AbstractDataType
     }
 
     /**
+     * Maximum legnth of the string in characters.
+     * 
+     * @uxon-property length_max
+     * @uxon-type integer
+     * 
      * @param integer $number
      * @return StringDataType
      */

@@ -598,7 +598,7 @@ class SqlModelLoader implements ModelLoaderInterface
         if ($this->isUid($uid_or_alias)){
             return $this->data_types_by_uid[$uid_or_alias];
         } else {
-            return $this->data_types_by_uid[$this->data];
+            return $this->data_types_by_uid[$this->data_type_uids[$uid_or_alias]];
         }
     }
     
@@ -607,7 +607,7 @@ class SqlModelLoader implements ModelLoaderInterface
             $where = 'dt.app_oid = (SELECT app_oid FROM exf_data_type WHERE oid = ' . $uid_or_alias . ')';
         } else {
             $name_resolver = NameResolver::createFromString($uid_or_alias, NameResolver::OBJECT_TYPE_DATATYPE, $this->getWorkbench());
-            $where = "dt.app_oid = (SELECT app_oid FROM exf_app WHERE app_alias = '" . $name_resolver->getNamespace() . '")';
+            $where = "dt.app_oid = (SELECT app_oid FROM exf_app WHERE app_alias = '" . $name_resolver->getNamespace() . "')";
         }
         $query = $this->getDataConnection()->runSql('
 				SELECT
@@ -618,7 +618,7 @@ class SqlModelLoader implements ModelLoaderInterface
 				WHERE ' . $where);
         foreach ($query->getResultArray() as $dt) {
             $this->data_types_by_uid[$dt['oid']] = $dt;
-            $this->data_type_uids[$dt['app_alias']] = $dt['data_type_alias'];
+            $this->data_type_uids[$this->getFullAlias($dt['app_alias'], $dt['data_type_alias'])] = $dt['oid'];
         }
         return $this;
     }

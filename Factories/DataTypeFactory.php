@@ -36,8 +36,7 @@ abstract class DataTypeFactory extends AbstractNameResolverFactory
      */
     public static function createFromAlias(Workbench $workbench, $alias_with_namespace)
     {
-        $name_resolver = NameResolver::createFromString($alias_with_namespace, NameResolver::OBJECT_TYPE_DATATYPE, $workbench);
-        return static::create($name_resolver);
+        return static::createFromUidOrAlias($workbench->model(), $alias_with_namespace);
     }
     
     /**
@@ -47,7 +46,7 @@ abstract class DataTypeFactory extends AbstractNameResolverFactory
      */
     public static function createBaseDataType(Workbench $workbench)
     {
-        $name_resolver = NameResolver::createFromString('String', NameResolver::OBJECT_TYPE_DATATYPE, $workbench);
+        $name_resolver = NameResolver::createFromString($workbench->getCoreApp()->getAliasWithNamespace() . NameResolver::NAMESPACE_SEPARATOR . 'String', NameResolver::OBJECT_TYPE_DATATYPE, $workbench);
         return static::create($name_resolver);
     }
     
