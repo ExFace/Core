@@ -91,6 +91,22 @@ class StringDataType extends AbstractDataType
     }
     
     /**
+     *
+     * @param string $haystack
+     * @param string $needle
+     * @param boolean $case_sensitive
+     * @return boolean
+     */
+    public static function endsWith($haystack, $needle, $case_sensitive = true)
+    {
+        if ($case_sensitive) {
+            return substr($haystack, (-1)*strlen($needle)) === $needle;
+        } else {
+            return substr(mb_strtoupper($haystack), (-1)*strlen(mb_strtoupper($needle))) === mb_strtoupper($needle);
+        }
+    }
+    
+    /**
      * 
      * {@inheritDoc}
      * @see \exface\Core\DataTypes\AbstractDataType::cast()
