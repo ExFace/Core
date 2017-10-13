@@ -57,7 +57,7 @@ interface MetaAttributeInterface extends ExfaceClassInterface, iCanBeCopied
      * @throws UnexpectedValueException
      * @return \exface\Core\Interfaces\Model\MetaAttributeInterface
      */
-    public function setDataType($object_or_name);
+    public function setDataType($instance_or_resolvable_string);
     
     public function getDefaultDisplayOrder();
     

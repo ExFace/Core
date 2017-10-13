@@ -8,6 +8,7 @@ use exface\Core\CommonLogic\NameResolver;
 use exface\Core\Interfaces\Model\DataTypeInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Model\ModelInterface;
+use exface\Core\Interfaces\AppInterface;
 
 abstract class DataTypeFactory extends AbstractNameResolverFactory
 {
@@ -67,27 +68,32 @@ abstract class DataTypeFactory extends AbstractNameResolverFactory
      * @param string $uid
      * @return \exface\Core\Interfaces\Model\DataTypeInterface
      */
-    public static function createFromUid(ModelInterface $model, $uid)
+    public static function createFromUidOrAlias(ModelInterface $model, $id_or_alias)
     {
-        return $model->getModelLoader()->loadDataTypeByUid($model, $uid);
+        return $model->getModelLoader()->loadDataType($id_or_alias);
     }
     
     /**
      * 
-     * @param Workbench $workbench
      * @param string $prototype_alias
+     * @param string $alias
+     * @param AppInterface $app
+     * @param UxonObject $uxon
      * @param string $name
      * @param string $parse_error_code
-     * @param UxonObject $uxon
+     * @param UxonObject $default_widget_uxon
+     * 
      * @return \exface\Core\Interfaces\Model\DataTypeInterface
      */
-    public static function createFromUxon(Workbench $workbench, $prototype_alias, UxonObject $uxon, $name = null, $short_description = null, $parse_error_code = null, UxonObject $default_widget_uxon = null){
-        $data_type = static::createFromPrototype($workbench, $prototype_alias);
+    public static function createFromModel($prototype_alias, $alias, AppInterface $app, UxonObject $uxon, $name = null, $short_description = null, $parse_error_code = null, UxonObject $default_widget_uxon = null){
+        $data_type = static::createFromPrototype($app->getWorkbench(), $prototype_alias);
+        $data_type->setApp($app);
+        $data_type->setAlias($alias);
         if ($name !== '' && ! is_null($name)) {
             $data_type->setName($name);
         }
         if ($parse_error_code !== '' && ! is_null($parse_error_code)) {
-            $data_type->setParseErrorCode($parse_error_code);
+            $data_type->setParsingErrorCode($parse_error_code);
         }
         if ($short_description !== '' && ! is_null($short_description)) {
             $data_type->setShortDescription($short_description);

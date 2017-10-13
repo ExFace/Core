@@ -8,12 +8,17 @@ use exface\Core\CommonLogic\NameResolver;
 use exface\Core\Interfaces\NameResolverInterface;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Interfaces\AppInterface;
 
 abstract class AbstractDataType implements DataTypeInterface
 {
     use ImportUxonObjectTrait;
 
     private $name_resolver = null;
+    
+    private $alias = null;
+    
+    private $app = null;
 
     private $name = null;
     
@@ -157,7 +162,12 @@ abstract class AbstractDataType implements DataTypeInterface
      */
     public function getAlias()
     {
-        return $this->getNameResolver()->getAlias();
+        return is_null($this->alias) ? $this->getNameResolver()->getAlias() : $this->alias;
+    }
+    
+    public function setAlias($string)
+    {
+        $this->alias = $string;
     }
     
     /**
@@ -167,7 +177,7 @@ abstract class AbstractDataType implements DataTypeInterface
      */
     public function getAliasWithNamespace()
     {
-        return $this->getNameResolver()->getAliasWithNamespace();
+        return $this->getNamespace() . NameResolver::NAMESPACE_SEPARATOR . $this->getAlias();
     }
     
     /**
@@ -176,7 +186,7 @@ abstract class AbstractDataType implements DataTypeInterface
      * @see \exface\Core\Interfaces\AliasInterface::getNamespace()
      */
     public function getNamespace(){
-        return $this->getNameResolver()->getNamespace();
+        return $this->getApp() ? $this->getApp()->getAliasWithNamespace() : $this->getNameResolver()->getNamespace();
     }
     
     /**
@@ -186,7 +196,13 @@ abstract class AbstractDataType implements DataTypeInterface
      */
     public function getApp()
     {
-        return $this->getWorkbench()->getApp($this->getNameResolver()->getAppAlias());
+        return $this->app ? $this->app : $this->getWorkbench()->getApp($this->getNameResolver()->getAppAlias());
+    }
+    
+    public function setApp(AppInterface $app)
+    {
+        $this->app = $app;
+        return $this;
     }
 
     /**
@@ -277,9 +293,9 @@ abstract class AbstractDataType implements DataTypeInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\DataTypeInterface::getParseErrorCode()
+     * @see \exface\Core\Interfaces\Model\DataTypeInterface::getParsingErrorCode()
      */
-    public function getParseErrorCode()
+    public function getParsingErrorCode()
     {
         return $this->parseErrorCode;
     }
@@ -287,9 +303,9 @@ abstract class AbstractDataType implements DataTypeInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\DataTypeInterface::setParseErrorCode()
+     * @see \exface\Core\Interfaces\Model\DataTypeInterface::setParsingErrorCode()
      */
-    public function setParseErrorCode($parseErrorCode)
+    public function setParsingErrorCode($parseErrorCode)
     {
         $this->parseErrorCode = $parseErrorCode;
         return $this;

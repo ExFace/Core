@@ -16,7 +16,6 @@ use exface\Core\Exceptions\RangeException;
 use exface\Core\Exceptions\Model\MetaObjectNotFoundError;
 use exface\Core\Exceptions\Model\MetaModelLoadingFailedError;
 use exface\Core\Interfaces\Model\MetaObjectActionListInterface;
-use exface\Core\CommonLogic\Model\ActionList;
 use exface\Core\CommonLogic\Model\AppActionList;
 use exface\Core\Factories\ActionFactory;
 use exface\Core\Interfaces\AppInterface;
@@ -32,13 +31,28 @@ use exface\Core\Exceptions\DataTypeNotFoundError;
 use exface\Core\Interfaces\Model\DataTypeInterface;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Exceptions\RuntimeException;
+use exface\Core\Interfaces\NameResolverInterface;
 
 class SqlModelLoader implements ModelLoaderInterface
 {
 
     private $data_connection = null;
     
-    private $data_types = null;
+    private $data_types_by_uid = [];
+    
+    private $data_type_uids = [];
+    
+    private $nameResolver = null;
+    
+    public function __construct(NameResolverInterface $nameResolver)
+    {
+        $this->nameResolver = $nameResolver;
+    }
+    
+    public function getNameResolver()
+    {
+        return $this->nameResolver;
+    }
     
     /**
      *
@@ -557,43 +571,76 @@ class SqlModelLoader implements ModelLoaderInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSources\ModelLoaderInterface::loadDataType()
      */
-    public function loadDataTypeByUid(ModelInterface $model, $uid){
-        if (! key_exists($uid, $this->data_types)) {
-            $this->cacheDataType($uid);
+    public function loadDataType($uid_or_alias){
+        if (! $this->getDataTypeCache($uid_or_alias)){
+            $this->cacheDataType($uid_or_alias);
         }
         
-        if (! key_exists($uid, $this->data_types)) {
-            throw new DataTypeNotFoundError('No data type with UID "' . $uid . '" found!');
+        if (! $cache = $this->getDataTypeCache($uid_or_alias)) {
+            throw new DataTypeNotFoundError('No data type "' . $uid_or_alias . '" found!');
         }
-        
-        $cache = $this->data_types[$uid];
         
         if ($cache instanceof DataTypeInterface) {
             return $cache->copy();
         } elseif (is_array($cache)) {
             $uxon = UxonObject::fromJson($cache['uxon_config']);
             $default_widget_uxon = UxonObject::fromJson($cache['default_widget_uxon']);
-            $data_type = DataTypeFactory::createFromUxon($model->getWorkbench(), $cache['prototype'], $uxon, $cache['name'], $cache['short_description'], $cache['parse_error_code'], $default_widget_uxon);
-            $this->data_types[$uid] = $data_type;
+            $data_type = DataTypeFactory::createFromModel($cache['prototype'], $cache['data_type_alias'], $this->getWorkbench()->getApp($cache['app_alias']), $uxon, $cache['name'], $cache['short_description'], $cache['parsing_error_code'], $default_widget_uxon);
+            $this->data_types_by_uid[$cache['oid']] = $data_type;
             return $data_type;
         } else {
             throw new RuntimeException('Invalid cache state in the SqlModelLoader: unexpected "' . gettype($cache) . '" found in data type cache!');
         }
     }
     
-    protected function cacheDataType($uid){
-        // select all attributes for this object
+    protected function getDataTypeCache($uid_or_alias)
+    {
+        if ($this->isUid($uid_or_alias)){
+            return $this->data_types_by_uid[$uid_or_alias];
+        } else {
+            return $this->data_types_by_uid[$this->data];
+        }
+    }
+    
+    protected function cacheDataType($uid_or_alias){
+        if ($this->isUid($uid_or_alias)){
+            $where = 'dt.app_oid = (SELECT app_oid FROM exf_data_type WHERE oid = ' . $uid_or_alias . ')';
+        } else {
+            $name_resolver = NameResolver::createFromString($uid_or_alias, NameResolver::OBJECT_TYPE_DATATYPE, $this->getWorkbench());
+            $where = "dt.app_oid = (SELECT app_oid FROM exf_app WHERE app_alias = '" . $name_resolver->getNamespace() . '")';
+        }
         $query = $this->getDataConnection()->runSql('
 				SELECT
 					dt.*,
 					' . $this->buildSqlUuidSelector('dt.oid') . ' as oid,
                     a.app_alias
 				FROM exf_data_type dt LEFT JOIN exf_app a ON a.oid = dt.app_oid
-				WHERE dt.app_oid = (SELECT app_oid FROM exf_data_type WHERE oid = ' . $uid . ')');
+				WHERE ' . $where);
         foreach ($query->getResultArray() as $dt) {
-            $this->data_types[$dt['oid']] = $dt;
+            $this->data_types_by_uid[$dt['oid']] = $dt;
+            $this->data_type_uids[$dt['app_alias']] = $dt['data_type_alias'];
         }
         return $this;
+    }
+    
+    protected function getFullAlias($app_alias, $instance_alias)
+    {
+        return $app_alias . NameResolver::NAMESPACE_SEPARATOR . $instance_alias;
+    }
+    
+    protected function isUid($string)
+    {
+        return substr($string, 0, 2) === '0x';
+    }
+    
+    protected function getModel()
+    {
+        return $this->getNameResolver()->getWorkbench()->model();
+    }
+    
+    public function getWorkbench()
+    {
+        return $this->getNameResolver()->getWorkbench();
     }
 }
 

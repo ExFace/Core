@@ -16,12 +16,17 @@ interface DataTypeInterface extends ExfaceClassInterface, AliasInterface, iCanBe
 {
 
     /**
-     * Constructuro
-     *
+     * 
      * @param NameResolverInterface $name_resolver            
      */
     public function __construct(NameResolverInterface $name_resolver);
 
+    /**
+     * @param string $string
+     * @return DataTypeInterface
+     */
+    public function setAlias($string);
+    
     /**
      *
      * @return Model
@@ -90,7 +95,7 @@ interface DataTypeInterface extends ExfaceClassInterface, AliasInterface, iCanBe
      * 
      * @return string
      */
-    public function getParseErrorCode();
+    public function getParsingErrorCode();
     
     /**
      * Sets the unique error code (error model alias) used for parsing errors of this data type.
@@ -98,7 +103,7 @@ interface DataTypeInterface extends ExfaceClassInterface, AliasInterface, iCanBe
      * @param string $string
      * @return DataTypeInterface
      */
-    public function setParseErrorCode($string);
+    public function setParsingErrorCode($string);
 
     /**
      * Returns TRUE if the given value matches the data type (and thus can be parsed) or FALSE otherwise.
@@ -125,12 +130,18 @@ interface DataTypeInterface extends ExfaceClassInterface, AliasInterface, iCanBe
      * Returns the app, to which this data type belongs to.
      * 
      * NOTE: if the model of this data type belongs to another app, than its prototype, this method
-     * will return the app of the model. Use getPrototypeNameResolver->getApp() to get the app
-     * of the prototype.
+     * will return the app of the model. 
      * 
      * @return AppInterface
      */
     public function getApp();
+    
+    /**
+     * 
+     * @param AppInterface $app
+     * @return DataTypeInterface
+     */
+    public function setApp(AppInterface $app);
     
     /**
      * @return string
