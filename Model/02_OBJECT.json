@@ -219,7 +219,7 @@
         },
         {
             "CREATED_ON": "2007-01-01 00:00:00",
-            "MODIFIED_ON": "2017-10-12 07:51:35",
+            "MODIFIED_ON": "2017-10-13 14:32:34",
             "CREATED_BY_USER": "",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x32350000000000000000000000000000",
@@ -238,7 +238,7 @@
         },
         {
             "CREATED_ON": "2007-01-01 00:00:00",
-            "MODIFIED_ON": "2017-09-11 10:28:08",
+            "MODIFIED_ON": "2017-10-13 14:27:34",
             "CREATED_BY_USER": "",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x32360000000000000000000000000000",
@@ -250,7 +250,7 @@
             "SHORT_DESCRIPTION": "",
             "PARENT_OBJECT": "",
             "DATA_ADDRESS_PROPS": "{}",
-            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Form\",\"widgets\":[{\"attribute_alias\":\"APP\"},{\"attribute_alias\":\"ALIAS\"},{\"attribute_alias\":\"NAME\"},{\"attribute_alias\":\"PROTOTYPE\"},{\"attribute_alias\":\"SHORT_DESCRIPTION\",\"width\":2},{\"attribute_alias\":\"DEFAULT_WIDGET_UXON\"}]}",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Form\",\"widgets\":[{\"attribute_alias\":\"APP\"},{\"attribute_alias\":\"ALIAS\"},{\"attribute_alias\":\"NAME\"},{\"attribute_alias\":\"PROTOTYPE\"},{\"attribute_alias\":\"VALIDATION_ERROR_CODE\"},{\"attribute_alias\":\"SHORT_DESCRIPTION\",\"width\":\"max\",\"height\":2},{\"attribute_alias\":\"CONFIG_UXON\",\"width\":\"max\"},{\"attribute_alias\":\"DEFAULT_WIDGET_UXON\",\"width\":\"max\"}]}",
             "LABEL": "Data Type",
             "ALIAS": "DATATYPE",
             "DATA_ADDRESS": "exf_data_type"
@@ -523,7 +523,7 @@
         },
         {
             "CREATED_ON": "2016-12-16 11:48:53",
-            "MODIFIED_ON": "2017-06-05 06:07:22",
+            "MODIFIED_ON": "2017-10-13 14:29:54",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6c3859abc5faea3e40205857feb80",

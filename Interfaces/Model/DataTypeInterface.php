@@ -95,7 +95,7 @@ interface DataTypeInterface extends ExfaceClassInterface, AliasInterface, iCanBe
      * 
      * @return string
      */
-    public function getParsingErrorCode();
+    public function getValidationErrorCode();
     
     /**
      * Sets the unique error code (error model alias) used for parsing errors of this data type.
@@ -103,7 +103,7 @@ interface DataTypeInterface extends ExfaceClassInterface, AliasInterface, iCanBe
      * @param string $string
      * @return DataTypeInterface
      */
-    public function setParsingErrorCode($string);
+    public function setValidationErrorCode($string);
 
     /**
      * Returns TRUE if the given value matches the data type (and thus can be parsed) or FALSE otherwise.

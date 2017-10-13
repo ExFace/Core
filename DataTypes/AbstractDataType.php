@@ -293,9 +293,9 @@ abstract class AbstractDataType implements DataTypeInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\DataTypeInterface::getParsingErrorCode()
+     * @see \exface\Core\Interfaces\Model\DataTypeInterface::getValidationErrorCode()
      */
-    public function getParsingErrorCode()
+    public function getValidationErrorCode()
     {
         return $this->parseErrorCode;
     }
@@ -303,9 +303,9 @@ abstract class AbstractDataType implements DataTypeInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\DataTypeInterface::setParsingErrorCode()
+     * @see \exface\Core\Interfaces\Model\DataTypeInterface::setValidationErrorCode()
      */
-    public function setParsingErrorCode($parseErrorCode)
+    public function setValidationErrorCode($parseErrorCode)
     {
         $this->parseErrorCode = $parseErrorCode;
         return $this;

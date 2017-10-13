@@ -585,7 +585,7 @@ class SqlModelLoader implements ModelLoaderInterface
         } elseif (is_array($cache)) {
             $uxon = UxonObject::fromJson($cache['uxon_config']);
             $default_widget_uxon = UxonObject::fromJson($cache['default_widget_uxon']);
-            $data_type = DataTypeFactory::createFromModel($cache['prototype'], $cache['data_type_alias'], $this->getWorkbench()->getApp($cache['app_alias']), $uxon, $cache['name'], $cache['short_description'], $cache['parsing_error_code'], $default_widget_uxon);
+            $data_type = DataTypeFactory::createFromModel($cache['prototype'], $cache['data_type_alias'], $this->getWorkbench()->getApp($cache['app_alias']), $uxon, $cache['name'], $cache['short_description'], $cache['validation_error_code'], $default_widget_uxon);
             $this->data_types_by_uid[$cache['oid']] = $data_type;
             return $data_type;
         } else {
