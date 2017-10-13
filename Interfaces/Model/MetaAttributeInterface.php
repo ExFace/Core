@@ -187,6 +187,10 @@ interface MetaAttributeInterface extends ExfaceClassInterface, iCanBeCopied
      */
     public function getDefaultWidgetUxon();
     
+    /**
+     * 
+     * @param UxonObject $uxon_object
+     */
     public function setDefaultWidgetUxon(UxonObject $uxon_object);
     
     public function getFormula();

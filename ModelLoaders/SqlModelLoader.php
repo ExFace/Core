@@ -28,11 +28,17 @@ use exface\Core\CommonLogic\Model\Object;
 use exface\Core\CommonLogic\Model\Attribute;
 use exface\Core\CommonLogic\Model\Relation;
 use exface\Core\Interfaces\ActionListInterface;
+use exface\Core\Exceptions\DataTypeNotFoundError;
+use exface\Core\Interfaces\Model\DataTypeInterface;
+use exface\Core\Factories\DataTypeFactory;
+use exface\Core\Exceptions\RuntimeException;
 
 class SqlModelLoader implements ModelLoaderInterface
 {
 
     private $data_connection = null;
+    
+    private $data_types = null;
     
     /**
      *
@@ -76,19 +82,19 @@ class SqlModelLoader implements ModelLoaderInterface
         }
         $query = $this->getDataConnection()->runSql('
 				SELECT
-					' . $this->generateSqlUuidSelector('o.oid') . ' as oid,
-					' . $this->generateSqlUuidSelector('o.app_oid') . ' as app_oid,
+					' . $this->buildSqlUuidSelector('o.oid') . ' as oid,
+					' . $this->buildSqlUuidSelector('o.app_oid') . ' as app_oid,
 					a.app_alias,
 					o.object_name,
 					o.object_alias,
 					o.data_address,
 					o.data_address_properties,
-					' . $this->generateSqlUuidSelector('o.data_source_oid') . ' as data_source_oid,
-					' . $this->generateSqlUuidSelector('o.parent_object_oid') . ' as parent_object_oid,
+					' . $this->buildSqlUuidSelector('o.data_source_oid') . ' as data_source_oid,
+					' . $this->buildSqlUuidSelector('o.parent_object_oid') . ' as parent_object_oid,
 					o.short_description,
 					o.long_description,
 					o.default_editor_uxon,
-					' . $this->generateSqlUuidSelector('ds.base_object_oid') . ' as base_object_oid,
+					' . $this->buildSqlUuidSelector('ds.base_object_oid') . ' as base_object_oid,
 					EXISTS (SELECT 1 FROM exf_object_behaviors ob WHERE ob.object_oid = o.oid) AS has_behaviors
 				FROM exf_object o 
 					LEFT JOIN exf_app a ON o.app_oid = a.oid 
@@ -147,15 +153,14 @@ class SqlModelLoader implements ModelLoaderInterface
         $query = $this->getDataConnection()->runSql('
 				SELECT
 					a.*,
-					' . $this->generateSqlUuidSelector('a.oid') . ' as oid,
-					' . $this->generateSqlUuidSelector('a.object_oid') . ' as object_oid,
-					' . $this->generateSqlUuidSelector('a.related_object_oid') . ' as related_object_oid,
-					' . $this->generateSqlUuidSelector('a.related_object_special_key_attribute_oid') . ' as related_object_special_key_attribute_oid,
-					d.data_type_alias,
-					d.default_widget_uxon AS default_data_type_editor,
+					' . $this->buildSqlUuidSelector('a.oid') . ' as oid,
+					' . $this->buildSqlUuidSelector('a.object_oid') . ' as object_oid,
+					' . $this->buildSqlUuidSelector('a.data_type_oid') . ' as data_type_oid,
+					' . $this->buildSqlUuidSelector('a.related_object_oid') . ' as related_object_oid,
+					' . $this->buildSqlUuidSelector('a.related_object_special_key_attribute_oid') . ' as related_object_special_key_attribute_oid,
 					o.object_alias as rev_relation_alias,
 					o.object_name AS rev_relation_name
-				FROM exf_attribute a LEFT JOIN exf_object o ON a.object_oid = o.oid LEFT JOIN exf_data_type d ON d.oid = a.data_type_oid
+				FROM exf_attribute a LEFT JOIN exf_object o ON a.object_oid = o.oid
 				WHERE a.object_oid = ' . $object->getId() . ' OR a.related_object_oid = ' . $object->getId());
         if ($res = $query->getResultArray()) {
             // use a for here instead of foreach because we want to extend the array from within the loop on some occasions
@@ -267,7 +272,6 @@ class SqlModelLoader implements ModelLoaderInterface
 
     protected function createAttributeFromDbRow(MetaObjectInterface $object, array $row)
     {
-        $model = $object->getModel();
         $attr = new Attribute($object);
         $attr->setId($row['oid']);
         $attr->setAlias($row['attribute_alias']);
@@ -275,8 +279,13 @@ class SqlModelLoader implements ModelLoaderInterface
         $attr->setDataAddress($row['data']);
         $attr->setDataAddressProperties(UxonObject::fromJson($row['data_properties']));
         $attr->setFormatter($row['attribute_formatter']);
-        // FIXME #datatypes replace by the real data type app alias or (better) load data types separately
-        $attr->setDataType('exface.Core.' . $row['data_type_alias']);
+        $attr->setDataType($row['data_type_oid']);
+        if ($row['default_editor_uxon']){
+            $default_widget_uxon = $default_widget_uxon = UxonObject::fromJson($row['default_editor_uxon']);
+            if (! $default_widget_uxon->isEmpty()){
+                $attr->setDefaultWidgetUxon($default_widget_uxon);
+            }
+        }
         // Control flags
         if (! is_null($row['attribute_readable_flag'])){
             $attr->setWritable($row['attribute_readable_flag']);
@@ -304,20 +313,6 @@ class SqlModelLoader implements ModelLoaderInterface
         $attr->setValueListDelimiter($row['value_list_delimiter']);
         // Descriptions
         $attr->setShortDescription($row['attribute_short_description']);
-        
-        // Create the UXON for the default editor widget
-        // Start with the data type widget
-        $uxon = UxonObject::fromJson($row['default_data_type_editor']);
-        // If anything goes wrong, create a blank widget with the overall default widget type (from the config)
-        if (! $uxon) {
-            $uxon = new UxonObject();
-            $uxon->setProperty('widget_type', $model->getWorkbench()->getConfig()->getOption('TEMPLATES.WIDGET_FOR_UNKNOWN_DATA_TYPES'));
-        }
-        // Extend by the specific uxon for this attribute if specified
-        if ($row['default_editor_uxon']) {
-            $uxon = $uxon->extend(UxonObject::fromJson($row['default_editor_uxon']));
-        }
-        $attr->setDefaultWidgetUxon($uxon);
         
         return $attr;
     }
@@ -426,7 +421,7 @@ class SqlModelLoader implements ModelLoaderInterface
      * @param string $field_name            
      * @return string
      */
-    protected function generateSqlUuidSelector($field_name)
+    protected function buildSqlUuidSelector($field_name)
     {
         return 'CONCAT(\'0x\', HEX(' . $field_name . '))';
     }
@@ -496,7 +491,7 @@ class SqlModelLoader implements ModelLoaderInterface
         
         $query = $this->getDataConnection()->runSql('
 				SELECT
-					' . $this->generateSqlUuidSelector('oa.object_oid') . ' AS object_oid,
+					' . $this->buildSqlUuidSelector('oa.object_oid') . ' AS object_oid,
 					oa.action, 
 					oa.alias, 
 					oa.name, 
@@ -557,8 +552,48 @@ class SqlModelLoader implements ModelLoaderInterface
         return $object->getRelation($relation_alias);   
     }
     
-    public function loadDataType($uid){
-        // TODO
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSources\ModelLoaderInterface::loadDataType()
+     */
+    public function loadDataTypeByUid(ModelInterface $model, $uid){
+        if (! key_exists($uid, $this->data_types)) {
+            $this->cacheDataType($uid);
+        }
+        
+        if (! key_exists($uid, $this->data_types)) {
+            throw new DataTypeNotFoundError('No data type with UID "' . $uid . '" found!');
+        }
+        
+        $cache = $this->data_types[$uid];
+        
+        if ($cache instanceof DataTypeInterface) {
+            return $cache->copy();
+        } elseif (is_array($cache)) {
+            $uxon = UxonObject::fromJson($cache['uxon_config']);
+            $default_widget_uxon = UxonObject::fromJson($cache['default_widget_uxon']);
+            $data_type = DataTypeFactory::createFromUxon($model->getWorkbench(), $cache['prototype'], $uxon, $cache['name'], $cache['short_description'], $cache['parse_error_code'], $default_widget_uxon);
+            $this->data_types[$uid] = $data_type;
+            return $data_type;
+        } else {
+            throw new RuntimeException('Invalid cache state in the SqlModelLoader: unexpected "' . gettype($cache) . '" found in data type cache!');
+        }
+    }
+    
+    protected function cacheDataType($uid){
+        // select all attributes for this object
+        $query = $this->getDataConnection()->runSql('
+				SELECT
+					dt.*,
+					' . $this->buildSqlUuidSelector('dt.oid') . ' as oid,
+                    a.app_alias
+				FROM exf_data_type dt LEFT JOIN exf_app a ON a.oid = dt.app_oid
+				WHERE dt.app_oid = (SELECT app_oid FROM exf_data_type WHERE oid = ' . $uid . ')');
+        foreach ($query->getResultArray() as $dt) {
+            $this->data_types[$dt['oid']] = $dt;
+        }
+        return $this;
     }
 }
 

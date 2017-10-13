@@ -104,11 +104,14 @@ interface ModelLoaderInterface
     public function loadAppActions(AppActionList $empty_list);
     
     /**
+     * Loads the data type matching the passed UID from the given model
      * 
+     * @param ModelInterface $model
      * @param string $uid
+     * 
      * @return DataTypeInterface
      */
-    public function loadDataType($uid);
+    public function loadDataTypeByUid(ModelInterface $model, $uid);
 
     /**
      * Loads an action defined in the meta model.

@@ -6,6 +6,8 @@ use exface\Core\Interfaces\NameResolverInterface;
 use exface\Core\Exceptions\DataTypeNotFoundError;
 use exface\Core\CommonLogic\NameResolver;
 use exface\Core\Interfaces\Model\DataTypeInterface;
+use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Interfaces\Model\ModelInterface;
 
 abstract class DataTypeFactory extends AbstractNameResolverFactory
 {
@@ -48,9 +50,53 @@ abstract class DataTypeFactory extends AbstractNameResolverFactory
         return static::create($name_resolver);
     }
     
-    public static function createFromPrototype(Workbench $workbench, $resolvable_name)
+    /**
+     * 
+     * @param Workbench $workbench
+     * @param string $prototype_alias
+     * @return \exface\Core\Interfaces\Model\DataTypeInterface
+     */
+    public static function createFromPrototype(Workbench $workbench, $prototype_resolvable_name)
     {
-        return static::createFromAlias($workbench, $resolvable_name);
+        return static::create(NameResolver::createFromString($prototype_resolvable_name, NameResolver::OBJECT_TYPE_DATATYPE, $workbench));
+    }
+    
+    /**
+     * 
+     * @param ModelInterface $model
+     * @param string $uid
+     * @return \exface\Core\Interfaces\Model\DataTypeInterface
+     */
+    public static function createFromUid(ModelInterface $model, $uid)
+    {
+        return $model->getModelLoader()->loadDataTypeByUid($model, $uid);
+    }
+    
+    /**
+     * 
+     * @param Workbench $workbench
+     * @param string $prototype_alias
+     * @param string $name
+     * @param string $parse_error_code
+     * @param UxonObject $uxon
+     * @return \exface\Core\Interfaces\Model\DataTypeInterface
+     */
+    public static function createFromUxon(Workbench $workbench, $prototype_alias, UxonObject $uxon, $name = null, $short_description = null, $parse_error_code = null, UxonObject $default_widget_uxon = null){
+        $data_type = static::createFromPrototype($workbench, $prototype_alias);
+        if ($name !== '' && ! is_null($name)) {
+            $data_type->setName($name);
+        }
+        if ($parse_error_code !== '' && ! is_null($parse_error_code)) {
+            $data_type->setParseErrorCode($parse_error_code);
+        }
+        if ($short_description !== '' && ! is_null($short_description)) {
+            $data_type->setShortDescription($short_description);
+        }
+        if (! is_null($default_widget_uxon) && ! $default_widget_uxon->isEmpty()) {
+            $data_type->setDefaultWidgetUxon($default_widget_uxon);
+        }
+        $data_type->importUxonObject($uxon);
+        return $data_type;
     }
 }
 ?>

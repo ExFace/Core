@@ -2,18 +2,26 @@
 namespace exface\Core\DataTypes;
 
 use exface\Core\Interfaces\Model\DataTypeInterface;
-use exface\Core\CommonLogic\Workbench;
 use exface\Core\Exceptions\DataTypeValidationError;
 use exface\Core\CommonLogic\Constants\SortingDirections;
 use exface\Core\CommonLogic\NameResolver;
 use exface\Core\Interfaces\NameResolverInterface;
+use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
+use exface\Core\CommonLogic\UxonObject;
 
 abstract class AbstractDataType implements DataTypeInterface
 {
+    use ImportUxonObjectTrait;
 
     private $name_resolver = null;
 
     private $name = null;
+    
+    private $shortDescription = null;
+    
+    private $defaultWidgetUxon = null;
+    
+    private $parseErrorCode = null;
 
     public function __construct(NameResolverInterface $name_resolver)
     {
@@ -56,6 +64,12 @@ abstract class AbstractDataType implements DataTypeInterface
             $this->name = $name;
         }
         return $this->name;
+    }
+    
+    public function setName($string)
+    {
+        $this->name = $string;
+        return $this;
     }
 
     /**
@@ -183,5 +197,103 @@ abstract class AbstractDataType implements DataTypeInterface
     {
         return "\\" . __CLASS__;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\iCanBeCopied::copy()
+     */
+    public function copy()
+    {
+        return clone $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::exportUxonObject()
+     */
+    public function exportUxonObject()
+    {
+        $uxon = new UxonObject();
+        $uxon->setProperty('name', $this->getName());
+        
+        return $uxon;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\DataTypeInterface::getShortDescription()
+     */
+    public function getShortDescription()
+    {
+        return $this->shortDescription;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\DataTypeInterface::setShortDescription()
+     */
+    public function setShortDescription($shortDescription)
+    {
+        $this->shortDescription = $shortDescription;
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\DataTypeInterface::getDefaultWidgetUxon()
+     */
+    public function getDefaultWidgetUxon()
+    {
+        if (is_null($this->defaultWidgetUxon)) {
+            $this->defaultWidgetUxon = new UxonObject();
+        }
+        
+        // Make sure, the UXON has allways an explicit widget type! Otherwise checks for
+        // widget type later in the code might put in their defaults potentially uncompatible
+        // with properties set here or anywhere inbetween.
+        if (! $this->defaultWidgetUxon->hasProperty('widget_type')) {
+            $this->defaultWidgetUxon->setProperty('widget_type', $this->getWorkbench()->getConfig()->getOption('TEMPLATES.WIDGET_FOR_UNKNOWN_DATA_TYPES'));
+        }
+        
+        return $this->defaultWidgetUxon;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\DataTypeInterface::setDefaultWidgetUxon()
+     */
+    public function setDefaultWidgetUxon(UxonObject $defaultWidgetUxon)
+    {
+        $this->defaultWidgetUxon = $defaultWidgetUxon;
+        return $this;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\DataTypeInterface::getParseErrorCode()
+     */
+    public function getParseErrorCode()
+    {
+        return $this->parseErrorCode;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\DataTypeInterface::setParseErrorCode()
+     */
+    public function setParseErrorCode($parseErrorCode)
+    {
+        $this->parseErrorCode = $parseErrorCode;
+        return $this;
+    }
+
 }
 ?>

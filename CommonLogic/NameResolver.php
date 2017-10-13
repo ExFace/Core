@@ -4,6 +4,7 @@ namespace exface\Core\CommonLogic;
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\Interfaces\NameResolverInterface;
 use exface\Core\Exceptions\NameResolverError;
+use exface\Core\DataTypes\StringDataType;
 
 /**
  * The name resolver translates all kinds of references to important objects within ExFace to their class names, thus
@@ -247,7 +248,10 @@ class NameResolver extends AbstractExfaceClass implements NameResolverInterface
                 } else {
                     $result .= 'exface\\Core';
                 }
-                $result .= self::CLASS_NAMESPACE_SEPARATOR . self::getSubdirFromObjectType($this->getObjectType());
+                $subdir = self::CLASS_NAMESPACE_SEPARATOR . self::getSubdirFromObjectType($this->getObjectType());
+                if (! StringDataType::endsWith($result, $subdir)) {
+                    $result .= $subdir;
+                }
                 break;
             case self::OBJECT_TYPE_APP:
                 $result = self::APPS_NAMESPACE . self::convertNamespaceToClassNamespace($this->getAliasWithNamespace());

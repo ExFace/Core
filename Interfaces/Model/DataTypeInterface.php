@@ -8,8 +8,11 @@ use exface\Core\Interfaces\ExfaceClassInterface;
 use exface\Core\Interfaces\AliasInterface;
 use exface\Core\Interfaces\NameResolverInterface;
 use exface\Core\Interfaces\AppInterface;
+use exface\Core\Interfaces\iCanBeCopied;
+use exface\Core\Interfaces\iCanBeConvertedToUxon;
+use exface\Core\CommonLogic\UxonObject;
 
-interface DataTypeInterface extends ExfaceClassInterface, AliasInterface, MetaModelPrototypeInterface
+interface DataTypeInterface extends ExfaceClassInterface, AliasInterface, iCanBeCopied, iCanBeConvertedToUxon, MetaModelPrototypeInterface
 {
 
     /**
@@ -32,6 +35,11 @@ interface DataTypeInterface extends ExfaceClassInterface, AliasInterface, MetaMo
      * @return string
      */
     public function getName();
+    
+    /**
+     * @return DataTypeInterface
+     */
+    public function setName($string);
 
     /**
      * Returns TRUE if the current data type equals is derived from the given one (e.g.
@@ -76,6 +84,21 @@ interface DataTypeInterface extends ExfaceClassInterface, AliasInterface, MetaMo
      * @return string
      */
     public function parse($string);
+    
+    /**
+     * Returns the unique error code (error model alias) used for parsing errors of this data type.
+     * 
+     * @return string
+     */
+    public function getParseErrorCode();
+    
+    /**
+     * Sets the unique error code (error model alias) used for parsing errors of this data type.
+     * 
+     * @param string $string
+     * @return DataTypeInterface
+     */
+    public function setParseErrorCode($string);
 
     /**
      * Returns TRUE if the given value matches the data type (and thus can be parsed) or FALSE otherwise.
@@ -108,5 +131,29 @@ interface DataTypeInterface extends ExfaceClassInterface, AliasInterface, MetaMo
      * @return AppInterface
      */
     public function getApp();
+    
+    /**
+     * @return string
+     */
+    public function getShortDescription();
+    
+    /**
+     * 
+     * @param string $text
+     * @return DataTypeInterface
+     */
+    public function setShortDescription($text);
+    
+    /**
+     * @return UxonObject
+     */
+    public function getDefaultWidgetUxon();
+    
+    /**
+     * 
+     * @param UxonObject $uxon
+     * @return DataTypeInterface
+     */
+    public function setDefaultWidgetUxon(UxonObject $uxon);
 }
 ?>
