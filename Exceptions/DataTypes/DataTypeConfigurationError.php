@@ -1,11 +1,7 @@
 <?php
 namespace exface\Core\Exceptions\DataTypes;
 
-use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;
-use exface\Core\Exceptions\Actions\ActionExceptionTrait;
 use exface\Core\Exceptions\UnexpectedValueException;
-use exface\Core\Interfaces\Actions\ActionInterface;
-use exface\Core\Interfaces\Exceptions\ActionExceptionInterface;
 use exface\Core\Interfaces\Model\DataTypeInterface;
 use exface\Core\Interfaces\Exceptions\DataTypeExceptionInterface;
 
@@ -26,7 +22,7 @@ class DataTypeConfigurationError extends UnexpectedValueException implements Dat
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\Interfaces\Exceptions\ActionExceptionInterface::__construct()
+     * @see \exface\Core\Interfaces\Exceptions\DataTypeExceptionInterface::__construct()
      */
     public function __construct(DataTypeInterface $dataType, $message, $alias = null, $previous = null)
     {

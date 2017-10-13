@@ -3,7 +3,7 @@ namespace exface\Core\Factories;
 
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\Interfaces\NameResolverInterface;
-use exface\Core\Exceptions\DataTypeNotFoundError;
+use exface\Core\Exceptions\DataTypes\DataTypeNotFoundError;
 use exface\Core\CommonLogic\NameResolver;
 use exface\Core\Interfaces\Model\DataTypeInterface;
 use exface\Core\CommonLogic\UxonObject;

@@ -26,6 +26,6 @@ Interface DataTypeExceptionInterface
      * @param DataTypeInterface $sheet            
      * @return DataTypeExceptionInterface
      */
-    public function setAction(DataTypeInterface $dataType);
+    public function setDataType(DataTypeInterface $dataType);
 }
 ?>

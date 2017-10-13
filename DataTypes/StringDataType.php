@@ -2,7 +2,7 @@
 namespace exface\Core\DataTypes;
 
 use exface\Core\CommonLogic\Constants\SortingDirections;
-use exface\Core\Exceptions\DataTypeValidationError;
+use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
 
 class StringDataType extends AbstractDataType
 {

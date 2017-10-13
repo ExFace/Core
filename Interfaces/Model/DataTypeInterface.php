@@ -1,7 +1,7 @@
 <?php
 namespace exface\Core\Interfaces\Model;
 
-use exface\Core\Exceptions\DataTypeValidationError;
+use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
 use exface\Core\CommonLogic\Model\Model;
 use exface\Core\CommonLogic\Constants\SortingDirections;
 use exface\Core\Interfaces\ExfaceClassInterface;
