@@ -78,19 +78,35 @@ interface DataSourceInterface extends ExfaceClassInterface
     public function setConnectionConfig(UxonObject $value);
 
     /**
-     * Returns TRUE, if the data source or it's connection is marked as read only or FALSE otherwise.
+     * Returns TRUE if write-opertaions are allowed on the data source with it's 
+     * current connection and FALSE otherwise.
      *
      * @return boolean
      */
-    public function isReadOnly();
+    public function isWritable();
 
     /**
-     * Set to TRUE to mark this data source as read only.
+     * Set to FALSE to mark this data source as read only.
      *
      * @param boolean $value            
      * @return DataSourceInterface
      */
-    public function setReadOnly($value);
+    public function setWritable($value);
+    
+    /**
+     * Returns TRUE if read-operations are allowed on the data source and FALSE otherwise.
+     * 
+     * @return boolean
+     */
+    public function isReadable();
+    
+    /**
+     * Set to TRUE to prevent read-operations on this data source.
+     * 
+     * @param boolean $true_or_false
+     * @return DataSourceInterface
+     */
+    public function setReadable($true_or_false);
 
     /**
      *

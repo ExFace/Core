@@ -103,6 +103,12 @@ class SqlModelLoader implements ModelLoaderInterface
             $object->setDataSourceId($row['data_source_oid']);
             $object->setAppId($row['app_oid']);
             $object->setNamespace($row['app_alias']);
+            if (! is_null($row['readable_flag'])){
+                $object->setReadable($row['readable_flag']);
+            }
+            if (! is_null($row['writable_flag'])){
+                $object->setWritable($row['writable_flag']);
+            }
             if ($row['has_behaviors']) {
                 $load_behaviors = true;
             }
@@ -271,6 +277,13 @@ class SqlModelLoader implements ModelLoaderInterface
         $attr->setFormatter($row['attribute_formatter']);
         // FIXME #datatypes replace by the real data type app alias or (better) load data types separately
         $attr->setDataType('exface.Core.' . $row['data_type_alias']);
+        // Control flags
+        if (! is_null($row['attribute_readable_flag'])){
+            $attr->setWritable($row['attribute_readable_flag']);
+        }
+        if (! is_null($row['attribute_writable_flag'])){
+            $attr->setWritable($row['attribute_writable_flag']);
+        }
         $attr->setRequired($row['attribute_required_flag']);
         $attr->setEditable($row['attribute_editable_flag']);
         $attr->setHidden($row['attribute_hidden_flag']);
@@ -278,6 +291,7 @@ class SqlModelLoader implements ModelLoaderInterface
         $attr->setSortable($row['attribute_sortable_flag']);
         $attr->setFilterable($row['attribute_filterable_flag']);
         $attr->setAggregatable($row['attribute_aggregatable_flag']);
+        // Defaults
         $attr->setDefaultDisplayOrder($row['default_display_order']);
         $attr->setRelationFlag($row['related_object_oid'] ? true : false);
         $attr->setDefaultValue($row['default_value']);
@@ -286,9 +300,10 @@ class SqlModelLoader implements ModelLoaderInterface
         if ($row['default_sorter_dir']){
             $attr->setDefaultSorterDir($row['default_sorter_dir']);
         }
-        $attr->setShortDescription($row['attribute_short_description']);
         $attr->setDefaultAggregateFunction($row['default_aggregate_function']);
         $attr->setValueListDelimiter($row['value_list_delimiter']);
+        // Descriptions
+        $attr->setShortDescription($row['attribute_short_description']);
         
         // Create the UXON for the default editor widget
         // Start with the data type widget
@@ -328,19 +343,39 @@ class SqlModelLoader implements ModelLoaderInterface
                 $select_user_credentials = ', uc.data_connector_config AS user_connector_config';
             }
             
-            $sql = '
-				SELECT 
+            // The following IF is needed to install SQL update 8 introducing new columns in the
+            // data source table. If the updated had not yet been installed, these columns are
+            // not selected.
+            // TODO remove the IF leaving only the ELSE after 01.01.2018
+            if ($data_source->getWorkbench()->getConfig()->getOption('INSTALLER.SQL_UPDATE_LAST_PERFORMED_ID') < 8){
+                $sql = '
+				SELECT
 					ds.custom_query_builder,
-					ds.default_query_builder, 
-					ds.read_only_flag AS data_source_read_only, 
-					dc.read_only_flag AS connection_read_only, 
-					CONCAT(\'0x\', HEX(dc.oid)) AS data_connection_oid, 
-					dc.name, 
-					dc.data_connector, 
-					dc.data_connector_config, 
-					dc.filter_context_uxon' . $select_user_credentials . ' 
-				FROM exf_data_source ds LEFT JOIN exf_data_connection dc ON ' . $join_on . $join_user_credentials . ' 
+					ds.default_query_builder,
+					dc.read_only_flag AS connection_read_only,
+					CONCAT(\'0x\', HEX(dc.oid)) AS data_connection_oid,
+					dc.name,
+					dc.data_connector,
+					dc.data_connector_config,
+					dc.filter_context_uxon' . $select_user_credentials . '
+				FROM exf_data_source ds LEFT JOIN exf_data_connection dc ON ' . $join_on . $join_user_credentials . '
 				WHERE ds.oid = ' . $data_source->getId();
+            } else {
+                $sql = '
+				SELECT
+					ds.custom_query_builder,
+					ds.default_query_builder,
+					ds.readable_flag AS data_source_readable,
+					ds.writable_flag AS data_source_writable,
+					dc.read_only_flag AS connection_read_only,
+					CONCAT(\'0x\', HEX(dc.oid)) AS data_connection_oid,
+					dc.name,
+					dc.data_connector,
+					dc.data_connector_config,
+					dc.filter_context_uxon' . $select_user_credentials . '
+				FROM exf_data_source ds LEFT JOIN exf_data_connection dc ON ' . $join_on . $join_user_credentials . '
+				WHERE ds.oid = ' . $data_source->getId();
+            }
             $query = $this->getDataConnection()->runSql($sql);
             $ds = $query->getResultArray();
             if (count($ds) > 1) {
@@ -351,7 +386,12 @@ class SqlModelLoader implements ModelLoaderInterface
             $ds = $ds[0];
             $data_source->setDataConnectorAlias($ds['data_connector']);
             $data_source->setConnectionId($ds['data_connection_oid']);
-            $data_source->setReadOnly(($ds['data_source_read_only'] || $ds['connection_read_only']) ? true : false);
+            if (! is_null($ds['data_source_readable'])){
+                $data_source->setReadable($ds['data_source_readable']);
+            }
+            if (! is_null($ds['data_source_writable'])){
+                $data_source->setWritable($ds['data_source_writable'] && ! $ds['connection_read_only']);
+            }
             // Some data connections may have their own filter context. Add them to the application context scope
             if ($ds['filter_context_uxon'] && $filter_context = UxonObject::fromJson($ds['filter_context_uxon'])) {
                 // If there is only one filter, make an array out of it (needed for backwards compatibility)

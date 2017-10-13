@@ -24,6 +24,7 @@ use exface\Core\Interfaces\Model\MetaRelationInterface;
 use exface\Core\Interfaces\Model\MetaAttributeListInterface;
 use exface\Core\Interfaces\Model\MetaAttributeGroupInterface;
 use exface\Core\Interfaces\Model\MetaRelationPathInterface;
+use exface\Core\DataTypes\BooleanDataType;
 
 class Object implements MetaObjectInterface
 {
@@ -71,6 +72,10 @@ class Object implements MetaObjectInterface
     private $behaviors = array();
 
     private $actions = array();
+    
+    private $readable = true;
+    
+    private $writable = true;
 
     function __construct(ModelInterface $model)
     {
@@ -460,6 +465,14 @@ class Object implements MetaObjectInterface
         // Inherit data address
         $this->setDataAddress($parent->getDataAddress());
         $this->setDataAddressProperties($parent->getDataAddressProperties());
+        // The inheriting object will only be readable/writable if it is marked as such itself
+        // and the parent is readable or writable respectively.
+        if ($this->isReadable() && ! $parent->isReadable()){
+            $this->setReadable(false);
+        }
+        if ($this->isWritable() && ! $parent->isWritable()){
+            $this->setWritable(false);
+        }
         
         // Inherit default editor
         $default_editor_uxon = $parent->getDefaultEditorUxon()->copy();
@@ -1116,5 +1129,54 @@ class Object implements MetaObjectInterface
     {
         return $this->getWorkbench()->getApp($this->getNamespace());
     }
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaObjectInterface::isReadable()
+     */
+    public function isReadable()
+    {
+        if ($this->readable && ! $this->getDataSource()->isReadable()){
+            return false;
+        }
+        return $this->readable;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaObjectInterface::setReadable()
+     */
+    public function setReadable($true_or_false)
+    {
+        $this->readable = BooleanDataType::cast($true_or_false);
+        return $this;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaObjectInterface::isWritable()
+     */
+    public function isWritable()
+    {
+        if ($this->writable && ! $this->getDataSource()->isWritable()){
+            return false;
+        }
+        return $this->writable;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaObjectInterface::setWritable()
+     */
+    public function setWritable($true_or_false)
+    {
+        $this->writable = BooleanDataType::cast($true_or_false);
+        return $this;
+    }
+
+
 }
 ?>

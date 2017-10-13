@@ -58,18 +58,25 @@
             "attribute_alias": "DEFAULT_QUERY_BUILDER"
         },
         {
+            "expression": "READABLE_FLAG",
+            "name": "READABLE_FLAG",
+            "hidden": false,
+            "data_type": "exface.Core.Boolean",
+            "attribute_alias": "READABLE_FLAG"
+        },
+        {
+            "expression": "WRITABLE_FLAG",
+            "name": "WRITABLE_FLAG",
+            "hidden": false,
+            "data_type": "exface.Core.Boolean",
+            "attribute_alias": "WRITABLE_FLAG"
+        },
+        {
             "expression": "BASE_OBJECT",
             "name": "BASE_OBJECT",
             "hidden": false,
             "data_type": "exface.Core.Relation",
             "attribute_alias": "BASE_OBJECT"
-        },
-        {
-            "expression": "READONLY",
-            "name": "READONLY",
-            "hidden": false,
-            "data_type": "exface.Core.Boolean",
-            "attribute_alias": "READONLY"
         },
         {
             "expression": "LABEL",
@@ -96,8 +103,9 @@
             "APP": "0x31000000000000000000000000000000",
             "DEFAULT_CONNECTION": "",
             "DEFAULT_QUERY_BUILDER": "exface\/Core\/QueryBuilders\/MySqlBuilder.php",
+            "READABLE_FLAG": "1",
+            "WRITABLE_FLAG": "1",
             "BASE_OBJECT": "0x32370000000000000000000000000000",
-            "READONLY": "0",
             "LABEL": "ExFace DB",
             "ALIAS": "exface_db"
         },
@@ -110,8 +118,9 @@
             "APP": "0x31000000000000000000000000000000",
             "DEFAULT_CONNECTION": "0x11e6b09c8ccac11d8943e4b318306b9a",
             "DEFAULT_QUERY_BUILDER": "exface\/Core\/QueryBuilders\/FileFinderBuilder.php",
+            "READABLE_FLAG": "1",
+            "WRITABLE_FLAG": "0",
             "BASE_OBJECT": "0x11e6afd8efb4743f8943e4b318306b9a",
-            "READONLY": "1",
             "LABEL": "Local Vendor Folders",
             "ALIAS": "LOCAL_VENDOR_FOLDERS"
         },
@@ -124,8 +133,9 @@
             "APP": "0x31000000000000000000000000000000",
             "DEFAULT_CONNECTION": "0x11e6afd88b5ffcd28943e4b318306b9a",
             "DEFAULT_QUERY_BUILDER": "exface\/Core\/QueryBuilders\/FileFinderBuilder.php",
+            "READABLE_FLAG": "1",
+            "WRITABLE_FLAG": "1",
             "BASE_OBJECT": "0x11e6afd8efb4743f8943e4b318306b9a",
-            "READONLY": "0",
             "LABEL": "System Folders",
             "ALIAS": "SYSTEM_FOLDERS"
         },
@@ -138,8 +148,9 @@
             "APP": "0x31000000000000000000000000000000",
             "DEFAULT_CONNECTION": "0x11e6bbc738b084ae9ee0e4b318306b9a",
             "DEFAULT_QUERY_BUILDER": "exface\/Core\/QueryBuilders\/PhpAnnotationsReader.php",
+            "READABLE_FLAG": "1",
+            "WRITABLE_FLAG": "1",
             "BASE_OBJECT": "0x11e6bae2326c99b59ee0e4b318306b9a",
-            "READONLY": "0",
             "LABEL": "PHP Annotations",
             "ALIAS": "PHP_ANNOTATIONS"
         },
@@ -152,8 +163,9 @@
             "APP": "0x31000000000000000000000000000000",
             "DEFAULT_CONNECTION": "0x11e72b5df9840faea3bee4b318306b9a",
             "DEFAULT_QUERY_BUILDER": "exface\/Core\/QueryBuilders\/CsvBuilder.php",
+            "READABLE_FLAG": "1",
+            "WRITABLE_FLAG": "1",
             "BASE_OBJECT": "",
-            "READONLY": "0",
             "LABEL": "Local CSV file",
             "ALIAS": "LOCAL_CSV_FILE"
         }
