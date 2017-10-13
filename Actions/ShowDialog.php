@@ -165,7 +165,7 @@ class ShowDialog extends ShowWidget implements iShowDialog
 
     public function setIncludeHeaders($value)
     {
-        $this->include_headers = \exface\Core\DataTypes\BooleanDataType::parse($value);
+        $this->include_headers = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;
     }
 

@@ -33,7 +33,7 @@ interface iRunTemplateScript
      * @param string $element_id            
      * @return string valid java script
      */
-    public function printScript($element_id);
+    public function buildScript($element_id);
 
     /**
      * Returns java script code, that needs to be placed outside the actions script.
@@ -46,7 +46,7 @@ interface iRunTemplateScript
      * @param string $element_id            
      * @return string valid java script
      */
-    public function printHelperFunctions();
+    public function buildScriptHelperFunctions();
 
     /**
      * The output of custom template script actions is text

@@ -647,7 +647,7 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
      */
     public function setDisabled($value)
     {
-        $this->disabled = \exface\Core\DataTypes\BooleanDataType::parse($value);
+        $this->disabled = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;
     }
 
@@ -1011,6 +1011,7 @@ else {
      */
     public function setHidden($value)
     {
+        $value = BooleanDataType::cast($value);
         if ($value) {
             $this->setVisibility(EXF_WIDGET_VISIBILITY_HIDDEN);
         } else {
@@ -1235,7 +1236,7 @@ else {
 
     public function setDoNotPrefill($value)
     {
-        $this->do_not_prefill = BooleanDataType::parse($value);
+        $this->do_not_prefill = BooleanDataType::cast($value);
         return $this;
     }
 
@@ -1252,11 +1253,13 @@ else {
      * Sets a condition to disable the widget.
      *
      * E.g.:
-     * "disable_condition": {
-     * "widget_link": "consumer!CONSUMER_MAIL_PHONE",
-     * "comparator": "!=",
-     * "value": ""
-     * }
+     *  
+     *  "disable_condition": {
+     *      "widget_link": "consumer!CONSUMER_MAIL_PHONE",
+     *      "comparator": "!=",
+     *      "value": ""
+     *  }
+     * 
      * means the current widget is disabled when the column CONSUMER_MAIL_PHONE of
      * widget consumer is not empty. Can be usefully combined with a value-reference
      * to the same widget and column.

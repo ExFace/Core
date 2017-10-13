@@ -134,7 +134,7 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
      */
     public function setSortable($value)
     {
-        $this->sortable = \exface\Core\DataTypes\BooleanDataType::parse($value);
+        $this->sortable = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;
     }
 
@@ -329,7 +329,7 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
      */
     public function setIncludeInQuickSearch($value)
     {
-        $this->include_in_quick_search = \exface\Core\DataTypes\BooleanDataType::parse($value);
+        $this->include_in_quick_search = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;
     }
 

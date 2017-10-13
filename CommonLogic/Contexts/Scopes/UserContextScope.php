@@ -4,29 +4,28 @@ namespace exface\Core\CommonLogic\Contexts\Scopes;
 use exface\Core\Interfaces\Contexts\ContextInterface;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\CommonLogic\Model\User;
+use exface\Core\Factories\UserFactory;
+use exface\Core\Exceptions\UserNotFoundError;
+use exface\Core\Exceptions\UserNotUniqueError;
 
 class UserContextScope extends AbstractContextScope
 {
+
     const CONTEXTS_FILENAME_IN_USER_DATA = '.contexts.json';
 
-    private $user_data = null;
+    private $user = null;
 
-    private $user_locale = null;
-    
     private $user_context_file_contents = null;
-    
-    public function getScopeId(){
-        return $this->getUserName();
+
+    public function getScopeId()
+    {
+        return $this->getUsername();
     }
 
-    public function getUserName()
+    public function getUsername()
     {
         return $this->getWorkbench()->getCMS()->getUserName();
-    }
-
-    public function getUserId()
-    {
-        return $this->getUserData()->getUidColumn()->getCellValue(0);
     }
 
     /**
@@ -46,7 +45,7 @@ class UserContextScope extends AbstractContextScope
 
     public function getUserDataFolderName()
     {
-        return $this->getUserName() ? $this->getUserName() : '.anonymous';
+        return $this->getUsername() ? $this->getUsername() : '.anonymous';
     }
 
     /**
@@ -56,11 +55,11 @@ class UserContextScope extends AbstractContextScope
      */
     public function loadContextData(ContextInterface $context)
     {
-        if (is_null($this->user_context_file_contents)){
-            if (file_exists($this->getFilename())){
+        if (is_null($this->user_context_file_contents)) {
+            if (file_exists($this->getFilename())) {
                 try {
                     $this->user_context_file_contents = UxonObject::fromAnything(file_get_contents($this->getFilename()));
-                } catch (\Throwable $e){
+                } catch (\Throwable $e) {
                     $this->user_context_file_contents = new UxonObject();
                 }
             } else {
@@ -68,13 +67,13 @@ class UserContextScope extends AbstractContextScope
             }
         }
         
-        if ($this->user_context_file_contents->hasProperty($context->getAliasWithNamespace())){
+        if ($this->user_context_file_contents->hasProperty($context->getAliasWithNamespace())) {
             $context->importUxonObject($this->user_context_file_contents->getProperty($context->getAliasWithNamespace()));
         }
         
         return $this;
     }
-    
+
     /**
      * Contexts in the user scope get saved to the file .contexts.json in the
      * user data folder of the current user.
@@ -98,78 +97,34 @@ class UserContextScope extends AbstractContextScope
             }
         }
         
-        // Now save the cached version of the file. 
+        // Now save the cached version of the file.
         // NOTE: if nothing was cached, than we don't need to change anything.
-        if (! is_null($this->user_context_file_contents)){
-            if (! $this->user_context_file_contents->isEmpty()){
+        if (! is_null($this->user_context_file_contents)) {
+            if (! $this->user_context_file_contents->isEmpty()) {
                 file_put_contents($this->getFilename(), $this->user_context_file_contents->toJson());
-            } elseif (file_exists($this->getFilename())){
+            } elseif (file_exists($this->getFilename())) {
                 unlink($this->getFilename());
             }
         }
         return $this;
     }
-    
+
     /**
      * 
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\Contexts\Scopes\AbstractContextScope::removeContext()
      */
-    public function removeContext($alias){
+    public function removeContext($alias)
+    {
         $this->user_context_file_contents->unsetProperty($alias);
         return parent::removeContext($alias);
     }
-    
-    protected function getFilename(){
+
+    protected function getFilename()
+    {
         return $this->getUserDataFolderAbsolutePath() . DIRECTORY_SEPARATOR . static::CONTEXTS_FILENAME_IN_USER_DATA;
     }
 
-    /**
-     * Returns a data sheet with all data from the user object
-     *
-     * @return \exface\Core\Interfaces\DataSheets\DataSheetInterface
-     */
-    protected function getUserData()
-    {
-        if (is_null($this->user_data)) {
-            $user_object = $this->getWorkbench()->model()->getObject('exface.Core.USER');
-            $ds = DataSheetFactory::createFromObject($user_object);
-            $ds->getColumns()->addFromExpression($user_object->getUidAttributeAlias());
-            $ds->getColumns()->addFromExpression('USERNAME');
-            $ds->getColumns()->addFromExpression('FIRST_NAME');
-            $ds->getColumns()->addFromExpression('LAST_NAME');
-            $ds->addFilterFromString('USERNAME', $this->getUserName());
-            $ds->dataRead();
-            $this->user_data = $ds;
-        }
-        return $this->user_data;
-    }
-
-    /**
-     * Returns the locale, set for the current user
-     *
-     * @return string
-     */
-    public function getUserLocale()
-    {
-        if (is_null($this->user_locale) && $cms_locale = $this->getWorkbench()->getCMS()->getUserLocale()) {
-            $this->setUserLocale($cms_locale);
-        }
-        return $this->user_locale;
-    }
-
-    /**
-     * Sets the locale for the current user
-     *
-     * @param string $string            
-     * @return \exface\Core\CommonLogic\Contexts\Scopes\UserContextScope
-     */
-    public function setUserLocale($string)
-    {
-        $this->user_locale = $string;
-        return $this;
-    }
-    
     /**
      * Returns TRUE if the user currently logged in is an administrator and FALSE otherwise.
      * 
@@ -179,7 +134,7 @@ class UserContextScope extends AbstractContextScope
     {
         return $this->getWorkbench()->getCMS()->isUserAdmin();
     }
-    
+
     /**
      * Returns TRUE if no named user is logged in and FALSE otherwise.
      * 
@@ -188,6 +143,105 @@ class UserContextScope extends AbstractContextScope
     public function isUserAnonymous()
     {
         return $this->getWorkbench()->getCMS()->isUserLoggedIn() ? false : true;
+    }
+
+    /**
+     * 
+     * @param string $username
+     * @return User
+     */
+    public function getUserByName($username)
+    {
+        if (! $username) {
+            throw new UserNotFoundError('Empty username passed.');
+        }
+        
+        $userModel = $this->getWorkbench()->model()->getObject('exface.Core.USER');
+        $userSheet = DataSheetFactory::createFromObject($userModel);
+        foreach ($userModel->getAttributes() as $attr) {
+            $userSheet->getColumns()->addFromAttribute($attr);
+        }
+        $userSheet->getFilters()->addConditionsFromString($userModel, 'USERNAME', $username, EXF_COMPARATOR_EQUALS);
+        $userSheet->dataRead();
+        
+        if ($userSheet->countRows() == 0) {
+            throw new UserNotFoundError('No Exface user with username "' . $username . '" defined.');
+        } elseif ($userSheet->countRows() == 1) {
+            return UserFactory::createFromDataSheet($userSheet);
+        } else {
+            throw new UserNotUniqueError('More than one Exface users with username "' . $username . '" defined.');
+        }
+    }
+
+    /**
+     * 
+     * @param string $uid
+     * @return User
+     */
+    public function getUserById($uid)
+    {
+        if (! $uid) {
+            throw new UserNotFoundError('Empty UID passed.');
+        }
+        
+        $userModel = $this->getWorkbench()->model()->getObject('exface.Core.USER');
+        $userSheet = DataSheetFactory::createFromObject($userModel);
+        foreach ($userModel->getAttributes() as $attr) {
+            $userSheet->getColumns()->addFromAttribute($attr);
+        }
+        $userSheet->getFilters()->addConditionsFromString($userModel, $userModel->getUidAttributeAlias(), $uid, EXF_COMPARATOR_EQUALS);
+        $userSheet->dataRead();
+        
+        if ($userSheet->countRows() == 0) {
+            throw new UserNotFoundError('No Exface user with UID "' . $uid . '" defined.');
+        } elseif ($userSheet->countRows() == 1) {
+            return UserFactory::createFromDataSheet($userSheet);
+        } else {
+            throw new UserNotUniqueError('More than one Exface users with UID "' . $uid . '" defined.');
+        }
+    }
+
+    /**
+     * 
+     * @return User
+     */
+    public function getUserCurrent()
+    {
+        if (! $this->user) {
+            if ($this->getWorkbench()->getCMS()->isUserLoggedIn()) {
+                $this->user = $this->getUserByName($this->getWorkbench()->getCMS()->getUserName());
+            } else {
+                throw new UserNotFoundError('No logged in Exface user.');
+            }
+        }
+        return $this->user;
+    }
+
+    /**
+     * 
+     * @param User $user
+     */
+    public function createUser(User $user)
+    {
+        $user->exportDataSheet()->dataCreate();
+    }
+
+    /**
+     * 
+     * @param User $user
+     */
+    public function updateUser(User $user)
+    {
+        $user->exportDataSheet()->dataUpdate();
+    }
+
+    /**
+     * 
+     * @param User $user
+     */
+    public function deleteUser(User $user)
+    {
+        $user->exportDataSheet()->dataDelete();
     }
 }
 ?>

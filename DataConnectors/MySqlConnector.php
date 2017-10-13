@@ -278,7 +278,7 @@ class MySqlConnector extends AbstractSqlConnector
      */
     public function setUsePersistantConnection($value)
     {
-        $this->use_persistant_connection = \exface\Core\DataTypes\BooleanDataType::parse($value);
+        $this->use_persistant_connection = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;
     }
 

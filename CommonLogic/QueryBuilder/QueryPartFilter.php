@@ -125,7 +125,7 @@ class QueryPartFilter extends QueryPartAttribute
      */
     public function setApplyAfterReading($value)
     {
-        $this->apply_after_reading = \exface\Core\DataTypes\BooleanDataType::parse($value);
+        $this->apply_after_reading = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;
     }
 }

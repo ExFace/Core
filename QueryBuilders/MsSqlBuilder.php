@@ -10,7 +10,7 @@ use exface\Core\CommonLogic\Model\Aggregator;
  * Data address properties for objects:
  * - SQL_SELECT_WHERE - custom where statement automatically appended to direct selects for this object (not if the object's table
  * is joined!). Usefull for generic tables, where different meta objects are stored and distinguished by specific keys in a
- * special column. The value of SQL_SELECT_WHERE should contain the [#alias#] placeholder: e.g. [#alias#].mycolumn = 'myvalue'.
+ * special column. The value of SQL_SELECT_WHERE should contain the [#~alias#] placeholder: e.g. [#~alias#].mycolumn = 'myvalue'.
  *
  * @author Andrej Kabachnik
  *        

@@ -60,7 +60,7 @@ class ObjectBasketShowDialog extends ShowDialog
         $dialog->addWidget($table);
         
         // Prefill table
-        $ds = $this->getContext()->getFavoritesByObject($this->getMetaObject())->copy();
+        $ds = $this->getContext()->getBasketByObject($this->getMetaObject())->copy();
         $ds->addFilterFromColumnValues($ds->getUidColumn());
         $table->prepareDataSheetToPrefill($ds);
         $table->prefill($ds);

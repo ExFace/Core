@@ -139,7 +139,7 @@ class InputSelect extends Input implements iSupportMultiSelect
      */
     public function setMultiSelect($value)
     {
-        $this->multi_select = \exface\Core\DataTypes\BooleanDataType::parse($value);
+        $this->multi_select = \exface\Core\DataTypes\BooleanDataType::cast($value);
     }
 
     /**
@@ -664,7 +664,7 @@ class InputSelect extends Input implements iSupportMultiSelect
      */
     public function setUsePrefillToFilterOptions($value)
     {
-        $this->use_prefill_to_filter_options = \exface\Core\DataTypes\BooleanDataType::parse($value);
+        $this->use_prefill_to_filter_options = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;
     }
 
@@ -684,7 +684,7 @@ class InputSelect extends Input implements iSupportMultiSelect
      */
     public function setUsePrefillValuesAsOptions($value)
     {
-        $this->use_prefill_values_as_options = \exface\Core\DataTypes\BooleanDataType::parse($value);
+        $this->use_prefill_values_as_options = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;
     }
 

@@ -41,7 +41,7 @@ class ObjectBasketContext extends AbstractContext
             $basket_data->dataRead();
         }
         
-        $this->getFavoritesByObjectId($data_sheet->getMetaObject()->getId())->addRows($basket_data->getRows(), true);
+        $this->getBasketByObjectId($data_sheet->getMetaObject()->getId())->addRows($basket_data->getRows(), true);
         return $this;
     }
 
@@ -68,8 +68,13 @@ class ObjectBasketContext extends AbstractContext
      *
      * @return DataSheetInterface[]
      */
-    public function getFavoritesAll()
+    protected function getBaskets()
     {
+        foreach ($this->favorites as $object_id => $data){
+            if (! ($data instanceof DataSheetInterface)){
+                $this->favorites[$object_id] = DataSheetFactory::createFromUxon($this->getWorkbench(), $data);
+            }
+        }
         return $this->favorites;
     }
 
@@ -78,7 +83,7 @@ class ObjectBasketContext extends AbstractContext
      * @param string $object_id            
      * @return DataSheetInterface
      */
-    public function getFavoritesByObjectId($object_id)
+    public function getBasketByObjectId($object_id)
     {
         if (! $this->favorites[$object_id]) {
             $this->favorites[$object_id] = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), $object_id);
@@ -93,9 +98,9 @@ class ObjectBasketContext extends AbstractContext
      * @param MetaObjectInterface $object            
      * @return DataSheetInterface
      */
-    public function getFavoritesByObject(MetaObjectInterface $object)
+    public function getBasketByObject(MetaObjectInterface $object)
     {
-        return $this->getFavoritesByObjectId($object->getId());
+        return $this->getBasketByObjectId($object->getId());
     }
 
     /**
@@ -104,11 +109,11 @@ class ObjectBasketContext extends AbstractContext
      * @throws ContextOutOfBoundsError
      * @return DataSheetInterface
      */
-    public function getFavoritesByObjectAlias($alias_with_namespace)
+    public function getBasketByObjectAlias($alias_with_namespace)
     {
         $object = $this->getWorkbench()->model()->getObjectByAlias($alias_with_namespace);
         if ($object) {
-            return $this->getFavoritesByObjectId($object->getId());
+            return $this->getBasketByObjectId($object->getId());
         } else {
             throw new ContextOutOfBoundsError($this, 'ObjectBasket requested for non-existant object alias "' . $alias_with_namespace . '"!', '6T5E5VY');
         }
@@ -133,7 +138,7 @@ class ObjectBasketContext extends AbstractContext
     public function importUxonObject(UxonObject $uxon)
     {
         foreach ($uxon as $object_id => $data_uxon) {
-            $this->favorites[$object_id] = DataSheetFactory::createFromUxon($this->getWorkbench(), $data_uxon);
+            $this->favorites[$object_id] = $data_uxon;
         }
     }
 
@@ -153,10 +158,14 @@ class ObjectBasketContext extends AbstractContext
      */
     public function exportUxonObject()
     {
-        $uxon = $this->getWorkbench()->createUxonObject();
-        foreach ($this->getFavoritesAll() as $object_id => $data_sheet) {
-            if (! $data_sheet->isEmpty()) {
-                $uxon->setProperty($object_id, $data_sheet->exportUxonObject());
+        $uxon = new UxonObject();
+        foreach ($this->favorites as $object_id => $data_sheet) {
+            if ($data_sheet instanceof DataSheetInterface){
+                if (! $data_sheet->isEmpty()) {
+                    $uxon->setProperty($object_id, $data_sheet->exportUxonObject());
+                }
+            } else {
+                $uxon->setProperty($object_id, $data_sheet);
             }
         }
         return $uxon;
@@ -181,7 +190,7 @@ class ObjectBasketContext extends AbstractContext
      */
     public function removeInstance($object_id, $uid)
     {
-        $this->getFavoritesByObjectId($object_id)->removeRowsByUid($uid);
+        $this->getBasketByObjectId($object_id)->removeRowsByUid($uid);
         return $this;
     }
 
@@ -193,8 +202,12 @@ class ObjectBasketContext extends AbstractContext
     public function getIndicator()
     {
         $i = 0;
-        foreach ($this->getFavoritesAll() as $data_sheet) {
-            $i += $data_sheet->countRows();
+        foreach ($this->favorites as $data_sheet) {
+            if ($data_sheet instanceof DataSheetInterface){
+                $i += $data_sheet->countRows();
+            } elseif ($data_sheet instanceof UxonObject) {
+                $i += count($data_sheet->getProperty('rows'));
+            }
         }
         return $i;
     }
@@ -216,7 +229,7 @@ class ObjectBasketContext extends AbstractContext
         $menu->setCaption($this->getName());
         
         // Fill with buttons
-        foreach ($this->getFavoritesAll() as $data_sheet) {
+        foreach ($this->getBaskets() as $data_sheet) {
             $btn = $menu->createButton();
             $btn->setMetaObject($data_sheet->getMetaObject());
             $btn->setActionAlias('exface.Core.ObjectBasketShowDialog');

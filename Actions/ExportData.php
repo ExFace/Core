@@ -75,7 +75,7 @@ class ExportData extends ReadData implements iExportData
      */
     public function setDownload($true_or_false)
     {
-        $this->download = BooleanDataType::parse($true_or_false);
+        $this->download = BooleanDataType::cast($true_or_false);
         return $this;
     }
 

@@ -88,8 +88,8 @@
     ],
     "rows": [
         {
-            "CREATED_ON": "0000-00-00 00:00:00",
-            "MODIFIED_ON": "0000-00-00 00:00:00",
+            "CREATED_ON": "1970-01-01 00:00:00",
+            "MODIFIED_ON": "1970-01-01 00:00:00",
             "CREATED_BY_USER": "",
             "MODIFIED_BY_USER": "",
             "UID": "0x30000000000000000000000000000000",
@@ -102,7 +102,7 @@
             "LABEL": "String"
         },
         {
-            "CREATED_ON": "0000-00-00 00:00:00",
+            "CREATED_ON": "1970-01-01 00:00:00",
             "MODIFIED_ON": "2017-09-11 10:25:27",
             "CREATED_BY_USER": "",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
@@ -116,7 +116,7 @@
             "LABEL": "Number"
         },
         {
-            "CREATED_ON": "0000-00-00 00:00:00",
+            "CREATED_ON": "1970-01-01 00:00:00",
             "MODIFIED_ON": "2017-09-11 12:00:44",
             "CREATED_BY_USER": "",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
@@ -130,8 +130,8 @@
             "LABEL": "Property Set"
         },
         {
-            "CREATED_ON": "0000-00-00 00:00:00",
-            "MODIFIED_ON": "0000-00-00 00:00:00",
+            "CREATED_ON": "1970-01-01 00:00:00",
+            "MODIFIED_ON": "1970-01-01 00:00:00",
             "CREATED_BY_USER": "",
             "MODIFIED_BY_USER": "",
             "UID": "0x31310000000000000000000000000000",
@@ -144,8 +144,8 @@
             "LABEL": "Text"
         },
         {
-            "CREATED_ON": "0000-00-00 00:00:00",
-            "MODIFIED_ON": "0000-00-00 00:00:00",
+            "CREATED_ON": "1970-01-01 00:00:00",
+            "MODIFIED_ON": "1970-01-01 00:00:00",
             "CREATED_BY_USER": "",
             "MODIFIED_BY_USER": "",
             "UID": "0x31320000000000000000000000000000",
@@ -158,8 +158,8 @@
             "LABEL": "URL"
         },
         {
-            "CREATED_ON": "0000-00-00 00:00:00",
-            "MODIFIED_ON": "0000-00-00 00:00:00",
+            "CREATED_ON": "1970-01-01 00:00:00",
+            "MODIFIED_ON": "1970-01-01 00:00:00",
             "CREATED_BY_USER": "",
             "MODIFIED_BY_USER": "",
             "UID": "0x31330000000000000000000000000000",
@@ -172,8 +172,8 @@
             "LABEL": "Json"
         },
         {
-            "CREATED_ON": "0000-00-00 00:00:00",
-            "MODIFIED_ON": "0000-00-00 00:00:00",
+            "CREATED_ON": "1970-01-01 00:00:00",
+            "MODIFIED_ON": "1970-01-01 00:00:00",
             "CREATED_BY_USER": "",
             "MODIFIED_BY_USER": "",
             "UID": "0x31340000000000000000000000000000",
@@ -186,7 +186,7 @@
             "LABEL": "HTML"
         },
         {
-            "CREATED_ON": "0000-00-00 00:00:00",
+            "CREATED_ON": "1970-01-01 00:00:00",
             "MODIFIED_ON": "2017-09-11 12:00:54",
             "CREATED_BY_USER": "",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
@@ -200,8 +200,8 @@
             "LABEL": "Image URL"
         },
         {
-            "CREATED_ON": "0000-00-00 00:00:00",
-            "MODIFIED_ON": "0000-00-00 00:00:00",
+            "CREATED_ON": "1970-01-01 00:00:00",
+            "MODIFIED_ON": "1970-01-01 00:00:00",
             "CREATED_BY_USER": "",
             "MODIFIED_BY_USER": "",
             "UID": "0x32000000000000000000000000000000",
@@ -214,8 +214,8 @@
             "LABEL": "Date"
         },
         {
-            "CREATED_ON": "0000-00-00 00:00:00",
-            "MODIFIED_ON": "0000-00-00 00:00:00",
+            "CREATED_ON": "1970-01-01 00:00:00",
+            "MODIFIED_ON": "1970-01-01 00:00:00",
             "CREATED_BY_USER": "",
             "MODIFIED_BY_USER": "",
             "UID": "0x33000000000000000000000000000000",
@@ -228,7 +228,7 @@
             "LABEL": "Timestamp"
         },
         {
-            "CREATED_ON": "0000-00-00 00:00:00",
+            "CREATED_ON": "1970-01-01 00:00:00",
             "MODIFIED_ON": "2016-03-18 14:43:57",
             "CREATED_BY_USER": "",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
@@ -242,8 +242,8 @@
             "LABEL": "Price"
         },
         {
-            "CREATED_ON": "0000-00-00 00:00:00",
-            "MODIFIED_ON": "0000-00-00 00:00:00",
+            "CREATED_ON": "1970-01-01 00:00:00",
+            "MODIFIED_ON": "1970-01-01 00:00:00",
             "CREATED_BY_USER": "",
             "MODIFIED_BY_USER": "",
             "UID": "0x35000000000000000000000000000000",
@@ -256,8 +256,8 @@
             "LABEL": "Relation"
         },
         {
-            "CREATED_ON": "0000-00-00 00:00:00",
-            "MODIFIED_ON": "0000-00-00 00:00:00",
+            "CREATED_ON": "1970-01-01 00:00:00",
+            "MODIFIED_ON": "1970-01-01 00:00:00",
             "CREATED_BY_USER": "",
             "MODIFIED_BY_USER": "",
             "UID": "0x37000000000000000000000000000000",
@@ -270,7 +270,7 @@
             "LABEL": "Boolean"
         },
         {
-            "CREATED_ON": "0000-00-00 00:00:00",
+            "CREATED_ON": "1970-01-01 00:00:00",
             "MODIFIED_ON": "2017-09-11 12:00:39",
             "CREATED_BY_USER": "",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
@@ -284,7 +284,7 @@
             "LABEL": "Relation Hierarchy"
         },
         {
-            "CREATED_ON": "0000-00-00 00:00:00",
+            "CREATED_ON": "1970-01-01 00:00:00",
             "MODIFIED_ON": "2017-09-11 12:00:33",
             "CREATED_BY_USER": "",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",

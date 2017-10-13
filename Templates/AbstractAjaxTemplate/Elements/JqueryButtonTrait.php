@@ -259,7 +259,7 @@ JS;
     {
         $widget = $this->getWidget();
         
-        $output = $action->printScript($input_element->getId());
+        $output = $action->buildScript($input_element->getId());
         $output .= '
 				' . $this->buildJsCloseDialog($widget, $input_element);
         

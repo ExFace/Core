@@ -43,14 +43,39 @@ interface DataTypeInterface extends ExfaceClassInterface, AliasInterface, MetaMo
     public function is($data_type_or_resolvable_name);
 
     /**
-     * Returns a normalized representation of the given string, that can be interpreted by the ExFace core correctly.
-     * E.g. Date::parse('21.9.1984') = 1984-09-21
+     * Returns a normalized representation of the given string matching the data prototype, but 
+     * does not check any configurable resrictions of the data type instance.
+     * 
+     * In other words, the string is made data prototype conform. That's all we can do without
+     * instantiating a concrete data type. On the other hand, any valid value of any data type
+     * based on this prototype will pass casting without being modified.
+     * 
+     * E.g. DateDataType::cast('21.9.1984') = 1984-09-21.
+     * 
+     * @see DataTypeInterface::parse($string) for a similar method for instantiated types.
      *
      * @param string $string            
      * @throws DataTypeValidationError
      * @return string
      */
-    public static function parse($string);
+    public static function cast($string);
+    
+    /**
+     * Returns a normalized representation of the given string mathing all the rules defined in the
+     * data type.
+     * 
+     * While the static cast() method only makes the value compatible with the prototype, parse()
+     * will make sure it matches all rules of the data type - including those defined in it's model.
+     * 
+     * E.g. NumberDataType::cast(1,5523) = 1.5523, but exface.Core.NumberNatural->parse(1,5523) = 1,
+     * because the natural number model not only casts anything to a number, but also rounds it to
+     * the a whole number.
+     *
+     * @param string $string
+     * @throws DataTypeValidationError
+     * @return string
+     */
+    public function parse($string);
 
     /**
      * Returns TRUE if the given value matches the data type (and thus can be parsed) or FALSE otherwise.

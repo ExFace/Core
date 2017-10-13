@@ -190,19 +190,19 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
      * 
      * TODO create a separate DataRowGroup-widget
      *
-     * @param UxonObject $uxon_description_object            
+     * @param UxonObject $uxon            
      * @return DataTable
      */
-    public function setGroupRows(UxonObject $uxon_description_object)
+    public function setGroupRows(UxonObject $uxon)
     {
-        if (isset($uxon_description_object->group_by_column_id))
-            $this->setRowGroupsByColumnId($uxon_description_object->group_by_column_id);
-        if (isset($uxon_description_object->expand))
-            $this->setRowGroupsExpand($uxon_description_object->expand);
-        if (isset($uxon_description_object->show_count))
-            $this->setRowGroupsShowCount($uxon_description_object->show_count);
-        if (isset($uxon_description_object->action_alias))
-            $this->setRowDetailsAction($uxon_description_object->action_alias);
+        if ($uxon->hasProperty('group_by_column_id'))
+            $this->setRowGroupsByColumnId($uxon->getProperty('group_by_column_id'));
+        if ($uxon->hasProperty('expand'))
+            $this->setRowGroupsExpand($uxon->getProperty('expand'));
+        if ($uxon->hasProperty('show_count'))
+            $this->setRowGroupsShowCount($uxon->getProperty('show_count'));
+        if ($uxon->hasProperty('action_alias'))
+            $this->setRowDetailsAction($uxon->getProperty('action_alias'));
         return $this;
     }
 
@@ -252,7 +252,7 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
      */
     public function setContextMenuEnabled($value)
     {
-        $this->context_menu_enabled = \exface\Core\DataTypes\BooleanDataType::parse($value);
+        $this->context_menu_enabled = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;
     }
 
@@ -274,7 +274,7 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
      */
     public function setShowFilterRow($value)
     {
-        $this->show_filter_row = \exface\Core\DataTypes\BooleanDataType::parse($value);
+        $this->show_filter_row = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;
     }
 
@@ -294,7 +294,7 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
      */
     public function setHeaderSortMultiple($value)
     {
-        $this->header_sort_multiple = \exface\Core\DataTypes\BooleanDataType::parse($value);
+        $this->header_sort_multiple = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;
     }
 
@@ -354,7 +354,7 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
      */
     public function setNowrap($value)
     {
-        $this->nowrap = \exface\Core\DataTypes\BooleanDataType::parse($value);
+        $this->nowrap = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;
     }
 
@@ -374,7 +374,7 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
      */
     public function setStriped($value)
     {
-        $this->striped = \exface\Core\DataTypes\BooleanDataType::parse($value);
+        $this->striped = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;
     }
 
@@ -399,7 +399,7 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
      */
     public function setAutoRowHeight($value)
     {
-        $this->auto_row_height = \exface\Core\DataTypes\BooleanDataType::parse($value);
+        $this->auto_row_height = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;
     }
 
