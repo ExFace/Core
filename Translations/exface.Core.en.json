@@ -99,16 +99,17 @@
 	"DATETIME.FORMAT.SCREEN.PHP": "Y-m-d H:i:s",
 	
 	"GLOBAL.ACTIONS": "Actions",
-	"GLOBAL.DEFAULT_DATE_FORMAT": "d.m.Y",
-    "GLOBAL.DEFAULT_DATETIME_FORMAT": "d.m.Y H:i:s",
-    
+	
+	"INSTALLER.SQLSCHEMA.SUCCESS": "%counter% SQL-schema-update installed|%counter% SQL-schema-updates installed",
+    "INSTALLER.SQLSCHEMA.FAILED": "SQL-schema-update %first_failed_id% failed: %error_text%|%counter% SQL-schema-updates failed starting with update %first_failed_id%: %error_text%",
+	
+	"LOCALIZATION.DATE.DATE_FORMAT": "d.m.Y",
+    "LOCALIZATION.DATE.DATETIME_FORMAT": "d.m.Y H:i:s",
+    "LOCALIZATION.DATE.TIME_FORMAT": "H:i:s",
     "LOCALIZATION.NUMBER.DECIMAL_SEPARATOR": ".",
     "LOCALIZATION.NUMBER.THOUSANDS_SEPARATOR": " ",
     
-    "INSTALLER.SQLSCHEMA.SUCCESS": "%counter% SQL-schema-update installed|%counter% SQL-schema-updates installed",
-    "INSTALLER.SQLSCHEMA.FAILED": "SQL-schema-update %first_failed_id% failed: %error_text%|%counter% SQL-schema-updates failed starting with update %first_failed_id%: %error_text%",
-	
-	"WIDGET.SELECT_ALL": "All",
+    "WIDGET.SELECT_ALL": "All",
 	"WIDGET.SELECT_YES": "Yes",
 	"WIDGET.SELECT_NO": "No",
 	"WIDGET.SELECT_NONE": "-",
