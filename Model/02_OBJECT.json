@@ -2,122 +2,71 @@
     "object_alias": "exface.Core.OBJECT",
     "columns": [
         {
-            "expression": "CREATED_ON",
             "name": "CREATED_ON",
-            "hidden": false,
-            "data_type": "exface.Core.Timestamp",
             "attribute_alias": "CREATED_ON"
         },
         {
-            "expression": "MODIFIED_ON",
             "name": "MODIFIED_ON",
-            "hidden": false,
-            "data_type": "exface.Core.Timestamp",
             "attribute_alias": "MODIFIED_ON"
         },
         {
-            "expression": "CREATED_BY_USER",
             "name": "CREATED_BY_USER",
-            "hidden": false,
-            "data_type": "exface.Core.Relation",
             "attribute_alias": "CREATED_BY_USER"
         },
         {
-            "expression": "MODIFIED_BY_USER",
             "name": "MODIFIED_BY_USER",
-            "hidden": false,
-            "data_type": "exface.Core.Relation",
             "attribute_alias": "MODIFIED_BY_USER"
         },
         {
-            "expression": "UID",
             "name": "UID",
-            "hidden": false,
-            "data_type": "exface.Core.Number",
             "attribute_alias": "UID"
         },
         {
-            "expression": "READABLE_FLAG",
             "name": "READABLE_FLAG",
-            "hidden": false,
-            "data_type": "exface.Core.Boolean",
             "attribute_alias": "READABLE_FLAG"
         },
         {
-            "expression": "WRITABLE_FLAG",
             "name": "WRITABLE_FLAG",
-            "hidden": false,
-            "data_type": "exface.Core.Boolean",
             "attribute_alias": "WRITABLE_FLAG"
         },
         {
-            "expression": "DATA_SOURCE",
             "name": "DATA_SOURCE",
-            "hidden": false,
-            "data_type": "exface.Core.Relation",
             "attribute_alias": "DATA_SOURCE"
         },
         {
-            "expression": "long_description",
             "name": "long_description",
-            "hidden": false,
-            "data_type": "exface.Core.Text",
             "attribute_alias": "long_description"
         },
         {
-            "expression": "APP",
             "name": "APP",
-            "hidden": false,
-            "data_type": "exface.Core.Relation",
             "attribute_alias": "APP"
         },
         {
-            "expression": "SHORT_DESCRIPTION",
             "name": "SHORT_DESCRIPTION",
-            "hidden": false,
-            "data_type": "exface.Core.Text",
             "attribute_alias": "SHORT_DESCRIPTION"
         },
         {
-            "expression": "PARENT_OBJECT",
             "name": "PARENT_OBJECT",
-            "hidden": false,
-            "data_type": "exface.Core.Relation",
             "attribute_alias": "PARENT_OBJECT"
         },
         {
-            "expression": "DATA_ADDRESS_PROPS",
             "name": "DATA_ADDRESS_PROPS",
-            "hidden": false,
-            "data_type": "exface.Core.PropertySet",
             "attribute_alias": "DATA_ADDRESS_PROPS"
         },
         {
-            "expression": "DEFAULT_EDITOR_UXON",
             "name": "DEFAULT_EDITOR_UXON",
-            "hidden": false,
-            "data_type": "exface.Core.Text",
             "attribute_alias": "DEFAULT_EDITOR_UXON"
         },
         {
-            "expression": "LABEL",
             "name": "LABEL",
-            "hidden": false,
-            "data_type": "exface.Core.String",
             "attribute_alias": "LABEL"
         },
         {
-            "expression": "ALIAS",
             "name": "ALIAS",
-            "hidden": false,
-            "data_type": "exface.Core.String",
             "attribute_alias": "ALIAS"
         },
         {
-            "expression": "DATA_ADDRESS",
             "name": "DATA_ADDRESS",
-            "hidden": false,
-            "data_type": "exface.Core.Text",
             "attribute_alias": "DATA_ADDRESS"
         }
     ],
@@ -162,7 +111,7 @@
         },
         {
             "CREATED_ON": "2007-01-01 00:00:00",
-            "MODIFIED_ON": "2017-10-12 14:02:45",
+            "MODIFIED_ON": "2017-10-16 05:19:46",
             "CREATED_BY_USER": "",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x31350000000000000000000000000000",
@@ -238,7 +187,7 @@
         },
         {
             "CREATED_ON": "2007-01-01 00:00:00",
-            "MODIFIED_ON": "2017-10-13 14:27:34",
+            "MODIFIED_ON": "2017-10-16 05:11:29",
             "CREATED_BY_USER": "",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x32360000000000000000000000000000",
@@ -250,7 +199,7 @@
             "SHORT_DESCRIPTION": "",
             "PARENT_OBJECT": "",
             "DATA_ADDRESS_PROPS": "{}",
-            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Form\",\"widgets\":[{\"attribute_alias\":\"APP\"},{\"attribute_alias\":\"ALIAS\"},{\"attribute_alias\":\"NAME\"},{\"attribute_alias\":\"PROTOTYPE\"},{\"attribute_alias\":\"VALIDATION_ERROR_CODE\"},{\"attribute_alias\":\"SHORT_DESCRIPTION\",\"width\":\"max\",\"height\":2},{\"attribute_alias\":\"CONFIG_UXON\",\"width\":\"max\"},{\"attribute_alias\":\"DEFAULT_WIDGET_UXON\",\"width\":\"max\"}]}",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Form\",\"widgets\":[{\"attribute_alias\":\"APP\"},{\"attribute_alias\":\"ALIAS\"},{\"attribute_alias\":\"NAME\"},{\"attribute_alias\":\"PROTOTYPE\"},{\"attribute_alias\":\"VALIDATION_ERROR\"},{\"attribute_alias\":\"SHORT_DESCRIPTION\",\"width\":\"max\",\"height\":2},{\"attribute_alias\":\"CONFIG_UXON\",\"width\":\"max\"},{\"attribute_alias\":\"DEFAULT_WIDGET_UXON\",\"width\":\"max\"}]}",
             "LABEL": "Data Type",
             "ALIAS": "DATATYPE",
             "DATA_ADDRESS": "exf_data_type"
