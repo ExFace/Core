@@ -94,17 +94,14 @@ class DataColumn implements DataColumnInterface
         } else {
             $expression = $expression_or_string;
         }
+        
         $this->expression = $expression;
+        
         if ($expression->isMetaAttribute()) {
-            $attribute_alias = $expression->getRequiredAttributes()[0];
-            $this->setAttributeAlias($attribute_alias);
-            try {
-                $attr = $this->getMetaObject()->getAttribute($attribute_alias);
-                $this->setDataType($attr->getDataType());
-            } catch (MetaAttributeNotFoundError $e) {
-                // ignore expressions with invalid attribute aliases
-            }
+            $this->setAttributeAlias($expression->toString());
         }
+        
+        return $this;
     }
 
     /**
@@ -233,6 +230,13 @@ class DataColumn implements DataColumnInterface
     public function getDataType()
     {
         if (is_null($this->data_type)) {
+            if ($attribute_alias = $this->getAttributeAlias()) {
+                try {
+                    return $this->getMetaObject()->getAttribute($attribute_alias)->getDataType();
+                } catch (MetaAttributeNotFoundError $e) {
+                    // ignore expressions with invalid attribute aliases
+                }
+            }
             $this->data_type = DataTypeFactory::createBaseDataType($this->getWorkbench());
         }
         return $this->data_type;
@@ -265,7 +269,7 @@ class DataColumn implements DataColumnInterface
      */
     public function getAttribute()
     {
-        if ($this->getAttributeAlias()) {
+        if ($this->isAttribute()) {
             return $this->getMetaObject()->getAttribute($this->getAttributeAlias());
         } else {
             return false;
@@ -375,21 +379,68 @@ class DataColumn implements DataColumnInterface
      */
     public function exportUxonObject()
     {
-        $uxon = $this->getDataSheet()->getWorkbench()->createUxonObject();
-        $uxon->setProperty('expression', $this->getExpressionObj()->toString());
+        $uxon = new UxonObject();
+        
+        // Allways export some basic properties of the column first
         $uxon->setProperty('name', $this->getName());
-        $uxon->setProperty('hidden', $this->getHidden());
-        $uxon->setProperty('data_type', $this->getDataType()->getAliasWithNamespace());
-        if ($this->formula) {
-            $uxon->setProperty('formula', $this->getFormula()->toString());
+        
+        if ($this->getHidden()) {
+            $uxon->setProperty('hidden', $this->getHidden());
         }
-        if ($this->attribute_alias) {
-            $uxon->setProperty('attribute_alias', $this->attribute_alias);
-        }
+        
         if ($this->hasTotals()) {
             $uxon->setProperty('totals', $this->getTotals()->exportUxonObject());
         }
+        
+        if ($this->isAttribute()) {
+            // If it contains an attribute, it will be enough to export it's alias and every thing
+            // else only if it differs from attribute data
+            $uxon->setProperty('attribute_alias', $this->attribute_alias);
+            
+            if ($this->getAttribute()->getDataType() !== $this->getDataType()) {
+                $uxon->setProperty('data_type', $this->getDataType()->getAliasWithNamespace());
+            }
+        } else {
+            // If it's not an attribute, export everything
+            $uxon->setProperty('expression', $this->getExpressionObj()->toString());
+            $uxon->setProperty('data_type', $this->getDataType()->getAliasWithNamespace());
+        
+            if ($this->formula) {
+                $uxon->setProperty('formula', $this->getFormula()->toString());
+            }
+        }
+        
         return $uxon;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::isAttribute()
+     */
+    public function isAttribute()
+    {
+        return $this->getAttributeAlias() ? true : false;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::isFormula()
+     */
+    public function isFormula()
+    {
+        return is_null($this->formula) || $this->formula === '' ? false : true; 
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::isCalculated()
+     */
+    public function isCalculated()
+    {
+        return $this->isFormula();
     }
 
     /**

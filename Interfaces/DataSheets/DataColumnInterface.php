@@ -306,4 +306,26 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
      * @return \exface\Core\Interfaces\Model\MetaObjectInterface
      */
     public function getMetaObject();
+    
+    /**
+     * Returns TRUE if this column shows a meta attribute and FALSE otherwise (e.g. formula, etc.)
+     * 
+     * @return boolean
+     */
+    public function isAttribute();
+    
+    /**
+     * 
+     * Returns TRUE if this column shows a formula and FALSE otherwise
+     * 
+     * @return boolean
+     */
+    public function isFormula();
+    
+    /**
+     * Returns TRUE if this is a calculated column - that is, it's data does not (only) come from a data source.
+     * 
+     * @return boolean
+     */
+    public function isCalculated();
 }
