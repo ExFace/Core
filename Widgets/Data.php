@@ -720,7 +720,7 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
         foreach ($this->getMetaObject()->getDataAddressRequiredPlaceholders() as $ph) {
             // Special placeholders referencing properties of the meta object itself
             // TODO find a better notation for special placeholders to separate them clearly from other attributes
-            if ($ph == 'alias' || $ph == 'id')
+            if ($ph == '~alias' || $ph == 'id')
                 continue;
             
             // If the placeholder is an attribute, add a required filter on it (or make an existing filter required)
