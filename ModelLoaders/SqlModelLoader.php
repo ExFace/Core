@@ -187,21 +187,15 @@ class SqlModelLoader implements ModelLoaderInterface
                     if ($row['object_label_flag']) {
                         $object->setLabelAttributeAlias($row['attribute_alias']);
                         // always add a LABEL attribute if it is not already called LABEL (widgets always need to show the LABEL!)
-                        // IDEA cleaner code does not work for some reason. Didn't have time to check out why...
-                        /*
-                         * if ($row['attribute_alias'] != $object->getModel()->getWorkbench()->getConfig()->getOption('METAMODEL.OBJECT_LABEL_ALIAS')){
-                         * $label_attribute = attribute::from_db_row($row);
-                         * $label_attribute->setAlias($object->getModel()->getWorkbench()->getConfig()->getOption('METAMODEL.OBJECT_LABEL_ALIAS'));
-                         * $label_attribute->setDefaultDisplayOrder(-1);
-                         * $object->getAttributes()->add($label_attribute);
-                         * }
-                         */
+                        // IDEA why does the reference from the object then go to the original attribute instead of the extra
+                        // created one?
                         if ($row['attribute_alias'] != $object->getWorkbench()->getConfig()->getOption('METAMODEL.OBJECT_LABEL_ALIAS')) {
                             $label_attribute = $row;
                             $label_attribute['attribute_alias'] = $object->getModel()->getWorkbench()->getConfig()->getOption('METAMODEL.OBJECT_LABEL_ALIAS');
                             $label_attribute['attribute_hidden_flag'] = '1';
                             $label_attribute['attribute_required_flag'] = '0';
                             $label_attribute['attribute_editable_flag'] = '0';
+                            $label_attribute['attribute_writable_flag'] = '0';
                             // The special label attribute should not be marked as label because it then would be returned by get_label..(),
                             // which instead should return the original attribute
                             $label_attribute['object_label_flag'] = 0;
@@ -585,7 +579,7 @@ class SqlModelLoader implements ModelLoaderInterface
         } elseif (is_array($cache)) {
             $uxon = UxonObject::fromJson($cache['uxon_config']);
             $default_widget_uxon = UxonObject::fromJson($cache['default_widget_uxon']);
-            $data_type = DataTypeFactory::createFromModel($cache['prototype'], $cache['data_type_alias'], $this->getWorkbench()->getApp($cache['app_alias']), $uxon, $cache['name'], $cache['short_description'], $cache['validation_error_code'], $default_widget_uxon);
+            $data_type = DataTypeFactory::createFromModel($cache['prototype'], $cache['data_type_alias'], $this->getWorkbench()->getApp($cache['app_alias']), $uxon, $cache['name'], $cache['short_description'], $cache['validation_error_code'], $cache['validation_error_text'], $default_widget_uxon);
             $this->data_types_by_uid[$cache['oid']] = $data_type;
             return $data_type;
         } else {
@@ -613,8 +607,10 @@ class SqlModelLoader implements ModelLoaderInterface
 				SELECT
 					dt.*,
 					' . $this->buildSqlUuidSelector('dt.oid') . ' as oid,
-                    a.app_alias
-				FROM exf_data_type dt LEFT JOIN exf_app a ON a.oid = dt.app_oid
+                    a.app_alias,
+                    ve.error_code as validation_error_code,
+                    ve.error_text as validation_error_text
+				FROM exf_data_type dt LEFT JOIN exf_error ve ON dt.validation_error_oid = ve.oid LEFT JOIN exf_app a ON a.oid = dt.app_oid
 				WHERE ' . $where);
         foreach ($query->getResultArray() as $dt) {
             $this->data_types_by_uid[$dt['oid']] = $dt;
