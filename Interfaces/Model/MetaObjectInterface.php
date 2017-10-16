@@ -405,8 +405,8 @@ interface MetaObjectInterface extends ExfaceClassInterface, AliasInterface
      * (depend on the current context like [#my_attribute_alias#]). Static placeholders start with a "~",
      * while dynamic ones contain an attribute alias resolvable relative to the object. 
      *
-     * A typical example using static placeholders would be an SQL view as an object data address:
-     * SELECT [#~alias#]tbl1.*, [#~alias#]tbl2.* FROM table1 [#~alias#]tbl1 LEFT JOIN table2 [#~alias#]tbl2
+     * A typical example using static placeholders would be an SQL view as an object's data address:
+     * "SELECT [#~alias#]tbl1.*, [#~alias#]tbl2.* FROM table1 [#~alias#]tbl1 LEFT JOIN table2 [#~alias#]tbl2"
      * The placeholder [#~alias#] here prefixes all table aliases with the alias of the meta object, thus making
      * naming collisions with other views put together by the query builder virtually impossible.
      * 
