@@ -1002,18 +1002,24 @@ class Object implements MetaObjectInterface
     }
 
     /**
-     * Returns an array of placeholders, which the data address of this object contains.
-     *
-     * A typical example would be an SQL view as an object data address:
-     * SELECT [#~alias#]tbl1.*, [#~alias#]tbl2.* FROM table1 [#~alias#]tbl1 LEFT JOIN table2 [#~alias#]tbl2
-     * The placeholder [#~alias#] here prefixes all table aliases with the alias of the meta object, thus making
-     * naming collisions with other views put together by the query builder virtually impossible.
-     *
-     * @return array ["alias"] for the above example
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaObjectInterface::getDataAddressRequiredPlaceholders()
      */
-    public function getDataAddressRequiredPlaceholders()
+    public function getDataAddressRequiredPlaceholders($includeStaticPlaceholders = true, $includeDynamicPlaceholders = true)
     {
-        return $this->getModel()->getWorkbench()->utils()->findPlaceholdersInString($this->getDataAddress());
+        $result = [];
+        foreach ($this->getModel()->getWorkbench()->utils()->findPlaceholdersInString($this->getDataAddress()) as $ph) {
+            if (substr($ph, 0, 1) === '~') {
+                if ($includeStaticPlaceholders) {
+                    $result[] = $ph; 
+                }
+            } elseif ($includeDynamicPlaceholders) {
+                // Attribute level
+                $result[] = $ph;
+            }
+        }
+        return $result;
     }
 
     /**
