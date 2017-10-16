@@ -84,7 +84,7 @@ abstract class DataTypeFactory extends AbstractNameResolverFactory
      * 
      * @return \exface\Core\Interfaces\Model\DataTypeInterface
      */
-    public static function createFromModel($prototype_alias, $alias, AppInterface $app, UxonObject $uxon, $name = null, $short_description = null, $validation_error_code = null, UxonObject $default_widget_uxon = null){
+    public static function createFromModel($prototype_alias, $alias, AppInterface $app, UxonObject $uxon, $name = null, $short_description = null, $validation_error_code = null, $validation_error_text = null, UxonObject $default_widget_uxon = null){
         $data_type = static::createFromPrototype($app->getWorkbench(), $prototype_alias);
         $data_type->setApp($app);
         $data_type->setAlias($alias);
@@ -93,6 +93,9 @@ abstract class DataTypeFactory extends AbstractNameResolverFactory
         }
         if ($validation_error_code !== '' && ! is_null($validation_error_code)) {
             $data_type->setValidationErrorCode($validation_error_code);
+        }
+        if (! is_null($validation_error_text)) {
+            $data_type->setValidationErrorText($validation_error_text);
         }
         if ($short_description !== '' && ! is_null($short_description)) {
             $data_type->setShortDescription($short_description);

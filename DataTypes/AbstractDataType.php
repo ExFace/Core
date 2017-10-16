@@ -26,7 +26,9 @@ abstract class AbstractDataType implements DataTypeInterface
     
     private $defaultWidgetUxon = null;
     
-    private $parseErrorCode = null;
+    private $validationErrorCode = null;
+    
+    private $validationErrorText = null;
 
     public function __construct(NameResolverInterface $name_resolver)
     {
@@ -297,7 +299,7 @@ abstract class AbstractDataType implements DataTypeInterface
      */
     public function getValidationErrorCode()
     {
-        return $this->parseErrorCode;
+        return $this->validationErrorCode;
     }
 
     /**
@@ -305,11 +307,31 @@ abstract class AbstractDataType implements DataTypeInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\DataTypeInterface::setValidationErrorCode()
      */
-    public function setValidationErrorCode($parseErrorCode)
+    public function setValidationErrorCode($validationErrorCode)
     {
-        $this->parseErrorCode = $parseErrorCode;
+        $this->validationErrorCode = $validationErrorCode;
         return $this;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\DataTypeInterface::getValidationErrorText()
+     */
+    public function getValidationErrorText()
+    {
+        return $this->validationErrorText;
+    }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\DataTypeInterface::setValidationErrorText()
+     */
+    public function setValidationErrorText($string)
+    {
+        $this->validationErrorText = $string;
+        return $this;
+    }
 }
 ?>

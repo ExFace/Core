@@ -104,6 +104,22 @@ interface DataTypeInterface extends ExfaceClassInterface, AliasInterface, iCanBe
      * @return DataTypeInterface
      */
     public function setValidationErrorCode($string);
+    
+    /**
+     * Returns the text explaining validation errors (e.g. "Model entity aliases must not start with '_' or '~').
+     * 
+     * @return string
+     */
+    public function getValidationErrorText();
+    
+    
+    /**
+     * Changes the explanation text for validation errors.
+     * 
+     * @param string $string
+     * @return DataTypeInterface
+     */
+    public function setValidationErrorText($string);
 
     /**
      * Returns TRUE if the given value matches the data type (and thus can be parsed) or FALSE otherwise.
