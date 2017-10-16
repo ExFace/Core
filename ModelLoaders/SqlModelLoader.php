@@ -598,10 +598,10 @@ class SqlModelLoader implements ModelLoaderInterface
     
     protected function cacheDataType($uid_or_alias){
         if ($this->isUid($uid_or_alias)){
-            $where = 'dt.app_oid = (SELECT app_oid FROM exf_data_type WHERE oid = ' . $uid_or_alias . ')';
+            $where = 'dt.app_oid = (SELECT fd.app_oid FROM exf_data_type fd WHERE fd.oid = ' . $uid_or_alias . ')';
         } else {
             $name_resolver = NameResolver::createFromString($uid_or_alias, NameResolver::OBJECT_TYPE_DATATYPE, $this->getWorkbench());
-            $where = "dt.app_oid = (SELECT app_oid FROM exf_app WHERE app_alias = '" . $name_resolver->getNamespace() . "')";
+            $where = "dt.app_oid = (SELECT fa.app_oid FROM exf_app fa WHERE fa.app_alias = '" . $name_resolver->getNamespace() . "')";
         }
         $query = $this->getDataConnection()->runSql('
 				SELECT
