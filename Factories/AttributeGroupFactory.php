@@ -49,6 +49,20 @@ abstract class AttributeGroupFactory extends AbstractFactory
                     $group->add($attr);
                 }
                 break;
+            case MetaAttributeGroupInterface::WRITABLE:
+                foreach ($object->getAttributes() as $attr) {
+                    if ($attr->isWritable()) {
+                        $group->add($attr);
+                    }
+                }
+                break;
+            case MetaAttributeGroupInterface::READABLE:
+                foreach ($object->getReadable() as $attr) {
+                    if ($attr->isEditable()) {
+                        $group->add($attr);
+                    }
+                }
+                break;
             default:
                 // TODO load group from DB
                 break;

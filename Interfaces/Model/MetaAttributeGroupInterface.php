@@ -27,6 +27,10 @@ interface MetaAttributeGroupInterface extends MetaAttributeListInterface
     
     const DEFAULT_DISPLAY = '~DEFAULT_DISPLAY';
     
+    const WRITABLE = '~WRITABLE';
+    
+    const READABLE = '~READABLE';
+    
     public function getAlias();
     
     public function setAlias($value);
