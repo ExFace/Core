@@ -400,15 +400,27 @@ interface MetaObjectInterface extends ExfaceClassInterface, AliasInterface
     
     /**
      * Returns an array of placeholders, which the data address of this object contains.
+     * 
+     * Placeholders can be static (depend on properties of the object's model like [#~alias#]) or dynamic
+     * (depend on the current context like [#my_attribute_alias#]). Static placeholders start with a "~",
+     * while dynamic ones contain an attribute alias resolvable relative to the object. 
      *
-     * A typical example would be an SQL view as an object data address:
-     * SELECT [#~alias#]tbl1.*, [#~alias#]tbl2.* FROM table1 [#~alias#]tbl1 LEFT JOIN table2 [#~alias#]tbl2
+     * A typical example using static placeholders would be an SQL view as an object's data address:
+     * "SELECT [#~alias#]tbl1.*, [#~alias#]tbl2.* FROM table1 [#~alias#]tbl1 LEFT JOIN table2 [#~alias#]tbl2"
      * The placeholder [#~alias#] here prefixes all table aliases with the alias of the meta object, thus making
      * naming collisions with other views put together by the query builder virtually impossible.
+     * 
+     * A common example for dynamic placeholders is a URL containing mandatory filters like
+     * "www.mydomain.com/api/my_entity/[#ID#] - which is a typical endpoint of a REST webservice to
+     * get an entity with a give id. This data address cannot be used without a filter over the ID
+     * attribute.  
      *
-     * @return array ["alias"] for the above example
+     * @param boolean $includeObjectLevel
+     * @param boolean $includeAttributeLevel
+     * 
+     * @return array ["~alias"] for the above example
      */
-    public function getDataAddressRequiredPlaceholders();
+    public function getDataAddressRequiredPlaceholders($includeStaticPlaceholders = true, $includeDynamicPlaceholders = true);
     
     /**
      * Returns the attribute group specified by the given alias or NULL if no such group exists.
@@ -470,4 +482,42 @@ interface MetaObjectInterface extends ExfaceClassInterface, AliasInterface
      * @return AppInterface
      */
     public function getApp();
+    
+    /**
+     * Returns TRUE if writing operations on the data source of the object are allowed 
+     * and FALSE otherwise (e.g. for a DB view).
+     * 
+     * Note: an object is considered not writable regardless of its own settings
+     * if its data source is not writable.
+     * 
+     * @return boolean
+     */
+    public function isWritable();
+    
+    /**
+     * Marks the object as writable (TRUE) or not (FALSE).
+     * 
+     * @param boolean $true_or_false
+     * @return MetaObjectInterface
+     */
+    public function setWritable($true_or_false);
+    
+    /**
+     * Returns TRUE if reading operations on the data source of the object are allowed
+     * and FALSE otherwise (e.g. for a one-way webservice like sending an SMS).
+     *
+     * Note: an object is considered not readable regardless of its own settings
+     * if its data source is not readable.
+     *
+     * @return boolean
+     */
+    public function isReadable();
+    
+    /**
+     * Marks the object as writable (TRUE) or not (FALSE).
+     *
+     * @param boolean $true_or_false
+     * @return MetaObjectInterface
+     */
+    public function setReadable($true_or_false);
 }

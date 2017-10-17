@@ -9,7 +9,7 @@ use exface\Core\CommonLogic\QueryBuilder\QueryPartFilter;
 use exface\Core\DataTypes\AbstractDataType;
 use exface\Core\CommonLogic\AbstractDataConnector;
 use exface\Core\CommonLogic\Model\RelationPath;
-use exface\Core\Exceptions\DataTypeValidationError;
+use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
 use exface\Core\DataTypes\NumberDataType;
 use exface\Core\DataConnectors\AbstractSqlConnector;
 use exface\Core\CommonLogic\DataQueries\SqlDataQuery;
@@ -21,7 +21,7 @@ use exface\Core\DataTypes\StringDataType;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\DataTypes\DateDataType;
 use exface\Core\DataTypes\RelationDataType;
-use exface\Core\Exceptions\DataTypeNotFoundError;
+use exface\Core\Exceptions\DataTypes\DataTypeNotFoundError;
 use exface\Core\CommonLogic\QueryBuilder\QueryPart;
 use exface\Core\Interfaces\Model\AggregatorInterface;
 use exface\Core\CommonLogic\Constants\AggregatorFunctions;
@@ -602,7 +602,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             } else {
                 try {
                     $parsed_value = NumberDataType::cast($value);
-                } catch (DataTypeValidationError $e){
+                } catch (DataTypeCastingError $e){
                     $parsed_value = "'" . $this->escapeString($value) . "'";
                 }
                 $value = $parsed_value;
@@ -1264,7 +1264,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 }
                 $value = '(' . (! empty($values) ? implode(',', $values) : 'NULL') . ')' . ($value ? ' OR ' . $value : '');
             }
-        } catch (DataTypeValidationError $e) {
+        } catch (DataTypeCastingError $e) {
             // If the data type is incompatible with the value, return a WHERE clause, that is always false.
             // A comparison of a date field with a string or a number field with
             // a string simply cannot result in TRUE.

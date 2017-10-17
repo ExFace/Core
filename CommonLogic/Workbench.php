@@ -114,11 +114,11 @@ class Workbench
         $this->mm = new \exface\Core\CommonLogic\Model\Model($this);
         
         // Init the ModelLoader
-        $model_loader_name = NameResolver::createFromString($this->getConfig()->getOption('MODEL_LOADER'), NameResolver::OBJECT_TYPE_MODEL_LOADER, $this);
-        if (! $model_loader_name->classExists()) {
+        $model_loader_resolver = NameResolver::createFromString($this->getConfig()->getOption('MODEL_LOADER'), NameResolver::OBJECT_TYPE_MODEL_LOADER, $this);
+        if (! $model_loader_resolver->classExists()) {
             throw new InvalidArgumentException('No valid model loader found in current configuration - please add a valid "MODEL_LOADER" : "file_path_or_qualified_alias_or_qualified_class_name" to your config in "' . $this->filemanager()->getPathToConfigFolder() . '"');
         }
-        $model_loader = ModelLoaderFactory::create($model_loader_name);
+        $model_loader = ModelLoaderFactory::create($model_loader_resolver);
         $model_connection = DataConnectorFactory::createFromAlias($this, $this->getConfig()->getOption('MODEL_DATA_CONNECTOR'));
         $model_loader->setDataConnection($model_connection);
         $this->model()->setModelLoader($model_loader);

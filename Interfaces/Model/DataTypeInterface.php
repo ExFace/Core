@@ -1,24 +1,32 @@
 <?php
 namespace exface\Core\Interfaces\Model;
 
-use exface\Core\Exceptions\DataTypeValidationError;
+use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
 use exface\Core\CommonLogic\Model\Model;
 use exface\Core\CommonLogic\Constants\SortingDirections;
 use exface\Core\Interfaces\ExfaceClassInterface;
 use exface\Core\Interfaces\AliasInterface;
 use exface\Core\Interfaces\NameResolverInterface;
 use exface\Core\Interfaces\AppInterface;
+use exface\Core\Interfaces\iCanBeCopied;
+use exface\Core\Interfaces\iCanBeConvertedToUxon;
+use exface\Core\CommonLogic\UxonObject;
 
-interface DataTypeInterface extends ExfaceClassInterface, AliasInterface, MetaModelPrototypeInterface
+interface DataTypeInterface extends ExfaceClassInterface, AliasInterface, iCanBeCopied, iCanBeConvertedToUxon, MetaModelPrototypeInterface
 {
 
     /**
-     * Constructuro
-     *
+     * 
      * @param NameResolverInterface $name_resolver            
      */
     public function __construct(NameResolverInterface $name_resolver);
 
+    /**
+     * @param string $string
+     * @return DataTypeInterface
+     */
+    public function setAlias($string);
+    
     /**
      *
      * @return Model
@@ -32,6 +40,11 @@ interface DataTypeInterface extends ExfaceClassInterface, AliasInterface, MetaMo
      * @return string
      */
     public function getName();
+    
+    /**
+     * @return DataTypeInterface
+     */
+    public function setName($string);
 
     /**
      * Returns TRUE if the current data type equals is derived from the given one (e.g.
@@ -76,6 +89,37 @@ interface DataTypeInterface extends ExfaceClassInterface, AliasInterface, MetaMo
      * @return string
      */
     public function parse($string);
+    
+    /**
+     * Returns the unique error code (error model alias) used for parsing errors of this data type.
+     * 
+     * @return string
+     */
+    public function getValidationErrorCode();
+    
+    /**
+     * Sets the unique error code (error model alias) used for parsing errors of this data type.
+     * 
+     * @param string $string
+     * @return DataTypeInterface
+     */
+    public function setValidationErrorCode($string);
+    
+    /**
+     * Returns the text explaining validation errors (e.g. "Model entity aliases must not start with '_' or '~').
+     * 
+     * @return string
+     */
+    public function getValidationErrorText();
+    
+    
+    /**
+     * Changes the explanation text for validation errors.
+     * 
+     * @param string $string
+     * @return DataTypeInterface
+     */
+    public function setValidationErrorText($string);
 
     /**
      * Returns TRUE if the given value matches the data type (and thus can be parsed) or FALSE otherwise.
@@ -102,11 +146,41 @@ interface DataTypeInterface extends ExfaceClassInterface, AliasInterface, MetaMo
      * Returns the app, to which this data type belongs to.
      * 
      * NOTE: if the model of this data type belongs to another app, than its prototype, this method
-     * will return the app of the model. Use getPrototypeNameResolver->getApp() to get the app
-     * of the prototype.
+     * will return the app of the model. 
      * 
      * @return AppInterface
      */
     public function getApp();
+    
+    /**
+     * 
+     * @param AppInterface $app
+     * @return DataTypeInterface
+     */
+    public function setApp(AppInterface $app);
+    
+    /**
+     * @return string
+     */
+    public function getShortDescription();
+    
+    /**
+     * 
+     * @param string $text
+     * @return DataTypeInterface
+     */
+    public function setShortDescription($text);
+    
+    /**
+     * @return UxonObject
+     */
+    public function getDefaultWidgetUxon();
+    
+    /**
+     * 
+     * @param UxonObject $uxon
+     * @return DataTypeInterface
+     */
+    public function setDefaultWidgetUxon(UxonObject $uxon);
 }
 ?>

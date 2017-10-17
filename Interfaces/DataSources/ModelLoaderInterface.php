@@ -14,10 +14,24 @@ use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Model\MetaRelationInterface;
 use exface\Core\Exceptions\Model\MetaRelationNotFoundError;
+use exface\Core\Interfaces\Model\DataTypeInterface;
+use exface\Core\Interfaces\NameResolverInterface;
 
 interface ModelLoaderInterface
 {
 
+    /**
+     * 
+     * @param NameResolverInterface $model
+     * @return ModelLoaderInterface
+     */
+    public function __construct(NameResolverInterface $nameResolver);
+    
+    /**
+     * @return NameResolverInterface
+     */
+    public function getNameResolver();
+    
     /**
      * 
      * @param AppInterface $app
@@ -101,6 +115,15 @@ interface ModelLoaderInterface
      * @return AppActionList
      */
     public function loadAppActions(AppActionList $empty_list);
+    
+    /**
+     * Loads the data type matching the passed UID from the given model
+     * 
+     * @param string $uid_or_alias
+     * 
+     * @return DataTypeInterface
+     */
+    public function loadDataType($uid_or_alias);
 
     /**
      * Loads an action defined in the meta model.

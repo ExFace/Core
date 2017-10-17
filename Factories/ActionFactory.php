@@ -105,9 +105,9 @@ abstract class ActionFactory extends AbstractNameResolverFactory
      * @throws ActionNotFoundError if the class name of the base action cannot be resolved
      * @return \exface\Core\Interfaces\Actions\ActionInterface
      */
-    public static function createFromModel($base_action_alias_or_class_or_file, $action_alias, AppInterface $app, MetaObjectInterface $object, UxonObject $uxon_description = null, WidgetInterface $called_by_widget = null)
+    public static function createFromModel($prototype_alias, $action_alias, AppInterface $app, MetaObjectInterface $object, UxonObject $uxon_description = null, WidgetInterface $called_by_widget = null)
     {
-        $name_resolver = static::getNameResolverFromString($app->getWorkbench(), $base_action_alias_or_class_or_file);
+        $name_resolver = static::getNameResolverFromString($app->getWorkbench(), $prototype_alias);
         $action = static::createEmpty($name_resolver, $app, $called_by_widget);
         $action->setAlias($action_alias);
         $action->setMetaObject($object);

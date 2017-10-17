@@ -5,6 +5,7 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Contexts\ContextInterface;
 use exface\Core\Exceptions\Contexts\ContextNotFoundError;
 use exface\Core\Exceptions\RuntimeException;
+use exface\Core\Exceptions\UserException;
 
 /**
  * The session context scope represents the PHP session (on server side).
@@ -254,7 +255,11 @@ class SessionContextScope extends AbstractContextScope
     public function getSessionLocale()
     {
         if (is_null($this->session_locale)) {
-            return $this->getContextManager()->getScopeUser()->getUserCurrent()->getLocale();
+            try {
+                return $this->getContextManager()->getScopeUser()->getUserCurrent()->getLocale();
+            } catch (UserException $e){
+                return $this->getWorkbench()->getConfig()->getOption('LOCALE.DEFAULT');
+            }
         }
         return $this->session_locale;
     }

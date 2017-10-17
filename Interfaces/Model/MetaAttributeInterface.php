@@ -57,11 +57,47 @@ interface MetaAttributeInterface extends ExfaceClassInterface, iCanBeCopied
      * @throws UnexpectedValueException
      * @return \exface\Core\Interfaces\Model\MetaAttributeInterface
      */
-    public function setDataType($object_or_name);
+    public function setDataType($instance_or_resolvable_string);
     
     public function getDefaultDisplayOrder();
     
     public function setDefaultDisplayOrder($value);
+    
+    /**
+     * Returns TRUE if values for this attribute can be read from the data 
+     * source of it's object and FALSE otherwise.
+     * 
+     * This is not allways the case, as attributes can be calculated or
+     * even only used for filtering sorting and cannot be "selected"
+     * directly.
+     * 
+     * @return boolean
+     */
+    public function isReadable();
+    
+    /**
+     * Marks the attribute as redable (TRUE) or not (FALSE).
+     * 
+     * @param boolean $true_or_false
+     * @return MetaAttributeInterface
+     */
+    public function setReadable($true_or_false);
+    
+    /**
+     * Returns TRUE if values of this attribute can be written to the data source
+     * of its object or FALSE otherwise.
+     * 
+     * @return boolean
+     */
+    public function isWritable();
+    
+    /**
+     * Marks the attribute as writable (TRUE) or not (FALSE).
+     * 
+     * @param boolean $true_or_false
+     * @return MetaAttributeInterface
+     */
+    public function setWritable($true_or_false);
     
     /**
      * Returns TRUE if the attribute can be changed and FALSE if it is read only.
@@ -151,6 +187,10 @@ interface MetaAttributeInterface extends ExfaceClassInterface, iCanBeCopied
      */
     public function getDefaultWidgetUxon();
     
+    /**
+     * 
+     * @param UxonObject $uxon_object
+     */
     public function setDefaultWidgetUxon(UxonObject $uxon_object);
     
     public function getFormula();

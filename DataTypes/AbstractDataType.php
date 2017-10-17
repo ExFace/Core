@@ -2,18 +2,33 @@
 namespace exface\Core\DataTypes;
 
 use exface\Core\Interfaces\Model\DataTypeInterface;
-use exface\Core\CommonLogic\Workbench;
-use exface\Core\Exceptions\DataTypeValidationError;
+use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
 use exface\Core\CommonLogic\Constants\SortingDirections;
 use exface\Core\CommonLogic\NameResolver;
 use exface\Core\Interfaces\NameResolverInterface;
+use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
+use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Interfaces\AppInterface;
 
 abstract class AbstractDataType implements DataTypeInterface
 {
+    use ImportUxonObjectTrait;
 
     private $name_resolver = null;
+    
+    private $alias = null;
+    
+    private $app = null;
 
     private $name = null;
+    
+    private $shortDescription = null;
+    
+    private $defaultWidgetUxon = null;
+    
+    private $validationErrorCode = null;
+    
+    private $validationErrorText = null;
 
     public function __construct(NameResolverInterface $name_resolver)
     {
@@ -56,6 +71,12 @@ abstract class AbstractDataType implements DataTypeInterface
             $this->name = $name;
         }
         return $this->name;
+    }
+    
+    public function setName($string)
+    {
+        $this->name = $string;
+        return $this;
     }
 
     /**
@@ -110,7 +131,7 @@ abstract class AbstractDataType implements DataTypeInterface
     {
         try {
             static::cast($string);
-        } catch (DataTypeValidationError $e) {
+        } catch (DataTypeCastingError $e) {
             return false;
         }
         return true;
@@ -143,7 +164,12 @@ abstract class AbstractDataType implements DataTypeInterface
      */
     public function getAlias()
     {
-        return $this->getNameResolver()->getAlias();
+        return is_null($this->alias) ? $this->getNameResolver()->getAlias() : $this->alias;
+    }
+    
+    public function setAlias($string)
+    {
+        $this->alias = $string;
     }
     
     /**
@@ -153,7 +179,7 @@ abstract class AbstractDataType implements DataTypeInterface
      */
     public function getAliasWithNamespace()
     {
-        return $this->getNameResolver()->getAliasWithNamespace();
+        return $this->getNamespace() . NameResolver::NAMESPACE_SEPARATOR . $this->getAlias();
     }
     
     /**
@@ -162,7 +188,7 @@ abstract class AbstractDataType implements DataTypeInterface
      * @see \exface\Core\Interfaces\AliasInterface::getNamespace()
      */
     public function getNamespace(){
-        return $this->getNameResolver()->getNamespace();
+        return $this->getApp()->getAliasWithNamespace();
     }
     
     /**
@@ -172,7 +198,13 @@ abstract class AbstractDataType implements DataTypeInterface
      */
     public function getApp()
     {
-        return $this->getWorkbench()->getApp($this->getNameResolver()->getAppAlias());
+        return is_null($this->app) ? $this->getWorkbench()->getApp($this->getNameResolver()->getAppAlias()) : $this->app;
+    }
+    
+    public function setApp(AppInterface $app)
+    {
+        $this->app = $app;
+        return $this;
     }
 
     /**
@@ -182,6 +214,124 @@ abstract class AbstractDataType implements DataTypeInterface
     public static function getPrototypeClassName()
     {
         return "\\" . __CLASS__;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\iCanBeCopied::copy()
+     */
+    public function copy()
+    {
+        return clone $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::exportUxonObject()
+     */
+    public function exportUxonObject()
+    {
+        $uxon = new UxonObject();
+        $uxon->setProperty('name', $this->getName());
+        
+        return $uxon;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\DataTypeInterface::getShortDescription()
+     */
+    public function getShortDescription()
+    {
+        return $this->shortDescription;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\DataTypeInterface::setShortDescription()
+     */
+    public function setShortDescription($shortDescription)
+    {
+        $this->shortDescription = $shortDescription;
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\DataTypeInterface::getDefaultWidgetUxon()
+     */
+    public function getDefaultWidgetUxon()
+    {
+        if (is_null($this->defaultWidgetUxon)) {
+            $this->defaultWidgetUxon = new UxonObject();
+        }
+        
+        // Make sure, the UXON has allways an explicit widget type! Otherwise checks for
+        // widget type later in the code might put in their defaults potentially uncompatible
+        // with properties set here or anywhere inbetween.
+        if (! $this->defaultWidgetUxon->hasProperty('widget_type')) {
+            $this->defaultWidgetUxon->setProperty('widget_type', $this->getWorkbench()->getConfig()->getOption('TEMPLATES.WIDGET_FOR_UNKNOWN_DATA_TYPES'));
+        }
+        
+        return $this->defaultWidgetUxon;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\DataTypeInterface::setDefaultWidgetUxon()
+     */
+    public function setDefaultWidgetUxon(UxonObject $defaultWidgetUxon)
+    {
+        $this->defaultWidgetUxon = $defaultWidgetUxon;
+        return $this;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\DataTypeInterface::getValidationErrorCode()
+     */
+    public function getValidationErrorCode()
+    {
+        return $this->validationErrorCode;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\DataTypeInterface::setValidationErrorCode()
+     */
+    public function setValidationErrorCode($validationErrorCode)
+    {
+        $this->validationErrorCode = $validationErrorCode;
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\DataTypeInterface::getValidationErrorText()
+     */
+    public function getValidationErrorText()
+    {
+        return $this->validationErrorText;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\DataTypeInterface::setValidationErrorText()
+     */
+    public function setValidationErrorText($string)
+    {
+        $this->validationErrorText = $string;
+        return $this;
     }
 }
 ?>

@@ -111,7 +111,7 @@ JS;
                     case EXF_COMPARATOR_GREATER_THAN_OR_EQUALS: // >=
                         $output .= <<<JS
 
-						// Man muesste eigentlich schauen ob ein bestimmter Wert vorhanden ist: build_js_value_getter(link->getColumnId()).
+						// Man muesste eigentlich schauen ob ein bestimmter Wert vorhanden ist: buildJsValueGetter(link->getColumnId()).
 						// Da nach einem Prefill dann aber normalerweise ein leerer Wert zurueckkommt, wird beim initialisieren
 						// momentan einfach geschaut ob irgendein Wert vorhanden ist.
 						if ({$linked_element->buildJsValueGetter()} {$condition->getProperty('comparator')} "{$condition->getProperty('value')}") {

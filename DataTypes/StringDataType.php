@@ -2,13 +2,51 @@
 namespace exface\Core\DataTypes;
 
 use exface\Core\CommonLogic\Constants\SortingDirections;
-use exface\Core\Exceptions\DataTypeValidationError;
+use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
 
+/**
+ * Basic data type for textual values.
+ * 
+ * Strings can contain any characters, but can be restricted in length and
+ * validating using regular expressions.
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
 class StringDataType extends AbstractDataType
 {
     private $lengthMin = 0;
     
     private $lengthMax = null;
+    
+    private $regexValidator = null;
+
+    /**
+     * @return string|null
+     */
+    public function getValidatorRegex()
+    {
+        return $this->regexValidator;
+    }
+
+    /**
+     * Defines a regular expression to validate values of this data type.
+     * 
+     * Use regular expressions compatible with PHP preg_match(). A good
+     * tool to create and test regular expressions can be found here:
+     * https://regex101.com/.
+     * 
+     * @uxon-property validator_regex
+     * @uxon-type string
+     * 
+     * @param string $regularExpression
+     * @return StringDataType
+     */
+    public function setValidatorRegex($regularExpression)
+    {
+        $this->regexValidator = $regularExpression;
+        return $this;
+    }
 
     /**
      * Converts a string from under_score (snake_case) to camelCase.
@@ -71,6 +109,22 @@ class StringDataType extends AbstractDataType
     }
     
     /**
+     *
+     * @param string $haystack
+     * @param string $needle
+     * @param boolean $case_sensitive
+     * @return boolean
+     */
+    public static function endsWith($haystack, $needle, $case_sensitive = true)
+    {
+        if ($case_sensitive) {
+            return substr($haystack, (-1)*strlen($needle)) === $needle;
+        } else {
+            return substr(mb_strtoupper($haystack), (-1)*strlen(mb_strtoupper($needle))) === mb_strtoupper($needle);
+        }
+    }
+    
+    /**
      * 
      * {@inheritDoc}
      * @see \exface\Core\DataTypes\AbstractDataType::cast()
@@ -86,6 +140,34 @@ class StringDataType extends AbstractDataType
         }
         
         return $result;
+    }
+    
+    public function parse($string){
+        $value = parent::parse($string);
+        
+        // validate length
+        $length = mb_strlen($value);
+        if ($this->getLengtMin() > 0 && $length < $this->getLengtMin()){
+            throw new DataTypeCastingError('The lenght of the string "' . $value . '" (' . $length . ') is less, than the minimum length required for data type ' . $this->getAliasWithNamespace() . ' (' . $this->getLengtMin() . ')!');
+        }
+        if ($this->getLengthMax() && $length > $this->getLengthMax()){
+            $value = substr($value, 0, $this->getLengthMax());
+        }
+        
+        // validate against regex
+        if ($this->getValidatorRegex()){
+            try {
+                $match = preg_match("'" . $this->getValidatorRegex() . "'", $value);
+            } catch (\Throwable $e) {
+                $match = 0;
+            }
+            
+            if (! $match){
+                throw new DataTypeCastingError('Value "' . $value . '" does not match the regular expression mask "' . $this->getValidatorRegex() . '" of data type ' . $this->getAliasWithNamespace() . '!');
+            }
+        }
+        
+        return $value;        
     }
     
     /**
@@ -106,6 +188,11 @@ class StringDataType extends AbstractDataType
     }
 
     /**
+     * Minimum legnth of the string in characters - defaults to 0.
+     * 
+     * @uxon-property length_min
+     * @uxon-type integer
+     * 
      * @param integer $number
      * @return StringDataType
      */
@@ -124,6 +211,11 @@ class StringDataType extends AbstractDataType
     }
 
     /**
+     * Maximum legnth of the string in characters.
+     * 
+     * @uxon-property length_max
+     * @uxon-type integer
+     * 
      * @param integer $number
      * @return StringDataType
      */

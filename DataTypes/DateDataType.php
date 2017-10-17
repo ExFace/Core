@@ -1,7 +1,7 @@
 <?php
 namespace exface\Core\DataTypes;
 
-use exface\Core\Exceptions\DataTypeValidationError;
+use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\CommonLogic\Constants\SortingDirections;
 
@@ -23,7 +23,7 @@ class DateDataType extends AbstractDataType
         try {
             $date = new \DateTime($string);
         } catch (\Exception $e) {
-            throw new DataTypeValidationError('Cannot convert "' . $string . '" to a date!', '6W25AB1', $e);
+            throw new DataTypeCastingError('Cannot convert "' . $string . '" to a date!', '6W25AB1', $e);
         }
         return static::formatDate($date);
     }

@@ -50,6 +50,20 @@ class UserFactory extends AbstractFactory
     }
 
     /**
+     * Creates an anonymous user.
+     * 
+     * An anonymous user is returned if the currently logged in user is requested but no
+     * named user is logged in.
+     * 
+     * @param Workbench $exface
+     * @return User
+     */
+    public static function createAnonymous(Workbench $exface)
+    {
+        return new User($exface, null, true);
+    }
+
+    /**
      * Creates a user from the passed DataSheet with 'exface.Core.USER' containing exactly one
      * row of user data.
      * 

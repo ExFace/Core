@@ -32,13 +32,16 @@ class User implements UserInterface
 
     private $email;
 
+    private $anonymous = false;
+
     /**
      * 
      * @deprecated use UserFactory::create() instead!
      * @param Workbench $exface
      * @param DataSheetInterface $dataSheet
+     * @param boolean $anonymous
      */
-    public function __construct(Workbench $exface, $dataSheet = null)
+    public function __construct(Workbench $exface, $dataSheet = null, $anonymous = false)
     {
         $this->exface = $exface;
         
@@ -48,6 +51,8 @@ class User implements UserInterface
                 $this->uid = $uid;
             }
         }
+        
+        $this->anonymous = $anonymous;
     }
 
     /**
@@ -258,5 +263,25 @@ class User implements UserInterface
         }
         
         return $userSheet;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\UserInterface::isUserAdmin()
+     */
+    public function isUserAdmin()
+    {
+        return $this->getWorkbench()->getCMS()->isUserAdmin();
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\UserInterface::isUserAnonymous()
+     */
+    public function isUserAnonymous()
+    {
+        return $this->anonymous;
     }
 }

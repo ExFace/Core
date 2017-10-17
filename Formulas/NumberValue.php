@@ -10,7 +10,7 @@ class NumberValue extends \exface\Core\CommonLogic\Model\Formula
     {
         try {
             $number = NumberDataType::cast($string);
-        } catch (\exface\Core\Exceptions\DataTypeValidationError $e) {
+        } catch (\exface\Core\Exceptions\DataTypes\DataTypeCastingError $e) {
             return '';
         }
         return $number;
