@@ -332,7 +332,7 @@ class SqlModelLoader implements ModelLoaderInterface
         if (! $data_source->getDataConnectorAlias()) {
             if ($data_connection_id_or_alias) {
                 // See if a (hex-)ID is given or an alias. The latter will need to be wrapped in qotes!
-                if (strpos($data_connection_id_or_alias, '0x') !== 0) {
+                if (! $this->isUid($data_connection_id_or_alias)) {
                     $data_connection_id_or_alias = '"' . $data_connection_id_or_alias . '"';
                 }
                 $join_on = "(dc.oid = " . $data_connection_id_or_alias . " OR dc.alias = " . $data_connection_id_or_alias . ")";
