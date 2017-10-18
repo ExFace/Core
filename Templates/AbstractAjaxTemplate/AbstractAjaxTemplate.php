@@ -156,23 +156,23 @@ abstract class AbstractAjaxTemplate extends AbstractTemplate
      */
     function getElement(\exface\Core\Widgets\AbstractWidget $widget)
     {
-        if (! array_key_exists($widget->getPageAlias(), $this->elements) || ! array_key_exists($widget->getId(), $this->elements[$widget->getPageAlias()])) {
+        if (! array_key_exists($widget->getPage()->getAliasWithNamespace(), $this->elements) || ! array_key_exists($widget->getId(), $this->elements[$widget->getPage()->getAliasWithNamespace()])) {
             $elem_class = $this->getClass($widget);
             $instance = new $elem_class($widget, $this);
-            // $this->elements[$widget->getPageAlias()][$widget->getId()] = $instance;
+            // $this->elements[$widget->getPage()->getAliasWithNamespace()][$widget->getId()] = $instance;
         }
         
-        return $this->elements[$widget->getPageAlias()][$widget->getId()];
+        return $this->elements[$widget->getPage()->getAliasWithNamespace()][$widget->getId()];
     }
 
     public function removeElement(AbstractWidget $widget)
     {
-        unset($this->elements[$widget->getPageAlias()][$widget->getId()]);
+        unset($this->elements[$widget->getPage()->getAliasWithNamespace()][$widget->getId()]);
     }
 
     public function registerElement($element)
     {
-        $this->elements[$element->getWidget()->getPageAlias()][$element->getWidget()->getId()] = $element;
+        $this->elements[$element->getWidget()->getPage()->getAliasWithNamespace()][$element->getWidget()->getId()] = $element;
         return $this;
     }
 
@@ -229,12 +229,12 @@ abstract class AbstractAjaxTemplate extends AbstractTemplate
 
     public function getElementFromWidgetLink(WidgetLink $link)
     {
-        return $this->getElementByWidgetId($link->getWidgetId(), $link->getPageAlias());
+        return $this->getElementByWidgetId($link->getWidgetId(), $link->getPage()->getAliasWithNamespace());
     }
 
-    public function createLinkInternal($page_id_cms, $url_params = '')
+    public function createLinkInternal(UiPageInterface $page, $url_params = '')
     {
-        return $this->getWorkbench()->getCMS()->createLinkInternal($page_id_cms, $url_params);
+        return $this->getWorkbench()->getCMS()->createLinkInternal($page, $url_params);
     }
 
     public function getDataSheetFromRequest($object_id = NULL, $widget = NULL)

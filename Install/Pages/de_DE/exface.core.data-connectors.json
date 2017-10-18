@@ -1,7 +1,7 @@
 {
     "id": "0xb863f248949e11e7917c028037ec0200",
     "alias_with_namespace": "exface.core.data-connectors",
-    "menu_parent_id": "0xa7760458949e11e7a353028037ec0200",
+    "menu_parent_page_alias": "0xa7760458949e11e7a353028037ec0200",
     "menu_index": "1",
     "menu_visible": true,
     "name": "Data Connectors",

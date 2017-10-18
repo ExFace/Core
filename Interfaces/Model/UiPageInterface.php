@@ -110,14 +110,14 @@ interface UiPageInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
      * @return boolean
      */
     public function isEmpty();
-    
+
     /**
      * Returns the context bar widget for this page
      * 
      * @return ContextBar
      */
     public function getContextBar();
-    
+
     /**
      * Returns the app, this page belongs to.
      * 
@@ -126,14 +126,14 @@ interface UiPageInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
      * @return AppInterface
      */
     public function getApp();
-    
+
     /**
      * Returns the app-alias, this page belongs to.
      * 
      * @return null|string
      */
     public function getAppAlias();
-    
+
     /**
      * Sets the app-alias, this page belongs to.
      * 
@@ -141,7 +141,7 @@ interface UiPageInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
      * @return UiPageInterface
      */
     public function setAppAlias($appAlias);
-    
+
     /**
      * Returns FALSE if the page should not be updated automatically when its
      * app is updated and TRUE otherwise (default).
@@ -149,7 +149,7 @@ interface UiPageInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
      * @return boolean
      */
     public function isUpdateable();
-    
+
     /**
      * If FALSE is passed, the page will not be updated with its app anymore.
      * 
@@ -157,59 +157,29 @@ interface UiPageInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
      * @return UiPageInterface
      */
     public function setUpdateable(bool $true_or_false);
-    
+
     /**
-     * Returns the uid of the parent page.
+     * Returns the UID or alias of the parent page.
      * 
      * @return string
      */
-    public function getMenuParentId();
-    
+    public function getMenuParentPageAlias();
+
     /**
-     * Sets the parent of the page by setting a UID.
+     * Sets the parent of the page by setting an UID or an alias.
      * 
-     * @param string $menuParentId
+     * @param string $menuParentPageAlias
      * @return UiPageInterface
      */
-    public function setMenuParentId($menuParentId);
-    
-    /**
-     * Returns the id of the parent page that the CMS uses.
-     * 
-     * @return string
-     */
-    public function getMenuParentIdCms();
-    
-    /**
-     * Sets the parent of the page by setting a CMS-ID.
-     * 
-     * @param string $menuParentIdCms
-     * @return UiPageInterface
-     */
-    public function setMenuParentIdCms($menuParentIdCms);
-    
-    /**
-     * Returns the alias of the parent page or NULL if this page has no alias.
-     * 
-     * @return string|null
-     */
-    public function getMenuParentAlias();
-    
-    /**
-     * Sets the parent of the page by setting an alias.
-     * 
-     * @param string $alias_with_namespace
-     * @return UiPageInterface
-     */
-    public function setMenuParentAlias($alias_with_namespace);
-    
+    public function setMenuParentPageAlias($menuParentPageAlias);
+
     /**
      * Returns the parent ui page or NULL if this page has no parent
      * 
      * @return UiPageInterface|null
      */
     public function getMenuParentPage();
-    
+
     /**
      * Sets the given page as parent for the current one.
      * 
@@ -217,7 +187,7 @@ interface UiPageInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
      * @return UiPageInterface
      */
     public function setMenuParentPage(UiPageInterface $page);
-    
+
     /**
      * Returns the index (position number starting with 0) of this page in the 
      * submenu of its parent.
@@ -227,7 +197,7 @@ interface UiPageInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
      * @return integer
      */
     public function getMenuIndex();
-    
+
     /**
      * Sets the index (position number starting with 0) of this page in the 
      * submenu of its parent.
@@ -236,14 +206,14 @@ interface UiPageInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
      * @return UiPageInterface
      */
     public function setMenuIndex($number);
-    
+
     /**
      * Returns if the page is visible in the menu.
      * 
      * @return boolean
      */
     public function getMenuVisible();
-    
+
     /**
      * Sets if the page is shown in the menu. (Default: true)
      * 
@@ -251,7 +221,7 @@ interface UiPageInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
      * @return UiPageInterface
      */
     public function setMenuVisible(bool $menuVisible);
-    
+
     /**
      * Returns the unique id of the page.
      * 
@@ -260,38 +230,7 @@ interface UiPageInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
      * @return string
      */
     public function getId();
-    
-    /**
-     * Overwrites the unique id of the page
-     * 
-     * @param string $uid
-     * @return UiPageInterface
-     */
-    public function setId($uid);
-    
-    /**
-     * Returns the id of the page that the CMS uses.
-     * 
-     * @return string
-     */
-    public function getIdCms();
-    
-    /**
-     * Sets the id of the page that the CMS uses.
-     * 
-     * @param string $idCms
-     * @return UiPageInterface
-     */
-    public function setIdCms($idCms);
-    
-    /**
-     * Sets the alias of the page.
-     *
-     * @param string $aliasWithNamespace
-     * @return UiPageInterface
-     */
-    public function setAliasWithNamespace($aliasWithNamespace);
-    
+
     /**
      * Returns the name of the page.
      * 
@@ -300,7 +239,7 @@ interface UiPageInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
      * @return string
      */
     public function getName();
-    
+
     /**
      * Overwrites the name of the page.
      * 
@@ -308,7 +247,7 @@ interface UiPageInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
      * @return UiPageInterface
      */
     public function setName($string);
-    
+
     /**
      * Returns a short description of the page.
      * 
@@ -318,7 +257,7 @@ interface UiPageInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
      * @return string
      */
     public function getShortDescription();
-    
+
     /**
      * Overwrites the short description of the page.
      * 
@@ -329,14 +268,14 @@ interface UiPageInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
      * @return UiPageInterface
      */
     public function setShortDescription($string);
-    
+
     /**
      * Returns the qualified alias of the page, this one should replace when resolving widget links.
      * 
      * @return string
      */
     public function getReplacesPageAlias();
-    
+
     /**
      * Specifies the alias of the page, this one will replace when resolving widget links.
      * 
@@ -352,7 +291,7 @@ interface UiPageInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
      * @return UiPageInterface
      */
     public function setReplacesPageAlias($alias_with_namespace);
-    
+
     /**
      * Returns the raw contents of the UI page, that is stored in the CMS (stringified UXON).
      * 
@@ -363,7 +302,7 @@ interface UiPageInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
      * @return string
      */
     public function getContents();
-    
+
     /**
      * Replaces the raw contents of the UI page (stringified UXON).
      * 
@@ -377,7 +316,17 @@ interface UiPageInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
      * @return UiPageInterface
      */
     public function setContents($contents);
-    
+
+    /**
+     * Generates a copy of the page.
+     * 
+     * The optional arguments page_alias and page_uid are set on the copy of the page.
+     * 
+     * @param string $page_alias
+     * @param string $page_uid
+     * @return UiPageInterface
+     */
+    public function copy($page_alias = null, $page_uid = null);
 }
 
 ?>

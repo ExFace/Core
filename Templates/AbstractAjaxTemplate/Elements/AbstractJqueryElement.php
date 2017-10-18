@@ -150,17 +150,7 @@ abstract class AbstractJqueryElement implements ExfaceClassInterface
     }
 
     /**
-     * Returns the page id
-     *
-     * @return string
-     */
-    public function getPageId()
-    {
-        return $this->getWidget()->getPage()->getId();
-    }
-    
-    /**
-     * Returns the page alias
+     * Returns the page alias.
      * 
      * @return string
      */

@@ -17,7 +17,7 @@ trait ImportUxonObjectTrait {
      * compatibility but must not be used anymore! The fallback will be removed in future versions!
      *
      * @param UxonObject $uxon            
-     * @param array $skip_properties            
+     * @param array $skip_property_names
      * @throws UxonMapError
      * @return void
      */

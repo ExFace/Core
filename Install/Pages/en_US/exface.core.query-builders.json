@@ -1,7 +1,7 @@
 {
     "id": "0xcdf966ba949e11e7a875028037ec0200",
     "alias_with_namespace": "exface.core.query-builders",
-    "menu_parent_id": "0xa7760458949e11e7a353028037ec0200",
+    "menu_parent_page_alias": "exface.core.apps",
     "menu_index": "2",
     "menu_visible": true,
     "name": "Query Builders",

@@ -48,8 +48,6 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
 
     private $filter_contexts = array();
 
-    private $page_id = null;
-    
     private $page_alias = null;
 
     protected function init()
@@ -82,13 +80,13 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
         if (is_null($this->widget)) {
             if ($this->getWidgetUxon()) {
                 $this->widget = WidgetFactory::createFromUxon($this->getCalledOnUiPage(), $this->getWidgetUxon(), $this->getCalledByWidget(), $this->getDefaultWidgetType());
-            } elseif ($this->widget_id && ! ($this->page_alias || $this->page_id)) {
+            } elseif ($this->widget_id && ! $this->page_alias) {
                 $this->widget = $this->getApp()->getWorkbench()->ui()->getWidget($this->widget_id, $this->getCalledOnUiPage()->getAliasWithNamespace());
-            } elseif (($this->page_alias || $this->page_id) && ! $this->widget_id) {
+            } elseif ($this->page_alias && ! $this->widget_id) {
                 // TODO this causes problems with simple links to other pages, as the action attempts to load them here...
-                // $this->widget = $this->getApp()->getWorkbench()->ui()->getPage($this->page_alias ? $this->page_alias : $this->page_id)->getWidgetRoot();
-            } elseif (($this->page_alias || $this->page_id) && $this->widget_id) {
-                $this->widget = $this->getApp()->getWorkbench()->ui()->getWidget($this->widget_id, ($this->page_alias ? $this->page_alias : $this->page_id));
+                // $this->widget = $this->getApp()->getWorkbench()->ui()->getPage($this->page_alias)->getWidgetRoot();
+            } elseif ($this->page_alias && $this->widget_id) {
+                $this->widget = $this->getApp()->getWorkbench()->ui()->getWidget($this->widget_id, $this->page_alias);
             }
         }
         return $this->widget;
@@ -405,7 +403,7 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
 
     /**
      * ShowWidget needs some kind of widget representation in UXON in order to be recreatable from the UXON object.
-     * TODO Currently the widget is represented by widget_id and page_id and there is no action widget UXON saved here. This won't work for generated widgets!
+     * TODO Currently the widget is represented by widget_id and page_alias and there is no action widget UXON saved here. This won't work for generated widgets!
      * 
      * @see \exface\Core\Interfaces\Actions\ActionInterface::exportUxonObject()
      */
@@ -413,8 +411,7 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
     {
         $uxon = parent::exportUxonObject();
         $uxon->setProperty('widget_id', $this->getWidgetId());
-        $uxon->setProperty('page_id', $this->getPageId() ? $this->getPageId() : $this->getCalledOnUiPage()->getId());
-        $uxon->setProperty('page_alias', $this->getPageAlias() ? $this->getPageAlias() : $this->getCalledOnUiPage()->getAliasWithNamespace());
+        $uxon->setProperty('page_alias', $this->page_alias ? $this->page_alias : $this->getCalledOnUiPage()->getAliasWithNamespace());
         $uxon->setProperty('prefill_with_filter_context', $this->getPrefillWithFilterContext());
         $uxon->setProperty('prefill_with_input_data', $this->getPrefillWithInputData());
         if ($this->getPrefillDataSheet()) {
@@ -422,83 +419,25 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
         }
         return $uxon;
     }
-    
+
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Actions\iReferenceWidget::getPageId()
+     * @see \exface\Core\Interfaces\Actions\iReferenceWidget::getPage()
      */
-    public function getPageId()
+    public function getPage()
     {
         if ($this->isWidgetDefined()) {
-            return $this->getWidget()->getPageId();
+            return $this->getWidget()->getPage();
         }
-        return $this->page_id;
+        return $this->getWorkbench()->ui()->getPage($this->page_alias);
     }
-    
-    /**
-     * The id of the page to get the widget from. 
-     * 
-     * You can specify either the UID of the page (0x...) or the CMS-Id (visible
-     * in the CMS and mostly numeric). Alternatively you can also specify the 
-     * alias of the page via the page_alias property.
-     * 
-     * @uxon-property page_id
-     * @uxon-type string
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Actions\iReferenceWidget::setPageId()
-     */
-    public function setPageId($value)
-    {
-        $this->page_id = $value;
-        return $this;
-    }
-    
-    /**
-     * Returns the CMS specific page-id.
-     * 
-     * @return string|null
-     */
-    public function getPageIdCms()
-    {
-        if ($this->isWidgetDefined()) {
-            return $this->getWidget()->getPage()->getIdCms();
-        } elseif ($this->page_alias) {
-            return $this->getWorkbench()->ui()->getPage($this->page_alias)->getIdCms();
-        } elseif ($this->page_id) {
-            if (substr($this->page_id, 0, 2) == '0x') {
-                return $this->getWorkbench()->ui()->getPage($this->page_id)->getIdCms();
-            } else {
-                return $this->page_id;
-            }
-        } else {
-            return null;
-        }
-    }
-    
+
     /**
      * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Actions\iReferenceWidget::getPageAlias()
-     */
-    public function getPageAlias()
-    {
-        if ($this->isWidgetDefined()) {
-            return $this->getWidget()->getPageAlias();
-        }
-        return $this->page_alias;
-    }
-    
-    /**
-     * Namespaced alias of the page to get the widget from.
-     *
-     * This is a more comfortable alternative to specifying the page_id as the
-     * alias is mostly directly visible in the URL of the page. 
-     *
      * @uxon-property page_alias
      * @uxon-type string
-     *
+     * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Actions\iReferenceWidget::setPageAlias()
      */
@@ -507,7 +446,7 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
         $this->page_alias = $value;
         return $this;
     }
-    
+
     /**
      * 
      * @return \exface\Core\Interfaces\Widgets\WidgetLinkInterface
@@ -521,7 +460,7 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
      * If a widget link is defined here, the prefill data for this action will
      * be taken from that widget link and not from the input widget.
      * 
-     * The value can be either a string ([page_id]widget_id!optional_column_id)
+     * The value can be either a string ([page_alias]widget_id!optional_column_id)
      * or a widget link defined as an object.
      * 
      * @uxon-property prefill_with_data_from_widget_link

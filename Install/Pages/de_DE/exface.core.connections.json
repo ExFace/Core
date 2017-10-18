@@ -1,7 +1,7 @@
 {
     "id": "0xa05b7202949e11e7acc3028037ec0200",
     "alias_with_namespace": "exface.core.connections",
-    "menu_parent_id": "0x8f9e3238949e11e7aa5f028037ec0200",
+    "menu_parent_page_alias": "0x8f9e3238949e11e7aa5f028037ec0200",
     "menu_index": "1",
     "menu_visible": true,
     "name": "Verbindungen",

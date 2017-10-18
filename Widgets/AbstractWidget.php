@@ -903,27 +903,6 @@ else {
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\Interfaces\WidgetInterface::getPageId()
-     */
-    public function getPageId()
-    {
-        return $this->getPage()->getId();
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\WidgetInterface::getPageAlias()
-     */
-    public function getPageAlias()
-    {
-        return $this->getPage()->getAliasWithNamespace();
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\WidgetInterface::getParent()
      */
     public function getParent()
@@ -1184,8 +1163,7 @@ else {
         $exface = $this->getWorkbench();
         $link = new WidgetLink($exface);
         $link->setWidgetId($this->getId());
-        $link->setPageId($this->getPageId());
-        $link->setPageAlias($this->getPageAlias());
+        $link->setPage($this->getPage());
         return $link;
     }
 

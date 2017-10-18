@@ -1,7 +1,7 @@
 {
     "id": "0xb90bb0b8949f11e7a605028037ec0200",
     "alias_with_namespace": "exface.core.logs",
-    "menu_parent_id": "0x8659379a949e11e78171028037ec0200",
+    "menu_parent_page_alias": "0x8659379a949e11e78171028037ec0200",
     "menu_index": "2",
     "menu_visible": true,
     "name": "Logs",

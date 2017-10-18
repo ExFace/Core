@@ -33,10 +33,10 @@ interface UiManagerInterface extends ExfaceClassInterface
      * Caching is used to store widgets from already loaded pages
      * 
      * @param string $widget_id
-     * @param string $page_id_or_alias
+     * @param string $page_alias
      * @return AbstractWidget
      */
-    public function getWidget($widget_id, $page_id_or_alias);
+    public function getWidget($widget_id, $page_alias);
 
     /**
      * 

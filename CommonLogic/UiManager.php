@@ -16,12 +16,6 @@ class UiManager implements UiManagerInterface
 
     private $loaded_templates = array();
 
-    private $pagesById = [];
-
-    private $pagesByIdCms = [];
-
-    private $pagesByAlias = [];
-
     private $exface = null;
 
     private $base_template = null;
@@ -90,12 +84,12 @@ class UiManager implements UiManagerInterface
      * Caching is used to store widgets from already loaded pages
      * 
      * @param string $widget_id
-     * @param string $page_id_or_alias
+     * @param string $page_alias
      * @return WidgetInterface
      */
-    function getWidget($widget_id, $page_id_or_alias)
+    function getWidget($widget_id, $page_alias)
     {
-        $page = $this->getPage($page_id_or_alias);
+        $page = $this->getPage($page_alias);
         if (! is_null($widget_id)) {
             return $page->getWidget($widget_id);
         } else {
@@ -109,72 +103,17 @@ class UiManager implements UiManagerInterface
     }
 
     /**
-     * Returns the UI page with the given $page_id_or_alias.
-     * If the $page_id_or_alias is ommitted or ='', the default (initially empty) page is returned.
+     * Returns the UI page with the given $page_alias.
+     * If the $page_alias is ommitted or ='', the default (initially empty) page is returned.
      * 
-     * @param string $page_id_or_alias
+     * @param string $page_alias
      * @return UiPageInterface
      */
-    public function getPage($page_id_or_alias = null)
+    public function getPage($page_alias = null)
     {
-        if (! $page_id_or_alias) {
-            if (! $this->pagesByAlias[null]) {
-                $uiPage = UiPageFactory::createEmpty($this);
-                $this->pagesById[null] = $uiPage;
-                $this->pagesByIdCms[null] = $uiPage;
-                $this->pagesByAlias[null] = $uiPage;
-            }
-            return $this->pagesByAlias[null];
-        }
-        
-        if (substr($page_id_or_alias, 0, 2) == '0x') {
-            if (! $this->pagesById[$page_id_or_alias]) {
-                $this->addPageToCache($page_id_or_alias);
-            }
-            return $this->pagesById[$page_id_or_alias];
-        } elseif (! is_numeric($page_id_or_alias)) {
-            if (! $this->pagesByAlias[$page_id_or_alias]) {
-                $this->addPageToCache($page_id_or_alias);
-            }
-            return $this->pagesByAlias[$page_id_or_alias];
-        } else {
-            if (! $this->pagesByIdCms[$page_id_or_alias]) {
-                $this->addPageToCache($page_id_or_alias);
-            }
-            return $this->pagesByIdCms[$page_id_or_alias];
-        }
+        return UiPageFactory::createFromCmsPage($this, $page_alias);
     }
     
-    /**
-     * 
-     * @param string $page_id_or_alias
-     */
-    protected function addPageToCache($page_id_or_alias)
-    {
-        $uiPage = UiPageFactory::createFromCmsPage($this, $page_id_or_alias);
-        if ($uiPage->getId()) {
-            $this->pagesById[$uiPage->getId()] = $uiPage;
-        }
-        if ($uiPage->getIdCms()) {
-            $this->pagesByIdCms[$uiPage->getIdCms()] = $uiPage;
-        }
-        if ($uiPage->getAliasWithNamespace()) {
-            $this->pagesByAlias[$uiPage->getAliasWithNamespace()] = $uiPage;
-        }
-        // Pruefen ob die Seite durch eine andere ersetzt wird. Wenn ja die Seite auch unter
-        // ihrer urspruenglichen Bezeichnung cachen.
-        if (substr($page_id_or_alias, 0, 2) == '0x' && $uiPage->getId() != $page_id_or_alias) {
-            // Die Seite wird durch eine andere ersetzt.
-            $this->pagesById[$page_id_or_alias] = $uiPage;
-        } elseif (! is_numeric($page_id_or_alias) && $uiPage->getAliasWithNamespace() != $page_id_or_alias) {
-            // Die Seite wird durch eine andere ersetzt.
-            $this->pagesByAlias[$page_id_or_alias] = $uiPage;
-        } elseif ($uiPage->getIdCms() != $page_id_or_alias) {
-            // Die Seite wird durch eine andere ersetzt.
-            $this->pagesByIdCms[$page_id_or_alias] = $uiPage;
-        }
-    }
-
     /**
      * 
      * @return \exface\Core\Interfaces\Model\UiPageInterface

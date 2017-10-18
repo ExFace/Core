@@ -15,6 +15,8 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\CommonLogic\NameResolver;
 use exface\Core\Exceptions\InvalidArgumentException;
+use exface\Core\Factories\UiPageFactory;
+use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 
 /**
  * This is the default implementation of the UiPageInterface.
@@ -31,6 +33,8 @@ use exface\Core\Exceptions\InvalidArgumentException;
  */
 class UiPage implements UiPageInterface
 {
+    
+    use ImportUxonObjectTrait;
 
     private $widgets = array();
 
@@ -50,21 +54,15 @@ class UiPage implements UiPageInterface
 
     private $updateable = true;
 
-    private $menuParentId = null;
-
-    private $menuParentIdCms = null;
-
-    private $menuParentAlias = null;
+    private $menuParentPageAlias = null;
 
     private $menuParentPage = null;
 
     private $menuIndex = 0;
-    
+
     private $menuVisible = true;
 
     private $id = null;
-
-    private $idCms = null;
 
     private $name = null;
 
@@ -75,19 +73,23 @@ class UiPage implements UiPageInterface
     private $contents = null;
 
     private $aliasWithNamespace = null;
-    
+
     private $alias = null;
-    
+
     private $namespace = null;
 
     /**
      *
      * @deprecated use UiPageFactory::create() instead!
-     * @param TemplateInterface $template            
+     * @param UiManagerInterface $ui
+     * @param string $alias
+     * @param string $uid
      */
-    public function __construct(UiManagerInterface $ui)
+    public function __construct(UiManagerInterface $ui, $alias = null, $uid = null)
     {
         $this->ui = $ui;
+        $this->setAliasWithNamespace($alias);
+        $this->setId($uid);
     }
 
     /**
@@ -279,16 +281,16 @@ class UiPage implements UiPageInterface
                         } catch (WidgetNotFoundError $e) {
                             // Catching the error means, we did not find the widget in this branch.
                             
-                            if ($id_is_path){
+                            if ($id_is_path) {
                                 // If we had a path-match, this probably means, that the widget was moved (see example 4 in
                                 // the method-docblock). In this case, the path in it's id does not match the real path anymore.
                                 // However, since this mostly happens when widgets get moved around within their parent, we
-                                // try a deep search within the child, that matched the id-path, first. This will help in 
-                                // example 4 too, as the widget was just moved one level up the tree. 
+                                // try a deep search within the child, that matched the id-path, first. This will help in
+                                // example 4 too, as the widget was just moved one level up the tree.
                                 try {
                                     // Setting the parameter $use_id_path to false makes the children search among their
                                     // children even if those don't match the path. In example 4 we would get to this line
-                                    // after searching the child DT_TB_BG_BT2 of widget DT_TB_BG. DT_TB_BG_BT2 itself 
+                                    // after searching the child DT_TB_BG_BT2 of widget DT_TB_BG. DT_TB_BG_BT2 itself
                                     // seems to match the path, but none of it's direct children do. Now we tell the
                                     // DT_TB_BG_BT2 to treat the id as a non-path. This will make it pass the search
                                     // to every child of DT_TB_BG_BT2. These will search regularly though, so stargin
@@ -445,7 +447,7 @@ class UiPage implements UiPageInterface
         
         return $result;
     }
-    
+
     /**
      * 
      * @return \exface\Core\CommonLogic\Model\UiPage
@@ -584,72 +586,21 @@ class UiPage implements UiPageInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\UiPageInterface::getMenuParentId()
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::getMenuParentPageAlias()
      */
-    public function getMenuParentId()
+    public function getMenuParentPageAlias()
     {
-        if (is_null($this->menuParentId) && ! is_null($this->getMenuParentPage())) {
-            $this->menuParentId = $this->getMenuParentPage()->getId();
-        }
-        return $this->menuParentId;
+        return $this->menuParentPageAlias;
     }
 
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\UiPageInterface::setMenuParentId()
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::setMenuParentPageAlias()
      */
-    public function setMenuParentId($menuParentId)
+    public function setMenuParentPageAlias($menuParentPageAlias)
     {
-        $this->menuParentId = $menuParentId;
-        return $this;
-    }
-
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\UiPageInterface::getMenuParentIdCms()
-     */
-    public function getMenuParentIdCms()
-    {
-        if (is_null($this->menuParentIdCms) && ! is_null($this->getMenuParentPage())) {
-            $this->menuParentIdCms = $this->getMenuParentPage()->getMenuParentIdCms();
-        }
-        return $this->menuParentIdCms;
-    }
-
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\UiPageInterface::setMenuParentIdCms()
-     */
-    public function setMenuParentIdCms($menuParentIdCms)
-    {
-        $this->menuParentIdCms = $menuParentIdCms;
-        return $this;
-    }
-
-    /**
-     *
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\UiPageInterface::getMenuParentAlias()
-     */
-    public function getMenuParentAlias()
-    {
-        if (is_null($this->menuParentAlias) && ! is_null($this->getMenuParentPage())) {
-            $this->menuParentAlias = $this->getMenuParentPage()->getAliasWithNamespace();
-        }
-        return $this->menuParentAlias;
-    }
-
-    /**
-     *
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\UiPageInterface::setMenuParentAlias()
-     */
-    public function setMenuParentAlias($alias_with_namespace)
-    {
-        $this->menuParentAlias = $alias_with_namespace;
+        $this->menuParentPageAlias = $menuParentPageAlias;
         return $this;
     }
 
@@ -660,20 +611,8 @@ class UiPage implements UiPageInterface
      */
     public function getMenuParentPage()
     {
-        if (is_null($this->menuParentPage)) {
-            if ($this->menuParentId) {
-                $this->menuParentPage = $this->getWorkbench()->ui()->getPage($this->menuParentId);
-                $this->setMenuParentIdCms($this->menuParentPage->getIdCms());
-                $this->setMenuParentAlias($this->menuParentPage->getAliasWithNamespace());
-            } elseif ($this->menuParentIdCms) {
-                $this->menuParentPage = $this->getWorkbench()->ui()->getPage($this->menuParentIdCms);
-                $this->setMenuParentId($this->menuParentPage->getId());
-                $this->setMenuParentAlias($this->menuParentPage->getAliasWithNamespace());
-            } elseif ($this->menuParentAlias) {
-                $this->menuParentPage = $this->getWorkbench()->ui()->getPage($this->menuParentAlias);
-                $this->setMenuParentId($this->menuParentPage->getId());
-                $this->setMenuParentIdCms($this->menuParentPage->getIdCms());
-            }
+        if (! $this->menuParentPage && $this->getMenuParentPageAlias()) {
+            $this->menuParentPage = $this->getWorkbench()->ui()->getPage($this->getMenuParentPageAlias());
         }
         return $this->menuParentPage;
     }
@@ -686,9 +625,7 @@ class UiPage implements UiPageInterface
     public function setMenuParentPage(UiPageInterface $page)
     {
         $this->menuParentPage = $page;
-        $this->setMenuParentId($page->getId());
-        $this->setMenuParentIdCms($page->getIdCms());
-        $this->setMenuParentAlias($page->getAliasWithNamespace());
+        $this->setMenuParentPageAlias($page->getAliasWithNamespace());
         return $this;
     }
 
@@ -712,7 +649,7 @@ class UiPage implements UiPageInterface
         $this->menuIndex = $number;
         return $this;
     }
-    
+
     /**
      * 
      * {@inheritDoc}
@@ -722,7 +659,7 @@ class UiPage implements UiPageInterface
     {
         return $this->menuVisible;
     }
-    
+
     /**
      * 
      * {@inheritDoc}
@@ -745,34 +682,14 @@ class UiPage implements UiPageInterface
     }
 
     /**
+     * Overwrites the unique id of the page
      * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\UiPageInterface::setId()
+     * @param string $uid
+     * @return UiPageInterface
      */
-    public function setId($uid)
+    protected function setId($uid)
     {
         $this->id = $uid;
-        return $this;
-    }
-
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\UiPageInterface::getIdCms()
-     */
-    public function getIdCms()
-    {
-        return $this->idCms;
-    }
-
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\UiPageInterface::setIdCms()
-     */
-    public function setIdCms($idCms)
-    {
-        $this->idCms = $idCms;
         return $this;
     }
 
@@ -860,7 +777,7 @@ class UiPage implements UiPageInterface
             $this->contents = $contents;
             $this->removeAllWidgets();
             $contents = trim($contents);
-            if (substr($contents, 0, 1) == '{' && substr($contents, -1) == '}') {
+            if (substr($contents, 0, 1) == '{' && substr($contents, - 1) == '}') {
                 WidgetFactory::createFromUxon($this, UxonObject::fromAnything($contents));
             }
         } elseif ($contents instanceof UxonObject) {
@@ -901,11 +818,12 @@ class UiPage implements UiPageInterface
     }
 
     /**
+     * Sets the alias of the page.
      * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\UiPageInterface::setAliasWithNamespace()
+     * @param string $aliasWithNamespace
+     * @return UiPageInterface
      */
-    public function setAliasWithNamespace($aliasWithNamespace)
+    protected function setAliasWithNamespace($aliasWithNamespace)
     {
         $this->aliasWithNamespace = $aliasWithNamespace;
         return $this;
@@ -939,7 +857,7 @@ class UiPage implements UiPageInterface
         $uxon = $this->getWorkbench()->createUxonObject();
         $uxon->setProperty('id', $this->getId());
         $uxon->setProperty('alias_with_namespace', $this->getAliasWithNamespace());
-        $uxon->setProperty('menu_parent_id', $this->getMenuParentId());
+        $uxon->setProperty('menu_parent_page_alias', $this->getMenuParentPageAlias());
         $uxon->setProperty('menu_index', $this->getMenuIndex());
         $uxon->setProperty('menu_visible', $this->getMenuVisible());
         $uxon->setProperty('name', $this->getName());
@@ -957,11 +875,20 @@ class UiPage implements UiPageInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::importUxonObject()
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::copy()
      */
-    public function importUxonObject(UxonObject $uxon)
+    public function copy($page_alias = null, $page_uid = null)
     {
-        $uxon->mapToClassSetters($this);
+        $copy = UiPageFactory::createFromUxon($this->getUi(), $this->exportUxonObject());
+        if ($page_uid) {
+            $copy->setId($page_uid);
+        }
+        if ($page_alias) {
+            $copy->setAliasWithNamespace($page_alias);
+        }
+        // Copy internal properties, that do not get exported to UXON
+        $copy->setAppAlias($this->getAppAlias());
+        return $copy;
     }
 }
 

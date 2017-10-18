@@ -30,12 +30,11 @@ interface CmsConnectorInterface extends ExfaceClassInterface
     /**
      * Returns the id of the current page in the CMS
      * 
-     * @deprecated use getCurrentPageAlias() or
-     * getPageIdCms(UiPageInterface $page|string $resource_id) instead
+     * @deprecated use getCurrentPageAlias() instead
      *
      * @return string
      */
-    public function getPageId();
+    public function getCurrentPageId();
 
     /**
      * Returns the title of the CMS page with the given id.
@@ -57,12 +56,12 @@ interface CmsConnectorInterface extends ExfaceClassInterface
     /**
      * Returns an href-link generated from document id an URL parameters.
      *
-     * @param string $doc_id            
+     * @param UiPageInterface|string $page_or_id_or_alias
      * @param string $url_params
      *            e.g. &param1=val1&param2=val2
      * @return string
      */
-    public function createLinkInternal($doc_id, $url_params = '');
+    public function createLinkInternal($page_or_id_or_alias, $url_params = '');
 
     /**
      * Returns an href-link compilant with the current CMS based on a given URL.
@@ -252,10 +251,34 @@ interface CmsConnectorInterface extends ExfaceClassInterface
     public function loadPageByIdCms($page_id_cms, $ignore_replacements = false);
 
     /**
-     * Returns the internal page id assigned to the given page by the CMS.
-     *
+     * Returns the page UID for the given UiPage or UID or alias or CMS ID.
+     * 
      * @param UiPageInterface|string $page_or_id_or_alias
-     *
+     * 
+     * @throws UiPageNotFoundError
+     * 
+     * @return string
+     */
+    public function getPageId($page_or_id_or_alias);
+
+    /**
+     * Returns the page alias for the given UiPage or UID or alias or CMS ID.
+     * 
+     * @param UiPageInterface|string $page_or_id_or_alias
+     * 
+     * @throws UiPageNotFoundError
+     * 
+     * @return string
+     */
+    public function getPageAlias($page_or_id_or_alias);
+
+    /**
+     * Returns the page CMS ID for the given UiPage or UID or alias or CMS ID.
+     * 
+     * @param UiPageInterface|string $page_or_id_or_alias
+     * 
+     * @throws UiPageNotFoundError
+     * 
      * @return string
      */
     public function getPageIdCms($page_or_id_or_alias);
@@ -306,15 +329,15 @@ interface CmsConnectorInterface extends ExfaceClassInterface
      * 
      * @return CmsConnectorInterface
      */
-    public function clearCMSRecycleBin();
+    public function clearCmsRecycleBin();
 
     /**
-     * Returns if the page exists in the CMS. Returns false if null is passed as id or alias.
+     * Returns if the page exists in the CMS.
      * 
      * @param UiPageInterface|string $page_or_id_or_alias
      * @return boolean
      */
-    public function existPage($page_or_id_or_alias);
+    public function hasPage($page_or_id_or_alias);
 
     /**
      * Returns all pages assigned to the given app.
