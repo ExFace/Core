@@ -7,7 +7,7 @@ use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Factories\EntityListFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\DataSheets\DataColumnInterface;
-use exface\Core\DataTypes\AbstractDataType;
+use exface\Core\CommonLogic\DataTypes\AbstractDataType;
 use exface\Core\Factories\DataColumnTotalsFactory;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\DataSheets\DataSheetDiffError;

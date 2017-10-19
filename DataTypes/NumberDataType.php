@@ -5,6 +5,7 @@ use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
 use exface\Core\CommonLogic\Constants\SortingDirections;
 use exface\Core\Exceptions\DataTypes\DataTypeConfigurationError;
 use exface\Core\Exceptions\DataTypes\DataTypeValidationError;
+use exface\Core\CommonLogic\DataTypes\AbstractDataType;
 
 /**
  * Basic data type for numeric values.
@@ -74,7 +75,7 @@ class NumberDataType extends AbstractDataType
     /**
      *
      * {@inheritDoc}
-     * @see \exface\Core\DataTypes\AbstractDataType::getDefaultSortingDirection()
+     * @see \exface\Core\CommonLogic\DataTypes\AbstractDataType::getDefaultSortingDirection()
      */
     public function getDefaultSortingDirection()
     {

@@ -96,18 +96,12 @@ class SqlModelLoader implements ModelLoaderInterface
         }
         $query = $this->getDataConnection()->runSql('
 				SELECT
+                    o.*,
 					' . $this->buildSqlUuidSelector('o.oid') . ' as oid,
 					' . $this->buildSqlUuidSelector('o.app_oid') . ' as app_oid,
-					a.app_alias,
-					o.object_name,
-					o.object_alias,
-					o.data_address,
-					o.data_address_properties,
 					' . $this->buildSqlUuidSelector('o.data_source_oid') . ' as data_source_oid,
 					' . $this->buildSqlUuidSelector('o.parent_object_oid') . ' as parent_object_oid,
-					o.short_description,
-					o.long_description,
-					o.default_editor_uxon,
+					a.app_alias,
 					' . $this->buildSqlUuidSelector('ds.base_object_oid') . ' as base_object_oid,
 					EXISTS (SELECT 1 FROM exf_object_behaviors ob WHERE ob.object_oid = o.oid) AS has_behaviors
 				FROM exf_object o 
@@ -288,12 +282,16 @@ class SqlModelLoader implements ModelLoaderInterface
         $attr->setDataAddressProperties(UxonObject::fromJson($row['data_properties']));
         $attr->setFormatter($row['attribute_formatter']);
         $attr->setDataType($row['data_type_oid']);
-        if ($row['default_editor_uxon']){
-            $default_widget_uxon = $default_widget_uxon = UxonObject::fromJson($row['default_editor_uxon']);
-            if (! $default_widget_uxon->isEmpty()){
-                $attr->setDefaultWidgetUxon($default_widget_uxon);
-            }
+        
+        $default_editor = $row['default_editor_uxon'];
+        if ($default_editor && $default_editor !== '{}'){
+            $attr->setDefaultEditorUxon(UxonObject::fromJson($default_editor));
         }
+        $custom_type = $row['custom_data_type_uxon'];
+        if ($custom_type && $custom_type !== '{}') {
+            $attr->setCustomDataTypeUxon(UxonObject::fromJson($custom_type));
+        }
+        
         // Control flags
         if (! is_null($row['attribute_readable_flag'])){
             $attr->setWritable($row['attribute_readable_flag']);
@@ -308,6 +306,7 @@ class SqlModelLoader implements ModelLoaderInterface
         $attr->setSortable($row['attribute_sortable_flag']);
         $attr->setFilterable($row['attribute_filterable_flag']);
         $attr->setAggregatable($row['attribute_aggregatable_flag']);
+        
         // Defaults
         $attr->setDefaultDisplayOrder($row['default_display_order']);
         $attr->setRelationFlag($row['related_object_oid'] ? true : false);
@@ -319,6 +318,7 @@ class SqlModelLoader implements ModelLoaderInterface
         }
         $attr->setDefaultAggregateFunction($row['default_aggregate_function']);
         $attr->setValueListDelimiter($row['value_list_delimiter']);
+        
         // Descriptions
         $attr->setShortDescription($row['attribute_short_description']);
         
@@ -578,8 +578,8 @@ class SqlModelLoader implements ModelLoaderInterface
             return $cache->copy();
         } elseif (is_array($cache)) {
             $uxon = UxonObject::fromJson($cache['uxon_config']);
-            $default_widget_uxon = UxonObject::fromJson($cache['default_widget_uxon']);
-            $data_type = DataTypeFactory::createFromModel($cache['prototype'], $cache['data_type_alias'], $this->getWorkbench()->getApp($cache['app_alias']), $uxon, $cache['name'], $cache['short_description'], $cache['validation_error_code'], $cache['validation_error_text'], $default_widget_uxon);
+            $default_editor_uxon = UxonObject::fromJson($cache['default_editor_uxon']);
+            $data_type = DataTypeFactory::createFromModel($cache['prototype'], $cache['data_type_alias'], $this->getWorkbench()->getApp($cache['app_alias']), $uxon, $cache['name'], $cache['short_description'], $cache['validation_error_code'], $cache['validation_error_text'], $default_editor_uxon);
             $this->data_types_by_uid[$cache['oid']] = $data_type;
             return $data_type;
         } else {

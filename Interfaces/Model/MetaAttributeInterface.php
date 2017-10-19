@@ -175,23 +175,19 @@ interface MetaAttributeInterface extends ExfaceClassInterface, iCanBeCopied
     public function getObjectInheritedFrom();
     
     /**
-     * Returns a UXON object for the default editor widget for this attribute.
-     *
-     * The default widget can be defined for a data type and extended by a further definition for a specific attribute. If none of the above is defined,
-     * a blank UXON object with merely the overall default widget type (specified in the config) will be returned.
-     *
-     * The returned UXON is a copy. Changes on it will not affect the result of the next method call. If you need to change
-     * the default UXON use MetaAttributeInterface::setDefaultWidgetUxon(MetaAttributeInterface::getDefaultWidgetUxon()) or similar.
-     *
+     * Returns a copy of the custom UXON configuration for the attribute's data type.
+     * 
+     * To change the data type configuration either use $this->getDataType() directly or setCustomDataTypeUxon().
+     * 
      * @return UxonObject
      */
-    public function getDefaultWidgetUxon();
+    public function getCustomDataTypeUxon();
     
     /**
-     * 
-     * @param UxonObject $uxon_object
+     * @param UxonObject $uxon
+     * @return MetaAttributeInterface
      */
-    public function setDefaultWidgetUxon(UxonObject $uxon_object);
+    public function setCustomDataTypeUxon(UxonObject $uxon);
     
     public function getFormula();
     
@@ -434,4 +430,29 @@ interface MetaAttributeInterface extends ExfaceClassInterface, iCanBeCopied
      * @return \exface\Core\Interfaces\Model\MetaAttributeInterface
      */
     public function setValueListDelimiter($string);
+    
+    
+    
+    /**
+     * Returns a copy of the UXON object for the default editor widget for this attribute.
+     *
+     * The default editor is defined for a data type and can be overridden for specific attributes. 
+     * The attribute-specific default editor will completely replace the one on the data-type-level,
+     * the UXONs will not be merged in order to avoid attributes incompatible with the specified
+     * widget type.
+     *
+     * Note: The returned UXON is a copy. Changes on it will not affect the result of the next method call. 
+     * If you need to change the default UXON use 
+     * MetaAttributeInterface::setDefaultEditorUxon(MetaAttributeInterface::getDefaultEditorUxon()) 
+     * or similar.
+     *
+     * @return UxonObject
+     */
+    public function getDefaultEditorUxon();
+    
+    /**
+     *
+     * @param UxonObject $uxon_object
+     */
+    public function setDefaultEditorUxon(UxonObject $uxon_object);
 }

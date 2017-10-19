@@ -1,7 +1,7 @@
 <?php
 namespace exface\Core\QueryBuilders;
 
-use exface\Core\DataTypes\AbstractDataType;
+use exface\Core\CommonLogic\DataTypes\AbstractDataType;
 use exface\Core\CommonLogic\AbstractDataConnector;
 use exface\Core\Exceptions\QueryBuilderException;
 use exface\Core\Interfaces\Model\MetaRelationInterface;

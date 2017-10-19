@@ -75,9 +75,12 @@ class Attribute implements MetaAttributeInterface
     private $filterable;
 
     private $aggregatable;
+    
+    /** @var UxonObject|null */
+    private $default_editor_uxon = null;
 
     /** @var UxonObject|null */
-    private $default_widget_uxon = null;
+    private $custom_data_type_uxon = null;
 
     /** @var MetaRelationPathInterface|null */
     private $relation_path;
@@ -180,6 +183,7 @@ class Attribute implements MetaAttributeInterface
     {
         if (is_string($this->data_type)){
             $this->data_type = DataTypeFactory::createFromUidOrAlias($this->getModel(), $this->data_type);
+            $this->data_type->importUxonObject($this->getCustomDataTypeUxon());
         }
         return $this->data_type;
     }
@@ -441,44 +445,6 @@ class Attribute implements MetaAttributeInterface
         }
     }
     
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::getDefaultWidgetUxon()
-     */
-    public function getDefaultWidgetUxon()
-    {
-        // If there is no default widget uxon defined, use the UXON from the data type
-        if (is_null($this->default_widget_uxon)) {
-            $this->default_widget_uxon = $this->getDataType()->getDefaultWidgetUxon()->copy();
-        }
-        
-        // If there is no widget type, try extending the data type default widget UXON
-        if (! $this->default_widget_uxon->hasProperty('widget_type')) {
-            $this->default_widget_uxon = $this->getDataType()->getDefaultWidgetUxon()->extend($this->default_widget_uxon);
-        }
-        
-        $uxon = $this->default_widget_uxon->copy();
-        
-        if (! $uxon->hasProperty('attribute_alias')) {
-            $uxon->setProperty(attribute_alias, $this->getAliasWithRelationPath());
-        }
-        
-        return $uxon;
-    }
-
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setDefaultWidgetUxon()
-     */
-    public function setDefaultWidgetUxon(UxonObject $uxon)
-    {
-        $this->default_widget_uxon = $uxon;
-        return $this;
-    }
-
     /**
      * 
      * {@inheritDoc}
@@ -775,10 +741,12 @@ class Attribute implements MetaAttributeInterface
         
         // Explicitly copy properties, that are objects themselves
         $copy->setRelationPath($path);
-        // Do not use getDefaultWidgetUxon() here as it already performs some enrichment
-        if ($this->default_widget_uxon instanceof UxonObject){
-            $copy->setDefaultWidgetUxon($this->default_widget_uxon->copy());
+        
+        // Do not use getDefaultEditorUxon() here as it already performs some enrichment
+        if ($this->default_editor_uxon instanceof UxonObject){
+            $copy->setDefaultEditorUxon($this->default_editor_uxon->copy());
         }
+        
         return $copy;
     }
 
@@ -919,6 +887,78 @@ class Attribute implements MetaAttributeInterface
         }
         return $this;
     }
- 
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::getCustomDataTypeUxon()
+     */
+    public function getCustomDataTypeUxon()
+    {
+        if (is_null($this->custom_data_type_uxon)){
+            return new UxonObject();
+        }
+        return $this->custom_data_type_uxon->copy();
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setCustomDataTypeUxon()
+     */
+    public function setCustomDataTypeUxon(UxonObject $uxon)
+    {
+        $this->custom_data_type_uxon = $uxon;
+        $this->resetDataType();
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return \exface\Core\CommonLogic\Model\Attribute
+     */
+    private function resetDataType()
+    {
+        // If the data type had already been instantiated, degrade it back to a string alias.
+        // Next time the getDataType() is called, it will reinstantiate the data type uxing
+        // the new custom setting.
+        if ($this->data_type instanceof UxonObject){
+            $this->data_type = $this->data_type->getAliasWithNamespace();
+        }
+        
+        return $this;
+    }
+
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::getDefaultEditorUxon()
+     */
+    public function getDefaultEditorUxon()
+    {
+        // If there is no default widget uxon defined, use the UXON from the data type
+        if (is_null($this->default_editor_uxon)) {
+            $this->default_editor_uxon = $this->getDataType()->getDefaultEditorUxon()->copy();
+        }
+        
+        $uxon = $this->default_editor_uxon->copy();
+        
+        if (! $uxon->hasProperty('attribute_alias')) {
+            $uxon->setProperty('attribute_alias', $this->getAliasWithRelationPath());
+        }
+        
+        return $uxon;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setDefaultEditorUxon()
+     */
+    public function setDefaultEditorUxon(UxonObject $uxon)
+    {
+        $this->default_editor_uxon = $uxon;
+        return $this;
+    }
 }
 ?>

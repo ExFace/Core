@@ -2,7 +2,7 @@
 namespace exface\Core\CommonLogic\Model;
 
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\DataTypes\AbstractDataType;
+use exface\Core\CommonLogic\DataTypes\AbstractDataType;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Exceptions\RangeException;

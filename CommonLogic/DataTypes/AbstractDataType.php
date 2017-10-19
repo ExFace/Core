@@ -1,5 +1,5 @@
 <?php
-namespace exface\Core\DataTypes;
+namespace exface\Core\CommonLogic\DataTypes;
 
 use exface\Core\Interfaces\Model\DataTypeInterface;
 use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
@@ -24,11 +24,13 @@ abstract class AbstractDataType implements DataTypeInterface
     
     private $shortDescription = null;
     
-    private $defaultWidgetUxon = null;
+    private $defaultEditorUxon = null;
     
     private $validationErrorCode = null;
     
     private $validationErrorText = null;
+    
+    private $value = null;
 
     public function __construct(NameResolverInterface $name_resolver)
     {
@@ -263,33 +265,43 @@ abstract class AbstractDataType implements DataTypeInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\DataTypeInterface::getDefaultWidgetUxon()
+     * @see \exface\Core\Interfaces\Model\DataTypeInterface::getDefaultEditorUxon()
      */
-    public function getDefaultWidgetUxon()
+    public function getDefaultEditorUxon()
     {
-        if (is_null($this->defaultWidgetUxon)) {
-            $this->defaultWidgetUxon = new UxonObject();
+        if (is_null($this->defaultEditorUxon)) {
+            $this->defaultEditorUxon = new UxonObject();
         }
         
         // Make sure, the UXON has allways an explicit widget type! Otherwise checks for
         // widget type later in the code might put in their defaults potentially uncompatible
         // with properties set here or anywhere inbetween.
-        if (! $this->defaultWidgetUxon->hasProperty('widget_type')) {
-            $this->defaultWidgetUxon->setProperty('widget_type', $this->getWorkbench()->getConfig()->getOption('TEMPLATES.WIDGET_FOR_UNKNOWN_DATA_TYPES'));
+        if (! $this->defaultEditorUxon->hasProperty('widget_type')) {
+            $this->defaultEditorUxon->setProperty('widget_type', $this->getWorkbench()->getConfig()->getOption('TEMPLATES.WIDGET_FOR_UNKNOWN_DATA_TYPES'));
         }
         
-        return $this->defaultWidgetUxon;
+        return $this->defaultEditorUxon;
     }
 
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\DataTypeInterface::setDefaultWidgetUxon()
+     * @see \exface\Core\Interfaces\Model\DataTypeInterface::setDefaultEditorUxon()
      */
-    public function setDefaultWidgetUxon(UxonObject $defaultWidgetUxon)
+    public function setDefaultEditorUxon(UxonObject $defaultEditorUxon)
     {
-        $this->defaultWidgetUxon = $defaultWidgetUxon;
+        $this->defaultEditorUxon = $defaultEditorUxon;
         return $this;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\DataTypeInterface::setDefaultEditorWidget()
+     */
+    public function setDefaultEditorWidget(UxonObject $uxon)
+    {
+        return $this->setDefaultEditorUxon($uxon);
     }
 
     /**
@@ -333,5 +345,46 @@ abstract class AbstractDataType implements DataTypeInterface
         $this->validationErrorText = $string;
         return $this;
     }
+    
+    public final function withValue($value)
+    {
+        return $this->copy()->setValue($value);
+    }
+    
+    public final function getValue()
+    {
+        return $this->value;
+    }
+    
+    public function hasValue()
+    {
+        return ! is_null($this->value);
+    }
+
+    protected final function setValue($value)
+    {
+        $this->value = $this->parse($value);
+        return $this;
+    }
+    
+    /**
+     * @return string
+     */
+    public function __toString()
+    {
+        return (string) $this->getValue();
+    }
+    
+    /**
+     * Compares one value object with another.
+     *
+     * @return boolean
+     */
+    public final function equals(DataTypeInterface $valueObject)
+    {
+        // TODO compare uxon configuration
+        return $this->getValue() === $valueObject->getValue() && $this->getAliasWithNamespace() === $valueObject->getAliasWithNamespace() && get_called_class() == get_class($valueObject);
+    }
+
 }
 ?>

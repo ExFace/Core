@@ -101,7 +101,7 @@ class ShowObjectDialog extends ShowDialog
     {
         $attr = $obj->getAttribute($attribute_alias);
         $page = $this->getCalledOnUiPage();
-        $widget = WidgetFactory::createFromUxon($page, $attr->getDefaultWidgetUxon(), $parent_widget);
+        $widget = WidgetFactory::createFromUxon($page, $attr->getDefaultEditorUxon(), $parent_widget);
         $widget->setAttributeAlias($attribute_alias);
         $widget->setCaption($attr->getName());
         $widget->setHint($attr->getHint());

@@ -42,8 +42,8 @@
             "attribute_alias": "VALIDATION_ERROR"
         },
         {
-            "name": "DEFAULT_WIDGET_UXON",
-            "attribute_alias": "DEFAULT_WIDGET_UXON"
+            "name": "DEFAULT_EDITOR_UXON",
+            "attribute_alias": "DEFAULT_EDITOR_UXON"
         },
         {
             "name": "ALIAS",
@@ -66,7 +66,7 @@
             "PROTOTYPE": "exface\/Core\/DataTypes\/StringDataType.php",
             "CONFIG_UXON": "",
             "VALIDATION_ERROR": "",
-            "DEFAULT_WIDGET_UXON": "{\"widget_type\": \"Input\"}",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\": \"Input\"}",
             "ALIAS": "String",
             "SHORT_DESCRIPTION": ""
         },
@@ -81,7 +81,7 @@
             "PROTOTYPE": "exface\/Core\/DataTypes\/NumberDataType.php",
             "CONFIG_UXON": "",
             "VALIDATION_ERROR": "",
-            "DEFAULT_WIDGET_UXON": "{\"widget_type\":\"InputNumber\"}",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"InputNumber\"}",
             "ALIAS": "Number",
             "SHORT_DESCRIPTION": ""
         },
@@ -96,7 +96,7 @@
             "PROTOTYPE": "exface\/Core\/DataTypes\/PropertySetDataType.php",
             "CONFIG_UXON": "",
             "VALIDATION_ERROR": "",
-            "DEFAULT_WIDGET_UXON": "{\"widget_type\":\"InputPropertyTable\"}",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"InputPropertyTable\"}",
             "ALIAS": "PropertySet",
             "SHORT_DESCRIPTION": "Property sets can be used to store multiple options in one data field, like connection settings (user, password, address, etc.)"
         },
@@ -111,7 +111,7 @@
             "PROTOTYPE": "exface\/Core\/DataTypes\/TextDataType.php",
             "CONFIG_UXON": "",
             "VALIDATION_ERROR": "",
-            "DEFAULT_WIDGET_UXON": "{\"widget_type\": \"InputText\"}",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\": \"InputText\"}",
             "ALIAS": "Text",
             "SHORT_DESCRIPTION": "A text field is longer than a string an may contain multiple lines"
         },
@@ -126,7 +126,7 @@
             "PROTOTYPE": "exface\/Core\/DataTypes\/URLDataType.php",
             "CONFIG_UXON": "",
             "VALIDATION_ERROR": "",
-            "DEFAULT_WIDGET_UXON": "{\"widget_type\":\"Input\"}",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Input\"}",
             "ALIAS": "URL",
             "SHORT_DESCRIPTION": "URL, File-Links, etc."
         },
@@ -141,7 +141,7 @@
             "PROTOTYPE": "exface\/Core\/DataTypes\/JsonDataType.php",
             "CONFIG_UXON": "{}",
             "VALIDATION_ERROR": "",
-            "DEFAULT_WIDGET_UXON": "{\"widget_type\":\"InputJson\",\"width\":\"2\",\"height\":\"6\"}",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"InputJson\",\"width\":\"2\",\"height\":\"6\"}",
             "ALIAS": "Uxon",
             "SHORT_DESCRIPTION": "User Experience Object Notation (JSON schema)"
         },
@@ -156,7 +156,7 @@
             "PROTOTYPE": "exface\/Core\/DataTypes\/HTMLDataType.php",
             "CONFIG_UXON": "",
             "VALIDATION_ERROR": "",
-            "DEFAULT_WIDGET_UXON": "{\"widget_type\": \"InputText\"}",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\": \"InputText\"}",
             "ALIAS": "HTML",
             "SHORT_DESCRIPTION": ""
         },
@@ -171,7 +171,7 @@
             "PROTOTYPE": "exface\/Core\/DataTypes\/ImageUrlDataType.php",
             "CONFIG_UXON": "",
             "VALIDATION_ERROR": "",
-            "DEFAULT_WIDGET_UXON": "{\"widget_type\":\"Input\"}",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Input\"}",
             "ALIAS": "ImageUrl",
             "SHORT_DESCRIPTION": ""
         },
@@ -186,7 +186,7 @@
             "PROTOTYPE": "exface\/Core\/DataTypes\/DateDataType.php",
             "CONFIG_UXON": "",
             "VALIDATION_ERROR": "",
-            "DEFAULT_WIDGET_UXON": "{\"widget_type\": \"InputDate\"}",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\": \"InputDate\"}",
             "ALIAS": "Date",
             "SHORT_DESCRIPTION": ""
         },
@@ -201,7 +201,7 @@
             "PROTOTYPE": "exface\/Core\/DataTypes\/TimestampDataType.php",
             "CONFIG_UXON": "",
             "VALIDATION_ERROR": "",
-            "DEFAULT_WIDGET_UXON": "{\"widget_type\": \"InputDateTime\"}",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\": \"InputDateTime\"}",
             "ALIAS": "Timestamp",
             "SHORT_DESCRIPTION": ""
         },
@@ -216,7 +216,7 @@
             "PROTOTYPE": "exface\/Core\/DataTypes\/PriceDataType.php",
             "CONFIG_UXON": "",
             "VALIDATION_ERROR": "",
-            "DEFAULT_WIDGET_UXON": "{\"widget_type\":\"InputNumber\",\"precision\":2}",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"InputNumber\",\"precision\":2}",
             "ALIAS": "Price",
             "SHORT_DESCRIPTION": ""
         },
@@ -231,7 +231,7 @@
             "PROTOTYPE": "exface\/Core\/DataTypes\/RelationDataType.php",
             "CONFIG_UXON": "",
             "VALIDATION_ERROR": "",
-            "DEFAULT_WIDGET_UXON": "{\"widget_type\": \"ComboTable\"}",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\": \"ComboTable\"}",
             "ALIAS": "Relation",
             "SHORT_DESCRIPTION": ""
         },
@@ -246,7 +246,7 @@
             "PROTOTYPE": "exface\/Core\/DataTypes\/BooleanDataType.php",
             "CONFIG_UXON": "",
             "VALIDATION_ERROR": "",
-            "DEFAULT_WIDGET_UXON": "{\"widget_type\": \"CheckBox\"}",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\": \"CheckBox\"}",
             "ALIAS": "Boolean",
             "SHORT_DESCRIPTION": ""
         },
@@ -261,7 +261,7 @@
             "PROTOTYPE": "exface\/Core\/DataTypes\/RelationHierarchyDataType.php",
             "CONFIG_UXON": "",
             "VALIDATION_ERROR": "",
-            "DEFAULT_WIDGET_UXON": "{\"widget_type\":\"ComboTable\"}",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"ComboTable\"}",
             "ALIAS": "RelationHierarchy",
             "SHORT_DESCRIPTION": "Special data type for hierarchies of object of the same type. It should be used for the relation to the parent object. Setting this data type enables the framework to build trees for these hierarchies automatically. "
         },
@@ -276,7 +276,7 @@
             "PROTOTYPE": "exface\/Core\/DataTypes\/FlagTreeFolderDataType.php",
             "CONFIG_UXON": "",
             "VALIDATION_ERROR": "",
-            "DEFAULT_WIDGET_UXON": "{\"widget_type\":\"CheckBox\"}",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"CheckBox\"}",
             "ALIAS": "FlagTreeFolder",
             "SHORT_DESCRIPTION": ""
         },
@@ -291,7 +291,7 @@
             "PROTOTYPE": "exface\/Core\/DataTypes\/IntegerDataType.php",
             "CONFIG_UXON": "{}",
             "VALIDATION_ERROR": "",
-            "DEFAULT_WIDGET_UXON": "{\"widget_type\":\"InputNumber\"}",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"InputNumber\"}",
             "ALIAS": "Integer",
             "SHORT_DESCRIPTION": ""
         },
@@ -306,7 +306,7 @@
             "PROTOTYPE": "exface\/Core\/DataTypes\/NumberDataType.php",
             "CONFIG_UXON": "{\"precision\":1}",
             "VALIDATION_ERROR": "",
-            "DEFAULT_WIDGET_UXON": "{\"widget_type\":\"InputNumber\"}",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"InputNumber\"}",
             "ALIAS": "Number1",
             "SHORT_DESCRIPTION": ""
         },
@@ -321,7 +321,7 @@
             "PROTOTYPE": "exface\/Core\/DataTypes\/NumberDataType.php",
             "CONFIG_UXON": "{\"precision\":2}",
             "VALIDATION_ERROR": "",
-            "DEFAULT_WIDGET_UXON": "{\"widget_type\":\"InputNumber\"}",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"InputNumber\"}",
             "ALIAS": "Number2",
             "SHORT_DESCRIPTION": ""
         },
@@ -336,7 +336,7 @@
             "PROTOTYPE": "exface\/Core\/DataTypes\/IntegerDataType.php",
             "CONFIG_UXON": "{\"min\":0}",
             "VALIDATION_ERROR": "",
-            "DEFAULT_WIDGET_UXON": "{\"widget_type\":\"InputNumber\"}",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"InputNumber\"}",
             "ALIAS": "NumberNatural",
             "SHORT_DESCRIPTION": ""
         },
@@ -351,7 +351,7 @@
             "PROTOTYPE": "exface\/Core\/DataTypes\/JsonDataType.php",
             "CONFIG_UXON": "{}",
             "VALIDATION_ERROR": "",
-            "DEFAULT_WIDGET_UXON": "{\"widget_type\":\"InputJson\",\"width\":\"2\",\"height\":\"6\"}",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"InputJson\",\"width\":\"2\",\"height\":\"6\"}",
             "ALIAS": "Json",
             "SHORT_DESCRIPTION": ""
         },
@@ -366,7 +366,7 @@
             "PROTOTYPE": "exface\/Core\/DataTypes\/StringDataType.php",
             "CONFIG_UXON": "{\"validator_regex\":\"\/^[^_~=].*$\/\"}",
             "VALIDATION_ERROR": "0x11e7b02c1305514998350205857feb80",
-            "DEFAULT_WIDGET_UXON": "{\"widget_type\":\"Input\"}",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Input\"}",
             "ALIAS": "MetaModelAlias",
             "SHORT_DESCRIPTION": ""
         }
