@@ -4,6 +4,7 @@ namespace exface\Core\DataTypes;
 use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\CommonLogic\Constants\SortingDirections;
+use exface\Core\CommonLogic\DataTypes\AbstractDataType;
 
 class DateDataType extends AbstractDataType
 {
@@ -90,7 +91,7 @@ class DateDataType extends AbstractDataType
     /**
      *
      * {@inheritDoc}
-     * @see \exface\Core\DataTypes\AbstractDataType::getDefaultSortingDirection()
+     * @see \exface\Core\CommonLogic\DataTypes\AbstractDataType::getDefaultSortingDirection()
      */
     public function getDefaultSortingDirection()
     {

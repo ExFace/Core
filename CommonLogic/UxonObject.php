@@ -206,9 +206,8 @@ class UxonObject implements \IteratorAggregate
     }
 
     /**
-     * Extends this UXON object with properties of the given one.
-     * Conflicting properties will be overridden with
-     * values from the argument object!
+     * Returns a copy of UXON object extended with properties of the given one.
+     * Conflicting properties will be overridden with values from the argument object!
      *
      * @param UxonObject $extend_by_uxon            
      * @return UxonObject

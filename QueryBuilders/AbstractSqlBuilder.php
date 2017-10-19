@@ -6,7 +6,7 @@ use exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartFilterGroup;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartAttribute;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartFilter;
-use exface\Core\DataTypes\AbstractDataType;
+use exface\Core\CommonLogic\DataTypes\AbstractDataType;
 use exface\Core\CommonLogic\AbstractDataConnector;
 use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Exceptions\DataTypes\DataTypeCastingError;

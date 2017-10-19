@@ -2,7 +2,7 @@
 namespace exface\Core\Interfaces\DataSheets;
 
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
-use exface\Core\DataTypes\AbstractDataType;
+use exface\Core\CommonLogic\DataTypes\AbstractDataType;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Interfaces\DataSheets\DataColumnTotalsListInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;

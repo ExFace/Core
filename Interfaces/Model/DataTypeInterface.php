@@ -172,15 +172,22 @@ interface DataTypeInterface extends ExfaceClassInterface, AliasInterface, iCanBe
     public function setShortDescription($text);
     
     /**
-     * @return UxonObject
+     * 
+     * @param UxonObject $uxon
+     * @return DataTypeInterface
      */
-    public function getDefaultWidgetUxon();
+    public function setDefaultEditorUxon(UxonObject $uxon);
     
     /**
      * 
      * @param UxonObject $uxon
      * @return DataTypeInterface
      */
-    public function setDefaultWidgetUxon(UxonObject $uxon);
+    public function setDefaultEditorWidget(UxonObject $uxon);
+    
+    /**
+     * @return UxonObject
+     */
+    public function getDefaultEditorUxon();
 }
 ?>
