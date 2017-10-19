@@ -207,7 +207,7 @@ trait JqueryButtonTrait {
         $output = '';
         $prefill_param = '';
         $filters_param = '';
-        if ($action->getPage()->getAliasWithNamespace() != $this->getPageAlias()) {
+        if (strcasecmp($action->getPage()->getAliasWithNamespace(), $this->getPageAlias()) != 0) {
             if ($action->getPrefillWithPrefillData()){
                 $output = <<<JS
     				{$this->buildJsRequestDataCollector($action, $input_element)}

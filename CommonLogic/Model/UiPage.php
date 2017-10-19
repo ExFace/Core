@@ -863,9 +863,22 @@ class UiPage implements UiPageInterface
         $uxon->setProperty('name', $this->getName());
         $uxon->setProperty('short_description', $this->getShortDescription());
         $uxon->setProperty('replaces_page_alias', $this->getReplacesPageAlias());
-        $contents = UxonObject::fromAnything($this->getContents());
-        if ($contents->isEmpty()) {
+        
+        $contents = trim($this->getContents());
+        if (! $contents) {
+            // contents == null
             $contents = '';
+        } else {
+            if (substr($contents, 0, 1) == '{' && substr($contents, - 1) == '}') {
+                // contents == UxonObject
+                $contents = UxonObject::fromJson($contents);
+                if ($contents->isEmpty()) {
+                    $contents = '';
+                }
+            } else {
+                // contents == string
+                $contents = $this->getContents();
+            }
         }
         $uxon->setProperty('contents', $contents);
         
