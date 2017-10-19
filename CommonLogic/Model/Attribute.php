@@ -532,7 +532,7 @@ class Attribute implements MetaAttributeInterface
     {        
         if ($value instanceof SortingDirectionsDataType){
             // everything is OK
-        } elseif (SortingDirectionsDataType::isValidValue(strtoupper($value))){
+        } elseif (SortingDirectionsDataType::isValidStaticValue(strtoupper($value))){
             $value = new SortingDirectionsDataType($this->getWorkbench(), strtoupper($value));
         } else {
             throw new UnexpectedValueException('Invalid value "' . $value . '" for default sorting direction in attribute "' . $this->getName() . '": use ASC or DESC');
