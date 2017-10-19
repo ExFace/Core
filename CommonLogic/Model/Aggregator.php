@@ -5,6 +5,18 @@ use exface\Core\Interfaces\Model\AggregatorInterface;
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
 use exface\Core\CommonLogic\Workbench;
 
+/**
+ * Aggregators are special expressions to define data aggregation like SUM, AVG, but also COUNT_IF(condition).
+ * 
+ * Aggregators consist of a function name and (mostly) optional parameters in braces. 
+ * 
+ * IDEA Having the AggregatorFunctionsDataType now, we could transfer all the logic to the data type
+ * and remove the AggregatorInterface. This would also allow to validate aggregators including
+ * their options and would be cleaner in general.
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
 class Aggregator implements AggregatorInterface {
     
     private $aggregator_string = null;
