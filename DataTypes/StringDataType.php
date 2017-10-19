@@ -1,7 +1,6 @@
 <?php
 namespace exface\Core\DataTypes;
 
-use exface\Core\CommonLogic\Constants\SortingDirections;
 use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
 use exface\Core\CommonLogic\DataTypes\AbstractDataType;
 
@@ -178,7 +177,7 @@ class StringDataType extends AbstractDataType
      */
     public function getDefaultSortingDirection()
     {
-        return SortingDirections::ASC();
+        return SortingDirectionsDataType::ASC($this->getWorkbench());
     }
     /**
      * @return integer

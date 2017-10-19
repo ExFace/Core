@@ -2,7 +2,6 @@
 namespace exface\Core\DataTypes;
 
 use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
-use exface\Core\CommonLogic\Constants\SortingDirections;
 use exface\Core\Exceptions\DataTypes\DataTypeConfigurationError;
 use exface\Core\Exceptions\DataTypes\DataTypeValidationError;
 use exface\Core\CommonLogic\DataTypes\AbstractDataType;
@@ -79,7 +78,7 @@ class NumberDataType extends AbstractDataType
      */
     public function getDefaultSortingDirection()
     {
-        return SortingDirections::DESC();
+        return SortingDirectionsDataType::DESC($this->getWorkbench());
     }
     /**
      * @return integer

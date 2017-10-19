@@ -5,7 +5,7 @@ use exface\Core\Interfaces\ExfaceClassInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\iCanBeCopied;
 use exface\Core\Exceptions\UnexpectedValueException;
-use exface\Core\CommonLogic\Constants\SortingDirections;
+use exface\Core\DataTypes\SortingDirectionsDataType;
 
 interface MetaAttributeInterface extends ExfaceClassInterface, iCanBeCopied
 {
@@ -214,13 +214,13 @@ interface MetaAttributeInterface extends ExfaceClassInterface, iCanBeCopied
     
     /**
      *
-     * @return \exface\Core\CommonLogic\Constants\SortingDirections
+     * @return \exface\Core\DataTypes\SortingDirectionsDataType
      */
     public function getDefaultSorterDir();
     
     /**
      *
-     * @param SortingDirections|string $value
+     * @param SortingDirectionsDataType|string $value
      */
     public function setDefaultSorterDir($value);
     

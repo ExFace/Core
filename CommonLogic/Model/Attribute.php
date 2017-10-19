@@ -2,18 +2,16 @@
 
 namespace exface\Core\CommonLogic\Model;
 
-use exface\Core\CommonLogic\Workbench;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Factories\RelationPathFactory;
 use exface\Core\Exceptions\UnexpectedValueException;
-use exface\Core\Interfaces\Model\DataTypeInterface;
-use exface\Core\CommonLogic\Constants\SortingDirections;
+use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Model\MetaRelationPathInterface;
-use exface\Core\Interfaces\Model\MetaRelationInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\DataTypes\SortingDirectionsDataType;
 
 /**
  * 
@@ -532,10 +530,10 @@ class Attribute implements MetaAttributeInterface
      */
     public function setDefaultSorterDir($value)
     {        
-        if ($value instanceof SortingDirections){
+        if ($value instanceof SortingDirectionsDataType){
             // everything is OK
-        } elseif (SortingDirections::isValid(strtolower($value))){
-            $value = new SortingDirections(strtolower($value));
+        } elseif (SortingDirectionsDataType::isValidValue(strtoupper($value))){
+            $value = new SortingDirectionsDataType($this->getWorkbench(), strtoupper($value));
         } else {
             throw new UnexpectedValueException('Invalid value "' . $value . '" for default sorting direction in attribute "' . $this->getName() . '": use ASC or DESC');
         }

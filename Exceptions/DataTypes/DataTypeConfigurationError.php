@@ -2,7 +2,7 @@
 namespace exface\Core\Exceptions\DataTypes;
 
 use exface\Core\Exceptions\UnexpectedValueException;
-use exface\Core\Interfaces\Model\DataTypeInterface;
+use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\Interfaces\Exceptions\DataTypeExceptionInterface;
 
 /**

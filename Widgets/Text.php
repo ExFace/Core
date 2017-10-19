@@ -15,7 +15,7 @@ use exface\Core\DataTypes\NumberDataType;
 use exface\Core\DataTypes\DateDataType;
 use exface\Core\DataTypes\PriceDataType;
 use exface\Core\DataTypes\BooleanDataType;
-use exface\Core\Interfaces\Model\DataTypeInterface;
+use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\CommonLogic\Model\Aggregator;
 use exface\Core\Interfaces\Model\AggregatorInterface;
 

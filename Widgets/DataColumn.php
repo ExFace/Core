@@ -21,6 +21,7 @@ use exface\Core\DataTypes\DateDataType;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Interfaces\Model\AggregatorInterface;
 use exface\Core\CommonLogic\Model\Aggregator;
+use exface\Core\DataTypes\SortingDirectionsDataType;
 
 /**
  * The DataColumn represents a column in Data-widgets a DataTable.
@@ -473,7 +474,7 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     
     /**
      * 
-     * @return \exface\Core\CommonLogic\Constants\SortingDirections
+     * @return \exface\Core\DataTypes\SortingDirectionsDataType
      */
     public function getDefaultSortingDirection()
     {
@@ -497,14 +498,14 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
      * @uxon-property default_sorting_direction
      * @uxon-type [ASC,DESC]
      * 
-     * @param SortingDirections|string $asc_or_desc
+     * @param SortingDirectionsDataType|string $asc_or_desc
      */
     public function setDefaultSortingDirection($asc_or_desc)
     {
-        if ($asc_or_desc instanceof SortingDirections){
+        if ($asc_or_desc instanceof SortingDirectionsDataType){
             // Everything OK. Just proceed
-        } elseif (SortingDirections::isValid(strtolower($asc_or_desc))){
-            $asc_or_desc = new SortingDirections(strtolower($asc_or_desc));
+        } elseif (SortingDirectionsDataType::isValidValue(strtoupper($asc_or_desc))){
+            $asc_or_desc = new SortingDirectionsDataType($this->getWorkbench(), strtoupper($asc_or_desc));
         } else {
             throw new WidgetPropertyInvalidValueError($this, 'Invalid value "' . $asc_or_desc . '" for default sorting direction in data column: use ASC or DESC');
         }

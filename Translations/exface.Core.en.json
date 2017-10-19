@@ -99,6 +99,8 @@
 	"DATETIME.FORMAT.SCREEN.PHP": "Y-m-d H:i:s",
 	
 	"GLOBAL.ACTIONS": "Actions",
+	"GLOBAL.SORTING_DIRECTIONS.ASC": "Ascending",
+	"GLOBAL.SORTING_DIRECTIONS.DESC": "Descending",
 	
 	"INSTALLER.SQLSCHEMA.SUCCESS": "%counter% SQL-schema-update installed|%counter% SQL-schema-updates installed",
     "INSTALLER.SQLSCHEMA.FAILED": "SQL-schema-update %first_failed_id% failed: %error_text%|%counter% SQL-schema-updates failed starting with update %first_failed_id%: %error_text%",

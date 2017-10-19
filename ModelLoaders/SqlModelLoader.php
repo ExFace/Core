@@ -28,7 +28,7 @@ use exface\Core\CommonLogic\Model\Attribute;
 use exface\Core\CommonLogic\Model\Relation;
 use exface\Core\Interfaces\ActionListInterface;
 use exface\Core\Exceptions\DataTypes\DataTypeNotFoundError;
-use exface\Core\Interfaces\Model\DataTypeInterface;
+use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Interfaces\NameResolverInterface;

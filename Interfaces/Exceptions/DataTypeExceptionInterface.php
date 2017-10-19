@@ -1,7 +1,7 @@
 <?php
 namespace exface\Core\Interfaces\Exceptions;
 
-use exface\Core\Interfaces\Model\DataTypeInterface;
+use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 
 Interface DataTypeExceptionInterface
 {
