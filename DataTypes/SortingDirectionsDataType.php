@@ -5,7 +5,7 @@ use exface\Core\CommonLogic\DataTypes\EnumStaticDataTypeTrait;
 use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
 
 /**
- * Enumeration - list of allowed values.
+ * Enumeration sorting directions: ASC and DESC.
  * 
  * @method SortingDirectionsDataType ASC(\exface\Core\CommonLogic\Workbench $workbench)
  * @method SortingDirectionsDataType DESC(\exface\Core\CommonLogic\Workbench $workbench)

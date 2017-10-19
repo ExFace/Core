@@ -11,7 +11,7 @@ use exface\Core\DataTypes\NumberDataType;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartAttribute;
 use exface\Core\CommonLogic\QueryBuilder\QueryPart;
 use exface\Core\CommonLogic\Model\Aggregator;
-use exface\Core\CommonLogic\Constants\AggregatorFunctions;
+use exface\Core\DataTypes\AggregatorFunctionsDataType;
 use exface\Core\Interfaces\Model\AggregatorInterface;
 
 /**
@@ -144,7 +144,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
                     // If we are grouping, we will not select any fields, that could be ambigous, thus
                     // we can use MAX(UID), since all other values are the same within the group.
                     if ($group_by && $qpart->getAlias() == $this->getMainObject()->getUidAttributeAlias() && ! $qpart->getAggregator()) {
-                        $qpart->setAggregator(new Aggregator(AggregatorFunctions::MAX));
+                        $qpart->setAggregator(new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::MAX));
                     }
                     // If we are grouping, we can only select valid GROUP BY expressions from the core table.
                     // These are either the ones with an aggregate function or thouse we are grouping by
@@ -195,7 +195,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
                     if ($first_rel->isForwardRelation()) {
                         $first_rel_qpart = $this->addAttribute($first_rel->getAlias());
                         // IDEA this does not support relations based on custom sql. Perhaps this needs to change
-                        $core_selects[$first_rel_qpart->getAttribute()->getDataAddress()] = $this->buildSqlSelect($first_rel_qpart, null, null, $first_rel_qpart->getAttribute()->getDataAddress(), ($group_by ? new Aggregator(AggregatorFunctions::MAX) : null));
+                        $core_selects[$first_rel_qpart->getAttribute()->getDataAddress()] = $this->buildSqlSelect($first_rel_qpart, null, null, $first_rel_qpart->getAttribute()->getDataAddress(), ($group_by ? new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::MAX) : null));
                     }
                 }
                 
@@ -273,7 +273,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
                 // if the query has a GROUP BY, we need to put the UID-Attribute in the core select as well as in the enrichment select
                 // otherwise the enrichment joins won't work!
                 if ($group_by && $qpart->getAttribute()->getAlias() === $qpart->getAttribute()->getObject()->getUidAttributeAlias()) {
-                    $select .= ', ' . $this->buildSqlSelect($qpart, null, null, null, new Aggregator(AggregatorFunctions::MAX));
+                    $select .= ', ' . $this->buildSqlSelect($qpart, null, null, null, new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::MAX));
                     $enrichment_select .= ', ' . $this->buildSqlSelect($qpart, 'EXFCOREQ');
                 } // if we are aggregating, leave only attributes, that have an aggregate function,
                   // and ones, that are aggregated over or can be assumed unique due to set filters
@@ -287,7 +287,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
                         $first_rel = reset($rels);
                         $first_rel_qpart = $this->addAttribute($first_rel->getAlias());
                         // IDEA this does not support relations based on custom sql. Perhaps this needs to change
-                        $select .= ', ' . $this->buildSqlSelect($first_rel_qpart, null, null, $first_rel_qpart->getAttribute()->getDataAddress(), ($group_by ? new Aggregator(AggregatorFunctions::MAX) : null));
+                        $select .= ', ' . $this->buildSqlSelect($first_rel_qpart, null, null, $first_rel_qpart->getAttribute()->getDataAddress(), ($group_by ? new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::MAX) : null));
                     }
                     $enrichment_select .= ', ' . $this->buildSqlSelect($qpart);
                     $enrichment_joins = array_merge($enrichment_joins, $this->buildSqlJoins($qpart, 'exfcoreq'));
@@ -333,7 +333,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
         }
         
         if ($group_by) {
-            $totals_core_selects[] = $this->buildSqlSelect($this->getAttribute($this->getMainObject()->getUidAttributeAlias()), null, null, null, new Aggregator(AggregatorFunctions::MAX));
+            $totals_core_selects[] = $this->buildSqlSelect($this->getAttribute($this->getMainObject()->getUidAttributeAlias()), null, null, null, new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::MAX));
         }
         
         // filters -> WHERE
@@ -409,12 +409,12 @@ class OracleSqlBuilder extends AbstractSqlBuilder
         $output = '';
         $function_arguments = $aggregator->getArguments();
         
-        switch ($aggregator->getFunction()) {
-            case AggregatorFunctions::LIST():
+        switch ($aggregator->getFunction()->getValue()) {
+            case AggregatorFunctionsDataType::LIST:
                 $output = "ListAgg(" . $sql . ", " . ($function_arguments[0] ? $function_arguments[0] : "', '") . ") WITHIN GROUP (order by " . $sql . ")";
                 $qpart->getQuery()->addAggregation($qpart->getAttribute()->getAliasWithRelationPath());
                 break;
-            case AggregatorFunctions::LIST_DISTINCT():
+            case AggregatorFunctionsDataType::LIST_DISTINCT:
                 $output = "ListAggDistinct(" . $sql . ")";
                 $qpart->getQuery()->addAggregation($qpart->getAttribute()->getAliasWithRelationPath());
                 break;

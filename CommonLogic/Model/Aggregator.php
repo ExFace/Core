@@ -2,7 +2,8 @@
 namespace exface\Core\CommonLogic\Model;
 
 use exface\Core\Interfaces\Model\AggregatorInterface;
-use exface\Core\CommonLogic\Constants\AggregatorFunctions;
+use exface\Core\DataTypes\AggregatorFunctionsDataType;
+use exface\Core\CommonLogic\Workbench;
 
 class Aggregator implements AggregatorInterface {
     
@@ -12,11 +13,19 @@ class Aggregator implements AggregatorInterface {
     
     private $arguments = [];
     
-    public function __construct($aggregator_string)
+    private $workbench = null;
+    
+    public function __construct(Workbench $workbench, $aggregator_string)
     {
+        $this->workbench = $workbench;
         $aggregator_string = (string) $aggregator_string;
         $this->aggregator_string = $aggregator_string;
         $this->importString($aggregator_string);
+    }
+    
+    public function getWorkbench()
+    {
+        return $this->workbench;
     }
     
     public function getFunction()
@@ -42,11 +51,11 @@ class Aggregator implements AggregatorInterface {
     public function importString($aggregator_string)
     {
         if ($args_pos = strpos($aggregator_string, '(')) {
-            $this->function = new AggregatorFunctions(strtoupper(substr($aggregator_string, 0, $args_pos)));
+            $this->function = new AggregatorFunctionsDataType($this->getWorkbench(), strtoupper(substr($aggregator_string, 0, $args_pos)));
             $this->arguments = explode(',', substr($aggregator_string, ($args_pos + 1), - 1));
             $this->arguments = array_map('trim', $this->arguments);
         } else {
-            $this->function = new AggregatorFunctions($aggregator_string);
+            $this->function = new AggregatorFunctionsDataType($this->getWorkbench(), $aggregator_string);
         }
         return $this;
     }

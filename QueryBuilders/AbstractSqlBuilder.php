@@ -24,7 +24,7 @@ use exface\Core\DataTypes\RelationDataType;
 use exface\Core\Exceptions\DataTypes\DataTypeNotFoundError;
 use exface\Core\CommonLogic\QueryBuilder\QueryPart;
 use exface\Core\Interfaces\Model\AggregatorInterface;
-use exface\Core\CommonLogic\Constants\AggregatorFunctions;
+use exface\Core\DataTypes\AggregatorFunctionsDataType;
 use exface\Core\CommonLogic\Model\Aggregator;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 
@@ -719,11 +719,11 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             $output = $this->buildSqlSelectSubselect($qpart, $select_from);
             if ($make_groupable && $aggregator){
                 if ($aggregator && $aggregator === $qpart->getAggregator()){
-                    switch ($aggregator->getFunction()){
-                        case AggregatorFunctions::COUNT():
-                        case AggregatorFunctions::COUNT_IF():
-                        case AggregatorFunctions::COUNT_DISTINCT():
-                            $aggregator = new Aggregator(AggregatorFunctions::SUM);
+                    switch ($aggregator->getFunction()->getValue()){
+                        case AggregatorFunctionsDataType::COUNT:
+                        case AggregatorFunctionsDataType::COUNT_IF:
+                        case AggregatorFunctionsDataType::COUNT_DISTINCT:
+                            $aggregator = new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::SUM);
                             break;
                     }
                 }
@@ -889,25 +889,25 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         $output = '';
         
         $args = $aggregator->getArguments();
-        $function_name = $aggregator->getFunction();
+        $function_name = $aggregator->getFunction()->getValue();
         
-        switch ($aggregator->getFunction()) {
-            case AggregatorFunctions::SUM():
-            case AggregatorFunctions::AVG():
-            case AggregatorFunctions::COUNT():
-            case AggregatorFunctions::MAX():
-            case AggregatorFunctions::MIN():
+        switch ($function_name) {
+            case AggregatorFunctionsDataType::SUM:
+            case AggregatorFunctionsDataType::AVG:
+            case AggregatorFunctionsDataType::COUNT:
+            case AggregatorFunctionsDataType::MAX:
+            case AggregatorFunctionsDataType::MIN:
                 $output = $function_name . '(' . $sql . ')';
                 break;
-            case AggregatorFunctions::LIST_DISTINCT():
-            case AggregatorFunctions::LIST():
+            case AggregatorFunctionsDataType::LIST_DISTINCT:
+            case AggregatorFunctionsDataType::LIST:
                 $output = "GROUP_CONCAT(" . ($function_name == 'LIST_DISTINCT' ? 'DISTINCT ' : '') . $sql . " SEPARATOR " . ($args[0] ? $args[0] : "', '") . ")";
                 $qpart->getQuery()->addAggregation($qpart->getAttribute()->getAliasWithRelationPath());
                 break;
-            case AggregatorFunctions::COUNT_DISTINCT():
+            case AggregatorFunctionsDataType::COUNT_DISTINCT:
                 $output = "COUNT(DISTINCT " . $sql . ")";
                 break;
-            case AggregatorFunctions::COUNT_IF():
+            case AggregatorFunctionsDataType::COUNT_IF:
                 $cond = $args[0];
                 list($if_comp, $if_val) = explode(' ', $cond, 2);
                 if (!$if_comp || is_null($if_val)) {

@@ -308,7 +308,7 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
         if ($aggregator_or_string instanceof AggregatorInterface){
             $aggregator = $aggregator_or_string;
         } else {
-            $aggregator = new Aggregator($aggregator_or_string);
+            $aggregator = new Aggregator($this->getWorkbench(), $aggregator_or_string);
         }
         $this->aggregate_function = $aggregator;
         return $this;

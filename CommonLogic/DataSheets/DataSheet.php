@@ -410,7 +410,7 @@ class DataSheet implements DataSheetInterface
             if ($attribute->getFormatter()) {
                 $col->setFormatter($attribute->getFormatter());
                 $col->getFormatter()->setRelationPath($attribute->getRelationPath()->toString());
-                if ($aggregator = DataAggregation::getAggregatorFromAlias($col->getExpressionObj()->toString())) {
+                if ($aggregator = DataAggregation::getAggregatorFromAlias($this->getWorkbench(), $col->getExpressionObj()->toString())) {
                     $col->getFormatter()->mapAttribute(str_replace(':' . $aggregator->exportString(), '', $col->getExpressionObj()->toString()), $col->getExpressionObj()->toString());
                 }
                 foreach ($col->getFormatter()->getRequiredAttributes() as $req) {
@@ -663,7 +663,7 @@ class DataSheet implements DataSheetInterface
                 // Skip columns, that reference non existing attributes
                 // TODO Is throwing an exception appropriate here?
                 throw new MetaAttributeNotFoundError($this->getMetaObject(), 'Attribute "' . $column->getExpressionObj()->toString() . '" of object "' . $this->getMetaObject()->getAliasWithNamespace() . '" not found!');
-            } elseif (DataAggregation::getAggregatorFromAlias($column->getExpressionObj()->toString())) {
+            } elseif (DataAggregation::getAggregatorFromAlias($this->getWorkbench(), $column->getExpressionObj()->toString())) {
                 // Skip columns with aggregate functions
                 continue;
             }
