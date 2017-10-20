@@ -189,6 +189,24 @@ interface UiPageInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
     public function setMenuParentPage(UiPageInterface $page);
 
     /**
+     * Returns the alias of the default menu parent page.
+     * 
+     * @return string
+     */
+    public function getMenuParentPageDefaultAlias();
+
+    /**
+     * Sets the alias of the default menu parent page.
+     * 
+     * This is important to determine if the page has been moved manually. If it has been
+     * moved, the position in the tree will not be changed during an update.
+     * 
+     * @param string $menuParentPageDefaultAlias
+     * @return UiPageInterface
+     */
+    public function setMenuParentPageDefaultAlias($menuParentPageDefaultAlias);
+
+    /**
      * Returns the index (position number starting with 0) of this page in the 
      * submenu of its parent.
      * 

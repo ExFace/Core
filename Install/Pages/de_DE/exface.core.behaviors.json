@@ -1,7 +1,7 @@
 {
     "id": "0xd5bf319a949e11e79bd9028037ec0200",
     "alias_with_namespace": "exface.core.behaviors",
-    "menu_parent_page_alias": "0xa7760458949e11e7a353028037ec0200",
+    "menu_parent_page_alias": "exface.core.apps",
     "menu_index": "3",
     "menu_visible": true,
     "name": "Behaviors",

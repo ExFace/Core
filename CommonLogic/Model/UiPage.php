@@ -58,6 +58,8 @@ class UiPage implements UiPageInterface
 
     private $menuParentPage = null;
 
+    private $menuParentPageDefaultAlias = null;
+
     private $menuIndex = 0;
 
     private $menuVisible = true;
@@ -632,6 +634,27 @@ class UiPage implements UiPageInterface
     /**
      * 
      * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::getMenuParentPageDefaultAlias()
+     */
+    public function getMenuParentPageDefaultAlias()
+    {
+        return $this->menuParentPageDefaultAlias;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::setMenuParentPageDefaultAlias()
+     */
+    public function setMenuParentPageDefaultAlias($menuParentPageDefaultAlias)
+    {
+        $this->menuParentPageDefaultAlias = $menuParentPageDefaultAlias;
+        return $this;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\UiPageInterface::getMenuIndex()
      */
     public function getMenuIndex()
@@ -901,6 +924,7 @@ class UiPage implements UiPageInterface
         }
         // Copy internal properties, that do not get exported to UXON
         $copy->setAppAlias($this->getAppAlias());
+        $copy->setMenuParentPageDefaultAlias($this->getMenuParentPageDefaultAlias());
         return $copy;
     }
 }

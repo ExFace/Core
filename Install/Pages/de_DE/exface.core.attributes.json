@@ -1,7 +1,7 @@
 {
     "id": "0xfcda43fa949e11e789c6028037ec0200",
     "alias_with_namespace": "exface.core.attributes",
-    "menu_parent_page_alias": "0x8f9e3238949e11e7aa5f028037ec0200",
+    "menu_parent_page_alias": "exface.core.alexa-ui-core",
     "menu_index": "4",
     "menu_visible": true,
     "name": "Attribute",
