@@ -247,7 +247,16 @@ class SqlModelLoader implements ModelLoaderInterface
                     } elseif ($attr) {
                         // At this point, we know, it is a direct relation. This can only happen if the object has a corresponding direct
                         // attribute. This is why the elseif($attr) is there.
-                        $rel = new Relation($exface, $attr->getId(), $attr->getAlias(), $attr->getName(), $object->getId(), $attr->getAlias(), $row['related_object_oid'], $row['related_object_special_key_attribute_oid'], MetaRelationInterface::RELATION_TYPE_FORWARD);
+                        $rel = new Relation(
+                            $exface, 
+                            $attr->getId(), // relation id
+                            $attr->getAlias(), // alias
+                            $attr->getName(), // name for captions
+                            $object->getId(), // main object
+                            $attr->getAlias(), // foreign key in main object
+                            $row['related_object_oid'], // related object
+                            $row['related_object_special_key_attribute_oid'], // related object key attribute (UID will be used if not set)
+                            MetaRelationInterface::RELATION_TYPE_FORWARD); // relation type
                     }
                     
                     if ($rel) {
@@ -281,6 +290,7 @@ class SqlModelLoader implements ModelLoaderInterface
         $attr->setDataAddress($row['data']);
         $attr->setDataAddressProperties(UxonObject::fromJson($row['data_properties']));
         $attr->setFormatter($row['attribute_formatter']);
+        $attr->setRelationFlag($row['related_object_oid'] ? true : false);
         $attr->setDataType($row['data_type_oid']);
         
         $default_editor = $row['default_editor_uxon'];
@@ -309,7 +319,6 @@ class SqlModelLoader implements ModelLoaderInterface
         
         // Defaults
         $attr->setDefaultDisplayOrder($row['default_display_order']);
-        $attr->setRelationFlag($row['related_object_oid'] ? true : false);
         $attr->setDefaultValue($row['default_value']);
         $attr->setFixedValue($row['fixed_value']);
         $attr->setFormula($row['attribute_formula']);
