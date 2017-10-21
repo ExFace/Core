@@ -157,7 +157,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Created on",
             "ALIAS": "CREATED_ON",
             "DATATYPE": "0x33000000000000000000000000000000",
@@ -178,7 +178,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "=NOW('Y-m-d H:i:s')",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2007-01-01 00:00:00",
@@ -194,7 +194,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Modified on",
             "ALIAS": "MODIFIED_ON",
             "DATATYPE": "0x33000000000000000000000000000000",
@@ -215,7 +215,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "=NOW('Y-m-d H:i:s')",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2007-01-01 00:00:00",
@@ -231,7 +231,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Created by",
             "ALIAS": "CREATED_BY_USER",
             "DATATYPE": "0x35000000000000000000000000000000",
@@ -252,7 +252,7 @@
             "DATA_ADDRESS_PROPS": "{\"SQL_DATA_TYPE\":\"binary\"}",
             "DEFAULT_VALUE": "=USER('id')",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2007-01-01 00:00:00",
@@ -268,7 +268,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Modified by",
             "ALIAS": "MODIFIED_BY_USER",
             "DATATYPE": "0x35000000000000000000000000000000",
@@ -289,7 +289,7 @@
             "DATA_ADDRESS_PROPS": "{\"SQL_DATA_TYPE\":\"binary\"}",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "=USER('id')",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2007-01-01 00:00:00",
@@ -305,7 +305,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Data Source",
             "ALIAS": "DATA_SOURCE",
             "DATATYPE": "0x35000000000000000000000000000000",
@@ -326,7 +326,7 @@
             "DATA_ADDRESS_PROPS": "{\"SQL_DATA_TYPE\":\"binary\"}",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2007-01-01 00:00:00",
@@ -342,7 +342,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Attribute",
             "ALIAS": "LABEL",
             "DATATYPE": "0x30000000000000000000000000000000",
@@ -363,7 +363,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2007-01-01 00:00:00",
@@ -379,7 +379,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Alias",
             "ALIAS": "ALIAS",
             "DATATYPE": "0x11e7b02bbffd277c98350205857feb80",
@@ -400,7 +400,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2007-01-01 00:00:00",
@@ -416,7 +416,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Data Type",
             "ALIAS": "DATATYPE",
             "DATATYPE": "0x35000000000000000000000000000000",
@@ -437,7 +437,7 @@
             "DATA_ADDRESS_PROPS": "{\"SQL_DATA_TYPE\":\"binary\"}",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2007-01-01 00:00:00",
@@ -453,7 +453,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Default Editor",
             "ALIAS": "DEFAULT_EDITOR_UXON",
             "DATATYPE": "0x31330000000000000000000000000000",
@@ -474,7 +474,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2007-01-01 00:00:00",
@@ -490,7 +490,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Alias",
             "ALIAS": "ALIAS",
             "DATATYPE": "0x11e7b02bbffd277c98350205857feb80",
@@ -511,7 +511,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2007-01-01 00:00:00",
@@ -527,7 +527,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Data Address",
             "ALIAS": "DATA_ADDRESS",
             "DATATYPE": "0x31310000000000000000000000000000",
@@ -548,7 +548,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2007-01-01 00:00:00",
@@ -564,7 +564,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Object",
             "ALIAS": "OBJECT",
             "DATATYPE": "0x35000000000000000000000000000000",
@@ -585,7 +585,7 @@
             "DATA_ADDRESS_PROPS": "{\"SQL_DATA_TYPE\":\"binary\"}",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2007-01-01 00:00:00",
@@ -601,7 +601,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Formatter",
             "ALIAS": "FORMATTER",
             "DATATYPE": "0x30000000000000000000000000000000",
@@ -622,7 +622,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2007-01-01 00:00:00",
@@ -638,7 +638,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Default Display Position",
             "ALIAS": "DISPLAYORDER",
             "DATATYPE": "0x31000000000000000000000000000000",
@@ -659,7 +659,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "0",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2007-01-01 00:00:00",
@@ -675,7 +675,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Object Label",
             "ALIAS": "LABELFLAG",
             "DATATYPE": "0x37000000000000000000000000000000",
@@ -696,7 +696,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2007-01-01 00:00:00",
@@ -712,7 +712,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Object UID",
             "ALIAS": "UIDFLAG",
             "DATATYPE": "0x37000000000000000000000000000000",
@@ -733,7 +733,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2007-01-01 00:00:00",
@@ -749,7 +749,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Hidden",
             "ALIAS": "HIDDENFLAG",
             "DATATYPE": "0x37000000000000000000000000000000",
@@ -770,7 +770,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2007-01-01 00:00:00",
@@ -786,7 +786,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Editable",
             "ALIAS": "EDITABLEFLAG",
             "DATATYPE": "0x37000000000000000000000000000000",
@@ -807,7 +807,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2007-01-01 00:00:00",
@@ -823,7 +823,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Required",
             "ALIAS": "REQUIREDFLAG",
             "DATATYPE": "0x37000000000000000000000000000000",
@@ -844,7 +844,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2007-01-01 00:00:00",
@@ -860,7 +860,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Relation to",
             "ALIAS": "RELATED_OBJ",
             "DATATYPE": "0x35000000000000000000000000000000",
@@ -881,7 +881,7 @@
             "DATA_ADDRESS_PROPS": "{\"SQL_DATA_TYPE\":\"binary\"}",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2007-01-01 00:00:00",
@@ -897,7 +897,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Custom Connection",
             "ALIAS": "CUSTOM_CONNECTION",
             "DATATYPE": "0x35000000000000000000000000000000",
@@ -918,7 +918,7 @@
             "DATA_ADDRESS_PROPS": "{\"SQL_DATA_TYPE\":\"binary\"}",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2007-01-01 00:00:00",
@@ -934,7 +934,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Connection",
             "ALIAS": "LABEL",
             "DATATYPE": "0x30000000000000000000000000000000",
@@ -955,7 +955,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2007-01-01 00:00:00",
@@ -971,7 +971,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Connector",
             "ALIAS": "CONNECTOR",
             "DATATYPE": "0x35000000000000000000000000000000",
@@ -992,7 +992,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2007-01-01 00:00:00",
@@ -1008,7 +1008,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Default Sorter Position",
             "ALIAS": "SORTERPOS",
             "DATATYPE": "0x31000000000000000000000000000000",
@@ -1029,7 +1029,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2007-01-01 00:00:00",
@@ -1082,7 +1082,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Alias",
             "ALIAS": "ALIAS",
             "DATATYPE": "0x30000000000000000000000000000000",
@@ -1103,7 +1103,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2007-01-01 00:00:00",
@@ -1119,7 +1119,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "App",
             "ALIAS": "NAME",
             "DATATYPE": "0x30000000000000000000000000000000",
@@ -1140,7 +1140,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2007-01-01 00:00:00",
@@ -1156,7 +1156,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "App",
             "ALIAS": "APP",
             "DATATYPE": "0x35000000000000000000000000000000",
@@ -1177,7 +1177,7 @@
             "DATA_ADDRESS_PROPS": "{\"SQL_DATA_TYPE\":\"binary\"}",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2007-01-01 00:00:00",
@@ -1193,7 +1193,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Relation to (attribute)",
             "ALIAS": "RELATED_OBJ_ATTR",
             "DATATYPE": "0x35000000000000000000000000000000",
@@ -1214,7 +1214,7 @@
             "DATA_ADDRESS_PROPS": "{\"SQL_DATA_TYPE\":\"binary\"}",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2007-01-01 00:00:00",
@@ -1267,7 +1267,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Description",
             "ALIAS": "SHORT_DESCRIPTION",
             "DATATYPE": "0x31310000000000000000000000000000",
@@ -1288,7 +1288,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2007-01-01 00:00:00",
@@ -1304,7 +1304,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Description",
             "ALIAS": "SHORT_DESCRIPTION",
             "DATATYPE": "0x31310000000000000000000000000000",
@@ -1325,7 +1325,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2007-01-01 00:00:00",
@@ -1341,7 +1341,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Base Object",
             "ALIAS": "BASE_OBJECT",
             "DATATYPE": "0x35000000000000000000000000000000",
@@ -1362,7 +1362,7 @@
             "DATA_ADDRESS_PROPS": "{\"SQL_DATA_TYPE\":\"binary\"}",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2007-01-01 00:00:00",
@@ -1378,7 +1378,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Extends Object",
             "ALIAS": "PARENT_OBJECT",
             "DATATYPE": "0x35000000000000000000000000000000",
@@ -1399,7 +1399,7 @@
             "DATA_ADDRESS_PROPS": "{\"SQL_DATA_TYPE\":\"binary\"}",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2007-01-01 00:00:00",
@@ -1415,7 +1415,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Configuration",
             "ALIAS": "CONFIG",
             "DATATYPE": "0x31300000000000000000000000000000",
@@ -1436,7 +1436,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2007-01-01 00:00:00",
@@ -1452,7 +1452,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Data Source Settings",
             "ALIAS": "DATA_ADDRESS_PROPS",
             "DATATYPE": "0x31300000000000000000000000000000",
@@ -1473,7 +1473,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2007-01-01 00:00:00",
@@ -1526,7 +1526,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Default Value",
             "ALIAS": "DEFAULT_VALUE",
             "DATATYPE": "0x30000000000000000000000000000000",
@@ -1547,7 +1547,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2007-01-01 00:00:00",
@@ -1563,7 +1563,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Fixed Value",
             "ALIAS": "FIXED_VALUE",
             "DATATYPE": "0x30000000000000000000000000000000",
@@ -1584,7 +1584,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2007-01-01 00:00:00",
@@ -1600,7 +1600,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Read-Only",
             "ALIAS": "READONLY",
             "DATATYPE": "0x37000000000000000000000000000000",
@@ -1621,7 +1621,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2007-01-01 00:00:00",
@@ -1637,7 +1637,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Alias",
             "ALIAS": "ALIAS",
             "DATATYPE": "0x30000000000000000000000000000000",
@@ -1658,7 +1658,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2007-01-01 00:00:00",
@@ -1674,7 +1674,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Filter Context",
             "ALIAS": "FILTER_CONTEXT",
             "DATATYPE": "0x31310000000000000000000000000000",
@@ -1695,7 +1695,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2007-01-01 00:00:00",
@@ -1711,7 +1711,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Default Editor",
             "ALIAS": "DEFAULT_EDITOR_UXON",
             "DATATYPE": "0x31310000000000000000000000000000",
@@ -1732,7 +1732,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2007-01-01 00:00:00",
@@ -1748,7 +1748,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "First Name",
             "ALIAS": "FIRST_NAME",
             "DATATYPE": "0x30000000000000000000000000000000",
@@ -1769,7 +1769,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2007-01-01 00:00:00",
@@ -1785,7 +1785,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Last Name",
             "ALIAS": "LAST_NAME",
             "DATATYPE": "0x30000000000000000000000000000000",
@@ -1806,7 +1806,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2007-01-01 00:00:00",
@@ -1822,7 +1822,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Data Connection",
             "ALIAS": "DATA_CONNECTION",
             "DATATYPE": "0x35000000000000000000000000000000",
@@ -1843,7 +1843,7 @@
             "DATA_ADDRESS_PROPS": "{\"SQL_DATA_TYPE\":\"binary\"}",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2007-01-01 00:00:00",
@@ -1859,7 +1859,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Username",
             "ALIAS": "USERNAME",
             "DATATYPE": "0x30000000000000000000000000000000",
@@ -1880,7 +1880,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2007-01-01 00:00:00",
@@ -1896,7 +1896,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Custom Data Type",
             "ALIAS": "CUSTOM_DATA_TYPE",
             "DATATYPE": "0x31330000000000000000000000000000",
@@ -1917,7 +1917,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2007-01-01 00:00:00",
@@ -1933,7 +1933,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "UID",
             "ALIAS": "UID",
             "DATATYPE": "0x31000000000000000000000000000000",
@@ -1954,7 +1954,7 @@
             "DATA_ADDRESS_PROPS": "{\"SQL_DATA_TYPE\":\"binary\",\"SQL_INSERT\":\"IF([#~value#]!='', [#~value#], UNHEX(CONCAT(SUBSTR(@uid:=uuid(), 15, 4),SUBSTR(@uid, 10, 4),SUBSTR(@uid, 1, 8),SUBSTR(@uid, 20, 4),SUBSTR(@uid, 25))))\"}",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2007-01-01 00:00:00",
@@ -1970,7 +1970,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Object",
             "ALIAS": "LABEL",
             "DATATYPE": "0x30000000000000000000000000000000",
@@ -1991,7 +1991,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2007-01-01 00:00:00",
@@ -2007,7 +2007,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Alias",
             "ALIAS": "ALIAS",
             "DATATYPE": "0x11e7b02bbffd277c98350205857feb80",
@@ -2028,7 +2028,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2007-01-01 00:00:00",
@@ -2044,7 +2044,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Data Address",
             "ALIAS": "DATA_ADDRESS",
             "DATATYPE": "0x31310000000000000000000000000000",
@@ -2065,7 +2065,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2007-01-01 00:00:00",
@@ -2081,7 +2081,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Credentials",
             "ALIAS": "USER_CREDENTIALS",
             "DATATYPE": "0x35000000000000000000000000000000",
@@ -2102,7 +2102,7 @@
             "DATA_ADDRESS_PROPS": "{\"SQL_DATA_TYPE\":\"binary\"}",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2007-01-01 00:00:00",
@@ -2118,7 +2118,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "User",
             "ALIAS": "USER",
             "DATATYPE": "0x35000000000000000000000000000000",
@@ -2139,7 +2139,7 @@
             "DATA_ADDRESS_PROPS": "{\"SQL_DATA_TYPE\":\"binary\"}",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2007-01-01 00:00:00",
@@ -2155,7 +2155,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Data Connector Configuration",
             "ALIAS": "DATA_CONNECTOR_CONFIG",
             "DATATYPE": "0x31300000000000000000000000000000",
@@ -2176,7 +2176,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2007-01-01 00:00:00",
@@ -2192,7 +2192,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Credential Set",
             "ALIAS": "NAME",
             "DATATYPE": "0x30000000000000000000000000000000",
@@ -2213,7 +2213,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2007-01-01 00:00:00",
@@ -2229,7 +2229,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Name",
             "ALIAS": "LABEL",
             "DATATYPE": "0x30000000000000000000000000000000",
@@ -2250,7 +2250,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2007-01-01 00:00:00",
@@ -2266,7 +2266,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Alias",
             "ALIAS": "ALIAS",
             "DATATYPE": "0x30000000000000000000000000000000",
@@ -2287,7 +2287,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2007-01-01 00:00:00",
@@ -2303,7 +2303,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "0",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Query Builder",
             "ALIAS": "QUERYBUILDER",
             "DATATYPE": "0x35000000000000000000000000000000",
@@ -2324,7 +2324,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2016-03-30 00:58:00",
@@ -2340,7 +2340,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "App",
             "ALIAS": "APP",
             "DATATYPE": "0x35000000000000000000000000000000",
@@ -2361,7 +2361,7 @@
             "DATA_ADDRESS_PROPS": "{\"SQL_DATA_TYPE\":\"binary\"}",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2016-03-30 01:00:39",
@@ -2377,7 +2377,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "App",
             "ALIAS": "APP",
             "DATATYPE": "0x35000000000000000000000000000000",
@@ -2398,7 +2398,7 @@
             "DATA_ADDRESS_PROPS": "{\"SQL_DATA_TYPE\":\"binary\"}",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2016-04-25 13:20:02",
@@ -2414,7 +2414,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Behavior prototype",
             "ALIAS": "BEHAVIOR",
             "DATATYPE": "0x35000000000000000000000000000000",
@@ -2435,7 +2435,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2016-04-25 13:20:02",
@@ -2488,7 +2488,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Object",
             "ALIAS": "OBJECT",
             "DATATYPE": "0x35000000000000000000000000000000",
@@ -2509,7 +2509,7 @@
             "DATA_ADDRESS_PROPS": "{\"SQL_DATA_TYPE\":\"binary\"}",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2016-07-21 10:33:13",
@@ -2525,7 +2525,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Package",
             "ALIAS": "PACKAGE",
             "DATATYPE": "0x35000000000000000000000000000000",
@@ -2546,7 +2546,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2016-11-21 10:56:31",
@@ -2562,7 +2562,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Name",
             "ALIAS": "NAME",
             "DATATYPE": "0x30000000000000000000000000000000",
@@ -2583,7 +2583,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2016-11-21 11:00:23",
@@ -2599,7 +2599,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Absolute path",
             "ALIAS": "PATHNAME_ABSOLUTE",
             "DATATYPE": "0x30000000000000000000000000000000",
@@ -2620,7 +2620,7 @@
             "DATA_ADDRESS_PROPS": "{\"filter_locally\":\"1\"}",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2016-11-21 11:09:00",
@@ -2636,7 +2636,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Relative path with filename",
             "ALIAS": "PATHNAME_RELATIVE",
             "DATATYPE": "0x30000000000000000000000000000000",
@@ -2657,7 +2657,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2016-11-21 11:11:28",
@@ -2673,7 +2673,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Relative path without filename",
             "ALIAS": "PATH_RELATIVE",
             "DATATYPE": "0x30000000000000000000000000000000",
@@ -2694,7 +2694,7 @@
             "DATA_ADDRESS_PROPS": "{\"filter_locally\":\"1\"}",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2016-11-21 16:28:13",
@@ -2710,7 +2710,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Filename",
             "ALIAS": "FILENAME",
             "DATATYPE": "0x30000000000000000000000000000000",
@@ -2731,7 +2731,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2016-11-21 16:29:34",
@@ -2747,7 +2747,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "File Extension",
             "ALIAS": "EXTENSION",
             "DATATYPE": "0x30000000000000000000000000000000",
@@ -2768,7 +2768,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2016-12-05 13:39:20",
@@ -2784,7 +2784,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Property",
             "ALIAS": "PROPERTY",
             "DATATYPE": "0x30000000000000000000000000000000",
@@ -2805,7 +2805,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2016-12-05 14:43:18",
@@ -2821,7 +2821,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Type",
             "ALIAS": "TYPE",
             "DATATYPE": "0x30000000000000000000000000000000",
@@ -2842,7 +2842,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2016-12-05 14:43:48",
@@ -2858,7 +2858,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Description",
             "ALIAS": "FULL_DESCRIPTION",
             "DATATYPE": "0x31310000000000000000000000000000",
@@ -2879,7 +2879,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2016-12-05 15:11:34",
@@ -2895,7 +2895,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Title",
             "ALIAS": "TITLE",
             "DATATYPE": "0x30000000000000000000000000000000",
@@ -2916,7 +2916,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2016-12-05 15:31:16",
@@ -2932,7 +2932,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Description",
             "ALIAS": "DESCRIPTION",
             "DATATYPE": "0x31310000000000000000000000000000",
@@ -2953,7 +2953,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2016-12-05 17:13:36",
@@ -2969,7 +2969,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "PHP class",
             "ALIAS": "CLASS",
             "DATATYPE": "0x30000000000000000000000000000000",
@@ -2990,7 +2990,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2016-12-06 13:29:39",
@@ -3006,7 +3006,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Filename",
             "ALIAS": "FILENAME",
             "DATATYPE": "0x30000000000000000000000000000000",
@@ -3027,7 +3027,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2016-12-06 13:36:53",
@@ -3043,7 +3043,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "File",
             "ALIAS": "FILE",
             "DATATYPE": "0x35000000000000000000000000000000",
@@ -3064,7 +3064,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2016-12-06 15:27:47",
@@ -3080,7 +3080,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Size",
             "ALIAS": "SIZE",
             "DATATYPE": "0x31000000000000000000000000000000",
@@ -3101,7 +3101,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2016-12-09 06:00:50",
@@ -3117,7 +3117,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "UID",
             "ALIAS": "UID",
             "DATATYPE": "0x30000000000000000000000000000000",
@@ -3138,7 +3138,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2016-12-09 06:05:18",
@@ -3154,7 +3154,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Structural element name",
             "ALIAS": "FQSEN",
             "DATATYPE": "0x30000000000000000000000000000000",
@@ -3175,7 +3175,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2016-12-14 14:22:13",
@@ -3191,7 +3191,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Sortable",
             "ALIAS": "SORTABLEFLAG",
             "DATATYPE": "0x37000000000000000000000000000000",
@@ -3212,7 +3212,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "'1'",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2016-12-14 14:22:13",
@@ -3228,7 +3228,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Filterable",
             "ALIAS": "FILTERABLEFLAG",
             "DATATYPE": "0x37000000000000000000000000000000",
@@ -3249,7 +3249,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "'1'",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2016-12-14 14:22:13",
@@ -3265,7 +3265,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Aggregatable",
             "ALIAS": "AGGREGATABLEFLAG",
             "DATATYPE": "0x37000000000000000000000000000000",
@@ -3286,7 +3286,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "'1'",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2016-12-14 14:22:13",
@@ -3339,7 +3339,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "App",
             "ALIAS": "APP",
             "DATATYPE": "0x35000000000000000000000000000000",
@@ -3360,7 +3360,7 @@
             "DATA_ADDRESS_PROPS": "{\"SQL_DATA_TYPE\":\"binary\"}",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2016-12-16 11:52:46",
@@ -3376,7 +3376,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Error Code",
             "ALIAS": "ERROR_CODE",
             "DATATYPE": "0x30000000000000000000000000000000",
@@ -3397,7 +3397,7 @@
             "DATA_ADDRESS_PROPS": "{\"SQL_INSERT\":\"IF([#~value#]!='', [#~value#], CONV(ROUND(UNIX_TIMESTAMP(CURTIME(4)) * 10),10,36))\"}",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2016-12-16 11:52:46",
@@ -3413,7 +3413,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Error Text",
             "ALIAS": "ERROR_TEXT",
             "DATATYPE": "0x30000000000000000000000000000000",
@@ -3434,7 +3434,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2017-01-24 09:32:21",
@@ -3450,7 +3450,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Object",
             "ALIAS": "OBJECT",
             "DATATYPE": "0x35000000000000000000000000000000",
@@ -3471,7 +3471,7 @@
             "DATA_ADDRESS_PROPS": "{\"SQL_DATA_TYPE\":\"binary\"}",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2017-01-24 09:32:21",
@@ -3487,7 +3487,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Prototype Action",
             "ALIAS": "ACTION_PROTOTYPE",
             "DATATYPE": "0x35000000000000000000000000000000",
@@ -3508,7 +3508,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2017-01-24 09:32:21",
@@ -3524,7 +3524,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Alias",
             "ALIAS": "ALIAS",
             "DATATYPE": "0x30000000000000000000000000000000",
@@ -3545,7 +3545,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2017-01-24 09:32:21",
@@ -3561,7 +3561,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Name",
             "ALIAS": "NAME",
             "DATATYPE": "0x30000000000000000000000000000000",
@@ -3582,7 +3582,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2017-01-24 09:32:21",
@@ -3598,7 +3598,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Description",
             "ALIAS": "SHORT_DESCRIPTION",
             "DATATYPE": "0x31310000000000000000000000000000",
@@ -3619,7 +3619,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2017-01-24 09:32:21",
@@ -3672,7 +3672,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Action App",
             "ALIAS": "APP",
             "DATATYPE": "0x35000000000000000000000000000000",
@@ -3693,7 +3693,7 @@
             "DATA_ADDRESS_PROPS": "{\"SQL_DATA_TYPE\":\"binary\"}",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2017-01-24 11:27:52",
@@ -3709,7 +3709,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Use in Object Basket",
             "ALIAS": "USE_IN_OBJECT_BASKET_FLAG",
             "DATATYPE": "0x37000000000000000000000000000000",
@@ -3730,7 +3730,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2017-02-09 16:44:06",
@@ -3746,7 +3746,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Class annotation",
             "ALIAS": "CLASS_ANNOTATION",
             "DATATYPE": "0x35000000000000000000000000000000",
@@ -3767,7 +3767,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2017-02-17 15:20:37",
@@ -3820,7 +3820,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Default Connection",
             "ALIAS": "DEFAULT_CONNECTION",
             "DATATYPE": "0x35000000000000000000000000000000",
@@ -3841,7 +3841,7 @@
             "DATA_ADDRESS_PROPS": "{\"SQL_DATA_TYPE\":\"binary\"}",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2017-04-19 13:10:01",
@@ -3857,7 +3857,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "0",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Connection",
             "ALIAS": "CONNECTION",
             "DATATYPE": "0x35000000000000000000000000000000",
@@ -3878,7 +3878,7 @@
             "DATA_ADDRESS_PROPS": "{\"SQL_DATA_TYPE\":\"binary\"}",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2017-04-27 11:53:59",
@@ -3894,7 +3894,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Default Query Builder",
             "ALIAS": "DEFAULT_QUERY_BUILDER",
             "DATATYPE": "0x35000000000000000000000000000000",
@@ -3915,7 +3915,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2017-04-27 11:59:49",
@@ -3931,7 +3931,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Custom Query Builder",
             "ALIAS": "CUSTOM_QUERY_BUILDER",
             "DATATYPE": "0x35000000000000000000000000000000",
@@ -3952,7 +3952,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2017-04-28 10:11:31",
@@ -3968,7 +3968,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Id",
             "ALIAS": "id",
             "DATATYPE": "0x30000000000000000000000000000000",
@@ -3989,7 +3989,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2017-04-28 10:11:48",
@@ -4005,7 +4005,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Message",
             "ALIAS": "message",
             "DATATYPE": "0x30000000000000000000000000000000",
@@ -4026,7 +4026,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2017-05-04 10:55:03",
@@ -4042,7 +4042,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Contents",
             "ALIAS": "CONTENTS",
             "DATATYPE": "0x30000000000000000000000000000000",
@@ -4063,7 +4063,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2017-05-05 11:08:23",
@@ -4079,7 +4079,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Context",
             "ALIAS": "context",
             "DATATYPE": "0x30000000000000000000000000000000",
@@ -4100,7 +4100,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2017-05-05 11:08:48",
@@ -4153,7 +4153,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Level",
             "ALIAS": "levelname",
             "DATATYPE": "0x30000000000000000000000000000000",
@@ -4174,7 +4174,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2017-05-05 11:09:26",
@@ -4190,7 +4190,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Channel",
             "ALIAS": "channel",
             "DATATYPE": "0x30000000000000000000000000000000",
@@ -4211,7 +4211,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2017-05-05 11:09:53",
@@ -4227,7 +4227,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Timestamp",
             "ALIAS": "timestamp",
             "DATATYPE": "0x33000000000000000000000000000000",
@@ -4248,7 +4248,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2017-05-10 15:07:24",
@@ -4264,7 +4264,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Logfile",
             "ALIAS": "logfile",
             "DATATYPE": "0x35000000000000000000000000000000",
@@ -4285,7 +4285,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2017-05-16 14:03:29",
@@ -4301,7 +4301,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Title",
             "ALIAS": "TITLE",
             "DATATYPE": "0x30000000000000000000000000000000",
@@ -4322,7 +4322,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2017-05-16 14:03:54",
@@ -4338,7 +4338,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Description",
             "ALIAS": "DESCRIPTION",
             "DATATYPE": "0x31310000000000000000000000000000",
@@ -4359,7 +4359,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2017-05-17 14:21:02",
@@ -4375,7 +4375,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "LogDetailsFile",
             "ALIAS": "logdetailsfile",
             "DATATYPE": "0x35000000000000000000000000000000",
@@ -4396,7 +4396,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2017-05-31 13:42:06",
@@ -4412,7 +4412,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "RequestId",
             "ALIAS": "requestId",
             "DATATYPE": "0x30000000000000000000000000000000",
@@ -4433,7 +4433,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2017-05-31 14:25:39",
@@ -4449,7 +4449,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "UserName",
             "ALIAS": "userName",
             "DATATYPE": "0x30000000000000000000000000000000",
@@ -4470,7 +4470,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2017-06-06 15:07:01",
@@ -4486,7 +4486,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "ActionAlias",
             "ALIAS": "actionAlias",
             "DATATYPE": "0x30000000000000000000000000000000",
@@ -4507,7 +4507,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2017-06-21 10:57:42",
@@ -4523,7 +4523,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Value List Delimiter",
             "ALIAS": "VALUE_LIST_DELIMITER",
             "DATATYPE": "0x30000000000000000000000000000000",
@@ -4544,7 +4544,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "','",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2017-06-29 15:30:31",
@@ -4560,7 +4560,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Id",
             "ALIAS": "ID",
             "DATATYPE": "0x30000000000000000000000000000000",
@@ -4581,7 +4581,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2017-06-29 15:30:47",
@@ -4597,7 +4597,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Title",
             "ALIAS": "TITLE",
             "DATATYPE": "0x30000000000000000000000000000000",
@@ -4618,7 +4618,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2017-09-11 09:52:49",
@@ -4634,7 +4634,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "App",
             "ALIAS": "APP",
             "DATATYPE": "0x35000000000000000000000000000000",
@@ -4655,7 +4655,7 @@
             "DATA_ADDRESS_PROPS": "{\"SQL_DATA_TYPE\":\"binary\"}",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2017-09-11 09:52:49",
@@ -4671,7 +4671,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Data Type",
             "ALIAS": "NAME",
             "DATATYPE": "0x30000000000000000000000000000000",
@@ -4692,7 +4692,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2017-09-11 09:52:49",
@@ -4708,7 +4708,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Prototype",
             "ALIAS": "PROTOTYPE",
             "DATATYPE": "0x35000000000000000000000000000000",
@@ -4729,7 +4729,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2017-09-27 11:14:18",
@@ -4745,7 +4745,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Locale",
             "ALIAS": "LOCALE",
             "DATATYPE": "0x30000000000000000000000000000000",
@@ -4766,7 +4766,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2017-10-09 14:21:56",
@@ -4782,7 +4782,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Behavior app",
             "ALIAS": "APP",
             "DATATYPE": "0x35000000000000000000000000000000",
@@ -4803,7 +4803,7 @@
             "DATA_ADDRESS_PROPS": "{\"SQL_DATA_TYPE\":\"binary\"}",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2017-10-11 09:55:01",
@@ -4819,7 +4819,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Email",
             "ALIAS": "EMAIL",
             "DATATYPE": "0x30000000000000000000000000000000",
@@ -4840,7 +4840,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2017-10-12 07:32:22",
@@ -4856,7 +4856,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Readable",
             "ALIAS": "READABLEFLAG",
             "DATATYPE": "0x37000000000000000000000000000000",
@@ -4877,7 +4877,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "'1'",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2017-10-12 07:32:22",
@@ -4893,7 +4893,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Writable",
             "ALIAS": "WRITABLEFLAG",
             "DATATYPE": "0x37000000000000000000000000000000",
@@ -4914,7 +4914,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "'1'",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2017-10-12 07:32:22",
@@ -4930,7 +4930,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "System",
             "ALIAS": "SYSTEMFLAG",
             "DATATYPE": "0x37000000000000000000000000000000",
@@ -4951,7 +4951,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2017-10-12 12:08:27",
@@ -4967,7 +4967,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Readable",
             "ALIAS": "READABLE_FLAG",
             "DATATYPE": "0x37000000000000000000000000000000",
@@ -4988,7 +4988,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "'1'",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2017-10-12 12:08:27",
@@ -5004,7 +5004,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Writable",
             "ALIAS": "WRITABLE_FLAG",
             "DATATYPE": "0x37000000000000000000000000000000",
@@ -5025,7 +5025,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "'1'",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2017-10-12 12:15:47",
@@ -5041,7 +5041,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Readable",
             "ALIAS": "READABLE_FLAG",
             "DATATYPE": "0x37000000000000000000000000000000",
@@ -5062,7 +5062,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "'1'",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2017-10-12 12:15:47",
@@ -5078,7 +5078,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Writable",
             "ALIAS": "WRITABLE_FLAG",
             "DATATYPE": "0x37000000000000000000000000000000",
@@ -5099,7 +5099,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "'1'",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2017-10-13 14:19:12",
@@ -5115,7 +5115,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Configuration",
             "ALIAS": "CONFIG_UXON",
             "DATATYPE": "0x31330000000000000000000000000000",
@@ -5136,7 +5136,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2017-10-13 14:19:12",
@@ -5152,7 +5152,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Validation Error Code",
             "ALIAS": "VALIDATION_ERROR",
             "DATATYPE": "0x35000000000000000000000000000000",
@@ -5173,7 +5173,7 @@
             "DATA_ADDRESS_PROPS": "{\"SQL_DATA_TYPE\":\"binary\"}",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2017-10-16 05:16:06",
@@ -5189,7 +5189,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "0",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Error",
             "ALIAS": "LABEL",
             "DATATYPE": "0x30000000000000000000000000000000",
@@ -5210,7 +5210,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": ""
         },
         {
             "CREATED_ON": "2017-10-18 11:14:54",
@@ -5226,7 +5226,7 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Default Editor",
             "ALIAS": "DEFAULT_EDITOR_UXON",
             "DATATYPE": "0x31330000000000000000000000000000",
