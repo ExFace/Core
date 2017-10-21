@@ -17,7 +17,7 @@ use exface\Core\CommonLogic\DataTypes\AbstractDataType;
  */
 class NumberDataType extends AbstractDataType
 {
-    private $precisionMin = 0;
+    private $precisionMin = null;
     
     private $precisionMax = null;
     
@@ -81,7 +81,7 @@ class NumberDataType extends AbstractDataType
         return SortingDirectionsDataType::DESC($this->getWorkbench());
     }
     /**
-     * @return integer
+     * @return integer|null
      */
     public function getPrecisionMin()
     {
@@ -110,7 +110,7 @@ class NumberDataType extends AbstractDataType
     }
 
     /**
-     * @return integer
+     * @return integer|null
      */
     public function getPrecisionMax()
     {
