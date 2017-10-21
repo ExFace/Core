@@ -72,6 +72,8 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     private $style = null;
 
     private $data_column_name = null;
+    
+    private $disableFormatters = false;
 
     public function hasFooter()
     {
@@ -512,5 +514,30 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
         $this->default_sorting_direction = $asc_or_desc;
         return $this;
     }
+    
+    /**
+     * Returns TRUE if formatters are disabled for this column and FALSE otherwise.
+     * @return boolean
+     */
+    public function getDisableFormatters()
+    {
+        return $this->disableFormatters;
+    }
+
+    /**
+     * Set to TRUE to disable all formatters for this column (including data type specific ones!) - FALSE by default.
+     * 
+     * @uxon-property disable_formatters
+     * @uxon-type boolean
+     * 
+     * @param boolean $disableFormatters
+     * @return DataColumn
+     */
+    public function setDisableFormatters($disableFormatters)
+    {
+        $this->disableFormatters = $disableFormatters;
+        return $this;
+    }
+
 }
 ?>
