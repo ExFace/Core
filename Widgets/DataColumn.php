@@ -70,6 +70,8 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     private $size = null;
 
     private $style = null;
+    
+    private $color = null;
 
     private $data_column_name = null;
     
@@ -538,6 +540,30 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
         $this->disableFormatters = $disableFormatters;
         return $this;
     }
+    /**
+     * 
+     * @return string $color
+     */
+    public function getColor()
+    {
+        return $this->color;
+    }
+
+    /**
+     * Sets the color to use for this data column (a CSS color code or anything else supported by your template).
+     * 
+     * @uxon-property color
+     * @uxon-type string
+     * 
+     * @param string $color
+     * @return DataColumn
+     */
+    public function setColor($color)
+    {
+        $this->color = $color;
+        return $this;
+    }
+
 
 }
 ?>
