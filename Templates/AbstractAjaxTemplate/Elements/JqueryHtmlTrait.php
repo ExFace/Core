@@ -22,7 +22,12 @@ trait JqueryHtmlTrait {
             $output .= '<label for="' . $this->getId() . '">' . $this->getWidget()->getCaption() . '</label>';
         }
         
-        $output .= '<div id="' . $this->getId() . '">' . $this->getWidget()->getHtml() . '</div>';
+        $style = '';
+        if ($this->getWidget()->getMargins()) {
+            $style .= 'margin: 10px;';
+        }
+        
+        $output .= '<div id="' . $this->getId() . '" style="' . $style . '">' . $this->getWidget()->getHtml() . '</div>';
         return $this->buildHtmlWrapper($output);
     }
     
