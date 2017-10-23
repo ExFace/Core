@@ -20,7 +20,7 @@ class UiManager implements UiManagerInterface
 
     private $base_template = null;
 
-    private $page_alias_current = null;
+    private $page_current = null;
 
     function __construct(\exface\Core\CommonLogic\Workbench $exface)
     {
@@ -79,24 +79,6 @@ class UiManager implements UiManagerInterface
         return $template->drawHeaders($widget);
     }
 
-    /**
-     * Returns an ExFace widget from a given resource by id
-     * Caching is used to store widgets from already loaded pages
-     * 
-     * @param string $widget_id
-     * @param string $page_alias
-     * @return WidgetInterface
-     */
-    function getWidget($widget_id, $page_alias)
-    {
-        $page = $this->getPage($page_alias);
-        if (! is_null($widget_id)) {
-            return $page->getWidget($widget_id);
-        } else {
-            return $page->getWidgetRoot();
-        }
-    }
-
     public function getWorkbench()
     {
         return $this->exface;
@@ -113,14 +95,28 @@ class UiManager implements UiManagerInterface
     {
         return UiPageFactory::createFromCmsPage($this, $page_alias);
     }
-    
+
     /**
      * 
-     * @return \exface\Core\Interfaces\Model\UiPageInterface
+     * @return UiPageInterface
      */
     public function getPageCurrent()
     {
-        return $this->getPage($this->getPageAliasCurrent());
+        if (is_null($this->page_current)) {
+            $this->page_current = UiPageFactory::createFromCmsPageCurrent($this);
+        }
+        return $this->page_current;
+    }
+
+    /**
+     * 
+     * @param UiPageInterface $pageCurrent
+     * @return UiManager
+     */
+    public function setPageCurrent(UiPageInterface $pageCurrent)
+    {
+        $this->page_current = $pageCurrent;
+        return $this;
     }
 
     public function getTemplateFromRequest()
@@ -135,20 +131,6 @@ class UiManager implements UiManagerInterface
     public function setBaseTemplateAlias($qualified_alias)
     {
         $this->base_template = $qualified_alias;
-        return $this;
-    }
-
-    public function getPageAliasCurrent()
-    {
-        if (is_null($this->page_alias_current)) {
-            $this->page_alias_current = $this->getWorkbench()->getCMS()->getCurrentPageAlias();
-        }
-        return $this->page_alias_current;
-    }
-
-    public function setPageAliasCurrent($value)
-    {
-        $this->page_alias_current = $value;
         return $this;
     }
 }

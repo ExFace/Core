@@ -150,16 +150,6 @@ abstract class AbstractJqueryElement implements ExfaceClassInterface
     }
 
     /**
-     * Returns the page alias.
-     * 
-     * @return string
-     */
-    public function getPageAlias()
-    {
-        return $this->getWidget()->getPage()->getAliasWithNamespace();
-    }
-
-    /**
      * Returns the maximum number of characters in one line for hint messages in this template
      *
      * @return string

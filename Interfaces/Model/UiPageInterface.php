@@ -128,21 +128,6 @@ interface UiPageInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
     public function getApp();
 
     /**
-     * Returns the app-alias, this page belongs to.
-     * 
-     * @return null|string
-     */
-    public function getAppAlias();
-
-    /**
-     * Sets the app-alias, this page belongs to.
-     * 
-     * @param string $appAlias
-     * @return UiPageInterface
-     */
-    public function setAppAlias($appAlias);
-
-    /**
      * Returns FALSE if the page should not be updated automatically when its
      * app is updated and TRUE otherwise (default).
      * 
@@ -156,7 +141,7 @@ interface UiPageInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
      * @param boolean $true_or_false
      * @return UiPageInterface
      */
-    public function setUpdateable(bool $true_or_false);
+    public function setUpdateable($true_or_false);
 
     /**
      * Returns the UID or alias of the parent page.
@@ -179,14 +164,6 @@ interface UiPageInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
      * @return UiPageInterface|null
      */
     public function getMenuParentPage();
-
-    /**
-     * Sets the given page as parent for the current one.
-     * 
-     * @param UiPageInterface $page
-     * @return UiPageInterface
-     */
-    public function setMenuParentPage(UiPageInterface $page);
 
     /**
      * Returns the alias of the default menu parent page.
@@ -238,7 +215,7 @@ interface UiPageInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
      * @param boolean $menuVisible
      * @return UiPageInterface
      */
-    public function setMenuVisible(bool $menuVisible);
+    public function setMenuVisible($menuVisible);
 
     /**
      * Returns the unique id of the page.
@@ -345,6 +322,26 @@ interface UiPageInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
      * @return UiPageInterface
      */
     public function copy($page_alias = null, $page_uid = null);
+    
+    /**
+     * Compares two pages by their UIDs and returns true if they are equal.
+     * 
+     * If the passed page replaces this page this function also returns true.
+     * 
+     * @param UiPageInterface $page
+     * @return boolean
+     */
+    public function is(UiPageInterface $page);
+    
+    /**
+     * Compares two pages by their UIDs and returns true if they are equal.
+     * 
+     * If the passed page replaces this page this function returns false.
+     * 
+     * @param UiPageInterface $page
+     * @return boolean
+     */
+    public function isExactly(UiPageInterface $page);
 }
 
 ?>

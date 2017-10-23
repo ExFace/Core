@@ -211,25 +211,23 @@ abstract class AbstractAjaxTemplate extends AbstractTemplate
      * hand, but know it's ID and the resource, where it resides.
      *
      * @param string $widget_id            
-     * @param string $page_alias            
+     * @param UiPageInterface $page            
      * @return AbstractJqueryElement
      */
-    public function getElementByWidgetId($widget_id, $page_alias)
+    public function getElementByWidgetId($widget_id, UiPageInterface $page)
     {
-        if ($elem = $this->elements[$page_alias][$widget_id]) {
+        if ($elem = $this->elements[$page->getAliasWithNamespace()][$widget_id]) {
             return $elem;
+        } elseif ($widget = $page->getWidget($widget_id)) {
+            return $this->getElement($widget);
         } else {
-            if ($widget = $this->getWorkbench()->ui()->getWidget($widget_id, $page_alias)) {
-                return $this->getElement($widget);
-            } else {
-                return false;
-            }
+            return false;
         }
     }
 
     public function getElementFromWidgetLink(WidgetLink $link)
     {
-        return $this->getElementByWidgetId($link->getWidgetId(), $link->getPage()->getAliasWithNamespace());
+        return $this->getElementByWidgetId($link->getWidgetId(), $link->getPage());
     }
 
     public function createLinkInternal(UiPageInterface $page, $url_params = '')
@@ -402,7 +400,7 @@ abstract class AbstractAjaxTemplate extends AbstractTemplate
         
         if ($called_in_resource_alias) {
             try {
-                $this->getWorkbench()->ui()->setPageAliasCurrent($called_in_resource_alias);
+                $this->getWorkbench()->ui()->setPageCurrent($this->getWorkbench()->ui()->getPage($called_in_resource_alias));
                 $this->getWorkbench()->ui()->getPageCurrent();
             } catch (\Throwable $e) {
                 if (! $disable_error_handling) {
@@ -427,7 +425,7 @@ abstract class AbstractAjaxTemplate extends AbstractTemplate
         try {
             if ($called_in_resource_alias) {
                 if ($called_by_widget_id) {
-                    $widget = $this->getWorkbench()->ui()->getWidget($called_by_widget_id, $called_in_resource_alias);
+                    $widget = $this->getWorkbench()->ui()->getPage($called_in_resource_alias)->getWidget($called_by_widget_id);
                 } else {
                     $widget = $this->getWorkbench()->ui()->getPage($called_in_resource_alias)->getWidgetRoot();
                 }

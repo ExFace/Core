@@ -81,12 +81,12 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
             if ($this->getWidgetUxon()) {
                 $this->widget = WidgetFactory::createFromUxon($this->getCalledOnUiPage(), $this->getWidgetUxon(), $this->getCalledByWidget(), $this->getDefaultWidgetType());
             } elseif ($this->widget_id && ! $this->page_alias) {
-                $this->widget = $this->getApp()->getWorkbench()->ui()->getWidget($this->widget_id, $this->getCalledOnUiPage()->getAliasWithNamespace());
+                $this->widget = $this->getCalledOnUiPage()->getWidget($this->widget_id);
             } elseif ($this->page_alias && ! $this->widget_id) {
                 // TODO this causes problems with simple links to other pages, as the action attempts to load them here...
                 // $this->widget = $this->getApp()->getWorkbench()->ui()->getPage($this->page_alias)->getWidgetRoot();
             } elseif ($this->page_alias && $this->widget_id) {
-                $this->widget = $this->getApp()->getWorkbench()->ui()->getWidget($this->widget_id, $this->page_alias);
+                $this->widget = $this->getPage()->getWidget($this->widget_id);
             }
         }
         return $this->widget;
@@ -434,14 +434,18 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
     }
 
     /**
+     * The alias of the page to get the widget from.
      * 
-     * @uxon-property page_alias
-     * @uxon-type string
+     * Widget links accept the internal UIDs, the namespaced alias as well as 
+     * the CMS-page ids here because the users do not really know the difference
+     * and will attempt to specify the id, they see first. Since most CMS show
+     * their internal ids, that typically are not UUIDs, we just allow both ids
+     * here.
      * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Actions\iReferenceWidget::setPageAlias()
+     * @param string $value
+     * @return iReferenceWidget
      */
-    public function setPageAlias($value)
+    protected function setPageAlias($value)
     {
         $this->page_alias = $value;
         return $this;

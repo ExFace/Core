@@ -155,7 +155,7 @@ trait JqueryButtonTrait {
 								url: '" . $this->getAjaxUrl() . "',
 								data: {	
 									action: '" . $widget->getActionAlias() . "',
-									resource: '" . $this->getPageAlias() . "',
+									resource: '" . $widget->getPage()->getAliasWithNamespace() . "',
 									element: '" . $widget->getId() . "',
 									object: '" . $widget->getMetaObject()->getId() . "',
 									data: requestData
@@ -207,7 +207,7 @@ trait JqueryButtonTrait {
         $output = '';
         $prefill_param = '';
         $filters_param = '';
-        if (strcasecmp($action->getPage()->getAliasWithNamespace(), $this->getPageAlias()) != 0) {
+        if (! $action->getPage()->is($widget->getPage())) {
             if ($action->getPrefillWithPrefillData()){
                 $output = <<<JS
     				{$this->buildJsRequestDataCollector($action, $input_element)}
@@ -279,7 +279,7 @@ JS;
     {
         $widget = $this->getWidget();
         if ($action->isUndoable()) {
-            $undo_url = $this->getAjaxUrl() . "&action=exface.Core.UndoAction&resource=" . $this->getPageAlias() . "&element=" . $widget->getId();
+            $undo_url = $this->getAjaxUrl() . "&action=exface.Core.UndoAction&resource=" . $widget->getPage()->getAliasWithNamespace() . "&element=" . $widget->getId();
         }
         return $undo_url;
     }

@@ -30,11 +30,11 @@ interface CmsConnectorInterface extends ExfaceClassInterface
     /**
      * Returns the id of the current page in the CMS
      * 
-     * @deprecated use getCurrentPageAlias() instead
+     * @deprecated use loadPageCurrent()->getAliasWithNamespace() instead
      *
      * @return string
      */
-    public function getCurrentPageId();
+    public function getPageCurrentId();
 
     /**
      * Returns the title of the CMS page with the given id.
@@ -45,13 +45,6 @@ interface CmsConnectorInterface extends ExfaceClassInterface
      * @param string $resource_id            
      */
     public function getPageTitle($resource_id = null);
-
-    /**
-     * Returns the alias of the currentpage in the CMS.
-     * 
-     * @return string
-     */
-    public function getCurrentPageAlias();
 
     /**
      * Returns an href-link generated from document id an URL parameters.
@@ -249,6 +242,13 @@ interface CmsConnectorInterface extends ExfaceClassInterface
      * @return UiPageInterface
      */
     public function loadPageByIdCms($page_id_cms, $ignore_replacements = false);
+
+    /**
+     * Returns the current page in the CMS.
+     *
+     * @return UiPageInterface
+     */
+    public function loadPageCurrent();
 
     /**
      * Returns the page UID for the given UiPage or UID or alias or CMS ID.

@@ -21,21 +21,7 @@ interface iReferenceWidget
      * @return UiPageInterface
      */
     public function getPage();
-    
-    /**
-     * The alias of the page to get the widget from.
-     * 
-     * Widget links accept the internal UIDs, the namespaced alias as well as 
-     * the CMS-page ids here because the users do not really know the difference
-     * and will attempt to specify the id, they see first. Since most CMS show
-     * their internal ids, that typically are not UUIDs, we just allow both ids
-     * here.
-     * 
-     * @param string $value
-     * @return iReferenceWidget
-     */
-    public function setPageAlias($value);
-    
+
     /**
      * @return string
      */

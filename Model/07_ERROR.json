@@ -1237,6 +1237,17 @@
             "ERROR_CODE": "6XDP7LI",
             "ERROR_TEXT": "Model entity aliases cannot start with '_', '=', or '~'!",
             "DESCRIPTION": "Aliases of meta model entities can contain any characters, but may not start with and underscore \"_\", equals-sign \"=\", or tilde \"~\"."
+        },
+        {
+            "CREATED_ON": "2017-10-20 14:48:17",
+            "MODIFIED_ON": "2017-10-20 14:49:52",
+            "CREATED_BY_USER": "0x11e7add6fab63cc6997b74e5434dc47d",
+            "MODIFIED_BY_USER": "0x11e7add6fab63cc6997b74e5434dc47d",
+            "UID": "0x11e7b5a5b48fc122b65674e5434dc47d",
+            "APP": "0x31000000000000000000000000000000",
+            "ERROR_CODE": "6XHA8KR",
+            "ERROR_TEXT": "This UI page is not part of any app.",
+            "DESCRIPTION": "This error occurs if an app is requested from a UiPage which is not part of any app."
         }
     ],
     "totals_rows": [],

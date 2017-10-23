@@ -5,6 +5,7 @@ use exface\Core\CommonLogic\Model\UiPage;
 use exface\Core\Interfaces\UiManagerInterface;
 use exface\Core\Exceptions\UiPageNotFoundError;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Interfaces\Model\UiPageInterface;
 
 class UiPageFactory extends AbstractFactory
 {
@@ -15,15 +16,16 @@ class UiPageFactory extends AbstractFactory
      * @param UiManagerInterface $ui
      * @param string $page_alias
      * @param string $page_uid
+     * @param string $app_alias The app the page belongs to.
      * @throws UiPageNotFoundError if the page id is invalid (i.e. not a number or a string)
-     * @return UiPage
+     * @return UiPageInterface
      */
-    public static function create(UiManagerInterface $ui, $page_alias, $page_uid = null)
+    public static function create(UiManagerInterface $ui, $page_alias, $page_uid = null, $app_alias = null)
     {
         if (is_null($page_alias)) {
             throw new UiPageNotFoundError('Cannot fetch UI page: page alias not specified!');
         }
-        $page = new UiPage($ui, $page_alias, $page_uid);
+        $page = new UiPage($ui, $page_alias, $page_uid, $app_alias);
         return $page;
     }
 
@@ -32,7 +34,7 @@ class UiPageFactory extends AbstractFactory
      * 
      * @param UiManagerInterface $ui
      * @param string $page_alias
-     * @return UiPage
+     * @return UiPageInterface
      */
     public static function createEmpty(UiManagerInterface $ui, $page_alias = '')
     {
@@ -48,7 +50,7 @@ class UiPageFactory extends AbstractFactory
      * @param UiManagerInterface $ui
      * @param string $page_alias
      * @param string $page_text
-     * @return UiPage
+     * @return UiPageInterface
      */
     public static function createFromString(UiManagerInterface $ui, $page_alias, $page_text)
     {
@@ -62,11 +64,22 @@ class UiPageFactory extends AbstractFactory
      * 
      * @param UiManagerInterface $ui
      * @param string $page_alias
-     * @return UiPage
+     * @return UiPageInterface
      */
     public static function createFromCmsPage(UiManagerInterface $ui, $page_alias)
     {
         return $ui->getWorkbench()->getCMS()->loadPage($page_alias);
+    }
+    
+    /**
+     * Creates a page which is obtained from the current CMS page.
+     * 
+     * @param UiManagerInterface $ui
+     * @return UiPageInterface
+     */
+    public static function createFromCmsPageCurrent(UiManagerInterface $ui)
+    {
+        return $ui->getWorkbench()->getCMS()->loadPageCurrent();
     }
 
     /**
@@ -75,7 +88,7 @@ class UiPageFactory extends AbstractFactory
      * @param UiManagerInterface $ui
      * @param UxonObject $uxon
      * @param array $skip_property_names
-     * @return UiPage
+     * @return UiPageInterface
      */
     public static function createFromUxon(UiManagerInterface $ui, UxonObject $uxon, array $skip_property_names = array())
     {

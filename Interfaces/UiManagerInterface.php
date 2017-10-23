@@ -1,8 +1,6 @@
 <?php
 namespace exface\Core\Interfaces;
 
-use exface\Core\Widgets\AbstractWidget;
-
 interface UiManagerInterface extends ExfaceClassInterface
 {
 
@@ -29,33 +27,10 @@ interface UiManagerInterface extends ExfaceClassInterface
     function drawHeaders(WidgetInterface $widget, TemplateInterface $template = null);
 
     /**
-     * Returns an ExFace widget from a given resource by id
-     * Caching is used to store widgets from already loaded pages
-     * 
-     * @param string $widget_id
-     * @param string $page_alias
-     * @return AbstractWidget
-     */
-    public function getWidget($widget_id, $page_alias);
-
-    /**
      * 
      * @return TemplateInterface
      */
     public function getTemplateFromRequest();
-
-    /**
-     * 
-     * @return string
-     */
-    public function getPageAliasCurrent();
-
-    /**
-     * 
-     * @param string $value
-     * @return UiManagerInterface
-     */
-    public function setPageAliasCurrent($value);
 }
 
 ?>

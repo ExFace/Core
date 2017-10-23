@@ -78,7 +78,7 @@ class ShowLookupDialog extends ShowDialog
         // @var $save_action \exface\Core\Actions\CustomTemplateScript
         $save_action = ActionFactory::createFromString($this->getWorkbench(), 'exface.Core.CustomTemplateScript', $save_button);
         $source_element = $this->getTemplate()->getElement($data_table);
-        $target_element = $this->getTemplate()->getElementByWidgetId($this->getTargetWidgetId(), $page->getAliasWithNamespace());
+        $target_element = $this->getTemplate()->getElementByWidgetId($this->getTargetWidgetId(), $page);
         $save_action_script = $target_element->buildJsValueSetter($source_element->buildJsValueGetter());
         $save_action->setScript($save_action_script);
         
