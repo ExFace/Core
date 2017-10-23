@@ -14,7 +14,7 @@ trait JqueryButtonTrait {
     {
         $js = ($widget->getRefreshInput() && $input_element->buildJsRefresh() ? $input_element->buildJsRefresh(true) . ";" : "");
         if ($link = $widget->getRefreshWidgetLink()) {
-            if ($link->getPage()->getAliasWithNamespace() == $widget->getPage()->getAliasWithNamespace() && $linked_element = $this->getTemplate()->getElement($link->getWidget())) {
+            if ($link->getPage()->is($widget->getPage()) && $linked_element = $this->getTemplate()->getElement($link->getWidget())) {
                 $js .= "\n" . $linked_element->buildJsRefresh(true);
             }
         }
