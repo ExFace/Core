@@ -393,7 +393,7 @@
         },
         {
             "CREATED_ON": "2016-12-07 11:50:05",
-            "MODIFIED_ON": "2017-06-05 06:06:11",
+            "MODIFIED_ON": "2017-10-24 08:43:54",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6bc734ac821e89ee0e4b318306b9a",
@@ -404,7 +404,7 @@
             "SHORT_DESCRIPTION": "",
             "PARENT_OBJECT": "0x11e6bae2326c99b59ee0e4b318306b9a",
             "DATA_ADDRESS_PROPS": "{\"annotation_level\":\"method\",\"ignore_comments_without_matching_tags\":\"true\"}",
-            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Container\",\"widgets\":[{\"attribute_alias\":\"PROPERTY\"},{\"attribute_alias\":\"TYPE\"},{\"attribute_alias\":\"FULL_DESCRIPTION\",\"width\":2,\"height\":12},{\"attribute_alias\":\"FILENAME\",\"width\":2},{\"attribute_alias\":\"CLASS\",\"width\":2}]}",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Panel\",\"widgets\":[{\"attribute_alias\":\"PROPERTY\",\"widget_type\":\"TextHeading\",\"heading_level\":1},{\"attribute_alias\":\"FULL_DESCRIPTION\",\"width\":\"max\",\"hide_caption\":true,\"widget_type\":\"Markdown\"},{\"attribute_alias\":\"TYPE\",\"width\":\"max\"},{\"attribute_alias\":\"FILENAME\",\"width\":\"max\"},{\"attribute_alias\":\"CLASS\",\"width\":\"max\"}]}",
             "LABEL": "UXON Property Annotation",
             "ALIAS": "UXON_PROPERTY_ANNOTATION",
             "DATA_ADDRESS": "[#FILE#]"
@@ -429,7 +429,7 @@
         },
         {
             "CREATED_ON": "2016-12-09 12:27:33",
-            "MODIFIED_ON": "2017-10-24 08:03:28",
+            "MODIFIED_ON": "2017-10-24 08:49:32",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6be0ad5666af88ddee4b318306b9a",
@@ -440,7 +440,7 @@
             "SHORT_DESCRIPTION": "",
             "PARENT_OBJECT": "",
             "DATA_ADDRESS_PROPS": "{}",
-            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Tabs\",\"object_alias\":\"exface.Core.UXON_ENTITY_ANNOTATION\",\"tabs\":[{\"caption\":\"General\",\"widgets\":[{\"attribute_alias\":\"CLASS\",\"width\":\"max\"},{\"attribute_alias\":\"CLASSNAME\",\"widget_type\":\"TextHeading\",\"heading_level\":1,\"width\":\"max\"},{\"attribute_alias\":\"FULL_DESCRIPTION\",\"widget_type\":\"Markdown\",\"width\":\"max\",\"hide_caption\":true}]},{\"caption\":\"Properties\",\"widgets\":[{\"object_alias\":\"exface.core.UXON_PROPERTY_ANNOTATION\",\"widget_type\":\"DataTable\",\"filters\":[{\"attribute_alias\":\"FILE\",\"widget_type\":\"InputHidden\"},{\"attribute_alias\":\"PROPERTY\"},{\"attribute_alias\":\"TITLE\"}],\"columns\":[{\"attribute_alias\":\"PROPERTY\"},{\"attribute_alias\":\"TITLE\"},{\"attribute_alias\":\"TYPE\"}],\"sorters\":[{\"attribute_alias\":\"PROPERTY\",\"direction\":\"desc\"}],\"buttons\":[{\"action_alias\":\"exface.Core.ShowObjectDialog\",\"bind_to_double_click\":true}]}]}]}",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Tabs\",\"object_alias\":\"exface.Core.UXON_ENTITY_ANNOTATION\",\"tabs\":[{\"caption\":\"General\",\"widgets\":[{\"attribute_alias\":\"ENTITY\",\"widget_type\":\"TextHeading\",\"heading_level\":1,\"width\":\"max\"},{\"attribute_alias\":\"FULL_DESCRIPTION\",\"widget_type\":\"Markdown\",\"width\":\"max\",\"hide_caption\":true},{\"attribute_alias\":\"CLASS\",\"width\":\"max\"}]},{\"caption\":\"Properties\",\"widgets\":[{\"object_alias\":\"exface.core.UXON_PROPERTY_ANNOTATION\",\"widget_type\":\"DataTable\",\"filters\":[{\"attribute_alias\":\"FILE\",\"widget_type\":\"InputHidden\"},{\"attribute_alias\":\"PROPERTY\"},{\"attribute_alias\":\"TITLE\"}],\"columns\":[{\"attribute_alias\":\"PROPERTY\"},{\"attribute_alias\":\"TITLE\"},{\"attribute_alias\":\"TYPE\"}],\"sorters\":[{\"attribute_alias\":\"PROPERTY\",\"direction\":\"desc\"}],\"buttons\":[{\"action_alias\":\"exface.Core.ShowObjectDialog\",\"bind_to_double_click\":true}]}]}]}",
             "LABEL": "UXON Entity PHP-file",
             "ALIAS": "UXON_ENTITY_PHP_FILE",
             "DATA_ADDRESS": ""
