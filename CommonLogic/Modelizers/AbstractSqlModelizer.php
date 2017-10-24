@@ -63,12 +63,16 @@ abstract class AbstractSqlModelizer implements ModelizerInterface
      * @param string $column_name            
      * @return string
      */
-    public function generateLabel($column_name)
+    public function generateLabel($column_name, $description = null)
     {
-        $column_name = trim($column_name);
-        $column_name = str_replace('_', ' ', $column_name);
-        $column_name = strtolower($column_name);
-        $column_name = ucfirst($column_name);
+        if (! is_null($description) && strlen($description) < 50) {
+            $column_name = $description;
+        } else {
+            $column_name = trim($column_name);
+            $column_name = str_replace('_', ' ', $column_name);
+            $column_name = strtolower($column_name);
+            $column_name = ucfirst($column_name);
+        }
         return $column_name;
     }
 
