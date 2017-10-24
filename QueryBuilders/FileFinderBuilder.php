@@ -176,9 +176,19 @@ class FileFinderBuilder extends AbstractQueryBuilder
         $file_data = $this->getDataFromFile($file, $query);
         
         foreach ($this->getAttributes() as $qpart) {
-            if ($field = $qpart->getAttribute()->getDataAddress()) {
+            if ($field = strtolower($qpart->getAttribute()->getDataAddress())) {
                 if (array_key_exists($field, $file_data)) {
                     $value = $file_data[$field];
+                } elseif (substr($field, 0, 4) === 'line') {
+                    $line_nr = intval(trim(substr($field, 4), '()'));
+                    if ($line_nr === 1) {
+                        $value = $file->openFile()->fgets();
+                    } else {
+                        // TODO
+                    }
+                } elseif (substr($field, 0, 7) === 'subpath') {
+                    list($start_pos, $end_pos) = explode(',', trim(substr($field, 7), '()'));
+                    // TODO
                 } else {
                     $method_name = 'get' . ucfirst($field);
                     if (method_exists($file, $method_name)) {

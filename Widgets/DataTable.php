@@ -10,11 +10,11 @@ use exface\Core\Interfaces\Widgets\iHaveContextMenu;
 
 /**
  * Renders data as a table with filters, columns, and toolbars.
- * Columns of the DataTable can also be made editable.
  *
- * Example:
+ * Example showing attributes from the metamodel:
+ * 
+ * ```json
  *  {
- *      "id": "attributes",
  *      "widget_type": "DataTable",
  *      "object_alias": "exface.Core.ATTRIBUTE",
  *      "filters": [
@@ -40,6 +40,12 @@ use exface\Core\Interfaces\Widgets\iHaveContextMenu;
  *              "caption": "Relation to"
  *          }
  *      ],
+ *      "sorters": [
+ *          {
+ *              "attribute_alias": "OBJECT__LABEL",
+ *              "direction": "desc"
+ *          }
+ *      ],
  *      "buttons": [
  *          {
  *              "action_alias": "exface.Core.UpdateData"
@@ -56,6 +62,12 @@ use exface\Core\Interfaces\Widgets\iHaveContextMenu;
  *          }
  *      ]
  *  }
+ * 
+ * ```
+ * ## Editable columns
+ *  
+ * Columns of the DataTable can also be made editable by configuring an input widget in the 
+ * `editor` property of the column. 
  *
  * @author Andrej Kabachnik
  *        

@@ -369,6 +369,21 @@
             "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Input\"}",
             "ALIAS": "MetaModelAlias",
             "SHORT_DESCRIPTION": ""
+        },
+        {
+            "CREATED_ON": "2017-10-24 07:43:19",
+            "MODIFIED_ON": "2017-10-24 07:43:19",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e7b88efc3e81d586360205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Markdown",
+            "PROTOTYPE": "exface\/Core\/DataTypes\/TextDataType.php",
+            "CONFIG_UXON": "",
+            "VALIDATION_ERROR": "",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Markdown\"}",
+            "ALIAS": "Markdown",
+            "SHORT_DESCRIPTION": "Text formatted via markdown"
         }
     ],
     "totals_rows": [],

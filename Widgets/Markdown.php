@@ -13,12 +13,6 @@ class Markdown extends Html
 {
     private $markdown = null;
     
-    protected function init()
-    {
-        parent::init();
-        $this->setMargins(true);
-    }
-    
     /**
      * @return string $markdown
      */

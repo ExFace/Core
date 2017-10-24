@@ -18,9 +18,12 @@ use exface\Core\Exceptions\UnderflowException;
  * shows a toolbar with three button groups. Note, that grp2 has been 
  * aligned to the right. 
  * 
- * ------------------------------------------------------------------------
- * | [grp1_btn1] [grp1_btn2] | [grp3_btn1] |    | [grp2_btn1] [grp2_btn2] |
- * ------------------------------------------------------------------------
+ * ```
+ *  ------------------------------------------------------------------------
+ *  [grp1_btn1] [grp1_btn2]   [grp3_btn1]            [grp2_btn1] [grp2_btn2] 
+ *  ------------------------------------------------------------------------
+ * 
+ * ```
  *
  * @author Andrej Kabachnik
  *        

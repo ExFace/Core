@@ -36,5 +36,14 @@ trait JqueryHtmlTrait {
         return $this->getWidget()->getJavascript();
     }
     
+    public function getHeight()
+    {
+        if ($this->getWidget()->getHeight()->isUndefined()){
+            return 'auto';
+        } else {
+            return parent::getHeight();
+        }
+    }
+    
 }
 ?>

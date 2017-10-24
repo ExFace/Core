@@ -198,6 +198,9 @@ class PhpAnnotationsReader extends AbstractQueryBuilder
                     case 'class':
                         $row[$qpart->getAlias()] = $class->getName();
                         break;
+                    case 'classname':
+                        $row[$qpart->getAlias()] = str_replace($class->getNamespaceName().'\\', '', $class->getName());
+                        break;
                     case 'namespace':
                         $row[$qpart->getAlias()] = $class->getNamespaceName();
                         break;

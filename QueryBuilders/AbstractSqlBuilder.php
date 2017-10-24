@@ -31,8 +31,7 @@ use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 /**
  * A query builder for generic SQL syntax.
  * 
- * # Data addresses
- * =====================
+ * ## Data addresses
  * 
  * The data address of an object stored in an SQL database can be a table name,
  * or any SQL usable within the FROM clause. Placeholders for filters can
@@ -50,7 +49,7 @@ use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
  * This is especially usefull to prevent table alias collisions in custom 
  * subselects:
  * 
- * "(SELECT mt_[#~alias#].my_column FROM my_table mt_[#~alias#] WHERE ... )"
+ * `(SELECT mt_[#~alias#].my_column FROM my_table mt_[#~alias#] WHERE ... )`
  * 
  * This way you can control which uses of my_table are unique within the
  * generated SQL.
@@ -61,18 +60,16 @@ use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
  * would be an attribute being calculated from two other attributes. This can
  * easily be done via attribute placeholders in it's data address: 
  * 
- * "([#RELATION_TO_OBJECT1__ATTRIBUTE1#]/[#RELATION_TO_OBJECT2__ATTRIBUTE2#])"
+ * `([#RELATION_TO_OBJECT1__ATTRIBUTE1#]/[#RELATION_TO_OBJECT2__ATTRIBUTE2#])`
  * 
  * You can even use relation paths here! It will even work if the placeholders
  * point to attributes, that are based on custom SQL statements themselves.
  * Just keep in mind, that these expressions may easily become complex and
  * kill query performance if used uncarefully.
  * 
- * # Data source options
- * =====================
+ * ## Data source options
  * 
- * ## On attribute level
- * ---------------------
+ * ### On attribute level
  * 
  * - **SQL_DATA_TYPE** - tells the query builder what data type the column has.
  * This is only needed for complex types that require conversion: e.g. binary,
