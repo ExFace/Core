@@ -22,6 +22,7 @@ use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Interfaces\Model\AggregatorInterface;
 use exface\Core\CommonLogic\Model\Aggregator;
 use exface\Core\DataTypes\SortingDirectionsDataType;
+use exface\Core\DataTypes\TextStylesDataType;
 
 /**
  * The DataColumn represents a column in Data-widgets a DataTable.
@@ -411,7 +412,7 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
      */
     public function setStyle($value)
     {
-        $this->style = $value;
+        $this->style = TextStylesDataType::cast(strtoupper($value));
         return $this;
     }
 
