@@ -841,7 +841,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             }
             // The filter needs to be an EQ, since we want a to compare by "=" to whatever we define without any quotes
             // Putting the value in brackets makes sure it is treated as an SQL expression and not a normal value
-            $relq->addFilterFromString($rev_rel->getForeignKeyAlias(), '(' . $select_from . '.' . $junction . ')', EXF_COMPARATOR_EQUALS);
+            $relq->addFilterWithCustomSql($rev_rel->getForeignKeyAlias(), '(' . $select_from . '.' . $junction . ')', EXF_COMPARATOR_EQUALS);
         }
         
         $output = '(' . $relq->buildSqlQuerySelect() . ')';
@@ -1093,6 +1093,8 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     protected function buildSqlWhere(QueryPartFilterGroup $qpart, $rely_on_joins = true)
     {
         $where = '';
+        $comment = "\n-- buildSqlWhere(" . $qpart->getConditionGroup()->toString() . ", " . $rely_on_joins . ")\n";
+        
         $op = $this->buildSqlLogicalOperator($qpart->getOperator());
         
         foreach ($qpart->getFilters() as $qpart_fltr) {
@@ -1107,7 +1109,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             }
         }
         
-        return $where;
+        return $comment . $where;
     }
 
     /**
@@ -1167,6 +1169,8 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             return '';
         }
         
+        $comment = "\n-- buildSqlSelect(" . $qpart->getCondition()->toString() . ", " . $rely_on_joins . ")\n";
+        
         $val = $qpart->getCompareValue();
         $attr = $qpart->getAttribute();
         $comp = $qpart->getComparator();
@@ -1222,7 +1226,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             // Do the actual comparing
             $output = $this->buildSqlWhereComparator($subj, $comp, $val, $attr->getDataType(), $attr->getDataAddressProperty('SQL_DATA_TYPE'), $delimiter);
         }
-        return $output;
+        return $comment . $output;
     }
     
     /**
@@ -1242,7 +1246,25 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             // Pay attention to comparators expecting concatennated values (like IN) - the concatennated value will not validate against
             // the data type, but the separated parts should
             if ($comparator != EXF_COMPARATOR_IN && $comparator != EXF_COMPARATOR_NOT_IN) {
-                $value = $data_type::cast($value);
+                // If it's a single value, cast it to the data type to make sure, it's a valid value.
+                // FIXME how to distinguish between actual values and SQL statements as values? The
+                // following switch() makes sure, a number can be compared to an SQL statement 
+                // which is ultimately a string - casting the SQL statement would result in a 
+                // casting exception. The current solution is insecure though, as it makes it
+                // possible to pass SQL statements from outside and it uses them without any
+                // sanitization! We could use $qpart->isValueDataAddress() here, but currently
+                // we don't have the query part at hand at this point.
+                switch (true) {
+                    case ($data_type instanceof DateDataType):
+                    case ($data_type instanceof NumberDataType):
+                    case ($data_type instanceof BooleanDataType):
+                        if (! $this->checkForSqlStatement($value)) {
+                            $value = $data_type::cast($value);
+                        }
+                        break;
+                    default:
+                        $value = $data_type::cast($value);
+                }
             } else {
                 $values = explode($value_list_delimiter, $value);
                 $value = '';
@@ -1376,7 +1398,11 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 }
                 $relq->addAttribute($start_rel->getForeignKeyAlias());
                 // Add the filter relative to the first reverse relation with the same $value and $comparator
-                $relq->addFilterFromString($rel_filter, $qpart->getCompareValue(), $qpart->getComparator());
+                if ($qpart->isValueDataAddress()) {
+                    $relq->addFilterWithCustomSql($rel_filter, $qpart->getCompareValue(), $qpart->getComparator());
+                } else {
+                    $relq->addFilterFromString($rel_filter, $qpart->getCompareValue(), $qpart->getComparator());
+                }
                 // FIXME add support for related_object_special_key_alias
                 if (! $prefix_rel_path->isEmpty()) {
                     $prefix_rel_qpart = new QueryPartSelect(RelationPath::relationPathAdd($prefix_rel_path->toString(), $this->getMainObject()->getRelatedObject($prefix_rel_path->toString())->getUidAttributeAlias()), $this);

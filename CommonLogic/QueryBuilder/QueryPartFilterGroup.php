@@ -51,15 +51,16 @@ class QueryPartFilterGroup extends QueryPart
     }
 
     /**
-     * Creates a filter from a given condition object and adds it to the group
+     * Creates a filter from a given condition object, adds it to the group and returns the resulting query part.
      *
      * @param Condition $condition            
-     * @return \exface\Core\CommonLogic\QueryBuilder\QueryPartFilterGroup
+     * @return QueryPartFilter
      */
     public function addCondition(Condition $condition)
     {
-        $this->addFilter($this->createQueryPartFromCondition($condition));
-        return $this;
+        $qpart = $this->createQueryPartFromCondition($condition);
+        $this->addFilter($qpart);
+        return $qpart;
     }
 
     /**
@@ -76,15 +77,16 @@ class QueryPartFilterGroup extends QueryPart
     }
 
     /**
-     * Creates a filter group from a given condition group and adds it to the group
+     * Creates a filter group from a given condition group, adds it to the group and returns the resulting query part.
      *
      * @param ConditionGroup $group            
      * @return \exface\Core\CommonLogic\QueryBuilder\QueryPartFilterGroup
      */
     public function addConditionGroup(ConditionGroup $group)
     {
-        $this->addNestedGroup($this->createQueryPartFromConditionGroup($group));
-        return $this;
+        $qpart = $this->createQueryPartFromConditionGroup($group);
+        $this->addNestedGroup($qpart);
+        return $qpart;
     }
 
     /**
