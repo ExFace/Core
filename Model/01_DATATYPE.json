@@ -225,21 +225,6 @@
             "MODIFIED_ON": "1970-01-01 00:00:00",
             "CREATED_BY_USER": "",
             "MODIFIED_BY_USER": "",
-            "UID": "0x35000000000000000000000000000000",
-            "APP": "0x31000000000000000000000000000000",
-            "NAME": "Relation",
-            "PROTOTYPE": "exface\/Core\/DataTypes\/RelationDataType.php",
-            "CONFIG_UXON": "",
-            "VALIDATION_ERROR": "",
-            "DEFAULT_EDITOR_UXON": "{\"widget_type\": \"ComboTable\"}",
-            "ALIAS": "Relation",
-            "SHORT_DESCRIPTION": ""
-        },
-        {
-            "CREATED_ON": "1970-01-01 00:00:00",
-            "MODIFIED_ON": "1970-01-01 00:00:00",
-            "CREATED_BY_USER": "",
-            "MODIFIED_BY_USER": "",
             "UID": "0x37000000000000000000000000000000",
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Boolean",
@@ -249,21 +234,6 @@
             "DEFAULT_EDITOR_UXON": "{\"widget_type\": \"CheckBox\"}",
             "ALIAS": "Boolean",
             "SHORT_DESCRIPTION": ""
-        },
-        {
-            "CREATED_ON": "1970-01-01 00:00:00",
-            "MODIFIED_ON": "2017-09-11 12:00:39",
-            "CREATED_BY_USER": "",
-            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
-            "UID": "0x38000000000000000000000000000000",
-            "APP": "0x31000000000000000000000000000000",
-            "NAME": "Relation Hierarchy",
-            "PROTOTYPE": "exface\/Core\/DataTypes\/RelationHierarchyDataType.php",
-            "CONFIG_UXON": "",
-            "VALIDATION_ERROR": "",
-            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"ComboTable\"}",
-            "ALIAS": "RelationHierarchy",
-            "SHORT_DESCRIPTION": "Special data type for hierarchies of object of the same type. It should be used for the relation to the parent object. Setting this data type enables the framework to build trees for these hierarchies automatically. "
         },
         {
             "CREATED_ON": "1970-01-01 00:00:00",
@@ -384,6 +354,21 @@
             "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Markdown\"}",
             "ALIAS": "Markdown",
             "SHORT_DESCRIPTION": "Text formatted via markdown"
+        },
+        {
+            "CREATED_ON": "2017-10-25 04:44:39",
+            "MODIFIED_ON": "2017-10-25 04:45:25",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e7b93f315ab6ca84cce4b318306b9a",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Relative File Path",
+            "PROTOTYPE": "exface\/Core\/DataTypes\/StringDataType.php",
+            "CONFIG_UXON": "",
+            "VALIDATION_ERROR": "",
+            "DEFAULT_EDITOR_UXON": "",
+            "ALIAS": "FILE_PATH_RELATIVE",
+            "SHORT_DESCRIPTION": "\/folder\/subfolder\/filename or folder\/subfolder\/filename"
         }
     ],
     "totals_rows": [],
