@@ -1093,13 +1093,13 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     protected function buildSqlWhere(QueryPartFilterGroup $qpart, $rely_on_joins = true)
     {
         $where = '';
-        $comment = "\n-- buildSqlWhere(" . $qpart->getConditionGroup()->toString() . ", " . $rely_on_joins . ")\n";
         
         $op = $this->buildSqlLogicalOperator($qpart->getOperator());
         
         foreach ($qpart->getFilters() as $qpart_fltr) {
             if ($fltr_string = $this->buildSqlWhereCondition($qpart_fltr, $rely_on_joins)) {
-                $where .= "\n " . ($where ? $op . " " : '') . $fltr_string;
+                $where .= "\n-- buildSqlWhereCondition(" . $qpart_fltr->getCondition()->toString() . ", " . $rely_on_joins . ")"
+                        . "\n " . ($where ? $op . " " : '') . $fltr_string;
             }
         }
         
@@ -1109,7 +1109,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             }
         }
         
-        return $comment . $where;
+        return $where;
     }
 
     /**
@@ -1169,8 +1169,6 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             return '';
         }
         
-        $comment = "\n-- buildSqlSelect(" . $qpart->getCondition()->toString() . ", " . $rely_on_joins . ")\n";
-        
         $val = $qpart->getCompareValue();
         $attr = $qpart->getAttribute();
         $comp = $qpart->getComparator();
@@ -1226,7 +1224,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             // Do the actual comparing
             $output = $this->buildSqlWhereComparator($subj, $comp, $val, $attr->getDataType(), $attr->getDataAddressProperty('SQL_DATA_TYPE'), $delimiter);
         }
-        return $comment . $output;
+        return $output;
     }
     
     /**
