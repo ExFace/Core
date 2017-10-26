@@ -169,13 +169,27 @@ abstract class AbstractQueryBuilder
      * @param string $attribute_alias            
      * @param string $value            
      * @param string $comparator            
-     * @return \exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder
+     * @return QueryPartFilter
      */
     public function addFilterFromString($attribute_alias, $value, $comparator = EXF_COMPARATOR_IS)
     {
         $exface = $this->getWorkbench();
         $condition = ConditionFactory::createFromExpression($exface, $this->getWorkbench()->model()->parseExpression($attribute_alias, $this->getMainObject()), $value, $comparator);
         return $this->addFilterCondition($condition);
+    }
+    
+    /**
+     * 
+     * @param string $attribute_alias
+     * @param string $sql
+     * @param string $comparator
+     * @return \exface\Core\CommonLogic\QueryBuilder\QueryPartFilter
+     */
+    protected function addFilterWithCustomSql($attribute_alias, $sql, $comparator = EXF_COMPARATOR_IS)
+    {
+        $qpart = $this->addFilterFromString($attribute_alias, $sql, $comparator);
+        $qpart->setValueIsDataAddress(true);
+        return $qpart;
     }
 
     /**
@@ -203,15 +217,14 @@ abstract class AbstractQueryBuilder
     }
 
     /**
-     * Adds a condition group to the first level of filters
+     * Adds a condition group to the first level of filters and returns the resulting query part.
      *
      * @param ConditionGroup $condition_group            
-     * @return \exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder
+     * @return QueryPartFilterGroup
      */
     public function addFilterConditionGroup(ConditionGroup $condition_group)
     {
-        $this->getFilters()->addConditionGroup($condition_group);
-        return $this;
+        return $this->getFilters()->addConditionGroup($condition_group);
     }
 
     /**
@@ -227,15 +240,14 @@ abstract class AbstractQueryBuilder
     }
 
     /**
-     * Adds a first level condition to the root filter group
+     * Adds a first level condition to the root filter group and returns the resulting query part
      *
      * @param Condition $condition            
-     * @return \exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder
+     * @return QueryPartFilter
      */
     public function addFilterCondition(Condition $condition)
     {
-        $this->getFilters()->addCondition($condition);
-        return $this;
+        return $this->getFilters()->addCondition($condition);
     }
 
     /**

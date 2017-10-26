@@ -119,11 +119,16 @@ trait ExceptionTrait {
             $error_tab->setNumberOfColumns(1);
             if ($this->getAlias()) {
                 $error_ds = $this->getErrorData($page->getWorkbench(), $this->getAlias());
-                $error_heading = WidgetFactory::create($page, 'TextHeading', $error_tab)->setHeadingLevel(2)->setValue($debug_widget->getWorkbench()->getCoreApp()->getTranslator()->translate('ERROR.CAPTION') . ' ' . $this->getAlias() . ': ' . $error_ds->getCellValue('ERROR_TEXT', 0));
+                $error_heading = WidgetFactory::create($page, 'TextHeading', $error_tab)
+                    ->setHeadingLevel(2)
+                    ->setValue($debug_widget->getWorkbench()->getCoreApp()->getTranslator()->translate('ERROR.CAPTION') . ' ' . $this->getAlias() . ': ' . $error_ds->getCellValue('ERROR_TEXT', 0));
                 $error_tab->addWidget($error_heading);
-                $error_text = WidgetFactory::create($page, 'Text', $error_tab)->setValue($this->getMessage());
+                $error_text = WidgetFactory::create($page, 'Text', $error_tab)
+                    ->setValue($this->getMessage());
                 $error_tab->addWidget($error_text);
-                $error_descr = WidgetFactory::create($page, 'Text', $error_tab)->setAttributeAlias('DESCRIPTION');
+                $error_descr = WidgetFactory::create($page, 'Markdown', $error_tab)
+                    ->setAttributeAlias('DESCRIPTION')
+                    ->setHideCaption(true);
                 $error_tab->addWidget($error_descr);
                 $error_tab->prefill($error_ds);
             } else {

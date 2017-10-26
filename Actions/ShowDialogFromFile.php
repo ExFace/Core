@@ -84,9 +84,12 @@ class ShowDialogFromFile extends ShowDialog
 
     protected function perform()
     {
+        if (! $idCol = $this->getInputDataSheet()->getColumns()->getByExpression($this->getFilePathAttributeAlias())) {
+            throw new ActionInputMissingError($this, 'Column "' . $this->getFilePathAttributeAlias() . '" not found in input data!');
+        }
+        $filename = $idCol->getCellValue(0);
         $basePath = Filemanager::pathNormalize($this->getWorkbench()->filemanager()->getPathToBaseFolder());
-        
-        $filename = $this->getInputDataSheet()->getColumns()->getByExpression($this->getFilePathAttributeAlias())->getCellValue(0);
+
         if (strlen(trim($filename)) > 0) {
             if ($this->getFolderPath()) {
                 if (Filemanager::pathIsAbsolute($this->getFolderPath())) {

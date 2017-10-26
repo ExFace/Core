@@ -27,7 +27,7 @@ class OracleSqlModelizer extends AbstractSqlModelizer
         $rows = array();
         foreach ($columns_array as $col) {
             $rows[] = array(
-                'LABEL' => $this->generateLabel($col['COLUMN_NAME']),
+                'LABEL' => $this->generateLabel($col['COLUMN_NAME'], $col['COMMENTS']),
                 'ALIAS' => $col['COLUMN_NAME'],
                 'DATATYPE' => $this->getDataTypeId($this->getDataType($col['DATA_TYPE'], ($col['DATA_PRECISION'] ? $col['DATA_PRECISION'] : $col['DATA_LENGTH']), $col['DATA_SCALE'])),
                 'DATA_ADDRESS' => $col['COLUMN_NAME'],

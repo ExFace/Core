@@ -21,7 +21,7 @@ class DataColumnTotal implements iCanBeConvertedToUxon, ExfaceClassInterface
     {
         $this->setColumn($column);
         if (! is_null($aggregator_string)) {
-            $this->setAggregator(new Aggregator($aggregator_string));
+            $this->setAggregator(new Aggregator($this->getWorkbench(), $aggregator_string));
         }
     }
 
@@ -62,7 +62,7 @@ class DataColumnTotal implements iCanBeConvertedToUxon, ExfaceClassInterface
         if ($aggregator_or_string instanceof AggregatorInterface){
             $aggregator = $aggregator_or_string;
         } else {
-            $aggregator = new Aggregator($aggregator_or_string);
+            $aggregator = new Aggregator($this->getWorkbench(), $aggregator_or_string);
         }
         $this->function = $aggregator;
         return $this;

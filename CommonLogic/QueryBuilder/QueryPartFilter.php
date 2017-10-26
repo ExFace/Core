@@ -22,6 +22,8 @@ class QueryPartFilter extends QueryPartAttribute
     private $condition = NULL;
 
     private $apply_after_reading = false;
+    
+    private $value_is_data_address = false;
 
     function __construct($alias, AbstractQueryBuilder $query)
     {
@@ -54,6 +56,7 @@ class QueryPartFilter extends QueryPartAttribute
     public function setCompareValue($value)
     {
         $this->compare_value = trim($value);
+        return $this;
     }
 
     /**
@@ -127,6 +130,35 @@ class QueryPartFilter extends QueryPartAttribute
     {
         $this->apply_after_reading = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;
+    }
+    
+    /**
+     * Tells the filter to treat the value as a data address instead of a scalar data type.
+     * 
+     * This is important for non-string data types that would produce casting errors when
+     * generating the query: e.g. filtering over an SQL column with numeric foreign keys,
+     * you can compare either to a number or an SQL statement resulting in a number. The
+     * query builder would attempt to cast the sql statement to the data type of the
+     * attribute in the metamodel and will fail because the SQL itself is a string. 
+     * 
+     * @param boolean $true_or_false
+     * 
+     * @return \exface\Core\CommonLogic\QueryBuilder\QueryPartFilter
+     */
+    public function setValueIsDataAddress($true_or_false) 
+    {
+        $this->value_is_data_address = $true_or_false;
+        return $this;
+    }
+    
+    /**
+     * Returns TRUE if the value compared to is a data address and not a scalar value.
+     * 
+     * @return boolean
+     */
+    public function isValueDataAddress()
+    {
+        return $this->value_is_data_address;
     }
 }
 ?>

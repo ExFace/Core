@@ -1,7 +1,7 @@
 <?php
 namespace exface\Core\QueryBuilders;
 
-use exface\Core\CommonLogic\Constants\AggregatorFunctions;
+use exface\Core\DataTypes\AggregatorFunctionsDataType;
 use exface\Core\CommonLogic\Model\Aggregator;
 
 /**
@@ -96,7 +96,7 @@ else {
             // if the query has a GROUP BY, we need to put the UID-Attribute in the core select as well as in the enrichment select
             // otherwise the enrichment joins won't work!
             if ($group_by && $qpart->getAttribute()->getAlias() === $qpart->getAttribute()->getObject()->getUidAttributeAlias() && ! $has_attributes_with_reverse_relations) {
-                $selects[] = $this->buildSqlSelect($qpart, null, null, null, new Aggregator(AggregatorFunctions::MAX));
+                $selects[] = $this->buildSqlSelect($qpart, null, null, null, new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::MAX));
                 $enrichment_select .= ', ' . $this->buildSqlSelect($qpart, 'EXFCOREQ', $qpart->getAttribute()->getObject()->getUidAttributeAlias());
                 $group_safe_attribute_aliases[] = $qpart->getAttribute()->getAliasWithRelationPath();
             } // If we are not aggregating or the attribute has a group function, add it regulary
@@ -112,7 +112,7 @@ elseif (! $group_by || $qpart->getAggregator() || $this->getAggregation($qpart->
                     $first_rel = reset($rels);
                     $first_rel_qpart = $this->addAttribute($first_rel->getAlias());
                     // IDEA this does not support relations based on custom sql. Perhaps this needs to change
-                    $selects[] = $this->buildSqlSelect($first_rel_qpart, null, null, $first_rel_qpart->getAttribute()->getDataAddress(), ($group_by ? new Aggregator(AggregatorFunctions::MAX) : null));
+                    $selects[] = $this->buildSqlSelect($first_rel_qpart, null, null, $first_rel_qpart->getAttribute()->getDataAddress(), ($group_by ? new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::MAX) : null));
                 }
                 $enrichment_select .= ', ' . $this->buildSqlSelect($qpart);
                 $enrichment_joins = array_merge($enrichment_joins, $this->buildSqlJoins($qpart, 'exfcoreq'));
@@ -120,7 +120,7 @@ elseif (! $group_by || $qpart->getAggregator() || $this->getAggregation($qpart->
                 $group_safe_attribute_aliases[] = $qpart->getAttribute()->getAliasWithRelationPath();
                 // If aggregating, also add attributes, that belong directly to objects, we are aggregating over (they can be assumed unique too, since their object is unique per row)
             } elseif ($group_by && $this->getAggregation($qpart->getAttribute()->getRelationPath()->toString())) {
-                $selects[] = $this->buildSqlSelect($qpart, null, null, null, new Aggregator(AggregatorFunctions::MAX));
+                $selects[] = $this->buildSqlSelect($qpart, null, null, null, new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::MAX));
                 $joins = array_merge($joins, $this->buildSqlJoins($qpart));
                 $group_safe_attribute_aliases[] = $qpart->getAttribute()->getAliasWithRelationPath();
             } else {
@@ -191,7 +191,7 @@ elseif (! $group_by || $qpart->getAggregator() || $this->getAggregation($qpart->
         }
         
         if ($group_by) {
-            $totals_core_selects[] = $this->buildSqlSelect($this->getAttribute($this->getMainObject()->getUidAttributeAlias()), null, null, null, new Aggregator(AggregatorFunctions::MAX));
+            $totals_core_selects[] = $this->buildSqlSelect($this->getAttribute($this->getMainObject()->getUidAttributeAlias()), null, null, null, new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::MAX));
         }
         
         // filters -> WHERE

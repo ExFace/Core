@@ -154,7 +154,7 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
                 throw new WidgetPropertyInvalidValueError($this, 'Cannot create a filter for attribute alias "' . $attribute_alias . '" in widget "' . $this->getId() . '": attribute not found for object "' . $this->getMetaObject()->getAliasWithNamespace() . '"!', '6T91AR9', $e);
             }
             // determine the widget for the filter
-            $uxon = $attr->getDefaultWidgetUxon()->copy();
+            $uxon = $attr->getDefaultEditorUxon()->copy();
             if ($uxon_object) {
                 $uxon = $uxon->extend($uxon_object);
             }
@@ -380,14 +380,14 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
             // FIXME This is a workaround for the known issues, that get_main_object_key_attribute() does not work for
             // reverse relations. When the issue is fixed, this if needs to be rewritten.
             if (! $relation->getMainObjectKeyAttribute() && $relation->isReverseRelation()) {
-                $filter_widget = WidgetFactory::createFromUxon($page, $relation->getRelatedObjectKeyAttribute()->getDefaultWidgetUxon(), $this);
+                $filter_widget = WidgetFactory::createFromUxon($page, $relation->getRelatedObjectKeyAttribute()->getDefaultEditorUxon(), $this);
                 if ($filter_widget->getMetaObject()->hasAttribute($relation->getRelatedObjectKeyAlias())){
                     $filter_widget->setAttributeAlias($relation->getRelatedObjectKeyAlias());
                 } else {
                     throw new WidgetLogicError($this, 'Cannot automatically create filter for relation "' . $relation->toString() . '" in a "' . $this->getWidgetType() . '" widget based on ' . $this->getMetaObject()->getAliasWithNamespace() . '!');
                 }
             } else {
-                $filter_widget = WidgetFactory::createFromUxon($page, $relation->getMainObjectKeyAttribute()->getDefaultWidgetUxon(), $this);
+                $filter_widget = WidgetFactory::createFromUxon($page, $relation->getMainObjectKeyAttribute()->getDefaultEditorUxon(), $this);
                 $filter_widget->setAttributeAlias($relation->getForeignKeyAlias());
             }
             $this->addFilter($filter_widget);

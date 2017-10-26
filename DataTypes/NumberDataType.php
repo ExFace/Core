@@ -2,9 +2,9 @@
 namespace exface\Core\DataTypes;
 
 use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
-use exface\Core\CommonLogic\Constants\SortingDirections;
 use exface\Core\Exceptions\DataTypes\DataTypeConfigurationError;
 use exface\Core\Exceptions\DataTypes\DataTypeValidationError;
+use exface\Core\CommonLogic\DataTypes\AbstractDataType;
 
 /**
  * Basic data type for numeric values.
@@ -17,7 +17,7 @@ use exface\Core\Exceptions\DataTypes\DataTypeValidationError;
  */
 class NumberDataType extends AbstractDataType
 {
-    private $precisionMin = 0;
+    private $precisionMin = null;
     
     private $precisionMax = null;
     
@@ -74,14 +74,14 @@ class NumberDataType extends AbstractDataType
     /**
      *
      * {@inheritDoc}
-     * @see \exface\Core\DataTypes\AbstractDataType::getDefaultSortingDirection()
+     * @see \exface\Core\CommonLogic\DataTypes\AbstractDataType::getDefaultSortingDirection()
      */
     public function getDefaultSortingDirection()
     {
-        return SortingDirections::DESC();
+        return SortingDirectionsDataType::DESC($this->getWorkbench());
     }
     /**
-     * @return integer
+     * @return integer|null
      */
     public function getPrecisionMin()
     {
@@ -110,7 +110,7 @@ class NumberDataType extends AbstractDataType
     }
 
     /**
-     * @return integer
+     * @return integer|null
      */
     public function getPrecisionMax()
     {

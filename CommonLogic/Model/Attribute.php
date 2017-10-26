@@ -2,18 +2,16 @@
 
 namespace exface\Core\CommonLogic\Model;
 
-use exface\Core\CommonLogic\Workbench;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Factories\RelationPathFactory;
 use exface\Core\Exceptions\UnexpectedValueException;
-use exface\Core\Interfaces\Model\DataTypeInterface;
-use exface\Core\CommonLogic\Constants\SortingDirections;
+use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Model\MetaRelationPathInterface;
-use exface\Core\Interfaces\Model\MetaRelationInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\DataTypes\SortingDirectionsDataType;
 
 /**
  * 
@@ -75,9 +73,12 @@ class Attribute implements MetaAttributeInterface
     private $filterable;
 
     private $aggregatable;
+    
+    /** @var UxonObject|null */
+    private $default_editor_uxon = null;
 
     /** @var UxonObject|null */
-    private $default_widget_uxon = null;
+    private $custom_data_type_uxon = null;
 
     /** @var MetaRelationPathInterface|null */
     private $relation_path;
@@ -180,6 +181,7 @@ class Attribute implements MetaAttributeInterface
     {
         if (is_string($this->data_type)){
             $this->data_type = DataTypeFactory::createFromUidOrAlias($this->getModel(), $this->data_type);
+            $this->data_type->importUxonObject($this->getCustomDataTypeUxon());
         }
         return $this->data_type;
     }
@@ -441,44 +443,6 @@ class Attribute implements MetaAttributeInterface
         }
     }
     
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::getDefaultWidgetUxon()
-     */
-    public function getDefaultWidgetUxon()
-    {
-        // If there is no default widget uxon defined, use the UXON from the data type
-        if (is_null($this->default_widget_uxon)) {
-            $this->default_widget_uxon = $this->getDataType()->getDefaultWidgetUxon()->copy();
-        }
-        
-        // If there is no widget type, try extending the data type default widget UXON
-        if (! $this->default_widget_uxon->hasProperty('widget_type')) {
-            $this->default_widget_uxon = $this->getDataType()->getDefaultWidgetUxon()->extend($this->default_widget_uxon);
-        }
-        
-        $uxon = $this->default_widget_uxon->copy();
-        
-        if (! $uxon->hasProperty('attribute_alias')) {
-            $uxon->setProperty(attribute_alias, $this->getAliasWithRelationPath());
-        }
-        
-        return $uxon;
-    }
-
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setDefaultWidgetUxon()
-     */
-    public function setDefaultWidgetUxon(UxonObject $uxon)
-    {
-        $this->default_widget_uxon = $uxon;
-        return $this;
-    }
-
     /**
      * 
      * {@inheritDoc}
@@ -566,10 +530,10 @@ class Attribute implements MetaAttributeInterface
      */
     public function setDefaultSorterDir($value)
     {        
-        if ($value instanceof SortingDirections){
+        if ($value instanceof SortingDirectionsDataType){
             // everything is OK
-        } elseif (SortingDirections::isValid(strtolower($value))){
-            $value = new SortingDirections(strtolower($value));
+        } elseif (SortingDirectionsDataType::isValidStaticValue(strtoupper($value))){
+            $value = new SortingDirectionsDataType($this->getWorkbench(), strtoupper($value));
         } else {
             throw new UnexpectedValueException('Invalid value "' . $value . '" for default sorting direction in attribute "' . $this->getName() . '": use ASC or DESC');
         }
@@ -775,10 +739,12 @@ class Attribute implements MetaAttributeInterface
         
         // Explicitly copy properties, that are objects themselves
         $copy->setRelationPath($path);
-        // Do not use getDefaultWidgetUxon() here as it already performs some enrichment
-        if ($this->default_widget_uxon instanceof UxonObject){
-            $copy->setDefaultWidgetUxon($this->default_widget_uxon->copy());
+        
+        // Do not use getDefaultEditorUxon() here as it already performs some enrichment
+        if ($this->default_editor_uxon instanceof UxonObject){
+            $copy->setDefaultEditorUxon($this->default_editor_uxon->copy());
         }
+        
         return $copy;
     }
 
@@ -919,6 +885,84 @@ class Attribute implements MetaAttributeInterface
         }
         return $this;
     }
- 
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::getCustomDataTypeUxon()
+     */
+    public function getCustomDataTypeUxon()
+    {
+        if (is_null($this->custom_data_type_uxon)){
+            return new UxonObject();
+        }
+        return $this->custom_data_type_uxon->copy();
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setCustomDataTypeUxon()
+     */
+    public function setCustomDataTypeUxon(UxonObject $uxon)
+    {
+        $this->custom_data_type_uxon = $uxon;
+        $this->resetDataType();
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return \exface\Core\CommonLogic\Model\Attribute
+     */
+    private function resetDataType()
+    {
+        // If the data type had already been instantiated, degrade it back to a string alias.
+        // Next time the getDataType() is called, it will reinstantiate the data type uxing
+        // the new custom setting.
+        if ($this->data_type instanceof UxonObject){
+            $this->data_type = $this->data_type->getAliasWithNamespace();
+        }
+        
+        return $this;
+    }
+
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::getDefaultEditorUxon()
+     */
+    public function getDefaultEditorUxon()
+    {
+        // If there is no default widget uxon defined, use the UXON from the data type
+        if (is_null($this->default_editor_uxon)) {
+            if ($this->isRelation()) {
+                $this->default_editor_uxon = new UxonObject([
+                    "widget_type" => $this->getWorkbench()->getConfig()->getOption('TEMPLATES.DEFAULT_WIDGET_FOR_RELATIONS')
+                ]);
+            } else {
+                $this->default_editor_uxon = $this->getDataType()->getDefaultEditorUxon()->copy();
+            }
+        }
+        
+        $uxon = $this->default_editor_uxon->copy();
+        
+        if (! $uxon->hasProperty('attribute_alias')) {
+            $uxon->setProperty('attribute_alias', $this->getAliasWithRelationPath());
+        }
+        
+        return $uxon;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setDefaultEditorUxon()
+     */
+    public function setDefaultEditorUxon(UxonObject $uxon)
+    {
+        $this->default_editor_uxon = $uxon;
+        return $this;
+    }
 }
 ?>

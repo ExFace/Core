@@ -1,18 +1,22 @@
 <?php
-namespace exface\Core\DataTypes;
+namespace exface\Core\CommonLogic\DataTypes;
 
-use exface\Core\Interfaces\Model\DataTypeInterface;
+use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
-use exface\Core\CommonLogic\Constants\SortingDirections;
 use exface\Core\CommonLogic\NameResolver;
 use exface\Core\Interfaces\NameResolverInterface;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\AppInterface;
+use exface\Core\CommonLogic\Workbench;
+use exface\Core\DataTypes\SortingDirectionsDataType;
+use exface\Core\Exceptions\DataTypes\DataTypeValidationError;
 
 abstract class AbstractDataType implements DataTypeInterface
 {
     use ImportUxonObjectTrait;
+    
+    private $workbench = null;
 
     private $name_resolver = null;
     
@@ -24,22 +28,31 @@ abstract class AbstractDataType implements DataTypeInterface
     
     private $shortDescription = null;
     
-    private $defaultWidgetUxon = null;
+    private $defaultEditorUxon = null;
     
     private $validationErrorCode = null;
     
     private $validationErrorText = null;
+    
+    private $value = null;
 
-    public function __construct(NameResolverInterface $name_resolver)
+    public function __construct(Workbench $workbench, $value = null, NameResolverInterface $name_resolver = null, UxonObject $configuration = null)
     {
+        $this->workbench = $workbench;
         $this->name_resolver = $name_resolver;
+        if (! is_null($configuration)) {
+            $this->importUxonObject($configuration);
+        }
+        if (! is_null($value)) {
+            $this->setValue($value);
+        }
     }
     
     /**
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\Interfaces\Model\DataTypeInterface::getModel()
+     * @see \exface\Core\Interfaces\DataTypes\DataTypeInterface::getModel()
      */
     public function getModel()
     {
@@ -54,14 +67,14 @@ abstract class AbstractDataType implements DataTypeInterface
      */
     public function getWorkbench()
     {
-        return $this->name_resolver->getWorkbench();
+        return $this->workbench;
     }
 
     /**
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\Interfaces\Model\DataTypeInterface::getName()
+     * @see \exface\Core\Interfaces\DataTypes\DataTypeInterface::getName()
      */
     public function getName()
     {
@@ -83,7 +96,7 @@ abstract class AbstractDataType implements DataTypeInterface
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\Interfaces\Model\DataTypeInterface::is()
+     * @see \exface\Core\Interfaces\DataTypes\DataTypeInterface::is()
      */
     public function is($data_type_or_resolvable_name)
     {
@@ -104,7 +117,7 @@ abstract class AbstractDataType implements DataTypeInterface
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\Interfaces\Model\DataTypeInterface::cast()
+     * @see \exface\Core\Interfaces\DataTypes\DataTypeInterface::cast()
      */
     public static function cast($string)
     {
@@ -114,7 +127,7 @@ abstract class AbstractDataType implements DataTypeInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\DataTypeInterface::parse()
+     * @see \exface\Core\Interfaces\DataTypes\DataTypeInterface::parse()
      */
     public function parse($string)
     {
@@ -125,35 +138,45 @@ abstract class AbstractDataType implements DataTypeInterface
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\Interfaces\Model\DataTypeInterface::validate()
+     * @see \exface\Core\Interfaces\DataTypes\DataTypeInterface::isValidValue()
      */
-    public static function validate($string)
+    public function isValidValue($string)
     {
         try {
             static::cast($string);
         } catch (DataTypeCastingError $e) {
             return false;
         }
+        
+        try {
+            $this->parse($value);
+        } catch (DataTypeValidationError $e) {
+            return false;
+        }
+        
         return true;
     }
     
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\DataTypeInterface::getDefaultSortingDirection()
+     * @see \exface\Core\Interfaces\DataTypes\DataTypeInterface::getDefaultSortingDirection()
      */
     public function getDefaultSortingDirection()
     {
-        return SortingDirections::DESC();
+        return SortingDirectionsDataType::DESC($this->getWorkbench());
     }
     
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\DataTypeInterface::getNameResolver()
+     * @see \exface\Core\Interfaces\DataTypes\DataTypeInterface::getNameResolver()
      */
     public function getNameResolver()
     {
+        if (is_null($this->name_resolver)) {
+            $this->name_resolver = NameResolver::createFromString(__CLASS__, NameResolver::OBJECT_TYPE_DATATYPE, $this->getWorkbench());
+        }
         return $this->name_resolver;
     }
     
@@ -194,7 +217,7 @@ abstract class AbstractDataType implements DataTypeInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\DataTypeInterface::getApp()
+     * @see \exface\Core\Interfaces\DataTypes\DataTypeInterface::getApp()
      */
     public function getApp()
     {
@@ -242,7 +265,7 @@ abstract class AbstractDataType implements DataTypeInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\DataTypeInterface::getShortDescription()
+     * @see \exface\Core\Interfaces\DataTypes\DataTypeInterface::getShortDescription()
      */
     public function getShortDescription()
     {
@@ -252,7 +275,7 @@ abstract class AbstractDataType implements DataTypeInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\DataTypeInterface::setShortDescription()
+     * @see \exface\Core\Interfaces\DataTypes\DataTypeInterface::setShortDescription()
      */
     public function setShortDescription($shortDescription)
     {
@@ -263,39 +286,49 @@ abstract class AbstractDataType implements DataTypeInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\DataTypeInterface::getDefaultWidgetUxon()
+     * @see \exface\Core\Interfaces\DataTypes\DataTypeInterface::getDefaultEditorUxon()
      */
-    public function getDefaultWidgetUxon()
+    public function getDefaultEditorUxon()
     {
-        if (is_null($this->defaultWidgetUxon)) {
-            $this->defaultWidgetUxon = new UxonObject();
+        if (is_null($this->defaultEditorUxon)) {
+            $this->defaultEditorUxon = new UxonObject();
         }
         
         // Make sure, the UXON has allways an explicit widget type! Otherwise checks for
         // widget type later in the code might put in their defaults potentially uncompatible
         // with properties set here or anywhere inbetween.
-        if (! $this->defaultWidgetUxon->hasProperty('widget_type')) {
-            $this->defaultWidgetUxon->setProperty('widget_type', $this->getWorkbench()->getConfig()->getOption('TEMPLATES.WIDGET_FOR_UNKNOWN_DATA_TYPES'));
+        if (! $this->defaultEditorUxon->hasProperty('widget_type')) {
+            $this->defaultEditorUxon->setProperty('widget_type', $this->getWorkbench()->getConfig()->getOption('TEMPLATES.DEFAULT_WIDGET_FOR_UNKNOWN_DATA_TYPES'));
         }
         
-        return $this->defaultWidgetUxon;
+        return $this->defaultEditorUxon;
     }
 
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\DataTypeInterface::setDefaultWidgetUxon()
+     * @see \exface\Core\Interfaces\DataTypes\DataTypeInterface::setDefaultEditorUxon()
      */
-    public function setDefaultWidgetUxon(UxonObject $defaultWidgetUxon)
+    public function setDefaultEditorUxon(UxonObject $defaultEditorUxon)
     {
-        $this->defaultWidgetUxon = $defaultWidgetUxon;
+        $this->defaultEditorUxon = $defaultEditorUxon;
         return $this;
     }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataTypes\DataTypeInterface::setDefaultEditorWidget()
+     */
+    public function setDefaultEditorWidget(UxonObject $uxon)
+    {
+        return $this->setDefaultEditorUxon($uxon);
+    }
 
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\DataTypeInterface::getValidationErrorCode()
+     * @see \exface\Core\Interfaces\DataTypes\DataTypeInterface::getValidationErrorCode()
      */
     public function getValidationErrorCode()
     {
@@ -305,7 +338,7 @@ abstract class AbstractDataType implements DataTypeInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\DataTypeInterface::setValidationErrorCode()
+     * @see \exface\Core\Interfaces\DataTypes\DataTypeInterface::setValidationErrorCode()
      */
     public function setValidationErrorCode($validationErrorCode)
     {
@@ -316,7 +349,7 @@ abstract class AbstractDataType implements DataTypeInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\DataTypeInterface::getValidationErrorText()
+     * @see \exface\Core\Interfaces\DataTypes\DataTypeInterface::getValidationErrorText()
      */
     public function getValidationErrorText()
     {
@@ -326,12 +359,53 @@ abstract class AbstractDataType implements DataTypeInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\DataTypeInterface::setValidationErrorText()
+     * @see \exface\Core\Interfaces\DataTypes\DataTypeInterface::setValidationErrorText()
      */
     public function setValidationErrorText($string)
     {
         $this->validationErrorText = $string;
         return $this;
     }
+    
+    public final function withValue($value)
+    {
+        return $this->copy()->setValue($value);
+    }
+    
+    public final function getValue()
+    {
+        return $this->value;
+    }
+    
+    public function hasValue()
+    {
+        return ! is_null($this->value);
+    }
+
+    protected final function setValue($value)
+    {
+        $this->value = $this->parse($value);
+        return $this;
+    }
+    
+    /**
+     * @return string
+     */
+    public function __toString()
+    {
+        return (string) $this->getValue();
+    }
+    
+    /**
+     * Compares one value object with another.
+     *
+     * @return boolean
+     */
+    public final function equals(DataTypeInterface $valueObject)
+    {
+        // TODO compare uxon configuration
+        return $this->getValue() === $valueObject->getValue() && $this->getAliasWithNamespace() === $valueObject->getAliasWithNamespace() && get_called_class() == get_class($valueObject);
+    }
+
 }
 ?>

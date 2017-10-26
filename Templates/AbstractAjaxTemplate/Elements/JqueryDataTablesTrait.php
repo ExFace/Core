@@ -379,7 +379,14 @@ JS;
             if ($col->getFooter()) {
                 $footer_callback .= <<<JS
 	            // Total over all pages
-	            if (api.ajax.json().footer[0]['{$col->getDataColumnName()}']){
+	            var data;
+                var loadFromServer = api.init().serverSide;
+                if (loadFromServer){
+                    data = api.ajax.json();
+                } else {
+                    data = api.data() ? api.data() : {};
+                }
+	            if (data.footer && data.footer[0]['{$col->getDataColumnName()}']){
 		            total = api.ajax.json().footer[0]['{$col->getDataColumnName()}'];
 		            // Update footer
 		            $( api.column( {$nr} ).footer() ).html( total );

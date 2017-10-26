@@ -1,9 +1,8 @@
 <?php
-namespace exface\Core\Interfaces\Model;
+namespace exface\Core\Interfaces\DataTypes;
 
 use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
 use exface\Core\CommonLogic\Model\Model;
-use exface\Core\CommonLogic\Constants\SortingDirections;
 use exface\Core\Interfaces\ExfaceClassInterface;
 use exface\Core\Interfaces\AliasInterface;
 use exface\Core\Interfaces\NameResolverInterface;
@@ -11,15 +10,22 @@ use exface\Core\Interfaces\AppInterface;
 use exface\Core\Interfaces\iCanBeCopied;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\CommonLogic\Workbench;
+use exface\Core\Exceptions\DataTypes\DataTypeValidationError;
+use exface\Core\DataTypes\SortingDirectionsDataType;
+use exface\Core\Interfaces\Model\MetaModelPrototypeInterface;
 
 interface DataTypeInterface extends ExfaceClassInterface, AliasInterface, iCanBeCopied, iCanBeConvertedToUxon, MetaModelPrototypeInterface
 {
 
     /**
      * 
-     * @param NameResolverInterface $name_resolver            
+     * @param Workbench $workbench
+     * @param mixed $value
+     * @param NameResolverInterface $name_resolver
+     * @param UxonObject $configuration
      */
-    public function __construct(NameResolverInterface $name_resolver);
+    public function __construct(Workbench $workbench, $value = null, NameResolverInterface $name_resolver = null, UxonObject $configuration = null);
 
     /**
      * @param string $string
@@ -68,7 +74,7 @@ interface DataTypeInterface extends ExfaceClassInterface, AliasInterface, iCanBe
      * @see DataTypeInterface::parse($string) for a similar method for instantiated types.
      *
      * @param string $string            
-     * @throws DataTypeValidationError
+     * @throws DataTypeCastingError
      * @return string
      */
     public static function cast($string);
@@ -124,14 +130,14 @@ interface DataTypeInterface extends ExfaceClassInterface, AliasInterface, iCanBe
     /**
      * Returns TRUE if the given value matches the data type (and thus can be parsed) or FALSE otherwise.
      *
-     * @param string $string            
+     * @param mixed $string            
      * @return boolean
      */
-    public static function validate($string);
+    public function isValidValue($string);
     
     /**
      * 
-     * @return SortingDirections
+     * @return SortingDirectionsDataType
      */
     public function getDefaultSortingDirection();
     
@@ -172,15 +178,22 @@ interface DataTypeInterface extends ExfaceClassInterface, AliasInterface, iCanBe
     public function setShortDescription($text);
     
     /**
-     * @return UxonObject
+     * 
+     * @param UxonObject $uxon
+     * @return DataTypeInterface
      */
-    public function getDefaultWidgetUxon();
+    public function setDefaultEditorUxon(UxonObject $uxon);
     
     /**
      * 
      * @param UxonObject $uxon
      * @return DataTypeInterface
      */
-    public function setDefaultWidgetUxon(UxonObject $uxon);
+    public function setDefaultEditorWidget(UxonObject $uxon);
+    
+    /**
+     * @return UxonObject
+     */
+    public function getDefaultEditorUxon();
 }
 ?>

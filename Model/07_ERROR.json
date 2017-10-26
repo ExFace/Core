@@ -1239,6 +1239,39 @@
             "DESCRIPTION": "Aliases of meta model entities can contain any characters, but may not start with and underscore \"_\", equals-sign \"=\", or tilde \"~\"."
         },
         {
+            "CREATED_ON": "2017-10-19 08:46:37",
+            "MODIFIED_ON": "2017-10-19 08:46:37",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e7b4aa02265dd3b111e4b318306b9a",
+            "APP": "0x31000000000000000000000000000000",
+            "ERROR_CODE": "6XGN2H6",
+            "ERROR_TEXT": "Not a valid value",
+            "DESCRIPTION": "The given value does not match any of the valid values defined in an enumeration data type."
+        },
+        {
+            "CREATED_ON": "2017-10-19 08:50:48",
+            "MODIFIED_ON": "2017-10-19 08:50:48",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e7b4aa97863b6ab111e4b318306b9a",
+            "APP": "0x31000000000000000000000000000000",
+            "ERROR_CODE": "6XGN4ES",
+            "ERROR_TEXT": "Invalid configuration for enumeration data type",
+            "DESCRIPTION": "The list of valid values of dynamic enumeration data types can be configured in the model of the data type or a specific attribute:\n\n{\n  ...\n  \"values\": {\n    \"VALUE1\": \"Label 1\",\n    \"VALUE2\": \"Label 2\"\n  }\n}"
+        },
+        {
+            "CREATED_ON": "2017-10-19 09:06:11",
+            "MODIFIED_ON": "2017-10-19 09:06:11",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e7b4acbdeba7bcb111e4b318306b9a",
+            "APP": "0x31000000000000000000000000000000",
+            "ERROR_CODE": "6XGNBJB",
+            "ERROR_TEXT": "Cannot override values in static enumeration data types",
+            "DESCRIPTION": "Valid values for wtatic enumeration data types are defined in the source code. They cannot be overridden in the model of the data type. \n\nThis behavior is intended because static enumerations can be used in both, the source code and in the meta model. This means, that their values must be supported by the source code. For example, data sorters will support sorting directions ASC and DESC defined in the exface.Core.SortingDirectionsDataType - it does not make sense to change or extend them as the sorters will not know, what to do with the new values."
+        },
+        {
             "CREATED_ON": "2017-10-20 14:48:17",
             "MODIFIED_ON": "2017-10-20 14:49:52",
             "CREATED_BY_USER": "0x11e7add6fab63cc6997b74e5434dc47d",

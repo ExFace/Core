@@ -23,7 +23,7 @@ class QueryPartAttribute extends QueryPart
             $this->setAttribute($attr);
         }
         
-        if ($aggr = DataAggregation::getAggregatorFromAlias($alias)){
+        if ($aggr = DataAggregation::getAggregatorFromAlias($this->getWorkbench(), $alias)){
             $this->aggregator = $aggr;
         }
     }

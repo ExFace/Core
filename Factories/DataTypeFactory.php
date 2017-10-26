@@ -5,7 +5,7 @@ use exface\Core\CommonLogic\Workbench;
 use exface\Core\Interfaces\NameResolverInterface;
 use exface\Core\Exceptions\DataTypes\DataTypeNotFoundError;
 use exface\Core\CommonLogic\NameResolver;
-use exface\Core\Interfaces\Model\DataTypeInterface;
+use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Model\ModelInterface;
 use exface\Core\Interfaces\AppInterface;
@@ -22,7 +22,7 @@ abstract class DataTypeFactory extends AbstractNameResolverFactory
     {
         if ($name_resolver->classExists()){
             $class = $name_resolver->getClassNameWithNamespace();
-            return new $class($name_resolver);
+            return new $class($name_resolver->getWorkbench(), null, $name_resolver);
         } else {
             throw new DataTypeNotFoundError('Data type "' . $name_resolver->getAliasWithNamespace() . '" not found in class "' . $name_resolver->getClassNameWithNamespace() . '"!');
         }
@@ -54,7 +54,7 @@ abstract class DataTypeFactory extends AbstractNameResolverFactory
      * 
      * @param Workbench $workbench
      * @param string $prototype_alias
-     * @return \exface\Core\Interfaces\Model\DataTypeInterface
+     * @return \exface\Core\Interfaces\DataTypes\DataTypeInterface
      */
     public static function createFromPrototype(Workbench $workbench, $prototype_resolvable_name)
     {
@@ -65,7 +65,7 @@ abstract class DataTypeFactory extends AbstractNameResolverFactory
      * 
      * @param ModelInterface $model
      * @param string $uid
-     * @return \exface\Core\Interfaces\Model\DataTypeInterface
+     * @return \exface\Core\Interfaces\DataTypes\DataTypeInterface
      */
     public static function createFromUidOrAlias(ModelInterface $model, $id_or_alias)
     {
@@ -80,11 +80,11 @@ abstract class DataTypeFactory extends AbstractNameResolverFactory
      * @param UxonObject $uxon
      * @param string $name
      * @param string $validation_error_code
-     * @param UxonObject $default_widget_uxon
+     * @param UxonObject $default_editor_uxon
      * 
-     * @return \exface\Core\Interfaces\Model\DataTypeInterface
+     * @return \exface\Core\Interfaces\DataTypes\DataTypeInterface
      */
-    public static function createFromModel($prototype_alias, $alias, AppInterface $app, UxonObject $uxon, $name = null, $short_description = null, $validation_error_code = null, $validation_error_text = null, UxonObject $default_widget_uxon = null){
+    public static function createFromModel($prototype_alias, $alias, AppInterface $app, UxonObject $uxon, $name = null, $short_description = null, $validation_error_code = null, $validation_error_text = null, UxonObject $default_editor_uxon = null){
         $data_type = static::createFromPrototype($app->getWorkbench(), $prototype_alias);
         $data_type->setApp($app);
         $data_type->setAlias($alias);
@@ -100,8 +100,8 @@ abstract class DataTypeFactory extends AbstractNameResolverFactory
         if ($short_description !== '' && ! is_null($short_description)) {
             $data_type->setShortDescription($short_description);
         }
-        if (! is_null($default_widget_uxon) && ! $default_widget_uxon->isEmpty()) {
-            $data_type->setDefaultWidgetUxon($default_widget_uxon);
+        if (! is_null($default_editor_uxon) && ! $default_editor_uxon->isEmpty()) {
+            $data_type->setDefaultEditorUxon($default_editor_uxon);
         }
         $data_type->importUxonObject($uxon);
         return $data_type;

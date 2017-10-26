@@ -12,10 +12,9 @@ use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\Model\MetaRelationInterface;
 use exface\Core\Widgets\Traits\iCanBeAlignedTrait;
 use exface\Core\DataTypes\NumberDataType;
-use exface\Core\DataTypes\DateDataType;
 use exface\Core\DataTypes\PriceDataType;
 use exface\Core\DataTypes\BooleanDataType;
-use exface\Core\Interfaces\Model\DataTypeInterface;
+use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\CommonLogic\Model\Aggregator;
 use exface\Core\Interfaces\Model\AggregatorInterface;
 
@@ -249,7 +248,7 @@ class Text extends AbstractWidget implements iShowSingleAttribute, iHaveValue, i
         if ($aggregator_or_string instanceof AggregatorInterface){
             $aggregator = $aggregator_or_string;
         } else {
-            $aggregator = new Aggregator($aggregator_or_string);
+            $aggregator = new Aggregator($this->getWorkbench(), $aggregator_or_string);
         }
         $this->aggregate_function = $aggregator;
         return $this;

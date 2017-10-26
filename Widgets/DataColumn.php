@@ -2,7 +2,7 @@
 namespace exface\Core\Widgets;
 
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
-use exface\Core\DataTypes\AbstractDataType;
+use exface\Core\CommonLogic\DataTypes\AbstractDataType;
 use exface\Core\Interfaces\Widgets\iShowText;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Factories\ExpressionFactory;
@@ -21,6 +21,8 @@ use exface\Core\DataTypes\DateDataType;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Interfaces\Model\AggregatorInterface;
 use exface\Core\CommonLogic\Model\Aggregator;
+use exface\Core\DataTypes\SortingDirectionsDataType;
+use exface\Core\DataTypes\TextStylesDataType;
 
 /**
  * The DataColumn represents a column in Data-widgets a DataTable.
@@ -69,8 +71,12 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     private $size = null;
 
     private $style = null;
+    
+    private $color = null;
 
     private $data_column_name = null;
+    
+    private $disableFormatters = false;
 
     public function hasFooter()
     {
@@ -307,7 +313,7 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
         if ($aggregator_or_string instanceof AggregatorInterface){
             $aggregator = $aggregator_or_string;
         } else {
-            $aggregator = new Aggregator($aggregator_or_string);
+            $aggregator = new Aggregator($this->getWorkbench(), $aggregator_or_string);
         }
         $this->aggregate_function = $aggregator;
         return $this;
@@ -406,7 +412,7 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
      */
     public function setStyle($value)
     {
-        $this->style = $value;
+        $this->style = TextStylesDataType::cast(strtoupper($value));
         return $this;
     }
 
@@ -473,7 +479,7 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     
     /**
      * 
-     * @return \exface\Core\CommonLogic\Constants\SortingDirections
+     * @return \exface\Core\DataTypes\SortingDirectionsDataType
      */
     public function getDefaultSortingDirection()
     {
@@ -497,19 +503,68 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
      * @uxon-property default_sorting_direction
      * @uxon-type [ASC,DESC]
      * 
-     * @param SortingDirections|string $asc_or_desc
+     * @param SortingDirectionsDataType|string $asc_or_desc
      */
     public function setDefaultSortingDirection($asc_or_desc)
     {
-        if ($asc_or_desc instanceof SortingDirections){
+        if ($asc_or_desc instanceof SortingDirectionsDataType){
             // Everything OK. Just proceed
-        } elseif (SortingDirections::isValid(strtolower($asc_or_desc))){
-            $asc_or_desc = new SortingDirections(strtolower($asc_or_desc));
+        } elseif (SortingDirectionsDataType::isValidValue(strtoupper($asc_or_desc))){
+            $asc_or_desc = new SortingDirectionsDataType($this->getWorkbench(), strtoupper($asc_or_desc));
         } else {
             throw new WidgetPropertyInvalidValueError($this, 'Invalid value "' . $asc_or_desc . '" for default sorting direction in data column: use ASC or DESC');
         }
         $this->default_sorting_direction = $asc_or_desc;
         return $this;
     }
+    
+    /**
+     * Returns TRUE if formatters are disabled for this column and FALSE otherwise.
+     * @return boolean
+     */
+    public function getDisableFormatters()
+    {
+        return $this->disableFormatters;
+    }
+
+    /**
+     * Set to TRUE to disable all formatters for this column (including data type specific ones!) - FALSE by default.
+     * 
+     * @uxon-property disable_formatters
+     * @uxon-type boolean
+     * 
+     * @param boolean $disableFormatters
+     * @return DataColumn
+     */
+    public function setDisableFormatters($disableFormatters)
+    {
+        $this->disableFormatters = $disableFormatters;
+        return $this;
+    }
+    /**
+     * 
+     * @return string $color
+     */
+    public function getColor()
+    {
+        return $this->color;
+    }
+
+    /**
+     * Sets the color to use for this data column (a CSS color code or anything else supported by your template).
+     * 
+     * @uxon-property color
+     * @uxon-type string
+     * 
+     * @param string $color
+     * @return DataColumn
+     */
+    public function setColor($color)
+    {
+        $this->color = $color;
+        return $this;
+    }
+
+
 }
 ?>

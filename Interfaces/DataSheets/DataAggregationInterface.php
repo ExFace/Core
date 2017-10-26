@@ -5,6 +5,7 @@ use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\iCanBeCopied;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\CommonLogic\Workbench;
 
 interface DataAggregationInterface extends iCanBeConvertedToUxon, iCanBeCopied
 {
@@ -29,5 +30,5 @@ interface DataAggregationInterface extends iCanBeConvertedToUxon, iCanBeCopied
      * @param string $attribute_alias            
      * @return string|boolean
      */
-    public static function getAggregatorFromAlias($attribute_alias);
+    public static function getAggregatorFromAlias(Workbench $workbench, $attribute_alias);
 }

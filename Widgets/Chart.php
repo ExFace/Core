@@ -64,6 +64,8 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveToolbars, iHave
      * @var boolean
      */
     private $stack_series = false;
+    
+    private $legendAlignment = null;
 
     /**
      *
@@ -645,5 +647,27 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveToolbars, iHave
     {
         return 'DataToolbar';
     }
+    /**
+     * @return string
+     */
+    public function getLegendAlignment()
+    {
+        return $this->legendAlignment;
+    }
+
+    /**
+     * 
+     * @uxon-property legend_alignment
+     * @uxon-type string [ left, right ]
+     * 
+     * @param string $legendAlignment
+     * @return Chart
+     */
+    public function setLegendAlignment($legendAlignment)
+    {
+        $this->legendAlignment = $legendAlignment;
+        return $this;
+    }
+
 }
 ?>

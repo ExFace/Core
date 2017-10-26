@@ -7,7 +7,7 @@ use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Factories\EntityListFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\DataSheets\DataColumnInterface;
-use exface\Core\DataTypes\AbstractDataType;
+use exface\Core\CommonLogic\DataTypes\AbstractDataType;
 use exface\Core\Factories\DataColumnTotalsFactory;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\DataSheets\DataSheetDiffError;
@@ -16,7 +16,7 @@ use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\Interfaces\Model\AggregatorInterface;
-use exface\Core\CommonLogic\Constants\AggregatorFunctions;
+use exface\Core\DataTypes\AggregatorFunctionsDataType;
 use exface\Core\DataTypes\BooleanDataType;
 
 class DataColumn implements DataColumnInterface
@@ -771,29 +771,29 @@ class DataColumn implements DataColumnInterface
         $args = $aggregator->getArguments();
         
         $output = '';
-        switch ($func) {
-            case AggregatorFunctions::LIST():
+        switch ($func->getValue()) {
+            case AggregatorFunctionsDataType::LIST:
                 $output = implode(($args[0] ? $args[0] : ', '), $row_array);
                 break;
-            case AggregatorFunctions::LIST_DISTINCT():
+            case AggregatorFunctionsDataType::LIST_DISTINCT:
                 $output = implode(($args[0] ? $args[0] : ', '), array_unique($row_array));
                 break;
-            case AggregatorFunctions::MIN():
+            case AggregatorFunctionsDataType::MIN:
                 $output = count($row_array) > 0 ? min($row_array) : 0;
                 break;
-            case AggregatorFunctions::MAX():
+            case AggregatorFunctionsDataType::MAX:
                 $output = count($row_array) > 0 ? max($row_array) : 0;
                 break;
-            case AggregatorFunctions::COUNT():
+            case AggregatorFunctionsDataType::COUNT:
                 $output = count($row_array);
                 break;
-            case AggregatorFunctions::COUNT_DISTINCT():
+            case AggregatorFunctionsDataType::COUNT_DISTINCT:
                 $output = count(array_unique($row_array));
                 break;
-            case AggregatorFunctions::SUM():
+            case AggregatorFunctionsDataType::SUM:
                 $output = array_sum($row_array);
                 break;
-            case AggregatorFunctions::AVG():
+            case AggregatorFunctionsDataType::AVG:
                 $output = count($row_array) > 0 ? array_sum($row_array) / count($row_array) : 0;
                 break;
             default:

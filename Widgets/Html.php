@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\Widgets;
 
+use exface\Core\DataTypes\BooleanDataType;
+
 /**
  * The HTML widget simply shows some HTML.
  * In contrast to a Text widget it will be seamlessly embedded in an HTML-based template
@@ -15,6 +17,8 @@ class Html extends Text
     private $css = null;
 
     private $javascript = null;
+    
+    private $margins = false;
 
     public function getHtml()
     {
@@ -65,5 +69,27 @@ class Html extends Text
         }
         return $uxon;
     }
+    /**
+     * @return boolean
+     */
+    public function getMargins()
+    {
+        return $this->margins;
+    }
+
+    /**
+     * Set to TRUE to enable margins around the HTML block - FALSE by default.
+     * 
+     * @uxon-property margins
+     * @uxon-type boolean
+     * 
+     * @param boolean $margins
+     */
+    public function setMargins($true_or_false)
+    {
+        $this->margins = BooleanDataType::cast($true_or_false);
+        return $this;
+    }
+
 }
 ?>

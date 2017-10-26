@@ -2,7 +2,7 @@
 namespace exface\Core\Exceptions\DataTypes;
 
 use exface\Core\Exceptions\RangeException;
-use exface\Core\Interfaces\Model\DataTypeInterface;
+use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 
 /**
  * Exception thrown if a value does not fit a data type's model.

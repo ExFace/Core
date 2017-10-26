@@ -1,7 +1,7 @@
 <?php
 namespace exface\Core\Widgets;
 
-use exface\Core\CommonLogic\Constants\AggregatorFunctions;
+use exface\Core\DataTypes\AggregatorFunctionsDataType;
 
 /**
  * 
@@ -39,7 +39,7 @@ class FormToolbar extends Toolbar
                     $widget = $form->getPage()->createWidget('InputHidden', $form);
                     $widget->setAttributeAlias($attr->getAlias());
                     if ($attr->isUidForObject()) {
-                        $widget->setAggregator(AggregatorFunctions::LIST());
+                        $widget->setAggregator(AggregatorFunctionsDataType::LIST($this->getWorkbench()));
                     } else {
                         $widget->setAggregator($attr->getDefaultAggregateFunction());
                     }

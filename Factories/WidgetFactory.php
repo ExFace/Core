@@ -97,7 +97,7 @@ abstract class WidgetFactory extends AbstractFactory
                     } catch (MetaAttributeNotFoundError $e) {
                         throw new UxonParserError($uxon_object, 'Cannot create an editor widget for attribute "' . $uxon_object->getProperty('attribute_alias') . '" of object "' . $obj->getAlias() . '". Attribute not found!', null, $e);
                     }
-                    $uxon_object = $attr->getDefaultWidgetUxon()->extend($uxon_object);
+                    $uxon_object = $attr->getDefaultEditorUxon()->extend($uxon_object);
                     $widget_type = $uxon_object->getProperty('widget_type');
                 }
             }

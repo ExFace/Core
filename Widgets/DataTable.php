@@ -10,11 +10,11 @@ use exface\Core\Interfaces\Widgets\iHaveContextMenu;
 
 /**
  * Renders data as a table with filters, columns, and toolbars.
- * Columns of the DataTable can also be made editable.
  *
- * Example:
+ * Example showing attributes from the metamodel:
+ * 
+ * ```json
  *  {
- *      "id": "attributes",
  *      "widget_type": "DataTable",
  *      "object_alias": "exface.Core.ATTRIBUTE",
  *      "filters": [
@@ -40,6 +40,12 @@ use exface\Core\Interfaces\Widgets\iHaveContextMenu;
  *              "caption": "Relation to"
  *          }
  *      ],
+ *      "sorters": [
+ *          {
+ *              "attribute_alias": "OBJECT__LABEL",
+ *              "direction": "desc"
+ *          }
+ *      ],
  *      "buttons": [
  *          {
  *              "action_alias": "exface.Core.UpdateData"
@@ -56,6 +62,12 @@ use exface\Core\Interfaces\Widgets\iHaveContextMenu;
  *          }
  *      ]
  *  }
+ * 
+ * ```
+ * ## Editable columns
+ *  
+ * Columns of the DataTable can also be made editable by configuring an input widget in the 
+ * `editor` property of the column. 
  *
  * @author Andrej Kabachnik
  *        
@@ -111,17 +123,30 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
 
     /**
      * Makes each row have a collapsible detail container with arbitrary widgets.
-     *
+     * 
      * Most templates will render an expand-button in each row, allowing to expand/collapse the detail widget.
      * This only works with interactiv templates (e.g. HTML-templates)
-     *
+     * 
      * The widget type of the details-widget can be omitted. It defaults to Container in this case.
-     *
+     * 
      * Example:
+     * ```json 
      * {
-     * height: nnn
-     * widgets: [ ... ]
+     *      height: 5,
+     *      widgets: [  
+     *          {
+     *              "widget_type": "DataTable",
+     *              "object_alias": "my.App.RelatedObject",
+     *              "filters": [
+     *                  {
+     *                      "attribute_alias": "RELATION_TO_OBJECT_OF_PARENT_TABLE"
+     *                  }
+     *              ],
+     *              "columns": []
+     *          }
+     *      ]
      * }
+     * ```
      *
      * @uxon-property row_details
      * @uxon-type \exface\Core\Widgets\Container

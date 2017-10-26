@@ -6,7 +6,7 @@ use exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartFilterGroup;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartAttribute;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartFilter;
-use exface\Core\DataTypes\AbstractDataType;
+use exface\Core\CommonLogic\DataTypes\AbstractDataType;
 use exface\Core\CommonLogic\AbstractDataConnector;
 use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
@@ -24,15 +24,14 @@ use exface\Core\DataTypes\RelationDataType;
 use exface\Core\Exceptions\DataTypes\DataTypeNotFoundError;
 use exface\Core\CommonLogic\QueryBuilder\QueryPart;
 use exface\Core\Interfaces\Model\AggregatorInterface;
-use exface\Core\CommonLogic\Constants\AggregatorFunctions;
+use exface\Core\DataTypes\AggregatorFunctionsDataType;
 use exface\Core\CommonLogic\Model\Aggregator;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 
 /**
  * A query builder for generic SQL syntax.
  * 
- * # Data addresses
- * =====================
+ * ## Data addresses
  * 
  * The data address of an object stored in an SQL database can be a table name,
  * or any SQL usable within the FROM clause. Placeholders for filters can
@@ -50,7 +49,7 @@ use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
  * This is especially usefull to prevent table alias collisions in custom 
  * subselects:
  * 
- * "(SELECT mt_[#~alias#].my_column FROM my_table mt_[#~alias#] WHERE ... )"
+ * `(SELECT mt_[#~alias#].my_column FROM my_table mt_[#~alias#] WHERE ... )`
  * 
  * This way you can control which uses of my_table are unique within the
  * generated SQL.
@@ -61,18 +60,16 @@ use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
  * would be an attribute being calculated from two other attributes. This can
  * easily be done via attribute placeholders in it's data address: 
  * 
- * "([#RELATION_TO_OBJECT1__ATTRIBUTE1#]/[#RELATION_TO_OBJECT2__ATTRIBUTE2#])"
+ * `([#RELATION_TO_OBJECT1__ATTRIBUTE1#]/[#RELATION_TO_OBJECT2__ATTRIBUTE2#])`
  * 
  * You can even use relation paths here! It will even work if the placeholders
  * point to attributes, that are based on custom SQL statements themselves.
  * Just keep in mind, that these expressions may easily become complex and
  * kill query performance if used uncarefully.
  * 
- * # Data source options
- * =====================
+ * ## Data source options
  * 
- * ## On attribute level
- * ---------------------
+ * ### On attribute level
  * 
  * - **SQL_DATA_TYPE** - tells the query builder what data type the column has.
  * This is only needed for complex types that require conversion: e.g. binary,
@@ -719,11 +716,11 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             $output = $this->buildSqlSelectSubselect($qpart, $select_from);
             if ($make_groupable && $aggregator){
                 if ($aggregator && $aggregator === $qpart->getAggregator()){
-                    switch ($aggregator->getFunction()){
-                        case AggregatorFunctions::COUNT():
-                        case AggregatorFunctions::COUNT_IF():
-                        case AggregatorFunctions::COUNT_DISTINCT():
-                            $aggregator = new Aggregator(AggregatorFunctions::SUM);
+                    switch ($aggregator->getFunction()->getValue()){
+                        case AggregatorFunctionsDataType::COUNT:
+                        case AggregatorFunctionsDataType::COUNT_IF:
+                        case AggregatorFunctionsDataType::COUNT_DISTINCT:
+                            $aggregator = new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::SUM);
                             break;
                     }
                 }
@@ -844,7 +841,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             }
             // The filter needs to be an EQ, since we want a to compare by "=" to whatever we define without any quotes
             // Putting the value in brackets makes sure it is treated as an SQL expression and not a normal value
-            $relq->addFilterFromString($rev_rel->getForeignKeyAlias(), '(' . $select_from . '.' . $junction . ')', EXF_COMPARATOR_EQUALS);
+            $relq->addFilterWithCustomSql($rev_rel->getForeignKeyAlias(), '(' . $select_from . '.' . $junction . ')', EXF_COMPARATOR_EQUALS);
         }
         
         $output = '(' . $relq->buildSqlQuerySelect() . ')';
@@ -889,25 +886,25 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         $output = '';
         
         $args = $aggregator->getArguments();
-        $function_name = $aggregator->getFunction();
+        $function_name = $aggregator->getFunction()->getValue();
         
-        switch ($aggregator->getFunction()) {
-            case AggregatorFunctions::SUM():
-            case AggregatorFunctions::AVG():
-            case AggregatorFunctions::COUNT():
-            case AggregatorFunctions::MAX():
-            case AggregatorFunctions::MIN():
+        switch ($function_name) {
+            case AggregatorFunctionsDataType::SUM:
+            case AggregatorFunctionsDataType::AVG:
+            case AggregatorFunctionsDataType::COUNT:
+            case AggregatorFunctionsDataType::MAX:
+            case AggregatorFunctionsDataType::MIN:
                 $output = $function_name . '(' . $sql . ')';
                 break;
-            case AggregatorFunctions::LIST_DISTINCT():
-            case AggregatorFunctions::LIST():
+            case AggregatorFunctionsDataType::LIST_DISTINCT:
+            case AggregatorFunctionsDataType::LIST:
                 $output = "GROUP_CONCAT(" . ($function_name == 'LIST_DISTINCT' ? 'DISTINCT ' : '') . $sql . " SEPARATOR " . ($args[0] ? $args[0] : "', '") . ")";
                 $qpart->getQuery()->addAggregation($qpart->getAttribute()->getAliasWithRelationPath());
                 break;
-            case AggregatorFunctions::COUNT_DISTINCT():
+            case AggregatorFunctionsDataType::COUNT_DISTINCT:
                 $output = "COUNT(DISTINCT " . $sql . ")";
                 break;
-            case AggregatorFunctions::COUNT_IF():
+            case AggregatorFunctionsDataType::COUNT_IF:
                 $cond = $args[0];
                 list($if_comp, $if_val) = explode(' ', $cond, 2);
                 if (!$if_comp || is_null($if_val)) {
@@ -1096,11 +1093,13 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     protected function buildSqlWhere(QueryPartFilterGroup $qpart, $rely_on_joins = true)
     {
         $where = '';
+        
         $op = $this->buildSqlLogicalOperator($qpart->getOperator());
         
         foreach ($qpart->getFilters() as $qpart_fltr) {
             if ($fltr_string = $this->buildSqlWhereCondition($qpart_fltr, $rely_on_joins)) {
-                $where .= "\n " . ($where ? $op . " " : '') . $fltr_string;
+                $where .= "\n-- buildSqlWhereCondition(" . $qpart_fltr->getCondition()->toString() . ", " . $rely_on_joins . ")"
+                        . "\n " . ($where ? $op . " " : '') . $fltr_string;
             }
         }
         
@@ -1245,7 +1244,25 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             // Pay attention to comparators expecting concatennated values (like IN) - the concatennated value will not validate against
             // the data type, but the separated parts should
             if ($comparator != EXF_COMPARATOR_IN && $comparator != EXF_COMPARATOR_NOT_IN) {
-                $value = $data_type::cast($value);
+                // If it's a single value, cast it to the data type to make sure, it's a valid value.
+                // FIXME how to distinguish between actual values and SQL statements as values? The
+                // following switch() makes sure, a number can be compared to an SQL statement 
+                // which is ultimately a string - casting the SQL statement would result in a 
+                // casting exception. The current solution is insecure though, as it makes it
+                // possible to pass SQL statements from outside and it uses them without any
+                // sanitization! We could use $qpart->isValueDataAddress() here, but currently
+                // we don't have the query part at hand at this point.
+                switch (true) {
+                    case ($data_type instanceof DateDataType):
+                    case ($data_type instanceof NumberDataType):
+                    case ($data_type instanceof BooleanDataType):
+                        if (! $this->checkForSqlStatement($value)) {
+                            $value = $data_type::cast($value);
+                        }
+                        break;
+                    default:
+                        $value = $data_type::cast($value);
+                }
             } else {
                 $values = explode($value_list_delimiter, $value);
                 $value = '';
@@ -1379,7 +1396,11 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 }
                 $relq->addAttribute($start_rel->getForeignKeyAlias());
                 // Add the filter relative to the first reverse relation with the same $value and $comparator
-                $relq->addFilterFromString($rel_filter, $qpart->getCompareValue(), $qpart->getComparator());
+                if ($qpart->isValueDataAddress()) {
+                    $relq->addFilterWithCustomSql($rel_filter, $qpart->getCompareValue(), $qpart->getComparator());
+                } else {
+                    $relq->addFilterFromString($rel_filter, $qpart->getCompareValue(), $qpart->getComparator());
+                }
                 // FIXME add support for related_object_special_key_alias
                 if (! $prefix_rel_path->isEmpty()) {
                     $prefix_rel_qpart = new QueryPartSelect(RelationPath::relationPathAdd($prefix_rel_path->toString(), $this->getMainObject()->getRelatedObject($prefix_rel_path->toString())->getUidAttributeAlias()), $this);

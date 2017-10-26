@@ -129,6 +129,7 @@ class FileFinderBuilder extends AbstractQueryBuilder
     public function read(AbstractDataConnector $data_connection = null)
     {
         $result_rows = array();
+        $pagination_applied = false;
         // Check if force filtering is enabled
         if ($this->getMainObject()->getDataAddressProperty('force_filtering') && count($this->getFilters()->getFiltersAndNestedGroups()) < 1) {
             return false;
@@ -141,6 +142,7 @@ class FileFinderBuilder extends AbstractQueryBuilder
             foreach ($files as $file) {
                 // If no full scan is required, apply pagination right away, so we do not even need to reed the files not being shown
                 if (! $query->getFullScanRequired()) {
+                    $pagination_applied = true;
                     $rownr ++;
                     // Skip rows, that are positioned below the offset
                     if (! $query->getFullScanRequired() && $rownr < $this->getOffset())
@@ -154,7 +156,9 @@ class FileFinderBuilder extends AbstractQueryBuilder
             }
             $result_rows = $this->applyFilters($result_rows);
             $result_rows = $this->applySorting($result_rows);
-            $result_rows = $this->applyPagination($result_rows);
+            if (! $pagination_applied) {
+                $result_rows = $this->applyPagination($result_rows);
+            }
         }
         
         if (! $this->getResultTotalRows()) {
@@ -172,9 +176,19 @@ class FileFinderBuilder extends AbstractQueryBuilder
         $file_data = $this->getDataFromFile($file, $query);
         
         foreach ($this->getAttributes() as $qpart) {
-            if ($field = $qpart->getAttribute()->getDataAddress()) {
+            if ($field = strtolower($qpart->getAttribute()->getDataAddress())) {
                 if (array_key_exists($field, $file_data)) {
                     $value = $file_data[$field];
+                } elseif (substr($field, 0, 4) === 'line') {
+                    $line_nr = intval(trim(substr($field, 4), '()'));
+                    if ($line_nr === 1) {
+                        $value = $file->openFile()->fgets();
+                    } else {
+                        // TODO
+                    }
+                } elseif (substr($field, 0, 7) === 'subpath') {
+                    list($start_pos, $end_pos) = explode(',', trim(substr($field, 7), '()'));
+                    // TODO
                 } else {
                     $method_name = 'get' . ucfirst($field);
                     if (method_exists($file, $method_name)) {

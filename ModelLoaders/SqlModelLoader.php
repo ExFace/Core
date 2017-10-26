@@ -28,7 +28,7 @@ use exface\Core\CommonLogic\Model\Attribute;
 use exface\Core\CommonLogic\Model\Relation;
 use exface\Core\Interfaces\ActionListInterface;
 use exface\Core\Exceptions\DataTypes\DataTypeNotFoundError;
-use exface\Core\Interfaces\Model\DataTypeInterface;
+use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Interfaces\NameResolverInterface;
@@ -96,18 +96,12 @@ class SqlModelLoader implements ModelLoaderInterface
         }
         $query = $this->getDataConnection()->runSql('
 				SELECT
+                    o.*,
 					' . $this->buildSqlUuidSelector('o.oid') . ' as oid,
 					' . $this->buildSqlUuidSelector('o.app_oid') . ' as app_oid,
-					a.app_alias,
-					o.object_name,
-					o.object_alias,
-					o.data_address,
-					o.data_address_properties,
 					' . $this->buildSqlUuidSelector('o.data_source_oid') . ' as data_source_oid,
 					' . $this->buildSqlUuidSelector('o.parent_object_oid') . ' as parent_object_oid,
-					o.short_description,
-					o.long_description,
-					o.default_editor_uxon,
+					a.app_alias,
 					' . $this->buildSqlUuidSelector('ds.base_object_oid') . ' as base_object_oid,
 					EXISTS (SELECT 1 FROM exf_object_behaviors ob WHERE ob.object_oid = o.oid) AS has_behaviors
 				FROM exf_object o 
@@ -253,7 +247,16 @@ class SqlModelLoader implements ModelLoaderInterface
                     } elseif ($attr) {
                         // At this point, we know, it is a direct relation. This can only happen if the object has a corresponding direct
                         // attribute. This is why the elseif($attr) is there.
-                        $rel = new Relation($exface, $attr->getId(), $attr->getAlias(), $attr->getName(), $object->getId(), $attr->getAlias(), $row['related_object_oid'], $row['related_object_special_key_attribute_oid'], MetaRelationInterface::RELATION_TYPE_FORWARD);
+                        $rel = new Relation(
+                            $exface, 
+                            $attr->getId(), // relation id
+                            $attr->getAlias(), // alias
+                            $attr->getName(), // name for captions
+                            $object->getId(), // main object
+                            $attr->getAlias(), // foreign key in main object
+                            $row['related_object_oid'], // related object
+                            $row['related_object_special_key_attribute_oid'], // related object key attribute (UID will be used if not set)
+                            MetaRelationInterface::RELATION_TYPE_FORWARD); // relation type
                     }
                     
                     if ($rel) {
@@ -287,13 +290,18 @@ class SqlModelLoader implements ModelLoaderInterface
         $attr->setDataAddress($row['data']);
         $attr->setDataAddressProperties(UxonObject::fromJson($row['data_properties']));
         $attr->setFormatter($row['attribute_formatter']);
+        $attr->setRelationFlag($row['related_object_oid'] ? true : false);
         $attr->setDataType($row['data_type_oid']);
-        if ($row['default_editor_uxon']){
-            $default_widget_uxon = $default_widget_uxon = UxonObject::fromJson($row['default_editor_uxon']);
-            if (! $default_widget_uxon->isEmpty()){
-                $attr->setDefaultWidgetUxon($default_widget_uxon);
-            }
+        
+        $default_editor = $row['default_editor_uxon'];
+        if ($default_editor && $default_editor !== '{}'){
+            $attr->setDefaultEditorUxon(UxonObject::fromJson($default_editor));
         }
+        $custom_type = $row['custom_data_type_uxon'];
+        if ($custom_type && $custom_type !== '{}') {
+            $attr->setCustomDataTypeUxon(UxonObject::fromJson($custom_type));
+        }
+        
         // Control flags
         if (! is_null($row['attribute_readable_flag'])){
             $attr->setWritable($row['attribute_readable_flag']);
@@ -308,9 +316,9 @@ class SqlModelLoader implements ModelLoaderInterface
         $attr->setSortable($row['attribute_sortable_flag']);
         $attr->setFilterable($row['attribute_filterable_flag']);
         $attr->setAggregatable($row['attribute_aggregatable_flag']);
+        
         // Defaults
         $attr->setDefaultDisplayOrder($row['default_display_order']);
-        $attr->setRelationFlag($row['related_object_oid'] ? true : false);
         $attr->setDefaultValue($row['default_value']);
         $attr->setFixedValue($row['fixed_value']);
         $attr->setFormula($row['attribute_formula']);
@@ -319,6 +327,7 @@ class SqlModelLoader implements ModelLoaderInterface
         }
         $attr->setDefaultAggregateFunction($row['default_aggregate_function']);
         $attr->setValueListDelimiter($row['value_list_delimiter']);
+        
         // Descriptions
         $attr->setShortDescription($row['attribute_short_description']);
         
@@ -577,9 +586,9 @@ class SqlModelLoader implements ModelLoaderInterface
         if ($cache instanceof DataTypeInterface) {
             return $cache->copy();
         } elseif (is_array($cache)) {
-            $uxon = UxonObject::fromJson($cache['uxon_config']);
-            $default_widget_uxon = UxonObject::fromJson($cache['default_widget_uxon']);
-            $data_type = DataTypeFactory::createFromModel($cache['prototype'], $cache['data_type_alias'], $this->getWorkbench()->getApp($cache['app_alias']), $uxon, $cache['name'], $cache['short_description'], $cache['validation_error_code'], $cache['validation_error_text'], $default_widget_uxon);
+            $uxon = UxonObject::fromJson($cache['config_uxon']);
+            $default_editor_uxon = UxonObject::fromJson($cache['default_editor_uxon']);
+            $data_type = DataTypeFactory::createFromModel($cache['prototype'], $cache['data_type_alias'], $this->getWorkbench()->getApp($cache['app_alias']), $uxon, $cache['name'], $cache['short_description'], $cache['validation_error_code'], $cache['validation_error_text'], $default_editor_uxon);
             $this->data_types_by_uid[$cache['oid']] = $data_type;
             return $data_type;
         } else {
