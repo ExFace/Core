@@ -90,14 +90,14 @@ abstract class AbstractTemplate implements TemplateInterface
 
     /**
      * Processes the current HTTP request, assuming it was made from a UI using this template
-     *
-     * @param string $page_id            
-     * @param string $widget_id            
-     * @param string $action_alias            
-     * @param boolean $disable_error_handling            
+     * 
+     * @param string $page_alias
+     * @param string $widget_id
+     * @param string $action_alias
+     * @param boolean $disable_error_handling
      * @return string
      */
-    abstract function processRequest($page_id = NULL, $widget_id = NULL, $action_alias = NULL, $disable_error_handling = false);
+    abstract function processRequest($page_alias = NULL, $widget_id = NULL, $action_alias = NULL, $disable_error_handling = false);
 
     public function is($template_alias)
     {

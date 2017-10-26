@@ -112,7 +112,7 @@ HTML;
 				method: 'post',
 				data: {
 					action: '{$widget->getRowDetailsAction()}',
-					resource: '{$this->getPageId()}',
+					resource: '{$widget->getPage()->getAliasWithNamespace()}',
 					element: '{$widget->getRowDetailsContainer()->getId()}',
 					prefill: {
 						oId:"{$widget->getMetaObject()->getId()}",
@@ -256,7 +256,7 @@ JS;
 				{$this->buildJsBusyIconShow()}
 				var filtersOn = false;
 				d.action = '{$widget->getLazyLoadingAction()}';
-				d.resource = "{$this->getPageId()}";
+				d.resource = "{$widget->getPage()->getAliasWithNamespace()}";
 				d.element = "{$widget->getId()}";
 				d.object = "{$this->getWidget()->getMetaObject()->getId()}";
                 d.q = $('#{$this->getId()}_quickSearch').val();

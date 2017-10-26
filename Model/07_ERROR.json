@@ -1270,6 +1270,17 @@
             "ERROR_CODE": "6XGNBJB",
             "ERROR_TEXT": "Cannot override values in static enumeration data types",
             "DESCRIPTION": "Valid values for wtatic enumeration data types are defined in the source code. They cannot be overridden in the model of the data type. \n\nThis behavior is intended because static enumerations can be used in both, the source code and in the meta model. This means, that their values must be supported by the source code. For example, data sorters will support sorting directions ASC and DESC defined in the exface.Core.SortingDirectionsDataType - it does not make sense to change or extend them as the sorters will not know, what to do with the new values."
+        },
+        {
+            "CREATED_ON": "2017-10-20 14:48:17",
+            "MODIFIED_ON": "2017-10-20 14:49:52",
+            "CREATED_BY_USER": "0x11e7add6fab63cc6997b74e5434dc47d",
+            "MODIFIED_BY_USER": "0x11e7add6fab63cc6997b74e5434dc47d",
+            "UID": "0x11e7b5a5b48fc122b65674e5434dc47d",
+            "APP": "0x31000000000000000000000000000000",
+            "ERROR_CODE": "6XHA8KR",
+            "ERROR_TEXT": "This UI page is not part of any app.",
+            "DESCRIPTION": "This error occurs if an app is requested from a UiPage which is not part of any app."
         }
     ],
     "totals_rows": [],

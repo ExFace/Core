@@ -1,0 +1,97 @@
+{
+    "id": "0xfcda43fa949e11e789c6028037ec0200",
+    "alias_with_namespace": "exface.core.attributes",
+    "menu_parent_page_alias": "exface.core.alexa-ui-core",
+    "menu_index": "4",
+    "menu_visible": true,
+    "name": "Attributes",
+    "short_description": "",
+    "replaces_page_alias": "",
+    "contents": {
+        "id": "attributes",
+        "widget_type": "DataTable",
+        "object_alias": "exface.Core.ATTRIBUTE",
+        "filters": [
+            {
+                "attribute_alias": "OBJECT"
+            },
+            {
+                "attribute_alias": "OBJECT__DATA_SOURCE"
+            },
+            {
+                "attribute_alias": "DATA_ADDRESS"
+            },
+            {
+                "attribute_alias": "DATA_ADDRESS_PROPS",
+                "widget_type": "Input",
+                "height": 1
+            },
+            {
+                "attribute_alias": "LABEL"
+            },
+            {
+                "attribute_alias": "ALIAS"
+            },
+            {
+                "attribute_alias": "OBJECT__APP"
+            }
+        ],
+        "columns": [
+            {
+                "attribute_alias": "OBJECT__LABEL"
+            },
+            {
+                "attribute_alias": "LABEL"
+            },
+            {
+                "attribute_alias": "ALIAS"
+            },
+            {
+                "attribute_alias": "DISPLAYORDER"
+            },
+            {
+                "attribute_alias": "DATA_ADDRESS"
+            },
+            {
+                "attribute_alias": "DATATYPE__LABEL"
+            },
+            {
+                "attribute_alias": "LABELFLAG"
+            },
+            {
+                "attribute_alias": "REQUIREDFLAG"
+            },
+            {
+                "attribute_alias": "EDITABLEFLAG"
+            },
+            {
+                "attribute_alias": "HIDDENFLAG"
+            },
+            {
+                "attribute_alias": "RELATED_OBJ__LABEL",
+                "caption": "Relation to"
+            },
+            {
+                "attribute_alias": "SHORT_DESCRIPTION"
+            }
+        ],
+        "buttons": [
+            {
+                "action_alias": "exface.Core.UpdateData"
+            },
+            {
+                "action_alias": "exface.Core.CreateObjectDialog"
+            },
+            {
+                "action_alias": "exface.Core.EditObjectDialog",
+                "bind_to_double_click": true
+            },
+            {
+                "action_alias": "exface.Core.DuplicateObjectDialog"
+            },
+            {
+                "action_alias": "exface.Core.DeleteObject"
+            }
+        ]
+    }
+}

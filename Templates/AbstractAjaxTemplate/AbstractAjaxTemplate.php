@@ -49,7 +49,7 @@ abstract class AbstractAjaxTemplate extends AbstractTemplate
 
     protected $request_widget_id = NULL;
 
-    protected $request_page_id = NULL;
+    protected $request_page_alias = NULL;
 
     protected $request_action_alias = NULL;
 
@@ -138,7 +138,7 @@ abstract class AbstractAjaxTemplate extends AbstractTemplate
             // TODO Is there a way to display errors in the header nicely?
             /*
              * $ui = $this->getWorkbench()->ui();
-             * $page = UiPageFactory::create($ui, 0);
+             * $page = UiPageFactory::create($ui, '');
              * return $this->getWorkbench()->getDebugger()->printException($e, false);
              */
             throw $e;
@@ -156,23 +156,23 @@ abstract class AbstractAjaxTemplate extends AbstractTemplate
      */
     function getElement(\exface\Core\Widgets\AbstractWidget $widget)
     {
-        if (! array_key_exists($widget->getPageId(), $this->elements) || ! array_key_exists($widget->getId(), $this->elements[$widget->getPageId()])) {
+        if (! array_key_exists($widget->getPage()->getAliasWithNamespace(), $this->elements) || ! array_key_exists($widget->getId(), $this->elements[$widget->getPage()->getAliasWithNamespace()])) {
             $elem_class = $this->getClass($widget);
             $instance = new $elem_class($widget, $this);
-            // $this->elements[$widget->getPageId()][$widget->getId()] = $instance;
+            // $this->elements[$widget->getPage()->getAliasWithNamespace()][$widget->getId()] = $instance;
         }
         
-        return $this->elements[$widget->getPageId()][$widget->getId()];
+        return $this->elements[$widget->getPage()->getAliasWithNamespace()][$widget->getId()];
     }
 
     public function removeElement(AbstractWidget $widget)
     {
-        unset($this->elements[$widget->getPageId()][$widget->getId()]);
+        unset($this->elements[$widget->getPage()->getAliasWithNamespace()][$widget->getId()]);
     }
 
     public function registerElement($element)
     {
-        $this->elements[$element->getWidget()->getPageId()][$element->getWidget()->getId()] = $element;
+        $this->elements[$element->getWidget()->getPage()->getAliasWithNamespace()][$element->getWidget()->getId()] = $element;
         return $this;
     }
 
@@ -211,30 +211,28 @@ abstract class AbstractAjaxTemplate extends AbstractTemplate
      * hand, but know it's ID and the resource, where it resides.
      *
      * @param string $widget_id            
-     * @param string $page_id            
+     * @param UiPageInterface $page            
      * @return AbstractJqueryElement
      */
-    public function getElementByWidgetId($widget_id, $page_id)
+    public function getElementByWidgetId($widget_id, UiPageInterface $page)
     {
-        if ($elem = $this->elements[$page_id][$widget_id]) {
+        if ($elem = $this->elements[$page->getAliasWithNamespace()][$widget_id]) {
             return $elem;
+        } elseif ($widget = $page->getWidget($widget_id)) {
+            return $this->getElement($widget);
         } else {
-            if ($widget_id = $this->getWorkbench()->ui()->getWidget($widget_id, $page_id)) {
-                return $this->getElement($widget_id);
-            } else {
-                return false;
-            }
+            return false;
         }
     }
 
     public function getElementFromWidgetLink(WidgetLink $link)
     {
-        return $this->getElementByWidgetId($link->getWidgetId(), $link->getPageId());
+        return $this->getElementByWidgetId($link->getWidgetId(), $link->getPage());
     }
 
-    public function createLinkInternal($page_id, $url_params = '')
+    public function createLinkInternal(UiPageInterface $page, $url_params = '')
     {
-        return $this->getWorkbench()->getCMS()->createLinkInternal($page_id, $url_params);
+        return $this->getWorkbench()->getCMS()->createLinkInternal($page, $url_params);
     }
 
     public function getDataSheetFromRequest($object_id = NULL, $widget = NULL)
@@ -389,10 +387,10 @@ abstract class AbstractAjaxTemplate extends AbstractTemplate
      *
      * @see \exface\Core\CommonLogic\AbstractTemplate::processRequest()
      */
-    public function processRequest($page_id = NULL, $widget_id = NULL, $action_alias = NULL, $disable_error_handling = false)
+    public function processRequest($page_alias = NULL, $widget_id = NULL, $action_alias = NULL, $disable_error_handling = false)
     {
         // Look for basic request parameters
-        $called_in_resource_id = $page_id ? $page_id : $this->getRequestPageId();
+        $called_in_resource_alias = $page_alias ? $page_alias : $this->getRequestPageAlias();
         $called_by_widget_id = $widget_id ? $widget_id : $this->getRequestWidgetId();
         $action_alias = $action_alias ? $action_alias : $this->getRequestActionAlias();
         
@@ -400,9 +398,9 @@ abstract class AbstractAjaxTemplate extends AbstractTemplate
         if ($this->getSubrequestId())
             $this->getWorkbench()->context()->getScopeRequest()->setSubrequestId($this->getSubrequestId());
         
-        if ($called_in_resource_id) {
+        if ($called_in_resource_alias) {
             try {
-                $this->getWorkbench()->ui()->setPageIdCurrent($called_in_resource_id);
+                $this->getWorkbench()->ui()->setPageCurrent($this->getWorkbench()->ui()->getPage($called_in_resource_alias));
                 $this->getWorkbench()->ui()->getPageCurrent();
             } catch (\Throwable $e) {
                 if (! $disable_error_handling) {
@@ -425,11 +423,11 @@ abstract class AbstractAjaxTemplate extends AbstractTemplate
         
         // Do the actual processing
         try {
-            if ($called_in_resource_id) {
+            if ($called_in_resource_alias) {
                 if ($called_by_widget_id) {
-                    $widget = $this->getWorkbench()->ui()->getWidget($called_by_widget_id, $called_in_resource_id);
+                    $widget = $this->getWorkbench()->ui()->getPage($called_in_resource_alias)->getWidget($called_by_widget_id);
                 } else {
-                    $widget = $this->getWorkbench()->ui()->getPage($called_in_resource_id)->getWidgetRoot();
+                    $widget = $this->getWorkbench()->ui()->getPage($called_in_resource_alias)->getWidgetRoot();
                 }
                 if (! $object_id && $widget)
                     $object_id = $widget->getMetaObject()->getId();
@@ -480,7 +478,7 @@ abstract class AbstractAjaxTemplate extends AbstractTemplate
                 if (! $e instanceof ExceptionInterface){
                     $e = new InternalError($e->getMessage(), null, $e);
                 }
-                $this->setResponseFromError($e, UiPageFactory::create($this->getWorkbench()->ui(), 0));
+                $this->setResponseFromError($e, UiPageFactory::create($this->getWorkbench()->ui(), ''));
             } else {
                 throw $e;
             }
@@ -692,13 +690,13 @@ abstract class AbstractAjaxTemplate extends AbstractTemplate
         return $this->request_object_id;
     }
 
-    public function getRequestPageId()
+    public function getRequestPageAlias()
     {
-        if (! $this->request_page_id) {
-            $this->request_page_id = ! is_null($this->getWorkbench()->getRequestParams()['resource']) ? intval($this->getWorkbench()->getRequestParams()['resource']) : NULL;
+        if (! $this->request_page_alias) {
+            $this->request_page_alias = ! is_null($this->getWorkbench()->getRequestParams()['resource']) ? $this->getWorkbench()->getRequestParams()['resource'] : NULL;
             $this->getWorkbench()->removeRequestParam('resource');
         }
-        return $this->request_page_id;
+        return $this->request_page_alias;
     }
 
     public function getRequestWidgetId()

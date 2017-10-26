@@ -1,0 +1,37 @@
+{
+    "id": "0x25d98c16949f11e7b780028037ec0200",
+    "alias_with_namespace": "exface.core.data-types",
+    "menu_parent_page_alias": "exface.core.alexa-ui-core",
+    "menu_index": "6",
+    "menu_visible": true,
+    "name": "Data Types",
+    "short_description": "",
+    "replaces_page_alias": "",
+    "contents": {
+        "object_alias": "exface.Core.DATATYPE",
+        "widget_type": "DataTable",
+        "columns": [
+            {
+                "attribute_group_alias": "~VISIBLE"
+            }
+        ],
+        "buttons": [
+            {
+                "action_alias": "exface.Core.UpdateData"
+            },
+            {
+                "action_alias": "exface.Core.CreateObjectDialog"
+            },
+            {
+                "action_alias": "exface.Core.EditObjectDialog",
+                "bind_to_double_click": true
+            },
+            {
+                "action_alias": "exface.Core.DuplicateObjectDialog"
+            },
+            {
+                "action_alias": "exface.Core.DeleteObject"
+            }
+        ]
+    }
+}

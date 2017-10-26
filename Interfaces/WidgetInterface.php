@@ -10,6 +10,7 @@ use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Model\MetaRelationPathInterface;
+use exface\Core\Interfaces\Model\UiPageInterface;
 
 interface WidgetInterface extends ExfaceClassInterface, iCanBeCopied
 {
@@ -423,12 +424,6 @@ interface WidgetInterface extends ExfaceClassInterface, iCanBeCopied
      * @return UiPageInterface
      */
     public function getPage();
-
-    /**
-     *
-     * @return string
-     */
-    public function getPageId();
 
     /**
      * Returns the orignal UXON description of this widget specified by the user, that is without any automatic enhancements

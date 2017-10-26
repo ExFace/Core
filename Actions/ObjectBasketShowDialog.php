@@ -40,7 +40,7 @@ class ObjectBasketShowDialog extends ShowDialog
         try {
             $page = $this->getCalledOnUiPage();
         } catch (\Throwable $e) {
-            $page = UiPageFactory::createEmpty($this->getWorkbench()->ui(), 0);
+            $page = UiPageFactory::createEmpty($this->getWorkbench()->ui());
         }
         /* @var $dialog \exface\Core\Widgets\Dialog */
         $dialog = WidgetFactory::create($page, 'Dialog', $this->getCalledByWidget());

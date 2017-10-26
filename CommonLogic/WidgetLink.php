@@ -11,7 +11,7 @@ class WidgetLink implements WidgetLinkInterface
 
     private $exface;
 
-    private $page_id;
+    private $page;
 
     private $widget_id;
 
@@ -50,19 +50,19 @@ class WidgetLink implements WidgetLinkInterface
     public function parseLinkString($string)
     {
         $string = trim($string);
-        // Check for reference to specific page_id
+        // Check for reference to specific page_alias
         if (strpos($string, '[') === 0) {
-            $page_id = substr($string, 1, strpos($string, ']') - 1);
-            if ($page_id) {
-                $this->setPageId($page_id);
+            $page_alias = substr($string, 1, strpos($string, ']') - 1);
+            if ($page_alias) {
+                $this->setPage($this->getWorkbench()->ui()->getPage($page_alias));
                 $string = substr($string, strpos($string, ']') + 1);
             } else {
-                throw new UnexpectedValueException('Cannot parse widget reference "' . $string . '"! Expected format: "[page_id]widget_id".', '6T91IGZ');
+                throw new UnexpectedValueException('Cannot parse widget reference "' . $string . '"! Expected format: "[page_alias]widget_id".', '6T91IGZ');
             }
         }
         
         // Determine the widget id
-        // Now the string definitely does not kontain a resource id any more
+        // Now the string definitely does not contain a resource id any more
         if ($pos = strpos($string, '!')) {
             // If there is a "!", there is at least a column id following it
             $widget_id = substr($string, 0, $pos);
@@ -90,7 +90,7 @@ class WidgetLink implements WidgetLinkInterface
 
     public function parseLinkUxon(UxonObject $object)
     {
-        $this->setPageId($object->getProperty('page_id'));
+        $this->setPage($this->getWorkbench()->ui()->getPage($object->getProperty('page_alias')));
         $this->setWidgetId($object->getProperty('widget_id'));
         return $this;
     }
@@ -104,31 +104,6 @@ class WidgetLink implements WidgetLinkInterface
     public function importUxonObject(UxonObject $uxon)
     {
         return $this->parseLinkUxon($uxon);
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Widgets\WidgetLinkInterface::getPageId()
-     */
-    public function getPageId()
-    {
-        if (is_null($this->page_id)){
-            return $this->getWorkbench()->ui()->getPageCurrent()->getId();
-        }
-        return $this->page_id;
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Widgets\WidgetLinkInterface::setPageId()
-     */
-    public function setPageId($value)
-    {
-        $this->page_id = $value;
     }
 
     /**
@@ -163,20 +138,33 @@ class WidgetLink implements WidgetLinkInterface
     {
         $widget = $this->getPage()->getWidget($this->getWidgetId());
         if (! $widget) {
-            throw new WidgetNotFoundError('Cannot find widget "' . $this->getWidgetId() . '" in resource "' . $this->getPageId() . '"!');
+            throw new WidgetNotFoundError('Cannot find widget "' . $this->getWidgetId() . '" in resource "' . $this->getPage()->getAliasWithNamespace() . '"!');
         }
         return $widget;
     }
 
     /**
-     *
-     * {@inheritdoc}
-     *
+     * 
+     * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\WidgetLinkInterface::getPage()
      */
     public function getPage()
     {
-        return $this->getWorkbench()->ui()->getPage($this->getPageId());
+        if (! $this->page) {
+            $this->page = $this->getWorkbench()->ui()->getPageCurrent();
+        }
+        return $this->page;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\WidgetLinkInterface::setPage()
+     */
+    public function setPage($page)
+    {
+        $this->page = $page;
+        return $this;
     }
 
     /**
@@ -185,8 +173,7 @@ class WidgetLink implements WidgetLinkInterface
      */
     public function getWidgetUxon()
     {
-        $resource = $this->exface->getCMS()->getPageContents($this->getPageId());
-        $uxon = UxonObject::fromJson($resource);
+        $uxon = $this->getPage()->exportUxonObject();
         if ($this->getWidgetId() && $uxon->getProperty('widget_id') != $this->getWidgetId()) {
             $uxon = $this->findWidgetIdInUxon($uxon, $this->getWidgetId());
             if ($uxon === false) {
@@ -197,7 +184,7 @@ class WidgetLink implements WidgetLinkInterface
     }
 
     /**
-     *
+     * 
      * @param UxonObject $uxon
      * @param string $widget_id            
      * @return UxonObject|boolean
@@ -234,7 +221,7 @@ class WidgetLink implements WidgetLinkInterface
     {
         $uxon = $this->exface->createUxonObject();
         $uxon->setProperty('widget_id', $this->widget_id);
-        $uxon->setProperty('page_id', $this->page_id);
+        $uxon->setProperty('page_alias', $this->getPage()->getAliasWithNamespace());
         $uxon->setProperty('widget_id_space', $this->widget_id_space);
         $uxon->setProperty('column_id', $this->column_id);
         $uxon->setProperty('row_number', $this->row_number);

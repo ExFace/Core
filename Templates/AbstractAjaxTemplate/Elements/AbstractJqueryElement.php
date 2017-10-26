@@ -150,16 +150,6 @@ abstract class AbstractJqueryElement implements ExfaceClassInterface
     }
 
     /**
-     * Returns the page id
-     *
-     * @return string
-     */
-    public function getPageId()
-    {
-        return $this->getWidget()->getPage()->getId();
-    }
-
-    /**
      * Returns the maximum number of characters in one line for hint messages in this template
      *
      * @return string

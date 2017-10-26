@@ -16,11 +16,11 @@ abstract class WidgetFactory extends AbstractFactory
 
     /**
      * Creates a widget of the specified type in the given page.
-     *
-     * @param UiPageInterface $page            
-     * @param string $widget_type            
+     * 
+     * @param UiPageInterface $page
+     * @param string $widget_type
      * @param WidgetInterface $parent_widget
-     *            
+     * 
      * @throws UnexpectedValueException if an unknown widget type is passed
      * 
      * @return WidgetInterface
@@ -40,16 +40,16 @@ abstract class WidgetFactory extends AbstractFactory
 
     /**
      * Creates a widget from a UXON description object.
-     * The main difference to create_widget() is, that the widget type will be 
-     * determined from the UXON description. If not given there, the 
+     * The main difference to create_widget() is, that the widget type will be
+     * determined from the UXON description. If not given there, the
      * $fallback_widget_type will be used or, if not set, ExFace will attempt
      * to find a default widget type of the meta object or the attribute.
-     *
-     * @param UiPageInterface $page            
-     * @param UxonObject $uxon_object            
+     * 
+     * @param UiPageInterface $page
+     * @param UxonObject $uxon_object
      * @param WidgetInterface $parent_widget
-     * @param string $fallback_widget_type    
-     *         
+     * @param string $fallback_widget_type
+     * 
      * @throws UxonParserError
      * 
      * @return WidgetInterface

@@ -18,6 +18,7 @@ use exface\Core\Exceptions\Actions\ActionConfigurationError;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 use exface\Core\CommonLogic\Constants\Icons;
+use exface\Core\Interfaces\Actions\iReferenceWidget;
 
 /**
  * The ShowWidget action is the base for all actions, that render widgets.
@@ -25,7 +26,7 @@ use exface\Core\CommonLogic\Constants\Icons;
  * @author Andrej Kabachnik
  *        
  */
-class ShowWidget extends AbstractAction implements iShowWidget
+class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
 {
 
     private $widget = null;
@@ -47,7 +48,7 @@ class ShowWidget extends AbstractAction implements iShowWidget
 
     private $filter_contexts = array();
 
-    private $page_id = null;
+    private $page_alias = null;
 
     protected function init()
     {
@@ -79,13 +80,13 @@ class ShowWidget extends AbstractAction implements iShowWidget
         if (is_null($this->widget)) {
             if ($this->getWidgetUxon()) {
                 $this->widget = WidgetFactory::createFromUxon($this->getCalledOnUiPage(), $this->getWidgetUxon(), $this->getCalledByWidget(), $this->getDefaultWidgetType());
-            } elseif ($this->widget_id && ! $this->page_id) {
-                $this->widget = $this->getApp()->getWorkbench()->ui()->getWidget($this->widget_id, $this->getCalledOnUiPage()->getId());
-            } elseif ($this->page_id && ! $this->widget_id) {
+            } elseif ($this->widget_id && ! $this->page_alias) {
+                $this->widget = $this->getCalledOnUiPage()->getWidget($this->widget_id);
+            } elseif ($this->page_alias && ! $this->widget_id) {
                 // TODO this causes problems with simple links to other pages, as the action attempts to load them here...
-                // $this->widget = $this->getApp()->getWorkbench()->ui()->getPage($this->page_id)->getWidgetRoot();
-            } elseif ($this->page_id && $this->widget_id) {
-                $this->widget = $this->getApp()->getWorkbench()->ui()->getWidget($this->widget_id, $this->page_id);
+                // $this->widget = $this->getApp()->getWorkbench()->ui()->getPage($this->page_alias)->getWidgetRoot();
+            } elseif ($this->page_alias && $this->widget_id) {
+                $this->widget = $this->getPage()->getWidget($this->widget_id);
             }
         }
         return $this->widget;
@@ -310,6 +311,11 @@ class ShowWidget extends AbstractAction implements iShowWidget
         return $this;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\iReferenceWidget::getWidgetId()
+     */
     public function getWidgetId()
     {
         if ($this->getWidget()) {
@@ -320,14 +326,14 @@ class ShowWidget extends AbstractAction implements iShowWidget
     }
     
     /**
-     * Sets the id of the widget to be shown. If not set, the main widget of the
+     * Specifies the id of the widget to be shown. If not set, the main widget of the
      * page will be used.
      * 
      * @uxon-property widget_id
      * @uxon-type string
      * 
-     * @param string $value
-     * @return ShowWidget
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\iReferenceWidget::setWidgetId()
      */
     public function setWidgetId($value)
     {
@@ -397,7 +403,7 @@ class ShowWidget extends AbstractAction implements iShowWidget
 
     /**
      * ShowWidget needs some kind of widget representation in UXON in order to be recreatable from the UXON object.
-     * TODO Currently the widget is represented by widget_id and page_id and there is no action widget UXON saved here. This won't work for generated widgets!
+     * TODO Currently the widget is represented by widget_id and page_alias and there is no action widget UXON saved here. This won't work for generated widgets!
      * 
      * @see \exface\Core\Interfaces\Actions\ActionInterface::exportUxonObject()
      */
@@ -405,7 +411,7 @@ class ShowWidget extends AbstractAction implements iShowWidget
     {
         $uxon = parent::exportUxonObject();
         $uxon->setProperty('widget_id', $this->getWidgetId());
-        $uxon->setProperty('page_id', $this->getCalledOnUiPage()->getId());
+        $uxon->setProperty('page_alias', $this->page_alias ? $this->page_alias : $this->getCalledOnUiPage()->getAliasWithNamespace());
         $uxon->setProperty('prefill_with_filter_context', $this->getPrefillWithFilterContext());
         $uxon->setProperty('prefill_with_input_data', $this->getPrefillWithInputData());
         if ($this->getPrefillDataSheet()) {
@@ -413,35 +419,38 @@ class ShowWidget extends AbstractAction implements iShowWidget
         }
         return $uxon;
     }
-    
+
     /**
      * 
-     * @return string
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\iReferenceWidget::getPage()
      */
-    public function getPageId()
+    public function getPage()
     {
         if ($this->isWidgetDefined()) {
-            return $this->getWidget()->getPageId();
+            return $this->getWidget()->getPage();
         }
-        return $this->page_id;
+        return $this->getWorkbench()->ui()->getPage($this->page_alias);
     }
-    
+
     /**
-     * Which page to get the widget from. If only page_id is specified, the
-     * action will use the main root widget of that page.
+     * The alias of the page to get the widget from.
      * 
-     * @uxon-property page_id
-     * @uxon-type string
+     * Widget links accept the internal UIDs, the namespaced alias as well as 
+     * the CMS-page ids here because the users do not really know the difference
+     * and will attempt to specify the id, they see first. Since most CMS show
+     * their internal ids, that typically are not UUIDs, we just allow both ids
+     * here.
      * 
      * @param string $value
-     * @return \exface\Core\Actions\ShowWidget
+     * @return iReferenceWidget
      */
-    public function setPageId($value)
+    protected function setPageAlias($value)
     {
-        $this->page_id = $value;
+        $this->page_alias = $value;
         return $this;
     }
-    
+
     /**
      * 
      * @return \exface\Core\Interfaces\Widgets\WidgetLinkInterface
@@ -455,7 +464,7 @@ class ShowWidget extends AbstractAction implements iShowWidget
      * If a widget link is defined here, the prefill data for this action will
      * be taken from that widget link and not from the input widget.
      * 
-     * The value can be either a string ([page_id]widget_id!optional_column_id)
+     * The value can be either a string ([page_alias]widget_id!optional_column_id)
      * or a widget link defined as an object.
      * 
      * @uxon-property prefill_with_data_from_widget_link
