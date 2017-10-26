@@ -92,7 +92,7 @@ abstract class AbstractCmsConnector implements CmsConnectorInterface
      * Adds the passed UiPage to the page cache.
      * 
      * @param UiPageInterface $page
-     * @return Modx
+     * @return CmsConnectorInterface
      */
     protected function addPageToCache(UiPageInterface $page)
     {
@@ -134,8 +134,6 @@ abstract class AbstractCmsConnector implements CmsConnectorInterface
      */
     public function hasPage($page_or_id_or_alias)
     {
-        global $modx;
-        
         $id_or_alias = $page_or_id_or_alias instanceof UiPageInterface ? $page_or_id_or_alias->getId() : $page_or_id_or_alias;
         try {
             $this->getPageId($id_or_alias);
