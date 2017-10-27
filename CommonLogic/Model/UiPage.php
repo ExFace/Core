@@ -772,26 +772,28 @@ class UiPage implements UiPageInterface
     }
 
     /**
+     * @param boolean $parseContents parse the passed contents to create the contained widgets
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\UiPageInterface::setContents()
      */
-    public function setContents($contents)
+    public function setContents($contents, $parseContents = true)
     {
         if (is_string($contents)) {
-            $this->contents = $contents;
-            $this->removeAllWidgets();
-            $contents = trim($contents);
-            if (substr($contents, 0, 1) == '{' && substr($contents, - 1) == '}') {
-                WidgetFactory::createFromUxon($this, UxonObject::fromAnything($contents));
-            }
+            $this->contents = trim($contents);
         } elseif ($contents instanceof UxonObject) {
             $this->contents = json_encode($contents->toArray(), JSON_UNESCAPED_UNICODE);
-            $this->removeAllWidgets();
-            WidgetFactory::createFromUxon($this, $contents);
         } else {
             throw new InvalidArgumentException('Cannot set contents from ' . gettype($contents) . ': expecting string or UxonObject!');
         }
+        
+        if ($parseContents) {
+            $this->removeAllWidgets();
+            if (substr($this->contents, 0, 1) == '{' && substr($this->contents, - 1) == '}') {
+                WidgetFactory::createFromUxon($this, UxonObject::fromAnything($this->contents));
+            }
+        }
+        
         return $this;
     }
 
