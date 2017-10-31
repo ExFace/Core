@@ -1,7 +1,7 @@
 {
     "id": "0xfcda43fa949e11e789c6028037ec0200",
     "alias_with_namespace": "exface.core.attributes",
-    "menu_parent_page_alias": "exface.core.alexa-ui-core",
+    "menu_parent_page_alias": "exface.core.metamodel",
     "menu_index": "4",
     "menu_visible": true,
     "name": "Attributes",
@@ -19,11 +19,12 @@
                 "attribute_alias": "OBJECT__DATA_SOURCE"
             },
             {
-                "attribute_alias": "DATA_ADDRESS"
+                "attribute_alias": "DATA_ADDRESS",
+                "height": 1
             },
             {
                 "attribute_alias": "DATA_ADDRESS_PROPS",
-                "widget_type": "Input",
+                "widget_type": "input",
                 "height": 1
             },
             {
@@ -34,6 +35,12 @@
             },
             {
                 "attribute_alias": "OBJECT__APP"
+            },
+            {
+                "attribute_alias": "DEFAULT_EDITOR_UXON",
+                "widget_type": "Input",
+                "height": 1,
+                "width": 1
             }
         ],
         "columns": [
@@ -72,7 +79,10 @@
                 "caption": "Relation to"
             },
             {
-                "attribute_alias": "SHORT_DESCRIPTION"
+                "attribute_alias": "CREATED_ON"
+            },
+            {
+                "attribute_alias": "MODIFIED_ON"
             }
         ],
         "buttons": [

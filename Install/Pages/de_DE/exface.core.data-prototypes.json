@@ -1,14 +1,14 @@
 {
-    "id": "0xb00f0326949e11e79341028037ec0200",
-    "alias_with_namespace": "exface.core.actions",
-    "menu_parent_page_alias": "exface.core.apps",
-    "menu_index": "0",
+    "id": "0xf831c47aba2c11e7895fe4b318306b9a",
+    "alias_with_namespace": "exface.core.data-prototypes",
+    "menu_parent_page_alias": "exface.core.documentation",
+    "menu_index": "4",
     "menu_visible": true,
-    "name": "Actions",
+    "name": "Data Prototypes",
     "short_description": "",
     "replaces_page_alias": "",
     "contents": {
-        "object_alias": "exface.core.ACTION",
+        "object_alias": "exface.core.DATA_PROTOTYPE",
         "widget_type": "DataTable",
         "filters": [
             {

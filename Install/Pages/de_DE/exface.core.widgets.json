@@ -1,8 +1,8 @@
 {
     "id": "0x3187ce4c949f11e7b01d028037ec0200",
     "alias_with_namespace": "exface.core.widgets",
-    "menu_parent_page_alias": "exface.core.alexa-ui-core",
-    "menu_index": "7",
+    "menu_parent_page_alias": "exface.core.documentation",
+    "menu_index": "1",
     "menu_visible": true,
     "name": "Widgets",
     "short_description": "",

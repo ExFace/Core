@@ -1,0 +1,11 @@
+{
+    "id": "0xf831c595ba2c11e7895fe4b318306b9a",
+    "alias_with_namespace": "exface.core.documentation",
+    "menu_parent_page_alias": "exface.core.administration",
+    "menu_index": "1",
+    "menu_visible": true,
+    "name": "Documentation",
+    "short_description": "",
+    "replaces_page_alias": "",
+    "contents": "429"
+}

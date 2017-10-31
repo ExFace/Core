@@ -1,8 +1,8 @@
 {
     "id": "0x0a3e0996949f11e78ac4028037ec0200",
     "alias_with_namespace": "exface.core.users",
-    "menu_parent_page_alias": "exface.core.alexa-ui-core",
-    "menu_index": "5",
+    "menu_parent_page_alias": "exface.core.metamodel",
+    "menu_index": "7",
     "menu_visible": true,
     "name": "Users",
     "short_description": "",
@@ -43,13 +43,13 @@
             {
                 "action": {
                     "alias": "exface.Core.GoToPage",
-                    "page_alias": "exface.core.credentials"
+                    "page_alias": 187
                 },
                 "caption": "Credentials"
             },
             {
                 "action_alias": "exface.Core.GoToPage",
-                "action_page_alias": "exface.core.connection-credentials",
+                "action_page_alias": 198,
                 "caption": "Connections"
             }
         ]

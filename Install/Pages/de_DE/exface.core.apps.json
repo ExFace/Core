@@ -1,7 +1,7 @@
 {
     "id": "0xa7760458949e11e7a353028037ec0200",
     "alias_with_namespace": "exface.core.apps",
-    "menu_parent_page_alias": "exface.core.alexa-ui-core",
+    "menu_parent_page_alias": "exface.core.metamodel",
     "menu_index": "2",
     "menu_visible": true,
     "name": "Apps",
@@ -18,6 +18,10 @@
             },
             {
                 "attribute_alias": "ALIAS"
+            },
+            {
+                "attribute_alias": "MODIFIED_ON",
+                "comparator": "<="
             }
         ],
         "sorters": [
@@ -48,15 +52,15 @@
             },
             {
                 "attribute_alias": "OBJECT__UID:COUNT",
-                "caption": "Objects"
+                "caption": "Objekte"
             },
             {
                 "attribute_alias": "DATASRC__UID:COUNT",
-                "caption": "Data Sources"
+                "caption": "Systeme"
             },
             {
                 "attribute_alias": "CONNECTION__UID:COUNT",
-                "caption": "Connections"
+                "caption": "Verbindungen"
             }
         ],
         "buttons": [
@@ -71,42 +75,29 @@
             },
             {
                 "action_alias": "exface.Core.GoToPage",
-                "action_page_alias": "exface.core.objects",
-                "caption": "Objekte"
+                "action_page_alias": 37,
+                "caption": "Objects"
             },
             {
                 "action_alias": "axenox.PackageManager.ExportAppModel"
             },
             {
                 "action_alias": "axenox.PackageManager.InstallApp",
-                "caption": "Reparieren"
+                "caption": "Repair"
             },
             {
-                "action_alias": "axenox.PackageManager.ImportAppModel"
+                "action_alias": "axenox.PackageManager.ImportAppModel",
+                "caption": "Repair model"
             },
             {
                 "action_alias": "axenox.PackageManager.ComposerCleanupPreviousActions",
-                "caption": "Composer aufr\u00e4umen"
+                "caption": "Cleanup composer"
             },
             {
-                "action": {
-                    "alias": "exface.Core.ShowDialog",
-                    "widget": {
-                        "widget_type": "Dialog",
-                        "object_alias": "exface.Core.APP",
-                        "widgets": [
-                            {
-                                "attribute_alias": "ALIAS"
-                            }
-                        ],
-                        "Buttons": [
-                            {
-                                "action_alias": "axenox.PackageManager.InstallApp"
-                            }
-                        ]
-                    }
-                },
-                "caption": "App installieren"
+                "action_alias": "axenox.PackageManager.BackupApp"
+            },
+            {
+                "action_alias": "axenox.PackageManager.InstallAppFromVendorFolder"
             }
         ]
     }

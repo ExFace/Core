@@ -1,10 +1,10 @@
 {
     "id": "0x57bfceca96ca11e79702028037ec0200",
     "alias_with_namespace": "exface.core.data-sources",
-    "menu_parent_page_alias": "exface.core.alexa-ui-core",
+    "menu_parent_page_alias": "exface.core.metamodel",
     "menu_index": "0",
     "menu_visible": true,
-    "name": "Datenquellen",
+    "name": "Data Sources",
     "short_description": "",
     "replaces_page_alias": "",
     "contents": {
@@ -36,10 +36,13 @@
             },
             {
                 "attribute_alias": "BASE_OBJECT__LABEL",
-                "caption": "Base Object"
+                "caption": "Basisobjekt"
             },
             {
-                "attribute_alias": "READONLY"
+                "attribute_alias": "READABLE_FLAG"
+            },
+            {
+                "attribute_alias": "WRITABLE_FLAG"
             },
             {
                 "attribute_alias": "CONNECTION__READONLY",
@@ -60,11 +63,11 @@
                 "action_alias": "exface.Core.CreateObjectDialog"
             },
             {
-                "action_alias": "exface.Core.EditObjectDialog",
-                "bind_to_double_click": true
+                "action_alias": "exface.Core.DuplicateObjectDialog"
             },
             {
-                "action_alias": "exface.Core.DuplicateObjectDialog"
+                "action_alias": "exface.Core.EditObjectDialog",
+                "bind_to_double_click": true
             },
             {
                 "action_alias": "exface.Core.DeleteObject"

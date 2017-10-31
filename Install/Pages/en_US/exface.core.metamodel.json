@@ -1,10 +1,10 @@
 {
     "id": "0x8f9e3238949e11e7aa5f028037ec0200",
-    "alias_with_namespace": "exface.core.alexa-ui-core",
+    "alias_with_namespace": "exface.core.metamodel",
     "menu_parent_page_alias": "exface.core.administration",
     "menu_index": "0",
     "menu_visible": true,
-    "name": "alexa UI Core",
+    "name": "Metamodel",
     "short_description": "",
     "replaces_page_alias": "",
     "contents": {
