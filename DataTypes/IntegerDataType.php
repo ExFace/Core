@@ -12,6 +12,12 @@ namespace exface\Core\DataTypes;
  */
 class IntegerDataType extends NumberDataType
 {
+    protected function init()
+    {
+        // Integers do not use digit groups by default
+        $this->setGroupDigits(false);
+    }
+    
     public function getPrecisionMax()
     {
         return 0;
