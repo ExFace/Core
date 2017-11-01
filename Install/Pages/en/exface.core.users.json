@@ -43,7 +43,7 @@
             {
                 "action": {
                     "alias": "exface.Core.GoToPage",
-                    "page_alias": 187
+                    "page_alias": "exface.core.credentials"
                 },
                 "caption": "Credentials"
             },
