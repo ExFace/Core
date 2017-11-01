@@ -79,6 +79,8 @@ class UiPage implements UiPageInterface
     private $alias = null;
 
     private $namespace = null;
+    
+    private $dirty = false;
 
     /**
      *
@@ -125,7 +127,20 @@ class UiPage implements UiPageInterface
      */
     public function getWidgetRoot()
     {
+        if ($this->dirty) {
+            $this->regenerateFromContents();
+        }
         return $this->widget_root;
+    }
+    
+    protected function regenerateFromContents()
+    {
+        $this->removeAllWidgets();
+        
+        $contents = $this->getContents();
+        if (substr($contents, 0, 1) == '{' && substr($contents, - 1) == '}') {
+            WidgetFactory::createFromUxon($this, UxonObject::fromAnything($contents));
+        }
     }
 
     /**
@@ -136,6 +151,11 @@ class UiPage implements UiPageInterface
      */
     public function getWidget($id, WidgetInterface $parent = null)
     {
+        if ($this->dirty) {
+            $this->regenerateFromContents();
+            $this->dirty = false;
+        }
+        
         if (is_null($id) || $id == '') {
             return $this->getWidgetRoot();
         }
@@ -779,19 +799,16 @@ class UiPage implements UiPageInterface
     public function setContents($contents)
     {
         if (is_string($contents)) {
-            $this->contents = $contents;
-            $this->removeAllWidgets();
+            $this->contents = trim($contents);
             $contents = trim($contents);
-            if (substr($contents, 0, 1) == '{' && substr($contents, - 1) == '}') {
-                WidgetFactory::createFromUxon($this, UxonObject::fromAnything($contents));
-            }
+            $this->dirty = true;
         } elseif ($contents instanceof UxonObject) {
-            $this->contents = json_encode($contents->toArray(), JSON_UNESCAPED_UNICODE);
-            $this->removeAllWidgets();
-            WidgetFactory::createFromUxon($this, $contents);
+            $this->contents = $contents->toJson();
+            $this->dirty = true;
         } else {
             throw new InvalidArgumentException('Cannot set contents from ' . gettype($contents) . ': expecting string or UxonObject!');
         }
+        
         return $this;
     }
 
