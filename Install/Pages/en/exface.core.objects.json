@@ -97,7 +97,7 @@
             {
                 "action": {
                     "alias": "exface.Core.GoToPage",
-                    "page_alias": 44
+                    "page_alias": "exface.core.attributes"
                 },
                 "caption": "Attribute"
             },
