@@ -1,0 +1,77 @@
+{
+    "id": "0x57bfceca96ca11e79702028037ec0200",
+    "alias_with_namespace": "exface.core.data-sources",
+    "menu_parent_page_alias": "exface.core.metamodel",
+    "menu_index": "0",
+    "menu_visible": true,
+    "name": "Data Sources",
+    "short_description": "",
+    "replaces_page_alias": "",
+    "contents": {
+        "widget_type": "DataTable",
+        "object_alias": "exface.Core.DATASRC",
+        "filters": [
+            {
+                "attribute_alias": "LABEL"
+            },
+            {
+                "attribute_alias": "APP"
+            },
+            {
+                "attribute_alias": "QUERYBUILDER"
+            }
+        ],
+        "columns": [
+            {
+                "attribute_alias": "LABEL"
+            },
+            {
+                "attribute_alias": "ALIAS"
+            },
+            {
+                "attribute_alias": "CONNECTION__LABEL"
+            },
+            {
+                "attribute_alias": "QUERYBUILDER"
+            },
+            {
+                "attribute_alias": "BASE_OBJECT__LABEL",
+                "caption": "Basisobjekt"
+            },
+            {
+                "attribute_alias": "READABLE_FLAG"
+            },
+            {
+                "attribute_alias": "WRITABLE_FLAG"
+            },
+            {
+                "attribute_alias": "CONNECTION__READONLY",
+                "caption": "Connection readonly"
+            },
+            {
+                "attribute_alias": "APP__LABEL"
+            }
+        ],
+        "sorters": [
+            {
+                "attribute_alias": "LABEL",
+                "direction": "ASC"
+            }
+        ],
+        "buttons": [
+            {
+                "action_alias": "exface.Core.CreateObjectDialog"
+            },
+            {
+                "action_alias": "exface.Core.DuplicateObjectDialog"
+            },
+            {
+                "action_alias": "exface.Core.EditObjectDialog",
+                "bind_to_double_click": true
+            },
+            {
+                "action_alias": "exface.Core.DeleteObject"
+            }
+        ]
+    }
+}
