@@ -75,7 +75,7 @@
             },
             {
                 "action_alias": "exface.Core.GoToPage",
-                "action_page_alias": 37,
+                "action_page_alias": "exface.core.objects",
                 "caption": "Objects"
             },
             {
