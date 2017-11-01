@@ -35,14 +35,14 @@ interface ActionInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
      *
      * @return string
      */
-    public function getIconName();
+    public function getIcon();
 
     /**
      *
      * @param string $value            
      * @return ActionInterface
      */
-    public function setIconName($value);
+    public function setIcon($value);
 
     /**
      * Sets the alias of the action.

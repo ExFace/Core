@@ -10,7 +10,7 @@ class GoBack extends AbstractAction implements iNavigate
 
     protected function init()
     {
-        $this->setIconName(Icons::ARROW_LEFT);
+        $this->setIcon(Icons::ARROW_LEFT);
     }
 
     protected function perform()

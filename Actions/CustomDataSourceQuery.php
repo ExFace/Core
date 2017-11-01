@@ -23,7 +23,7 @@ class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuer
     protected function init()
     {
         parent::init();
-        $this->setIconName(Icons::COGS);
+        $this->setIcon(Icons::COGS);
     }
 
     /**

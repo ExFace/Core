@@ -18,7 +18,7 @@ class GenerateAttributesFromDataSource extends AbstractAction
 
     protected function init()
     {
-        $this->setIconName(Icons::COGS);
+        $this->setIcon(Icons::COGS);
         $this->setInputRowsMin(1);
         $this->setInputRowsMax(null);
     }

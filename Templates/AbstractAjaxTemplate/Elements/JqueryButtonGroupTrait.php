@@ -71,7 +71,7 @@ trait JqueryButtonGroupTrait
             if (! $icon){
                 $this->more_buttons_menu->setHideButtonIcon(true);
             } else {
-                $this->more_buttons_menu->setIconName($icon);
+                $this->more_buttons_menu->setIcon($icon);
             }
             $widget->addButton($this->more_buttons_menu);
         }

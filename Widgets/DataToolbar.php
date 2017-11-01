@@ -223,7 +223,7 @@ class DataToolbar extends Toolbar
             $search_button
             ->setActionAlias('exface.Core.RefreshWidget')
             ->setCaption($this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.READDATA.SEARCH'))
-            ->setIconName(Icons::SEARCH)
+            ->setIcon(Icons::SEARCH)
             ->setVisibility(EXF_WIDGET_VISIBILITY_PROMOTED)
             ->setAlign(EXF_ALIGN_OPPOSITE);
             

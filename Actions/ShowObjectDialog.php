@@ -48,7 +48,7 @@ class ShowObjectDialog extends ShowDialog
         parent::init();
         $this->setInputRowsMin(1);
         $this->setInputRowsMax(1);
-        $this->setIconName(Icons::INFO_CIRCLE);
+        $this->setIcon(Icons::INFO_CIRCLE);
         $this->setShowOnlyEditableAttributes(false);
         // Disable prefilling the widget from contexts as we only whant to fill in data that actually comes from the data source
         $this->setPrefillWithFilterContext(false);

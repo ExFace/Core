@@ -53,7 +53,7 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
     protected function init()
     {
         parent::init();
-        $this->setIconName(Icons::EXTERNAL_LINK);
+        $this->setIcon(Icons::EXTERNAL_LINK);
     }
 
     protected function perform()

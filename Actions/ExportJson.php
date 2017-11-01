@@ -23,7 +23,7 @@ class ExportJson extends ExportDataFile
     protected function init()
     {
         parent::init();
-        $this->setIconName(Icons::FILE_TEXT_O);
+        $this->setIcon(Icons::FILE_TEXT_O);
     }
 
     /**

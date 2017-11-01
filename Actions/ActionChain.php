@@ -189,9 +189,9 @@ class ActionChain extends AbstractAction
         return parent::getName();
     }
 
-    public function getIconName()
+    public function getIcon()
     {
-        return parent::getIconName() ? parent::getIconName() : $this->getActions()->getFirst()->getIconName();
+        return parent::getIcon() ? parent::getIcon() : $this->getActions()->getFirst()->getIcon();
     }
     
     public function implementsInterface($interface)

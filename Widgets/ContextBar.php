@@ -164,7 +164,7 @@ class ContextBar extends Toolbar
         ->setId($this->createButtonIdFromContext($context))
         ->setActionAlias('exface.Core.ShowContextPopup')
         ->setHint($context->getName())
-        ->setIconName($context->getIcon())
+        ->setIcon($context->getIcon())
         ->setMetaObject($this->getWorkbench()->model()->getObject('exface.Core.CONTEXT_BASE_OBJECT'));
         
         $btn->getAction()->setContextAlias($context->getAliasWithNamespace());
