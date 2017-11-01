@@ -5362,7 +5362,7 @@
         },
         {
             "CREATED_ON": "2017-11-01 12:42:54",
-            "MODIFIED_ON": "2017-11-01 12:48:31",
+            "MODIFIED_ON": "2017-11-01 14:07:13",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e7bf0227d8e5cf9c0f0205857feb80",
@@ -5376,7 +5376,7 @@
             "SYSTEMFLAG": "0",
             "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Default Language",
-            "ALIAS": "default_language_code",
+            "ALIAS": "DEFAULT_LANGUAGE_CODE",
             "DATATYPE": "0x11e7bf02824f925f9c0f0205857feb80",
             "DATA_ADDRESS": "default_language_code",
             "OBJECT": "0x35370000000000000000000000000000",

@@ -455,5 +455,22 @@ class App implements AppInterface
         }
         return false;
     }
+    
+    public function getDefaultLanguageCode()
+    {
+        return $this->getAppModelDataSheet()->getCellValue('DEFAULT_LANGUAGE_CODE', 0);
+    }
+    
+    protected function getAppModelDataSheet()
+    {
+        $app_object = $this->getWorkbench()->model()->getObject('exface.Core.App');
+        $ds = DataSheetFactory::createFromObject($app_object);
+        foreach ($app_object->getAttributes()->getAll() as $attr) {
+            $ds->getColumns()->addFromAttribute($attr);
+        }
+        $ds->addFilterFromString('ALIAS', $this->getAliasWithNamespace(), EXF_COMPARATOR_EQUALS);
+        $ds->dataRead();
+        return $ds;
+    }
 }
 ?>
