@@ -19,34 +19,6 @@ interface CmsConnectorInterface extends ExfaceClassInterface
 {
 
     /**
-     * Returns the contents of the page specified by the given id
-     * 
-     * @deprecated use loadPage($id)->getContents() instead
-     *
-     * @param string $id            
-     */
-    public function getPageContents($id);
-
-    /**
-     * Returns the id of the current page in the CMS
-     * 
-     * @deprecated use loadPageCurrent()->getAliasWithNamespace() instead
-     *
-     * @return string
-     */
-    public function getPageCurrentId();
-
-    /**
-     * Returns the title of the CMS page with the given id.
-     * If no id specified, the title of the current CMS page is returned.
-     * 
-     * @deprecated use loadPage($resource_id)->getName() instead
-     *
-     * @param string $resource_id            
-     */
-    public function getPageTitle($resource_id = null);
-
-    /**
      * Returns an href-link generated from document id an URL parameters.
      *
      * @param UiPageInterface|string $page_or_id_or_alias
@@ -231,17 +203,6 @@ interface CmsConnectorInterface extends ExfaceClassInterface
      * @return UiPageInterface
      */
     public function loadPageCurrent();
-
-    /**
-     * Returns the page alias for the given UiPage or UID or alias or CMS ID.
-     * 
-     * @param UiPageInterface|string $page_or_id_or_alias
-     * 
-     * @throws UiPageNotFoundError
-     * 
-     * @return string
-     */
-    public function getPageAlias($page_or_id_or_alias);
 
     /**
      * Saves the given page to the CMS database by creating a new one or updating

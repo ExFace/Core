@@ -56,7 +56,27 @@ abstract class AbstractCmsConnector implements CmsConnectorInterface
         }
     }
     
-    protected abstract function getPageId($page_or_id_or_alias);
+    /**
+     * Returns the page UID for the given UiPage or UID or alias or CMS ID.
+     *
+     * @param UiPageInterface|string $page_or_id_or_alias
+     *
+     * @throws UiPageNotFoundError
+     *
+     * @return string
+     */
+    abstract protected function getPageId($page_or_id_or_alias);
+    
+    /**
+     * Returns the page alias for the given UiPage or UID or alias or CMS ID.
+     *
+     * @param UiPageInterface|string $page_or_id_or_alias
+     *
+     * @throws UiPageNotFoundError
+     *
+     * @return string
+     */
+    abstract protected function getPageAlias($page_or_id_or_alias);
 
     /**
      * Tries to retrieve a UiPage from the page cache by its UID.
