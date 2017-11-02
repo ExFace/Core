@@ -224,26 +224,6 @@ interface CmsConnectorInterface extends ExfaceClassInterface
     public function loadPageById($uid, $ignore_replacements = false);
 
     /**
-     * Returns the page matching the given CMS page id (case sensitive!)
-     * 
-     * NOTE: If there is a page in the CMS, that replaces the matching page, the 
-     * replacement will be returned unless $ignore_replacements is TRUE. 
-     * 
-     * NOTE: Instead of directly calling loadPageByIdCms($page_id_cms) you should
-     * call exface->ui()->getPage($page_id_cms) because the pages are cached
-     * there.
-     * 
-     * @param string $page_id_cms
-     * @param boolean $ignore_replacements
-     * 
-     * @throws UiPageNotFoundError if no matching page can be found
-     * @throws RuntimeException if there are multiple pages replacing this page
-     * 
-     * @return UiPageInterface
-     */
-    public function loadPageByIdCms($page_id_cms, $ignore_replacements = false);
-
-    /**
      * Returns the current page in the CMS.
      *
      * @return UiPageInterface
@@ -271,17 +251,6 @@ interface CmsConnectorInterface extends ExfaceClassInterface
      * @return string
      */
     public function getPageAlias($page_or_id_or_alias);
-
-    /**
-     * Returns the page CMS ID for the given UiPage or UID or alias or CMS ID.
-     * 
-     * @param UiPageInterface|string $page_or_id_or_alias
-     * 
-     * @throws UiPageNotFoundError
-     * 
-     * @return string
-     */
-    public function getPageIdCms($page_or_id_or_alias);
 
     /**
      * Saves the given page to the CMS database by creating a new one or updating
