@@ -55,6 +55,8 @@ abstract class AbstractCmsConnector implements CmsConnectorInterface
             return $this->loadPage($this->getPageId($page_id_or_alias), $ignore_replacements);
         }
     }
+    
+    protected abstract function getPageId($page_or_id_or_alias);
 
     /**
      * Tries to retrieve a UiPage from the page cache by its UID.

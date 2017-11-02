@@ -763,5 +763,10 @@ abstract class AbstractJqueryElement implements ExfaceClassInterface
     {
         return '$("#' . $this->getId() . '").prop("disabled", true)';
     }
+    
+    public function getPageId()
+    {
+        return $this->getWidget()->getPage()->getId();
+    }
 }
 ?>

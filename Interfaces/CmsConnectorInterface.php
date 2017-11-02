@@ -156,6 +156,8 @@ interface CmsConnectorInterface extends ExfaceClassInterface
      * @return string
      */
     public function getSiteUrl();
+    
+    public function getPageIdInCms(UiPageInterface $page);
 
     /**
      * Returns the page matching the given identifier: UID, namespaced alias or
@@ -229,17 +231,6 @@ interface CmsConnectorInterface extends ExfaceClassInterface
      * @return UiPageInterface
      */
     public function loadPageCurrent();
-
-    /**
-     * Returns the page UID for the given UiPage or UID or alias or CMS ID.
-     * 
-     * @param UiPageInterface|string $page_or_id_or_alias
-     * 
-     * @throws UiPageNotFoundError
-     * 
-     * @return string
-     */
-    public function getPageId($page_or_id_or_alias);
 
     /**
      * Returns the page alias for the given UiPage or UID or alias or CMS ID.
