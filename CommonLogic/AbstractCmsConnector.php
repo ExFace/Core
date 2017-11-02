@@ -52,7 +52,7 @@ abstract class AbstractCmsConnector implements CmsConnectorInterface
             }
         } else {
             // CMS ID uebergeben.
-            return $this->loadPage($this->getPageId($page_id_or_alias), $ignore_replacements);
+            return $this->loadPage($this->getPageAlias($page_id_or_alias), $ignore_replacements);
         }
     }
     
