@@ -164,4 +164,22 @@ abstract class AbstractCmsConnector implements CmsConnectorInterface
             return false;
         }
     }
+    
+    protected function isUid($page_id_or_alias)
+    {
+        if (substr($page_id_or_alias, 0, 2) == '0x') {
+            return true;
+        } 
+        return false;
+    }
+    
+    protected function isAlias($page_id_or_alias)
+    {
+        if (! $this->isUid($page_id_or_alias) && ! is_numeric($page_id_or_alias)) {
+            return true;
+        }
+        return false;
+    }
+    
+    abstract protected function isCmsId($page_id_or_alias);
 }
