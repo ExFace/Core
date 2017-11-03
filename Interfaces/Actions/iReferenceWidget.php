@@ -35,4 +35,12 @@ interface iReferenceWidget
      * @return iReferenceWidget
      */
     public function setWidgetId($value);
+    
+    /**
+     * Returns the fully qualified alias of the UI page with the referenced widget.
+     * 
+     * @param string $alias_with_namespace
+     * @return iReferenceWidget
+     */
+    public function setPageAlias($alias_with_namespace);
 }
