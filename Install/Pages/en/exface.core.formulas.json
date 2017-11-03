@@ -6,7 +6,7 @@
     "menu_visible": true,
     "name": "Formulas",
     "short_description": "",
-    "replaces_page_alias": "",
+    "replaces_page_alias": null,
     "contents": {
         "object_alias": "exface.Core.FORMULA",
         "widget_type": "DataTable",

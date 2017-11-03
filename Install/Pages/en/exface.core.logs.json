@@ -6,7 +6,7 @@
     "menu_visible": true,
     "name": "Logs",
     "short_description": "",
-    "replaces_page_alias": "",
+    "replaces_page_alias": null,
     "contents": {
         "widget_type": "DataTable",
         "object_alias": "exface.Core.LOG",

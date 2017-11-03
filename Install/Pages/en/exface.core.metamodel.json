@@ -6,7 +6,7 @@
     "menu_visible": true,
     "name": "Metamodel",
     "short_description": "",
-    "replaces_page_alias": "",
+    "replaces_page_alias": null,
     "contents": {
         "extend_widget": "[exface.core.apps]"
     }
