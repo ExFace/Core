@@ -8,9 +8,17 @@ use exface\Core\Exceptions\UiPageNotFoundError;
 
 abstract class AbstractCmsConnector implements CmsConnectorInterface
 {
-
+    
+    /**
+     * Page cache [ cmsId => UiPage ]
+     * @var array
+     */
     protected $pageCacheByCmsId = [];
     
+    /**
+     * Replacing pages [ replacedPageCmsId => replacingPageCmsId ]
+     * @var array
+     */
     protected $pageCacheReplacements = [];
 
     protected $defaultPage = null;
@@ -39,6 +47,16 @@ abstract class AbstractCmsConnector implements CmsConnectorInterface
         return $page;
     }
     
+    /**
+     * 
+     * @param integer $cmsId
+     * @param string $uid
+     * @param string $alias
+     * @param boolean $ignore_replacements
+     * @return UiPageInterface
+     */
+    abstract protected function getPageFromCms($cmsId = null, $uid = null, $alias = null, $ignore_replacements = false);
+    
     protected function getPageFromCache($id_or_alias) {
         // No empty keys in cache allowed!
         if (is_null($id_or_alias) || $id_or_alias === '') {
@@ -62,11 +80,6 @@ abstract class AbstractCmsConnector implements CmsConnectorInterface
             }
         }
         return false;
-    }
-    
-    protected function getPageReplacementFromCache()
-    {
-        
     }
     
     protected function replacePageInCache(UiPageInterface $originalPage, $cmsIdReplacement, UiPageInterface $replacementPage)

@@ -157,6 +157,13 @@ interface UiPageInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
      * @return UiPageInterface
      */
     public function setMenuParentPageAlias($menuParentPageAlias);
+    
+    /**
+     * 
+     * @param string $id_or_alias
+     * @return UiPageInterface
+     */
+    public function setMenuParentPageSelector($id_or_alias);
 
     /**
      * Returns the parent ui page or NULL if this page has no parent
