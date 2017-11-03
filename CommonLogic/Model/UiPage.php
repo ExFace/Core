@@ -57,6 +57,8 @@ class UiPage implements UiPageInterface
     private $updateable = true;
 
     private $menuParentPageAlias = null;
+    
+    private $menuParentPageSelector = null;
 
     private $menuParentPageDefaultAlias = null;
 
@@ -638,6 +640,9 @@ class UiPage implements UiPageInterface
      */
     public function getMenuParentPageAlias()
     {
+        if (is_null($this->menuParentPageAlias) && ! is_null($this->menuParentPageSelector)) {
+            $this->menuParentPageAlias = $this->getMenuParentPage()->getAliasWithNamespace();
+        }
         return $this->menuParentPageAlias;
     }
 
@@ -649,9 +654,10 @@ class UiPage implements UiPageInterface
     public function setMenuParentPageAlias($menuParentPageAlias)
     {
         $this->menuParentPageAlias = $menuParentPageAlias;
+        $this->menuParentPageSelector = null;
         return $this;
     }
-
+    
     /**
      * 
      * {@inheritDoc}
@@ -659,7 +665,26 @@ class UiPage implements UiPageInterface
      */
     public function getMenuParentPage()
     {
-        return $this->getWorkbench()->ui()->getPage($this->getMenuParentPageAlias());
+        return $this->getWorkbench()->ui()->getPage($this->getMenuParentPageSelector());
+    }
+    
+    /**
+     * Returns the selector (id or alias) for the parent page in the main menu or NULL if no parent defined.
+     * 
+     * @return string|null
+     */
+    protected function getMenuParentPageSelector()
+    {
+        if (is_null($this->menuParentPageSelector) && ! is_null($this->menuParentPageAlias)) {
+            return $this->menuParentPageAlias;
+        }
+        return $this->menuParentPageSelector;
+    }
+
+    public function setMenuParentPageSelector($id_or_alias) {
+        $this->menuParentPageSelector = $id_or_alias;
+        $this->menuParentPageAlias = null;
+        return $this;
     }
 
     /**
