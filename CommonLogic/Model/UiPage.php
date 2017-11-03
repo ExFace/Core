@@ -38,8 +38,12 @@ class UiPage implements UiPageInterface
     
     use ImportUxonObjectTrait;
 
+    const WIDGET_ID_SEPARATOR = '_';
+    
+    const WIDGET_ID_SPACE_SEPARATOR = '.';
+    
     private $widgets = array();
-
+    
     private $template = null;
 
     private $ui = null;
@@ -48,15 +52,13 @@ class UiPage implements UiPageInterface
 
     private $context_bar = null;
 
-    const WIDGET_ID_SEPARATOR = '_';
-
-    const WIDGET_ID_SPACE_SEPARATOR = '.';
-
     private $appAlias = null;
 
     private $updateable = true;
 
     private $menuParentPageAlias = null;
+    
+    private $menuParentPageSelector = null;
 
     private $menuParentPageDefaultAlias = null;
 
@@ -74,11 +76,15 @@ class UiPage implements UiPageInterface
 
     private $contents = null;
 
+    private $contents_uxon = null;
+    
     private $aliasWithNamespace = null;
 
     private $alias = null;
 
     private $namespace = null;
+    
+    private $dirty = false;
 
     /**
      *
@@ -125,7 +131,47 @@ class UiPage implements UiPageInterface
      */
     public function getWidgetRoot()
     {
+        if ($this->isDirty()) {
+            $this->regenerateFromContents();
+        }
         return $this->widget_root;
+    }
+    
+    /**
+     * Initializes all widgets from the contents of the page
+     * 
+     * @return UiPage
+     */
+    protected function regenerateFromContents()
+    {
+        $this->removeAllWidgets();
+        WidgetFactory::createFromUxon($this, $this->getContentsUxon());   
+        return $this;
+    }
+    
+    /**
+     * Returns the UXON representation of the contents
+     * 
+     * @return UxonObject
+     */
+    protected function getContentsUxon()
+    {
+        if (is_null($this->contents_uxon)) {
+            if (! is_null($this->contents)) {
+                $contents = $this->getContents();
+                if (substr($contents, 0, 1) == '{' && substr($contents, - 1) == '}') {
+                    $uxon = UxonObject::fromAnything($contents);
+                } else {
+                    $uxon = new UxonObject();
+                }
+            } else {
+                $uxon = new UxonObject();
+            }
+        } else {
+            $uxon = $this->contents_uxon;
+        }
+        
+        return $uxon;
     }
 
     /**
@@ -136,6 +182,11 @@ class UiPage implements UiPageInterface
      */
     public function getWidget($id, WidgetInterface $parent = null)
     {
+        if ($this->isDirty()) {
+            $this->regenerateFromContents();
+            $this->dirty = false;
+        }
+        
         if (is_null($id) || $id == '') {
             return $this->getWidgetRoot();
         }
@@ -589,6 +640,9 @@ class UiPage implements UiPageInterface
      */
     public function getMenuParentPageAlias()
     {
+        if (is_null($this->menuParentPageAlias) && ! is_null($this->menuParentPageSelector)) {
+            $this->menuParentPageAlias = $this->getMenuParentPage()->getAliasWithNamespace();
+        }
         return $this->menuParentPageAlias;
     }
 
@@ -600,9 +654,10 @@ class UiPage implements UiPageInterface
     public function setMenuParentPageAlias($menuParentPageAlias)
     {
         $this->menuParentPageAlias = $menuParentPageAlias;
+        $this->menuParentPageSelector = null;
         return $this;
     }
-
+    
     /**
      * 
      * {@inheritDoc}
@@ -610,7 +665,26 @@ class UiPage implements UiPageInterface
      */
     public function getMenuParentPage()
     {
-        return $this->getWorkbench()->ui()->getPage($this->getMenuParentPageAlias());
+        return $this->getWorkbench()->ui()->getPage($this->getMenuParentPageSelector());
+    }
+    
+    /**
+     * Returns the selector (id or alias) for the parent page in the main menu or NULL if no parent defined.
+     * 
+     * @return string|null
+     */
+    protected function getMenuParentPageSelector()
+    {
+        if (is_null($this->menuParentPageSelector) && ! is_null($this->menuParentPageAlias)) {
+            return $this->menuParentPageAlias;
+        }
+        return $this->menuParentPageSelector;
+    }
+
+    public function setMenuParentPageSelector($id_or_alias) {
+        $this->menuParentPageSelector = $id_or_alias;
+        $this->menuParentPageAlias = null;
+        return $this;
     }
 
     /**
@@ -768,7 +842,36 @@ class UiPage implements UiPageInterface
      */
     public function getContents()
     {
+        if (is_null($this->contents) && ! is_null($this->contents_uxon)) {
+            $this->contents = $this->contents_uxon->toJson();
+        }
+        
         return $this->contents;
+    }
+    
+    /**
+     * Returns TRUE if the contents of the page was modified since the last time widgets were generated.
+     * 
+     * Run regenerateWidgetsFromContents() to make the page not dirty.
+     * 
+     * @return boolean
+     */
+    protected function isDirty()
+    {
+        return $this->dirty;
+    }
+    
+    /**
+     * Marks this page as dirty: all widgets will be removed immediately and will get regenerated the next 
+     * time the user requests a widget.
+     * 
+     * @return \exface\Core\CommonLogic\Model\UiPage
+     */
+    private function setDirty()
+    {
+        $this->removeAllWidgets();
+        $this->dirty = true;
+        return $this;
     }
 
     /**
@@ -778,20 +881,16 @@ class UiPage implements UiPageInterface
      */
     public function setContents($contents)
     {
+        $this->setDirty();
+        
         if (is_string($contents)) {
-            $this->contents = $contents;
-            $this->removeAllWidgets();
-            $contents = trim($contents);
-            if (substr($contents, 0, 1) == '{' && substr($contents, - 1) == '}') {
-                WidgetFactory::createFromUxon($this, UxonObject::fromAnything($contents));
-            }
+            $this->contents = trim($contents);
         } elseif ($contents instanceof UxonObject) {
-            $this->contents = json_encode($contents->toArray(), JSON_UNESCAPED_UNICODE);
-            $this->removeAllWidgets();
-            WidgetFactory::createFromUxon($this, $contents);
+            $this->contents_uxon = $contents;  
         } else {
             throw new InvalidArgumentException('Cannot set contents from ' . gettype($contents) . ': expecting string or UxonObject!');
         }
+        
         return $this;
     }
 
@@ -920,7 +1019,7 @@ class UiPage implements UiPageInterface
         if ($this->isExactly($page)) {
             // Die uebergebene Seite ist genau diese Seite.
             return true;
-        } elseif (strcasecmp($this->getId(), $this->getWorkbench()->ui()->getPage($page->getId())->getId()) == 0) {
+        } elseif (strcasecmp($this->getId(), $this->getWorkbench()->ui()->getPage($page->getId())->getId()) === 0) {
             // Ersetzt die uebergebene Seite diese Seite, wird diese Seite zurueckgegeben
             // wenn die uebergebene Seite geladen wird.
             return true;

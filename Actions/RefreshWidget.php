@@ -18,7 +18,7 @@ class RefreshWidget extends ReadData implements iRefreshInputWidget
     public function init()
     {
         parent::init();
-        $this->setIconName(Icons::REFRESH);
+        $this->setIcon(Icons::REFRESH);
     }
 
     /**

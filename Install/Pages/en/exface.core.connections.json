@@ -1,12 +1,12 @@
 {
     "id": "0xa05b7202949e11e7acc3028037ec0200",
     "alias_with_namespace": "exface.core.connections",
-    "menu_parent_page_alias": "exface.core.alexa-ui-core",
+    "menu_parent_page_alias": "exface.core.metamodel",
     "menu_index": "1",
     "menu_visible": true,
-    "name": "Verbindungen",
+    "name": "Connections",
     "short_description": "",
-    "replaces_page_alias": "",
+    "replaces_page_alias": null,
     "contents": {
         "object_alias": "exface.Core.CONNECTION",
         "widget_type": "DataTable",
@@ -56,17 +56,21 @@
         ],
         "buttons": [
             {
-                "action_alias": "exface.Core.CreateObjectDialog"
+                "action_alias": "exface.Core.CreateObjectDialog",
+                "caption": "Neu"
             },
             {
                 "action_alias": "exface.Core.EditObjectDialog",
+                "caption": "Bearbeiten",
                 "bind_to_double_click": true
             },
             {
-                "action_alias": "exface.Core.DuplicateObjectDialog"
+                "action_alias": "exface.Core.DuplicateObjectDialog",
+                "caption": "Duplizieren"
             },
             {
-                "action_alias": "exface.Core.DeleteObject"
+                "action_alias": "exface.Core.DeleteObject",
+                "caption": "L\u00f6schen"
             }
         ]
     }

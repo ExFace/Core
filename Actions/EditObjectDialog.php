@@ -15,7 +15,7 @@ class EditObjectDialog extends ShowObjectDialog
     protected function init()
     {
         parent::init();
-        $this->setIconName(Icons::PENCIL_SQUARE_O);
+        $this->setIcon(Icons::PENCIL_SQUARE_O);
         $this->setSaveActionAlias('exface.Core.UpdateData');
         $this->setShowOnlyEditableAttributes(true);
         $this->setDisableEditing(false);

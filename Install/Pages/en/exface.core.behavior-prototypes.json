@@ -1,12 +1,12 @@
 {
     "id": "0xd5bf319a949e11e79bd9028037ec0200",
-    "alias_with_namespace": "exface.core.behaviors",
-    "menu_parent_page_alias": "exface.core.apps",
+    "alias_with_namespace": "exface.core.behavior-prototypes",
+    "menu_parent_page_alias": "exface.core.documentation",
     "menu_index": "3",
     "menu_visible": true,
-    "name": "Behaviors",
+    "name": "Behavior Prototypes",
     "short_description": "",
-    "replaces_page_alias": "",
+    "replaces_page_alias": null,
     "contents": {
         "object_alias": "exface.core.BEHAVIOR",
         "widget_type": "DataTable",

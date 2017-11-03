@@ -62,12 +62,12 @@ class ShowDialog extends ShowWidget implements iShowDialog
         
         // If the widget calling the action (typically a button) is known, inherit some of it's attributes
         if ($this->getCalledByWidget()) {
-            if (! $dialog->getIconName() && ($this->getCalledByWidget() instanceof iHaveIcon)) {
-                $dialog->setIconName($this->getCalledByWidget()->getIconName());
+            if (! $dialog->getIcon() && ($this->getCalledByWidget() instanceof iHaveIcon)) {
+                $dialog->setIcon($this->getCalledByWidget()->getIcon());
             }
         } else {
-            if (! $dialog->getIconName()) {
-                $dialog->setIconName($this->getIconName());
+            if (! $dialog->getIcon()) {
+                $dialog->setIcon($this->getIcon());
             }
         }
         

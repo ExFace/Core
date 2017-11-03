@@ -19,34 +19,6 @@ interface CmsConnectorInterface extends ExfaceClassInterface
 {
 
     /**
-     * Returns the contents of the page specified by the given id
-     * 
-     * @deprecated use loadPage($id)->getContents() instead
-     *
-     * @param string $id            
-     */
-    public function getPageContents($id);
-
-    /**
-     * Returns the id of the current page in the CMS
-     * 
-     * @deprecated use loadPageCurrent()->getAliasWithNamespace() instead
-     *
-     * @return string
-     */
-    public function getPageCurrentId();
-
-    /**
-     * Returns the title of the CMS page with the given id.
-     * If no id specified, the title of the current CMS page is returned.
-     * 
-     * @deprecated use loadPage($resource_id)->getName() instead
-     *
-     * @param string $resource_id            
-     */
-    public function getPageTitle($resource_id = null);
-
-    /**
      * Returns an href-link generated from document id an URL parameters.
      *
      * @param UiPageInterface|string $page_or_id_or_alias
@@ -156,6 +128,8 @@ interface CmsConnectorInterface extends ExfaceClassInterface
      * @return string
      */
     public function getSiteUrl();
+    
+    public function getPageIdInCms(UiPageInterface $page);
 
     /**
      * Returns the page matching the given identifier: UID, namespaced alias or
@@ -224,64 +198,11 @@ interface CmsConnectorInterface extends ExfaceClassInterface
     public function loadPageById($uid, $ignore_replacements = false);
 
     /**
-     * Returns the page matching the given CMS page id (case sensitive!)
-     * 
-     * NOTE: If there is a page in the CMS, that replaces the matching page, the 
-     * replacement will be returned unless $ignore_replacements is TRUE. 
-     * 
-     * NOTE: Instead of directly calling loadPageByIdCms($page_id_cms) you should
-     * call exface->ui()->getPage($page_id_cms) because the pages are cached
-     * there.
-     * 
-     * @param string $page_id_cms
-     * @param boolean $ignore_replacements
-     * 
-     * @throws UiPageNotFoundError if no matching page can be found
-     * @throws RuntimeException if there are multiple pages replacing this page
-     * 
-     * @return UiPageInterface
-     */
-    public function loadPageByIdCms($page_id_cms, $ignore_replacements = false);
-
-    /**
      * Returns the current page in the CMS.
      *
      * @return UiPageInterface
      */
     public function loadPageCurrent();
-
-    /**
-     * Returns the page UID for the given UiPage or UID or alias or CMS ID.
-     * 
-     * @param UiPageInterface|string $page_or_id_or_alias
-     * 
-     * @throws UiPageNotFoundError
-     * 
-     * @return string
-     */
-    public function getPageId($page_or_id_or_alias);
-
-    /**
-     * Returns the page alias for the given UiPage or UID or alias or CMS ID.
-     * 
-     * @param UiPageInterface|string $page_or_id_or_alias
-     * 
-     * @throws UiPageNotFoundError
-     * 
-     * @return string
-     */
-    public function getPageAlias($page_or_id_or_alias);
-
-    /**
-     * Returns the page CMS ID for the given UiPage or UID or alias or CMS ID.
-     * 
-     * @param UiPageInterface|string $page_or_id_or_alias
-     * 
-     * @throws UiPageNotFoundError
-     * 
-     * @return string
-     */
-    public function getPageIdCms($page_or_id_or_alias);
 
     /**
      * Saves the given page to the CMS database by creating a new one or updating

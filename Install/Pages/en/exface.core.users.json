@@ -1,26 +1,29 @@
 {
-    "id": "0x17494cb8949f11e7a92d028037ec0200",
-    "alias_with_namespace": "exface.core.credentials",
-    "menu_parent_page_alias": "exface.core.users",
-    "menu_index": "0",
-    "menu_visible": false,
-    "name": "Credentials",
+    "id": "0x0a3e0996949f11e78ac4028037ec0200",
+    "alias_with_namespace": "exface.core.users",
+    "menu_parent_page_alias": "exface.core.metamodel",
+    "menu_index": "7",
+    "menu_visible": true,
+    "name": "Users",
     "short_description": "",
-    "replaces_page_alias": "",
+    "replaces_page_alias": null,
     "contents": {
         "widget_type": "DataTable",
-        "object_alias": "exface.Core.USER_CREDENTIALS",
+        "object_alias": "exface.Core.USER",
         "filters": [
             {
-                "attribute_alias": "USER"
+                "attribute_alias": "USERNAME"
             },
             {
-                "attribute_alias": "DATA_CONNECTION_CREDENTIALS__DATA_CONNECTION"
+                "attribute_alias": "USER_CREDENTIALS__DATA_CONNECTION_CREDENTIALS__DATA_CONNECTION"
             }
         ],
         "columns": [
             {
                 "attribute_group_alias": "~VISIBLE"
+            },
+            {
+                "attribute_alias": "USER_CREDENTIALS__NAME:COUNT"
             }
         ],
         "buttons": [
@@ -36,6 +39,13 @@
             },
             {
                 "action_alias": "exface.Core.DeleteObject"
+            },
+            {
+                "action": {
+                    "alias": "exface.Core.GoToPage",
+                    "page_alias": "exface.core.credentials"
+                },
+                "caption": "Credentials"
             },
             {
                 "action_alias": "exface.Core.GoToPage",

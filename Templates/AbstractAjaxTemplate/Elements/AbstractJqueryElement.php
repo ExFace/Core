@@ -680,16 +680,16 @@ abstract class AbstractJqueryElement implements ExfaceClassInterface
      * Returns a template specific CSS class for a given icon.
      * In most templates this string will be used as a class for an <a> or <i> element.
      *
-     * @param string $icon_name            
+     * @param string $icon            
      * @return string
      */
-    public function buildCssIconClass($icon_name)
+    public function buildCssIconClass($icon)
     {
         try {
-            $class = $this->getTemplate()->getConfig()->getOption('ICON_CLASSES.' . strtoupper($icon_name));
+            $class = $this->getTemplate()->getConfig()->getOption('ICON_CLASSES.' . strtoupper($icon));
             return $class;
         } catch (ConfigOptionNotFoundError $e) {
-            return $this->getTemplate()->getConfig()->getOption('ICON_CLASSES.DEFAULT_CLASS_PREFIX') . $icon_name;
+            return $this->getTemplate()->getConfig()->getOption('ICON_CLASSES.DEFAULT_CLASS_PREFIX') . $icon;
         }
     }
 
@@ -762,6 +762,11 @@ abstract class AbstractJqueryElement implements ExfaceClassInterface
     public function buildJsDisabler()
     {
         return '$("#' . $this->getId() . '").prop("disabled", true)';
+    }
+    
+    public function getPageId()
+    {
+        return $this->getWidget()->getPage()->getId();
     }
 }
 ?>

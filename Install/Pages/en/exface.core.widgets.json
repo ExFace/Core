@@ -1,14 +1,14 @@
 {
-    "id": "0xd5bf319a949e11e79bd9028037ec0200",
-    "alias_with_namespace": "exface.core.behaviors",
-    "menu_parent_page_alias": "exface.core.apps",
-    "menu_index": "3",
+    "id": "0x3187ce4c949f11e7b01d028037ec0200",
+    "alias_with_namespace": "exface.core.widgets",
+    "menu_parent_page_alias": "exface.core.documentation",
+    "menu_index": "1",
     "menu_visible": true,
-    "name": "Behaviors",
+    "name": "Widgets",
     "short_description": "",
-    "replaces_page_alias": "",
+    "replaces_page_alias": null,
     "contents": {
-        "object_alias": "exface.core.BEHAVIOR",
+        "object_alias": "exface.core.WIDGET",
         "widget_type": "DataTable",
         "filters": [
             {

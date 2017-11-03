@@ -88,7 +88,7 @@ class Dialog extends Form implements iAmClosable, iHaveContextualHelp
             $btn = $this->createButton();
             $btn->setCloseDialogAfterActionSucceeds(true);
             $btn->setRefreshInput(false);
-            $btn->setIconName(Icons::TIMES);
+            $btn->setIcon(Icons::TIMES);
             $btn->setCaption($this->translate('WIDGET.DIALOG.CLOSE_BUTTON_CAPTION'));
             $btn->setAlign(EXF_ALIGN_OPPOSITE);
             if ($this->getHideCloseButton())

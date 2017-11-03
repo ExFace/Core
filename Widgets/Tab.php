@@ -90,18 +90,18 @@ class Tab extends Panel implements iHaveIcon
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Widgets\Panel::getIconName()
+     * @see \exface\Core\Widgets\Panel::getIcon()
      */
-    public function getIconName() {
+    public function getIcon() {
         return $this->icon;    
     }
     
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Widgets\Panel::setIconName()
+     * @see \exface\Core\Widgets\Panel::setIcon()
      */
-    public function setIconName($value) {
+    public function setIcon($value) {
         $this->icon = $value;
         return $this;    
     }

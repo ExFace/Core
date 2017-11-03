@@ -264,14 +264,14 @@ class DebugContext extends AbstractContext
             ->setContextScope($this->getScope()->getName())
             ->setContextAlias($this->getAliasWithNamespace())
             ->setOperation('startDebugging')
-            ->setIconName(Icons::BUG);
+            ->setIcon(Icons::BUG);
         $data_list->addButton($button);
         
         /* @var $button \exface\Core\Widgets\Button */
         $button = $data_list->createButton()
             ->setActionAlias('exface.Core.ContextApi')
             ->setCaption($this->getWorkbench()->getCoreApp()->getTranslator()->translate('CONTEXT.DEBUG.STOP'))
-            ->setIconName(Icons::PAUSE);
+            ->setIcon(Icons::PAUSE);
         $button->getAction()
             ->setContextScope($this->getScope()->getName())
             ->setContextAlias($this->getAliasWithNamespace())

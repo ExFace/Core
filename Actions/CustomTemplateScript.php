@@ -14,7 +14,7 @@ class CustomTemplateScript extends AbstractAction implements iRunTemplateScript
 
     protected function init()
     {
-        $this->setIconName(Icons::CODE);
+        $this->setIcon(Icons::CODE);
     }
 
     protected function perform()

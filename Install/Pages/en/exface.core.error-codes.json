@@ -1,12 +1,12 @@
 {
     "id": "0xdd41b032949e11e798a5028037ec0200",
     "alias_with_namespace": "exface.core.error-codes",
-    "menu_parent_page_alias": "exface.core.apps",
-    "menu_index": "4",
+    "menu_parent_page_alias": "exface.core.metamodel",
+    "menu_index": "6",
     "menu_visible": true,
-    "name": "Error Codes",
+    "name": "Error codes",
     "short_description": "",
-    "replaces_page_alias": "",
+    "replaces_page_alias": null,
     "contents": {
         "widget_type": "DataTable",
         "object_alias": "exface.Core.ERROR",

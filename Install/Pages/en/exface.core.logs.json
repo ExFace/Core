@@ -1,15 +1,15 @@
 {
-    "id": "0x3187ce4c949f11e7b01d028037ec0200",
-    "alias_with_namespace": "exface.core.widgets",
-    "menu_parent_page_alias": "exface.core.alexa-ui-core",
-    "menu_index": "7",
+    "id": "0xb90bb0b8949f11e7a605028037ec0200",
+    "alias_with_namespace": "exface.core.logs",
+    "menu_parent_page_alias": "exface.core.administration",
+    "menu_index": "9",
     "menu_visible": true,
-    "name": "Widgets",
+    "name": "Logs",
     "short_description": "",
-    "replaces_page_alias": "",
+    "replaces_page_alias": null,
     "contents": {
-        "object_alias": "exface.core.WIDGET",
         "widget_type": "DataTable",
+        "object_alias": "exface.Core.LOG",
         "filters": [
             {
                 "attribute_alias": "NAME"
@@ -26,10 +26,13 @@
                 "attribute_alias": "PATHNAME_RELATIVE"
             },
             {
-                "attribute_alias": "PATHNAME_ABSOLUTE"
-            },
-            {
                 "attribute_alias": "SIZE"
+            }
+        ],
+        "sorters": [
+            {
+                "attribute_alias": "NAME",
+                "direction": "DESC"
             }
         ],
         "buttons": [

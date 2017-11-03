@@ -41,7 +41,7 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iUseIn
 
     private $hotkey = null;
 
-    private $icon_name = null;
+    private $icon = null;
 
     private $refresh_input = true;
 
@@ -203,12 +203,12 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iUseIn
         return $this;
     }
 
-    public function getIconName()
+    public function getIcon()
     {
-        if (! $this->icon_name && $this->getAction()) {
-            $this->icon_name = $this->getAction()->getIconName();
+        if (! $this->icon && $this->getAction()) {
+            $this->icon = $this->getAction()->getIcon();
         }
-        return $this->icon_name;
+        return $this->icon;
     }
 
     /**
@@ -217,16 +217,16 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iUseIn
      * There are some default icons defined in the core, but every template is free to add more icons. The names of the latter
      * are, of course, absolutely template specific.
      *
-     * @uxon-property icon_name
+     * @uxon-property icon
      * @uxon-type string
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\Interfaces\Widgets\iHaveIcon::setIconName()
+     * @see \exface\Core\Interfaces\Widgets\iHaveIcon::setIcon()
      */
-    public function setIconName($value)
+    public function setIcon($value)
     {
-        $this->icon_name = $value;
+        $this->icon = $value;
         return $this;
     }
 

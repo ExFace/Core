@@ -9,7 +9,9 @@ use exface\Core\Exceptions\UiPageNotFoundError;
 abstract class AbstractCmsConnector implements CmsConnectorInterface
 {
 
-    protected $pageCache = [];
+    protected $pageCacheByCmsId = [];
+    
+    protected $pageCacheReplacements = [];
 
     protected $defaultPage = null;
 
@@ -24,68 +26,68 @@ abstract class AbstractCmsConnector implements CmsConnectorInterface
             return $this->getDefaultPage();
         }
         
-        if (substr($page_id_or_alias, 0, 2) == '0x') {
-            // UID uebergeben.
-            if ($page = $this->getPageFromCacheById($page_id_or_alias)) {
-                return $page;
+        if (! $page = $this->getPageFromCache($page_id_or_alias)) {
+            if ($this->isUid($page_id_or_alias)) {
+                $page = $this->getPageFromCms(null, $page_id_or_alias, null, $ignore_replacements);
+            } elseif ($this->isAlias($page_id_or_alias)) {
+                $page = $this->getPageFromCms(null, null, $page_id_or_alias, $ignore_replacements);
             } else {
-                $page = $this->loadPageById($page_id_or_alias, $ignore_replacements, $replace_ids);
-                $this->addPageToCache($page);
-                if ($page->getId() != $page_id_or_alias) {
-                    $replacedPage = $page->copy($this->getPageAlias($page_id_or_alias), $page_id_or_alias);
-                    $this->addPageToCache($replacedPage);
+                $page = $this->getPageFromCms($page_id_or_alias, null, null, $ignore_replacements);
+            }
+        }
+        
+        return $page;
+    }
+    
+    protected function getPageFromCache($id_or_alias) {
+        // No empty keys in cache allowed!
+        if (is_null($id_or_alias) || $id_or_alias === '') {
+            return false;
+        }
+        
+        // Return direkt hits right away!
+        if ($this->isCmsId($id_or_alias)) {
+            if ($page = $this->pageCacheByCmsId[$id_or_alias]) {
+                if (array_key_exists($id_or_alias, $this->pageCacheReplacements)) {
+                    return $this->pageCacheByCmsId[$this->pageCacheReplacements[$id_or_alias]];
+                } else {
+                    return $page;
                 }
+            }
+        }
+        
+        foreach ($this->pageCacheByCmsId as $page) {
+            if ($page->getAliasWithNamespace() === $id_or_alias || $page->getId() === $id_or_alias) {
                 return $page;
             }
-        } elseif (! is_numeric($page_id_or_alias)) {
-            // Alias uebergeben.
-            if ($page = $this->getPageFromCacheByAlias($page_id_or_alias)) {
-                return $page;
-            } else {
-                $page = $this->loadPageByAlias($page_id_or_alias, $ignore_replacements, $replace_ids);
-                $this->addPageToCache($page);
-                if ($page->getAliasWithNamespace() != $page_id_or_alias) {
-                    $replacedPage = $page->copy($page_id_or_alias, $this->getPageId($page_id_or_alias));
-                    $this->addPageToCache($replacedPage);
-                }
-                return $page;
+        }
+        return false;
+    }
+    
+    protected function getPageReplacementFromCache()
+    {
+        
+    }
+    
+    protected function replacePageInCache(UiPageInterface $originalPage, $cmsIdReplacement, UiPageInterface $replacementPage)
+    {
+        if ($originalCmsId = array_search($originalPage, $this->pageCacheByCmsId)) {
+            $this->pageCacheReplacements[$originalCmsId] = $cmsIdReplacement;
+            foreach (array_keys($this->pageCacheReplacements, $originalCmsId) as $recursivelyReplacedId) {
+                $this->pageCacheReplacements[$recursivelyReplacedId] = $cmsIdReplacement;
             }
+        } 
+        $this->addPageToCache($cmsIdReplacement, $replacementPage);
+        return $this;
+    }
+    
+    public function getPageIdInCms(UiPageInterface $page) {
+        if ($cmsId = array_search($page, $this->pageCacheByCmsId)) {
+            return $cmsId;
         } else {
-            // CMS ID uebergeben.
-            return $this->loadPage($this->getPageId($page_id_or_alias), $ignore_replacements);
+            $this->loadPage($page->getAliasWithNamespace());
         }
-    }
-
-    /**
-     * Tries to retrieve a UiPage from the page cache by its UID.
-     * 
-     * @param string $uid
-     * @return UiPageInterface|null
-     */
-    protected function getPageFromCacheById($uid)
-    {
-        foreach ($this->pageCache as $cachePage) {
-            if ($uid == $cachePage->getId()) {
-                return $cachePage;
-            }
-        }
-        return null;
-    }
-
-    /**
-     * Tries to retrieve a UiPage from the page cache by its alias.
-     * 
-     * @param string $alias_with_namespace
-     * @return UiPageInterface|null
-     */
-    protected function getPageFromCacheByAlias($alias_with_namespace)
-    {
-        foreach ($this->pageCache as $cachePage) {
-            if ($alias_with_namespace == $cachePage->getAliasWithNamespace()) {
-                return $cachePage;
-            }
-        }
-        return null;
+        return array_search($page, $this->pageCacheByCmsId);
     }
 
     /**
@@ -94,9 +96,9 @@ abstract class AbstractCmsConnector implements CmsConnectorInterface
      * @param UiPageInterface $page
      * @return CmsConnectorInterface
      */
-    protected function addPageToCache(UiPageInterface $page)
+    protected function addPageToCache($cmsId, UiPageInterface $page)
     {
-        $this->pageCache[] = $page;
+        $this->pageCacheByCmsId[$cmsId] = $page;
         return $this;
     }
 
@@ -134,12 +136,36 @@ abstract class AbstractCmsConnector implements CmsConnectorInterface
      */
     public function hasPage($page_or_id_or_alias)
     {
-        $id_or_alias = $page_or_id_or_alias instanceof UiPageInterface ? $page_or_id_or_alias->getId() : $page_or_id_or_alias;
-        try {
-            $this->getPageId($id_or_alias);
+        $page_identifier = $page_or_id_or_alias instanceof UiPageInterface ? $page_or_id_or_alias->getAliasWithNamespace() : $page_or_id_or_alias;
+        
+        if ($this->getPageFromCache($page_identifier)) {
             return true;
-        } catch (UiPageNotFoundError $upnfe) {
-            return false;
+        } else {
+            try {
+                $this->getPageId($page_identifier);
+                return true;
+            } catch (UiPageNotFoundError $upnfe) {
+                return false;
+            }
         }
+        return false;
     }
+    
+    protected function isUid($page_id_or_alias)
+    {
+        if (substr($page_id_or_alias, 0, 2) == '0x') {
+            return true;
+        } 
+        return false;
+    }
+    
+    protected function isAlias($page_id_or_alias)
+    {
+        if (! $this->isUid($page_id_or_alias) && ! is_numeric($page_id_or_alias)) {
+            return true;
+        }
+        return false;
+    }
+    
+    abstract protected function isCmsId($page_id_or_alias);
 }

@@ -37,7 +37,7 @@ class Panel extends Container implements iLayoutWidgets, iSupportLazyLoading, iH
 
     private $collapsible = false;
 
-    private $icon_name = null;
+    private $icon = null;
 
     private $lazy_loading_group_id = null;
 
@@ -67,22 +67,22 @@ class Panel extends Container implements iLayoutWidgets, iSupportLazyLoading, iH
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\Interfaces\Widgets\iHaveIcon::getIconName()
+     * @see \exface\Core\Interfaces\Widgets\iHaveIcon::getIcon()
      */
-    public function getIconName()
+    public function getIcon()
     {
-        return $this->icon_name;
+        return $this->icon;
     }
 
     /**
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\Interfaces\Widgets\iHaveIcon::setIconName()
+     * @see \exface\Core\Interfaces\Widgets\iHaveIcon::setIcon()
      */
-    public function setIconName($value)
+    public function setIcon($value)
     {
-        $this->icon_name = $value;
+        $this->icon = $value;
     }
 
     /**

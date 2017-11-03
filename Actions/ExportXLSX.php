@@ -54,7 +54,7 @@ class ExportXLSX extends ExportDataFile
     protected function init()
     {
         parent::init();
-        $this->setIconName(Icons::FILE_EXCEL_O);
+        $this->setIcon(Icons::FILE_EXCEL_O);
         
         $this->typeMap['Date'] = $this->getWorkbench()->getCoreApp()->getTranslator()->translate('DATE.FORMAT.SCREEN.EXCEL');
         $this->typeMap['Timestamp'] = $this->getWorkbench()->getCoreApp()->getTranslator()->translate('DATETIME.FORMAT.SCREEN.EXCEL');

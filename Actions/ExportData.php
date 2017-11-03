@@ -34,7 +34,7 @@ class ExportData extends ReadData implements iExportData
     protected function init()
     {
         parent::init();
-        $this->setIconName(Icons::DOWNLOAD);
+        $this->setIcon(Icons::DOWNLOAD);
     }
     /**
      * 

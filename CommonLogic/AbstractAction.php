@@ -97,7 +97,7 @@ abstract class AbstractAction implements ActionInterface
     /**
      * @var string
      */
-    private $icon_name = null;
+    private $icon = null;
 
     /**
      *@var integer
@@ -239,11 +239,11 @@ abstract class AbstractAction implements ActionInterface
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::getIconName()
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::getIcon()
      */
-    public function getIconName()
+    public function getIcon()
     {
-        return $this->icon_name;
+        return $this->icon;
     }
 
     /**
@@ -254,15 +254,15 @@ abstract class AbstractAction implements ActionInterface
      * 
      * By default all icons from font awsome (http://fontawesome.io/icons/) are supported.
      *
-     * @uxon-property icon_name
+     * @uxon-property icon
      * @uxon-type string
      *
      * {@inheritdoc}
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::setIconName()
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::setIcon()
      */
-    public function setIconName($value)
+    public function setIcon($value)
     {
-        $this->icon_name = $value;
+        $this->icon = $value;
     }
 
     /**

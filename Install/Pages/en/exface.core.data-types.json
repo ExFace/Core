@@ -1,44 +1,39 @@
 {
-    "id": "0xdd41b032949e11e798a5028037ec0200",
-    "alias_with_namespace": "exface.core.error-codes",
-    "menu_parent_page_alias": "exface.core.apps",
-    "menu_index": "4",
+    "id": "0x25d98c16949f11e7b780028037ec0200",
+    "alias_with_namespace": "exface.core.data-types",
+    "menu_parent_page_alias": "exface.core.metamodel",
+    "menu_index": "5",
     "menu_visible": true,
-    "name": "Error Codes",
+    "name": "Data Types",
     "short_description": "",
-    "replaces_page_alias": "",
+    "replaces_page_alias": null,
     "contents": {
+        "object_alias": "exface.Core.DATATYPE",
         "widget_type": "DataTable",
-        "object_alias": "exface.Core.ERROR",
         "filters": [
             {
-                "attribute_alias": "ERROR_CODE"
+                "attribute_alias": "NAME"
             },
             {
-                "attribute_alias": "ERROR_TEXT"
+                "attribute_alias": "ALIAS"
             },
             {
                 "attribute_alias": "APP"
+            },
+            {
+                "attribute_alias": "UID",
+                "widget_type": "input"
             }
         ],
         "columns": [
             {
-                "attribute_alias": "APP__ALIAS"
-            },
-            {
-                "attribute_alias": "ERROR_CODE"
-            },
-            {
-                "attribute_alias": "ERROR_TEXT"
-            }
-        ],
-        "sorters": [
-            {
-                "attribute_alias": "CREATED_ON",
-                "direction": "desc"
+                "attribute_group_alias": "~VISIBLE"
             }
         ],
         "buttons": [
+            {
+                "action_alias": "exface.Core.UpdateData"
+            },
             {
                 "action_alias": "exface.Core.CreateObjectDialog"
             },

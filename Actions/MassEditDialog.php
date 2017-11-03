@@ -13,7 +13,7 @@ class MassEditDialog extends ShowDialog
     {
         $this->setInputRowsMin(null);
         $this->setInputRowsMax(null);
-        $this->setIconName(Icons::PENCIL_MULTIPLE);
+        $this->setIcon(Icons::PENCIL_MULTIPLE);
         $this->setPrefillWithInputData(true);
         $this->setPrefillWithFilterContext(false);
     }

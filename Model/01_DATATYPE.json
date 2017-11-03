@@ -369,6 +369,36 @@
             "DEFAULT_EDITOR_UXON": "",
             "ALIAS": "FILE_PATH_RELATIVE",
             "SHORT_DESCRIPTION": "\/folder\/subfolder\/filename or folder\/subfolder\/filename"
+        },
+        {
+            "CREATED_ON": "2017-10-31 08:42:21",
+            "MODIFIED_ON": "2017-09-11 10:25:27",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e7be1769277c6a9c0f0205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Numberic ID (Integer)",
+            "PROTOTYPE": "exface\/Core\/DataTypes\/IntegerDataType.php",
+            "CONFIG_UXON": "{\"group_digits\":false}",
+            "VALIDATION_ERROR": "",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"InputNumber\"}",
+            "ALIAS": "NumericId",
+            "SHORT_DESCRIPTION": ""
+        },
+        {
+            "CREATED_ON": "2017-11-01 12:45:25",
+            "MODIFIED_ON": "2017-11-01 12:47:06",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e7bf02824f925f9c0f0205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Language codes (ISO 639-1)",
+            "PROTOTYPE": "exface\/Core\/DataTypes\/StringEnumDataType.php",
+            "CONFIG_UXON": "{\"values\":{\"en\":\"English\",\"de\":\"German\",\"ru\":\"Russian\",\"fr\":\"French\"}}",
+            "VALIDATION_ERROR": "",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"InputSelect\"}",
+            "ALIAS": "LanguageCode",
+            "SHORT_DESCRIPTION": ""
         }
     ],
     "totals_rows": [],

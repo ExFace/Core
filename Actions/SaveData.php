@@ -20,7 +20,7 @@ class SaveData extends AbstractAction implements iModifyData, iCanBeUndone
 
     function init()
     {
-        $this->setIconName(Icons::CHECK);
+        $this->setIcon(Icons::CHECK);
         $this->setInputRowsMin(0);
         $this->setInputRowsMax(null);
     }

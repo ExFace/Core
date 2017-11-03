@@ -26,6 +26,10 @@ class NumberDataType extends AbstractDataType
     private $max = null;
     
     private $base = 10;
+    
+    private $groupDigits = true;
+    
+    private $groupLength = 3;
 
     public static function cast($string)
     {
@@ -230,7 +234,50 @@ class NumberDataType extends AbstractDataType
         $this->base = $base;
         return $this;
     }
+    
+    /**
+     * @return boolean
+     */
+    public function getGroupDigits()
+    {
+        return $this->groupDigits;
+    }
 
+    /**
+     * If set to TRUE, digits will be separated in groups of group_length.
+     * 
+     * @uxon-property group_digits
+     * @uxon-type boolean
+     * 
+     * @param boolean $groupDigits
+     */
+    public function setGroupDigits($true_or_false)
+    {
+        $this->groupDigits = BooleanDataType::cast($true_or_false);
+        return $this;
+    }
+
+    /**
+     * @return boolean
+     */
+    public function getGroupLength()
+    {
+        return $this->groupLength;
+    }
+    
+    /**
+     * Sets the length of a digit group if group_digits is enabled.
+     * 
+     * @uxon-property group_length
+     * @uxon-type integer
+     * 
+     * @param integer $groupDigits
+     */
+    public function setGroupLength($number)
+    {
+        $this->groupLength = NumberDataType::cast($number);
+        return $this;
+    }
 
 }
 ?>

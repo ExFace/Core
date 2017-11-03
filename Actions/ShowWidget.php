@@ -53,7 +53,7 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
     protected function init()
     {
         parent::init();
-        $this->setIconName(Icons::EXTERNAL_LINK);
+        $this->setIcon(Icons::EXTERNAL_LINK);
     }
 
     protected function perform()
@@ -432,6 +432,11 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
         }
         return $this->getWorkbench()->ui()->getPage($this->page_alias);
     }
+    
+    public function getPageAlias()
+    {
+        return $this->page_alias;
+    }
 
     /**
      * The alias of the page to get the widget from.
@@ -445,7 +450,7 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
      * @param string $value
      * @return iReferenceWidget
      */
-    protected function setPageAlias($value)
+    public function setPageAlias($value)
     {
         $this->page_alias = $value;
         return $this;
