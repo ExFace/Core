@@ -619,7 +619,7 @@ class UiPage implements UiPageInterface
      */
     public function isUpdateable()
     {
-        return $this->updateable;
+        return is_null($this->updateable) ? true : $this->updateable;
     }
 
     /**
@@ -741,7 +741,7 @@ class UiPage implements UiPageInterface
      */
     public function getMenuVisible()
     {
-        return $this->menuVisible;
+        return is_null($this->menuVisible) ? true : $this->menuVisible;
     }
 
     /**
