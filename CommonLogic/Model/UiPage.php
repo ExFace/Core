@@ -681,6 +681,11 @@ class UiPage implements UiPageInterface
         return $this->menuParentPageSelector;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::setMenuParentPageSelector()
+     */
     public function setMenuParentPageSelector($id_or_alias) {
         $this->menuParentPageSelector = $id_or_alias;
         $this->menuParentPageAlias = null;
