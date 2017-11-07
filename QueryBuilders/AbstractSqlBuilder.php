@@ -40,7 +40,7 @@ use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
  * mandatory filter).
  * 
  * The data address of an attribute stored in an SQL database can be a column
- * name or any SQL usable in the SELECT clause. Custom SQL should be enclosed
+ * name or any SQL usable in the SELECT clause. Custom SQL must be enclosed
  * in regular braces "()" to ensure it is correctly distinguished from column
  * names. 
  * 
@@ -705,10 +705,9 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             }
             $select_from .= $this->getQueryId();
         }
-        if (is_null($select_as))
-            $select_as = $qpart->getAlias();
+        
+        $select_as = $this->getShortAlias(is_null($select_as) ? $qpart->getAlias() : $select_as);
         $select_from = $this->getShortAlias($select_from);
-        $select_as = $this->getShortAlias($select_as);
         $aggregator = ! is_null($aggregator) ? $aggregator : $qpart->getAggregator();
         
         // build subselects for reverse relations if the body of the select is not specified explicitly
