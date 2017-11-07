@@ -145,7 +145,9 @@ class UiPage implements UiPageInterface
     protected function regenerateFromContents()
     {
         $this->removeAllWidgets();
-        WidgetFactory::createFromUxon($this, $this->getContentsUxon());   
+        if (! $this->getContentsUxon()->isEmpty()) {
+            WidgetFactory::createFromUxon($this, $this->getContentsUxon());   
+        }
         return $this;
     }
     
