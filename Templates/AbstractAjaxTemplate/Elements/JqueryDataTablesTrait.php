@@ -94,7 +94,7 @@ HTML;
             $output = <<<JS
 	// Add event listener for opening and closing details
 	$('#{$this->getId()} tbody').on('click', 'td.details-control', function () {
-		var tr = $(this).closest('{{$this->buildCssSelectorDataRows()}}');
+		var tr = $(this).closest('{$this->buildCssSelectorDataRows()}');
 		var row = {$this->getId()}_table.row( tr );
 		
 		if ( row.child.isShown() ) {
