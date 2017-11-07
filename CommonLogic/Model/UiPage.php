@@ -12,13 +12,14 @@ use exface\Core\DataTypes\StringDataType;
 use exface\Core\Factories\EventFactory;
 use exface\Core\Exceptions\Widgets\WidgetNotFoundError;
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\Exceptions\RuntimeException;
 use exface\Core\CommonLogic\NameResolver;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Factories\UiPageFactory;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\DataTypes\NumberDataType;
+use exface\Core\Exceptions\UiPageNotPartOfAppError;
+use Ramsey\Uuid\Uuid;
 
 /**
  * This is the default implementation of the UiPageInterface.
@@ -593,10 +594,10 @@ class UiPage implements UiPageInterface
      */
     public function getApp()
     {
-        if (! is_null($this->appAlias)) {
+        if ($this->appAlias) {
             return $this->getWorkbench()->getApp($this->appAlias);
         } else {
-            throw new RuntimeException('The page "' . $this->getAliasWithNamespace() . '" is not part of any app!', '6XHA8KR');
+            throw new UiPageNotPartOfAppError('The page "' . $this->getAliasWithNamespace() . '" is not part of any app!');
         }
     }
 
@@ -629,7 +630,13 @@ class UiPage implements UiPageInterface
      */
     public function setUpdateable($true_or_false)
     {
-        $this->updateable = BooleanDataType::cast($true_or_false);
+        if (! is_null($true_or_false)) {
+            // BooleanDataType::cast() ist sehr restriktiv darin einen Wert als true zurueckzugeben,
+            // im Zweifelsfall wird false zurueckgegeben. Updatetable sollte aber im Zweifelsfall
+            // eher true sein.
+            $this->updateable = BooleanDataType::cast($true_or_false);
+        }
+        
         return $this;
     }
 
@@ -1045,6 +1052,33 @@ class UiPage implements UiPageInterface
         } else {
             return false;
         }
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::generateUid()
+     */
+    public static function generateUid()
+    {
+        return '0x' . Uuid::uuid1()->getHex();
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::generateAlias()
+     */
+    public static function generateAlias($prefix)
+    {
+        $characters = 'abcdefghijklmnopqrstuvwxyz';
+        $charactersLength = strlen($characters);
+        $aliasLength = 10;
+        $alias = '';
+        for ($i = 0; $i < $aliasLength; $i ++) {
+            $alias .= $characters[mt_rand(0, $charactersLength - 1)];
+        }
+        return $prefix . $alias;
     }
 }
 

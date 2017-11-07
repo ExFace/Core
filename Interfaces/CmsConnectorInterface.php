@@ -267,5 +267,12 @@ interface CmsConnectorInterface extends ExfaceClassInterface
      * @return UiPageInterface[]
      */
     public function getPagesForApp(AppInterface $app);
+    
+    /**
+     * Returns the CMS-ID of the root of the menu tree.
+     * 
+     * @return integer
+     */
+    public function getPageIdRoot();
 }
 ?>

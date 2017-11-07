@@ -28,7 +28,7 @@ abstract class AbstractCmsConnector implements CmsConnectorInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\CmsConnectorInterface::loadPage()
      */
-    public function loadPage($page_id_or_alias, $ignore_replacements = false, $replace_ids = [])
+    public function loadPage($page_id_or_alias, $ignore_replacements = false)
     {
         if (! $page_id_or_alias) {
             return $this->getDefaultPage();
@@ -63,44 +63,62 @@ abstract class AbstractCmsConnector implements CmsConnectorInterface
             return false;
         }
         
-        // Return direkt hits right away!
-        if ($this->isCmsId($id_or_alias)) {
-            if ($page = $this->pageCacheByCmsId[$id_or_alias]) {
-                if (array_key_exists($id_or_alias, $this->pageCacheReplacements)) {
-                    return $this->pageCacheByCmsId[$this->pageCacheReplacements[$id_or_alias]];
-                } else {
-                    return $page;
+        if (! $this->isCmsId($id_or_alias)) {
+            // Wurde keine CMS-ID uebergeben wird der Cache nach passenden Aliasen und UIDs durchsucht
+            // und die uebergebene ID durch die CMS-ID ersetzt wenn eine passende Seite gefunden wird.
+            foreach ($this->pageCacheByCmsId as $idCms => $page) {
+                if ($page->getAliasWithNamespace() === $id_or_alias || $page->getId() === $id_or_alias) {
+                    $id_or_alias = $idCms;
+                    break;
                 }
             }
         }
         
-        foreach ($this->pageCacheByCmsId as $page) {
-            if ($page->getAliasWithNamespace() === $id_or_alias || $page->getId() === $id_or_alias) {
-                return $page;
+        // Return direct hits right away!
+        if ($this->isCmsId($id_or_alias)) {
+            if (array_key_exists($id_or_alias, $this->pageCacheReplacements) && array_key_exists($this->pageCacheReplacements[$id_or_alias], $this->pageCacheByCmsId)) {
+                return $this->pageCacheByCmsId[$this->pageCacheReplacements[$id_or_alias]];
+            } elseif (array_key_exists($id_or_alias, $this->pageCacheByCmsId)) {
+                return $this->pageCacheByCmsId[$id_or_alias];
             }
         }
+        
         return false;
     }
     
     protected function replacePageInCache(UiPageInterface $originalPage, $cmsIdReplacement, UiPageInterface $replacementPage)
     {
         if ($originalCmsId = array_search($originalPage, $this->pageCacheByCmsId)) {
-            $this->pageCacheReplacements[$originalCmsId] = $cmsIdReplacement;
-            foreach (array_keys($this->pageCacheReplacements, $originalCmsId) as $recursivelyReplacedId) {
-                $this->pageCacheReplacements[$recursivelyReplacedId] = $cmsIdReplacement;
+            if (array_key_exists($cmsIdReplacement, $this->pageCacheReplacements)) {
+                $cmsIdReplacement = $this->pageCacheReplacements[$cmsIdReplacement];
             }
-        } 
+            $this->pageCacheReplacements[$originalCmsId] = $cmsIdReplacement;
+        }
         $this->addPageToCache($cmsIdReplacement, $replacementPage);
         return $this;
     }
     
     public function getPageIdInCms(UiPageInterface $page) {
-        if ($cmsId = array_search($page, $this->pageCacheByCmsId)) {
+        if (! is_null($cmsId = $this->getCachedPageCmsId($page))) {
             return $cmsId;
         } else {
             $this->loadPage($page->getAliasWithNamespace());
+            if (! is_null($cmsId = $this->getCachedPageCmsId($page))) {
+                return $cmsId;
+            } else {
+                throw new UiPageNotFoundError('The UiPage "' . $page->getAliasWithNamespace() . '" doesn\'t exist.');
+            }
         }
-        return array_search($page, $this->pageCacheByCmsId);
+    }
+    
+    protected function getCachedPageCmsId(UiPageInterface $page)
+    {
+        foreach ($this->pageCacheByCmsId as $cmsId => $cachedPage) {
+            if ($page->isExactly($cachedPage)) {
+                return $cmsId;
+            }
+        }
+        return null;
     }
 
     /**
@@ -181,4 +199,14 @@ abstract class AbstractCmsConnector implements CmsConnectorInterface
     }
     
     abstract protected function isCmsId($page_id_or_alias);
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\CmsConnectorInterface::getPageIdRoot()
+     */
+    public function getPageIdRoot()
+    {
+        return $this->getApp()->getConfig()->getOption('MODX.PAGES.ROOT_CONTAINER_ID');
+    }
 }

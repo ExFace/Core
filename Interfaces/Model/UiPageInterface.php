@@ -349,6 +349,21 @@ interface UiPageInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
      * @return boolean
      */
     public function isExactly(UiPageInterface $page);
+    
+    /**
+     * Generates a UID.
+     * 
+     * @return string
+     */
+    public static function generateUid();
+    
+    /**
+     * Generates a unique alias.
+     * 
+     * @param string $prefix
+     * @return string
+     */
+    public static function generateAlias($prefix);
 }
 
 ?>
