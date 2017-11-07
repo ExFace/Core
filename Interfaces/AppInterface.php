@@ -7,6 +7,7 @@ use exface\Core\Contexts\DataContext;
 use exface\Core\Exceptions\Actions\ActionNotFoundError;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Exceptions\LogicException;
 
 /**
  * The app class provieds access to actions, configs, translations, etc. of
@@ -77,7 +78,9 @@ interface AppInterface extends ExfaceClassInterface, AliasInterface
     /**
      * Returns the unique identifier of this app.
      * It is a UUID by default.
-     *
+     * 
+     * @throws LogicException if app has no UID or is not installed
+     * 
      * @return string
      */
     public function getUid();
