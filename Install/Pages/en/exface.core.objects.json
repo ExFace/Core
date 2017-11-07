@@ -19,7 +19,8 @@
                 "attribute_alias": "APP"
             },
             {
-                "attribute_alias": "DATA_ADDRESS"
+                "attribute_alias": "DATA_ADDRESS",
+                "widget_type": "Input"
             },
             {
                 "attribute_alias": "ALIAS"
