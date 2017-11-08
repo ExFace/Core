@@ -79,10 +79,6 @@ class UiPage implements UiPageInterface
     private $contents_uxon = null;
     
     private $aliasWithNamespace = null;
-
-    private $alias = null;
-
-    private $namespace = null;
     
     private $dirty = false;
 
@@ -908,14 +904,12 @@ class UiPage implements UiPageInterface
      */
     public function getAlias()
     {
-        if (is_null($this->alias) && ! is_null($this->getAliasWithNamespace())) {
-            if (($sepPos = strrpos($this->getAliasWithNamespace(), NameResolver::NAMESPACE_SEPARATOR)) !== false) {
-                $this->alias = substr($this->getAliasWithNamespace(), $sepPos + 1);
-            } else {
-                $this->alias = $this->getAliasWithNamespace();
-            }
+        if (($sepPos = strrpos($this->getAliasWithNamespace(), NameResolver::NAMESPACE_SEPARATOR)) !== false) {
+            $alias = substr($this->getAliasWithNamespace(), $sepPos + 1);
+        } else {
+            $alias = $this->getAliasWithNamespace();
         }
-        return $this->alias;
+        return $alias;
     }
 
     /**
@@ -947,14 +941,12 @@ class UiPage implements UiPageInterface
      */
     public function getNamespace()
     {
-        if (is_null($this->namespace) && ! is_null($this->getAliasWithNamespace())) {
-            if (($sepPos = strrpos($this->getAliasWithNamespace(), NameResolver::NAMESPACE_SEPARATOR)) !== false) {
-                $this->namespace = substr($this->getAliasWithNamespace(), 0, $sepPos);
-            } else {
-                $this->namespace = '';
-            }
+        if (($sepPos = strrpos($this->getAliasWithNamespace(), NameResolver::NAMESPACE_SEPARATOR)) !== false) {
+            $namespace = substr($this->getAliasWithNamespace(), 0, $sepPos);
+        } else {
+            $namespace = '';
         }
-        return $this->namespace;
+        return $namespace;
     }
 
     /**
