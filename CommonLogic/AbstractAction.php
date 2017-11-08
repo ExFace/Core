@@ -23,6 +23,8 @@ use exface\Core\Interfaces\DataSheets\DataSheetMapperInterface;
 use exface\Core\CommonLogic\DataSheets\DataSheetMapper;
 use exface\Core\Factories\DataSheetMapperFactory;
 use exface\Core\Exceptions\Actions\ActionConfigurationError;
+use exface\Core\Interfaces\Widgets\iTriggerAction;
+use exface\Core\Interfaces\Widgets\iUseInputWidget;
 
 /**
  * The abstract action is the base ActionInterface implementation, that simplifies the creation of custom actions.
@@ -1063,19 +1065,44 @@ abstract class AbstractAction implements ActionInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Actions\ActionInterface::setInputMappers()
      */
-    public function setInputMappers($data_sheet_mappers_or_uxon_objects)
+    public function setInputMappers(UxonObject $uxon)
     {
-        foreach ($data_sheet_mappers_or_uxon_objects as $instance){
-            if ($instance instanceof DataSheetMapper){
-                $mapper = $instance;
-            } elseif ($instance instanceof UxonObject){
-                $mapper = DataSheetMapperFactory::createFromUxon($this->getWorkbench(), $instance, null, $this->getMetaObject());
-            } else {
-                throw new ActionConfigurationError($this, 'Error in specification of input mappers: expecting array of mappers or their UXON descriptions - "' . gettype($instance) . '" given instead!');
-            }
-            
+        foreach ($uxon as $instance){
+            $mapper = DataSheetMapperFactory::createFromUxon($this->getWorkbench(), $instance, null, $this->getMetaObject());         
             $this->addInputMapper($mapper);
         }
+    }
+    
+    /**
+     * Defines transformation rules for input data coming from the calling widget of this action.
+     * 
+     * This is a shortcut to specifying input_mappers, where an array needs to be created and
+     * every mapper must have a from_object_alias defined. In contrast to input_mappers, you
+     * can only define one mapper here and it will be automatically applied to data with
+     * the meta object of the input widget of this action.
+     * 
+     * See description of the input_mappers property for more details. 
+     * 
+     * @uxon-property input_mapper
+     * @uxon-type \exface\Core\CommonLogic\DataSheet\DataSheetMapper
+     * 
+     * @see setInputMappers()
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::setInputMapper()
+     */
+    public function setInputMapper(UxonObject $uxon)
+    {
+        if ($calling_widget = $this->getCalledByWidget()) {
+            if ($calling_widget instanceof iUseInputWidget) {
+                $from_object = $calling_widget->getInputWidget()->getMetaObject();
+            } else {
+                $from_object = $calling_widget->getMetaObject();
+            }
+        } else {
+            $this->getWorkbench()->getLogger()->warning('Cannot initialize input mapper for action "' . $this->getAliasWithNamespace() . '": no from-object defined and no calling widget to get it from!', [], $this);
+            return $this;
+        }
+        $mapper = DataSheetMapperFactory::createFromUxon($this->getWorkbench(), $uxon, $from_object, $this->getMetaObject());
+        return $this->addInputMapper($mapper);
     }
     
     /**
