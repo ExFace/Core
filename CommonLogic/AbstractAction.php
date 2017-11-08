@@ -1030,7 +1030,7 @@ abstract class AbstractAction implements ActionInterface
      *  "input_mappers": [
      *      {
      *          "from_object_alias": "my.App.PurchaseOrder",
-     *          "column_mappings": [
+     *          "column_to_column_mappings": [
      *              {
      *                  "from": "LABEL",
      *                  "to": "TITLE"
