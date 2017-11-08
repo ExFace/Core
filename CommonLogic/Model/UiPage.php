@@ -40,11 +40,11 @@ class UiPage implements UiPageInterface
     use ImportUxonObjectTrait;
 
     const WIDGET_ID_SEPARATOR = '_';
-    
+
     const WIDGET_ID_SPACE_SEPARATOR = '.';
-    
+
     private $widgets = array();
-    
+
     private $template = null;
 
     private $ui = null;
@@ -58,7 +58,7 @@ class UiPage implements UiPageInterface
     private $updateable = true;
 
     private $menuParentPageAlias = null;
-    
+
     private $menuParentPageSelector = null;
 
     private $menuParentPageDefaultAlias = null;
@@ -78,13 +78,13 @@ class UiPage implements UiPageInterface
     private $contents = null;
 
     private $contents_uxon = null;
-    
+
     private $aliasWithNamespace = null;
 
     private $alias = null;
 
     private $namespace = null;
-    
+
     private $dirty = false;
 
     /**
@@ -137,7 +137,7 @@ class UiPage implements UiPageInterface
         }
         return $this->widget_root;
     }
-    
+
     /**
      * Initializes all widgets from the contents of the page
      * 
@@ -146,10 +146,10 @@ class UiPage implements UiPageInterface
     protected function regenerateFromContents()
     {
         $this->removeAllWidgets();
-        WidgetFactory::createFromUxon($this, $this->getContentsUxon());   
+        WidgetFactory::createFromUxon($this, $this->getContentsUxon());
         return $this;
     }
-    
+
     /**
      * Returns the UXON representation of the contents
      * 
@@ -664,7 +664,7 @@ class UiPage implements UiPageInterface
         $this->menuParentPageSelector = null;
         return $this;
     }
-    
+
     /**
      * 
      * {@inheritDoc}
@@ -674,7 +674,7 @@ class UiPage implements UiPageInterface
     {
         return $this->getWorkbench()->ui()->getPage($this->getMenuParentPageSelector());
     }
-    
+
     /**
      * Returns the selector (id or alias) for the parent page in the main menu or NULL if no parent defined.
      * 
@@ -693,7 +693,8 @@ class UiPage implements UiPageInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\UiPageInterface::setMenuParentPageSelector()
      */
-    public function setMenuParentPageSelector($id_or_alias) {
+    public function setMenuParentPageSelector($id_or_alias)
+    {
         $this->menuParentPageSelector = $id_or_alias;
         $this->menuParentPageAlias = null;
         return $this;
@@ -860,7 +861,7 @@ class UiPage implements UiPageInterface
         
         return $this->contents;
     }
-    
+
     /**
      * Returns TRUE if the contents of the page was modified since the last time widgets were generated.
      * 
@@ -872,7 +873,7 @@ class UiPage implements UiPageInterface
     {
         return $this->dirty;
     }
-    
+
     /**
      * Marks this page as dirty: all widgets will be removed immediately and will get regenerated the next 
      * time the user requests a widget.
@@ -898,7 +899,7 @@ class UiPage implements UiPageInterface
         if (is_string($contents)) {
             $this->contents = trim($contents);
         } elseif ($contents instanceof UxonObject) {
-            $this->contents_uxon = $contents;  
+            $this->contents_uxon = $contents;
         } else {
             throw new InvalidArgumentException('Cannot set contents from ' . gettype($contents) . ': expecting string or UxonObject!');
         }
@@ -1028,6 +1029,11 @@ class UiPage implements UiPageInterface
      */
     public function is(UiPageInterface $page)
     {
+        // Seiten ohne ID sind nicht vergleichbar.
+        if (! $this->getId() || ! $page->getId()) {
+            return false;
+        }
+        
         if ($this->isExactly($page)) {
             // Die uebergebene Seite ist genau diese Seite.
             return true;
@@ -1047,13 +1053,18 @@ class UiPage implements UiPageInterface
      */
     public function isExactly(UiPageInterface $page)
     {
+        // Seiten ohne ID sind nicht vergleichbar.
+        if (! $this->getId() || ! $page->getId()) {
+            return false;
+        }
+        
         if (strcasecmp($this->getId(), $page->getId()) == 0) {
             return true;
         } else {
             return false;
         }
     }
-    
+
     /**
      * 
      * {@inheritDoc}
@@ -1063,7 +1074,7 @@ class UiPage implements UiPageInterface
     {
         return '0x' . Uuid::uuid1()->getHex();
     }
-    
+
     /**
      * 
      * {@inheritDoc}
