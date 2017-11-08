@@ -259,7 +259,7 @@ abstract class AbstractJqueryElement implements ExfaceClassInterface
      */
     public function buildCssElementClass()
     {
-        return '';
+        return $this->element_class;
     }
     
     /**
