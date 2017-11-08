@@ -747,7 +747,7 @@ class UiPage implements UiPageInterface
      */
     public function getMenuVisible()
     {
-        return is_null($this->menuVisible) ? true : $this->menuVisible;
+        return $this->menuVisible;
     }
 
     /**
@@ -757,7 +757,9 @@ class UiPage implements UiPageInterface
      */
     public function setMenuVisible($menuVisible)
     {
-        $this->menuVisible = BooleanDataType::cast($menuVisible);
+        if (! is_null($menuVisible)) {
+            $this->menuVisible = BooleanDataType::cast($menuVisible);
+        }
         return $this;
     }
 
