@@ -137,6 +137,13 @@ abstract class AbstractCmsConnector implements CmsConnectorInterface
         $this->pageCacheByCmsId[$cmsId] = $page;
         return $this;
     }
+    
+    protected function clearPagesCache()
+    {
+        $this->pageCacheByCmsId = [];
+        $this->pageCacheReplacements = [];
+        return $this;
+    }
 
     /**
      * Returns a default page.

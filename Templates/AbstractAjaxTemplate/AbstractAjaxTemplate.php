@@ -282,11 +282,6 @@ abstract class AbstractAjaxTemplate extends AbstractTemplate
                 }
             }
             
-            // TODO this is a dirty hack. The special treatment for trees needs to move completely to the respective class
-            if ($widget && $widget->getWidgetType() == 'DataTree' && ! $filters['PARENT']) {
-                $filters['PARENT'][] = $widget->getTreeRootUid();
-            }
-            
             /* @var $data_sheet \exface\Core\CommonLogic\DataSheets\DataSheet */
             if (! $data_sheet || $data_sheet->isEmpty()) {
                 if ($widget) {

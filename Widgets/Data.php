@@ -629,8 +629,13 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
         if ($data_sheet->getMetaObject()->isExactly($this->getMetaObject())) {
             // If the prefill data is based on the same object as the widget, inherit the filter conditions from the prefill
             foreach ($data_sheet->getFilters()->getConditions() as $condition) {
-                // For each filter condition look for filters over the same attribute
-                $attribute_filters = $this->getConfiguratorWidget()->findFiltersByAttribute($condition->getExpression()->getAttribute());
+                // For each filter condition look for filters over the same attribute.
+                // Skip conditions not based on attributes.
+                if (! $condition->getExpression()->isMetaAttribute()) {
+                    continue;
+                }
+                $attr = $condition->getExpression()->getAttribute();
+                $attribute_filters = $this->getConfiguratorWidget()->findFiltersByAttribute($attr);
                 // If no filters are there, create one
                 if (count($attribute_filters) == 0) {
                     $filter = $this->createFilterWidget($condition->getExpression()->getAttribute()->getAliasWithRelationPath());

@@ -18,8 +18,8 @@ trait JqueryHtmlTrait {
         if ($this->getWidget()->getCss()) {
             $output .= '<style>' . $this->getWidget()->getCss() . '</style>';
         }
-        if ($this->getWidget()->getCaption() && ! $this->getWidget()->getHideCaption()) {
-            $output .= '<label for="' . $this->getId() . '">' . $this->getWidget()->getCaption() . '</label>';
+        if ($caption = $this->getCaption()) {
+            $output .= '<label for="' . $this->getId() . '">' . $caption . '</label>';
         }
         
         $style = '';
@@ -28,7 +28,7 @@ trait JqueryHtmlTrait {
         }
         
         $output .= '<div id="' . $this->getId() . '" style="' . $style . '">' . $this->getWidget()->getHtml() . '</div>';
-        return $this->buildHtmlWrapper($output);
+        return $this->buildHtmlGridItemWrapper($output);
     }
     
     public function generateJs()

@@ -94,7 +94,7 @@ HTML;
             $output = <<<JS
 	// Add event listener for opening and closing details
 	$('#{$this->getId()} tbody').on('click', 'td.details-control', function () {
-		var tr = $(this).closest('{{$this->buildCssSelectorDataRows()}}');
+		var tr = $(this).closest('{$this->buildCssSelectorDataRows()}');
 		var row = {$this->getId()}_table.row( tr );
 		
 		if ( row.child.isShown() ) {
@@ -460,7 +460,7 @@ JS;
 			$('#{$this->getId()} tbody tr').on('contextmenu', function(e){
 				{$this->getId()}_table.row($(e.target).closest('{$this->buildCssSelectorDataRows()}')).select();
 			});
-			$('#{$this->getId()}').closest('.fitem').trigger('resize');
+			$('#{$this->getId()}').closest('.exf-grid-item').trigger('resize');
             {$context_menu_js}
 			if({$this->getId()}_table){
 				{$this->getId()}_drawPagination();

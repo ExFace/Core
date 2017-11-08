@@ -326,25 +326,6 @@ class Text extends AbstractWidget implements iShowSingleAttribute, iHaveValue, i
     }
     
     /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Widgets\iCanBeAligned::getAlign()
-     */
-    public function getAlign()
-    {
-        if (! $this->isAlignSet()) {
-            if ($this->getDataType() instanceof NumberDataType || $this->getDataType() instanceof PriceDataType) {
-                $this->setAlign(EXF_ALIGN_OPPOSITE);
-            } elseif ($this->getDataType() instanceof BooleanDataType) {
-                $this->setAlign(EXF_ALIGN_CENTER);
-            } else {
-                $this->setAlign(EXF_ALIGN_DEFAULT);
-            }
-        }
-        return $this->getAlignDefault();
-    }
-
-    /**
      * Returns the data type of the widget. 
      * 
      * The data type can either be set explicitly by UXON, or is derived from the shown meta attribute.
