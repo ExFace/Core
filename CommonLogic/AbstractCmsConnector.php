@@ -88,11 +88,16 @@ abstract class AbstractCmsConnector implements CmsConnectorInterface
     
     protected function replacePageInCache(UiPageInterface $originalPage, $cmsIdReplacement, UiPageInterface $replacementPage)
     {
-        if ($originalCmsId = array_search($originalPage, $this->pageCacheByCmsId)) {
+        if ($originalCmsId = $this->getCachedPageCmsId($originalPage)) {
+            // vorhanden: 2 => 3, hinzufuegen: 1 => 2, tatsaechlich hinzuguegen: 1 => 3
+            // (zu lesen: Seite 2 wird ersetzt durch Seite 3, ...)
             if (array_key_exists($cmsIdReplacement, $this->pageCacheReplacements)) {
                 $cmsIdReplacement = $this->pageCacheReplacements[$cmsIdReplacement];
             }
             $this->pageCacheReplacements[$originalCmsId] = $cmsIdReplacement;
+            
+            // vorhanden: 2 => 3, hinzufuegen: 3 => 4, vorhandenes aendern: 2 => 4
+            $this->pageCacheReplacements = array_replace($this->pageCacheReplacements, array_fill_keys(array_keys($this->pageCacheReplacements, $originalCmsId), $cmsIdReplacement));
         }
         $this->addPageToCache($cmsIdReplacement, $replacementPage);
         return $this;

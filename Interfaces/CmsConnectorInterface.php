@@ -4,6 +4,7 @@ namespace exface\Core\Interfaces;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Exceptions\UiPageNotFoundError;
 use exface\Core\Exceptions\RuntimeException;
+use exface\Core\Exceptions\UiPageIdNotUniqueError;
 
 /**
  * A CMS-connector provides a generic interface for ExFace to communicate with
@@ -216,9 +217,11 @@ interface CmsConnectorInterface extends ExfaceClassInterface
 
     /**
      * Creates a new page in the CMS for the given page model
-     *
+     * 
      * @param UiPageInterface $page
-     *
+     * 
+     * @throws UiPageIdNotUniqueError if a page with the same alias already exists
+     * 
      * @return CmsConnectorInterface
      */
     public function createPage(UiPageInterface $page);
