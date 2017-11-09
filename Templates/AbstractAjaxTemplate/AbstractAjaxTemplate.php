@@ -230,9 +230,9 @@ abstract class AbstractAjaxTemplate extends AbstractTemplate
         return $this->getElementByWidgetId($link->getWidgetId(), $link->getPage());
     }
 
-    public function createLinkInternal(UiPageInterface $page, $url_params = '')
+    public function createLinkInternal($page_or_id_or_alias, $url_params = '')
     {
-        return $this->getWorkbench()->getCMS()->createLinkInternal($page, $url_params);
+        return $this->getWorkbench()->getCMS()->createLinkInternal($page_or_id_or_alias, $url_params);
     }
 
     public function getDataSheetFromRequest($object_id = NULL, $widget = NULL)

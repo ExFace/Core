@@ -1163,7 +1163,7 @@ else {
         $exface = $this->getWorkbench();
         $link = new WidgetLink($exface);
         $link->setWidgetId($this->getId());
-        $link->setPage($this->getPage());
+        $link->setPageAlias($this->getPage()->getAliasWithNamespace());
         return $link;
     }
 

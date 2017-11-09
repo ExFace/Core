@@ -53,7 +53,7 @@ class UiPage implements UiPageInterface
 
     private $context_bar = null;
 
-    private $appAlias = null;
+    private $appUidOrAlias = null;
 
     private $updateable = true;
 
@@ -61,7 +61,7 @@ class UiPage implements UiPageInterface
 
     private $menuParentPageSelector = null;
 
-    private $menuParentPageDefaultAlias = null;
+    private $menuDefaultPosition = null;
 
     private $menuIndex = 0;
 
@@ -80,7 +80,7 @@ class UiPage implements UiPageInterface
     private $contents_uxon = null;
 
     private $aliasWithNamespace = null;
-    
+
     private $dirty = false;
 
     /**
@@ -89,14 +89,14 @@ class UiPage implements UiPageInterface
      * @param UiManagerInterface $ui
      * @param string $alias
      * @param string $uid
-     * @param string $appAlias
+     * @param string $appUidOrAlias
      */
-    public function __construct(UiManagerInterface $ui, $alias = null, $uid = null, $appAlias = null)
+    public function __construct(UiManagerInterface $ui, $alias = null, $uid = null, $appUidOrAlias = null)
     {
         $this->ui = $ui;
         $this->setAliasWithNamespace($alias);
         $this->setId($uid);
-        $this->setAppAlias($appAlias);
+        $this->setAppUidOrAlias($appUidOrAlias);
     }
 
     /**
@@ -592,22 +592,22 @@ class UiPage implements UiPageInterface
      */
     public function getApp()
     {
-        if ($this->appAlias) {
-            return $this->getWorkbench()->getApp($this->appAlias);
+        if ($this->appUidOrAlias) {
+            return $this->getWorkbench()->getApp($this->appUidOrAlias);
         } else {
             throw new UiPageNotPartOfAppError('The page "' . $this->getAliasWithNamespace() . '" is not part of any app!');
         }
     }
 
     /**
-     * Sets the app-alias, this page belongs to.
+     * Sets the app UID or alias, this page belongs to.
      * 
-     * @param string $appAlias
+     * @param string $appUidOrAlias
      * @return UiPageInterface
      */
-    protected function setAppAlias($appAlias)
+    protected function setAppUidOrAlias($appUidOrAlias)
     {
-        $this->appAlias = $appAlias;
+        $this->appUidOrAlias = $appUidOrAlias;
         return $this;
     }
 
@@ -701,21 +701,21 @@ class UiPage implements UiPageInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\UiPageInterface::getMenuParentPageDefaultAlias()
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::getMenuDefaultPosition()
      */
-    public function getMenuParentPageDefaultAlias()
+    public function getMenuDefaultPosition()
     {
-        return $this->menuParentPageDefaultAlias;
+        return $this->menuDefaultPosition;
     }
 
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\UiPageInterface::setMenuParentPageDefaultAlias()
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::setMenuDefaultPosition()
      */
-    public function setMenuParentPageDefaultAlias($menuParentPageDefaultAlias)
+    public function setMenuDefaultPosition($menuDefaultPosition)
     {
-        $this->menuParentPageDefaultAlias = $menuParentPageDefaultAlias;
+        $this->menuDefaultPosition = $menuDefaultPosition;
         return $this;
     }
 
@@ -738,6 +738,26 @@ class UiPage implements UiPageInterface
     {
         $this->menuIndex = NumberDataType::cast($number);
         return $this;
+    }
+
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::getMenuPosition()
+     */
+    public function getMenuPosition()
+    {
+        return $this->getMenuParentPageAlias() . ':' . $this->getMenuIndex();
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::isMoved()
+     */
+    public function isMoved()
+    {
+        return strcasecmp($this->getMenuPosition(), $this->getMenuDefaultPosition()) != 0;
     }
 
     /**
@@ -1013,8 +1033,8 @@ class UiPage implements UiPageInterface
             $copy->setAliasWithNamespace($page_alias);
         }
         // Copy internal properties, that do not get exported to UXON
-        $copy->setAppAlias($this->appAlias);
-        $copy->setMenuParentPageDefaultAlias($this->getMenuParentPageDefaultAlias());
+        $copy->setAppUidOrAlias($this->appUidOrAlias);
+        $copy->setMenuDefaultPosition($this->getMenuDefaultPosition());
         return $copy;
     }
 
@@ -1023,23 +1043,33 @@ class UiPage implements UiPageInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\UiPageInterface::is()
      */
-    public function is(UiPageInterface $page)
+    public function is($page_or_id_or_alias)
     {
-        // Seiten ohne ID sind nicht vergleichbar.
-        if (! $this->getId() || ! $page->getId()) {
-            return false;
-        }
-        
-        if ($this->isExactly($page)) {
+        if ($this->isExactly($page_or_id_or_alias)) {
             // Die uebergebene Seite ist genau diese Seite.
             return true;
-        } elseif (strcasecmp($this->getId(), $this->getWorkbench()->ui()->getPage($page->getId())->getId()) === 0) {
-            // Ersetzt die uebergebene Seite diese Seite, wird diese Seite zurueckgegeben
-            // wenn die uebergebene Seite geladen wird.
-            return true;
-        } else {
-            return false;
         }
+        
+        if ($page_or_id_or_alias instanceof UiPageInterface) {
+            $page_or_id_or_alias = $page_or_id_or_alias->getAliasWithNamespace();
+        }
+        
+        // Ersetzt die uebergebene Seite eine andere Seite, koennte es diese Seite sein (auch
+        // ueber eine Kette von Ersetzungen).
+        $replacedPage = $this->getWorkbench()->getCMS()->loadPage($this->getAliasWithNamespace());
+        if ($replacedPage->isExactly($page_or_id_or_alias)) {
+            return true;
+        }
+        
+        // Ersetzt diese Seite eine andere Seite, koennte es die uebergebene Seite sein (auch
+        // ueber eine Kette von Ersetzungen).
+        // Dies kann hier aber nicht so einfach ueberprueft werden, da es bei fehlerhaften Links
+        // sonst zu Fehlern beim Laden der Seite kommt.
+        
+        // Leider waeren hier fuer eine exakte Pruefung bei laengeren Ketten von Ersetzungen auf
+        // beiden Seiten eine exponentiell zunehmende Anzahl von Vergleichen zu tun.
+        
+        return false;
     }
 
     /**
@@ -1047,18 +1077,34 @@ class UiPage implements UiPageInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\UiPageInterface::isExactly()
      */
-    public function isExactly(UiPageInterface $page)
+    public function isExactly($page_or_id_or_alias)
     {
-        // Seiten ohne ID sind nicht vergleichbar.
-        if (! $this->getId() || ! $page->getId()) {
-            return false;
+        if ($page_or_id_or_alias instanceof UiPageInterface) {
+            return $this->compareTo($page_or_id_or_alias->getId(), $page_or_id_or_alias->getAliasWithNamespace());
+        } else {
+            return $this->compareTo($page_or_id_or_alias, $page_or_id_or_alias);
+        }
+    }
+
+    protected function compareTo($id, $alias)
+    {
+        if ($this->getId() && $id && strcasecmp($this->getId(), $id) == 0) {
+            return true;
+        } elseif ($this->getAliasWithNamespace() && $alias && strcasecmp($this->getAliasWithNamespace(), $alias) == 0) {
+            return true;
         }
         
-        if (strcasecmp($this->getId(), $page->getId()) == 0) {
-            return true;
-        } else {
-            return false;
-        }
+        return false;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::equals()
+     */
+    public function equals(UiPageInterface $page)
+    {
+        return $this->getId() == $page->getId() && $this->getAliasWithNamespace() == $page->getAliasWithNamespace() && $this->getMenuVisible() == $page->getMenuVisible() && $this->getName() == $page->getName() && $this->getShortDescription() == $page->getShortDescription() && $this->getReplacesPageAlias() == $page->getReplacesPageAlias() && $this->getContents() == $page->getContents();
     }
 
     /**
