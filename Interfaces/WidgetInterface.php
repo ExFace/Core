@@ -279,9 +279,16 @@ interface WidgetInterface extends ExfaceClassInterface, iCanBeCopied
     /**
      * Returns the parent widget
      *
-     * @return WidgetInterface
+     * @return WidgetInterface|null
      */
     public function getParent();
+    
+    /**
+     * Returns TRUE if the widget has a parent and FALSE if it is a root widget.
+     * 
+     * @return boolean
+     */
+    public function hasParent();
 
     /**
      * Sets the parent widget
