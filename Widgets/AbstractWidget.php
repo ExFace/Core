@@ -909,6 +909,11 @@ else {
     {
         return $this->parent;
     }
+    
+    public function hasParent()
+    {
+        return is_null($this->parent) ? false : true;
+    }
 
     /**
      *

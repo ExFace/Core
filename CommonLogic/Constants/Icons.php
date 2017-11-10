@@ -635,4 +635,14 @@ abstract class Icons
     const  WINDOW_RESTORE = 'window-restore';
     const  WIFI = 'wifi';
     const  WRENCH = 'wrench';
+    
+    /**
+     * Returns TRUE if the given icon name exists in this class and FALSE otherwise
+     * @param string $icon
+     * @return boolean
+     */
+    public static function isDefined($icon)
+    {
+        return defined('self::' . str_replace('-', '_', strtoupper($icon)));
+    }
 }
