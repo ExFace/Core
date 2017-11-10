@@ -20,6 +20,7 @@ use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\DataTypes\NumberDataType;
 use exface\Core\Exceptions\UiPageNotPartOfAppError;
 use Ramsey\Uuid\Uuid;
+use exface\Core\Exceptions\UiPageNotFoundError;
 
 /**
  * This is the default implementation of the UiPageInterface.
@@ -1050,24 +1051,40 @@ class UiPage implements UiPageInterface
             return true;
         }
         
-        if ($page_or_id_or_alias instanceof UiPageInterface) {
-            $page_or_id_or_alias = $page_or_id_or_alias->getAliasWithNamespace();
+        if (! $page_or_id_or_alias instanceof UiPageInterface) {
+            try {
+                $page_or_id_or_alias = $this->getWorkbench()->getCMS()->loadPage($page_id_or_alias, true);
+            } catch (UiPageNotFoundError $upnfe) {
+                return false;
+            }
         }
         
-        // Ersetzt die uebergebene Seite eine andere Seite, koennte es diese Seite sein (auch
-        // ueber eine Kette von Ersetzungen).
-        $replacedPage = $this->getWorkbench()->getCMS()->loadPage($this->getAliasWithNamespace());
-        if ($replacedPage->isExactly($page_or_id_or_alias)) {
+        if ($page_or_id_or_alias->getReplacesPageAlias() && $this->compareToPageReplace($this, $page_or_id_or_alias)) {
+            // Ersetzt die uebergebene Seite eine andere Seite, koennte es diese Seite sein (auch
+            // ueber eine Kette von Ersetzungen).
+            return true;
+        } elseif ($this->getReplacesPageAlias() && $this->compareToPageReplace($page_or_id_or_alias, $this)) {
+            // Ersetzt diese Seite eine andere Seite, koennte es die uebergebene Seite sein (auch
+            // ueber eine Kette von Ersetzungen).
             return true;
         }
         
-        // Ersetzt diese Seite eine andere Seite, koennte es die uebergebene Seite sein (auch
-        // ueber eine Kette von Ersetzungen).
-        // Dies kann hier aber nicht so einfach ueberprueft werden, da es bei fehlerhaften Links
-        // sonst zu Fehlern beim Laden der Seite kommt.
-        
         // Leider waeren hier fuer eine exakte Pruefung bei laengeren Ketten von Ersetzungen auf
         // beiden Seiten eine exponentiell zunehmende Anzahl von Vergleichen zu tun.
+        
+        return false;
+    }
+
+    protected function compareToPageReplace(UiPageInterface $page1, UiPageInterface $page2)
+    {
+        try {
+            $replacedPage = $this->getWorkbench()->getCMS()->loadPage($page1->getAliasWithNamespace());
+        } catch (UiPageNotFoundError $uipnfe) {
+            return false;
+        }
+        if ($replacedPage->isExactly($page2)) {
+            return true;
+        }
         
         return false;
     }
@@ -1080,13 +1097,13 @@ class UiPage implements UiPageInterface
     public function isExactly($page_or_id_or_alias)
     {
         if ($page_or_id_or_alias instanceof UiPageInterface) {
-            return $this->compareTo($page_or_id_or_alias->getId(), $page_or_id_or_alias->getAliasWithNamespace());
+            return $this->compareToIdAlias($page_or_id_or_alias->getId(), $page_or_id_or_alias->getAliasWithNamespace());
         } else {
-            return $this->compareTo($page_or_id_or_alias, $page_or_id_or_alias);
+            return $this->compareToIdAlias($page_or_id_or_alias, $page_or_id_or_alias);
         }
     }
 
-    protected function compareTo($id, $alias)
+    protected function compareToIdAlias($id, $alias)
     {
         if ($this->getId() && $id && strcasecmp($this->getId(), $id) == 0) {
             return true;
