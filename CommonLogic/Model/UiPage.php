@@ -1119,9 +1119,39 @@ class UiPage implements UiPageInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\UiPageInterface::equals()
      */
-    public function equals(UiPageInterface $page)
+    public function equals(UiPageInterface $page, $skip_property_names = [])
     {
-        return $this->getId() == $page->getId() && $this->getAliasWithNamespace() == $page->getAliasWithNamespace() && $this->getMenuVisible() == $page->getMenuVisible() && $this->getName() == $page->getName() && $this->getShortDescription() == $page->getShortDescription() && $this->getReplacesPageAlias() == $page->getReplacesPageAlias() && $this->getContents() == $page->getContents();
+        $skip_property_names = array_map('strtolower', $skip_property_names);
+        
+        if ($this->getId() != $page->getId() && ! in_array('id', $skip_property_names)) {
+            return false;
+        }
+        if ($this->getAliasWithNamespace() != $page->getAliasWithNamespace() && ! in_array('aliaswithnamespace', $skip_property_names)) {
+            return false;
+        }
+        if ($this->getMenuParentPageAlias() != $page->getMenuParentPageAlias() && ! in_array('menuparentpagealias', $skip_property_names)) {
+            return false;
+        }
+        if ($this->getMenuIndex() != $page->getMenuIndex() && ! in_array('menuindex', $skip_property_names)) {
+            return false;
+        }
+        if ($this->getMenuVisible() != $page->getMenuVisible() && ! in_array('menuvisible', $skip_property_names)) {
+            return false;
+        }
+        if ($this->getName() != $page->getName() && ! in_array('name', $skip_property_names)) {
+            return false;
+        }
+        if ($this->getShortDescription() != $page->getShortDescription() && ! in_array('shortdescription', $skip_property_names)) {
+            return false;
+        }
+        if ($this->getReplacesPageAlias() != $page->getReplacesPageAlias() && ! in_array('replacespagealias', $skip_property_names)) {
+            return false;
+        }
+        if ($this->getContents() != $page->getContents() && ! in_array('contents', $skip_property_names)) {
+            return false;
+        }
+        
+        return true;
     }
 
     /**

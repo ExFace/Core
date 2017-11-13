@@ -371,9 +371,10 @@ interface UiPageInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
      * menutree.
      * 
      * @param UiPageInterface $page
+     * @param string[] $skip_property_names
      * @return boolean
      */
-    public function equals(UiPageInterface $page);
+    public function equals(UiPageInterface $page, $skip_property_names);
     
     /**
      * Generates a UID.
