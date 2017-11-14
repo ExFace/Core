@@ -313,7 +313,7 @@ class Condition implements iCanBeConvertedToUxon
      * 
      * @return Condition
      */
-    public function empty()
+    public function setEmpty()
     {
         $this->value = null;
         $this->value_set = false;
