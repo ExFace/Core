@@ -51,7 +51,7 @@ abstract class Icons
     const  RUPEE = 'rupee';
     const  SHEKEL = 'shekel';
     const  SHEQEL = 'sheqel';
-    const  TRYI = 'try';
+    const  TRY_ = 'try'; // underscore to avoid reserved PHP word
     const  TURKISH_LIRA = 'turkish-lira';
     const  USD = 'usd';
     const  WON = 'won';
@@ -203,7 +203,7 @@ abstract class Icons
     const  INDENT = 'indent';
     const  ITALIC = 'italic';
     const  LINK = 'link';
-    const  LISTI = 'list';
+    const  LIST_ = 'list'; // underscore to avoid reserved PHP word
     const  LIST_ALT = 'list-alt';
     const  LIST_OL = 'list-ol';
     const  LIST_UL = 'list-ul';
@@ -335,7 +335,7 @@ abstract class Icons
     const  CHILD = 'child';
     const  CIRCLE_THIN = 'circle-thin';
     const  CLOCK_O = 'clock-o';
-    const  CLONEI = 'clone';
+    const  CLONE_ = 'clone'; // underscore suffix needed to avoid using reserved PHP word CLONE
     const  CLOSE = 'close';
     const  CLOUD = 'cloud';
     const  CLOUD_DOWNLOAD = 'cloud-download';
@@ -499,7 +499,7 @@ abstract class Icons
     const  PLUS_CIRCLE = 'plus-circle';
     const  PODCAST = 'podcast';
     const  POWER_OFF = 'power-off';
-    const  PRINTI = 'print';
+    const  PRINT_ = 'print'; // underscore to avoid reserved PHP word
     const  PUZZLE_PIECE = 'puzzle-piece';
     const  QRCODE = 'qrcode';
     const  QUESTION = 'question';
@@ -643,6 +643,18 @@ abstract class Icons
      */
     public static function isDefined($icon)
     {
-        return defined('self::' . str_replace('-', '_', strtoupper($icon)));
+        $constant_name = 'self::' . str_replace('-', '_', strtoupper($icon));
+        
+        if (defined($constant_name)) {
+            return true;
+        } 
+        
+        // Check for name with trailing underscore just in case the name is a reserved 
+        // PHP word (like LIST, which is repsresented by the LIST_ constant) 
+        if (defined($constant_name . '_')) {
+            return true;
+        }
+        
+        return false;
     }
 }

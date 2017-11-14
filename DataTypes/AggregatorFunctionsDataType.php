@@ -11,7 +11,7 @@ use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
  * @method AggregatorFunctionsDataType AVG(\exface\Core\CommonLogic\workbench $workbench)
  * @method AggregatorFunctionsDataType MIN(\exface\Core\CommonLogic\workbench $workbench)
  * @method AggregatorFunctionsDataType MAX(\exface\Core\CommonLogic\workbench $workbench)
- * @method AggregatorFunctionsDataType LIST(\exface\Core\CommonLogic\workbench $workbench)
+ * @method AggregatorFunctionsDataType LIST_ALL(\exface\Core\CommonLogic\workbench $workbench)
  * @method AggregatorFunctionsDataType LIST_DISTINCT(\exface\Core\CommonLogic\workbench $workbench)
  * @method AggregatorFunctionsDataType COUNT(\exface\Core\CommonLogic\workbench $workbench)
  * @method AggregatorFunctionsDataType COUNT_DISTINCT(\exface\Core\CommonLogic\workbench $workbench)
@@ -32,7 +32,7 @@ class AggregatorFunctionsDataType extends StringDataType implements EnumDataType
     
     const MAX = 'MAX';
     
-    const LISTING = 'LIST';
+    const LIST_ALL = 'LIST';
     
     const LIST_DISTINCT = 'LIST_DISTINCT';
     
