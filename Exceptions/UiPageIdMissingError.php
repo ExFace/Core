@@ -7,7 +7,7 @@ namespace exface\Core\Exceptions;
  * @author SFL
  *
  */
-class UiPageIdNotPresentError extends RuntimeException
+class UiPageIdMissingError extends RuntimeException
 {
     
     public function getDefaultAlias()

@@ -1075,6 +1075,16 @@ class UiPage implements UiPageInterface
         return false;
     }
 
+    /**
+     * This function compares two pages and returns if they are equal.
+     * 
+     * It first reloads page1 and then compares it to page2. So it also returns true if
+     * page1 is replaced by page2.
+     * 
+     * @param UiPageInterface $page1
+     * @param UiPageInterface $page2
+     * @return boolean
+     */
     protected function compareToPageReplace(UiPageInterface $page1, UiPageInterface $page2)
     {
         try {
@@ -1103,6 +1113,16 @@ class UiPage implements UiPageInterface
         }
     }
 
+    /**
+     * This function compares this UiPage to the passed UID and alias.
+     * 
+     * If the UID of this UiPage and the passed UID match or the alias of this UiPage and
+     * the passed alias match it returns true, false otherwise.
+     * 
+     * @param string $id
+     * @param string $alias
+     * @return boolean
+     */
     protected function compareToIdAlias($id, $alias)
     {
         if ($this->getId() && $id && strcasecmp($this->getId(), $id) == 0) {
@@ -1119,35 +1139,35 @@ class UiPage implements UiPageInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\UiPageInterface::equals()
      */
-    public function equals(UiPageInterface $page, $skip_property_names = [])
+    public function equals(UiPageInterface $page, $ignore_properties = [])
     {
-        $skip_property_names = array_map('strtolower', $skip_property_names);
+        $ignore_properties = array_map('strtolower', $ignore_properties);
         
-        if ($this->getId() != $page->getId() && ! in_array('id', $skip_property_names)) {
+        if ($this->getId() != $page->getId() && ! in_array('id', $ignore_properties)) {
             return false;
         }
-        if ($this->getAliasWithNamespace() != $page->getAliasWithNamespace() && ! in_array('aliaswithnamespace', $skip_property_names)) {
+        if ($this->getAliasWithNamespace() != $page->getAliasWithNamespace() && ! in_array('aliaswithnamespace', $ignore_properties)) {
             return false;
         }
-        if ($this->getMenuParentPageAlias() != $page->getMenuParentPageAlias() && ! in_array('menuparentpagealias', $skip_property_names)) {
+        if ($this->getMenuParentPageAlias() != $page->getMenuParentPageAlias() && ! in_array('menuparentpagealias', $ignore_properties)) {
             return false;
         }
-        if ($this->getMenuIndex() != $page->getMenuIndex() && ! in_array('menuindex', $skip_property_names)) {
+        if ($this->getMenuIndex() != $page->getMenuIndex() && ! in_array('menuindex', $ignore_properties)) {
             return false;
         }
-        if ($this->getMenuVisible() != $page->getMenuVisible() && ! in_array('menuvisible', $skip_property_names)) {
+        if ($this->getMenuVisible() != $page->getMenuVisible() && ! in_array('menuvisible', $ignore_properties)) {
             return false;
         }
-        if ($this->getName() != $page->getName() && ! in_array('name', $skip_property_names)) {
+        if ($this->getName() != $page->getName() && ! in_array('name', $ignore_properties)) {
             return false;
         }
-        if ($this->getShortDescription() != $page->getShortDescription() && ! in_array('shortdescription', $skip_property_names)) {
+        if ($this->getShortDescription() != $page->getShortDescription() && ! in_array('shortdescription', $ignore_properties)) {
             return false;
         }
-        if ($this->getReplacesPageAlias() != $page->getReplacesPageAlias() && ! in_array('replacespagealias', $skip_property_names)) {
+        if ($this->getReplacesPageAlias() != $page->getReplacesPageAlias() && ! in_array('replacespagealias', $ignore_properties)) {
             return false;
         }
-        if ($this->getContents() != $page->getContents() && ! in_array('contents', $skip_property_names)) {
+        if ($this->getContents() != $page->getContents() && ! in_array('contents', $ignore_properties)) {
             return false;
         }
         

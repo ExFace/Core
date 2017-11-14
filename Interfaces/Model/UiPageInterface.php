@@ -367,14 +367,16 @@ interface UiPageInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
     public function isExactly($page_or_id_or_alias);
     
     /**
-     * Compares two pages by their attributes ignoring their positions in the
-     * menutree.
+     * Compares two pages by their attributes.
+     * 
+     * The attributes with names contained in the $ignore_properties array are ignored in
+     * the comparison.
      * 
      * @param UiPageInterface $page
-     * @param string[] $skip_property_names
+     * @param string[] $ignore_properties
      * @return boolean
      */
-    public function equals(UiPageInterface $page, $skip_property_names);
+    public function equals(UiPageInterface $page, $ignore_properties);
     
     /**
      * Generates a UID.

@@ -48,6 +48,7 @@ abstract class AbstractCmsConnector implements CmsConnectorInterface
     }
     
     /**
+     * Returns the requested UiPage from the CMS.
      * 
      * @param integer $cmsId
      * @param string $uid
@@ -57,6 +58,12 @@ abstract class AbstractCmsConnector implements CmsConnectorInterface
      */
     abstract protected function getPageFromCms($cmsId = null, $uid = null, $alias = null, $ignore_replacements = false);
     
+    /**
+     * Returns a UiPage from the page cache or false if it is not found in the cache.
+     * 
+     * @param string $id_or_alias
+     * @return UiPageInterface|boolean
+     */
     protected function getPageFromCache($id_or_alias) {
         // No empty keys in cache allowed!
         if (is_null($id_or_alias) || $id_or_alias === '') {
@@ -86,6 +93,17 @@ abstract class AbstractCmsConnector implements CmsConnectorInterface
         return false;
     }
     
+    /**
+     * Replaces the $originalPage in the page cache by the replacing page $replacementPage.
+     * 
+     * $cmsIdReplacement is the CMS-ID of the replacing page. The next time the
+     * originalPage is requested from the page cache the replacing page is returned.
+     * 
+     * @param UiPageInterface $originalPage
+     * @param integer $cmsIdReplacement
+     * @param UiPageInterface $replacementPage
+     * @return AbstractCmsConnector
+     */
     protected function replacePageInCache(UiPageInterface $originalPage, $cmsIdReplacement, UiPageInterface $replacementPage)
     {
         if ($originalCmsId = $this->getCachedPageCmsId($originalPage)) {
@@ -103,6 +121,11 @@ abstract class AbstractCmsConnector implements CmsConnectorInterface
         return $this;
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\CmsConnectorInterface::getPageIdInCms()
+     */
     public function getPageIdInCms(UiPageInterface $page) {
         if (! is_null($cmsId = $this->getCachedPageCmsId($page))) {
             return $cmsId;
@@ -116,6 +139,13 @@ abstract class AbstractCmsConnector implements CmsConnectorInterface
         }
     }
     
+    /**
+     * Searches for the passed UiPage in the page cache and returns its CMS-ID if it is
+     * found, null otherwise.
+     * 
+     * @param UiPageInterface $page
+     * @return integer|null
+     */
     protected function getCachedPageCmsId(UiPageInterface $page)
     {
         foreach ($this->pageCacheByCmsId as $cmsId => $cachedPage) {
@@ -138,6 +168,11 @@ abstract class AbstractCmsConnector implements CmsConnectorInterface
         return $this;
     }
     
+    /**
+     * Clears the page cache.
+     * 
+     * @return AbstractCmsConnector
+     */
     protected function clearPagesCache()
     {
         $this->pageCacheByCmsId = [];
@@ -194,6 +229,12 @@ abstract class AbstractCmsConnector implements CmsConnectorInterface
         return false;
     }
     
+    /**
+     * Returns if the passed $page_id_or_alias is an UID.
+     * 
+     * @param string $page_id_or_alias
+     * @return boolean
+     */
     protected function isUid($page_id_or_alias)
     {
         if (substr($page_id_or_alias, 0, 2) == '0x') {
@@ -202,6 +243,12 @@ abstract class AbstractCmsConnector implements CmsConnectorInterface
         return false;
     }
     
+    /**
+     * Returns if the passed $page_id_or_alias is an alias.
+     * 
+     * @param string $page_id_or_alias
+     * @return boolean
+     */
     protected function isAlias($page_id_or_alias)
     {
         if (! $this->isUid($page_id_or_alias) && ! is_numeric($page_id_or_alias)) {
@@ -210,6 +257,12 @@ abstract class AbstractCmsConnector implements CmsConnectorInterface
         return false;
     }
     
+    /**
+     * Returns if the passed $page_id_or_alias is a CMS-ID.
+     * 
+     * @param string $page_id_or_alias
+     * @return boolean
+     */
     abstract protected function isCmsId($page_id_or_alias);
     
     /**

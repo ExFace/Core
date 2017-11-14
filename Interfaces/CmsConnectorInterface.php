@@ -130,6 +130,13 @@ interface CmsConnectorInterface extends ExfaceClassInterface
      */
     public function getSiteUrl();
     
+    /**
+     * Returns the CMS-ID of the passed UiPage.
+     * 
+     * @param UiPageInterface $page
+     * @throws UiPageNotFoundError
+     * @return integer
+     */
     public function getPageIdInCms(UiPageInterface $page);
 
     /**
