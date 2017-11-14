@@ -51,7 +51,7 @@ abstract class Icons
     const  RUPEE = 'rupee';
     const  SHEKEL = 'shekel';
     const  SHEQEL = 'sheqel';
-    const  TRY = 'try';
+    const  TRYI = 'try';
     const  TURKISH_LIRA = 'turkish-lira';
     const  USD = 'usd';
     const  WON = 'won';
@@ -203,7 +203,7 @@ abstract class Icons
     const  INDENT = 'indent';
     const  ITALIC = 'italic';
     const  LINK = 'link';
-    const  LIST = 'list';
+    const  LISTI = 'list';
     const  LIST_ALT = 'list-alt';
     const  LIST_OL = 'list-ol';
     const  LIST_UL = 'list-ul';
@@ -335,7 +335,7 @@ abstract class Icons
     const  CHILD = 'child';
     const  CIRCLE_THIN = 'circle-thin';
     const  CLOCK_O = 'clock-o';
-    const  CLONE = 'clone';
+    const  CLONEI = 'clone';
     const  CLOSE = 'close';
     const  CLOUD = 'cloud';
     const  CLOUD_DOWNLOAD = 'cloud-download';
@@ -499,7 +499,7 @@ abstract class Icons
     const  PLUS_CIRCLE = 'plus-circle';
     const  PODCAST = 'podcast';
     const  POWER_OFF = 'power-off';
-    const  PRINT = 'print';
+    const  PRINTI = 'print';
     const  PUZZLE_PIECE = 'puzzle-piece';
     const  QRCODE = 'qrcode';
     const  QUESTION = 'question';
