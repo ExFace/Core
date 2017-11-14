@@ -429,6 +429,21 @@
             "DEFAULT_EDITOR_UXON": "",
             "ALIAS": "GenericStringEnum",
             "SHORT_DESCRIPTION": "Allows to define a list of valid numeric values directly in the model (without creating a custom data type). This is handy if a data type is only used for a single attribute -  you can create a custom configuration for this generic type and don't nee"
+        },
+        {
+            "CREATED_ON": "2017-11-14 17:31:34",
+            "MODIFIED_ON": "2017-11-07 14:03:51",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e7c96192a2660ca6aa0205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Year",
+            "PROTOTYPE": "exface\/Core\/DataTypes\/IntegerDataType.php",
+            "CONFIG_UXON": "{\"group_digits\":false}",
+            "VALIDATION_ERROR": "",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"InputNumber\"}",
+            "ALIAS": "YearNumber",
+            "SHORT_DESCRIPTION": "Year number (e.g. 2017)"
         }
     ],
     "totals_rows": [],
