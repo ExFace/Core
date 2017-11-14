@@ -110,7 +110,7 @@ class Filemanager extends Filesystem implements ExfaceClassInterface
             } catch (ConfigOptionNotFoundError $e) {
                 $path = '';
             }
-            
+
             $this->path_to_cache_folder = $path ? $path : $this->getPathToBaseFolder() . DIRECTORY_SEPARATOR . static::FOLDER_NAME_CACHE;
             if (! is_dir($this->path_to_cache_folder)) {
                 static::pathConstruct($this->path_to_cache_folder);
@@ -224,9 +224,9 @@ class Filemanager extends Filesystem implements ExfaceClassInterface
     /**
      * Copies a complete folder to a new location including all sub folders
      *
-     * @param string $originDir            
-     * @param string $destinationDir  
-     * @param boolean $overWriteNewerFiles          
+     * @param string $originDir
+     * @param string $destinationDir
+     * @param boolean $overWriteNewerFiles
      */
     public function copyDir($originDir, $destinationDir, $overWriteNewerFiles = false)
     {
@@ -243,7 +243,7 @@ class Filemanager extends Filesystem implements ExfaceClassInterface
         }
         closedir($dir);
     }
-    
+
     /**
      * Removes all files and subfolders in the given folder, leaving it empty.
      * @param string $absolutePath
@@ -254,7 +254,7 @@ class Filemanager extends Filesystem implements ExfaceClassInterface
         if (substr($absolutePath, -1) !== DIRECTORY_SEPARATOR){
             $absolutePath .= DIRECTORY_SEPARATOR;
         }
-        
+
         // First empty subfolders
         if ($removeHiddenFiles){
             $subfolders = glob($absolutePath . '{,.}[!.,!..]*', GLOB_MARK|GLOB_BRACE|GLOB_ONLYDIR);
@@ -262,7 +262,7 @@ class Filemanager extends Filesystem implements ExfaceClassInterface
             $subfolders = glob($absolutePath . '*', GLOB_ONLYDIR);
         }
         array_map('self::emptyDir', $subfolders);
-        
+
         // Now delete subfolders and files
         if ($removeHiddenFiles){
             $files = glob($absolutePath . '{,.}[!.,!..]*', GLOB_MARK|GLOB_BRACE);
@@ -270,7 +270,7 @@ class Filemanager extends Filesystem implements ExfaceClassInterface
             $files = glob($absolutePath . '*');
         }
         array_map('unlink', $files);
-        
+
         return;
     }
 
@@ -288,7 +288,7 @@ class Filemanager extends Filesystem implements ExfaceClassInterface
     /**
      * Transforms "C:\wamp\www\exface\exface\vendor\exface\Core\CommonLogic\..\..\..\.." to "C:/wamp/www/exface/exface"
      *
-     * @param string $path            
+     * @param string $path
      * @return string
      */
     public static function pathNormalize($path, $directory_separator = '/')
@@ -303,7 +303,7 @@ class Filemanager extends Filesystem implements ExfaceClassInterface
     /**
      * Returns TRUE if the given string is an absolute path and FALSE otherwise
      *
-     * @param string $path            
+     * @param string $path
      * @return boolean
      */
     public static function pathIsAbsolute($path)
@@ -317,7 +317,7 @@ class Filemanager extends Filesystem implements ExfaceClassInterface
     /**
      * Joins all paths given in the array and returns the resulting path
      *
-     * @param array $paths            
+     * @param array $paths
      * @return string
      */
     public static function pathJoin(array $paths)
@@ -328,7 +328,7 @@ class Filemanager extends Filesystem implements ExfaceClassInterface
     /**
      * Returns the longest common base path for all given paths or NULL if there is no common base.
      *
-     * @param array $paths            
+     * @param array $paths
      * @return string|NULL
      */
     public static function pathGetCommonBase(array $paths)
@@ -354,6 +354,32 @@ class Filemanager extends Filesystem implements ExfaceClassInterface
                 mkdir($sPathList, 0755);
             }
         }
+    }
+    public static function deleteDir($dirPath) {
+        if (is_dir($dirPath)) {
+            $objects = scandir($dirPath);
+            foreach ($objects as $object) {
+                if ($object != "." && $object !="..") {
+                    if (filetype($dirPath . DIRECTORY_SEPARATOR . $object) == "dir") {
+                        self::deleteDir($dirPath . DIRECTORY_SEPARATOR . $object);
+                    } else {
+                        unlink($dirPath . DIRECTORY_SEPARATOR . $object);
+                    }
+                }
+            }
+            reset($objects);
+            rmdir($dirPath);
+        }
+    }
+    public static function is_dir_empty($dir) {
+        if (!is_readable($dir)) return NULL;
+        $handle = opendir($dir);
+        while (false !== ($entry = readdir($handle))) {
+            if ($entry != "." && $entry != "..") {
+                return FALSE;
+            }
+        }
+        return TRUE;
     }
 }
 ?>
