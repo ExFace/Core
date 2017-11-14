@@ -32,7 +32,7 @@ class AggregatorFunctionsDataType extends StringDataType implements EnumDataType
     
     const MAX = 'MAX';
     
-    const LIST = 'LIST';
+    const LISTING = 'LIST';
     
     const LIST_DISTINCT = 'LIST_DISTINCT';
     
