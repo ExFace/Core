@@ -9,4 +9,9 @@ namespace exface\Core\Exceptions;
  */
 class UiPageIdNotUniqueError extends RuntimeException
 {
+    
+    public function getDefaultAlias()
+    {
+        return '6XQM0HG';
+    }
 }

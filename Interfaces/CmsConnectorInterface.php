@@ -4,6 +4,7 @@ namespace exface\Core\Interfaces;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Exceptions\UiPageNotFoundError;
 use exface\Core\Exceptions\RuntimeException;
+use exface\Core\Exceptions\UiPageIdNotUniqueError;
 
 /**
  * A CMS-connector provides a generic interface for ExFace to communicate with
@@ -129,6 +130,13 @@ interface CmsConnectorInterface extends ExfaceClassInterface
      */
     public function getSiteUrl();
     
+    /**
+     * Returns the CMS-ID of the passed UiPage.
+     * 
+     * @param UiPageInterface $page
+     * @throws UiPageNotFoundError
+     * @return integer
+     */
     public function getPageIdInCms(UiPageInterface $page);
 
     /**
@@ -216,9 +224,11 @@ interface CmsConnectorInterface extends ExfaceClassInterface
 
     /**
      * Creates a new page in the CMS for the given page model
-     *
+     * 
      * @param UiPageInterface $page
-     *
+     * 
+     * @throws UiPageIdNotUniqueError if a page with the same alias already exists
+     * 
      * @return CmsConnectorInterface
      */
     public function createPage(UiPageInterface $page);
@@ -267,5 +277,12 @@ interface CmsConnectorInterface extends ExfaceClassInterface
      * @return UiPageInterface[]
      */
     public function getPagesForApp(AppInterface $app);
+    
+    /**
+     * Returns the CMS-ID of the root of the menu tree.
+     * 
+     * @return integer
+     */
+    public function getPageIdRoot();
 }
 ?>
