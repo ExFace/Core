@@ -215,7 +215,7 @@ class DebugContext extends AbstractContext
         if ($this->isDebugging()){
             return Colors::RED;
         }
-        return Colors::BASE;
+        return Colors::DEFAULT_COLOR;
     }
     
     /**

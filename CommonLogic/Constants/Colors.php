@@ -16,7 +16,7 @@ namespace exface\Core\CommonLogic\Constants;
 abstract class Colors 
 {
     // Default color to make the template pick a color
-    const BASE = '';
+    const DEFAULT_COLOR = '';
     // No-color-color to tell a template that something is transparent
     const NONE = null;
     

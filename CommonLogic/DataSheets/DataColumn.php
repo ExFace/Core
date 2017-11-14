@@ -772,7 +772,7 @@ class DataColumn implements DataColumnInterface
         
         $output = '';
         switch ($func->getValue()) {
-            case AggregatorFunctionsDataType::LISTING:
+            case AggregatorFunctionsDataType::LIST_ALL:
                 $output = implode(($args[0] ? $args[0] : ', '), $row_array);
                 break;
             case AggregatorFunctionsDataType::LIST_DISTINCT:

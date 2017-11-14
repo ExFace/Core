@@ -896,7 +896,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 $output = $function_name . '(' . $sql . ')';
                 break;
             case AggregatorFunctionsDataType::LIST_DISTINCT:
-            case AggregatorFunctionsDataType::LISTING:
+            case AggregatorFunctionsDataType::LIST_ALL:
                 $output = "GROUP_CONCAT(" . ($function_name == 'LIST_DISTINCT' ? 'DISTINCT ' : '') . $sql . " SEPARATOR " . ($args[0] ? $args[0] : "', '") . ")";
                 $qpart->getQuery()->addAggregation($qpart->getAttribute()->getAliasWithRelationPath());
                 break;
