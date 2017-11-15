@@ -14,10 +14,10 @@ class DuplicateObjectDialog extends EditObjectDialog
     }
 
     /**
+     * In the case of the dublicate-action we need to remove the UID column from the data sheet to ensure, that the
+     * duplicated object will get new ids.
      *
-     * {@inheritdoc} In the case of the dublicate-action we need to remove the UID column from the data sheet to ensure, that the
-     *               duplicated object will get new ids.
-     *              
+     * {@inheritdoc} 
      * @see \exface\Core\Actions\ShowWidget::getPrefillDataSheet()
      */
     protected function prefillWidget()
