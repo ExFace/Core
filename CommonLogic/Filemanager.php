@@ -355,23 +355,25 @@ class Filemanager extends Filesystem implements ExfaceClassInterface
             }
         }
     }
+    /**
+     * Emptys directory, deletes it afterwards
+     *
+     * @param  $path
+     */
     public static function deleteDir($dirPath) {
         if (is_dir($dirPath)) {
-            $objects = scandir($dirPath);
-            foreach ($objects as $object) {
-                if ($object != "." && $object !="..") {
-                    if (filetype($dirPath . DIRECTORY_SEPARATOR . $object) == "dir") {
-                        self::deleteDir($dirPath . DIRECTORY_SEPARATOR . $object);
-                    } else {
-                        unlink($dirPath . DIRECTORY_SEPARATOR . $object);
-                    }
-                }
-            }
-            reset($objects);
+            self::emptyDir($dirPath, true);
             rmdir($dirPath);
         }
+        return;
     }
-    public static function is_dir_empty($dir) {
+    /**
+     * Checks if a directory is empty
+     *
+     * @param  $path
+     * @return boolean|null State of directory, TRUE if empty, FALSE if at least one file is found, NULL if permission denied and state unclear
+     */
+    public static function isDirEmpty($dir) {
         if (!is_readable($dir)) return NULL;
         $handle = opendir($dir);
         while (false !== ($entry = readdir($handle))) {
