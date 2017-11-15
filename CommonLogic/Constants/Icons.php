@@ -657,4 +657,16 @@ abstract class Icons
         
         return false;
     }
+    public static function getIcon($icon){
+        $icons = self::getConstants();
+        if (array_key_exists($icon, $icons)){
+            return $icons[$icon];
+        }
+        return self::WRENCH;
+    }
+
+    private static function getConstants() {
+        $oClass = new ReflectionClass(__CLASS__);
+        return $oClass->getConstants();
+    }
 }
