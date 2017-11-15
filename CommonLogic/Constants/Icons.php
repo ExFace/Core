@@ -8,6 +8,12 @@ namespace exface\Core\CommonLogic\Constants;
  * Apart from a few custom icons, all font awsome (4.7) icon names are supported.
  * Preview and search for icons available via link below.
  * 
+ * While every template should support the icon names listed below, it is free
+ * to use its own icon names in addition to it. 
+ * 
+ * The constants in this class are meant to provide an easy lookup option for
+ * PHP developers building cross-tmemplate actions and widgets. 
+ * 
  * @link http://fontawesome.io/icons/
  * 
  * @author Andrej Kabachnik
@@ -637,8 +643,14 @@ abstract class Icons
     const  WRENCH = 'wrench';
     
     /**
-     * Returns TRUE if the given icon name exists in this class and FALSE otherwise
+     * Returns TRUE if the given icon name is part of the base icons set and FALSE otherwise.
+     * 
+     * This is usefull for templates, that offer their own icon sets in additon to font awesome.
+     * in this case, you can easily check if the given icon name belongs to font awesome using
+     * this method.
+     * 
      * @param string $icon
+     * 
      * @return boolean
      */
     public static function isDefined($icon)
