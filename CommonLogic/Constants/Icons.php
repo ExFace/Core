@@ -1,6 +1,7 @@
 <?php
 
 namespace exface\Core\CommonLogic\Constants;
+use ReflectionClass;
 
 /**
  * Icon names for basic icons supported by all templates.
@@ -656,5 +657,38 @@ abstract class Icons
         }
         
         return false;
+    }
+
+    /**
+     * Returns TRUE if the given icon name exists in this class and FALSE otherwise
+     * @param string $icon
+     * @return boolean
+     */
+    public static function isDefinedIcon($icon){
+        $icons = self::getConstants();
+        if (array_key_exists($icon, $icons)){
+            return true;
+        }
+        return false;
+    }
+    /**
+     * Returns the associated icon string to the constant name given in $icon
+     * @param string $icon
+     * @return string
+     */
+    public static function getIcon($icon){
+        $icons = self::getConstants();
+        if (array_key_exists($icon, $icons)){
+            return $icons[$icon];
+        }
+        return self::WRENCH;
+    }
+    /**
+     * Grabs all icon constants with the help of the ReflectionClass
+     * @return array
+     */
+    private static function getConstants() {
+        $oClass = new ReflectionClass(__CLASS__);
+        return $oClass->getConstants();
     }
 }
