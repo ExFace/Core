@@ -26,7 +26,7 @@ trait JqueryContainerTrait {
     public function buildHtmlForChildren()
     {
         foreach ($this->getWidget()->getChildren() as $subw) {
-            $output .= $this->getTemplate()->generateHtml($subw) . "\n";
+            $output .= $this->getTemplate()->getElement($subw)->generateHtml() . "\n";
         }
         ;
         return $output;
@@ -35,7 +35,7 @@ trait JqueryContainerTrait {
     public function buildJsForChildren()
     {
         foreach ($this->getWidget()->getChildren() as $subw) {
-            $output .= $this->getTemplate()->generateJs($subw) . "\n";
+            $output .= $this->getTemplate()->getElement($subw)->generateJs() . "\n";
         }
         ;
         return $output;
@@ -44,7 +44,7 @@ trait JqueryContainerTrait {
     public function buildHtmlForWidgets()
     {
         foreach ($this->getWidget()->getWidgets() as $subw) {
-            $output .= $this->getTemplate()->generateHtml($subw) . "\n";
+            $output .= $this->getTemplate()->getElement($subw)->generateHtml() . "\n";
         }
         ;
         return $output;
@@ -53,7 +53,7 @@ trait JqueryContainerTrait {
     public function buildJsForWidgets()
     {
         foreach ($this->getWidget()->getWidgets() as $subw) {
-            $output .= $this->getTemplate()->generateJs($subw) . "\n";
+            $output .= $this->getTemplate()->getElement($subw)->generateJs() . "\n";
         }
         ;
         return $output;
