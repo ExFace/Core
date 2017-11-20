@@ -38,7 +38,7 @@ class InstallerRuntimeError extends RuntimeException implements InstallerExcepti
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Exceptions\InstallerExceptionInterface::setInstaller()
      */
-    public function setInstaller($installer)
+    public function setInstaller(InstallerInterface $installer)
     {
         $this->installer = $installer;
         return $this;
