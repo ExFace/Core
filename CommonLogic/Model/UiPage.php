@@ -1024,7 +1024,7 @@ class UiPage implements UiPageInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\UiPageInterface::copy()
      */
-    public function copy($page_alias = null, $page_uid = null)
+    public function copy($page_alias = null, $page_uid = null, $appUidOrAlias = null)
     {
         $copy = UiPageFactory::createFromUxon($this->getUi(), $this->exportUxonObject());
         if ($page_uid) {
@@ -1034,7 +1034,11 @@ class UiPage implements UiPageInterface
             $copy->setAliasWithNamespace($page_alias);
         }
         // Copy internal properties, that do not get exported to UXON
-        $copy->setAppUidOrAlias($this->appUidOrAlias);
+        if ($appUidOrAlias) {
+            $copy->setAppUidOrAlias($appUidOrAlias);
+        } else {
+            $copy->setAppUidOrAlias($this->appUidOrAlias);
+        }
         $copy->setMenuDefaultPosition($this->getMenuDefaultPosition());
         return $copy;
     }
