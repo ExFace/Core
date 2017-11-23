@@ -18,9 +18,9 @@ use exface\Core\Factories\UiPageFactory;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\DataTypes\NumberDataType;
-use exface\Core\Exceptions\UiPageNotPartOfAppError;
+use exface\Core\Exceptions\UiPage\UiPageNotPartOfAppError;
 use Ramsey\Uuid\Uuid;
-use exface\Core\Exceptions\UiPageNotFoundError;
+use exface\Core\Exceptions\UiPage\UiPageNotFoundError;
 
 /**
  * This is the default implementation of the UiPageInterface.
@@ -1024,7 +1024,7 @@ class UiPage implements UiPageInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\UiPageInterface::copy()
      */
-    public function copy($page_alias = null, $page_uid = null)
+    public function copy($page_alias = null, $page_uid = null, $appUidOrAlias = null)
     {
         $copy = UiPageFactory::createFromUxon($this->getUi(), $this->exportUxonObject());
         if ($page_uid) {
@@ -1034,7 +1034,11 @@ class UiPage implements UiPageInterface
             $copy->setAliasWithNamespace($page_alias);
         }
         // Copy internal properties, that do not get exported to UXON
-        $copy->setAppUidOrAlias($this->appUidOrAlias);
+        if ($appUidOrAlias) {
+            $copy->setAppUidOrAlias($appUidOrAlias);
+        } else {
+            $copy->setAppUidOrAlias($this->appUidOrAlias);
+        }
         $copy->setMenuDefaultPosition($this->getMenuDefaultPosition());
         return $copy;
     }

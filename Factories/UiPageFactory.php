@@ -3,7 +3,7 @@ namespace exface\Core\Factories;
 
 use exface\Core\CommonLogic\Model\UiPage;
 use exface\Core\Interfaces\UiManagerInterface;
-use exface\Core\Exceptions\UiPageNotFoundError;
+use exface\Core\Exceptions\UiPage\UiPageNotFoundError;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Model\UiPageInterface;
 
