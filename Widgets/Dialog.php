@@ -11,8 +11,11 @@ use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 use exface\Core\CommonLogic\Constants\Icons;
+use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
+use exface\Core\Interfaces\Widgets\iHaveHeader;
 
-class Dialog extends Form implements iAmClosable, iHaveContextualHelp
+class Dialog extends Form implements iAmClosable, iHaveContextualHelp, iHaveHeader
 {
 
     private $hide_close_button = false;
@@ -26,6 +29,10 @@ class Dialog extends Form implements iAmClosable, iHaveContextualHelp
     private $help_button = null;
 
     private $hide_help_button = false;
+    
+    private $header = null;
+    
+    private $hide_header = null;
 
     protected function init()
     {
@@ -287,9 +294,18 @@ class Dialog extends Form implements iAmClosable, iHaveContextualHelp
         return $this;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Form::getChildren()
+     */
     public function getChildren()
     {
         $children = parent::getChildren();
+        
+        if (! $this->getHideHeader() && $this->hasHeader()) {
+            $children[] = $this->getHeader();
+        }
         
         // Add the help button, so pages will be able to find it when dealing with the ShowHelpDialog action.
         // IMPORTANT: Add the help button to the children only if it is not hidden. This is needed to hide the button in
@@ -299,6 +315,44 @@ class Dialog extends Form implements iAmClosable, iHaveContextualHelp
             $children[] = $this->getHelpButton();
         }
         return $children;
+    }
+    
+    /**
+     * 
+     * @param UxonObject|DialogHeader $uxon_or_widget
+     * @throws WidgetConfigurationError
+     * @return \exface\Core\Widgets\Dialog
+     */
+    public function setHeader($uxon_or_widget)
+    {
+        if ($uxon_or_widget instanceof UxonObject) {
+            $this->header = WidgetFactory::createFromUxon($this->getPage(), $uxon_or_widget, $this, 'DialogHeader');
+        } elseif ($uxon_or_widget instanceof DialogHeader) {
+            $this->header = $uxon_or_widget;
+        } else {
+            throw new WidgetConfigurationError($this, 'Invalid definiton of panel header given!');
+        }
+        return $this;
+    }
+    
+    public function getHeader()
+    {
+        return $this->header;
+    }
+    
+    public function hasHeader()
+    {
+        return is_null($this->header) ? false : true;
+    }
+    
+    public function getHideHeader()
+    {
+        return $this->hide_header;
+    }
+    
+    public function setHideHeader($boolean)
+    {
+        $this->hide_header = BooleanDataType::cast($boolean);
     }
 }
 ?>
