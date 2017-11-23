@@ -336,13 +336,14 @@ interface UiPageInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
     /**
      * Generates a copy of the page.
      * 
-     * The optional arguments page_alias and page_uid are set on the copy of the page.
+     * The optional arguments page_alias, page_uid and appUidOrAlias are set on the copy of the page.
      * 
      * @param string $page_alias
      * @param string $page_uid
+     * @param string $appUidOrAlias
      * @return UiPageInterface
      */
-    public function copy($page_alias = null, $page_uid = null);
+    public function copy($page_alias = null, $page_uid = null, $appUidOrAlias = null);
     
     /**
      * Compares two pages by their UIDs, aliases and CMS-IDs and returns
