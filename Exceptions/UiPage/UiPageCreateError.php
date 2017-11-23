@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\Exceptions\UiPage;
 
+use exface\Core\Exceptions\RuntimeException;
+
 /**
  * Error thrown when a problem creating a UiPage occurs.
  * 
