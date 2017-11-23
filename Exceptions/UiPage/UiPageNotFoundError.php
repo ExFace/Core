@@ -1,5 +1,5 @@
 <?php
-namespace exface\Core\Exceptions;
+namespace exface\Core\Exceptions\UiPage;
 
 use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;
 

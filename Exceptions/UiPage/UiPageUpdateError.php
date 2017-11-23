@@ -1,5 +1,5 @@
 <?php
-namespace exface\Core\Exceptions;
+namespace exface\Core\Exceptions\UiPage;
 
 /**
  * Error thrown when a problem updating a UiPage occurs.

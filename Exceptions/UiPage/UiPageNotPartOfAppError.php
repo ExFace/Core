@@ -1,5 +1,5 @@
 <?php
-namespace exface\Core\Exceptions;
+namespace exface\Core\Exceptions\UiPage;
 
 /**
  * Exception thrown if the UiPage is not part of any app.

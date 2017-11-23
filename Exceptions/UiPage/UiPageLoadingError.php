@@ -1,5 +1,5 @@
 <?php
-namespace exface\Core\Exceptions;
+namespace exface\Core\Exceptions\UiPage;
 
 /**
  * Exception thrown if a UI page could not be loaded, although it's id is known to the CMS.
