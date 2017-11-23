@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\Exceptions\UiPage;
 
+use exface\Core\Exceptions\RuntimeException;
+
 /**
  * Exception thrown if a UI page has no UID.
  *
