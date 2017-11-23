@@ -18,9 +18,9 @@ use exface\Core\Factories\UiPageFactory;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\DataTypes\NumberDataType;
-use exface\Core\Exceptions\UiPageNotPartOfAppError;
+use exface\Core\Exceptions\UiPage\UiPageNotPartOfAppError;
 use Ramsey\Uuid\Uuid;
-use exface\Core\Exceptions\UiPageNotFoundError;
+use exface\Core\Exceptions\UiPage\UiPageNotFoundError;
 
 /**
  * This is the default implementation of the UiPageInterface.

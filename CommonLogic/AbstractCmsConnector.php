@@ -4,7 +4,7 @@ namespace exface\Core\CommonLogic;
 use exface\Core\Interfaces\CmsConnectorInterface;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Factories\UiPageFactory;
-use exface\Core\Exceptions\UiPageNotFoundError;
+use exface\Core\Exceptions\UiPage\UiPageNotFoundError;
 
 abstract class AbstractCmsConnector implements CmsConnectorInterface
 {
