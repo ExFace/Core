@@ -405,5 +405,18 @@ class Text extends AbstractWidget implements iShowSingleAttribute, iHaveValue, i
         }
         return $uxon;
     }
+    
+    public function getValueWithDefaults()
+    {
+        if ($this->getValueExpression() && $this->getValueExpression()->isReference()) {
+            $value = '';
+        } else {
+            $value = $this->getValue();
+        }
+        if (is_null($value) || $value === '') {
+            $value = $this->getDefaultValue();
+        }
+        return $value;
+    }
 }
 ?>
