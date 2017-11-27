@@ -31,6 +31,9 @@
 	"ACTION.FAVORITESADD.NAME": "Add to favorites",
     "ACTION.FAVORITESADD.RESULT": "%number% objects added to favorites.",
     
+	"ACTION.GENERATEMODELFROMDATASOURCE.NAME": "Generate Model",
+	"ACTION.GENERATEMODELFROMDATASOURCE.RESULT_FOR_OBJECT": "Created %created_counter% attribute(s) for %object_counter% object(s). %skipped_counter% attributes skipped as duplicates!",
+	
 	"ACTION.GOBACK.NAME": "Back",
 	"ACTION.GOTOURL.NAME": "Visit URL",
 	"ACTION.GOTOURL.SUCCESS": "Redirecting...",

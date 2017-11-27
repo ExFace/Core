@@ -1,12 +1,12 @@
 <?php
-namespace exface\Core\CommonLogic\Modelizers;
+namespace exface\Core\ModelBuilders;
 
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 
-class OracleSqlModelizer extends AbstractSqlModelizer
+class OracleSqlModelBuilder extends AbstractSqlModelBuilder
 {
 
-    public function getAttributePropertiesFromTable(MetaObjectInterface $meta_object, $table_name)
+    public function getAttributeDataFromTableColumns(MetaObjectInterface $meta_object, $table_name)
     {
         $columns_sql = "
 					SELECT

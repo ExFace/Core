@@ -7,7 +7,7 @@ use exface\Core\Exceptions\DataSources\DataConnectionCommitFailedError;
 use exface\Core\Exceptions\DataSources\DataConnectionRollbackFailedError;
 use exface\Core\CommonLogic\DataQueries\SqlDataQuery;
 use exface\Core\Exceptions\DataSources\DataQueryFailedError;
-use exface\Core\CommonLogic\Modelizers\OracleSqlModelizer;
+use exface\Core\ModelBuilders\OracleSqlModelBuilder;
 
 /**
  * Datbase API object of OracleSQL
@@ -270,11 +270,11 @@ class OracleSqlConnector extends AbstractSqlConnector
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\DataConnectors\AbstractSqlConnector::getModelizer()
+     * @see \exface\Core\DataConnectors\AbstractSqlConnector::getModelBuilder()
      */
-    public function getModelizer()
+    public function getModelBuilder()
     {
-        return new OracleSqlModelizer($this);
+        return new OracleSqlModelBuilder($this);
     }
 }
 ?>
