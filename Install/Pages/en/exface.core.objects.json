@@ -103,8 +103,7 @@
                 "caption": "Attribute"
             },
             {
-                "action_alias": "exface.Core.GenerateAttributesFromDataSource",
-                "caption": "Generate attributes from data source"
+                "action_alias": "exface.Core.GenerateModelFromDataSource"
             }
         ]
     }

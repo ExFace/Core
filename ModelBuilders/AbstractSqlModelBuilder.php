@@ -1,24 +1,49 @@
 <?php
-namespace exface\Core\CommonLogic\Modelizers;
+namespace exface\Core\ModelBuilders;
 
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\DataSources\SqlDataConnectorInterface;
-use exface\Core\Interfaces\DataSources\ModelizerInterface;
+use exface\Core\Interfaces\DataSources\ModelBuilderInterface;
 use exface\Core\Factories\DataSheetFactory;
+use exface\Core\Interfaces\AppInterface;
+use exface\Core\Exceptions\NotImplementedError;
 
-abstract class AbstractSqlModelizer implements ModelizerInterface
+abstract class AbstractSqlModelBuilder implements ModelBuilderInterface
 {
 
     private $data_connector = null;
 
     private $data_types = null;
+    
+    private $countSkippedEntities = 0;
+    
+    private $countCreatedEntities = 0;
 
     public function __construct(SqlDataConnectorInterface $data_connector)
     {
         $this->data_connector = $data_connector;
     }
 
-    abstract public function getAttributePropertiesFromTable(MetaObjectInterface $meta_object, $table_name);
+    public function generateModelForObject(MetaObjectInterface $meta_object)
+    {
+        $result_data_sheet = DataSheetFactory::createFromObjectIdOrAlias($meta_object->getWorkbench(), 'exface.Core.ATTRIBUTE');
+        
+        foreach ($this->getAttributeDataFromTableColumns($meta_object, $meta_object->getDataAddress()) as $row) {
+            if ($meta_object->findAttributesByDataAddress($row['DATA_ADDRESS'])) {
+                $this->countSkippedEntities++;
+                continue;
+            }
+            $result_data_sheet->addRow($row);
+        }
+        
+        if (! $result_data_sheet->isEmpty()) {
+            $result_data_sheet->dataCreate();
+            $this->countCreatedEntities += $result_data_sheet->countRows();
+        }
+        return $this;
+    }
+    
+    abstract protected function getAttributeDataFromTableColumns(MetaObjectInterface $meta_object, $table_name);
 
     /**
      *
@@ -94,7 +119,7 @@ abstract class AbstractSqlModelizer implements ModelizerInterface
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\Interfaces\DataSources\ModelizerInterface::getDataConnection()
+     * @see \exface\Core\Interfaces\DataSources\ModelBuilderInterface::getDataConnection()
      */
     public function getDataConnection()
     {
@@ -133,6 +158,26 @@ abstract class AbstractSqlModelizer implements ModelizerInterface
         } else {
             return $parts[0];
         }
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSources\ModelBuilderInterface::generateModelForApp()
+     */
+    public function generateModelForApp(AppInterface $app)
+    {
+        throw new NotImplementedError('Creating models for all tables of an SQL data base not yet implemented!');
+    }
+    
+    public function countSkippedEntities()
+    {
+        return $this->countSkippedEntities;
+    }
+    
+    public function countCreatedEntities()
+    {
+        return $this->countCreatedEntities;
     }
 }
 ?>

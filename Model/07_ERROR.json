@@ -1325,6 +1325,17 @@
             "ERROR_CODE": "6XX8HFA",
             "ERROR_TEXT": "Error updating Ui page.",
             "DESCRIPTION": "This error occurs when a problem updating a Ui page occurs.\n"
+        },
+        {
+            "CREATED_ON": "2017-11-27 15:06:45",
+            "MODIFIED_ON": "2017-11-27 15:07:57",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e7d3846e10a285a3da0205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "ERROR_CODE": "6Y0U6GM",
+            "ERROR_TEXT": "Model builder not available for selected data connector",
+            "DESCRIPTION": ""
         }
     ],
     "totals_rows": [],
