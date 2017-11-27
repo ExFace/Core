@@ -1303,6 +1303,28 @@
             "ERROR_CODE": "6XQM0SZ",
             "ERROR_TEXT": "This UI page has no UID.",
             "DESCRIPTION": "This error occurs an UI page has no UID.\n\nThis problem might be solved by recreation of the page or by direct manipulation of the page UID template variable in the database (modx_site_tmplvar_contentvalues)."
+        },
+        {
+            "CREATED_ON": "2017-11-20 15:01:20",
+            "MODIFIED_ON": "2017-11-20 15:01:20",
+            "CREATED_BY_USER": "0x11e7add6fab63cc6997b74e5434dc47d",
+            "MODIFIED_BY_USER": "0x11e7add6fab63cc6997b74e5434dc47d",
+            "UID": "0x11e7ce03ad1ae7e6ad9174e5434dc47d",
+            "APP": "0x31000000000000000000000000000000",
+            "ERROR_CODE": "6XX8HAD",
+            "ERROR_TEXT": "Error creating Ui page.",
+            "DESCRIPTION": "This error occurs when a problem creating a Ui page occurs.\n"
+        },
+        {
+            "CREATED_ON": "2017-11-20 15:01:38",
+            "MODIFIED_ON": "2017-11-20 15:01:20",
+            "CREATED_BY_USER": "0x11e7add6fab63cc6997b74e5434dc47d",
+            "MODIFIED_BY_USER": "0x11e7add6fab63cc6997b74e5434dc47d",
+            "UID": "0x11e7ce03b79e6318ad9174e5434dc47d",
+            "APP": "0x31000000000000000000000000000000",
+            "ERROR_CODE": "6XX8HFA",
+            "ERROR_TEXT": "Error updating Ui page.",
+            "DESCRIPTION": "This error occurs when a problem updating a Ui page occurs.\n"
         }
     ],
     "totals_rows": [],

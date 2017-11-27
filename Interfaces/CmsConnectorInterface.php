@@ -2,9 +2,9 @@
 namespace exface\Core\Interfaces;
 
 use exface\Core\Interfaces\Model\UiPageInterface;
-use exface\Core\Exceptions\UiPageNotFoundError;
+use exface\Core\Exceptions\UiPage\UiPageNotFoundError;
 use exface\Core\Exceptions\RuntimeException;
-use exface\Core\Exceptions\UiPageIdNotUniqueError;
+use exface\Core\Exceptions\UiPage\UiPageIdNotUniqueError;
 
 /**
  * A CMS-connector provides a generic interface for ExFace to communicate with

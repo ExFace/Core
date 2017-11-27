@@ -1,5 +1,7 @@
 <?php
-namespace exface\Core\Exceptions;
+namespace exface\Core\Exceptions\UiPage;
+
+use exface\Core\Exceptions\RuntimeException;
 
 /**
  * Exception thrown if a UI page could not be loaded, although it's id is known to the CMS.
