@@ -711,21 +711,39 @@ class Object implements MetaObjectInterface
         return $this->getAttribute($this->getLabelAttributeAlias());
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaObjectInterface::getDataSourceId()
+     */
     public function getDataSourceId()
     {
         return $this->data_source_id;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaObjectInterface::setDataSourceId()
+     */
     public function setDataSourceId($value)
     {
         $this->data_source_id = $value;
     }
+    
+    /**
+     * 
+     * @return boolean
+     */
+    public function hasDataSource()
+    {
+        return is_null($this->data_source_id) ? false : true;
+    }
 
     /**
-     * Returns the data source for this object.
-     * The data source is fully initialized and the connection is already established.
-     *
-     * @return \exface\Core\CommonLogic\DataSource
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaObjectInterface::getDataSource()
      */
     public function getDataSource()
     {
@@ -733,12 +751,11 @@ class Object implements MetaObjectInterface
     }
 
     /**
-     * Returns the data connection for this object.
-     * The connection is already initialized and established.
-     *
-     * @return \exface\Core\CommonLogic\AbstractDataConnector
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaObjectInterface::getDataConnection()
      */
-    function getDataConnection()
+    public function getDataConnection()
     {
         return $this->getModel()->getWorkbench()->data()->getDataConnection($this->data_source_id, $this->data_connection_alias);
     }
@@ -1142,6 +1159,9 @@ class Object implements MetaObjectInterface
      */
     public function isReadable()
     {
+        if (! $this->hasDataSource()) {
+            return false;
+        }        
         if ($this->readable && ! $this->getDataSource()->isReadable()){
             return false;
         }
@@ -1166,6 +1186,9 @@ class Object implements MetaObjectInterface
      */
     public function isWritable()
     {
+        if (! $this->hasDataSource()) {
+            return false;
+        }
         if ($this->writable && ! $this->getDataSource()->isWritable()){
             return false;
         }

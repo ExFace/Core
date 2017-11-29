@@ -7,44 +7,43 @@ use exface\Core\Interfaces\DataSources\ModelBuilderInterface;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Exceptions\NotImplementedError;
+use exface\Core\Interfaces\DataSources\DataSourceInterface;
+use exface\Core\CommonLogic\ModelBuilders\AbstractModelBuilder;
 
-abstract class AbstractSqlModelBuilder implements ModelBuilderInterface
+abstract class AbstractSqlModelBuilder extends AbstractModelBuilder implements ModelBuilderInterface
 {
 
     private $data_connector = null;
 
     private $data_types = null;
-    
-    private $countSkippedEntities = 0;
-    
-    private $countCreatedEntities = 0;
 
-    public function __construct(SqlDataConnectorInterface $data_connector)
-    {
-        $this->data_connector = $data_connector;
-    }
-
-    public function generateModelForObject(MetaObjectInterface $meta_object)
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\ModelBuilders\AbstractModelBuilder::generateAttributesForObject()
+     */
+    public function generateAttributesForObject(MetaObjectInterface $meta_object)
     {
         $result_data_sheet = DataSheetFactory::createFromObjectIdOrAlias($meta_object->getWorkbench(), 'exface.Core.ATTRIBUTE');
         
-        foreach ($this->getAttributeDataFromTableColumns($meta_object, $meta_object->getDataAddress()) as $row) {
+        $imported_rows = $this->getAttributeDataFromTableColumns($meta_object, $meta_object->getDataAddress());
+        foreach ($imported_rows as $row) {
             if ($meta_object->findAttributesByDataAddress($row['DATA_ADDRESS'])) {
-                $this->countSkippedEntities++;
                 continue;
             }
             $result_data_sheet->addRow($row);
         }
+        $result_data_sheet->setCounterRowsAll(count($imported_rows));
         
         if (! $result_data_sheet->isEmpty()) {
             $result_data_sheet->dataCreate();
-            $this->countCreatedEntities += $result_data_sheet->countRows();
         }
-        return $this;
+        
+        return $result_data_sheet;
     }
     
     abstract protected function getAttributeDataFromTableColumns(MetaObjectInterface $meta_object, $table_name);
-
+    
     /**
      *
      * @param string $sql_data_type            
@@ -116,17 +115,6 @@ abstract class AbstractSqlModelBuilder implements ModelBuilderInterface
     }
 
     /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\DataSources\ModelBuilderInterface::getDataConnection()
-     */
-    public function getDataConnection()
-    {
-        return $this->data_connector;
-    }
-
-    /**
      * Extracts the DB schema from a qualified table alias (e.g.
      * SCHEMA.TABLE_NAME). Returns an empty string if no schema is found.
      *
@@ -158,26 +146,6 @@ abstract class AbstractSqlModelBuilder implements ModelBuilderInterface
         } else {
             return $parts[0];
         }
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\DataSources\ModelBuilderInterface::generateModelForApp()
-     */
-    public function generateModelForApp(AppInterface $app)
-    {
-        throw new NotImplementedError('Creating models for all tables of an SQL data base not yet implemented!');
-    }
-    
-    public function countSkippedEntities()
-    {
-        return $this->countSkippedEntities;
-    }
-    
-    public function countCreatedEntities()
-    {
-        return $this->countCreatedEntities;
     }
 }
 ?>

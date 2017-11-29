@@ -106,6 +106,20 @@
             "READONLY": "0",
             "ALIAS": "LOCAL_FILE",
             "FILTER_CONTEXT": ""
+        },
+        {
+            "CREATED_ON": "2017-11-28 09:53:47",
+            "MODIFIED_ON": "2017-11-28 10:24:30",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e7d421dd76d008a3da0205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "LABEL": "No Connection (Transparent)",
+            "CONNECTOR": "exface\/Core\/DataConnectors\/TransparentConnector.php",
+            "CONFIG": "{}",
+            "READONLY": "0",
+            "ALIAS": "TRANSPARENT_CONNECTION",
+            "FILTER_CONTEXT": ""
         }
     ],
     "totals_rows": [],
