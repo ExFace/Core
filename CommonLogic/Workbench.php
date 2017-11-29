@@ -231,13 +231,29 @@ class Workbench
         }
     }
 
+    /**
+     * Returns an app, defined by its UID or alias, from the running_apps.
+     * 
+     * @param string $appUidOrAlias
+     * @return AppInterface|null
+     */
     protected function findAppByUidOrAlias($appUidOrAlias)
     {
-        foreach ($this->running_apps as $app) {
-            // Um die Uid der App zu erhalten muss das Model bereits existieren, sonst
-            // kommt es zu einem Fehler in app->getUid()
-            if (strcasecmp($app->getAliasWithNamespace(), $appUidOrAlias) === 0 || ($this->model() && strcasecmp($app->getUid(), $appUidOrAlias) === 0)) {
-                return $app;
+        if (AppFactory::isUid($appUidOrAlias) && $this->model()) {
+            // Die App-UID darf nur abgefragt werden, wenn tatsaechlich eine UID ueber-
+            // geben wird, sonst kommt es zu Problemen beim Update. Um die UID der App zu
+            // erhalten muss ausserdem das Model bereits existieren, sonst kommt es zu
+            // einem Fehler in app->getUid().
+            foreach ($this->running_apps as $app) {
+                if (strcasecmp($app->getUid(), $appUidOrAlias) === 0) {
+                    return $app;
+                }
+            }
+        } else {
+            foreach ($this->running_apps as $app) {
+                if (strcasecmp($app->getAliasWithNamespace(), $appUidOrAlias) === 0) {
+                    return $app;
+                }
             }
         }
         return null;
