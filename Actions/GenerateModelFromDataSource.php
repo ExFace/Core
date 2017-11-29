@@ -6,6 +6,8 @@ use exface\Core\Exceptions\Actions\ActionInputInvalidObjectError;
 use exface\Core\Interfaces\DataSources\SqlDataConnectorInterface;
 use exface\Core\Exceptions\Actions\ActionInputTypeError;
 use exface\Core\CommonLogic\Constants\Icons;
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\Exceptions\Actions\ActionInputMissingError;
 
 /**
  * This action runs one or more selected test steps
@@ -25,28 +27,45 @@ class GenerateModelFromDataSource extends AbstractAction
 
     protected function perform()
     {
-        if (! $this->getInputDataSheet()->getMetaObject()->is('exface.Core.OBJECT')) {
-            throw new ActionInputInvalidObjectError($this, 'Action "' . $this->getAlias() . '" exprects an exface.Core.OBJECT as input, "' . $this->getInputDataSheet()->getMetaObject()->getAliasWithNamespace() . '" given instead!');
+        $input_data = $this->getInputDataSheet();
+        
+        if (! $input_data->getMetaObject()->is('exface.Core.MODEL_BUILDER_INPUT')) {
+            throw new ActionInputInvalidObjectError($this, 'Action "' . $this->getAlias() . '" exprects exface.Core.MODEL_BUILDER_INPUT as input, "' . $this->getInputDataSheet()->getMetaObject()->getAliasWithNamespace() . '" given instead!');
         }
         
-        $skipped = 0;
+        $obj_col = $input_data->getColumns()->getByExpression('OBJECT');
+        $data_src_col = $input_data->getColumns()->getByExpression('DATA_SOURCE');
         $created = 0;
-        $objects_sheet = $this->getInputDataSheet();
-        foreach ($objects_sheet->getRows() as $objects_sheet_row) {
-            /* @var $target_obj \exface\Core\Interfaces\Model\MetaObjectInterface */
-            $target_obj = $this->getWorkbench()->model()->getObject($objects_sheet_row[$this->getInputDataSheet()->getUidColumn()->getName()]);
-            $modelBuilder = $target_obj->getDataConnection()->getModelBuilder();
-            $modelBuilder->generateModelForObject($target_obj);
-            $skipped += $modelBuilder->countSkippedEntities();
-            $created += $modelBuilder->countCreatedEntities();
+        $skipped = 0;
+        if ($obj_col && ! $obj_col->isEmpty(true)) {
+            
+            foreach ($input_data->getRows() as $row){
+                $data_source = $this->getWorkbench()->data()->getDataSource($row[$data_src_col->getName()]);
+                $model_builder = $data_source->getConnection()->getModelBuilder();
+                
+                $created_ds = $model_builder->generateAttributesForObject($this->getWorkbench()->model()->getObject($row['OBJECT']));
+                $created += $created_ds->countRows();
+                $skipped += $created_ds->countRowsAll() - $created_ds->countRows();
+            }
+            
+            $this->addResultMessage('Created ' . $created . ' attributes, ' . $skipped . ' skipped as duplicates.');
+            
+        } elseif ($data_src_col && ! $data_src_col->isEmpty()) {
+            
+            foreach ($input_data->getRows() as $row){
+                $data_source = $this->getWorkbench()->data()->getDataSource($row[$data_src_col->getName()]);
+                $app = $this->getWorkbench()->getApp($row['APP']);
+                $model_builder = $data_source->getConnection()->getModelBuilder();
+                
+                $created_ds = $model_builder->generateObjectsForDataSource($app, $data_source);
+                $created += $created_ds->countRows();
+                $skipped += $created_ds->countRowsAll() - $created_ds->countRows();
+            }
+            
+            $this->addResultMessage('Created ' . $created . ' objects, ' . $skipped . ' skipped as duplicates.');
         }
         
-        
-        // Save the result and output a message for the user
-        $objects_sheet->addFilterFromColumnValues($objects_sheet->getUidColumn())->dataRead();
-        $this->setResultDataSheet($objects_sheet);
         $this->setResult('');
-        $this->setResultMessage($this->translate('RESULT_FOR_OBJECT', ['%created_counter%' => $created, '%object_counter%' => $objects_sheet->countRows(), '%skipped_counter%' => $skipped]));
         
         return;
     }

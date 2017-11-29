@@ -100,10 +100,10 @@
                     "alias": "exface.Core.GoToPage",
                     "page_alias": "exface.core.attributes"
                 },
-                "caption": "Attribute"
+                "caption": "Attributes"
             },
             {
-                "action_alias": "exface.Core.GenerateModelFromDataSource"
+                "action_alias": "exface.Core.ShowModelBuilderDialog"
             }
         ]
     }

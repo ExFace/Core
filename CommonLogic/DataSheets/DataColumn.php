@@ -654,13 +654,20 @@ class DataColumn implements DataColumnInterface
      *
      * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::isEmpty()
      */
-    public function isEmpty()
+    public function isEmpty($check_values = false)
     {
-        if (count($this->getValues(true)) > 0) {
-            return false;
-        } else {
+        if ($check_values) {
+            foreach ($this->getValues(true) as $val) {
+                if (! is_null($val) && $val !== '') {
+                    return false;
+                }
+            }
             return true;
+        } elseif (count($this->getValues(true)) > 0) {
+            return false;
         }
+            
+        return true;
     }
 
     public static function sanitizeColumnName($string)

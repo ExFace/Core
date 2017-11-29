@@ -71,6 +71,9 @@
             },
             {
                 "action_alias": "exface.Core.DeleteObject"
+            },
+            {
+                "action_alias": "exface.Core.ShowModelBuilderDialog"
             }
         ]
     }
