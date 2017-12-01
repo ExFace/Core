@@ -7,9 +7,14 @@ use exface\Core\Exceptions\NotImplementedError;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 use exface\Core\Interfaces\DataSources\DataSourceInterface;
+use exface\Core\Factories\DataSheetFactory;
+use exface\Core\CommonLogic\Workbench;
+use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 
 abstract class AbstractModelBuilder implements ModelBuilderInterface
 {
+    private $data_types = null;
+    
     public function __construct(DataConnectionInterface $data_connector)
     {
         $this->data_connector = $data_connector;
@@ -45,4 +50,32 @@ abstract class AbstractModelBuilder implements ModelBuilderInterface
     {
         throw new NotImplementedError('Creating models for explicitly specified object not yet implemented!');
     }
+    
+    /**
+     * 
+     * @param DataTypeInterface $type
+     * @return string|null
+     */
+    protected function getDataTypeId(DataTypeInterface $type)
+    {
+        if (is_null($this->data_types)) {
+            $this->data_types = DataSheetFactory::createFromObject($this->getDataConnection()->getWorkbench()->model()->getObject('exface.Core.DATATYPE'));
+            $this->data_types->getColumns()->addMultiple(array(
+                $this->data_types->getMetaObject()->getUidAttributeAlias(),
+                'ALIAS'
+            ));
+            $this->data_types->dataRead(0, 0);
+        }
+        
+        return $this->data_types->getUidColumn()->getCellValue($this->data_types->getColumns()->get('ALIAS')->findRowByValue($type->getAlias()));
+    }
+    
+    /**
+     * 
+     * @param Workbench $workbench
+     * @param string $source_data_type
+     * @param array $options
+     * @return DataTypeInterface
+     */
+    protected abstract function guessDataType(Workbench $workbench, $source_data_type);
 }

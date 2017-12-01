@@ -2,10 +2,16 @@
 namespace exface\Core\ModelBuilders;
 
 use exface\Core\Interfaces\Model\MetaObjectInterface;
+use exface\Core\CommonLogic\Workbench;
 
 class MySqlModelBuilder extends AbstractSqlModelBuilder
 {
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\ModelBuilders\AbstractSqlModelBuilder::getAttributeDataFromTableColumns()
+     */
     public function getAttributeDataFromTableColumns(MetaObjectInterface $meta_object, $table_name)
     {
         $columns_sql = "
@@ -19,7 +25,7 @@ class MySqlModelBuilder extends AbstractSqlModelBuilder
             $rows[] = array(
                 'LABEL' => $this->generateLabel($col['Field']),
                 'ALIAS' => $col['Field'],
-                'DATATYPE' => $this->getDataTypeId($this->getDataType($col['Type'])),
+                'DATATYPE' => $this->getDataTypeId($this->guessDataType($meta_object->getWorkbench(), $col['Type'])),
                 'DATA_ADDRESS' => $col['Field'],
                 'OBJECT' => $meta_object->getId(),
                 'REQUIREDFLAG' => ($col['Null'] == 'NO' ? 1 : 0),
@@ -29,7 +35,12 @@ class MySqlModelBuilder extends AbstractSqlModelBuilder
         return $rows;
     }
 
-    public function getDataType($data_type, $length = null, $number_scale = null)
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\ModelBuilders\AbstractSqlModelBuilder::guessDataType()
+     */
+    protected function guessDataType(Workbench $workbench, $data_type, $length = null, $number_scale = null)
     {
         $data_type = trim($data_type);
         $details = array();
@@ -38,7 +49,7 @@ class MySqlModelBuilder extends AbstractSqlModelBuilder
             $details = explode(',', substr($data_type, (strpos($data_type, '(')) + 1, (strlen($data_type) - strrpos($data_type, ')'))));
         }
         
-        return parent::getDataType($type, $details[0], $details[1]);
+        return parent::guessDataType($type, $details[0], $details[1]);
     }
 }
 ?>
