@@ -9,13 +9,19 @@ use exface\Core\Interfaces\AppInterface;
 use exface\Core\Exceptions\NotImplementedError;
 use exface\Core\Interfaces\DataSources\DataSourceInterface;
 use exface\Core\CommonLogic\ModelBuilders\AbstractModelBuilder;
+use exface\Core\DataTypes\StringDataType;
+use exface\Core\DataTypes\NumberDataType;
+use exface\Core\CommonLogic\Workbench;
+use exface\Core\DataTypes\TimestampDataType;
+use exface\Core\DataTypes\DateDataType;
+use exface\Core\DataTypes\TextDataType;
+use exface\Core\Interfaces\DataTypes\DataTypeInterface;
+use exface\Core\Factories\DataTypeFactory;
 
 abstract class AbstractSqlModelBuilder extends AbstractModelBuilder implements ModelBuilderInterface
 {
 
     private $data_connector = null;
-
-    private $data_types = null;
 
     /**
      * 
@@ -28,10 +34,9 @@ abstract class AbstractSqlModelBuilder extends AbstractModelBuilder implements M
         
         $imported_rows = $this->getAttributeDataFromTableColumns($meta_object, $meta_object->getDataAddress());
         foreach ($imported_rows as $row) {
-            if ($meta_object->findAttributesByDataAddress($row['DATA_ADDRESS'])) {
-                continue;
+            if (count($meta_object->findAttributesByDataAddress($row['DATA_ADDRESS'])) === 0) {
+                $result_data_sheet->addRow($row);
             }
-            $result_data_sheet->addRow($row);
         }
         $result_data_sheet->setCounterRowsAll(count($imported_rows));
         
@@ -42,19 +47,15 @@ abstract class AbstractSqlModelBuilder extends AbstractModelBuilder implements M
         return $result_data_sheet;
     }
     
-    abstract protected function getAttributeDataFromTableColumns(MetaObjectInterface $meta_object, $table_name);
+    protected abstract function getAttributeDataFromTableColumns(MetaObjectInterface $meta_object, $table_name);
     
     /**
-     *
-     * @param string $sql_data_type            
-     * @param integer $length
-     *            total number of digits/characters
-     * @param integer $number_scale
-     *            number of digits to the right of the decimal point
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\ModelBuilders\AbstractModelBuilder::guessDataType()
      */
-    public function getDataType($sql_data_type, $length = null, $number_scale = null)
+    protected function guessDataType(Workbench $workbench, $sql_data_type, array $options = [])
     {
-        $data_type_alias = '';
         switch (strtoupper($sql_data_type)) {
             case 'NUMBER':
             case 'BIGINT':
@@ -62,23 +63,23 @@ abstract class AbstractSqlModelBuilder extends AbstractModelBuilder implements M
             case 'INTEGER':
             case 'DECIMAL':
             case 'FLOAT':
-                $data_type_alias = 'Number';
+                $data_type = DataTypeFactory::createFromAlias($workbench, 'exface.Core.Number');
                 break;
             case 'TIMESTAMP':
             case 'DATETIME':
-                $data_type_alias = 'Timestamp';
+                $data_type = DataTypeFactory::createFromAlias($workbench, 'exface.Core.Timestamp');
                 break;
             case 'DATE':
-                $data_type_alias = 'Date';
+                $data_type = DataTypeFactory::createFromAlias($workbench, 'exface.Core.Date');
                 break;
             case 'TEXT':
             case 'LONGTEXT':
-                $data_type_alias = 'Text';
+                $data_type = DataTypeFactory::createFromAlias($workbench, 'exface.Core.Text');
                 break;
             default:
-                $data_type_alias = 'String';
+                $data_type = DataTypeFactory::createFromAlias($workbench, 'exface.Core.String');
         }
-        return $data_type_alias;
+        return $data_type;
     }
 
     /**
@@ -98,20 +99,6 @@ abstract class AbstractSqlModelBuilder extends AbstractModelBuilder implements M
             $column_name = ucfirst($column_name);
         }
         return $column_name;
-    }
-
-    public function getDataTypeId($data_type_alias)
-    {
-        if (is_null($this->data_types)) {
-            $this->data_types = DataSheetFactory::createFromObject($this->getDataConnection()->getWorkbench()->model()->getObject('exface.Core.DATATYPE'));
-            $this->data_types->getColumns()->addMultiple(array(
-                $this->data_types->getMetaObject()->getUidAttributeAlias(),
-                'ALIAS'
-            ));
-            $this->data_types->dataRead(0, 0);
-        }
-        
-        return $this->data_types->getUidColumn()->getCellValue($this->data_types->getColumns()->get('ALIAS')->findRowByValue($data_type_alias));
     }
 
     /**
