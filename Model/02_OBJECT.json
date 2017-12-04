@@ -660,6 +660,24 @@
             "LABEL": "Model Builder Input",
             "ALIAS": "MODEL_BUILDER_INPUT",
             "DATA_ADDRESS": ""
+        },
+        {
+            "CREATED_ON": "2017-12-03 09:15:31",
+            "MODIFIED_ON": "2017-09-11 10:09:23",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e7d80a432348c7a3da0205857feb80",
+            "READABLE_FLAG": "0",
+            "WRITABLE_FLAG": "0",
+            "DATA_SOURCE": "0x11e6afd8d2fa47e78943e4b318306b9a",
+            "APP": "0x31000000000000000000000000000000",
+            "SHORT_DESCRIPTION": "",
+            "PARENT_OBJECT": "0x11e6be0ad5666af88ddee4b318306b9a",
+            "DATA_ADDRESS_PROPS": "{}",
+            "DEFAULT_EDITOR_UXON": "",
+            "LABEL": "Model Builder",
+            "ALIAS": "MODEL_BUILDER",
+            "DATA_ADDRESS": "*\/*\/ModelBuilders\/*.php"
         }
     ],
     "totals_rows": [],
