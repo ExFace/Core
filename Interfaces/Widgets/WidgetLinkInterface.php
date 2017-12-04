@@ -40,6 +40,9 @@ interface WidgetLinkInterface extends ExfaceClassInterface, iCanBeConvertedToUxo
     /**
      * Returns the target-page of the link.
      * 
+     * If the target page is not explicitly specified in the widget link, the current page must be 
+     * treated as target.
+     * 
      * @return UiPageInterface
      */
     public function getPage();
