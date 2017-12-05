@@ -8,7 +8,6 @@ use exface\Core\Interfaces\TemplateInterface;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\UiManagerInterface;
 use exface\Core\Factories\TemplateFactory;
-use exface\Core\Exceptions\UiPageFoundError;
 
 class UiManager implements UiManagerInterface
 {
@@ -17,13 +16,11 @@ class UiManager implements UiManagerInterface
 
     private $loaded_templates = array();
 
-    private $pages = array();
-
     private $exface = null;
 
     private $base_template = null;
 
-    private $page_id_current = null;
+    private $page_current = null;
 
     function __construct(\exface\Core\CommonLogic\Workbench $exface)
     {
@@ -33,8 +30,8 @@ class UiManager implements UiManagerInterface
     /**
      * Returns a template instance for a given template alias.
      * If no alias given, returns the current template.
-     *
-     * @param string $template            
+     * 
+     * @param string $template
      * @return AbstractTemplate
      */
     function getTemplate($template = null)
@@ -53,10 +50,9 @@ class UiManager implements UiManagerInterface
     /**
      * Output the final UI code for a given widget
      * IDEA Remove this method from the UI in favor of template::draw() after template handling has been moved to the actions
-     *
-     * @param AbstractWidget $widget            
-     * @param
-     *            TemplateInterface ui_template to use when drawing
+     * 
+     * @param AbstractWidget $widget
+     * @param TemplateInterface $template ui_template to use when drawing
      * @return string
      */
     function draw(WidgetInterface $widget, TemplateInterface $template = null)
@@ -71,10 +67,9 @@ class UiManager implements UiManagerInterface
      * This could be JS-Includes, stylesheets - anything, that needs to be placed in the
      * resulting document separately from the renderen widget itself.
      * IDEA Remove this method from the UI in favor of template::drawHeaders() after template handling has been moved to the actions
-     *
-     * @param WidgetInterface $widget            
-     * @param
-     *            TemplateInterface ui_template to use when drawing
+     * 
+     * @param WidgetInterface $widget
+     * @param TemplateInterface $template ui_template to use when drawing
      * @return string
      */
     function drawHeaders(WidgetInterface $widget, TemplateInterface $template = null)
@@ -84,53 +79,44 @@ class UiManager implements UiManagerInterface
         return $template->drawHeaders($widget);
     }
 
-    /**
-     * Returns an ExFace widget from a given resource by id
-     * Caching is used to store widgets from already loaded pages
-     *
-     * @param string $widget_id            
-     * @param string $page_id            
-     * @return WidgetInterface
-     */
-    function getWidget($widget_id, $page_id)
-    {
-        $page = $this->getPage($page_id);
-        if (! is_null($widget_id)) {
-            return $page->getWidget($widget_id);
-        } else {
-            return $page->getWidgetRoot();
-        }
-    }
-
     public function getWorkbench()
     {
         return $this->exface;
     }
 
     /**
-     * Returns the UI page with the given $page_id.
-     * If the $page_id is ommitted or =0, the default (initially empty) page is returned.
-     *
-     * @param string $page_id            
+     * Returns the UI page with the given $page_alias.
+     * If the $page_alias is ommitted or ='', the default (initially empty) page is returned.
+     * 
+     * @param string $page_alias
      * @return UiPageInterface
      */
-    public function getPage($page_id = null)
+    public function getPage($page_alias = null)
     {
-        if (! $page_id) {
-            $this->pages[$page_id] = UiPageFactory::createEmpty($this);
-        } elseif (! $this->pages[$page_id]) {
-            $this->pages[$page_id] = UiPageFactory::createFromCmsPage($this, $page_id);
-        }
-        return $this->pages[$page_id];
+        return UiPageFactory::createFromCmsPage($this, $page_alias);
     }
 
     /**
-     *
-     * @return \exface\Core\Interfaces\Model\UiPageInterface
+     * 
+     * @return UiPageInterface
      */
     public function getPageCurrent()
     {
-        return $this->getPage($this->getPageIdCurrent());
+        if (is_null($this->page_current)) {
+            $this->page_current = UiPageFactory::createFromCmsPageCurrent($this);
+        }
+        return $this->page_current;
+    }
+
+    /**
+     * 
+     * @param UiPageInterface $pageCurrent
+     * @return UiManager
+     */
+    public function setPageCurrent(UiPageInterface $pageCurrent)
+    {
+        $this->page_current = $pageCurrent;
+        return $this;
     }
 
     public function getTemplateFromRequest()
@@ -145,20 +131,6 @@ class UiManager implements UiManagerInterface
     public function setBaseTemplateAlias($qualified_alias)
     {
         $this->base_template = $qualified_alias;
-        return $this;
-    }
-
-    public function getPageIdCurrent()
-    {
-        if (is_null($this->page_id_current)) {
-            $this->page_id_current = $this->getWorkbench()->getCMS()->getPageId();
-        }
-        return $this->page_id_current;
-    }
-
-    public function setPageIdCurrent($value)
-    {
-        $this->page_id_current = $value;
         return $this;
     }
 }

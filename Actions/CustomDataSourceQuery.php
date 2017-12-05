@@ -4,11 +4,12 @@ namespace exface\Core\Actions;
 use exface\Core\CommonLogic\AbstractAction;
 use exface\Core\Interfaces\Actions\iRunDataSourceQuery;
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
-use exface\Core\CommonLogic\Model\Object;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\CommonLogic\DataSheets\DataColumn;
 use exface\Core\Exceptions\Actions\ActionInputMissingError;
 use exface\Core\Exceptions\Actions\ActionInputInvalidObjectError;
 use exface\Core\CommonLogic\Constants\Icons;
+use exface\Core\CommonLogic\UxonObject;
 
 class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuery
 {
@@ -22,7 +23,7 @@ class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuer
     protected function init()
     {
         parent::init();
-        $this->setIconName(Icons::COGS);
+        $this->setIcon(Icons::COGS);
     }
 
     /**
@@ -34,9 +35,9 @@ class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuer
         return $this->queries;
     }
 
-    public function setQueries(array $strings)
+    public function setQueries(UxonObject $query_strings)
     {
-        $this->queries = $strings;
+        $this->queries = $query_strings->toArray();
         return $this;
     }
 
@@ -71,7 +72,7 @@ class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuer
 
     /**
      *
-     * @return Object
+     * @return MetaObjectInterface
      */
     public function getAplicableToObject()
     {
@@ -87,7 +88,7 @@ class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuer
     protected function perform()
     {
         $counter = 0;
-        $data_sheet = $this->getInputDataSheet()->copy();
+        $data_sheet = $this->getInputDataSheet();
         // Check if the action is aplicable to the input object
         if ($this->getAplicableToObjectAlias()) {
             if (! $data_sheet->getMetaObject()->is($this->getAplicableToObjectAlias())) {

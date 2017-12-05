@@ -5,14 +5,15 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\DataSheets\DataColumn;
 use exface\Core\CommonLogic\Model\Expression;
+use exface\Core\Interfaces\Model\ExpressionInterface;
 
 abstract class DataColumnFactory extends AbstractFactory
 {
 
     /**
      *
-     * @param DataSheet $data_sheet            
-     * @param unknown $expression_or_string            
+     * @param DataSheetInterface $data_sheet            
+     * @param string|ExpressionInterfaceInterface $expression_or_string            
      * @param string $name            
      * @return DataColumn
      */
@@ -23,25 +24,25 @@ abstract class DataColumnFactory extends AbstractFactory
 
     /**
      *
-     * @param DataSheet $data_sheet            
-     * @param Expression $expression            
+     * @param DataSheetInterface $data_sheet            
+     * @param ExpressionInterface $expression            
      * @param string $name            
      * @return DataColumn
      */
-    public static function createFromExpression(DataSheetInterface $data_sheet, Expression $expression, $name = null)
+    public static function createFromExpression(DataSheetInterface $data_sheet, ExpressionInterface $expression, $name = null)
     {
         return new DataColumn($expression, $name, $data_sheet);
     }
 
     /**
      *
-     * @param DataSheet $data_sheet            
+     * @param DataSheetInterface $data_sheet            
      * @param UxonObject $uxon            
      * @return DataColumn
      */
     public static function createFromUxon(DataSheetInterface $data_sheet, UxonObject $uxon)
     {
-        $result = self::createFromString($data_sheet, ($uxon->expression ? $uxon->expression : $uxon->attribute_alias), $uxon->name);
+        $result = self::createFromString($data_sheet, ($uxon->hasProperty('expression') ? $uxon->getProperty('expression') : $uxon->getProperty('attribute_alias')), $uxon->getProperty('name'));
         $result->importUxonObject($uxon);
         return $result;
     }

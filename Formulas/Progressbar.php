@@ -37,23 +37,21 @@ class Progressbar extends Formula
      *
      * @return string
      */
-    function run($value, $text = '', $min = 0, $max = 100, $colorMap = array(
-        10 => "#FFEF9C",
-        20 => "#EEEA99",
-        30 => "#DDE595",
-        40 => "#CBDF91",
-        50 => "#BADA8E",
-        60 => "#A9D48A",
-        70 => "#97CF86",
-        80 => "#86C983",
-        90 => "#75C47F",
-        100 => "#63BE7B"))
+    function run($value, $text = '', $min = 0, $max = 100, array $colorMap = null)
     {
-        if (! $value)
+        if (is_null($value) || $value === ''){
             return '';
-        if (! $text)
-            $text = $value;
-        $value = NumberDataType::parse($value);
+        }
+        
+        if (! $text){
+            $text = round($value, 2);
+        }
+        
+        if (is_null($colorMap)){
+            $colorMap = $this->getColorMapPercentual();
+        }
+        
+        $value = NumberDataType::cast($value);
         
         $return = '<div style="width:100%; border:1px solid #ccc; position:relative; overflow: hidden">' . '<div style="width:' . ($value ? $value / ($max - $min) * 100 : $min) . '%;background:' . $this->getBackgroundColor($value, $colorMap) . ';">&nbsp;</div>' . '<div style="position:absolute; left:0; top:0; z-index:100; padding:0 0; width:100%">' . $text . '</div>' . '</div>';
         return $return;
@@ -90,6 +88,20 @@ class Progressbar extends Formula
         }
         
         return max($colorKeys);
+    }
+    
+    protected function getColorMapPercentual(){
+        return array(
+            10 => "#FFEF9C",
+            20 => "#EEEA99",
+            30 => "#DDE595",
+            40 => "#CBDF91",
+            50 => "#BADA8E",
+            60 => "#A9D48A",
+            70 => "#97CF86",
+            80 => "#86C983",
+            90 => "#75C47F",
+            100 => "#63BE7B");
     }
 }
 

@@ -2,7 +2,7 @@
 namespace exface\Core\Behaviors;
 
 use exface\Core\CommonLogic\AbstractBehavior;
-use exface\Core\CommonLogic\Model\Attribute;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Events\DataSheetEvent;
 use exface\Core\Interfaces\Actions\iUndoActions;
 use exface\Core\CommonLogic\DataSheets\DataColumn;
@@ -68,7 +68,7 @@ class TimeStampingBehavior extends AbstractBehavior
 
     /**
      *
-     * @return Attribute
+     * @return MetaAttributeInterface
      */
     public function getCreatedOnAttribute()
     {
@@ -77,7 +77,7 @@ class TimeStampingBehavior extends AbstractBehavior
 
     /**
      *
-     * @return Attribute
+     * @return MetaAttributeInterface
      */
     public function getUpdatedOnAttribute()
     {
@@ -158,7 +158,7 @@ class TimeStampingBehavior extends AbstractBehavior
                          * (with milliseconds). This would cause the Check to fail, if the attribute with the timestamp had a formatter. The
                          * formatter would change the timestamp in the GUI, thus the comparison would naturally fail. This should not be
                          * neccessary as long as timestamping attributes do not use formatters. The lines should be removed after some testing.
-                         * $format = $this->getWorkbench()->getCoreApp()->getTranslator()->translate('GLOBAL.DEFAULT_DATETIME_FORMAT');
+                         * $format = $this->getWorkbench()->getCoreApp()->getTranslator()->translate('LOCALIZATION.DATE.DATETIME_FORMAT');
                          * $v_date = new \DateTime($val);
                          * $val_date = new \DateTime($v_date->format($format));
                          * $c_date = new \DateTime($check_val);

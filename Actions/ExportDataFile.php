@@ -34,7 +34,7 @@ abstract class ExportDataFile extends ExportData
     protected function perform()
     {
         // DataSheet vorbereiten
-        $dataSheetMaster = $this->getInputDataSheet()->copy();
+        $dataSheetMaster = $this->getInputDataSheet();
         // Make sure, the input data has all the columns required for the widget
         // we export from. Generally this will not be the case, because the
         // widget calling the action is a button and it normally does not know
@@ -80,7 +80,7 @@ abstract class ExportDataFile extends ExportData
         $this->writeFileResult($dataSheetMaster);
         $url = $this->getWorkbench()->getCMS()->createLinkToFile($this->getPathname());
         $this->setResult($url);
-        $this->setResultMessage($resultMessage . 'Download ready. If it does not start automatically, click <a href="' . $url . '">here</a>.');
+        $this->setResultMessage($resultMessage ? $resultMessage : 'Download ready. If it does not start automatically, click <a href="' . $url . '">here</a>.');
     }
 
     /**

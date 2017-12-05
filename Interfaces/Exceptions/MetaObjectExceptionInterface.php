@@ -1,31 +1,31 @@
 <?php
 namespace exface\Core\Interfaces\Exceptions;
 
-use exface\Core\CommonLogic\Model\Object;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 
 Interface MetaObjectExceptionInterface extends ExceptionInterface
 {
 
     /**
      *
-     * @param Object $uxon            
+     * @param MetaObjectInterface $uxon            
      * @param string $message            
      * @param string $code            
      * @param \Throwable $previous            
      */
-    public function __construct(Object $object, $message, $code = null, $previous = null);
+    public function __construct(MetaObjectInterface $object, $message, $code = null, $previous = null);
 
     /**
      *
-     * @return Object
+     * @return MetaObjectInterface
      */
     public function getMetaObject();
 
     /**
      *
-     * @param Object $object            
+     * @param MetaObjectInterface $object            
      * @return MetaObjectExceptionInterface
      */
-    public function setMetaObject(Object $object);
+    public function setMetaObject(MetaObjectInterface $object);
 }
 ?>

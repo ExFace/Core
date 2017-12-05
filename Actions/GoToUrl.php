@@ -4,6 +4,8 @@ namespace exface\Core\Actions;
 use exface\Core\Interfaces\Actions\iShowUrl;
 use exface\Core\CommonLogic\AbstractAction;
 use exface\Core\CommonLogic\Constants\Icons;
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\Exceptions\Actions\ActionRuntimeError;
 
 /**
  * This action opens a URL for a given object instance.
@@ -34,7 +36,7 @@ class GoToUrl extends AbstractAction implements iShowUrl
         parent::init();
         $this->setInputRowsMin(1);
         $this->setInputRowsMax(1);
-        $this->setIconName(Icons::EXTERNAL_LINK);
+        $this->setIcon(Icons::EXTERNAL_LINK);
         return $this;
     }
 
@@ -92,6 +94,20 @@ class GoToUrl extends AbstractAction implements iShowUrl
     {
         $this->urlencode_placeholders = $value;
         return $this;
+    }
+    
+    public function buildUrlFromDataSheet(DataSheetInterface $data_sheet, $row_nr = 0)
+    {
+        $url = $this->getUrl();
+        $placeholders = $this->getWorkbench()->utils()->findPlaceholdersInString($url);
+        foreach ($placeholders as $ph){
+            if ($col = $data_sheet->getColumns()->getByExpression($ph)){
+                $url = str_replace('[#' . $ph . '#]', $col->getCellValue($row_nr), $url);
+            } else {
+                throw new ActionRuntimeError($this, 'No value found for placeholder "' . $ph . '" in URL! Make sure, the input data sheet has a corresponding column!');
+            }
+        }
+        return $url;
     }
 }
 ?>

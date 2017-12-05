@@ -18,9 +18,12 @@ use exface\Core\Exceptions\UnderflowException;
  * shows a toolbar with three button groups. Note, that grp2 has been 
  * aligned to the right. 
  * 
- * ------------------------------------------------------------------------
- * | [grp1_btn1] [grp1_btn2] | [grp3_btn1] |    | [grp2_btn1] [grp2_btn2] |
- * ------------------------------------------------------------------------
+ * ```
+ *  ------------------------------------------------------------------------
+ *  [grp1_btn1] [grp1_btn2]   [grp3_btn1]            [grp2_btn1] [grp2_btn2] 
+ *  ------------------------------------------------------------------------
+ * 
+ * ```
  *
  * @author Andrej Kabachnik
  *        
@@ -79,7 +82,7 @@ class Toolbar extends Container implements iHaveButtons, iContainButtonGroups, i
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\iContainButtonGroups::setButtonGroups()
      */
-    public function setButtonGroups(array $button_groups_or_uxon_arrays)
+    public function setButtonGroups($button_groups_or_uxon_arrays)
     {
         foreach ($button_groups_or_uxon_arrays as $group){
             if ($group instanceof ButtonGroup){
@@ -216,7 +219,7 @@ class Toolbar extends Container implements iHaveButtons, iContainButtonGroups, i
      * {@inheritDoc}
      * @see \exface\Core\Widgets\ButtonGroup::setButtons()
      */
-    public function setButtons(array $buttons)
+    public function setButtons($buttons)
     {
         $btn_grps = [];
         foreach ($buttons as $btn){

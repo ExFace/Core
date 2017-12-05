@@ -19,6 +19,7 @@ class InputCombo extends InputSelect implements iSupportLazyLoading
     // Combos should use lazy autosuggest in general
     private $lazy_loading_action = 'exface.Core.Autosuggest';
 
+    // FIXME move default value to template config option WIDGET.INPUTCOMBO.MAX_SUGGESTION like PAGE_SIZE of tables
     private $max_suggestions = 20;
 
     private $allow_new_values = true;
@@ -99,7 +100,7 @@ class InputCombo extends InputSelect implements iSupportLazyLoading
      */
     public function setAllowNewValues($value)
     {
-        $this->allow_new_values = \exface\Core\DataTypes\BooleanDataType::parse($value);
+        $this->allow_new_values = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;
     }
 
@@ -139,7 +140,7 @@ class InputCombo extends InputSelect implements iSupportLazyLoading
      */
     public function setAutoselectSingleSuggestion($value)
     {
-        $this->autoselect_single_suggestion = \exface\Core\DataTypes\BooleanDataType::parse($value);
+        $this->autoselect_single_suggestion = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;
     }
 

@@ -1,0 +1,1 @@
+ALTER TABLE `exf_app` ADD `default_language_code` VARCHAR(10) NOT NULL AFTER `app_name`;

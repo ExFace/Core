@@ -2,7 +2,7 @@
 namespace exface\Core\CommonLogic;
 
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\Core\CommonLogic\Model\Object;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Actions\iCanBeUndone;
 use exface\Core\Interfaces\Actions\iModifyData;
 use exface\Core\Factories\DataSheetFactory;
@@ -10,7 +10,6 @@ use exface\Core\Factories\ActionFactory;
 use exface\Core\Factories\EventFactory;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\WidgetInterface;
-use exface\Core\Events\ActionEvent;
 use exface\Core\Factories\WidgetLinkFactory;
 use exface\Core\Exceptions\Model\MetaObjectNotFoundError;
 use exface\Core\Exceptions\Actions\ActionOutputError;
@@ -20,6 +19,12 @@ use exface\Core\DataTypes\StringDataType;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Interfaces\AppInterface;
+use exface\Core\Interfaces\DataSheets\DataSheetMapperInterface;
+use exface\Core\CommonLogic\DataSheets\DataSheetMapper;
+use exface\Core\Factories\DataSheetMapperFactory;
+use exface\Core\Exceptions\Actions\ActionConfigurationError;
+use exface\Core\Interfaces\Widgets\iTriggerAction;
+use exface\Core\Interfaces\Widgets\iUseInputWidget;
 
 /**
  * The abstract action is the base ActionInterface implementation, that simplifies the creation of custom actions.
@@ -81,6 +86,8 @@ abstract class AbstractAction implements ActionInterface
      * @var DataSheetInterface
      */
     private $input_data_sheet = null;
+    
+    private $input_mappers = [];
 
     /**
      * @uxon template_alias Qualified alias of the template to be used to render the output of this action
@@ -90,22 +97,16 @@ abstract class AbstractAction implements ActionInterface
     private $template_alias = null;
 
     /**
-     * @uxon
-     *
-     * @var unknown
+     * @var string
      */
-    private $icon_name = null;
+    private $icon = null;
 
     /**
-     * @uxon
-     *
-     * @var integer
+     *@var integer
      */
     private $input_rows_min = 0;
 
     /**
-     * @uxon
-     *
      * @var integer
      */
     private $input_rows_max = null;
@@ -214,19 +215,19 @@ abstract class AbstractAction implements ActionInterface
     }
 
     /**
-     * Loads data from a standard UXON object (stdClass) into any action using setter functions.
+     * Loads data from a standard UXON object into any action using setter functions.
      * E.g. calls $this->setId($source->id) for every property of the source object. Thus the behaviour of this
      * function like error handling, input checks, etc. can easily be customized by programming good
      * setters.
      *
-     * @param \stdClass $source            
+     * @param UxonObject $source            
      */
-    public function importUxonObject(\stdClass $uxon)
+    public function importUxonObject(UxonObject $uxon)
     {
         // Skip alias property if found because it was processed already to instantiate the right action class.
         // Setting the alias after instantiation is currently not possible beacuase it would mean recreating
         // the entire action.
-        return $this->importUxonObjectDefault(UxonObject::fromStdClass($uxon), array(
+        return $this->importUxonObjectDefault($uxon, array(
             'alias'
         ));
     }
@@ -240,28 +241,34 @@ abstract class AbstractAction implements ActionInterface
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::getIconName()
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::getIcon()
      */
-    public function getIconName()
+    public function getIcon()
     {
-        return $this->icon_name;
+        return $this->icon;
     }
 
     /**
+     * Sets the icon to be used for this action.
+     * 
+     * This icon will be used on buttons and menu items with this action unless they have
+     * their own icons defined.
+     * 
+     * By default all icons from font awsome (http://fontawesome.io/icons/) are supported.
+     *
+     * @uxon-property icon
+     * @uxon-type string
      *
      * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::setIconName()
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::setIcon()
      */
-    public function setIconName($value)
+    public function setIcon($value)
     {
-        $this->icon_name = $value;
+        $this->icon = $value;
     }
 
     /**
-     *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\Actions\ActionInterface::getCalledByWidget()
      */
     public function getCalledByWidget()
@@ -305,9 +312,9 @@ abstract class AbstractAction implements ActionInterface
      *
      * @see \exface\Core\Interfaces\Actions\ActionInterface::setFollowupActions()
      */
-    public function setFollowupActions(array $actions_array)
+    public function setFollowupActions($actions_array)
     {
-        $this->followup_actions = $actions_array;
+        // TODO
     }
 
     public function addFollowupAction(ActionInterface $action)
@@ -526,9 +533,18 @@ abstract class AbstractAction implements ActionInterface
      *
      * @see \exface\Core\Interfaces\Actions\ActionInterface::getInputDataSheet()
      */
-    public function getInputDataSheet()
-    {
-        return $this->input_data_sheet;
+    public function getInputDataSheet($apply_mappers = true)
+    {        
+        if ($apply_mappers && $this->input_data_sheet){
+            foreach ($this->getInputMappers() as $mapper){
+                if ($mapper->getFromMetaObject()->is($this->input_data_sheet->getMetaObject())){
+                    return $mapper->map($this->input_data_sheet);
+                    break;
+                }
+            }
+        }
+        
+        return $this->input_data_sheet ? $this->input_data_sheet->copy() : $this->input_data_sheet;
     }
 
     protected function setResultDataSheet(DataSheetInterface $data_sheet)
@@ -562,9 +578,12 @@ abstract class AbstractAction implements ActionInterface
     }
 
     /**
+     * Sets the minimum number of rows the input data sheet must have for this action.
+     *
+     * @uxon-property input_rows_min
+     * @uxon-type integer
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\Actions\ActionInterface::setInputRowsMin()
      */
     public function setInputRowsMin($value)
@@ -573,9 +592,7 @@ abstract class AbstractAction implements ActionInterface
     }
 
     /**
-     *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\Actions\ActionInterface::getInputRowsMax()
      */
     public function getInputRowsMax()
@@ -584,9 +601,12 @@ abstract class AbstractAction implements ActionInterface
     }
 
     /**
+     * Sets the maximum number of rows the input data sheet must have for this action.
      *
+     * @uxon-property input_rows_max
+     * @uxon-type integer
+     * 
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\Actions\ActionInterface::setInputRowsMax()
      */
     public function setInputRowsMax($value)
@@ -620,16 +640,22 @@ abstract class AbstractAction implements ActionInterface
      *
      * @see \exface\Core\Interfaces\Actions\ActionInterface::setMetaObject()
      */
-    public function setMetaObject(Object $object)
+    public function setMetaObject(MetaObjectInterface $object)
     {
         $this->meta_object = $object;
         return $this;
     }
 
     /**
+     * Defines the object, that this action is to be performed upon (alias with namespace).
+     * 
+     * If not explicitly defined, the object of the widget calling the action (e.g. a button)
+     * will be used automatically.
+     *
+     * @uxon-property object_alias
+     * @uxon-type string
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\Actions\ActionInterface::setObjectAlias()
      */
     public function setObjectAlias($qualified_alias)
@@ -650,7 +676,9 @@ abstract class AbstractAction implements ActionInterface
      */
     public function implementsInterface($interface)
     {
-        $interface = '\\exface\\Core\\Interfaces\\Actions\\' . $interface;
+        if (! interface_exists($interface)){
+            $interface = '\\exface\\Core\\Interfaces\\Actions\\' . $interface;
+        }
         if ($this instanceof $interface) {
             return true;
         } else {
@@ -726,20 +754,29 @@ abstract class AbstractAction implements ActionInterface
     }
 
     /**
-     * Returns a loadable UXON-representation of the action
+     * Returns a loadable UXON-representation of the action including the input data
      *
      * @return UxonObject
      */
     public function exportUxonObject()
     {
         $uxon = $this->getWorkbench()->createUxonObject();
-        $uxon->alias = $this->getAliasWithNamespace();
+        $uxon->setProperty('alias', $this->getAliasWithNamespace());
         if ($this->getCalledByWidget()) {
-            $uxon->called_by_widget = $this->getCalledByWidget()->createWidgetLink()->exportUxonObject();
+            $uxon->setProperty('called_by_widget', $this->getCalledByWidget()->createWidgetLink()->exportUxonObject());
         }
-        $uxon->template_alias = $this->getTemplateAlias();
-        $uxon->input_data_sheet = $this->getInputDataSheet()->exportUxonObject();
-        $uxon->disabled_behaviors = UxonObject::fromArray($this->getDisabledBehaviors());
+        $uxon->setProperty('template_alias', $this->getTemplateAlias());
+        $uxon->setProperty('input_data_sheet',  $this->getInputDataSheet(false)->exportUxonObject());
+        $uxon->setProperty('disabled_behaviors', UxonObject::fromArray($this->getDisabledBehaviors()));
+        
+        if (empty($this->getInputMappers())){
+            $input_mappers = new UxonObject();
+            foreach ($this->getInputMappers() as $nr => $mapper){
+                $input_mappers->setProperty($nr, $mapper->exportUxonObject());
+            }
+            $uxon->setProperty('input_mappers', $input_mappers);
+        }
+        
         return $uxon;
     }
 
@@ -778,9 +815,9 @@ abstract class AbstractAction implements ActionInterface
      *
      * @see \exface\Core\Interfaces\Actions\ActionInterface::setDisabledBehaviors()
      */
-    public function setDisabledBehaviors(array $behavior_aliases)
+    public function setDisabledBehaviors(UxonObject $behavior_aliases)
     {
-        $this->disabled_behaviors = $behavior_aliases;
+        $this->disabled_behaviors = $behavior_aliases->toArray();
         return $this;
     }
 
@@ -961,6 +998,122 @@ abstract class AbstractAction implements ActionInterface
         } else {
             throw new UnexpectedValueException('Invalid value "' . gettype($action_or_alias) .'" passed to "ActionInterface::is()": instantiated action or action alias with namespace expected!');
         }
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::getInputMappers()
+     */
+    public function getInputMappers()
+    {
+        return $this->input_mappers;
+    }
+    
+    /**
+     * Defines transformation rules for input datasheets if they are not based on the object of the action.
+     * 
+     * Input mappers can be used to perform an action on an object, that it was
+     * not explicitly made for - even if the objects are not related in any way.
+     * 
+     * You can define as many mappers as you like - each containing rules to
+     * map data of its form-object to its to-object. These rules basically
+     * define simple mappings from one expression to another.
+     * 
+     * For example, if you want to have an action, that will create a support
+     * ticket for a selected purchase order, you will probably use a the
+     * action CreateObjectDialog (or a derivative) based on the ticket object.
+     * Now, you can use input mappers to prefill it with data from the (totally
+     * unrelated) purchase order object:
+     * 
+     * {
+     *  "input_mappers": [
+     *      {
+     *          "from_object_alias": "my.App.PurchaseOrder",
+     *          "column_to_column_mappings": [
+     *              {
+     *                  "from": "LABEL",
+     *                  "to": "TITLE"
+     *              },
+     *              {
+     *                  "from": "CUSTOMER__PRIORITY__LEVEL",
+     *                  "to": "PRIORITY__LEVEL"
+     *              }
+     *          ]
+     *      }
+     *  ]
+     * }
+     * 
+     * In this example we map the label-attribute of the purchase order to the
+     * title of the ticket. This will probably prefill our title field with
+     * the order number and date (or whatever is set as label). We also map
+     * the priority of the customer of the order to the ticket priority.
+     * Assuming both attributes have identical numeric levels (probably 1, 2, 3),
+     * this will result in high priority tickets for high priority customers.
+     * 
+     * You can now create an action in the model of your purchase orers, so
+     * users can create tickets from every page showing orders. 
+     * 
+     * Alternatively you could create an action in the model of your tickets
+     * with multiple mappers from different business objects: every time
+     * the ticket-dialog opens, the system would see, if there is a suitable
+     * mapper for the current input object and use it.
+     * 
+     * @uxon-property input_mappers
+     * @uxon-type \exface\Core\CommonLogic\DataSheet\DataSheetMapper[]
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::setInputMappers()
+     */
+    public function setInputMappers(UxonObject $uxon)
+    {
+        foreach ($uxon as $instance){
+            $mapper = DataSheetMapperFactory::createFromUxon($this->getWorkbench(), $instance, null, $this->getMetaObject());         
+            $this->addInputMapper($mapper);
+        }
+    }
+    
+    /**
+     * Defines transformation rules for input data coming from the calling widget of this action.
+     * 
+     * This is a shortcut to specifying input_mappers, where an array needs to be created and
+     * every mapper must have a from_object_alias defined. In contrast to input_mappers, you
+     * can only define one mapper here and it will be automatically applied to data with
+     * the meta object of the input widget of this action.
+     * 
+     * See description of the input_mappers property for more details. 
+     * 
+     * @uxon-property input_mapper
+     * @uxon-type \exface\Core\CommonLogic\DataSheet\DataSheetMapper
+     * 
+     * @see setInputMappers()
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::setInputMapper()
+     */
+    public function setInputMapper(UxonObject $uxon)
+    {
+        if ($calling_widget = $this->getCalledByWidget()) {
+            if ($calling_widget instanceof iUseInputWidget) {
+                $from_object = $calling_widget->getInputWidget()->getMetaObject();
+            } else {
+                $from_object = $calling_widget->getMetaObject();
+            }
+        } else {
+            $this->getWorkbench()->getLogger()->warning('Cannot initialize input mapper for action "' . $this->getAliasWithNamespace() . '": no from-object defined and no calling widget to get it from!', [], $this);
+            return $this;
+        }
+        $mapper = DataSheetMapperFactory::createFromUxon($this->getWorkbench(), $uxon, $from_object, $this->getMetaObject());
+        return $this->addInputMapper($mapper);
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::addInputMapper()
+     */
+    public function addInputMapper(DataSheetMapperInterface $mapper)
+    {
+        $this->input_mappers[] = $mapper;
+        return $this;
     }
 }
 ?>

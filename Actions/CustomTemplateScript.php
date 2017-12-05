@@ -14,7 +14,7 @@ class CustomTemplateScript extends AbstractAction implements iRunTemplateScript
 
     protected function init()
     {
-        $this->setIconName(Icons::CODE);
+        $this->setIcon(Icons::CODE);
     }
 
     protected function perform()
@@ -49,16 +49,16 @@ class CustomTemplateScript extends AbstractAction implements iRunTemplateScript
 
     /**
      *
-     * @see \exface\Core\Interfaces\Actions\iRunTemplateScript::printScript()
+     * @see \exface\Core\Interfaces\Actions\iRunTemplateScript::buildScript()
      */
-    public function printScript($widget_id)
+    public function buildScript($widget_id)
     {
         return $this->prepareScript(array(
             "[#widget_id#]" => $widget_id
         ));
     }
 
-    public function printHelperFunctions()
+    public function buildScriptHelperFunctions()
     {
         return '';
     }

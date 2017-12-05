@@ -16,8 +16,8 @@ trait ImportUxonObjectTrait {
      * NOTE: snake_case methods (setWidgetType() for the example above) are supported for backwards
      * compatibility but must not be used anymore! The fallback will be removed in future versions!
      *
-     * @param \stdClass $uxon            
-     * @param array $skip_properties            
+     * @param UxonObject $uxon            
+     * @param array $skip_property_names
      * @throws UxonMapError
      * @return void
      */

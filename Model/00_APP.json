@@ -1,0 +1,78 @@
+{
+    "object_alias": "exface.Core.APP",
+    "columns": [
+        {
+            "name": "CREATED_ON",
+            "attribute_alias": "CREATED_ON"
+        },
+        {
+            "name": "MODIFIED_ON",
+            "attribute_alias": "MODIFIED_ON"
+        },
+        {
+            "name": "CREATED_BY_USER",
+            "attribute_alias": "CREATED_BY_USER"
+        },
+        {
+            "name": "MODIFIED_BY_USER",
+            "attribute_alias": "MODIFIED_BY_USER"
+        },
+        {
+            "name": "UID",
+            "attribute_alias": "UID"
+        },
+        {
+            "name": "PACKAGE",
+            "attribute_alias": "PACKAGE"
+        },
+        {
+            "name": "DEFAULT_LANGUAGE_CODE",
+            "attribute_alias": "DEFAULT_LANGUAGE_CODE"
+        },
+        {
+            "name": "ALIAS",
+            "attribute_alias": "ALIAS"
+        },
+        {
+            "name": "NAME",
+            "attribute_alias": "NAME"
+        }
+    ],
+    "rows": [
+        {
+            "CREATED_ON": "2007-01-01 00:00:00",
+            "MODIFIED_ON": "2016-03-18 14:20:32",
+            "CREATED_BY_USER": "",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x31000000000000000000000000000000",
+            "PACKAGE": "exface\/Core",
+            "DEFAULT_LANGUAGE_CODE": "en",
+            "ALIAS": "exface.Core",
+            "NAME": "ExFace Core"
+        }
+    ],
+    "totals_rows": [],
+    "filters": {
+        "operator": "AND",
+        "conditions": [
+            {
+                "expression": "UID",
+                "comparator": "=",
+                "value": "0x31000000000000000000000000000000",
+                "object_alias": "exface.Core.APP"
+            }
+        ]
+    },
+    "rows_on_page": null,
+    "row_offset": 0,
+    "sorters": [
+        {
+            "attribute_alias": "CREATED_ON",
+            "direction": "ASC"
+        },
+        {
+            "attribute_alias": "UID",
+            "direction": "ASC"
+        }
+    ]
+}

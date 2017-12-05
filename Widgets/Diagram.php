@@ -7,6 +7,7 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
+use exface\Core\Factories\WidgetFactory;
 
 /**
  * Widget to display diagrams like planograms, entity-relationships, organigrams, etc.
@@ -50,12 +51,8 @@ class Diagram extends Container implements iSupportLazyLoading
     {
         $shapes = array();
         foreach ($array_of_uxon_or_widgets as $shape) {
-            if ($shape instanceof \stdClass) {
-                $uxon = UxonObject::fromAnything($shape);
-                if (! $uxon->getProperty('widget_type')) {
-                    $uxon->setProperty('widget_type', 'DiagramShape');
-                }
-                $shapes[] = $uxon;
+            if ($shape instanceof UxonObject) {
+                $shapes[] = WidgetFactory::createFromUxon($this->getPage(), $shape, 'DiagramShape');
             } elseif ($shape instanceof DiagramShape) {
                 $shapes[] = $shape;
             } else {
@@ -166,14 +163,13 @@ class Diagram extends Container implements iSupportLazyLoading
 
     public function setDiagramObjectSelectorWidget($widget_or_uxon)
     {
-        if ($widget_or_uxon instanceof \stdClass) {
+        if ($widget_or_uxon instanceof UxonObject) {
             // $this->diagram_object_selector_widget = $this->getPage()->createWidget('Filter', $this);
             /* @var $widget \exface\Core\Widgets\ComboTable */
             
-            $widget_or_uxon->widget_type = $widget_or_uxon->widget_type ? $widget_or_uxon->widget_type : 'ComboTable';
-            $widget = $this->getPage()->createWidget($widget_or_uxon->widget_type, $this, $widget_or_uxon);
-            $widget->setMetaObjectId($this->getMetaObject()->getId());
-            $widget->setAttributeAlias($this->getMetaObject()->getUidAlias());
+            $widget = WidgetFactory::createFromUxon($this->getPage(), $widget_or_uxon, $this, 'ComboTable');
+            $widget->setMetaObject($this->getMetaObject());
+            $widget->setAttributeAlias($this->getMetaObject()->getUidAttributeAlias());
             $widget->setTableObjectAlias($this->getMetaObject()->getAliasWithNamespace());
             $widget->setCaption($this->getMetaObject()->getName());
             $widget->setDisabled(false);

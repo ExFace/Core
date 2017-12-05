@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\CommonLogic\Traits;
 
+use exface\Core\DataTypes\BooleanDataType;
+
 /**
  * Trait for widgets that implemenent the interface iLayoutWidgets.
  *
@@ -60,7 +62,7 @@ trait WidgetLayoutTrait {
      */
     public function setStackColumnsOnTabletsSmartphones($value)
     {
-        $this->column_stack_on_smartphones = BooleanDataType::parse($value);
+        $this->column_stack_on_smartphones = BooleanDataType::cast($value);
         return $this;
     }
 
@@ -83,7 +85,7 @@ trait WidgetLayoutTrait {
      */
     public function setStackColumnsOnTabletsTablets($value)
     {
-        $this->column_stack_on_tablets = BooleanDataType::parse($value);
+        $this->column_stack_on_tablets = BooleanDataType::cast($value);
         return $this;
     }
 }

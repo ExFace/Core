@@ -7,6 +7,8 @@ use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\Exceptions\Model\ExpressionRebaseImpossibleError;
 use exface\Core\Interfaces\iCanBeCopied;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
+use exface\Core\Interfaces\Model\ExpressionInterface;
 
 /**
  * A condition group contains one or more conditions and/or other (nested) condition groups combined by one logical operator,
@@ -56,7 +58,7 @@ class ConditionGroup implements iCanBeConvertedToUxon, iCanBeCopied
      * @param string $comparator            
      * @return \exface\Core\CommonLogic\Model\ConditionGroup
      */
-    public function addConditionFromExpression(Expression $expression, $value = NULL, $comparator = EXF_COMPARATOR_IS)
+    public function addConditionFromExpression(ExpressionInterface $expression, $value = NULL, $comparator = EXF_COMPARATOR_IS)
     {
         if (! is_null($value) && $value !== '') {
             $condition = ConditionFactory::createFromExpression($this->exface, $expression, $value, $comparator);
@@ -74,7 +76,7 @@ class ConditionGroup implements iCanBeConvertedToUxon, iCanBeCopied
      * @param string $comparator            
      * @return ConditionGroup
      */
-    function addConditionsFromString(Object $base_object, $expression_string, $value, $comparator = null)
+    function addConditionsFromString(MetaObjectInterface $base_object, $expression_string, $value, $comparator = null)
     {
         $value = trim($value);
                 
@@ -233,14 +235,12 @@ class ConditionGroup implements iCanBeConvertedToUxon, iCanBeCopied
     public function exportUxonObject()
     {
         $uxon = new UxonObject();
-        $uxon->operator = $this->getOperator();
-        $uxon->conditions = array();
-        $uxon->nested_groups = array();
+        $uxon->setProperty('operator', $this->getOperator());
         foreach ($this->getConditions() as $cond) {
-            $uxon->conditions[] = $cond->exportUxonObject();
+            $uxon->appendToProperty('conditions', $cond->exportUxonObject());
         }
         foreach ($this->getNestedGroups() as $group) {
-            $uxon->nested_groups[] = $group->exportUxonObject();
+            $uxon->appendToProperty('nested_groups', $group->exportUxonObject());
         }
         return $uxon;
     }
@@ -250,12 +250,12 @@ class ConditionGroup implements iCanBeConvertedToUxon, iCanBeCopied
         $this->setOperator($uxon->getProperty('operator'));
         if ($uxon->hasProperty('conditions')) {
             foreach ($uxon->getProperty('conditions') as $cond) {
-                $this->addCondition(ConditionFactory::createFromObjectOrArray($this->exface, $cond));
+                $this->addCondition(ConditionFactory::createFromUxon($this->exface, $cond));
             }
         }
         if ($uxon->hasProperty('nested_groups')) {
             foreach ($uxon->getProperty('nested_groups') as $group) {
-                $this->addNestedGroup(ConditionGroupFactory::createFromObjectOrArray($this->exface, $group));
+                $this->addNestedGroup(ConditionGroupFactory::createFromUxon($this->exface, $group));
             }
         }
     }

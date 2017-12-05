@@ -7,16 +7,19 @@ use exface\Core\Factories\FormulaFactory;
 use exface\Core\Factories\WidgetLinkFactory;
 use exface\Core\Exceptions\Model\MetaRelationNotFoundError;
 use exface\Core\Exceptions\Model\ExpressionRebaseImpossibleError;
-use exface\Core\Interfaces\ExfaceClassInterface;
-use exface\Core\Interfaces\iCanBeCopied;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
+use exface\Core\Interfaces\Formulas\FormulaInterface;
+use exface\Core\Interfaces\Model\ExpressionInterface;
 
-class Expression implements ExfaceClassInterface, iCanBeCopied
+class Expression implements ExpressionInterface
 {
 
     // Expression types
-    // const FORMULA = 'formula';
-    // const ATTRIBUTE = 'attribute';
-    // const STRING = 'string';
+    const TYPE_FORMULA = 'formula';
+    const TYPE_ATTRIBUTE = 'attribute_alias';
+    const TYPE_CONSTANT = 'constant';
+    const TYPE_REFERENCE = 'reference';
+    
     private $attributes = array();
 
     private $formula = null;
@@ -39,7 +42,11 @@ class Expression implements ExfaceClassInterface, iCanBeCopied
 
     private $meta_object = null;
 
-    function __construct(\exface\Core\CommonLogic\Workbench $exface, $string, $meta_object = null)
+    /**
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\Model\ExpressionInterface::__constuct()
+     */
+    function __construct(\exface\Core\CommonLogic\Workbench $exface, $string, MetaObjectInterface $meta_object = null)
     {
         $this->exface = $exface;
         $this->meta_object = $meta_object;
@@ -50,33 +57,32 @@ class Expression implements ExfaceClassInterface, iCanBeCopied
     /**
      * Parses an ExFace expression and returns it's type
      *
-     * @param
-     *            string expression
+     * @param string $expression
      */
-    function parse($expression)
+    protected function parse($expression)
     {
         $expression = trim($expression);
         // see, what type of expression it is. Depending on the type, the evaluate() method will give different results.
         $str = $this->parseQuotedString($expression);
         if (! $expression || $str !== false) {
-            $this->type = 'string';
+            $this->type = self::TYPE_CONSTANT;
             $this->value = $str;
         } elseif (strpos($expression, '=') === 0) {
             if (strpos($expression, '(') !== false && strpos($expression, ')') !== false) {
-                $this->type = 'formula';
+                $this->type = self::TYPE_FORMULA;
                 $this->formula = $this->parseFormula($expression);
                 $this->attributes = array_merge($this->attributes, $this->formula->getRequiredAttributes());
             } else {
-                $this->type = 'reference';
+                $this->type = self::TYPE_REFERENCE;
                 $this->widget_link = WidgetLinkFactory::createFromAnything($this->exface, substr($expression, 1));
             }
         } else { // attribute_alias
             if (! $this->getMetaObject() || ($this->getMetaObject() && $this->getMetaObject()->hasAttribute($expression))) {
-                $this->type = 'attribute_alias';
+                $this->type = self::TYPE_ATTRIBUTE;
                 $this->attribute_alias = $expression;
                 $this->attributes[] = $expression;
             } else {
-                $this->type = 'string';
+                $this->type = self::TYPE_CONSTANT;
                 $this->value = $str === false ? '' : $str;
             }
         }
@@ -84,25 +90,37 @@ class Expression implements ExfaceClassInterface, iCanBeCopied
         return $this->getType();
     }
 
-    function isMetaAttribute()
+    /**
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\Model\ExpressionInterface::isMetaAttribute()
+     */
+    public function isMetaAttribute()
     {
-        if ($this->type == 'attribute_alias')
+        if ($this->type === self::TYPE_ATTRIBUTE)
             return true;
         else
             return false;
     }
 
-    function isFormula()
+    /**
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\Model\ExpressionInterface::isFormula()
+     */
+    public function isFormula()
     {
-        if ($this->type == 'formula')
+        if ($this->type === SELF::TYPE_FORMULA)
             return true;
         else
             return false;
     }
 
-    function isString()
+    /**
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\Model\ExpressionInterface::isConstant()
+     */
+    public function isConstant()
     {
-        if ($this->type == 'string')
+        if ($this->type === self::TYPE_CONSTANT)
             return true;
         else
             return false;
@@ -113,20 +131,24 @@ class Expression implements ExfaceClassInterface, iCanBeCopied
      *
      * @return boolean
      */
-    function isEmpty()
+    public function isEmpty()
     {
         return is_null($this->toString()) ? true : false;
     }
 
-    function isReference()
+    /**
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\Model\ExpressionInterface::isReference()
+     */
+    public function isReference()
     {
-        if ($this->type == 'reference')
+        if ($this->type === SELF::TYPE_REFERENCE)
             return true;
         else
             return false;
     }
 
-    function parseQuotedString($expression)
+    protected function parseQuotedString($expression)
     {
         if (substr($expression, 0, 1) == '"' || substr($expression, 0, 1) == "'") {
             return trim($expression, '"\'');
@@ -140,9 +162,9 @@ class Expression implements ExfaceClassInterface, iCanBeCopied
      * It is a good idea to create the function here already, because we need to know it's required attributes.
      *
      * @param string $expression            
-     * @return boolean|exf_formula function object or false
+     * @return boolean|FormulaInterface function object or false
      */
-    function parseFormula($expression)
+    protected function parseFormula($expression)
     {
         if (substr($expression, 0, 1) !== '=')
             return false;
@@ -160,6 +182,7 @@ class Expression implements ExfaceClassInterface, iCanBeCopied
         return FormulaFactory::createFromString($this->exface, $func_name, $this->parseParams($params));
     }
 
+    
     protected function parseParams($str)
     {
         $buffer = '';
@@ -208,18 +231,10 @@ class Expression implements ExfaceClassInterface, iCanBeCopied
     }
 
     /**
-     * Evaluates the given expression based on a data sheet and the coordinates of a cell.
-     * Returns either a string value (if column and row are specified) or an array of values (if only the column is specified).
-     *
-     * @param
-     *            \exface\Core\Interfaces\DataSheets\DataSheetInterface data_sheet
-     * @param
-     *            string column_name
-     * @param
-     *            int row_number
-     * @return array|string
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\Model\ExpressionInterface::evaluate()
      */
-    function evaluate(\exface\Core\Interfaces\DataSheets\DataSheetInterface $data_sheet, $column_name, $row_number = null)
+    public function evaluate(\exface\Core\Interfaces\DataSheets\DataSheetInterface $data_sheet, $column_name, $row_number = null)
     {
         if (is_null($row_number)) {
             $result = array();
@@ -230,30 +245,46 @@ class Expression implements ExfaceClassInterface, iCanBeCopied
             return $result;
         }
         switch ($this->type) {
-            case 'attribute_alias':
+            case self::TYPE_ATTRIBUTE:
                 return $data_sheet->getCellValue($this->attribute_alias, $row_number);
-            case 'formula':
+            case self::TYPE_FORMULA:
                 return $this->formula->evaluate($data_sheet, $column_name, $row_number);
             default:
                 return $this->value;
         }
     }
 
-    function getRequiredAttributes()
+    /**
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\Model\ExpressionInterface::getRequiredAttributes()
+     */
+    public function getRequiredAttributes()
     {
         return $this->attributes;
     }
 
-    function getType()
+    /**
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\Model\ExpressionInterface::getType()
+     */
+    public function getType()
     {
         return $this->type;
     }
 
+    /**
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\Model\ExpressionInterface::getRelationPath()
+     */
     public function getRelationPath()
     {
         return $this->relation_path;
     }
 
+    /**
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\Model\ExpressionInterface::setRelationPath()
+     */
     public function setRelationPath($relation_path)
     {
         // remove old relation path
@@ -279,52 +310,70 @@ class Expression implements ExfaceClassInterface, iCanBeCopied
     }
 
     /**
-     * Returns the expression as string.
-     * Basically this is the opposite fo parse.
-     * Note, that in case of attributes the expression will include the relation path, aggregators, etc., whereas getAttribute->getAlias() would return only the actual alias.
-     *
-     * @return string
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\Model\ExpressionInterface::toString()
      */
-    function toString()
+    public function toString()
     {
         return $this->string;
     }
 
-    function getRawValue()
+    /**
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\Model\ExpressionInterface::getRawValue()
+     */
+    public function getRawValue()
     {
         return $this->value;
     }
 
-    function getWorkbench()
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\ExfaceClassInterface::getWorkbench()
+     */
+    public function getWorkbench()
     {
         return $this->exface;
     }
 
+    /**
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\Model\ExpressionInterface::getDataType()
+     */
     public function getDataType()
     {
         if (is_null($this->data_type)) {
             switch ($this->type) {
-                case 'formula':
+                case self::TYPE_FORMULA:
                     $this->data_type = $this->formula->getDataType();
                     break;
-                case 'attribute_alias':
+                case self::TYPE_ATTRIBUTE:
                     // FIXME How to get the attribute by alias, if we do not know the object here???
                     break;
-                case 'string':
-                    $this->data_type = DataTypeFactory::createFromAlias($this->exface, EXF_DATA_TYPE_STRING);
+                case self::TYPE_CONSTANT:
+                    $this->data_type = DataTypeFactory::createFromAlias($this->exface, 'String');
                     break;
                 default:
-                    $this->data_type = DataTypeFactory::createFromAlias($this->exface, EXF_DATA_TYPE_STRING);
+                    $this->data_type = DataTypeFactory::createBaseDataType($this->exface);
             }
         }
         return $this->data_type;
     }
 
+    /**
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\Model\ExpressionInterface::setDataType()
+     */
     public function setDataType($value)
     {
         $this->data_type = $value;
     }
 
+    /**
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\Model\ExpressionInterface::mapAttribute()
+     */
     public function mapAttribute($map_from, $map_to)
     {
         foreach ($this->attributes as $id => $attr) {
@@ -336,22 +385,27 @@ class Expression implements ExfaceClassInterface, iCanBeCopied
             $this->formula->mapAttribute($map_from, $map_to);
     }
 
+    /**
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\Model\ExpressionInterface::getMetaObject()
+     */
     public function getMetaObject()
     {
         return $this->meta_object;
     }
 
-    public function setMetaObject(Object $object)
+    /**
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\Model\ExpressionInterface::setMetaObject()
+     */
+    public function setMetaObject(MetaObjectInterface $object)
     {
         $this->meta_object = $object;
     }
-
+    
     /**
-     * Returns the same expression, but relative to another base object.
-     * E.g. "ORDER->POSITION->PRODUCT->ID" will become "PRODUCT->ID" after calling rebase(ORDER->POSITION) on it.
-     *
-     * @param string $relation_path_to_new_base_object            
-     * @return expression
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\Model\ExpressionInterface::rebase()
      */
     public function rebase($relation_path_to_new_base_object)
     {
@@ -406,9 +460,8 @@ class Expression implements ExfaceClassInterface, iCanBeCopied
     }
 
     /**
-     * Returns the meta attribute, represented by this expression or FALSE if the expression represents something else (a formula, a constant, etc.)
-     *
-     * @return boolean|attribute
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\Model\ExpressionInterface::getAttribute()
      */
     public function getAttribute()
     {
@@ -418,12 +471,22 @@ class Expression implements ExfaceClassInterface, iCanBeCopied
             return false;
         }
     }
-
+    
+    /**
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\Model\ExpressionInterface::getWidgetLink()
+     */
     public function getWidgetLink()
     {
         return $this->widget_link;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\iCanBeCopied::copy()
+     * @return ExpressionInterfaceInterface
+     */
     public function copy()
     {
         $copy = clone $this;

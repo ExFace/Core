@@ -21,7 +21,7 @@ trait JqueryDataConfiguratorTrait
             $filters .= ', ' . $this->getTemplate()->getElement($filter)->buildJsConditionGetter();
         }
         $filters = $filters ? '{operator: "AND", conditions: [' . trim($filters, ",") . ']}' : '';
-        return "{oId: '" . $widget->getMetaObjectId() . "'" . ($filters ? ", filters: " . $filters : "") . "}";
+        return "{oId: '" . $widget->getMetaObject()->getId() . "'" . ($filters ? ", filters: " . $filters : "") . "}";
     }
     
     public function buildJsRefreshOnEnter()

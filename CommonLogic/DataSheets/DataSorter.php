@@ -1,13 +1,11 @@
 <?php
 namespace exface\Core\CommonLogic\DataSheets;
 
-use exface\Core\Exceptions\DataSheetException;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\ExfaceClassInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\CommonLogic\Workbench;
-use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Exceptions\DataSheets\DataSheetStructureError;
 

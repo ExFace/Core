@@ -2,8 +2,13 @@
 namespace exface\Core\Factories;
 
 use exface\Core\CommonLogic\Workbench;
-use exface\Core\DataTypes\AbstractDataType;
 use exface\Core\Interfaces\NameResolverInterface;
+use exface\Core\Exceptions\DataTypes\DataTypeNotFoundError;
+use exface\Core\CommonLogic\NameResolver;
+use exface\Core\Interfaces\DataTypes\DataTypeInterface;
+use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Interfaces\Model\ModelInterface;
+use exface\Core\Interfaces\AppInterface;
 
 abstract class DataTypeFactory extends AbstractNameResolverFactory
 {
@@ -11,34 +16,95 @@ abstract class DataTypeFactory extends AbstractNameResolverFactory
     /**
      *
      * @param NameResolverInterface $name_resolver            
-     * @return AbstractDataType
+     * @return DataTypeInterface
      */
     public static function create(NameResolverInterface $name_resolver)
     {
-        // TODO
-        return parent::create($name_resolver);
+        if ($name_resolver->classExists()){
+            $class = $name_resolver->getClassNameWithNamespace();
+            return new $class($name_resolver->getWorkbench(), null, $name_resolver);
+        } else {
+            throw new DataTypeNotFoundError('Data type "' . $name_resolver->getAliasWithNamespace() . '" not found in class "' . $name_resolver->getClassNameWithNamespace() . '"!');
+        }
     }
 
     /**
-     * TODO Make data types compatible to the name resolver, so they can also be added by app developers!
-     *
-     * @param exface $exface            
-     * @param string $data_type_alias            
-     * @return AbstractDataType
+     * 
+     * @param Workbench $exface            
+     * @param string $alias_with_namespace            
+     * @return DataTypeInterface
      */
-    public static function createFromAlias(Workbench $exface, $data_type_alias)
+    public static function createFromAlias(Workbench $workbench, $alias_with_namespace)
     {
-        $class = static::getClassNameFromAlias($data_type_alias);
-        if (! class_exists($class)) {
-            $data_type_alias = ucfirst(mb_strtolower($data_type_alias));
-            $class = static::getClassNameFromAlias($data_type_alias);
-        }
-        return new $class($exface);
+        return static::createFromUidOrAlias($workbench->model(), $alias_with_namespace);
     }
-
-    protected static function getClassNameFromAlias($data_type_alias)
+    
+    /**
+     * 
+     * @param Workbench $workbench
+     * @return DataTypeInterface
+     */
+    public static function createBaseDataType(Workbench $workbench)
     {
-        return 'exface\\Core\\DataTypes\\' . $data_type_alias . 'DataType';
+        $name_resolver = NameResolver::createFromString($workbench->getCoreApp()->getAliasWithNamespace() . NameResolver::NAMESPACE_SEPARATOR . 'String', NameResolver::OBJECT_TYPE_DATATYPE, $workbench);
+        return static::create($name_resolver);
+    }
+    
+    /**
+     * 
+     * @param Workbench $workbench
+     * @param string $prototype_alias
+     * @return \exface\Core\Interfaces\DataTypes\DataTypeInterface
+     */
+    public static function createFromPrototype(Workbench $workbench, $prototype_resolvable_name)
+    {
+        return static::create(NameResolver::createFromString($prototype_resolvable_name, NameResolver::OBJECT_TYPE_DATATYPE, $workbench));
+    }
+    
+    /**
+     * 
+     * @param ModelInterface $model
+     * @param string $uid
+     * @return \exface\Core\Interfaces\DataTypes\DataTypeInterface
+     */
+    public static function createFromUidOrAlias(ModelInterface $model, $id_or_alias)
+    {
+        return $model->getModelLoader()->loadDataType($id_or_alias);
+    }
+    
+    /**
+     * 
+     * @param string $prototype_alias
+     * @param string $alias
+     * @param AppInterface $app
+     * @param UxonObject $uxon
+     * @param string $name
+     * @param string $validation_error_code
+     * @param UxonObject $default_editor_uxon
+     * 
+     * @return \exface\Core\Interfaces\DataTypes\DataTypeInterface
+     */
+    public static function createFromModel($prototype_alias, $alias, AppInterface $app, UxonObject $uxon, $name = null, $short_description = null, $validation_error_code = null, $validation_error_text = null, UxonObject $default_editor_uxon = null){
+        $data_type = static::createFromPrototype($app->getWorkbench(), $prototype_alias);
+        $data_type->setApp($app);
+        $data_type->setAlias($alias);
+        if ($name !== '' && ! is_null($name)) {
+            $data_type->setName($name);
+        }
+        if ($validation_error_code !== '' && ! is_null($validation_error_code)) {
+            $data_type->setValidationErrorCode($validation_error_code);
+        }
+        if (! is_null($validation_error_text)) {
+            $data_type->setValidationErrorText($validation_error_text);
+        }
+        if ($short_description !== '' && ! is_null($short_description)) {
+            $data_type->setShortDescription($short_description);
+        }
+        if (! is_null($default_editor_uxon) && ! $default_editor_uxon->isEmpty()) {
+            $data_type->setDefaultEditorUxon($default_editor_uxon);
+        }
+        $data_type->importUxonObject($uxon);
+        return $data_type;
     }
 }
 ?>

@@ -27,7 +27,7 @@ class ObjectBasketAdd extends AbstractAction implements iModifyContext
         parent::init();
         $this->setInputRowsMin(1);
         $this->setInputRowsMax(null);
-        $this->setIconName(Icons::SHOPPING_BASKET);
+        $this->setIcon(Icons::SHOPPING_BASKET);
         $this->setContextAlias('exface.Core.ObjectBasketContext');
         $this->setContextScope(ContextManagerInterface::CONTEXT_SCOPE_WINDOW);
     }

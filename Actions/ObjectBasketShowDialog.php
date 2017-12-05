@@ -40,7 +40,7 @@ class ObjectBasketShowDialog extends ShowDialog
         try {
             $page = $this->getCalledOnUiPage();
         } catch (\Throwable $e) {
-            $page = UiPageFactory::createEmpty($this->getWorkbench()->ui(), 0);
+            $page = UiPageFactory::createEmpty($this->getWorkbench()->ui());
         }
         /* @var $dialog \exface\Core\Widgets\Dialog */
         $dialog = WidgetFactory::create($page, 'Dialog', $this->getCalledByWidget());
@@ -55,12 +55,12 @@ class ObjectBasketShowDialog extends ShowDialog
         $table->setMultiSelect(true);
         $table->setMultiSelectAllSelected(true);
         $table->getConfiguratorWidget()->addFilter(
-            $table->getConfiguratorWidget()->createFilterWidget($table->getMetaObject()->getUidAlias(), UxonObject::fromArray(['widget_type' => 'InputHidden']))
+            $table->getConfiguratorWidget()->createFilterWidget($table->getMetaObject()->getUidAttributeAlias(), UxonObject::fromArray(['widget_type' => 'InputHidden']))
         );
         $dialog->addWidget($table);
         
         // Prefill table
-        $ds = $this->getContext()->getFavoritesByObject($this->getMetaObject())->copy();
+        $ds = $this->getContext()->getBasketByObject($this->getMetaObject())->copy();
         $ds->addFilterFromColumnValues($ds->getUidColumn());
         $table->prepareDataSheetToPrefill($ds);
         $table->prefill($ds);

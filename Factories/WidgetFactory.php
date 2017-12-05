@@ -9,17 +9,18 @@ use exface\Core\Factories\WidgetLinkFactory;
 use exface\Core\CommonLogic\Model\UiPage;
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
+use exface\Core\Exceptions\LogicException;
 
 abstract class WidgetFactory extends AbstractFactory
 {
 
     /**
      * Creates a widget of the specified type in the given page.
-     *
-     * @param UiPageInterface $page            
-     * @param string $widget_type            
+     * 
+     * @param UiPageInterface $page
+     * @param string $widget_type
      * @param WidgetInterface $parent_widget
-     *            
+     * 
      * @throws UnexpectedValueException if an unknown widget type is passed
      * 
      * @return WidgetInterface
@@ -39,16 +40,16 @@ abstract class WidgetFactory extends AbstractFactory
 
     /**
      * Creates a widget from a UXON description object.
-     * The main difference to create_widget() is, that the widget type will be 
-     * determined from the UXON description. If not given there, the 
+     * The main difference to create_widget() is, that the widget type will be
+     * determined from the UXON description. If not given there, the
      * $fallback_widget_type will be used or, if not set, ExFace will attempt
      * to find a default widget type of the meta object or the attribute.
-     *
-     * @param UiPageInterface $page            
-     * @param UxonObject $uxon_object            
+     * 
+     * @param UiPageInterface $page
+     * @param UxonObject $uxon_object
      * @param WidgetInterface $parent_widget
-     * @param string $fallback_widget_type    
-     *         
+     * @param string $fallback_widget_type
+     * 
      * @throws UxonParserError
      * 
      * @return WidgetInterface
@@ -57,10 +58,9 @@ abstract class WidgetFactory extends AbstractFactory
     {
         
         // If the widget is supposed to be extended from another one, merge the uxon descriptions before doing anything else
-        if ($uxon_object->extend_widget) {
-            // TODO Remove UxonObject::fromAnything($uxon_object) as soon as all \stdClass UXONs will be replaced by real ones
+        if ($uxon_object->hasProperty('extend_widget')) {
             $exface = $page->getWorkbench();
-            $linked_object = WidgetLinkFactory::createFromAnything($exface, $uxon_object->extend_widget)->getWidgetUxon();
+            $linked_object = WidgetLinkFactory::createFromAnything($exface, $uxon_object->getProperty('extend_widget'))->getWidgetUxon();
             // Remove the id from the new widget, because otherwise it would be identical to the id of the widget extended from
             $linked_object->unsetProperty('id');
             // Extend the linked object by the original one. Thus any properties of the original uxon will override those from the linked widget
@@ -81,8 +81,8 @@ abstract class WidgetFactory extends AbstractFactory
                 $widget_type = $fallback_widget_type;
             } else {
                 // First of all, we need to figure out, which object the widget is representing
-                if ($uxon_object->object_alias) {
-                    $obj = $page->getWorkbench()->model()->getObject($uxon_object->object_alias);
+                if ($uxon_object->hasProperty('object_alias')) {
+                    $obj = $page->getWorkbench()->model()->getObject($uxon_object->getProperty('object_alias'));
                 } elseif ($parent_widget) {
                     $obj = $parent_widget->getMetaObject();
                 } else {
@@ -91,13 +91,13 @@ abstract class WidgetFactory extends AbstractFactory
                 // TODO Determine the object via parent_relation_alias, once this field is supported in UXON
                 
                 // Now, that we have an object, see if the widget should show an attribute. If so, get the default widget for the attribute
-                if ($uxon_object->attribute_alias) {
+                if ($uxon_object->hasProperty('attribute_alias')) {
                     try {
-                        $attr = $obj->getAttribute($uxon_object->attribute_alias);
+                        $attr = $obj->getAttribute($uxon_object->getProperty('attribute_alias'));
                     } catch (MetaAttributeNotFoundError $e) {
-                        throw new UxonParserError($uxon_object, 'Cannot create an editor widget for attribute "' . $uxon_object->attribute_alias . '" of object "' . $obj->getAlias() . '". Attribute not found!', null, $e);
+                        throw new UxonParserError($uxon_object, 'Cannot create an editor widget for attribute "' . $uxon_object->getProperty('attribute_alias') . '" of object "' . $obj->getAlias() . '". Attribute not found!', null, $e);
                     }
-                    $uxon_object = $attr->getDefaultWidgetUxon()->extend($uxon_object);
+                    $uxon_object = $attr->getDefaultEditorUxon()->extend($uxon_object);
                     $widget_type = $uxon_object->getProperty('widget_type');
                 }
             }
@@ -152,12 +152,21 @@ abstract class WidgetFactory extends AbstractFactory
         return '\\exface\\Core\\Widgets\\' . ucfirst($widget_type);
     }
 
+    /**
+     * 
+     * @param UiPage $page
+     * @param WidgetInterface|UxonObject $widget_or_uxon_object
+     * @param WidgetInterface $parent_widget
+     * @return \exface\Core\Interfaces\WidgetInterface
+     */
     public static function createFromAnything(UiPage $page, $widget_or_uxon_object, WidgetInterface $parent_widget = null)
     {
         if ($widget_or_uxon_object instanceof WidgetInterface) {
             return $widget_or_uxon_object;
-        } elseif ($widget_or_uxon_object instanceof \stdClass) {
+        } elseif ($widget_or_uxon_object instanceof UxonObject) {
             return static::createFromUxon($page, UxonObject::fromAnything($widget_or_uxon_object), $parent_widget);
+        } else {
+            throw new LogicException('Cannot create widget from ' . gettype($widget_or_uxon_object) . ': expecting instance of WidgetInterface or a UxonObject!');
         }
     }
 }

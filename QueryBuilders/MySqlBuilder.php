@@ -2,9 +2,12 @@
 namespace exface\Core\QueryBuilders;
 
 use exface\Core\Exceptions\QueryBuilderException;
-use exface\Core\DataTypes\AbstractDataType;
+use exface\Core\CommonLogic\DataTypes\AbstractDataType;
 use exface\Core\CommonLogic\AbstractDataConnector;
 use exface\Core\CommonLogic\Model\RelationPath;
+use exface\Core\DataTypes\DateDataType;
+use exface\Core\CommonLogic\Model\Aggregator;
+use exface\Core\DataTypes\AggregatorFunctionsDataType;
 
 /**
  * A query builder for MySQL.
@@ -12,7 +15,7 @@ use exface\Core\CommonLogic\Model\RelationPath;
  * Data address properties for objects:
  * - SQL_SELECT_WHERE - custom where statement automatically appended to direct selects for this object (not if the object's table
  * is joined!). Usefull for generic tables, where different meta objects are stored and distinguished by specific keys in a
- * special column. The value of SQL_SELECT_WHERE should contain the [#alias#] placeholder: e.g. [#alias#].mycolumn = 'myvalue'.
+ * special column. The value of SQL_SELECT_WHERE should contain the [#~alias#] placeholder: e.g. [#~alias#].mycolumn = 'myvalue'.
  *
  *
  * @author Andrej Kabachnik
@@ -33,7 +36,7 @@ class MySqlBuilder extends AbstractSqlBuilder
      * to distinguish between core and enrichment elements in order to join enrchichment stuff after all
      * the aggregating had been done.
      *
-     * @see \exface\DataSources\QueryBuilders\sql_abstractSQL::buildSqlQuerySelect()
+     * @see AbstractSqlBuilder::buildSqlQuerySelect()
      */
     public function buildSqlQuerySelect()
     {
@@ -71,7 +74,7 @@ class MySqlBuilder extends AbstractSqlBuilder
             $group_by .= ', ' . $this->buildSqlGroupBy($qpart);
             if (! $group_uid_alias) {
                 if ($rel_path = $qpart->getAttribute()->getRelationPath()->toString()) {
-                    $group_uid_alias = RelationPath::relationPathAdd($rel_path, $this->getMainObject()->getRelatedObject($rel_path)->getUidAlias());
+                    $group_uid_alias = RelationPath::relationPathAdd($rel_path, $this->getMainObject()->getRelatedObject($rel_path)->getUidAttributeAlias());
                 }
             }
         }
@@ -88,13 +91,13 @@ class MySqlBuilder extends AbstractSqlBuilder
                 $this->addBinaryColumn($qpart->getAlias());
             }
             
-            if ($group_by && $qpart->getAttribute()->getAlias() === $qpart->getAttribute()->getObject()->getUidAlias() && ! $qpart->getAggregateFunction()) {
+            if ($group_by && $qpart->getAttribute()->getAlias() === $qpart->getAttribute()->getObject()->getUidAttributeAlias() && ! $qpart->getAggregator()) {
                 // If the query has a GROUP BY, we need to put the UID-Attribute in the core select as well as in the enrichment select
                 // otherwise the enrichment joins won't work! Be carefull to apply this rule only to the plain UID column, not to columns
                 // using the UID with aggregate functions
-                $selects[] = $this->buildSqlSelect($qpart, null, null, null, 'MAX');
+                $selects[] = $this->buildSqlSelect($qpart, null, null, null, new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::MAX));
                 $enrichment_select .= ', ' . $this->buildSqlSelect($qpart, 'EXFCOREQ', $this->getShortAlias($qpart->getAlias()));
-            } elseif (! $group_by || $qpart->getAggregateFunction() || $this->getAggregation($qpart->getAlias())) {
+            } elseif (! $group_by || $qpart->getAggregator() || $this->getAggregation($qpart->getAlias())) {
                 // If we are not aggregating or the attribute has a group function, add it regulary
                 $selects[] = $this->buildSqlSelect($qpart);
                 $joins = array_merge($joins, $this->buildSqlJoins($qpart));
@@ -107,7 +110,7 @@ class MySqlBuilder extends AbstractSqlBuilder
                     $first_rel = reset($rels);
                     $first_rel_qpart = $this->addAttribute($first_rel->getAlias());
                     // IDEA this does not support relations based on custom sql. Perhaps this needs to change
-                    $selects[] = $this->buildSqlSelect($first_rel_qpart, null, null, $first_rel_qpart->getAttribute()->getDataAddress(), ($group_by ? 'MAX' : null));
+                    $selects[] = $this->buildSqlSelect($first_rel_qpart, null, null, $first_rel_qpart->getAttribute()->getDataAddress(), ($group_by ? new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::MAX) : null));
                 }
                 $enrichment_select .= ', ' . $this->buildSqlSelect($qpart);
                 $enrichment_joins = array_merge($enrichment_joins, $this->buildSqlJoins($qpart, 'exfcoreq'));
@@ -116,7 +119,7 @@ class MySqlBuilder extends AbstractSqlBuilder
             } elseif ($group_by && $this->getAggregation($qpart->getAttribute()->getRelationPath()->toString())) {
                 // If aggregating, also add attributes, that belong directly to objects, we are aggregating 
                 // over (they can be assumed unique too, since their object is unique per row)
-                $selects[] = $this->buildSqlSelect($qpart, null, null, null, 'MAX');
+                $selects[] = $this->buildSqlSelect($qpart, null, null, null, new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::MAX));
                 $joins = array_merge($joins, $this->buildSqlJoins($qpart));
                 $group_safe_attribute_aliases[] = $qpart->getAttribute()->getAliasWithRelationPath();
             }
@@ -163,14 +166,14 @@ class MySqlBuilder extends AbstractSqlBuilder
         if (count($this->getTotals()) > 0) {
             // determine all joins, needed to perform the totals functions
             foreach ($this->getTotals() as $qpart) {
-                $totals_selects[] = $this->buildSqlSelect($qpart, 'EXFCOREQ', $this->getShortAlias($qpart->getAlias()), null, $qpart->getFunction());
+                $totals_selects[] = $this->buildSqlSelect($qpart, 'EXFCOREQ', $this->getShortAlias($qpart->getAlias()), null, $qpart->getTotalAggregator());
                 $totals_core_selects[] = $this->buildSqlSelect($qpart);
                 $totals_joins = array_merge($totals_joins, $this->buildSqlJoins($qpart));
             }
         }
         
         if ($group_by) {
-            $totals_core_selects[] = $this->buildSqlSelect($this->getAttribute($this->getMainObject()->getUidAlias()), null, null, null, 'MAX');
+            $totals_core_selects[] = $this->buildSqlSelect($this->getAttribute($this->getMainObject()->getUidAttributeAlias()), null, null, null, new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::MAX));
         }
         
         // filters -> WHERE
@@ -211,7 +214,7 @@ class MySqlBuilder extends AbstractSqlBuilder
 
     protected function prepareWhereValue($value, AbstractDataType $data_type, $sql_data_type = NULL)
     {
-        if ($data_type->is(EXF_DATA_TYPE_DATE)) {
+        if ($data_type instanceof DateDataType) {
             $output = "{ts '" . $value . "'}";
         } else {
             $output = parent::prepareWhereValue($value, $data_type, $sql_data_type);
@@ -219,62 +222,16 @@ class MySqlBuilder extends AbstractSqlBuilder
         return $output;
     }
 
-    protected function buildSqlSelectNullCheck($select_statement, $value_if_null)
+    protected function buildSqlSelectNullCheckFunctionName()
     {
-        return 'IFNULL(' . $select_statement . ', ' . (is_numeric($value_if_null) ? $value_if_null : '"' . $value_if_null . '"') . ')';
-    }
-
-    /**
-     *
-     * @see \exface\DataSources\QueryBuilders\sql_abstractSQL
-     * @param \exface\Core\CommonLogic\QueryBuilder\QueryPart $qpart            
-     * @param string $select_from            
-     * @param string $select_column            
-     * @param string $select_as            
-     * @param string $group_function            
-     * @return string
-     */
-    protected function buildSqlGroupFunction(\exface\Core\CommonLogic\QueryBuilder\QueryPart $qpart, $select_from = null, $select_column = null, $select_as = null, $group_function = null)
-    {
-        $output = '';
-        $group_function = ! is_null($group_function) ? $group_function : $qpart->getAggregateFunction();
-        $group_function = trim($group_function);
-        $select = $this->buildSqlSelect($qpart, $select_from, $select_column, false, false);
-        $args = array();
-        if ($args_pos = strpos($group_function, '(')) {
-            $func = substr($group_function, 0, $args_pos);
-            $args = explode(',', substr($group_function, ($args_pos + 1), - 1));
-        } else {
-            $func = $group_function;
-        }
-        
-        switch ($func) {
-            case 'SUM':
-            case 'AVG':
-            case 'COUNT':
-            case 'MAX':
-            case 'MIN':
-                $output = $func . '(' . $select . ')';
-                break;
-            case 'LIST_DISTINCT':
-            case 'LIST':
-                $output = "GROUP_CONCAT(" . ($func == 'LIST_DISTINCT' ? 'DISTINCT ' : '') . $select . " SEPARATOR " . ($args[0] ? $args[0] : "', '") . ")";
-                $qpart->getQuery()->addAggregation($qpart->getAttribute()->getAliasWithRelationPath());
-                break;
-            case 'COUNT_DISTINCT':
-                $output = "COUNT(DISTINCT " . $select . ")";
-                break;
-            default:
-                break;
-        }
-        return $output;
-    }
+        return 'IFNULL';
+    }    
 
     /**
      * Special DELETE builder for MySQL because MySQL does not support table aliases in the DELETE query.
      * Thus, they must be removed from all the generated filters and other parts of the query.
      *
-     * @see \exface\DataSources\QueryBuilders\sql_abstractSQL::delete()
+     * @see AbstractSqlBuilder::delete()
      */
     function delete(AbstractDataConnector $data_connection = null)
     {

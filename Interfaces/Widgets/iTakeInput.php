@@ -14,11 +14,11 @@ interface iTakeInput extends iCanBeRequired, iCanBeDisabled
     public function isReadonly();
 
     /**
-     * Makes the widget read only when set to TRUE.
-     * Similarly to disabled widgets, users cannot interact with read-only widgets
-     * directly. But while the value of a diabled widget ist still passed to actions, read-only widgets are completely ignored
-     * when gathering data for action's input or prefills - similarly to widgets with display_only = true, but without any user
-     * interaction.
+     * Makes the widget readonly when set to TRUE.
+     * 
+     * Similarly to disabled widgets, users cannot interact with read-only widgets directly. But while the value of a
+     * diabled widget ist still passed to actions, read-only widgets are completely ignored when gathering data for 
+     * action's input or prefills - similarly to widgets with display_only = true, but without any user interaction.
      *
      * @param boolean $true_or_false            
      * @return WidgetInterface

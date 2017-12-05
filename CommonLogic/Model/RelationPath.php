@@ -5,6 +5,10 @@ use exface\Core\Factories\RelationPathFactory;
 use exface\Core\Exceptions\Model\MetaRelationNotFoundError;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Exceptions\OutOfRangeException;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
+use exface\Core\Interfaces\Model\MetaRelationInterface;
+use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 
 /**
  * The relation path object holds all relations needed to reach the end object from the start object.
@@ -21,7 +25,7 @@ use exface\Core\Exceptions\OutOfRangeException;
  * @author Andrej Kabachnik
  *        
  */
-class RelationPath implements \IteratorAggregate
+class RelationPath implements MetaRelationPathInterface
 {
 
     const RELATION_SEPARATOR = '__';
@@ -32,15 +36,18 @@ class RelationPath implements \IteratorAggregate
     /* Properties NOT to be dublicated on copy() */
     private $start_object = null;
 
-    public function __construct(Object $start_object)
+    /**
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationPathInterface::__constuct()
+     */
+    public function __construct(MetaObjectInterface $start_object)
     {
         $this->start_object = $start_object;
     }
 
     /**
-     * Returns all relations from this path as an array
-     *
-     * @return relation[]
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationPathInterface::getRelations()
      */
     public function getRelations()
     {
@@ -48,37 +55,28 @@ class RelationPath implements \IteratorAggregate
     }
 
     /**
-     * Adds the given relation to the right end of the path
-     *
-     * @param Relation $relation            
-     * @return \exface\Core\CommonLogic\Model\RelationPath
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationPathInterface::appendRelation()
      */
-    public function appendRelation(Relation $relation)
+    public function appendRelation(MetaRelationInterface $relation)
     {
         $this->relations[] = $relation;
         return $this;
     }
 
     /**
-     * Adds the given relation to the left end of the path
-     *
-     * @param Relation $relation            
-     * @return \exface\Core\CommonLogic\Model\RelationPath
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationPathInterface::prependRelation()
      */
-    public function prependRelation(Relation $relation)
+    public function prependRelation(MetaRelationInterface $relation)
     {
         array_unshift($this->relations, $relation);
         return $this;
     }
 
     /**
-     * Adds all relations from the given path string to the left end of the path.
-     * Use with caution as ambiguos
-     * reverse relation may cause trouble. Prefer append_relation() insted, because it always explicitly specifies
-     * each relation!
-     *
-     * @param string $relation_path_string            
-     * @return RelationPath
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationPathInterface::appendRelationsFromStringPath()
      */
     public function appendRelationsFromStringPath($relation_path_string)
     {
@@ -102,12 +100,20 @@ class RelationPath implements \IteratorAggregate
         
         return $this;
     }
-
+    
+    /**
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationPathInterface::getFirstRelationFromStringPath()
+     */
     protected static function getFirstRelationFromStringPath($string_relation_path)
     {
         return explode(self::RELATION_SEPARATOR, $string_relation_path, 2)[0];
     }
 
+    /**
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationPathInterface::toString()
+     */
     public function toString()
     {
         $path = '';
@@ -123,15 +129,18 @@ class RelationPath implements \IteratorAggregate
         return $this->getStartObject()->getModel()->getWorkbench();
     }
 
+    /**
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationPathInterface::getStartObject()
+     */
     public function getStartObject()
     {
         return $this->start_object;
     }
 
     /**
-     * Returns the last object in the relation path (the related object of the last relation)
-     *
-     * @return Object
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationPathInterface::getEndObject()
      */
     public function getEndObject()
     {
@@ -143,10 +152,8 @@ class RelationPath implements \IteratorAggregate
     }
 
     /**
-     * Returns the nth relation in the path (starting with 0 for the first relation).
-     *
-     * @param integer $sequence_number            
-     * @return Relation
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationPathInterface::getRelation()
      */
     public function getRelation($index)
     {
@@ -154,9 +161,8 @@ class RelationPath implements \IteratorAggregate
     }
 
     /**
-     * Returns the first relation of the path or NULL if the path is empty
-     *
-     * @return Relation
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationPathInterface::getRelationFirst()
      */
     public function getRelationFirst()
     {
@@ -164,23 +170,26 @@ class RelationPath implements \IteratorAggregate
     }
 
     /**
-     * Returns the last relation of the path or NULL if the path is empty
-     *
-     * @return Relation
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationPathInterface::getRelationLast()
      */
     public function getRelationLast()
     {
         return $this->getRelation($this->countRelations() - 1);
     }
 
+    /**
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationPathInterface::countRelations()
+     */
     public function countRelations()
     {
         return count($this->getRelations());
     }
 
     /**
-     * DEPRECATED! Use RelationPathFactory::crate_from_string_path() instead!
-     * TODO make protected or remove
+     * @deprecated! Use RelationPathFactory::crate_from_string_path() instead!
+     * 
      * Checks if the given alias includes a relation path and returns an array with relations
      *
      * @param string $col            
@@ -205,10 +214,10 @@ class RelationPath implements \IteratorAggregate
     }
 
     /**
-     * DEPRECATED! Use combine() instead!
+     * @deprecated! Use combine() instead!
      *
-     * @param unknown $relation_alias_1            
-     * @param unknown $relation_alias_2            
+     * @param string $relation_alias_1            
+     * @param string $relation_alias_2            
      */
     public static function relationPathAdd($relation_alias_1, $relation_alias_2)
     {
@@ -224,12 +233,10 @@ class RelationPath implements \IteratorAggregate
     }
 
     /**
-     * Returns a new relation path appending the given path to the current one
-     *
-     * @param RelationPath $path_to_append            
-     * @return RelationPath
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationPathInterface::combine()
      */
-    public function combine(RelationPath $path_to_append)
+    public function combine(MetaRelationPathInterface $path_to_append)
     {
         $result = $this->copy();
         foreach ($path_to_append as $relation) {
@@ -239,15 +246,16 @@ class RelationPath implements \IteratorAggregate
     }
 
     /**
-     * DEPRECATED! Use reverse() instead!
+     * @deprecated! Use reverse() instead!
+     * 
      * Reverses a given relation path relative to a given object: POSITION->PRODUCT relative to an ORDER will become POSITION->ORDER and thus can now be
      * used in the context of a PRODUCT.
      *
      * @param string $relation_path            
-     * @param object $meta_object            
+     * @param MetaObjectInterface $meta_object            
      * @return string
      */
-    public static function relationPathReverse($relation_path, Object $meta_object)
+    public static function relationPathReverse($relation_path, MetaObjectInterface $meta_object)
     {
         $output = '';
         // Parse the relation path to get an array of relation aliases
@@ -281,17 +289,8 @@ class RelationPath implements \IteratorAggregate
     }
 
     /**
-     * Returns a relation path, that $length of relations from this path starting with the relation at $start_index.
-     *
-     * Examples:
-     * ORDER__CUSTOMER__ADDRESS__TYPE__LABEL::subpath(2) = ADDRESS__TYPE__LABEL
-     * ORDER__CUSTOMER__ADDRESS__TYPE__LABEL::subpath(0,2) = ORDER__CUSTOMER
-     * ORDER__CUSTOMER__ADDRESS__TYPE__LABEL::subpath(0,-2) = 'ORDER__CUSTOMER__ADDRESS'
-     * ORDER__CUSTOMER__ADDRESS__TYPE__LABEL::subpath(-2) = 'TYPE__LABEL'
-     *
-     * @param string $relation_path            
-     * @param string $cut_before_alias            
-     * @return RelationPath
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationPathInterface::getSubpath()
      */
     public function getSubpath($start_index = 0, $length = null)
     {
@@ -300,11 +299,8 @@ class RelationPath implements \IteratorAggregate
         }
         
         if (! is_null($length) && ! is_numeric($length)) {
-            throw new InvalidArgumentException('Non-numeric length for Relation::subpath($start_index, $length) given!');
+            throw new InvalidArgumentException('Non-numeric length for MetaRelationInterface::subpath($start_index, $length) given!');
         }
-        
-        // Save the originally passed index for error reporting before doing calculations with it
-        $passed_index = $start_index;
         
         if ($start_index < 0) {
             $start_index = $this->countRelations() - $start_index;
@@ -337,13 +333,10 @@ class RelationPath implements \IteratorAggregate
     }
 
     /**
-     * Returns the numeric index of the first occurrence of the given relation in the path or FALSE if the relation was not found.
-     *
-     * @param Relation $relation            
-     * @param boolean $exact_match            
-     * @return integer|boolean
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationPathInterface::getIndexOf()
      */
-    public function getIndexOf(Relation $relation, $exact_match = false)
+    public function getIndexOf(MetaRelationInterface $relation, $exact_match = false)
     {
         foreach ($this->getRelations() as $index => $rel) {
             if ($exact_match && $rel->isExactly($relation)) {
@@ -356,7 +349,8 @@ class RelationPath implements \IteratorAggregate
     }
 
     /**
-     * DEPRECATED! Use Attribute->getRelationPath() instead
+     * @deprecated! Use Attribute->getRelationPath() instead
+     * 
      * Returns the relation path contained in an attribute alias.
      * If the alias does not contain any relations, returns empty strgin.
      * E.g. for the attribute CUSTOMER__CUSTOMER_GROUP__LABEL it woud return CUSTOMER__CUSTOMER_GRUP.
@@ -386,7 +380,8 @@ class RelationPath implements \IteratorAggregate
     }
 
     /**
-     * Returns TRUE if the path does not contain any relation and FALSE otherwise
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationPathInterface::isEmpty()
      */
     public function isEmpty()
     {
@@ -398,32 +393,36 @@ class RelationPath implements \IteratorAggregate
     }
 
     /**
-     * TODO Make the staic method relation_path_reverse protected or remove it once all calls are replaced
-     * by this method!
-     *
-     * @return \exface\Core\CommonLogic\Model\RelationPath
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationPathInterface::reverse()
      */
     public function reverse()
     {
         return RelationPathFactory::createFromString($this->getEndObject(), self::relationPathReverse($this->toString(), $this->getStartObject()));
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \IteratorAggregate::getIterator()
+     */
     public function getIterator()
     {
         return $this->relations;
     }
 
-    public function getRelationSeparator()
+    /**
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationPathInterface::getRelationSeparator()
+     */
+    public static function getRelationSeparator()
     {
         return self::RELATION_SEPARATOR;
     }
 
     /**
-     * Returns an attribute of the end object specified by it's attribute alias, but with a relation path relative to the start object.
-     * E.g. calling getAttributeOfEndObject('POSITION_NO') on the relation path ORDER<-POSITION will return ORDER__POSITION__POSITION_NO
-     *
-     * @param string $attribute_alias            
-     * @return Attribute
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationPathInterface::getAttributeOfEndObject()
      */
     public function getAttributeOfEndObject($attribute_alias)
     {

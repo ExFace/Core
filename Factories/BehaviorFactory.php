@@ -3,7 +3,7 @@ namespace exface\Core\Factories;
 
 use exface\Core\CommonLogic\NameResolver;
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\CommonLogic\Model\Object;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Interfaces\NameResolverInterface;
 use exface\Core\Exceptions\Behaviors\BehaviorNotFoundError;
@@ -16,7 +16,7 @@ abstract class BehaviorFactory extends AbstractNameResolverFactory
      * @param NameResolverInterface $name_resolver            
      * @return BehaviorInterface
      */
-    public static function create(NameResolverInterface $name_resolver, Object $object = null)
+    public static function create(NameResolverInterface $name_resolver, MetaObjectInterface $object = null)
     {
         $class = $name_resolver->getClassNameWithNamespace();
         $instance = new $class($object);
@@ -25,12 +25,12 @@ abstract class BehaviorFactory extends AbstractNameResolverFactory
 
     /**
      *
-     * @param Object $object            
+     * @param MetaObjectInterface $object            
      * @param string $behavior_name            
      * @param UxonObject $uxon            
      * @return BehaviorInterface
      */
-    public static function createFromUxon(Object $object, $behavior_name, UxonObject $uxon)
+    public static function createFromUxon(MetaObjectInterface $object, $behavior_name, UxonObject $uxon)
     {
         $exface = $object->getWorkbench();
         $name_resolver = NameResolver::createFromString($behavior_name, NameResolver::OBJECT_TYPE_BEHAVIOR, $exface);

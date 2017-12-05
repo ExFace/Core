@@ -11,7 +11,7 @@ interface iHaveIcon extends WidgetInterface
      *
      * @return string
      */
-    public function getIconName();
+    public function getIcon();
 
     /**
      * If set, the widget will display the defined icon (if the template supports it, of course)
@@ -19,5 +19,5 @@ interface iHaveIcon extends WidgetInterface
      * @param string $value            
      * @return boolean
      */
-    public function setIconName($value);
+    public function setIcon($value);
 }

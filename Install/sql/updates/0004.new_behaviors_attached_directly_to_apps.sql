@@ -1,0 +1,2 @@
+ALTER TABLE `exf_object_behaviors` ADD `behavior_app_oid` BINARY(16) NOT NULL AFTER `behavior`;
+UPDATE exf_object_behaviors SET behavior_app_oid = (SELECT app_oid FROM exf_object WHERE exf_object.oid = exf_object_behaviors.object_oid);

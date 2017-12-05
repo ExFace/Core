@@ -6,34 +6,40 @@ use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Factories\ActionFactory;
 use exface\Core\CommonLogic\Model\ActionList;
 use exface\Core\Exceptions\Actions\ActionConfigurationError;
+use exface\Core\Interfaces\Actions\iShowWidget;
+use exface\Core\Interfaces\Actions\iRunTemplateScript;
+use exface\Core\Interfaces\ActionListInterface;
+use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 
 /**
- * This action chains other actions together.
+ * This action chains other actions together and performs them one after another.
  *
  * All actions in the action-array will be performed one-after-another in the order of definition. Every action receives
  * the result data of it's predecessor as input. The first action will get the input from the chain action. The result
  * of the action chain is the result of the last action.
+ * 
+ * NOTE: actions showing widgets cannot be used in actions chains as the will not show anything!
  *
  * Here is a simple example:
- * {
- * "alias": "exface.Core.ActionChain",
- * "actions": [
- * {
- * "alias": "my.app.CreateOrder",
- * "name": "Order",
- * "input_rows_min": 0
- * },
- * {
- * "alias": "my.app.PrintOrder"
- * }
- * ]
+ *  {
+ *      "alias": "exface.Core.ActionChain",
+ *      "actions": [
+ *          {
+ *              "alias": "my.app.CreateOrder",
+ *              "name": "Order",
+ *              "input_rows_min": 0
+ *          },
+ *          {
+ *              "alias": "my.app.PrintOrder"
+ *          }
+ *      ]
  * }
  *
  * As a rule of thumb, the action chain will behave as the first action in the it: it will inherit it's name, input restrictions, etc.
  * Thus, in the above example, the action chain would inherit the name "Order" and "input_rows_min=0". However, there are some
  * important exceptions from this rule:
  * - the chain has modified data if at least one of the actions modified data
- * - the chain has all interfaces it's actions have
  *
  * By default, all actions in the chain will be performed in a single transaction. That is, all actions will get rolled back if at least
  * one failes. Set the property "use_single_transaction" to false to make every action in the chain run in it's own transaction.
@@ -67,7 +73,7 @@ class ActionChain extends AbstractAction
         
         $result = null;
         $output = '';
-        $data = $this->getInputDataSheet()->copy();
+        $data = $this->getInputDataSheet();
         foreach ($this->getActions() as $action) {
             // Prepare the action
             // All actions obviously run in the same template
@@ -101,22 +107,20 @@ class ActionChain extends AbstractAction
 
     /**
      *
-     * @return ActionList|ActionInterface[]
+     * @return ActionListInterface|ActionInterface[]
      */
     public function getActions()
     {
         return $this->actions;
     }
 
-    public function setActions($array_or_uxon_or_action_list)
+    public function setActions($uxon_array_or_action_list)
     {
-        if ($array_or_uxon_or_action_list instanceof ActionList) {
-            $this->actions = $array_or_uxon_or_action_list;
-        } elseif ($array_or_uxon_or_action_list instanceof \stdClass) {
-            // TODO
-        } elseif (is_array($array_or_uxon_or_action_list)) {
-            foreach ($array_or_uxon_or_action_list as $nr => $action_or_uxon) {
-                if ($action_or_uxon instanceof \stdClass) {
+        if ($uxon_array_or_action_list instanceof ActionListInterface) {
+            $this->actions = $uxon_array_or_action_list;
+        } elseif ($uxon_array_or_action_list instanceof UxonObject) {
+            foreach ($uxon_array_or_action_list as $nr => $action_or_uxon) {
+                if ($action_or_uxon instanceof UxonObject) {
                     $action = ActionFactory::createFromUxon($this->getWorkbench(), $action_or_uxon);
                 } elseif ($action_or_uxon instanceof ActionInterface) {
                     $action = $action_or_uxon;
@@ -125,6 +129,8 @@ class ActionChain extends AbstractAction
                 }
                 $this->addAction($action);
             }
+        } else {
+            throw new WidgetPropertyInvalidValueError('Cannot set actions for ' . $this->getAliasWithNamespace() . ': invalid format ' . gettype($uxon_array_or_action_list) . ' given instead of and instantiated condition or its UXON description.');
         }
         
         return $this;
@@ -132,6 +138,14 @@ class ActionChain extends AbstractAction
 
     public function addAction(ActionInterface $action)
     {
+        if ($action instanceof iShowWidget){
+            throw new ActionConfigurationError($this, 'Actions showing widgets cannot be used within action chains!');
+        }
+        
+        if ($action instanceof iRunTemplateScript){
+            throw new ActionConfigurationError($this, 'Actions running template scripts cannot be used within action chains!');
+        }
+        
         $this->getActions()->add($action);
         return $this;
     }
@@ -143,7 +157,7 @@ class ActionChain extends AbstractAction
 
     public function setUseSingleTransaction($value)
     {
-        $this->use_single_transaction = \exface\Core\DataTypes\BooleanDataType::parse($value);
+        $this->use_single_transaction = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;
     }
 
@@ -175,36 +189,29 @@ class ActionChain extends AbstractAction
         return parent::getName();
     }
 
-    public function getIconName()
+    public function getIcon()
     {
-        return parent::getIconName() ? parent::getIconName() : $this->getActions()->getFirst()->getIconName();
+        return parent::getIcon() ? parent::getIcon() : $this->getActions()->getFirst()->getIcon();
     }
     
-    /*
-     * TODO
-     * public function implementsInterface($interface){
-     * $answer = false;
-     * foreach ($this->getActions() as $action){
-     * if ($action->implementsInterface($interface)){
-     * $answer = true;
-     * }
-     * }
-     * return $answer;
-     * }
+    public function implementsInterface($interface)
+    {
+        if ($this->getActions()->isEmpty()){
+            return parent::implementsInterface($interface);
+        }
+        return $this->getActions()->getFirst()->implementsInterface($interface);
+    }
+    
+    /**
+     * For every method not exlicitly inherited from AbstractAciton attemt to call it on the first action.
+     * 
+     * @param mixed $method
+     * @param mixed $arguments
+     * @return mixed
      */
-
-/**
- *
- * @param string $method            
- * @param array $arguments            
- * @return mixed
- */
-    /*
-     * TODO
-     * public function __call($method, $arguments){
-     * foreach ($this->get_ac)
-     * return call_user_func_array(array($this->getAction(), $method), $arguments);
-     * }
-     */
+    public function __call($method, $arguments){
+        return call_user_func_array(array($this->getActions()->getFirst(), $method), $arguments);
+    }
+     
 }
 ?>

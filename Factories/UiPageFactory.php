@@ -1,77 +1,100 @@
 <?php
 namespace exface\Core\Factories;
 
-use exface\Core\Interfaces\TemplateInterface;
 use exface\Core\CommonLogic\Model\UiPage;
-use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\UiManagerInterface;
-use exface\Core\Exceptions\UiPageNotFoundError;
+use exface\Core\Exceptions\UiPage\UiPageNotFoundError;
+use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Interfaces\Model\UiPageInterface;
 
 class UiPageFactory extends AbstractFactory
 {
 
     /**
-     *
-     * @param TemplateInterface $template            
+     * Creates an empty page (even without a root container) with the passed UID and alias.
+     * 
+     * @param UiManagerInterface $ui
+     * @param string $pageAlias
+     * @param string $pageUid
+     * @param string $appUidOrAlias The app the page belongs to.
      * @throws UiPageNotFoundError if the page id is invalid (i.e. not a number or a string)
-     * @return \exface\Core\CommonLogic\Model\UiPage
+     * @return UiPageInterface
      */
-    public static function create(UiManagerInterface $ui, $page_id)
+    public static function create(UiManagerInterface $ui, $pageAlias, $pageUid = null, $appUidOrAlias = null)
     {
-        if (is_null($page_id)) {
-            throw new UiPageNotFoundError('Cannot fetch UI page: page id not specified!');
+        if (is_null($pageAlias)) {
+            throw new UiPageNotFoundError('Cannot fetch UI page: page alias not specified!');
         }
-        $page = new UiPage($ui);
-        $page->setId($page_id);
+        $page = new UiPage($ui, $pageAlias, $pageUid, $appUidOrAlias);
         return $page;
     }
 
     /**
-     * Creates an empty page with a simple root container without any meta object
-     *
-     * @param UiManagerInterface $ui            
-     * @param number $page_id            
-     * @return \exface\Core\CommonLogic\Model\UiPage
+     * Creates an empty page with a simple root container without any meta object.
+     * 
+     * @param UiManagerInterface $ui
+     * @param string $page_alias
+     * @return UiPageInterface
      */
-    public static function createEmpty(UiManagerInterface $ui, $page_id = 0)
+    public static function createEmpty(UiManagerInterface $ui, $page_alias = '')
     {
-        $page = static::create($ui, $page_id);
+        $page = static::create($ui, $page_alias);
         $root_container = WidgetFactory::create($page, 'Container');
         $page->addWidget($root_container);
         return $page;
     }
 
     /**
-     *
-     * @param TemplateInterface $template            
-     * @param string $page_id            
-     * @param string $page_text            
-     * @return \exface\Core\CommonLogic\Model\UiPage
+     * Creates a page with the passed alias and the passed content.
+     * 
+     * @param UiManagerInterface $ui
+     * @param string $page_alias
+     * @param string $page_text
+     * @return UiPageInterface
      */
-    public static function createFromString(UiManagerInterface $ui, $page_id, $page_text)
+    public static function createFromString(UiManagerInterface $ui, $page_alias, $page_text)
     {
-        $page = static::create($ui, $page_id);
-        WidgetFactory::createFromUxon($page, UxonObject::fromAnything($page_text));
+        $page = static::create($ui, $page_alias);
+        $page->setContents($page_text);
         return $page;
     }
 
     /**
-     * TODO This method is still unfinished!
-     *
-     * @param TemplateInterface $template            
-     * @param string $page_id            
-     * @throws UiPageNotFoundError if no CMS page can be found by the given id
-     * @return \exface\Core\CommonLogic\Model\UiPage
+     * Creates a page which is obtained from the CMS by the passed alias.
+     * 
+     * @param UiManagerInterface $ui
+     * @param string $page_alias
+     * @return UiPageInterface
      */
-    public static function createFromCmsPage(UiManagerInterface $ui, $page_id)
+    public static function createFromCmsPage(UiManagerInterface $ui, $page_alias)
     {
-        $page_text = $ui->getWorkbench()->getCMS()->getPageContents($page_id);
-        if (is_null($page_text)) {
-            throw new UiPageNotFoundError('UI page with id "' . $page_id . '" not found!');
-        } elseif (substr(trim($page_text), 0, 1) !== '{') {
-            return static::create($ui, $page_id);
-        }
-        return static::createFromString($ui, $page_id, $page_text);
+        return $ui->getWorkbench()->getCMS()->loadPage($page_alias);
+    }
+
+    /**
+     * Creates a page which is obtained from the current CMS page.
+     * 
+     * @param UiManagerInterface $ui
+     * @return UiPageInterface
+     */
+    public static function createFromCmsPageCurrent(UiManagerInterface $ui)
+    {
+        return $ui->getWorkbench()->getCMS()->loadPageCurrent();
+    }
+
+    /**
+     * Creates a page from a uxon description.
+     * 
+     * @param UiManagerInterface $ui
+     * @param UxonObject $uxon
+     * @param array $skip_property_names
+     * @return UiPageInterface
+     */
+    public static function createFromUxon(UiManagerInterface $ui, UxonObject $uxon, array $skip_property_names = array())
+    {
+        $page = static::create($ui, '');
+        $page->importUxonObject($uxon, $skip_property_names);
+        return $page;
     }
 }
 

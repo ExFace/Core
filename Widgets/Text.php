@@ -9,8 +9,14 @@ use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\Factories\DataSheetFactory;
-use exface\Core\CommonLogic\Model\Relation;
+use exface\Core\Interfaces\Model\MetaRelationInterface;
 use exface\Core\Widgets\Traits\iCanBeAlignedTrait;
+use exface\Core\DataTypes\NumberDataType;
+use exface\Core\DataTypes\PriceDataType;
+use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\Interfaces\DataTypes\DataTypeInterface;
+use exface\Core\CommonLogic\Model\Aggregator;
+use exface\Core\Interfaces\Model\AggregatorInterface;
 
 /**
  * The text widget simply shows text with an optional title created from the caption of the widget
@@ -117,7 +123,7 @@ class Text extends AbstractWidget implements iShowSingleAttribute, iHaveValue, i
                             $related_obj = $related_obj->getRelatedObject($rel_part);
                             unset($rel_parts[$rel_nr]);
                             if ($related_obj->isExactly($prefill_object)) {
-                                $attr_path = implode(RelationPath::RELATION_SEPARATOR, $rel_parts);
+                                $attr_path = implode(RelationPath::getRelationSeparator(), $rel_parts);
                                 $attr = RelationPath::relationPathAdd($attr_path, $this->getAttribute()->getAlias());
                                 $data_sheet->getColumns()->addFromExpression($attr);
                             }
@@ -125,23 +131,26 @@ class Text extends AbstractWidget implements iShowSingleAttribute, iHaveValue, i
                     }
                     // If the prefill object is not in the widget's relation path, try to find a relation from this widget's
                     // object to the data sheet object and vice versa
-                } // If this widget represents the direct relation attribute, the attribute to display would be the UID of the
-                  // of the related object (e.g. trying to fill the order positions attribute "ORDER" relative to the object
-                  // "ORDER" should result in the attribute UID of ORDER because it holds the same value)
-                elseif ($this->getAttribute()->isRelation() && $prefill_object->is($this->getAttribute()->getRelation()->getRelatedObject())) {
+                } elseif ($this->getAttribute()->isRelation() && $prefill_object->is($this->getAttribute()->getRelation()->getRelatedObject())) {
+                    // If this widget represents the direct relation attribute, the attribute to display would be the UID of the
+                    // of the related object (e.g. trying to fill the order positions attribute "ORDER" relative to the object
+                    // "ORDER" should result in the attribute UID of ORDER because it holds the same value)
+                        
                     $data_sheet->getColumns()->addFromExpression($this->getAttribute()->getRelation()->getRelatedObjectKeyAlias());
-                } // If the attribute is not a relation itself, we still can use it for prefills if we find a relation to access
-                  // it from the $data_sheet's object. In order to do this, we need to find relations from the prefill object to
-                  // the object of this widget. However, it does not make sense to use reverse relations because the corresponding
-                  // values would need to get aggregated in the prefill sheet in most cases and we don't have a meaningfull
-                  // aggregator at hand at this time. Direct (not inherited) relations should be preffered. That is, a relation from
-                  // the prefill object to an object, this widget's object extends, can still be used in most cases, but a direct
-                  // relation is safer. Not sure, if inherited relations will work if the extending object has a different data address...
-                else {
+                } else {
+                    // If the attribute is not a relation itself, we still can use it for prefills if we find a relation to access
+                    // it from the $data_sheet's object. In order to do this, we need to find relations from the prefill object to
+                    // the object of this widget. However, it does not make sense to use reverse relations because the corresponding
+                    // values would need to get aggregated in the prefill sheet in most cases and we don't have a meaningfull
+                    // aggregator at hand at this time. Direct (not inherited) relations should be preffered. That is, a relation from
+                    // the prefill object to an object, this widget's object extends, can still be used in most cases, but a direct
+                    // relation is safer. Not sure, if inherited relations will work if the extending object has a different data address...
+                    
+                    
                     // Iterate over all forward relations
                     $inherited_rel = null;
                     $direct_rel = null;
-                    foreach ($prefill_object->findRelations($widget_object->getId(), Relation::RELATION_TYPE_FORWARD) as $rel) {
+                    foreach ($prefill_object->findRelations($widget_object->getId(), MetaRelationInterface::RELATION_TYPE_FORWARD) as $rel) {
                         if ($rel->isInherited() && ! $inherited_rel) {
                             // Remember the first inherited relation in case there will be no direct relations
                             $inherited_rel = $rel;
@@ -211,8 +220,8 @@ class Text extends AbstractWidget implements iShowSingleAttribute, iHaveValue, i
         // and set it as the value of our input.
         $prefill_columns = $this->prepareDataSheetToPrefill(DataSheetFactory::createFromObject($data_sheet->getMetaObject()))->getColumns();
         if ($col = $prefill_columns->getFirst()) {
-            if (count($data_sheet->getColumnValues($col->getName(false))) > 1 && $this->getAggregateFunction()) {
-                $value = \exface\Core\CommonLogic\DataSheets\DataColumn::aggregateValues($data_sheet->getColumnValues($col->getName(false)), $this->getAggregateFunction());
+            if (count($data_sheet->getColumnValues($col->getName(false))) > 1 && $this->getAggregator()) {
+                $value = \exface\Core\CommonLogic\DataSheets\DataColumn::aggregateValues($data_sheet->getColumnValues($col->getName(false)), $this->getAggregator());
             } else {
                 $value = $data_sheet->getCellValue($col->getName(), 0);
             }
@@ -224,14 +233,24 @@ class Text extends AbstractWidget implements iShowSingleAttribute, iHaveValue, i
         return;
     }
 
-    public function getAggregateFunction()
+    public function getAggregator()
     {
         return $this->aggregate_function;
     }
 
-    public function setAggregateFunction($value)
+    /**
+     * 
+     * @param string|AggregatorInterface $aggregator_or_string
+     * @return \exface\Core\Widgets\Text
+     */
+    public function setAggregator($aggregator_or_string)
     {
-        $this->aggregate_function = $value;
+        if ($aggregator_or_string instanceof AggregatorInterface){
+            $aggregator = $aggregator_or_string;
+        } else {
+            $aggregator = new Aggregator($this->getWorkbench(), $aggregator_or_string);
+        }
+        $this->aggregate_function = $aggregator;
         return $this;
     }
 
@@ -307,32 +326,13 @@ class Text extends AbstractWidget implements iShowSingleAttribute, iHaveValue, i
     }
     
     /**
+     * Returns the data type of the widget. 
      * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Widgets\iCanBeAligned::getAlign()
-     */
-    public function getAlign()
-    {
-        if (! $this->isAlignSet()) {
-            if ($this->getDataType()->is(EXF_DATA_TYPE_NUMBER) || $this->getDataType()->is(EXF_DATA_TYPE_PRICE)) {
-                $this->setAlign(EXF_ALIGN_OPPOSITE);
-            } elseif ($this->getDataType()->is(EXF_DATA_TYPE_BOOLEAN)) {
-                $this->setAlign(EXF_ALIGN_CENTER);
-            } else {
-                $this->setAlign(EXF_ALIGN_DEFAULT);
-            }
-        }
-        return $this->getAlignDefault();
-    }
-
-    /**
-     * Returns the data type of the column as a constant (e.g.
-     * EXF_DATA_TYPE_NUMBER). The column's
-     * data_type can either be set explicitly by UXON, or is derived from the shown meta attribute.
-     * If there is neither an attribute bound to the column, nor an explicit data_type EXF_DATA_TYPE_STRING
-     * is returned.
+     * The data type can either be set explicitly by UXON, or is derived from the shown meta attribute.
+     * If there is neither an attribute bound to the column, nor an explicit data_type, the base data
+     * type is returned.
      *
-     * @return AbstractDataType
+     * @return DataTypeInterface
      */
     public function getDataType()
     {
@@ -341,8 +341,7 @@ class Text extends AbstractWidget implements iShowSingleAttribute, iHaveValue, i
         } elseif ($attr = $this->getAttribute()) {
             return $attr->getDataType();
         } else {
-            $exface = $this->getWorkbench();
-            return DataTypeFactory::createFromAlias($exface, EXF_DATA_TYPE_STRING);
+            return DataTypeFactory::createBaseDataType($this->getWorkbench());
         }
     }
 
@@ -405,6 +404,19 @@ class Text extends AbstractWidget implements iShowSingleAttribute, iHaveValue, i
             $uxon->setProperty('attribute_alias', $this->getAttributeAlias());
         }
         return $uxon;
+    }
+    
+    public function getValueWithDefaults()
+    {
+        if ($this->getValueExpression() && $this->getValueExpression()->isReference()) {
+            $value = '';
+        } else {
+            $value = $this->getValue();
+        }
+        if (is_null($value) || $value === '') {
+            $value = $this->getDefaultValue();
+        }
+        return $value;
     }
 }
 ?>

@@ -4,6 +4,7 @@ namespace exface\Core\Actions;
 use exface\Core\Interfaces\Actions\iReadData;
 use exface\Core\CommonLogic\AbstractAction;
 use exface\Core\Exceptions\Actions\ActionCallingWidgetNotSpecifiedError;
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 
 class ReadData extends AbstractAction implements iReadData
 {
@@ -14,7 +15,7 @@ class ReadData extends AbstractAction implements iReadData
 
     protected function perform()
     {
-        $data_sheet = $this->getInputDataSheet()->copy();
+        $data_sheet = $this->getInputDataSheet();
         $this->setAffectedRows($data_sheet->removeRows()->dataRead());
         
         // Replace the filter conditions in the current window context by the ones in this data sheet
@@ -22,14 +23,23 @@ class ReadData extends AbstractAction implements iReadData
         // context filters would affect the result of the read operation (context filters are automatically
         // applied to the query, each time, data is fetched)
         if ($this->getUpdateFilterContext()) {
-            $this->getApp()->getWorkbench()->context()->getScopeWindow()->getFilterContext()->removeAllConditions();
-            foreach ($data_sheet->getFilters()->getConditions() as $condition) {
-                $this->getApp()->getWorkbench()->context()->getScopeWindow()->getFilterContext()->addCondition($condition);
-            }
+            $this->updateFilterContext($data_sheet);
         }
         
         $this->setResultDataSheet($data_sheet);
         $this->setResultMessage($this->getAffectedRows() . ' entries read');
+    }
+    
+    protected function updateFilterContext(DataSheetInterface $data_sheet)
+    {
+        $context = $this->getApp()->getWorkbench()->context()->getScopeWindow()->getFilterContext();
+        $context->removeAllConditions();
+        foreach ($data_sheet->getFilters()->getConditions() as $condition) {
+            if (! $condition->isEmpty()){
+                $context->addCondition($condition);
+            } 
+        }
+        return $this;
     }
 
     protected function getAffectedRows()

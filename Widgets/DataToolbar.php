@@ -87,7 +87,7 @@ class DataToolbar extends Toolbar
      */
     public function setIncludeNoExtraActions($true_or_false)
     {
-        $this->disable_autoinclude_actions = BooleanDataType::parse($true_or_false);
+        $this->disable_autoinclude_actions = BooleanDataType::cast($true_or_false);
         return $this;
     }
     
@@ -126,7 +126,7 @@ class DataToolbar extends Toolbar
      */
     public function setIncludeGlobalActions($true_or_false)
     {
-        $this->include_global_actions = BooleanDataType::parse($true_or_false);
+        $this->include_global_actions = BooleanDataType::cast($true_or_false);
         return $this;
     }
     
@@ -156,7 +156,7 @@ class DataToolbar extends Toolbar
      */
     public function setIncludeObjectBasketActions($true_or_false)
     {
-        $this->include_object_basket_actions = BooleanDataType::parse($true_or_false);
+        $this->include_object_basket_actions = BooleanDataType::cast($true_or_false);
         return $this;
     }
     
@@ -223,7 +223,7 @@ class DataToolbar extends Toolbar
             $search_button
             ->setActionAlias('exface.Core.RefreshWidget')
             ->setCaption($this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.READDATA.SEARCH'))
-            ->setIconName(Icons::SEARCH)
+            ->setIcon(Icons::SEARCH)
             ->setVisibility(EXF_WIDGET_VISIBILITY_PROMOTED)
             ->setAlign(EXF_ALIGN_OPPOSITE);
             
@@ -312,7 +312,7 @@ class DataToolbar extends Toolbar
      */
     public function setIncludeSearchActions($true_or_false)
     {
-        $this->include_search_actions = BooleanDataType::parse($true_or_false);
+        $this->include_search_actions = BooleanDataType::cast($true_or_false);
         return $this;
     }
     

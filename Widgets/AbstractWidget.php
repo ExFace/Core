@@ -9,7 +9,7 @@ use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\CommonLogic\WidgetLink;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\CommonLogic\NameResolver;
-use exface\Core\CommonLogic\Model\Object;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Factories\WidgetDimensionFactory;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\CommonLogic\Model\RelationPath;
@@ -23,9 +23,10 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\Exceptions\UxonMapError;
-use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 use exface\Core\Exceptions\Widgets\WidgetHasNoMetaObjectError;
 use exface\Core\Factories\WidgetFactory;
+use exface\Core\Interfaces\Model\ExpressionInterface;
+use exface\Core\CommonLogic\Translation;
 
 /**
  * Basic ExFace widget
@@ -48,8 +49,8 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
     private $hint = null;
 
     private $widget_type = null;
-
-    private $meta_object_id = null;
+    
+    private $meta_object = null;
 
     private $object_alias = null;
 
@@ -138,10 +139,8 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
      *
      * @see \exface\Core\Interfaces\WidgetInterface::importUxonObject()
      */
-    function importUxonObject(\stdClass $source)
+    function importUxonObject(UxonObject $uxon)
     {
-        $uxon = UxonObject::fromAnything($source);
-        
         // Save the original UXON description
         $this->uxon_original = $uxon->copy();
         
@@ -161,7 +160,7 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
         }
         
         try {
-            return $this->importUxonObjectDefault(UxonObject::fromStdClass($source));
+            return $this->importUxonObjectDefault($uxon);
         } catch (UxonMapError $e) {
             throw new WidgetPropertyUnknownError($this, 'Unknown UXON property found for widget "' . $this->getWidgetType() . '": ' . $e->getMessage(), '6UNTXJE', $e);
         }
@@ -320,32 +319,7 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
         $this->caption = $caption;
         return $this;
     }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\WidgetInterface::getMetaObjectId()
-     */
-    function getMetaObjectId()
-    {
-        if (! $this->meta_object_id)
-            return $this->getMetaObject()->getId();
-        return $this->meta_object_id;
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\WidgetInterface::setMetaObjectId()
-     */
-    function setMetaObjectId($id)
-    {
-        $this->meta_object_id = $id;
-        return $this;
-    }
-
+    
     /**
      * Explicitly specifies the ID of the widget.
      * The ID must be unique on every page containing the widget and can be used in widget links
@@ -450,17 +424,17 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
      */
     function getMetaObject()
     {
-        if ($this->meta_object_id) {
-            $obj = $this->getUi()->getWorkbench()->model()->getObject($this->meta_object_id);
-        } elseif ($this->getObjectQualifiedAlias()) {
-            $obj = $this->getUi()->getWorkbench()->model()->getObject($this->getObjectQualifiedAlias());
-        } elseif ($this->getParent()) {
-            $obj = $this->getParent()->getMetaObject();
-        } else {
-            throw new WidgetHasNoMetaObjectError($this, 'A widget must have either an object_id, an object_alias or a parent widget with an object reference!');
+        if (is_null($this->meta_object)) {
+            if ($this->getObjectQualifiedAlias()) {
+                $obj = $this->getUi()->getWorkbench()->model()->getObject($this->getObjectQualifiedAlias());
+            } elseif ($this->getParent()) {
+                $obj = $this->getParent()->getMetaObject();
+            } else {
+                throw new WidgetHasNoMetaObjectError($this, 'A widget must have either an object_id, an object_alias or a parent widget with an object reference!');
+            }
+            $this->setMetaObject($obj);
         }
-        $this->setMetaObjectId($obj->getId());
-        return $obj;
+        return $this->meta_object;
     }
 
     /**
@@ -469,9 +443,10 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
      *
      * @see \exface\Core\Interfaces\WidgetInterface::setMetaObject()
      */
-    function setMetaObject(Object $object)
+    function setMetaObject(MetaObjectInterface $object)
     {
-        return $this->setMetaObjectId($object->getId());
+        $this->meta_object = $object;
+        return $this;
     }
 
     /**
@@ -606,7 +581,7 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
     /**
      * TODO Move to iHaveValue-Widgets or trait
      *
-     * @return Expression
+     * @return ExpressionInterface
      */
     public function getValueExpression()
     {
@@ -635,7 +610,7 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
      *
      * TODO Move to iHaveValue-Widgets or trait
      *
-     * @param Expression|string $expression_or_string            
+     * @param ExpressionInterface|string $expression_or_string            
      */
     public function setValue($expression_or_string)
     {
@@ -672,7 +647,7 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
      */
     public function setDisabled($value)
     {
-        $this->disabled = \exface\Core\DataTypes\BooleanDataType::parse($value);
+        $this->disabled = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;
     }
 
@@ -928,22 +903,16 @@ else {
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\Interfaces\WidgetInterface::getPageId()
-     */
-    public function getPageId()
-    {
-        return $this->getPage()->getId();
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\WidgetInterface::getParent()
      */
     public function getParent()
     {
         return $this->parent;
+    }
+    
+    public function hasParent()
+    {
+        return is_null($this->parent) ? false : true;
     }
 
     /**
@@ -1026,6 +995,7 @@ else {
      */
     public function setHidden($value)
     {
+        $value = BooleanDataType::cast($value);
         if ($value) {
             $this->setVisibility(EXF_WIDGET_VISIBILITY_HIDDEN);
         } else {
@@ -1198,7 +1168,7 @@ else {
         $exface = $this->getWorkbench();
         $link = new WidgetLink($exface);
         $link->setWidgetId($this->getId());
-        $link->setPageId($this->getPageId());
+        $link->setPageAlias($this->getPage()->getAliasWithNamespace());
         return $link;
     }
 
@@ -1249,7 +1219,7 @@ else {
 
     public function setDoNotPrefill($value)
     {
-        $this->do_not_prefill = BooleanDataType::parse($value);
+        $this->do_not_prefill = BooleanDataType::cast($value);
         return $this;
     }
 
@@ -1266,11 +1236,13 @@ else {
      * Sets a condition to disable the widget.
      *
      * E.g.:
-     * "disable_condition": {
-     * "widget_link": "consumer!CONSUMER_MAIL_PHONE",
-     * "comparator": "!=",
-     * "value": ""
-     * }
+     *  
+     *  "disable_condition": {
+     *      "widget_link": "consumer!CONSUMER_MAIL_PHONE",
+     *      "comparator": "!=",
+     *      "value": ""
+     *  }
+     * 
      * means the current widget is disabled when the column CONSUMER_MAIL_PHONE of
      * widget consumer is not empty. Can be usefully combined with a value-reference
      * to the same widget and column.

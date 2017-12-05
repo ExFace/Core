@@ -45,7 +45,7 @@ class DebugContext extends AbstractContext
     public function __construct(NameResolverInterface $name_resolver){
         parent::__construct($name_resolver);
         
-        if ($name_resolver->getWorkbench()->context()->getScopeUser()->isUserAnonymous()){
+        if ($name_resolver->getWorkbench()->context()->getScopeUser()->getUserCurrent()->isUserAnonymous()){
             throw new ContextAccessDeniedError($this, 'The debug context cannot be used for anonymous users!');
         }
         
@@ -68,7 +68,7 @@ class DebugContext extends AbstractContext
      */
     public function setDebugging($true_or_false)
     {
-        $value = BooleanDataType::parse($true_or_false);
+        $value = BooleanDataType::cast($true_or_false);
         if ($value){
             $this->startDebugging();
         } else {
@@ -215,7 +215,7 @@ class DebugContext extends AbstractContext
         if ($this->isDebugging()){
             return Colors::RED;
         }
-        return Colors::DEFAULT;
+        return Colors::DEFAULT_COLOR;
     }
     
     /**
@@ -264,14 +264,14 @@ class DebugContext extends AbstractContext
             ->setContextScope($this->getScope()->getName())
             ->setContextAlias($this->getAliasWithNamespace())
             ->setOperation('startDebugging')
-            ->setIconName(Icons::BUG);
+            ->setIcon(Icons::BUG);
         $data_list->addButton($button);
         
         /* @var $button \exface\Core\Widgets\Button */
         $button = $data_list->createButton()
             ->setActionAlias('exface.Core.ContextApi')
             ->setCaption($this->getWorkbench()->getCoreApp()->getTranslator()->translate('CONTEXT.DEBUG.STOP'))
-            ->setIconName(Icons::PAUSE);
+            ->setIcon(Icons::PAUSE);
         $button->getAction()
             ->setContextScope($this->getScope()->getName())
             ->setContextAlias($this->getAliasWithNamespace())

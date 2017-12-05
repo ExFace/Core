@@ -152,7 +152,7 @@ class FileFinderConnector extends TransparentConnector
      */
     public function setUseVendorFolderAsBase($value)
     {
-        $this->use_vendor_folder_as_base = \exface\Core\DataTypes\BooleanDataType::parse($value);
+        $this->use_vendor_folder_as_base = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;
     }
 }

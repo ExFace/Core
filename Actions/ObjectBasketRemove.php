@@ -17,7 +17,7 @@ class ObjectBasketRemove extends ObjectBasketAdd
         parent::init();
         $this->setInputRowsMin(1);
         $this->setInputRowsMax(null);
-        $this->setIconName(Icons::MINUS);
+        $this->setIcon(Icons::MINUS);
     }
 
     protected function perform()

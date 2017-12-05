@@ -3,7 +3,7 @@ namespace exface\Core\Interfaces\Formulas;
 
 use exface\Core\Interfaces\ExfaceClassInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\Core\Interfaces\Model\DataTypeInterface;
+use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\Interfaces\DataSheets\DataColumnInterface;
 
 interface FormulaInterface extends ExfaceClassInterface

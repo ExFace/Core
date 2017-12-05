@@ -1,26 +1,28 @@
 <?php
 namespace exface\Core\CommonLogic\DataSheets;
 
-use exface\Core\CommonLogic\Model\Attribute;
-use exface\Core\CommonLogic\Model\Expression;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\CommonLogic\Model\Formula;
 use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Factories\EntityListFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\DataSheets\DataColumnInterface;
-use exface\Core\DataTypes\AbstractDataType;
+use exface\Core\CommonLogic\DataTypes\AbstractDataType;
 use exface\Core\Factories\DataColumnTotalsFactory;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\DataSheets\DataSheetDiffError;
 use exface\Core\Exceptions\DataSheets\DataSheetRuntimeError;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\Exceptions\UnexpectedValueException;
+use exface\Core\Interfaces\Model\ExpressionInterface;
+use exface\Core\Interfaces\Model\AggregatorInterface;
+use exface\Core\DataTypes\AggregatorFunctionsDataType;
+use exface\Core\DataTypes\BooleanDataType;
 
 class DataColumn implements DataColumnInterface
 {
 
-    const COLUMN_NAME_VALIDATOR = '[^A-Za-z0-9_\.]';
+    const COLUMN_NAME_VALIDATOR = '[^A-Za-z0-9_]';
 
     // Properties, _not_ to be dublicated on copy()
     private $data_sheet = null;
@@ -36,26 +38,24 @@ class DataColumn implements DataColumnInterface
 
     private $fresh = false;
 
-    private $totals = array();
+    private $totals = null;
 
     private $ignore_fixed_values = false;
 
-    /** @var Expression */
+    /** @var ExpressionInterface */
     private $expression = null;
 
     /** @var Formula */
     private $formula = null;
 
-    /** @var Expression */
+    /** @var ExpressionInterface */
     private $formatter = null;
 
     function __construct($expression, $name = '', DataSheetInterface $data_sheet)
     {
-        $exface = $data_sheet->getWorkbench();
         $this->data_sheet = $data_sheet;
         $this->setExpression($expression);
         $this->setName($name ? $name : $this->getExpressionObj()->toString());
-        $this->totals = EntityListFactory::createWithEntityFactory($exface, $this, 'DataColumnTotalsFactory');
     }
 
     /**
@@ -88,23 +88,20 @@ class DataColumn implements DataColumnInterface
      */
     public function setExpression($expression_or_string)
     {
-        if (! ($expression_or_string instanceof Expression)) {
+        if (! ($expression_or_string instanceof ExpressionInterface)) {
             $exface = $this->getWorkbench();
             $expression = ExpressionFactory::createFromString($exface, $expression_or_string, $this->getMetaObject());
         } else {
             $expression = $expression_or_string;
         }
+        
         $this->expression = $expression;
+        
         if ($expression->isMetaAttribute()) {
-            $attribute_alias = $expression->getRequiredAttributes()[0];
-            $this->setAttributeAlias($attribute_alias);
-            try {
-                $attr = $this->getMetaObject()->getAttribute($attribute_alias);
-                $this->setDataType($attr->getDataType());
-            } catch (MetaAttributeNotFoundError $e) {
-                // ignore expressions with invalid attribute aliases
-            }
+            $this->setAttributeAlias($expression->toString());
         }
+        
+        return $this;
     }
 
     /**
@@ -195,7 +192,8 @@ class DataColumn implements DataColumnInterface
      */
     public function setHidden($value)
     {
-        $this->hidden = $value;
+        $this->hidden = BooleanDataType::cast($value);
+        return $this;
     }
 
     /**
@@ -217,7 +215,7 @@ class DataColumn implements DataColumnInterface
      */
     public function setFormatter($expression)
     {
-        if (! ($expression instanceof expression)) {
+        if (! ($expression instanceof ExpressionInterface)) {
             $expression = $this->getWorkbench()->model()->parseExpression($expression);
         }
         $this->formatter = $expression;
@@ -232,8 +230,14 @@ class DataColumn implements DataColumnInterface
     public function getDataType()
     {
         if (is_null($this->data_type)) {
-            $exface = $this->getDataSheet()->getWorkbench();
-            $this->data_type = DataTypeFactory::createFromAlias($exface, EXF_DATA_TYPE_STRING);
+            if ($attribute_alias = $this->getAttributeAlias()) {
+                try {
+                    return $this->getMetaObject()->getAttribute($attribute_alias)->getDataType();
+                } catch (MetaAttributeNotFoundError $e) {
+                    // ignore expressions with invalid attribute aliases
+                }
+            }
+            $this->data_type = DataTypeFactory::createBaseDataType($this->getWorkbench());
         }
         return $this->data_type;
     }
@@ -265,7 +269,7 @@ class DataColumn implements DataColumnInterface
      */
     public function getAttribute()
     {
-        if ($this->getAttributeAlias()) {
+        if ($this->isAttribute()) {
             return $this->getMetaObject()->getAttribute($this->getAttributeAlias());
         } else {
             return false;
@@ -312,7 +316,7 @@ class DataColumn implements DataColumnInterface
      *
      * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::setValuesByExpression()
      */
-    public function setValuesByExpression(Expression $expression, $overwrite = true)
+    public function setValuesByExpression(ExpressionInterface $expression, $overwrite = true)
     {
         if ($overwrite || $this->isEmpty()) {
             $this->setValues($expression->evaluate($this->getDataSheet(), $this->getName()));
@@ -375,21 +379,68 @@ class DataColumn implements DataColumnInterface
      */
     public function exportUxonObject()
     {
-        $uxon = $this->getDataSheet()->getWorkbench()->createUxonObject();
-        $uxon->expression = $this->getExpressionObj()->toString();
-        $uxon->name = $this->getName();
-        $uxon->hidden = $this->getHidden();
-        $uxon->data_type = $this->getDataType()->getName();
-        if ($this->formula) {
-            $uxon->formula = $this->getFormula()->toString();
+        $uxon = new UxonObject();
+        
+        // Allways export some basic properties of the column first
+        $uxon->setProperty('name', $this->getName());
+        
+        if ($this->getHidden()) {
+            $uxon->setProperty('hidden', $this->getHidden());
         }
-        if ($this->attribute_alias) {
-            $uxon->attribute_alias = $this->attribute_alias;
+        
+        if ($this->hasTotals()) {
+            $uxon->setProperty('totals', $this->getTotals()->exportUxonObject());
         }
-        if (! $this->getTotals()->isEmpty()) {
-            $uxon->totals = $this->getTotals()->exportUxonObject();
+        
+        if ($this->isAttribute()) {
+            // If it contains an attribute, it will be enough to export it's alias and every thing
+            // else only if it differs from attribute data
+            $uxon->setProperty('attribute_alias', $this->attribute_alias);
+            
+            if ($this->getAttribute()->getDataType() !== $this->getDataType()) {
+                $uxon->setProperty('data_type', $this->getDataType()->getAliasWithNamespace());
+            }
+        } else {
+            // If it's not an attribute, export everything
+            $uxon->setProperty('expression', $this->getExpressionObj()->toString());
+            $uxon->setProperty('data_type', $this->getDataType()->getAliasWithNamespace());
+        
+            if ($this->formula) {
+                $uxon->setProperty('formula', $this->getFormula()->toString());
+            }
         }
+        
         return $uxon;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::isAttribute()
+     */
+    public function isAttribute()
+    {
+        return $this->getAttributeAlias() ? true : false;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::isFormula()
+     */
+    public function isFormula()
+    {
+        return is_null($this->formula) || $this->formula === '' ? false : true; 
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::isCalculated()
+     */
+    public function isCalculated()
+    {
+        return $this->isFormula();
     }
 
     /**
@@ -400,12 +451,12 @@ class DataColumn implements DataColumnInterface
      */
     public function importUxonObject(UxonObject $uxon)
     {
-        $this->setHidden($uxon->hidden);
-        $this->setDataType($uxon->data_type);
-        $this->setFormula($uxon->formula);
-        $this->setAttributeAlias($uxon->attribute_alias);
-        if (is_array($uxon->totals)) {
-            foreach ($uxon->totals as $u) {
+        $this->setHidden($uxon->getProperty('hidden'));
+        $this->setDataType($uxon->getProperty('data_type'));
+        $this->setFormula($uxon->getProperty('formula'));
+        $this->setAttributeAlias($uxon->getProperty('attribute_alias'));
+        if ($uxon->hasProperty('totals')) {
+            foreach ($uxon->getProperty('totals') as $u) {
                 $total = DataColumnTotalsFactory::createFromUxon($this, $u);
                 $this->getTotals()->add($total);
             }
@@ -529,13 +580,13 @@ class DataColumn implements DataColumnInterface
     public function setFormula($expression_or_string)
     {
         if ($expression_or_string) {
-            if ($expression_or_string instanceof Expression) {
+            if ($expression_or_string instanceof ExpressionInterface) {
                 $expression = $expression_or_string;
             } else {
                 $exface = $this->getWorkbench();
                 $expression = ExpressionFactory::createFromString($exface, $expression_or_string);
             }
-            if (! $expression->isFormula() && ! $expression->isReference()) {
+            if (! $expression->isConstant() && ! $expression->isFormula() && ! $expression->isReference()) {
                 throw new DataSheetRuntimeError($this->getDataSheet(), 'Invalid formula "' . $expression->toString() . 'given to data sheet column "' . $this->getName() . '"!', '6T5UW0E');
             }
             $this->formula = $expression;
@@ -579,7 +630,22 @@ class DataColumn implements DataColumnInterface
      */
     public function getTotals()
     {
+        if (is_null($this->totals)){
+            $this->totals = EntityListFactory::createWithEntityFactory($this->getWorkbench(), $this, 'DataColumnTotalsFactory');
+        }
         return $this->totals;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::hasTotals()
+     */
+    public function hasTotals(){
+        if (! is_null($this->totals) && ! $this->getTotals()->isEmpty()){
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -588,13 +654,20 @@ class DataColumn implements DataColumnInterface
      *
      * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::isEmpty()
      */
-    public function isEmpty()
+    public function isEmpty($check_values = false)
     {
-        if (count($this->getValues(true)) > 0) {
-            return false;
-        } else {
+        if ($check_values) {
+            foreach ($this->getValues(true) as $val) {
+                if (! is_null($val) && $val !== '') {
+                    return false;
+                }
+            }
             return true;
+        } elseif (count($this->getValues(true)) > 0) {
+            return false;
         }
+            
+        return true;
     }
 
     public static function sanitizeColumnName($string)
@@ -679,65 +752,59 @@ class DataColumn implements DataColumnInterface
      *
      * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::aggregate()
      */
-    public function aggregate($aggregate_function_name)
+    public function aggregate(AggregatorInterface $aggregator)
     {
         $result = '';
         $values = $this->getValues(false);
         try {
-            $result = static::aggregateValues($values, $aggregate_function_name);
+            $result = static::aggregateValues($values, $aggregator);
         } catch (\Throwable $e) {
-            throw new DataSheetRuntimeError($this->getDataSheet(), 'Cannot aggregate over column "' . $this->getName() . '" of a data sheet of "' . $this->getMetaObject()->getAliasWithNamespace() . '": unknown aggregator function "' . $aggregate_function_name . '"!', '6T5UXLD', $e);
+            throw new DataSheetRuntimeError($this->getDataSheet(), 'Cannot aggregate over column "' . $this->getName() . '" of a data sheet of "' . $this->getMetaObject()->getAliasWithNamespace() . '": unknown aggregator function "' . $aggregator . '"!', '6T5UXLD', $e);
         }
         return $result;
     }
 
     /**
-     * Reduces the given array of values to a single value by applying the given aggregator function.
-     * If no function is specified,
-     * returns the first value.
+     * Reduces the given array of values to a single value by applying the given aggregator.
+     * If no aggregator is specified, returns the first value.
      *
-     * @param array $row_array            
+     * @param array $row_array  
+     * @param AggregatorInterface $aggregator          
      * @return array
      */
-    public static function aggregateValues(array $row_array, $group_function = null)
+    public static function aggregateValues(array $row_array, AggregatorInterface $aggregator = null)
     {
-        $group_function = trim($group_function);
-        $args = array();
-        if ($args_pos = strpos($group_function, '(')) {
-            $func = substr($group_function, 0, $args_pos);
-            $args = explode(',', substr($group_function, ($args_pos + 1), - 1));
-        } else {
-            $func = $group_function;
-        }
+        $func = $aggregator->getFunction();
+        $args = $aggregator->getArguments();
         
         $output = '';
-        switch (mb_strtoupper($func)) {
-            case EXF_AGGREGATOR_LIST:
+        switch ($func->getValue()) {
+            case AggregatorFunctionsDataType::LIST_ALL:
                 $output = implode(($args[0] ? $args[0] : ', '), $row_array);
                 break;
-            case EXF_AGGREGATOR_LIST_DISTINCT:
+            case AggregatorFunctionsDataType::LIST_DISTINCT:
                 $output = implode(($args[0] ? $args[0] : ', '), array_unique($row_array));
                 break;
-            case EXF_AGGREGATOR_MIN:
+            case AggregatorFunctionsDataType::MIN:
                 $output = count($row_array) > 0 ? min($row_array) : 0;
                 break;
-            case EXF_AGGREGATOR_MAX:
+            case AggregatorFunctionsDataType::MAX:
                 $output = count($row_array) > 0 ? max($row_array) : 0;
                 break;
-            case EXF_AGGREGATOR_COUNT:
+            case AggregatorFunctionsDataType::COUNT:
                 $output = count($row_array);
                 break;
-            case EXF_AGGREGATOR_COUNT_DISTINCT:
+            case AggregatorFunctionsDataType::COUNT_DISTINCT:
                 $output = count(array_unique($row_array));
                 break;
-            case EXF_AGGREGATOR_SUM:
+            case AggregatorFunctionsDataType::SUM:
                 $output = array_sum($row_array);
                 break;
-            case EXF_AGGREGATOR_AVG:
+            case AggregatorFunctionsDataType::AVG:
                 $output = count($row_array) > 0 ? array_sum($row_array) / count($row_array) : 0;
                 break;
             default:
-                throw new UnexpectedValueException('Invalid aggregator function "' . $group_function . '"!');
+                throw new UnexpectedValueException('Unsupported aggregator function "' . $func . '"!');
         }
         return $output;
     }

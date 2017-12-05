@@ -17,10 +17,10 @@ interface iShowDataSet extends WidgetInterface
 
     /**
      *
-     * @param \stdClass $uxon_object            
+     * @param UxonObject $uxon_object            
      * @return \exface\Core\Interfaces\Widgets\iShowDataColumn
      */
-    public function setData(\stdClass $uxon_object);
+    public function setData(UxonObject $uxon_object);
 
     /**
      *

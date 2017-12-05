@@ -32,14 +32,15 @@
         "mk-j/PHP_XLSXWriter": "^0.32",
         "wingu/reflection": "~1.0.5",
         "league/csv": "^8.0",
-        "jdorn/sql-formatter": "~1.2.17"
+        "jdorn/sql-formatter": "~1.2.17",
+        "cebe/markdown": "^1.1.2"
     },
     "extra": {
         "app": {
             "app_uid": "0x31000000000000000000000000000000",
             "app_alias": "exface.Core",
-            "model_md5": "6af92a3fea01cbf4be6563743484881b",
-            "model_timestamp": "2017-07-20 00:00:00"
+            "model_md5": "eb3fcb7142186547854b59412f48fbeb",
+            "model_timestamp": "2017-12-01 09:39:39"
         }
     },
     "autoload": {

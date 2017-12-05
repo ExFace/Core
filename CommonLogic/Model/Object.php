@@ -6,11 +6,9 @@ use exface\Core\CommonLogic\NameResolver;
 use exface\Core\Factories\RelationPathFactory;
 use exface\Core\Factories\AttributeGroupFactory;
 use exface\Core\Factories\AttributeListFactory;
-use exface\Core\CommonLogic\DataSheets\DataAggregator;
+use exface\Core\CommonLogic\DataSheets\DataAggregation;
 use exface\Core\CommonLogic\EntityList;
 use exface\Core\Factories\EntityListFactory;
-use exface\Core\Interfaces\ExfaceClassInterface;
-use exface\Core\Interfaces\AliasInterface;
 use exface\Core\Exceptions\Model\MetaRelationNotFoundError;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\CommonLogic\Workbench;
@@ -18,8 +16,17 @@ use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Exceptions\Model\MetaObjectNotFoundError;
 use exface\Core\Exceptions\Model\MetaObjectHasNoUidAttributeError;
 use exface\Core\Exceptions\InvalidArgumentException;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
+use exface\Core\Interfaces\Model\ModelInterface;
+use exface\Core\Interfaces\Model\MetaObjectActionListInterface;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
+use exface\Core\Interfaces\Model\MetaRelationInterface;
+use exface\Core\Interfaces\Model\MetaAttributeListInterface;
+use exface\Core\Interfaces\Model\MetaAttributeGroupInterface;
+use exface\Core\Interfaces\Model\MetaRelationPathInterface;
+use exface\Core\DataTypes\BooleanDataType;
 
-class Object implements ExfaceClassInterface, AliasInterface
+class Object implements MetaObjectInterface
 {
 
     private $id;
@@ -65,8 +72,12 @@ class Object implements ExfaceClassInterface, AliasInterface
     private $behaviors = array();
 
     private $actions = array();
+    
+    private $readable = true;
+    
+    private $writable = true;
 
-    function __construct(\exface\Core\CommonLogic\Model\Model $model)
+    function __construct(ModelInterface $model)
     {
         $exface = $model->getWorkbench();
         $this->model = $model;
@@ -92,13 +103,13 @@ class Object implements ExfaceClassInterface, AliasInterface
      * Returns all direct relations of this object as a flat array.
      * Optionally filtered by relation type.
      *
-     * @return Relation[]
+     * @return MetaRelationInterface[]
      */
     function getRelations($relation_type = null)
     {
         $result = array();
         foreach ($this->getRelationsArray() as $rel) {
-            if (is_null($relation_type) || (is_array($rel) && $relation_type == Relation::RELATION_TYPE_REVERSE) || $relation_type == $rel->getType()) {
+            if (is_null($relation_type) || (is_array($rel) && $relation_type == MetaRelationInterface::RELATION_TYPE_REVERSE) || $relation_type == $rel->getType()) {
                 if (is_array($rel)) {
                     $result = array_merge($result, $rel);
                 } else {
@@ -138,7 +149,7 @@ class Object implements ExfaceClassInterface, AliasInterface
      * @param string $alias            
      * @param string $foreign_key_alias            
      * @throws MetaRelationNotFoundError if no matching relation found
-     * @return Relation
+     * @return MetaRelationInterface
      */
     public function getRelation($alias, $foreign_key_alias = '')
     {
@@ -213,7 +224,7 @@ class Object implements ExfaceClassInterface, AliasInterface
     /**
      * Returns a list of all direct attributes of this object (including inherited ones!)
      *
-     * @return AttributeList
+     * @return MetaAttributeListInterface|MetaAttributeInterface[]
      */
     function getAttributes()
     {
@@ -241,7 +252,7 @@ class Object implements ExfaceClassInterface, AliasInterface
      * 
      * @throws MetaAttributeNotFoundError if no matching attribute could be found
      * 
-     * @return Attribute
+     * @return MetaAttributeInterface
      */
     public function getAttribute($alias)
     {
@@ -250,7 +261,7 @@ class Object implements ExfaceClassInterface, AliasInterface
         // - if it's a MISS, search for the attribute
         // - if it's a HIT, but the value is FALSE skip the searching an head to the exception trowing
         $attr = $this->getAttributeCache($alias);
-        if ($attr instanceof Attribute){
+        if ($attr instanceof MetaAttributeInterface){
             return $attr;
         } elseif ($attr !== false){
             // Now check, if it is a direct attribute. This is the simplest case and the fastets one too
@@ -266,8 +277,8 @@ class Object implements ExfaceClassInterface, AliasInterface
             }
             
             // check for aggregate functions and remove them
-            if ($aggr = DataAggregator::getAggregateFunctionFromAlias($alias)) {
-                $alias = substr($alias, 0, strlen(DataAggregator::AGGREGATION_SEPARATOR . $aggr) * (- 1));
+            if (($alias_without_aggregator = DataAggregation::stripAggregator($alias)) !== $alias) {
+                $alias = $alias_without_aggregator;
                 // check if it is a direct attribute again (now, as the aggregator was removed)
                 if ($attr = $this->getAttributes()->get($alias)) {
                     $this->setAttributeCache($alias, $attr);
@@ -330,13 +341,13 @@ class Object implements ExfaceClassInterface, AliasInterface
      * this alias.
      * 
      * @param string $alias
-     * @param Attribute|boolean|null $value
+     * @param MetaAttributeInterface|boolean|null $value
      * @throws InvalidArgumentException
-     * @return \exface\Core\CommonLogic\Model\Object
+     * @return \exface\Core\Interfaces\Model\MetaObjectInterface
      */
     protected function setAttributeCache($alias, $value = null)
     {
-        if ($value === false || is_null($value) || $value instanceof Attribute){
+        if ($value === false || is_null($value) || $value instanceof MetaAttributeInterface){
             $this->attributes_alias_cache[$alias] = $value;
         } else {
             throw new InvalidArgumentException('Invalid value passed to attribute cache: expecting Attribute or FALSE, "' . gettype($value) . '" received!');
@@ -349,7 +360,7 @@ class Object implements ExfaceClassInterface, AliasInterface
      * is no attribute matching the alias or NULL if it's a cache miss.
      * 
      * @param string $alias
-     * @return Attribute|boolean|null
+     * @return MetaAttributeInterface|boolean|null
      */
     protected function getAttributeCache($alias)
     {
@@ -368,7 +379,7 @@ class Object implements ExfaceClassInterface, AliasInterface
         $cache = $this->getAttributeCache($alias);
         if ($cache === false){
             return false;
-        } elseif ($cache instanceof Attribute){
+        } elseif ($cache instanceof MetaAttributeInterface){
             return $cache;
         }
         
@@ -384,7 +395,7 @@ class Object implements ExfaceClassInterface, AliasInterface
      * Returns the object related to the current one via the given relation path string
      *
      * @param string $relation_path_string            
-     * @return Object
+     * @return MetaObjectInterface
      */
     function getRelatedObject($relation_path_string)
     {
@@ -405,9 +416,9 @@ class Object implements ExfaceClassInterface, AliasInterface
      * specify which of the two reverse relation to use (e.g. LOCATION->ADDRESS[SHIPPING_ADDRESS] or something)
      *
      * @param relation $relation            
-     * @return Object
+     * @return MetaObjectInterface
      */
-    function addRelation(Relation $relation)
+    function addRelation(MetaRelationInterface $relation)
     {
         // If there already is a relation with this alias, add another one, making it an array of relations
         // Make sure, this only happens to reverse relation!!! Direct relation MUST have different aliases!
@@ -454,6 +465,14 @@ class Object implements ExfaceClassInterface, AliasInterface
         // Inherit data address
         $this->setDataAddress($parent->getDataAddress());
         $this->setDataAddressProperties($parent->getDataAddressProperties());
+        // The inheriting object will only be readable/writable if it is marked as such itself
+        // and the parent is readable or writable respectively.
+        if ($this->isReadable() && ! $parent->isReadable()){
+            $this->setReadable(false);
+        }
+        if ($this->isWritable() && ! $parent->isWritable()){
+            $this->setWritable(false);
+        }
         
         // Inherit default editor
         $default_editor_uxon = $parent->getDefaultEditorUxon()->copy();
@@ -464,8 +483,8 @@ class Object implements ExfaceClassInterface, AliasInterface
         $this->setDefaultEditorUxon($default_editor_uxon);
         
         // Inherit some object properties originating from attributes
-        $this->setUidAlias($parent->getUidAlias());
-        $this->setLabelAlias($parent->getLabelAlias());
+        $this->setUidAttributeAlias($parent->getUidAttributeAlias());
+        $this->setLabelAttributeAlias($parent->getLabelAttributeAlias());
         
         // Inherit description
         $this->setShortDescription($parent->getShortDescription());
@@ -473,23 +492,25 @@ class Object implements ExfaceClassInterface, AliasInterface
         // Inherit attributes
         foreach ($parent->getAttributes() as $attr) {
             $attr_clone = $attr->copy();
-            // Save the parent's id, if there isn't one already (that would mean, that the parent inherited the attribute too)
-            if (is_null($attr->getInheritedFromObjectId())) {
-                $attr_clone->setInheritedFromObjectId($parent_object_id);
-                // TODO Is it a good idea to set the object id of the inheridted attribute to the inheriting object? Would it be
-                // better, if we only do this for objects, that do not have their own data address and merely are containers for attributes?
-                // Currently the attribute is attached to the inheriting object, but the reference to the original object is saved in the
-                // inherited_from_object_id property. This is important because otherwise there is no easy way to find out, which object
-                // the attribute belongs to. Say, we want to get the object filtered over if the filter attribute_alias is RELATION__RELATION__ATTRIBUTE
-                // and ATTRIBUTE is inherited. In this case ATTRIBUTE->getObject() should return the inheriting object and not the base object.
-                //
-                // One place, this is used at is \exface\Core\Widgets\Data::doPrefill(). When trying to prefill from the filters of the prefill sheet,
-                // we need to find a filter widget over the object the prefill filters attribute belong to. Now, if that attribute is a UID or a
-                // create/update-timestamp, it will often be inherited from some base object of the data source - perhaps the same base object, the
-                // widget's object inherits from as well. In this case, there is no way to know, whose UID it is, unless the object_id of the inherited
-                // attribute points to the object it directly belongs to (working example in Administration > Core > App > Button "Show Objects").
-                $attr_clone->setObjectId($this->getId());
-            }
+            
+            // Save the object, we are inheriting from in the attribute
+            $attr_clone->setInheritedFromObjectId($parent_object_id);
+            
+            // IDEA Is it a good idea to set the object of the inheridted attribute to the inheriting object? Would it be
+            // better, if we only do this for objects, that do not have their own data address and merely are containers for attributes?
+            //
+            // Currently the attribute is attached to the inheriting object, but the reference to the original object is saved in the
+            // inherited_from_object_id property. This is important because otherwise there is no easy way to find out, which object
+            // the attribute belongs to. Say, we want to get the object filtered over if the filter attribute_alias is RELATION__RELATION__ATTRIBUTE
+            // and ATTRIBUTE is inherited. In this case ATTRIBUTE->getObject() should return the inheriting object and not the base object.
+            //
+            // One place, this is used at is \exface\Core\Widgets\Data::doPrefill(). When trying to prefill from the filters of the prefill sheet,
+            // we need to find a filter widget over the object the prefill filters attribute belong to. Now, if that attribute is a UID or a
+            // create/update-timestamp, it will often be inherited from some base object of the data source - perhaps the same base object, the
+            // widget's object inherits from as well. In this case, there is no way to know, whose UID it is, unless the object_id of the inherited
+            // attribute points to the object it directly belongs to (working example in Administration > Core > App > Button "Show Objects").
+            $attr_clone->setObject($this);
+            
             $this->getAttributes()->add($attr_clone);
         }
         
@@ -526,10 +547,10 @@ class Object implements ExfaceClassInterface, AliasInterface
      *
      * @see find_relation_path()
      *
-     * @param Object $related_object            
-     * @return Relation
+     * @param MetaObjectInterface $related_object            
+     * @return MetaRelationInterface
      */
-    public function findRelation(Object $related_object, $prefer_direct_relations = false)
+    public function findRelation(MetaObjectInterface $related_object, $prefer_direct_relations = false)
     {
         $first_relation = false;
         foreach ($this->getRelations() as $rel) {
@@ -557,8 +578,8 @@ class Object implements ExfaceClassInterface, AliasInterface
      *
      * @param string $related_object_id            
      * @param string $relation_type
-     *            one of the Relation::RELATION_TYPE_xxx constants
-     * @return Relation[]
+     *            one of the MetaRelationInterface::RELATION_TYPE_xxx constants
+     * @return MetaRelationInterface[]
      */
     public function findRelations($related_object_id, $relation_type = null)
     {
@@ -584,12 +605,12 @@ class Object implements ExfaceClassInterface, AliasInterface
      *
      * @see find_relation()
      *
-     * @param object $related_object            
+     * @param MetaObjectInterface $related_object            
      * @param number $max_depth            
-     * @param RelationPath $start_path            
-     * @return RelationPath | boolean
+     * @param MetaRelationPathInterface $start_path            
+     * @return MetaRelationPathInterface|boolean
      */
-    public function findRelationPath(Object $related_object, $max_depth = 3, RelationPath $start_path = null)
+    public function findRelationPath(MetaObjectInterface $related_object, $max_depth = 3, MetaRelationPathInterface $start_path = null)
     {
         $path = $start_path ? $start_path : new RelationPath($this);
         
@@ -628,12 +649,12 @@ class Object implements ExfaceClassInterface, AliasInterface
         return $result;
     }
 
-    public function getUidAlias()
+    public function getUidAttributeAlias()
     {
         return $this->uid_alias;
     }
 
-    public function setUidAlias($value)
+    public function setUidAttributeAlias($value)
     {
         $this->uid_alias = $value;
     }
@@ -642,14 +663,14 @@ class Object implements ExfaceClassInterface, AliasInterface
      * Returns the meta attribute with the unique ID of the object.
      *
      * @throws MetaObjectHasNoUidAttributeError if no UID attribute defined for this object
-     * @return \exface\Core\CommonLogic\Model\Attribute
+     * @return \exface\Core\Interfaces\Model\MetaAttributeInterface
      */
     public function getUidAttribute()
     {
-        if (! $this->getUidAlias()) {
+        if (! $this->getUidAttributeAlias()) {
             throw new MetaObjectHasNoUidAttributeError($this, 'No UID attribute defined for object "' . $this->getAliasWithNamespace() . '"!');
         }
-        return $this->getAttribute($this->getUidAlias());
+        return $this->getAttribute($this->getUidAttributeAlias());
     }
 
     /**
@@ -667,12 +688,12 @@ class Object implements ExfaceClassInterface, AliasInterface
         return true;
     }
 
-    public function getLabelAlias()
+    public function getLabelAttributeAlias()
     {
         return $this->label;
     }
 
-    public function setLabelAlias($value)
+    public function setLabelAttributeAlias($value)
     {
         $this->label = $value;
     }
@@ -680,31 +701,49 @@ class Object implements ExfaceClassInterface, AliasInterface
     /**
      * Returns the meta attribute with the label of the object
      *
-     * @return Attribute
+     * @return MetaAttributeInterface
      */
     public function getLabelAttribute()
     {
-        if (! $this->getLabelAlias()) {
+        if (! $this->getLabelAttributeAlias()) {
             return null;
         }
-        return $this->getAttribute($this->getLabelAlias());
+        return $this->getAttribute($this->getLabelAttributeAlias());
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaObjectInterface::getDataSourceId()
+     */
     public function getDataSourceId()
     {
         return $this->data_source_id;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaObjectInterface::setDataSourceId()
+     */
     public function setDataSourceId($value)
     {
         $this->data_source_id = $value;
     }
+    
+    /**
+     * 
+     * @return boolean
+     */
+    public function hasDataSource()
+    {
+        return is_null($this->data_source_id) ? false : true;
+    }
 
     /**
-     * Returns the data source for this object.
-     * The data source is fully initialized and the connection is already established.
-     *
-     * @return \exface\Core\CommonLogic\DataSource
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaObjectInterface::getDataSource()
      */
     public function getDataSource()
     {
@@ -712,12 +751,11 @@ class Object implements ExfaceClassInterface, AliasInterface
     }
 
     /**
-     * Returns the data connection for this object.
-     * The connection is already initialized and established.
-     *
-     * @return \exface\Core\CommonLogic\AbstractDataConnector
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaObjectInterface::getDataConnection()
      */
-    function getDataConnection()
+    public function getDataConnection()
     {
         return $this->getModel()->getWorkbench()->data()->getDataConnection($this->data_source_id, $this->data_connection_alias);
     }
@@ -727,7 +765,7 @@ class Object implements ExfaceClassInterface, AliasInterface
      * This way, the default connection for the data source can be overridden!
      *
      * @param string $alias            
-     * @return \exface\Core\CommonLogic\Model\Object
+     * @return \exface\Core\Interfaces\Model\MetaObjectInterface
      */
     function setDataConnectionAlias($alias)
     {
@@ -818,7 +856,7 @@ class Object implements ExfaceClassInterface, AliasInterface
      *
      * @param string $id            
      * @param string $value            
-     * @return Object
+     * @return MetaObjectInterface
      */
     public function setDataAddressProperty($id, $value)
     {
@@ -829,31 +867,12 @@ class Object implements ExfaceClassInterface, AliasInterface
     /**
      *
      * @param UxonObject $uxon            
-     * @return Object
+     * @return MetaObjectInterface
      */
     public function setDataAddressProperties(UxonObject $uxon)
     {
         $this->data_address_properties = $uxon;
         return $this;
-    }
-
-    /**
-     * DEPRECATED!
-     * Parses a string with data address properties to an assotiative array
-     *
-     * @param unknown $string            
-     * @return array
-     */
-    public function parseDataAddressProperties($string)
-    {
-        $props = array();
-        if (! empty($string)) {
-            $props = @json_decode($string, true);
-        }
-        if (! $props) {
-            $props = array();
-        }
-        return $props;
     }
 
     /**
@@ -868,7 +887,7 @@ class Object implements ExfaceClassInterface, AliasInterface
     /**
      * Returns all objects, this one inherits from as an array
      *
-     * @return object[]
+     * @return MetaObjectInterface[]
      */
     public function getParentObjects()
     {
@@ -902,7 +921,7 @@ class Object implements ExfaceClassInterface, AliasInterface
      * This includes distant relatives, that inherit
      * from other objects, inheriting from the current one.
      *
-     * @return object[]
+     * @return MetaObjectInterface[]
      */
     public function getInheritingObjects()
     {
@@ -957,11 +976,6 @@ class Object implements ExfaceClassInterface, AliasInterface
         ;
     }
 
-    public function setAliasWithNamespace($value)
-    {
-        $this->qualified_alias = $value;
-    }
-
     public function getNamespace()
     {
         return $this->namespace;
@@ -993,7 +1007,7 @@ class Object implements ExfaceClassInterface, AliasInterface
      * to build the EditObjectDialog)
      *
      * @param UxonObject $value            
-     * @return Object
+     * @return MetaObjectInterface
      */
     public function setDefaultEditorUxon(UxonObject $value)
     {
@@ -1005,18 +1019,24 @@ class Object implements ExfaceClassInterface, AliasInterface
     }
 
     /**
-     * Returns an array of placeholders, which the data address of this object contains.
-     *
-     * A typical example would be an SQL view as an object data address:
-     * SELECT [#alias#]tbl1.*, [#alias#]tbl2.* FROM table1 [#alias#]tbl1 LEFT JOIN table2 [#alias#]tbl2
-     * The placeholder [#alias#] here prefixes all table aliases with the alias of the meta object, thus making
-     * naming collisions with other views put together by the query builder virtually impossible.
-     *
-     * @return array ["alias"] for the above example
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaObjectInterface::getDataAddressRequiredPlaceholders()
      */
-    public function getDataAddressRequiredPlaceholders()
+    public function getDataAddressRequiredPlaceholders($includeStaticPlaceholders = true, $includeDynamicPlaceholders = true)
     {
-        return $this->getModel()->getWorkbench()->utils()->findPlaceholdersInString($this->getDataAddress());
+        $result = [];
+        foreach ($this->getModel()->getWorkbench()->utils()->findPlaceholdersInString($this->getDataAddress()) as $ph) {
+            if (substr($ph, 0, 1) === '~') {
+                if ($includeStaticPlaceholders) {
+                    $result[] = $ph; 
+                }
+            } elseif ($includeDynamicPlaceholders) {
+                // Attribute level
+                $result[] = $ph;
+            }
+        }
+        return $result;
     }
 
     /**
@@ -1032,12 +1052,9 @@ class Object implements ExfaceClassInterface, AliasInterface
     }
 
     /**
-     * Returns the attribute group specified by the given alias or NULL if no such group exists.
-     * Apart from explicitly defined attribute groups, built-in groups can be used. Built-in groups have aliases starting with "~".
-     * For every built-in alias there is a constant in the AttributeGroup class (e.g. AttributeGroup::ALL, etc.)
-     *
-     * @param string $alias            
-     * @return AttributeGroup
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaObjectInterface::getAttributeGroup()
      */
     public function getAttributeGroup($alias)
     {
@@ -1048,14 +1065,9 @@ class Object implements ExfaceClassInterface, AliasInterface
     }
 
     /**
-     * Returns TRUE if this object is exactly the one given or inherits from it and FALSE otherwise - similarly to the behavior of PHP instance_of.
-     * E.g. if you have an object SPECIAL_FILE, which extends FILE, SPECIAL_FILE->is(FILE) = true, but FILE->is(SPECIAL_FILE) = false.
-     *
-     * @param Object|string $object_or_alias_or_id            
-     * @return boolean
-     *
-     * @see is_exactly()
-     * @see is_extended_from()
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaObjectInterface::is()
      */
     public function is($object_or_alias_or_id)
     {
@@ -1070,7 +1082,7 @@ class Object implements ExfaceClassInterface, AliasInterface
      * Checks if this object matches the given object identifier: if so, returns TRUE and FALSE otherwise.
      * The identifier may be a qualified alias, a UID or an instantiated object.
      *
-     * @param Object|string $alias_with_relation_path            
+     * @param MetaObjectInterface|string $alias_with_relation_path            
      * @return boolean
      *
      * @see is()
@@ -1078,8 +1090,8 @@ class Object implements ExfaceClassInterface, AliasInterface
      */
     public function isExactly($object_or_alias_or_id)
     {
-        if ($object_or_alias_or_id instanceof Object) {
-            if ($object_or_alias_or_id->getId() == $this->getId()) {
+        if ($object_or_alias_or_id instanceof MetaObjectInterface) {
+            if ($object_or_alias_or_id->getId() === $this->getId()) {
                 return true;
             }
         } elseif (mb_stripos($object_or_alias_or_id, '0x') === 0) {
@@ -1098,7 +1110,7 @@ class Object implements ExfaceClassInterface, AliasInterface
      * Returns TRUE if this object is extended from the given object identifier.
      * The identifier may be a qualified alias, a UID or an instantiated object.
      *
-     * @param Object|string $object_or_alias_or_id            
+     * @param MetaObjectInterface|string $object_or_alias_or_id            
      * @return boolean
      *
      * @see is_exactly()
@@ -1121,11 +1133,11 @@ class Object implements ExfaceClassInterface, AliasInterface
 
     /**
      *
-     * @return ObjectActionList|ActionInterface[]
+     * @return MetaObjectActionListInterface|ActionInterface[]
      */
     public function getActions()
     {
-        if (! ($this->actions instanceof ObjectActionList)) {
+        if (! ($this->actions instanceof MetaObjectActionListInterface)) {
             $this->actions = $this->getModel()->getModelLoader()->loadObjectActions(new ObjectActionList($this->getWorkbench(), $this));
         }
         return $this->actions;
@@ -1140,5 +1152,60 @@ class Object implements ExfaceClassInterface, AliasInterface
     {
         return $this->getWorkbench()->getApp($this->getNamespace());
     }
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaObjectInterface::isReadable()
+     */
+    public function isReadable()
+    {
+        if (! $this->hasDataSource()) {
+            return false;
+        }        
+        if ($this->readable && ! $this->getDataSource()->isReadable()){
+            return false;
+        }
+        return $this->readable;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaObjectInterface::setReadable()
+     */
+    public function setReadable($true_or_false)
+    {
+        $this->readable = BooleanDataType::cast($true_or_false);
+        return $this;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaObjectInterface::isWritable()
+     */
+    public function isWritable()
+    {
+        if (! $this->hasDataSource()) {
+            return false;
+        }
+        if ($this->writable && ! $this->getDataSource()->isWritable()){
+            return false;
+        }
+        return $this->writable;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaObjectInterface::setWritable()
+     */
+    public function setWritable($true_or_false)
+    {
+        $this->writable = BooleanDataType::cast($true_or_false);
+        return $this;
+    }
+
+
 }
 ?>

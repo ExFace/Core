@@ -19,7 +19,7 @@ class FavoritesAdd extends ObjectBasketAdd
     protected function init()
     {
         parent::init();
-        $this->setIconName(Icons::STAR);
+        $this->setIcon(Icons::STAR);
     }
     
     /**

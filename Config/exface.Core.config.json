@@ -4,7 +4,8 @@
 	"METAMODEL.OBJECT_LABEL_ALIAS": "LABEL",
 	
 	"TEMPLATES.DEFAULT_UI_TEMPLATE": "exface.JEasyUiTemplate",
-    "TEMPLATES.WIDGET_FOR_UNKNOWN_DATA_TYPES" : "Input",
+    "TEMPLATES.DEFAULT_WIDGET_FOR_UNKNOWN_DATA_TYPES" : "Input",
+    "TEMPLATES.DEFAULT_WIDGET_FOR_RELATIONS" : "ComboTable",
 	
 	"WIDGET.CONTEXTBAR": {
 	   "contexts": [
@@ -34,11 +35,17 @@
 	},
 	
 	"WIDGET.DATATOOLBAR.GLOBAL_ACTIONS": [
-	   {
-	       "alias": "exface.Core.ObjectBasketAdd"
-	   },
-	   {
-           "alias": "exface.Core.FavoritesAdd"
-       }
+	    {
+	        "alias": "exface.Core.ObjectBasketAdd"
+	    },
+	    {
+	        "alias": "exface.Core.FavoritesAdd"
+	    },
+		{
+		    "alias": "exface.Core.ExportXLSX"
+		},
+		{
+		    "alias": "exface.Core.ExportCSV"
+		}
 	]
 }

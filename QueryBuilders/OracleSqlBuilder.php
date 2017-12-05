@@ -1,29 +1,35 @@
 <?php
 namespace exface\Core\QueryBuilders;
 
-use exface\Core\DataTypes\AbstractDataType;
+use exface\Core\CommonLogic\DataTypes\AbstractDataType;
 use exface\Core\CommonLogic\AbstractDataConnector;
 use exface\Core\Exceptions\QueryBuilderException;
-use exface\Core\CommonLogic\Model\Relation;
+use exface\Core\Interfaces\Model\MetaRelationInterface;
+use exface\Core\DataTypes\DateDataType;
+use exface\Core\DataTypes\TimestampDataType;
+use exface\Core\DataTypes\NumberDataType;
+use exface\Core\CommonLogic\QueryBuilder\QueryPartAttribute;
+use exface\Core\CommonLogic\QueryBuilder\QueryPart;
+use exface\Core\CommonLogic\Model\Aggregator;
+use exface\Core\DataTypes\AggregatorFunctionsDataType;
+use exface\Core\Interfaces\Model\AggregatorInterface;
 
 /**
  * A query builder for Oracle SQL.
  *
  * # Data source options
- * =====================
  * 
  * The following options are available in addition to the ones of the
  * AbstractSqlBuilder
  * 
  * ## On object level
- * ---------------------
  *  
  * - **SQL_SELECT_WHERE** - custom where statement automatically appended to 
  * direct selects for this object (not if the object's table is joined!). 
  * Usefull for generic tables, where different meta objects are stored and 
  * distinguished by specific keys in a special column. The value of 
- * SQL_SELECT_WHERE should contain the [#alias#] placeholder: e.g. 
- * [#alias#].mycolumn = 'myvalue'.
+ * SQL_SELECT_WHERE should contain the [#~alias#] placeholder: e.g. 
+ * [#~alias#].mycolumn = 'myvalue'.
  * 
  * @see AbstractSqlBuilder
  *
@@ -112,7 +118,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
             // sorters -> ORDER BY
             foreach ($this->getSorters() as $qpart) {
                 if ($group_by) {
-                   // TODO if we sort over an attribute that is no groupable, there will be an SQL error.
+                   // TODO if we sort over an attribute that is not groupable, there will be an SQL error.
                    // Without the sorting, there will be no error. So it makes sense to prevent this
                    // error somehow...
                 } 
@@ -135,12 +141,12 @@ class OracleSqlBuilder extends AbstractSqlBuilder
                     // Workaround to ensure, the UID is always in the query!
                     // If we are grouping, we will not select any fields, that could be ambigous, thus
                     // we can use MAX(UID), since all other values are the same within the group.
-                    if ($group_by && $qpart->getAlias() == $this->getMainObject()->getUidAlias() && ! $qpart->getAggregateFunction()) {
-                        $qpart->setAggregateFunction('MAX');
+                    if ($group_by && $qpart->getAlias() == $this->getMainObject()->getUidAttributeAlias() && ! $qpart->getAggregator()) {
+                        $qpart->setAggregator(new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::MAX));
                     }
                     // If we are grouping, we can only select valid GROUP BY expressions from the core table.
                     // These are either the ones with an aggregate function or thouse we are grouping by
-                    if ($group_by && ! $qpart->getAggregateFunction() && ! $this->getAggregation($qpart->getAlias())) {
+                    if ($group_by && ! $qpart->getAggregator() && ! $this->getAggregation($qpart->getAlias())) {
                         // IDEA at this point, we could use the default aggregate function of the attributes. However it is probably a good
                         // idea to set the default aggregator somewhere in the qpart code, not in the query builders. If we set the aggregator
                         // to the default, this place will pass without a problem.
@@ -148,18 +154,22 @@ class OracleSqlBuilder extends AbstractSqlBuilder
                     }
                     // also skip selects based on custom sql substatements if not being grouped over
                     // they should be done after pagination as they are potentially very time consuming
-                    if ($this->checkForSqlStatement($qpart->getAttribute()->getDataAddress()) && (! $group_by || ! $qpart->getAggregateFunction())) {
+                    if ($this->checkForSqlStatement($qpart->getAttribute()->getDataAddress()) && (! $group_by || ! $qpart->getAggregator())) {
                         continue;
-                    } elseif ($qpart->getUsedRelations(Relation::RELATION_TYPE_REVERSE) && ! $this->getAggregation($qpart->getAlias())) {
-                        // Also skip selects with reverse relations, as they will be fetched via subselects later
-                        // Selecting them in the core query would only slow it down. The filtering ist done explicitly in build_sql_where_condition()
-                        // FIXME This only works if the reverse relation can be joined onto something coming out of the GROUP BY. If we need UIDs of
-                        // objects being grouped, the subselect must go into the core query! But how to find out, if the columns inside the group are
-                        // needed?
+                    } elseif ($qpart->getUsedRelations(MetaRelationInterface::RELATION_TYPE_REVERSE) && ! $this->getAggregation($qpart->getAlias()) && $this->isQpartRelatedToAggregator($qpart)) {
+                        // Also skip selects with reverse relations that can be joined later in the enrichment.                      
+                        // Selecting them in the core query would only slow it down. The filtering is done explicitly in build_sql_where_condition()
+                        // The trick is, that we need to check, if the reverse relation can be joined onto something coming out of the GROUP BY:
+                        // this is done via $this->isQpartRelatedToAggregator($qpart).
                         continue;
                     } else {
                         // Add all remainig attributes of the core objects to the core query and select them 1-to-1 in the enrichment query
-                        $core_selects[$qpart->getAlias()] = $this->buildSqlSelect($qpart);
+                        if ($group_by){
+                            // When grouping, force the select expression to be compatible with GROUP BY!
+                            $core_selects[$qpart->getAlias()] = $this->buildSqlSelect($qpart, null, null, null, null, true);
+                        } else {
+                            $core_selects[$qpart->getAlias()] = $this->buildSqlSelect($qpart);
+                        }
                         $enrichment_select .= ', ' . $this->buildSqlSelect($qpart, 'EXFCOREQ', $this->getShortAlias($qpart->getAlias()), null, false);
                     }
                     unset($enrichment_selects[$nr]);
@@ -174,13 +184,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
                 // that the filter should be layed over an attribute, which uniquely identifies the object (e.g.
                 // its UID column).
                 if ($group_by && in_array($qpart->getAttribute()->getObject()->getId(), $filter_object_ids) === false) {
-                    $related_to_aggregator = false;
-                    foreach ($this->getAggregations() as $aggr) {
-                        if (strpos($qpart->getAlias(), $aggr->getAlias()) === 0) {
-                            $related_to_aggregator = true;
-                        }
-                    }
-                    if (! $related_to_aggregator) {
+                    if (! $this->isQpartRelatedToAggregator($qpart)) {
                         continue;
                     }
                 }
@@ -189,7 +193,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
                     if ($first_rel->isForwardRelation()) {
                         $first_rel_qpart = $this->addAttribute($first_rel->getAlias());
                         // IDEA this does not support relations based on custom sql. Perhaps this needs to change
-                        $core_selects[$first_rel_qpart->getAttribute()->getDataAddress()] = $this->buildSqlSelect($first_rel_qpart, null, null, $first_rel_qpart->getAttribute()->getDataAddress(), ($group_by ? 'MAX' : null));
+                        $core_selects[$first_rel_qpart->getAttribute()->getDataAddress()] = $this->buildSqlSelect($first_rel_qpart, null, null, $first_rel_qpart->getAttribute()->getDataAddress(), ($group_by ? new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::MAX) : null));
                     }
                 }
                 
@@ -197,7 +201,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
                 if ($qpart->getFirstRelation() && $qpart->getFirstRelation()->isReverseRelation()) {
                     // If the first relation needed for the select is a reverse one, make sure, the subselect will reference the core query directly
                     $enrichment_select .= ', ' . $this->buildSqlSelect($qpart, 'EXFCOREQ');
-                } elseif ($group_by && ! $qpart->getFirstRelation() && ! $qpart->getAggregateFunction()) {
+                } elseif ($group_by && ! $qpart->getFirstRelation() && ! $qpart->getAggregator()) {
                     // If in a GROUP BY the attribute belongs to the main object and does not have an aggregate function, skip it - oracle cannot deal with it
                     continue;
                 } else {
@@ -266,12 +270,12 @@ class OracleSqlBuilder extends AbstractSqlBuilder
             foreach ($this->getAttributes() as $qpart) {
                 // if the query has a GROUP BY, we need to put the UID-Attribute in the core select as well as in the enrichment select
                 // otherwise the enrichment joins won't work!
-                if ($group_by && $qpart->getAttribute()->getAlias() === $qpart->getAttribute()->getObject()->getUidAlias()) {
-                    $select .= ', ' . $this->buildSqlSelect($qpart, null, null, null, 'MAX');
+                if ($group_by && $qpart->getAttribute()->getAlias() === $qpart->getAttribute()->getObject()->getUidAttributeAlias()) {
+                    $select .= ', ' . $this->buildSqlSelect($qpart, null, null, null, new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::MAX));
                     $enrichment_select .= ', ' . $this->buildSqlSelect($qpart, 'EXFCOREQ');
                 } // if we are aggregating, leave only attributes, that have an aggregate function,
                   // and ones, that are aggregated over or can be assumed unique due to set filters
-                elseif (! $group_by || $qpart->getAggregateFunction() || $this->getAggregation($qpart->getAlias())) {
+                elseif (! $group_by || $qpart->getAggregator() || $this->getAggregation($qpart->getAlias())) {
                     $select .= ', ' . $this->buildSqlSelect($qpart);
                     $joins = array_merge($joins, $this->buildSqlJoins($qpart));
                 } elseif (in_array($qpart->getAttribute()->getObject()->getId(), $filter_object_ids) !== false) {
@@ -281,7 +285,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
                         $first_rel = reset($rels);
                         $first_rel_qpart = $this->addAttribute($first_rel->getAlias());
                         // IDEA this does not support relations based on custom sql. Perhaps this needs to change
-                        $select .= ', ' . $this->buildSqlSelect($first_rel_qpart, null, null, $first_rel_qpart->getAttribute()->getDataAddress(), ($group_by ? 'MAX' : null));
+                        $select .= ', ' . $this->buildSqlSelect($first_rel_qpart, null, null, $first_rel_qpart->getAttribute()->getDataAddress(), ($group_by ? new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::MAX) : null));
                     }
                     $enrichment_select .= ', ' . $this->buildSqlSelect($qpart);
                     $enrichment_joins = array_merge($enrichment_joins, $this->buildSqlJoins($qpart, 'exfcoreq'));
@@ -320,14 +324,14 @@ class OracleSqlBuilder extends AbstractSqlBuilder
         if (count($this->getTotals()) > 0) {
             // determine all joins, needed to perform the totals functions
             foreach ($this->getTotals() as $qpart) {
-                $totals_selects[] = $this->buildSqlSelect($qpart, 'EXFCOREQ', $this->getShortAlias($qpart->getAlias()), null, $qpart->getFunction());
+                $totals_selects[] = $this->buildSqlSelect($qpart, 'EXFCOREQ', $this->getShortAlias($qpart->getAlias()), null, $qpart->getTotalAggregator());
                 $totals_core_selects[] = $this->buildSqlSelect($qpart);
                 $totals_joins = array_merge($totals_joins, $this->buildSqlJoins($qpart));
             }
         }
         
         if ($group_by) {
-            $totals_core_selects[] = $this->buildSqlSelect($this->getAttribute($this->getMainObject()->getUidAlias()), null, null, null, 'MAX');
+            $totals_core_selects[] = $this->buildSqlSelect($this->getAttribute($this->getMainObject()->getUidAttributeAlias()), null, null, null, new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::MAX));
         }
         
         // filters -> WHERE
@@ -368,9 +372,9 @@ class OracleSqlBuilder extends AbstractSqlBuilder
         return $totals_query;
     }
 
-    protected function buildSqlSelectNullCheck($select_statement, $value_if_null)
+    protected function buildSqlSelectNullCheckFunctionName()
     {
-        return 'NVL(' . $select_statement . ', ' . (is_numeric($value_if_null) ? $value_if_null : '"' . $value_if_null . '"') . ')';
+        return 'NVL';
     }
 
     /**
@@ -387,54 +391,35 @@ class OracleSqlBuilder extends AbstractSqlBuilder
             $output = ($select_from ? $select_from : $this->getShortAlias($qpart->getAttribute()->getRelationPath()->toString())) . '.' . $qpart->getDataAddressProperty("ORDER_BY");
         } else {
             $output = '"' . $this->getShortAlias($qpart->getAlias()) . '"';
+            
+            // Make sure, NULLs are treated as 0 in numeric columns. Otherwise
+            // they will be put at the beginning or the end of the result making
+            // sorting loose it's value.
+            if ($qpart->getAttribute()->getDataType() instanceof NumberDataType){
+                $output = 'NVL(' . $output . ',0)';
+            }
         }
         $output .= ' ' . $qpart->getOrder();
         return $output;
     }
-
-    /**
-     *
-     * @see \exface\DataSources\QueryBuilders\sql_abstractSQL
-     * @param \exface\Core\CommonLogic\QueryBuilder\QueryPart $qpart            
-     * @param string $select_from            
-     * @param string $select_column            
-     * @param string $select_as            
-     * @param string $group_function            
-     * @return string
-     */
-    protected function buildSqlGroupFunction(\exface\Core\CommonLogic\QueryBuilder\QueryPart $qpart, $select_from = null, $select_column = null, $select_as = null, $group_function = null)
-    {
+    
+    protected function buildSqlGroupByExpression(QueryPartAttribute $qpart, $sql, AggregatorInterface $aggregator){
         $output = '';
-        $group_function = ! is_null($group_function) ? $group_function : $qpart->getAggregateFunction();
-        $group_function = trim($group_function);
-        $select = $this->buildSqlSelect($qpart, $select_from, $select_column, false, false);
-        $args = array();
-        if ($args_pos = strpos($group_function, '(')) {
-            $func = substr($group_function, 0, $args_pos);
-            $args = explode(',', substr($group_function, ($args_pos + 1), - 1));
-        } else {
-            $func = $group_function;
-        }
+        $function_arguments = $aggregator->getArguments();
         
-        switch ($func) {
-            case 'SUM':
-            case 'AVG':
-            case 'COUNT':
-            case 'MAX':
-            case 'MIN':
-                $output = $func . '(' . $select . ')';
-                break;
-            case 'LIST':
-                $output = "ListAgg(" . $select . ", " . ($args[0] ? $args[0] : "', '") . ") WITHIN GROUP (order by " . $select . ")";
+        switch ($aggregator->getFunction()->getValue()) {
+            case AggregatorFunctionsDataType::LIST_ALL:
+                $output = "ListAgg(" . $sql . ", " . ($function_arguments[0] ? $function_arguments[0] : "', '") . ") WITHIN GROUP (order by " . $sql . ")";
                 $qpart->getQuery()->addAggregation($qpart->getAttribute()->getAliasWithRelationPath());
                 break;
-            case 'LIST_DISTINCT':
-                $output = "ListAggDistinct(" . $select . ")";
+            case AggregatorFunctionsDataType::LIST_DISTINCT:
+                $output = "ListAggDistinct(" . $sql . ")";
                 $qpart->getQuery()->addAggregation($qpart->getAttribute()->getAliasWithRelationPath());
                 break;
             default:
-                break;
+                $output = parent::buildSqlGroupByExpression($qpart, $sql, $aggregator);
         }
+        
         return $output;
     }
 
@@ -450,7 +435,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
 
     protected function prepareInputValue($value, AbstractDataType $data_type, $sql_data_type = NULL)
     {
-        if ($data_type->is(EXF_DATA_TYPE_DATE) || $data_type->is(EXF_DATA_TYPE_TIMESTAMP)) {
+        if ($data_type instanceof DateDataType || $data_type instanceof TimestampDataType) {
             $value = "TO_DATE('" . $this->escapeString($value) . "', 'yyyy-mm-dd hh24:mi:ss')";
         } else {
             $value = parent::prepareInputValue($value, $data_type, $sql_data_type);
@@ -460,7 +445,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
 
     protected function prepareWhereValue($value, AbstractDataType $data_type, $sql_data_type = NULL)
     {
-        if ($data_type->is(EXF_DATA_TYPE_DATE) || $data_type->is(EXF_DATA_TYPE_TIMESTAMP)) {
+        if ($data_type instanceof DateDataType || $data_type instanceof TimestampDataType) {
             $output = "TO_DATE('" . $value . "', 'yyyy-mm-dd hh24:mi:ss')";
         } else {
             $output = parent::prepareWhereValue($value, $data_type);
@@ -517,8 +502,8 @@ class OracleSqlBuilder extends AbstractSqlBuilder
                 if ($custom_insert_sql) {
                     // If there is a custom insert SQL for the attribute, use it
                     $values[$row][$column] = str_replace(array(
-                        '[#alias#]',
-                        '[#value#]'
+                        '[#~alias#]',
+                        '[#~value#]'
                     ), array(
                         $this->getMainObject()->getAlias(),
                         $value

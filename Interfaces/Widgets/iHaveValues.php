@@ -14,7 +14,7 @@ interface iHaveValues extends iHaveValue
 
     /**
      *
-     * @param Expression|string $expression_or_delimited_list            
+     * @param ExpressionInterface|string $expression_or_delimited_list            
      */
     public function setValues($expression_or_delimited_list);
 

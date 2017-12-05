@@ -3,7 +3,7 @@ namespace exface\Core\Exceptions\Model;
 
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Interfaces\Exceptions\MetaObjectExceptionInterface;
-use exface\Core\CommonLogic\Model\Object;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 
 /**
  * Exception thrown if a requested relation cannot be found for the given meta object.
@@ -20,12 +20,12 @@ class MetaRelationNotFoundError extends UnexpectedValueException implements Meta
 
     /**
      *
-     * @param Object $meta_object            
+     * @param MetaObjectInterface $meta_object            
      * @param string $message            
      * @param string $alias            
      * @param \Throwable $previous            
      */
-    public function __construct(Object $meta_object, $message, $alias = null, $previous = null)
+    public function __construct(MetaObjectInterface $meta_object, $message, $alias = null, $previous = null)
     {
         parent::__construct($message, null, $previous);
         $this->setAlias($alias);

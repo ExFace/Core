@@ -18,10 +18,10 @@ interface iContainButtonGroups extends iHaveChildren
     
     /**
      * 
-     * @param ButtonGroup[]|UxonObject[] $widget_or_uxon_objects
+     * @param ButtonGroup[]|UxonObject $widget_or_uxon_objects
      * @return iContainButtonGroups
      */
-    public function setButtonGroups(array $widget_or_uxon_objects);
+    public function setButtonGroups($widget_or_uxon_objects);
     
     /**
      *

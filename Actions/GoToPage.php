@@ -3,6 +3,7 @@ namespace exface\Core\Actions;
 
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\WidgetLinkFactory;
+use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 
 /**
  * Navigates to the given page optionally taking along a set of definable filters.

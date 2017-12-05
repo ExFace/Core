@@ -1,9 +1,6 @@
 <?php
 namespace exface\Core\Interfaces;
 
-use exface\Core\Interfaces\iCanBeConvertedToUxon;
-use exface\Core\CommonLogic\Workbench;
-
 /**
  * The EntityList is a generic container for all kinds of object collections or lists in ExFace.
  * Basically, it is an array with a proper API and some
@@ -36,7 +33,7 @@ interface EntityListInterface extends iCanBeConvertedToUxon, \IteratorAggregate
      *
      * @param mixed $entity            
      * @param mixed $key            
-     * @return UxonObjectList
+     * @return EntityListInterface
      */
     public function add($entity, $key = null);
 
@@ -44,7 +41,7 @@ interface EntityListInterface extends iCanBeConvertedToUxon, \IteratorAggregate
      * Removes the given entity from the list
      *
      * @param mixed $entity            
-     * @return UxonObjectList
+     * @return EntityListInterface
      */
     public function remove($entity);
 
@@ -115,19 +112,9 @@ interface EntityListInterface extends iCanBeConvertedToUxon, \IteratorAggregate
     /**
      * Sorts the list by key values
      *
-     * @return EntityList
+     * @return EntityListInterface
      */
     public function sortByKey();
-
-    /**
-     * Uses the given array of UXON objects to populate the entity list.
-     * Each UXON object in the array
-     * will be instantiated and added to the list.
-     *
-     * @param array $uxon            
-     * @return void
-     */
-    public function importUxonArray(array $uxon);
 
     /**
      * Returns a new entity list, containing all entities of this one and all entities of the given other list, that

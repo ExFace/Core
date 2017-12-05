@@ -25,7 +25,7 @@ class UndoAction extends AbstractAction implements iUndoActions
      */
     function init()
     {
-        $this->setIconName(Icons::UNDO);
+        $this->setIcon(Icons::UNDO);
     }
 
     /**

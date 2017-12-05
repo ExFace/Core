@@ -1,12 +1,15 @@
 <?php
 namespace exface\Core\CommonLogic\Model;
 
+use exface\Core\Interfaces\Model\MetaObjectInterface;
+use exface\Core\Interfaces\Model\MetaObjectActionListInterface;
+
 /**
  *
  * @author Andrej Kabachnik
  *        
  */
-class ObjectActionList extends ActionList
+class ObjectActionList extends ActionList implements MetaObjectActionListInterface
 {
 
     private $object_basket_action_aliases = array();
@@ -34,7 +37,7 @@ class ObjectActionList extends ActionList
 
     /**
      *
-     * @return Object
+     * @return MetaObjectInterface
      */
     public function getMetaObject()
     {
@@ -43,10 +46,10 @@ class ObjectActionList extends ActionList
 
     /**
      *
-     * @param Object $meta_object            
-     * @return \exface\Core\CommonLogic\Model\ObjectActionList
+     * @param MetaObjectInterface $meta_object            
+     * @return \exface\Core\Interfaces\Model\MetaObjectActionListInterface
      */
-    public function setMetaObject(Object $meta_object)
+    public function setMetaObject(MetaObjectInterface $meta_object)
     {
         return $this->setParent($meta_object);
     }
@@ -75,7 +78,7 @@ class ObjectActionList extends ActionList
     /**
      *
      * @param array $value            
-     * @return \exface\Core\CommonLogic\Model\Object
+     * @return \exface\Core\Interfaces\Model\MetaObjectInterface
      */
     public function setObjectBasketActionAliases(array $value)
     {

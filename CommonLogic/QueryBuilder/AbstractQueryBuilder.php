@@ -7,6 +7,7 @@ use exface\Core\CommonLogic\AbstractDataConnector;
 use exface\Core\Exceptions\QueryBuilderException;
 use exface\Core\Factories\ConditionFactory;
 use exface\Core\Exceptions\Model\MetaObjectDataConnectionNotFoundError;
+use exface\Core\Interfaces\Model\AggregatorInterface;
 
 abstract class AbstractQueryBuilder
 {
@@ -80,11 +81,11 @@ abstract class AbstractQueryBuilder
     /**
      * Set the main object for the query
      *
-     * @param \exface\Core\CommonLogic\Model\Object $meta_object            
+     * @param \exface\Core\Interfaces\Model\MetaObjectInterface $meta_object            
      * @throws MetaObjectDataConnectionNotFoundError if the data connection for the object cannot be established
      * @return \exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder
      */
-    public function setMainObject(\exface\Core\CommonLogic\Model\Object $meta_object)
+    public function setMainObject(\exface\Core\Interfaces\Model\MetaObjectInterface $meta_object)
     {
         $this->main_object = $meta_object;
         // Instantiate the data connection for the object here to make sure, all it's settings, contexts, etc. are applied before the query is built!
@@ -97,7 +98,7 @@ abstract class AbstractQueryBuilder
     /**
      * Returns the main meta object of the query
      *
-     * @return \exface\Core\CommonLogic\Model\Object
+     * @return \exface\Core\Interfaces\Model\MetaObjectInterface
      */
     public function getMainObject()
     {
@@ -107,7 +108,8 @@ abstract class AbstractQueryBuilder
     /**
      * Adds an attribute to be fetched by the query
      *
-     * @param string $attribute_alias            
+     * @param string $attribute_alias 
+     * @return QueryPartAttribute           
      */
     public function addAttribute($alias)
     {
@@ -141,18 +143,16 @@ abstract class AbstractQueryBuilder
      * Adds a total row to the query (i.e.
      * for the footers)
      *
-     * @param string $attribute
-     *            attribute_alias
-     * @param string $function
-     *            like SUM, AVG, etc.
+     * @param string $attribute_alias
+     * @param AggregatorInterface $aggregator
      * @param int $place_in_row
      *            row number within a multi-row footer for this total
      */
-    public function addTotal($attribute, $function, $place_in_row = 0)
+    public function addTotal($attribute_alias, AggregatorInterface $aggregator, $place_in_row = 0)
     {
-        $qpart = new QueryPartTotal($attribute, $this);
-        $qpart->setAlias($attribute);
-        $qpart->setFunction($function);
+        $qpart = new QueryPartTotal($attribute_alias, $this);
+        $qpart->setAlias($attribute_alias);
+        $qpart->setTotalAggregator($aggregator);
         $qpart->setRow($place_in_row);
         $this->totals[] = $qpart;
         return $qpart;
@@ -166,16 +166,30 @@ abstract class AbstractQueryBuilder
     /**
      * Creates and adds a single filter to the query
      *
-     * @param unknown $attribute_alias            
-     * @param unknown $value            
+     * @param string $attribute_alias            
+     * @param string $value            
      * @param string $comparator            
-     * @return \exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder
+     * @return QueryPartFilter
      */
     public function addFilterFromString($attribute_alias, $value, $comparator = EXF_COMPARATOR_IS)
     {
         $exface = $this->getWorkbench();
         $condition = ConditionFactory::createFromExpression($exface, $this->getWorkbench()->model()->parseExpression($attribute_alias, $this->getMainObject()), $value, $comparator);
         return $this->addFilterCondition($condition);
+    }
+    
+    /**
+     * 
+     * @param string $attribute_alias
+     * @param string $sql
+     * @param string $comparator
+     * @return \exface\Core\CommonLogic\QueryBuilder\QueryPartFilter
+     */
+    protected function addFilterWithCustomSql($attribute_alias, $sql, $comparator = EXF_COMPARATOR_IS)
+    {
+        $qpart = $this->addFilterFromString($attribute_alias, $sql, $comparator);
+        $qpart->setValueIsDataAddress(true);
+        return $qpart;
     }
 
     /**
@@ -203,15 +217,14 @@ abstract class AbstractQueryBuilder
     }
 
     /**
-     * Adds a condition group to the first level of filters
+     * Adds a condition group to the first level of filters and returns the resulting query part.
      *
      * @param ConditionGroup $condition_group            
-     * @return \exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder
+     * @return QueryPartFilterGroup
      */
     public function addFilterConditionGroup(ConditionGroup $condition_group)
     {
-        $this->getFilters()->addConditionGroup($condition_group);
-        return $this;
+        return $this->getFilters()->addConditionGroup($condition_group);
     }
 
     /**
@@ -227,15 +240,14 @@ abstract class AbstractQueryBuilder
     }
 
     /**
-     * Adds a first level condition to the root filter group
+     * Adds a first level condition to the root filter group and returns the resulting query part
      *
      * @param Condition $condition            
-     * @return \exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder
+     * @return QueryPartFilter
      */
     public function addFilterCondition(Condition $condition)
     {
-        $this->getFilters()->addCondition($condition);
-        return $this;
+        return $this->getFilters()->addCondition($condition);
     }
 
     /**
@@ -573,5 +585,23 @@ abstract class AbstractQueryBuilder
             return $row_array;
         }
         return array_slice($row_array, $this->getOffset(), $this->getLimit());
+    }
+    
+    protected function replacePlaceholdersByFilterValues($string)
+    {
+        foreach ($this->getWorkbench()->utils()->findPlaceholdersInString($string) as $ph) {
+            if ($ph_filter = $this->getFilter($ph)) {
+                if (! is_null($ph_filter->getCompareValue())) {
+                    $string = str_replace('[#' . $ph . '#]', $ph_filter->getCompareValue(), $string);
+                } else {
+                    // If at least one filter does not have a value, return false
+                    throw new QueryBuilderException('Missing filter value in "' . $ph_filter->getAlias() . '" needed for placeholder "' . $ph . '" in SQL "' . $string . '"!');
+                }
+            } else {
+                // If at least one placeholder does not have a corresponding filter, return false
+                throw new QueryBuilderException('Missing filter for placeholder "' . $ph . '" in SQL "' . $string . '"!');
+            }
+        }
+        return $string;
     }
 }

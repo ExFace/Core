@@ -1,7 +1,6 @@
 <?php
 namespace exface\Core\CommonLogic;
 
-use exface\Core\CommonLogic\Workbench;
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 use exface\Core\Interfaces\NameResolverInterface;
 use exface\Core\Factories\EventFactory;
@@ -9,6 +8,7 @@ use exface\Core\Interfaces\DataSources\DataQueryInterface;
 use exface\Core\Exceptions\DataSources\DataConnectionConfigurationError;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\Exceptions\UxonMapError;
+use exface\Core\Exceptions\ModelBuilders\ModelBuilderNotAvailableError;
 
 abstract class AbstractDataConnector implements DataConnectionInterface
 {
@@ -25,11 +25,11 @@ abstract class AbstractDataConnector implements DataConnectionInterface
      *
      * @deprecated Use DataConnectorFactory instead!
      */
-    function __construct(Workbench $exface, array $config = null)
+    function __construct(Workbench $exface, UxonObject $config = null)
     {
         $this->exface = $exface;
         if ($config) {
-            $this->importUxonObject(UxonObject::fromArray($config));
+            $this->importUxonObject($config);
         }
     }
 
@@ -196,4 +196,17 @@ abstract class AbstractDataConnector implements DataConnectionInterface
      * @see \exface\Core\Interfaces\DataSources\DataConnectionInterface::transactionIsStarted()
      */
     public abstract function transactionIsStarted();
+    
+    
+    
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Interfaces\DataSources\SqlDataConnectorInterface::getModelBuilder()
+     */
+    public function getModelBuilder()
+    {
+        throw new ModelBuilderNotAvailableError('No model builder implemented for data connector ' . $this->getAliasWithNamespace() . '!');
+    }
 }

@@ -2,9 +2,9 @@
 namespace exface\Core\Factories;
 
 use exface\Core\CommonLogic\Workbench;
-use exface\Core\CommonLogic\Model\Condition;
 use exface\Core\CommonLogic\Model\ConditionGroup;
 use exface\Core\Exceptions\UnexpectedValueException;
+use exface\Core\CommonLogic\UxonObject;
 
 abstract class ConditionGroupFactory extends AbstractUxonFactory
 {
@@ -12,7 +12,7 @@ abstract class ConditionGroupFactory extends AbstractUxonFactory
     /**
      * Returns an empty condition group
      *
-     * @param exface $exface            
+     * @param Workbench $exface            
      * @param string $group_operator            
      * @return ConditionGroup
      */
@@ -27,7 +27,7 @@ abstract class ConditionGroupFactory extends AbstractUxonFactory
      * [ OPERATOR1, [ CONDITION1 ], [ CONDITION2 ], [ OPERATOR2, [ CONDITION3 ], [ CONDITION4] ], ...
      * ]
      *
-     * @param exface $exface            
+     * @param Workbench $exface            
      * @param array $array_notation            
      * @return ConditionGroup
      */
@@ -44,10 +44,10 @@ abstract class ConditionGroupFactory extends AbstractUxonFactory
                     case EXF_LOGICAL_NOT:
                     case EXF_LOGICAL_OR:
                     case EXF_LOGICAL_XOR:
-                        $group->addNestedGroup(self::createFromObjectOrArray($exface, $part));
+                        $group->addNestedGroup(self::createFromUxonOrArray($exface, $part));
                         break;
                     default:
-                        $group->addCondition(ConditionFactory::createFromObjectOrArray($exface, $part));
+                        $group->addCondition(ConditionFactory::createFromUxonOrArray($exface, $part));
                 }
             } else {
                 throw new UnexpectedValueException('Cannot parse condition "' . print_r($part) . '" of condition group "' . print_r($array_notation) . '"!');
@@ -58,15 +58,15 @@ abstract class ConditionGroupFactory extends AbstractUxonFactory
 
     /**
      *
-     * @param exface $exface            
-     * @param string|array $uxon_or_array            
+     * @param Workbench $exface            
+     * @param UxonObject|array $uxon_or_array            
      * @throws UnexpectedValueException
      * @return ConditionGroup
      */
-    public static function createFromObjectOrArray(Workbench $exface, $uxon_or_array)
+    public static function createFromUxonOrArray(Workbench $exface, $uxon_or_array)
     {
-        if ($uxon_or_array instanceof \stdClass) {
-            return self::createFromStdClass($exface, $uxon_or_array);
+        if ($uxon_or_array instanceof UxonObject) {
+            return self::createFromUxon($exface, $uxon_or_array);
         } elseif (is_array($uxon_or_array)) {
             return self::createFromArray($exface, $uxon_or_array);
         } else {

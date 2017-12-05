@@ -68,5 +68,14 @@ interface DataConnectionInterface extends ExfaceClassInterface, AliasInterface, 
      * @return boolean
      */
     public function transactionIsStarted();
+    
+    
+    
+    /**
+     * Returns an instance of the model builder, that can be used to generate meta models from this data connection.
+     *
+     * @return ModelBuilderInterface
+     */
+    public function getModelBuilder();
 }
 ?>

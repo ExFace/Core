@@ -34,7 +34,7 @@ class ExportData extends ReadData implements iExportData
     protected function init()
     {
         parent::init();
-        $this->setIconName(Icons::DOWNLOAD);
+        $this->setIcon(Icons::DOWNLOAD);
     }
     /**
      * 
@@ -42,7 +42,7 @@ class ExportData extends ReadData implements iExportData
      * @see \exface\Core\Actions\ReadData::perform()
      */
     protected function perform(){
-        $dataSheet = $this->getInputDataSheet()->copy();
+        $dataSheet = $this->getInputDataSheet();
         // Make sure, the input data has all the columns required for the widget
         // we export from. Generally this will not be the case, because the
         // widget calling the action is a button and it normally does not know
@@ -75,7 +75,7 @@ class ExportData extends ReadData implements iExportData
      */
     public function setDownload($true_or_false)
     {
-        $this->download = BooleanDataType::parse($true_or_false);
+        $this->download = BooleanDataType::cast($true_or_false);
         return $this;
     }
 

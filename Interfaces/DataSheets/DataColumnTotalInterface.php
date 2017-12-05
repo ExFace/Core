@@ -5,6 +5,7 @@ use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Interfaces\DataSheets\DataColumnInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\InvalidArgumentException;
+use exface\Core\Interfaces\Model\AggregatorInterface;
 
 interface DataColumnTotalInterface extends iCanBeConvertedToUxon
 {
@@ -27,15 +28,17 @@ interface DataColumnTotalInterface extends iCanBeConvertedToUxon
      *
      * @return string
      */
-    public function getFunction();
+    public function getAggregator();
 
     /**
      *
-     * @param string $value            
+     * @param AggregatorInterface|string $value            
+     * 
      * @throws InvalidArgumentException
+     * 
      * @return \exface\Core\Interfaces\DataSheets\DataColumnTotalInterface
      */
-    public function setFunction($value);
+    public function setAggregator($aggregator_or_string);
 
     /**
      *

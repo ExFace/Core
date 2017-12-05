@@ -70,6 +70,21 @@ class Configuration implements ConfigurationInterface
         }
         return $this->getConfigUxon()->getProperty($key);
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\ConfigurationInterface::hasOption()
+     */
+    public function hasOption($key)
+    {
+        try {
+            $this->getOption($key);
+        } catch (ConfigOptionNotFoundError $e){
+            return false;
+        }
+        return true;
+    }
 
     protected function getConfigFilePath($scope)
     {

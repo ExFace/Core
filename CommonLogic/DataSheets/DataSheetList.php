@@ -1,7 +1,7 @@
 <?php
 namespace exface\Core\CommonLogic\DataSheets;
 
-use exface\Core\CommonLogic\Model\Object;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\CommonLogic\EntityList;
 use exface\Core\Exceptions\DataSheets\DataSheetLogicError;
 
@@ -38,10 +38,10 @@ class DataSheetList extends EntityList
     /**
      * Returns all subsheets, that have the specified meta object as their base object
      *
-     * @param Object $object            
+     * @param MetaObjectInterface $object            
      * @return DataColumn[]
      */
-    public function getByObject(Object $object)
+    public function getByObject(MetaObjectInterface $object)
     {
         $result = array();
         foreach ($this->getAll() as $sheet) {

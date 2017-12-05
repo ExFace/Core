@@ -14,10 +14,10 @@ interface iHaveToolbars extends iHaveChildren
     
     /**
      * 
-     * @param Toolbar[]|UxonObject[] $widget_or_uxon_objects
+     * @param Toolbar[]|UxonObject $widget_or_uxon_objects
      * @return iHaveToolbars
      */
-    public function setToolbars(array $widget_or_uxon_objects);
+    public function setToolbars($widget_or_uxon_objects);
     
     /**
      *

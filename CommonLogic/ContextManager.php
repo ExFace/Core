@@ -6,7 +6,7 @@ use exface\Core\CommonLogic\Contexts\Scopes\SessionContextScope;
 use exface\Core\CommonLogic\Contexts\Scopes\AbstractContextScope;
 use exface\Core\CommonLogic\Model\Condition;
 use exface\Core\CommonLogic\Contexts\Scopes\ApplicationContextScope;
-use exface\Core\CommonLogic\Model\Object;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\CommonLogic\Contexts\Scopes\UserContextScope;
 use exface\Core\Interfaces\Contexts\ContextManagerInterface;
 use exface\Core\CommonLogic\Contexts\Scopes\RequestContextScope;
@@ -113,10 +113,10 @@ class ContextManager implements ContextManagerInterface
      * Returns an array of filter conditions from all scopes.
      * If a meta object id is given, only conditions applicable to that object are returned.
      *
-     * @param \exface\Core\CommonLogic\Model\Object $meta_object            
+     * @param \exface\Core\Interfaces\Model\MetaObjectInterface $meta_object            
      * @return Condition[]
      */
-    public function getFilterConditionsFromAllContexts(Object $meta_object)
+    public function getFilterConditionsFromAllContexts(MetaObjectInterface $meta_object)
     {
         $contexts = array();
         foreach ($this->getScopes() as $scope) {

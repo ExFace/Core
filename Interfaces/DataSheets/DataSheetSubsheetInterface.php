@@ -14,20 +14,13 @@ interface DataSheetSubsheetInterface extends DataSheetInterface
      *
      * @param DataSheetInterface $value            
      */
-    public function setParentSheet($value)
-    {
-        $this->parent_sheet = $value;
-        return $this;
-    }
+    public function setParentSheet($value);
 
     /**
      *
      * @return string
      */
-    public function getJoinParentOnColumnId()
-    {
-        return $this->join_parent_on_column_id;
-    }
+    public function getJoinParentOnColumnId();
 
     /**
      *

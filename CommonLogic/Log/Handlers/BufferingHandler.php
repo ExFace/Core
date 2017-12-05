@@ -69,7 +69,7 @@ class BufferingHandler implements LogHandlerInterface
      */
     public function setDisabled($true_or_false)
     {
-        $this->disabled = BooleanDataType::parse($true_or_false);
+        $this->disabled = BooleanDataType::cast($true_or_false);
     }
     
     /**

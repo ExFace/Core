@@ -3,20 +3,21 @@ namespace exface\Core\CommonLogic\Model;
 
 use exface\Core\CommonLogic\EntityList;
 use exface\Core\Interfaces\Actions\ActionInterface;
+use exface\Core\Interfaces\ActionListInterface;
 
 /**
  *
  * @author Andrej Kabachnik
  *        
  * @method ActionInterface[] getAll()
- * @method ActionList|ActionInterface[] getIterator()
+ * @method ActionListInterface|ActionInterface[] getIterator()
  * @method ActionInterface get()
  * @method ActionInterface getFirst()
  * @method ActionInterface getLast()
- * @method ActionList copy()
+ * @method ActionListInterface copy()
  *        
  */
-class ActionList extends EntityList
+class ActionList extends EntityList implements ActionListInterface
 {
 
     /**
