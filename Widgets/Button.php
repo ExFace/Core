@@ -10,10 +10,10 @@ use exface\Core\Factories\WidgetLinkFactory;
 use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
-use exface\Core\Interfaces\Widgets\iHaveButtons;
 use exface\Core\Interfaces\Widgets\iCanBeAligned;
 use exface\Core\Widgets\Traits\iCanBeAlignedTrait;
 use exface\Core\Interfaces\Widgets\iUseInputWidget;
+use exface\Core\Widgets\Traits\iUseInputWidgetTrait;
 
 /**
  * A Button is the primary widget for triggering actions.
@@ -27,6 +27,8 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iUseIn
 {
     use iCanBeAlignedTrait;
     
+    use iUseInputWidgetTrait;
+    
     private $action_alias = null;
 
     private $action = null;
@@ -39,7 +41,7 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iUseIn
 
     private $hotkey = null;
 
-    private $icon_name = null;
+    private $icon = null;
 
     private $refresh_input = true;
 
@@ -72,10 +74,10 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iUseIn
      *
      * @see \exface\Core\Interfaces\Widgets\iTriggerAction::setAction()
      */
-    public function setAction($action_object_or_uxon_description)
+    public function setAction($action_or_uxon)
     {
-        if ($action_object_or_uxon_description instanceof ActionInterface) {
-            $this->action = $action_object_or_uxon_description;
+        if ($action_or_uxon instanceof ActionInterface) {
+            $this->action = $action_or_uxon;
             // Let the action know, it was (or will be) called by this button
             // unless the action already has a called-by-widget. This would be
             // the case if the same action is assigned to multiple buttons. 
@@ -85,11 +87,11 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iUseIn
             if (! $this->action->getCalledByWidget()){
                 $this->action->setCalledByWidget($this);
             }
-        } elseif ($action_object_or_uxon_description instanceof \stdClass) {
-            $this->setActionAlias($action_object_or_uxon_description->alias);
-            $this->setActionOptions($action_object_or_uxon_description);
+        } elseif ($action_or_uxon instanceof UxonObject) {
+            $this->setActionAlias($action_or_uxon->getProperty('alias'));
+            $this->setActionOptions($action_or_uxon);
         } else {
-            throw new WidgetPropertyInvalidValueError($this, 'The set_action() method of a button accepts either an action object extended from ActionInterface or a UXON description object. ' . gettype($action_object_or_uxon_description) . ' given for button "' . $this->getId() . '".', '6T919D5');
+            throw new WidgetPropertyInvalidValueError($this, 'The set_action() method of a button accepts either an action object extended from ActionInterface or a UXON description object. ' . gettype($action_or_uxon) . ' given for button "' . $this->getId() . '".', '6T919D5');
         }
         return $this;
     }
@@ -129,119 +131,41 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iUseIn
     }
 
     /**
-     * Returns the id of the widget, which the action is supposed to be performed upon.
-     * I.e. if it is an Action doing something with a table row, the input widget will be
-     * the table. If the action ist to be performed upon an Input field - that Input is the input widget.
-     *
-     * By default the input widget is the actions parent
-     */
-    public function getInputWidgetId()
-    {
-        if (! $this->input_widget_id) {
-            if ($this->input_widget) {
-                $this->setInputWidgetId($this->getInputWidget()->getId());
-            } else {
-                $this->setInputWidgetId($this->getParent()->getId());
-            }
-        }
-        return $this->input_widget_id;
-    }
-
-    /**
-     * Sets the id of the widget to be used to fetch input data for the action performed by this button.
-     *
-     * @uxon-property input_widget_id
-     * @uxon-type string
-     *
-     * @param string $value            
-     */
-    public function setInputWidgetId($value)
-    {
-        $this->input_widget_id = $value;
-        return $this;
-    }
-    
-    /**
-     * Returns the input widget of the button.
-     * 
-     * If no input widget was set for this button explicitly (via UXON or
-     * programmatically using setInputWidget()), the input widget will be
-     * determined automatically:
-     * - If the parent of the button is a button or a button group, the input
-     * widget will be inherited
-     * - If the parent of the widget has buttons (e.g. a Data widget), it will
-     * be used as input widget
-     * - Otherwise the search for those criteria will continue up the hierarchy
-     * untill the root widget is reached. If no match is found, the root widget
-     * itself will be returned.
-     * 
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Widgets\iTriggerAction::getInputWidget()
-     */
-    public function getInputWidget()
-    {
-        if (is_null($this->input_widget)) {
-            if ($this->input_widget_id) {
-                $this->input_widget = $this->getUi()->getWidget($this->input_widget_id, $this->getPageId());
-            } elseif ($this->getParent()) {
-                $parent = $this->getParent();
-                while (!(($parent instanceof iHaveButtons) || ($parent instanceof iUseInputWidget)) && ! is_null($parent->getParent())) {
-                    $parent = $parent->getParent();
-                }
-                if ($parent instanceof iUseInputWidget){
-                    $this->input_widget = $parent->getInputWidget();
-                } else {
-                    $this->input_widget = $parent;
-                }
-            }
-        }
-        return $this->input_widget;
-    }
-
-    public function setInputWidget(AbstractWidget $widget)
-    {
-        $this->input_widget = $widget;
-        $this->setInputWidgetId($widget->getId());
-        return $this;
-    }
-
-    /**
      * Buttons allow to set action options as an options array or directly as an option of the button itself.
      * In the latter case the option's name must be prefixed by "action_": to set a action's property
      * called "script" simply add "action_script": XXX to the button.
      *
      * @see \exface\Core\Widgets\AbstractWidget::importUxonObject()
      */
-    public function importUxonObject(\stdClass $source)
+    public function importUxonObject(UxonObject $uxon)
     {
         // If there are button attributes starting with "action_", these are just shortcuts for
         // action attributes. We need to remove them from the button's description an pass
         // them all in on "action_options" attribute. The only exclusion is the action_alias, which
         // we need to instantiate the action.
-        $action_options = $source->action_options ? $source->action_options : new \stdClass();
-        foreach ($source as $attr => $val) {
+        $action_options = $uxon->hasProperty('action_options') ? $uxon->getProperty('action_options') : new UxonObject();
+        foreach ($uxon as $attr => $val) {
             if ($attr != 'action_alias' && strpos($attr, "action_") === 0) {
-                unset($source->$attr);
+                $uxon->unsetProperty($attr);
                 $attr = substr($attr, 7);
-                $action_options->$attr = $val;
+                $action_options->setProperty($attr, $val);
             }
         }
-        if (count((array) $action_options)) {
-            $source->action_options = $action_options;
+        if (! $action_options->isEmpty()) {
+            $uxon->setProperty('action_options', $action_options);
         }
-        parent::importUxonObject($source);
+        parent::importUxonObject($uxon);
     }
 
     /**
      * Sets options of the action, defined in the button's description.
      * NOTE: the action must be defined first!
      *
-     * @param \stdClass $action_options            
+     * @param UxonObject $action_options            
      * @throws WidgetPropertyInvalidValueError
      * @return Button
      */
-    protected function setActionOptions(\stdClass $action_options)
+    protected function setActionOptions(UxonObject $action_options)
     {
         if (! $action = $this->getAction()) {
             throw new WidgetPropertyInvalidValueError($this, 'Cannot set action properties prior to action initialization! Please ensure, that the action_alias is defined first!', '6T919D5');
@@ -279,12 +203,12 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iUseIn
         return $this;
     }
 
-    public function getIconName()
+    public function getIcon()
     {
-        if (! $this->icon_name && $this->getAction()) {
-            $this->icon_name = $this->getAction()->getIconName();
+        if (! $this->icon && $this->getAction()) {
+            $this->icon = $this->getAction()->getIcon();
         }
-        return $this->icon_name;
+        return $this->icon;
     }
 
     /**
@@ -293,16 +217,16 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iUseIn
      * There are some default icons defined in the core, but every template is free to add more icons. The names of the latter
      * are, of course, absolutely template specific.
      *
-     * @uxon-property icon_name
+     * @uxon-property icon
      * @uxon-type string
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\Interfaces\Widgets\iHaveIcon::setIconName()
+     * @see \exface\Core\Interfaces\Widgets\iHaveIcon::setIcon()
      */
-    public function setIconName($value)
+    public function setIcon($value)
     {
-        $this->icon_name = $value;
+        $this->icon = $value;
         return $this;
     }
 
@@ -377,7 +301,8 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iUseIn
     public function getChildren()
     {
         $children = array();
-        if ($this->getAction() && $this->getAction()->implementsInterface('iShowWidget') && $this->getAction()->getWidget()) {
+        $action = $this->getAction();
+        if ($action && $action->implementsInterface('iShowWidget') && $action->isWidgetDefined()) {
             $children[] = $this->getAction()->getWidget();
         }
         return $children;

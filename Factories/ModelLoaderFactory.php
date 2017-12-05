@@ -15,7 +15,8 @@ abstract class ModelLoaderFactory extends AbstractNameResolverFactory
      */
     public static function create(NameResolverInterface $name_resolver)
     {
-        return parent::create($name_resolver);
+        $class = $name_resolver->getClassNameWithNamespace();
+        return new $class($name_resolver);
     }
 }
 ?>

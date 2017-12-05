@@ -31,6 +31,9 @@
 	"ACTION.FAVORITESADD.NAME": "In die Favoriten",
     "ACTION.FAVORITESADD.RESULT": "%number% Objekt zu Favoriten hinzugefügt.|%number% Objekte zu Favoriten hinzugefügt.",
     
+    "ACTION.GENERATEMODELFROMDATASOURCE.NAME": "Modell generieren",
+	"ACTION.GENERATEMODELFROMDATASOURCE.RESULT_FOR_OBJECT": "%created_counter% Attribut(e) für %object_counter% Objekt(e) erstellt. %skipped_counter% Attribut(e) als Dublikate ignoriert!",
+	
     "ACTION.GOBACK.NAME": "Zurück",
 	"ACTION.GOTOURL.NAME": "Webseite anzeigen",
 	"ACTION.GOTOURL.SUCCESS": "Sie werden weitergeleitet...",
@@ -99,16 +102,36 @@
 	"DATETIME.FORMAT.SCREEN.PHP": "d.m.Y H:i:s",
 	
     "GLOBAL.ACTIONS": "Aktionen",
-    "GLOBAL.DEFAULT_DATE_FORMAT": "d.m.Y",
-    "GLOBAL.DEFAULT_DATETIME_FORMAT": "d.m.Y H:i:s",
     
-    "INSTALLER.SQLSCHEMA.SUCCESS": "%counter% SQL-Schema-Update wurde installiert|%counter% SQL-Schema-Updates wurden installiert",
+    "GLOBAL.AGGREGATOR_FUNCTIONS.SUM": "Summe",
+	"GLOBAL.AGGREGATOR_FUNCTIONS.AVG": "Durchschnitt",
+	"GLOBAL.AGGREGATOR_FUNCTIONS.MIN": "Minimum",
+	"GLOBAL.AGGREGATOR_FUNCTIONS.MAX": "Maximum",
+	"GLOBAL.AGGREGATOR_FUNCTIONS.LIST": "Liste",
+	"GLOBAL.AGGREGATOR_FUNCTIONS.LIST_DISTINCT": "Liste unterschiedlicher Werte",
+	"GLOBAL.AGGREGATOR_FUNCTIONS.COUNT": "Anzahl",
+	"GLOBAL.AGGREGATOR_FUNCTIONS.COUNT_DISTINCT": "Anzahl unterschiedlicher Werte",
+	"GLOBAL.AGGREGATOR_FUNCTIONS.COUNT_IF": "Anzahl mit Filter",
+	
+	"GLOBAL.SORTING_DIRECTIONS.ASC": "Aufsteigend",
+	"GLOBAL.SORTING_DIRECTIONS.DESC": "Absteigend",
+	
+	"INSTALLER.SQLSCHEMA.SUCCESS": "%counter% SQL-Schema-Update wurde installiert|%counter% SQL-Schema-Updates wurden installiert",
     "INSTALLER.SQLSCHEMA.FAILED": "SQL-Schema-Update Nr. %first_failed_id% fehlerhaft: %error_text%|%counter% SQL-Schema-Updates wurden abgebrochen angefangen mit Update Nr. %first_failed_id%: %error_text%", 
+    
+    "LOCALIZATION.DATE.DATE_FORMAT": "d.m.Y",
+    "LOCALIZATION.DATE.DATETIME_FORMAT": "d.m.Y H:i:s",
+    "LOCALIZATION.DATE.TIME_FORMAT": "H:i:s",
+    "LOCALIZATION.NUMBER.DECIMAL_SEPARATOR": ",",
+    "LOCALIZATION.NUMBER.THOUSANDS_SEPARATOR": " ",
+    "LOCALIZATION.PRICE.PRECISION_MAX": 2,
+    "LOCALIZATION.PRICE.PRECISION_MIN": 2,
     
 	"WIDGET.SELECT_ALL": "Alle",
 	"WIDGET.SELECT_YES": "Ja",
 	"WIDGET.SELECT_NO": "Nein",
 	"WIDGET.SELECT_NONE": "-",
+	"WIDGET.SELECT_EMPTY": "Leer",
 
 	"WIDGET.STATEMENUBUTTON.CAPTION": "Status ändern",
 
@@ -124,6 +147,11 @@
 	"WIDGET.DIALOG.CLOSE_BUTTON_CAPTION": "Abbrechen",
 
 	"WIDGET.TEXT.EMPTY_TEXT": "-",
+	"WIDGET.TEXT.STYLE_BOLD": "Fett",
+	"WIDGET.TEXT.STYLE_NORMAL": "Normal",
+	"WIDGET.TEXT.STYLE_UNDERLINE": "Unterstrichen",
+	"WIDGET.TEXT.STYLE_ITALIC": "Kursiv",
+	"WIDGET.TEXT.STYLE_STRIKETHROUGH": "Durchgestrichen",
 
 	"WIDGET.INPUT.EMPTY_TEXT": "",
 

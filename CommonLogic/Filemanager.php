@@ -4,6 +4,7 @@ namespace exface\Core\CommonLogic;
 use Symfony\Component\Filesystem\Filesystem;
 use exface\Core\Interfaces\ExfaceClassInterface;
 use Webmozart\PathUtil\Path;
+use exface\Core\Exceptions\Configuration\ConfigOptionNotFoundError;
 
 class Filemanager extends Filesystem implements ExfaceClassInterface
 {
@@ -78,9 +79,18 @@ class Filemanager extends Filesystem implements ExfaceClassInterface
     public function getPathToUserDataFolder()
     {
         if (is_null($this->path_to_user_data_folder)) {
-            $this->path_to_user_data_folder = $this->getPathToBaseFolder() . DIRECTORY_SEPARATOR . static::FOLDER_NAME_USER_DATA;
+            /* TODO configurable userdata folder path did not work because Workbench::getConfig() also
+             * attempts to get the userdata folder to look for configs there, resulting in an infinite 
+             * loop. 
+             *
+            try {
+                $path = $this->getWorkbench()->getConfig()->getOption('FOLDERS.USERDATA_PATH_ABSOLUTE');
+            } catch (ConfigOptionNotFoundError $e) {
+                $path = '';
+            }*/
+            $this->path_to_user_data_folder = $path ? $path : $this->getPathToBaseFolder() . DIRECTORY_SEPARATOR . static::FOLDER_NAME_USER_DATA;
             if (! is_dir($this->path_to_user_data_folder)) {
-                mkdir($this->path_to_user_data_folder);
+                static::pathConstruct($this->path_to_user_data_folder);
             }
         }
         return $this->path_to_user_data_folder;
@@ -95,9 +105,15 @@ class Filemanager extends Filesystem implements ExfaceClassInterface
     public function getPathToCacheFolder()
     {
         if (is_null($this->path_to_cache_folder)) {
-            $this->path_to_cache_folder = $this->getPathToBaseFolder() . DIRECTORY_SEPARATOR . static::FOLDER_NAME_CACHE;
+            try {
+                $path = $this->getWorkbench()->getConfig()->getOption('FOLDERS.CACHE_PATH_ABSOLUTE');
+            } catch (ConfigOptionNotFoundError $e) {
+                $path = '';
+            }
+
+            $this->path_to_cache_folder = $path ? $path : $this->getPathToBaseFolder() . DIRECTORY_SEPARATOR . static::FOLDER_NAME_CACHE;
             if (! is_dir($this->path_to_cache_folder)) {
-                mkdir($this->path_to_cache_folder);
+                static::pathConstruct($this->path_to_cache_folder);
             }
         }
         return $this->path_to_cache_folder;
@@ -145,9 +161,14 @@ class Filemanager extends Filesystem implements ExfaceClassInterface
     public function getPathToLogFolder()
     {
         if (is_null($this->path_to_log_folder)) {
-            $this->path_to_log_folder = $this->getPathToBaseFolder() . DIRECTORY_SEPARATOR . static::FOLDER_NAME_LOG;
+            try {
+                $path = $this->getWorkbench()->getConfig()->getOption('FOLDERS.LOGS_PATH_ABSOLUTE');
+            } catch (ConfigOptionNotFoundError $e) {
+                $path = '';
+            }
+            $this->path_to_log_folder = $path ? $path : $this->getPathToBaseFolder() . DIRECTORY_SEPARATOR . static::FOLDER_NAME_LOG;
             if (! is_dir($this->path_to_log_folder)) {
-                mkdir($this->path_to_log_folder);
+                static::pathConstruct($this->path_to_log_folder);
             }
         }
         return $this->path_to_log_folder;
@@ -187,9 +208,14 @@ class Filemanager extends Filesystem implements ExfaceClassInterface
     public function getPathToBackupFolder()
     {
         if (is_null($this->path_to_backup_folder)) {
-            $this->path_to_backup_folder = $this->getPathToBaseFolder() . DIRECTORY_SEPARATOR . static::FOLDER_NAME_BACKUP;
+            try {
+                $path = $this->getWorkbench()->getConfig()->getOption('FOLDERS.BACKUP_PATH_ABSOLUTE');
+            } catch (ConfigOptionNotFoundError $e) {
+                $path = '';
+            }
+            $this->path_to_backup_folder = $path ? $path : $this->getPathToBaseFolder() . DIRECTORY_SEPARATOR . static::FOLDER_NAME_BACKUP;
             if (! is_dir($this->path_to_backup_folder)) {
-                mkdir($this->path_to_backup_folder);
+                static::pathConstruct($this->path_to_backup_folder);
             }
         }
         return $this->path_to_backup_folder;
@@ -198,9 +224,9 @@ class Filemanager extends Filesystem implements ExfaceClassInterface
     /**
      * Copies a complete folder to a new location including all sub folders
      *
-     * @param string $originDir            
-     * @param string $destinationDir  
-     * @param boolean $overWriteNewerFiles          
+     * @param string $originDir
+     * @param string $destinationDir
+     * @param boolean $overWriteNewerFiles
      */
     public function copyDir($originDir, $destinationDir, $overWriteNewerFiles = false)
     {
@@ -217,20 +243,34 @@ class Filemanager extends Filesystem implements ExfaceClassInterface
         }
         closedir($dir);
     }
-    
+
     /**
      * Removes all files and subfolders in the given folder, leaving it empty.
      * @param string $absolutePath
      * @param boolean $removeHiddenFiles
      */
     public function emptyDir($absolutePath, $removeHiddenFiles = true){
-        $absolutePath = rtrim(static::pathNormalize($absolutePath, '/'), "/");
+        $absolutePath = static::pathNormalize($absolutePath, DIRECTORY_SEPARATOR);
+        if (substr($absolutePath, -1) !== DIRECTORY_SEPARATOR){
+            $absolutePath .= DIRECTORY_SEPARATOR;
+        }
+
+        // First empty subfolders
         if ($removeHiddenFiles){
-            $files = glob('path/to/temp/{,.}*', GLOB_BRACE);
+            $subfolders = glob($absolutePath . '{,.}[!.,!..]*', GLOB_MARK|GLOB_BRACE|GLOB_ONLYDIR);
         } else {
-            $files = glob($absolutePath . '/*');
+            $subfolders = glob($absolutePath . '*', GLOB_ONLYDIR);
+        }
+        array_map('self::emptyDir', $subfolders);
+
+        // Now delete subfolders and files
+        if ($removeHiddenFiles){
+            $files = glob($absolutePath . '{,.}[!.,!..]*', GLOB_MARK|GLOB_BRACE);
+        } else {
+            $files = glob($absolutePath . '*');
         }
         array_map('unlink', $files);
+
         return;
     }
 
@@ -248,7 +288,7 @@ class Filemanager extends Filesystem implements ExfaceClassInterface
     /**
      * Transforms "C:\wamp\www\exface\exface\vendor\exface\Core\CommonLogic\..\..\..\.." to "C:/wamp/www/exface/exface"
      *
-     * @param string $path            
+     * @param string $path
      * @return string
      */
     public static function pathNormalize($path, $directory_separator = '/')
@@ -263,7 +303,7 @@ class Filemanager extends Filesystem implements ExfaceClassInterface
     /**
      * Returns TRUE if the given string is an absolute path and FALSE otherwise
      *
-     * @param string $path            
+     * @param string $path
      * @return boolean
      */
     public static function pathIsAbsolute($path)
@@ -277,7 +317,7 @@ class Filemanager extends Filesystem implements ExfaceClassInterface
     /**
      * Joins all paths given in the array and returns the resulting path
      *
-     * @param array $paths            
+     * @param array $paths
      * @return string
      */
     public static function pathJoin(array $paths)
@@ -288,7 +328,7 @@ class Filemanager extends Filesystem implements ExfaceClassInterface
     /**
      * Returns the longest common base path for all given paths or NULL if there is no common base.
      *
-     * @param array $paths            
+     * @param array $paths
      * @return string|NULL
      */
     public static function pathGetCommonBase(array $paths)
@@ -314,6 +354,34 @@ class Filemanager extends Filesystem implements ExfaceClassInterface
                 mkdir($sPathList, 0755);
             }
         }
+    }
+    /**
+     * Emptys directory, deletes it afterwards
+     *
+     * @param  $path
+     */
+    public static function deleteDir($dirPath) {
+        if (is_dir($dirPath)) {
+            self::emptyDir($dirPath, true);
+            rmdir($dirPath);
+        }
+        return;
+    }
+    /**
+     * Checks if a directory is empty
+     *
+     * @param  $path
+     * @return boolean|null State of directory, TRUE if empty, FALSE if at least one file is found, NULL if permission denied and state unclear
+     */
+    public static function isDirEmpty($dir) {
+        if (!is_readable($dir)) return NULL;
+        $handle = opendir($dir);
+        while (false !== ($entry = readdir($handle))) {
+            if ($entry != "." && $entry != "..") {
+                return FALSE;
+            }
+        }
+        return TRUE;
     }
 }
 ?>

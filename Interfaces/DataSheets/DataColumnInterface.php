@@ -1,21 +1,22 @@
 <?php
 namespace exface\Core\Interfaces\DataSheets;
 
-use exface\Core\CommonLogic\Model\Attribute;
-use exface\Core\CommonLogic\Model\Expression;
-use exface\Core\DataTypes\AbstractDataType;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
+use exface\Core\CommonLogic\DataTypes\AbstractDataType;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Interfaces\DataSheets\DataColumnTotalsListInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\iCanBeCopied;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
+use exface\Core\Interfaces\Model\ExpressionInterface;
+use exface\Core\Interfaces\Model\AggregatorInterface;
 
 interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
 {
 
     /**
      *
-     * @param unknown $expression            
+     * @param ExpressionInterface|string $expression            
      * @param string $name            
      * @param DataSheetInterface $data_sheet            
      */
@@ -23,14 +24,13 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
 
     /**
      *
-     * @return \exface\Core\CommonLogic\Model\Expression
+     * @return \exface\Core\Interfaces\Model\ExpressionInterface
      */
     public function getExpressionObj();
 
     /**
      *
-     * @param
-     *            Expression | string $expression_or_string
+     * @param ExpressionInterface|string $expression_or_string
      */
     public function setExpression($expression_or_string);
 
@@ -45,7 +45,7 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
      * Updates the parent data sheet by the given one.
      * This can be used to copy columns back and forth, but must be handeld with CAUTION, because it only copies the column, not the values!!!
      *
-     * @param DataSheet $data_sheet            
+     * @param DataSheetInterface $data_sheet            
      */
     public function setDataSheet(DataSheetInterface $data_sheet);
 
@@ -70,13 +70,13 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
 
     /**
      *
-     * @return Expression
+     * @return ExpressionInterface
      */
     public function getFormatter();
 
     /**
      *
-     * @param Expression $expression            
+     * @param ExpressionInterface $expression            
      */
     public function setFormatter($expression);
 
@@ -98,7 +98,7 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
      * represents anything else, like a forumula, a constant, etc.
      *
      * @throws MetaAttributeNotFoundError if it is expected to be an attribute, but is not found for the object of the column
-     * @return Attribute
+     * @return MetaAttributeInterface
      */
     public function getAttribute();
 
@@ -130,10 +130,10 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
     /**
      * Sets the values of the column by evaluating the given expression for this column
      *
-     * @param expression $expression            
+     * @param ExpressionInterface $expression            
      * @return @return DataColumnInterface
      */
-    public function setValuesByExpression(Expression $expression, $overwrite = true);
+    public function setValuesByExpression(ExpressionInterface $expression, $overwrite = true);
 
     /**
      *
@@ -150,7 +150,7 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
     /**
      * Clones the column and returns the new copy
      *
-     * @return DataColumn
+     * @return DataColumnInterface
      */
     public function copy();
 
@@ -193,7 +193,7 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
      * an empty array, because both values are present in both columns (however in different rows).
      * If you need to compare the columns per-row, use diff_rows() instead.
      *
-     * @param DataColumn $another_column            
+     * @param DataColumnInterface $another_column            
      * @return array
      */
     public function diffValues(DataColumnInterface $another_column);
@@ -221,13 +221,13 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
 
     /**
      *
-     * @return Expression
+     * @return ExpressionInterface
      */
     public function getFormula();
 
     /**
      *
-     * @param string|Expression $expression_or_string            
+     * @param string|ExpressionInterface $expression_or_string            
      */
     public function setFormula($expression_or_string);
 
@@ -241,13 +241,22 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
      * @return DataColumnTotalsListInterface
      */
     public function getTotals();
-
+    
     /**
-     * Returns FALSE if the column contains at least one data row and TRUE otherwise
-     *
+     * Returns TRUE if the column has at least one total function and FALSE otherwise.
+     * 
      * @return boolean
      */
-    public function isEmpty();
+    public function hasTotals();
+
+    /**
+     * Returns FALSE if the column contains at least one data row (with non-empty values 
+     * if $check_values is TRUE) and TRUE otherwise.
+     *
+     * @param boolean $check_values
+     * @return boolean
+     */
+    public function isEmpty($check_values = false);
 
     /**
      * Applies default and fixed values defined in the meta model to this column.
@@ -286,19 +295,39 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
     public function removeRows();
 
     /**
-     * Aggregates all values in this column using the given function.
-     * The function names are the same, as in
-     * the column definitions (e.g. attribute_alias:SUM)
+     * Aggregates all values in this column using the given aggregator.
      *
-     * @param string $aggregate_function            
+     * @param AggregatorInterface $aggregator            
      * @return string
      */
-    public function aggregate($aggregate_function_name);
+    public function aggregate(AggregatorInterface $aggregator);
 
     /**
      * Returns the meta object of this data column
      *
-     * @return \exface\Core\CommonLogic\Model\Object
+     * @return \exface\Core\Interfaces\Model\MetaObjectInterface
      */
     public function getMetaObject();
+    
+    /**
+     * Returns TRUE if this column shows a meta attribute and FALSE otherwise (e.g. formula, etc.)
+     * 
+     * @return boolean
+     */
+    public function isAttribute();
+    
+    /**
+     * 
+     * Returns TRUE if this column shows a formula and FALSE otherwise
+     * 
+     * @return boolean
+     */
+    public function isFormula();
+    
+    /**
+     * Returns TRUE if this is a calculated column - that is, it's data does not (only) come from a data source.
+     * 
+     * @return boolean
+     */
+    public function isCalculated();
 }

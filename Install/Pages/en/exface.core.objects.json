@@ -1,0 +1,110 @@
+{
+    "id": "0xe6ea2a1a949e11e78de5028037ec0200",
+    "alias_with_namespace": "exface.core.objects",
+    "menu_parent_page_alias": "exface.core.metamodel",
+    "menu_index": "3",
+    "menu_visible": true,
+    "name": "Objects",
+    "short_description": "",
+    "replaces_page_alias": null,
+    "contents": {
+        "id": "object",
+        "object_alias": "exface.Core.OBJECT",
+        "widget_type": "DataTable",
+        "filters": [
+            {
+                "attribute_alias": "LABEL"
+            },
+            {
+                "attribute_alias": "APP"
+            },
+            {
+                "attribute_alias": "DATA_ADDRESS",
+                "widget_type": "Input"
+            },
+            {
+                "attribute_alias": "ALIAS"
+            },
+            {
+                "attribute_alias": "DATA_SOURCE"
+            },
+            {
+                "attribute_alias": "UID",
+                "widget_type": "input"
+            },
+            {
+                "attribute_alias": "PARENT_OBJECT"
+            }
+        ],
+        "columns": [
+            {
+                "attribute_alias": "LABEL"
+            },
+            {
+                "attribute_alias": "APP__ALIAS",
+                "caption": "App Alias"
+            },
+            {
+                "attribute_alias": "ALIAS"
+            },
+            {
+                "attribute_alias": "DATA_SOURCE__LABEL"
+            },
+            {
+                "attribute_alias": "DATA_ADDRESS"
+            },
+            {
+                "attribute_alias": "ATTRIBUTE__UID:COUNT",
+                "caption": "Attributes"
+            },
+            {
+                "attribute_alias": "OBJECT_ACTION__UID:COUNT",
+                "caption": "Actions"
+            },
+            {
+                "attribute_alias": "OBJECT_BEHAVIORS__UID:COUNT",
+                "caption": "Behaviors"
+            },
+            {
+                "attribute_alias": "UID"
+            },
+            {
+                "attribute_alias": "CREATED_BY_USER__LABEL"
+            },
+            {
+                "attribute_alias": "CREATED_ON"
+            }
+        ],
+        "sorters": [
+            {
+                "attribute_alias": "CREATED_ON",
+                "direction": "desc"
+            }
+        ],
+        "buttons": [
+            {
+                "action_alias": "exface.Core.CreateObjectDialog"
+            },
+            {
+                "action_alias": "exface.Core.EditObjectDialog",
+                "bind_to_double_click": true
+            },
+            {
+                "action_alias": "exface.Core.DuplicateObjectDialog"
+            },
+            {
+                "action_alias": "exface.Core.DeleteObject"
+            },
+            {
+                "action": {
+                    "alias": "exface.Core.GoToPage",
+                    "page_alias": "exface.core.attributes"
+                },
+                "caption": "Attributes"
+            },
+            {
+                "action_alias": "exface.Core.ShowModelBuilderDialog"
+            }
+        ]
+    }
+}

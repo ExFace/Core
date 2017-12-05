@@ -20,14 +20,14 @@ class SaveData extends AbstractAction implements iModifyData, iCanBeUndone
 
     function init()
     {
-        $this->setIconName(Icons::CHECK);
+        $this->setIcon(Icons::CHECK);
         $this->setInputRowsMin(0);
         $this->setInputRowsMax(null);
     }
 
     protected function perform()
     {
-        $data_sheet = $this->getInputDataSheet()->copy();
+        $data_sheet = $this->getInputDataSheet();
         $this->setAffectedRows($data_sheet->dataSave($this->getTransaction()));
         $this->setResultDataSheet($data_sheet);
         $this->setResult('');
@@ -72,10 +72,10 @@ class SaveData extends AbstractAction implements iModifyData, iCanBeUndone
         }
     }
 
-    public function setUndoData(\stdClass $uxon_object)
+    public function setUndoData(UxonObject $uxon_object)
     {
         $exface = $this->getApp()->getWorkbench();
-        $this->undo_data_sheet = DataSheetFactory::createFromStdClass($exface, $uxon_object);
+        $this->undo_data_sheet = DataSheetFactory::createFromUxon($exface, $uxon_object);
     }
 
     public function undo(DataTransactionInterface $transaction = null)

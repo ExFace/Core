@@ -24,6 +24,56 @@ trait JqueryDataTablesTrait {
     private $row_details_collapse_icon = 'fa-minus-square-o';
     
     private $on_load_success = '';
+    
+    /**
+     * 
+     * @return string
+     */
+    protected function buildHtmlTable($css_class = '')
+    {
+        $widget = $this->getWidget();
+        $thead = '';
+        $tfoot = '';
+        
+        // Column headers
+        /* @var $col \exface\Core\Widgets\DataColumn */
+        foreach ($widget->getColumns() as $col) {
+            $thead .= '<th title="' . $col->getHint() . '">' . $col->getCaption() . '</th>';
+            if ($widget->hasColumnFooters()) {
+                $tfoot .= '<th class="text-right"></th>';
+            }
+        }
+        
+        // Extra column for the multiselect-checkbox
+        if ($widget->getMultiSelect()) {
+            $checkbox_header = '<th onclick="javascript: if(!$(this).parent().hasClass(\'selected\')) {' . $this->getId() . '_table.rows().select(); $(\'#' . $this->getId() . '_wrapper\').find(\'th.select-checkbox\').parent().addClass(\'selected\');} else{' . $this->getId() . '_table.rows().deselect(); $(\'#' . $this->getId() . '_wrapper\').find(\'th.select-checkbox\').parent().removeClass(\'selected\');}"></th>';
+            $thead = $checkbox_header . $thead;
+            if ($tfoot) {
+                $tfoot = $checkbox_header . $tfoot;
+            }
+        }
+        
+        // Extra column for expand-button if rows have details
+        if ($widget->hasRowDetails()) {
+            $thead = '<th></th>' . $thead;
+            if ($tfoot) {
+                $tfoot = '<th></th>' . $tfoot;
+            }
+        }
+        
+        if ($tfoot) {
+            $tfoot = '<tfoot>' . $tfoot . '</tfoot>';
+        }
+        
+        return <<<HTML
+        <table id="{$this->getId()}" class="{$css_class}" cellspacing="0" width="100%">
+            <thead>
+                {$thead}
+            </thead>
+            {$tfoot}
+        </table>
+HTML;
+    }
 
     /**
      * Returns JS code adding a click-event handler to the expand-cell of each row of a table with row details,
@@ -37,44 +87,45 @@ trait JqueryDataTablesTrait {
     {
         $output = '';
         $widget = $this->getWidget();
+        $collapse_icon_selector = '.' . str_replace(' ', '.', $this->getRowDetailsCollapseIcon());
+        $expand_icon_selector = '.' . str_replace(' ', '.', $this->getRowDetailsExpandIcon());
         
         if ($widget->hasRowDetails()) {
             $output = <<<JS
 	// Add event listener for opening and closing details
 	$('#{$this->getId()} tbody').on('click', 'td.details-control', function () {
-		var tr = $(this).closest('tr');
+		var tr = $(this).closest('{$this->buildCssSelectorDataRows()}');
 		var row = {$this->getId()}_table.row( tr );
 		
 		if ( row.child.isShown() ) {
 			// This row is already open - close it
 			row.child.hide();
 			tr.removeClass('shown');
-			tr.find('.{$this->getRowDetailsCollapseIcon()}').removeClass('{$this->getRowDetailsCollapseIcon()}').addClass('{$this->getRowDetailsExpandIcon()}');
+			tr.find('{$collapse_icon_selector}').removeClass('{$this->getRowDetailsCollapseIcon()}').addClass('{$this->getRowDetailsExpandIcon()}');
 			$('#detail'+row.data().id).remove();
 			{$this->getId()}_table.columns.adjust();
-		}
-		else {
+		} else {
 			// Open this row
-			row.child('<div id="detail'+row.data().{$widget->getMetaObject()->getUidAlias()}+'"></div>').show();
+			row.child('<div id="detail'+row.data().{$widget->getMetaObject()->getUidAttributeAlias()}+'"></div>').show();
 			$.ajax({
 				url: '{$this->getAjaxUrl()}',
 				method: 'post',
 				data: {
 					action: '{$widget->getRowDetailsAction()}',
-					resource: '{$this->getPageId()}',
+					resource: '{$widget->getPage()->getAliasWithNamespace()}',
 					element: '{$widget->getRowDetailsContainer()->getId()}',
 					prefill: {
-						oId:"{$widget->getMetaObjectId()}",
+						oId:"{$widget->getMetaObject()->getId()}",
 						rows:[
-							{ {$widget->getMetaObject()->getUidAlias()}: row.data().{$widget->getMetaObject()->getUidAlias()} }
+							{ {$widget->getMetaObject()->getUidAttributeAlias()}: row.data().{$widget->getMetaObject()->getUidAttributeAlias()} }
 						],
 						filters: {$this->buildJsDataFilters()}
 					},
-					exfrid: row.data().{$widget->getMetaObject()->getUidAlias()}
+					exfrid: row.data().{$widget->getMetaObject()->getUidAttributeAlias()}
 				},
 				dataType: "html",
 				success: function(data){
-					$('#detail'+row.data().{$widget->getMetaObject()->getUidAlias()}).append(data);
+					$('#detail'+row.data().{$widget->getMetaObject()->getUidAttributeAlias()}).append(data);
 					{$this->getId()}_table.columns.adjust();
 				},
 				error: function(jqXHR, textStatus, errorThrown ){
@@ -83,7 +134,7 @@ trait JqueryDataTablesTrait {
 			});
 			tr.next().addClass('detailRow unselectable');
 			tr.addClass('shown');
-			tr.find('.{$this->getRowDetailsExpandIcon()}').removeClass('{$this->getRowDetailsExpandIcon()}').addClass('{$this->getRowDetailsCollapseIcon()}');
+			tr.find('{$expand_icon_selector}').removeClass('{$this->getRowDetailsExpandIcon()}').addClass('{$this->getRowDetailsCollapseIcon()}');
 		}
 	} );
 JS;
@@ -114,7 +165,7 @@ JS;
         } else {
             $rows = "Array.prototype.slice.call(" . $this->getId() . "_table.rows({selected: true}).data())";
         }
-        return "{oId: '" . $this->getWidget()->getMetaObjectId() . "', rows: " . $rows . "}";
+        return "{oId: '" . $this->getWidget()->getMetaObject()->getId() . "', rows: " . $rows . "}";
     }
     
     public function buildJsRefresh($keep_pagination_position = false)
@@ -167,7 +218,7 @@ JS;
             // TODO
         }
         if (is_null($column)) {
-            $column = $this->getWidget()->getMetaObject()->getUidAlias();
+            $column = $this->getWidget()->getMetaObject()->getUidAttributeAlias();
         } else {
             // TODO
         }
@@ -205,7 +256,7 @@ JS;
 				{$this->buildJsBusyIconShow()}
 				var filtersOn = false;
 				d.action = '{$widget->getLazyLoadingAction()}';
-				d.resource = "{$this->getPageId()}";
+				d.resource = "{$widget->getPage()->getAliasWithNamespace()}";
 				d.element = "{$widget->getId()}";
 				d.object = "{$this->getWidget()->getMetaObject()->getId()}";
                 d.q = $('#{$this->getId()}_quickSearch').val();
@@ -282,7 +333,7 @@ JS;
 						"width": "10px",
 						"orderable": false,
 						"data": null,
-						"defaultContent": \'<i class="fa ' . $this->row_details_expand_icon . '"></i>\'
+						"defaultContent": \'<i class="fa ' . $this->getRowDetailsExpandIcon() . '"></i>\'
 					}
 					';
             $column_number_offset ++;
@@ -293,9 +344,9 @@ JS;
         foreach ($widget->getSorters() as $sorter) {
             $column_exists = false;
             foreach ($widget->getColumns() as $nr => $col) {
-                if ($col->getAttributeAlias() == $sorter->attribute_alias) {
+                if ($col->getAttributeAlias() == $sorter->getProperty('attribute_alias')) {
                     $column_exists = true;
-                    $default_sorters .= '[ ' . ($nr + $column_number_offset) . ', "' . $sorter->direction . '" ], ';
+                    $default_sorters .= '[ ' . ($nr + $column_number_offset) . ', "' . $sorter->getProperty('direction') . '" ], ';
                 }
             }
             if (! $column_exists) {
@@ -315,9 +366,9 @@ JS;
         
         // configure pagination
         if ($widget->getPaginate()) {
-            $paging_options = '"pageLength": ' . (!is_null($widget->getPaginatePageSize()) ? $widget->getPaginatePageSize() : $this->getTemplate()->getConfig()->getOption('WIDGET.DATATABLE.PAGE_SIZE')) . ',';
+            $paging_options = ', pageLength: ' . (!is_null($widget->getPaginatePageSize()) ? $widget->getPaginatePageSize() : $this->getTemplate()->getConfig()->getOption('WIDGET.DATATABLE.PAGE_SIZE'));
         } else {
-            $paging_options = '"paging": false,';
+            $paging_options = ', paging: false';
         }
         
         // columns && their footers
@@ -328,7 +379,14 @@ JS;
             if ($col->getFooter()) {
                 $footer_callback .= <<<JS
 	            // Total over all pages
-	            if (api.ajax.json().footer[0]['{$col->getDataColumnName()}']){
+	            var data;
+                var loadFromServer = api.init().serverSide;
+                if (loadFromServer){
+                    data = api.ajax.json();
+                } else {
+                    data = api.data() ? api.data() : {};
+                }
+	            if (data.footer && data.footer[0]['{$col->getDataColumnName()}']){
 		            total = api.ajax.json().footer[0]['{$col->getDataColumnName()}'];
 		            // Update footer
 		            $( api.column( {$nr} ).footer() ).html( total );
@@ -340,48 +398,77 @@ JS;
         
         if ($footer_callback) {
             $footer_callback = '
-				, "footerCallback": function ( row, data, start, end, display ) {
-					var api = this.api(), data;
-                
-		            // Remove the formatting to get integer data for summation
-		            var intVal = function ( i ) {
-		                return typeof i === \'string\' ?
-		                    i.replace(/[\$,]/g, \'\')*1 :
-		                    typeof i === \'number\' ?
-		                        i : 0;
-		            };
-					' . $footer_callback . '
-				}';
+		, "footerCallback": function ( row, data, start, end, display ) {
+			var api = this.api(), data;
+        
+            // Remove the formatting to get integer data for summation
+            var intVal = function ( i ) {
+                return typeof i === \'string\' ?
+                    i.replace(/[\$,]/g, \'\')*1 :
+                    typeof i === \'number\' ?
+                        i : 0;
+            };
+			' . $footer_callback . '
+		}';
+        }
+        
+        if ($widget->getContextMenuEnabled() && $widget->hasButtons()){
+            $context_menu_js = $this->buildJsContextMenu();
+        }
+        
+        if ($widget->hasRowGroups()){
+            if ($widget->getRowGroupsShowCount()){
+                $rowGroupConter = "' ('+rows.count()+')'";
+            } else {
+                $rowGroupConter = "''";
+            }
+            
+            if ($widget->getRowGroupsExpand() == 'all'){
+                // TODO
+            }
+            
+            $rowGroup = <<<JS
+        , "rowGroup": {
+            dataSrc: '{$widget->getRowGroupsByColumnId()}',
+            startRender: function ( rows, group ) {
+                var counter = {$rowGroupConter} ;
+                return $('<tr onclick="{$this->buildJsFunctionPrefix()}RowGroupToggle(this);"/>')
+                    .append( '<td colspan="'+{$this->getId()}_table.columns(':visible').count()+'"><i class="{$this->getRowDetailsCollapseIcon()}"></i> '+group+counter+'</td>' );
+            }
+        }
+JS;
         }
         
         return <<<JS
 
     $('#{$this->getId()}').DataTable( {
-		"dom": 't',
-		"deferRender": true,
-		"processing": true,
-		"select": { {$select_options} },
+		"dom": 't'
+		, deferRender: true
+		, processing: true
+		, select: { {$select_options} }
 		{$paging_options}
-		"scrollX": true,
-		"scrollXollapse": true,
-		{$this->buildJsDataSource($filters_ajax)}
-		"language": {
-            "zeroRecords": "{$widget->getEmptyText()}"
-        },
-		"columns": [{$columns}],
-		"order": [ {$default_sorters} ],
-		"drawCallback": function(settings, json) {
+		, scrollX: true
+		, scrollXollapse: true
+		, {$this->buildJsDataSource()}
+		language: {
+            zeroRecords: "{$widget->getEmptyText()}"
+        }
+		, columns: [{$columns}]
+		, order: [ {$default_sorters} ]
+        {$rowGroup}
+		, drawCallback: function(settings, json) {
 			$('#{$this->getId()} tbody tr').on('contextmenu', function(e){
-				{$this->getId()}_table.row($(e.target).closest('tr')).select();
+				{$this->getId()}_table.row($(e.target).closest('{$this->buildCssSelectorDataRows()}')).select();
 			});
-			$('#{$this->getId()}').closest('.fitem').trigger('resize');
-            context.attach('#{$this->getId()} tbody tr', [{$this->buildJsContextMenu()}]);
+			$('#{$this->getId()}').closest('.exf-grid-item').trigger('resize');
+            {$context_menu_js}
 			if({$this->getId()}_table){
 				{$this->getId()}_drawPagination();
 				{$this->getId()}_table.columns.adjust();
 			}
 			{$this->buildJsDisableTextSelection()}
 			{$this->buildJsBusyIconHide()}
+			{$this->getOnLoadSuccess()}
 		}
 		{$footer_callback}
 	} );
@@ -426,19 +513,24 @@ JS;
 
         return <<<JS
 
-	$('#{$this->getId()} tbody').on( 'click', 'tr', function () {
+	$('#{$this->getId()} tbody').on( 'click', '{$this->buildCssSelectorDataRows()}', function () {
 		{$leftclick_script}
     } );
     
-    $('#{$this->getId()} tbody').on( 'dblclick', 'tr', function(e){
+    $('#{$this->getId()} tbody').on( 'dblclick', '{$this->buildCssSelectorDataRows()}', function(e){
 		{$dblclick_script}
 	});
 	
-	$('#{$this->getId()} tbody').on( 'rightclick', 'tr', function(e){
+	$('#{$this->getId()} tbody').on( 'rightclick', '{$this->buildCssSelectorDataRows()}', function(e){
 		{$rightclick_script}
 	});
 
 JS;
+    }
+		
+    protected function buildCssSelectorDataRows()
+    {
+        return 'tr:not(.group)';
     }
     
     /**
@@ -468,6 +560,28 @@ JS;
 	});
 JS;
 		return $output;
+    }
+    
+    protected function buildJsRowGroupFunctions()
+    {
+        if (! $this->getWidget()->hasRowGroups()){
+            return '';
+        }
+        
+        return <<<JS
+
+    function {$this->buildJsFunctionPrefix()}RowGroupToggle(row){
+        var jqRow = $(row);
+        if (jqRow.hasClass('collapsed')){
+            jqRow.removeClass('collapsed').nextUntil('.group').show();
+            jqRow.find('i').removeClass().addClass('{$this->getRowDetailsCollapseIcon()}');
+        } else {
+            jqRow.addClass('collapsed').nextUntil('.group').hide();
+            jqRow.find('i').removeClass().addClass('{$this->getRowDetailsExpandIcon()}');
+        }
+    }
+
+JS;
     }
 }
 ?>

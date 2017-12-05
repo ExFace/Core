@@ -2,27 +2,27 @@
 
 namespace exface\Core\CommonLogic\Model;
 
-use exface\Core\CommonLogic\Workbench;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Factories\RelationPathFactory;
-use exface\Core\Interfaces\ExfaceClassInterface;
-use exface\Core\Interfaces\iCanBeCopied;
 use exface\Core\Exceptions\UnexpectedValueException;
-use exface\Core\Interfaces\Model\DataTypeInterface;
+use exface\Core\Interfaces\DataTypes\DataTypeInterface;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
+use exface\Core\Interfaces\Model\MetaRelationPathInterface;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
+use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\DataTypes\SortingDirectionsDataType;
 
 /**
  * 
  * @author Andrej Kabachnik
  *
  */
-class Attribute implements ExfaceClassInterface, iCanBeCopied
+class Attribute implements MetaAttributeInterface
 {
 
     // Properties to be dublicated on copy()
     private $id;
-
-    private $object_id;
 
     private $inherited_from_object_id = null;
 
@@ -37,6 +37,10 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
     private $data_type;
 
     private $formatter;
+    
+    private $readable = true;
+    
+    private $writable = null;
 
     private $required = false;
 
@@ -69,26 +73,29 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
     private $filterable;
 
     private $aggregatable;
+    
+    /** @var UxonObject|null */
+    private $default_editor_uxon = null;
 
-    /** @var UxonObject */
-    private $default_widget_uxon;
+    /** @var UxonObject|null */
+    private $custom_data_type_uxon = null;
 
-    /** @var RelationPath */
+    /** @var MetaRelationPathInterface|null */
     private $relation_path;
 
     // Properties NOT to be dublicated on copy()
     /** @var Model */
-    private $model;
+    private $object;
 
-    public function __construct(Model $model)
+    public function __construct(MetaObjectInterface $object)
     {
-        $this->model = $model;
+        $this->object = $object;
     }
 
     /**
-     * Marks this attribute as a relation
      * 
-     * @param boolean $value            
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setRelationFlag()
      */
     public function setRelationFlag($value)
     {
@@ -96,11 +103,9 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
     }
 
     /**
-     * Returns TRUE if this attribute actually is a relation and FALSE otherwise.
-     * The relation itself can be obtained by calling get_relation().
      * 
-     * @see getRelation()
-     * @return boolean
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::isRelation()
      */
     public function isRelation()
     {
@@ -108,101 +113,141 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
     }
 
     /**
-     * Returns the relation, this attribute represents if it is a relation attribute and NULL otherwise
      * 
-     * @return Relation
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::getRelation()
      */
     public function getRelation()
     {
         return $this->getObject()->getRelation($this->getAlias());
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::getAliasWithRelationPath()
+     */
     public function getAliasWithRelationPath()
     {
         return RelationPath::relationPathAdd($this->getRelationPath()->toString(), $this->getAlias());
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::getId()
+     */
     public function getId()
     {
         return $this->id;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setId()
+     */
     public function setId($value)
     {
         $this->id = $value;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::getAlias()
+     */
     public function getAlias()
     {
         return $this->alias;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setAlias()
+     */
     public function setAlias($value)
     {
         $this->alias = $value;
     }
 
     /**
-     * Returns the data type of the attribute as an instantiated data type object
      * 
-     * @return DataTypeInterface
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::getDataType()
      */
     public function getDataType()
     {
         if (is_string($this->data_type)){
-            $this->data_type = DataTypeFactory::createFromAlias($this->getWorkbench(), $this->data_type);
+            $this->data_type = DataTypeFactory::createFromUidOrAlias($this->getModel(), $this->data_type);
+            $this->data_type->importUxonObject($this->getCustomDataTypeUxon());
         }
         return $this->data_type;
     }
     
     /**
      * 
-     * @param string|DataTypeInterface $object_or_name
-     * @throws UnexpectedValueException
-     * @return \exface\Core\CommonLogic\Model\Attribute
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setDataType()
      */
-    public function setDataType($object_or_name)
+    public function setDataType($instance_or_resolvable_string)
     {
-        if (is_string($object_or_name) || ($object_or_name instanceof DataTypeInterface)) {
-            $this->data_type = $object_or_name;
+        if (is_string($instance_or_resolvable_string) || ($instance_or_resolvable_string instanceof DataTypeInterface)) {
+            $this->data_type = $instance_or_resolvable_string;
         } else {
             throw new UnexpectedValueException('Invalid data type value given to attribute "' . $this->getAliasWithRelationPath() . '" of object "' . $this->getObject()->getAliasWithNamespace() . '": string or instantiated data type classes expected!');
         }
         return $this;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::getDefaultDisplayOrder()
+     */
     public function getDefaultDisplayOrder()
     {
         return $this->default_display_order;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setDefaultDisplayOrder()
+     */
     public function setDefaultDisplayOrder($value)
     {
         $this->default_display_order = $value;
     }
 
     /**
-     * Returns TRUE if the attribute can be changed and FALSE if it is read only.
-     * Attributes of objects from read-only data sources are never editable!
      * 
-     * @return boolean
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::isEditable()
      */
     public function isEditable()
     {
-        if ($this->getObject()->getDataSource()->isReadOnly()) {
+        if ($this->getObject()->hasDataSource() && ! $this->getObject()->isWritable()) {
             return false;
         }
         return $this->editable;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setEditable()
+     */
     public function setEditable($value)
     {
-        $this->editable = $value;
+        $this->editable = BooleanDataType::cast($value);
     }
 
     /**
-     *
-     * @return unknown
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::getFormatter()
      */
     public function getFormatter()
     {
@@ -210,63 +255,141 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
     }
 
     /**
-     *
-     * @param unknown $value            
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setFormatter()
      */
     public function setFormatter($value)
     {
         $this->formatter = $value;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::isHidden()
+     */
     public function isHidden()
     {
         return $this->hidden;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setHidden()
+     */
     public function setHidden($value)
     {
-        $this->hidden = $value;
+        $this->hidden = BooleanDataType::cast($value);
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::getName()
+     */
     public function getName()
     {
         return $this->name;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setName()
+     */
     public function setName($value)
     {
         $this->name = $value;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::isReadable()
+     */
+    public function isReadable()
+    {
+        return $this->readable;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setReadable()
+     */
+    public function setReadable($true_or_false)
+    {
+        $this->readable = BooleanDataType::cast($true_or_false);
+        return $this;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::isWritable()
+     */
+    public function isWritable()
+    {
+        return $this->writable;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setWritable()
+     */
+    public function setWritable($true_or_false)
+    {
+        $this->writable = BooleanDataType::cast($true_or_false);
+        return $this;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::isRequired()
+     */
     public function isRequired()
     {
         return $this->required;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setRequired()
+     */
     public function setRequired($value)
     {
-        $this->required = $value;
+        $this->required = BooleanDataType::cast($value);
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::getDataAddress()
+     */
     public function getDataAddress()
     {
         return $this->data;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setDataAddress()
+     */
     public function setDataAddress($value)
     {
         $this->data = $value;
     }
 
     /**
-     * Returns the relation path for this attribute, no matter how deep
-     * the relation is.
-     * E.g. calling it for the attribute PRICE of POSITION__PRODUCT
-     * (POSITION__PRODUCT__PRICE) would result in POSITION__PRODUCT as
-     * path.
-     * Returns NULL if the attribute belongs to the object itself.
-     *
-     * @return RelationPath
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::getRelationPath()
      */
     public function getRelationPath()
     {
@@ -276,35 +399,40 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
         return $this->relation_path;
     }
 
-    protected function setRelationPath(RelationPath $path)
+    /**
+     * 
+     * @param MetaRelationPathInterface $path
+     */
+    public function setRelationPath(MetaRelationPathInterface $path)
     {
         $this->relation_path = $path;
     }
 
     /**
-     * Returns the meta object to which this attributes belongs to.
-     * If the attribute has a relation path, this
-     * will return the last object in that path.
-     *
-     * If the attribute is inherited, the inheriting object will be returned. To get the base object, the
-     * attribute was inherited from, use getObjectInheritedFrom().
-     *
-     * @return \exface\Core\CommonLogic\Model\Object
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::getObject()
      */
     public function getObject()
     {
-        return $this->getModel()->getObject($this->getObjectId());
+        return $this->object;
+    }
+    
+    /**
+     * 
+     * @param MetaObjectInterface $object
+     * @return \exface\Core\CommonLogic\Model\Attribute
+     */
+    public function setObject(MetaObjectInterface $object)
+    {
+        $this->object = $object;
+        return $this;
     }
 
     /**
-     * Returns the object, this attribute was inherited from.
-     * If the attribute was not inherited, returns it's regular object (same as get_object()).
-     *
-     * If the attribute was inherited multiple times, this method will go back exactly one step. For example, if we have a base object
-     * of a data source, that is extended by OBJECT1, which in turn, is extended by OBJECT2, calling get_object_extended_from() on an
-     * attribute of OBJECT2 will return OBJECT1, while doing so for OBJECT1 will return the base object.
-     *
-     * @return \exface\Core\CommonLogic\Model\Object
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::getObjectInheritedFrom()
      */
     public function getObjectInheritedFrom()
     {
@@ -314,38 +442,22 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
             return $this->getObject();
         }
     }
-
+    
     /**
-     * Returns a UXON object for the default editor widget for this attribute.
      * 
-     * The default widget can be defined for a data type and extended by a further definition for a specific attribute. If none of the above is defined,
-     * a blank UXON object with merely the overall default widget type (specified in the config) will be returned.
-     * 
-     * The returned UXON is a copy. Changes on it will not affect the result of the next method call. If you need to change
-     * the default UXON use Attribute::setDefaultWidgetUxon(Attribute::getDefaultWidgetUxon()) or similar.
-     * 
-     * @return UxonObject
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::getFormula()
      */
-    public function getDefaultWidgetUxon()
-    {
-        $uxon = $this->default_widget_uxon->copy();
-        
-        if (! $uxon->getProperty('attribute_alias')) {
-            $uxon->setProperty(attribute_alias, $this->getAliasWithRelationPath());
-        }
-        return $uxon;
-    }
-
-    public function setDefaultWidgetUxon(UxonObject $uxon_object)
-    {
-        $this->default_widget_uxon = $uxon_object;
-    }
-
     public function getFormula()
     {
         return $this->formula;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setFormula()
+     */
     public function setFormula($value)
     {
         if ($value) {
@@ -354,10 +466,9 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
     }
 
     /**
-     * Returns an expression for the default value of this attribute, which is to be used, when saving the attribute without an explicit value given in the data sheet.
      * 
-     * @see getFixedValue() in contrast to the fixed value, the default value is always overridden by any value in the data sheet.
-     * @return \exface\Core\CommonLogic\Model\Expression
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::getDefaultValue()
      */
     public function getDefaultValue()
     {
@@ -367,6 +478,11 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
         return $this->default_value;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setDefaultValue()
+     */
     public function setDefaultValue($value)
     {
         if ($value) {
@@ -375,9 +491,9 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
     }
 
     /**
-     * Returns an expression for value of this attribute, which is to be set or updated every time the attribute is saved to the data source.
      * 
-     * @return \exface\Core\CommonLogic\Model\Expression
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::getFixedValue()
      */
     public function getFixedValue()
     {
@@ -387,60 +503,99 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
         return $this->fixed_value;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setFixedValue()
+     */
     public function setFixedValue($value)
     {
         $this->fixed_value = $value;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::getDefaultSorterDir()
+     */
     public function getDefaultSorterDir()
     {
-        return $this->default_sorter_dir;
+        return $this->default_sorter_dir ? $this->default_sorter_dir : $this->getDataType()->getDefaultSortingDirection();
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setDefaultSorterDir()
+     */
     public function setDefaultSorterDir($value)
-    {
+    {        
+        if ($value instanceof SortingDirectionsDataType){
+            // everything is OK
+        } elseif (SortingDirectionsDataType::isValidStaticValue(strtoupper($value))){
+            $value = new SortingDirectionsDataType($this->getWorkbench(), strtoupper($value));
+        } else {
+            throw new UnexpectedValueException('Invalid value "' . $value . '" for default sorting direction in attribute "' . $this->getName() . '": use ASC or DESC');
+        }
+        
         $this->default_sorter_dir = $value;
+        return $this;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::getObjectId()
+     */
     public function getObjectId()
     {
-        return $this->object_id;
+        return $this->getObject()->getId();
     }
 
-    public function setObjectId($value)
-    {
-        $this->object_id = $value;
-    }
-
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::getModel()
+     */
     public function getModel()
     {
-        return $this->model;
+        return $this->getObject()->getModel();
     }
 
-    public function setModel(\exface\Core\CommonLogic\Model\Model $model)
-    {
-        $this->model = $model;
-    }
-
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::getShortDescription()
+     */
     public function getShortDescription()
     {
         return $this->short_description;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setShortDescription()
+     */
     public function setShortDescription($value)
     {
         $this->short_description = $value;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::getHint()
+     */
     public function getHint()
     {
         return ($this->getShortDescription() ? $this->getShortDescription() : $this->getName()) . ' [' . $this->getDataType()->getName() . ']';
     }
 
     /**
-     * Returns the UID of the object, this attribute was inherited from or NULL if it is a direct attribute of it's object
      * 
-     * @return string
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::getInheritedFromObjectId()
      */
     public function getInheritedFromObjectId()
     {
@@ -448,8 +603,9 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
     }
 
     /**
-     *
-     * @param string $value            
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setInheritedFromObjectId()
      */
     public function setInheritedFromObjectId($value)
     {
@@ -457,9 +613,9 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
     }
 
     /**
-     * Returns TRUE if this Relation was inherited from a parent object
      * 
-     * @return boolean
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::isInherited()
      */
     public function isInherited()
     {
@@ -467,8 +623,9 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
     }
 
     /**
-     *
-     * @return \exface\Core\CommonLogic\UxonObject
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::getDataAddressProperties()
      */
     public function getDataAddressProperties()
     {
@@ -476,9 +633,9 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
     }
 
     /**
-     *
-     * @param UxonObject $value            
-     * @return Attribute
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setDataAddressProperties()
      */
     public function setDataAddressProperties(UxonObject $value)
     {
@@ -487,9 +644,9 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
     }
 
     /**
-     * Returns the value of a data source specifi object property specified by it's id
      * 
-     * @param string $id            
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::getDataAddressProperty()
      */
     public function getDataAddressProperty($id)
     {
@@ -497,10 +654,9 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
     }
 
     /**
-     *
-     * @param string $id            
-     * @param mixed $value            
-     * @return \exface\Core\CommonLogic\Model\Attribute
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setDataAddressProperty()
      */
     public function setDataAddressProperty($id, $value)
     {
@@ -509,13 +665,13 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
     }
 
     /**
-     * Returns TRUE if the attribute is used as the label for it's object or FALSE otherwise
      * 
-     * @return boolean
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::isLabelForObject()
      */
-    public function isLabel()
+    public function isLabelForObject()
     {
-        if ($this->getAlias() == $this->getObject()->getLabelAlias()) {
+        if ($this->getAlias() == $this->getObject()->getLabelAttributeAlias()) {
             return true;
         } else {
             return false;
@@ -523,13 +679,13 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
     }
 
     /**
-     * Returns TRUE if this attribute is used as UID for it's object and FALSE otherwise
      * 
-     * @return boolean
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::isUidForObject()
      */
     public function isUidForObject()
     {
-        if ($this->getObject()->getUidAlias() === $this->getAlias()) {
+        if ($this->getObject()->getUidAttributeAlias() === $this->getAlias()) {
             return true;
         } else {
             return false;
@@ -537,15 +693,11 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
     }
 
     /**
-     * Returns TRUE if this attribute is the same (same UID, same object), as the given attribute, and FALSE otherwise.
-     *
-     * This method will also return TRUE if the attributes have differen relations paths.
-     * NOTE: comparing the UID is not enough, as inherited attributes will keep their UID.
-     *
-     * @param Attribute $attribute            
-     * @return boolean
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::isExactly()
      */
-    public function isExactly(Attribute $attribute)
+    public function isExactly(MetaAttributeInterface $attribute)
     {
         if ($this->getId() == $attribute->getId() && $this->getObject()->isExactly($attribute->getObject())) {
             return true;
@@ -554,19 +706,11 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
     }
 
     /**
-     * Returns TRUE if the given attribute is the same as this one or is inherited from it.
-     *
-     * For example, if we have a BASE object for a data source holds the UID attribute, and OBJECT1 inherits from that base object,
-     * we will have the following behavior - even if there is a custom UID attribute for OBJECT1, that overrides the default:
-     * - BASE__UID->is(OBJECT1__UID) = FALSE
-     * - OBJECT__UID->is(BASE__UID) = TRUE
-     * - BASE__UID->is(BASE__UID) = TRUE
-     * - OBJECT1__UID->is(OBJECT1__UID) = TRUE
-     *
-     * @param Attribute $attribute            
-     * @return boolean
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::is()
      */
-    public function is(Attribute $attribute)
+    public function is(MetaAttributeInterface $attribute)
     {
         if (strcasecmp($this->getAlias(), $attribute->getAlias()) === 0 && $this->getObject()->is($attribute->getObject())) {
             return true;
@@ -575,9 +719,9 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
     }
 
     /**
-     * Creates an exact copy of the attribute
-     *
-     * @return Attribute
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\iCanBeCopied::copy()
      */
     public function copy()
     {
@@ -585,29 +729,29 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
     }
 
     /**
-     * Creates a copy of the attribute relative to a given relation path.
-     * This is usefull if you want to rebase an attribute.
-     *
-     * @param RelationPath $path            
-     * @return \exface\Core\CommonLogic\Model\Attribute
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::rebase()
      */
-    public function rebase(RelationPath $path)
+    public function rebase(MetaRelationPathInterface $path)
     {
         $copy = clone $this;
         
         // Explicitly copy properties, that are objects themselves
         $copy->setRelationPath($path);
-        // Do not use getDefaultWidgetUxon() here as it already performs some enrichment
-        $copy->setDefaultWidgetUxon($this->default_widget_uxon->copy());
+        
+        // Do not use getDefaultEditorUxon() here as it already performs some enrichment
+        if ($this->default_editor_uxon instanceof UxonObject){
+            $copy->setDefaultEditorUxon($this->default_editor_uxon->copy());
+        }
+        
         return $copy;
     }
 
     /**
-     * Returns TRUE if this attribute is a system attribute.
-     * System attributes are required by the internal logic
-     * (like the UID attribute) an will be loaded by default in all data sheets
-     *
-     * @return boolean
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::isSystem()
      */
     public function isSystem()
     {
@@ -615,22 +759,20 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
     }
 
     /**
-     * Marks the attribute as system (TRUE) or non-system (FALSE).
-     * System attributes are required by the internal logic (like the UID attribute) an will be loaded by default
-     * in all data sheets
-     *
-     * @param boolean $value            
-     * @return Attribute
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setSystem()
      */
     public function setSystem($value)
     {
-        $this->system = \exface\Core\DataTypes\BooleanDataType::parse($value);
+        $this->system = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;
     }
 
     /**
-     *
-     * @return Workbench
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\ExfaceClassInterface::getWorkbench()
      */
     public function getWorkbench()
     {
@@ -638,8 +780,9 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
     }
 
     /**
-     *
-     * @return string
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::getDefaultAggregateFunction()
      */
     public function getDefaultAggregateFunction()
     {
@@ -647,9 +790,9 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
     }
 
     /**
-     *
-     * @param string $value            
-     * @return \exface\Core\CommonLogic\Model\Attribute
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setDefaultAggregateFunction()
      */
     public function setDefaultAggregateFunction($value)
     {
@@ -658,8 +801,9 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
     }
 
     /**
-     *
-     * @return boolean
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::isSortable()
      */
     public function isSortable()
     {
@@ -667,19 +811,20 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
     }
 
     /**
-     *
-     * @param boolean $value            
-     * @return \exface\Core\CommonLogic\Model\Attribute
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setSortable()
      */
     public function setSortable($value)
     {
-        $this->sortable = \exface\Core\DataTypes\BooleanDataType::parse($value);
+        $this->sortable = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;
     }
 
     /**
-     *
-     * @return boolean
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::isFilterable()
      */
     public function isFilterable()
     {
@@ -687,19 +832,20 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
     }
 
     /**
-     *
-     * @param boolean $value            
-     * @return \exface\Core\CommonLogic\Model\Attribute
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setFilterable()
      */
     public function setFilterable($value)
     {
-        $this->filterable = \exface\Core\DataTypes\BooleanDataType::parse($value);
+        $this->filterable = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;
     }
 
     /**
-     *
-     * @return boolean
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::isAggregatable()
      */
     public function isAggregatable()
     {
@@ -707,23 +853,20 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
     }
 
     /**
-     *
-     * @param boolean $value            
-     * @return \exface\Core\CommonLogic\Model\Attribute
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setAggregatable()
      */
     public function setAggregatable($value)
     {
-        $this->aggregatable = \exface\Core\DataTypes\BooleanDataType::parse($value);
+        $this->aggregatable = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;
     }
     
     /**
-     * Returns the delimiter to be used when concatennating multiple values of 
-     * this attribute into a string.
      * 
-     * Defaults to EXF_LIST_SEPARATOR unless changed via setValueListDelimiter()
-     * 
-     * @return string
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::getValueListDelimiter()
      */
     public function getValueListDelimiter()
     {
@@ -731,22 +874,9 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
     }
     
     /**
-     * Changes the delimiter to be used when concatennating multiple values of 
-     * this attribute into a string.
      * 
-     * This is usefull if the values are likely to contain the delimiter string
-     * themselves. Since the default delimiter is a comma, you should change it
-     * to something else if your values will regularly contain commas. 
-     * 
-     * Note, for longer texts, that will contain commas in most cases, there is
-     * normally no need to change the delimiter because it is mainly used for
-     * all kinds of filter and relation keys. Longer texts with commas, on the 
-     * other hand, are very unlikely to be used for keys or as search strings.
-     * If it still happens, change the delimiter to a pipe or so, that - in
-     * turn - is very unlikely to be included in a longer text.
-     * 
-     * @param string $string
-     * @return \exface\Core\CommonLogic\Model\Attribute
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setValueListDelimiter()
      */
     public function setValueListDelimiter($string)
     {
@@ -755,6 +885,84 @@ class Attribute implements ExfaceClassInterface, iCanBeCopied
         }
         return $this;
     }
- 
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::getCustomDataTypeUxon()
+     */
+    public function getCustomDataTypeUxon()
+    {
+        if (is_null($this->custom_data_type_uxon)){
+            return new UxonObject();
+        }
+        return $this->custom_data_type_uxon->copy();
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setCustomDataTypeUxon()
+     */
+    public function setCustomDataTypeUxon(UxonObject $uxon)
+    {
+        $this->custom_data_type_uxon = $uxon;
+        $this->resetDataType();
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return \exface\Core\CommonLogic\Model\Attribute
+     */
+    private function resetDataType()
+    {
+        // If the data type had already been instantiated, degrade it back to a string alias.
+        // Next time the getDataType() is called, it will reinstantiate the data type uxing
+        // the new custom setting.
+        if ($this->data_type instanceof UxonObject){
+            $this->data_type = $this->data_type->getAliasWithNamespace();
+        }
+        
+        return $this;
+    }
+
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::getDefaultEditorUxon()
+     */
+    public function getDefaultEditorUxon()
+    {
+        // If there is no default widget uxon defined, use the UXON from the data type
+        if (is_null($this->default_editor_uxon)) {
+            if ($this->isRelation()) {
+                $this->default_editor_uxon = new UxonObject([
+                    "widget_type" => $this->getWorkbench()->getConfig()->getOption('TEMPLATES.DEFAULT_WIDGET_FOR_RELATIONS')
+                ]);
+            } else {
+                $this->default_editor_uxon = $this->getDataType()->getDefaultEditorUxon()->copy();
+            }
+        }
+        
+        $uxon = $this->default_editor_uxon->copy();
+        
+        if (! $uxon->hasProperty('attribute_alias')) {
+            $uxon->setProperty('attribute_alias', $this->getAliasWithRelationPath());
+        }
+        
+        return $uxon;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setDefaultEditorUxon()
+     */
+    public function setDefaultEditorUxon(UxonObject $uxon)
+    {
+        $this->default_editor_uxon = $uxon;
+        return $this;
+    }
 }
 ?>

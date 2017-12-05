@@ -6,8 +6,9 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\ExfaceClassInterface;
 use exface\Core\Interfaces\DataSheets\DataColumnInterface;
 use exface\Core\Exceptions\DomainException;
-use exface\Core\Exceptions\DataSheets\DataSheetRuntimeError;
 use exface\Core\Exceptions\DataSheets\DataSheetStructureError;
+use exface\Core\CommonLogic\Model\Aggregator;
+use exface\Core\Interfaces\Model\AggregatorInterface;
 
 class DataColumnTotal implements iCanBeConvertedToUxon, ExfaceClassInterface
 {
@@ -16,11 +17,11 @@ class DataColumnTotal implements iCanBeConvertedToUxon, ExfaceClassInterface
 
     private $data_column = null;
 
-    function __construct(DataColumnInterface $column, $function_name = null)
+    function __construct(DataColumnInterface $column, $aggregator_string = null)
     {
         $this->setColumn($column);
-        if (! is_null($function_name)) {
-            $this->setFunction($function_name);
+        if (! is_null($aggregator_string)) {
+            $this->setAggregator(new Aggregator($this->getWorkbench(), $aggregator_string));
         }
     }
 
@@ -42,30 +43,48 @@ class DataColumnTotal implements iCanBeConvertedToUxon, ExfaceClassInterface
         return $this;
     }
 
-    public function getFunction()
+    /**
+     * 
+     * @return AggregatorInterface
+     */
+    public function getAggregator()
     {
         return $this->function;
     }
 
-    public function setFunction($value)
+    /**
+     * 
+     * @param AggregatorInterface|string $aggregator
+     * @return \exface\Core\CommonLogic\DataSheets\DataColumnTotal
+     */
+    public function setAggregator($aggregator_or_string)
     {
-        if (! defined('EXF_AGGREGATOR_' . $value)) {
-            throw new DomainException('Cannot set totals function "' . $value . '" for data column "' . $this->getColumn()->getName() . '": invalid function!', '6T5UXLD');
+        if ($aggregator_or_string instanceof AggregatorInterface){
+            $aggregator = $aggregator_or_string;
+        } else {
+            $aggregator = new Aggregator($this->getWorkbench(), $aggregator_or_string);
         }
-        $this->function = $value;
+        $this->function = $aggregator;
         return $this;
     }
 
     public function exportUxonObject()
     {
         $uxon = $this->getColumn()->getDataSheet()->getWorkbench()->createUxonObject();
-        $uxon->setProperty('function', $this->getFunction());
+        $uxon->setProperty('function', $this->getAggregator()->exportString());
         return $uxon;
     }
 
     public function importUxonObject(UxonObject $uxon)
     {
-        $this->setFunction($uxon->getProperty('function'));
+        // Map "function" to the aggregator for backwards compatibility! (13.09.2017)
+        if ($uxon->hasProperty('function')){
+            $this->setAggregator($uxon->getProperty('function'));
+        }
+        
+        if ($uxon->hasProperty('aggregator')){
+            $this->setAggregator($uxon->getProperty('aggregator'));
+        }
     }
 
     public function getWorkbench()

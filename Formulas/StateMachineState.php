@@ -33,8 +33,8 @@ class StateMachineState extends Formula
      */
     function run($state, $object, $showId = true, $showProgressBar = true)
     {
-        $showId = BooleanDataType::parse($showId);
-        $showProgressBar = BooleanDataType::parse($showProgressBar);
+        $showId = BooleanDataType::cast($showId);
+        $showProgressBar = BooleanDataType::cast($showProgressBar);
         
         $workbench = $this->getWorkbench();
         /** @var StateMachineBehavior $smb */

@@ -6,7 +6,7 @@ use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Templates\AbstractAjaxTemplate\AbstractAjaxTemplate;
 use exface\Core\Exceptions\Configuration\ConfigOptionNotFoundError;
-use exface\Core\CommonLogic\Model\Object;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\ExfaceClassInterface;
 use exface\Core\CommonLogic\Translation;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
@@ -42,6 +42,8 @@ abstract class AbstractJqueryElement implements ExfaceClassInterface
     private $id = null;
 
     private $element_type = null;
+    
+    private $element_class = '';
 
     private $number_of_columns = null;
 
@@ -142,21 +144,11 @@ abstract class AbstractJqueryElement implements ExfaceClassInterface
     /**
      * Returns the meta object of the widget, that this element represents.
      *
-     * @return Object
+     * @return MetaObjectInterface
      */
     public function getMetaObject()
     {
         return $this->getWidget()->getMetaObject();
-    }
-
-    /**
-     * Returns the page id
-     *
-     * @return string
-     */
-    public function getPageId()
-    {
-        return $this->getWidget()->getPage()->getId();
     }
 
     /**
@@ -243,7 +235,7 @@ abstract class AbstractJqueryElement implements ExfaceClassInterface
     public function buildJsFunctionPrefix()
     {
         if (is_null($this->function_prefix)) {
-            $this->function_prefix = str_replace($this->getTemplate()->getConfig()->getOption('FORBIDDEN_CHARS_IN_FUNCTION_PREFIX'), '_', $this->getId()) . '_';
+            $this->function_prefix = str_replace($this->getTemplate()->getConfig()->getOption('FORBIDDEN_CHARS_IN_FUNCTION_PREFIX')->toArray(), '_', $this->getId()) . '_';
         }
         return $this->function_prefix;
     }
@@ -259,6 +251,37 @@ abstract class AbstractJqueryElement implements ExfaceClassInterface
     public function getElementType()
     {
         return $this->element_type;
+    }
+    
+    /**
+     * Returns the CSS classes for this element (i.e. the contents of the HTML attribute class="...")
+     * @return string
+     */
+    public function buildCssElementClass()
+    {
+        return $this->element_class;
+    }
+    
+    /**
+     * 
+     * @param string $classes
+     * @return AbstractJqueryElement
+     */
+    public function addElementCssClass($string)
+    {
+        $this->element_class = ($this->element_class ? ' ' : '') . $string;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @param string $string
+     * @return \exface\Core\Templates\AbstractAjaxTemplate\Elements\AbstractJqueryElement
+     */
+    public function removeElementCssClass($string)
+    {
+        $this->element_class = str_replace($string, '', $this->element_class);
+        return $this;
     }
 
     /**
@@ -298,7 +321,7 @@ abstract class AbstractJqueryElement implements ExfaceClassInterface
      */
     public function cleanId($id)
     {
-        return str_replace($this->getTemplate()->getConfig()->getOption('FORBIDDEN_CHARS_IN_ELEMENT_ID'), '_', $id);
+        return str_replace($this->getTemplate()->getConfig()->getOption('FORBIDDEN_CHARS_IN_ELEMENT_ID')->toArray(), '_', $id);
     }
 
     /**
@@ -406,34 +429,18 @@ abstract class AbstractJqueryElement implements ExfaceClassInterface
         } elseif ($dimension->isTemplateSpecific() || $dimension->isPercentual()) {
             $height = $dimension->getValue();
         } else {
-            $height = ($this->getHeightRelativeUnit() * $this->getHeightDefault()) . 'px';
+            $height = $this->buildCssHeightDefaultValue();
         }
         return $height;
     }
-
+    
     /**
-     * Returns the default relative height of this element
-     *
+     * Returns the CSS value for default height of this element: e.g. "48px")
      * @return string
      */
-    public function getHeightDefault()
+    protected function buildCssHeightDefaultValue()
     {
-        if (is_null($this->height_default)) {
-            $this->height_default = $this->getTemplate()->getConfig()->getOption('HEIGHT_DEFAULT');
-        }
-        return $this->height_default;
-    }
-
-    /**
-     * Sets the default relative height of this element
-     *
-     * @param string $value            
-     * @return \exface\Core\Templates\AbstractAjaxTemplate\Elements\AbstractJqueryElement
-     */
-    public function setHeightDefault($value)
-    {
-        $this->height_default = $value;
-        return $this;
+        return $this->getHeightRelativeUnit() . 'px';
     }
 
     /**
@@ -560,7 +567,7 @@ abstract class AbstractJqueryElement implements ExfaceClassInterface
         } else {
             $alias = $this->getWidget()->getMetaObject()->getAliasWithNamespace();
         }
-        return "{oId: '" . $this->getWidget()->getMetaObjectId() . "', rows: [{'" . $alias . "': " . $this->buildJsValueGetter() . "}]}";
+        return "{oId: '" . $this->getWidget()->getMetaObject()->getId() . "', rows: [{'" . $alias . "': " . $this->buildJsValueGetter() . "}]}";
     }
 
     /**
@@ -690,16 +697,16 @@ abstract class AbstractJqueryElement implements ExfaceClassInterface
      * Returns a template specific CSS class for a given icon.
      * In most templates this string will be used as a class for an <a> or <i> element.
      *
-     * @param string $icon_name            
+     * @param string $icon            
      * @return string
      */
-    public function buildCssIconClass($icon_name)
+    public function buildCssIconClass($icon)
     {
         try {
-            $class = $this->getTemplate()->getConfig()->getOption('ICON_CLASSES.' . strtoupper($icon_name));
+            $class = $this->getTemplate()->getConfig()->getOption('ICON_CLASSES.' . strtoupper($icon));
             return $class;
         } catch (ConfigOptionNotFoundError $e) {
-            return $this->getTemplate()->getConfig()->getOption('ICON_CLASSES.DEFAULT_CLASS_PREFIX') . $icon_name;
+            return $this->getTemplate()->getConfig()->getOption('ICON_CLASSES.DEFAULT_CLASS_PREFIX') . $icon;
         }
     }
 
@@ -772,6 +779,20 @@ abstract class AbstractJqueryElement implements ExfaceClassInterface
     public function buildJsDisabler()
     {
         return '$("#' . $this->getId() . '").prop("disabled", true)';
+    }
+    
+    public function getPageId()
+    {
+        return $this->getWidget()->getPage()->getId();
+    }
+    
+    protected function getCaption()
+    {
+        $widget = $this->getWidget();
+        if ($widget->getCaption() && ! $widget->getHideCaption()){
+            return $widget->getCaption();
+        }
+        return '';
     }
 }
 ?>

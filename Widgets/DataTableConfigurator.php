@@ -43,7 +43,7 @@ class DataTableConfigurator extends DataConfigurator
     {
         $tab = $this->createTab();
         $tab->setCaption($this->translate('WIDGET.DATACONFIGURATOR.COLUMN_TAB_CAPTION'));
-        $tab->setIconName(Icons::TABLE);
+        $tab->setIcon(Icons::TABLE);
         // TODO reenable the tab once it has content
         $tab->setDisabled(true);
         return $tab;
@@ -70,7 +70,7 @@ class DataTableConfigurator extends DataConfigurator
     {
         $tab = $this->createTab();
         $tab->setCaption($this->translate('WIDGET.DATACONFIGURATOR.AGGREGATION_TAB_CAPTION'));
-        $tab->setIconName(Icons::OBJECT_GROUP);
+        $tab->setIcon(Icons::OBJECT_GROUP);
         // TODO reenable the tab once it has content
         $tab->setDisabled(true);
         return $tab;

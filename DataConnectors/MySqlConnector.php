@@ -8,7 +8,7 @@ use exface\Core\Exceptions\DataSources\DataConnectionCommitFailedError;
 use exface\Core\Exceptions\DataSources\DataConnectionRollbackFailedError;
 use exface\Core\CommonLogic\DataQueries\SqlDataQuery;
 use exface\Core\Exceptions\DataSources\DataQueryFailedError;
-use exface\Core\CommonLogic\Modelizers\MySqlModelizer;
+use exface\Core\ModelBuilders\MySqlModelBuilder;
 
 /**
  * Data source connector for MySQL databases
@@ -278,7 +278,7 @@ class MySqlConnector extends AbstractSqlConnector
      */
     public function setUsePersistantConnection($value)
     {
-        $this->use_persistant_connection = \exface\Core\DataTypes\BooleanDataType::parse($value);
+        $this->use_persistant_connection = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;
     }
 
@@ -320,11 +320,11 @@ class MySqlConnector extends AbstractSqlConnector
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\DataConnectors\AbstractSqlConnector::getModelizer()
+     * @see \exface\Core\DataConnectors\AbstractSqlConnector::getModelBuilder()
      */
-    public function getModelizer()
+    public function getModelBuilder()
     {
-        return new MySqlModelizer($this);
+        return new MySqlModelBuilder($this);
     }
 }
 ?>

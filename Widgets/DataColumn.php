@@ -2,7 +2,7 @@
 namespace exface\Core\Widgets;
 
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
-use exface\Core\DataTypes\AbstractDataType;
+use exface\Core\CommonLogic\DataTypes\AbstractDataType;
 use exface\Core\Interfaces\Widgets\iShowText;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Factories\ExpressionFactory;
@@ -13,10 +13,19 @@ use exface\Core\Interfaces\Widgets\iShowDataColumn;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Widgets\Traits\iCanBeAlignedTrait;
+use exface\Core\CommonLogic\Constants\SortingDirections;
+use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
+use exface\Core\DataTypes\NumberDataType;
+use exface\Core\DataTypes\PriceDataType;
+use exface\Core\DataTypes\DateDataType;
+use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\Interfaces\Model\AggregatorInterface;
+use exface\Core\CommonLogic\Model\Aggregator;
+use exface\Core\DataTypes\SortingDirectionsDataType;
+use exface\Core\DataTypes\TextStylesDataType;
 
 /**
- * The DataColumn represents a column in Data-widgets.
- * The most common usecase are DataTable columns.
+ * The DataColumn represents a column in Data-widgets a DataTable.
  *
  * DataColumns are not always visible as columns. But they are always there, when tabular data is needed
  * for a widget. A DataColumn has a caption (header), an expression for it's contents (an attribute alias,
@@ -48,8 +57,8 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     private $editor = null;
 
     private $editable = false;
-
-    private $align = null;
+    
+    private $default_sorting_direction = null;
 
     private $aggregate_function = null;
 
@@ -62,8 +71,12 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     private $size = null;
 
     private $style = null;
+    
+    private $color = null;
 
     private $data_column_name = null;
+    
+    private $disableFormatters = false;
 
     public function hasFooter()
     {
@@ -127,7 +140,7 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
      */
     public function setSortable($value)
     {
-        $this->sortable = \exface\Core\DataTypes\BooleanDataType::parse($value);
+        $this->sortable = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;
     }
 
@@ -215,7 +228,7 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
         // wich would be the easiest way to set it editable and the editor would be optional then.
         $page = $this->getPage();
         $editor = WidgetFactory::createFromUxon($page, UxonObject::fromAnything($uxon_object), $this);
-        if ($uxon_object->widget_type && $editor) {
+        if ($uxon_object->hasProperty('widget_type') && $editor) {
             $editor->setAttributeAlias($this->getAttributeAlias());
             $this->editor = $editor;
             $this->editable = true;
@@ -233,9 +246,9 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     public function getAlign()
     {
         if (! $this->isAlignSet()) {
-            if ($this->getDataType()->is(EXF_DATA_TYPE_NUMBER) || $this->getDataType()->is(EXF_DATA_TYPE_PRICE) || $this->getDataType()->is(EXF_DATA_TYPE_DATE)) {
+            if ($this->getDataType() instanceof NumberDataType || $this->getDataType() instanceof PriceDataType || $this->getDataType() instanceof DateDataType) {
                 $this->setAlign(EXF_ALIGN_OPPOSITE);
-            } elseif ($this->getDataType()->is(EXF_DATA_TYPE_BOOLEAN)) {
+            } elseif ($this->getDataType() instanceof BooleanDataType) {
                 $this->setAlign(EXF_ALIGN_CENTER);
             } else {
                 $this->setAlign(EXF_ALIGN_DEFAULT);
@@ -245,10 +258,10 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     }
 
     /**
-     * Returns the data type of the column as a constant (e.g.
-     * EXF_DATA_TYPE_NUMBER). The column's
-     * data_type can either be set explicitly by UXON, or is derived from the shown meta attribute.
-     * If there is neither an attribute bound to the column, nor an explicit data_type EXF_DATA_TYPE_STRING
+     * Returns the data type of the column. 
+     * 
+     * The column's data_type can either be set explicitly by UXON, or is derived from the shown meta attribute.
+     * If there is neither an attribute bound to the column, nor an explicit data_type, the base data type
      * is returned.
      *
      * @return AbstractDataType
@@ -260,8 +273,7 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
         } elseif ($attr = $this->getAttribute()) {
             return $attr->getDataType();
         } else {
-            $exface = $this->getWorkbench();
-            return DataTypeFactory::createFromAlias($exface, EXF_DATA_TYPE_STRING);
+            return DataTypeFactory::createBaseDataType($this->getWorkbench());
         }
     }
 
@@ -286,14 +298,25 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
         }
     }
 
-    public function getAggregateFunction()
+    public function getAggregator()
     {
         return $this->aggregate_function;
     }
 
-    public function setAggregateFunction($value)
+    /**
+     * 
+     * @param AggregatorInterface|string $aggregator_or_string
+     * @return \exface\Core\Widgets\DataColumn
+     */
+    public function setAggregator($aggregator_or_string)
     {
-        $this->aggregate_function = $value;
+        if ($aggregator_or_string instanceof AggregatorInterface){
+            $aggregator = $aggregator_or_string;
+        } else {
+            $aggregator = new Aggregator($this->getWorkbench(), $aggregator_or_string);
+        }
+        $this->aggregate_function = $aggregator;
+        return $this;
     }
 
     public function getIncludeInQuickSearch()
@@ -312,7 +335,7 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
      */
     public function setIncludeInQuickSearch($value)
     {
-        $this->include_in_quick_search = \exface\Core\DataTypes\BooleanDataType::parse($value);
+        $this->include_in_quick_search = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;
     }
 
@@ -389,7 +412,7 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
      */
     public function setStyle($value)
     {
-        $this->style = $value;
+        $this->style = TextStylesDataType::cast(strtoupper($value));
         return $this;
     }
 
@@ -419,7 +442,7 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
 
     /**
      *
-     * @return Expression
+     * @return ExpressionInterface
      */
     public function getExpression()
     {
@@ -453,5 +476,95 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
         // TODO add properties specific to this widget here
         return $uxon;
     }
+    
+    /**
+     * 
+     * @return \exface\Core\DataTypes\SortingDirectionsDataType
+     */
+    public function getDefaultSortingDirection()
+    {
+        if(is_null($this->default_sorting_direction)){
+            return $this->getDataType()->getDefaultSortingDirection();
+        }
+        return $this->default_sorting_direction;
+    }
+    
+    /**
+     * Defines the default sorting direction for this column: ASC or DESC.
+     * 
+     * The default direction is used if sorting the column without a
+     * direction being explicitly specified: e.g. when clicking on a
+     * sortable table header.
+     * 
+     * If not set, the default sorting direction of the attribute will
+     * be used for columns representing attributes or the default sorting
+     * direction of the data type of the columns expression.
+     * 
+     * @uxon-property default_sorting_direction
+     * @uxon-type [ASC,DESC]
+     * 
+     * @param SortingDirectionsDataType|string $asc_or_desc
+     */
+    public function setDefaultSortingDirection($asc_or_desc)
+    {
+        if ($asc_or_desc instanceof SortingDirectionsDataType){
+            // Everything OK. Just proceed
+        } elseif (SortingDirectionsDataType::isValidValue(strtoupper($asc_or_desc))){
+            $asc_or_desc = new SortingDirectionsDataType($this->getWorkbench(), strtoupper($asc_or_desc));
+        } else {
+            throw new WidgetPropertyInvalidValueError($this, 'Invalid value "' . $asc_or_desc . '" for default sorting direction in data column: use ASC or DESC');
+        }
+        $this->default_sorting_direction = $asc_or_desc;
+        return $this;
+    }
+    
+    /**
+     * Returns TRUE if formatters are disabled for this column and FALSE otherwise.
+     * @return boolean
+     */
+    public function getDisableFormatters()
+    {
+        return $this->disableFormatters;
+    }
+
+    /**
+     * Set to TRUE to disable all formatters for this column (including data type specific ones!) - FALSE by default.
+     * 
+     * @uxon-property disable_formatters
+     * @uxon-type boolean
+     * 
+     * @param boolean $disableFormatters
+     * @return DataColumn
+     */
+    public function setDisableFormatters($disableFormatters)
+    {
+        $this->disableFormatters = $disableFormatters;
+        return $this;
+    }
+    /**
+     * 
+     * @return string $color
+     */
+    public function getColor()
+    {
+        return $this->color;
+    }
+
+    /**
+     * Sets the color to use for this data column (a CSS color code or anything else supported by your template).
+     * 
+     * @uxon-property color
+     * @uxon-type string
+     * 
+     * @param string $color
+     * @return DataColumn
+     */
+    public function setColor($color)
+    {
+        $this->color = $color;
+        return $this;
+    }
+
+
 }
 ?>

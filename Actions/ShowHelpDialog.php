@@ -24,7 +24,7 @@ class ShowHelpDialog extends ShowDialog
     protected function init()
     {
         parent::init();
-        $this->setIconName(Icons::QUESTION_CIRCLE_O);
+        $this->setIcon(Icons::QUESTION_CIRCLE_O);
         $this->setPrefillWithFilterContext(false);
         $this->setPrefillWithInputData(false);
     }

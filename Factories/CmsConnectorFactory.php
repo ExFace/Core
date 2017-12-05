@@ -1,7 +1,6 @@
 <?php
 namespace exface\Core\Factories;
 
-use exface;
 use exface\Core\Interfaces\NameResolverInterface;
 use exface\Core\Interfaces\CmsConnectorInterface;
 

@@ -2,7 +2,7 @@
 namespace exface\Core\Factories;
 
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\CommonLogic\Model\Object;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\CommonLogic\DataSheets\DataSheet;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
@@ -15,13 +15,13 @@ abstract class DataSheetFactory extends AbstractUxonFactory
      * Creates a data sheet for a give object.
      * The object can be passed directly or specified by it's fully qualified alias (with namespace!)
      *
-     * @param exface $exface            
-     * @param Object|string $meta_object_or_alias            
+     * @param Workbench $exface            
+     * @param MetaObjectInterface|string $meta_object_or_alias            
      * @return DataSheetInterface
      */
     public static function createFromObjectIdOrAlias(Workbench $exface, $meta_object_or_alias = null)
     {
-        if ($meta_object_or_alias instanceof Object) {
+        if ($meta_object_or_alias instanceof MetaObjectInterface) {
             $meta_object = $meta_object_or_alias;
         } else {
             $meta_object = $exface->model()->getObject($meta_object_or_alias);
@@ -31,7 +31,7 @@ abstract class DataSheetFactory extends AbstractUxonFactory
 
     /**
      *
-     * @param exface $exface            
+     * @param Workbench $exface            
      * @return DataSheetInterface
      */
     public static function createEmpty(Workbench $exface)
@@ -41,10 +41,10 @@ abstract class DataSheetFactory extends AbstractUxonFactory
 
     /**
      *
-     * @param Object $meta_object            
+     * @param MetaObjectInterface $meta_object            
      * @return DataSheetInterface
      */
-    public static function createFromObject(Object $meta_object)
+    public static function createFromObject(MetaObjectInterface $meta_object)
     {
         $data_sheet = new DataSheet($meta_object);
         return $data_sheet;
@@ -52,7 +52,7 @@ abstract class DataSheetFactory extends AbstractUxonFactory
 
     /**
      *
-     * @param exface $exface            
+     * @param Workbench $exface            
      * @param UxonObject $uxon            
      * @return DataSheetInterface
      */
@@ -70,8 +70,8 @@ abstract class DataSheetFactory extends AbstractUxonFactory
 
     /**
      *
-     * @param exface $exface            
-     * @param unknown $data_sheet_or_uxon            
+     * @param Workbench $exface            
+     * @param DataSheetInterface|UxonObject $data_sheet_or_uxon            
      * @throws InvalidArgumentException
      * @return DataSheetInterface
      */
@@ -79,8 +79,8 @@ abstract class DataSheetFactory extends AbstractUxonFactory
     {
         if ($data_sheet_or_uxon instanceof DataSheetInterface) {
             return $data_sheet_or_uxon;
-        } elseif ($data_sheet_or_uxon instanceof \stdClass) {
-            return static::createFromStdClass($exface, $data_sheet_or_uxon);
+        } elseif ($data_sheet_or_uxon instanceof UxonObject) {
+            return static::createFromUxon($exface, $data_sheet_or_uxon);
         } elseif (! is_object($data_sheet_or_uxon)) {
             return static::createFromUxon($exface, UxonObject::fromJson($data_sheet_or_uxon));
         } else {

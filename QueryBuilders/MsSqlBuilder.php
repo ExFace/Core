@@ -1,13 +1,16 @@
 <?php
 namespace exface\Core\QueryBuilders;
 
+use exface\Core\DataTypes\AggregatorFunctionsDataType;
+use exface\Core\CommonLogic\Model\Aggregator;
+
 /**
  * A query builder for Microsoft SQL.
  *
  * Data address properties for objects:
  * - SQL_SELECT_WHERE - custom where statement automatically appended to direct selects for this object (not if the object's table
  * is joined!). Usefull for generic tables, where different meta objects are stored and distinguished by specific keys in a
- * special column. The value of SQL_SELECT_WHERE should contain the [#alias#] placeholder: e.g. [#alias#].mycolumn = 'myvalue'.
+ * special column. The value of SQL_SELECT_WHERE should contain the [#~alias#] placeholder: e.g. [#~alias#].mycolumn = 'myvalue'.
  *
  * @author Andrej Kabachnik
  *        
@@ -27,7 +30,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
      * to distinguish between core and enrichment elements in order to join enrchichment stuff after all
      * the aggregating had been done.
      *
-     * @see \exface\DataSources\QueryBuilders\sql_abstractSQL::buildSqlQuerySelect()
+     * @see \exface\Core\QueryBuilders\AbstractSqlBuilder::buildSqlQuerySelect()
      */
     public function buildSqlQuerySelect()
     {
@@ -92,12 +95,12 @@ else {
             }
             // if the query has a GROUP BY, we need to put the UID-Attribute in the core select as well as in the enrichment select
             // otherwise the enrichment joins won't work!
-            if ($group_by && $qpart->getAttribute()->getAlias() === $qpart->getAttribute()->getObject()->getUidAlias() && ! $has_attributes_with_reverse_relations) {
-                $selects[] = $this->buildSqlSelect($qpart, null, null, null, 'MAX');
-                $enrichment_select .= ', ' . $this->buildSqlSelect($qpart, 'EXFCOREQ', $qpart->getAttribute()->getObject()->getUidAlias());
+            if ($group_by && $qpart->getAttribute()->getAlias() === $qpart->getAttribute()->getObject()->getUidAttributeAlias() && ! $has_attributes_with_reverse_relations) {
+                $selects[] = $this->buildSqlSelect($qpart, null, null, null, new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::MAX));
+                $enrichment_select .= ', ' . $this->buildSqlSelect($qpart, 'EXFCOREQ', $qpart->getAttribute()->getObject()->getUidAttributeAlias());
                 $group_safe_attribute_aliases[] = $qpart->getAttribute()->getAliasWithRelationPath();
             } // If we are not aggregating or the attribute has a group function, add it regulary
-elseif (! $group_by || $qpart->getAggregateFunction() || $this->getAggregation($qpart->getAlias())) {
+elseif (! $group_by || $qpart->getAggregator() || $this->getAggregation($qpart->getAlias())) {
                 $selects[] = $this->buildSqlSelect($qpart);
                 $joins = array_merge($joins, $this->buildSqlJoins($qpart));
                 $group_safe_attribute_aliases[] = $qpart->getAttribute()->getAliasWithRelationPath();
@@ -109,7 +112,7 @@ elseif (! $group_by || $qpart->getAggregateFunction() || $this->getAggregation($
                     $first_rel = reset($rels);
                     $first_rel_qpart = $this->addAttribute($first_rel->getAlias());
                     // IDEA this does not support relations based on custom sql. Perhaps this needs to change
-                    $selects[] = $this->buildSqlSelect($first_rel_qpart, null, null, $first_rel_qpart->getAttribute()->getDataAddress(), ($group_by ? 'MAX' : null));
+                    $selects[] = $this->buildSqlSelect($first_rel_qpart, null, null, $first_rel_qpart->getAttribute()->getDataAddress(), ($group_by ? new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::MAX) : null));
                 }
                 $enrichment_select .= ', ' . $this->buildSqlSelect($qpart);
                 $enrichment_joins = array_merge($enrichment_joins, $this->buildSqlJoins($qpart, 'exfcoreq'));
@@ -117,7 +120,7 @@ elseif (! $group_by || $qpart->getAggregateFunction() || $this->getAggregation($
                 $group_safe_attribute_aliases[] = $qpart->getAttribute()->getAliasWithRelationPath();
                 // If aggregating, also add attributes, that belong directly to objects, we are aggregating over (they can be assumed unique too, since their object is unique per row)
             } elseif ($group_by && $this->getAggregation($qpart->getAttribute()->getRelationPath()->toString())) {
-                $selects[] = $this->buildSqlSelect($qpart, null, null, null, 'MAX');
+                $selects[] = $this->buildSqlSelect($qpart, null, null, null, new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::MAX));
                 $joins = array_merge($joins, $this->buildSqlJoins($qpart));
                 $group_safe_attribute_aliases[] = $qpart->getAttribute()->getAliasWithRelationPath();
             } else {
@@ -181,14 +184,14 @@ elseif (! $group_by || $qpart->getAggregateFunction() || $this->getAggregation($
         if (count($this->getTotals()) > 0) {
             // determine all joins, needed to perform the totals functions
             foreach ($this->getTotals() as $qpart) {
-                $totals_selects[] = $this->buildSqlSelect($qpart, 'EXFCOREQ', $this->getShortAlias($qpart->getAlias()), null, $qpart->getFunction());
+                $totals_selects[] = $this->buildSqlSelect($qpart, 'EXFCOREQ', $this->getShortAlias($qpart->getAlias()), null, $qpart->getTotalAggregator());
                 $totals_core_selects[] = $this->buildSqlSelect($qpart);
                 $totals_joins = array_merge($totals_joins, $this->buildSqlJoins($qpart));
             }
         }
         
         if ($group_by) {
-            $totals_core_selects[] = $this->buildSqlSelect($this->getAttribute($this->getMainObject()->getUidAlias()), null, null, null, 'MAX');
+            $totals_core_selects[] = $this->buildSqlSelect($this->getAttribute($this->getMainObject()->getUidAttributeAlias()), null, null, null, new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::MAX));
         }
         
         // filters -> WHERE
@@ -229,9 +232,9 @@ elseif (! $group_by || $qpart->getAggregateFunction() || $this->getAggregation($
         return $totals_query;
     }
 
-    protected function buildSqlSelectNullCheck($select_statement, $value_if_null)
+    protected function buildSqlSelectNullCheckFunctionName()
     {
-        return 'ISNULL(' . $select_statement . ', ' . (is_numeric($value_if_null) ? $value_if_null : '"' . $value_if_null . '"') . ')';
+        return 'ISNULL';
     }
 }
 ?>

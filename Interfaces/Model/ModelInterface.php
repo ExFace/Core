@@ -3,7 +3,7 @@ namespace exface\Core\Interfaces\Model;
 
 use exface\Core\Interfaces\DataSources\ModelLoaderInterface;
 use exface\Core\Interfaces\ExfaceClassInterface;
-use exface\Core\CommonLogic\Model\Object;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 
 /**
  * The model class is the single point of contact for a workbench instance to the metamodel.
@@ -27,7 +27,7 @@ interface ModelInterface extends ExfaceClassInterface
      * Fetch object meta data from model by object_id (numeric)
      *
      * @param string $object_id
-     * @return Object
+     * @return MetaObjectInterface
      */
     public function getObjectById($object_id);
 
@@ -37,7 +37,7 @@ interface ModelInterface extends ExfaceClassInterface
      *
      * @param string $object_alias     
      * @param string $namespace       
-     * @return \exface\Core\CommonLogic\Model\Object
+     * @return \exface\Core\Interfaces\Model\MetaObjectInterface
      */
     public function getObjectByAlias($object_alias, $namespace = null);
 
@@ -48,7 +48,7 @@ interface ModelInterface extends ExfaceClassInterface
      * numeric parameters are treated as ids.
      *
      * @param int $id_or_alias
-     * @return \exface\Core\CommonLogic\Model\Object
+     * @return \exface\Core\Interfaces\Model\MetaObjectInterface
      */
     public function getObject($id_or_alias);
 
@@ -56,10 +56,10 @@ interface ModelInterface extends ExfaceClassInterface
      * TODO Move this method to the ExpressionFactory (need to replace all calls...)
      *
      * @param string $expression            
-     * @param Object $object            
-     * @return \exface\Core\CommonLogic\Model\Expression
+     * @param MetaObjectInterface $object            
+     * @return \exface\Core\Interfaces\Model\ExpressionInterface
      */
-    public function parseExpression($expression, Object $object = null);
+    public function parseExpression($expression, MetaObjectInterface $object = null);
 
     /**
      * @return ModelLoaderInterface

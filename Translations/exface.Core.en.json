@@ -31,6 +31,9 @@
 	"ACTION.FAVORITESADD.NAME": "Add to favorites",
     "ACTION.FAVORITESADD.RESULT": "%number% objects added to favorites.",
     
+	"ACTION.GENERATEMODELFROMDATASOURCE.NAME": "Generate Model",
+	"ACTION.GENERATEMODELFROMDATASOURCE.RESULT_FOR_OBJECT": "Created %created_counter% attribute(s) for %object_counter% object(s). %skipped_counter% attributes skipped as duplicates!",
+	
 	"ACTION.GOBACK.NAME": "Back",
 	"ACTION.GOTOURL.NAME": "Visit URL",
 	"ACTION.GOTOURL.SUCCESS": "Redirecting...",
@@ -99,16 +102,36 @@
 	"DATETIME.FORMAT.SCREEN.PHP": "Y-m-d H:i:s",
 	
 	"GLOBAL.ACTIONS": "Actions",
-	"GLOBAL.DEFAULT_DATE_FORMAT": "d.m.Y",
-    "GLOBAL.DEFAULT_DATETIME_FORMAT": "d.m.Y H:i:s",
-    
-    "INSTALLER.SQLSCHEMA.SUCCESS": "%counter% SQL-schema-update installed|%counter% SQL-schema-updates installed",
+	
+	"GLOBAL.AGGREGATOR_FUNCTIONS.SUM": "Sum",
+	"GLOBAL.AGGREGATOR_FUNCTIONS.AVG": "Average",
+	"GLOBAL.AGGREGATOR_FUNCTIONS.MIN": "Minimum",
+	"GLOBAL.AGGREGATOR_FUNCTIONS.MAX": "Maximum",
+	"GLOBAL.AGGREGATOR_FUNCTIONS.LIST": "List",
+	"GLOBAL.AGGREGATOR_FUNCTIONS.LIST_DISTINCT": "List distinct",
+	"GLOBAL.AGGREGATOR_FUNCTIONS.COUNT": "Count",
+	"GLOBAL.AGGREGATOR_FUNCTIONS.COUNT_DISTINCT": "Count distinct",
+	"GLOBAL.AGGREGATOR_FUNCTIONS.COUNT_IF": "Count if",
+	
+	"GLOBAL.SORTING_DIRECTIONS.ASC": "Ascending",
+	"GLOBAL.SORTING_DIRECTIONS.DESC": "Descending",
+	
+	"INSTALLER.SQLSCHEMA.SUCCESS": "%counter% SQL-schema-update installed|%counter% SQL-schema-updates installed",
     "INSTALLER.SQLSCHEMA.FAILED": "SQL-schema-update %first_failed_id% failed: %error_text%|%counter% SQL-schema-updates failed starting with update %first_failed_id%: %error_text%",
 	
-	"WIDGET.SELECT_ALL": "All",
+	"LOCALIZATION.DATE.DATE_FORMAT": "d.m.Y",
+    "LOCALIZATION.DATE.DATETIME_FORMAT": "d.m.Y H:i:s",
+    "LOCALIZATION.DATE.TIME_FORMAT": "H:i:s",
+    "LOCALIZATION.NUMBER.DECIMAL_SEPARATOR": ".",
+    "LOCALIZATION.NUMBER.THOUSANDS_SEPARATOR": " ",
+    "LOCALIZATION.PRICE.PRECISION_MAX": 2,
+    "LOCALIZATION.PRICE.PRECISION_MIN": 2,
+    
+    "WIDGET.SELECT_ALL": "All",
 	"WIDGET.SELECT_YES": "Yes",
 	"WIDGET.SELECT_NO": "No",
 	"WIDGET.SELECT_NONE": "-",
+	"WIDGET.SELECT_EMPTY": "Empty",
 	
 	"WIDGET.STATEMENUBUTTON.CAPTION": "Change state",
 	
@@ -124,6 +147,11 @@
 	"WIDGET.DIALOG.CLOSE_BUTTON_CAPTION": "Cancel",
 	
 	"WIDGET.TEXT.EMPTY_TEXT": "-",
+	"WIDGET.TEXT.STYLE_BOLD": "Bold",
+	"WIDGET.TEXT.STYLE_NORMAL": "Normal",
+	"WIDGET.TEXT.STYLE_UNDERLINE": "Underline",
+	"WIDGET.TEXT.STYLE_ITALIC": "Italic",
+	"WIDGET.TEXT.STYLE_STRIKETHROUGH": "Strike-through",
 	
 	"WIDGET.INPUT.EMPTY_TEXT": "",
 	

@@ -2,7 +2,7 @@
 namespace exface\Core\Widgets;
 
 use exface\Core\Factories\WidgetFactory;
-use exface\Core\CommonLogic\Model\Attribute;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Widgets\iCanBeRequired;
 use exface\Core\Interfaces\Widgets\iHaveValue;
 use exface\Core\Interfaces\Widgets\iTakeInput;
@@ -10,6 +10,7 @@ use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\CommonLogic\Model\Condition;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
+use exface\Core\CommonLogic\UxonObject;
 
 /**
  * A filter is a wrapper widget, which typically consist of one or more input widgets.
@@ -48,7 +49,7 @@ class Filter extends Container implements iCanBeRequired, iShowSingleAttribute
     /**
      * Sets the widget used to interact with the filter (typically some kind of input widget)
      *
-     * @param iTakeInput|\stdClass $widget_or_uxon_object            
+     * @param iTakeInput|UxonObject $widget_or_uxon_object            
      * @return \exface\Core\Widgets\Filter
      */
     public function setInputWidget($widget_or_uxon_object)
@@ -62,7 +63,7 @@ class Filter extends Container implements iCanBeRequired, iShowSingleAttribute
         }
         
         // Set a default comparator
-        if (is_null($this->getComparator())) {
+        if (is_null($this->comparator)) {
             // If the input widget will produce multiple values, use the IN comparator
             if ($this->widget->implementsInterface('iSupportMultiselect') && $this->widget->getMultiSelect()) {
                 $this->setComparator(EXF_COMPARATOR_IN);
@@ -117,7 +118,7 @@ class Filter extends Container implements iCanBeRequired, iShowSingleAttribute
 
     /**
      *
-     * @return Attribute
+     * @return MetaAttributeInterface
      */
     public function getAttribute()
     {
@@ -152,6 +153,11 @@ class Filter extends Container implements iCanBeRequired, iShowSingleAttribute
     public function getValue()
     {
         return $this->getInputWidget()->getValue();
+    }
+    
+    public function getValueWithDefaults()
+    {
+        return $this->getInputWidget()->getValueWithDefaults();
     }
 
     /**
@@ -208,6 +214,9 @@ class Filter extends Container implements iCanBeRequired, iShowSingleAttribute
 
     public function getComparator()
     {
+        // IDEA give the comparator a default value. But make sure, setInputWidget() retains the possibility
+        // to detect, that the comparator is not set and set one based on the input widget (or, perhaps even
+        // better, move that logic here).
         return $this->comparator;
     }
 
@@ -277,7 +286,7 @@ class Filter extends Container implements iCanBeRequired, iShowSingleAttribute
         $uxon = parent::exportUxonObject();
         $uxon->setProperty('comparator', $this->getComparator());
         $uxon->setProperty('required', $this->isRequired());
-        $uxon->setProperty('widget', $this->getInputWidget()->exportUxonObject());
+        $uxon->setProperty('input_widget', $this->getInputWidget()->exportUxonObject());
         return $uxon;
     }
 }

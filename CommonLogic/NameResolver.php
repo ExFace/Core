@@ -4,6 +4,7 @@ namespace exface\Core\CommonLogic;
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\Interfaces\NameResolverInterface;
 use exface\Core\Exceptions\NameResolverError;
+use exface\Core\DataTypes\StringDataType;
 
 /**
  * The name resolver translates all kinds of references to important objects within ExFace to their class names, thus
@@ -33,6 +34,8 @@ class NameResolver extends AbstractExfaceClass implements NameResolverInterface
 
     const OBJECT_TYPE_DATA_CONNECTOR = 'DataConnectors';
 
+    const OBJECT_TYPE_DATATYPE = 'DataTypes';
+    
     const OBJECT_TYPE_QUERY_BUILDER = 'QueryBuilders';
 
     const OBJECT_TYPE_CMS_CONNECTOR = 'CmsConnectors';
@@ -103,14 +106,30 @@ class NameResolver extends AbstractExfaceClass implements NameResolverInterface
      * @param Workbench $exface            
      * @return string
      */
-    protected static function getAliasFromString($string, $separator = self::NAMESPACE_SEPARATOR)
+    protected static function removeNamespaceFromString($string, $separator = self::NAMESPACE_SEPARATOR)
     {
         $pos = strripos($string, $separator);
         if ($pos !== false) {
-            return str_replace($separator, self::NAMESPACE_SEPARATOR, substr($string, ($pos + 1)));
+            $alias = substr($string, ($pos + 1));
         } else {
-            return $string;
+            $alias = $string;
         }
+        return $alias;
+    }
+    
+    protected static function getAliasFromFilePath($path, $object_type)
+    {
+        $filename = self::removeNamespaceFromString($path, DIRECTORY_SEPARATOR);
+        switch ($object_type){
+            case self::OBJECT_TYPE_APP:
+                $alias = str_replace('App', '', $filename);
+                break;
+            case self::OBJECT_TYPE_DATATYPE:
+                $alias = str_replace('DataType', '', $filename);
+                break;
+            default: $alias = $filename;
+        }
+        return $alias;
     }
 
     public static function createFromString($string, $object_type, Workbench $exface)
@@ -126,14 +145,14 @@ class NameResolver extends AbstractExfaceClass implements NameResolverInterface
                 self::APPS_DIRECTORY . DIRECTORY_SEPARATOR
             ), '', $string);
             $string = str_replace(self::NORMALIZED_DIRECTORY_SEPARATOR, DIRECTORY_SEPARATOR, $string);
-            $instance->setAlias(self::getAliasFromString($string, DIRECTORY_SEPARATOR));
+            $instance->setAlias(self::getAliasFromFilePath($string, $object_type));
             $instance->setNamespace(self::getNamespaceFromString($string, DIRECTORY_SEPARATOR, $object_type));
         } elseif (mb_strpos($string, self::CLASS_NAMESPACE_SEPARATOR) === 0) {
             // If the first character of the string is "\" - it is a class name with a namespace
             // TODO
         } else {
             // Otherwise treat the string as an alias
-            $instance->setAlias(self::getAliasFromString($string));
+            $instance->setAlias(self::removeNamespaceFromString($string));
             $instance->setNamespace(self::getNamespaceFromString($string));
         }
         return $instance;
@@ -204,6 +223,9 @@ class NameResolver extends AbstractExfaceClass implements NameResolverInterface
             case self::OBJECT_TYPE_APP:
                 $result .= self::CLASS_NAMESPACE_SEPARATOR . $this->getAlias() . 'App';
                 break;
+            case self::OBJECT_TYPE_DATATYPE:
+                $result .= self::CLASS_NAMESPACE_SEPARATOR . $this->getAlias() . 'DataType';
+                break;
             case self::OBJECT_TYPE_TEMPLATE:
                 $result .= self::CLASS_NAMESPACE_SEPARATOR . $this->getAlias() . self::CLASS_NAMESPACE_SEPARATOR . 'Template' . self::CLASS_NAMESPACE_SEPARATOR . $this->getAlias();
                 break;
@@ -218,6 +240,7 @@ class NameResolver extends AbstractExfaceClass implements NameResolverInterface
         switch ($this->getObjectType()) {
             case self::OBJECT_TYPE_CONTEXT:
             case self::OBJECT_TYPE_FORMULA:
+            case self::OBJECT_TYPE_DATATYPE:
             case self::OBJECT_TYPE_ACTION:
                 $result = self::APPS_NAMESPACE;
                 if ($this->getNamespace()) {
@@ -225,7 +248,10 @@ class NameResolver extends AbstractExfaceClass implements NameResolverInterface
                 } else {
                     $result .= 'exface\\Core';
                 }
-                $result .= self::CLASS_NAMESPACE_SEPARATOR . self::getSubdirFromObjectType($this->getObjectType());
+                $subdir = self::CLASS_NAMESPACE_SEPARATOR . self::getSubdirFromObjectType($this->getObjectType());
+                if (! StringDataType::endsWith($result, $subdir)) {
+                    $result .= $subdir;
+                }
                 break;
             case self::OBJECT_TYPE_APP:
                 $result = self::APPS_NAMESPACE . self::convertNamespaceToClassNamespace($this->getAliasWithNamespace());
@@ -296,6 +322,9 @@ class NameResolver extends AbstractExfaceClass implements NameResolverInterface
                 break;
             case self::OBJECT_TYPE_WIDGET:
                 $result = $factory_namespace . 'WidgetFactory';
+                break;
+            case self::OBJECT_TYPE_DATATYPE:
+                $result = $factory_namespace . 'DataTypeFactory';
                 break;
         }
         return $result;

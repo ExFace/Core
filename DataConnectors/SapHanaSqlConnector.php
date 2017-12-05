@@ -1,7 +1,7 @@
 <?php
 namespace exface\Core\DataConnectors;
 
-use exface\Core\CommonLogic\Modelizers\SapHanaSqlModelizer;
+use exface\Core\ModelBuilders\SapHanaSqlModelBuilder;
 
 /**
  * SQL connector for SAP HANA based on ODBC
@@ -15,11 +15,11 @@ class SapHanaSqlConnector extends OdbcSqlConnector
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\DataConnectors\AbstractSqlConnector::getModelizer()
+     * @see \exface\Core\DataConnectors\AbstractSqlConnector::getModelBuilder()
      */
-    public function getModelizer()
+    public function getModelBuilder()
     {
-        return new SapHanaSqlModelizer($this);
+        return new SapHanaSqlModelBuilder($this);
     }
 }
 ?>

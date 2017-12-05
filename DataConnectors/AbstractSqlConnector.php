@@ -49,7 +49,7 @@ abstract class AbstractSqlConnector extends AbstractDataConnector implements Sql
      */
     public function setAutocommit($value)
     {
-        $this->autocommit = \exface\Core\DataTypes\BooleanDataType::parse($value);
+        $this->autocommit = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;
     }
 
@@ -83,7 +83,7 @@ abstract class AbstractSqlConnector extends AbstractDataConnector implements Sql
 
     protected function setConnected($value)
     {
-        $this->connected = BooleanDataType::parse($value);
+        $this->connected = BooleanDataType::cast($value);
         return $this;
     }
 
@@ -94,7 +94,7 @@ abstract class AbstractSqlConnector extends AbstractDataConnector implements Sql
 
     protected function setTransactionStarted($value)
     {
-        $this->transaction_started = \exface\Core\DataTypes\BooleanDataType::parse($value);
+        $this->transaction_started = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;
     }
 
@@ -226,17 +226,6 @@ abstract class AbstractSqlConnector extends AbstractDataConnector implements Sql
         $uxon->setProperty('port', $this->getPort());
         $uxon->setProperty('autocommit', $this->getAutocommit());
         return $uxon;
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\DataSources\SqlDataConnectorInterface::getModelizer()
-     */
-    public function getModelizer()
-    {
-        throw new NotImplementedError('Cannot create an SQL explorer for a general ODBC connection!');
     }
 }
 ?>

@@ -86,24 +86,24 @@ class ContextBar extends Toolbar
      * @uxon-property contexts
      * @uxon-type array
      * 
-     * @param UxonObject[] $context_uxon_objects
+     * @param UxonObject $context_uxon_objects
      * @return ContextBar
      */
-    public function setContexts(array $context_uxon_objects){
+    public function setContexts(UxonObject $context_uxon_objects){
         foreach ($context_uxon_objects as $uxon){
             $visibility = strtolower($uxon->getProperty('visibility'));
             if ($visibility == ContextInterface::CONTEXT_BAR_DISABED){
                 continue;
             }
             
-            if ($uxon->getProperty('restrict_only_admins') && ! $this->getWorkbench()->context()->getScopeUser()->isUserAdmin()){
+            if ($uxon->getProperty('restrict_only_admins') && ! $this->getWorkbench()->context()->getScopeUser()->getUserCurrent()->isUserAdmin()){
                 $this->getWorkbench()->getLogger()->info('Not adding context "' . $uxon->getProperty('context_scope') . ':' . $uxon->getProperty('context_alias') . '" to ContextBar: it is accessible for admins only!');
                 continue;
             } else {
                 $uxon->unsetProperty('restrict_only_admins');
             }
             
-            if ($uxon->getProperty('restrict_only_authenticated') && $this->getWorkbench()->context()->getScopeUser()->isUserAnonymous()){
+            if ($uxon->getProperty('restrict_only_authenticated') && $this->getWorkbench()->context()->getScopeUser()->getUserCurrent()->isUserAnonymous()){
                 $this->getWorkbench()->getLogger()->info('Not adding context "' . $uxon->getProperty('context_scope') . ':' . $uxon->getProperty('context_alias') . '" to ContextBar: it is accessible for logged in users only!');
                 continue;
             } else {
@@ -164,7 +164,7 @@ class ContextBar extends Toolbar
         ->setId($this->createButtonIdFromContext($context))
         ->setActionAlias('exface.Core.ShowContextPopup')
         ->setHint($context->getName())
-        ->setIconName($context->getIcon())
+        ->setIcon($context->getIcon())
         ->setMetaObject($this->getWorkbench()->model()->getObject('exface.Core.CONTEXT_BASE_OBJECT'));
         
         $btn->getAction()->setContextAlias($context->getAliasWithNamespace());

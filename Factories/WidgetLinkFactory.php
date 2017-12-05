@@ -10,9 +10,9 @@ abstract class WidgetLinkFactory extends AbstractUxonFactory
 {
 
     /**
-     * Creates an empty dimension object
+     * Creates an empty widget link
      *
-     * @param exface $exface            
+     * @param Workbench $exface            
      * @return WidgetLinkInterface
      */
     public static function createEmpty(Workbench $exface)
@@ -22,8 +22,8 @@ abstract class WidgetLinkFactory extends AbstractUxonFactory
 
     /**
      *
-     * @param exface $exface            
-     * @param string|\stdClass|UxonObject $string_or_object            
+     * @param Workbench $exface            
+     * @param string|UxonObject $string_or_object            
      * @param string $id_space            
      * @return WidgetLinkInterface
      */
@@ -32,10 +32,12 @@ abstract class WidgetLinkFactory extends AbstractUxonFactory
         if ($string_or_object instanceof WidgetLinkInterface) {
             return $string_or_object;
         }
+        
         $ref = static::createEmpty($exface);
         if (! is_null($id_space)) {
             $ref->setWidgetIdSpace($id_space);
         }
+        
         $ref->parseLink($string_or_object);
         return $ref;
     }

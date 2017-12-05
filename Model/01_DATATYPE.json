@@ -1,0 +1,473 @@
+{
+    "object_alias": "exface.Core.DATATYPE",
+    "columns": [
+        {
+            "name": "CREATED_ON",
+            "attribute_alias": "CREATED_ON"
+        },
+        {
+            "name": "MODIFIED_ON",
+            "attribute_alias": "MODIFIED_ON"
+        },
+        {
+            "name": "CREATED_BY_USER",
+            "attribute_alias": "CREATED_BY_USER"
+        },
+        {
+            "name": "MODIFIED_BY_USER",
+            "attribute_alias": "MODIFIED_BY_USER"
+        },
+        {
+            "name": "UID",
+            "attribute_alias": "UID"
+        },
+        {
+            "name": "APP",
+            "attribute_alias": "APP"
+        },
+        {
+            "name": "NAME",
+            "attribute_alias": "NAME"
+        },
+        {
+            "name": "PROTOTYPE",
+            "attribute_alias": "PROTOTYPE"
+        },
+        {
+            "name": "CONFIG_UXON",
+            "attribute_alias": "CONFIG_UXON"
+        },
+        {
+            "name": "VALIDATION_ERROR",
+            "attribute_alias": "VALIDATION_ERROR"
+        },
+        {
+            "name": "DEFAULT_EDITOR_UXON",
+            "attribute_alias": "DEFAULT_EDITOR_UXON"
+        },
+        {
+            "name": "ALIAS",
+            "attribute_alias": "ALIAS"
+        },
+        {
+            "name": "SHORT_DESCRIPTION",
+            "attribute_alias": "SHORT_DESCRIPTION"
+        }
+    ],
+    "rows": [
+        {
+            "CREATED_ON": "1970-01-01 00:00:00",
+            "MODIFIED_ON": "1970-01-01 00:00:00",
+            "CREATED_BY_USER": "",
+            "MODIFIED_BY_USER": "",
+            "UID": "0x30000000000000000000000000000000",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "String",
+            "PROTOTYPE": "exface\/Core\/DataTypes\/StringDataType.php",
+            "CONFIG_UXON": "",
+            "VALIDATION_ERROR": "",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\": \"Input\"}",
+            "ALIAS": "String",
+            "SHORT_DESCRIPTION": ""
+        },
+        {
+            "CREATED_ON": "1970-01-01 00:00:00",
+            "MODIFIED_ON": "2017-09-11 10:25:27",
+            "CREATED_BY_USER": "",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x31000000000000000000000000000000",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Number",
+            "PROTOTYPE": "exface\/Core\/DataTypes\/NumberDataType.php",
+            "CONFIG_UXON": "",
+            "VALIDATION_ERROR": "",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"InputNumber\"}",
+            "ALIAS": "Number",
+            "SHORT_DESCRIPTION": ""
+        },
+        {
+            "CREATED_ON": "1970-01-01 00:00:00",
+            "MODIFIED_ON": "2017-09-11 12:00:44",
+            "CREATED_BY_USER": "",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x31300000000000000000000000000000",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Property Set",
+            "PROTOTYPE": "exface\/Core\/DataTypes\/PropertySetDataType.php",
+            "CONFIG_UXON": "",
+            "VALIDATION_ERROR": "",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"InputPropertyTable\"}",
+            "ALIAS": "PropertySet",
+            "SHORT_DESCRIPTION": "Property sets can be used to store multiple options in one data field, like connection settings (user, password, address, etc.)"
+        },
+        {
+            "CREATED_ON": "1970-01-01 00:00:00",
+            "MODIFIED_ON": "1970-01-01 00:00:00",
+            "CREATED_BY_USER": "",
+            "MODIFIED_BY_USER": "",
+            "UID": "0x31310000000000000000000000000000",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Text",
+            "PROTOTYPE": "exface\/Core\/DataTypes\/TextDataType.php",
+            "CONFIG_UXON": "",
+            "VALIDATION_ERROR": "",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\": \"InputText\"}",
+            "ALIAS": "Text",
+            "SHORT_DESCRIPTION": "A text field is longer than a string an may contain multiple lines"
+        },
+        {
+            "CREATED_ON": "1970-01-01 00:00:00",
+            "MODIFIED_ON": "1970-01-01 00:00:00",
+            "CREATED_BY_USER": "",
+            "MODIFIED_BY_USER": "",
+            "UID": "0x31320000000000000000000000000000",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "URL",
+            "PROTOTYPE": "exface\/Core\/DataTypes\/URLDataType.php",
+            "CONFIG_UXON": "",
+            "VALIDATION_ERROR": "",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Input\"}",
+            "ALIAS": "URL",
+            "SHORT_DESCRIPTION": "URL, File-Links, etc."
+        },
+        {
+            "CREATED_ON": "1970-01-01 00:00:00",
+            "MODIFIED_ON": "2017-10-13 15:07:38",
+            "CREATED_BY_USER": "",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x31330000000000000000000000000000",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "UXON",
+            "PROTOTYPE": "exface\/Core\/DataTypes\/JsonDataType.php",
+            "CONFIG_UXON": "{}",
+            "VALIDATION_ERROR": "",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"InputJson\",\"width\":\"2\",\"height\":\"6\"}",
+            "ALIAS": "Uxon",
+            "SHORT_DESCRIPTION": "User Experience Object Notation (JSON schema)"
+        },
+        {
+            "CREATED_ON": "1970-01-01 00:00:00",
+            "MODIFIED_ON": "1970-01-01 00:00:00",
+            "CREATED_BY_USER": "",
+            "MODIFIED_BY_USER": "",
+            "UID": "0x31340000000000000000000000000000",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "HTML",
+            "PROTOTYPE": "exface\/Core\/DataTypes\/HTMLDataType.php",
+            "CONFIG_UXON": "",
+            "VALIDATION_ERROR": "",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\": \"InputText\"}",
+            "ALIAS": "HTML",
+            "SHORT_DESCRIPTION": ""
+        },
+        {
+            "CREATED_ON": "1970-01-01 00:00:00",
+            "MODIFIED_ON": "2017-09-11 12:00:54",
+            "CREATED_BY_USER": "",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x31350000000000000000000000000000",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Image URL",
+            "PROTOTYPE": "exface\/Core\/DataTypes\/ImageUrlDataType.php",
+            "CONFIG_UXON": "",
+            "VALIDATION_ERROR": "",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Input\"}",
+            "ALIAS": "ImageUrl",
+            "SHORT_DESCRIPTION": ""
+        },
+        {
+            "CREATED_ON": "1970-01-01 00:00:00",
+            "MODIFIED_ON": "1970-01-01 00:00:00",
+            "CREATED_BY_USER": "",
+            "MODIFIED_BY_USER": "",
+            "UID": "0x32000000000000000000000000000000",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Date",
+            "PROTOTYPE": "exface\/Core\/DataTypes\/DateDataType.php",
+            "CONFIG_UXON": "",
+            "VALIDATION_ERROR": "",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\": \"InputDate\"}",
+            "ALIAS": "Date",
+            "SHORT_DESCRIPTION": ""
+        },
+        {
+            "CREATED_ON": "1970-01-01 00:00:00",
+            "MODIFIED_ON": "1970-01-01 00:00:00",
+            "CREATED_BY_USER": "",
+            "MODIFIED_BY_USER": "",
+            "UID": "0x33000000000000000000000000000000",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Timestamp",
+            "PROTOTYPE": "exface\/Core\/DataTypes\/TimestampDataType.php",
+            "CONFIG_UXON": "",
+            "VALIDATION_ERROR": "",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\": \"InputDateTime\"}",
+            "ALIAS": "Timestamp",
+            "SHORT_DESCRIPTION": ""
+        },
+        {
+            "CREATED_ON": "1970-01-01 00:00:00",
+            "MODIFIED_ON": "2016-03-18 14:43:57",
+            "CREATED_BY_USER": "",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x34000000000000000000000000000000",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Price",
+            "PROTOTYPE": "exface\/Core\/DataTypes\/PriceDataType.php",
+            "CONFIG_UXON": "",
+            "VALIDATION_ERROR": "",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"InputNumber\",\"precision\":2}",
+            "ALIAS": "Price",
+            "SHORT_DESCRIPTION": ""
+        },
+        {
+            "CREATED_ON": "1970-01-01 00:00:00",
+            "MODIFIED_ON": "1970-01-01 00:00:00",
+            "CREATED_BY_USER": "",
+            "MODIFIED_BY_USER": "",
+            "UID": "0x37000000000000000000000000000000",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Boolean",
+            "PROTOTYPE": "exface\/Core\/DataTypes\/BooleanDataType.php",
+            "CONFIG_UXON": "",
+            "VALIDATION_ERROR": "",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\": \"CheckBox\"}",
+            "ALIAS": "Boolean",
+            "SHORT_DESCRIPTION": ""
+        },
+        {
+            "CREATED_ON": "1970-01-01 00:00:00",
+            "MODIFIED_ON": "2017-09-11 12:00:33",
+            "CREATED_BY_USER": "",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x39000000000000000000000000000000",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Tree Folder Flag",
+            "PROTOTYPE": "exface\/Core\/DataTypes\/FlagTreeFolderDataType.php",
+            "CONFIG_UXON": "",
+            "VALIDATION_ERROR": "",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"CheckBox\"}",
+            "ALIAS": "FlagTreeFolder",
+            "SHORT_DESCRIPTION": ""
+        },
+        {
+            "CREATED_ON": "2017-10-13 15:02:03",
+            "MODIFIED_ON": "2017-09-11 10:25:27",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e7b0277435425e98350205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Integer (whole number)",
+            "PROTOTYPE": "exface\/Core\/DataTypes\/IntegerDataType.php",
+            "CONFIG_UXON": "{}",
+            "VALIDATION_ERROR": "",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"InputNumber\"}",
+            "ALIAS": "Integer",
+            "SHORT_DESCRIPTION": ""
+        },
+        {
+            "CREATED_ON": "2017-10-13 15:03:41",
+            "MODIFIED_ON": "2017-09-11 10:25:27",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e7b027ae9f85e598350205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Number (0.x)",
+            "PROTOTYPE": "exface\/Core\/DataTypes\/NumberDataType.php",
+            "CONFIG_UXON": "{\"precision\":1}",
+            "VALIDATION_ERROR": "",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"InputNumber\"}",
+            "ALIAS": "Number1",
+            "SHORT_DESCRIPTION": ""
+        },
+        {
+            "CREATED_ON": "2017-10-13 15:04:02",
+            "MODIFIED_ON": "2017-09-11 10:25:27",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e7b027bba7711798350205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Number (0.xx)",
+            "PROTOTYPE": "exface\/Core\/DataTypes\/NumberDataType.php",
+            "CONFIG_UXON": "{\"precision\":2}",
+            "VALIDATION_ERROR": "",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"InputNumber\"}",
+            "ALIAS": "Number2",
+            "SHORT_DESCRIPTION": ""
+        },
+        {
+            "CREATED_ON": "2017-10-13 15:06:20",
+            "MODIFIED_ON": "2017-09-11 10:25:27",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e7b0280dd00a8998350205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Natural number (positive integer)",
+            "PROTOTYPE": "exface\/Core\/DataTypes\/IntegerDataType.php",
+            "CONFIG_UXON": "{\"min\":0}",
+            "VALIDATION_ERROR": "",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"InputNumber\"}",
+            "ALIAS": "NumberNatural",
+            "SHORT_DESCRIPTION": ""
+        },
+        {
+            "CREATED_ON": "2017-10-13 15:07:58",
+            "MODIFIED_ON": "2017-10-13 15:07:38",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e7b02848321d2398350205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "JSON",
+            "PROTOTYPE": "exface\/Core\/DataTypes\/JsonDataType.php",
+            "CONFIG_UXON": "{}",
+            "VALIDATION_ERROR": "",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"InputJson\",\"width\":\"2\",\"height\":\"6\"}",
+            "ALIAS": "Json",
+            "SHORT_DESCRIPTION": ""
+        },
+        {
+            "CREATED_ON": "2017-10-13 15:32:48",
+            "MODIFIED_ON": "2017-10-16 05:20:22",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e7b02bbffd277c98350205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Meta Model Alias",
+            "PROTOTYPE": "exface\/Core\/DataTypes\/StringDataType.php",
+            "CONFIG_UXON": "{\"validator_regex\":\"\/^[^_~=].*$\/\"}",
+            "VALIDATION_ERROR": "0x11e7b02c1305514998350205857feb80",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Input\"}",
+            "ALIAS": "MetaModelAlias",
+            "SHORT_DESCRIPTION": ""
+        },
+        {
+            "CREATED_ON": "2017-10-24 07:43:19",
+            "MODIFIED_ON": "2017-10-24 07:43:19",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e7b88efc3e81d586360205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Markdown",
+            "PROTOTYPE": "exface\/Core\/DataTypes\/TextDataType.php",
+            "CONFIG_UXON": "",
+            "VALIDATION_ERROR": "",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Markdown\"}",
+            "ALIAS": "Markdown",
+            "SHORT_DESCRIPTION": "Text formatted via markdown"
+        },
+        {
+            "CREATED_ON": "2017-10-25 04:44:39",
+            "MODIFIED_ON": "2017-10-25 04:45:25",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e7b93f315ab6ca84cce4b318306b9a",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Relative File Path",
+            "PROTOTYPE": "exface\/Core\/DataTypes\/StringDataType.php",
+            "CONFIG_UXON": "",
+            "VALIDATION_ERROR": "",
+            "DEFAULT_EDITOR_UXON": "",
+            "ALIAS": "FILE_PATH_RELATIVE",
+            "SHORT_DESCRIPTION": "\/folder\/subfolder\/filename or folder\/subfolder\/filename"
+        },
+        {
+            "CREATED_ON": "2017-10-31 08:42:21",
+            "MODIFIED_ON": "2017-11-07 14:03:51",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e7be1769277c6a9c0f0205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Numeric ID (Integer)",
+            "PROTOTYPE": "exface\/Core\/DataTypes\/IntegerDataType.php",
+            "CONFIG_UXON": "{\"group_digits\":false}",
+            "VALIDATION_ERROR": "",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"InputNumber\"}",
+            "ALIAS": "NumericId",
+            "SHORT_DESCRIPTION": "Use this type for all kinds of ids, keys, etc. It is numeric, but has neither fractions nor digit grouping."
+        },
+        {
+            "CREATED_ON": "2017-11-01 12:45:25",
+            "MODIFIED_ON": "2017-11-01 12:47:06",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e7bf02824f925f9c0f0205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Language codes (ISO 639-1)",
+            "PROTOTYPE": "exface\/Core\/DataTypes\/StringEnumDataType.php",
+            "CONFIG_UXON": "{\"values\":{\"en\":\"English\",\"de\":\"German\",\"ru\":\"Russian\",\"fr\":\"French\"}}",
+            "VALIDATION_ERROR": "",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"InputSelect\"}",
+            "ALIAS": "LanguageCode",
+            "SHORT_DESCRIPTION": ""
+        },
+        {
+            "CREATED_ON": "2017-11-07 08:32:07",
+            "MODIFIED_ON": "2017-11-07 08:35:07",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e7c3960c3586c38001e4b318306b9a",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Generic List (String Enumeration)",
+            "PROTOTYPE": "exface\/Core\/DataTypes\/StringEnumDataType.php",
+            "CONFIG_UXON": "",
+            "VALIDATION_ERROR": "",
+            "DEFAULT_EDITOR_UXON": "",
+            "ALIAS": "GenericStringEnum",
+            "SHORT_DESCRIPTION": "Allows to define a list of valid string values directly in the model (without creating a custom data type). This is handy if a data type is only used for a single attribute -  you can create a custom configuration for this generic type and don't need"
+        },
+        {
+            "CREATED_ON": "2017-11-07 08:32:43",
+            "MODIFIED_ON": "2017-11-07 08:36:14",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e7c39621725c1e8001e4b318306b9a",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Generic List (Number Enumeration)",
+            "PROTOTYPE": "exface\/Core\/DataTypes\/NumberEnumDataType.php",
+            "CONFIG_UXON": "",
+            "VALIDATION_ERROR": "",
+            "DEFAULT_EDITOR_UXON": "",
+            "ALIAS": "GenericStringEnum",
+            "SHORT_DESCRIPTION": "Allows to define a list of valid numeric values directly in the model (without creating a custom data type). This is handy if a data type is only used for a single attribute -  you can create a custom configuration for this generic type and don't nee"
+        },
+        {
+            "CREATED_ON": "2017-11-14 17:31:34",
+            "MODIFIED_ON": "2017-11-07 14:03:51",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e7c96192a2660ca6aa0205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Year",
+            "PROTOTYPE": "exface\/Core\/DataTypes\/IntegerDataType.php",
+            "CONFIG_UXON": "{\"group_digits\":false}",
+            "VALIDATION_ERROR": "",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"InputNumber\"}",
+            "ALIAS": "YearNumber",
+            "SHORT_DESCRIPTION": "Year number (e.g. 2017)"
+        }
+    ],
+    "totals_rows": [],
+    "filters": {
+        "operator": "AND",
+        "conditions": [
+            {
+                "expression": "APP",
+                "comparator": "=",
+                "value": "0x31000000000000000000000000000000",
+                "object_alias": "exface.Core.DATATYPE"
+            }
+        ]
+    },
+    "rows_on_page": null,
+    "row_offset": 0,
+    "sorters": [
+        {
+            "attribute_alias": "CREATED_ON",
+            "direction": "ASC"
+        },
+        {
+            "attribute_alias": "UID",
+            "direction": "ASC"
+        }
+    ]
+}

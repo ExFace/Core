@@ -2,7 +2,7 @@
 namespace exface\Core\Interfaces\DataSheets;
 
 use exface\Core\Interfaces\EntityListInterface;
-use exface\Core\CommonLogic\Model\Attribute;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
 
 /**
  *
@@ -52,7 +52,7 @@ interface DataColumnListInterface extends EntityListInterface
     /**
      * Adds a new column from an instatiated expression object or a string expression and returns it.
      *
-     * @param \exface\Core\CommonLogic\Model\Expression|string $expression            
+     * @param \exface\Core\Interfaces\Model\ExpressionInterface|string $expression            
      * @param string $name            
      * @param string $hidden            
      * @return DataColumnInterface
@@ -62,10 +62,10 @@ interface DataColumnListInterface extends EntityListInterface
     /**
      * Adds a new column with the given attribute and returns it
      *
-     * @param Attribute $attribute            
+     * @param MetaAttributeInterface $attribute            
      * @return DataColumnInterface
      */
-    public function addFromAttribute(Attribute $attribute);
+    public function addFromAttribute(MetaAttributeInterface $attribute);
 
     /**
      * Removes the given entity from the list
@@ -120,9 +120,9 @@ interface DataColumnListInterface extends EntityListInterface
      * Returns the first column, that shows the specified attribute explicitly (not within a formula).
      * Returns FALSE if no column is found.
      *
-     * @param Attribute $attribute            
+     * @param MetaAttributeInterface $attribute            
      * @return DataColumnInterface|boolean
      */
-    public function getByAttribute(Attribute $attribute);
+    public function getByAttribute(MetaAttributeInterface $attribute);
 }
 ?>

@@ -1,9 +1,10 @@
 <?php
 namespace exface\Core\CommonLogic\Model;
 
-use exface\Core\CommonLogic\Workbench;
 use exface\Core\CommonLogic\EntityList;
 use exface\Core\Factories\AttributeListFactory;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
 
 /**
  *
@@ -20,7 +21,7 @@ class RelationList extends EntityList
      * {@inheritdoc}
      *
      * @see \exface\Core\CommonLogic\EntityList::add()
-     * @param Relation $attribute            
+     * @param MetaRelationInterface $attribute            
      */
     public function add($relaion, $key = null)
     {
@@ -41,21 +42,21 @@ class RelationList extends EntityList
 
     /**
      *
-     * @return Object
+     * @return MetaObjectInterface
      */
     public function getMetaObject()
     {
         return $this->getParent();
     }
 
-    public function setMetaObject(Object $meta_object)
+    public function setMetaObject(MetaObjectInterface $meta_object)
     {
         return $this->setParent($meta_object);
     }
 
     /**
      *
-     * @return Relation[]
+     * @return MetaRelationInterface[]
      */
     public function getAll()
     {
@@ -66,7 +67,7 @@ class RelationList extends EntityList
      * Returns the attribute matching the given alias or FALSE if no such attribute is found
      *
      * @param string $alias            
-     * @return Attribute|boolean
+     * @return MetaAttributeInterface|boolean
      */
     public function getByAttributeAlias($alias)
     {
@@ -87,7 +88,7 @@ class RelationList extends EntityList
      * Returns the attribute matching the given UID or FALSE if no such attribute is found
      *
      * @param string $uid            
-     * @return Attribute|boolean
+     * @return MetaAttributeInterface|boolean
      */
     public function getByAttributeId($uid)
     {
@@ -97,24 +98,6 @@ class RelationList extends EntityList
             }
         }
         return false;
-    }
-
-    /**
-     * Returns a new attribute list with all attributes of the given data type
-     *
-     * @param string $data_type_alias            
-     * @return AttributeList
-     */
-    public function getByDataTypeAlias($data_type_alias)
-    {
-        $object = $this->getMetaObject();
-        $result = AttributeListFactory::createForObject($object);
-        foreach ($this->getAll() as $key => $attr) {
-            if (strcasecmp($attr->getDataType()->getName(), $data_type_alias) == 0) {
-                $result->add($attr, $key);
-            }
-        }
-        return $result;
     }
 
     /**
@@ -150,7 +133,7 @@ class RelationList extends EntityList
                 if ($attr->isRelation()) {
                     $rel_path = $attr->getAlias();
                     $rel_obj = $object->getRelatedObject($rel_path);
-                    $rel_attr = $object->getAttribute(RelationPath::relationPathAdd($rel_path, $rel_obj->getLabelAlias()));
+                    $rel_attr = $object->getAttribute(RelationPath::relationPathAdd($rel_path, $rel_obj->getLabelAttributeAlias()));
                     // Leave the name of the relation as attribute name and ensure, that it is visible
                     $rel_attr->setName($attr->getName());
                     $rel_attr->setHidden(false);
@@ -162,7 +145,7 @@ class RelationList extends EntityList
         }
         
         // Use the label attribute if there are no defaults defined
-        if ($defs->count() == 0 && $label_attribute = $object->getLabelAttribute()) {
+        if ($defs->isEmpty() && $label_attribute = $object->getLabelAttribute()) {
             $defs->add($label_attribute);
         }
         

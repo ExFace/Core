@@ -14,7 +14,7 @@ class ShowDialog extends ShowWidget implements iShowDialog
 
     private $widget_was_enhanced = false;
 
-    private $dialog_buttons_uxon = [];
+    private $dialog_buttons_uxon = null;
 
     /**
      * Creates the dialog widget.
@@ -62,12 +62,12 @@ class ShowDialog extends ShowWidget implements iShowDialog
         
         // If the widget calling the action (typically a button) is known, inherit some of it's attributes
         if ($this->getCalledByWidget()) {
-            if (! $dialog->getIconName() && ($this->getCalledByWidget() instanceof iHaveIcon)) {
-                $dialog->setIconName($this->getCalledByWidget()->getIconName());
+            if (! $dialog->getIcon() && ($this->getCalledByWidget() instanceof iHaveIcon)) {
+                $dialog->setIcon($this->getCalledByWidget()->getIcon());
             }
         } else {
-            if (! $dialog->getIconName()) {
-                $dialog->setIconName($this->getIconName());
+            if (! $dialog->getIcon()) {
+                $dialog->setIcon($this->getIcon());
             }
         }
         
@@ -75,7 +75,7 @@ class ShowDialog extends ShowWidget implements iShowDialog
             $dialog->setCaption($this->getDialogCaption());
         }
         
-        if (count($this->getDialogButtonsUxon()) > 0) {
+        if (! $this->getDialogButtonsUxon()->isEmpty()) {
             $dialog->setButtons($this->getDialogButtonsUxon());
         }
         
@@ -116,7 +116,22 @@ class ShowDialog extends ShowWidget implements iShowDialog
         }
         return $widget;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Actions\ShowWidget::getDefaultWidgetType()
+     */
+    public function getDefaultWidgetType()
+    {
+        return 'Dialog';
+    }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\iShowDialog::getDialogWidget()
+     */
     public function getDialogWidget()
     {
         return $this->getWidget();
@@ -150,12 +165,19 @@ class ShowDialog extends ShowWidget implements iShowDialog
 
     public function setIncludeHeaders($value)
     {
-        $this->include_headers = \exface\Core\DataTypes\BooleanDataType::parse($value);
+        $this->include_headers = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;
     }
 
+    /**
+     * 
+     * @return \exface\Core\CommonLogic\UxonObject
+     */
     public function getDialogButtonsUxon()
     {
+        if (is_null($this->dialog_buttons_uxon)){
+            $this->dialog_buttons_uxon = new UxonObject();
+        }
         return $this->dialog_buttons_uxon;
     }
 
@@ -173,12 +195,12 @@ class ShowDialog extends ShowWidget implements iShowDialog
      * @uxon-property dialog_buttons
      * @uxon-type \exface\Core\Widgets\Button[]
      *
-     * @param UxonObject[] $uxon_array            
+     * @param UxonObject $uxon            
      * @return \exface\Core\Actions\ShowDialog
      */
-    public function setDialogButtons($uxon_array)
+    public function setDialogButtons(UxonObject $uxon)
     {
-        $this->dialog_buttons_uxon = $uxon_array;
+        $this->dialog_buttons_uxon = $uxon;
         return $this;
     }
 }

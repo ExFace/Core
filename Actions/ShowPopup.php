@@ -11,7 +11,7 @@ class ShowPopup extends ShowWidget implements iShowPopup
 
     /**
      * Creates a container widget for the popup.
-     * If not contents is passed, an empty dialog widget will be returned.
+     * If not contents is passed, an empty container widget will be returned.
      *
      * This method is called if there is no widget passed to the action or the 
      * passed widget is not a container. It creates a basic container and 

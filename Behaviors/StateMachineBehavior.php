@@ -11,6 +11,7 @@ use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
 use exface\Core\Exceptions\UxonMapError;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
+use exface\Core\DataTypes\BooleanDataType;
 
 /**
  * A behavior that defines states and transitions between these states for an objects.
@@ -29,6 +30,8 @@ class StateMachineBehavior extends AbstractBehavior
     private $states = null;
 
     private $progress_bar_color_map = null;
+    
+    private $use_percentual_color_map = null;
 
     /**
      *
@@ -82,7 +85,7 @@ class StateMachineBehavior extends AbstractBehavior
      * Determines the state attribute from the alias and the attached object and
      * returns it.
      *
-     * @return \exface\Core\CommonLogic\Model\Attribute
+     * @return \exface\Core\Interfaces\Model\MetaAttributeInterface
      */
     public function getStateAttribute()
     {
@@ -160,43 +163,48 @@ class StateMachineBehavior extends AbstractBehavior
      * The states are set by a JSON object or array with state ids for keys and an objects describing the state for values.
      *
      * Example:
-     * "states": {
-     * "10": {
-     * "buttons": {
-     * "10": {
-     * "caption": "20 Annahme bestätigen",
-     * "action": {
-     * "alias": "exface.Core.UpdateData",
-     * "input_data_sheet": {
-     * "object_alias": "alexa.RMS.CUSTOMER_COMPLAINT",
-     * "columns": [
-     * {
-     * "attribute_alias": "STATE_ID",
-     * "formula": "=NumberValue('20')"
-     * },
-     * {
-     * "attribute_alias": "TS_UPDATE"
-     * }
-     * ]
-     * }
-     * }
-     * }
-     * },
-     * "disabled_attributes_aliases": [
-     * "COMPLAINT_NO"
-     * ],
-     * "transitions": [
-     * 10,
-     * 20,
-     * 30,
-     * 50,
-     * 60,
-     * 70,
-     * 90,
-     * 99
-     * ]
-     * }
-     * }
+     *  "states": {
+     *      "10": {
+     *          "buttons": {
+     *              "10": {
+     *                  "caption": "20 Annahme bestätigen",
+     *                  "action": {
+     *                      "alias": "exface.Core.UpdateData",
+     *                      "input_data_sheet": {
+     *                          "object_alias": "alexa.RMS.CUSTOMER_COMPLAINT",
+     *                          "columns": [
+     *                              {
+     *                                  "attribute_alias": "STATE_ID",
+     *                                  "formula": "=NumberValue('20')"
+     *                              },
+     *                              {
+     *                                  "attribute_alias": "TS_UPDATE"
+     *                              }
+     *                          ]
+     *                      }
+     *                  }
+     *              }
+     *          },
+     *          "disabled_attributes_aliases": [
+     *              "COMPLAINT_NO"
+     *          ],
+     *          "transitions": [
+     *              10,
+     *              20,
+     *              30,
+     *              50,
+     *              60,
+     *              70,
+     *              90,
+     *              99
+     *          ]
+     *      },
+     *      "20": {
+     *          "buttons": ...,
+     *          "transitions": ...,
+     *          ...
+     *      }
+     *  }
      *
      * @uxon-property states
      * @uxon-type object
@@ -207,12 +215,10 @@ class StateMachineBehavior extends AbstractBehavior
      */
     public function setStates($value)
     {
-        $this->uxon_states = UxonObject::fromAnything($value);
-        
-        if ($value instanceof UxonObject) {
+        if ($value instanceof UxonObject) { 
+            $this->uxon_states = $value;
             $this->states = [];
-            $states = get_object_vars($this->uxon_states);
-            foreach ($states as $state => $uxon_smstate) {
+            foreach ($value as $state => $uxon_smstate) {
                 $smstate = new StateMachineState();
                 $smstate->setStateId($state);
                 if ($uxon_smstate) {
@@ -433,13 +439,15 @@ class StateMachineBehavior extends AbstractBehavior
     {
         $uxonColorMap = UxonObject::fromAnything($progress_bar_color_map);
         if ($uxonColorMap instanceof UxonObject) {
-            $colorMap = array();
-            foreach ($uxonColorMap as $progressBarValue => $color) {
-                $colorMap[$progressBarValue] = $color;
+            if (is_array($uxonColorMap)) {
+                $this->progress_bar_color_map = $uxonColorMap->toArray();
+            } else {
+                $colorMap = array();
+                foreach ($uxonColorMap as $progressBarValue => $color) {
+                    $colorMap[$progressBarValue] = $color;
+                }
+                $this->progress_bar_color_map = $colorMap;
             }
-            $this->progress_bar_color_map = $colorMap;
-        } elseif (is_array($progress_bar_color_map)) {
-            $this->progress_bar_color_map = $progress_bar_color_map;
         } else {
             throw new BehaviorConfigurationError($this->getObject(), 'Can not set progress_bar_color_map for "' . $this->getObject()->getAliasWithNamespace() . '": the argument passed to set_progress_bar_color_map() is neither an UxonObject nor an array!', '6TG2ZFI');
         }
@@ -447,12 +455,91 @@ class StateMachineBehavior extends AbstractBehavior
 
     /**
      * Returns color map for use in for instance ProgressBar formula.
+     * 
+     * Example (default percentual color map):
+     *  [
+     *      10: "#FFEF9C",
+     *      20: "#EEEA99",
+     *      30: "#DDE595",
+     *      40: "#CBDF91",
+     *      50: "#BADA8E",
+     *      60: "#A9D48A",
+     *      70: "#97CF86",
+     *      80: "#86C983",
+     *      90: "#75C47F",
+     *      100: "#63BE7B"
+     *  ]
+     * 
+     * @uxon-property progress_bar_color_map
+     * @uxon-type array
      *
      * @return array
      */
     public function getProgressBarColorMap()
     {
+        if (is_null($this->progress_bar_color_map)){
+            if ($this->getUsePercentualColorMap()){
+                $this->progress_bar_color_map = $this->getProgressBarColorMapPercentual();
+            }
+            foreach ($this->getStates() as $state){
+                if ($color = $state->getColor()){
+                    $this->progress_bar_color_map[$state->getStateId()] = $color;
+                }
+            }
+        }
         return $this->progress_bar_color_map;
+    }
+    
+    /**
+     * Set to TRUE to use the default color map for percentual progress bars.
+     * 
+     * If not set, the system will try to pick a suitable color map based
+     * on the state id values.
+     * 
+     * @uxon-property use_percentual_color_map
+     * @uxon-type boolean
+     * 
+     * @param boolean $true_or_false
+     * @return \exface\Core\Behaviors\StateMachineBehavior
+     */
+    public function setUsePercentualColorMap($true_or_false)
+    {
+        $this->use_percentual_color_map = BooleanDataType::cast($true_or_false);
+        return $this;
+    }
+    
+    /**
+     * Returns TRUE if the default percentual color map should be used for progress bars
+     * based on the states of this state machine.
+     * 
+     * @return boolean
+     */
+    public function getUsePercentualColorMap()
+    {
+        if (is_null($this->use_percentual_color_map)){
+            $state_ids = array_keys($this->getStates());
+            if (count(array_filter($state_ids, 'is_string')) === 0){
+                if (min($state_ids) <= 10 && min($state_ids) >= 0 && max($state_ids) >= 90 && max($state_ids) <= 100){
+                    return true;
+                }
+            }
+            return false;
+        }
+        return $this->use_percentual_color_map;
+    }
+    
+    protected function getProgressBarColorMapPercentual(){
+        return array(
+            10 => "#FFEF9C",
+            20 => "#EEEA99",
+            30 => "#DDE595",
+            40 => "#CBDF91",
+            50 => "#BADA8E",
+            60 => "#A9D48A",
+            70 => "#97CF86",
+            80 => "#86C983",
+            90 => "#75C47F",
+            100 => "#63BE7B");
     }
 }
 

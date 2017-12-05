@@ -1,7 +1,7 @@
 <?php
 namespace exface\Core\Exceptions\Model;
 
-use exface\Core\CommonLogic\Model\Object;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Exceptions\ExceptionTrait;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Widgets\iHaveButtons;
@@ -26,7 +26,7 @@ trait MetaObjectExceptionTrait {
 
     private $meta_object = null;
 
-    public function __construct(Object $meta_object, $message, $alias = null, $previous = null)
+    public function __construct(MetaObjectInterface $meta_object, $message, $alias = null, $previous = null)
     {
         parent::__construct($message, null, $previous);
         $this->setAlias($alias);
@@ -35,7 +35,7 @@ trait MetaObjectExceptionTrait {
 
     /**
      *
-     * @return \exface\Core\CommonLogic\Model\Object
+     * @return \exface\Core\Interfaces\Model\MetaObjectInterface
      */
     public function getMetaObject()
     {
@@ -44,10 +44,10 @@ trait MetaObjectExceptionTrait {
 
     /**
      *
-     * @param Object $object            
+     * @param MetaObjectInterface $object            
      * @return \exface\Core\Exceptions\Model\MetaObjectExceptionTrait
      */
-    public function setMetaObject(Object $object)
+    public function setMetaObject(MetaObjectInterface $object)
     {
         $this->meta_object = $object;
         return $this;
@@ -117,7 +117,7 @@ trait MetaObjectExceptionTrait {
         
         // Prefill the debug widget with data of the current meta object
         $object_data = DataSheetFactory::createFromObject($object_object);
-        $object_data->addFilterFromString($object_object->getUidAlias(), $this->getMetaObject()->getId(), EXF_COMPARATOR_EQUALS);
+        $object_data->addFilterFromString($object_object->getUidAttributeAlias(), $this->getMetaObject()->getId(), EXF_COMPARATOR_EQUALS);
         $object_data = $error_message->prepareDataSheetToPrefill($object_data);
         $object_data->dataRead();
         $error_message->prefill($object_data);

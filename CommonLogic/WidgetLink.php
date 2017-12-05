@@ -11,7 +11,7 @@ class WidgetLink implements WidgetLinkInterface
 
     private $exface;
 
-    private $page_id;
+    private $page_alias;
 
     private $widget_id;
 
@@ -34,8 +34,8 @@ class WidgetLink implements WidgetLinkInterface
      */
     public function parseLink($string_or_object)
     {
-        if ($string_or_object instanceof \stdClass) {
-            return $this->parseLinkObject($string_or_object);
+        if ($string_or_object instanceof UxonObject) {
+            return $this->parseLinkUxon($string_or_object);
         } else {
             return $this->parseLinkString($string_or_object);
         }
@@ -50,19 +50,19 @@ class WidgetLink implements WidgetLinkInterface
     public function parseLinkString($string)
     {
         $string = trim($string);
-        // Check for reference to specific page_id
+        // Check for reference to specific page_alias
         if (strpos($string, '[') === 0) {
-            $page_id = substr($string, 1, strpos($string, ']') - 1);
-            if ($page_id) {
-                $this->setPageId($page_id);
+            $page_alias = substr($string, 1, strpos($string, ']') - 1);
+            if ($page_alias) {
+                $this->setPageAlias($page_alias);
                 $string = substr($string, strpos($string, ']') + 1);
             } else {
-                throw new UnexpectedValueException('Cannot parse widget reference "' . $string . '"! Expected format: "[page_id]widget_id".', '6T91IGZ');
+                throw new UnexpectedValueException('Cannot parse widget reference "' . $string . '"! Expected format: "[page_alias]widget_id".', '6T91IGZ');
             }
         }
         
         // Determine the widget id
-        // Now the string definitely does not kontain a resource id any more
+        // Now the string definitely does not contain a resource id any more
         if ($pos = strpos($string, '!')) {
             // If there is a "!", there is at least a column id following it
             $widget_id = substr($string, 0, $pos);
@@ -88,10 +88,10 @@ class WidgetLink implements WidgetLinkInterface
         return $this;
     }
 
-    public function parseLinkObject(\stdClass $object)
+    public function parseLinkUxon(UxonObject $object)
     {
-        $this->setPageId($object->page_id);
-        $this->setWidgetId($object->widget_id);
+        $this->setPageAlias($object->getProperty('page_alias'));
+        $this->setWidgetId($object->getProperty('widget_id'));
         return $this;
     }
 
@@ -103,32 +103,7 @@ class WidgetLink implements WidgetLinkInterface
      */
     public function importUxonObject(UxonObject $uxon)
     {
-        return $this->parseLinkObject($uxon);
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Widgets\WidgetLinkInterface::getPageId()
-     */
-    public function getPageId()
-    {
-        if (is_null($this->page_id)){
-            return $this->getWorkbench()->ui()->getPageCurrent()->getId();
-        }
-        return $this->page_id;
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Widgets\WidgetLinkInterface::setPageId()
-     */
-    public function setPageId($value)
-    {
-        $this->page_id = $value;
+        return $this->parseLinkUxon($uxon);
     }
 
     /**
@@ -163,20 +138,43 @@ class WidgetLink implements WidgetLinkInterface
     {
         $widget = $this->getPage()->getWidget($this->getWidgetId());
         if (! $widget) {
-            throw new WidgetNotFoundError('Cannot find widget "' . $this->getWidgetId() . '" in resource "' . $this->getPageId() . '"!');
+            throw new WidgetNotFoundError('Cannot find widget "' . $this->getWidgetId() . '" in resource "' . $this->getPage()->getAliasWithNamespace() . '"!');
         }
         return $widget;
     }
 
     /**
-     *
-     * {@inheritdoc}
-     *
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\WidgetLinkInterface::getPageAlias()
+     */
+    public function getPageAlias()
+    {
+        return $this->page_alias;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\WidgetLinkInterface::setPageAlias()
+     */
+    public function setPageAlias($pageAlias)
+    {
+        $this->page_alias = $pageAlias;
+        return $this;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\WidgetLinkInterface::getPage()
      */
     public function getPage()
     {
-        return $this->getWorkbench()->ui()->getPage($this->getPageId());
+        if (is_null($this->getPageAlias())) {
+            return $this->getWorkbench()->ui()->getPageCurrent();
+        }
+        return $this->getWorkbench()->ui()->getPage($this->page_alias);
     }
 
     /**
@@ -185,9 +183,8 @@ class WidgetLink implements WidgetLinkInterface
      */
     public function getWidgetUxon()
     {
-        $resource = $this->exface->getCMS()->getPageContents($this->getPageId());
-        $uxon = UxonObject::fromJson($resource);
-        if ($this->getWidgetId() && $uxon->widget_id != $this->getWidgetId()) {
+        $uxon = $this->getPage()->exportUxonObject()->getProperty('contents');
+        if ($this->getWidgetId() && $uxon->getProperty('widget_id') != $this->getWidgetId()) {
             $uxon = $this->findWidgetIdInUxon($uxon, $this->getWidgetId());
             if ($uxon === false) {
                 $uxon = $this->exface->createUxonObject();
@@ -197,30 +194,27 @@ class WidgetLink implements WidgetLinkInterface
     }
 
     /**
-     *
-     * @param
-     *            UxonObject || array $uxon
+     * 
+     * @param UxonObject $uxon
      * @param string $widget_id            
      * @return UxonObject|boolean
      */
-    private function findWidgetIdInUxon($uxon, $widget_id)
+    private function findWidgetIdInUxon(UxonObject $uxon, $widget_id)
     {
         $result = false;
-        if ($uxon instanceof \stdClass) {
-            if ($uxon->id == $widget_id) {
-                $result = $uxon;
-            } else {
-                $array = get_object_vars($uxon);
+        
+        if ($uxon->hasProperty('id')){
+            if ($uxon->getProperty('id') == $widget_id) {
+                return $uxon;
             }
-        } elseif (is_array($uxon)) {
-            $array = $uxon;
         }
         
-        if (is_array($array)) {
-            foreach ($array as $prop) {
-                if ($result = $this->findWidgetIdInUxon($prop, $widget_id)) {
-                    return $result;
-                }
+        foreach ($uxon as $prop) {
+            if (! ($prop instanceof UxonObject)){
+                continue;
+            }
+            if ($result = $this->findWidgetIdInUxon($prop, $widget_id)) {
+                return $result;
             }
         }
         
@@ -236,11 +230,11 @@ class WidgetLink implements WidgetLinkInterface
     public function exportUxonObject()
     {
         $uxon = $this->exface->createUxonObject();
-        $uxon->widget_id = $this->widget_id;
-        $uxon->page_id = $this->page_id;
-        $uxon->widget_id_space = $this->widget_id_space;
-        $uxon->column_id = $this->column_id;
-        $uxon->row_number = $this->row_number;
+        $uxon->setProperty('widget_id', $this->widget_id);
+        $uxon->setProperty('page_alias', $this->getPage()->getAliasWithNamespace());
+        $uxon->setProperty('widget_id_space', $this->widget_id_space);
+        $uxon->setProperty('column_id', $this->column_id);
+        $uxon->setProperty('row_number', $this->row_number);
         return $uxon;
     }
 

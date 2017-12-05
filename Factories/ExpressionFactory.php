@@ -3,7 +3,9 @@ namespace exface\Core\Factories;
 
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\CommonLogic\Model\Expression;
-use exface\Core\CommonLogic\Model\Attribute;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
+use exface\Core\Interfaces\Model\ExpressionInterface;
 
 abstract class ExpressionFactory
 {
@@ -14,10 +16,10 @@ abstract class ExpressionFactory
      * attribute_aliases cannot be parsed properly.
      * TODO Make the object a mandatory parameter. This requires a lot of changes to formulas, however. Probably will do that when rewriting the formula parser.
      *
-     * @param exface $exface            
+     * @param Workbench $exface            
      * @param string $expression            
-     * @param object $object            
-     * @return Expression
+     * @param MetaObjectInterface $object            
+     * @return ExpressionInterface
      */
     public static function createFromString(Workbench $exface, $string, $meta_object = null)
     {
@@ -26,10 +28,10 @@ abstract class ExpressionFactory
 
     /**
      *
-     * @param Attribute $attribute            
-     * @return Expression
+     * @param MetaAttributeInterface $attribute            
+     * @return ExpressionInterface
      */
-    public static function createFromAttribute(Attribute $attribute)
+    public static function createFromAttribute(MetaAttributeInterface $attribute)
     {
         $exface = $attribute->getObject()->getWorkbench();
         return self::createFromString($exface, $attribute->getAliasWithRelationPath(), $attribute->getRelationPath()->getStartObject());

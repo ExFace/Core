@@ -13,5 +13,5 @@
 	<buildpathentry external="true" kind="lib" path="C:/wamp/www/exface/exface/vendor/symfony/finder"/>
 	<buildpathentry external="true" kind="lib" path="C:/wamp/www/exface/exface/vendor/wingu/reflection/src"/>
 	<buildpathentry external="true" kind="lib" path="C:/wamp/www/exface/exface/vendor/league/csv/src"/>
-	<buildpathentry kind="con" path="org.eclipse.php.core.LANGUAGE"/>
+	<buildpathentry external="true" kind="lib" path="C:/wamp/www/exface/exface/vendor/cebe/markdown"/><buildpathentry kind="con" path="org.eclipse.php.core.LANGUAGE"/>
 </buildpath>

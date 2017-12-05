@@ -3,7 +3,7 @@ namespace exface\Core\Widgets;
 
 use exface\Core\Interfaces\Widgets\iAmClosable;
 use exface\Core\Interfaces\Widgets\iFillEntireContainer;
-use exface\Core\CommonLogic\Model\Attribute;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Widgets\iHaveContextualHelp;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Factories\WidgetFactory;
@@ -11,8 +11,11 @@ use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 use exface\Core\CommonLogic\Constants\Icons;
+use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
+use exface\Core\Interfaces\Widgets\iHaveHeader;
 
-class Dialog extends Form implements iAmClosable, iHaveContextualHelp
+class Dialog extends Form implements iAmClosable, iHaveContextualHelp, iHaveHeader
 {
 
     private $hide_close_button = false;
@@ -26,6 +29,10 @@ class Dialog extends Form implements iAmClosable, iHaveContextualHelp
     private $help_button = null;
 
     private $hide_help_button = false;
+    
+    private $header = null;
+    
+    private $hide_header = null;
 
     protected function init()
     {
@@ -88,7 +95,7 @@ class Dialog extends Form implements iAmClosable, iHaveContextualHelp
             $btn = $this->createButton();
             $btn->setCloseDialogAfterActionSucceeds(true);
             $btn->setRefreshInput(false);
-            $btn->setIconName(Icons::TIMES);
+            $btn->setIcon(Icons::TIMES);
             $btn->setCaption($this->translate('WIDGET.DIALOG.CLOSE_BUTTON_CAPTION'));
             $btn->setAlign(EXF_ALIGN_OPPOSITE);
             if ($this->getHideCloseButton())
@@ -133,7 +140,7 @@ class Dialog extends Form implements iAmClosable, iHaveContextualHelp
 
     public function setMaximizable($value)
     {
-        $this->maximizable = BooleanDataType::parse($value);
+        $this->maximizable = BooleanDataType::cast($value);
         return $this;
     }
 
@@ -144,7 +151,7 @@ class Dialog extends Form implements iAmClosable, iHaveContextualHelp
 
     public function setMaximized($value)
     {
-        $this->maximized = BooleanDataType::parse($value);
+        $this->maximized = BooleanDataType::cast($value);
         return $this;
     }
 
@@ -154,7 +161,7 @@ class Dialog extends Form implements iAmClosable, iHaveContextualHelp
      *
      * @see \exface\Core\Widgets\Container::findChildrenByAttribute()
      */
-    public function findChildrenByAttribute(Attribute $attribute)
+    public function findChildrenByAttribute(MetaAttributeInterface $attribute)
     {
         // If the container has a single filling child, which is a container itself, search that child
         if ($this->countWidgets() == 1) {
@@ -242,10 +249,10 @@ class Dialog extends Form implements iAmClosable, iHaveContextualHelp
      * the given attribute.
      * The inforation is derived from the attributes meta model.
      *
-     * @param Attribute $attr            
+     * @param MetaAttributeInterface $attr            
      * @return string[]
      */
-    protected function getHelpRowFromAttribute(Attribute $attr)
+    protected function getHelpRowFromAttribute(MetaAttributeInterface $attr)
     {
         $row = array();
         $row['DESCRIPTION'] = $attr->getShortDescription() ? rtrim(trim($attr->getShortDescription()), ".") . '.' : '';
@@ -283,13 +290,22 @@ class Dialog extends Form implements iAmClosable, iHaveContextualHelp
      */
     public function setHideHelpButton($value)
     {
-        $this->hide_help_button = BooleanDataType::parse($value);
+        $this->hide_help_button = BooleanDataType::cast($value);
         return $this;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Form::getChildren()
+     */
     public function getChildren()
     {
         $children = parent::getChildren();
+        
+        if (! $this->getHideHeader() && $this->hasHeader()) {
+            $children[] = $this->getHeader();
+        }
         
         // Add the help button, so pages will be able to find it when dealing with the ShowHelpDialog action.
         // IMPORTANT: Add the help button to the children only if it is not hidden. This is needed to hide the button in
@@ -299,6 +315,44 @@ class Dialog extends Form implements iAmClosable, iHaveContextualHelp
             $children[] = $this->getHelpButton();
         }
         return $children;
+    }
+    
+    /**
+     * 
+     * @param UxonObject|DialogHeader $uxon_or_widget
+     * @throws WidgetConfigurationError
+     * @return \exface\Core\Widgets\Dialog
+     */
+    public function setHeader($uxon_or_widget)
+    {
+        if ($uxon_or_widget instanceof UxonObject) {
+            $this->header = WidgetFactory::createFromUxon($this->getPage(), $uxon_or_widget, $this, 'DialogHeader');
+        } elseif ($uxon_or_widget instanceof DialogHeader) {
+            $this->header = $uxon_or_widget;
+        } else {
+            throw new WidgetConfigurationError($this, 'Invalid definiton of panel header given!');
+        }
+        return $this;
+    }
+    
+    public function getHeader()
+    {
+        return $this->header;
+    }
+    
+    public function hasHeader()
+    {
+        return is_null($this->header) ? false : true;
+    }
+    
+    public function getHideHeader()
+    {
+        return $this->hide_header;
+    }
+    
+    public function setHideHeader($boolean)
+    {
+        $this->hide_header = BooleanDataType::cast($boolean);
     }
 }
 ?>

@@ -3,7 +3,6 @@ namespace exface\Core\Templates\AbstractAjaxTemplate;
 
 use exface\Core\CommonLogic\AbstractTemplate;
 use exface\Core\Interfaces\Actions\ActionInterface;
-use exface\Core\Widgets\Data;
 use exface\Core\Widgets\AbstractWidget;
 use exface\Core\Interfaces\Widgets\iTriggerAction;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
@@ -23,9 +22,7 @@ use exface\Core\Exceptions\Templates\TemplateRequestParsingError;
 use exface\Core\Events\WidgetEvent;
 use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 use exface\Core\Exceptions\InternalError;
-use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\Interfaces\Actions\iModifyContext;
-use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 
 abstract class AbstractAjaxTemplate extends AbstractTemplate
 {
@@ -52,7 +49,7 @@ abstract class AbstractAjaxTemplate extends AbstractTemplate
 
     protected $request_widget_id = NULL;
 
-    protected $request_page_id = NULL;
+    protected $request_page_alias = NULL;
 
     protected $request_action_alias = NULL;
 
@@ -141,7 +138,7 @@ abstract class AbstractAjaxTemplate extends AbstractTemplate
             // TODO Is there a way to display errors in the header nicely?
             /*
              * $ui = $this->getWorkbench()->ui();
-             * $page = UiPageFactory::create($ui, 0);
+             * $page = UiPageFactory::create($ui, '');
              * return $this->getWorkbench()->getDebugger()->printException($e, false);
              */
             throw $e;
@@ -159,23 +156,23 @@ abstract class AbstractAjaxTemplate extends AbstractTemplate
      */
     function getElement(\exface\Core\Widgets\AbstractWidget $widget)
     {
-        if (! array_key_exists($widget->getPageId(), $this->elements) || ! array_key_exists($widget->getId(), $this->elements[$widget->getPageId()])) {
+        if (! array_key_exists($widget->getPage()->getAliasWithNamespace(), $this->elements) || ! array_key_exists($widget->getId(), $this->elements[$widget->getPage()->getAliasWithNamespace()])) {
             $elem_class = $this->getClass($widget);
             $instance = new $elem_class($widget, $this);
-            // $this->elements[$widget->getPageId()][$widget->getId()] = $instance;
+            // $this->elements[$widget->getPage()->getAliasWithNamespace()][$widget->getId()] = $instance;
         }
         
-        return $this->elements[$widget->getPageId()][$widget->getId()];
+        return $this->elements[$widget->getPage()->getAliasWithNamespace()][$widget->getId()];
     }
 
     public function removeElement(AbstractWidget $widget)
     {
-        unset($this->elements[$widget->getPageId()][$widget->getId()]);
+        unset($this->elements[$widget->getPage()->getAliasWithNamespace()][$widget->getId()]);
     }
 
     public function registerElement($element)
     {
-        $this->elements[$element->getWidget()->getPageId()][$element->getWidget()->getId()] = $element;
+        $this->elements[$element->getWidget()->getPage()->getAliasWithNamespace()][$element->getWidget()->getId()] = $element;
         return $this;
     }
 
@@ -213,31 +210,29 @@ abstract class AbstractAjaxTemplate extends AbstractTemplate
      * It's just a shortcut in case you do not have the widget object at
      * hand, but know it's ID and the resource, where it resides.
      *
-     * @param strig $widget_id            
-     * @param string $page_id            
-     * @return \exface\Templates\jeasyui\Widgets\jeasyuiAbstractWidget
+     * @param string $widget_id            
+     * @param UiPageInterface $page            
+     * @return AbstractJqueryElement
      */
-    public function getElementByWidgetId($widget_id, $page_id)
+    public function getElementByWidgetId($widget_id, UiPageInterface $page)
     {
-        if ($elem = $this->elements[$page_id][$widget_id]) {
+        if ($elem = $this->elements[$page->getAliasWithNamespace()][$widget_id]) {
             return $elem;
+        } elseif ($widget = $page->getWidget($widget_id)) {
+            return $this->getElement($widget);
         } else {
-            if ($widget_id = $this->getWorkbench()->ui()->getWidget($widget_id, $page_id)) {
-                return $this->getElement($widget_id);
-            } else {
-                return false;
-            }
+            return false;
         }
     }
 
     public function getElementFromWidgetLink(WidgetLink $link)
     {
-        return $this->getElementByWidgetId($link->getWidgetId(), $link->getPageId());
+        return $this->getElementByWidgetId($link->getWidgetId(), $link->getPage());
     }
 
-    public function createLinkInternal($page_id, $url_params = '')
+    public function createLinkInternal($page_or_id_or_alias, $url_params = '')
     {
-        return $this->getWorkbench()->getCMS()->createLinkInternal($page_id, $url_params);
+        return $this->getWorkbench()->getCMS()->createLinkInternal($page_or_id_or_alias, $url_params);
     }
 
     public function getDataSheetFromRequest($object_id = NULL, $widget = NULL)
@@ -246,8 +241,8 @@ abstract class AbstractAjaxTemplate extends AbstractTemplate
             // Look for actual data rows in the request
             if ($this->getWorkbench()->getRequestParams()['data']) {
                 if (! is_array($this->getWorkbench()->getRequestParams()['data'])) {
-                    if ($decoded = @json_decode($this->getWorkbench()->getRequestParams()['data'], true));
-                    $this->getWorkbench()->setRequestParam('data', $decoded);
+                    if ($decoded = @json_decode($this->getWorkbench()->getRequestParams()['data'], true))
+                        $this->getWorkbench()->setRequestParam('data', $decoded);
                 }
                 $request_data = $this->getWorkbench()->getRequestParams()['data'];
                 // If there is a data request parameter, create a data sheet from it
@@ -274,7 +269,7 @@ abstract class AbstractAjaxTemplate extends AbstractTemplate
             $filters = $this->getRequestFilters();
             // Add filters for quick search
             if ($widget && $quick_search = $this->getRequestQuickSearchValue()) {
-                $quick_search_filter = $widget->getMetaObject()->getLabelAlias();
+                $quick_search_filter = $widget->getMetaObject()->getLabelAttributeAlias();
                 if ($widget->is('Data') && count($widget->getAttributesForQuickSearch()) > 0) {
                     foreach ($widget->getAttributesForQuickSearch() as $attr) {
                         $quick_search_filter .= ($quick_search_filter ? EXF_LIST_SEPARATOR : '') . $attr;
@@ -285,11 +280,6 @@ abstract class AbstractAjaxTemplate extends AbstractTemplate
                 } else {
                     throw new TemplateRequestParsingError('Cannot perform quick search on object "' . $widget->getMetaObject()->getAliasWithNamespace() . '": either mark one of the attributes as a label in the model or set inlude_in_quick_search = true for one of the filters in the widget definition!', '6T6HSL4');
                 }
-            }
-            
-            // TODO this is a dirty hack. The special treatment for trees needs to move completely to the respective class
-            if ($widget && $widget->getWidgetType() == 'DataTree' && ! $filters['PARENT']) {
-                $filters['PARENT'][] = $widget->getTreeRootUid();
             }
             
             /* @var $data_sheet \exface\Core\CommonLogic\DataSheets\DataSheet */
@@ -392,10 +382,10 @@ abstract class AbstractAjaxTemplate extends AbstractTemplate
      *
      * @see \exface\Core\CommonLogic\AbstractTemplate::processRequest()
      */
-    public function processRequest($page_id = NULL, $widget_id = NULL, $action_alias = NULL, $disable_error_handling = false)
+    public function processRequest($page_alias = NULL, $widget_id = NULL, $action_alias = NULL, $disable_error_handling = false)
     {
         // Look for basic request parameters
-        $called_in_resource_id = $page_id ? $page_id : $this->getRequestPageId();
+        $called_in_resource_alias = $page_alias ? $page_alias : $this->getRequestPageAlias();
         $called_by_widget_id = $widget_id ? $widget_id : $this->getRequestWidgetId();
         $action_alias = $action_alias ? $action_alias : $this->getRequestActionAlias();
         
@@ -403,9 +393,9 @@ abstract class AbstractAjaxTemplate extends AbstractTemplate
         if ($this->getSubrequestId())
             $this->getWorkbench()->context()->getScopeRequest()->setSubrequestId($this->getSubrequestId());
         
-        if ($called_in_resource_id) {
+        if ($called_in_resource_alias) {
             try {
-                $this->getWorkbench()->ui()->setPageIdCurrent($called_in_resource_id);
+                $this->getWorkbench()->ui()->setPageCurrent($this->getWorkbench()->ui()->getPage($called_in_resource_alias));
                 $this->getWorkbench()->ui()->getPageCurrent();
             } catch (\Throwable $e) {
                 if (! $disable_error_handling) {
@@ -428,11 +418,11 @@ abstract class AbstractAjaxTemplate extends AbstractTemplate
         
         // Do the actual processing
         try {
-            if ($called_in_resource_id) {
+            if ($called_in_resource_alias) {
                 if ($called_by_widget_id) {
-                    $widget = $this->getWorkbench()->ui()->getWidget($called_by_widget_id, $called_in_resource_id);
+                    $widget = $this->getWorkbench()->ui()->getPage($called_in_resource_alias)->getWidget($called_by_widget_id);
                 } else {
-                    $widget = $this->getWorkbench()->ui()->getPage($called_in_resource_id)->getWidgetRoot();
+                    $widget = $this->getWorkbench()->ui()->getPage($called_in_resource_alias)->getWidgetRoot();
                 }
                 if (! $object_id && $widget)
                     $object_id = $widget->getMetaObject()->getId();
@@ -467,13 +457,13 @@ abstract class AbstractAjaxTemplate extends AbstractTemplate
             $data_sheet = $this->getDataSheetFromRequest($object_id, $widget);
             if ($data_sheet) {
                 if ($action->getInputDataSheet()) {
-                    $action->getInputDataSheet()->importRows($data_sheet);
+                    $action->setInputDataSheet($action->getInputDataSheet()->importRows($data_sheet));
                 } else {
                     $action->setInputDataSheet($data_sheet);
                 }
             }
             // Check, if the action has a widget. If not, give it the widget from the request
-            if ($action->implementsInterface('iShowWidget') && ! $action->getWidget() && $widget) {
+            if ($action->implementsInterface('iShowWidget') && ! $action->isWidgetDefined() && $widget) {
                 $action->setWidget($widget);
             }
             
@@ -483,7 +473,7 @@ abstract class AbstractAjaxTemplate extends AbstractTemplate
                 if (! $e instanceof ExceptionInterface){
                     $e = new InternalError($e->getMessage(), null, $e);
                 }
-                $this->setResponseFromError($e, UiPageFactory::create($this->getWorkbench()->ui(), 0));
+                $this->setResponseFromError($e, UiPageFactory::create($this->getWorkbench()->ui(), ''));
             } else {
                 throw $e;
             }
@@ -528,7 +518,7 @@ abstract class AbstractAjaxTemplate extends AbstractTemplate
         
         try {
             $debug_widget = $exception->createWidget($page);
-            if ($page->getWorkbench()->getConfig()->getOption('DEBUG.SHOW_ERROR_DETAILS_TO_ADMINS_ONLY') && ! $page->getWorkbench()->context()->getScopeUser()->isUserAdmin()) {
+            if ($page->getWorkbench()->getConfig()->getOption('DEBUG.SHOW_ERROR_DETAILS_TO_ADMINS_ONLY') && ! $page->getWorkbench()->context()->getScopeUser()->getUserCurrent()->isUserAdmin()) {
                 foreach ($debug_widget->getTabs() as $nr => $tab) {
                     if ($nr > 0) {
                         $tab->setHidden(true);
@@ -539,11 +529,15 @@ abstract class AbstractAjaxTemplate extends AbstractTemplate
         } catch (\Throwable $e) {
             // If anything goes wrong when trying to prettify the original error, drop prettifying
             // and throw the original exception wrapped in a notice about the failed prettification
-            throw new RuntimeException('Failed to create error report widget: "' . $e->getMessage() . '"! See orignal error detail below.', null, $exception);
+            $this->getWorkbench()->getLogger()->logException($e);
+            $log_id = $e instanceof ExceptionInterface ? $e->getId() : '';
+            throw new RuntimeException('Failed to create error report widget: "' . $e->getMessage() . '" - see ' . ($log_id ? 'log ID ' . $log_id : 'logs') . ' for more details! Find the orignal error detail below.', null, $exception);
         } catch (FatalThrowableError $e) {
             // If anything goes wrong when trying to prettify the original error, drop prettifying
             // and throw the original exception wrapped in a notice about the failed prettification
-            throw new RuntimeException('Failed to create error report widget: "' . $e->getMessage() . '"! See orignal error detail below.', null, $exception);
+            $this->getWorkbench()->getLogger()->logException($e);
+            $log_id = $e instanceof ExceptionInterface ? $e->getId() : '';
+            throw new RuntimeException('Failed to create error report widget: "' . $e->getMessage() . '" - see ' . ($log_id ? 'log ID ' . $log_id : 'logs') . ' for more details! Find the orignal error detail below.', null, $exception);
         }
         
         $this->getWorkbench()->getLogger()->log($exception->getLogLevel(), $exception->getMessage(), array(), $exception);
@@ -580,7 +574,7 @@ abstract class AbstractAjaxTemplate extends AbstractTemplate
                 $prefill_data = $widget_to_prefill->prepareDataSheetToPrefill($prefill_data);
                 // If new colums are added, the sheet is marked as outdated, so we need to fetch the data from the data source
                 if (! $prefill_data->isFresh()) {
-                    $prefill_data->addFilterInFromString($prefill_data->getMetaObject()->getUidAlias(), $prefill_data->getColumnValues($prefill_data->getMetaObject()->getUidAlias()));
+                    $prefill_data->addFilterInFromString($prefill_data->getMetaObject()->getUidAttributeAlias(), $prefill_data->getColumnValues($prefill_data->getMetaObject()->getUidAttributeAlias()));
                     $prefill_data->dataRead();
                 }
                 
@@ -691,13 +685,13 @@ abstract class AbstractAjaxTemplate extends AbstractTemplate
         return $this->request_object_id;
     }
 
-    public function getRequestPageId()
+    public function getRequestPageAlias()
     {
-        if (! $this->request_page_id) {
-            $this->request_page_id = ! is_null($this->getWorkbench()->getRequestParams()['resource']) ? intval($this->getWorkbench()->getRequestParams()['resource']) : NULL;
+        if (! $this->request_page_alias) {
+            $this->request_page_alias = ! is_null($this->getWorkbench()->getRequestParams()['resource']) ? $this->getWorkbench()->getRequestParams()['resource'] : NULL;
             $this->getWorkbench()->removeRequestParam('resource');
         }
-        return $this->request_page_id;
+        return $this->request_page_alias;
     }
 
     public function getRequestWidgetId()
@@ -770,7 +764,7 @@ abstract class AbstractAjaxTemplate extends AbstractTemplate
                 $context = $contextBar->getContextForButton($btn);
                 $extra[$btn_element->getId()] = [
                     'visibility' => $context->getVisibility(),
-                    'icon' => $btn_element->buildCssIconClass($btn->getIconName()),
+                    'icon' => $btn_element->buildCssIconClass($btn->getIcon()),
                     'color' => $context->getColor(),
                     'hint' => $btn->getHint(),
                     'indicator' => ! is_null($context->getIndicator()) ? $contextBar->getContextForButton($btn)->getIndicator() : '',

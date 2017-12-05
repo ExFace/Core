@@ -1,0 +1,42 @@
+{
+    "id": "0xcdf966ba949e11e7a875028037ec0200",
+    "alias_with_namespace": "exface.core.query-builders",
+    "menu_parent_page_alias": "exface.core.documentation",
+    "menu_index": "5",
+    "menu_visible": true,
+    "name": "Query Builders",
+    "short_description": "",
+    "replaces_page_alias": null,
+    "contents": {
+        "object_alias": "exface.core.QUERY_BUILDER",
+        "widget_type": "DataTable",
+        "filters": [
+            {
+                "attribute_alias": "NAME"
+            },
+            {
+                "attribute_alias": "PATHNAME_RELATIVE"
+            }
+        ],
+        "columns": [
+            {
+                "attribute_alias": "NAME"
+            },
+            {
+                "attribute_alias": "PATHNAME_RELATIVE"
+            },
+            {
+                "attribute_alias": "PATHNAME_ABSOLUTE"
+            },
+            {
+                "attribute_alias": "SIZE"
+            }
+        ],
+        "buttons": [
+            {
+                "action_alias": "exface.Core.ShowObjectDialog",
+                "bind_to_double_click": true
+            }
+        ]
+    }
+}

@@ -4,17 +4,17 @@ namespace exface\Core\Widgets;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Widgets\iFillEntireContainer;
 use exface\Core\Interfaces\Widgets\iSupportMultiSelect;
-use exface\Core\CommonLogic\Model\Attribute;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Widgets\iHaveContextMenu;
 
 /**
  * Renders data as a table with filters, columns, and toolbars.
- * Columns of the DataTable can also be made editable.
  *
- * Example:
+ * Example showing attributes from the metamodel:
+ * 
+ * ```json
  *  {
- *      "id": "attributes",
  *      "widget_type": "DataTable",
  *      "object_alias": "exface.Core.ATTRIBUTE",
  *      "filters": [
@@ -40,6 +40,12 @@ use exface\Core\Interfaces\Widgets\iHaveContextMenu;
  *              "caption": "Relation to"
  *          }
  *      ],
+ *      "sorters": [
+ *          {
+ *              "attribute_alias": "OBJECT__LABEL",
+ *              "direction": "desc"
+ *          }
+ *      ],
  *      "buttons": [
  *          {
  *              "action_alias": "exface.Core.UpdateData"
@@ -56,6 +62,12 @@ use exface\Core\Interfaces\Widgets\iHaveContextMenu;
  *          }
  *      ]
  *  }
+ * 
+ * ```
+ * ## Editable columns
+ *  
+ * Columns of the DataTable can also be made editable by configuring an input widget in the 
+ * `editor` property of the column. 
  *
  * @author Andrej Kabachnik
  *        
@@ -111,32 +123,41 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
 
     /**
      * Makes each row have a collapsible detail container with arbitrary widgets.
-     *
+     * 
      * Most templates will render an expand-button in each row, allowing to expand/collapse the detail widget.
      * This only works with interactiv templates (e.g. HTML-templates)
-     *
+     * 
      * The widget type of the details-widget can be omitted. It defaults to Container in this case.
-     *
+     * 
      * Example:
+     * ```json 
      * {
-     * height: nnn
-     * widgets: [ ... ]
+     *      height: 5,
+     *      widgets: [  
+     *          {
+     *              "widget_type": "DataTable",
+     *              "object_alias": "my.App.RelatedObject",
+     *              "filters": [
+     *                  {
+     *                      "attribute_alias": "RELATION_TO_OBJECT_OF_PARENT_TABLE"
+     *                  }
+     *              ],
+     *              "columns": []
+     *          }
+     *      ]
      * }
+     * ```
      *
      * @uxon-property row_details
      * @uxon-type \exface\Core\Widgets\Container
      *
-     * @param
-     *            $detail_widget
+     * @param UxonObject $detail_widget
      * @return boolean
      */
-    function setRowDetails(\stdClass $detail_widget)
+    public function setRowDetails(UxonObject $detail_widget)
     {
         $page = $this->getPage();
-        if (! $detail_widget->widget_type) {
-            $detail_widget->widget_type = 'Container';
-        }
-        $widget = WidgetFactory::createFromUxon($page, $detail_widget, $this);
+        $widget = WidgetFactory::createFromUxon($page, $detail_widget, $this, 'Container');
         if ($widget instanceof Container) {
             $container = $widget;
         } else {
@@ -191,20 +212,22 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
      *
      * @uxon-property group_rows
      * @uxon-type Object
+     * 
+     * TODO create a separate DataRowGroup-widget
      *
-     * @param \stdClass $uxon_description_object            
+     * @param UxonObject $uxon            
      * @return DataTable
      */
-    public function setGroupRows(\stdClass $uxon_description_object)
+    public function setGroupRows(UxonObject $uxon)
     {
-        if (isset($uxon_description_object->group_by_column_id))
-            $this->setRowGroupsByColumnId($uxon_description_object->group_by_column_id);
-        if (isset($uxon_description_object->expand))
-            $this->setRowGroupsExpand($uxon_description_object->expand);
-        if (isset($uxon_description_object->show_count))
-            $this->setRowGroupsShowCount($uxon_description_object->show_count);
-        if (isset($uxon_description_object->action_alias))
-            $this->setRowDetailsAction($uxon_description_object->action_alias);
+        if ($uxon->hasProperty('group_by_column_id'))
+            $this->setRowGroupsByColumnId($uxon->getProperty('group_by_column_id'));
+        if ($uxon->hasProperty('expand'))
+            $this->setRowGroupsExpand($uxon->getProperty('expand'));
+        if ($uxon->hasProperty('show_count'))
+            $this->setRowGroupsShowCount($uxon->getProperty('show_count'));
+        if ($uxon->hasProperty('action_alias'))
+            $this->setRowDetailsAction($uxon->getProperty('action_alias'));
         return $this;
     }
 
@@ -254,7 +277,7 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
      */
     public function setContextMenuEnabled($value)
     {
-        $this->context_menu_enabled = \exface\Core\DataTypes\BooleanDataType::parse($value);
+        $this->context_menu_enabled = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;
     }
 
@@ -276,7 +299,7 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
      */
     public function setShowFilterRow($value)
     {
-        $this->show_filter_row = \exface\Core\DataTypes\BooleanDataType::parse($value);
+        $this->show_filter_row = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;
     }
 
@@ -296,7 +319,7 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
      */
     public function setHeaderSortMultiple($value)
     {
-        $this->header_sort_multiple = \exface\Core\DataTypes\BooleanDataType::parse($value);
+        $this->header_sort_multiple = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;
     }
 
@@ -356,7 +379,7 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
      */
     public function setNowrap($value)
     {
-        $this->nowrap = \exface\Core\DataTypes\BooleanDataType::parse($value);
+        $this->nowrap = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;
     }
 
@@ -376,7 +399,7 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
      */
     public function setStriped($value)
     {
-        $this->striped = \exface\Core\DataTypes\BooleanDataType::parse($value);
+        $this->striped = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;
     }
 
@@ -401,7 +424,7 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
      */
     public function setAutoRowHeight($value)
     {
-        $this->auto_row_height = \exface\Core\DataTypes\BooleanDataType::parse($value);
+        $this->auto_row_height = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;
     }
 
@@ -449,6 +472,12 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
          * }
          */
         return array();
+    }
+    
+    public function getValueWithDefaults()
+    {
+        // TODO return the UID of programmatically selected row
+        return null;
     }
 
     /**

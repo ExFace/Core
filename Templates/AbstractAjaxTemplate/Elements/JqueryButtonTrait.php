@@ -14,7 +14,7 @@ trait JqueryButtonTrait {
     {
         $js = ($widget->getRefreshInput() && $input_element->buildJsRefresh() ? $input_element->buildJsRefresh(true) . ";" : "");
         if ($link = $widget->getRefreshWidgetLink()) {
-            if ($link->getPageId() == $widget->getPageId() && $linked_element = $this->getTemplate()->getElement($link->getWidget())) {
+            if ($widget->getPage()->is($link->getPageAlias()) && $linked_element = $this->getTemplate()->getElement($link->getWidget())) {
                 $js .= "\n" . $linked_element->buildJsRefresh(true);
             }
         }
@@ -155,9 +155,9 @@ trait JqueryButtonTrait {
 								url: '" . $this->getAjaxUrl() . "',
 								data: {	
 									action: '" . $widget->getActionAlias() . "',
-									resource: '" . $widget->getPageId() . "',
+									resource: '" . $widget->getPage()->getAliasWithNamespace() . "',
 									element: '" . $widget->getId() . "',
-									object: '" . $widget->getMetaObjectId() . "',
+									object: '" . $widget->getMetaObject()->getId() . "',
 									data: requestData
 								},
 								success: function(data, textStatus, jqXHR) {
@@ -207,17 +207,17 @@ trait JqueryButtonTrait {
         $output = '';
         $prefill_param = '';
         $filters_param = '';
-        if ($action->getPageId() != $this->getPageId()) {
+        if (! $widget->getPage()->is($action->getPageAlias())) {
             if ($action->getPrefillWithPrefillData()){
                 $output = <<<JS
     				{$this->buildJsRequestDataCollector($action, $input_element)}
     				{$input_element->buildJsBusyIconShow()}
     				var prefillRows = [];
-    				if (requestData.rows[0]["{$widget->getMetaObject()->getUidAlias()}"]){
-    					prefillRows.push({{$widget->getMetaObject()->getUidAlias()}: requestData.rows[0]["{$widget->getMetaObject()->getUidAlias()}"]});
+    				if (requestData.rows.length > 0 && requestData.rows[0]["{$widget->getMetaObject()->getUidAttributeAlias()}"]){
+    					prefillRows.push({{$widget->getMetaObject()->getUidAttributeAlias()}: requestData.rows[0]["{$widget->getMetaObject()->getUidAttributeAlias()}"]});
     				}
 JS;
-                $prefill_param = '&prefill={"meta_object_id":"'.$widget->getMetaObjectId().'","rows": \' + JSON.stringify(prefillRows) + \'}';
+                $prefill_param = '&prefill={"meta_object_id":"'.$widget->getMetaObject()->getId().'","rows": \' + JSON.stringify(prefillRows) + \'}';
             } 
             
             if ($action instanceof GoToPage){
@@ -230,7 +230,7 @@ JS;
             
             $output .= <<<JS
             {$input_element->buildJsBusyIconShow()}
-			window.location.href = '{$this->getTemplate()->createLinkInternal($action->getPageId())}?{$prefill_param}{$filters_param}';
+			window.location.href = '{$this->getTemplate()->createLinkInternal($action->getPageAlias())}?{$prefill_param}{$filters_param}';
 JS;
         }
         return $output;
@@ -259,7 +259,7 @@ JS;
     {
         $widget = $this->getWidget();
         
-        $output = $action->printScript($input_element->getId());
+        $output = $action->buildScript($input_element->getId());
         $output .= '
 				' . $this->buildJsCloseDialog($widget, $input_element);
         
@@ -279,7 +279,7 @@ JS;
     {
         $widget = $this->getWidget();
         if ($action->isUndoable()) {
-            $undo_url = $this->getAjaxUrl() . "&action=exface.Core.UndoAction&resource=" . $widget->getPageId() . "&element=" . $widget->getId();
+            $undo_url = $this->getAjaxUrl() . "&action=exface.Core.UndoAction&resource=" . $widget->getPage()->getAliasWithNamespace() . "&element=" . $widget->getId();
         }
         return $undo_url;
     }

@@ -4,6 +4,7 @@ namespace exface\Core\Interfaces\Actions;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
+use exface\Core\CommonLogic\UxonObject;
 
 interface iCanBeUndone
 {
@@ -21,7 +22,7 @@ interface iCanBeUndone
      * Returns a serializable UXON object with all the data neede to perform an undo operation later.
      * The output of this method will be saved in the context history.
      *
-     * @return \stdClass
+     * @return UxonObject
      */
     public function getUndoDataSerializable();
 
@@ -31,9 +32,10 @@ interface iCanBeUndone
      * This method should work with whatever get_undo_data_serializable() returns for
      * the same action.
      *
-     * @param \stdClass $uxon_object            
+     * @param UxonObject $uxon_object   
+     * @return iCanBeUndone         
      */
-    public function setUndoData(\stdClass $uxon_object);
+    public function setUndoData(UxonObject $uxon_object);
 
     /**
      *

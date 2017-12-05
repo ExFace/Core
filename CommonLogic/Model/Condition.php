@@ -2,11 +2,14 @@
 namespace exface\Core\CommonLogic\Model;
 
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\DataTypes\AbstractDataType;
+use exface\Core\CommonLogic\DataTypes\AbstractDataType;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Exceptions\RangeException;
 use exface\Core\Exceptions\UnexpectedValueException;
+use exface\Core\Interfaces\Model\ExpressionInterface;
+use exface\Core\DataTypes\NumberDataType;
+use exface\Core\DataTypes\RelationDataType;
 
 /**
  * .
@@ -25,6 +28,8 @@ class Condition implements iCanBeConvertedToUxon
     private $expression = null;
 
     private $value = null;
+    
+    private $value_set = false;
 
     private $comparator = null;
 
@@ -43,7 +48,7 @@ class Condition implements iCanBeConvertedToUxon
     /**
      * Returns the expression to filter
      *
-     * @return Expression
+     * @return ExpressionInterface
      */
     public function getExpression()
     {
@@ -53,9 +58,9 @@ class Condition implements iCanBeConvertedToUxon
     /**
      * Sets the expression that will be compared to the value
      *
-     * @param Expression $expression            
+     * @param ExpressionInterface $expression            
      */
-    public function setExpression(Expression $expression)
+    public function setExpression(ExpressionInterface $expression)
     {
         $this->expression = $expression;
     }
@@ -78,11 +83,13 @@ class Condition implements iCanBeConvertedToUxon
      */
     public function setValue($value)
     {
+        $this->value_set = true;
         try {
             $value = $this->getDataType()->parse($value);
         } catch (\Throwable $e) {
             throw new RangeException('Illegal filter value "' . $value . '" for attribute "' . $this->getAttributeAlias() . '" of data type "' . $this->getExpression()->getAttribute()->getDataType()->getName() . '": ' . $e->getMessage(), '6T5WBNB', $e);
             $value = null;
+            $this->unset();
         }
         $this->value = $value;
     }
@@ -160,8 +167,8 @@ class Condition implements iCanBeConvertedToUxon
             $comparator = EXF_COMPARATOR_IN;
         } elseif (strpos($expression_string, EXF_LIST_SEPARATOR) === false
             && $base_object->hasAttribute($expression_string)
-            && ($base_object->getAttribute($expression_string)->getDataType()->is(EXF_DATA_TYPE_NUMBER)
-                || $base_object->getAttribute($expression_string)->getDataType()->is(EXF_DATA_TYPE_RELATION)
+            && ($base_object->getAttribute($expression_string)->getDataType() instanceof NumberDataType
+                || $base_object->getAttribute($expression_string)->getDataType() instanceof RelationDataType
                 )
             && strpos($value, $base_object->getAttribute($expression_string)->getValueListDelimiter()) !== false) {
                 // if a numeric attribute has a value with commas, it is actually an IN-statement
@@ -214,7 +221,7 @@ class Condition implements iCanBeConvertedToUxon
     public function getDataType()
     {
         if (is_null($this->data_type)) {
-            $this->data_type = DataTypeFactory::createFromAlias($this->exface, EXF_DATA_TYPE_STRING);
+            $this->data_type = DataTypeFactory::createBaseDataType($this->exface);
         }
         return $this->data_type;
     }
@@ -255,10 +262,10 @@ class Condition implements iCanBeConvertedToUxon
     public function exportUxonObject()
     {
         $uxon = new UxonObject();
-        $uxon->expression = $this->getExpression()->toString();
-        $uxon->comparator = $this->getComparator();
-        $uxon->value = $this->getValue();
-        $uxon->object_alias = $this->getExpression()->getMetaObject()->getAliasWithNamespace();
+        $uxon->setProperty('expression', $this->getExpression()->toString());
+        $uxon->setProperty('comparator', $this->getComparator());
+        $uxon->setProperty('value', $this->getValue());
+        $uxon->setProperty('object_alias', $this->getExpression()->getMetaObject()->getAliasWithNamespace());
         return $uxon;
     }
 
@@ -278,11 +285,37 @@ class Condition implements iCanBeConvertedToUxon
         if ($uxon_object->hasProperty('comparator') && $uxon_object->getProperty('comparator')) {
             $this->setComparator($uxon_object->getProperty('comparator'));
         }
-        $this->setValue($uxon_object->getProperty('value'));
+        if ($uxon_object->hasProperty('value')){
+            $value = $uxon_object->getProperty('value');
+            if (! is_null($value) && $value !== ''){
+                $this->setValue($value);
+            }
+        }
     }
 
     public function getModel()
     {
         return $this->exface->model();
+    }
+    
+    /**
+     * Returns TRUE if the condition does not affect anything and FALSE otherwise.
+     * 
+     * @return boolean
+     */
+    public function isEmpty()
+    {
+        return ! $this->value_set;
+    }
+    
+    /**
+     * Unsets the value of the condition making query builders etc. ignore it.
+     * 
+     * @return Condition
+     */
+    public function unsetValue()
+    {
+        $this->value = null;
+        $this->value_set = false;
     }
 }

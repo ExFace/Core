@@ -5,7 +5,7 @@ use exface\Core\Interfaces\Widgets\iSupportMultiSelect;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Factories\DataSheetFactory;
-use exface\Core\CommonLogic\Model\Object;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\CommonLogic\Model\Condition;
 use exface\Core\Factories\ConditionFactory;
 use exface\Core\CommonLogic\UxonObject;
@@ -13,11 +13,14 @@ use exface\Core\CommonLogic\DataSheets\DataSorter;
 use exface\Core\Factories\DataSorterFactory;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Interfaces\DataSheets\DataColumnInterface;
-use exface\Core\CommonLogic\Model\Relation;
+use exface\Core\Interfaces\Model\MetaRelationInterface;
+use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
 
 /**
  * A dropdown menu to select from.
- * Each menu item has a value and a text. Optional support for selecting multiple items.
+ * 
+ * Each menu item has a value and a text. Multiple selection can be enabled with select_multiple: true.
  *
  * The selectable options can either be specified directly (via the property "selectable_options") or generated from
  * the data source. In the latter case, attributes for text and values can be specified via text_attribute_alias and
@@ -48,11 +51,19 @@ use exface\Core\CommonLogic\Model\Relation;
  *      "text_attribute_alias": "CLASSIFICATION_NAME"
  *  }
  *
- * By turning "use_prefill_to_filter_options" on or off, the prefill behavior can be customized. By default, the values
- * from the prefill data will be used as options in the select automatically.
+ * By turning "use_prefill_to_filter_options" on or off, the prefill 
+ * behavior can be customized. By default, the values from the prefill 
+ * data will be used as options in the select automatically.
+ * 
+ * The widget will also add some generic menu items automatically:
+ * - an option to empty the selection if the widget is not required 
+ * (the value of this option is an empty string)
+ * - an option to select empty values if the widget is based on an 
+ * attribute which is not required (the value is the empty-comparator "__")
  *
- * InputSelects should be used for small data sets, as not all frameworks will support searching for values or
- * lazy loading. If you have a large amount of data, use an InputCombo instead!
+ * InputSelects should be used for small data sets, as not all frameworks 
+ * will support searching for values or lazy loading. If you have a large 
+ * amount of data, use an InputCombo instead!
  *
  * @author Andrej Kabachnik
  */
@@ -129,7 +140,7 @@ class InputSelect extends Input implements iSupportMultiSelect
      */
     public function setMultiSelect($value)
     {
-        $this->multi_select = \exface\Core\DataTypes\BooleanDataType::parse($value);
+        $this->multi_select = \exface\Core\DataTypes\BooleanDataType::cast($value);
     }
 
     /**
@@ -141,7 +152,8 @@ class InputSelect extends Input implements iSupportMultiSelect
     {
         // If there are no selectable options set explicitly, try to determine them from the meta model. Otherwise the select box would be empty.
         if (empty($this->selectable_options) && $this->getAttribute()) {
-            if ($this->getAttribute()->getDataType()->is(EXF_DATA_TYPE_BOOLEAN)) {
+            $data_type = $this->getAttribute()->getDataType();
+            if ($data_type instanceof BooleanDataType) {
                 $this->setSelectableOptions(array(
                     1,
                     0
@@ -149,6 +161,8 @@ class InputSelect extends Input implements iSupportMultiSelect
                     $this->translate('WIDGET.SELECT_YES'),
                     $this->translate('WIDGET.SELECT_NO')
                 ));
+            } elseif ($data_type instanceof EnumDataTypeInterface) {
+                $this->setSelectableOptions($data_type->getLabels());
             }
         }
         
@@ -157,15 +171,41 @@ class InputSelect extends Input implements iSupportMultiSelect
             $this->setOptionsFromDataSheet($this->getOptionsDataSheet());
         }
         
-        // Add unselected uption
-        if (! $this->isRequired() && ! array_key_exists('', $this->selectable_options) && ! ($this->isDisabled() && $this->getValue())) {
-            $options = array(
-                '' => $this->translate('WIDGET.SELECT_NONE')
-            ) + $this->selectable_options;
-        } else {
-            $options = $this->selectable_options;
-        }
+        $options = $this->getSelectableGenericOptions() + $this->selectable_options;
+        
         return $options;
+    }
+    
+    /**
+     * Returns generic options like "none" or "empty"
+     * 
+     * @return string[]
+     */
+    protected function getSelectableGenericOptions()
+    {
+        $generic_options =  [];
+        // Unselect option if the input is not required and not disabled with a fixed value
+        if (! $this->isRequired() && ! ($this->isDisabled() && $this->getValue()) && ! array_key_exists('', $this->selectable_options)) {
+            $generic_options[''] = $this->translate('WIDGET.SELECT_NONE');
+        }
+        // Select empty option if based on an attribute that is not required
+        if ($this->getAttribute() && ! $this->getAttribute()->isRequired() && ! $this->isRequired()){
+            $generic_options[EXF_LOGICAL_NULL] = $this->translate('WIDGET.SELECT_EMPTY');
+        }
+        return $generic_options;
+    }
+    
+    /**
+     * Returns TRUE if there are selectable options currently defined (not generic ones!)
+     * 
+     * @return boolean
+     */
+    public function hasOptions()
+    {
+        if (! empty($this->selectable_options)){
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -176,7 +216,7 @@ class InputSelect extends Input implements iSupportMultiSelect
      *
      * When adding options programmatically, separate arrays with equal length can be used: one for values and one for the text labels.
      *
-     * @param array|stdClass $array_or_object            
+     * @param array|UxonObject $array_or_object            
      * @param array $options_texts_array            
      * @throws WidgetPropertyInvalidValueError
      * @return InputSelect
@@ -185,29 +225,32 @@ class InputSelect extends Input implements iSupportMultiSelect
     {
         $options = array();
         
-        // Add the specified options
-        if ($array_or_object instanceof \stdClass) {
-            $options = (array) $array_or_object;
+        // Transform the options into an array
+        if ($array_or_object instanceof UxonObject) {
+            $array = $array_or_object->toArray();
         } elseif (is_array($array_or_object)) {
+            $array = $array_or_object;
+        } else {
+            throw new WidgetPropertyInvalidValueError($this, 'Wrong data type for possible values of ' . $this->getWidgetType() . '! Expecting array or object, ' . gettype($array_or_object) . ' given.', '6T91S9G');
+        }
+        
+        // If it is not an assosiative array, attemt to transform it to one
+        if (array_values($array) === $array) {
             if (is_array($options_texts_array)) {
-                if (count($array_or_object) != count($options_texts_array)) {
-                    throw new WidgetPropertyInvalidValueError($this, 'Number of possible values (' . count($array_or_object) . ') differs from the number of keys (' . count($options_texts_array) . ') for widget "' . $this->getId() . '"!', '6T91S9G');
+                if (count($array) !== count($options_texts_array)) {
+                    throw new WidgetPropertyInvalidValueError($this, 'Number of possible values (' . count($array) . ') differs from the number of keys (' . count($options_texts_array) . ') for widget "' . $this->getId() . '"!', '6T91S9G');
                 } else {
-                    foreach ($array_or_object as $nr => $id) {
+                    foreach ($array as $nr => $id) {
                         $options[$id] = $options_texts_array[$nr];
                     }
                 }
             } else {
-                // See if it is an assotiative array
-                if (array_keys($array_or_object)[0] === 0 && array_keys($array_or_object)[count($array_or_object) - 1] == (count($array_or_object) - 1)) {
-                    $options = array_combine($array_or_object, $array_or_object);
-                } else {
-                    $options = $array_or_object;
-                }
-            }
+                $options = array_combine($array, $array);
+            } 
         } else {
-            throw new WidgetPropertyInvalidValueError($this, 'Wrong data type for possible values of ' . $this->getWidgetType() . '! Expecting array or object, ' . gettype($array_or_object) . ' given.', '6T91S9G');
+            $options = $array;
         }
+        
         $this->selectable_options = $options;
         return $this;
     }
@@ -217,13 +260,9 @@ class InputSelect extends Input implements iSupportMultiSelect
      *
      * @return integer
      */
-    public function countSelectableOptions()
+    public function countSelectableOptions($include_generic_options = false)
     {
-        $number = count($this->getSelectableOptions());
-        if (array_key_exists('', $this->getSelectableOptions())) {
-            $number --;
-        }
-        return $number;
+        return count($this->getSelectableOptions()) - ($include_generic_options ? 0 : count($this->getSelectableGenericOptions()));
     }
     
     /**
@@ -317,10 +356,10 @@ class InputSelect extends Input implements iSupportMultiSelect
      * from the options object to the prefill object.
      * 
      * @param DataSheetInterface $data_sheet
-     * @param Relation $relation_from_options_to_prefill_object
+     * @param MetaRelationInterface $relation_from_options_to_prefill_object
      * @return void
      */
-    protected function doPrefillWithRelatedObject(DataSheetInterface $data_sheet, Relation $relation_from_options_to_prefill_object)
+    protected function doPrefillWithRelatedObject(DataSheetInterface $data_sheet, MetaRelationInterface $relation_from_options_to_prefill_object)
     {
         
         // Now see if the prefill object can be used to filter values
@@ -457,7 +496,7 @@ class InputSelect extends Input implements iSupportMultiSelect
 
     /**
      *
-     * @return \exface\Core\CommonLogic\Model\Attribute
+     * @return \exface\Core\Interfaces\Model\MetaAttributeInterface
      */
     public function getTextAttribute()
     {
@@ -509,9 +548,9 @@ class InputSelect extends Input implements iSupportMultiSelect
                 $this->text_attribute_alias = $this->getAttributeAlias();
             } else {
                 if ($this->getOptionsObject()->getLabelAttribute()) {
-                    $this->text_attribute_alias = $this->getOptionsObject()->getLabelAlias();
+                    $this->text_attribute_alias = $this->getOptionsObject()->getLabelAttributeAlias();
                 } else {
-                    $this->text_attribute_alias = $this->getOptionsObject()->getUidAlias();
+                    $this->text_attribute_alias = $this->getOptionsObject()->getUidAttributeAlias();
                 }
             }
         }
@@ -544,7 +583,7 @@ class InputSelect extends Input implements iSupportMultiSelect
         return $this->options_object;
     }
 
-    public function setOptionsObject(Object $value)
+    public function setOptionsObject(MetaObjectInterface $value)
     {
         $this->options_object = $value;
         return $this;
@@ -582,8 +621,8 @@ class InputSelect extends Input implements iSupportMultiSelect
             // unless it is a self-reference-relation, which should be treated just like a relation to other objects
             if ($this->getOptionsObject()->isExactly($this->getMetaObject()) && ! ($this->getAttribute() && $this->getAttribute()->isRelation())) {
                 $this->value_attribute_alias = $this->getAttributeAlias();
-            } elseif ($this->getOptionsObject()->getUidAlias()) {
-                $this->value_attribute_alias = $this->getOptionsObject()->getUidAlias();
+            } elseif ($this->getOptionsObject()->getUidAttributeAlias()) {
+                $this->value_attribute_alias = $this->getOptionsObject()->getUidAttributeAlias();
             } else {
                 throw new WidgetConfigurationError($this, 'Cannot create ' . $this->getWidgetType() . ': there is no value attribute defined and the options object "' . $this->getOptionsObject()->getAliasWithNamespace() . '" has no UID attribute!', '6V5FGYF');
             }
@@ -629,7 +668,7 @@ class InputSelect extends Input implements iSupportMultiSelect
      */
     public function setUsePrefillToFilterOptions($value)
     {
-        $this->use_prefill_to_filter_options = \exface\Core\DataTypes\BooleanDataType::parse($value);
+        $this->use_prefill_to_filter_options = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;
     }
 
@@ -649,7 +688,7 @@ class InputSelect extends Input implements iSupportMultiSelect
      */
     public function setUsePrefillValuesAsOptions($value)
     {
-        $this->use_prefill_values_as_options = \exface\Core\DataTypes\BooleanDataType::parse($value);
+        $this->use_prefill_values_as_options = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;
     }
 
@@ -689,20 +728,22 @@ class InputSelect extends Input implements iSupportMultiSelect
      * @uxon-property filters
      * @uxon-type \exface\Core\CommonLogic\Model\Condition
      *
-     * @param Condition[]|UxonObject[] $conditions_or_uxon_objects            
+     * @param Condition[]|UxonObject $conditions_or_uxon_objects            
      * @return \exface\Core\Widgets\InputSelect
      */
-    public function setFilters(array $conditions_or_uxon_objects)
+    public function setFilters($conditions_or_uxon_objects)
     {
         foreach ($conditions_or_uxon_objects as $condition_or_uxon_object) {
             if ($condition_or_uxon_object instanceof Condition) {
                 $this->getOptionsDataSheet()->getFilters()->addCondition($condition_or_uxon_object);
-            } elseif ($condition_or_uxon_object instanceof \stdClass) {
-                $uxon = UxonObject::fromAnything($condition_or_uxon_object);
+            } elseif ($condition_or_uxon_object instanceof UxonObject) {
+                $uxon = $condition_or_uxon_object;
                 if (! $uxon->hasProperty('object_alias')) {
                     $uxon->setProperty('object_alias', $this->getMetaObject()->getAliasWithNamespace());
                 }
                 $this->getOptionsDataSheet()->getFilters()->addCondition(ConditionFactory::createFromUxon($this->getWorkbench(), $uxon));
+            } else {
+                throw new WidgetPropertyInvalidValueError('Cannot set filters for ' . $this->getWidgetType() . ': invalid format ' . gettype($condition_or_uxon_object) . ' given instead of and instantiated condition or its UXON description.');
             }
         }
         return $this;
@@ -713,30 +754,31 @@ class InputSelect extends Input implements iSupportMultiSelect
      *
      * For example, if we have a select for sizes of a product and we only wish to show sort the ascendingly,
      * we would need the following config:
-     * {
-     * "options_object_alias": "my.app.product",
-     * "value_attribute_alias": "SIZE_ID",
-     * "text_attribute_alias": "SIZE_TEXT",
-     * "sorters":
-     * [
-     * {"attribute_alias": "SIZE_TEXT", "direction": "ASC"}
-     * ]
-     * }
+     *  {
+     *      "options_object_alias": "my.app.product",
+     *      "value_attribute_alias": "SIZE_ID",
+     *      "text_attribute_alias": "SIZE_TEXT",
+     *      "sorters": [
+     *          {"attribute_alias": "SIZE_TEXT", "direction": "ASC"}
+     *      ]
+     *  }
      *
      * @uxon-property sorters
      * @uxon-type \exface\Core\CommonLogic\DataSheets\DataSorter
      *
-     * @param DataSorter[]|UxonObject[] $data_sorters_or_uxon_objects            
+     * @param DataSorter[]|UxonObject $data_sorters_or_uxon_object            
      * @return \exface\Core\Widgets\InputSelect
      */
-    public function setSorters(array $data_sorters_or_uxon_objects)
+    public function setSorters(UxonObject $data_sorters_or_uxon_object)
     {
-        foreach ($data_sorters_or_uxon_objects as $sorter_or_uxon) {
+        foreach ($data_sorters_or_uxon_object as $sorter_or_uxon) {
             if ($sorter_or_uxon instanceof DataSorter) {
                 $this->getOptionsDataSheet()->getSorters()->add($sorter_or_uxon);
-            } elseif ($sorter_or_uxon instanceof \stdClass) {
-                $uxon = UxonObject::fromAnything($sorter_or_uxon);
+            } elseif ($sorter_or_uxon instanceof UxonObject) {
+                $uxon = $sorter_or_uxon;
                 $this->getOptionsDataSheet()->getSorters()->add(DataSorterFactory::createFromUxon($this->getOptionsDataSheet(), $uxon));
+            } else {
+                throw new WidgetPropertyInvalidValueError('Cannot set sorters for ' . $this->getWidgetType() . ': invalid format ' . gettype($sorter_or_uxon) . ' given instead of and instantiated DataSorter or its UXON description.');
             }
         }
         return $this;

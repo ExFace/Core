@@ -1,13 +1,14 @@
 <?php
 namespace exface\Core\DataTypes;
 
-use exface\Core\Exceptions\DataTypeValidationError;
+use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
 use exface\Core\Exceptions\UnexpectedValueException;
+use exface\Core\CommonLogic\DataTypes\AbstractDataType;
 
 class DateDataType extends AbstractDataType
 {
 
-    public static function parse($string)
+    public static function cast($string)
     {
         $string = trim($string);
         
@@ -22,7 +23,7 @@ class DateDataType extends AbstractDataType
         try {
             $date = new \DateTime($string);
         } catch (\Exception $e) {
-            throw new DataTypeValidationError('Cannot convert "' . $string . '" to a date!', '6W25AB1', $e);
+            throw new DataTypeCastingError('Cannot convert "' . $string . '" to a date!', '6W25AB1', $e);
         }
         return static::formatDate($date);
     }
@@ -49,7 +50,7 @@ class DateDataType extends AbstractDataType
         $year_period = 'Y';
         
         $matches = [];
-        if (preg_match('/^([\+-]?[0-9]+)([dDmMwWyY])$/', $string, $matches)){
+        if (preg_match('/^([\+-]?[0-9]+)([dDmMwWyY]?)$/', $string, $matches)){
             $period = $matches[2];
             $quantifier = intval($matches[1]);
             $interval_spec = 'P' . abs($quantifier);
@@ -84,6 +85,16 @@ class DateDataType extends AbstractDataType
     
     public static function formatDate(\DateTime $date){
         return $date->format('Y-m-d');
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\DataTypes\AbstractDataType::getDefaultSortingDirection()
+     */
+    public function getDefaultSortingDirection()
+    {
+        return SortingDirectionsDataType::DESC($this->getWorkbench());
     }
 }
 ?>

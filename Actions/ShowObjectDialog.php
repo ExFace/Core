@@ -48,7 +48,7 @@ class ShowObjectDialog extends ShowDialog
         parent::init();
         $this->setInputRowsMin(1);
         $this->setInputRowsMax(1);
-        $this->setIconName(Icons::INFO_CIRCLE);
+        $this->setIcon(Icons::INFO_CIRCLE);
         $this->setShowOnlyEditableAttributes(false);
         // Disable prefilling the widget from contexts as we only whant to fill in data that actually comes from the data source
         $this->setPrefillWithFilterContext(false);
@@ -63,7 +63,7 @@ class ShowObjectDialog extends ShowDialog
     {
         $editors = array();
         $cnt = 0;
-        /* @var $attr \exface\Core\CommonLogic\Model\Attribute */
+        /* @var $attr \exface\Core\Interfaces\Model\MetaAttributeInterface */
         foreach ($this->getMetaObject()->getAttributes() as $attr) {
             $cnt ++;
             // Ignore hidden attributes if they are not system attributes
@@ -101,7 +101,7 @@ class ShowObjectDialog extends ShowDialog
     {
         $attr = $obj->getAttribute($attribute_alias);
         $page = $this->getCalledOnUiPage();
-        $widget = WidgetFactory::createFromUxon($page, $attr->getDefaultWidgetUxon(), $parent_widget);
+        $widget = WidgetFactory::createFromUxon($page, $attr->getDefaultEditorUxon(), $parent_widget);
         $widget->setAttributeAlias($attribute_alias);
         $widget->setCaption($attr->getName());
         $widget->setHint($attr->getHint());
@@ -194,7 +194,7 @@ else {
 
     public function setDisableEditing($value)
     {
-        $this->disable_editing = BooleanDataType::parse($value);
+        $this->disable_editing = BooleanDataType::cast($value);
         return $this;
     }
 }

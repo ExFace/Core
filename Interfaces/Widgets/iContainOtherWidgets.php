@@ -2,11 +2,12 @@
 namespace exface\Core\Interfaces\Widgets;
 
 use exface\Core\Interfaces\Widgets\iHaveChildren;
-use exface\Core\CommonLogic\Model\Attribute;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Widgets\AbstractWidget;
 use exface\Core\Exceptions\Widgets\WidgetChildNotFoundError;
 use exface\Core\Exceptions\UnderflowException;
+use exface\Core\CommonLogic\UxonObject;
 
 interface iContainOtherWidgets extends iHaveChildren
 {
@@ -21,7 +22,7 @@ interface iContainOtherWidgets extends iHaveChildren
 
     /**
      *
-     * @param AbstractWidget[] $widgets            
+     * @param WidgetInterface[] $widgets            
      */
     public function addWidgets(array $widgets);
 
@@ -99,11 +100,10 @@ interface iContainOtherWidgets extends iHaveChildren
      * Alias for add_widgets()
      *
      * @see add_widgets()
-     * @param
-     *            WidgetInterface[]|UxonObject[]
+     * @param WidgetInterface[]|UxonObject[]
      * @return iContainOtherWidgets
      */
-    public function setWidgets(array $widget_or_uxon_array);
+    public function setWidgets($widget_or_uxon_array);
 
     /**
      * Returns the current number of child widgets optionally filtering them via given closure.
@@ -137,10 +137,10 @@ interface iContainOtherWidgets extends iHaveChildren
      * The array will contain only widgets implementing the interface
      * iShowSingleAttribute.
      *
-     * @param Attribute $attribute            
+     * @param MetaAttributeInterface $attribute            
      * @return WidgetInterface[]
      */
-    public function findChildrenByAttribute(Attribute $attribute);
+    public function findChildrenByAttribute(MetaAttributeInterface $attribute);
     
     /**
      * Returns the direct child widget with the given id or boolean FALSE if there is no matching child.

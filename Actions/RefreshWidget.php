@@ -18,7 +18,7 @@ class RefreshWidget extends ReadData implements iRefreshInputWidget
     public function init()
     {
         parent::init();
-        $this->setIconName(Icons::REFRESH);
+        $this->setIcon(Icons::REFRESH);
     }
 
     /**
@@ -37,7 +37,7 @@ class RefreshWidget extends ReadData implements iRefreshInputWidget
      */
     public function setResetPagination($true_or_false)
     {
-        $this->reset_pagination = BooleanDataType::parse($true_or_false);
+        $this->reset_pagination = BooleanDataType::cast($true_or_false);
         return $this;
     }
 }

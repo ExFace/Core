@@ -3,7 +3,7 @@ namespace exface\Core\Interfaces\Model;
 
 use exface\Core\Interfaces\ExfaceClassInterface;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
-use exface\Core\CommonLogic\Model\Object;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\AliasInterface;
 use exface\Core\Interfaces\iCanBeCopied;
 
@@ -12,16 +12,16 @@ interface BehaviorInterface extends ExfaceClassInterface, iCanBeConvertedToUxon,
 
     /**
      *
-     * @return Object
+     * @return MetaObjectInterface
      */
     public function getObject();
 
     /**
      *
-     * @param Object $value            
+     * @param MetaObjectInterface $value            
      * @return BehaviorInterface
      */
-    public function setObject(Object $value);
+    public function setObject(MetaObjectInterface $value);
 
     /**
      *

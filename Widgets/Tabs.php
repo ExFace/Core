@@ -4,6 +4,7 @@ namespace exface\Core\Widgets;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Widgets\iFillEntireContainer;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
+use exface\Core\CommonLogic\UxonObject;
 
 /**
  * Tabs is a special container widget, that holds one or more Tab widgets allowing the
@@ -57,10 +58,10 @@ class Tabs extends Container implements iFillEntireContainer
      * @uxon-property tabs
      * @uxon-type \exface\Core\Widgets\Tab[]
      * 
-     * @param array|Tab|Container $widget_or_uxon_array
+     * @param UxonObject|Tab|Container $widget_or_uxon_array
      * @return Tabs
      */
-    public function setTabs(array $widget_or_uxon_array)
+    public function setTabs($widget_or_uxon_array)
     {
         return $this->setWidgets($widget_or_uxon_array);
     }
@@ -141,17 +142,16 @@ class Tabs extends Container implements iFillEntireContainer
      *
      * @see \exface\Core\Widgets\Container::setWidgets()
      */
-    public function setWidgets(array $widget_or_uxon_array)
+    public function setWidgets($widget_or_uxon_array)
     {
         $widgets = array();
         foreach ($widget_or_uxon_array as $w) {
-            if ($w instanceof \stdClass || $w instanceof AbstractWidget) {
-                if ($w instanceof \stdClass && ! isset($w->widget_type)) {
-                    $w->widget_type = 'Tab';
-                }
+            if ($w instanceof UxonObject) {
                 // If we have a UXON or instantiated widget object, use the widget directly
                 $page = $this->getPage();
-                $widget = WidgetFactory::createFromAnything($page, $w, $this);
+                $widget = WidgetFactory::createFromUxon($page, $w, $this, 'Tab');
+            } elseif ($w instanceof AbstractWidget){
+                $widget = $w;
             } else {
                 // If it is something else, just add it to the result and let the parent object deal with it
                 $widgets[] = $w;
@@ -185,7 +185,7 @@ class Tabs extends Container implements iFillEntireContainer
         // If any contained widget is specified, add it to the tab an inherit some of it's attributes
         if ($contents) {
             $widget->addWidget($contents);
-            $widget->setMetaObjectId($contents->getMetaObjectId());
+            $widget->setMetaObject($contents->getMetaObject());
             $widget->setCaption($contents->getCaption());
         }
         

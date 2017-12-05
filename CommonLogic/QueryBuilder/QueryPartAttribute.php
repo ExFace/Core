@@ -3,12 +3,13 @@ namespace exface\Core\CommonLogic\QueryBuilder;
 
 use exface\Core\Exceptions\QueryBuilderException;
 use exface\Core\CommonLogic\Model\RelationPath;
-use exface\Core\CommonLogic\DataSheets\DataAggregator;
+use exface\Core\CommonLogic\DataSheets\DataAggregation;
+use exface\Core\Interfaces\Model\AggregatorInterface;
 
 class QueryPartAttribute extends QueryPart
 {
 
-    private $aggregate_function;
+    private $aggregator;
 
     private $used_relations = null;
 
@@ -22,7 +23,9 @@ class QueryPartAttribute extends QueryPart
             $this->setAttribute($attr);
         }
         
-        $this->aggregate_function = DataAggregator::getAggregateFunctionFromAlias($alias);
+        if ($aggr = DataAggregation::getAggregatorFromAlias($this->getWorkbench(), $alias)){
+            $this->aggregator = $aggr;
+        }
     }
 
     /**
@@ -49,7 +52,7 @@ class QueryPartAttribute extends QueryPart
                     $last_alias = '';
                     foreach ($rel_aliases as $alias) {
                         $rels[$last_alias . $alias] = $this->getQuery()->getMainObject()->getRelation($last_alias . $alias);
-                        $last_alias .= $alias . RelationPath::RELATION_SEPARATOR;
+                        $last_alias .= $alias . RelationPath::getRelationSeparator();
                     }
                 }
             }
@@ -69,14 +72,22 @@ class QueryPartAttribute extends QueryPart
         return $rels;
     }
 
-    public function getAggregateFunction()
+    /**
+     * Returns the aggregator used to calculate values in this query part.
+     * 
+     * E.g. for POSITION__VALUE:SUM it would return SUM (in the form of an
+     * instantiated aggregator).
+     * 
+     * @return AggregatorInterface
+     */
+    public function getAggregator()
     {
-        return $this->aggregate_function;
+        return $this->aggregator;
     }
 
-    public function setAggregateFunction($value)
+    public function setAggregator(AggregatorInterface $value)
     {
-        $this->aggregate_function = $value;
+        $this->aggregator = $value;
     }
 
     public function getDataAddressProperty($property_key)
@@ -109,7 +120,7 @@ class QueryPartAttribute extends QueryPart
     /**
      * Parses the alias of this query part as an ExFace expression and returns the expression object
      *
-     * @return \exface\Core\CommonLogic\Model\Expression
+     * @return \exface\Core\Interfaces\Model\ExpressionInterface
      */
     public function getExpression()
     {

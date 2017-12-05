@@ -15,6 +15,9 @@ use exface\Core\Interfaces\NameResolverInterface;
 use exface\Core\CommonLogic\NameResolver;
 use exface\Core\CommonLogic\Translation;
 use exface\Core\CommonLogic\AppInstallers\AppInstallerContainer;
+use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\Exceptions\LogicException;
 
 /**
  * This is the base implementation of the AppInterface aimed at providing an
@@ -81,13 +84,13 @@ class App implements AppInterface
      *
      * @see \exface\Core\Interfaces\AppInterface::getAction()
      */
-    public function getAction($action_alias, \exface\Core\Widgets\AbstractWidget $called_by_widget = null, \stdClass $uxon_description = null)
+    public function getAction($action_alias, WidgetInterface $called_by_widget = null, UxonObject $uxon_description = null)
     {
         if (! $action_alias) {
             throw new ActionNotFoundError('Cannot find action with alias "' . $action_alias . '" in app "' . $this->getAliasWithNamespace() . '"!');
         }
         $action = ActionFactory::createFromString($this->getWorkbench(), $this->getAliasWithNamespace() . NameResolver::NAMESPACE_SEPARATOR . $action_alias, $called_by_widget);
-        if ($uxon_description instanceof \stdClass) {
+        if ($uxon_description instanceof UxonObject) {
             $action->importUxonObject($uxon_description);
         }
         return $action;
@@ -221,10 +224,8 @@ class App implements AppInterface
         // Load the installation config of the app
         $config->loadConfigFile($this->getWorkbench()->filemanager()->getPathToConfigFolder() . DIRECTORY_SEPARATOR . $this->getConfigFileName(), AppInterface::CONFIG_SCOPE_INSTALLATION);
         
-        // Load the user config if there is one
-        // IDEA Enable user-configs for the core app too: currently custom configs are not possible for the core app,
-        // because it's config is loaded before the context.
-        if ($this->getWorkbench()->context()) {
+        // Load the user config if the workbench is already fully started and thus the user is known
+        if ($this->getWorkbench()->isStarted()) {
             $config->loadConfigFile($this->getWorkbench()->context()->getScopeUser()->getUserDataFolderAbsolutePath() . DIRECTORY_SEPARATOR . static::CONFIG_FOLDER_IN_USER_DATA . DIRECTORY_SEPARATOR . $this->getConfigFileName(), AppInterface::CONFIG_SCOPE_USER);
         }
         
@@ -274,8 +275,14 @@ class App implements AppInterface
     {
         if (is_null($this->uid)) {
             $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.APP');
-            $ds->addFilterFromString('ALIAS', $this->getAliasWithNamespace());
+            $ds->addFilterFromString('ALIAS', $this->getAliasWithNamespace(), EXF_COMPARATOR_EQUALS);
             $ds->dataRead();
+            if ($ds->countRows() == 0) {
+                throw new LogicException('No app matching alias "' . $this->getAliasWithNamespace() . '" is installed!');
+            }
+            if ($ds->countRows() > 1) {
+                throw new LogicException('Multiple apps matching the alias "' . $this->getAliasWithNamespace() . '" found!');
+            }
             $this->uid = $ds->getUidColumn()->getCellValue(0);
         }
         return $this->uid;
@@ -454,6 +461,23 @@ class App implements AppInterface
             return true;
         }
         return false;
+    }
+    
+    public function getDefaultLanguageCode()
+    {
+        return $this->getAppModelDataSheet()->getCellValue('DEFAULT_LANGUAGE_CODE', 0);
+    }
+    
+    protected function getAppModelDataSheet()
+    {
+        $app_object = $this->getWorkbench()->model()->getObject('exface.Core.App');
+        $ds = DataSheetFactory::createFromObject($app_object);
+        foreach ($app_object->getAttributes()->getAll() as $attr) {
+            $ds->getColumns()->addFromAttribute($attr);
+        }
+        $ds->addFilterFromString('ALIAS', $this->getAliasWithNamespace(), EXF_COMPARATOR_EQUALS);
+        $ds->dataRead();
+        return $ds;
     }
 }
 ?>

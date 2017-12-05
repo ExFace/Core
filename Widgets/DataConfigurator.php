@@ -6,9 +6,9 @@ use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\CommonLogic\Constants\Icons;
-use exface\Core\CommonLogic\Model\Object;
-use exface\Core\CommonLogic\Model\Relation;
-use exface\Core\CommonLogic\Model\Attribute;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
+use exface\Core\Interfaces\Model\MetaRelationInterface;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Exceptions\Widgets\WidgetLogicError;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 
@@ -115,34 +115,34 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
      *  }
      *  
      * @uxon-property filters
-     * @uxon-type Filter[]
+     * @uxon-type exface\Core\Widgets\Filter[]
      *
-     * @param UxonObject $filters_array
+     * @param UxonObject[] $uxon_objects
      * @return DataConfigurator
      */
-    public function setFilters(array $uxon_objects)
+    public function setFilters(UxonObject $uxon_objects)
     {
-        foreach ($uxon_objects as $f) {
+        foreach ($uxon_objects as $uxon) {
             $include_in_quick_search = false;
             // Add to quick search if required
-            if ($f->include_in_quick_search === true) {
+            if ($uxon->getProperty('include_in_quick_search') === true) {
                 $include_in_quick_search = true;
             }
-            unset($f->include_in_quick_search);
+            $uxon->unsetProperty('include_in_quick_search');
             
-            $filter = $this->createFilterWidget($f->attribute_alias, $f);
+            $filter = $this->createFilterWidget($uxon->getProperty('attribute_alias'), $uxon);
             $this->addFilter($filter, $include_in_quick_search);
         }
         return $this;
     }
     
-    public function createFilterWidget($attribute_alias = null, \stdClass $uxon_object = null)
+    public function createFilterWidget($attribute_alias = null, UxonObject $uxon_object = null)
     {
         if (is_null($attribute_alias)) {
-            if ($uxon_object->attribute_alias) {
-                $attribute_alias = $uxon_object->attribute_alias;
-            } elseif ($uxon_object->widget && $uxon_object->widget->attribute_alias) {
-                $attribute_alias = $uxon_object->widget->attribute_alias;
+            if ($uxon_object->hasProperty('attribute_alias')) {
+                $attribute_alias = $uxon_object->getProperty('attribute_alias');
+            } elseif (($uxon_object->getProperty('input_widget') instanceof UxonObject) && $uxon_object->getProperty('input_widget')->hasProperty('attribute_alias')) {
+                $attribute_alias = $uxon_object->getProperty('input_widget')->getProperty('attribute_alias');
             }
         }
         // a filter can only be applied, if the attribute alias is specified and the attribute exists
@@ -154,9 +154,9 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
                 throw new WidgetPropertyInvalidValueError($this, 'Cannot create a filter for attribute alias "' . $attribute_alias . '" in widget "' . $this->getId() . '": attribute not found for object "' . $this->getMetaObject()->getAliasWithNamespace() . '"!', '6T91AR9', $e);
             }
             // determine the widget for the filter
-            $uxon = $attr->getDefaultWidgetUxon()->copy();
+            $uxon = $attr->getDefaultEditorUxon()->copy();
             if ($uxon_object) {
-                $uxon = $uxon->extend(UxonObject::fromStdClass($uxon_object));
+                $uxon = $uxon->extend($uxon_object);
             }
             // Set a special caption for filters on relations, which is derived from the relation itself
             // IDEA this might be obsolete since it probably allways returns the attribute name anyway, but I'm not sure
@@ -164,9 +164,9 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
                 $uxon->setProperty('caption', $this->getMetaObject()->getRelation($attribute_alias)->getName());
             }
             $page = $this->getPage();
-            if ($uxon->comparator) {
-                $comparator = $uxon->comparator;
-                unset($uxon->comparator);
+            if ($uxon->hasProperty('comparator')) {
+                $comparator = $uxon->getProperty('comparator');
+                $uxon->unsetProperty('comparator');
             }
             
             $filter = $this->getPage()->createWidget('Filter', $this->getFilterTab());
@@ -231,7 +231,7 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
     {
         $tab = $this->createTab();
         $tab->setCaption($this->translate('WIDGET.DATACONFIGURATOR.FILTER_TAB_CAPTION'));
-        $tab->setIconName(Icons::FILTER);
+        $tab->setIcon(Icons::FILTER);
         return $tab;
     }
     
@@ -258,7 +258,7 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
     {
         $tab = $this->createTab();
         $tab->setCaption($this->translate('WIDGET.DATACONFIGURATOR.SORTER_TAB_CAPTION'));
-        $tab->setIconName(Icons::SORT);
+        $tab->setIcon(Icons::SORT);
         // TODO reenable the tab once it has content
         $tab->setDisabled(true);
         return $tab;
@@ -308,10 +308,10 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
      * are different filters with different comparators (like from+to for numeric or data values), there will be multiple filters
      * in the list.
      *
-     * @param Attribute $attribute
+     * @param MetaAttributeInterface $attribute
      * @return Filter[]
      */
-    public function findFiltersByAttribute(Attribute $attribute)
+    public function findFiltersByAttribute(MetaAttributeInterface $attribute)
     {
         $result = array();
         foreach ($this->getFilters() as $filter_widget) {
@@ -325,10 +325,10 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
     /**
      * TODO Make the method return an array like find_filters_by_attribute() does
      *
-     * @param Relation $relation
+     * @param MetaRelationInterface $relation
      * @return Filter
      */
-    public function findFilterByRelation(Relation $relation)
+    public function findFilterByRelation(MetaRelationInterface $relation)
     {
         foreach ($this->getFilters() as $filter_widget) {
             if ($filter_widget->getAttributeAlias() == $relation->getAlias()) {
@@ -348,10 +348,10 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
     /**
      * Returns the first filter based on the given object or it's attributes
      *
-     * @param Object $object
+     * @param MetaObjectInterface $object
      * @return \exface\Core\Widgets\Filter|boolean
      */
-    public function findFiltersByObject(Object $object)
+    public function findFiltersByObject(MetaObjectInterface $object)
     {
         $result = array();
         foreach ($this->getFilters() as $filter_widget) {
@@ -371,7 +371,7 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
      * @param relation $relation
      * @return \exface\Core\Widgets\AbstractWidget
      */
-    public function createFilterFromRelation(Relation $relation)
+    public function createFilterFromRelation(MetaRelationInterface $relation)
     {
         $filter_widget = $this->findFilterByRelation($relation);
         // Create a new hidden filter if there is no such filter already
@@ -380,14 +380,14 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
             // FIXME This is a workaround for the known issues, that get_main_object_key_attribute() does not work for
             // reverse relations. When the issue is fixed, this if needs to be rewritten.
             if (! $relation->getMainObjectKeyAttribute() && $relation->isReverseRelation()) {
-                $filter_widget = WidgetFactory::createFromUxon($page, $relation->getRelatedObjectKeyAttribute()->getDefaultWidgetUxon(), $this);
+                $filter_widget = WidgetFactory::createFromUxon($page, $relation->getRelatedObjectKeyAttribute()->getDefaultEditorUxon(), $this);
                 if ($filter_widget->getMetaObject()->hasAttribute($relation->getRelatedObjectKeyAlias())){
                     $filter_widget->setAttributeAlias($relation->getRelatedObjectKeyAlias());
                 } else {
                     throw new WidgetLogicError($this, 'Cannot automatically create filter for relation "' . $relation->toString() . '" in a "' . $this->getWidgetType() . '" widget based on ' . $this->getMetaObject()->getAliasWithNamespace() . '!');
                 }
             } else {
-                $filter_widget = WidgetFactory::createFromUxon($page, $relation->getMainObjectKeyAttribute()->getDefaultWidgetUxon(), $this);
+                $filter_widget = WidgetFactory::createFromUxon($page, $relation->getMainObjectKeyAttribute()->getDefaultEditorUxon(), $this);
                 $filter_widget->setAttributeAlias($relation->getForeignKeyAlias());
             }
             $this->addFilter($filter_widget);

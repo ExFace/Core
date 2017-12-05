@@ -2,10 +2,11 @@
 namespace exface\Core\Factories;
 
 use exface\Core\CommonLogic\Workbench;
-use exface\Core\CommonLogic\Model\Expression;
 use exface\Core\CommonLogic\Model\Condition;
 use exface\Core\Exceptions\UnexpectedValueException;
-use exface\Core\CommonLogic\Model\Object;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
+use exface\Core\Interfaces\Model\ExpressionInterface;
+use exface\Core\CommonLogic\UxonObject;
 
 abstract class ConditionFactory extends AbstractUxonFactory
 {
@@ -24,14 +25,14 @@ abstract class ConditionFactory extends AbstractUxonFactory
     /**
      * Creates a condition for the given object from an expression string (e.g. attribute alias)
      * 
-     * @param Object $object
+     * @param MetaObjectInterface $object
      * @param string $expression_string
      * @param string $value
      * @param string $comparator
      * 
      * @return Condition
      */
-    public static function createFromString(Object $object, $expression_string, $value, $comparator = null)
+    public static function createFromString(MetaObjectInterface $object, $expression_string, $value, $comparator = null)
     {
         $workbench = $object->getWorkbench();
         $condition = static::createEmpty($workbench);
@@ -49,12 +50,12 @@ abstract class ConditionFactory extends AbstractUxonFactory
      * compare the expression to and a comparator like "=", ">", "<", etc. Comparators are defined by the EXF_COMPARATOR_xxx constants.
      *
      * @param Workbench $exface
-     * @param string|\exface\Core\CommonLogic\Model\Expression $expression_or_string            
+     * @param string|\exface\Core\Interfaces\Model\ExpressionInterface $expression_or_string            
      * @param string $value            
      * @param string $comparator            
      * @return Condition
      */
-    public static function createFromExpression(Workbench $exface, Expression $expression = NULL, $value = NULL, $comparator = null)
+    public static function createFromExpression(Workbench $exface, ExpressionInterface $expression = NULL, $value = NULL, $comparator = null)
     {
         $condition = static::createEmpty($exface);
         if ($expression) {
@@ -85,14 +86,14 @@ abstract class ConditionFactory extends AbstractUxonFactory
     /**
      *
      * @param Workbench $exface            
-     * @param string|array $uxon_or_array            
+     * @param UxonObject|array $uxon_or_array            
      * @throws UnexpectedValueException
      * @return Condition
      */
-    public static function createFromObjectOrArray(Workbench $exface, $uxon_or_array)
+    public static function createFromUxonOrArray(Workbench $exface, $uxon_or_array)
     {
-        if ($uxon_or_array instanceof \stdClass) {
-            return self::createFromStdClass($exface, $uxon_or_array);
+        if ($uxon_or_array instanceof UxonObject) {
+            return self::createFromUxon($exface, $uxon_or_array);
         } elseif (is_array($uxon_or_array)) {
             return self::createFromArray($exface, $uxon_or_array);
         } else {

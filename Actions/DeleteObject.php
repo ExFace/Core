@@ -14,7 +14,7 @@ class DeleteObject extends AbstractAction implements iDeleteData
     {
         $this->setInputRowsMin(1);
         $this->setInputRowsMax(null);
-        $this->setIconName(Icons::TRASH_O);
+        $this->setIcon(Icons::TRASH_O);
     }
 
     protected function perform()
@@ -24,11 +24,11 @@ class DeleteObject extends AbstractAction implements iDeleteData
         $ds = $this->getApp()->getWorkbench()->data()->createDataSheet($obj);
         $instances = array();
         foreach ($this->getInputDataSheet()->getRows() as $row) {
-            $instances[] = $row[$obj->getUidAlias()];
+            $instances[] = $row[$obj->getUidAttributeAlias()];
         }
         
         if (count($instances) > 0) {
-            $ds->addFilterInFromString($obj->getUidAlias(), $instances);
+            $ds->addFilterInFromString($obj->getUidAttributeAlias(), $instances);
             $this->setAffectedRows($this->getAffectedRows() + $ds->dataDelete($this->getTransaction()));
         }
         $this->setResult('');

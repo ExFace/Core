@@ -1,17 +1,12 @@
 <?php
 namespace exface\Core\CommonLogic;
 
-use exface\Core\CommonLogic\EventManager;
-use exface\Core\CommonLogic\Filemanager;
 use exface\Core\CommonLogic\Log\Log;
 use exface\Core\Interfaces\CmsConnectorInterface;
 use exface\Core\utils;
 use exface\Core\Factories\DataConnectorFactory;
 use exface\Core\Factories\CmsConnectorFactory;
 use exface\Core\Factories\AppFactory;
-use exface\Core\CommonLogic\NameResolver;
-use exface\Core\CommonLogic\ContextManager;
-use exface\Core\CommonLogic\DataManager;
 use exface\Core\Factories\ModelLoaderFactory;
 use exface\Core\Factories\EventFactory;
 use exface\Core\Interfaces\Events\EventManagerInterface;
@@ -22,6 +17,9 @@ use exface\Core\CoreApp;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\NameResolverInterface;
 use exface\Core\Exceptions\Configuration\ConfigOptionNotFoundError;
+use exface\Core\Interfaces\DataSources\DataManagerInterface;
+use exface\Core\Exceptions\UnexpectedValueException;
+use exface\Core\Exceptions\RuntimeException;
 
 class Workbench
 {
@@ -50,7 +48,7 @@ class Workbench
 
     private $event_manager = null;
 
-    private $vendor_dir_path = '';
+    private $vendor_dir_path = null;
 
     private $installation_path = null;
 
@@ -62,18 +60,20 @@ class Workbench
             require_once 'Php5Compatibility.php';
         }
         
-        // Determine the absolute path to the vendor folder
-        $this->vendor_dir_path = dirname(__FILE__) . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..';
-        
         // Init composer autoload
-        require_once ($this->vendor_dir_path . DIRECTORY_SEPARATOR . 'autoload.php');
+        require_once ($this->getVendorDirPath() . DIRECTORY_SEPARATOR . 'autoload.php');
+        
+        // If the config overrides the installation path, use the config value, otherwise go one level up from the vendor folder.
+        if ($this->getConfig()->hasOption('FOLDERS.INSTALLATION_PATH_ABSOLUTE') && $installation_path = $this->getConfig()->getOption("FOLDERS.INSTALLATION_PATH_ABSOLUTE")) {
+            $this->setInstallationPath($installation_path);
+        } 
         
         // If the current config uses the live autoloader, load it right next
         // to the one from composer.
         if ($this->getConfig()->getOption('DEBUG.LIVE_CLASS_AUTOLOADER')){
             require_once 'splClassLoader.php';
             $classLoader = new \SplClassLoader(null, array(
-                $this->vendor_dir_path
+                $this->getVendorDirPath()
             ));
             $classLoader->register();
         }
@@ -114,11 +114,11 @@ class Workbench
         $this->mm = new \exface\Core\CommonLogic\Model\Model($this);
         
         // Init the ModelLoader
-        $model_loader_name = NameResolver::createFromString($this->getConfig()->getOption('MODEL_LOADER'), NameResolver::OBJECT_TYPE_MODEL_LOADER, $this);
-        if (! $model_loader_name->classExists()) {
+        $model_loader_resolver = NameResolver::createFromString($this->getConfig()->getOption('MODEL_LOADER'), NameResolver::OBJECT_TYPE_MODEL_LOADER, $this);
+        if (! $model_loader_resolver->classExists()) {
             throw new InvalidArgumentException('No valid model loader found in current configuration - please add a valid "MODEL_LOADER" : "file_path_or_qualified_alias_or_qualified_class_name" to your config in "' . $this->filemanager()->getPathToConfigFolder() . '"');
         }
-        $model_loader = ModelLoaderFactory::create($model_loader_name);
+        $model_loader = ModelLoaderFactory::create($model_loader_resolver);
         $model_connection = DataConnectorFactory::createFromAlias($this, $this->getConfig()->getOption('MODEL_DATA_CONNECTOR'));
         $model_loader->setDataConnection($model_connection);
         $this->model()->setModelLoader($model_loader);
@@ -170,10 +170,15 @@ class Workbench
 
     /**
      *
+     * @throws RuntimeException if the context manager was not started yet
+     * 
      * @return ContextManager
      */
     public function context()
     {
+        if (is_null($this->context)){
+            throw new RuntimeException('Workbench not started: missing context manager! Did you forget Workbench->start()?');
+        }
         return $this->context;
     }
 
@@ -188,7 +193,7 @@ class Workbench
 
     /**
      *
-     * @return DataManager
+     * @return DataManagerInterface
      */
     public function data()
     {
@@ -211,16 +216,47 @@ class Workbench
     /**
      * Launches an ExFace app and returns it.
      * Apps are cached and kept running for script (request) window
-     *
-     * @param string $app_alias            
+     * 
+     * @param string $appUidOrAlias
      * @return AppInterface
      */
-    public function getApp($app_alias)
+    public function getApp($appUidOrAlias)
     {
-        if (! array_key_exists($app_alias, $this->running_apps)) {
-            $this->running_apps[$app_alias] = AppFactory::create($this->createNameResolver($app_alias, NameResolver::OBJECT_TYPE_APP));
+        if ($app = $this->findAppByUidOrAlias($appUidOrAlias)) {
+            return $app;
+        } else {
+            $app = AppFactory::createFromAnything($appUidOrAlias, $this);
+            $this->running_apps[] = $app;
+            return $app;
         }
-        return $this->running_apps[$app_alias];
+    }
+
+    /**
+     * Returns an app, defined by its UID or alias, from the running_apps.
+     * 
+     * @param string $appUidOrAlias
+     * @return AppInterface|null
+     */
+    protected function findAppByUidOrAlias($appUidOrAlias)
+    {
+        if (AppFactory::isUid($appUidOrAlias) && $this->model()) {
+            // Die App-UID darf nur abgefragt werden, wenn tatsaechlich eine UID ueber-
+            // geben wird, sonst kommt es zu Problemen beim Update. Um die UID der App zu
+            // erhalten muss ausserdem das Model bereits existieren, sonst kommt es zu
+            // einem Fehler in app->getUid().
+            foreach ($this->running_apps as $app) {
+                if (strcasecmp($app->getUid(), $appUidOrAlias) === 0) {
+                    return $app;
+                }
+            }
+        } else {
+            foreach ($this->running_apps as $app) {
+                if (strcasecmp($app->getAliasWithNamespace(), $appUidOrAlias) === 0) {
+                    return $app;
+                }
+            }
+        }
+        return null;
     }
 
     /**
@@ -314,7 +350,7 @@ class Workbench
     /**
      * Get the utilities class
      *
-     * @return \Workbench\Core\utils
+     * @return utils
      */
     public function utils()
     {
@@ -344,9 +380,38 @@ class Workbench
     public function getInstallationPath()
     {
         if (is_null($this->installation_path)) {
-            $this->installation_path = Filemanager::pathNormalize($this->vendor_dir_path . DIRECTORY_SEPARATOR . '..', DIRECTORY_SEPARATOR);
+            $this->installation_path = Filemanager::pathNormalize($this->getVendorDirPath() . DIRECTORY_SEPARATOR . '..', DIRECTORY_SEPARATOR);
         }
         return $this->installation_path;
+    }
+    
+    /**
+     * Changes the path to the installation folder and the vendor folder for this instance.
+     * 
+     * @param string $absolute_path
+     * @return Workbench
+     */
+    private function setInstallationPath($absolute_path)
+    {
+        if ($this->isStarted()){
+            throw new RuntimeException('Cannot override installation path after the workbench has started!');
+        }
+        
+        if (! is_dir($absolute_path)){
+            throw new UnexpectedValueException('Cannot override default installation path with "' . $absolute_path . '": folder does not exist!');
+        }
+        
+        $this->installation_path = $absolute_path;
+        $this->vendor_dir_path = $absolute_path . DIRECTORY_SEPARATOR . Filemanager::FOLDER_NAME_VENDOR;
+        return $this;
+    }
+    
+    private function getVendorDirPath()
+    {
+        if (is_null($this->vendor_dir_path)){
+            $this->vendor_dir_path = dirname(__FILE__) . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..';
+        }
+        return $this->vendor_dir_path;
     }
 
     /**
@@ -394,9 +459,15 @@ class Workbench
         
         // TODO clear other caches
         
-        // Clear main cache folder
-        $filemanager = $this->filemanager();
-        $filemanager->emptyDir($filemanager->getPathToCacheFolder());
+        // Clear main cache folder. Mute errors since this is method is often called in background
+        // IDEA introduce a special exception instead of muting to give dependants
+        // more control.
+        try {
+            $filemanager = $this->filemanager();
+            $filemanager->emptyDir($this->filemanager()->getPathToCacheFolder());
+        } catch (\Throwable $e){
+            $this->getLogger()->logException($e);
+        }
         return $this;
     }
     
