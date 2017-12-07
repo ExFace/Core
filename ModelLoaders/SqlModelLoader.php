@@ -365,7 +365,7 @@ class SqlModelLoader implements ModelLoaderInterface
 					ds.custom_query_builder,
 					ds.default_query_builder,
 					dc.read_only_flag AS connection_read_only,
-					CONCAT(\'0x\', HEX(dc.oid)) AS data_connection_oid,
+					' . $this->buildSqlUuidSelector('dc.oid') . ' AS data_connection_oid,
 					dc.name,
 					dc.data_connector,
 					dc.data_connector_config,
@@ -380,7 +380,7 @@ class SqlModelLoader implements ModelLoaderInterface
 					ds.readable_flag AS data_source_readable,
 					ds.writable_flag AS data_source_writable,
 					dc.read_only_flag AS connection_read_only,
-					CONCAT(\'0x\', HEX(dc.oid)) AS data_connection_oid,
+					' . $this->buildSqlUuidSelector('dc.oid') . ' AS data_connection_oid,
 					dc.name,
 					dc.data_connector,
 					dc.data_connector_config,
@@ -440,7 +440,7 @@ class SqlModelLoader implements ModelLoaderInterface
      */
     protected function buildSqlUuidSelector($field_name)
     {
-        return 'CONCAT(\'0x\', HEX(' . $field_name . '))';
+        return 'CONCAT(\'0x\', LOWER(HEX(' . $field_name . ')))';
     }
 
     /**
