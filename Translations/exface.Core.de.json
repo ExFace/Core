@@ -138,6 +138,7 @@
 	"WIDGET.DATA.NO_DATA_FOUND": "Keine Daten gefunden, die zu aktuellen Filtern passen!",
 	"WIDGET.DATA.HELP.FILTERS": "Filter",
 	"WIDGET.DATA.HELP.COLUMNS": "Spalten",
+	"WIDGET.DATA.NOT_LOADED": "Aus Performancegründen wurden keine Daten geladen. Bitte zuerst die Filter setzen, dann auf Suchen/Neu Laden drücken!",
 	
     "WIDGET.DATACONFIGURATOR.FILTER_TAB_CAPTION": "Filter",
     "WIDGET.DATACONFIGURATOR.SORTER_TAB_CAPTION": "Sortierung",
