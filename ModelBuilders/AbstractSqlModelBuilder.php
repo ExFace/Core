@@ -54,7 +54,7 @@ abstract class AbstractSqlModelBuilder extends AbstractModelBuilder implements M
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\ModelBuilders\AbstractModelBuilder::guessDataType()
      */
-    protected function guessDataType(Workbench $workbench, $sql_data_type, array $options = [])
+    protected function guessDataType(Workbench $workbench, $sql_data_type, $length = null, $scale = null)
     {
         switch (strtoupper($sql_data_type)) {
             case 'NUMBER':
