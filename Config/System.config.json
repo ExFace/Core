@@ -11,7 +11,7 @@
     "DEBUG.SHOW_ERROR_DETAILS_TO_ADMINS_ONLY": true,
     "DEBUG.SUPPORT_EMAIL_ADDRESS": "support@mydomain.com",
     
-    "LOG.MINIMUM_LEVEL_TO_LOG": "notice",
+    "LOG.MINIMUM_LEVEL_TO_LOG": "debug",
     "LOG.MAX_DAYS_TO_KEEP": "14",
     "LOG.PERSIST_LOG_LEVEL": "alert",
     "LOG.PASSTHROUGH_LOG_LEVEL": "error",
