@@ -96,6 +96,8 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
     
     private $has_system_columns = false;
 
+    private $autoload_data = true;
+
     protected function init()
     {
         parent::init();
@@ -1427,6 +1429,38 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
     {
         $this->hide_footer = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;
+    }
+
+    public function getAutoloadData()
+    {
+        return $this->autoload_data;
+    }
+
+    /**
+     * Set to FALSE to prevent initial loading of data or TRUE to enable it.
+     * 
+     * (default: TRUE)
+     * 
+     * @uxon-property autoload_data
+     * @uxon-type boolean
+     * 
+     * @param boolean $autoloadData
+     * @return Data
+     */
+    public function setAutoloadData($autoloadData)
+    {
+        $this->autoload_data = BooleanDataType::cast($autoloadData);
+        return $this;
+    }
+    
+    /**
+     * Returns a text which can be displayed if initial loading is prevented.
+     * 
+     * @return string
+     */
+    public function getTextNotLoaded()
+    {
+        return $this->translate('WIDGET.DATA.NOT_LOADED');
     }
 }
 
