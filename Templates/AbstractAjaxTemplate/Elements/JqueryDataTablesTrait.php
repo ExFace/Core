@@ -277,7 +277,15 @@ JS;
 			"error": function(jqXHR, textStatus, errorThrown ){
 				{$this->buildJsBusyIconHide()}
 				{$this->buildJsShowError('jqXHR.responseText', 'jqXHR.status + " " + jqXHR.statusText')}
-			}
+			},
+            "beforeSend": function(jqXHR, settings) {
+                {$this->getId()}_jquery = $("#{$this->getId()}");
+                if ({$this->getId()}_jquery.data("_skipNextLoad") === true) {
+                    {$this->getId()}_jquery.data("_skipNextLoad", false);
+                    {$this->buildJsBusyIconHide()}
+                    return false;
+                }
+            }
 		}
 JS;
 				} else {
