@@ -1,4 +1,4 @@
-l<?php
+<?php
 namespace exface\Core\Templates\AbstractAjaxTemplate\Elements;
 
 use exface\Core\Exceptions\Templates\TemplateUnsupportedWidgetPropertyWarning;
