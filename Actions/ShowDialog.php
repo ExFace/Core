@@ -6,6 +6,7 @@ use exface\Core\Widgets\AbstractWidget;
 use exface\Core\Widgets\Dialog;
 use exface\Core\Interfaces\Widgets\iHaveIcon;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\DataTypes\BooleanDataType;
 
 class ShowDialog extends ShowWidget implements iShowDialog
 {
@@ -15,6 +16,8 @@ class ShowDialog extends ShowWidget implements iShowDialog
     private $widget_was_enhanced = false;
 
     private $dialog_buttons_uxon = null;
+    
+    private $maximize = null;
 
     /**
      * Creates the dialog widget.
@@ -77,6 +80,10 @@ class ShowDialog extends ShowWidget implements iShowDialog
         
         if (! $this->getDialogButtonsUxon()->isEmpty()) {
             $dialog->setButtons($this->getDialogButtonsUxon());
+        }
+        
+        if (! is_null($this->getMaximize())) {
+            $dialog->setMaximized($this->getMaximize());
         }
         
         return $dialog;
@@ -202,6 +209,26 @@ class ShowDialog extends ShowWidget implements iShowDialog
     {
         $this->dialog_buttons_uxon = $uxon;
         return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\iShowDialog::getMaximize()
+     */
+    public function getMaximize()
+    {
+        return $this->maximize;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\iShowDialog::setMaximize()
+     */
+    public function setMaximize($true_or_false)
+    {
+        $this->maximize = BooleanDataType::cast($true_or_false);
     }
 }
 ?>

@@ -24,7 +24,7 @@ class Dialog extends Form implements iAmClosable, iHaveContextualHelp, iHaveHead
 
     private $maximizable = true;
 
-    private $maximized = false;
+    private $maximized = null;
 
     private $help_button = null;
 
