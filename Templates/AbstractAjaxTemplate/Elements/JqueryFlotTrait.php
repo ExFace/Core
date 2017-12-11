@@ -1,4 +1,4 @@
-<?php
+l<?php
 namespace exface\Core\Templates\AbstractAjaxTemplate\Elements;
 
 use exface\Core\Exceptions\Templates\TemplateUnsupportedWidgetPropertyWarning;
@@ -165,7 +165,7 @@ trait JqueryFlotTrait {
     protected function buildJsLegendOptionsAlignment()
     {
         $options = '';
-        switch (strtoupper($this->getWidget())) {
+        switch (strtoupper($this->getWidget()->getLegendAlignment())) {
             case 'LEFT': $options = 'position: "nw"'; break;
             case 'RIGHT':
             default: $options = 'position: "ne"';
