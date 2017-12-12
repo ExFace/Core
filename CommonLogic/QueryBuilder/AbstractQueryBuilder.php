@@ -301,7 +301,9 @@ abstract class AbstractQueryBuilder
      *
      * @param string $sort_by
      *            attribute_alias
-     * @param string $order            
+     * @param string $order   
+     * 
+     * @return QueryPartSorter
      */
     public function addSorter($sort_by, $order = 'ASC')
     {
