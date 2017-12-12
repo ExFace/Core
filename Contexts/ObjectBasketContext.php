@@ -72,7 +72,7 @@ class ObjectBasketContext extends AbstractContext
     {
         foreach ($this->favorites as $object_id => $data){
             if (! ($data instanceof DataSheetInterface)){
-                $this->favorites[$object_id] = DataSheetFactory::createFromUxon($this->getWorkbench(), $data);
+                $this->favorites[strtolower($object_id)] = DataSheetFactory::createFromUxon($this->getWorkbench(), $data);
             }
         }
         return $this->favorites;
@@ -85,6 +85,7 @@ class ObjectBasketContext extends AbstractContext
      */
     public function getBasketByObjectId($object_id)
     {
+        $object_id = strtolower($object_id);
         if (! $this->favorites[$object_id]) {
             $this->favorites[$object_id] = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), $object_id);
         } elseif (($this->favorites[$object_id] instanceof UxonObject) || is_array($this->favorites[$object_id])) {
@@ -138,7 +139,7 @@ class ObjectBasketContext extends AbstractContext
     public function importUxonObject(UxonObject $uxon)
     {
         foreach ($uxon as $object_id => $data_uxon) {
-            $this->favorites[$object_id] = $data_uxon;
+            $this->favorites[strtolower($object_id)] = $data_uxon;
         }
     }
 
@@ -178,6 +179,7 @@ class ObjectBasketContext extends AbstractContext
      */
     public function removeInstancesForObjectId($object_id)
     {
+        $object_id = strtolower($object_id);
         unset($this->favorites[$object_id]);
         return $this;
     }

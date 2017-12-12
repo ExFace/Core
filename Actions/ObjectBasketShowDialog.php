@@ -61,9 +61,11 @@ class ObjectBasketShowDialog extends ShowDialog
         
         // Prefill table
         $ds = $this->getContext()->getBasketByObject($this->getMetaObject())->copy();
-        $ds->addFilterFromColumnValues($ds->getUidColumn());
-        $table->prepareDataSheetToPrefill($ds);
-        $table->prefill($ds);
+        if (! $ds->isEmpty()) {
+            $ds->addFilterFromColumnValues($ds->getUidColumn());
+            $table->prepareDataSheetToPrefill($ds);
+            $table->prefill($ds);
+        }
         
         // Add remove button
         $button = $dialog->createButton();
