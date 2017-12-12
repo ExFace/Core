@@ -146,7 +146,7 @@ class SqlDataQuery extends AbstractDataQuery
         $sql_tab->setNumberOfColumns(1);
         /* @var $sql_widget \exface\Core\Widgets\Html */
         $sql_widget = WidgetFactory::create($page, 'Html', $sql_tab);
-        $sql_widget->setValue('<div style="padding:10px;">' . \SqlFormatter::format($this->getSql()) . '</div>');
+        $sql_widget->setHtml('<div style="padding:10px;">' . \SqlFormatter::format($this->getSql()) . '</div>');
         $sql_widget->setWidth('100%');
         $sql_tab->addWidget($sql_widget);
         $debug_widget->addTab($sql_tab);
