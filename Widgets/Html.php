@@ -46,34 +46,6 @@ class Html extends Text
     {
         return $this->setText($value);
     }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Widgets\Text::setText()
-     */
-    public function setText($value)
-    {
-        $script_tags = [];
-        // Fetch all <script> tags into a multidimensional array:
-        // [
-        //  0 => [
-        //      0 => <script> first script </script>
-        //      1 => <script> second script </script>
-        //      ...
-        //  ],
-        //  1 => [
-        //      0 => first script
-        //      1 => second script
-        //      ...
-        //  ]
-        preg_match_all("'<script .*?>(.*?)</script>'si", $value, $script_tags);
-        foreach($script_tags[0] as $nr => $tag) {
-            $this->setJavascript($this->getJavascript() . $script_tags[1][$nr]);
-            $value = str_replace($tag, '', $value);
-        }
-        return parent::setText($value);
-    }
 
     /**
      * 
