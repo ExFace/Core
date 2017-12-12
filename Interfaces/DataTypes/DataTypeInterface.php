@@ -54,7 +54,7 @@ interface DataTypeInterface extends ExfaceClassInterface, AliasInterface, iCanBe
 
     /**
      * Returns TRUE if the current data type equals is derived from the given one (e.g.
-     * Integer::is(Number) = true) and FALSE otherwise.
+     * Integer::is('exface.Core.Number') = true) and FALSE otherwise.
      *
      * @param DataTypeInterface|string $data_type_or_resolvable_name
      * @return boolean

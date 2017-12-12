@@ -111,6 +111,16 @@ class QueryPartAttribute extends QueryPart
     {
         return $this->getAttribute()->getDataAddress();
     }
+    
+    /**
+     * Returns the data type of this query part
+     * 
+     * @return \exface\Core\Interfaces\DataTypes\DataTypeInterface
+     */
+    public function getDataType()
+    {
+        return $this->getAttribute()->getDataType();
+    }
 
     public function getMetaModel()
     {
