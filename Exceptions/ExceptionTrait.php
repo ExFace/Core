@@ -154,7 +154,7 @@ trait ExceptionTrait {
             $stacktrace_tab->setNumberOfColumns(1);
             $stacktrace_widget = WidgetFactory::create($page, 'Html', $stacktrace_tab);
             $stacktrace_tab->addWidget($stacktrace_widget);
-            $stacktrace_widget->setValue($page->getWorkbench()->getCMS()->sanitizeErrorOutput($page->getWorkbench()->getDebugger()->printException($this)));
+            $stacktrace_widget->setHtml($page->getWorkbench()->getCMS()->sanitizeErrorOutput($page->getWorkbench()->getDebugger()->printException($this)));
             $debug_widget->addTab($stacktrace_tab);
         }
         
@@ -166,7 +166,7 @@ trait ExceptionTrait {
             $request_tab->setNumberOfColumns(1);
             $request_widget = WidgetFactory::create($page, 'Html', $request_tab);
             $request_tab->addWidget($request_widget);
-            $request_widget->setValue('<pre>' . $page->getWorkbench()->getDebugger()->printVariable($_REQUEST, true, 5) . '</pre>');
+            $request_widget->setHtml('<pre>' . $page->getWorkbench()->getDebugger()->printVariable($_REQUEST, true, 5) . '</pre>');
             $debug_widget->addTab($request_tab);
         }
         
@@ -184,7 +184,7 @@ trait ExceptionTrait {
             $context_tab->setCaption($page->getWorkbench()->getCoreApp()->getTranslator()->translate('ERROR.CONTEXT_CAPTION'));
             $context_tab->setNumberOfColumns(1);
             $context_widget = WidgetFactory::create($page, 'Html', $context_tab);
-            $context_widget->setValue('<pre>' . $page->getWorkbench()->getDebugger()->printVariable($context_dump, true, 2) . '</pre>');
+            $context_widget->setHtml('<pre>' . $page->getWorkbench()->getDebugger()->printVariable($context_dump, true, 2) . '</pre>');
             $context_tab->addWidget($context_widget);
             $debug_widget->addTab($context_tab);
         }
