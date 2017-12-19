@@ -96,7 +96,7 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
     
     private $has_system_columns = false;
 
-    private $autoload_data = true;
+    protected $autoload_data = true;
 
     protected function init()
     {
