@@ -39,8 +39,8 @@ class StateMachineState extends Formula
         $workbench = $this->getWorkbench();
         /** @var StateMachineBehavior $smb */
         $smb = $workbench->model()->getObject($object)->getBehaviors()->getByAlias('exface.Core.Behaviors.StateMachineBehavior');
-        if (! $smb) {
-            // no StateMachineBehavior -> simply return state string
+        if (! $smb || is_null($state)) {
+            // If no StateMachineBehavior or no state set -> simply return state string
             return strval($state);
         }
         
