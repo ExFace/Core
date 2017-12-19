@@ -287,7 +287,9 @@ JS;
 				    }
 				    
 				    $data = $widget->prepareDataSheetToRead($data ? $data : null);
-				    
+				    if (is_null($data->getRowsOnPage())) {
+				        $data->setRowsOnPage($this->getTemplate()->getConfig()->getOption('WIDGET.DATATABLE.PAGE_SIZE'));
+				    }
 				    if (! $data->isFresh()) {
 				        $data->dataRead();
 				    }
