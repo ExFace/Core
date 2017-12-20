@@ -183,7 +183,7 @@ class WidgetLink implements WidgetLinkInterface
      */
     public function getWidgetUxon()
     {
-        $uxon = $this->getPage()->exportUxonObject()->getProperty('contents');
+        $uxon = $this->getPage()->getContentsUxon();
         if ($this->getWidgetId() && $uxon->getProperty('widget_id') != $this->getWidgetId()) {
             $uxon = $this->findWidgetIdInUxon($uxon, $this->getWidgetId());
             if ($uxon === false) {

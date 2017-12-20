@@ -146,15 +146,21 @@ class UiPage implements UiPageInterface
         if (! $this->getContentsUxon()->isEmpty()) {
             WidgetFactory::createFromUxon($this, $this->getContentsUxon());
         }
+        $this->dirty = false;
         return $this;
     }
 
     /**
-     * Returns the UXON representation of the contents
+     * Returns the UXON representation of the contents (or an empty UXON object if there is no contents
+     * or the contents is not UXON).
+     * 
+     * NOTE: This method will return an empty UXON object even if the page has some other type of contents
+     * (e.g. HTML). Do not use this method to get the contents in general, use getContents() instead. This
+     * method is only legitim if you know, the page has UXON content.
      * 
      * @return UxonObject
      */
-    protected function getContentsUxon()
+    public function getContentsUxon()
     {
         if (is_null($this->contents_uxon)) {
             if (! is_null($this->contents)) {
@@ -184,7 +190,6 @@ class UiPage implements UiPageInterface
     {
         if ($this->isDirty()) {
             $this->regenerateFromContents();
-            $this->dirty = false;
         }
         
         if (is_null($id) || $id == '') {
