@@ -37,6 +37,12 @@
                 "attribute_alias": "OBJECT__APP"
             },
             {
+                "attribute_alias": "DATATYPE"
+            },
+            {
+                "attribute_alias": "FORMATTER"
+            },
+            {
                 "attribute_alias": "DEFAULT_EDITOR_UXON",
                 "widget_type": "Input",
                 "height": 1,
