@@ -4,6 +4,9 @@ namespace exface\Core\Widgets;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\DataTypes\FlagTreeFolderDataType;
+use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\Factories\WidgetFactory;
 
 class DataTree extends DataTable
 {
@@ -17,11 +20,42 @@ class DataTree extends DataTable
     private $tree_expanded = false;
 
     private $tree_root_uid = null;
+    
+    private $tree = null;
 
     protected function init()
     {
         parent::init();
         $this->setPaginate(false);
+    }
+    
+    public function getTree()
+    {
+        if (is_null($this->tree)) {
+            throw new WidgetConfigurationError($this, 'No tree configuration found for ' . $this->getWidgetType() . ' with id ' . $this->getId() . '!', '6YD4HAF');
+        }
+        return $this->tree;
+    }
+    
+    /**
+     * 
+     * @param UxonObject $uxon
+     * @return \exface\Core\Widgets\DataTree
+     */
+    public function setTree(UxonObject $uxon)
+    {
+        return $this->setTreeWidget(WidgetFactory::createFromUxon($this->getPage(), $uxon, $this, 'Tree'));
+    }
+    
+    /**
+     * 
+     * @param Tree $widget
+     * @return \exface\Core\Widgets\DataTree
+     */
+    public function setTreeWidget(Tree $widget)
+    {
+        $this->tree = $widget;
+        return $this;
     }
 
     /**
