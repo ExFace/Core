@@ -93,7 +93,7 @@ interface ContextInterface extends AliasInterface, iCanBeConvertedToUxon, Exface
     public function setIndicator($indicator);
     
     /**
-     * Returns the color code for the indicator. Colors::DEFAULT by default.
+     * Returns the color code for the indicator. Colors::DEFAULT_COLOR by default.
      *
      * @return string
      */

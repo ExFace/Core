@@ -909,6 +909,11 @@ else {
     {
         return $this->parent;
     }
+    
+    public function hasParent()
+    {
+        return is_null($this->parent) ? false : true;
+    }
 
     /**
      *
@@ -1163,7 +1168,7 @@ else {
         $exface = $this->getWorkbench();
         $link = new WidgetLink($exface);
         $link->setWidgetId($this->getId());
-        $link->setPage($this->getPage());
+        $link->setPageAlias($this->getPage()->getAliasWithNamespace());
         return $link;
     }
 

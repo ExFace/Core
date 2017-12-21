@@ -8,7 +8,7 @@ use exface\Core\Exceptions\DataSources\DataConnectionCommitFailedError;
 use exface\Core\Exceptions\DataSources\DataConnectionRollbackFailedError;
 use exface\Core\CommonLogic\DataQueries\SqlDataQuery;
 use exface\Core\Exceptions\DataSources\DataQueryFailedError;
-use exface\Core\CommonLogic\Modelizers\MsSqlModelizer;
+use exface\Core\ModelBuilders\MsSqlModelBuilder;
 
 /**
  * Datbase API object of Microsoft SQL Server
@@ -260,11 +260,11 @@ class MsSqlConnector extends AbstractSqlConnector
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\DataConnectors\AbstractSqlConnector::getModelizer()
+     * @see \exface\Core\DataConnectors\AbstractSqlConnector::getModelBuilder()
      */
-    public function getModelizer()
+    public function getModelBuilder()
     {
-        return new MsSqlModelizer($this);
+        return new MsSqlModelBuilder($this);
     }
 }
 ?>

@@ -9,15 +9,15 @@ class DuplicateObjectDialog extends EditObjectDialog
     protected function init()
     {
         parent::init();
-        $this->setIcon(Icons::CLONE);
+        $this->setIcon(Icons::CLONE_);
         $this->setSaveActionAlias('exface.Core.CreateData');
     }
 
     /**
+     * In the case of the dublicate-action we need to remove the UID column from the data sheet to ensure, that the
+     * duplicated object will get new ids.
      *
-     * {@inheritdoc} In the case of the dublicate-action we need to remove the UID column from the data sheet to ensure, that the
-     *               duplicated object will get new ids.
-     *              
+     * {@inheritdoc} 
      * @see \exface\Core\Actions\ShowWidget::getPrefillDataSheet()
      */
     protected function prefillWidget()

@@ -32,9 +32,6 @@
         ],
         "buttons": [
             {
-                "action_alias": "exface.Core.UpdateData"
-            },
-            {
                 "action_alias": "exface.Core.CreateObjectDialog"
             },
             {

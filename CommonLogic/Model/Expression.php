@@ -352,7 +352,7 @@ class Expression implements ExpressionInterface
                     // FIXME How to get the attribute by alias, if we do not know the object here???
                     break;
                 case self::TYPE_CONSTANT:
-                    $this->data_type = DataTypeFactory::createFromAlias($this->exface, 'String');
+                    $this->data_type = DataTypeFactory::createFromAlias($this->exface, 'exface.Core.String');
                     break;
                 default:
                     $this->data_type = DataTypeFactory::createBaseDataType($this->exface);

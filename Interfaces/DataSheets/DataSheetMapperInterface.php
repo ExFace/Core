@@ -57,23 +57,54 @@ interface DataSheetMapperInterface extends iCanBeConvertedToUxon, ExfaceClassInt
     public function setToMetaObject(MetaObjectInterface $toMetaObject);
     
     /**
+     * @return DataMappingInterface[]
+     */
+    public function getMappings();
+    
+    /**
+     * @return DataColumnToFilterMappingInterface[]
+     */
+    public function getColumnToFilterMappings();
+    
+    /**
      * @return DataColumnMappingInterface[]
      */
-    public function getColumnMappings();
+    public function getColumnToColumnMappings();
     
     /**
      *
-     * @param DataColumnMappingInterface[]|UxonObject
+     * @param UxonObject
      * @return DataSheetMapperInterface
      */
-    public function setColumnMappings($ColumnMappingsOrUxonObjects);
+    public function setColumnMappings(UxonObject $uxon);
+    
+    /**
+     *
+     * @param UxonObject
+     * @return DataSheetMapperInterface
+     */
+    public function setColumnToColumnMappings(UxonObject $uxon);
+    
+    /**
+     *
+     * @param UxonObject
+     * @return DataSheetMapperInterface
+     */
+    public function setColumnToFilterMappings(UxonObject $uxon);
     
     /**
      *
      * @param DataColumnMappingInterface $map
      * @return DataSheetMapperInterface
      */
-    public function addColumnMapping(DataColumnMappingInterface $map);
+    public function addColumnToColumnMapping(DataColumnMappingInterface $map);
+    
+    /**
+     *
+     * @param DataColumnMappingInterface $map
+     * @return DataSheetMapperInterface
+     */
+    public function addColumnToFilterMapping(DataColumnToFilterMappingInterface $map);
     
     /**
      * Creates all types of mappings, that can be derived from expressions: mappings for columns, filters, sorters, aggregators, etc.
@@ -81,6 +112,6 @@ interface DataSheetMapperInterface extends iCanBeConvertedToUxon, ExfaceClassInt
      * @param UxonObject
      * @return DataSheetMapperInterface
      */
-    public function setExpressionMappings(UxonObject $uxonObject);
+    public function setExpressionMappings(UxonObject $uxon);
    
 }

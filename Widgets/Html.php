@@ -18,34 +18,76 @@ class Html extends Text
 
     private $javascript = null;
     
+    private $headTags = null;
+    
     private $margins = false;
 
+    /**
+     * 
+     * @return string|NULL
+     */
     public function getHtml()
     {
         return $this->getText();
     }
 
+    /**
+     * Defines the HTML to show.
+     * 
+     * NOTE: Any <script> tags will be automatically extracted and placed in the "javascript" property!
+     * 
+     * @uxon-property html
+     * @uxon-type string
+     * 
+     * @param string $value
+     * @return \exface\Core\Widgets\Text
+     */
     public function setHtml($value)
     {
         return $this->setText($value);
     }
 
+    /**
+     * 
+     * @return string
+     */
     public function getCss()
     {
         return $this->css;
     }
 
+    /**
+     * Defines custom CSS for this widget: accepts any CSS style definitions.
+     * 
+     * @uxon-property css
+     * @uxon-type string
+     * 
+     * @return Html
+     */
     public function setCss($value)
     {
         $this->css = $value;
         return $this;
     }
 
+    /**
+     * 
+     * @return string
+     */
     public function getJavascript()
     {
         return $this->javascript;
     }
 
+    /**
+     * Specifies custom javascript code for this widget. 
+     * 
+     * @uxon-property javascript
+     * @uxon-type string
+     * 
+     * @param string $value
+     * @return \exface\Core\Widgets\Html
+     */
     public function setJavascript($value)
     {
         $this->javascript = $value;
@@ -90,6 +132,32 @@ class Html extends Text
         $this->margins = BooleanDataType::cast($true_or_false);
         return $this;
     }
+    
+    /**
+     * @return string
+     */
+    public function getHeadTags()
+    {
+        return $this->headTags;
+    }
+
+    /**
+     * Allows to specify HTML tags for the <head> section of the resulting page.
+     * 
+     * NOTE: only HTML-templates will actually place these tags in the head of the page, 
+     * while other templates may use a different location with a similar result.
+     * 
+     * @uxon-property head_tags
+     * @uxon-type string
+     * 
+     * @param string $html
+     */
+    public function setHeadTags($html)
+    {
+        $this->headTags = $html;
+        return $this;
+    }
+
 
 }
 ?>

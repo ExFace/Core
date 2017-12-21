@@ -17,6 +17,7 @@ use exface\Core\CommonLogic\Translation;
 use exface\Core\CommonLogic\AppInstallers\AppInstallerContainer;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\Exceptions\LogicException;
 
 /**
  * This is the base implementation of the AppInterface aimed at providing an
@@ -274,8 +275,14 @@ class App implements AppInterface
     {
         if (is_null($this->uid)) {
             $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.APP');
-            $ds->addFilterFromString('ALIAS', $this->getAliasWithNamespace());
+            $ds->addFilterFromString('ALIAS', $this->getAliasWithNamespace(), EXF_COMPARATOR_EQUALS);
             $ds->dataRead();
+            if ($ds->countRows() == 0) {
+                throw new LogicException('No app matching alias "' . $this->getAliasWithNamespace() . '" is installed!');
+            }
+            if ($ds->countRows() > 1) {
+                throw new LogicException('Multiple apps matching the alias "' . $this->getAliasWithNamespace() . '" found!');
+            }
             $this->uid = $ds->getUidColumn()->getCellValue(0);
         }
         return $this->uid;

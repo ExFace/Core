@@ -460,7 +460,7 @@ JS;
 			$('#{$this->getId()} tbody tr').on('contextmenu', function(e){
 				{$this->getId()}_table.row($(e.target).closest('{$this->buildCssSelectorDataRows()}')).select();
 			});
-			$('#{$this->getId()}').closest('.fitem').trigger('resize');
+			$('#{$this->getId()}').closest('.exf-grid-item').trigger('resize');
             {$context_menu_js}
 			if({$this->getId()}_table){
 				{$this->getId()}_drawPagination();

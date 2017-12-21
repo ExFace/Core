@@ -2,6 +2,7 @@
 namespace exface\Core\Widgets;
 
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
+use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 
 /**
  * The ChartAxis represents the X or Y axis of a chart.
@@ -51,8 +52,12 @@ class ChartAxis extends AbstractWidget
      */
     public function getDataColumn()
     {
-        if (! $result = $this->getChart()->getData()->getColumn($this->getDataColumnId())) {
-            $result = $this->getChart()->getData()->getColumnByAttributeAlias($this->getDataColumnId());
+        $data = $this->getChart()->getData();
+        if (! $result = $data->getColumn($this->getDataColumnId())) {
+            $result = $data->getColumnByAttributeAlias($this->getDataColumnId());
+            if (! $result) {
+                throw new WidgetConfigurationError($this, 'Column "' . $this->getDataColumnId() . '" required for axis ' . $this->getNumber() . ' not found in chart data!', '6XUZ9ZE');
+            }
         }
         return $result;
     }

@@ -41,13 +41,6 @@ interface SqlDataConnectorInterface extends DataConnectionInterface
      * @return void
      */
     public function freeResult(SqlDataQuery $query);
-
-    /**
-     * Returns an instance of SQL explorer for this connection
-     *
-     * @return ModelizerInterface
-     */
-    public function getModelizer();
 }
 
 ?>

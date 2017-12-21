@@ -190,10 +190,17 @@ interface ActionInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
     
     /**
      *
-     * @param DataSheetMapperInterface[]|UxonObject[] $data_sheet_mappers_or_uxon_objects
+     * @param UxonObject $uxon
      * @return ActionInterface
      */
-    public function setInputMappers($data_sheet_mappers_or_uxon_objects);
+    public function setInputMappers(UxonObject $uxon);
+    
+    /**
+     *
+     * @param UxonObject $uxon
+     * @return ActionInterface
+     */
+    public function setInputMapper(UxonObject $uxon);
     
     /**
      * 

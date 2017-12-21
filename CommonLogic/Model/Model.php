@@ -48,6 +48,13 @@ class Model implements ModelInterface
         }
         return $obj;
     }
+    
+    public function reloadObject(MetaObjectInterface $object)
+    {
+        $obj = $this->getModelLoader()->loadObjectById($this, $object->getId());
+        $this->cacheObject($obj);
+        return $obj;
+    }
 
     /**
      * 

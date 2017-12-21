@@ -216,16 +216,47 @@ class Workbench
     /**
      * Launches an ExFace app and returns it.
      * Apps are cached and kept running for script (request) window
-     *
-     * @param string $app_alias            
+     * 
+     * @param string $appUidOrAlias
      * @return AppInterface
      */
-    public function getApp($app_alias)
+    public function getApp($appUidOrAlias)
     {
-        if (! array_key_exists($app_alias, $this->running_apps)) {
-            $this->running_apps[$app_alias] = AppFactory::create($this->createNameResolver($app_alias, NameResolver::OBJECT_TYPE_APP));
+        if ($app = $this->findAppByUidOrAlias($appUidOrAlias)) {
+            return $app;
+        } else {
+            $app = AppFactory::createFromAnything($appUidOrAlias, $this);
+            $this->running_apps[] = $app;
+            return $app;
         }
-        return $this->running_apps[$app_alias];
+    }
+
+    /**
+     * Returns an app, defined by its UID or alias, from the running_apps.
+     * 
+     * @param string $appUidOrAlias
+     * @return AppInterface|null
+     */
+    protected function findAppByUidOrAlias($appUidOrAlias)
+    {
+        if (AppFactory::isUid($appUidOrAlias) && $this->model()) {
+            // Die App-UID darf nur abgefragt werden, wenn tatsaechlich eine UID ueber-
+            // geben wird, sonst kommt es zu Problemen beim Update. Um die UID der App zu
+            // erhalten muss ausserdem das Model bereits existieren, sonst kommt es zu
+            // einem Fehler in app->getUid().
+            foreach ($this->running_apps as $app) {
+                if (strcasecmp($app->getUid(), $appUidOrAlias) === 0) {
+                    return $app;
+                }
+            }
+        } else {
+            foreach ($this->running_apps as $app) {
+                if (strcasecmp($app->getAliasWithNamespace(), $appUidOrAlias) === 0) {
+                    return $app;
+                }
+            }
+        }
+        return null;
     }
 
     /**

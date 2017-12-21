@@ -13,15 +13,13 @@ use exface\Core\Interfaces\Widgets\iHaveIcon;
  * @author Andrej Kabachnik
  *        
  */
-class Tab extends Panel implements iHaveIcon
+class Tab extends Panel
 {
 
     private $badge_attribute_alias;
 
     private $badge_value;
     
-    private $icon = null;
-
     public function getBadgeAttributeAlias()
     {
         return $this->badge_attribute_alias;
@@ -85,25 +83,6 @@ class Tab extends Panel implements iHaveIcon
             }
         }
         return $this;
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Widgets\Panel::getIcon()
-     */
-    public function getIcon() {
-        return $this->icon;    
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Widgets\Panel::setIcon()
-     */
-    public function setIcon($value) {
-        $this->icon = $value;
-        return $this;    
     }
     
     /**

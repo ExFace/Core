@@ -154,6 +154,11 @@ class Filter extends Container implements iCanBeRequired, iShowSingleAttribute
     {
         return $this->getInputWidget()->getValue();
     }
+    
+    public function getValueWithDefaults()
+    {
+        return $this->getInputWidget()->getValueWithDefaults();
+    }
 
     /**
      *

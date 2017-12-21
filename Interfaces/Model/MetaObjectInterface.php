@@ -254,6 +254,13 @@ interface MetaObjectInterface extends ExfaceClassInterface, AliasInterface
     
     public function getDataSourceId();
     
+    /**
+     * Returns TRUE if the object has a data source and FALSE otherwise.
+     * 
+     * @return boolean
+     */
+    public function hasDataSource();
+    
     public function setDataSourceId($value);
     
     /**

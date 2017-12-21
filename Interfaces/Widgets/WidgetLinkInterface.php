@@ -23,19 +23,29 @@ interface WidgetLinkInterface extends ExfaceClassInterface, iCanBeConvertedToUxo
     public function parseLinkString($string);
 
     /**
+     * Returns the page alias of the target page of the link.
+     * 
+     * @return string
+     */
+    public function getPageAlias();
+
+    /**
+     * Sets the page alias of the target page of the link.
+     * 
+     * @param string $pageAlias
+     * @return WidgetLinkInterface
+     */
+    public function setPageAlias($pageAlias);
+
+    /**
      * Returns the target-page of the link.
+     * 
+     * If the target page is not explicitly specified in the widget link, the current page must be 
+     * treated as target.
      * 
      * @return UiPageInterface
      */
     public function getPage();
-
-    /**
-     * Sets the target-page of the link.
-     * 
-     * @param UiPageInterface $page
-     * @return WidgetLinkInterface
-     */
-    public function setPage($page);
 
     /**
      * Returns the id of the linked widget within the linked page.

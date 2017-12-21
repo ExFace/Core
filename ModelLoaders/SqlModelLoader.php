@@ -365,7 +365,7 @@ class SqlModelLoader implements ModelLoaderInterface
 					ds.custom_query_builder,
 					ds.default_query_builder,
 					dc.read_only_flag AS connection_read_only,
-					CONCAT(\'0x\', HEX(dc.oid)) AS data_connection_oid,
+					' . $this->buildSqlUuidSelector('dc.oid') . ' AS data_connection_oid,
 					dc.name,
 					dc.data_connector,
 					dc.data_connector_config,
@@ -380,7 +380,7 @@ class SqlModelLoader implements ModelLoaderInterface
 					ds.readable_flag AS data_source_readable,
 					ds.writable_flag AS data_source_writable,
 					dc.read_only_flag AS connection_read_only,
-					CONCAT(\'0x\', HEX(dc.oid)) AS data_connection_oid,
+					' . $this->buildSqlUuidSelector('dc.oid') . ' AS data_connection_oid,
 					dc.name,
 					dc.data_connector,
 					dc.data_connector_config,
@@ -440,7 +440,7 @@ class SqlModelLoader implements ModelLoaderInterface
      */
     protected function buildSqlUuidSelector($field_name)
     {
-        return 'CONCAT(\'0x\', HEX(' . $field_name . '))';
+        return 'CONCAT(\'0x\', LOWER(HEX(' . $field_name . ')))';
     }
 
     /**
@@ -575,17 +575,19 @@ class SqlModelLoader implements ModelLoaderInterface
      * @see \exface\Core\Interfaces\DataSources\ModelLoaderInterface::loadDataType()
      */
     public function loadDataType($uid_or_alias){
-        if (! $this->getDataTypeCache($uid_or_alias)){
+        $cache = $this->getDataTypeCache($uid_or_alias);
+        if (empty($cache)){
             $this->cacheDataType($uid_or_alias);
+            $cache = $this->getDataTypeCache($uid_or_alias);
         }
         
-        if (! $cache = $this->getDataTypeCache($uid_or_alias)) {
+        if (empty($cache)) {
             throw new DataTypeNotFoundError('No data type "' . $uid_or_alias . '" found!');
         }
         
         if ($cache instanceof DataTypeInterface) {
             return $cache->copy();
-        } elseif (is_array($cache)) {
+        } elseif (! empty($cache)) {
             $uxon = UxonObject::fromJson($cache['config_uxon']);
             $default_editor_uxon = UxonObject::fromJson($cache['default_editor_uxon']);
             $data_type = DataTypeFactory::createFromModel($cache['prototype'], $cache['data_type_alias'], $this->getWorkbench()->getApp($cache['app_alias']), $uxon, $cache['name'], $cache['short_description'], $cache['validation_error_code'], $cache['validation_error_text'], $default_editor_uxon);

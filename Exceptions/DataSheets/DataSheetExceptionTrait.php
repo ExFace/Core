@@ -57,7 +57,7 @@ trait DataSheetExceptionTrait {
         $uxon_tab->setNumberOfColumns(1);
         $uxon_widget = WidgetFactory::create($page, 'Html');
         $uxon_tab->addWidget($uxon_widget);
-        $uxon_widget->setValue('<pre>' . $this->getDataSheet()->exportUxonObject()->toJson(true) . '</pre>');
+        $uxon_widget->setHtml('<pre>' . $this->getDataSheet()->exportUxonObject()->toJson(true) . '</pre>');
         $debug_widget->addTab($uxon_tab);
         return $debug_widget;
     }
