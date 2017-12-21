@@ -11,7 +11,7 @@ class WidgetLink implements WidgetLinkInterface
 
     private $exface;
 
-    private $page;
+    private $page_alias;
 
     private $widget_id;
 
@@ -54,7 +54,7 @@ class WidgetLink implements WidgetLinkInterface
         if (strpos($string, '[') === 0) {
             $page_alias = substr($string, 1, strpos($string, ']') - 1);
             if ($page_alias) {
-                $this->setPage($this->getWorkbench()->ui()->getPage($page_alias));
+                $this->setPageAlias($page_alias);
                 $string = substr($string, strpos($string, ']') + 1);
             } else {
                 throw new UnexpectedValueException('Cannot parse widget reference "' . $string . '"! Expected format: "[page_alias]widget_id".', '6T91IGZ');
@@ -90,7 +90,7 @@ class WidgetLink implements WidgetLinkInterface
 
     public function parseLinkUxon(UxonObject $object)
     {
-        $this->setPage($this->getWorkbench()->ui()->getPage($object->getProperty('page_alias')));
+        $this->setPageAlias($object->getProperty('page_alias'));
         $this->setWidgetId($object->getProperty('widget_id'));
         return $this;
     }
@@ -146,25 +146,35 @@ class WidgetLink implements WidgetLinkInterface
     /**
      * 
      * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\WidgetLinkInterface::getPageAlias()
+     */
+    public function getPageAlias()
+    {
+        return $this->page_alias;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\WidgetLinkInterface::setPageAlias()
+     */
+    public function setPageAlias($pageAlias)
+    {
+        $this->page_alias = $pageAlias;
+        return $this;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\WidgetLinkInterface::getPage()
      */
     public function getPage()
     {
-        if (! $this->page) {
-            $this->page = $this->getWorkbench()->ui()->getPageCurrent();
+        if (is_null($this->getPageAlias())) {
+            return $this->getWorkbench()->ui()->getPageCurrent();
         }
-        return $this->page;
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Widgets\WidgetLinkInterface::setPage()
-     */
-    public function setPage($page)
-    {
-        $this->page = $page;
-        return $this;
+        return $this->getWorkbench()->ui()->getPage($this->page_alias);
     }
 
     /**
@@ -173,7 +183,7 @@ class WidgetLink implements WidgetLinkInterface
      */
     public function getWidgetUxon()
     {
-        $uxon = $this->getPage()->exportUxonObject()->getProperty('contents');
+        $uxon = $this->getPage()->getContentsUxon();
         if ($this->getWidgetId() && $uxon->getProperty('widget_id') != $this->getWidgetId()) {
             $uxon = $this->findWidgetIdInUxon($uxon, $this->getWidgetId());
             if ($uxon === false) {

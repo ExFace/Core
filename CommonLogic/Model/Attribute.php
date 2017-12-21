@@ -228,7 +228,7 @@ class Attribute implements MetaAttributeInterface
      */
     public function isEditable()
     {
-        if (! $this->getObject()->isWritable()) {
+        if ($this->getObject()->hasDataSource() && ! $this->getObject()->isWritable()) {
             return false;
         }
         return $this->editable;

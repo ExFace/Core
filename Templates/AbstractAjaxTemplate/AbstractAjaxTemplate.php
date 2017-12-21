@@ -28,6 +28,12 @@ abstract class AbstractAjaxTemplate extends AbstractTemplate
 {
 
     private $elements = array();
+    
+    /**
+     * [ widget_type => qualified class name]
+     * @var array
+     */
+    private $classes_by_widget_type = [];
 
     private $class_prefix = '';
 
@@ -178,29 +184,33 @@ abstract class AbstractAjaxTemplate extends AbstractTemplate
 
     protected function getClass(WidgetInterface $widget)
     {
-        $elem_class_prefix = $this->getClassNamespace() . '\\Elements\\' . $this->getClassPrefix();
-        $elem_class = $elem_class_prefix . $widget->getWidgetType();
-        if (! class_exists($elem_class)) {
-            $widget_class = get_parent_class($widget);
-            $elem_class = $elem_class_prefix . AbstractWidget::getWidgetTypeFromClass($widget_class);
-            while (! class_exists($elem_class)) {
-                if ($widget_class = get_parent_class($widget_class)) {
-                    $elem_class = $elem_class_prefix . AbstractWidget::getWidgetTypeFromClass($widget_class);
-                } else {
-                    break;
+        $elem_class = $this->classes_by_widget_type[$widget->getWidgetType()];
+        if (is_null($elem_class)) {
+            $elem_class_prefix = $this->getClassNamespace() . '\\Elements\\' . $this->getClassPrefix();
+            $elem_class = $elem_class_prefix . $widget->getWidgetType();
+            if (! class_exists($elem_class)) {
+                $widget_class = get_parent_class($widget);
+                $elem_class = $elem_class_prefix . AbstractWidget::getWidgetTypeFromClass($widget_class);
+                while (! class_exists($elem_class)) {
+                    if ($widget_class = get_parent_class($widget_class)) {
+                        $elem_class = $elem_class_prefix . AbstractWidget::getWidgetTypeFromClass($widget_class);
+                    } else {
+                        break;
+                    }
                 }
-            }
-            
-            if (class_exists($elem_class)) {
-                $reflection = new \ReflectionClass($elem_class);
-                if ($reflection->isAbstract()) {
+                
+                if (class_exists($elem_class)) {
+                    $reflection = new \ReflectionClass($elem_class);
+                    if ($reflection->isAbstract()) {
+                        $elem_class = $elem_class_prefix . 'BasicElement';
+                    }
+                } else {
+                    // if the required widget is not found, create an abstract widget instead
                     $elem_class = $elem_class_prefix . 'BasicElement';
                 }
-            } else {
-                $elem_class = $elem_class_prefix . 'BasicElement';
             }
+            $this->classes_by_widget_type[$widget->getWidgetType()] = $elem_class;
         }
-        // if the required widget is not found, create an abstract widget instead
         return $elem_class;
     }
 
@@ -230,9 +240,9 @@ abstract class AbstractAjaxTemplate extends AbstractTemplate
         return $this->getElementByWidgetId($link->getWidgetId(), $link->getPage());
     }
 
-    public function createLinkInternal(UiPageInterface $page, $url_params = '')
+    public function createLinkInternal($page_or_id_or_alias, $url_params = '')
     {
-        return $this->getWorkbench()->getCMS()->createLinkInternal($page, $url_params);
+        return $this->getWorkbench()->getCMS()->createLinkInternal($page_or_id_or_alias, $url_params);
     }
 
     public function getDataSheetFromRequest($object_id = NULL, $widget = NULL)

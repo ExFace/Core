@@ -39,7 +39,7 @@ class FormToolbar extends Toolbar
                     $widget = $form->getPage()->createWidget('InputHidden', $form);
                     $widget->setAttributeAlias($attr->getAlias());
                     if ($attr->isUidForObject()) {
-                        $widget->setAggregator(AggregatorFunctionsDataType::LIST($this->getWorkbench()));
+                        $widget->setAggregator(AggregatorFunctionsDataType::LIST_ALL($this->getWorkbench()));
                     } else {
                         $widget->setAggregator($attr->getDefaultAggregateFunction());
                     }

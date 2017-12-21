@@ -5,6 +5,7 @@ use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\UxonMapError;
 use exface\Core\Exceptions\UxonParserError;
 use exface\Core\Exceptions\LogicException;
+use exface\Core\Exceptions\InvalidArgumentException;
 
 class UxonObject implements \IteratorAggregate
 {
@@ -54,6 +55,9 @@ class UxonObject implements \IteratorAggregate
         if (is_array($array)){
             return static::fromArray($array);
         } else {
+            if ($uxon !== '' && ! is_null($uxon)) {
+                throw new InvalidArgumentException('Cannot parse string "' . substr($uxon, 0, 50) . '" as UXON: ' . json_last_error_msg() . ' in JSON decoder!');
+            }
             return new self();
         }
     }

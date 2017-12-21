@@ -14,7 +14,7 @@ trait JqueryButtonTrait {
     {
         $js = ($widget->getRefreshInput() && $input_element->buildJsRefresh() ? $input_element->buildJsRefresh(true) . ";" : "");
         if ($link = $widget->getRefreshWidgetLink()) {
-            if ($link->getPage()->is($widget->getPage()) && $linked_element = $this->getTemplate()->getElement($link->getWidget())) {
+            if ($widget->getPage()->is($link->getPageAlias()) && $linked_element = $this->getTemplate()->getElement($link->getWidget())) {
                 $js .= "\n" . $linked_element->buildJsRefresh(true);
             }
         }
@@ -207,7 +207,7 @@ trait JqueryButtonTrait {
         $output = '';
         $prefill_param = '';
         $filters_param = '';
-        if (! $action->getPage()->is($widget->getPage())) {
+        if (! $widget->getPage()->is($action->getPageAlias())) {
             if ($action->getPrefillWithPrefillData()){
                 $output = <<<JS
     				{$this->buildJsRequestDataCollector($action, $input_element)}
@@ -230,7 +230,7 @@ JS;
             
             $output .= <<<JS
             {$input_element->buildJsBusyIconShow()}
-			window.location.href = '{$this->getTemplate()->createLinkInternal($action->getPage())}?{$prefill_param}{$filters_param}';
+			window.location.href = '{$this->getTemplate()->createLinkInternal($action->getPageAlias())}?{$prefill_param}{$filters_param}';
 JS;
         }
         return $output;

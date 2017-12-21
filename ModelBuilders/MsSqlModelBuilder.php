@@ -1,12 +1,17 @@
 <?php
-namespace exface\Core\CommonLogic\Modelizers;
+namespace exface\Core\ModelBuilders;
 
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 
-class MSSqlModelizer extends AbstractSqlModelizer
+class MSSqlModelBuilder extends AbstractSqlModelBuilder
 {
 
-    public function getAttributePropertiesFromTable(MetaObjectInterface $meta_object, $table_name)
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\ModelBuilders\AbstractSqlModelBuilder::getAttributeDataFromTableColumns()
+     */
+    public function getAttributeDataFromTableColumns(MetaObjectInterface $meta_object, $table_name)
     {
         $table_name_parts = explode('.', $table_name);
         if (count($table_name_parts) == 2) {
@@ -26,7 +31,7 @@ class MSSqlModelizer extends AbstractSqlModelizer
             $rows[] = array(
                 'LABEL' => $this->generateLabel($col['COLUMN_NAME']),
                 'ALIAS' => $col['COLUMN_NAME'],
-                'DATATYPE' => $this->getDataTypeId($this->getDataType($col['TYPE_NAME'], $col['PRECISION'], $col['SCALE'])),
+                'DATATYPE' => $this->getDataTypeId($this->guessDataType($meta_object->getWorkbench(), $col['TYPE_NAME'], $col['PRECISION'], $col['SCALE'])),
                 'DATA_ADDRESS' => $col['COLUMN_NAME'],
                 'OBJECT' => $meta_object->getId(),
                 'REQUIREDFLAG' => ($col['NULLABLE'] == 0 ? 1 : 0),

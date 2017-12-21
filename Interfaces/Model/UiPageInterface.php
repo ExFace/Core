@@ -173,23 +173,23 @@ interface UiPageInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
     public function getMenuParentPage();
 
     /**
-     * Returns the alias of the default menu parent page.
+     * Returns the default menu position of the page in the form 'menuParentPageAlias:menuIndex'.
      * 
      * @return string
      */
-    public function getMenuParentPageDefaultAlias();
+    public function getMenuDefaultPosition();
 
     /**
-     * Sets the alias of the default menu parent page.
+     * Sets the default menu position of the page in the form 'menuParentPageAlias:menuIndex'.
      * 
      * This is important to determine if the page has been moved manually. If it has been
      * moved, the position in the tree will not be changed during an update.
      * 
-     * @param string $menuParentPageDefaultAlias
+     * @param string $menuDefaultPosition
      * @return UiPageInterface
      */
-    public function setMenuParentPageDefaultAlias($menuParentPageDefaultAlias);
-
+    public function setMenuDefaultPosition($menuDefaultPosition);
+    
     /**
      * Returns the index (position number starting with 0) of this page in the 
      * submenu of its parent.
@@ -208,6 +208,20 @@ interface UiPageInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
      * @return UiPageInterface
      */
     public function setMenuIndex($number);
+
+    /**
+     * Returns the menu position of the page in the form 'menuParentPageAlias:menuIndex'.
+     *
+     * @return string
+     */
+    public function getMenuPosition();
+
+    /**
+     * Returns if the page was moved in the menu tree compared to the default menu position.
+     * 
+     * @return boolean
+     */
+    public function isMoved();
 
     /**
      * Returns if the page is visible in the menu.
@@ -322,33 +336,63 @@ interface UiPageInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
     /**
      * Generates a copy of the page.
      * 
-     * The optional arguments page_alias and page_uid are set on the copy of the page.
+     * The optional arguments page_alias, page_uid and appUidOrAlias are set on the copy of the page.
      * 
      * @param string $page_alias
      * @param string $page_uid
+     * @param string $appUidOrAlias
      * @return UiPageInterface
      */
-    public function copy($page_alias = null, $page_uid = null);
+    public function copy($page_alias = null, $page_uid = null, $appUidOrAlias = null);
     
     /**
-     * Compares two pages by their UIDs and returns true if they are equal.
+     * Compares two pages by their UIDs, aliases and CMS-IDs and returns
+     * true if they are equal.
      * 
      * If the passed page replaces this page this function also returns true.
      * 
-     * @param UiPageInterface $page
+     * @param UiPageInterface|string $page_or_id_or_alias
      * @return boolean
      */
-    public function is(UiPageInterface $page);
+    public function is($page_or_id_or_alias);
     
     /**
-     * Compares two pages by their UIDs and returns true if they are equal.
+     * Compares two pages by their UIDs, aliases and CMS-IDs and returns
+     * true if they are equal.
      * 
      * If the passed page replaces this page this function returns false.
      * 
-     * @param UiPageInterface $page
+     * @param UiPageInterface|string $page_or_id_or_alias
      * @return boolean
      */
-    public function isExactly(UiPageInterface $page);
+    public function isExactly($page_or_id_or_alias);
+    
+    /**
+     * Compares two pages by their attributes.
+     * 
+     * The attributes with names contained in the $ignore_properties array are ignored in
+     * the comparison.
+     * 
+     * @param UiPageInterface $page
+     * @param string[] $ignore_properties
+     * @return boolean
+     */
+    public function equals(UiPageInterface $page, $ignore_properties);
+    
+    /**
+     * Generates a UID.
+     * 
+     * @return string
+     */
+    public static function generateUid();
+    
+    /**
+     * Generates a unique alias.
+     * 
+     * @param string $prefix
+     * @return string
+     */
+    public static function generateAlias($prefix);
 }
 
 ?>

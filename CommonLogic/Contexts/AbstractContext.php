@@ -276,7 +276,7 @@ abstract class AbstractContext implements ContextInterface
     public function getColor()
     {
         if (is_null($this->indicator_color)){
-            return Colors::DEFAULT;
+            return Colors::DEFAULT_COLOR;
         }
         return $this->indicator_color;
     }

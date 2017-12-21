@@ -1109,7 +1109,7 @@ class DataSheet implements DataSheetInterface
         }
     }
 
-    function setCounterRowsAll($count)
+    public function setCounterRowsAll($count)
     {
         $this->total_row_count = intval($count);
         return $this;

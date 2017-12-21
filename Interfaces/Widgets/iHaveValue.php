@@ -8,10 +8,17 @@ interface iHaveValue extends WidgetInterface
 {
 
     /**
-     *
-     * @return string
+     * Returns the current value of this widget if it is set and NULL otherwise - no fallback to default value!
+     * 
+     * @return string|null
      */
     public function getValue();
+    
+    /**
+     * Returns the value of this widget if set and the default value otherwise.
+     * 
+     */
+    public function getValueWithDefaults();
 
     /**
      *

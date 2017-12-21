@@ -473,6 +473,12 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
          */
         return array();
     }
+    
+    public function getValueWithDefaults()
+    {
+        // TODO return the UID of programmatically selected row
+        return null;
+    }
 
     /**
      *

@@ -250,11 +250,13 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
     public function hasTotals();
 
     /**
-     * Returns FALSE if the column contains at least one data row and TRUE otherwise
+     * Returns FALSE if the column contains at least one data row (with non-empty values 
+     * if $check_values is TRUE) and TRUE otherwise.
      *
+     * @param boolean $check_values
      * @return boolean
      */
-    public function isEmpty();
+    public function isEmpty($check_values = false);
 
     /**
      * Applies default and fixed values defined in the meta model to this column.

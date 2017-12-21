@@ -4,10 +4,11 @@ namespace exface\Core\Widgets;
 use exface\Core\Interfaces\Widgets\iHaveIcon;
 use exface\Core\Interfaces\Widgets\iSupportLazyLoading;
 use exface\Core\Interfaces\Widgets\iFillEntireContainer;
-use exface\Core\Interfaces\Widgets\iLayoutWidgets;
 use exface\Core\Interfaces\Widgets\iAmCollapsible;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\CommonLogic\Traits\WidgetLayoutTrait;
+use exface\Core\Widgets\Traits\iAmCollapsibleTrait;
+use exface\Core\Widgets\Traits\iHaveIconTrait;
 
 /**
  * A panel is a visible container with a configurable layout (number of columns,
@@ -18,72 +19,26 @@ use exface\Core\CommonLogic\Traits\WidgetLayoutTrait;
  *
  * @see Form - Panel with buttons
  * @see Dashboard - Panel with a common customizer (common filters, buttons, etc.)
- * @see InputGroup - Small panel to easily group input widgets
+ * @see WidgetGroup - Small panel to easily group input widgets
  * @see SplitPanel - Special resizable panel to be used in SplitVertical and SplitHorizontal widgets
  * @see Tab - Special panel to be used in the Tabs widget
  *     
  * @author Andrej Kabachnik
  *        
  */
-class Panel extends Container implements iLayoutWidgets, iSupportLazyLoading, iHaveIcon, iAmCollapsible, iFillEntireContainer
+class Panel extends WidgetGrid implements iSupportLazyLoading, iHaveIcon, iAmCollapsible, iFillEntireContainer
 {
     
     use WidgetLayoutTrait;
+    use iAmCollapsibleTrait;
+    use iHaveIconTrait;
     
     // A panel will not be loaded via AJAX by default
     private $lazy_loading = false;
 
     private $lazy_loading_action = 'exface.Core.ShowWidget';
 
-    private $collapsible = false;
-
-    private $icon = null;
-
     private $lazy_loading_group_id = null;
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Widgets\iAmCollapsible::isCollapsible()
-     */
-    public function isCollapsible()
-    {
-        return $this->collapsible;
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Widgets\iAmCollapsible::setCollapsible()
-     */
-    public function setCollapsible($value)
-    {
-        $this->collapsible = BooleanDataType::cast($value);
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Widgets\iHaveIcon::getIcon()
-     */
-    public function getIcon()
-    {
-        return $this->icon;
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Widgets\iHaveIcon::setIcon()
-     */
-    public function setIcon($value)
-    {
-        $this->icon = $value;
-    }
 
     /**
      *
