@@ -1336,6 +1336,28 @@
             "ERROR_CODE": "6Y0U6GM",
             "ERROR_TEXT": "Model builder not available for selected data connector",
             "DESCRIPTION": ""
+        },
+        {
+            "CREATED_ON": "2017-12-21 11:52:42",
+            "MODIFIED_ON": "2017-12-21 12:19:37",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e7e64572b340df88460205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "ERROR_CODE": "6YD44MC",
+            "ERROR_TEXT": "Invalid configuration for Tree widget",
+            "DESCRIPTION": ""
+        },
+        {
+            "CREATED_ON": "2017-12-21 12:20:03",
+            "MODIFIED_ON": "2017-12-21 12:24:52",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e7e64944b1046888460205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "ERROR_CODE": "6YD4HAF",
+            "ERROR_TEXT": "Invalid tree widget configuration",
+            "DESCRIPTION": "The configuration for the tree structure within a widget based on a hierarchy is missing or invalid. Widgets like DataTree or ComboTree contain a Tree widget internally, that defines the hierarchy structure. When creating on of those widgets, the \"tree\" property must contain a valid tree definition.\n\nPlease refer to the description of the Tree widget for more information."
         }
     ],
     "totals_rows": [],

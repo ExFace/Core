@@ -39,8 +39,8 @@
         "app": {
             "app_uid": "0x31000000000000000000000000000000",
             "app_alias": "exface.Core",
-            "model_md5": "492726190c893954a6d327a22bae4dc7",
-            "model_timestamp": "2017-12-06 14:52:33"
+            "model_md5": "a786585e73caf68f7ba731dfb123087d",
+            "model_timestamp": "2017-12-21 12:24:52"
         }
     },
     "autoload": {
