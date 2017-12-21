@@ -6,6 +6,7 @@ use exface\Core\CommonLogic\Model\Condition;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\IntegerDataType;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
+use exface\Core\Exceptions\LogicException;
 
 /**
  * 
@@ -26,10 +27,6 @@ class TreeLevel extends AbstractWidget
     private $NodeTypeFolderClosedCondition = null;
     
     private $NodeTypeLeafCondition = null;
-    
-    private $recursive = null;
-    
-    private $recursionLevels = null;
     
     /**
      * @return string $UidAttributeAlias
@@ -155,40 +152,6 @@ class TreeLevel extends AbstractWidget
         $this->NodeTypeLeafCondition = $NodeTypeLeafCondition;
         return $this;
     }
-    /**
-     * @return boolean
-     */
-    public function isRecursive()
-    {
-        return $this->recursive;
-    }
-
-    /**
-     * @param boolean
-     * @return TreeLevel
-     */
-    public function setRecursive($true_or_false)
-    {
-        $this->recursive = BooleanDataType::cast($true_or_false);
-        return $this;
-    }
-
-    /**
-     * @return integer
-     */
-    public function getRecursionLevels()
-    {
-        return $this->recursionLevels;
-    }
-
-    /**
-     * @param integer $recursionLevels
-     */
-    public function setRecursionLevels($number)
-    {
-        $this->recursionLevels = IntegerDataType::cast($number);
-        return $this;
-    }
 
     /**
      * 
@@ -197,6 +160,33 @@ class TreeLevel extends AbstractWidget
     public function getTree()
     {
         return $this->getParent();
+    }
+    
+    /**
+     * 
+     * @return string
+     */
+    public function getType()
+    {
+        return strtolower(str_replace('TreeLevel', '', $this->getWidgetType()));
+    }
+    
+    /**
+     * Defines the type of a tree level: use "recursive" for recursive hierarchies or leave blank for a per-level definition.
+     * 
+     * @uxon-property type
+     * @uxon-type string
+     * 
+     * @param string $levelType
+     * @return TreeLevel
+     */
+    public function setType($levelType)
+    {
+        $levelType = strtolower($levelType);
+        if ($levelType !== $this->getType()) {
+            throw new LogicException('Cannot change the type of a tree level widget after it had been initialized!');
+        }
+        return $this;
     }
     
 }
