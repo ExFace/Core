@@ -14,6 +14,7 @@ use exface\Core\Interfaces\Widgets\iCanBeAligned;
 use exface\Core\Widgets\Traits\iCanBeAlignedTrait;
 use exface\Core\Interfaces\Widgets\iUseInputWidget;
 use exface\Core\Widgets\Traits\iUseInputWidgetTrait;
+use exface\Core\Interfaces\Widgets\iDefineAction;
 
 /**
  * A Button is the primary widget for triggering actions.
@@ -23,7 +24,7 @@ use exface\Core\Widgets\Traits\iUseInputWidgetTrait;
  * @author Andrej Kabachnik
  *        
  */
-class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iUseInputWidget, iHaveChildren, iCanBeAligned
+class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iDefineAction, iUseInputWidget, iHaveChildren, iCanBeAligned
 {
     use iCanBeAlignedTrait;
     
@@ -72,7 +73,7 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iUseIn
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\Interfaces\Widgets\iTriggerAction::setAction()
+     * @see \exface\Core\Interfaces\Widgets\iDefineAction::setAction()
      */
     public function setAction($action_or_uxon)
     {
