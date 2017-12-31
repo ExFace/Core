@@ -25,33 +25,6 @@ trait WidgetExceptionTrait {
         parent::__construct($message, null, $previous);
         $this->setAlias($alias);
         $this->setWidget($widget);
-        if ($this->mustDestroyWidget()){
-            $this->cleanupPageCache(); 
-        }
-    }
-    
-    /**
-     * Returns TRUE if this is a critical exception and the widget must be destroyed 
-     * and caches cleaned up.
-     * 
-     * @return boolean
-     */
-    protected function mustDestroyWidget()
-    {
-        return false;
-    }
-    
-    /**
-     * Ist die Widget-Konfiguration fehlerhaft wird das entsprechende Widget entfernt.
-     * Ueber ein Event (Widget.Remove.After) wird das Element auch aus dem Element-
-     * Cache des Templates entfernt (siehe AbstractAjaxTemplate->init()).
-     * 
-     * @return \exface\Core\Exceptions\Widgets\WidgetExceptionTrait
-     */
-    protected function cleanupPageCache()
-    {
-        $this->getWidget()->getPage()->removeWidget($this->getWidget());
-        return $this;
     }
 
     /**
