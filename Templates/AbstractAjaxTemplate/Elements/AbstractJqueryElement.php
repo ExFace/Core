@@ -11,6 +11,7 @@ use exface\Core\Interfaces\ExfaceClassInterface;
 use exface\Core\CommonLogic\Translation;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\Interfaces\Widgets\iLayoutWidgets;
+use exface\Core\Widgets\Container;
 
 abstract class AbstractJqueryElement implements ExfaceClassInterface
 {
@@ -781,11 +782,23 @@ abstract class AbstractJqueryElement implements ExfaceClassInterface
         return '$("#' . $this->getId() . '").prop("disabled", true)';
     }
     
+    /**
+     * Returns the id of the UI page of the widget represented by this element.
+     * 
+     * This is just a shortcut to calling $this->getWidget()->getPage()->getId()
+     * 
+     * @return string
+     */
     public function getPageId()
     {
         return $this->getWidget()->getPage()->getId();
     }
     
+    /**
+     * Returns the caption to be used for this element or an empty string if not caption is defined or it is to be hidden.
+     * 
+     * @return string
+     */
     protected function getCaption()
     {
         $widget = $this->getWidget();
@@ -793,6 +806,17 @@ abstract class AbstractJqueryElement implements ExfaceClassInterface
             return $widget->getCaption();
         }
         return '';
+    }
+    
+    /**
+     * Returns TRUE if this element is the only one visible within it's parent container and FALSE otherwise.
+     *
+     * @return boolean
+     */
+    protected function isOnlyVisibleElementInContainer()
+    {
+        $widget = $this->getWidget();
+        return $widget->hasParent() && ($widget->getParent() instanceof Container) && $widget->getParent()->countWidgetsVisible() > 1 ? true : false;
     }
 }
 ?>
