@@ -12,20 +12,10 @@ use exface\Core\Exceptions\LogicException;
  */
 class WidgetLogicError extends LogicException implements WidgetExceptionInterface
 {
-    
     use WidgetExceptionTrait;
 
     public function getDefaultAlias()
     {
         return '6VCYEUC';
-    }
-    
-    /**
-     *
-     * @see WidgetExceptionTrait::mustDestroyWidget()
-     */
-    protected function mustDestroyWidget()
-    {
-        return true;
     }
 }

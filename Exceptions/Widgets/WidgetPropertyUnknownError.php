@@ -17,13 +17,4 @@ class WidgetPropertyUnknownError extends InvalidArgumentException implements Wid
     public function getDefaultAlias(){
         return '6VYOFZJ';
     }
-    
-    /**
-     *
-     * @see WidgetExceptionTrait::mustDestroyWidget()
-     */
-    protected function mustDestroyWidget()
-    {
-        return true;
-    }
 }
