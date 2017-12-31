@@ -5,10 +5,11 @@ use exface\Core\Interfaces\Widgets\iHaveIcon;
 use exface\Core\Interfaces\Widgets\iSupportLazyLoading;
 use exface\Core\Interfaces\Widgets\iFillEntireContainer;
 use exface\Core\Interfaces\Widgets\iAmCollapsible;
-use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\CommonLogic\Traits\WidgetLayoutTrait;
 use exface\Core\Widgets\Traits\iAmCollapsibleTrait;
 use exface\Core\Widgets\Traits\iHaveIconTrait;
+use exface\Core\Widgets\Traits\iSupportLazyLoadingTrait;
+use exface\Core\Exceptions\Widgets\WidgetPropertyNotSetError;
 
 /**
  * A panel is a visible container with a configurable layout (number of columns,
@@ -28,61 +29,27 @@ use exface\Core\Widgets\Traits\iHaveIconTrait;
  */
 class Panel extends WidgetGrid implements iSupportLazyLoading, iHaveIcon, iAmCollapsible, iFillEntireContainer
 {
-    
     use WidgetLayoutTrait;
     use iAmCollapsibleTrait;
     use iHaveIconTrait;
-    
-    // A panel will not be loaded via AJAX by default
-    private $lazy_loading = false;
-
-    private $lazy_loading_action = 'exface.Core.ShowWidget';
-
-    private $lazy_loading_group_id = null;
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::getLazyLoading()
-     */
-    public function getLazyLoading()
-    {
-        return $this->lazy_loading;
+    use iSupportLazyLoadingTrait {
+        getLazyLoadingActionAlias as getLazyLoadingActionAliasViaTrait;
     }
 
     /**
      *
      * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::setLazyLoading()
+     * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::getLazyLoadingActionAlias()
      */
-    public function setLazyLoading($value)
+    public function getLazyLoadingActionAlias()
     {
-        $this->lazy_loading = BooleanDataType::cast($value);
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::getLazyLoadingAction()
-     */
-    public function getLazyLoadingAction()
-    {
-        return $this->lazy_loading_action;
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::setLazyLoadingAction()
-     */
-    public function setLazyLoadingAction($value)
-    {
-        $this->lazy_loading_action = $value;
-        return $this;
+        try {
+            $result = $this->getLazyLoadingActionAliasViaTrait();
+        } catch (WidgetPropertyNotSetError $e) {
+            $this->setLazyLoadingActionAlias('exface.Core.ShowWidget');
+            $result = $this->getLazyLoadingActionAliasViaTrait();
+        }
+        return $result;
     }
 
     /**
@@ -95,29 +62,6 @@ class Panel extends WidgetGrid implements iSupportLazyLoading, iHaveIcon, iAmCol
      */
     public function getAlternativeContainerForOrphanedSiblings()
     {
-        return $this;
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::getLazyLoadingGroupId()
-     */
-    public function getLazyLoadingGroupId()
-    {
-        return $this->lazy_loading_group_id;
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::setLazyLoadingGroupId()
-     */
-    public function setLazyLoadingGroupId($value)
-    {
-        $this->lazy_loading_group_id = $value;
         return $this;
     }
 }

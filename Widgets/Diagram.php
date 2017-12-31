@@ -8,6 +8,7 @@ use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\Factories\WidgetFactory;
+use exface\Core\Widgets\Traits\iSupportLazyLoadingTrait;
 
 /**
  * Widget to display diagrams like planograms, entity-relationships, organigrams, etc.
@@ -17,12 +18,8 @@ use exface\Core\Factories\WidgetFactory;
  */
 class Diagram extends Container implements iSupportLazyLoading
 {
-
-    private $lazy_loading = false;
-
-    // A diagram will not be loaded via AJAX by default
-    private $lazy_loading_action = 'exface.Core.ReadData';
-
+    use iSupportLazyLoadingTrait;
+    
     private $diagram_options_attribute_alias = null;
 
     private $background_image = null;
@@ -32,8 +29,6 @@ class Diagram extends Container implements iSupportLazyLoading
     private $scale = null;
 
     private $diagram_object_selector_widget = null;
-
-    private $lazy_loading_group_id = null;
 
     /**
      * Returns an array of shapes usable in this diagram.
@@ -111,47 +106,6 @@ class Diagram extends Container implements iSupportLazyLoading
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::getLazyLoading()
-     */
-    public function getLazyLoading()
-    {
-        return $this->lazy_loading;
-    }
-
-    /**
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::setLazyLoading()
-     */
-    public function setLazyLoading($value)
-    {
-        $this->lazy_loading = $value;
-    }
-
-    /**
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::getLazyLoadingAction()
-     */
-    public function getLazyLoadingAction()
-    {
-        return $this->lazy_loading_action;
-    }
-
-    /**
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::setLazyLoadingAction()
-     */
-    public function setLazyLoadingAction($value)
-    {
-        $this->lazy_loading_action = $value;
-        return $this;
-    }
-
     public function getDiagramObjectSelectorWidget()
     {
         if (is_null($this->diagram_object_selector_widget)) {
@@ -208,23 +162,6 @@ class Diagram extends Container implements iSupportLazyLoading
             }
         }
         return $data_sheet;
-    }
-
-    public function getLazyLoadingGroupId()
-    {
-        return $this->lazy_loading_group_id;
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::setLazyLoadingGroupId()
-     */
-    public function setLazyLoadingGroupId($value)
-    {
-        $this->lazy_loading_group_id = $value;
-        return $this;
     }
 }
 

@@ -2,6 +2,8 @@
 namespace exface\Core\Widgets;
 
 use exface\Core\Interfaces\Widgets\iSupportLazyLoading;
+use exface\Core\Widgets\Traits\iSupportLazyLoadingTrait;
+use exface\Core\Exceptions\Widgets\WidgetPropertyNotSetError;
 
 /**
  * InputCombo is similar to InputSelect extended by an autosuggest, that supports lazy loading.
@@ -13,12 +15,11 @@ use exface\Core\Interfaces\Widgets\iSupportLazyLoading;
  */
 class InputCombo extends InputSelect implements iSupportLazyLoading
 {
-
-    private $lazy_loading = true;
-
-    // Combos should use lazy autosuggest in general
-    private $lazy_loading_action = 'exface.Core.Autosuggest';
-
+    use iSupportLazyLoadingTrait {
+        getLazyLoadingActionAlias as getLazyLoadingActionAliasViaTrait;
+        setLazyLoadingActionAlias as setLazyLoadingActionAliasViaTrait;
+    }
+    
     // FIXME move default value to template config option WIDGET.INPUTCOMBO.MAX_SUGGESTION like PAGE_SIZE of tables
     private $max_suggestions = 20;
 
@@ -26,61 +27,37 @@ class InputCombo extends InputSelect implements iSupportLazyLoading
 
     private $autoselect_single_suggestion = true;
 
-    private $lazy_loading_group_id = null;
-
-    /**
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::getLazyLoading()
-     */
-    public function getLazyLoading()
-    {
-        return $this->lazy_loading;
-    }
-
-    /**
-     * By default lazy loading is used to fetch autosuggest values.
-     * Set to FALSE to preload the values.
-     *
-     * @uxon-property lazy_loading
-     * @uxon-type boolean
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::setLazyLoading()
-     */
-    public function setLazyLoading($value)
-    {
-        $this->lazy_loading = $value;
-    }
-
     /**
      * Returns the alias of the action to be called by the lazy autosuggest.
      *
      * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::getLazyLoadingAction()
+     * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::getLazyLoadingActionAlias()
      */
-    public function getLazyLoadingAction()
+    public function getLazyLoadingActionAlias()
     {
-        return $this->lazy_loading_action;
+        try {
+            $result = $this->getLazyLoadingActionAliasViaTrait();
+        } catch (WidgetPropertyNotSetError $e) {
+            $this->setLazyLoadingActionAlias('exface.Core.Autosuggest');
+            $result = $this->getLazyLoadingActionAliasViaTrait();
+        }
+        return $result;
     }
 
     /**
      * Defines the alias of the action to be called by the autosuggest.
+     * 
      * Default: exface.Core.Autosuggest.
      *
-     * @uxon-property lazy_loading_action
+     * @uxon-property lazy_loading_action_alias
      * @uxon-type string
      *
      * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::setLazyLoadingAction()
+     * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::setLazyLoadingActionAlias()
      */
-    public function setLazyLoadingAction($value)
+    public function setLazyLoadingActionAlias($value)
     {
-        $this->lazy_loading_action = $value;
-        return $this;
+        return $this->setLazyLoadingActionAliasViaTrait($value);
     }
 
     public function getAllowNewValues()
@@ -141,23 +118,6 @@ class InputCombo extends InputSelect implements iSupportLazyLoading
     public function setAutoselectSingleSuggestion($value)
     {
         $this->autoselect_single_suggestion = \exface\Core\DataTypes\BooleanDataType::cast($value);
-        return $this;
-    }
-
-    public function getLazyLoadingGroupId()
-    {
-        return $this->lazy_loading_group_id;
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::setLazyLoadingGroupId()
-     */
-    public function setLazyLoadingGroupId($value)
-    {
-        $this->lazy_loading_group_id = $value;
         return $this;
     }
 }

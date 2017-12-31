@@ -15,6 +15,7 @@ use exface\Core\Interfaces\Widgets\iFillEntireContainer;
 use exface\Core\Widgets\Traits\iHaveButtonsAndToolbarsTrait;
 use exface\Core\Interfaces\Widgets\iHaveToolbars;
 use exface\Core\Interfaces\Widgets\iHaveConfigurator;
+use exface\Core\Widgets\Traits\iSupportLazyLoadingTrait;
 
 /**
  * A Chart widget draws a chart with upto two axis and any number of series.
@@ -28,6 +29,7 @@ use exface\Core\Interfaces\Widgets\iHaveConfigurator;
 class Chart extends AbstractWidget implements iShowDataSet, iHaveToolbars, iHaveButtons, iHaveHeader, iHaveFooter, iHaveConfigurator, iSupportLazyLoading, iFillEntireContainer
 {
     use iHaveButtonsAndToolbarsTrait;
+    use iSupportLazyLoadingTrait;
 
     /**
      *
@@ -81,9 +83,6 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveToolbars, iHave
 
     /** @var Button[] */
     private $buttons = array();
-
-    /** @var string */
-    private $lazy_loading_group_id = null;
 
     const AXIS_X = 'x';
 
@@ -563,11 +562,11 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveToolbars, iHave
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::getLazyLoadingAction()
+     * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::getLazyLoadingActionAlias()
      */
-    public function getLazyLoadingAction()
+    public function getLazyLoadingActionAlias()
     {
-        return $this->getData()->getLazyLoadingAction();
+        return $this->getData()->getLazyLoadingActionAlias();
     }
 
     /**
@@ -578,11 +577,11 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveToolbars, iHave
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::setLazyLoadingAction()
+     * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::setLazyLoadingActionAlias()
      */
-    public function setLazyLoadingAction($value)
+    public function setLazyLoadingActionAlias($value)
     {
-        return $this->getData()->setLazyLoadingAction($value);
+        return $this->getData()->setLazyLoadingActionAlias($value);
     }
 
     /**
@@ -594,23 +593,6 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveToolbars, iHave
     public function getButtonWidgetType()
     {
         return 'DataButton';
-    }
-
-    public function getLazyLoadingGroupId()
-    {
-        return $this->lazy_loading_group_id;
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::setLazyLoadingGroupId()
-     */
-    public function setLazyLoadingGroupId($value)
-    {
-        $this->lazy_loading_group_id = $value;
-        return $this;
     }
 
     public function getAlternativeContainerForOrphanedSiblings()

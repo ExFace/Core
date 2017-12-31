@@ -168,9 +168,22 @@ JS;
         return "{oId: '" . $this->getWidget()->getMetaObject()->getId() . "', rows: " . $rows . "}";
     }
     
+    /**
+     *
+     * @return boolean
+     */
+    protected function isLazyLoading()
+    {
+        $widget_option = $this->getWidget()->getLazyLoading();
+        if (is_null($widget_option)) {
+            return true;
+        }
+        return $widget_option;
+    }
+    
     public function buildJsRefresh($keep_pagination_position = false)
     {
-        if (! $this->getWidget()->getLazyLoading()) {
+        if (! $this->isLazyLoading()) {
             return "{$this->getId()}_table.search($('#" . $this->getId() . "_quickSearch').val(), false, true).draw();";
         } else {
             return $this->getId() . "_table.draw(" . ($keep_pagination_position ? "false" : "true") . ");";
@@ -255,7 +268,7 @@ JS;
 			function ( d ) {
 				{$this->buildJsBusyIconShow()}
 				var filtersOn = false;
-				d.action = '{$widget->getLazyLoadingAction()}';
+				d.action = '{$widget->getLazyLoadingActionAlias()}';
 				d.resource = "{$widget->getPage()->getAliasWithNamespace()}";
 				d.element = "{$widget->getId()}";
 				d.object = "{$this->getWidget()->getMetaObject()->getId()}";
@@ -267,7 +280,7 @@ JS;
 JS;
 				
 				$result = '';
-				if ($this->getWidget()->getLazyLoading()) {
+				if ($this->isLazyLoading()) {
 				    $result = <<<JS
 		"serverSide": true,
 		"ajax": {
