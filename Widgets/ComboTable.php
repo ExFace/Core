@@ -160,7 +160,7 @@ class ComboTable extends InputCombo implements iHaveChildren
         // Enforce those options that cannot be overridden in the table's UXON description
         $table->setMultiSelect($this->getMultiSelect());
         $table->setLazyLoading($this->getLazyLoading());
-        $table->setLazyLoadingAction($this->getLazyLoadingAction());
+        $table->setLazyLoadingActionAlias($this->getLazyLoadingActionAlias());
         
         // Ensure, that special columns needed for the ComboTable are present. This must be done after $this->data_table is
         // set, because the method may use autogeneration of the text column, which needs to know about the DataTable

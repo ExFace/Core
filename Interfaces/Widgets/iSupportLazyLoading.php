@@ -1,19 +1,52 @@
 <?php
 namespace exface\Core\Interfaces\Widgets;
 
-use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\Exceptions\Widgets\WidgetPropertyNotSetError;
 
-interface iSupportLazyLoading extends WidgetInterface
+/**
+ * This interface defines, how widgets can support optional lazy (asynchronous) loading.
+ * 
+ * Lazy loading widgets trigger a secondary action asynchronously when being instantiated.
+ * This action actually does the lazy loading. Depending on the widget and the currently
+ * used template, the action can load different parts of the widget: e.g. the data in
+ * lazy data widgets or the entire widget itself for panels or dialogs.
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
+interface iSupportLazyLoading extends iTriggerAction
 {
 
+    /**
+     * 
+     * @return boolean|null
+     */
     public function getLazyLoading();
 
+    /**
+     * 
+     * @param boolean $value
+     * @return iSupportLazyLoading
+     */
     public function setLazyLoading($value);
 
-    public function getLazyLoadingAction();
+    /**
+     * 
+     * @throws WidgetPropertyNotSetError
+     * @return string
+     */
+    public function getLazyLoadingActionAlias();
 
-    public function setLazyLoadingAction($value);
+    /**
+     * 
+     * @param string $value
+     * @return iSupportLazyLoading
+     */
+    public function setLazyLoadingActionAlias($value);
 
+    /**
+     * @return string
+     */
     public function getLazyLoadingGroupId();
 
     /**

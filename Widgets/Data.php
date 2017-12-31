@@ -25,6 +25,8 @@ use exface\Core\Interfaces\Widgets\iHaveConfigurator;
 use exface\Core\Interfaces\Widgets\iConfigureWidgets;
 use exface\Core\Interfaces\Widgets\iHaveHeader;
 use exface\Core\Interfaces\Widgets\iHaveFooter;
+use exface\Core\Widgets\Traits\iSupportLazyLoadingTrait;
+use exface\Core\Exceptions\Widgets\WidgetPropertyNotSetError;
 
 /**
  * Data is the base for all widgets displaying tabular data.
@@ -42,6 +44,10 @@ use exface\Core\Interfaces\Widgets\iHaveFooter;
 class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColumns, iHaveColumnGroups, iHaveToolbars, iHaveButtons, iHaveFilters, iSupportLazyLoading, iHaveContextualHelp, iHaveConfigurator
 {
     use iHaveButtonsAndToolbarsTrait;
+    use iSupportLazyLoadingTrait {
+        setLazyLoading as setLazyLoadingViaTrait;
+        getLazyLoadingActionAlias as getLazyLoadingActionAliasViaTrait;
+    }
 
     // properties
     private $paginate = true;
@@ -49,13 +55,6 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
     private $paginate_page_size = null;
 
     private $aggregate_by_attribute_alias = null;
-
-    private $lazy_loading = true;
-
-    // Data should be loaded lazily by defaul (via AJAX) - of course, only if the used template supports this
-    private $lazy_loading_action = 'exface.Core.ReadData';
-
-    private $lazy_loading_group_id = null;
 
     /** @var DataColumnGroup[] */
     private $column_groups = array();
@@ -914,58 +913,37 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
     }
 
     /**
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::getLazyLoading()
-     */
-    public function getLazyLoading()
-    {
-        return $this->lazy_loading;
-    }
-
-    /**
      * Makes data values get loaded asynchronously in background if the template supports it (i.e.
      * via AJAX).
      *
      * @uxon-property lazy_loading
      * @uxon-type boolean
+     * 
+     * TODO should this option not be set recursively in general - not only for the configurator?
      *
      * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::setLazyLoading()
      */
     public function setLazyLoading($value)
     {
-        $this->lazy_loading = $value;
+        $result = $this->setLazyLoadingViaTrait($value);
         $this->getConfiguratorWidget()->setLazyLoading($value);
-        return $this;
+        return $result;
     }
-
+    
     /**
      *
      * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::getLazyLoadingAction()
+     * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::getLazyLoadingActionAlias()
      */
-    public function getLazyLoadingAction()
+    public function getLazyLoadingActionAlias()
     {
-        return $this->lazy_loading_action;
-    }
-
-    /**
-     * Sets a custom action for lazy data loading.
-     *
-     * By default, it is the ReadData action, but it can be substituted by any compatible action. Compatible
-     * means in this case, that it should fill a given data sheet with data and output the data in a format
-     * compatible with the template (e.g. via AbstractAjaxTemplate::encodeData()).
-     *
-     * @uxon-property lazy_loading_action
-     * @uxon-type string
-     *
-     * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::setLazyLoadingAction()
-     */
-    public function setLazyLoadingAction($value)
-    {
-        $this->lazy_loading_action = $value;
-        return $this;
+        try {
+            $result = $this->getLazyLoadingActionAliasViaTrait();
+        } catch (WidgetPropertyNotSetError $e) {
+            $this->setLazyLoadingActionAlias('exface.Core.ReadData');
+            $result = $this->getLazyLoadingActionAliasViaTrait();
+        }
+        return $result;
     }
 
     /**
@@ -1169,23 +1147,6 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
         return $this;
     }
 
-    public function getLazyLoadingGroupId()
-    {
-        return $this->lazy_loading_group_id;
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::setLazyLoadingGroupId()
-     */
-    public function setLazyLoadingGroupId($value)
-    {
-        $this->lazy_loading_group_id = $value;
-        return $this;
-    }
-
     public function getHelpButton()
     {
         if (is_null($this->help_button)) {
@@ -1310,7 +1271,7 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
         $uxon->setProperty('paginate_page_size', $this->getPaginatePageSize());
         $uxon->setProperty('aggregate_by_attribute_alias', $this->getAggregateByAttributeAlias());
         $uxon->setProperty('lazy_loading', $this->getLazyLoading());
-        $uxon->setProperty('lazy_loading_action', $this->getLazyLoadingAction());
+        $uxon->setProperty('lazy_loading_action', $this->getLazyLoadingActionAlias());
         $uxon->setProperty('lazy_loading_group_id', $this->getLazyLoadingGroupId());
         
         foreach ($this->getColumnGroups() as $col_group) {
