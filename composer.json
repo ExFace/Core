@@ -33,7 +33,8 @@
         "wingu/reflection": "~1.0.5",
         "league/csv": "^8.0",
         "jdorn/sql-formatter": "~1.2.17",
-        "cebe/markdown": "^1.1.2"
+        "cebe/markdown": "^1.1.2",
+		"phpunit/phpunit" : "^6"
     },
     "extra": {
         "app": {
