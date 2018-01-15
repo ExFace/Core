@@ -21,6 +21,16 @@ trait JqueryToolbarTrait
 {
     protected function init()
     {
+        $this->moveButtonsToMoreButtonsMenu();
+        return;
+    }
+    
+    /**
+     * 
+     * @return \exface\Core\Templates\AbstractAjaxTemplate\Elements\JqueryToolbarTrait
+     */
+    protected function moveButtonsToMoreButtonsMenu()
+    {
         $toolbar = $this->getWidget();
         // See if the toolbar has only optional button groups, which would
         // only produce a menu button. If so, we could potentially have multiple
@@ -44,12 +54,12 @@ trait JqueryToolbarTrait
                         $prev_grp = null;
                     }
                 } while (
-                    !is_null($prev_grp) 
-                    && !is_null($grp->getAlign()) 
-                    && $prev_grp->isHidden() 
-                    && $prev_grp->getVisibility() === EXF_WIDGET_VISIBILITY_OPTIONAL 
+                    !is_null($prev_grp)
+                    && !is_null($grp->getAlign())
+                    && $prev_grp->isHidden()
+                    && $prev_grp->getVisibility() === EXF_WIDGET_VISIBILITY_OPTIONAL
                     && $prev_grp->getAlign() !== $grp->getAlign()
-                );
+                    );
                 
                 // If a neighbour group was found, include this group in it's menu.
                 // If nothing was found, leave this group as it is and it will
@@ -62,7 +72,7 @@ trait JqueryToolbarTrait
                 $this->getTemplate()->getElement($grp)->moveButtonsToMoreButtonsMenu(EXF_WIDGET_VISIBILITY_OPTIONAL, EXF_WIDGET_VISIBILITY_OPTIONAL);
             }
         }
-        return;
+        return $this;
     }
     
     /**
