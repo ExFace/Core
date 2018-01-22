@@ -3,6 +3,12 @@ namespace exface\Core\Interfaces\Widgets;
 
 use exface\Core\Interfaces\WidgetInterface;
 
+/**
+ * Common interface for input widgets.
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
 interface iTakeInput extends iCanBeRequired, iCanBeDisabled
 {
 

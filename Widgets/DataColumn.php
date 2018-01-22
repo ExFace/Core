@@ -6,14 +6,12 @@ use exface\Core\CommonLogic\DataTypes\AbstractDataType;
 use exface\Core\Interfaces\Widgets\iShowText;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Factories\ExpressionFactory;
-use exface\Core\CommonLogic\Model\Expression;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Widgets\iShowDataColumn;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Widgets\Traits\iCanBeAlignedTrait;
-use exface\Core\CommonLogic\Constants\SortingDirections;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\DataTypes\NumberDataType;
 use exface\Core\DataTypes\PriceDataType;
@@ -23,6 +21,9 @@ use exface\Core\Interfaces\Model\AggregatorInterface;
 use exface\Core\CommonLogic\Model\Aggregator;
 use exface\Core\DataTypes\SortingDirectionsDataType;
 use exface\Core\DataTypes\TextStylesDataType;
+use exface\Core\Interfaces\Model\ExpressionInterface;
+use exface\Core\Interfaces\Widgets\iTakeInput;
+use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 
 /**
  * The DataColumn represents a column in Data-widgets a DataTable.
@@ -183,7 +184,7 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     /**
      * Returns the editor widget instance for this column
      *
-     * @return WidgetInterface
+     * @return iTakeInput
      */
     public function getEditor()
     {
@@ -210,31 +211,31 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
      *
      * Example:
      * {
-     * "attribute_alias": "MY_ATTRIBUTE",
-     * "editor": {
-     * "widget_type": "InputNumber"
-     * }
+     *  "attribute_alias": "MY_ATTRIBUTE",
+     *  "editor": {
+     *      "widget_type": "InputNumber"
+     *  }
      * }
      *
      * @uxon-property editor
      * @uxon-type \exface\Core\Widgets\AbstractWidget
      *
      * @param UxonObject $uxon_object            
-     * @return boolean
+     * @return DataColumn
      */
-    public function setEditor($uxon_object)
+    public function setEditor(UxonObject $uxon_object)
     {
         // TODO Fetch the default editor from data type. Probably need a editable attribute for the DataColumn,
         // wich would be the easiest way to set it editable and the editor would be optional then.
-        $page = $this->getPage();
-        $editor = WidgetFactory::createFromUxon($page, UxonObject::fromAnything($uxon_object), $this);
-        if ($uxon_object->hasProperty('widget_type') && $editor) {
+        try {
+            $editor = WidgetFactory::createFromUxon($this->getPage(), UxonObject::fromAnything($uxon_object), $this);
             $editor->setAttributeAlias($this->getAttributeAlias());
             $this->editor = $editor;
             $this->editable = true;
-        } else {
-            return false;
+        } catch (\Throwable $e) {
+            throw new WidgetConfigurationError($this, 'Cannot set editor for ' . $this->getWidgetType() . ': see details below!', null, $e);
         }
+        return $this;
     }
 
     /**

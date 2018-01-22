@@ -11,7 +11,7 @@ use exface\Core\DataTypes\BooleanDataType;
  * @author Andrej Kabachnik
  *        
  */
-class Html extends Text
+class Html extends Display
 {
 
     private $css = null;
@@ -28,7 +28,7 @@ class Html extends Text
      */
     public function getHtml()
     {
-        return $this->getText();
+        return $this->getValue();
     }
 
     /**
@@ -44,7 +44,7 @@ class Html extends Text
      */
     public function setHtml($value)
     {
-        return $this->setText($value);
+        return $this->setValue($value);
     }
 
     /**
