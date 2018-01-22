@@ -615,5 +615,15 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
     {
         return $this->responsive;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveValue::getValueDataType()
+     */
+    public function getValueDataType()
+    {
+        return $this->getUidColumn()->getDataType();
+    }
 }
 ?>

@@ -258,29 +258,6 @@ class Filter extends Container implements iCanBeRequired, iShowSingleAttribute
         return parent::setDisabled($value);
     }
 
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Widgets\iHaveValue::getEmptyText()
-     */
-    public function getEmptyText()
-    {
-        return $this->getInputWidget()->getEmptyText();
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Widgets\iHaveValue::setEmptyText()
-     */
-    public function setEmptyText($value)
-    {
-        $this->getInputWidget()->setEmptyText($value);
-        return $this;
-    }
-
     public function exportUxonObject()
     {
         $uxon = parent::exportUxonObject();
@@ -288,6 +265,37 @@ class Filter extends Container implements iCanBeRequired, iShowSingleAttribute
         $uxon->setProperty('required', $this->isRequired());
         $uxon->setProperty('input_widget', $this->getInputWidget()->exportUxonObject());
         return $uxon;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveValue::getValueDataType()
+     */
+    public function getValueDataType()
+    {
+        return $this->getInputWidget()->getValueDataType();
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveValue::getEmptyText()
+     */
+    public function getEmptyText()
+    {
+        return $this->getInputWidget()->getEmptyText();
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveValue::setEmptyText()
+     */
+    public function setEmptyText($value)
+    {
+        $this->getInputWidget()->setEmptyText($value);
+        return $this;
     }
 }
 ?>

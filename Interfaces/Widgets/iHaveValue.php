@@ -1,8 +1,9 @@
 <?php
 namespace exface\Core\Interfaces\Widgets;
 
-use exface\Core\CommonLogic\Model\Expression;
 use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\Interfaces\DataTypes\DataTypeInterface;
+use exface\Core\Interfaces\Model\ExpressionInterface;
 
 interface iHaveValue extends WidgetInterface
 {
@@ -43,17 +44,24 @@ interface iHaveValue extends WidgetInterface
     public function getValueWidgetLink();
 
     /**
+     * Returns the data type of the widget's value.
+     * 
+     * @return DataTypeInterface
+     */
+    public function getValueDataType();
+    
+    /**
      * Returns the placeholder text to be used by templates if the widget has no value.
      *
      * @return string
      */
     public function getEmptyText();
-
+    
     /**
      * Defines the placeholder text to be used if the widget has no value.
      * Set to blank string to remove the placeholder.
      *
-     * @param string $value            
+     * @param string $value
      * @return iHaveValue
      */
     public function setEmptyText($value);

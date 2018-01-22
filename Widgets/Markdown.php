@@ -11,14 +11,12 @@ use cebe\markdown\GithubMarkdown;
  */
 class Markdown extends Html
 {
-    private $markdown = null;
-    
     /**
      * @return string $markdown
      */
     public function getMarkdown()
     {
-        return $this->getText();
+        return $this->getValue();
     }
 
     /**
@@ -27,7 +25,7 @@ class Markdown extends Html
      */
     public function setMarkdown($string)
     {
-        return $this->setText($string);
+        return $this->setValue($string);
     }
     
     public function getHtml(){
