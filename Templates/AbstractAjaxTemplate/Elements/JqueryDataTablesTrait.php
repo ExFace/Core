@@ -4,6 +4,7 @@ namespace exface\Core\Templates\AbstractAjaxTemplate\Elements;
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\Actions\iReadData;
+use exface\Core\Templates\AbstractAjaxTemplate\Interfaces\JsValueDecoratingInterface;
 
 /**
  * This trait contains common methods for template elements using the jQuery DataTables library.
@@ -192,6 +193,13 @@ JS;
     
     public function buildJsColumnDef(\exface\Core\Widgets\DataColumn $col)
     {
+        // Data type specific formatting
+        $formatter_js = '';
+        $cellTpl = $this->getTemplate()->getElement($col->getCellWidget());
+        if (($cellTpl instanceof JsValueDecoratingInterface) && $cellTpl->hasDecorator()) {
+            $formatter_js = $cellTpl->buildJsValueDecorator('data');
+        }
+        
         $output = '{
 							name: "' . $col->getDataColumnName() . '"
                             ' . ($col->getAttributeAlias() ? ', data: "' . $col->getDataColumnName() . '"' : '') . '
@@ -199,6 +207,8 @@ JS;
                             ' . ($col->getWidth()->isTemplateSpecific() ? ', width: "' . $col->getWidth()->getValue() . '"': '') . '
                             , className: "' . $this->buildCssColumnClass($col) . '"' . '
                             , orderable: ' . ($col->getSortable() ? 'true' : 'false') . '
+                            ' . ($formatter_js ? ", render: function(data, type, row){try {return " . $formatter_js . "} catch (e) {return data;} }" : '') . '
+                            
                     }';
         
         return $output;

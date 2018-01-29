@@ -395,7 +395,7 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
     {
         $result = array();
         foreach ($this->getColumns() as $col) {
-            if ($col->getAttribute() && $col->getAttribute()->isSystem()) {
+            if ($col->hasAttributeReference() && $col->getAttribute()->isSystem()) {
                 $result[] = $col;
             }
         }
@@ -417,26 +417,24 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
      *
      * Example:
      * "columns": [
-     * {
-     * "attribute_alias": "PRODUCT__LABEL",
-     * "caption": "Product"
-     * },
-     * {
-     * "attribute_alias": "PRODUCT__BRAND__LABEL"
-     * },
-     * {
-     * "caption": "Sales",
-     * "columns": [
-     * {
-     * "attribute_alias": "QUANTITY:SUM",
-     * "caption": "Qty."
-     * },
-     * {
-     * "attribute_alias": "VALUE:SUM",
-     * "caption": "Sum"
-     * }
-     * ]
-     * }
+     *  {
+     *      "attribute_alias": "PRODUCT__LABEL",
+     *      "caption": "Product"
+     *  },
+     *  {
+     *      "attribute_alias": "PRODUCT__BRAND__LABEL"
+     *  },
+     *  {
+     *      "caption": "Sales",
+     *      "columns": [
+     *  {
+     *      "attribute_alias": "QUANTITY:SUM",
+     *      "caption": "Qty."
+     *  },
+     *  {
+     *      "attribute_alias": "VALUE:SUM",
+     *      "caption": "Sum"
+     *  }
      * ]
      *
      * @uxon-property columns
@@ -906,7 +904,7 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
         $editors = array();
         foreach ($this->getColumns() as $col) {
             if ($col->isEditable()) {
-                $editors[] = $col->getEditor();
+                $editors[] = $col->getCellWidget();
             }
         }
         return $editors;

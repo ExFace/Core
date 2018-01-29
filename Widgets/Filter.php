@@ -297,5 +297,10 @@ class Filter extends Container implements iCanBeRequired, iShowSingleAttribute
         $this->getInputWidget()->setEmptyText($value);
         return $this;
     }
+    
+    public function hasAttributeReference()
+    {
+        return $this->getInputWidget()->hasAttributeReference();
+    }
 }
 ?>

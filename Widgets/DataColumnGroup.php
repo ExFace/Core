@@ -1,13 +1,13 @@
 <?php
 namespace exface\Core\Widgets;
 
+use exface\Core\CommonLogic\UxonObject;
+use exface\Core\CommonLogic\Model\RelationPath;
+use exface\Core\Exceptions\Model\MetaObjectHasNoUidAttributeError;
+use exface\Core\Exceptions\Widgets\WidgetHasNoUidColumnError;
+use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Widgets\iHaveColumns;
-use exface\Core\CommonLogic\Model\RelationPath;
-use exface\Core\Exceptions\Widgets\WidgetHasNoUidColumnError;
-use exface\Core\Exceptions\Model\MetaObjectHasNoUidAttributeError;
-use exface\Core\CommonLogic\UxonObject;
-use exface\Core\Factories\WidgetFactory;
 
 /**
  * The DataColumnGroup is a group of columns in a data widget from one side and at the same time a full featured data widget on the other.
@@ -37,7 +37,7 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
             // If an attribute of a related object should be editable, we need it's system attributes as columns -
             // that is, at least a column with the UID of the related object, but maybe also some columns needed for
             // the behaviors of the related object
-            if ($column->getAttribute() && $rel_path = $column->getAttribute()->getRelationPath()->toString()) {
+            if ($column->hasAttributeReference() && $rel_path = $column->getAttribute()->getRelationPath()->toString()) {
                 $rel = $this->getMetaObject()->getRelation($rel_path);
                 if ($rel->isForwardRelation()) {
                     $this->getParent()->addColumnsForSystemAttributes($rel_path);

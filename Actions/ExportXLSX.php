@@ -56,8 +56,8 @@ class ExportXLSX extends ExportDataFile
         parent::init();
         $this->setIcon(Icons::FILE_EXCEL_O);
         
-        $this->typeMap['Date'] = $this->getWorkbench()->getCoreApp()->getTranslator()->translate('DATE.FORMAT.SCREEN.EXCEL');
-        $this->typeMap['Timestamp'] = $this->getWorkbench()->getCoreApp()->getTranslator()->translate('DATETIME.FORMAT.SCREEN.EXCEL');
+        $this->typeMap['Date'] = $this->getWorkbench()->getCoreApp()->getTranslator()->translate('LOCALIZATION.DATE.DATE_FORMAT_EXCEL');
+        $this->typeMap['Timestamp'] = $this->getWorkbench()->getCoreApp()->getTranslator()->translate('LOCALIZATION.DATE.DATETIME_FORMAT_EXCEL');
     }
 
     /**
@@ -230,7 +230,7 @@ class ExportXLSX extends ExportDataFile
         // Zeitpunkt des Exports
         $this->getWriter()->writeSheetRow($this->getExcelInfoSheetName(), [
             $translator->translate('ACTION.EXPORTXLSX.TIMESTAMP'),
-            date($translator->translate('DATETIME.FORMAT.SCREEN.PHP'))
+            date($translator->translate('LOCALIZATION.DATE.DATETIME_FORMAT'))
         ]);
         
         // Exportiertes Objekt
