@@ -24,6 +24,8 @@ use exface\Core\DataTypes\TextStylesDataType;
 use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\Interfaces\Widgets\iTakeInput;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
+use exface\Core\Interfaces\Widgets\iHaveValue;
+use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 
 /**
  * The DataColumn represents a column in Data-widgets a DataTable.
@@ -32,8 +34,8 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
  * for a widget. A DataColumn has a caption (header), an expression for it's contents (an attribute alias,
  * a formula, etc.) and an optional footer, where the contents can be summarized (e.g. summed up).
  *
- * Many widgets support inline-editing. Their columns can be made editable by defining an editor widget
- * for the column. Any input widget (Inputs, Combos, etc.) can be used as an editor.
+ * Many widgets support inline-editing. Their columns can be made editable by defining an cell widget
+ * for the column. Any input or display widget (Inputs, Combo, Text, ProgressBar etc.) can be used as cell widget.
  *
  * DataColumns can also be made sortable. This is usefull for template features like changing the sort
  * order via mouse click on the colum header.
@@ -55,9 +57,9 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
 
     private $fixed_width = false;
 
-    private $editor = null;
+    private $cellWidget = null;
 
-    private $editable = false;
+    private $editable = null;
     
     private $default_sorting_direction = null;
 
@@ -98,7 +100,7 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
      * The attribute_alias can contain a relation path and/or an optional aggregator: e.g.
      * "attribute_alias": "ORDER__POSITION__VALUE:SUM"
      *
-     * WARNING: This field currently also accepts formulas an string. However, this feature
+     * WARNING: This field currently also accepts formulas and strings. However, this feature
      * is not quite stable and it is not guaranteed for it to remain in future (it is more
      * likely that formulas and widget links will be moved to a new generalized property of the
      * DataColumn - presumabely "expression")
@@ -182,13 +184,23 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     }
 
     /**
-     * Returns the editor widget instance for this column
+     * Returns the cell widget widget instance for this column
      *
-     * @return iTakeInput
+     * @return iHaveValue
      */
-    public function getEditor()
+    public function getCellWidget()
     {
-        return $this->editor;
+        if (is_null($this->cellWidget)) {
+            if ($this->editable === true) {
+                // TODO
+            } else {
+                $this->cellWidget = WidgetFactory::create($this->getPage(), 'Display', $this);
+            }
+            $this->cellWidget
+                ->setAttributeAlias($this->getAttributeAlias())
+                ->setHideCaption(true);
+        }
+        return $this->cellWidget;
     }
 
     /**
@@ -198,42 +210,60 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
      */
     public function isEditable()
     {
+        if (is_null($this->editable)) {
+            return $this->getCellWidget() instanceof iTakeInput ? true : false;
+        } 
         return $this->editable;
+    }
+    
+    /**
+     * 
+     * 
+     * @uxon-property editable
+     * @uxon-type boolean
+     * 
+     * @param boolean $true_or_false
+     * @return \exface\Core\Widgets\DataColumn
+     */
+    public function setEditable($true_or_false)
+    {
+        $this->editable = BooleanDataType::cast($true_or_false);
+        return $this;
     }
 
     /**
-     * Defines an editor widget for the column making each row in it editable.
+     * Defines an cell widget widget for the column making each row in it editable.
      *
-     * The editor is a UXON widget description object. Any input widget (Input, Combo, etc.)
-     * can be used. An editor can even be placed on non-attribute columns. This is very
+     * The cell widget is a UXON widget description object. Any input widget (Input, Combo, etc.)
+     * can be used. An cell widget can even be placed on non-attribute columns. This is very
      * usefull if the action, that will receive the data, expects some input not related
      * to the meta object.
      *
      * Example:
      * {
      *  "attribute_alias": "MY_ATTRIBUTE",
-     *  "editor": {
+     *  "cell_widget": {
      *      "widget_type": "InputNumber"
      *  }
      * }
      *
-     * @uxon-property editor
+     * @uxon-property cell_widget
      * @uxon-type \exface\Core\Widgets\AbstractWidget
      *
      * @param UxonObject $uxon_object            
      * @return DataColumn
      */
-    public function setEditor(UxonObject $uxon_object)
+    public function setCellWidget(UxonObject $uxon_object)
     {
-        // TODO Fetch the default editor from data type. Probably need a editable attribute for the DataColumn,
-        // wich would be the easiest way to set it editable and the editor would be optional then.
+        // TODO Fetch the default cell widget from data type. Probably need a editable attribute for the DataColumn,
+        // wich would be the easiest way to set it editable and the cell widget would be optional then.
         try {
-            $editor = WidgetFactory::createFromUxon($this->getPage(), UxonObject::fromAnything($uxon_object), $this);
-            $editor->setAttributeAlias($this->getAttributeAlias());
-            $this->editor = $editor;
+            $cellWidget = WidgetFactory::createFromUxon($this->getPage(), UxonObject::fromAnything($uxon_object), $this);
+            $cellWidget->setAttributeAlias($this->getAttributeAlias());
+            $this->cellWidget = $cellWidget;
             $this->editable = true;
         } catch (\Throwable $e) {
-            throw new WidgetConfigurationError($this, 'Cannot set editor for ' . $this->getWidgetType() . ': see details below!', null, $e);
+            throw new WidgetConfigurationError($this, 'Cannot set cell widget for ' . $this->getWidgetType() . ': see details below!', null, $e);
         }
         return $this;
     }
@@ -265,22 +295,22 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
      * If there is neither an attribute bound to the column, nor an explicit data_type, the base data type
      * is returned.
      *
-     * @return AbstractDataType
+     * @return DataTypeInterface
      */
     public function getDataType()
     {
-        if ($this->data_type) {
-            return $this->data_type;
-        } elseif ($attr = $this->getAttribute()) {
-            return $attr->getDataType();
-        } else {
-            return DataTypeFactory::createBaseDataType($this->getWorkbench());
-        }
+        return $this->getCellWidget()->getValueDataType();
     }
 
-    public function setDataType($exface_data_type)
+    /**
+     * 
+     * @param DataTypeInterface|string $data_type_or_string
+     * @return \exface\Core\Widgets\DataColumn
+     */
+    public function setDataType($data_type_or_string)
     {
-        $this->data_type = $exface_data_type;
+        // TODO check if the cell widget really has a data type setter
+        $this->getCellWidget()->setValueDataType($data_type_or_string);
         return $this;
     }
 
@@ -292,10 +322,12 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     function getAttribute()
     {
         try {
-            $attr = $this->getMetaObject()->getAttribute($this->getAttributeAlias());
-            return $attr;
+            return $this->getMetaObject()->getAttribute($this->getAttributeAlias());
         } catch (MetaAttributeNotFoundError $e) {
-            return false;
+            if ($this->getExpression()->isFormula()) {
+                return $this->getMetaObject()->getAttribute($this->getExpression()->getRequiredAttributes()[0]);
+            }
+            throw new WidgetPropertyInvalidValueError($this, 'Attribute "' . $this->getAttributeAlias() . '" specified for widget ' . $this->getWidgetType() . ' not found for the widget\'s object "' . $this->getMetaObject()->getAliasWithNamespace() . '"!', null, $e);
         }
     }
 
@@ -342,13 +374,7 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
 
     public function getChildren()
     {
-        if ($this->isEditable() && $editor = $this->getEditor()) {
-            return array(
-                $editor
-            );
-        } else {
-            return array();
-        }
+        return [$this->getCellWidget()];
     }
 
     /**
@@ -426,14 +452,7 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     public function getCaption()
     {
         if (! parent::getCaption()) {
-            try {
-                $attr = $this->getAttribute();
-            } catch (MetaAttributeNotFoundError $e) {
-                if ($this->getExpression()->isFormula()) {
-                    $attr = $this->getMetaObject()->getAttribute($this->getExpression()->getRequiredAttributes()[0]);
-                }
-            }
-            
+            $attr = $this->getAttribute();
             if ($attr) {
                 $this->setCaption($attr->getName());
             }
@@ -566,6 +585,14 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
         return $this;
     }
 
-
+    /**
+     * Returns TRUE if this widget references a meta attribute and FALSE otherwise.
+     *
+     * @return boolean
+     */
+    public function hasAttributeReference()
+    {
+        return $this->getAttributeAlias() ? true : false;
+    }
 }
 ?>

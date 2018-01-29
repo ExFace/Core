@@ -14,6 +14,10 @@ use exface\Core\CommonLogic\Model\Aggregator;
 use exface\Core\Interfaces\Model\AggregatorInterface;
 use exface\Core\Interfaces\Widgets\iSupportAggregators;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
+use exface\Core\CommonLogic\DataSheets\DataAggregation;
+use exface\Core\DataTypes\AggregatorFunctionsDataType;
+use exface\Core\DataTypes\NumberDataType;
+use exface\Core\CommonLogic\UxonObject;
 
 /**
  * The Value widget simply shows a raw (unformatted) value.
@@ -234,7 +238,17 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
      */
     public function getAggregator()
     {
+        if (is_null($this->aggregate_function)) {
+            if ($aggr = DataAggregation::getAggregatorFromAlias($this->getWorkbench(), $this->getAttributeAlias())) {
+                $this->setAggregator($aggr);
+            }
+        }
         return $this->aggregate_function;
+    }
+    
+    public function hasAggregator()
+    {
+        return is_null($this->getAggregator()) ? false : true;
     }
 
     /**
@@ -267,6 +281,16 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
         }
         return parent::getCaption();
     }
+    
+    /**
+     * Returns TRUE if this widget references a meta attribute and FALSE otherwise.
+     * 
+     * @return boolean
+     */
+    public function hasAttributeReference()
+    {
+        return $this->getAttributeAlias() ? true : false;
+    }
 
     /**
      *
@@ -281,7 +305,11 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
         }
         
         if (! $this->getMetaObject()->hasAttribute($this->getAttributeAlias())){
-            throw new WidgetPropertyInvalidValueError($this, 'Attribute "' . $this->getAttributeAlias() . '" specified for Text widget not found for the widget\'s object "' . $this->getMetaObject()->getAliasWithNamespace() . '"!');
+            if ($this->getValueExpression() && $this->getValueExpression()->isFormula()) {
+                return $this->getMetaObject()->getAttribute($this->getValueExpression()->getRequiredAttributes()[0]);
+            } else {
+                throw new WidgetPropertyInvalidValueError($this, 'Attribute "' . $this->getAttributeAlias() . '" specified for widget ' . $this->getWidgetType() . ' not found for the widget\'s object "' . $this->getMetaObject()->getAliasWithNamespace() . '"!');
+            }
         }
         
         return $this->getMetaObject()->getAttribute($this->getAttributeAlias());
@@ -298,13 +326,33 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
      */
     public function getValueDataType()
     {
-        if ($this->data_type) {
-            return $this->data_type;
-        } elseif ($attr = $this->getAttribute()) {
-            return $attr->getDataType();
-        } else {
-            return DataTypeFactory::createBaseDataType($this->getWorkbench());
+        if (is_null($this->data_type)) {
+            if ($attr = $this->getAttribute()) {
+                if ($this->hasAggregator()) {
+                    switch ($this->getAggregator()->getFunction()->__toString()) {
+                        case AggregatorFunctionsDataType::SUM:
+                        case AggregatorFunctionsDataType::AVG:
+                        case AggregatorFunctionsDataType::COUNT:
+                        case AggregatorFunctionsDataType::COUNT_DISTINCT:
+                        case AggregatorFunctionsDataType::COUNT_IF:
+                            $this->data_type = new NumberDataType($this->getWorkbench());
+                            break;
+                        case AggregatorFunctionsDataType::MIN:
+                        case AggregatorFunctionsDataType::MAX:
+                            $this->data_type = $attr->getDataType();
+                            break;
+                        default:
+                            $this->data_type = DataTypeFactory::createBaseDataType($this->getWorkbench());
+                    }
+                    
+                } else {
+                    return $attr->getDataType();
+                }
+            } else {
+                return DataTypeFactory::createBaseDataType($this->getWorkbench());
+            }
         }
+        return $this->data_type;
     }
     
     /**
@@ -312,14 +360,14 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\iHaveValue::setDataType()
      */
-    public function setDataType($string_or_type)
+    public function setValueDataType($data_type_or_string)
     {
-        if ($string_or_type instanceof DataTypeInterface) {
-            $this->data_type = $string_or_type;
-        } elseif (is_object($string_or_type) || is_array($string_or_type)) {
-            throw new WidgetConfigurationError($this, 'Cannot set custom data type for widget ' . $this->getWidgetType() . ': invalid value "' . gettype($string_or_type) . '" given - expecting an instantiated data type or a string selector!');
+        if ($data_type_or_string instanceof DataTypeInterface) {
+            $this->data_type = $data_type_or_string;
+        } elseif (is_string($data_type_or_string)) {
+            $this->data_type = DataTypeFactory::createFromAlias($this->getWorkbench(), $data_type_or_string);
         } else {
-            $this->data_type = DataTypeFactory::createFromAlias($this->getWorkbench(), $string_or_type);
+            throw new WidgetConfigurationError($this, 'Cannot set custom data type for widget ' . $this->getWidgetType() . ': invalid value "' . gettype($data_type_or_string) . '" given - expecting an instantiated data type or a string selector!');
         }
         return $this;
     }
