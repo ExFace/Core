@@ -470,6 +470,11 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
         return ExpressionFactory::createFromString($exface, $this->getAttributeAlias());
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iShowDataColumn::getDataColumnName()
+     */
     public function getDataColumnName()
     {
         if (is_null($this->data_column_name)) {
@@ -478,6 +483,11 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
         return $this->data_column_name;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iShowDataColumn::setDataColumnName()
+     */
     public function setDataColumnName($value)
     {
         $this->data_column_name = $value;

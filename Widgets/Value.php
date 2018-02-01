@@ -19,6 +19,7 @@ use exface\Core\DataTypes\AggregatorFunctionsDataType;
 use exface\Core\DataTypes\NumberDataType;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\ExpressionFactory;
+use exface\Core\Interfaces\Widgets\iShowDataColumn;
 
 /**
  * The Value widget simply shows a raw (unformatted) value.
@@ -38,7 +39,7 @@ use exface\Core\Factories\ExpressionFactory;
  * @author Andrej Kabachnik
  *        
  */
-class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, iSupportAggregators
+class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, iShowDataColumn, iSupportAggregators
 {
     private $attribute_alias = null;
 
@@ -47,6 +48,8 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
     private $aggregate_function = null;
 
     private $empty_text = null;
+    
+    private $data_column_name = null;
     
     /**
      *
@@ -438,6 +441,29 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
         $this->empty_text = $value;
         return $this;
     }
-
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iShowDataColumn::getDataColumnName()
+     */
+    public function getDataColumnName()
+    {
+        if (is_null($this->data_column_name)) {
+            $this->data_column_name = \exface\Core\CommonLogic\DataSheets\DataColumn::sanitizeColumnName($this->getAttributeAlias());
+        }
+        return $this->data_column_name;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iShowDataColumn::setDataColumnName()
+     */
+    public function setDataColumnName($value)
+    {
+        $this->data_column_name = $value;
+        return $this;
+    }
 }
 ?>
