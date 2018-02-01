@@ -42,10 +42,9 @@ class JsNumberFormatter extends AbstractJsDataTypeFormatter
         function() {
             var input = {$jsInput};
             if (input !== null && input !== undefined && input !== ''){
-    			input = {$this->buildJsFormatParser('input')};
-    			var number = parseFloat(input);
+    			var number = parseFloat({$this->buildJsFormatParser('input')});
                 if (! isNaN(number)) {
-                    var input = number.toLocaleString(
+                    return number.toLocaleString(
                         {$locale}, // use a string like 'en-US' to override browser locale
                         {
                             minimumFractionDigits: {$precision_min},
@@ -54,7 +53,6 @@ class JsNumberFormatter extends AbstractJsDataTypeFormatter
                         }
                     );
                 }
-                return input;
             }
             return input;
         }()
