@@ -7,12 +7,15 @@ use exface\Core\Interfaces\ExfaceClassInterface;
 
 abstract class AbstractJsDataTypeFormatter implements JsDataTypeFormatterInterface, ExfaceClassInterface
 {
+    /**
+     * 
+     * @var DataTypeInterface
+     */
     private $dataType = null;
     
     /**
      * 
-     * {@inheritDoc}
-     * @see JsDataTypeFormatterInterface::__construct()
+     * @param DataTypeInterface $dataType
      */
     public function __construct(DataTypeInterface $dataType)
     {
@@ -34,9 +37,9 @@ abstract class AbstractJsDataTypeFormatter implements JsDataTypeFormatterInterfa
     }
     
     /**
-     * Returns the data type used in this formatter.
      * 
-     * @return \exface\Core\Interfaces\DataTypes\DataTypeInterface
+     * {@inheritDoc}
+     * @see \exface\Core\Templates\AbstractAjaxTemplate\Interfaces\JsDataTypeFormatterInterface::getDataType()
      */
     public function getDataType()
     {

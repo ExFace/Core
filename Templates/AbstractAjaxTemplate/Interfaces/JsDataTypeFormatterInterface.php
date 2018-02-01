@@ -12,11 +12,13 @@ use exface\Core\Interfaces\DataTypes\DataTypeInterface;
  */
 interface JsDataTypeFormatterInterface 
 {
+    
     /**
+     * Returns the data type used in this formatter.
      * 
-     * @param DataTypeInterface $dataType
+     * @return DataTypeInterface
      */
-    public function __construct(DataTypeInterface $dataType);
+    public function getDataType();
     
     /**
      * Returns an array of HTML include tags (<script>, <link>, etc.) to be placed in the <head> section.

@@ -18,6 +18,7 @@ use exface\Core\CommonLogic\DataSheets\DataAggregation;
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
 use exface\Core\DataTypes\NumberDataType;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Factories\ExpressionFactory;
 
 /**
  * The Value widget simply shows a raw (unformatted) value.
@@ -305,8 +306,9 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
         }
         
         if (! $this->getMetaObject()->hasAttribute($this->getAttributeAlias())){
-            if ($this->getValueExpression() && $this->getValueExpression()->isFormula()) {
-                return $this->getMetaObject()->getAttribute($this->getValueExpression()->getRequiredAttributes()[0]);
+            $expr = ExpressionFactory::createFromString($this->getWorkbench(), $this->getAttributeAlias(), $this->getMetaObject());
+            if ($expr->isFormula()) {
+                return $this->getMetaObject()->getAttribute($expr->getRequiredAttributes()[0]);
             } else {
                 throw new WidgetPropertyInvalidValueError($this, 'Attribute "' . $this->getAttributeAlias() . '" specified for widget ' . $this->getWidgetType() . ' not found for the widget\'s object "' . $this->getMetaObject()->getAliasWithNamespace() . '"!');
             }
