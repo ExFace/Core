@@ -1,11 +1,8 @@
 <?php
-use exface\Core\CommonLogic\Workbench;
 use exface\Core\Formulas\Date;
 
 class DateTest extends \Codeception\Test\Unit
 {
-
-    protected $tester;
 
     private $date;
 
@@ -15,8 +12,7 @@ class DateTest extends \Codeception\Test\Unit
 
     protected function _before()
     {
-        $exface = new Workbench();
-        $exface->start();
+        global $exface;
         $this->date = new Date($exface);
     }
 
@@ -40,22 +36,19 @@ class DateTest extends \Codeception\Test\Unit
         $this->assertEquals('11.01.2018', $formattedDate);
     }
 
-    public function testFormatDateFromInvalidFormat()
-    {
-        $formattedDate = $this->date->formatDate(self::TEST_DATE, 'cy.we.j');
-        $this->assertEquals('11.01.2018', $formattedDate);
-    }
-
     public function testFormatDateFromEmptyDate()
     {
         $formattedDate = $this->date->formatDate('', self::TEST_FORMAT);
-        $this->assertEquals('11.01.2018', $formattedDate);
+        $this->assertEquals((new DateTime())->format(self::TEST_FORMAT), $formattedDate);
+        
+        $formattedDate = $this->date->formatDate(null, self::TEST_FORMAT);
+        $this->assertEquals((new DateTime())->format(self::TEST_FORMAT), $formattedDate);
     }
 
     public function testFormatDateFromInvalidDate()
     {
-        $formattedDate = $this->date->formatDate(null, self::TEST_FORMAT);
-        $this->assertEquals('11.01.2018', $formattedDate);
+        $formattedDate = $this->date->formatDate('2018-13-12', self::TEST_FORMAT);
+        $this->assertEquals('2018-13-12', $formattedDate);
     }
 
     public function testRun()
