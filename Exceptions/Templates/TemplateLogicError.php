@@ -9,6 +9,6 @@ use exface\Core\Exceptions\LogicException;
  * @author Andrej Kabachnik
  *        
  */
-class TemplateOutputError extends LogicException
+class TemplateLogicError extends LogicException
 {
 }
