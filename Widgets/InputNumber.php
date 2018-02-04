@@ -149,8 +149,9 @@ class InputNumber extends Input
     public function getThousandsSeparator()
     {
         if (is_null($this->thousand_separator)) {
-            if (($this->getValueDataType() instanceof NumberDataType) && $this->getValueDataType()->getGroupDigits()) {
-                $this->thousand_separator = $this->translate('LOCALIZATION.NUMBER.THOUSANDS_SEPARATOR');
+            $type = $this->getValueDataType();
+            if ($type instanceof NumberDataType) {
+                $this->thousand_separator = $type->getGroupSeparator();
             }
         }
         return $this->thousand_separator;
