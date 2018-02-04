@@ -46,6 +46,12 @@ interface iHaveValue extends WidgetInterface
     /**
      * Returns the data type of the widget's value.
      * 
+     * If a widget references a meta attribute, this data type should be compatible
+     * with the attribute's type. In most cases, the attribute's data type should be
+     * used as default. 
+     * 
+     * Override this method to add extra data type options specified by the widget itself.
+     * 
      * @return DataTypeInterface
      */
     public function getValueDataType();

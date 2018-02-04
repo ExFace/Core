@@ -30,7 +30,14 @@ class NumberDataType extends AbstractDataType
     private $groupDigits = true;
     
     private $groupLength = 3;
+    
+    private $groupSeparator = null;
 
+    /**
+     *
+     * {@inheritdoc}
+     * @see AbstractDataType::cast()
+     */
     public static function cast($string)
     {
         if (is_numeric($string)) {
@@ -278,6 +285,38 @@ class NumberDataType extends AbstractDataType
         $this->groupLength = NumberDataType::cast($number);
         return $this;
     }
+    
+    /**
+     * Returns the digit group separator or NULL if not defined.
+     * 
+     * @return string|null
+     */
+    public function getGroupSeparator()
+    {
+        if (is_null($this->groupSeparator)) {
+            $this->groupSeparator = $this->getWorkbench()->getCoreApp()->getTranslator()->translate('LOCALIZATION.NUMBER.THOUSANDS_SEPARATOR');
+        }
+        return $this->groupSeparator;
+    }
+
+    /**
+     * Sets a language-agnostic digit group separator for this data type.
+     * 
+     * If not set and digit grouping is enabled, the default separator for the current language
+     * will be used automatically.
+     * 
+     * @uxon-property group_separator
+     * @uxon-type string
+     * 
+     * @param string $groupSeparator
+     * @return NumberDataType
+     */
+    public function setGroupSeparator($groupSeparator)
+    {
+        $this->groupSeparator = $groupSeparator;
+        return $this;
+    }
+
 
 }
 ?>

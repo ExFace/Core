@@ -116,7 +116,6 @@ abstract class AbstractDataType implements DataTypeInterface
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\DataTypes\DataTypeInterface::cast()
      */
     public static function cast($string)

@@ -444,6 +444,21 @@
             "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"InputNumber\"}",
             "ALIAS": "YearNumber",
             "SHORT_DESCRIPTION": "Year number (e.g. 2017)"
+        },
+        {
+            "CREATED_ON": "2018-02-03 18:51:15",
+            "MODIFIED_ON": "2018-02-03 18:51:15",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e8091315d97da6b5b5e4b318306b9a",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Hexadecimal Number",
+            "PROTOTYPE": "exface\/Core\/DataTypes\/HexadecimalNumberDataType.php",
+            "CONFIG_UXON": "",
+            "VALIDATION_ERROR": "",
+            "DEFAULT_EDITOR_UXON": "",
+            "ALIAS": "HexadecimalNumber",
+            "SHORT_DESCRIPTION": ""
         }
     ],
     "totals_rows": [],
