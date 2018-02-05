@@ -19,7 +19,7 @@ class NumberDataType extends AbstractDataType
 {
     private $precisionMin = null;
     
-    private $precisionMax = null;
+    private $precisionMax = 2;
     
     private $min = null;
     
@@ -91,6 +91,7 @@ class NumberDataType extends AbstractDataType
     {
         return SortingDirectionsDataType::DESC($this->getWorkbench());
     }
+    
     /**
      * @return integer|null
      */
@@ -129,7 +130,7 @@ class NumberDataType extends AbstractDataType
     }
 
     /**
-     * Sets a maximum precision (number of fractional digits).
+     * Sets a maximum precision (number of fractional digits) - use NULL remove any limitations.
      * 
      * Values will be rounded to this number of fractional digits
      * without raising errors.
@@ -137,14 +138,18 @@ class NumberDataType extends AbstractDataType
      * @uxon-property precision_max
      * @uxon-type integer
      * 
-     * @param integer $precisionMax
+     * @param integer|null $precisionMax
      * @return NumberDataType
      */
     public function setPrecisionMax($precisionMax)
     {
-        $value = intval($precisionMax);
-        if ($this->getPrecisionMin() && $value < $this->getPrecisionMin()){
-            throw new DataTypeConfigurationError($this, 'Minimum precision ("' . $value . '") of ' . $this->getAliasWithNamespace() . ' less than maximum precision ("' . $this->getPrecisionMax() . '")!', '6XALZHW');
+        if (is_null($precisionMax)) {
+            $value = null;
+        } else {
+            $value = intval($precisionMax);
+            if ($this->getPrecisionMin() && $value < $this->getPrecisionMin()){
+                throw new DataTypeConfigurationError($this, 'Minimum precision ("' . $value . '") of ' . $this->getAliasWithNamespace() . ' less than maximum precision ("' . $this->getPrecisionMax() . '")!', '6XALZHW');
+            }
         }
         $this->precisionMax = $value;
         return $this;

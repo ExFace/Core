@@ -32,6 +32,11 @@ class JsNumberFormatter extends AbstractJsDataTypeFormatter
     public function buildJsFormatter($jsInput)
     {
         $dataType = $this->getDataType();
+        
+        if ($dataType->getBase() !== 10) {
+            return $jsInput;
+        }
+        
         $precision_max = is_null($dataType->getPrecisionMax()) ? 'undefined' : $dataType->getPrecisionMax();
         $precision_min = is_null($dataType->getPrecisionMin()) ? 'undefined' : $dataType->getPrecisionMin();
         $locale = $this->getWorkbench()->context()->getScopeSession()->getSessionLocale();
