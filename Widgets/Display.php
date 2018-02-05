@@ -2,6 +2,7 @@
 namespace exface\Core\Widgets;
 
 use exface\Core\Interfaces\Widgets\iDisplayValue;
+use exface\Core\DataTypes\BooleanDataType;
 
 /**
  * The Display is the basic widget to show formatted values.
@@ -22,6 +23,35 @@ use exface\Core\Interfaces\Widgets\iDisplayValue;
  */
 class Display extends Value implements iDisplayValue
 {
+    /**
+     * 
+     * @var boolean
+     */
+    private $disableFormatting = false;
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iDisplayValue::getDisableFormatting()
+     */
+    public function getDisableFormatting()
+    {
+        return $this->disableFormatting;
+    }
+    
+    /**
+     * Set to TRUE to disable all Formatting for this column (including data type specific ones!) - FALSE by default.
+     *
+     * @uxon-property disable_formatting
+     * @uxon-type boolean
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iDisplayValue::setDisableFormatting()
+     */
+    public function setDisableFormatting($true_or_false)
+    {
+        $this->disableFormatting = BooleanDataType::cast($true_or_false);
+        return $this;
+    }
 }
 ?>

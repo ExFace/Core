@@ -14,5 +14,17 @@ namespace exface\Core\Interfaces\Widgets;
  */
 interface iDisplayValue extends iHaveValue
 {
+    /**
+     * Returns TRUE the display should not use any formatting, thus just showing the raw value.
+     * @return boolean
+     */
+    public function getDisableFormatting();
     
+    /**
+     * Set to TRUE to disable all data type specific formatters for this display.
+     *
+     * @param boolean $true_or_false
+     * @return iHaveValue
+     */
+    public function setDisableFormatting($true_or_false);
 }
