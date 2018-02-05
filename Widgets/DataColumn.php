@@ -2,15 +2,11 @@
 namespace exface\Core\Widgets;
 
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
-use exface\Core\CommonLogic\DataTypes\AbstractDataType;
-use exface\Core\Interfaces\Widgets\iShowText;
-use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Widgets\iShowDataColumn;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
-use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Widgets\Traits\iCanBeAlignedTrait;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\DataTypes\NumberDataType;
@@ -20,12 +16,12 @@ use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Interfaces\Model\AggregatorInterface;
 use exface\Core\CommonLogic\Model\Aggregator;
 use exface\Core\DataTypes\SortingDirectionsDataType;
-use exface\Core\DataTypes\TextStylesDataType;
 use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\Interfaces\Widgets\iTakeInput;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Interfaces\Widgets\iHaveValue;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
+use exface\Core\Interfaces\Widgets\iCanBeAligned;
 
 /**
  * The DataColumn represents a column in Data-widgets a DataTable.
@@ -43,7 +39,7 @@ use exface\Core\Interfaces\DataTypes\DataTypeInterface;
  * @author Andrej Kabachnik
  *        
  */
-class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleAttribute, iShowText
+class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleAttribute, iCanBeAligned
 {
     use iCanBeAlignedTrait {
         getAlign as getAlignDefault;
@@ -73,15 +69,7 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
 
     private $cell_styler_script = null;
 
-    private $size = null;
-
-    private $style = null;
-    
-    private $color = null;
-
     private $data_column_name = null;
-    
-    private $disableFormatters = false;
 
     public function hasFooter()
     {
@@ -205,6 +193,9 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
             // Some data types require special treatment within a table to make all rows comparable.
             $type = $this->cellWidget->getValueDataType();
             if ($type instanceof NumberDataType) {
+                // Numbers with a variable, but limited amount of fraction digits should
+                // allways have the same amount of fraction digits in a table to ensure the
+                // decimal separator is at the same place in every row.
                 if (is_null($type->getPrecisionMin()) && ! is_null($type->getPrecisionMax())) {
                     $type->setPrecisionMin($type->getPrecisionMax());
                 }
@@ -314,18 +305,6 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
 
     /**
      * 
-     * @param DataTypeInterface|string $data_type_or_string
-     * @return \exface\Core\Widgets\DataColumn
-     */
-    public function setDataType($data_type_or_string)
-    {
-        // TODO check if the cell widget really has a data type setter
-        $this->getCellWidget()->setValueDataType($data_type_or_string);
-        return $this;
-    }
-
-    /**
-     * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\iShowSingleAttribute::getAttribute()
      */
@@ -412,44 +391,6 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     public function setCellStylerScript($value)
     {
         $this->cell_styler_script = $value;
-        return $this;
-    }
-
-    public function getSize()
-    {
-        return $this->size;
-    }
-
-    /**
-     * Sets the font size for the values in this column: BIG, NORMAL or SMALL.
-     *
-     * @uxon-property size
-     * @uxon-type string
-     *
-     * @see \exface\Core\Interfaces\Widgets\iShowText::setSize()
-     */
-    public function setSize($value)
-    {
-        $this->size = $value;
-        return $this;
-    }
-
-    public function getStyle()
-    {
-        return $this->style;
-    }
-
-    /**
-     * Sets the font style for the values in this column: NORMAL, BOLD, ITALIC, STRIKETHROUGH, UNDERLINE
-     *
-     * @uxon-property style
-     * @uxon-type string
-     *
-     * @see \exface\Core\Interfaces\Widgets\iShowText::setStyle()
-     */
-    public function setStyle($value)
-    {
-        $this->style = TextStylesDataType::cast(strtoupper($value));
         return $this;
     }
 
@@ -555,53 +496,6 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
             throw new WidgetPropertyInvalidValueError($this, 'Invalid value "' . $asc_or_desc . '" for default sorting direction in data column: use ASC or DESC');
         }
         $this->default_sorting_direction = $asc_or_desc;
-        return $this;
-    }
-    
-    /**
-     * Returns TRUE if formatters are disabled for this column and FALSE otherwise.
-     * @return boolean
-     */
-    public function getDisableFormatters()
-    {
-        return $this->disableFormatters;
-    }
-
-    /**
-     * Set to TRUE to disable all formatters for this column (including data type specific ones!) - FALSE by default.
-     * 
-     * @uxon-property disable_formatters
-     * @uxon-type boolean
-     * 
-     * @param boolean $disableFormatters
-     * @return DataColumn
-     */
-    public function setDisableFormatters($disableFormatters)
-    {
-        $this->disableFormatters = $disableFormatters;
-        return $this;
-    }
-    /**
-     * 
-     * @return string $color
-     */
-    public function getColor()
-    {
-        return $this->color;
-    }
-
-    /**
-     * Sets the color to use for this data column (a CSS color code or anything else supported by your template).
-     * 
-     * @uxon-property color
-     * @uxon-type string
-     * 
-     * @param string $color
-     * @return DataColumn
-     */
-    public function setColor($color)
-    {
-        $this->color = $color;
         return $this;
     }
 
