@@ -130,7 +130,7 @@ class NumberDataType extends AbstractDataType
     }
 
     /**
-     * Sets a maximum precision (number of fractional digits) - use NULL remove any limitations.
+     * Sets a maximum precision (number of fractional digits) - 2 by default, use NULL remove any limitations.
      * 
      * Values will be rounded to this number of fractional digits
      * without raising errors.
