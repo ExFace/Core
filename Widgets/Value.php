@@ -332,30 +332,10 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
     public function getValueDataType()
     {
         if (is_null($this->data_type)) {
-            if ($attr = $this->getAttribute()) {
-                if ($this->hasAggregator()) {
-                    switch ($this->getAggregator()->getFunction()->__toString()) {
-                        case AggregatorFunctionsDataType::SUM:
-                        case AggregatorFunctionsDataType::AVG:
-                        case AggregatorFunctionsDataType::COUNT:
-                        case AggregatorFunctionsDataType::COUNT_DISTINCT:
-                        case AggregatorFunctionsDataType::COUNT_IF:
-                            $this->data_type = new NumberDataType($this->getWorkbench());
-                            break;
-                        case AggregatorFunctionsDataType::MIN:
-                        case AggregatorFunctionsDataType::MAX:
-                            $this->data_type = $attr->getDataType();
-                            break;
-                        default:
-                            $this->data_type = DataTypeFactory::createBaseDataType($this->getWorkbench());
-                    }
-                    
-                } else {
-                    return $attr->getDataType();
-                }
-            } else {
-                return DataTypeFactory::createBaseDataType($this->getWorkbench());
+            if (! $expr = $this->getValueExpression()) {
+                $expr = ExpressionFactory::createFromString($this->getWorkbench(), $this->getAttributeAlias(), $this->getMetaObject());
             }
+            $this->data_type = $expr->getDataType();
         }
         return $this->data_type;
     }
