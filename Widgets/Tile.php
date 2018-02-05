@@ -4,6 +4,7 @@ namespace exface\Core\Widgets;
 use exface\Core\Interfaces\Widgets\iDisplayValue;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\WidgetFactory;
+use exface\Core\Exceptions\Widgets\WidgetLogicError;
 
 /**
  * A Tile is basically a big fancy button, that can display additional information (KPIs, etc.).
@@ -54,6 +55,9 @@ class Tile extends Button
      */
     public function getDisplayWidget()
     {
+        if (is_null($this->displayWidget)) {
+            throw new WidgetLogicError($this, 'The display widget of a ' . $this->getWidgetType() . ' was requested, while no such widget was defined!');
+        }
         return $this->displayWidget;
     }
 
@@ -71,6 +75,16 @@ class Tile extends Button
         }
         $this->displayWidget = $widget;
         return $this;
+    }
+    
+    public function hasDisplayWidget()
+    {
+        try {
+            $this->getDisplayWidget();
+        } catch (WidgetLogicError $e) {
+            return false;
+        }
+        return true;
     }
 
     
