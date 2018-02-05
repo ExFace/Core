@@ -57,6 +57,10 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
 
     private $fixed_width = false;
 
+    /**
+     * 
+     * @var iHaveValue
+     */
     private $cellWidget = null;
 
     private $editable = null;
@@ -64,8 +68,6 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     private $default_sorting_direction = null;
 
     private $aggregate_function = null;
-
-    private $data_type = null;
 
     private $include_in_quick_search = false;
 
@@ -199,6 +201,14 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
             $this->cellWidget
                 ->setAttributeAlias($this->getAttributeAlias())
                 ->setHideCaption(true);
+            
+            // Some data types require special treatment within a table to make all rows comparable.
+            $type = $this->cellWidget->getValueDataType();
+            if ($type instanceof NumberDataType) {
+                if (is_null($type->getPrecisionMin()) && ! is_null($type->getPrecisionMax())) {
+                    $type->setPrecisionMin($type->getPrecisionMax());
+                }
+            }
         }
         return $this->cellWidget;
     }
