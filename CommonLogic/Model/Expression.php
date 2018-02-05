@@ -365,7 +365,7 @@ class Expression implements ExpressionInterface
                                     if ($attribute_type instanceof BooleanDataType) {
                                         $this->data_type = new IntegerDataType($this->getWorkbench());
                                     } else {
-                                        $this->data_type = $attribute_type;
+                                        $this->data_type = $attribute_type->copy();
                                     }
                                     break;
                                 case AggregatorFunctionsDataType::AVG:
@@ -378,14 +378,14 @@ class Expression implements ExpressionInterface
                                     break;
                                 case AggregatorFunctionsDataType::MIN:
                                 case AggregatorFunctionsDataType::MAX:
-                                    $this->data_type = $this->getAttribute()->getDataType();
+                                    $this->data_type = $this->getAttribute()->getDataType()->copy();
                                     break;
                                 default:
                                     $this->data_type = DataTypeFactory::createBaseDataType($this->getWorkbench());
                             }
                             
                         } else {
-                            $this->data_type = $this->getAttribute()->getDataType();
+                            $this->data_type = $this->getAttribute()->getDataType()->copy();
                         }
                         break;
                     }                 
