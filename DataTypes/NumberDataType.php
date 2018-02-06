@@ -19,7 +19,7 @@ class NumberDataType extends AbstractDataType
 {
     private $precisionMin = null;
     
-    private $precisionMax = 2;
+    private $precisionMax = null;
     
     private $min = null;
     
@@ -122,6 +122,8 @@ class NumberDataType extends AbstractDataType
     }
 
     /**
+     * Returns the maximum number of fraction digits (precision) or NULL if unlimited.
+     * 
      * @return integer|null
      */
     public function getPrecisionMax()
@@ -130,7 +132,7 @@ class NumberDataType extends AbstractDataType
     }
 
     /**
-     * Sets a maximum precision (number of fractional digits) - 2 by default, use NULL remove any limitations.
+     * Sets a maximum precision (number of fractional digits) - unlimited (null) by default.
      * 
      * Values will be rounded to this number of fractional digits
      * without raising errors.
