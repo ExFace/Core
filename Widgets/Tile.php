@@ -60,7 +60,7 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
  *  }
  * }
  * 
- * Example of a navigation tile with preset filters:
+ * Example of a navigation tile with preset filters and not display widget:
  * 
  * {
  *  "widget_type": "Tile",
@@ -212,9 +212,6 @@ class Tile extends Button
             return false;
         }
         return true;
-    }
-
-    
-    
+    }    
 }
 ?>
