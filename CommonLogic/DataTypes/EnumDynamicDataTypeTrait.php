@@ -29,6 +29,20 @@ trait EnumDynamicDataTypeTrait {
         return $this->values;
     }
     
+    /**
+     * Defines the allowed values for the enumeration as value-label pairs.
+     * 
+     * Example for a typical type enumeration:
+     * {
+     *  values: {
+     *      "TYPE1": "Name of type 1",
+     *      "TYPE2": "Name of type 2"
+     *  }
+     * }
+     * 
+     * @param UxonObject|array $uxon_or_array
+     * @throws DataTypeConfigurationError
+     */
     public function setValues($uxon_or_array)
     {
         if ($uxon_or_array instanceof UxonObject) {
