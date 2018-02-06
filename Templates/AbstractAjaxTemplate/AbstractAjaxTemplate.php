@@ -810,9 +810,9 @@ abstract class AbstractAjaxTemplate extends AbstractTemplate
     public function getDataTypeFormatter(DataTypeInterface $dataType)
     {
         switch (true) {
+            case $dataType instanceof EnumDataTypeInterface: return new JsEnumFormatter($dataType);
             case $dataType instanceof NumberDataType: return new JsNumberFormatter($dataType);
             case $dataType instanceof DateDataType: return new JsDateFormatter($dataType);
-            case $dataType instanceof EnumDataTypeInterface: return new JsEnumFormatter($dataType);
             case $dataType instanceof BooleanDataType: return new JsBooleanFormatter($dataType);
         }
         return new JsTransparentFormatter($dataType);

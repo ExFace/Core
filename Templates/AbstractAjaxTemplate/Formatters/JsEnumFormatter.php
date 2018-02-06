@@ -30,13 +30,11 @@ class JsEnumFormatter extends AbstractJsDataTypeFormatter
     {
         $js_value_labels = json_encode($this->getDataType()->getLabels());
         return <<<JS
-
     function() {
         var labels = {$js_value_labels};
         var key = {$jsInput};
         return labels[key] ? labels[key] : {$jsInput};
     }()
-
 JS;
     }
     
