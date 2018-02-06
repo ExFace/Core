@@ -10,22 +10,42 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 /**
  * A Tile is basically a big fancy button, that can display additional information (KPIs, etc.).
  * 
- * The additional information widget can be defined in the display_widget property. As the
- * name suggests, it can be a Display or one of it's derivatives: Text, ProgressBar, Microchart, etc.
+ * The additional information widget can be defined in the display_widget property. 
+ * As the name suggests, it can be a Display or one of it's derivatives: Text, 
+ * ProgressBar, Microchart, etc.
  * 
- * Tiles are typically used to create navigation menus or deep-links in dashboards, but technically
- * they can trigger any action. However, a link to the input widget must be defined for actions, that
- * require input, as the tile will mostly be used stand-alone and not within a form or data widget.
+ * Tiles are typically used to create navigation menus or deep-links in dashboards, 
+ * but technically they can trigger any action. However, a link to the input widget 
+ * must be defined for actions, that require input, as the tile will mostly be used 
+ * stand-alone and not within a form or data widget.
  * 
- * Example of a KPI tile with a counter. The DisplayTotal widget used for the
- * counter is linked with the main widget of the target page of the GoTo-action
- * and displays the COUNT of it's ORDER_NO column. This ensures, that the
- * information in the tile allways corresponds to the initial state of the
+ * Example of a counter tile that will show the number of order in "pending" state
+ * and will navigate to a detail page when clicked.
+ * 
+ * {
+ *  "widget_type": "Tile",
+ *  "object_alias": "my.App.ORDER",
+ *  "title": "Orders",
+ *  "subtitle": "To approve",
+ *  "display_widget": {
+ *      "attribute_alias": "STATE:COUNT_IF(= 'pending')"
+ *  },
+ *  "action": {
+ *      "alias": "exface.Core.GoToPage",
+ *      "page_alias": "my.App.orders-for-approval",
+ *  }
+ * }
+ * 
+ * Example of a similar tile, but linked to a data widget. The DisplayTotal 
+ * widget used for the tile is linked with the main widget of the target page 
+ * of the GoTo-action and displays the COUNT of it's ORDER_NO column. This ensures, 
+ * that the information in the tile allways corresponds to the initial state of the
  * widget the tile will show when clicked - regardless of the exact filters,
  * aggregations or other configuration of that widget.
  *  
  * {
  *  "widget_type": "Tile",
+ *  "object_alias": "my.App.ORDER",
  *  "title": "Orders",
  *  "subtitle": "To approve",
  *  "display_widget": {
@@ -44,6 +64,7 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
  * 
  * {
  *  "widget_type": "Tile",
+ *  "object_alias": "my.App.DELIVERY",
  *  "title": "Deliveries",
  *  "subtitle": "Expected today",
  *  "action": {
