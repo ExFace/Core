@@ -198,6 +198,8 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
                 // decimal separator is at the same place in every row.
                 if (is_null($type->getPrecisionMin()) && ! is_null($type->getPrecisionMax())) {
                     $type->setPrecisionMin($type->getPrecisionMax());
+                } elseif (is_null($type->getPrecisionMax())) {
+                    $type->setPrecisionMax(3);
                 }
             }
         }

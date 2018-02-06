@@ -15,6 +15,8 @@ use exface\Core\DataTypes\AggregatorFunctionsDataType;
 use exface\Core\DataTypes\NumberDataType;
 use exface\Core\DataTypes\IntegerDataType;
 use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\Interfaces\DataTypes\DataTypeInterface;
+use exface\Core\Interfaces\Model\AggregatorInterface;
 
 class Expression implements ExpressionInterface
 {
@@ -358,34 +360,11 @@ class Expression implements ExpressionInterface
                     break;
                 case self::TYPE_ATTRIBUTE:
                     if (! is_null($this->getMetaObject())) {
+                        $attribute_type = $this->getAttribute()->getDataType();
                         if ($aggr = DataAggregation::getAggregatorFromAlias($this->getWorkbench(), $this->toString())) {
-                            switch ($aggr->getFunction()->__toString()) {
-                                case AggregatorFunctionsDataType::SUM:
-                                    $attribute_type = $this->getAttribute()->getDataType();
-                                    if ($attribute_type instanceof BooleanDataType) {
-                                        $this->data_type = new IntegerDataType($this->getWorkbench());
-                                    } else {
-                                        $this->data_type = $attribute_type->copy();
-                                    }
-                                    break;
-                                case AggregatorFunctionsDataType::AVG:
-                                    $this->data_type = new NumberDataType($this->getWorkbench());
-                                    break;
-                                case AggregatorFunctionsDataType::COUNT:
-                                case AggregatorFunctionsDataType::COUNT_DISTINCT:
-                                case AggregatorFunctionsDataType::COUNT_IF:
-                                    $this->data_type = new IntegerDataType($this->getWorkbench());
-                                    break;
-                                case AggregatorFunctionsDataType::MIN:
-                                case AggregatorFunctionsDataType::MAX:
-                                    $this->data_type = $this->getAttribute()->getDataType()->copy();
-                                    break;
-                                default:
-                                    $this->data_type = DataTypeFactory::createBaseDataType($this->getWorkbench());
-                            }
-                            
+                            $this->data_type = $aggr->getResultDataType($attribute_type);
                         } else {
-                            $this->data_type = $this->getAttribute()->getDataType()->copy();
+                            $this->data_type = $attribute_type->copy();
                         }
                         break;
                     }                 
