@@ -301,7 +301,7 @@ class Object implements MetaObjectInterface
                     // Otherwise it's not clear to the user, at what point the 
                     // relation was required.
                     $this->setAttributeCache($alias, false);
-                    throw new MetaAttributeNotFoundError($this, 'Attribute "' . $alias . '" not found for object "' . $this->getAliasWithNamespace() . '"!', null, $e);
+                    throw new MetaAttributeNotFoundError($this, 'Attribute "' . $alias . '" not found for object "' . $this->getAliasWithNamespace() . '": invalid relation path "' . $rel_parts[0] . '"!', null, $e);
                 } catch (MetaAttributeNotFoundError $e) {
                     // Catch attribute-not-found errors from other objects and
                     // wrap them into an error for this object. Otherwise it's
@@ -397,7 +397,7 @@ class Object implements MetaObjectInterface
      * @param string $relation_path_string            
      * @return MetaObjectInterface
      */
-    function getRelatedObject($relation_path_string)
+    public function getRelatedObject($relation_path_string)
     {
         $relation_path = RelationPathFactory::createFromString($this, $relation_path_string);
         return $relation_path->getEndObject();
