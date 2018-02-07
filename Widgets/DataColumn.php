@@ -36,6 +36,8 @@ use exface\Core\Interfaces\Widgets\iCanBeAligned;
  * DataColumns can also be made sortable. This is usefull for template features like changing the sort
  * order via mouse click on the colum header.
  *
+ * @method DataColumnGroup getParent()
+ * 
  * @author Andrej Kabachnik
  *        
  */
@@ -509,6 +511,24 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     public function hasAttributeReference()
     {
         return $this->getAttributeAlias() ? true : false;
+    }
+    
+    /**
+     * 
+     * @return \exface\Core\Widgets\DataColumnGroup
+     */
+    public function getDataColumnGroup()
+    {
+        return $this->getParent();
+    }
+    
+    /**
+     * 
+     * @return \exface\Core\Widgets\Data
+     */
+    public function getDataWidget()
+    {
+        return $this->getParent()->getDataWidget();
     }
 }
 ?>
