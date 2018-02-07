@@ -17,17 +17,7 @@ namespace exface\Core\Widgets;
  * @author Andrej Kabachnik
  *        
  */
-class DataCards extends DataList
+class DataCards extends DataTable
 {
-
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Widgets\DataList::getAutoloadData()
-     */
-    public function getAutoloadData()
-    {
-        return $this->autoload_data;
-    }
 }
 ?>

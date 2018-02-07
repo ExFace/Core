@@ -23,7 +23,7 @@ class DataList extends DataTable
 {
 
     /**
-     * Keine sinnvolle Funktion fuer DataList, gibt daher immer true zurueck.
+     * The DataList allways loads data automatically.
      * 
      * {@inheritDoc}
      * @see \exface\Core\Widgets\Data::getAutoloadData()

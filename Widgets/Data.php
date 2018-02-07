@@ -95,7 +95,7 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
     
     private $has_system_columns = false;
 
-    protected $autoload_data = true;
+    private $autoload_data = true;
 
     protected function init()
     {
@@ -1399,9 +1399,7 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
     }
 
     /**
-     * Set to FALSE to prevent initial loading of data or TRUE to enable it.
-     * 
-     * (default: TRUE)
+     * Set to FALSE to prevent initial loading of data or TRUE (default) to enable it.
      * 
      * @uxon-property autoload_data
      * @uxon-type boolean
