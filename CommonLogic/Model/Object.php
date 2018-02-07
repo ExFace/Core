@@ -687,12 +687,33 @@ class Object implements MetaObjectInterface
         }
         return true;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaObjectInterface::hasLabelAttribute()
+     */
+    public function hasLabelAttribute()
+    {
+        return $this->getLabelAttributeAlias() ? true : false;
+        
+    }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaObjectInterface::getLabelAttributeAlias()
+     */
     public function getLabelAttributeAlias()
     {
         return $this->label;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaObjectInterface::setLabelAttributeAlias()
+     */
     public function setLabelAttributeAlias($value)
     {
         $this->label = $value;
