@@ -21,6 +21,16 @@ namespace exface\Core\Widgets;
  */
 class DataList extends DataTable
 {
-    
+
+    /**
+     * Keine sinnvolle Funktion fuer DataList, gibt daher immer true zurueck.
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Data::getAutoloadData()
+     */
+    public function getAutoloadData()
+    {
+        return true;
+    }
 }
 ?>
