@@ -332,7 +332,8 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
     public function getValueDataType()
     {
         if (is_null($this->data_type)) {
-            if (! $expr = $this->getValueExpression()) {
+            $expr = $this->getValueExpression();
+            if (! $expr || $expr->isEmpty() || ($expr->isConstant() && $this->hasAttributeReference())) {
                 $expr = ExpressionFactory::createFromString($this->getWorkbench(), $this->getAttributeAlias(), $this->getMetaObject());
             }
             $this->data_type = $expr->getDataType();
