@@ -325,5 +325,14 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
         // TODO add properties specific to this widget here
         return $uxon;
     }
+    
+    /**
+     * 
+     * @return \exface\Core\Widgets\Data
+     */
+    public function getDataWidget()
+    {
+        return $this->getParent();
+    }
 }
 ?>
