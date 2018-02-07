@@ -298,9 +298,55 @@ class Filter extends Container implements iCanBeRequired, iShowSingleAttribute
         return $this;
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iShowSingleAttribute::hasAttributeReference()
+     */
     public function hasAttributeReference()
     {
         return $this->getInputWidget()->hasAttributeReference();
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveValue::hasValue()
+     */
+    public function hasValue()
+    {
+        return $this->getInputWidget()->hasValue();
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\AbstractWidget::isPrefillable()
+     */
+    public function isPrefillable()
+    {
+        return parent::isPrefillable() && $this->getInputWidget()->isPrefillable();
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\AbstractWidget::setDoNotPrefill()
+     */
+    public function setDoNotPrefill($value)
+    {
+        $this->getInputWidget()->setDoNotPrefill($value);
+        return parent::setDoNotPrefill($value);
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\AbstractWidget::getDoNotPrefill()
+     */
+    public function getDoNotPrefill()
+    {
+        return parent::getDoNotPrefill() || $this->getInputWidget()->getDoNotPrefill();
     }
 }
 ?>

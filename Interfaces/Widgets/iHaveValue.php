@@ -42,6 +42,13 @@ interface iHaveValue extends WidgetInterface
      * @return NULL|\exface\Core\Interfaces\Widgets\WidgetLinkInterface
      */
     public function getValueWidgetLink();
+    
+    /**
+     * Returns TRUE if a value is set for this widget and FALSE otherwise.
+     * 
+     * @return boolean
+     */
+    public function hasValue();
 
     /**
      * Returns the data type of the widget's value.

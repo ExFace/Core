@@ -646,13 +646,16 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
                     // If matching filters were found, prefill them
                     $prefilled = false;
                     foreach ($attribute_filters as $filter) {
-                        if ($filter->getComparator() == $condition->getComparator()) {
+                        if ($filter->isPrefillable() && $filter->getComparator() == $condition->getComparator()) {
                             $filter->setValue($condition->getValue());
                             $prefilled = true;
                         }
                     }
                     if ($prefilled == false) {
-                        $attribute_filters[0]->setValue($condition->getValue());
+                        $filter = $attribute_filters[0];
+                        if ($filter->isPrefillable()) {
+                            $filter->setValue($condition->getValue());
+                        }
                     }
                 }
             }

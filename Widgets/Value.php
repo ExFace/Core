@@ -201,9 +201,9 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
      * {@inheritDoc}
      * @see \exface\Core\Widgets\AbstractWidget::isPrefillable()
      */
-    protected function isPrefillable()
+    public function isPrefillable()
     {
-        return ! ($this->getValue() && ! $this->getValueExpression()->isReference());
+        return parent::isPrefillable() && ! ($this->hasValue() && ! $this->getValueExpression()->isReference());
     }
 
     /**
@@ -444,6 +444,16 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
     {
         $this->data_column_name = $value;
         return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveValue::hasValue()
+     */
+    public function hasValue()
+    {
+        return is_null($this->getValue()) ? false : true;
     }
 }
 ?>
