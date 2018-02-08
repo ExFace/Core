@@ -28,7 +28,12 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
 
     private $uid_column_id = null;
 
-    public function addColumn(DataColumn $column)
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveColumns::addColumn()
+     */
+    public function addColumn(DataColumn $column, $position = NULL)
     {
         $column->setMetaObject($this->getMetaObject());
         if ($column->isEditable()) {
@@ -48,7 +53,31 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
                 }
             }
         }
-        $this->columns[] = $column;
+        
+        if (is_null($position) || ! is_numeric($position)) {
+            $this->columns[] = $column;
+        } else {
+            array_splice($this->columns, $position, 0, array(
+                $column
+            ));
+        }
+        
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveColumns::removeColumn()
+     */
+    public function removeColumn(DataColumn $column)
+    {
+        $key = array_search($column, $this->columns);
+        if ($key !== false){
+            unset($this->columns[$key]);
+            // Reindex the array to avoid index gaps
+            $this->columns = array_values($this->columns);
+        }
         return $this;
     }
 
