@@ -18,6 +18,8 @@ class InputNumber extends Input
     private $decimal_separator = null;
 
     private $thousand_separator = null;
+    
+    private $step = null;
 
     public function getPrecisionMax()
     {
@@ -173,5 +175,29 @@ class InputNumber extends Input
         $this->thousand_separator = $value;
         return $this;
     }
+    
+    /**
+     * @return integer|null
+     */
+    public function getStep()
+    {
+        return $this->step;
+    }
+
+    /**
+     * Sets the increment step for helper-buttons (if supported by the template).
+     * 
+     * @uxon-property step
+     * @uxon-type integer
+     * 
+     * @param integer $step
+     * @return InputNumber
+     */
+    public function setStep($step)
+    {
+        $this->step = $step;
+        return $this;
+    }
+
 }
 ?>
