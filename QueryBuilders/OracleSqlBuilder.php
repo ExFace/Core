@@ -17,12 +17,12 @@ use exface\Core\Interfaces\Model\AggregatorInterface;
 /**
  * A query builder for Oracle SQL.
  *
- * # Data source options
+ * ## Data source options
  * 
  * The following options are available in addition to the ones of the
  * AbstractSqlBuilder
  * 
- * ## On object level
+ * ### On object level
  *  
  * - **SQL_SELECT_WHERE** - custom where statement automatically appended to 
  * direct selects for this object (not if the object's table is joined!). 
