@@ -626,7 +626,7 @@
         },
         {
             "CREATED_ON": "2007-01-01 00:00:00",
-            "MODIFIED_ON": "2017-06-05 05:48:57",
+            "MODIFIED_ON": "2018-02-08 10:08:44",
             "CREATED_BY_USER": "",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x31313100000000000000000000000000",
@@ -641,7 +641,7 @@
             "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Default Display Position",
             "ALIAS": "DISPLAYORDER",
-            "DATATYPE": "0x31000000000000000000000000000000",
+            "DATATYPE": "0x11e7b0280dd00a8998350205857feb80",
             "DATA_ADDRESS": "default_display_order",
             "OBJECT": "0x32350000000000000000000000000000",
             "FORMATTER": "",
@@ -656,7 +656,7 @@
             "SORTERDIR": "",
             "RELATED_OBJ_ATTR": "",
             "SHORT_DESCRIPTION": "If set, this attribute will be used to create default tabular representations of the object: e.g. for default columns in a ComboTable widget.",
-            "DATA_ADDRESS_PROPS": "",
+            "DATA_ADDRESS_PROPS": "{}",
             "DEFAULT_VALUE": "0",
             "FIXED_VALUE": "",
             "CUSTOM_DATA_TYPE": ""
@@ -996,7 +996,7 @@
         },
         {
             "CREATED_ON": "2007-01-01 00:00:00",
-            "MODIFIED_ON": "2017-06-05 05:49:26",
+            "MODIFIED_ON": "2018-02-08 10:09:01",
             "CREATED_BY_USER": "",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x31333400000000000000000000000000",
@@ -1011,7 +1011,7 @@
             "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Default Sorter Position",
             "ALIAS": "SORTERPOS",
-            "DATATYPE": "0x31000000000000000000000000000000",
+            "DATATYPE": "0x11e7b0280dd00a8998350205857feb80",
             "DATA_ADDRESS": "default_sorter_order",
             "OBJECT": "0x32350000000000000000000000000000",
             "FORMATTER": "",
@@ -1026,7 +1026,7 @@
             "SORTERDIR": "",
             "RELATED_OBJ_ATTR": "",
             "SHORT_DESCRIPTION": "If set, the attribute will be used for sorting in lists of it's object by default. The number specifies the importance of this attribute among other sorting attributes: the list will be sorted by the attribute with a 1 first, the by the attribute wit",
-            "DATA_ADDRESS_PROPS": "",
+            "DATA_ADDRESS_PROPS": "{}",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
             "CUSTOM_DATA_TYPE": ""
