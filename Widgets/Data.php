@@ -106,9 +106,14 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
         }
     }
 
-    public function addColumn(DataColumn $column)
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveColumns::addColumn()
+     */
+    public function addColumn(DataColumn $column, $position = NULL)
     {
-        $this->getColumnGroupMain()->addColumn($column);
+        $this->getColumnGroupMain()->addColumn($column, $position);
         return $this;
     }
 
@@ -120,6 +125,19 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
     public function createColumnFromUxon(UxonObject $uxon)
     {
         return $this->getColumnGroupMain()->createColumnFromUxon($uxon);
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveColumns::removeColumn()
+     */
+    public function removeColumn(DataColumn $column)
+    {
+        foreach ($this->getColumnGroups() as $grp) {
+            $grp->removeColumn($column);
+        }
+        return $this;
     }
 
     /**
