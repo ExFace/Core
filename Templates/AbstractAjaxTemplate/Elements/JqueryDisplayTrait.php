@@ -3,6 +3,7 @@ namespace exface\Core\Templates\AbstractAjaxTemplate\Elements;
 
 use exface\Core\Widgets\Display;
 use exface\Core\Templates\AbstractAjaxTemplate\Interfaces\JsDataTypeFormatterInterface;
+use exface\Core\Templates\AbstractAjaxTemplate\Interfaces\JsValueDecoratingInterface;
 
 /**
  *
@@ -86,7 +87,8 @@ trait JqueryDisplayTrait {
     }
     
     /**
-     * @return string
+     * {@inheritdoc}
+     * @see JsValueDecoratingInterface::buildJsValueDecorator
      */
     public function buildJsValueDecorator($value_js)
     {

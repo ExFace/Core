@@ -8,7 +8,10 @@ namespace exface\Core\Templates\AbstractAjaxTemplate\Interfaces;
  */
 interface JsValueDecoratingInterface 
 {
+    
     /**
+     * Returns inline javascript code decorating the value with extra styles, wrapping HTML elements, etc.
+     *
      * @return string
      */
     public function buildJsValueDecorator($value_js);
