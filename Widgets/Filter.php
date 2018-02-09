@@ -348,5 +348,15 @@ class Filter extends Container implements iCanBeRequired, iShowSingleAttribute
     {
         return parent::getDoNotPrefill() || $this->getInputWidget()->getDoNotPrefill();
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\AbstractWidget::isHidden()
+     */
+    public function isHidden()
+    {
+        return parent::isHidden() || $this->getInputWidget()->isHidden();
+    }
 }
 ?>
