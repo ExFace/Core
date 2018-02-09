@@ -656,7 +656,6 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\WidgetInterface::getWidth()
      */
     public function getWidth()
@@ -682,7 +681,6 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
      * @uxon-type string
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\WidgetInterface::setWidth()
      */
     public function setWidth($value)

@@ -217,7 +217,7 @@ interface WidgetInterface extends ExfaceClassInterface, iCanBeCopied
      * or in any unit compatible with the current template (in this case, the value is alphanumeric because the unit must be
      * specified directltly).
      *
-     * @param float|string $value            
+     * @param WidgetDimension|string $value            
      * @return WidgetInterface
      */
     public function setWidth($value);
@@ -235,7 +235,7 @@ interface WidgetInterface extends ExfaceClassInterface, iCanBeCopied
      * or in any unit compatible with the current template (in this case, the value is alphanumeric because the unit must be
      * specified directltly).
      *
-     * @param float|string $value            
+     * @param WidgetDimension|string $value            
      * @return WidgetInterface
      */
     public function setHeight($value);

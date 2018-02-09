@@ -188,9 +188,10 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
             } else {
                 $this->cellWidget = WidgetFactory::create($this->getPage(), 'Display', $this);
             }
-            $this->cellWidget
-                ->setAttributeAlias($this->getAttributeAlias())
-                ->setHideCaption(true);
+            $this->cellWidget->setAttributeAlias($this->getAttributeAlias());
+            if ($this->cellWidget->getWidth()->isUndefined()) {
+                $this->cellWidget->setWidth($this->getWidth());
+            }
             
             // Some data types require special treatment within a table to make all rows comparable.
             $type = $this->cellWidget->getValueDataType();
