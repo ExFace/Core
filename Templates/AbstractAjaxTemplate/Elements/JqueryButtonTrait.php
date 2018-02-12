@@ -213,7 +213,7 @@ trait JqueryButtonTrait {
     				{$this->buildJsRequestDataCollector($action, $input_element)}
     				{$input_element->buildJsBusyIconShow()}
     				var prefillRows = [];
-    				if (requestData.rows.length > 0 && requestData.rows[0]["{$widget->getMetaObject()->getUidAttributeAlias()}"]){
+    				if (requestData.rows && requestData.rows.length > 0 && requestData.rows[0]["{$widget->getMetaObject()->getUidAttributeAlias()}"]){
     					prefillRows.push({{$widget->getMetaObject()->getUidAttributeAlias()}: requestData.rows[0]["{$widget->getMetaObject()->getUidAttributeAlias()}"]});
     				}
 JS;

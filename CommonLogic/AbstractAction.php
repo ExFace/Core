@@ -986,6 +986,22 @@ abstract class AbstractAction implements ActionInterface
     /**
      * 
      * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::isExactly()
+     */
+    public function isExactly($action_or_alias)
+    {
+        if ($action_or_alias instanceof ActionInterface) {
+            $alias = $action_or_alias->getAliasWithNamespace();
+        } else {
+            $alias = $action_or_alias;
+        }
+        
+        return strcasecmp($this->getAliasWithNamespace(), trim($alias)) === 0;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
      * @see \exface\Core\Interfaces\Actions\ActionInterface::is()
      */
     public function is($action_or_alias)
@@ -994,7 +1010,12 @@ abstract class AbstractAction implements ActionInterface
             $class = get_class($action_or_alias);
             return $this instanceof $class;
         } elseif (is_string($action_or_alias)){
-            return $this->getAliasWithNamespace() === trim($action_or_alias);
+            if ($this->isExactly($action_or_alias)) {
+                return true;
+            }
+            $resolver = NameResolver::createFromString($action_or_alias, NameResolver::OBJECT_TYPE_ACTION, $this->getWorkbench());
+            $class_name = $resolver->getClassNameWithNamespace();
+            return $this instanceof $class_name;
         } else {
             throw new UnexpectedValueException('Invalid value "' . gettype($action_or_alias) .'" passed to "ActionInterface::is()": instantiated action or action alias with namespace expected!');
         }

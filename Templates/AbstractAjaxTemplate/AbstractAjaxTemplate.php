@@ -23,6 +23,18 @@ use exface\Core\Events\WidgetEvent;
 use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 use exface\Core\Exceptions\InternalError;
 use exface\Core\Interfaces\Actions\iModifyContext;
+use exface\Core\Interfaces\DataTypes\DataTypeInterface;
+use exface\Core\Factories\DataTypeFactory;
+use exface\Core\DataTypes\NumberDataType;
+use exface\Core\Templates\AbstractAjaxTemplate\Formatters\JsNumberFormatter;
+use exface\Core\DataTypes\DateDataType;
+use exface\Core\Templates\AbstractAjaxTemplate\Formatters\JsDateFormatter;
+use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
+use exface\Core\Templates\AbstractAjaxTemplate\Formatters\JsTransparentFormatter;
+use exface\Core\Templates\AbstractAjaxTemplate\Interfaces\JsDataTypeFormatterInterface;
+use exface\Core\Templates\AbstractAjaxTemplate\Formatters\JsEnumFormatter;
+use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\Templates\AbstractAjaxTemplate\Formatters\JsBooleanFormatter;
 
 abstract class AbstractAjaxTemplate extends AbstractTemplate
 {
@@ -38,6 +50,8 @@ abstract class AbstractAjaxTemplate extends AbstractTemplate
     private $class_prefix = '';
 
     private $class_namespace = '';
+    
+    private $data_type_formatters = [];
 
     protected $subrequest_id = null;
 
@@ -785,6 +799,23 @@ abstract class AbstractAjaxTemplate extends AbstractTemplate
             $this->getWorkbench()->getLogger()->logException($e);
         }
         return $extra;
+    }
+    
+    /**
+     * Returns the data type formatter for the given data type.
+     * 
+     * @param DataTypeInterface $dataType
+     * @return JsDataTypeFormatterInterface
+     */
+    public function getDataTypeFormatter(DataTypeInterface $dataType)
+    {
+        switch (true) {
+            case $dataType instanceof EnumDataTypeInterface: return new JsEnumFormatter($dataType);
+            case $dataType instanceof NumberDataType: return new JsNumberFormatter($dataType);
+            case $dataType instanceof DateDataType: return new JsDateFormatter($dataType);
+            case $dataType instanceof BooleanDataType: return new JsBooleanFormatter($dataType);
+        }
+        return new JsTransparentFormatter($dataType);
     }
 }
 ?>

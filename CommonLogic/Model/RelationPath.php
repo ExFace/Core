@@ -89,9 +89,11 @@ class RelationPath implements MetaRelationPathInterface
                 $this->appendRelation($rel);
             }
         } catch (MetaRelationNotFoundError $e) {
-            // Do nothing, if it is not a relation (it's probably an attribute than)
-            // IDEA Maybe check, to see if it really is an attribute and throw an error otherwise???
-            $rel = false;
+            // Rethrow the error if it's just an invalid alias
+            if (! $this->getEndObject()->hasAttribute($first_rel)) {
+                throw $e;
+            }
+            // Do nothing if it is not a relation, but a regular attribute. It's relation path is already built.
         }
         
         if ($first_rel != $relation_path_string) {

@@ -5,8 +5,10 @@ use exface\Core\Interfaces\Widgets\iTakeInput;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\Interfaces\Widgets\iHaveDefaultValue;
 use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\DataTypes\NumberDataType;
+use exface\Core\Interfaces\Widgets\iCanBeAligned;
 
-class Input extends Text implements iTakeInput, iHaveDefaultValue
+class Input extends Value implements iTakeInput, iHaveDefaultValue
 {
 
     private $required = null;
@@ -242,7 +244,6 @@ class Input extends Text implements iTakeInput, iHaveDefaultValue
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Widgets\Text::exportUxonObject()
      */
     public function exportUxonObject()
@@ -252,25 +253,6 @@ class Input extends Text implements iTakeInput, iHaveDefaultValue
         $uxon->setProperty('readonly', $this->isReadonly());
         $uxon->setProperty('required', $this->isRequired());
         return $uxon;
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Widgets\iCanBeAligned::getAlign()
-     */
-    public function getAlign()
-    {
-        if (! $this->isAlignSet()) {
-            if ($this->getDataType() instanceof NumberDataType || $this->getDataType() instanceof PriceDataType) {
-                $this->setAlign(EXF_ALIGN_OPPOSITE);
-            } elseif ($this->getDataType() instanceof BooleanDataType) {
-                $this->setAlign(EXF_ALIGN_CENTER);
-            } else {
-                $this->setAlign(EXF_ALIGN_DEFAULT);
-            }
-        }
-        return $this->getAlignDefault();
     }
 }
 ?>

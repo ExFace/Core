@@ -35,7 +35,7 @@ abstract class WidgetDimensionFactory extends AbstractFactory
 
     /**
      *
-     * @param exface $exface            
+     * @param Workbench $exface            
      * @param string|WidgetDimension $string_or_dimension            
      * @return \exface\Core\CommonLogic\WidgetDimension
      */

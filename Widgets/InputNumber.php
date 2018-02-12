@@ -18,11 +18,13 @@ class InputNumber extends Input
     private $decimal_separator = null;
 
     private $thousand_separator = null;
+    
+    private $step = null;
 
     public function getPrecisionMax()
     {
-        if (is_null($this->precision_max) && $this->getDataType() instanceof NumberDataType){
-            $this->precision_max = $this->getDataType()->getPrecisionMax();
+        if (is_null($this->precision_max) && $this->getValueDataType() instanceof NumberDataType){
+            $this->precision_max = $this->getValueDataType()->getPrecisionMax();
         }
         return $this->precision_max;
     }
@@ -44,8 +46,8 @@ class InputNumber extends Input
     
     public function getPrecisionMin()
     {
-        if (is_null($this->precision_min) && $this->getDataType() instanceof NumberDataType){
-            $this->precision_min = $this->getDataType()->getPrecisionMin();
+        if (is_null($this->precision_min) && $this->getValueDataType() instanceof NumberDataType){
+            $this->precision_min = $this->getValueDataType()->getPrecisionMin();
         }
         return $this->precision_min;
     }
@@ -149,8 +151,9 @@ class InputNumber extends Input
     public function getThousandsSeparator()
     {
         if (is_null($this->thousand_separator)) {
-            if (($this->getDataType() instanceof NumberDataType) && $this->getDataType()->getGroupDigits()) {
-                $this->thousand_separator = $this->translate('LOCALIZATION.NUMBER.THOUSANDS_SEPARATOR');
+            $type = $this->getValueDataType();
+            if ($type instanceof NumberDataType) {
+                $this->thousand_separator = $type->getGroupSeparator();
             }
         }
         return $this->thousand_separator;
@@ -172,5 +175,29 @@ class InputNumber extends Input
         $this->thousand_separator = $value;
         return $this;
     }
+    
+    /**
+     * @return integer|null
+     */
+    public function getStep()
+    {
+        return $this->step;
+    }
+
+    /**
+     * Sets the increment step for helper-buttons (if supported by the template).
+     * 
+     * @uxon-property step
+     * @uxon-type integer
+     * 
+     * @param integer $step
+     * @return InputNumber
+     */
+    public function setStep($step)
+    {
+        $this->step = $step;
+        return $this;
+    }
+
 }
 ?>

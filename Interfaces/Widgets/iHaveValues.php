@@ -1,7 +1,7 @@
 <?php
 namespace exface\Core\Interfaces\Widgets;
 
-use exface\Core\CommonLogic\Model\Expression;
+use exface\Core\Interfaces\Model\ExpressionInterface;
 
 interface iHaveValues extends iHaveValue
 {

@@ -241,8 +241,19 @@ interface MetaObjectInterface extends ExfaceClassInterface, AliasInterface
      */
     public function hasUidAttribute();
     
+    /**
+     * Returns the alias of the label attribute for this object or NULL if no label attribute exists.
+     * 
+     * @return string|null
+     */
     public function getLabelAttributeAlias();
     
+    /**
+     * 
+     * 
+     * @param string $value
+     * @return MetaObjectInterface
+     */
     public function setLabelAttributeAlias($value);
     
     /**
@@ -251,6 +262,13 @@ interface MetaObjectInterface extends ExfaceClassInterface, AliasInterface
      * @return MetaAttributeInterface
      */
     public function getLabelAttribute();
+    
+    /**
+     * Returns TRUE if the object has a label attribute and FALSE otherwise
+     *
+     * @return boolean
+     */
+    public function hasLabelAttribute();
     
     public function getDataSourceId();
     

@@ -43,7 +43,14 @@ interface WidgetInterface extends ExfaceClassInterface, iCanBeCopied
      * @param \exface\Core\Interfaces\DataSheets\DataSheetInterface $data_sheet            
      * @return void
      */
-    function prefill(DataSheetInterface $data_sheet);
+    public function prefill(DataSheetInterface $data_sheet);
+    
+    /**
+     * Returns TRUE if this widget can be prefilled and FALSE otherwise.
+     * 
+     * @return boolean
+     */
+    public function isPrefillable();
 
     /**
      * Adds attributes, filters, etc.
@@ -210,7 +217,7 @@ interface WidgetInterface extends ExfaceClassInterface, iCanBeCopied
      * or in any unit compatible with the current template (in this case, the value is alphanumeric because the unit must be
      * specified directltly).
      *
-     * @param float|string $value            
+     * @param WidgetDimension|string $value            
      * @return WidgetInterface
      */
     public function setWidth($value);
@@ -228,7 +235,7 @@ interface WidgetInterface extends ExfaceClassInterface, iCanBeCopied
      * or in any unit compatible with the current template (in this case, the value is alphanumeric because the unit must be
      * specified directltly).
      *
-     * @param float|string $value            
+     * @param WidgetDimension|string $value            
      * @return WidgetInterface
      */
     public function setHeight($value);
@@ -438,5 +445,23 @@ interface WidgetInterface extends ExfaceClassInterface, iCanBeCopied
      * @return \exface\Core\CommonLogic\UxonObject|\exface\Core\CommonLogic\UxonObject
      */
     public function exportUxonObjectOriginal();
+    
+    /**
+     * Returns TRUE if prefilling is explicitly disabled for this widget and FALSE otherwise (default).
+     *
+     * @return boolean
+     */
+    public function getDoNotPrefill();
+    
+    /**
+     * Disable prefilling this widget with input or prefill data, making it allways have the value defined in UXON.
+     * 
+     * @uxon-property do_not_prefill
+     * @uxon-type boolean
+     * 
+     * @param boolean $true_or_false
+     * @return WidgetInterface
+     */
+    public function setDoNotPrefill($true_or_false);
 }
 ?>

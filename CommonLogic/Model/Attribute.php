@@ -712,6 +712,7 @@ class Attribute implements MetaAttributeInterface
      */
     public function is(MetaAttributeInterface $attribute)
     {
+        // IDEA perhaps it would be better to use $attribute->getAliasWithRelationPath() for comparison?
         if (strcasecmp($this->getAlias(), $attribute->getAlias()) === 0 && $this->getObject()->is($attribute->getObject())) {
             return true;
         }

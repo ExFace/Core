@@ -30,7 +30,14 @@ class NumberDataType extends AbstractDataType
     private $groupDigits = true;
     
     private $groupLength = 3;
+    
+    private $groupSeparator = null;
 
+    /**
+     *
+     * {@inheritdoc}
+     * @see AbstractDataType::cast()
+     */
     public static function cast($string)
     {
         if (is_numeric($string)) {
@@ -84,6 +91,7 @@ class NumberDataType extends AbstractDataType
     {
         return SortingDirectionsDataType::DESC($this->getWorkbench());
     }
+    
     /**
      * @return integer|null
      */
@@ -114,6 +122,8 @@ class NumberDataType extends AbstractDataType
     }
 
     /**
+     * Returns the maximum number of fraction digits (precision) or NULL if unlimited.
+     * 
      * @return integer|null
      */
     public function getPrecisionMax()
@@ -122,7 +132,7 @@ class NumberDataType extends AbstractDataType
     }
 
     /**
-     * Sets a maximum precision (number of fractional digits).
+     * Sets a maximum precision (number of fractional digits) - unlimited (null) by default.
      * 
      * Values will be rounded to this number of fractional digits
      * without raising errors.
@@ -130,14 +140,18 @@ class NumberDataType extends AbstractDataType
      * @uxon-property precision_max
      * @uxon-type integer
      * 
-     * @param integer $precisionMax
+     * @param integer|null $precisionMax
      * @return NumberDataType
      */
     public function setPrecisionMax($precisionMax)
     {
-        $value = intval($precisionMax);
-        if ($this->getPrecisionMin() && $value < $this->getPrecisionMin()){
-            throw new DataTypeConfigurationError($this, 'Minimum precision ("' . $value . '") of ' . $this->getAliasWithNamespace() . ' less than maximum precision ("' . $this->getPrecisionMax() . '")!', '6XALZHW');
+        if (is_null($precisionMax)) {
+            $value = null;
+        } else {
+            $value = intval($precisionMax);
+            if ($this->getPrecisionMin() && $value < $this->getPrecisionMin()){
+                throw new DataTypeConfigurationError($this, 'Minimum precision ("' . $value . '") of ' . $this->getAliasWithNamespace() . ' less than maximum precision ("' . $this->getPrecisionMax() . '")!', '6XALZHW');
+            }
         }
         $this->precisionMax = $value;
         return $this;
@@ -278,6 +292,38 @@ class NumberDataType extends AbstractDataType
         $this->groupLength = NumberDataType::cast($number);
         return $this;
     }
+    
+    /**
+     * Returns the digit group separator or NULL if not defined.
+     * 
+     * @return string|null
+     */
+    public function getGroupSeparator()
+    {
+        if (is_null($this->groupSeparator)) {
+            $this->groupSeparator = $this->getWorkbench()->getCoreApp()->getTranslator()->translate('LOCALIZATION.NUMBER.THOUSANDS_SEPARATOR');
+        }
+        return $this->groupSeparator;
+    }
+
+    /**
+     * Sets a language-agnostic digit group separator for this data type.
+     * 
+     * If not set and digit grouping is enabled, the default separator for the current language
+     * will be used automatically.
+     * 
+     * @uxon-property group_separator
+     * @uxon-type string
+     * 
+     * @param string $groupSeparator
+     * @return NumberDataType
+     */
+    public function setGroupSeparator($groupSeparator)
+    {
+        $this->groupSeparator = $groupSeparator;
+        return $this;
+    }
+
 
 }
 ?>

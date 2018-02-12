@@ -8,8 +8,7 @@ namespace exface\Core\Widgets;
  *  {
  *      "object_alias": "alexa.RMS.CONSUMER_COMPLAINT",
  *      "attribute_alias": "COMPLAINT_DATE",
- *      "id": "complaint_date",
- *      "value": "heute"
+ *      "value": "today"
  *  }
  * 
  * Supported input-formats and -values are:
@@ -29,5 +28,29 @@ namespace exface\Core\Widgets;
  */
 class InputDate extends Input
 {
+    private $format = null;
+    
+    /**
+     * @return string|null
+     */
+    public function getFormat()
+    {
+        return $this->format;
+    }
+
+    /**
+     * Sets the display format for the value.
+     * 
+     * @uxon-property format
+     * @uxon-type string
+     * 
+     * @param string $format
+     * @return InputDate
+     */
+    public function setFormat($format)
+    {
+        $this->format = $format;
+        return $this;
+    }
 }
 ?>

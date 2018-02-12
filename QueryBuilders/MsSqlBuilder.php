@@ -7,8 +7,11 @@ use exface\Core\CommonLogic\Model\Aggregator;
 /**
  * A query builder for Microsoft SQL.
  *
- * Data address properties for objects:
- * - SQL_SELECT_WHERE - custom where statement automatically appended to direct selects for this object (not if the object's table
+ * ## Data source options
+ * 
+ * ### On object level
+ * 
+ * - **SQL_SELECT_WHERE** - custom where statement automatically appended to direct selects for this object (not if the object's table
  * is joined!). Usefull for generic tables, where different meta objects are stored and distinguished by specific keys in a
  * special column. The value of SQL_SELECT_WHERE should contain the [#~alias#] placeholder: e.g. [#~alias#].mycolumn = 'myvalue'.
  *

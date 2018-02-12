@@ -21,6 +21,16 @@ namespace exface\Core\Widgets;
  */
 class DataList extends DataTable
 {
-    
+
+    /**
+     * The DataList allways loads data automatically.
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Data::getAutoloadData()
+     */
+    public function getAutoloadData()
+    {
+        return true;
+    }
 }
 ?>

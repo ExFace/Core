@@ -2,26 +2,51 @@
 namespace exface\Core\Templates\AbstractAjaxTemplate\Elements;
 
 use exface\Core\Factories\WidgetLinkFactory;
+use exface\Core\Interfaces\Widgets\iHaveValue;
 
+/**
+ * 
+ * @method iHaveValue getWidget()
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
 trait JqueryLiveReferenceTrait {
 
+    /**
+     * Returns javascript code to transfer the value from the referenced element to
+     * the one owning the reference.
+     * 
+     * The code ends with a semicolon.
+     * 
+     * @return string
+     */
     protected function buildJsLiveReference()
     {
         $output = '';
-        if ($link = $this->getWidget()->getValueWidgetLink()) {
-            $linked_element = $this->getTemplate()->getElementByWidgetId($link->getWidgetId(), $this->getWidget()->getPage());
-            if ($linked_element) {
-                $output = '
-						' . $this->buildJsValueSetter($linked_element->buildJsValueGetter($link->getColumnId())) . ';';
-            }
+        if ($linked_element = $this->getLinkedTemplateElement()) {
+            $output = '
+					' . $this->buildJsValueSetter($linked_element->buildJsValueGetter($this->getWidget()->getValueWidgetLink()->getColumnId())) . ';';
         }
         return $output;
     }
+    
+    /**
+     * Returns TRUE if this element has a live reference to fetch a value
+     * from another element and FALSE otherwise.
+     * 
+     * @return boolean
+     */
+    protected function hasLiveReference()
+    {
+        return $this->getWidget()->getValueWidgetLink() ? true : false;
+    }
 
     /**
-     * Makes sure, this element is always updated, once the value of a live reference changes - of course, only if there is a live reference!
+     * Adds an on-change script to the referenced element to make sure, this element 
+     * is always updated, once the referenced value changes.
      *
-     * @return euiInput
+     * @return AbstractJqueryElement
      */
     protected function registerLiveReferenceAtLinkedElement()
     {
@@ -30,7 +55,12 @@ trait JqueryLiveReferenceTrait {
         }
         return $this;
     }
-
+    
+    /**
+     * Returns the referenced template element or NULL if this element has no live reference.
+     * 
+     * @return AbstractJqueryElement||NULL
+     */
     public function getLinkedTemplateElement()
     {
         $linked_element = null;
