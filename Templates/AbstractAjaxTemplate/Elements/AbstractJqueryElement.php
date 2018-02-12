@@ -572,7 +572,9 @@ abstract class AbstractJqueryElement implements ExfaceClassInterface
     }
 
     /**
-     * Adds a JavaScript snippet to the script, that will get executed every time the value of this element changes
+     * Adds a JavaScript snippet to the script, that will get executed every time the value of this element changes.
+     * 
+     * NOTE: the event object is available via the javascript variable "event".
      *
      * @param string $string            
      * @return \exface\Core\Templates\AbstractAjaxTemplate\Elements\AbstractJqueryElement
