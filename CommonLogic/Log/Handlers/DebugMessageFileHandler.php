@@ -50,7 +50,12 @@ class DebugMessageFileHandler implements LogHandlerInterface
         }
         
         $fileName = $context["id"] . $this->staticFilenamePart;
-        if (!$fileName) {
+        // Do no do anything if no file name could be determined or the file exists. The latter
+        // case is important as if two loggers would attempt to log to the same file (e.g. the
+        // main logger and the debug logger), the file would have double content and it would
+        // be impossible to parse it. Since the file name is the id of the debug message, we
+        // can be sure that it's content will be the same every time we attempt to write it.
+        if (! $fileName || file_exists($this->dir . "/" . $fileName)) {
             return;
         }
         
