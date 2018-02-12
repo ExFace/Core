@@ -8,7 +8,6 @@
     "short_description": "",
     "replaces_page_alias": null,
     "contents": {
-        "id": "object",
         "object_alias": "exface.Core.OBJECT",
         "widget_type": "DataTable",
         "filters": [
