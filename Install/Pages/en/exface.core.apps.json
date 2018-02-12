@@ -10,7 +10,6 @@
     "contents": {
         "object_alias": "exface.Core.APP",
         "widget_type": "DataTable",
-        "id": "apps",
         "multi_select": true,
         "filters": [
             {
