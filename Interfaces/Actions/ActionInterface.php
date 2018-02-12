@@ -421,11 +421,20 @@ interface ActionInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
     public function setResultMessageText($value);
     
     /**
-     * Returns TRUE if this action matches the given alias and FALSE otherwise.
+     * Returns TRUE if this action matches the given alias or inherits for the action identified by it.
      * 
+     * @param ActionInterface|string $action_or_alias
      * @return boolean
      */
     public function is($action_or_alias);
+    
+    /**
+     * Returns TRUE if this action matches the given alias and FALSE otherwise.
+     * 
+     * @param ActionInterface|string $action_or_alias
+     * @return boolean
+     */
+    public function isExactly($action_or_alias);
 }
 
 ?>

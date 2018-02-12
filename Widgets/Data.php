@@ -95,6 +95,8 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
     
     private $has_system_columns = false;
 
+    private $autoload_data = true;
+
     protected function init()
     {
         parent::init();
@@ -104,9 +106,14 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
         }
     }
 
-    public function addColumn(DataColumn $column)
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveColumns::addColumn()
+     */
+    public function addColumn(DataColumn $column, $position = NULL)
     {
-        $this->getColumnGroupMain()->addColumn($column);
+        $this->getColumnGroupMain()->addColumn($column, $position);
         return $this;
     }
 
@@ -118,6 +125,19 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
     public function createColumnFromUxon(UxonObject $uxon)
     {
         return $this->getColumnGroupMain()->createColumnFromUxon($uxon);
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveColumns::removeColumn()
+     */
+    public function removeColumn(DataColumn $column)
+    {
+        foreach ($this->getColumnGroups() as $grp) {
+            $grp->removeColumn($column);
+        }
+        return $this;
     }
 
     /**
@@ -395,7 +415,7 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
     {
         $result = array();
         foreach ($this->getColumns() as $col) {
-            if ($col->getAttribute() && $col->getAttribute()->isSystem()) {
+            if ($col->hasAttributeReference() && $col->getAttribute()->isSystem()) {
                 $result[] = $col;
             }
         }
@@ -417,26 +437,24 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
      *
      * Example:
      * "columns": [
-     * {
-     * "attribute_alias": "PRODUCT__LABEL",
-     * "caption": "Product"
-     * },
-     * {
-     * "attribute_alias": "PRODUCT__BRAND__LABEL"
-     * },
-     * {
-     * "caption": "Sales",
-     * "columns": [
-     * {
-     * "attribute_alias": "QUANTITY:SUM",
-     * "caption": "Qty."
-     * },
-     * {
-     * "attribute_alias": "VALUE:SUM",
-     * "caption": "Sum"
-     * }
-     * ]
-     * }
+     *  {
+     *      "attribute_alias": "PRODUCT__LABEL",
+     *      "caption": "Product"
+     *  },
+     *  {
+     *      "attribute_alias": "PRODUCT__BRAND__LABEL"
+     *  },
+     *  {
+     *      "caption": "Sales",
+     *      "columns": [
+     *  {
+     *      "attribute_alias": "QUANTITY:SUM",
+     *      "caption": "Qty."
+     *  },
+     *  {
+     *      "attribute_alias": "VALUE:SUM",
+     *      "caption": "Sum"
+     *  }
      * ]
      *
      * @uxon-property columns
@@ -649,12 +667,17 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
                     $prefilled = false;
                     foreach ($attribute_filters as $filter) {
                         if ($filter->getComparator() == $condition->getComparator()) {
-                            $filter->setValue($condition->getValue());
+                            if ($filter->isPrefillable()) {
+                                $filter->setValue($condition->getValue());
+                            }
                             $prefilled = true;
                         }
                     }
                     if ($prefilled == false) {
-                        $attribute_filters[0]->setValue($condition->getValue());
+                        $filter = $attribute_filters[0];
+                        if ($filter->isPrefillable()) {
+                            $filter->setValue($condition->getValue());
+                        }
                     }
                 }
             }
@@ -906,7 +929,7 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
         $editors = array();
         foreach ($this->getColumns() as $col) {
             if ($col->isEditable()) {
-                $editors[] = $col->getEditor();
+                $editors[] = $col->getCellWidget();
             }
         }
         return $editors;
@@ -1388,6 +1411,36 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
     {
         $this->hide_footer = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;
+    }
+
+    public function getAutoloadData()
+    {
+        return $this->autoload_data;
+    }
+
+    /**
+     * Set to FALSE to prevent initial loading of data or TRUE (default) to enable it.
+     * 
+     * @uxon-property autoload_data
+     * @uxon-type boolean
+     * 
+     * @param boolean $autoloadData
+     * @return Data
+     */
+    public function setAutoloadData($autoloadData)
+    {
+        $this->autoload_data = BooleanDataType::cast($autoloadData);
+        return $this;
+    }
+    
+    /**
+     * Returns a text which can be displayed if initial loading is prevented.
+     * 
+     * @return string
+     */
+    public function getTextNotLoaded()
+    {
+        return $this->translate('WIDGET.DATA.NOT_LOADED');
     }
 }
 

@@ -17,8 +17,7 @@ namespace exface\Core\Widgets;
  * @author Andrej Kabachnik
  *        
  */
-class DataCards extends DataList
+class DataCards extends DataTable
 {
-    
 }
 ?>

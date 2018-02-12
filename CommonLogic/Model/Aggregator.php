@@ -4,6 +4,11 @@ namespace exface\Core\CommonLogic\Model;
 use exface\Core\Interfaces\Model\AggregatorInterface;
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
 use exface\Core\CommonLogic\Workbench;
+use exface\Core\Interfaces\DataTypes\DataTypeInterface;
+use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\DataTypes\IntegerDataType;
+use exface\Core\DataTypes\NumberDataType;
+use exface\Core\Factories\DataTypeFactory;
 
 /**
  * Aggregators are special expressions to define data aggregation like SUM, AVG, but also COUNT_IF(condition).
@@ -75,5 +80,49 @@ class Aggregator implements AggregatorInterface {
     public function __toString()
     {
         return $this->exportString();
+    }
+    
+    /**
+     * 
+     * @param DataTypeInterface $aggregatedType
+     * @return DataTypeInterface
+     */
+    public function getResultDataType(DataTypeInterface $aggregatedType)
+    {
+        switch ($this->getFunction()->__toString()) {
+            case AggregatorFunctionsDataType::SUM:
+                if ($aggregatedType instanceof BooleanDataType) {
+                    $type = new IntegerDataType($this->getWorkbench());
+                } else {
+                    $type = $aggregatedType->copy();
+                }
+                break;
+            case AggregatorFunctionsDataType::AVG:
+                if ($aggregatedType instanceof NumberDataType) {
+                    // If averaging numbers, we can keep the precision in most cases
+                    $type = $aggregatedType->copy();
+                    // However, if it is a whole number, it is a good idea to show at
+                    // least one fraction digit as averages very often result in fractional
+                    // values.
+                    if (! $type->getPrecisionMin() && $type->getPrecisionMax() === 0) {
+                        $type->setPrecisionMax(1);
+                    }
+                } else {
+                    $type = new NumberDataType($this->getWorkbench());
+                }
+                break;
+            case AggregatorFunctionsDataType::COUNT:
+            case AggregatorFunctionsDataType::COUNT_DISTINCT:
+            case AggregatorFunctionsDataType::COUNT_IF:
+                $type = new IntegerDataType($this->getWorkbench());
+                break;
+            case AggregatorFunctionsDataType::MIN:
+            case AggregatorFunctionsDataType::MAX:
+                $type = $aggregatedType->copy();
+                break;
+            default:
+                $type = DataTypeFactory::createBaseDataType($this->getWorkbench());
+        }
+        return $type;
     }
 }

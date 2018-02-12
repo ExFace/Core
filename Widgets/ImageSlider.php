@@ -29,5 +29,16 @@ class ImageSlider extends DataCards
         $this->image_title_column_id = $value;
         return $this;
     }
+
+    /**
+     * Keine sinnvolle Funktion fuer ImageSlider, gibt daher immer true zurueck.
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\DataCards::getAutoloadData()
+     */
+    public function getAutoloadData()
+    {
+        return true;
+    }
 }
 ?>

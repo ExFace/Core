@@ -304,9 +304,10 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
     
     /**
      * Returns an array of filters, that filter over the given attribute.
-     * It will mostly contain only one filter, but if there
-     * are different filters with different comparators (like from+to for numeric or data values), there will be multiple filters
-     * in the list.
+     * 
+     * It will mostly contain only one filter, but if there are different filters with different 
+     * comparators (like from+to for numeric or data values), there will be multiple filters in 
+     * the list. 
      *
      * @param MetaAttributeInterface $attribute
      * @return Filter[]
@@ -317,7 +318,7 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
         foreach ($this->getFilters() as $filter_widget) {
             if ($filter_widget->getAttributeAlias() == $attribute->getAliasWithRelationPath()) {
                 $result[] = $filter_widget;
-            }
+            } 
         }
         return $result;
     }

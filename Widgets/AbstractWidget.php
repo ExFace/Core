@@ -223,8 +223,9 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
      */
     public final function prefill(DataSheetInterface $data_sheet)
     {
-        if ($this->getDoNotPrefill())
+        if ($this->getDoNotPrefill()) {
             return;
+        }
         $this->getWorkbench()->eventManager()->dispatch(EventFactory::createWidgetEvent($this, 'Prefill.Before'));
         $this->setPrefillData($data_sheet);
         $this->doPrefill($data_sheet);
@@ -275,12 +276,13 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
     }
     
     /**
-     * Returns TRUE if this widget can be prefilled and FALSE otherwise.
-     * @return boolean
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\WidgetInterface::isPrefillable()
      */
-    protected function isPrefillable()
+    public function isPrefillable()
     {
-        return true;
+        return ! $this->getDoNotPrefill();
     }
 
     protected function createDataSheet()
@@ -654,7 +656,6 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\WidgetInterface::getWidth()
      */
     public function getWidth()
@@ -680,7 +681,6 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
      * @uxon-type string
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\WidgetInterface::setWidth()
      */
     public function setWidth($value)
@@ -946,7 +946,7 @@ else {
      */
     public function getHint()
     {
-        if (! $this->hint && ($this instanceof iShowSingleAttribute) && $this->getAttribute()) {
+        if (! $this->hint && ($this instanceof iShowSingleAttribute) && $this->hasAttributeReference() && $this->getAttribute()) {
             $this->setHint($this->getAttribute()->getHint());
         }
         return $this->hint;
@@ -1212,11 +1212,21 @@ else {
         return $this->getWorkbench()->getCoreApp()->getTranslator()->translate($message_id, $placeholders, $number_for_plurification);
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\WidgetInterface::getDoNotPrefill()
+     */
     public function getDoNotPrefill()
     {
         return $this->do_not_prefill;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\WidgetInterface::setDoNotPrefill()
+     */
     public function setDoNotPrefill($value)
     {
         $this->do_not_prefill = BooleanDataType::cast($value);

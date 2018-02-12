@@ -10,6 +10,13 @@ use exface\Core\Exceptions\Model\ExpressionRebaseImpossibleError;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Formulas\FormulaInterface;
 use exface\Core\Interfaces\Model\ExpressionInterface;
+use exface\Core\CommonLogic\DataSheets\DataAggregation;
+use exface\Core\DataTypes\AggregatorFunctionsDataType;
+use exface\Core\DataTypes\NumberDataType;
+use exface\Core\DataTypes\IntegerDataType;
+use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\Interfaces\DataTypes\DataTypeInterface;
+use exface\Core\Interfaces\Model\AggregatorInterface;
 
 class Expression implements ExpressionInterface
 {
@@ -348,12 +355,19 @@ class Expression implements ExpressionInterface
                 case self::TYPE_FORMULA:
                     $this->data_type = $this->formula->getDataType();
                     break;
-                case self::TYPE_ATTRIBUTE:
-                    // FIXME How to get the attribute by alias, if we do not know the object here???
-                    break;
                 case self::TYPE_CONSTANT:
                     $this->data_type = DataTypeFactory::createFromAlias($this->exface, 'exface.Core.String');
                     break;
+                case self::TYPE_ATTRIBUTE:
+                    if (! is_null($this->getMetaObject())) {
+                        $attribute_type = $this->getAttribute()->getDataType();
+                        if ($aggr = DataAggregation::getAggregatorFromAlias($this->getWorkbench(), $this->toString())) {
+                            $this->data_type = $aggr->getResultDataType($attribute_type);
+                        } else {
+                            $this->data_type = $attribute_type->copy();
+                        }
+                        break;
+                    }                 
                 default:
                     $this->data_type = DataTypeFactory::createBaseDataType($this->exface);
             }

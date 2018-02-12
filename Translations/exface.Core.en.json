@@ -96,11 +96,6 @@
     "CONTEXT.OBJECTBASKET.REMOVE": "Remove",
     "CONTEXT.OBJECTBASKET.REMOVE_ALL": "Remove all",
 	
-	"DATE.FORMAT.SCREEN.EXCEL": "YYYY-MM-DD",
-	"DATE.FORMAT.SCREEN.PHP": "Y-m-d",
-	"DATETIME.FORMAT.SCREEN.EXCEL": "YYYY-MM-DD HH:MM:SS",
-	"DATETIME.FORMAT.SCREEN.PHP": "Y-m-d H:i:s",
-	
 	"GLOBAL.ACTIONS": "Actions",
 	
 	"GLOBAL.AGGREGATOR_FUNCTIONS.SUM": "Sum",
@@ -120,8 +115,12 @@
     "INSTALLER.SQLSCHEMA.FAILED": "SQL-schema-update %first_failed_id% failed: %error_text%|%counter% SQL-schema-updates failed starting with update %first_failed_id%: %error_text%",
 	
 	"LOCALIZATION.DATE.DATE_FORMAT": "d.m.Y",
-    "LOCALIZATION.DATE.DATETIME_FORMAT": "d.m.Y H:i:s",
-    "LOCALIZATION.DATE.TIME_FORMAT": "H:i:s",
+    "LOCALIZATION.DATE.DATE_FORMAT_JS": "dd.MM.yyyy",
+    "LOCALIZATION.DATE.DATE_FORMAT_EXCEL": "DD.MM.YYYY",
+	"LOCALIZATION.DATE.DATETIME_FORMAT": "d.m.Y H:i:s",
+    "LOCALIZATION.DATE.DATETIME_FORMAT_JS": "dd.MM.yyyy HH:mm:ss",
+    "LOCALIZATION.DATE.DATETIME_FORMAT_EXCEL": "DD.MM.YYYY HH:MM:SS",
+	"LOCALIZATION.DATE.TIME_FORMAT": "H:i:s",
     "LOCALIZATION.NUMBER.DECIMAL_SEPARATOR": ".",
     "LOCALIZATION.NUMBER.THOUSANDS_SEPARATOR": " ",
     "LOCALIZATION.PRICE.PRECISION_MAX": 2,
@@ -138,6 +137,7 @@
 	"WIDGET.DATA.NO_DATA_FOUND": "No data could be found for the current set of filters!",
 	"WIDGET.DATA.HELP.FILTERS": "Filters",
 	"WIDGET.DATA.HELP.COLUMNS": "Columns",
+	"WIDGET.DATA.NOT_LOADED": "No data was loaded for performance reasons. Please first set the filters, then press Search/Reload!",
 	
 	"WIDGET.DATACONFIGURATOR.FILTER_TAB_CAPTION": "Filters",
 	"WIDGET.DATACONFIGURATOR.SORTER_TAB_CAPTION": "Sorting",

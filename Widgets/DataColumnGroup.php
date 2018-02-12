@@ -1,13 +1,13 @@
 <?php
 namespace exface\Core\Widgets;
 
+use exface\Core\CommonLogic\UxonObject;
+use exface\Core\CommonLogic\Model\RelationPath;
+use exface\Core\Exceptions\Model\MetaObjectHasNoUidAttributeError;
+use exface\Core\Exceptions\Widgets\WidgetHasNoUidColumnError;
+use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Widgets\iHaveColumns;
-use exface\Core\CommonLogic\Model\RelationPath;
-use exface\Core\Exceptions\Widgets\WidgetHasNoUidColumnError;
-use exface\Core\Exceptions\Model\MetaObjectHasNoUidAttributeError;
-use exface\Core\CommonLogic\UxonObject;
-use exface\Core\Factories\WidgetFactory;
 
 /**
  * The DataColumnGroup is a group of columns in a data widget from one side and at the same time a full featured data widget on the other.
@@ -28,7 +28,12 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
 
     private $uid_column_id = null;
 
-    public function addColumn(DataColumn $column)
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveColumns::addColumn()
+     */
+    public function addColumn(DataColumn $column, $position = NULL)
     {
         $column->setMetaObject($this->getMetaObject());
         if ($column->isEditable()) {
@@ -37,7 +42,7 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
             // If an attribute of a related object should be editable, we need it's system attributes as columns -
             // that is, at least a column with the UID of the related object, but maybe also some columns needed for
             // the behaviors of the related object
-            if ($column->getAttribute() && $rel_path = $column->getAttribute()->getRelationPath()->toString()) {
+            if ($column->hasAttributeReference() && $rel_path = $column->getAttribute()->getRelationPath()->toString()) {
                 $rel = $this->getMetaObject()->getRelation($rel_path);
                 if ($rel->isForwardRelation()) {
                     $this->getParent()->addColumnsForSystemAttributes($rel_path);
@@ -48,7 +53,31 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
                 }
             }
         }
-        $this->columns[] = $column;
+        
+        if (is_null($position) || ! is_numeric($position)) {
+            $this->columns[] = $column;
+        } else {
+            array_splice($this->columns, $position, 0, array(
+                $column
+            ));
+        }
+        
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveColumns::removeColumn()
+     */
+    public function removeColumn(DataColumn $column)
+    {
+        $key = array_search($column, $this->columns);
+        if ($key !== false){
+            unset($this->columns[$key]);
+            // Reindex the array to avoid index gaps
+            $this->columns = array_values($this->columns);
+        }
         return $this;
     }
 
@@ -324,6 +353,15 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
         $uxon = parent::exportUxonObject();
         // TODO add properties specific to this widget here
         return $uxon;
+    }
+    
+    /**
+     * 
+     * @return \exface\Core\Widgets\Data
+     */
+    public function getDataWidget()
+    {
+        return $this->getParent();
     }
 }
 ?>
