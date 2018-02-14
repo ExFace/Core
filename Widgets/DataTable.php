@@ -8,6 +8,8 @@ use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Widgets\iHaveContextMenu;
 use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
+use exface\Core\Exceptions\Widgets\WidgetLogicError;
 
 /**
  * Renders data as a table with filters, columns, and toolbars.
@@ -94,12 +96,8 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
 
     private $row_details_action = 'exface.Core.ShowWidget';
 
-    private $row_groups_by_column_id = null;
-
-    private $row_groups_expand = 'all';
-
-    private $row_groups_show_count = true;
-
+    private $row_grouper = null;
+    
     private $context_menu_enabled = true;
 
     private $header_sort_multiple = false;
@@ -114,14 +112,6 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
             return false;
         else
             return true;
-    }
-
-    function hasRowGroups()
-    {
-        if ($this->getRowGroupsByColumnId())
-            return true;
-        else
-            return false;
     }
 
     /**
@@ -195,73 +185,66 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
 
     /**
      * Makes the table group rows by values of a column.
-     * Each group will have a header and will be collapsible.
+     * 
+     * Rows with equal values in the column being grouped by will be visually grouped together and separated
+     * from other groups via a group header, which will show the grouped value and additional information if
+     * configured. Most templates will support collapsing and expanding groups.
      *
-     * It is a good idea to give the column, that will be used for grouping an explicit id. This id is then
-     * what you need to specify in group_by_column_id. In most cases, the column used for grouping will be
-     * hidden, because it does not make much sens to show it's values within every group as they are the same
-     * in the group and are also visible in the group's title.
+     * You can group by column id if the data column already exists in the table or by attribute alias to
+     * make the system add a corresponding hidden column automatically.
      *
      * Set "expand" to FALSE to collapse all groups initially. Set "show_count" to TRUE to include the number
      * of rows within the group in it's header.
      *
      * Example:
-     * "group_rows": {
-     * "group_by_column_id": "my_column_id",
-     * "expand": true,
-     * "show_count": true
-     * "action_alias": "exface.Core.ShowWidget"
+     * {
+     *  "widget_type": "DataTable",
+     *  ...
+     *  "row_grouper": {
+     *      "group_by_attribute_alias": "MY_ATTRIBUTE",
+     *      "expand": true,
+     *      "show_count": true
+     *  }
      * }
      *
-     * @uxon-property group_rows
-     * @uxon-type Object
-     * 
-     * TODO create a separate DataRowGroup-widget
+     * @uxon-property row_grouper
+     * @uxon-type \exface\Core\Widgets\DataRowGrouper
      *
      * @param UxonObject $uxon            
      * @return DataTable
      */
-    public function setGroupRows(UxonObject $uxon)
+    public function setRowGrouper(UxonObject $uxon)
     {
-        if ($uxon->hasProperty('group_by_column_id'))
-            $this->setRowGroupsByColumnId($uxon->getProperty('group_by_column_id'));
-        if ($uxon->hasProperty('expand'))
-            $this->setRowGroupsExpand($uxon->getProperty('expand'));
-        if ($uxon->hasProperty('show_count'))
-            $this->setRowGroupsShowCount($uxon->getProperty('show_count'));
-        if ($uxon->hasProperty('action_alias'))
-            $this->setRowDetailsAction($uxon->getProperty('action_alias'));
+        $grouper = WidgetFactory::createFromUxon($this->getPage(), $uxon, $this, 'DataRowGrouper');
+        if (! ($grouper instanceof DataRowGrouper)) {
+            throw new WidgetPropertyInvalidValueError($this, 'Invalid widget type for the data row grouping: expecting DataRowGrouper or derivatives, received ' . $grouper->getWidgetType() . ' instead!');
+        }
+        $this->row_grouper = $grouper;
         return $this;
     }
-
-    public function getRowGroupsByColumnId()
+    
+    /**
+     * Returns the DataRowGrouper widget if row grouping is configured or throws exception.
+     * 
+     * @throws WidgetLogicError
+     * @return DataRowGrouper
+     */
+    public function getRowGrouper()
     {
-        return $this->row_groups_by_column_id;
+        if (is_null($this->row_grouper)) {
+            throw new WidgetLogicError($this, 'Property row_grouper not set prior to grouper initialization!');
+        }
+        return $this->row_grouper;
     }
-
-    public function setRowGroupsByColumnId($value)
+    
+    /**
+     * Returns TRUE if row grouping is enabled for this table and FALSE otherwise.
+     * 
+     * @return boolean
+     */
+    public function hasRowGroups()
     {
-        $this->row_groups_by_column_id = $value;
-    }
-
-    public function getRowGroupsExpand()
-    {
-        return $this->row_groups_expand;
-    }
-
-    public function setRowGroupsExpand($value)
-    {
-        $this->row_groups_expand = $value;
-    }
-
-    public function getRowGroupsShowCount()
-    {
-        return $this->row_groups_show_count;
-    }
-
-    public function setRowGroupsShowCount($value)
-    {
-        $this->row_groups_show_count = $value;
+        return is_null($this->row_grouper) ? false : true;
     }
 
     public function getContextMenuEnabled()

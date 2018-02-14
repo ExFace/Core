@@ -83,6 +83,9 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
 
     /**
      * Creates a DataColumn from a meta attribute.
+     * 
+     * The column is not automatically added to the column group - use addColumn() explicitly!
+     * 
      * For relations the column will automatically show the label of the related object
      *
      * @param MetaAttributeInterface $attribute            

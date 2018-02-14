@@ -448,19 +448,19 @@ JS;
         }
         
         if ($widget->hasRowGroups()){
-            if ($widget->getRowGroupsShowCount()){
+            if ($widget->getRowGrouper()->getShowCounter()){
                 $rowGroupConter = "' ('+rows.count()+')'";
             } else {
                 $rowGroupConter = "''";
             }
             
-            if ($widget->getRowGroupsExpand() == 'all'){
+            if ($widget->getRowGrouper()->getExpandAllRows()){
                 // TODO
             }
             
             $rowGroup = <<<JS
         , "rowGroup": {
-            dataSrc: '{$widget->getRowGroupsByColumnId()}',
+            dataSrc: '{$widget->getRowGrouper()->getGroupByColumn()->getDataColumnName()}',
             startRender: function ( rows, group ) {
                 var counter = {$rowGroupConter} ;
                 return $('<tr onclick="{$this->buildJsFunctionPrefix()}RowGroupToggle(this);"/>')
