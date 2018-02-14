@@ -116,12 +116,28 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
         $this->getColumnGroupMain()->addColumn($column, $position);
         return $this;
     }
-
+    
+    /**
+     * Creates a DataColumn from a meta attribute.
+     * 
+     * The column is not automatically added to the column group - use addColumn() explicitly!
+     * 
+     * For relations the column will automatically show the label of the related object
+     *
+     * @param MetaAttributeInterface $attribute            
+     * @return \exface\Core\Widgets\DataColumn
+     */
     public function createColumnFromAttribute(MetaAttributeInterface $attribute, $caption = null, $hidden = null)
     {
         return $this->getColumnGroupMain()->createColumnFromAttribute($attribute, $caption, $hidden);
     }
     
+    /**
+     * The column is not automatically added to the column group - use addColumn() explicitly!
+     * 
+     * @param UxonObject $uxon
+     * @return \exface\Core\Widgets\DataColumn
+     */
     public function createColumnFromUxon(UxonObject $uxon)
     {
         return $this->getColumnGroupMain()->createColumnFromUxon($uxon);
@@ -1201,8 +1217,8 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
         $table->setLazyLoading(false);
         $table->setPaginate(false);
         $table->setNowrap(false);
-        $table->setGroupRows(UxonObject::fromArray(array(
-            'group_by_column_id' => 'GROUP'
+        $table->setRowGrouper(UxonObject::fromArray(array(
+            'group_by_attribute_alias' => 'GROUP'
         )));
         
         // IMPORTANT: make sure the help table does not have a help button itself, because that would result in having

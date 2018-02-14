@@ -218,7 +218,7 @@ class Dialog extends Form implements iAmClosable, iHaveContextualHelp, iHaveHead
         $table->setLazyLoading(false);
         $table->setPaginate(false);
         $table->setNowrap(false);
-        // $table->setGroupRows(UxonObject::fromArray(array('group_by_column_id' => 'GROUP')));
+        // $table->setRowGrouper(UxonObject::fromArray(array('group_by_column_id' => 'GROUP')));
         
         // IMPORTANT: make sure the help table does not have a help button itself, because that would result in having
         // infinite children!

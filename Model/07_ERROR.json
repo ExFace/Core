@@ -1369,6 +1369,17 @@
             "ERROR_CODE": "6YI5RCU",
             "ERROR_TEXT": "Required widget property missing",
             "DESCRIPTION": ""
+        },
+        {
+            "CREATED_ON": "2018-02-14 21:47:58",
+            "MODIFIED_ON": "2018-02-14 21:47:58",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e811d0b514b5d698100205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "ERROR_CODE": "6Z5MAVK",
+            "ERROR_TEXT": "Invalid configuration for the DataRowGrouper",
+            "DESCRIPTION": ""
         }
     ],
     "totals_rows": [],
