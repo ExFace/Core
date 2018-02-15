@@ -5,7 +5,8 @@
     "menu_index": "6",
     "menu_visible": true,
     "name": "Formulas",
-    "short_description": "",
+    "description": "",
+    "intro": "",
     "replaces_page_alias": null,
     "contents": {
         "object_alias": "exface.Core.FORMULA",

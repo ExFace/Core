@@ -5,7 +5,8 @@
     "menu_index": "1",
     "menu_visible": true,
     "name": "Connections",
-    "short_description": "",
+    "description": "",
+    "intro": "",
     "replaces_page_alias": null,
     "contents": {
         "object_alias": "exface.Core.CONNECTION",

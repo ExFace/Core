@@ -5,7 +5,8 @@
     "menu_index": "2",
     "menu_visible": true,
     "name": "Apps",
-    "short_description": "",
+    "description": "",
+    "intro": "",
     "replaces_page_alias": null,
     "contents": {
         "object_alias": "exface.Core.APP",

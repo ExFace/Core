@@ -263,27 +263,45 @@ interface UiPageInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
      * @return UiPageInterface
      */
     public function setName($string);
-
+    
     /**
-     * Returns a short description of the page.
+     * Returns the description of this page.
      * 
-     * The short description will be used as menu hint or intro-text by most
-     * templates.
+     * The description is used as hint, tooltip or similar by most templates.
+     * It is a short text describing, what functionality the page offers:
+     * e.g. "View an manage meta object of installed apps" for the object-page
+     * in the metamodel editor.
      * 
      * @return string
      */
-    public function getShortDescription();
+    public function getDescription();
+    
+    /**
+     * Overwrites the description of this page.
+     *
+     * The description is used as hint, tooltip or similar by most templates.
+     * It is a short text describing, what functionality the page offers:
+     * e.g. "View an manage meta object of installed apps" for the object-page
+     * in the metamodel editor.
+     *
+     * @return string
+     */
+    public function setDescription($string);
 
     /**
-     * Overwrites the short description of the page.
+     * Returns an introduction text for the page to be used in contextual help, etc.
      * 
-     * The short description will be used as menu hint or intro-text by most
-     * templates.
+     * @return string
+     */
+    public function getIntro();
+
+    /**
+     * Overwrites introduction text for the page.
      * 
      * @param string $string
      * @return UiPageInterface
      */
-    public function setShortDescription($string);
+    public function setIntro($text);
 
     /**
      * Returns the qualified alias of the page, this one should replace when resolving widget links.
