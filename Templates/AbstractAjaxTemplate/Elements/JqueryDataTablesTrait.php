@@ -454,7 +454,7 @@ JS;
                 $rowGroupConter = "''";
             }
             
-            if ($widget->getRowGrouper()->getExpandAllRows()){
+            if (! $widget->getRowGrouper()->getExpandAllGroups()){
                 // TODO
             }
             

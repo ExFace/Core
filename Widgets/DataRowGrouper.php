@@ -4,6 +4,7 @@ namespace exface\Core\Widgets;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Exceptions\Widgets\WidgetNotFoundError;
+use exface\Core\Exceptions\Widgets\WidgetLogicError;
 
 /**
  * This widget is used to group rows in a data table.
@@ -109,6 +110,9 @@ class DataRowGrouper extends AbstractWidget
     /**
      * 
      * @throws WidgetNotFoundError
+     * @throws WidgetLogicError
+     * @throws WidgetConfigurationError
+     * 
      * @return \exface\Core\Widgets\DataColumn
      */
     public function getGroupByColumn()
@@ -118,8 +122,7 @@ class DataRowGrouper extends AbstractWidget
                 throw new WidgetConfigurationError($this, 'Alternative properties "group_by_attribute_alias" and "group_by_column_id" are defined at the same time for a DataRowGrouper widget: please use only one of them!', '6Z5MAVK');
             }
             if (! $col = $this->getDataTable()->getColumnByAttributeAlias($this->group_by_attribute_alias)) {
-                $col = $this->getDataTable()->createColumnFromAttribute($this->getMetaObject()->getAttribute($this->group_by_attribute_alias), null, true);
-                $this->getDataTable()->addColumn($col);
+                throw new WidgetLogicError('No data column "' . $this->group_by_attribute_alias . '" could be added automatically by the DataRowGrouper: try to add it manually to the DataTable.');
             }
         } elseif (! is_null($this->group_by_column_id)) {
             if (! $col = $this->getDataTable()->getColumn($this->group_by_column_id)) {
@@ -232,6 +235,10 @@ class DataRowGrouper extends AbstractWidget
     public function setGroupByAttributeAlias($alias)
     {
         $this->group_by_attribute_alias = $alias;
+        if (! $col = $this->getDataTable()->getColumnByAttributeAlias($this->group_by_attribute_alias)) {
+            $col = $this->getDataTable()->createColumnFromAttribute($this->getMetaObject()->getAttribute($this->group_by_attribute_alias), null, true);
+            $this->getDataTable()->addColumn($col);
+        }
         return $this;
     }
     
