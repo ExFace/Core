@@ -854,6 +854,19 @@ class UiPage implements UiPageInterface
         $this->description = $string;
         return $this;
     }
+     
+    /**
+     * @deprecated use setDescription() instead. To be removed in july 2018
+     * 
+     * @TODO remove in july 2018
+     * 
+     * @param string $string
+     * @return UiPageInterface
+     */
+    public function setShortDescription($string)
+    {
+        return $this->setDescription($string);
+    }
 
     /**
      * 
