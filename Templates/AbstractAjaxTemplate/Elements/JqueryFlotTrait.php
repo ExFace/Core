@@ -264,7 +264,7 @@ trait JqueryFlotTrait {
     protected function buildJsSeriesOptions(ChartSeries $series)
     {
         $options = '';
-        $color = $series->getDataColumn()->getColor();
+        $color = $series->getColor();
         switch ($series->getChartType()) {
             case ChartSeries::CHART_TYPE_LINE:
             case ChartSeries::CHART_TYPE_AREA:
