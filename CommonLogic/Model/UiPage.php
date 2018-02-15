@@ -70,9 +70,11 @@ class UiPage implements UiPageInterface
 
     private $id = null;
 
-    private $name = null;
+    private $name = '';
+    
+    private $description = '';
 
-    private $shortDescription = null;
+    private $intro = '';
 
     private $replacesPageAlias = null;
 
@@ -831,25 +833,46 @@ class UiPage implements UiPageInterface
         $this->name = $string;
         return $this;
     }
-
+    
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\UiPageInterface::getShortDescription()
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::getDescription()
      */
-    public function getShortDescription()
+    public function getDescription()
     {
-        return $this->shortDescription;
+        return $this->description;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::setDescription()
+     */
+    public function setDescription($string)
+    {
+        $this->description = $string;
+        return $this;
     }
 
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\UiPageInterface::setShortDescription()
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::getIntro()
      */
-    public function setShortDescription($string)
+    public function getIntro()
     {
-        $this->shortDescription = $string;
+        return $this->intro;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::setIntro()
+     */
+    public function setIntro($text)
+    {
+        $this->intro = $text;
         return $this;
     }
 
@@ -1000,7 +1023,8 @@ class UiPage implements UiPageInterface
         $uxon->setProperty('menu_index', $this->getMenuIndex());
         $uxon->setProperty('menu_visible', $this->getMenuVisible());
         $uxon->setProperty('name', $this->getName());
-        $uxon->setProperty('short_description', $this->getShortDescription());
+        $uxon->setProperty('description', $this->getDescription());
+        $uxon->setProperty('intro', $this->getIntro());
         $uxon->setProperty('replaces_page_alias', $this->getReplacesPageAlias());
         
         $contents = trim($this->getContents());
@@ -1170,7 +1194,10 @@ class UiPage implements UiPageInterface
         if ($this->getName() != $page->getName() && ! in_array('name', $ignore_properties)) {
             return false;
         }
-        if ($this->getShortDescription() != $page->getShortDescription() && ! in_array('shortdescription', $ignore_properties)) {
+        if ($this->getDescription() != $page->getDescription() && ! in_array('description', $ignore_properties)) {
+            return false;
+        }
+        if ($this->getIntro() != $page->getIntro() && ! in_array('intro', $ignore_properties)) {
             return false;
         }
         if ($this->getReplacesPageAlias() != $page->getReplacesPageAlias() && ! in_array('replacespagealias', $ignore_properties)) {

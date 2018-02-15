@@ -5,7 +5,8 @@
     "menu_index": "5",
     "menu_visible": true,
     "name": "Query Builders",
-    "short_description": "",
+    "description": "",
+    "intro": "",
     "replaces_page_alias": null,
     "contents": {
         "object_alias": "exface.core.QUERY_BUILDER",

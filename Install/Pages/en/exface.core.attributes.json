@@ -5,7 +5,8 @@
     "menu_index": "4",
     "menu_visible": true,
     "name": "Attributes",
-    "short_description": "",
+    "description": "",
+    "intro": "Hier k\u00f6nnen Meta-Attribute gepflegt werden.",
     "replaces_page_alias": null,
     "contents": {
         "id": "attributes",

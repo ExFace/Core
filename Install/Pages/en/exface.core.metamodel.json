@@ -5,7 +5,8 @@
     "menu_index": "0",
     "menu_visible": true,
     "name": "Metamodel",
-    "short_description": "",
+    "description": "View and edit the metamodel",
+    "intro": "",
     "replaces_page_alias": null,
     "contents": {
         "extend_widget": "[exface.core.apps]"

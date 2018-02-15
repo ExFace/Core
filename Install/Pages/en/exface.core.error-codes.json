@@ -5,7 +5,8 @@
     "menu_index": "6",
     "menu_visible": true,
     "name": "Error codes",
-    "short_description": "",
+    "description": "",
+    "intro": "",
     "replaces_page_alias": null,
     "contents": {
         "widget_type": "DataTable",

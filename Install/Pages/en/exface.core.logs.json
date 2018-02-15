@@ -5,7 +5,8 @@
     "menu_index": "9",
     "menu_visible": true,
     "name": "Logs",
-    "short_description": "",
+    "description": "View system\/error logs",
+    "intro": "",
     "replaces_page_alias": null,
     "contents": {
         "widget_type": "DataTable",
