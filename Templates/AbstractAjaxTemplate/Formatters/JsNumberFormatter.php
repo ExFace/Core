@@ -84,16 +84,6 @@ JS;
     {
         return [];
     }
-
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Templates\AbstractAjaxTemplate\Interfaces\JsDataTypeFormatterInterface::buildHtmlBodyIncludes()
-     */
-    public function buildHtmlBodyIncludes()
-    {
-        return ['<script type="text/javascript" src="exface/vendor/bower-asset/number-format.js/lib/format.min.js"></script>'];
-    }
     
     /**
      * @return string
