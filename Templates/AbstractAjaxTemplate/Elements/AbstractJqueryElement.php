@@ -45,6 +45,8 @@ abstract class AbstractJqueryElement implements ExfaceClassInterface
     private $element_type = null;
     
     private $element_class = '';
+    
+    private $element_style = '';
 
     private $number_of_columns = null;
 
@@ -284,6 +286,29 @@ abstract class AbstractJqueryElement implements ExfaceClassInterface
         $this->element_class = str_replace($string, '', $this->element_class);
         return $this;
     }
+    
+    /**
+     * Returns css properties for this element: custom colors, styles, etc. - things that come into the style="...".
+     *
+     * @return string
+     */
+    public function buildCssElementStyle()
+    {
+        return $this->element_style;
+    }
+    
+    /**
+     *
+     * @param string $css_properties
+     * @return AbstractJqueryElement
+     */
+    public function addElementCssStyle($css_properties)
+    {
+        $this->element_style = ($this->element_style ? '; ' : '') . trim($css_properties, ";");
+        return $this;
+    }
+    
+    
 
     /**
      * Sets the element type
@@ -712,7 +737,7 @@ abstract class AbstractJqueryElement implements ExfaceClassInterface
             return $this->getTemplate()->getConfig()->getOption('ICON_CLASSES.DEFAULT_CLASS_PREFIX') . $icon;
         }
     }
-
+    
     /**
      *
      * @return \exface\Core\CommonLogic\Workbench

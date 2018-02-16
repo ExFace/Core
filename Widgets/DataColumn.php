@@ -269,7 +269,7 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
             $this->cellWidget = $cellWidget;
             $this->editable = true;
         } catch (\Throwable $e) {
-            throw new WidgetConfigurationError($this, 'Cannot set cell widget for ' . $this->getWidgetType() . ': see details below!', null, $e);
+            throw new WidgetConfigurationError($this, 'Cannot set cell widget for ' . $this->getWidgetType() . '. ' . $e->getMessage() . ' See details below.', null, $e);
         }
         return $this;
     }

@@ -69,7 +69,6 @@ class ConditionGroup implements iCanBeConvertedToUxon, iCanBeCopied
 
     /**
      * Creates a new condition and adds it to this condition group.
-     * TODO Refactor to use ConditionFactory::createFromString() and process special prefixes and so on there
      *
      * @param string $column_name            
      * @param mixed $value            
@@ -87,11 +86,11 @@ class ConditionGroup implements iCanBeConvertedToUxon, iCanBeCopied
         if (count($expression_strings) > 1) {
             $group = ConditionGroupFactory::createEmpty($this->exface, EXF_LOGICAL_OR);
             foreach ($expression_strings as $f) {
-                $group->addCondition(ConditionFactory::createFromString($base_object, $f, $value, $comparator));
+                $group->addCondition(ConditionFactory::createFromExpressionString($base_object, $f, $value, $comparator));
             }
             $this->addNestedGroup($group);
         } elseif (! is_null($value) && $value !== '') {
-            $this->addCondition(ConditionFactory::createFromString($base_object, $expression_string, $value, $comparator));
+            $this->addCondition(ConditionFactory::createFromExpressionString($base_object, $expression_string, $value, $comparator));
         }
         
         return $this;
