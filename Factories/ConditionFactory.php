@@ -7,6 +7,8 @@ use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\DataTypes\ComparatorDataType;
+use exface\Core\Exceptions\Model\ConditionIncompleteError;
 
 abstract class ConditionFactory extends AbstractUxonFactory
 {
@@ -32,7 +34,7 @@ abstract class ConditionFactory extends AbstractUxonFactory
      * 
      * @return Condition
      */
-    public static function createFromString(MetaObjectInterface $object, $expression_string, $value, $comparator = null)
+    public static function createFromExpressionString(MetaObjectInterface $object, $expression_string, $value, $comparator = null)
     {
         $workbench = $object->getWorkbench();
         $condition = static::createEmpty($workbench);
@@ -99,6 +101,62 @@ abstract class ConditionFactory extends AbstractUxonFactory
         } else {
             throw new UnexpectedValueException('Cannot parse condition "' . print_r($uxon_or_array) . '"!');
         }
+    }
+    
+    /**
+     * Parses a string like "MY_ATTRIBUTE > 0" into a condition.
+     * 
+     * The comparator must be separated from the left and the right expressions by spaces. Both 
+     * expression may include spaces, but must not include comparator charaters (<, >, =, etc.)
+     * 
+     * @param Workbench $workbench
+     * @param string $string
+     * @param MetaObjectInterface $object
+     * @return \exface\Core\CommonLogic\Model\Condition
+     */
+    public static function createFromString(Workbench $workbench, $string, MetaObjectInterface $object = null)
+    {
+        $tokens = explode(' ', $string);
+        $left = '';
+        $right = '';
+        foreach ($tokens as $token) {
+            if (in_array($token, ComparatorDataType::getValuesStatic())) {
+                if ($left === '') {
+                    throw new ConditionIncompleteError('Cannot parse "' . $string . '" as condition: there is no left side!');
+                }
+                
+                $comp = $token;
+                $right = substr($string, (strlen($left) + strlen($comp) + 2));
+                break;
+            } else {
+                $left .= ($left ? ' ' : '') . $token;
+            }
+        }
+        if (! is_null($object)) {
+            $condition = static::createFromExpressionString($object, $left, $right, $comp);
+        } else {
+            $condition = static::createEmpty($workbench);
+            $condition->setExpression(ExpressionFactory::createFromString($workbench, $left));
+            $condition->setComparator($comp);
+            $condition->setValue($right);
+        }
+        return $condition;
+    }
+    
+    /**
+     * Parses a string like "> 0" into a condtion relative to the given left expression
+     * 
+     * @param ExpressionInterface $expression
+     * @param string $string
+     * @return \exface\Core\CommonLogic\Model\Condition
+     */
+    public static function createFromStringRelativeToExpression(ExpressionInterface $expression, $string)
+    {
+        $string = trim($string);
+        $tokens = explode(' ', $string);
+        $comp = $tokens[0];
+        $value = substr($string, (strlen($comp)+1));
+        return static::createFromExpression($expression->getWorkbench(), $expression, $value, $comp);
     }
 }
 ?>

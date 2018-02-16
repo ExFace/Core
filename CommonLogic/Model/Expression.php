@@ -74,7 +74,7 @@ class Expression implements ExpressionInterface
         if (! $expression || $str !== false) {
             $this->type = self::TYPE_CONSTANT;
             $this->value = $str;
-        } elseif (strpos($expression, '=') === 0) {
+        } elseif (substr($expression, 0, 1) === '=') {
             if (strpos($expression, '(') !== false && strpos($expression, ')') !== false) {
                 $this->type = self::TYPE_FORMULA;
                 $this->formula = $this->parseFormula($expression);
