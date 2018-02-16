@@ -6,7 +6,6 @@ use exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartFilterGroup;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartAttribute;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartFilter;
-use exface\Core\CommonLogic\DataTypes\AbstractDataType;
 use exface\Core\CommonLogic\AbstractDataConnector;
 use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
@@ -16,17 +15,15 @@ use exface\Core\CommonLogic\DataQueries\SqlDataQuery;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartSelect;
 use exface\Core\Interfaces\Model\MetaRelationInterface;
 use exface\Core\CommonLogic\DataSheets\DataAggregation;
-use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\DataTypes\DateDataType;
 use exface\Core\DataTypes\RelationDataType;
-use exface\Core\Exceptions\DataTypes\DataTypeNotFoundError;
-use exface\Core\CommonLogic\QueryBuilder\QueryPart;
 use exface\Core\Interfaces\Model\AggregatorInterface;
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
 use exface\Core\CommonLogic\Model\Aggregator;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
+use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 
 /**
  * A query builder for generic SQL syntax.
@@ -575,11 +572,11 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      * IDEA create a new qpart for input values and use it as an argument in this method. Only need one argument then.
      *
      * @param multitype $value            
-     * @param AbstractDataType $data_type            
+     * @param DataTypeInterface $data_type            
      * @param string $sql_data_type            
      * @return string
      */
-    protected function prepareInputValue($value, AbstractDataType $data_type, $sql_data_type = NULL)
+    protected function prepareInputValue($value, DataTypeInterface $data_type, $sql_data_type = NULL)
     {
         $value = $data_type::cast($value);
         if ($data_type instanceof StringDataType) {
@@ -823,12 +820,21 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         // Add the key alias relative to the first reverse relation (TYPE->LABEL for the above example)
         $relq->addAttribute(str_replace($rev_rel_path->toString() . RelationPath::getRelationSeparator(), '', $qpart->getAlias()));
         
-        // Set the filters of the subquery to all filters of the main query, that need to be applied to objects beyond the reverse relation.
+        // Let the subquery inherit all filters of the main query, that need to be applied to objects beyond the reverse relation.
         // In our examplte, those would be any filter on ORDER->CUSTOMER<-CUSTOMER_CARD or ORDER->CUSTOMER<-CUSTOMER_CARD->TYPE, etc. Filters
         // over ORDER oder ORDER->CUSTOMER would be applied to the base query and ar not neeede in the subquery any more.
-        // If we rebase and add all filters, it will still work, but the SQL would get much more complex and surely slow with large data sets.
-        // Set $remove_conditions_not_matching_the_path parameter to true, to make sure, only applicable filters will get rebased.
-        $relq->setFiltersConditionGroup($this->getFilters()->getConditionGroup()->rebase($rev_rel_path->toString(), true));
+        // If we would rebase and add all filters, it will still work, but the SQL would get much more complex and surely 
+        // slow with large data sets.
+        // Filtering out applicable filters (conditions) is done via the following callback, that returns TRUE only if the
+        // path we rebase to matches the beginning of the condition's relation path.
+        $relq_condition_filter = function($condition, $relation_path_to_new_base_object) {
+            if ($condition->getExpression()->isMetaAttribute() && stripos($condition->getExpression()->toString(), $relation_path_to_new_base_object) !== 0) {
+                return false;
+            } else {
+                return true;
+            }
+        };
+        $relq->setFiltersConditionGroup($this->getFilters()->getConditionGroup()->rebase($rev_rel_path->toString(), $relq_condition_filter));
         // Add a new filter to attach to the main query (WHERE CUSTOMER_CARD.CUSTOMER_ID = ORDER.CUSTOMER_ID for the above example)
         // This only makes sense, if we have a reference to the parent query (= the $select_from parameter is set)
         if ($select_from) {
@@ -1034,7 +1040,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
 
     /**
      * Builds the SQL for a condition within the HAVING clause. This is similar
-     * to buildSqlWhereCondition but it takes care of filters with aggregators.
+     * to buildSqlWhereCondition() but it takes care of filters with aggregators.
      * 
      * @param QueryPartFilter $qpart            
      * @param boolean $rely_on_joins            
@@ -1051,8 +1057,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         
         $val = $qpart->getCompareValue();
         $attr = $qpart->getAttribute();
-        $comp = $qpart->getComparator();
-        $delimiter = $qpart->getValueListDelimiter();
+        $comp = $this->getOptimizedComparator($qpart);
         
         $select = $this->buildSqlSelectGrouped($qpart);
         $where = $qpart->getDataAddressProperty('WHERE');
@@ -1064,7 +1069,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             return false;
         }
         
-        // build the having
+        // build the HAVING clause
         if ($where) {
             // check if it has an explicit where clause. If not try to filter based on the select clause
             $output = $this->replacePlaceholdersInSqlAddress($where, $qpart->getAttribute()->getRelationPath(), ['~alias' => $table_alias, '~value' => $val], $table_alias);
@@ -1171,24 +1176,8 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         
         $val = $qpart->getCompareValue();
         $attr = $qpart->getAttribute();
-        $comp = $qpart->getComparator();
+        $comp = $this->getOptimizedComparator($qpart);
         $delimiter = $qpart->getValueListDelimiter();
-        
-        if ($attr->isRelation() && $comp != EXF_COMPARATOR_IN) {
-            // always use the equals comparator for foreign keys! It's faster!
-            $comp = EXF_COMPARATOR_EQUALS;
-        } elseif ($attr->isExactly($this->getMainObject()->getUidAttribute()) && $comp != EXF_COMPARATOR_IN && ! $qpart->getAggregator()) {
-            $comp = EXF_COMPARATOR_EQUALS;
-        } elseif (($qpart->getDataType() instanceof NumberDataType) && $comp == EXF_COMPARATOR_IS && is_numeric($val)) {
-            // also use equals for the NUMBER data type, but make sure, the value to compare to is really a number (otherwise the query will fail!)
-            $comp = EXF_COMPARATOR_EQUALS;
-        } elseif (($qpart->getDataType() instanceof BooleanDataType) && $comp == EXF_COMPARATOR_IS) {
-            // also use equals for the BOOLEAN data type
-            $comp = EXF_COMPARATOR_EQUALS;
-        } elseif (($qpart->getDataType() instanceof DateDataType) && $comp == EXF_COMPARATOR_IS) {
-            // also use equals for the NUMBER data type, but make sure, the value to compare to is really a number (otherwise the query will fail!)
-            $comp = EXF_COMPARATOR_EQUALS;
-        }
         
         $select = $attr->getDataAddress();
         $where = $qpart->getDataAddressProperty('WHERE');
@@ -1227,17 +1216,41 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         return $output;
     }
     
+    protected function getOptimizedComparator(QueryPartFilter $qpart)
+    {
+        $val = $qpart->getCompareValue();
+        $attr = $qpart->getAttribute();
+        $comp = $qpart->getComparator();
+        
+        if ($attr->isRelation() && $comp != EXF_COMPARATOR_IN) {
+            // always use the equals comparator for foreign keys! It's faster!
+            $comp = EXF_COMPARATOR_EQUALS;
+        } elseif ($attr->isExactly($this->getMainObject()->getUidAttribute()) && $comp != EXF_COMPARATOR_IN && ! $qpart->getAggregator()) {
+            $comp = EXF_COMPARATOR_EQUALS;
+        } elseif (($qpart->getDataType() instanceof NumberDataType) && $comp == EXF_COMPARATOR_IS && is_numeric($val)) {
+            // also use equals for the NUMBER data type, but make sure, the value to compare to is really a number (otherwise the query will fail!)
+            $comp = EXF_COMPARATOR_EQUALS;
+        } elseif (($qpart->getDataType() instanceof BooleanDataType) && $comp == EXF_COMPARATOR_IS) {
+            // also use equals for the BOOLEAN data type
+            $comp = EXF_COMPARATOR_EQUALS;
+        } elseif (($qpart->getDataType() instanceof DateDataType) && $comp == EXF_COMPARATOR_IS) {
+            // also use equals for the NUMBER data type, but make sure, the value to compare to is really a number (otherwise the query will fail!)
+            $comp = EXF_COMPARATOR_EQUALS;
+        }
+        return $comp;
+    }
+    
     /**
      * 
      * @param string $subject column name or subselect
      * @param string $comparator one of the EXF_COMPARATOR_xxx constants
      * @param string $value value or SQL expression to compare to
-     * @param AbstractDataType $data_type
+     * @param DataTypeInterface $data_type
      * @param string $sql_data_type value of SQL_DATA_TYPE data source setting
      * @param string $value_list_delimiter delimiter used to separate concatenated lists of values
      * @return string
      */
-    protected function buildSqlWhereComparator($subject, $comparator, $value, AbstractDataType $data_type, $sql_data_type = NULL, $value_list_delimiter = EXF_LIST_SEPARATOR)
+    protected function buildSqlWhereComparator($subject, $comparator, $value, DataTypeInterface $data_type, $sql_data_type = NULL, $value_list_delimiter = EXF_LIST_SEPARATOR)
     {
         // Check if the value is of valid type.
         try {
@@ -1333,7 +1346,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         return $output;
     }
 
-    protected function prepareWhereValue($value, AbstractDataType $data_type, $sql_data_type = NULL)
+    protected function prepareWhereValue($value, DataTypeInterface $data_type, $sql_data_type = NULL)
     {
         // IDEA some data type specific procession here
         if ($data_type instanceof BooleanDataType) {
@@ -1385,6 +1398,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 // If we are dealing with a reverse relation, build a subquery to select foreign keys from rows of the joined tables,
                 // that match the given filter
                 $rel_filter = $qpart->getAttribute()->rebase($qpart_rel_path->getSubpath($qpart_rel_path->getIndexOf($start_rel) + 1))->getAliasWithRelationPath();
+                
                 // Remember to keep the aggregator of the attribute filtered over. Since we are interested in a list of keys, the
                 // subquery should GROUP BY these kees.
                 if ($qpart->getAggregator()) {
@@ -1393,8 +1407,40 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                     // without any aggregation and it should yield the same results
                     $rel_filter .= DataAggregation::AGGREGATION_SEPARATOR . $qpart->getAggregator()->exportString();
                     $relq->addAggregation($start_rel->getForeignKeyAlias());
+                    
+                    // If we are in a WHERE subquery of a filter with an aggregator, this means, we want to filter
+                    // over the aggregated value. However, there might be other filters, that affect this aggregated
+                    // value: e.g. as SUM over transactions for a product will be different depending on the store
+                    // filter set for the query. So we need all applicale non-aggregating filters in our subquery.
+                    // This is achieved by rebasing all filters with the following filter callback, that excludes 
+                    // certain conditions.
+                    $relq_condition_filter = function($condition, $relation_path_to_new_base_object) use ($qpart) {
+                        // If the condition is not an attribute, keep it - other partsof the code will deal with it
+                        if (! $condition->getExpression()->isMetaAttribute()) {
+                            return true;
+                        }
+                        // If a condition matches the query part we are processing right now, skip it - we will
+                        // add it later explicitly.
+                        if ($condition->getExpression()->toString() === $qpart->getExpression()->toString()){
+                            return false;
+                        }
+                        // If a conditon  has an aggregator itself - skip it as it will get it's own subquery.
+                        if (DataAggregation::getAggregatorFromAlias($this->getWorkbench(), $condition->getExpression()->toString())) {
+                            return false;
+                        }
+                        // If a condition is not applicable (is applied to something else, then the tables in our
+                        // subquery) - skip it.
+                        if (stripos($condition->getExpression()->toString(), $relation_path_to_new_base_object) !== 0) {
+                            return false;
+                        }
+                        return true;
+                    };
+                    /* @var MetaRelationPathInterface complete path of the first reverse relation */
+                    $rev_rel_path = $prefix_rel_path->copy()->appendRelation($start_rel);
+                    $relq->setFiltersConditionGroup($this->getFilters()->getConditionGroup()->rebase($rev_rel_path->toString(), $relq_condition_filter));
                 }
                 $relq->addAttribute($start_rel->getForeignKeyAlias());
+                
                 // Add the filter relative to the first reverse relation with the same $value and $comparator
                 if ($qpart->isValueDataAddress()) {
                     $relq->addFilterWithCustomSql($rel_filter, $qpart->getCompareValue(), $qpart->getComparator());
