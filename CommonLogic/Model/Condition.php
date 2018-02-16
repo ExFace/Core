@@ -2,7 +2,6 @@
 namespace exface\Core\CommonLogic\Model;
 
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\CommonLogic\DataTypes\AbstractDataType;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Exceptions\RangeException;
@@ -10,6 +9,7 @@ use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\DataTypes\NumberDataType;
 use exface\Core\DataTypes\RelationDataType;
+use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 
 /**
  * .
@@ -216,7 +216,7 @@ class Condition implements iCanBeConvertedToUxon
 
     /**
      *
-     * @return AbstractDataType
+     * @return DataTypeInterface
      */
     public function getDataType()
     {
@@ -228,9 +228,9 @@ class Condition implements iCanBeConvertedToUxon
 
     /**
      *
-     * @param AbstractDataType $value            
+     * @param DataTypeInterface $value            
      */
-    public function setDataType(AbstractDataType $value)
+    public function setDataType(DataTypeInterface $value)
     {
         $this->data_type = $value;
     }
