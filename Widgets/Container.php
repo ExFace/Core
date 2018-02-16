@@ -146,7 +146,7 @@ class Container extends AbstractWidget implements iContainOtherWidgets
      */
     public function getWidgets(callable $filter = null)
     {
-        if (!is_null($filter)){
+        if (! is_null($filter)){
             return array_filter($this->widgets, $filter);
         }
         return $this->widgets;
