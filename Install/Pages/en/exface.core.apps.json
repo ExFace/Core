@@ -44,7 +44,14 @@
                 "attribute_alias": "PACKAGE__version"
             },
             {
-                "attribute_alias": "MODEL_MODIFIED_ON"
+                "attribute_alias": "MODEL_MODIFIED_ON",
+                "cell_widget": {
+                    "widget_type": "ColorIndicator",
+                    "fill": true,
+                    "color_conditions": {
+                        "!= PACKAGE__model_timestamp": "yellow"
+                    }
+                }
             },
             {
                 "attribute_alias": "PACKAGE__model_timestamp"
