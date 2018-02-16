@@ -182,7 +182,7 @@ class ConditionGroup implements iCanBeConvertedToUxon, iCanBeCopied
      * @param string $relation_path_to_new_base_object            
      * @return ConditionGroup
      */
-    public function rebase($relation_path_to_new_base_object, $remove_conditions_not_matching_the_path = false)
+    public function rebase($relation_path_to_new_base_object, $filter_callback = null)
     {
         // Do nothing, if the relation path is empty (nothing to rebase...)
         if (! $relation_path_to_new_base_object)
@@ -190,12 +190,17 @@ class ConditionGroup implements iCanBeConvertedToUxon, iCanBeCopied
         
         $result = ConditionGroupFactory::createEmpty($this->exface, $this->getOperator());
         foreach ($this->getConditions() as $condition) {
+            // Remove conditions not matching the filter
+            if (! is_null($filter_callback) && call_user_func($filter_callback, $condition, $relation_path_to_new_base_object) === false) {
+                continue;
+            }
             // Remove conditions not matching the path if required by user
+            /*
             if ($remove_conditions_not_matching_the_path && $condition->getExpression()->isMetaAttribute()) {
-                if (strpos($condition->getExpression()->toString(), $relation_path_to_new_base_object) !== 0) {
+                if (stripos($condition->getExpression()->toString(), $relation_path_to_new_base_object) !== 0) {
                     continue;
                 }
-            }
+            }*/
             
             // Rebase the expression behind the condition and create a new condition from it
             try {

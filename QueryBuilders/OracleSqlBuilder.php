@@ -1,7 +1,6 @@
 <?php
 namespace exface\Core\QueryBuilders;
 
-use exface\Core\CommonLogic\DataTypes\AbstractDataType;
 use exface\Core\CommonLogic\AbstractDataConnector;
 use exface\Core\Exceptions\QueryBuilderException;
 use exface\Core\Interfaces\Model\MetaRelationInterface;
@@ -9,10 +8,10 @@ use exface\Core\DataTypes\DateDataType;
 use exface\Core\DataTypes\TimestampDataType;
 use exface\Core\DataTypes\NumberDataType;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartAttribute;
-use exface\Core\CommonLogic\QueryBuilder\QueryPart;
 use exface\Core\CommonLogic\Model\Aggregator;
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
 use exface\Core\Interfaces\Model\AggregatorInterface;
+use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 
 /**
  * A query builder for Oracle SQL.
@@ -433,7 +432,12 @@ class OracleSqlBuilder extends AbstractSqlBuilder
         return $sequence;
     }
 
-    protected function prepareInputValue($value, AbstractDataType $data_type, $sql_data_type = NULL)
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\QueryBuilders\AbstractSqlBuilder::prepareInputValue()
+     */
+    protected function prepareInputValue($value, DataTypeInterface $data_type, $sql_data_type = NULL)
     {
         if ($data_type instanceof DateDataType || $data_type instanceof TimestampDataType) {
             $value = "TO_DATE('" . $this->escapeString($value) . "', 'yyyy-mm-dd hh24:mi:ss')";
@@ -443,7 +447,12 @@ class OracleSqlBuilder extends AbstractSqlBuilder
         return $value;
     }
 
-    protected function prepareWhereValue($value, AbstractDataType $data_type, $sql_data_type = NULL)
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\QueryBuilders\AbstractSqlBuilder::prepareWhereValue()
+     */
+    protected function prepareWhereValue($value, DataTypeInterface $data_type, $sql_data_type = NULL)
     {
         if ($data_type instanceof DateDataType || $data_type instanceof TimestampDataType) {
             $output = "TO_DATE('" . $value . "', 'yyyy-mm-dd hh24:mi:ss')";

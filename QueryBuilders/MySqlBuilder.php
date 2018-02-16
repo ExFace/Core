@@ -2,12 +2,12 @@
 namespace exface\Core\QueryBuilders;
 
 use exface\Core\Exceptions\QueryBuilderException;
-use exface\Core\CommonLogic\DataTypes\AbstractDataType;
 use exface\Core\CommonLogic\AbstractDataConnector;
 use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\DataTypes\DateDataType;
 use exface\Core\CommonLogic\Model\Aggregator;
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
+use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 
 /**
  * A query builder for MySQL.
@@ -215,7 +215,12 @@ class MySqlBuilder extends AbstractSqlBuilder
         return $totals_query;
     }
 
-    protected function prepareWhereValue($value, AbstractDataType $data_type, $sql_data_type = NULL)
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\QueryBuilders\AbstractSqlBuilder::prepareWhereValue()
+     */
+    protected function prepareWhereValue($value, DataTypeInterface $data_type, $sql_data_type = NULL)
     {
         if ($data_type instanceof DateDataType) {
             $output = "{ts '" . $value . "'}";
@@ -225,6 +230,11 @@ class MySqlBuilder extends AbstractSqlBuilder
         return $output;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\QueryBuilders\AbstractSqlBuilder::buildSqlSelectNullCheckFunctionName()
+     */
     protected function buildSqlSelectNullCheckFunctionName()
     {
         return 'IFNULL';
