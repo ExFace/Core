@@ -320,7 +320,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             $columns[$attr->getDataAddress()] = $attr->getDataAddress();
             $custom_insert_sql = $qpart->getDataAddressProperty('SQL_INSERT');
             foreach ($qpart->getValues() as $row => $value) {
-                $value = $this->prepareInputValue($value, $attr->getDataType(), $attr->getDataAddressProperty('SQL_DATA_TYPE'));
+                $value = $this->prepareInputValue($value, $qpart->getDataType(), $attr->getDataAddressProperty('SQL_DATA_TYPE'));
                 if ($custom_insert_sql) {
                     // If there is a custom insert SQL for the attribute, use it 
                     // NOTE: if you just write some kind of generator here, it 
@@ -473,7 +473,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                         
             if (count($qpart->getValues()) == 1) {
                 $values = $qpart->getValues();
-                $value = $this->prepareInputValue(reset($values), $attr->getDataType(), $attr->getDataAddressProperty('SQL_DATA_TYPE'));
+                $value = $this->prepareInputValue(reset($values), $qpart->getDataType(), $attr->getDataAddressProperty('SQL_DATA_TYPE'));
                 if ($custom_update_sql) {
                     // If there is a custom update SQL for the attribute, use it ONLY if there is no value
                     // Otherwise there would not be any possibility to save explicit values
@@ -489,7 +489,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 }
                 
                 foreach ($qpart->getValues() as $row_nr => $value) {
-                    $value = $this->prepareInputValue($value, $attr->getDataType(), $attr->getDataAddressProperty('SQL_DATA_TYPE'));
+                    $value = $this->prepareInputValue($value, $qpart->getDataType(), $attr->getDataAddressProperty('SQL_DATA_TYPE'));
                     if ($custom_update_sql) {
                         // If there is a custom update SQL for the attribute, use it ONLY if there is no value
                         // Otherwise there would not be any possibility to save explicit values
@@ -755,7 +755,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         if ($add_nvl) {
             // do some prettyfying
             // return zero for number fields if the subquery does not return anything
-            if ($attribute->getDataType() instanceof NumberDataType) {
+            if ($qpart->getDataType() instanceof NumberDataType) {
                 $output = $this->buildSqlSelectNullCheck($output, 0);
             }
         }
@@ -1076,7 +1076,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 $subj = $select;
             }
             // Do the actual comparing
-            $output = $this->buildSqlWhereComparator($subj, $comp, $val, $attr->getDataType(), $attr->getDataAddressProperty('SQL_DATA_TYPE'), $delimiter);
+            $output = $this->buildSqlWhereComparator($subj, $comp, $val, $qpart->getDataType(), $attr->getDataAddressProperty('SQL_DATA_TYPE'), $delimiter);
         }
         
         return $output;
@@ -1179,13 +1179,13 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             $comp = EXF_COMPARATOR_EQUALS;
         } elseif ($attr->isExactly($this->getMainObject()->getUidAttribute()) && $comp != EXF_COMPARATOR_IN && ! $qpart->getAggregator()) {
             $comp = EXF_COMPARATOR_EQUALS;
-        } elseif (($attr->getDataType() instanceof NumberDataType) && $comp == EXF_COMPARATOR_IS && is_numeric($val)) {
+        } elseif (($qpart->getDataType() instanceof NumberDataType) && $comp == EXF_COMPARATOR_IS && is_numeric($val)) {
             // also use equals for the NUMBER data type, but make sure, the value to compare to is really a number (otherwise the query will fail!)
             $comp = EXF_COMPARATOR_EQUALS;
-        } elseif (($attr->getDataType() instanceof BooleanDataType) && $comp == EXF_COMPARATOR_IS) {
+        } elseif (($qpart->getDataType() instanceof BooleanDataType) && $comp == EXF_COMPARATOR_IS) {
             // also use equals for the BOOLEAN data type
             $comp = EXF_COMPARATOR_EQUALS;
-        } elseif (($attr->getDataType() instanceof DateDataType) && $comp == EXF_COMPARATOR_IS) {
+        } elseif (($qpart->getDataType() instanceof DateDataType) && $comp == EXF_COMPARATOR_IS) {
             // also use equals for the NUMBER data type, but make sure, the value to compare to is really a number (otherwise the query will fail!)
             $comp = EXF_COMPARATOR_EQUALS;
         }
@@ -1222,7 +1222,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 }
             }
             // Do the actual comparing
-            $output = $this->buildSqlWhereComparator($subj, $comp, $val, $attr->getDataType(), $attr->getDataAddressProperty('SQL_DATA_TYPE'), $delimiter);
+            $output = $this->buildSqlWhereComparator($subj, $comp, $val, $qpart->getDataType(), $attr->getDataAddressProperty('SQL_DATA_TYPE'), $delimiter);
         }
         return $output;
     }

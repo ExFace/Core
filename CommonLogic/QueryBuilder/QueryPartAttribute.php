@@ -5,6 +5,8 @@ use exface\Core\Exceptions\QueryBuilderException;
 use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\CommonLogic\DataSheets\DataAggregation;
 use exface\Core\Interfaces\Model\AggregatorInterface;
+use exface\Core\Interfaces\DataTypes\DataTypeInterface;
+use exface\Core\Factories\ExpressionFactory;
 
 class QueryPartAttribute extends QueryPart
 {
@@ -119,7 +121,7 @@ class QueryPartAttribute extends QueryPart
      */
     public function getDataType()
     {
-        return $this->getAttribute()->getDataType();
+        return $this->getExpression()->getDataType();
     }
 
     public function getMetaModel()
@@ -134,9 +136,15 @@ class QueryPartAttribute extends QueryPart
      */
     public function getExpression()
     {
-        return $this->getWorkbench()->model()->parseExpression($this->getAlias(), $this->getQuery()->getMainObject());
+        return ExpressionFactory::createFromString($this->getWorkbench(), $this->getAlias(), $this->getQuery()->getMainObject());
     }
 
+    /**
+     * 
+     * @param AbstractQueryBuilder $new_query
+     * @param string $relation_path_to_new_base_object
+     * @return \exface\Core\CommonLogic\QueryBuilder\QueryPartAttribute
+     */
     public function rebase(AbstractQueryBuilder $new_query, $relation_path_to_new_base_object)
     {
         $qpart = clone $this;
