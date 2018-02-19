@@ -20,6 +20,8 @@ use exface\Core\Exceptions\Configuration\ConfigOptionNotFoundError;
 use exface\Core\Interfaces\DataSources\DataManagerInterface;
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Exceptions\RuntimeException;
+use exface\Core\Interfaces\Selectors\AppSelectorInterface;
+use exface\Core\CommonLogic\Selectors\AppSelector;
 
 class Workbench
 {
@@ -217,15 +219,15 @@ class Workbench
      * Launches an ExFace app and returns it.
      * Apps are cached and kept running for script (request) window
      * 
-     * @param string $appUidOrAlias
+     * @param string $appSelectorString
      * @return AppInterface
      */
-    public function getApp($appUidOrAlias)
+    public function getApp($appSelectorString)
     {
-        if ($app = $this->findAppByUidOrAlias($appUidOrAlias)) {
+        if ($app = $this->findAppRunning(new AppSelector($this, $appSelectorString))) {
             return $app;
         } else {
-            $app = AppFactory::createFromAnything($appUidOrAlias, $this);
+            $app = AppFactory::createFromAnything($appSelectorString, $this);
             $this->running_apps[] = $app;
             return $app;
         }
@@ -234,29 +236,29 @@ class Workbench
     /**
      * Returns an app, defined by its UID or alias, from the running_apps.
      * 
-     * @param string $appUidOrAlias
-     * @return AppInterface|null
+     * @param AppSelectorInterface $selector
+     * @return AppInterface|false
      */
-    protected function findAppByUidOrAlias($appUidOrAlias)
+    protected function findAppRunning(AppSelectorInterface $selector)
     {
-        if (AppFactory::isUid($appUidOrAlias) && $this->model()) {
+        if ($selector->isUid() && $this->model()) {
             // Die App-UID darf nur abgefragt werden, wenn tatsaechlich eine UID ueber-
             // geben wird, sonst kommt es zu Problemen beim Update. Um die UID der App zu
             // erhalten muss ausserdem das Model bereits existieren, sonst kommt es zu
             // einem Fehler in app->getUid().
             foreach ($this->running_apps as $app) {
-                if (strcasecmp($app->getUid(), $appUidOrAlias) === 0) {
+                if (strcasecmp($app->getUid(), $selector->toString()) === 0) {
                     return $app;
                 }
             }
         } else {
             foreach ($this->running_apps as $app) {
-                if (strcasecmp($app->getAliasWithNamespace(), $appUidOrAlias) === 0) {
+                if (strcasecmp($app->getAliasWithNamespace(), $selector->getAliasWithNamespace()) === 0) {
                     return $app;
                 }
             }
         }
-        return null;
+        return false;
     }
 
     /**
