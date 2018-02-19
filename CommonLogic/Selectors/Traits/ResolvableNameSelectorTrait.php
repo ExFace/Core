@@ -20,6 +20,20 @@ trait ResolvableNameSelectorTrait
     use FileSelectorTrait;
     use ClassSelectorTrait;
     use AliasSelectorTrait;
+    use PrototypeSelectorTrait;
+    
+    /**
+     * Returns the selector type specific suffix for class names.
+     * 
+     * E.g. "Template" for template selectors as all template classes end with
+     * "Template" like "AdminLteTemplate".
+     * 
+     * @return string
+     */
+    protected function getPrototypeClassnameSuffix()
+    {
+        return '';
+    }
     
     /**
      *
@@ -63,7 +77,8 @@ trait ResolvableNameSelectorTrait
             case ($this->isAlias()):
                 return $this::convertAliasToFilePath($this->getAppAlias()) . FileSelectorInterface::NORMALIZED_DIRECTORY_SEPARATOR
                 . $this->getPrototypeSubfolder() . ($this->getPrototypeSubfolder() ? FileSelectorInterface::NORMALIZED_DIRECTORY_SEPARATOR : '')
-                . $this::convertAliasToFilePath($this->getAlias());
+                . $this::convertAliasToFilePath($this->getAlias())
+                . $this->getPrototypeClassnameSuffix();
             case ($this->isClassname()):
                 return $this::convertClassPathToFilePath($this->toString) . '.' . FileSelectorInterface::PHP_FILE_EXTENSION;
         }
@@ -100,11 +115,11 @@ trait ResolvableNameSelectorTrait
     /**
      *
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Selectors\PrototypeSelectorInterface::prototypeClassExists()
+     * @see \exface\Core\Interfaces\Selectors\PrototypeSelectorInterface::getPrototypeClass()
      */
-    public function prototypeClassExists()
+    public function getPrototypeClass()
     {
-        return class_exists($this->getClassname());
+        return $this->getClassname();
     }
     
     protected static function convertAliasToClassPath($string)

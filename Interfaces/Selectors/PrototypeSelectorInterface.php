@@ -29,6 +29,13 @@ interface PrototypeSelectorInterface extends ClassSelectorInterface, FileSelecto
     public function getPrototypeSubNamespace();
     
     /**
+     * Returns the fully qualified class name of the prototype PHP class
+     * 
+     * @return string
+     */
+    public function getPrototypeClass();
+    
+    /**
      * Returns TRUE if the prototype class exists and FALSE otherwise
      * 
      * @return boolean
