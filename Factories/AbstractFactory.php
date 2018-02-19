@@ -7,7 +7,7 @@ abstract class AbstractFactory
     /**
      * Factories cannot be instantiated!
      */
-    protected function __construct()
+    protected final function __construct()
     {}
 }
 ?>
