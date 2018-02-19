@@ -19,7 +19,7 @@ class CoreApp extends App
         $installer = parent::getInstaller($injected_installer);
         // Add the custom core installer, that will take care of model schema updates, etc.
         // Make sure, it runs before any other installers do.
-        $installer->addInstaller(new CoreInstaller($this->getNameResolver()), true);
+        $installer->addInstaller(new CoreInstaller($this->getSelector()), true);
         return $installer;
     }
     

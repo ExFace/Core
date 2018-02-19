@@ -2,8 +2,8 @@
 namespace exface\Core\Events;
 
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
-use exface\Core\CommonLogic\NameResolver;
 use exface\Core\Interfaces\DataSources\DataQueryInterface;
+use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 
 /**
  * Data connection event names consist of the alias of the connector followed 
@@ -66,6 +66,6 @@ class DataConnectionEvent extends ExfaceEvent
      */
     public function getNamespace()
     {
-        return $this->getDataConnection()->getAliasWithNamespace() . NameResolver::NAMESPACE_SEPARATOR . 'DataConnection';
+        return $this->getDataConnection()->getAliasWithNamespace() . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER . 'DataConnection';
     }
 }

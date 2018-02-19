@@ -12,7 +12,6 @@ use exface\Core\DataTypes\StringDataType;
 use exface\Core\Factories\EventFactory;
 use exface\Core\Exceptions\Widgets\WidgetNotFoundError;
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\CommonLogic\NameResolver;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Factories\UiPageFactory;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
@@ -21,6 +20,7 @@ use exface\Core\DataTypes\NumberDataType;
 use exface\Core\Exceptions\UiPage\UiPageNotPartOfAppError;
 use Ramsey\Uuid\Uuid;
 use exface\Core\Exceptions\UiPage\UiPageNotFoundError;
+use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 
 /**
  * This is the default implementation of the UiPageInterface.
@@ -976,7 +976,7 @@ class UiPage implements UiPageInterface
      */
     public function getAlias()
     {
-        if (($sepPos = strrpos($this->getAliasWithNamespace(), NameResolver::NAMESPACE_SEPARATOR)) !== false) {
+        if (($sepPos = strrpos($this->getAliasWithNamespace(), AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER)) !== false) {
             $alias = substr($this->getAliasWithNamespace(), $sepPos + 1);
         } else {
             $alias = $this->getAliasWithNamespace();
@@ -1013,7 +1013,7 @@ class UiPage implements UiPageInterface
      */
     public function getNamespace()
     {
-        if (($sepPos = strrpos($this->getAliasWithNamespace(), NameResolver::NAMESPACE_SEPARATOR)) !== false) {
+        if (($sepPos = strrpos($this->getAliasWithNamespace(), AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER)) !== false) {
             $namespace = substr($this->getAliasWithNamespace(), 0, $sepPos);
         } else {
             $namespace = '';

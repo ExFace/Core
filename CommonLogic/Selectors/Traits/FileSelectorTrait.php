@@ -30,6 +30,7 @@ trait FileSelectorTrait
         }
         return $this->isFilepath;
     }
+    
     /**
      *
      * {@inheritDoc}
@@ -38,5 +39,25 @@ trait FileSelectorTrait
     public function getPathAbsolute()
     {
         return Filemanager::pathJoin([$this->getWorkbench()->filemanager()->getPathToVendorFolder(), $this->getPathRelativeToVendorFolder()]);
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Selectors\FileSelectorInterface::getFolderAbsolute()
+     */
+    public function getFolderAbsolute()
+    {
+        return pathinfo($this->getPathAbsolute(), PATHINFO_DIRNAME);
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Selectors\FileSelectorInterface::getFolderRelativeToVendorFolder()
+     */
+    public function getFolderRelativeToVendorFolder()
+    {
+        return pathinfo($this->getPathRelativeToVendorFolder(), PATHINFO_DIRNAME);
     }
 }

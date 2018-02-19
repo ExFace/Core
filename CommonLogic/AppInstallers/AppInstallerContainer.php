@@ -88,8 +88,8 @@ class AppInstallerContainer implements AppInstallerInterface, InstallerContainer
     {
         $exface = $this->getWorkbench();
         $app = $this->getApp();
-        $appNameResolver = $app->getNameResolver();
-        $appPath = $exface->filemanager()->getPathToVendorFolder() . $appNameResolver->getClassDirectory();
+        $appSelector = $app->getSelector();
+        $appPath = $exface->filemanager()->getPathToVendorFolder() . $appSelector->getFolderRelativeToVendorFolder();
         $result = '';
         $app->getWorkbench()->filemanager()->pathConstruct($destination_absolute_path);
         // TODO Dispatch App.Backup.Before

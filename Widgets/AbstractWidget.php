@@ -8,7 +8,6 @@ use exface\Core\Interfaces\Widgets\iTriggerAction;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\CommonLogic\WidgetLink;
 use exface\Core\Interfaces\WidgetInterface;
-use exface\Core\CommonLogic\NameResolver;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Factories\WidgetDimensionFactory;
 use exface\Core\Interfaces\Model\UiPageInterface;
@@ -27,6 +26,7 @@ use exface\Core\Exceptions\Widgets\WidgetHasNoMetaObjectError;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\CommonLogic\Translation;
+use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 
 /**
  * Basic ExFace widget
@@ -765,7 +765,7 @@ else {
                 throw new WidgetConfigurationError($this, 'Cannot set object_alias property for widget "' . $this->getId() . '": neither a namespace is specified, nor is there a parent widget to take it from!', '6UOD4TW');
             }
             $this->object_alias = $full_or_object_alias;
-            $this->object_qualified_alias = $ns . NameResolver::NAMESPACE_SEPARATOR . $this->object_alias;
+            $this->object_qualified_alias = $ns . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER . $this->object_alias;
         }
         // IMPORTANT: unset the meta_object_id of this class, because it may already have been initialized previously and would act as a cache
         // for the meta object.

@@ -11,14 +11,13 @@ use exface\Core\Interfaces\TranslationInterface;
 use exface\Core\Interfaces\InstallerInterface;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Exceptions\Actions\ActionNotFoundError;
-use exface\Core\Interfaces\NameResolverInterface;
-use exface\Core\CommonLogic\NameResolver;
 use exface\Core\CommonLogic\Translation;
 use exface\Core\CommonLogic\AppInstallers\AppInstallerContainer;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Exceptions\LogicException;
 use exface\Core\Interfaces\Selectors\AppSelectorInterface;
+use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 
 /**
  * This is the base implementation of the AppInterface aimed at providing an
@@ -60,7 +59,7 @@ class App implements AppInterface
     
     /**
      *
-     * @param NameResolverInterface $selector
+     * @param AppSelectorInterface $selector
      * @deprecated use AppFactory instead!
      */
     public function __construct(AppSelectorInterface $selector)
@@ -90,7 +89,7 @@ class App implements AppInterface
         if (! $action_alias) {
             throw new ActionNotFoundError('Cannot find action with alias "' . $action_alias . '" in app "' . $this->getAliasWithNamespace() . '"!');
         }
-        $action = ActionFactory::createFromString($this->getWorkbench(), $this->getAliasWithNamespace() . NameResolver::NAMESPACE_SEPARATOR . $action_alias, $called_by_widget);
+        $action = ActionFactory::createFromString($this->getWorkbench(), $this->getAliasWithNamespace() . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER . $action_alias, $called_by_widget);
         if ($uxon_description instanceof UxonObject) {
             $action->importUxonObject($uxon_description);
         }
@@ -128,7 +127,7 @@ class App implements AppInterface
     public function getDirectory()
     {
         if (! $this->directory) {
-            $this->directory = str_replace(NameResolver::NAMESPACE_SEPARATOR, DIRECTORY_SEPARATOR, $this->getAliasWithNamespace());
+            $this->directory = str_replace(AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER, DIRECTORY_SEPARATOR, $this->getAliasWithNamespace());
         }
         return $this->directory;
     }
@@ -146,7 +145,7 @@ class App implements AppInterface
     
     public function getNamespace()
     {
-        return substr($this->getAliasWithNamespace(), 0, mb_strripos($this->getAliasWithNamespace(), NameResolver::NAMESPACE_SEPARATOR));
+        return substr($this->getAliasWithNamespace(), 0, mb_strripos($this->getAliasWithNamespace(), AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER));
     }
     
     /**
