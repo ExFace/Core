@@ -25,6 +25,7 @@ use exface\Core\Factories\DataSheetMapperFactory;
 use exface\Core\Exceptions\Actions\ActionConfigurationError;
 use exface\Core\Interfaces\Widgets\iTriggerAction;
 use exface\Core\Interfaces\Widgets\iUseInputWidget;
+use exface\Core\CommonLogic\Selectors\ActionSelector;
 
 /**
  * The abstract action is the base ActionInterface implementation, that simplifies the creation of custom actions.
@@ -1013,8 +1014,8 @@ abstract class AbstractAction implements ActionInterface
             if ($this->isExactly($action_or_alias)) {
                 return true;
             }
-            $resolver = NameResolver::createFromString($action_or_alias, NameResolver::OBJECT_TYPE_ACTION, $this->getWorkbench());
-            $class_name = $resolver->getClassNameWithNamespace();
+            $selector = new ActionSelector($this->getWorkbench(), $action_or_alias);
+            $class_name = $selector->getClassname();
             return $this instanceof $class_name;
         } else {
             throw new UnexpectedValueException('Invalid value "' . gettype($action_or_alias) .'" passed to "ActionInterface::is()": instantiated action or action alias with namespace expected!');
