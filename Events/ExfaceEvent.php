@@ -4,7 +4,7 @@ namespace exface\Core\Events;
 use Symfony\Component\EventDispatcher\Event;
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\Interfaces\Events\EventInterface;
-use exface\Core\CommonLogic\NameResolver;
+use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 
 class ExfaceEvent extends Event implements EventInterface
 {
@@ -56,7 +56,7 @@ class ExfaceEvent extends Event implements EventInterface
      */
     public function getNameWithNamespace()
     {
-        return $this->getNamespace() . NameResolver::NAMESPACE_SEPARATOR . $this->getName();
+        return $this->getNamespace() . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER . $this->getName();
     }
 
     /**
@@ -67,6 +67,6 @@ class ExfaceEvent extends Event implements EventInterface
      */
     public function getNamespace()
     {
-        return 'exface' . NameResolver::NAMESPACE_SEPARATOR . 'Core';
+        return 'exface' . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER . 'Core';
     }
 }
