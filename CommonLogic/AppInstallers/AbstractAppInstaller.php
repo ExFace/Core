@@ -22,7 +22,7 @@ abstract class AbstractAppInstaller extends AbstractSelectorInstaller implements
     public function getApp()
     {
         if (is_null($this->app)) {
-            $this->app = $this->getWorkbench()->getApp($this->getSelectorInstalling()->getAliasWithNamespace());
+            $this->app = $this->getWorkbench()->getApp($this->getSelectorInstalling());
         }
         return $this->app;
     }
