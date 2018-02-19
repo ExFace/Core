@@ -8,6 +8,7 @@ use exface\Core\Exceptions\Actions\ActionNotFoundError;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\LogicException;
+use exface\Core\Interfaces\Selectors\AppSelectorInterface;
 
 /**
  * The app class provieds access to actions, configs, translations, etc. of
@@ -149,21 +150,12 @@ interface AppInterface extends ExfaceClassInterface, AliasInterface
      * @return AppInstallerInterface
      */
     public function getInstaller(InstallerInterface $injected_installer = null);
-
-    /**
-     * Returns TRUE if the given class is part of the app and FALSE otherwise.
-     *
-     * @param string|object $object_or_class_name            
-     * @throws InvalidArgumentException if the given argument is neither object nor string
-     * @return boolean
-     */
-    public function containsClass($object_or_class_name);
     
     /**
-     * Returns the name resolver, that can be used to instantiate the app
+     * Returns the selector, that can be used to instantiate the app
      * 
-     * @return NameResolverInterface
+     * @return AppSelectorInterface
      */
-    public function getNameResolver();
+    public function getSelector();
 }
 ?>
