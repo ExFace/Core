@@ -23,6 +23,8 @@ class CallActionBehavior extends AbstractBehavior
     private $objectEventAlias = null;
 
     private $action = null;
+    
+    private $actionConfig = null;
 
     /**
      * 
@@ -82,6 +84,9 @@ class CallActionBehavior extends AbstractBehavior
      */
     public function getAction()
     {
+        if (is_null($this->action)) {
+            $this->action = ActionFactory::createFromUxon($this->getWorkbench(), UxonObject::fromAnything($this->actionConfig));
+        }
         return $this->action;
     }
 
@@ -96,7 +101,7 @@ class CallActionBehavior extends AbstractBehavior
      */
     public function setAction($action)
     {
-        $this->action = ActionFactory::createFromUxon($this->getWorkbench(), UxonObject::fromAnything($action));
+        $this->actionConfig = $action;
         return $this;
     }
 
