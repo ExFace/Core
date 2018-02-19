@@ -12,7 +12,7 @@ use exface\Core\Exceptions\Selectors\SelectorInvalidError;
  */
 trait AliasSelectorTrait
 {
-    private $nameParts = null;
+    private $aliasParts = null;
     
     /**
      * 
@@ -44,15 +44,27 @@ trait AliasSelectorTrait
      * 
      * @return string[]
      */
-    protected function getNameParts()
+    protected function getAliasParts()
     {
-        if (is_null($this->nameParts)) {
-            $this->nameParts = explode($this::getAliasNamespaceDelimiter(), $this->getAliasWithNamespace());
-            if (count($this->nameParts) < 3) {
+        if (is_null($this->aliasParts)) {
+            $parts = explode($this::getAliasNamespaceDelimiter(), $this->getAliasWithNamespace());
+            if (! $this->validateAliasParts($parts)) {
                 throw new SelectorInvalidError('"' . $this->getAliasWithNamespace() . '" is not a valid alias!');
             }
+            $this->aliasParts = $parts;
         }
-        return $this->nameParts;
+        return $this->aliasParts;
+    }
+    
+    /**
+     * Returns TRUE if the given array contains parts of a valid alias and FALSE otherwise
+     * 
+     * @param array $parts
+     * @return boolean
+     */
+    protected function validateAliasParts(array $parts)
+    {
+        return count($parts) < 3 ? false : true;
     }
     
     /**
@@ -62,7 +74,7 @@ trait AliasSelectorTrait
      */
     public function getVendorAlias()
     {
-        return $this->getNameParts()[0];
+        return $this->getAliasParts()[0];
     }
     
     /**
@@ -72,7 +84,7 @@ trait AliasSelectorTrait
      */
     public function getAppAlias()
     {
-        return implode($this::getAliasNamespaceDelimiter(), array_slice($this->getNameParts(), 0, 2));
+        return implode($this::getAliasNamespaceDelimiter(), array_slice($this->getAliasParts(), 0, 2));
     }
     
     /**
@@ -82,7 +94,7 @@ trait AliasSelectorTrait
      */
     public function getNamespace()
     {
-        return implode($this::getAliasNamespaceDelimiter(), array_slice($this->getNameParts(), 0, -1));
+        return implode($this::getAliasNamespaceDelimiter(), array_slice($this->getAliasParts(), 0, -1));
     }
     
     /**
@@ -92,13 +104,13 @@ trait AliasSelectorTrait
      */
     public function getAlias()
     {
-        return array_slice($this->getNameParts(), -1)[0];
+        return array_slice($this->getAliasParts(), -1)[0];
     }
     
     public function isAlias()
     {
         try {
-            $this->getNameParts();
+            $this->getAliasParts();
         } catch (SelectorInvalidError $e) {
             return false;
         }
