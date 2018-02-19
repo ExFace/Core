@@ -21,7 +21,7 @@ class CoreInstaller extends AbstractAppInstaller
     public function install($source_absolute_path)
     {
         $model_source_installer = $this->getWorkbench()->model()->getModelLoader()->getInstaller();
-        return $model_source_installer->install($this->getWorkbench()->filemanager()->getPathToVendorFolder() . DIRECTORY_SEPARATOR . $model_source_installer->getNameResolver()->getClassDirectory());
+        return $model_source_installer->install($this->getWorkbench()->filemanager()->getPathToVendorFolder() . DIRECTORY_SEPARATOR . $model_source_installer->getSelectorInstalling()->getFolderRelativeToVendorFolder());
     }
 
     /**
@@ -33,7 +33,7 @@ class CoreInstaller extends AbstractAppInstaller
     public function update($source_absolute_path)
     {
         $model_source_installer = $this->getWorkbench()->model()->getModelLoader()->getInstaller();
-        return $model_source_installer->update($this->getWorkbench()->filemanager()->getPathToVendorFolder() . DIRECTORY_SEPARATOR . $model_source_installer->getNameResolver()->getClassDirectory());
+        return $model_source_installer->update($this->getWorkbench()->filemanager()->getPathToVendorFolder() . DIRECTORY_SEPARATOR . $model_source_installer->getSelectorInstalling()->getFolderRelativeToVendorFolder());
     }
 
     /**
@@ -44,7 +44,7 @@ class CoreInstaller extends AbstractAppInstaller
      */
     public function uninstall()
     {
-        return 'Uninstall not implemented for installer "' . $this->getNameResolver()->getAliasWithNamespace() . '"!';
+        return 'Uninstall not implemented for installer "' . $this->getSelectorInstalling()->getAliasWithNamespace() . '"!';
     }
 
     /**
@@ -55,7 +55,7 @@ class CoreInstaller extends AbstractAppInstaller
      */
     public function backup($destination_absolute_path)
     {
-        return 'Backup not implemented for' . $this->getNameResolver()->getAliasWithNamespace() . '!';
+        return 'Backup not implemented for' . $this->getSelectorInstalling()->getAliasWithNamespace() . '!';
     }
 }
 ?>
