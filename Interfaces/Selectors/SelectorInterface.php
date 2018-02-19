@@ -5,7 +5,7 @@ use exface\Core\CommonLogic\Workbench;
 use exface\Core\Interfaces\ExfaceClassInterface;
 
 /**
- * Selectors are strings that uniquely identify a UXON model entity or it's prototype.
+ * Selectors are strings that uniquely identify a UXON model component or it's prototype.
  * 
  * Depending on the model entity, different selectors can be used: action selectors
  * can be aliases, class names or file paths, while meta object selectors can be
