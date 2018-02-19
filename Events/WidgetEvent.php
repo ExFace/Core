@@ -1,9 +1,9 @@
 <?php
 namespace exface\Core\Events;
 
-use exface\Core\CommonLogic\NameResolver;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Exceptions\Widgets\WidgetHasNoMetaObjectError;
+use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 
 /**
  * Widget event names consist of the qualified alias of the app followed by "Widget" and the respective event type:
@@ -42,6 +42,6 @@ class WidgetEvent extends ExfaceEvent
             $this->getWidget()->setMetaObject($this->getWorkbench()->model()->getObject('exface.Core.BASE_OBJECT'));
             $object_alias = $this->getWidget()->getMetaObject()->getAliasWithNamespace();
         }
-        return $object_alias . NameResolver::NAMESPACE_SEPARATOR . 'Widget';
+        return $object_alias . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER . 'Widget';
     }
 }

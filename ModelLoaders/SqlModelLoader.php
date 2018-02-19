@@ -32,6 +32,7 @@ use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Interfaces\NameResolverInterface;
+use exface\Core\CommonLogic\Selectors\AppSelector;
 
 class SqlModelLoader implements ModelLoaderInterface
 {
@@ -544,7 +545,7 @@ class SqlModelLoader implements ModelLoaderInterface
 
     public function getInstaller()
     {
-        $installer = new SqlSchemaInstaller(NameResolver::createFromString('exface.Core', NameResolver::OBJECT_TYPE_APP, $this->getDataConnection()->getWorkbench()));
+        $installer = new SqlSchemaInstaller(new AppSelector($this->getDataConnection()->getWorkbench(), 'exface.Core'));
         $installer->setDataConnection($this->getDataConnection());
         return $installer;
     }

@@ -2,7 +2,6 @@
 namespace exface\Core\CommonLogic\Model;
 
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\CommonLogic\NameResolver;
 use exface\Core\Factories\RelationPathFactory;
 use exface\Core\Factories\AttributeGroupFactory;
 use exface\Core\Factories\AttributeListFactory;
@@ -25,6 +24,7 @@ use exface\Core\Interfaces\Model\MetaAttributeListInterface;
 use exface\Core\Interfaces\Model\MetaAttributeGroupInterface;
 use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 
 class Object implements MetaObjectInterface
 {
@@ -993,7 +993,7 @@ class Object implements MetaObjectInterface
 
     public function getAliasWithNamespace()
     {
-        return $this->getNamespace() . NameResolver::NAMESPACE_SEPARATOR . $this->getAlias();
+        return $this->getNamespace() . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER . $this->getAlias();
         ;
     }
 

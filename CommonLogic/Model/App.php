@@ -11,13 +11,13 @@ use exface\Core\Interfaces\TranslationInterface;
 use exface\Core\Interfaces\InstallerInterface;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Exceptions\Actions\ActionNotFoundError;
-use exface\Core\Interfaces\NameResolverInterface;
-use exface\Core\CommonLogic\NameResolver;
 use exface\Core\CommonLogic\Translation;
 use exface\Core\CommonLogic\AppInstallers\AppInstallerContainer;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Exceptions\LogicException;
+use exface\Core\Interfaces\Selectors\AppSelectorInterface;
+use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 
 /**
  * This is the base implementation of the AppInterface aimed at providing an
@@ -43,7 +43,7 @@ class App implements AppInterface
     
     const TRANSLATIONS_FOLDER_IN_APP = 'Translations';
     
-    private $name_resolver = null;
+    private $selector = null;
     
     private $uid = null;
     
@@ -59,12 +59,12 @@ class App implements AppInterface
     
     /**
      *
-     * @param NameResolverInterface $name_resolver
+     * @param AppSelectorInterface $selector
      * @deprecated use AppFactory instead!
      */
-    public function __construct(NameResolverInterface $name_resolver)
+    public function __construct(AppSelectorInterface $selector)
     {
-        $this->name_resolver = $name_resolver;
+        $this->selector = $selector;
         $this->init();
     }
     
@@ -89,7 +89,7 @@ class App implements AppInterface
         if (! $action_alias) {
             throw new ActionNotFoundError('Cannot find action with alias "' . $action_alias . '" in app "' . $this->getAliasWithNamespace() . '"!');
         }
-        $action = ActionFactory::createFromString($this->getWorkbench(), $this->getAliasWithNamespace() . NameResolver::NAMESPACE_SEPARATOR . $action_alias, $called_by_widget);
+        $action = ActionFactory::createFromString($this->getWorkbench(), $this->getAliasWithNamespace() . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER . $action_alias, $called_by_widget);
         if ($uxon_description instanceof UxonObject) {
             $action->importUxonObject($uxon_description);
         }
@@ -104,7 +104,7 @@ class App implements AppInterface
      */
     public function getAliasWithNamespace()
     {
-        return $this->getNameResolver()->getAliasWithNamespace();
+        return $this->getSelector()->getAliasWithNamespace();
     }
     
     /**
@@ -115,7 +115,7 @@ class App implements AppInterface
      */
     public function getAlias()
     {
-        return $this->getNameResolver()->getAlias();
+        return $this->getSelector()->getAlias();
     }
     
     /**
@@ -127,7 +127,7 @@ class App implements AppInterface
     public function getDirectory()
     {
         if (! $this->directory) {
-            $this->directory = str_replace(NameResolver::NAMESPACE_SEPARATOR, DIRECTORY_SEPARATOR, $this->getAliasWithNamespace());
+            $this->directory = str_replace(AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER, DIRECTORY_SEPARATOR, $this->getAliasWithNamespace());
         }
         return $this->directory;
     }
@@ -145,12 +145,7 @@ class App implements AppInterface
     
     public function getNamespace()
     {
-        return substr($this->getAliasWithNamespace(), 0, mb_strripos($this->getAliasWithNamespace(), NameResolver::NAMESPACE_SEPARATOR));
-    }
-    
-    public function getClassNamespace()
-    {
-        return str_replace(NameResolver::NAMESPACE_SEPARATOR, '\\', $this->getAliasWithNamespace());
+        return substr($this->getAliasWithNamespace(), 0, mb_strripos($this->getAliasWithNamespace(), AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER));
     }
     
     /**
@@ -160,10 +155,7 @@ class App implements AppInterface
      */
     public function getVendor()
     {
-        if (is_null($this->vendor)) {
-            $this->vendor = explode(NameResolver::NAMESPACE_SEPARATOR, $this->getAliasWithNamespace())[0];
-        }
-        return $this->vendor;
+        return $this->getSelector()->getVendorAlias();
     }
     
     /**
@@ -174,7 +166,7 @@ class App implements AppInterface
      */
     public function getWorkbench()
     {
-        return $this->getNameResolver()->getWorkbench();
+        return $this->getSelector()->getWorkbench();
     }
     
     /**
@@ -291,17 +283,11 @@ class App implements AppInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\AppInterface::getNameResolver()
+     * @see \exface\Core\Interfaces\AppInterface::getSelector()
      */
-    public function getNameResolver()
+    public function getSelector()
     {
-        return $this->name_resolver;
-    }
-    
-    public function setNameResolver(NameResolver $value)
-    {
-        $this->name_resolver = $value;
-        return $this;
+        return $this->selector;
     }
     
     /**
@@ -435,32 +421,6 @@ class App implements AppInterface
             $app_installer->addInstaller($injected_installer);
         }
         return $app_installer;
-    }
-    
-    /**
-     * By default a class is conscidered part of an app if it is in the namespace of the app.
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\AppInterface::containsClass()
-     */
-    public function containsClass($object_or_class_name)
-    {
-        if (is_object($object_or_class_name)) {
-            $class_name = get_class($object_or_class_name);
-        } elseif (is_string($object_or_class_name)) {
-            $class_name = $object_or_class_name;
-        } else {
-            throw new InvalidArgumentException('AppInterface::containsClass() expects the argument to be either an object or a string class name: "' . gettype($object_or_class_name) . '" given instead!');
-        }
-        
-        $app_namespace = $this->getNameResolver()->getClassNamespace();
-        $app_namespace = substr($app_namespace, 0, 1) == "\\" ? substr($app_namespace, 1) : $app_namespace;
-        $class_name = substr($class_name, 0, 1) == "\\" ? substr($class_name, 1) : $class_name;
-        if (substr($class_name, 0, strlen($app_namespace)) == $app_namespace) {
-            return true;
-        }
-        return false;
     }
     
     public function getDefaultLanguageCode()

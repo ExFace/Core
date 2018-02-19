@@ -26,6 +26,7 @@ use exface\Core\Exceptions\Actions\ActionConfigurationError;
 use exface\Core\Interfaces\Widgets\iTriggerAction;
 use exface\Core\Interfaces\Widgets\iUseInputWidget;
 use exface\Core\CommonLogic\Selectors\ActionSelector;
+use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 
 /**
  * The abstract action is the base ActionInterface implementation, that simplifies the creation of custom actions.
@@ -176,7 +177,7 @@ abstract class AbstractAction implements ActionInterface
      */
     public function getAliasWithNamespace()
     {
-        return $this->getNamespace() . NameResolver::NAMESPACE_SEPARATOR . $this->getAlias();
+        return $this->getNamespace() . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER . $this->getAlias();
     }
 
     /**

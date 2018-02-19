@@ -1,47 +1,60 @@
 <?php
 namespace exface\Core\Factories;
 
-use exface\Core\CommonLogic\NameResolver;
-use exface\Core\Interfaces\NameResolverInterface;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Exceptions\AppNotFoundError;
 use exface\Core\CommonLogic\Workbench;
+use exface\Core\Interfaces\Selectors\SelectorInterface;
+use exface\Core\CommonLogic\Selectors\AppSelector;
+use exface\Core\Exceptions\InvalidArgumentException;
+use exface\Core\Interfaces\Selectors\AppSelectorInterface;
 
-abstract class AppFactory extends AbstractNameResolverFactory
+/**
+ * Instantiates apps.
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
+abstract class AppFactory extends AbstractSelectorFactory
 {
 
     /**
      * Creates a new app from the given name resolver
      *
-     * @param NameResolver $name_resolver            
+     * @param AppSelectorInterface $selector            
      * @return AppInterface
      */
-    public static function create(NameResolverInterface $name_resolver)
+    public static function create(SelectorInterface $selector)
     {
-        $class = $name_resolver->getClassNameWithNamespace();
-        if (! class_exists($class)) {
-            $class = '\\exface\\Core\\CommonLogic\\Model\\App';
-            // throw new AppNotFoundError('No class found for app "' . $name_resolver->getAliasWithNamespace() . '"!', '6T5DXWP');
+        if (! ($selector instanceof AppSelectorInterface)) {
+            throw new InvalidArgumentException('Cannot create App from selector "' . get_class($selector) . '": expecting "AppSelector" or derivatives!');
         }
-        $app = new $class($name_resolver);
+        
+        if ($selector->isUid()) {
+            return static::createFromUid($selector->toString(), $selector->getWorkbench());
+        }
+        
+        $class = $selector->getClassname();
+        if (! $selector->prototypeClassExists()) {
+            $class = $selector->getClassnameOfDefaultPrototype();
+        }
+        $app = new $class($selector);
         return $app;
     }
 
     /**
      * Creates a new app from the given NameResolver, UID or alias.
      * 
-     * @param NameResolverInterface|string $anything
-     * @param Workbench $exface
+     * @param AppSelectorInterface|string $anything
+     * @param Workbench $workbench
      * @return AppInterface
      */
-    public static function createFromAnything($anything, Workbench $exface)
+    public static function createFromAnything($anything, Workbench $workbench)
     {
-        if ($anything instanceof NameResolverInterface) {
+        if ($anything instanceof AppSelectorInterface) {
             return static::create($anything);
-        } elseif (static::isUid($anything)) {
-            return static::createFromUid($anything, $exface);
         } else {
-            return static::createFromAlias($anything, $exface);
+            return static::create(new AppSelector($workbench, $anything));
         }
     }
 
@@ -49,13 +62,13 @@ abstract class AppFactory extends AbstractNameResolverFactory
      * Creates a new app from the given alias.
      * 
      * @param string $alias_with_namespace            
-     * @param Workbench $exface            
+     * @param Workbench $workbench            
      * @return AppInterface
      */
-    public static function createFromAlias($alias_with_namespace, Workbench $exface)
+    public static function createFromAlias($alias_with_namespace, Workbench $workbench)
     {
-        $name_resolver = NameResolver::createFromString($alias_with_namespace, NameResolver::OBJECT_TYPE_APP, $exface);
-        return static::create($name_resolver);
+        $selector = new AppSelector($workbench, $alias_with_namespace);
+        return static::create($selector);
     }
 
     /**
@@ -77,20 +90,6 @@ abstract class AppFactory extends AbstractNameResolverFactory
             throw new AppNotFoundError('No class found for app "' . $uid . '"!', '6T5DXWP');
         }
         return self::createFromAlias($appDataSheet->getRow(0)['ALIAS'], $exface);
-    }
-
-    /**
-     * Returns if the passed value contains an app UID.
-     * 
-     * @param string $value
-     * @return boolean
-     */
-    public static function isUid($value)
-    {
-        if (substr($value, 0, 2) == '0x') {
-            return true;
-        }
-        return false;
     }
 }
 ?>

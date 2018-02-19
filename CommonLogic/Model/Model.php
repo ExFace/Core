@@ -2,11 +2,11 @@
 namespace exface\Core\CommonLogic\Model;
 
 use exface\Core\Factories\ExpressionFactory;
-use exface\Core\CommonLogic\NameResolver;
 use exface\Core\Interfaces\DataSources\ModelLoaderInterface;
 use exface\Core\Interfaces\Model\ModelInterface;
 use exface\Core\Exceptions\Model\MetaObjectNotFoundError;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
+use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 
 class Model implements ModelInterface
 {
@@ -173,7 +173,7 @@ class Model implements ModelInterface
      */
     public function getObjectAliasFromQualifiedAlias($qualified_alias_with_app)
     {
-        if ($sep = strrpos($qualified_alias_with_app, NameResolver::NAMESPACE_SEPARATOR)) {
+        if ($sep = strrpos($qualified_alias_with_app, AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER)) {
             return substr($qualified_alias_with_app, $sep + 1);
         } else {
             return $qualified_alias_with_app;
@@ -188,7 +188,7 @@ class Model implements ModelInterface
      */
     public function getNamespaceFromQualifiedAlias($qualified_alias_with_app)
     {
-        return substr($qualified_alias_with_app, 0, strrpos($qualified_alias_with_app, NameResolver::NAMESPACE_SEPARATOR));
+        return substr($qualified_alias_with_app, 0, strrpos($qualified_alias_with_app, AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER));
     }
 
     /**
