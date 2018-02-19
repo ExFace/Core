@@ -222,12 +222,20 @@ class Workbench
      * @param string $appSelectorString
      * @return AppInterface
      */
-    public function getApp($appSelectorString)
+    public function getApp($selectorOrString)
     {
-        if ($app = $this->findAppRunning(new AppSelector($this, $appSelectorString))) {
+        if ($selectorOrString instanceof AppSelectorInterface) {
+            $selector = $selectorOrString;
+        } elseif (is_string($selectorOrString)) {
+            $selector = new AppSelector($this, $selectorOrString);
+        } else {
+            throw new InvalidArgumentException('Invalid app selector used: ' . $selectorOrString . '!');
+        }
+        
+        if ($app = $this->findAppRunning($selector)) {
             return $app;
         } else {
-            $app = AppFactory::createFromAnything($appSelectorString, $this);
+            $app = AppFactory::create($selector);
             $this->running_apps[] = $app;
             return $app;
         }
