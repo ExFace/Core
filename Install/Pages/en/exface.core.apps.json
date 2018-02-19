@@ -49,12 +49,19 @@
                     "widget_type": "ColorIndicator",
                     "fill": true,
                     "color_conditions": {
-                        "!= PACKAGE__model_timestamp": "yellow"
+                        "> PACKAGE__model_timestamp": "yellow"
                     }
                 }
             },
             {
-                "attribute_alias": "PACKAGE__model_timestamp"
+                "attribute_alias": "PACKAGE__model_timestamp",
+                "cell_widget": {
+                    "widget_type": "ColorIndicator",
+                    "fill": true,
+                    "color_conditions": {
+                        "< MODEL_MODIFIED_ON": "yellow"
+                    }
+                }
             },
             {
                 "attribute_alias": "OBJECT__UID:COUNT",
