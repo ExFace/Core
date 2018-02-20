@@ -398,7 +398,7 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
      */
     public function getResultOutput()
     {
-        return $this->getTemplate()->draw($this->getResult());
+        return $this->getTemplate()->buildWidget($this->getResult());
     }
 
     /**

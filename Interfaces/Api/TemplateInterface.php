@@ -1,19 +1,16 @@
 <?php
-namespace exface\Core\Interfaces;
+namespace exface\Core\Interfaces\Api;
 
 use exface\Core\CommonLogic\Configuration;
+use exface\Core\Interfaces\ExfaceClassInterface;
+use exface\Core\Interfaces\AliasInterface;
+use exface\Core\Interfaces\AppInterface;
+use exface\Core\Interfaces\WidgetInterface;
 
 interface TemplateInterface extends ExfaceClassInterface, AliasInterface
 {
 
-    function draw(\exface\Core\Widgets\AbstractWidget $widget);
-
-    /**
-     * Generates the declaration of the JavaScript sources
-     *
-     * @return string
-     */
-    function drawHeaders(\exface\Core\Widgets\AbstractWidget $widget);
+    public function buildWidget(WidgetInterface $widget);
 
     /**
      *
@@ -22,31 +19,11 @@ interface TemplateInterface extends ExfaceClassInterface, AliasInterface
     public function getAlias();
 
     /**
-     * Processes the current HTTP request, assuming it was made from a UI using this template
-     *
-     * @return string
-     */
-    public function processRequest();
-
-    /**
      * Returns TRUE if this template matches the given template alias and false otherwise (case insensitive!)
      *
      * @param string $template_alias            
      */
     public function is($template_alias);
-
-    /**
-     *
-     * @return string
-     */
-    public function getResponse();
-
-    /**
-     *
-     * @param string $value            
-     * @return \exface\Core\Interfaces\TemplateInterface
-     */
-    public function setResponse($value);
 
     /**
      * Returns the app, that contains the template
