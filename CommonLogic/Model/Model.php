@@ -7,6 +7,8 @@ use exface\Core\Interfaces\Model\ModelInterface;
 use exface\Core\Exceptions\Model\MetaObjectNotFoundError;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
+use exface\Core\Interfaces\Selectors\MetaObjectSelectorInterface;
+use exface\Core\CommonLogic\Selectors\MetaObjectSelector;
 
 class Model implements ModelInterface
 {
@@ -89,19 +91,25 @@ class Model implements ModelInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\ModelInterface::getObject()
      */
-    public function getObject($id_or_alias)
+    public function getObject($selectorOrString)
     {
+        if ($selectorOrString instanceof MetaObjectSelectorInterface) {
+            $selector = $selectorOrString;
+        } else {
+            $selector = new MetaObjectSelector($this->getWorkbench(), $selectorOrString);
+        }
+        
         // If the given identifier looks like a UUID, try using it as object id. If this fails, try using it as alias anyway.
-        if (strpos($id_or_alias, '0x') === 0 && strlen($id_or_alias) == 34) {
+        if ($selector->isUid()) {
             try {
-                $object = $this->getObjectById($id_or_alias);
+                $object = $this->getObjectById($selector->toString());
             } catch (MetaObjectNotFoundError $e) {
                 $object = null;
             }
         }
         
         if (! $object) {
-            $object = $this->getObjectByAlias($this->getObjectAliasFromQualifiedAlias($id_or_alias), $this->getNamespaceFromQualifiedAlias($id_or_alias));
+            $object = $this->getObjectByAlias($selector->getAlias(), $selector->getNamespace());
         }
         
         return $object;

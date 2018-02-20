@@ -5,6 +5,8 @@ use exface\Core\Interfaces\AppInterface;
 use exface\Core\Factories\ActionFactory;
 use exface\Core\Factories\ConfigurationFactory;
 use exface\Core\Interfaces\ConfigurationInterface;
+use exface\Core\Interfaces\Tasks\TaskInterface;
+use exface\Core\Interfaces\Tasks\TaskResultInterface;
 use exface\Core\Interfaces\Contexts\ContextManagerInterface;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\TranslationInterface;
@@ -77,24 +79,6 @@ class App implements AppInterface
      */
     protected function init()
     {}
-    
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\AppInterface::getAction()
-     */
-    public function getAction($action_alias, WidgetInterface $called_by_widget = null, UxonObject $uxon_description = null)
-    {
-        if (! $action_alias) {
-            throw new ActionNotFoundError('Cannot find action with alias "' . $action_alias . '" in app "' . $this->getAliasWithNamespace() . '"!');
-        }
-        $action = ActionFactory::createFromString($this->getWorkbench(), $this->getAliasWithNamespace() . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER . $action_alias, $called_by_widget);
-        if ($uxon_description instanceof UxonObject) {
-            $action->importUxonObject($uxon_description);
-        }
-        return $action;
-    }
     
     /**
      *
@@ -439,5 +423,11 @@ class App implements AppInterface
         $ds->dataRead();
         return $ds;
     }
+    
+    public function handle(TaskInterface $task): TaskResultInterface
+    {
+        // TODO
+    }
+
 }
 ?>

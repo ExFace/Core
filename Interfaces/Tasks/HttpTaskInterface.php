@@ -1,8 +1,8 @@
 <?php
-namespace exface\Core\Interfaces\Api;
+namespace exface\Core\Interfaces\Tasks;
 
 use Psr\Http\Message\ServerRequestInterface;
-use exface\Core\Interfaces\TemplateInterface;
+use exface\Core\Interfaces\Templates\TemplateInterface;
 
 /**
  * 
@@ -16,7 +16,7 @@ interface HttpTaskInterface extends TaskInterface
      * @param TemplateInterface $template
      * @param ServerRequestInterface $request
      */
-    public function __construct(TemplateInterface $template, ServerRequestInterface $request);
+    public function __construct(TemplateInterface $template, ServerRequestInterface $request = null);
     
     /**
      * 

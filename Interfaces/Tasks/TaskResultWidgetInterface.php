@@ -1,5 +1,5 @@
 <?php
-namespace exface\Core\Interfaces\Api;
+namespace exface\Core\Interfaces\Tasks;
 
 use exface\Core\Interfaces\WidgetInterface;
 

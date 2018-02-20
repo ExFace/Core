@@ -4,7 +4,7 @@ namespace exface\Core\Factories;
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\Interfaces\NameResolverInterface;
 use exface\Core\CommonLogic\NameResolver;
-use exface\Core\Interfaces\TemplateInterface;
+use exface\Core\Interfaces\Templates\TemplateInterface;
 
 abstract class TemplateFactory extends AbstractNameResolverFactory
 {
@@ -39,7 +39,7 @@ abstract class TemplateFactory extends AbstractNameResolverFactory
      *
      * @param string|NameResolverInterface|TemplateInterface $name_reslver_or_alias_or_template            
      * @param exface $exface            
-     * @return \exface\Core\Interfaces\TemplateInterface
+     * @return \exface\Core\Interfaces\Templates\TemplateInterface
      */
     public static function createFromAnything($name_reslver_or_alias_or_template, Workbench $exface)
     {

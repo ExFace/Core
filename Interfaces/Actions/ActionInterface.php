@@ -7,7 +7,7 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Interfaces\Model\UiPageInterface;
-use exface\Core\Interfaces\TemplateInterface;
+use exface\Core\Interfaces\Templates\TemplateInterface;
 use exface\Core\Exceptions\Actions\ActionObjectNotSpecifiedError;
 use exface\Core\Exceptions\Actions\ActionInputError;
 use exface\Core\Interfaces\iCanBeCopied;
@@ -15,8 +15,8 @@ use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\DataSheets\DataSheetMapperInterface;
-use exface\Core\Interfaces\Api\TaskInterface;
-use exface\Core\Interfaces\Api\TaskResultInterface;
+use exface\Core\Interfaces\Tasks\TaskInterface;
+use exface\Core\Interfaces\Tasks\TaskResultInterface;
 use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 
 interface ActionInterface extends ExfaceClassInterface, AliasInterface, iCanBeCopied

@@ -4,10 +4,13 @@ namespace exface\Core\CommonLogic;
 use exface\Core\Widgets\AbstractWidget;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Factories\UiPageFactory;
-use exface\Core\Interfaces\TemplateInterface;
+use exface\Core\Interfaces\Templates\TemplateInterface;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\UiManagerInterface;
 use exface\Core\Factories\TemplateFactory;
+use Psr\Http\Message\UriInterface;
+use exface\Core\Exceptions\Templates\TemplateRoutingError;
+use exface\Core\CommonLogic\Selectors\UiPageSelector;
 
 class UiManager implements UiManagerInterface
 {
@@ -32,7 +35,7 @@ class UiManager implements UiManagerInterface
      * If no alias given, returns the current template.
      * 
      * @param string $template
-     * @return AbstractTemplate
+     * @return TemplateInterface
      */
     function getTemplate($template = null)
     {
@@ -88,12 +91,14 @@ class UiManager implements UiManagerInterface
      * Returns the UI page with the given $page_alias.
      * If the $page_alias is ommitted or ='', the default (initially empty) page is returned.
      * 
-     * @param string $page_alias
+     * @param UiPageSelector|string $selectorOrString
      * @return UiPageInterface
      */
-    public function getPage($page_alias = null)
+    public function getPage($selectorOrString = null)
     {
-        return UiPageFactory::createFromCmsPage($this, $page_alias);
+        // FIXME use UiPageSelector in the factory and in the CMS interfaces
+        $string = $selectorOrString instanceof UiPageSelector ? $selectorOrString->toString() : $selectorOrString;
+        return UiPageFactory::createFromCmsPage($this, $string);
     }
 
     /**
@@ -132,6 +137,17 @@ class UiManager implements UiManagerInterface
     {
         $this->base_template = $qualified_alias;
         return $this;
+    }
+    
+    public function getTemplateForUri(UriInterface $uri) : TemplateInterface
+    {
+        $url = $uri->getPath() . '?' . $uri->getQuery();
+        foreach ($this->getWorkbench()->getConfig()->getOption('TEMPLATE.ROUTES') as $pattern => $templateAlias) {
+            if (preg_match($pattern, $url) === 1) {
+                return $this->getTemplate($templateAlias);
+            }
+        }
+        throw new TemplateRoutingError('No route can be found for URL "' . $url . '" - please check system configuration option TEMPLATE.ROUTES!');
     }
 }
 

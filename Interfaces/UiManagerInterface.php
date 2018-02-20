@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\Interfaces;
 
+use exface\Core\Interfaces\Templates\TemplateInterface;
+
 interface UiManagerInterface extends ExfaceClassInterface
 {
 
