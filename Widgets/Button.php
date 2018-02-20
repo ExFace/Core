@@ -33,6 +33,8 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iDefin
     private $action_alias = null;
 
     private $action = null;
+    
+    private $action_uxon = null;
 
     private $active_condition = null;
 
@@ -54,9 +56,12 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iDefin
 
     public function getAction()
     {
-        if (! $this->action) {
+        if (is_null($this->action)) {
             if ($this->getActionAlias()) {
                 $this->action = ActionFactory::createFromString($this->getWorkbench(), $this->getActionAlias(), $this);
+            }
+            if (! is_null($this->action_uxon)) {
+                $this->action->importUxonObject($this->action_uxon);
             }
         }
         return $this->action;
@@ -168,11 +173,12 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iDefin
      */
     protected function setActionOptions(UxonObject $action_options)
     {
-        if (! $action = $this->getAction()) {
-            throw new WidgetPropertyInvalidValueError($this, 'Cannot set action properties prior to action initialization! Please ensure, that the action_alias is defined first!', '6T919D5');
+        if (is_null($this->action)) {
+            $this->action_uxon = $action_options;
         } else {
-            $action->importUxonObject($action_options);
+            $this->action->importUxonObject($action_options);
         }
+        
         return $this;
     }
 
