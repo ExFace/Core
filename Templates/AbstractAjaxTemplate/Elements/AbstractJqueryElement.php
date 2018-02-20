@@ -1,7 +1,7 @@
 <?php
 namespace exface\Core\Templates\AbstractAjaxTemplate\Elements;
 
-use exface\Core\Interfaces\TemplateInterface;
+use exface\Core\Interfaces\Templates\TemplateInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Templates\AbstractAjaxTemplate\AbstractAjaxTemplate;

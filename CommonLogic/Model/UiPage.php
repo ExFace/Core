@@ -3,7 +3,7 @@ namespace exface\Core\CommonLogic\Model;
 
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\WidgetInterface;
-use exface\Core\Interfaces\TemplateInterface;
+use exface\Core\Interfaces\Templates\TemplateInterface;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\UiManagerInterface;
 use exface\Core\Exceptions\Widgets\WidgetIdConflictError;
@@ -441,7 +441,7 @@ class UiPage implements UiPageInterface
 
     /**
      *
-     * @return \exface\Core\Interfaces\TemplateInterface
+     * @return \exface\Core\Interfaces\Templates\TemplateInterface
      */
     public function getTemplate()
     {

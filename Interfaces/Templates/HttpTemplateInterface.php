@@ -1,5 +1,5 @@
 <?php
-namespace exface\Core\Interfaces\Api;
+namespace exface\Core\Interfaces\Templates;
 
 use Psr\Http\Server\RequestHandlerInterface;
 

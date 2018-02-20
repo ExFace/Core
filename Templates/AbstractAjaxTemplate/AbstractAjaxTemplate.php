@@ -1,7 +1,6 @@
 <?php
 namespace exface\Core\Templates\AbstractAjaxTemplate;
 
-use exface\Core\CommonLogic\AbstractTemplate;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Widgets\AbstractWidget;
 use exface\Core\Interfaces\Widgets\iTriggerAction;
@@ -24,7 +23,6 @@ use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 use exface\Core\Exceptions\InternalError;
 use exface\Core\Interfaces\Actions\iModifyContext;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
-use exface\Core\Factories\DataTypeFactory;
 use exface\Core\DataTypes\NumberDataType;
 use exface\Core\Templates\AbstractAjaxTemplate\Formatters\JsNumberFormatter;
 use exface\Core\DataTypes\DateDataType;
@@ -35,8 +33,9 @@ use exface\Core\Templates\AbstractAjaxTemplate\Interfaces\JsDataTypeFormatterInt
 use exface\Core\Templates\AbstractAjaxTemplate\Formatters\JsEnumFormatter;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Templates\AbstractAjaxTemplate\Formatters\JsBooleanFormatter;
+use exface\Core\Templates\AbstractHttpTemplate\AbstractHttpTemplate;
 
-abstract class AbstractAjaxTemplate extends AbstractTemplate
+abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
 {
 
     private $elements = array();
@@ -81,7 +80,7 @@ abstract class AbstractAjaxTemplate extends AbstractTemplate
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\CommonLogic\AbstractTemplate::init()
+     * @see \exface\Core\Templates\AbstractTemplate\AbstractTemplate::init()
      */
     protected function init()
     {
@@ -95,9 +94,9 @@ abstract class AbstractAjaxTemplate extends AbstractTemplate
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\CommonLogic\AbstractTemplate::buildWidget()
+     * @see \exface\Core\Templates\AbstractTemplate\AbstractTemplate::buildWidget()
      */
-    function buildWidget(\exface\Core\Widgets\AbstractWidget $widget)
+    function buildWidget(WidgetInterface $widget)
     {
         $output = '';
         try {
@@ -149,7 +148,7 @@ abstract class AbstractAjaxTemplate extends AbstractTemplate
      *
      * @return string
      */
-    public function buildIncludes(\exface\Core\Widgets\AbstractWidget $widget)
+    public function buildIncludes(WidgetInterface $widget)
     {
         try {
             $instance = $this->getElement($widget);
@@ -404,7 +403,7 @@ abstract class AbstractAjaxTemplate extends AbstractTemplate
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\CommonLogic\AbstractTemplate::processRequest()
+     * @see \exface\Core\Templates\AbstractTemplate\AbstractTemplate::processRequest()
      */
     public function processRequest($page_alias = NULL, $widget_id = NULL, $action_alias = NULL, $disable_error_handling = false)
     {

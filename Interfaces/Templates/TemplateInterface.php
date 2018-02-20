@@ -1,5 +1,5 @@
 <?php
-namespace exface\Core\Interfaces\Api;
+namespace exface\Core\Interfaces\Templates;
 
 use exface\Core\CommonLogic\Configuration;
 use exface\Core\Interfaces\ExfaceClassInterface;

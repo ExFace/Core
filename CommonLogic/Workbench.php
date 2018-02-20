@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\CommonLogic;
 
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'Interfaces' . DIRECTORY_SEPARATOR . 'WorkbenchInterface.php';
+
 use exface\Core\CommonLogic\Log\Log;
 use exface\Core\Interfaces\CmsConnectorInterface;
 use exface\Core\utils;
@@ -17,15 +19,16 @@ use exface\Core\CoreApp;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\NameResolverInterface;
 use exface\Core\Exceptions\Configuration\ConfigOptionNotFoundError;
+use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\DataSources\DataManagerInterface;
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Interfaces\Selectors\AppSelectorInterface;
 use exface\Core\CommonLogic\Selectors\AppSelector;
+use exface\Core\Interfaces\WorkbenchInterface;
 
-class Workbench
+class Workbench implements WorkbenchInterface
 {
-
     private $started = false;
 
     private $data;
@@ -540,5 +543,11 @@ class Workbench
         
         return $this;
     }
+    
+    public function handle(TaskInterface $taks)
+    {
+        
+    }
+
 }
 ?>

@@ -19,7 +19,7 @@ trait UidSelectorTrait
     public function isUid()
     {
         if (is_null($this->isUid)) {
-            $this->isUid = (substr($this->toString(), 0, 2) == '0x' ? true : false);
+            $this->isUid = (substr($this->toString(), 0, 2) == '0x' && strlen($this->toString()) == 34 ? true : false);
         }
         return $this->isUid;
     }

@@ -1,10 +1,13 @@
 <?php
-namespace exface\Core\CommonLogic;
+namespace exface\Core\Templates\AbstractTemplate;
 
-use exface\Core\Interfaces\TemplateInterface;
+use exface\Core\Interfaces\Templates\TemplateInterface;
 use exface\Core\Interfaces\NameResolverInterface;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Factories\AppFactory;
+use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\CommonLogic\Workbench;
+use exface\Core\CommonLogic\NameResolver;
 
 abstract class AbstractTemplate implements TemplateInterface
 {
@@ -16,8 +19,6 @@ abstract class AbstractTemplate implements TemplateInterface
     private $alias = '';
 
     private $name_resolver = null;
-
-    private $response = '';
 
     public final function __construct(\exface\Core\CommonLogic\Workbench $exface)
     {
@@ -31,7 +32,7 @@ abstract class AbstractTemplate implements TemplateInterface
 
     /**
      *
-     * @return \exface\Core\Interfaces\NameResolverInterfacer
+     * @return NameResolverInterface
      */
     public function getNameResolver()
     {
@@ -44,7 +45,7 @@ abstract class AbstractTemplate implements TemplateInterface
     /**
      *
      * @param NameResolverInterface $value            
-     * @return \exface\Core\CommonLogic\AbstractTemplate
+     * @return \exface\Core\Templates\AbstractTemplate\AbstractTemplate
      */
     public function setNameResolver(NameResolverInterface $value)
     {
@@ -79,26 +80,6 @@ abstract class AbstractTemplate implements TemplateInterface
         return $this->exface;
     }
 
-    abstract function buildWidget(\exface\Core\Widgets\AbstractWidget $widget);
-
-    /**
-     * Generates the declaration of the JavaScript sources
-     *
-     * @return string
-     */
-    abstract function buildIncludes(\exface\Core\Widgets\AbstractWidget $widget);
-
-    /**
-     * Processes the current HTTP request, assuming it was made from a UI using this template
-     * 
-     * @param string $page_alias
-     * @param string $widget_id
-     * @param string $action_alias
-     * @param boolean $disable_error_handling
-     * @return string
-     */
-    abstract function processRequest($page_alias = NULL, $widget_id = NULL, $action_alias = NULL, $disable_error_handling = false);
-
     public function is($template_alias)
     {
         if (strcasecmp($this->getAlias(), $template_alias) === 0 || strcasecmp($this->getAliasWithNamespace(), $template_alias) === 0) {
@@ -112,30 +93,7 @@ abstract class AbstractTemplate implements TemplateInterface
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\Interfaces\TemplateInterface::getResponse()
-     */
-    public function getResponse()
-    {
-        return $this->response;
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\TemplateInterface::setResponse()
-     */
-    public function setResponse($value)
-    {
-        $this->response = $value;
-        return $this;
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\TemplateInterface::getApp()
+     * @see \exface\Core\Interfaces\Templates\TemplateInterface::getApp()
      */
     public function getApp()
     {
@@ -154,8 +112,7 @@ abstract class AbstractTemplate implements TemplateInterface
     /**
      *
      * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\TemplateInterface::getConfig()
+     * @see \exface\Core\Interfaces\Templates\TemplateInterface::getConfig()
      */
     public function getConfig()
     {

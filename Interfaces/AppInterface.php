@@ -7,8 +7,8 @@ use exface\Core\Exceptions\Actions\ActionNotFoundError;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\LogicException;
 use exface\Core\Interfaces\Selectors\AppSelectorInterface;
-use exface\Core\Interfaces\Api\TaskInterface;
-use exface\Core\Interfaces\Api\TaskResultInterface;
+use exface\Core\Interfaces\Tasks\TaskInterface;
+use exface\Core\Interfaces\Tasks\TaskResultInterface;
 
 /**
  * The app class provieds access to actions, configs, translations, etc. of
@@ -39,19 +39,6 @@ interface AppInterface extends ExfaceClassInterface, AliasInterface
      * @return TaskResultInterface
      */
     public function handle(TaskInterface $task) : TaskResultInterface;
-    
-    /**
-     * Returns an action object
-     *
-     * @param string $action_alias 
-     * @param WidgetInterface $called_by_widget
-     * @param UxonObject $uxon_description
-     *           
-     * @throws ActionNotFoundError if the alias cannot be resolved
-     * 
-     * @return ActionInterface
-     */
-    public function getAction($action_alias, WidgetInterface $called_by_widget = null, UxonObject $uxon_description = null);
 
     /**
      * Returns the path to the app's folder relative to the vendor folder
