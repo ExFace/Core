@@ -185,9 +185,9 @@ JS;
     public function buildJsRefresh($keep_pagination_position = false)
     {
         if (! $this->isLazyLoading()) {
-            return "{$this->getId()}_table.search($('#" . $this->getId() . "_quickSearch').val(), false, true).draw();";
+            return "{$this->getId()}_table.search($('#" . $this->getId() . "_quickSearch').val(), false, true).buildWidget();";
         } else {
-            return $this->getId() . "_table.draw(" . ($keep_pagination_position ? "false" : "true") . ");";
+            return $this->getId() . "_table.buildWidget(" . ($keep_pagination_position ? "false" : "true") . ");";
         }
     }
     
@@ -587,7 +587,7 @@ JS;
 	});
 	
 	$('#{$this->getId()}_pageControls').on('hidden.bs.dropdown', function(){
-		{$this->getId()}_table.page(parseInt($('#{$this->getId()}_pageSlider').val())-1).draw(false);
+		{$this->getId()}_table.page(parseInt($('#{$this->getId()}_pageSlider').val())-1).buildWidget(false);
 	});
 JS;
 		return $output;

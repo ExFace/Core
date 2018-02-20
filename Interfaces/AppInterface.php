@@ -1,14 +1,14 @@
 <?php
 namespace exface\Core\Interfaces;
 
-use exface\Core\Widgets\AbstractWidget;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Contexts\DataContext;
 use exface\Core\Exceptions\Actions\ActionNotFoundError;
-use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\LogicException;
 use exface\Core\Interfaces\Selectors\AppSelectorInterface;
+use exface\Core\Interfaces\Api\TaskInterface;
+use exface\Core\Interfaces\Api\TaskResultInterface;
 
 /**
  * The app class provieds access to actions, configs, translations, etc. of
@@ -32,6 +32,13 @@ interface AppInterface extends ExfaceClassInterface, AliasInterface
     const CONFIG_SCOPE_INSTALLATION = 'INSTALLATION';
     
     const CONFIG_SCOPE_USER = 'USER';
+    
+    /**
+     * 
+     * @param TaskInterface $task
+     * @return TaskResultInterface
+     */
+    public function handle(TaskInterface $task) : TaskResultInterface;
     
     /**
      * Returns an action object

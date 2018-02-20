@@ -95,9 +95,9 @@ abstract class AbstractAjaxTemplate extends AbstractTemplate
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\CommonLogic\AbstractTemplate::draw()
+     * @see \exface\Core\CommonLogic\AbstractTemplate::buildWidget()
      */
-    function draw(\exface\Core\Widgets\AbstractWidget $widget)
+    function buildWidget(\exface\Core\Widgets\AbstractWidget $widget)
     {
         $output = '';
         try {
@@ -149,7 +149,7 @@ abstract class AbstractAjaxTemplate extends AbstractTemplate
      *
      * @return string
      */
-    public function drawHeaders(\exface\Core\Widgets\AbstractWidget $widget)
+    public function buildIncludes(\exface\Core\Widgets\AbstractWidget $widget)
     {
         try {
             $instance = $this->getElement($widget);
@@ -549,7 +549,7 @@ abstract class AbstractAjaxTemplate extends AbstractTemplate
                     }
                 }
             }
-            $output = $this->drawHeaders($debug_widget) . "\n" . $this->draw($debug_widget);
+            $output = $this->buildIncludes($debug_widget) . "\n" . $this->buildWidget($debug_widget);
         } catch (\Throwable $e) {
             // If anything goes wrong when trying to prettify the original error, drop prettifying
             // and throw the original exception wrapped in a notice about the failed prettification
