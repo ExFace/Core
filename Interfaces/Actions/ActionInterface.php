@@ -15,9 +15,19 @@ use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\DataSheets\DataSheetMapperInterface;
+use exface\Core\Interfaces\Api\TaskInterface;
+use exface\Core\Interfaces\Api\TaskResultInterface;
+use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 
 interface ActionInterface extends ExfaceClassInterface, AliasInterface, iCanBeCopied
 {
+    
+    /**
+     * 
+     * @param TaskInterface $task
+     * @return TaskResultInterface
+     */
+    public function handle(TaskInterface $task) : TaskResultInterface;
 
     /**
      *
@@ -54,110 +64,22 @@ interface ActionInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
     public function setAlias($value);
 
     /**
-     * Returns the widget, that called the action (typically a button) or the
-     * widget that will call the action if it was not called yet.
+     * Returns the widget, in which the action is defined - typically a button.
      * 
-     * May return null if the calling widget is not known.
-     * 
-     * NOTE: if the action was not really called yet, this method returns the
-     * widget, that instantiated the action: i.e. the first button on the page,
-     * that will call this action.
-     * 
-     * IDEA Returning NULL in certain cases does not feel right. We had to add 
-     * the called_by_widget() method to be able to determine the meta_object
-     * of the dialog even if the action does not have an input data sheet yet 
-     * (when drawing the dialog in ajax templates). At that point, the action 
-     * does not know, what object it is going to be performed upon. I don't feel 
-     * comfortable with this solution though, since called_by_widget will be 
-     * null when performing the action via AJAX (or the entire page would need 
-     * to be instantiated).
-     * 
-     * Here are the choices I had:
-     * 
-     * - I could create the Dialog when the action is really called an import 
-     * the entire dialog via AJAX.
-     * 
-     * - I could also pass the meta object as a separate parameter to the action:
-     * $action->set_target_meta_object() - may be a good idea since an action 
-     * could also have a built it meta_object, which should not be overridden
-     * or action->set_called_by_widget - enables the action to create widgets 
-     * with real parents, but produces overhead whe called via AJAX and is not 
-     * needed for actions within workflows (or is it?)
+     * TODO update docs to show difference with TaskInterface::getWidgetTriggeredBy()
      *
      * @return WidgetInterface|null 
      */
-    public function getCalledByWidget();
+    public function getWidgetDefinedIn();
 
     /**
      * Sets the widget, that called the action: either taking an instantiated 
      * widget object or a widget link (text, uxon or object)
      *
-     * @param
-     *            AbstractWidget || WidgetLink || string $widget_or_widget_link
+     * @param WidgetInterface||WidgetLinkInterface||string $widget_or_widget_link
      * @return ActionInterface
      */
-    public function setCalledByWidget($widget_or_widget_link);
-
-    /**
-     *
-     * @return ActionInterface[]
-     */
-    public function getFollowupActions();
-
-    /**
-     *
-     * @param ActionInterface[]|UxonObject $actions_array            
-     */
-    public function setFollowupActions($actions_array);
-
-    /**
-     *
-     * @param ActionInterface $action            
-     * @return ActionInputInterface
-     */
-    public function addFollowupAction(ActionInterface $action);
-
-    /**
-     * Returns the resulting data sheet.
-     * Performs the action if it had not been performed yet.
-     *
-     * @return DataSheetInterface
-     */
-    public function getResultDataSheet();
-
-    /**
-     * Returns the result of the action - whatever it is.
-     * What data type is returned depends on the specific action implementation.
-     * In any case, get_result() makes sure, the action is performed.
-     * In contrast to get_result_data_sheet(), the get_result() methods can return anything. While get_result_data_sheet() is important
-     * for concatennation of actions and actually performing them, the output is whatever the user actually sees and, perhaps even more importantly,
-     * whatever is compared to there reference when testing actions.
-     *
-     * @return mixed
-     */
-    public function getResult();
-
-    /**
-     * Returns a string representing the result object of the action (= a string version of get_result())
-     *
-     * @return string
-     */
-    public function getResultStringified();
-
-    /**
-     * Returns a printable version of the result: HTML or text if the result is a widget, UXON for data sheets, etc.
-     * By default, it's the UXON of the result data sheet
-     *
-     * @return string
-     */
-    public function getResultOutput();
-
-    /**
-     * Returns a human readable message, describing, what the action has done.
-     *
-     * @return string
-     */
-    public function getResultMessage();
+    public function setWidgetDefinedIn($widget_or_widget_link);
 
     /**
      * Sets the data sheet, the action is supposed to be performed upon.
@@ -168,7 +90,7 @@ interface ActionInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
      * 
      * @return \exface\Core\Interfaces\Actions\ActionInterface
      */
-    public function setInputDataSheet($data_sheet_or_uxon);
+    public function setInputDataSheetPreset($data_sheet_or_uxon);
 
     /**
      * Returns a copy of the data sheet, the action is performed upon.
@@ -181,7 +103,7 @@ interface ActionInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
      * 
      * @return DataSheetInterface
      */
-    public function getInputDataSheet($apply_mappers = true);
+    public function getInputDataSheetPreset($apply_mappers = true);
     
     /**
      * @return DataSheetMapperInterface[]
@@ -288,23 +210,6 @@ interface ActionInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
     public function setUndoable($value);
 
     /**
-     * Returns TRUE, if the action modifies data in a data source or FALSE otherwise.
-     * By default all actions capable of modifying data return TRUE,
-     * but the flag may change, if there had been no data actually modified while performing the action. Assuming TRUE if a data modification is
-     * possible, makes sure, no modifications actually remains undiscovered because of developers forgetting to set the appropriate flag of an action.
-     *
-     * @return boolean
-     */
-    public function isDataModified();
-
-    /**
-     *
-     * @param boolean $value            
-     * @return \exface\Core\Interfaces\Actions\ActionInterface
-     */
-    public function setDataModified($value);
-
-    /**
      *
      * @param array $behavior_aliases            
      */
@@ -321,25 +226,6 @@ interface ActionInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
      * @return UiPageInterface
      */
     public function getCalledOnUiPage();
-
-    /**
-     *
-     * @return TemplateInterface
-     */
-    public function getTemplate();
-
-    /**
-     *
-     * @return string
-     */
-    public function getTemplateAlias();
-
-    /**
-     *
-     * @param string $value            
-     * @return \exface\Core\Interfaces\Actions\ActionInterface
-     */
-    public function setTemplateAlias($value);
 
     /**
      * Returns the default name of the action translated to the currently used locale.
@@ -363,62 +249,20 @@ interface ActionInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
     public function hasName();
 
     /**
-     * Returns the data transaction, the action runs in.
-     * Most action should run in a single transactions, so it is a good
-     * practice to use the action's transaction for all data source operations. If not transaction was set explicitly
-     * via set_transaction(), a new transaction will be started automatically.
-     *
-     * @return DataTransactionInterface
-     */
-    public function getTransaction();
-
-    /**
-     * Sets the main data transaction used in this action.
-     *
-     * @param DataTransactionInterface $transaction            
-     * @return ActionInterface
-     */
-    public function setTransaction(DataTransactionInterface $transaction);
-
-    /**
-     * Returns TRUE if the action will perform a commit on it's data transaction after it was performed and if data was modified.
+     * Returns TRUE if the action will perform a commit on a task's data transaction after it was performed and if data was modified.
      *
      * @return boolean
      */
     public function getAutocommit();
 
     /**
-     * Set to FALSE to force the action not to perform a commit on it's data transaction after the action had been performed.
+     * Set to FALSE to force the action not to perform a commit on a taks's data transaction after the action had been performed.
      * By default, the action will commit the transaction automatically.
      *
      * @param boolean $true_or_false            
      * @return ActionInterface
      */
     public function setAutocommit($true_or_false);
-
-    /**
-     * Returns the text for the result message if one was set in the UXON description of the action and NULL otherwise.
-     *
-     * @return string
-     */
-    public function getResultMessageText();
-
-    /**
-     * Overrides the auto-generated result message with the given text.
-     * The text can contain placeholders.
-     *
-     * Placeholders can be used for any column in the result data sheet of this action: e.g. for a CreateObject action
-     * a the follwoing text could be used: "Object [#LABEL#] with id [#UID#] created". If the result sheet contains
-     * multiple rows, the message text will be repeated for every row with the placeholders being replaced from that
-     * row.
-     *
-     * @uxon-property result_message_text
-     * @uxon-type string
-     *
-     * @param string $value            
-     * @return \exface\Core\CommonLogic\AbstractAction
-     */
-    public function setResultMessageText($value);
     
     /**
      * Returns TRUE if this action matches the given alias or inherits for the action identified by it.
