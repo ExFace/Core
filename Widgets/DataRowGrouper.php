@@ -19,8 +19,8 @@ use exface\Core\Exceptions\Widgets\WidgetLogicError;
  *  ...
  *  "row_grouper": {
  *      "group_by_attribute_alias": "MY_ATTRIBUTE",
- *      "expand": true,
- *      "show_count": true
+ *      "expand_all_groups": true,
+ *      "show_counter": true
  *  }
  * }
  * 
