@@ -124,7 +124,7 @@ class ActionContext extends AbstractContext
             $action_uxon = new UxonObject();
             $action_uxon->setProperty('action', $action->exportUxonObject());
             if ($action->isUndoable()) {
-                $action_uxon->setProperty('undo_data', $action->getUndoDataSerializable());
+                $action_uxon->setProperty('undo_data', $action->getUndoDataUxon());
             }
             $array[] = $action_uxon;
         }

@@ -63,7 +63,7 @@ class SaveData extends AbstractAction implements iModifyData, iCanBeUndone
         $this->undo_data_sheet = $data_sheet;
     }
 
-    public function getUndoDataSerializable()
+    public function getUndoDataUxon()
     {
         if ($this->getUndoDataSheet()) {
             return $this->getUndoDataSheet()->exportUxonObject();

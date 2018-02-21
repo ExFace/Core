@@ -39,8 +39,8 @@ abstract class ExportDataFile extends ExportData
         // we export from. Generally this will not be the case, because the
         // widget calling the action is a button and it normally does not know
         // which columns to export.
-        if ($this->getCalledByWidget() && $this->getCalledByWidget()->is('Button')) {
-            $this->getCalledByWidget()->getInputWidget()->prepareDataSheetToRead($dataSheetMaster);
+        if ($this->getTriggerWidget() && $this->getTriggerWidget()->is('Button')) {
+            $this->getTriggerWidget()->getInputWidget()->prepareDataSheetToRead($dataSheetMaster);
         }
         $dataSheetMaster->removeRows();
         

@@ -1,9 +1,8 @@
 <?php
-namespace exface\Core\CommonLogic;
+namespace exface\Core\CommonLogic\Tasks;
 
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Selectors\ActionSelectorInterface;
 use exface\Core\Interfaces\Selectors\MetaObjectSelectorInterface;
@@ -12,6 +11,12 @@ use exface\Core\Interfaces\Templates\TemplateInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Factories\DataSheetFactory;
 
+/**
+ * Generic task implementation to create task programmatically.
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
 class GenericTask implements TaskInterface
 {
     private $template = null;
@@ -97,19 +102,15 @@ class GenericTask implements TaskInterface
     }
     
     /**
-     * Replaces the parameters of this task with those in the give array.
+     * Adds the parameters of this task with those in the given array replacing duplicates.
      * 
      * @param array $array
      */
     protected function setParameters(array $array) : TaskInterface
     {
-        $this->parameters = $array;
-        return $this;
-    }
-    
-    public function setTransaction(DataTransactionInterface $transaction): TaskInterface
-    {
-        $this->transaction = $transaction;
+        foreach ($array as $name => $value) {
+            $this->setParameter($name, $value);
+        }
         return $this;
     }
 
@@ -129,7 +130,7 @@ class GenericTask implements TaskInterface
         if (is_null($this->prefillData)) {
             $this->prefillData = DataSheetFactory::createFromObject($this->getMetaObject());
         }
-        return $this->prefillData;
+        return $this->prefillData->copy();
     }
 
     /**
@@ -184,20 +185,7 @@ class GenericTask implements TaskInterface
         if (is_null($this->inputData)) {
             $this->inputData = DataSheetFactory::createFromObject($this->getMetaObject());
         }
-        return $this->inputData;
-    }
-
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Tasks\TaskInterface::getTransaction()
-     */
-    public function getTransaction(): DataTransactionInterface
-    {
-        if (is_null($this->transaction)) {
-            $this->transaction = new DataTransaction($this->getWorkbench()->data());
-        }
-        return $this->transaction;
+        return $this->inputData->copy();
     }
     
     /**

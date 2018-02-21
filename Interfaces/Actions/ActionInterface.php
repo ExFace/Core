@@ -6,8 +6,6 @@ use exface\Core\Interfaces\AliasInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\AppInterface;
-use exface\Core\Interfaces\Model\UiPageInterface;
-use exface\Core\Interfaces\Templates\TemplateInterface;
 use exface\Core\Exceptions\Actions\ActionObjectNotSpecifiedError;
 use exface\Core\Exceptions\Actions\ActionInputError;
 use exface\Core\Interfaces\iCanBeCopied;
@@ -18,8 +16,32 @@ use exface\Core\Interfaces\DataSheets\DataSheetMapperInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\Tasks\TaskResultInterface;
 use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
+use exface\Core\Interfaces\iCanBeConvertedToUxon;
 
-interface ActionInterface extends ExfaceClassInterface, AliasInterface, iCanBeCopied
+/**
+ * Common interface for all actions.
+ * 
+ * Actions represent, as the name suggests, anything the user can request the plattfrom to do.
+ * Actions handle tasks. Once an action is performed upon a task, it must return a TaksResult.
+ * 
+ * Actions can pass tasks to other actions, thus forming chains or entire workflows - from this
+ * point of view, they are comparable to a command bus, where actions would be command handlers
+ * tasks would be the commands with the important difference, that a task can represent a 
+ * command as well as a query (in CQRS) and allways causes the handler to return something.
+ * 
+ * Actions are part of the metamodel, but they are based on coded prototypes (PHP classes), so
+ * the model of an action actually configures it's prototype. Action models can either be placed
+ * within an object's model (object actions) or inside the UI model as properties of the
+ * corresponding trigger widget (e.g. Button). Of course, action models can also be created
+ * programmatically via UXON or using the action's interfaces in OOP style directly.
+ * 
+ * @see TaskInterface
+ * @see TaskResultTextInterface
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
+interface ActionInterface extends ExfaceClassInterface, AliasInterface, iCanBeCopied, iCanBeConvertedToUxon
 {
     
     /**
@@ -27,7 +49,7 @@ interface ActionInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
      * @param TaskInterface $task
      * @return TaskResultInterface
      */
-    public function handle(TaskInterface $task) : TaskResultInterface;
+    public function handle(TaskInterface $task, DataTransactionInterface $transaction = null) : TaskResultInterface;
 
     /**
      *
@@ -64,33 +86,72 @@ interface ActionInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
     public function setAlias($value);
 
     /**
-     * Returns the widget, in which the action is defined - typically a button.
+     * Returns the trigger widget for the action - that is the widget, where
+     * this action was instantiated.
      * 
-     * TODO update docs to show difference with TaskInterface::getWidgetTriggeredBy()
+     * @see hasTriggerWidget()
      *
-     * @return WidgetInterface|null 
+     * @return WidgetInterface 
      */
-    public function getWidgetDefinedIn();
+    public function getTriggerWidget() : WidgetInterface;
 
     /**
-     * Sets the widget, that called the action: either taking an instantiated 
-     * widget object or a widget link (text, uxon or object)
-     *
-     * @param WidgetInterface||WidgetLinkInterface||string $widget_or_widget_link
+     * Sets a trigger widget for the action.
+     * 
+     * @see hasTriggerWidget()
+     * 
+     * @param WidgetInterface|WidgetLinkInterface|string $widget_or_widget_link
      * @return ActionInterface
      */
-    public function setWidgetDefinedIn($widget_or_widget_link);
+    public function setTriggerWidget($widget_or_widget_link);
+    
+    /**
+     * Returns TRUE if the trigger widget of this action is known and FALSE otherwise.
+     * 
+     * NOTE, that the trigger widget is not neccesarily the one that actually called
+     * the action - it's the widget, that instantiated it. In other words, the one, 
+     * that defines the action's model. Other widgets may than call the action by using
+     * widget links, etc. It is important, that while the trigger widget is known 
+     * right from the instantiation of the action, the actuall caller is only accessible 
+     * while the action handles a task - see TaskInterface::getOriginWidget().
+     * 
+     * All actions, that originate from the UI, are instantiated as part of the 
+     * definition of Buttons, Menus and other widgets, that can trigger actions. 
+     * These actions "know" their widgets and have access to them even if they 
+     * are not actually called.
+     *
+     * However ther are also cases, when actions are called without a widget 
+     * even being involved (e.g. via API). In this case, the action does not have
+     * a trigger widget and event the task being handled might not have an
+     * origin widget.
+     * 
+     * @return bool
+     */
+    public function hasTriggerWidget() : bool;
 
     /**
-     * Sets the data sheet, the action is supposed to be performed upon.
-     *
-     * @param DataSheetInterface||UxonObject||string $data_sheet_or_uxon
+     * Sets preset input data for the action.
      * 
-     * @throws ActionInputError if the passed input data is of an unsupported type
+     * The preset will be merged with the task input data when the action is performed
+     * or used as input data if the task will not provide any data.
+     *
+     * @param DataSheetInterface $dataSheet
      * 
      * @return \exface\Core\Interfaces\Actions\ActionInterface
      */
-    public function setInputDataSheetPreset($data_sheet_or_uxon);
+    public function setInputDataPreset(DataSheetInterface $dataSheet) : ActionInterface;
+    
+    /**
+     * Sets preset input data for the action.
+     * 
+     * Technically the same as setInputDataPreset(), but takes a UXON model of
+     * a data sheet as input. Additionally this method provides a better
+     * understandable UXON property input_data_sheet to use in UXON models.
+     * 
+     * @param UxonObject $uxon
+     * @return ActionInterface
+     */
+    public function setInputDataSheet(UxonObject $uxon) : ActionInterface;
 
     /**
      * Returns a copy of the data sheet, the action is performed upon.
@@ -99,11 +160,15 @@ interface ActionInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
      * automatically applied - to get the raw input data, that was originally
      * passed to the action, set the parameter $apply_mappers to FALSE.
      *
-     * @param boolean $apply_mappers
-     * 
      * @return DataSheetInterface
      */
-    public function getInputDataSheetPreset($apply_mappers = true);
+    public function getInputDataPreset() : DataSheetInterface;
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function hasInputDataPreset() : bool;
     
     /**
      * @return DataSheetMapperInterface[]
@@ -222,12 +287,6 @@ interface ActionInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
     public function getDisabledBehaviors();
 
     /**
-     *
-     * @return UiPageInterface
-     */
-    public function getCalledOnUiPage();
-
-    /**
      * Returns the default name of the action translated to the currently used locale.
      *
      * @return string
@@ -279,6 +338,27 @@ interface ActionInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
      * @return boolean
      */
     public function isExactly($action_or_alias);
+
+    /**
+     * Returns the text for the result message if one was set in the UXON description of the action and NULL otherwise.
+     *
+     * @return string
+     */
+    public function getResultMessageText();
+    
+    /**
+     * Overrides the auto-generated result message with the given text.
+     * The text can contain placeholders.
+     *
+     * Placeholders can be used for any column in the result data sheet of this action: e.g. for a CreateObject action
+     * a the follwoing text could be used: "Object [#LABEL#] with id [#UID#] created". If the result sheet contains
+     * multiple rows, the message text will be repeated for every row with the placeholders being replaced from that
+     * row.
+     *
+     * @param string $value
+     * @return \exface\Core\CommonLogic\AbstractAction
+     */
+    public function setResultMessageText($value);
 }
 
 ?>

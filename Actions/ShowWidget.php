@@ -3,9 +3,7 @@
 namespace exface\Core\Actions;
 
 use exface\Core\Interfaces\Actions\iShowWidget;
-use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\Core\CommonLogic\Model\Condition;
 use exface\Core\Exceptions\DataSheets\DataSheetMergeError;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\CommonLogic\UxonObject;
@@ -16,9 +14,13 @@ use exface\Core\Factories\WidgetFactory;
 use exface\Core\Factories\WidgetLinkFactory;
 use exface\Core\Exceptions\Actions\ActionConfigurationError;
 use exface\Core\DataTypes\BooleanDataType;
-use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\Interfaces\Actions\iReferenceWidget;
+use exface\Core\Interfaces\Tasks\TaskInterface;
+use exface\Core\Interfaces\DataSources\DataTransactionInterface;
+use exface\Core\Interfaces\Tasks\TaskResultInterface;
+use exface\Core\Interfaces\Tasks\TaskResultWidgetInterface;
+use exface\Core\CommonLogic\Tasks\TaskResultWidget;
 
 /**
  * The ShowWidget action is the base for all actions, that render widgets.
@@ -43,26 +45,38 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
 
     private $prefill_with_data_from_widget_link = null;
 
-    /** @var DataSheetInterface $prefill_data_sheet */
-    private $prefill_data_sheet = null;
+    /** @var DataSheetInterface */
+    private $prefill_data_preset = null;
 
     private $filter_contexts = array();
 
     private $page_alias = null;
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AbstractAction::init()
+     */
     protected function init()
     {
         parent::init();
         $this->setIcon(Icons::EXTERNAL_LINK);
     }
 
-    protected function perform()
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AbstractAction::perform()
+     * 
+     * @return TaskResultWidgetInterface
+     */
+    public function perform(TaskInterface $task, DataTransactionInterface $transaction) : TaskResultInterface
     {
-        $this->prefillWidget();
-        if ($this->getInputDataSheet()) {
-            $this->setResultDataSheet($this->getInputDataSheet());
-        }
-        $this->setResult($this->getWidget());
+        $widget = $this->getWidget();
+        // TODO copy the widget before prefill because otherwise the action cannot hanlde more than one task!
+        $widget = $this->prefillWidget($task, $widget);
+        
+        return new TaskResultWidget($task, $widget);
     }
 
     /**
@@ -79,7 +93,7 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
     {
         if (is_null($this->widget)) {
             if ($this->getWidgetUxon()) {
-                $this->widget = WidgetFactory::createFromUxon($this->getCalledOnUiPage(), $this->getWidgetUxon(), $this->getCalledByWidget(), $this->getDefaultWidgetType());
+                $this->widget = WidgetFactory::createFromUxon($this->getCalledOnUiPage(), $this->getWidgetUxon(), ($this->hasTriggerWidget() ? $this->getTriggerWidget() : null), $this->getDefaultWidgetType());
             } elseif ($this->widget_id && ! $this->page_alias) {
                 $this->widget = $this->getCalledOnUiPage()->getWidget($this->widget_id);
             } elseif ($this->page_alias && ! $this->widget_id) {
@@ -107,9 +121,11 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Actions\iShowWidget::isWidgetDefined()
      */
-    public function isWidgetDefined()
+    public function isWidgetDefined() : bool
     {
-        if (is_null($this->getWidget())){
+        try {
+            $this->getWidget();
+        } catch (\Throwable $e) {
             return false;
         }
         
@@ -124,7 +140,7 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
      * {@inheritdoc}
      * @see \exface\Core\Interfaces\Actions\iShowWidget::setWidget()
      */
-    public function setWidget($widget_or_uxon_object)
+    public function setWidget($widget_or_uxon_object) : iShowWidget
     {
         if ($widget_or_uxon_object instanceof WidgetInterface) {
             $widget = $widget_or_uxon_object;
@@ -152,15 +168,15 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
      *
      * @return void;
      */
-    protected function prefillWidget()
+    protected function prefillWidget(TaskInterface $task, WidgetInterface $widget) : WidgetInterface
     {
         // Start with the prefill data already stored in the widget
-        if ($this->getWidget()) {
-            $data_sheet = $this->getWidget()->getPrefillData();
+        if ($widget->getPrefillData()) {
+            $data_sheet = $widget->getPrefillData();
         }
         
         // Prefill with input data if not turned off
-        if ($this->getPrefillWithInputData() && $input_data = $this->getInputDataSheet()) {
+        if ($this->getPrefillWithInputData() && $input_data = $this->getInputDataSheet($task)) {
             if (! $data_sheet || $data_sheet->isEmpty()) {
                 $data_sheet = $input_data->copy();
             } else {
@@ -175,7 +191,7 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
         }
         
         // Now prefill with prefill data.
-        if ($this->getPrefillWithPrefillData() && $prefill_data = $this->getPrefillDataSheet()) {
+        if ($this->getPrefillWithPrefillData() && ($prefill_data = $this->getPrefillDataSheet($task)) && ! $prefill_data->isBlank()) {
             // Try to merge prefill data and any data already gathered. If the merge does not work, ignore the prefill data
             // for now and use it for a secondary prefill later.
             $prefill_data_merge_failed = false;
@@ -193,7 +209,7 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
         
         // See if the widget requires any other columns to be prefilled. If so, add them and check if data needs to be read.
         if ($data_sheet && $data_sheet->countRows() > 0 && $data_sheet->getUidColumn()) {
-            $data_sheet = $this->getWidget()->prepareDataSheetToPrefill($data_sheet);
+            $data_sheet = $widget->prepareDataSheetToPrefill($data_sheet);
             if (! $data_sheet->isFresh()) {
                 $data_sheet->addFilterFromColumnValues($data_sheet->getUidColumn());
                 $data_sheet->dataRead();
@@ -202,19 +218,19 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
         
         // Prefill widget using the filter contexts if the widget does not have any prefill data yet
         // TODO Use the context prefill even if the widget already has other prefill data: use DataSheet::merge()!
-        if ($this->getPrefillWithFilterContext() && $this->getWidget() && $context_conditions = $this->getApp()->getWorkbench()->context()->getScopeWindow()->getFilterContext()->getConditions($this->getWidget()->getMetaObject())) {
+        if ($this->getPrefillWithFilterContext() && $widget && $context_conditions = $this->getApp()->getWorkbench()->context()->getScopeWindow()->getFilterContext()->getConditions($widget->getMetaObject())) {
             if (! $data_sheet || $data_sheet->isBlank()) {
-                $data_sheet = DataSheetFactory::createFromObject($this->getWidget()->getMetaObject());
+                $data_sheet = DataSheetFactory::createFromObject($widget->getMetaObject());
             }
             
             // Make sure, the context object fits the data sheet object.
             // TODO Currently we fetch context filters for the object of the action. If data sheet has another object, we ignore the context filters.
             // Wouldn't it be better to add the context filters to the data sheet or maybe even to the data sheet and the prefill data separately?
-            if ($this->getWidget()->getMetaObject()->is($data_sheet->getMetaObject())) {
+            if ($widget->getMetaObject()->is($data_sheet->getMetaObject())) {
                 /* @var $condition \exface\Core\CommonLogic\Model\Condition */
                 foreach ($context_conditions as $condition) {                    
                     /*
-                     * if ($this->getWidget() && $condition->getExpression()->getMetaObject()->getId() == $this->getWidget()->getMetaObject()->getId()){
+                     * if ($widget && $condition->getExpression()->getMetaObject()->getId() == $widget->getMetaObject()->getId()){
                      * // If the expressions belong to the same object, as the one being displayed, use them as filters
                      * // TODO Building the prefill sheet from context in different ways depending on the object of the top widget
                      * // is somewhat ugly (shouldn't the children widgets get the chance, to decide themselves, what they do with the prefill)
@@ -267,20 +283,39 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
         }
         
         if ($data_sheet) {
-            $this->getWidget()->prefill($data_sheet);
+            $widget->prefill($data_sheet);
         }
         if ($prefill_data_merge_failed) {
-            $this->getWidget()->prefill($prefill_data);
+            $widget->prefill($prefill_data);
         }
+        
+        return $widget;
     }
 
     /**
-     *
+     * Gets the prefill data by merging the preset data with the task data.
+     * 
+     * @param TaskInterface $task
      * @return DataSheetInterface
      */
-    public function getPrefillDataSheet()
+    protected function getPrefillDataSheet(TaskInterface $task) : DataSheetInterface
     {
-        return $this->prefill_data_sheet;
+        if ($task->hasPrefillData()) {
+            // If the task has some prefill data, use it
+            $sheet = $task->getPrefillData();
+            // Merge it with the preset if it exists
+            if ($this instanceof iUsePrefillData && $this->hasPrefillDataPreset()) {
+                $sheet = $this->getPrefillDataPreset($task)->importRows($sheet);
+            }
+        } elseif ($this->hasInputDataPreset()) {
+            // If the task has no data, use the preset data
+            $sheet = $this->getInputDataPreset();
+        } else {
+            // If there is neither task nor preset data, create a new data sheet
+            $sheet = DataSheetFactory::createFromObject($this->getMetaObject());
+        }
+        
+        return $sheet;
     }
 
     /**
@@ -289,24 +324,24 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
      * Note, the prefill data will be ignored if prefill_with_prefill_data is
      * set to FALSE!
      * 
-     * TODO make it possible to override the prefill data sheet from UXON
+     * @uxon-property input_data_sheet
+     * @uxon-type \exface\Core\CommonLogic\DataSheets\DataSheet
      * 
-     * @param DataSheetInterface|UxonObject $data_sheet_or_uxon_object            
-     * @return ShowWidget
+     * @see iUsePrefillData::setPrefillDataSheet()
      */
-    public function setPrefillDataSheet($data_sheet_or_uxon_object)
+    public function setPrefillDataSheet(UxonObject $uxon) : iUsePrefillData
     {
         $exface = $this->getWorkbench();
-        $data_sheet = DataSheetFactory::createFromAnything($exface, $data_sheet_or_uxon_object);
-        if (! is_null($this->prefill_data_sheet)) {
+        $data_sheet = DataSheetFactory::createFromUxon($exface, $uxon, $this->getMetaObject());
+        if (! is_null($this->prefill_data_preset)) {
             try {
-                $data_sheet = $this->prefill_data_sheet->merge($data_sheet);
-                $this->prefill_data_sheet = $data_sheet;
+                $data_sheet = $this->prefill_data_preset->merge($data_sheet);
+                $this->prefill_data_preset = $data_sheet;
             } catch (DataSheetMergeError $e) {
                 // Do nothing, if the sheets cannot be merged
             }
         } else {
-            $this->prefill_data_sheet = $data_sheet;
+            $this->prefill_data_preset = $data_sheet;
         }
         return $this;
     }
@@ -346,7 +381,7 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
     * {@inheritDoc}
     * @see \exface\Core\Interfaces\Actions\iShowWidget::getPrefillWithFilterContext()
     */
-    public function getPrefillWithFilterContext()
+    public function getPrefillWithFilterContext() : bool
     {
         return $this->prefill_with_filter_context;
     }
@@ -360,7 +395,7 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Actions\iShowWidget::setPrefillWithFilterContext()
      */
-    public function setPrefillWithFilterContext($value)
+    public function setPrefillWithFilterContext($value) : iShowWidget
     {
         $this->prefill_with_filter_context = $value;
         return $this;
@@ -371,7 +406,7 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Actions\iShowWidget::getPrefillWithInputData()
      */
-    public function getPrefillWithInputData()
+    public function getPrefillWithInputData() : bool
     {
         return $this->prefill_with_input_data;
     }
@@ -385,20 +420,10 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Actions\iShowWidget::setPrefillWithInputData()
      */
-    public function setPrefillWithInputData($value)
+    public function setPrefillWithInputData($value) : iShowWidget
     {
         $this->prefill_with_input_data = $value;
         return $this;
-    }
-
-    /**
-     * The output for actions showing a widget is the actual code for the template element representing that widget
-     * 
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::getResultOutput()
-     */
-    public function getResultOutput()
-    {
-        return $this->getTemplate()->buildWidget($this->getResult());
     }
 
     /**
@@ -414,8 +439,8 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
         $uxon->setProperty('page_alias', $this->page_alias ? $this->page_alias : $this->getCalledOnUiPage()->getAliasWithNamespace());
         $uxon->setProperty('prefill_with_filter_context', $this->getPrefillWithFilterContext());
         $uxon->setProperty('prefill_with_input_data', $this->getPrefillWithInputData());
-        if ($this->getPrefillDataSheet()) {
-            $uxon->setProperty('prefill_data_sheet', $this->getPrefillDataSheet()->exportUxonObject());
+        if ($this->hasPrefillDataPreset()) {
+            $uxon->setProperty('prefill_data_sheet', $this->getPrefillDataPreset()->exportUxonObject());
         }
         return $uxon;
     }
@@ -457,8 +482,8 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
     }
 
     /**
-     * 
-     * @return \exface\Core\Interfaces\Widgets\WidgetLinkInterface
+     * {@inheritdoc}
+     * @see iUsePrefillData::getPrefillWithDataFromWidgetLink()
      */
     public function getPrefillWithDataFromWidgetLink()
     {
@@ -475,10 +500,10 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
      * @uxon-property prefill_with_data_from_widget_link
      * @uxon-type \exface\Core\CommonLogic\WidgetLink
      * 
-     * @param string|UxonObject|WidgetLinkInterface $string_or_widget_link
-     * @return \exface\Core\Actions\ShowWidget
+     * {@inheritdoc}
+     * @see iUsePrefillData::setPrefillWithDataFromWidgetLink()
      */
-    public function setPrefillWithDataFromWidgetLink($string_or_widget_link)
+    public function setPrefillWithDataFromWidgetLink($string_or_widget_link) : iUsePrefillData
     {
         $exface = $this->getWorkbench();
         if ($string_or_widget_link) {
@@ -516,7 +541,7 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Actions\iShowWidget::setDoNotPrefill($value)
      */
-    public function setDoNotPrefill($value)
+    public function setDoNotPrefill($value) : iShowWidget
     {
         $value = BooleanDataType::cast($value) ? false : true;
         $this->setPrefillWithFilterContext($value);
@@ -529,7 +554,7 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Actions\iUsePrefillData::getPrefillWithPrefillData()
      */
-    public function getPrefillWithPrefillData()
+    public function getPrefillWithPrefillData() : bool
     {
         return $this->prefill_with_prefill_data;
     }
@@ -543,10 +568,42 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Actions\iUsePrefillData::setPrefillWithPrefillData()
      */
-    public function setPrefillWithPrefillData($prefill_with_prefill_data)
+    public function setPrefillWithPrefillData($prefill_with_prefill_data) : iUsePrefillData
     {
         $this->prefill_with_prefill_data = $prefill_with_prefill_data;
         return $this;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\iUsePrefillData::hasPrefillDataPreset()
+     */
+    public function hasPrefillDataPreset(): bool
+    {
+        return is_null($this->prefill_data_preset) ? false : true;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\iUsePrefillData::setPrefillDataPreset()
+     */
+    public function setPrefillDataPreset(DataSheetInterface $dataSheet): iUsePrefillData
+    {
+        $this->prefill_data_preset = $dataSheet;
+        return $this;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\iUsePrefillData::getPrefillDataPreset()
+     */
+    public function getPrefillDataPreset(): DataSheetInterface
+    {
+        return $this->prefill_data_preset;
+    }
+
 }
 ?>

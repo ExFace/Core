@@ -11,6 +11,11 @@ use exface\Core\Interfaces\Selectors\MetaObjectSelectorInterface;
 use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
 use exface\Core\Interfaces\WidgetInterface;
 
+/**
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
 interface TaskInterface extends ExfaceClassInterface
 {
     /**
@@ -39,6 +44,8 @@ interface TaskInterface extends ExfaceClassInterface
     public function hasAction() : bool;
     
     /**
+     * Returns a copy of the prefill data sheet.
+     * 
      * @return DataSheetInterface|null
      */
     public function getPrefillData();
@@ -57,6 +64,8 @@ interface TaskInterface extends ExfaceClassInterface
     public function hasPrefillData() : bool;
     
     /**
+     * Returns a copy of the input data sheet.
+     * 
      * @return DataSheetInterface
      */
     public function getInputData() : DataSheetInterface;
@@ -105,24 +114,6 @@ interface TaskInterface extends ExfaceClassInterface
      * @return TemplateInterface
      */
     public function getTemplate() : TemplateInterface;
-    
-    /**
-     * Returns the data transaction, the action runs in.
-     * Most action should run in a single transactions, so it is a good
-     * practice to use the action's transaction for all data source operations. If not transaction was set explicitly
-     * via set_transaction(), a new transaction will be started automatically.
-     *
-     * @return DataTransactionInterface
-     */
-    public function getTransaction() : DataTransactionInterface;
-    
-    /**
-     * Sets the main data transaction used in this action.
-     *
-     * @param DataTransactionInterface $transaction
-     * @return TaskInterface
-     */
-    public function setTransaction(DataTransactionInterface $transaction) : TaskInterface;
     
     /**
      * 

@@ -4,12 +4,18 @@ namespace exface\Core\Templates\AbstractHttpTemplate;
 use exface\Core\Interfaces\Tasks\HttpTaskInterface;
 use exface\Core\Interfaces\Templates\TemplateInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use exface\Core\CommonLogic\GenericTask;
+use exface\Core\CommonLogic\Tasks\GenericTask;
 use exface\Core\CommonLogic\Selectors\ActionSelector;
 use exface\Core\CommonLogic\Selectors\MetaObjectSelector;
 use GuzzleHttp\Psr7\ServerRequest;
 use exface\Core\CommonLogic\Selectors\UiPageSelector;
+use exface\Core\Interfaces\Tasks\TaskInterface;
 
+/**
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
 class GenericHttpTask extends GenericTask implements HttpTaskInterface
 {
     private $request = null;
@@ -29,6 +35,16 @@ class GenericHttpTask extends GenericTask implements HttpTaskInterface
     }
     
     /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Tasks\HttpTaskInterface::getHttpRequest()
+     */
+    public function getHttpRequest() : ServerRequestInterface
+    {
+        return $this->request;
+    }
+    
+    /**
      * 
      * @param ServerRequestInterface $request
      * @return HttpTaskInterface
@@ -36,40 +52,95 @@ class GenericHttpTask extends GenericTask implements HttpTaskInterface
     protected function setRequest(ServerRequestInterface $request) : HttpTaskInterface
     {
         $this->request = $request;
-        
+        $this->importRequestParameters($request);        
+        return $this;
+    }
+    
+    /**
+     * 
+     * @param ServerRequestInterface $request
+     * @return HttpTaskInterface
+     */
+    protected function importRequestParameters(ServerRequestInterface $request) : HttpTaskInterface
+    {
         $requestParams = $request->getQueryParams();
         if (is_array($request->getParsedBody()) || $request->getParsedBody()) {
             $requestParams = array_merge($requestParams, $request->getParsedBody());
         }
-        
         $this->setParameters($requestParams);
+        return $this;
+    }
+    
+    /**
+     * 
+     * @param ServerRequestInterface $request
+     * @return HttpTaskInterface
+     */
+    public function setParameter($name, $value) : TaskInterface
+    {
+        $name = strtolower($name);
         
-        if ($this->hasParameter('action')) {
-            $this->setActionSelector(new ActionSelector($this->getWorkbench(), $this->getParameter('action')));
-        }
+        parent::setParameter($name, $value);
         
-        if ($this->hasParameter('object')) {
-            $this->setMetaObjectSelector(new MetaObjectSelector($this->getWorkbench(), $this->getParameter('object')));
-        }
-        
-        if ($this->hasParameter('resource')) {
-            $this->setOriginPageSelector(new UiPageSelector($this->getWorkbench(), $this->getParameter('resource')));
-        }
-        
-        if ($this->hasParameter('element')) {
-            $this->setOriginWidgetId($this->getParameter('element'));
+        switch ($name) {
+            case $this->getParamNameAction() :
+                $this->setActionSelector(new ActionSelector($this->getWorkbench(), $value));
+                break;
+            case $this->getParamNameObject() : 
+                $this->setMetaObjectSelector(new MetaObjectSelector($this->getWorkbench(), $value));
+                break;
+            case $this->getParamNamePage() :
+                $this->setOriginPageSelector(new UiPageSelector($this->getWorkbench(), $value));
+                break;
+            case $this->getParamNameWidget() :
+                $this->setOriginWidgetId($value);
+                break;
         }
         
         return $this;
     }
     
     /**
+     * Returns the name of the URL parameter holding the action selector or NULL
+     * if no such URL parameter exists (e.g. the action is derived from the path).
      * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Tasks\HttpTaskInterface::getHttpRequest()
+     * @return string|null
      */
-    public function getHttpRequest() : ServerRequestInterface
+    protected function getParamNameAction()
     {
-        return $this->request;
+        return 'action';
+    }
+    
+    /**
+     * Returns the name of the URL parameter holding the object selector or NULL
+     * if no such URL parameter exists (e.g. the object is derived from the path).
+     *
+     * @return string|null
+     */
+    protected function getParamNameObject()
+    {
+        return 'object';
+    }
+    
+    /**
+     * Returns the name of the URL parameter holding the page selector or NULL
+     * if no such URL parameter exists (e.g. the page is derived from the path).
+     *
+     * @return string|null
+     */
+    protected function getParamNamePage()
+    {
+        return 'resource';
+    }
+    
+    /**
+     * Returns the name of the URL parameter holding the widget selector or NULL
+     * if no such URL parameter exists (e.g. the widget is derived from the path).
+     *
+     * @return string|null
+     */
+    protected function getParamNameWidget()
+    {
+        return 'element';
     }
 }

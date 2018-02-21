@@ -4,7 +4,6 @@ namespace exface\Core\CommonLogic;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Actions\iCanBeUndone;
-use exface\Core\Interfaces\Actions\iModifyData;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Factories\ActionFactory;
 use exface\Core\Factories\EventFactory;
@@ -12,7 +11,6 @@ use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Factories\WidgetLinkFactory;
 use exface\Core\Exceptions\Model\MetaObjectNotFoundError;
-use exface\Core\Exceptions\Actions\ActionOutputError;
 use exface\Core\Exceptions\Actions\ActionObjectNotSpecifiedError;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\DataTypes\StringDataType;
@@ -20,22 +18,21 @@ use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetMapperInterface;
-use exface\Core\CommonLogic\DataSheets\DataSheetMapper;
 use exface\Core\Factories\DataSheetMapperFactory;
-use exface\Core\Exceptions\Actions\ActionConfigurationError;
-use exface\Core\Interfaces\Widgets\iTriggerAction;
 use exface\Core\Interfaces\Widgets\iUseInputWidget;
 use exface\Core\CommonLogic\Selectors\ActionSelector;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
+use exface\Core\Interfaces\Tasks\TaskInterface;
+use exface\Core\Interfaces\Tasks\TaskResultInterface;
+use exface\Core\Interfaces\iCanBeConvertedToUxon;
+use exface\Core\Interfaces\Actions\iUsePrefillData;
 
 /**
- * The abstract action is the base ActionInterface implementation, that simplifies the creation of custom actions.
- * All core
- * action are based on this class.
- *
- * To implement a specific action one atually only needs to implement the abstract perform() method. From within that method
- * the set_result...() methods should be called to set the action output. Everything else (registering in the action context, etc.)
- * is done automatically by the abstract action.
+ * The abstract action is a generic implementation of the ActionInterface, that simplifies 
+ * the creation of custom actions.
+ * 
+ * To implement a specific action one atually only needs to implement the abstract perform() 
+ * method. All core actions are made like this.
  *
  * The abstract action dispatches the following events prefixed by the actions alias (@see ActionEvent):
  * - Perform (.Before/.After)
@@ -60,43 +57,18 @@ abstract class AbstractAction implements ActionInterface
     private $app = null;
 
     /** @var WidgetInterface widget, that called this action */
-    private $called_by_widget = null;
-
-    /** @var ActionInterface[] contains actions, that can be performed after the current one*/
-    private $followup_actions = array();
-
-    private $result_data_sheet = null;
-
-    private $result_message = null;
+    private $trigger_widget = null;
 
     private $result_message_text = null;
 
-    private $result = null;
-
-    private $performed = false;
-
     private $is_undoable = null;
 
-    private $is_data_modified = null;
-
-    /** @var DataTransactionInterface */
-    private $transaction = null;
-
     /**
-     * @uxon
-     *
      * @var DataSheetInterface
      */
-    private $input_data_sheet = null;
+    private $input_data_preset = null;
     
     private $input_mappers = [];
-
-    /**
-     * @uxon template_alias Qualified alias of the template to be used to render the output of this action
-     *
-     * @var string
-     */
-    private $template_alias = null;
 
     /**
      * @var string
@@ -104,7 +76,7 @@ abstract class AbstractAction implements ActionInterface
     private $icon = null;
 
     /**
-     *@var integer
+     * @var integer
      */
     private $input_rows_min = 0;
 
@@ -114,15 +86,11 @@ abstract class AbstractAction implements ActionInterface
     private $input_rows_max = null;
 
     /**
-     * @uxon
-     *
      * @var array
      */
     private $disabled_behaviors = array();
 
     /**
-     * @uxon object_alias Qualified alias of the base meta object for this action
-     *
      * @var string
      */
     private $meta_object = null;
@@ -133,14 +101,14 @@ abstract class AbstractAction implements ActionInterface
      *
      * @deprecated use ActionFactory instead
      * @param AppInterface $app            
-     * @param WidgetInterface $called_by_widget            
+     * @param WidgetInterface $trigger_widget            
      */
-    function __construct(AppInterface $app, WidgetInterface $called_by_widget = null)
+    public function __construct(AppInterface $app, WidgetInterface $trigger_widget = null)
     {
         $this->app = $app;
         $this->exface = $app->getWorkbench();
-        if ($called_by_widget) {
-            $this->setCalledByWidget($called_by_widget);
+        if ($trigger_widget) {
+            $this->setTriggerWidget($trigger_widget);
         }
         $this->init();
     }
@@ -236,7 +204,7 @@ abstract class AbstractAction implements ActionInterface
 
     public function hasProperty($name)
     {
-        return method_exists($this, 'set_' . $name) || method_exists($this, 'set' . StringDataType::convertCaseUnderscoreToPascal($name));
+        return method_exists($this, 'set' . StringDataType::convertCaseUnderscoreToPascal($name));
     }
 
     /**
@@ -271,218 +239,66 @@ abstract class AbstractAction implements ActionInterface
 
     /**
      * {@inheritdoc}
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::getCalledByWidget()
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::getTriggerWidget()
      */
-    public function getCalledByWidget()
+    public function getTriggerWidget() : WidgetInterface
     {
-        return $this->called_by_widget;
+        return $this->trigger_widget;
     }
 
     /**
      *
      * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::setCalledByWidget()
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::setTriggerWidget()
      */
-    public function setCalledByWidget($widget_or_widget_link)
+    public function setTriggerWidget($widget_or_widget_link)
     {
         if ($widget_or_widget_link instanceof WidgetInterface) {
-            $this->called_by_widget = $widget_or_widget_link;
+            $this->trigger_widget = $widget_or_widget_link;
         } elseif ($widget_or_widget_link instanceof WidgetLink) {
-            $this->called_by_widget = $widget_or_widget_link->getWidget();
+            $this->trigger_widget = $widget_or_widget_link->getWidget();
         } else {
             $link = WidgetLinkFactory::createFromAnything($this->exface, $widget_or_widget_link);
-            $this->called_by_widget = $link->getWidget();
+            $this->trigger_widget = $link->getWidget();
         }
         return $this;
     }
 
     /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::getFollowupActions()
-     */
-    public function getFollowupActions()
-    {
-        return $this->followup_actions;
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::setFollowupActions()
-     */
-    public function setFollowupActions($actions_array)
-    {
-        // TODO
-    }
-
-    public function addFollowupAction(ActionInterface $action)
-    {
-        if (! $action->getCalledByWidget()) {
-            $action->setCalledByWidget($this->getCalledByWidget());
-        }
-        $this->followup_actions[] = $action;
-    }
-
-    /**
-     * Performs the action and registers it in the current window context.
-     * This is a wrapper function for perform() that takes care of the contexts etc. The actual logic
+     * {@inheritDoc}
+     * 
+     * This method actually only takes care of the infrastructure (events, etc.) while actual logic 
      * of the action sits in the perform() method that, on the other hand should not be called
      * from external sources because the developer of a specific action might not have taken care
-     * of contexts etc.
-     *
-     * @return ActionInterface
+     * of contexts, events etc. This is why handle() is final.
+     * 
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::handle()
      */
-    private function prepareResult()
+    public final function handle(TaskInterface $task, DataTransactionInterface $transaction = null) : TaskResultInterface
     {
         $this->dispatchEvent('Perform.Before');
+        
         // Register the action in the action context of the window. Since it is passed by reference, we can
         // safely do it here, befor perform(). On the other hand, this gives all kinds of action event handlers
         // the possibility to access the current action and it's current state
         $this->getApp()->getWorkbench()->context()->getScopeWindow()->getActionContext()->addAction($this);
-        // Marke the action as performed first, to make sure it is not performed again if there is some exception
-        // In the case of an exception in perform() it might be caught somewhere outside and the execution will
-        // move on an mitght lead to another call on perform()
-        $this->setPerformed();
-        $this->perform();
+        
+        // Start a new transaction if none passed
+        if (is_null($transaction)) {
+            $transaction = $this->getWorkbench()->data()->startTransaction();
+        }
+        
+        // Call the action's logic
+        $result = $this->perform($task, $transaction);
+        
         $this->dispatchEvent('Perform.After');
-        if ($this->getAutocommit() && $this->isDataModified()) {
-            $this->getTransaction()->commit();
-        }
-        return $this;
-    }
-
-    /**
-     * Returns the resulting data sheet.
-     * Performs the action if it had not been performed yet. If the action does not explicitly
-     * produce a result data sheet (e.g. by calling $this->setResultDataSheet() somewhere within the perform() method), the
-     * input data sheet will be passed through without changes. This ensures easy chainability of actions.
-     *
-     * @return DataSheetInterface
-     */
-    final public function getResultDataSheet()
-    {
-        // Make sure, the action has been performed
-        if (! $this->isPerformed()) {
-            $this->prepareResult();
+        
+        // Commit the transaction if autocommit is on
+        if ($this->getAutocommit() && $result->isDataModified()) {
+            $transaction->commit();
         }
         
-        // Pass through the input data if no result data is set by the perform() method
-        if (! $this->result_data_sheet) {
-            $this->result_data_sheet = $this->getInputDataSheet();
-        }
-        return $this->result_data_sheet;
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::getResult()
-     */
-    final public function getResult()
-    {
-        // Perform the action if not yet done so
-        if (! $this->isPerformed()) {
-            $this->prepareResult();
-        }
-        // If the actual result is still empty, try the result data sheet - that should always be filled
-        if (is_null($this->result)) {
-            return $this->getResultDataSheet();
-        } else {
-            return $this->result;
-        }
-    }
-
-    protected function setResult($data_sheet_or_widget_or_string)
-    {
-        $this->result = $data_sheet_or_widget_or_string;
-        return $this;
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::getResultStringified()
-     */
-    public function getResultStringified()
-    {
-        $result = $this->getResult();
-        if ($result instanceof DataSheetInterface) {
-            return $result->toUxon();
-        } elseif ($result instanceof WidgetInterface) {
-            return '';
-        } elseif (! is_object($result)) {
-            return $result;
-        } else {
-            throw new ActionOutputError($this, 'Cannot convert result object of type "' . get_class($result) . '" to string for action "' . $this->getAliasWithNamespace() . '"', '6T5DUT1');
-        }
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::getResultOutput()
-     */
-    public function getResultOutput()
-    {
-        $result = $this->getResult();
-        if ($result instanceof DataSheetInterface) {
-            return $result->toUxon();
-        } elseif ($result instanceof WidgetInterface) {
-            return $this->getTemplate()->buildWidget($result);
-        } elseif (! is_object($result)) {
-            return $result;
-        } else {
-            throw new ActionOutputError($this, 'Cannot render output for unknown result object type "' . gettype($result) . '" of action "' . $this->getAliasWithNamespace() . '"', '6T5DUT1');
-        }
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::getResultMessage()
-     */
-    final public function getResultMessage()
-    {
-        if (! $this->isPerformed()) {
-            $this->prepareResult();
-        }
-        
-        // If there is a custom result message text defined, use it instead of the autogenerated message
-        if ($this->getResultMessageText()) {
-            $message = '';
-            $placeholders = $this->getWorkbench()->utils()->findPlaceholdersInString($this->getResultMessageText());
-            foreach ($this->getResultDataSheet()->getRows() as $row) {
-                $message_line = $this->getResultMessageText();
-                foreach ($placeholders as $ph) {
-                    $message_line = str_replace('[#' . $ph . '#]', $row[$ph], $message_line);
-                }
-                $message .= ($message ? "\n" : '') . $message_line;
-            }
-        } else {
-            $message = $this->result_message;
-        }
-        
-        return $message;
-    }
-
-    protected function setResultMessage($text)
-    {
-        $this->result_message = $text;
-        return $this;
-    }
-
-    protected function addResultMessage($text)
-    {
-        $this->result_message .= $text;
-        return $this;
+        return $result;
     }
 
     /**
@@ -519,39 +335,48 @@ abstract class AbstractAction implements ActionInterface
     /**
      *
      * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::setInputDataSheet()
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::setInputDataPreset()
      */
-    public function setInputDataSheet($data_sheet_or_uxon)
+    public function setInputDataPreset(DataSheetInterface $data_sheet) : ActionInterface
     {
-        $data_sheet = DataSheetFactory::createFromAnything($this->exface, $data_sheet_or_uxon);
-        $this->input_data_sheet = $data_sheet;
+        $this->input_data_preset = $data_sheet;
         return $this;
     }
 
     /**
      *
      * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::getInputDataSheet()
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::getInputDataPreset()
      */
-    public function getInputDataSheet($apply_mappers = true)
+    public function getInputDataPreset() : DataSheetInterface
     {        
-        if ($apply_mappers && $this->input_data_sheet){
-            foreach ($this->getInputMappers() as $mapper){
-                if ($mapper->getFromMetaObject()->is($this->input_data_sheet->getMetaObject())){
-                    return $mapper->map($this->input_data_sheet);
-                    break;
-                }
-            }
-        }
-        
-        return $this->input_data_sheet ? $this->input_data_sheet->copy() : $this->input_data_sheet;
+        return $this->input_data_preset;
     }
-
-    protected function setResultDataSheet(DataSheetInterface $data_sheet)
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::hasInputDataPreset()
+     */
+    public function hasInputDataPreset() : bool
     {
-        $this->result_data_sheet = $data_sheet;
+        return is_null($this->input_data_preset) ? false : true;
+    }
+    
+    /**
+     * Sets preset input data for the action.
+     * 
+     * The preset will be merged with the task input data when the action is performed
+     * or used as input data if the task will not provide any data.
+     * 
+     * @uxon-property input_data_sheet
+     * @uxon-type \exface\Core\CommonLogic\DataSheets\DataSheet
+     * 
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::setInputDataSheet($uxon)
+     */
+    public function setInputDataSheet(UxonObject $uxon) : ActionInterface
+    {
+        return $this->setInputDataPreset(DataSheetFactory::createFromUxon($this->getWorkbench(), $uxon, $this->getMetaObject()));
     }
 
     /**
@@ -566,12 +391,11 @@ abstract class AbstractAction implements ActionInterface
      *
      * @return void
      */
-    abstract protected function perform();
+    abstract protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : TaskResultInterface;
 
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\Actions\ActionInterface::getInputRowsMin()
      */
     public function getInputRowsMin()
@@ -619,7 +443,6 @@ abstract class AbstractAction implements ActionInterface
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\Actions\ActionInterface::getMetaObject()
      */
     public function getMetaObject()
@@ -627,8 +450,8 @@ abstract class AbstractAction implements ActionInterface
         if (is_null($this->meta_object)) {
             if ($this->getInputDataSheet()) {
                 $this->meta_object = $this->getInputDataSheet()->getMetaObject();
-            } elseif ($this->getCalledByWidget()) {
-                $this->meta_object = $this->getCalledByWidget()->getMetaObject();
+            } elseif ($this->getTriggerWidget()) {
+                $this->meta_object = $this->getTriggerWidget()->getMetaObject();
             } else {
                 throw new ActionObjectNotSpecifiedError($this, 'Cannot determine the meta object, the action is performed upon! An action must either have an input data sheet or a reference to the widget, that called it, or an explicitly specified object_alias option to determine the meta object.');
             }
@@ -639,7 +462,6 @@ abstract class AbstractAction implements ActionInterface
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\Actions\ActionInterface::setMetaObject()
      */
     public function setMetaObject(MetaObjectInterface $object)
@@ -673,7 +495,6 @@ abstract class AbstractAction implements ActionInterface
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\Actions\ActionInterface::implementsInterface()
      */
     public function implementsInterface($interface)
@@ -691,7 +512,6 @@ abstract class AbstractAction implements ActionInterface
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\Actions\ActionInterface::isUndoable()
      */
     public function isUndoable()
@@ -709,7 +529,6 @@ abstract class AbstractAction implements ActionInterface
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\Actions\ActionInterface::setUndoable()
      */
     public function setUndoable($value)
@@ -719,53 +538,28 @@ abstract class AbstractAction implements ActionInterface
     }
 
     /**
-     *
+     * 
      * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::isDataModified()
+     * @see iCanBeUndone::getUndoAction()
      */
-    public function isDataModified()
-    {
-        if (is_null($this->is_data_modified)) {
-            if ($this instanceof iModifyData) {
-                return $this->is_data_modified = true;
-            } else {
-                return $this->is_data_modified = false;
-            }
-        }
-        return $this->is_data_modified;
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::setDataModified()
-     */
-    public function setDataModified($value)
-    {
-        $this->is_data_modified = $value;
-        return $this;
-    }
-
-    public function getUndoAction()
+    public function getUndoAction() : ActionInterface
     {
         if ($this->isUndoable()) {
-            return ActionFactory::createFromString($this->exface, 'exface.Core.UndoAction', $this->getCalledByWidget());
+            return ActionFactory::createFromString($this->exface, 'exface.Core.UndoAction', $this->getTriggerWidget());
         }
     }
 
     /**
-     * Returns a loadable UXON-representation of the action including the input data
-     *
-     * @return UxonObject
+     * 
+     * {@inheritdoc}
+     * @see iCanBeConvertedToUxon::exportUxonObject()
      */
     public function exportUxonObject()
     {
         $uxon = $this->getWorkbench()->createUxonObject();
         $uxon->setProperty('alias', $this->getAliasWithNamespace());
-        if ($this->getCalledByWidget()) {
-            $uxon->setProperty('called_by_widget', $this->getCalledByWidget()->createWidgetLink()->exportUxonObject());
+        if ($this->getTriggerWidget()) {
+            $uxon->setProperty('trigger_widget', $this->getTriggerWidget()->createWidgetLink()->exportUxonObject());
         }
         $uxon->setProperty('template_alias', $this->getTemplateAlias());
         $uxon->setProperty('input_data_sheet',  $this->getInputDataSheet(false)->exportUxonObject());
@@ -782,16 +576,21 @@ abstract class AbstractAction implements ActionInterface
         return $uxon;
     }
 
+    /**
+     * 
+     * @param string $event_name
+     * @return ActionInterface
+     */
     protected function dispatchEvent($event_name)
     {
         /* @var $event \exface\Core\Events\ActionEvent */
         $this->getApp()->getWorkbench()->eventManager()->dispatch(EventFactory::createActionEvent($this, $event_name));
+        return $this;
     }
 
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\ExfaceClassInterface::getWorkbench()
      * @return Workbench
      */
@@ -800,21 +599,9 @@ abstract class AbstractAction implements ActionInterface
         return $this->exface;
     }
 
-    protected final function isPerformed()
-    {
-        return $this->performed;
-    }
-
-    protected final function setPerformed()
-    {
-        $this->performed = true;
-        return $this;
-    }
-
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\Actions\ActionInterface::setDisabledBehaviors()
      */
     public function setDisabledBehaviors(UxonObject $behavior_aliases)
@@ -826,60 +613,11 @@ abstract class AbstractAction implements ActionInterface
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\Actions\ActionInterface::getDisabledBehaviors()
      */
     public function getDisabledBehaviors()
     {
         return $this->disabled_behaviors;
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::getCalledOnUiPage()
-     */
-    public function getCalledOnUiPage()
-    {
-        return $this->getCalledByWidget() ? $this->getCalledByWidget()->getPage() : $this->getWorkbench()->ui()->getPageCurrent();
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::getTemplate()
-     */
-    public function getTemplate()
-    {
-        return $this->getWorkbench()->ui()->getTemplate($this->getTemplateAlias());
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::getTemplateAlias()
-     */
-    public function getTemplateAlias()
-    {
-        if (is_null($this->template_alias)) {
-            $this->template_alias = $this->exface->ui()->getTemplateFromRequest()->getAliasWithNamespace();
-        }
-        return $this->template_alias;
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::setTemplateAlias()
-     */
-    public function setTemplateAlias($value)
-    {
-        $this->template_alias = $value;
-        return $this;
     }
 
     /**
@@ -909,7 +647,6 @@ abstract class AbstractAction implements ActionInterface
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\Actions\ActionInterface::getName()
      */
     public function getName()
@@ -920,6 +657,11 @@ abstract class AbstractAction implements ActionInterface
         return $this->name;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::hasName()
+     */
     public function hasName()
     {
         return ! $this->name || substr($this->name, - 5) == '.NAME' ? false : true;
@@ -928,7 +670,6 @@ abstract class AbstractAction implements ActionInterface
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\Actions\ActionInterface::setName()
      */
     public function setName($value)
@@ -937,31 +678,14 @@ abstract class AbstractAction implements ActionInterface
         return $this;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\iCanBeCopied::copy()
+     */
     public function copy()
     {
         return clone $this;
-    }
-
-    /**
-     *
-     * @return \exface\Core\Interfaces\DataSources\DataTransactionInterface
-     */
-    public function getTransaction()
-    {
-        if (is_null($this->transaction)) {
-            $this->transaction = $this->getWorkbench()->data()->startTransaction();
-        }
-        return $this->transaction;
-    }
-
-    /**
-     *
-     * @param DataTransactionInterface $transaction            
-     */
-    public function setTransaction(DataTransactionInterface $transaction)
-    {
-        $this->transaction = $transaction;
-        return $this;
     }
     
     /**
@@ -1114,7 +838,7 @@ abstract class AbstractAction implements ActionInterface
      */
     public function setInputMapper(UxonObject $uxon)
     {
-        if ($calling_widget = $this->getCalledByWidget()) {
+        if ($calling_widget = $this->getTriggerWidget()) {
             if ($calling_widget instanceof iUseInputWidget) {
                 $from_object = $calling_widget->getInputWidget()->getMetaObject();
             } else {
@@ -1137,6 +861,55 @@ abstract class AbstractAction implements ActionInterface
     {
         $this->input_mappers[] = $mapper;
         return $this;
+    }
+    
+    /**
+     * Gets the input data by merging the preset data with the task data and applying
+     * appropriate input mappers.
+     * 
+     * NOTE: this can be a resource consuming task, so it is a good idea
+     * to call this method only once!
+     * 
+     * @param TaskInterface $task
+     * @return \exface\Core\Interfaces\DataSheets\DataSheetInterface
+     */
+    protected function getInputDataSheet(TaskInterface $task) : DataSheetInterface
+    {
+        // Get the current input data
+        if ($task->hasInputData()) {
+            // If the task has some, use it
+            $sheet = $task->getInputData();
+            // Merge it with the preset if it exists
+            if ($this->hasInputDataPreset()) {
+                $sheet = $this->getInputDataPreset()->importRows($sheet);
+            } 
+        } elseif ($this->hasInputDataPreset()) {
+            // If the task has no data, use the preset data
+            $sheet = $this->getInputDataPreset();
+        } else {
+            // If there is neither task nor preset data, create a new data sheet
+            $sheet = DataSheetFactory::createFromObject($this->getMetaObject());    
+        }
+        
+        // Apply the input mappers
+        foreach ($this->getInputMappers() as $mapper){
+            if ($mapper->getFromMetaObject()->is($sheet->getMetaObject())){
+                return $mapper->map($sheet);
+                break;
+            }
+        }
+        
+        return $sheet;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::hasTriggerWidget()
+     */
+    public function hasTriggerWidget(): bool
+    {
+        return is_null($this->trigger_widget) ? false : true;
     }
 }
 ?>

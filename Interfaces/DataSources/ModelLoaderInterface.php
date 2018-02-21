@@ -131,10 +131,10 @@ interface ModelLoaderInterface
      *
      * @param AppInterface $app            
      * @param string $action_alias            
-     * @param WidgetInterface $called_by_widget            
+     * @param WidgetInterface $trigger_widget            
      * @return ActionInterface
      */
-    public function loadAction(AppInterface $app, $action_alias, WidgetInterface $called_by_widget = null);
+    public function loadAction(AppInterface $app, $action_alias, WidgetInterface $trigger_widget = null);
 
     /**
      * Returns the Installer, that will take care of setting up the model data source, keeping in upto date, etc.

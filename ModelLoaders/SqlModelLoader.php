@@ -490,10 +490,10 @@ class SqlModelLoader implements ModelLoaderInterface
         return $this->loadActionsFromModel($empty_list, $sql_where);
     }
 
-    public function loadAction(AppInterface $app, $action_alias, WidgetInterface $called_by_widget = null)
+    public function loadAction(AppInterface $app, $action_alias, WidgetInterface $trigger_widget = null)
     {
         $sql_where = 'a.app_alias = "' . $app->getAliasWithNamespace() . '" AND oa.alias = "' . $action_alias . '"';
-        $actions = $this->loadActionsFromModel(new AppActionList($app->getWorkbench(), $app), $sql_where, $called_by_widget);
+        $actions = $this->loadActionsFromModel(new AppActionList($app->getWorkbench(), $app), $sql_where, $trigger_widget);
         return $actions->getFirst();
     }
 
@@ -503,7 +503,7 @@ class SqlModelLoader implements ModelLoaderInterface
      * @param string $sql_where            
      * @return \exface\Core\CommonLogic\Model\ActionList
      */
-    protected function loadActionsFromModel(ActionListInterface $action_list, $sql_where, WidgetInterface $called_by_widget = null)
+    protected function loadActionsFromModel(ActionListInterface $action_list, $sql_where, WidgetInterface $trigger_widget = null)
     {
         $basket_aliases = ($action_list instanceof MetaObjectActionListInterface) ? $action_list->getObjectBasketActionAliases() : array();
         
@@ -526,7 +526,7 @@ class SqlModelLoader implements ModelLoaderInterface
                 }
                 $app = $action_list->getWorkbench()->getApp($row['app_alias']);
                 $object = $action_list instanceof MetaObjectActionListInterface ? $action_list->getMetaObject() : $action_list->getWorkbench()->model()->getObjectById($row['object_oid']);
-                $a = ActionFactory::createFromModel($row['action'], $row['alias'], $app, $object, $action_uxon, $called_by_widget);
+                $a = ActionFactory::createFromModel($row['action'], $row['alias'], $app, $object, $action_uxon, $trigger_widget);
                 $a->setName($row['name']);
                 $action_list->add($a);
                 

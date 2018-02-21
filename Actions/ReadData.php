@@ -5,6 +5,10 @@ use exface\Core\Interfaces\Actions\iReadData;
 use exface\Core\CommonLogic\AbstractAction;
 use exface\Core\Exceptions\Actions\ActionCallingWidgetNotSpecifiedError;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\Interfaces\Tasks\TaskInterface;
+use exface\Core\Interfaces\DataSources\DataTransactionInterface;
+use exface\Core\Interfaces\Tasks\TaskResultInterface;
+use exface\Core\CommonLogic\Tasks\TaskResultData;
 
 class ReadData extends AbstractAction implements iReadData
 {
@@ -13,9 +17,9 @@ class ReadData extends AbstractAction implements iReadData
 
     private $update_filter_context = true;
 
-    protected function perform()
+    protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : TaskResultInterface
     {
-        $data_sheet = $this->getInputDataSheet();
+        $data_sheet = $this->getInputDataSheet($task);
         $this->setAffectedRows($data_sheet->removeRows()->dataRead());
         
         // Replace the filter conditions in the current window context by the ones in this data sheet
@@ -26,8 +30,8 @@ class ReadData extends AbstractAction implements iReadData
             $this->updateFilterContext($data_sheet);
         }
         
-        $this->setResultDataSheet($data_sheet);
-        $this->setResultMessage($this->getAffectedRows() . ' entries read');
+        $result = new TaskResultData($task, $data_sheet);
+        $result->setMessage($this->getAffectedRows() . ' entries read');
     }
     
     protected function updateFilterContext(DataSheetInterface $data_sheet)
@@ -64,16 +68,6 @@ class ReadData extends AbstractAction implements iReadData
     {
         $this->update_filter_context = $value;
         return $this;
-    }
-
-    public function getResultOutput()
-    {
-        if (! $this->getCalledByWidget()) {
-            throw new ActionCallingWidgetNotSpecifiedError($this, 'Security violaion! Cannot read data without a target widget in action "' . $this->getAliasWithNamespace() . '"!', '6T5DOSV');
-        }
-        $elem = $this->getApp()->getWorkbench()->ui()->getTemplate()->getElement($this->getCalledByWidget());
-        $output = $elem->prepareData($this->getResultDataSheet());
-        return $this->getApp()->getWorkbench()->ui()->getTemplate()->encodeData($output);
     }
 }
 ?>

@@ -51,18 +51,30 @@ abstract class DataSheetFactory extends AbstractUxonFactory
     }
 
     /**
-     *
+     * Creates a data sheet by parsing the given UXON model.
+     * 
+     * If the model has no explicit object reference, the optional $fallback_object
+     * parameter can be provided as fallback. This is handy to instantiate data
+     * sheets from widget and action models, where the the sheet should inherit
+     * the meta object.
+     * 
      * @param Workbench $exface            
-     * @param UxonObject $uxon            
+     * @param UxonObject $uxon     
+     * @param MetaObjectInterface $fallback_object
+     *        
      * @return DataSheetInterface
      */
-    public static function createFromUxon(Workbench $exface, UxonObject $uxon)
+    public static function createFromUxon(Workbench $exface, UxonObject $uxon, MetaObjectInterface $fallback_object = null)
     {
         $object_ref = $uxon->hasProperty('object_alias') ? $uxon->getProperty('object_alias') : $uxon->getProperty('meta_object_alias');
-        if (!$object_ref){
+        if (! $object_ref){
             $object_ref = $uxon->hasProperty('meta_object_id') ? $uxon->getProperty('meta_object_id') : $uxon->getProperty('oId');
         }
-        $meta_object = $exface->model()->getObject($object_ref);
+        if ($object_ref) {
+            $meta_object = $exface->model()->getObject($object_ref);
+        } else {
+            $meta_object = $fallback_object;
+        }
         $data_sheet = self::createFromObject($meta_object);
         $data_sheet->importUxonObject($uxon);
         return $data_sheet;

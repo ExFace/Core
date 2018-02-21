@@ -285,11 +285,6 @@ class UxonObject implements \IteratorAggregate
                     $target_class_instance,
                     $setterCamelCased
                 ), $this->getProperty($var));
-            } elseif (method_exists($target_class_instance, 'set_' . $var)) {
-                call_user_func(array(
-                    $target_class_instance,
-                    'set_' . $var
-                ), $this->getProperty($var));
             } else {
                 throw new UxonMapError($this, 'No setter method found for UXON property "' . $var . '" in "' . get_class($target_class_instance) . '"!');
             }
