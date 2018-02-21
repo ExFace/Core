@@ -47,7 +47,7 @@ class Diagram extends Container implements iSupportLazyLoading
         $shapes = array();
         foreach ($array_of_uxon_or_widgets as $shape) {
             if ($shape instanceof UxonObject) {
-                $shapes[] = WidgetFactory::createFromUxon($this->getPage(), $shape, 'DiagramShape');
+                $shapes[] = WidgetFactory::createFromUxon($this->getPage(), $shape, $this, 'DiagramShape');
             } elseif ($shape instanceof DiagramShape) {
                 $shapes[] = $shape;
             } else {
