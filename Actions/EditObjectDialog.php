@@ -53,9 +53,9 @@ class EditObjectDialog extends ShowObjectDialog
             ->setVisibility(EXF_WIDGET_VISIBILITY_PROMOTED)
             ->setAlign(EXF_ALIGN_OPPOSITE);
         // Make the save button refresh the same widget as the Button showing the dialog would do
-        if ($this->getCalledByWidget() instanceof Button) {
-            $save_button->setRefreshWidgetLink($this->getCalledByWidget()->getRefreshWidgetLink());
-            $this->getCalledByWidget()->setRefreshWidgetLink(null);
+        if ($this->getTriggerWidget() instanceof Button) {
+            $save_button->setRefreshWidgetLink($this->getTriggerWidget()->getRefreshWidgetLink());
+            $this->getTriggerWidget()->setRefreshWidgetLink(null);
         }
         $dialog->addButton($save_button);
         return $dialog;

@@ -79,8 +79,8 @@ class ActionChain extends AbstractAction
             // All actions obviously run in the same template
             $action->setTemplateAlias($this->getTemplateAlias());
             // They are all called by the widget, that called the chain
-            if ($this->getCalledByWidget()) {
-                $action->setCalledByWidget($this->getCalledByWidget());
+            if ($this->getTriggerWidget()) {
+                $action->setTriggerWidget($this->getTriggerWidget());
             }
             // If the chain should run in a single transaction, this transaction must be set for every action to run in
             if ($this->getUseSingleTransaction()) {

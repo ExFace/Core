@@ -43,7 +43,7 @@ class ObjectBasketShowDialog extends ShowDialog
             $page = UiPageFactory::createEmpty($this->getWorkbench()->ui());
         }
         /* @var $dialog \exface\Core\Widgets\Dialog */
-        $dialog = WidgetFactory::create($page, 'Dialog', $this->getCalledByWidget());
+        $dialog = WidgetFactory::create($page, 'Dialog', $this->getTriggerWidget());
         $dialog->setCaption($this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.OBJECTBASKET'));
         $dialog->setLazyLoading(false);
         

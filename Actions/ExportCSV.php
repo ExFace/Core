@@ -45,7 +45,7 @@ class ExportCSV extends ExportDataFile
     protected function writeHeader(DataSheetInterface $dataSheet)
     {
         /** @var DataTable $inputWidget */
-        $inputWidget = $this->getCalledByWidget()->getInputWidget();
+        $inputWidget = $this->getTriggerWidget()->getInputWidget();
         $header = [];
         $output = [];
         foreach ($dataSheet->getColumns() as $col) {

@@ -52,8 +52,8 @@ class ShowLookupDialog extends ShowDialog
         parent::init();
         $this->setPrefillWithInputData(false);
         
-        if ($this->getCalledByWidget() && $this->getCalledByWidget()->is('DialogButton')) {
-            $this->getCalledByWidget()->setCloseDialogAfterActionSucceeds(false);
+        if ($this->getTriggerWidget() && $this->getTriggerWidget()->is('DialogButton')) {
+            $this->getTriggerWidget()->setCloseDialogAfterActionSucceeds(false);
         }
     }
 

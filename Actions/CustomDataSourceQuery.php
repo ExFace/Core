@@ -50,7 +50,7 @@ class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuer
     public function getDataConnection()
     {
         if (is_null($this->data_connection)) {
-            $this->setDataConnection($this->getCalledByWidget()->getMetaObject()->getDataConnection());
+            $this->setDataConnection($this->getTriggerWidget()->getMetaObject()->getDataConnection());
         }
         return $this->data_connection;
     }

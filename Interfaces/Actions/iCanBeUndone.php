@@ -2,11 +2,10 @@
 namespace exface\Core\Interfaces\Actions;
 
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\CommonLogic\UxonObject;
 
-interface iCanBeUndone
+interface iCanBeUndone extends ActionInterface
 {
 
     /**
@@ -24,7 +23,7 @@ interface iCanBeUndone
      *
      * @return UxonObject
      */
-    public function getUndoDataSerializable();
+    public function getUndoDataUxon();
 
     /**
      * Imports the undo data from get_undo_data_serializable(), that is saved in the context history, back
@@ -35,17 +34,17 @@ interface iCanBeUndone
      * @param UxonObject $uxon_object   
      * @return iCanBeUndone         
      */
-    public function setUndoData(UxonObject $uxon_object);
+    public function setUndoData(UxonObject $uxon_object) : iCanBeUndone;
 
     /**
      *
      * @see ActionInterface::isUndoable()
      */
-    public function isUndoable();
+    public function isUndoable() : bool;
 
     /**
      *
      * @return ActionInterface
      */
-    public function getUndoAction();
+    public function getUndoAction() : ActionInterface;
 }

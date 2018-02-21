@@ -34,7 +34,7 @@ class ShowDialog extends ShowWidget implements iShowDialog
     protected function createDialogWidget(AbstractWidget $contained_widget = NULL)
     {
         /* @var $dialog \exface\Core\Widgets\Dialog */
-        $parent_widget = $this->getCalledByWidget();
+        $parent_widget = $this->getTriggerWidget();
         $dialog = $this->getCalledOnUiPage()->createWidget('Dialog', $parent_widget);
         $dialog->setMetaObject($this->getMetaObject());
         
@@ -64,9 +64,9 @@ class ShowDialog extends ShowWidget implements iShowDialog
     {
         
         // If the widget calling the action (typically a button) is known, inherit some of it's attributes
-        if ($this->getCalledByWidget()) {
-            if (! $dialog->getIcon() && ($this->getCalledByWidget() instanceof iHaveIcon)) {
-                $dialog->setIcon($this->getCalledByWidget()->getIcon());
+        if ($this->getTriggerWidget()) {
+            if (! $dialog->getIcon() && ($this->getTriggerWidget() instanceof iHaveIcon)) {
+                $dialog->setIcon($this->getTriggerWidget()->getIcon());
             }
         } else {
             if (! $dialog->getIcon()) {
@@ -91,8 +91,8 @@ class ShowDialog extends ShowWidget implements iShowDialog
 
     protected function getDialogCaption()
     {
-        if ($this->getCalledByWidget()) {
-            $caption = $this->getCalledByWidget()->getCaption();
+        if ($this->getTriggerWidget()) {
+            $caption = $this->getTriggerWidget()->getCaption();
         }
         if (! $caption) {
             $caption = $this->getName();

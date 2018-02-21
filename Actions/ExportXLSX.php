@@ -77,7 +77,7 @@ class ExportXLSX extends ExportDataFile
         $dataTypeSheet->dataRead();
         
         /** @var DataTable $inputWidget */
-        $inputWidget = $this->getCalledByWidget()->getInputWidget();
+        $inputWidget = $this->getTriggerWidget()->getInputWidget();
         $header = [];
         $output = [];
         foreach ($dataSheet->getColumns() as $col) {
@@ -245,7 +245,7 @@ class ExportXLSX extends ExportDataFile
         ]);
         // Filter mit Captions von der DataTable auslesen
         $dataTableFilters = [];
-        foreach ($this->getCalledByWidget()->getInputWidget()->getFilters() as $filter) {
+        foreach ($this->getTriggerWidget()->getInputWidget()->getFilters() as $filter) {
             $dataTableFilters[$filter->getInputWidget()->getAttributeAlias()] = $filter->getInputWidget()->getCaption();
         }
         // Gesetzte Filter am DataSheet durchsuchen

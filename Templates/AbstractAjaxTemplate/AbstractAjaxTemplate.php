@@ -409,7 +409,7 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
     {
         // Look for basic request parameters
         $called_in_resource_alias = $page_alias ? $page_alias : $this->getRequestPageAlias();
-        $called_by_widget_id = $widget_id ? $widget_id : $this->getRequestWidgetId();
+        $trigger_widget_id = $widget_id ? $widget_id : $this->getRequestWidgetId();
         $action_alias = $action_alias ? $action_alias : $this->getRequestActionAlias();
         
         $object_id = $this->getRequestObjectId();
@@ -442,8 +442,8 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
         // Do the actual processing
         try {
             if ($called_in_resource_alias) {
-                if ($called_by_widget_id) {
-                    $widget = $this->getWorkbench()->ui()->getPage($called_in_resource_alias)->getWidget($called_by_widget_id);
+                if ($trigger_widget_id) {
+                    $widget = $this->getWorkbench()->ui()->getPage($called_in_resource_alias)->getWidget($trigger_widget_id);
                 } else {
                     $widget = $this->getWorkbench()->ui()->getPage($called_in_resource_alias)->getWidgetRoot();
                 }

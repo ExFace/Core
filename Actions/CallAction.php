@@ -40,7 +40,7 @@ class CallAction extends AbstractAction
     public function getAction()
     {
         if (is_null($this->action)) {
-            $action = ActionFactory::createFromString($this->getWorkbench(), $this->getActionAlias(), $this->getCalledByWidget());
+            $action = ActionFactory::createFromString($this->getWorkbench(), $this->getActionAlias(), $this->getTriggerWidget());
             $this->validateAction($action);
             $this->action = $action;
         }
