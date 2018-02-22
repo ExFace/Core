@@ -174,6 +174,8 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
             if ($uxon->hasProperty('apply_on_change')) {
                 $apply_on_change = $uxon->getProperty('apply_on_change');
                 $uxon->unsetProperty('apply_on_change');
+            } else {
+                $apply_on_change = false;
             }
             
             $filter = $this->getPage()->createWidget('Filter', $this->getFilterTab());
