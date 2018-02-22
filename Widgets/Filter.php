@@ -11,6 +11,7 @@ use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\CommonLogic\Model\Condition;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\DataTypes\BooleanDataType;
 
 /**
  * A filter is a wrapper widget, which typically consist of one or more input widgets.
@@ -32,6 +33,8 @@ class Filter extends Container implements iCanBeRequired, iShowSingleAttribute
     private $comparator = null;
 
     private $required = null;
+    
+    private $apply_on_change = false;
 
     /**
      * Returns the widget used to interact with the filter (typically some kind of input widget)
@@ -357,6 +360,32 @@ class Filter extends Container implements iCanBeRequired, iShowSingleAttribute
     public function isHidden()
     {
         return parent::isHidden() || $this->getInputWidget()->isHidden();
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function getApplyOnChange() : bool
+    {
+        return $this->apply_on_change;
+    }
+    
+    /**
+     * Set to TRUE to refresh the filterd widget automatically when the value of the filter changes.
+     * 
+     * FALSE by default.
+     * 
+     * @uxon-property apply_on_change
+     * @uxon-type boolean
+     * 
+     * @param boolean $true_or_false
+     * @return Filter
+     */
+    public function setApplyOnChange($true_or_false) : Filter
+    {
+        $this->apply_on_change = BooleanDataType::cast($true_or_false);
+        return $this;
     }
 }
 ?>

@@ -62,6 +62,12 @@ trait JqueryFilterTrait {
     {
         return $this->getTemplate()->getElement($this->getWidget()->getInputWidget());
     }
+    
+    public function addOnChangeScript($string)
+    {
+        $this->getInputElement()->addOnChangeScript($string);
+        return $this;
+    }
 
     /**
      * Magic method to forward all calls to methods, not explicitly defined in the filter to ist value widget.

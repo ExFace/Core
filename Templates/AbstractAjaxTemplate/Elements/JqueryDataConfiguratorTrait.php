@@ -13,6 +13,22 @@ use exface\Core\Widgets\DataConfigurator;
  */
 trait JqueryDataConfiguratorTrait 
 {
+    protected function init()
+    {
+        $result = parent::init();
+        
+        $widget = $this->getWidget();
+        $data_element = null;
+        foreach ($widget->getFilters() as $filter) {
+            if ($filter->getApplyOnChange()) {
+                $data_element = is_null($data_element) ? $this->getTemplate()->getElement($widget->getWidgetConfigured()) : $data_element;
+                $filter_element = $this->getTemplate()->getElement($filter);
+                $filter_element->addOnChangeScript($data_element->buildJsRefresh());
+            }
+        }
+        
+        return $result;
+    }
     
     public function buildJsDataGetter(ActionInterface $action = null)
     {
