@@ -127,9 +127,9 @@ class SqlDataQuery extends AbstractDataQuery
      *
      * @see \exface\Core\CommonLogic\DataQueries\AbstractDataQuery::toString()
      */
-    public function toString()
+    public function toString($prettify = true)
     {
-        return \SqlFormatter::format($this->getSql(), false);
+        return $prettify ? \SqlFormatter::format($this->getSql(), false) : $this->getSql();
     }
 
     /**
