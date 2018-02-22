@@ -62,6 +62,12 @@ trait JqueryFilterTrait {
     {
         return $this->getTemplate()->getElement($this->getWidget()->getInputWidget());
     }
+    
+    public function addOnChangeScript($string)
+    {
+        $this->getInputElement()->addOnChangeScript($string);
+        return $this;
+    }
 
     /**
      * Magic method to forward all calls to methods, not explicitly defined in the filter to ist value widget.
@@ -77,6 +83,26 @@ trait JqueryFilterTrait {
     public function __call($name, $arguments)
     {
         return call_user_method_array($name, $this->getInputElement(), $arguments);
+    }
+    
+    /**
+     * 
+     * {@inheritdoc}
+     * @see AbstractJqueryElement::buildJsValidator()
+     */
+    public function buildJsValidator()
+    {
+        return $this->getInputElement()->buildJsValidator();
+    }
+    
+    /**
+     *
+     * {@inheritdoc}
+     * @see AbstractJqueryElement::buildJsValidationError()
+     */
+    public function buildJsValidationError()
+    {
+        return $this->getInputElement()->buildJsValidationError();
     }
 }
 ?>

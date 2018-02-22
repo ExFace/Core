@@ -5584,7 +5584,7 @@
         },
         {
             "CREATED_ON": "2018-02-14 22:16:23",
-            "MODIFIED_ON": "2018-02-14 22:18:26",
+            "MODIFIED_ON": "2018-02-22 14:23:27",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e811d4ad7a9fac98100205857feb80",
@@ -5600,7 +5600,7 @@
             "LABEL": "Last model modification",
             "ALIAS": "MODEL_MODIFIED_ON",
             "DATATYPE": "0x33000000000000000000000000000000",
-            "DATA_ADDRESS": "GREATEST(\n\t[#~alias#].modified_on, \n    IFNULL((SELECT GREATEST(IFNULL(MAX([#~alias#]_o.modified_on), 1970-01-01), IFNULL(MAX([#~alias#]_at.modified_on), 1970-01-01)) FROM exf_attribute [#~alias#]_at LEFT JOIN exf_object [#~alias#]_o ON [#~alias#]_o.oid = [#~alias#]_at.object_oid WHERE [#~alias#]_o.oid = [#~alias#].oid), 1970-01-01),\n   \tIFNULL((SELECT MAX([#~alias#]_dt.modified_on) FROM exf_data_source [#~alias#]_dt WHERE [#~alias#]_dt.app_oid = [#~alias#].oid), 1970-01-01),\n    IFNULL((SELECT MAX([#~alias#]_ob.modified_on) FROM exf_object_behaviors [#~alias#]_ob WHERE [#~alias#]_ob.behavior_app_oid = [#~alias#].oid), 1970-01-01),\n    IFNULL((SELECT MAX([#~alias#]_dc.modified_on) FROM exf_data_connection [#~alias#]_dc WHERE [#~alias#]_dc.app_oid = [#~alias#].oid), 1970-01-01),\n    IFNULL((SELECT MAX([#~alias#]_er.modified_on) FROM exf_error [#~alias#]_er WHERE [#~alias#]_er.app_oid = [#~alias#].oid), 1970-01-01),\n    IFNULL((SELECT MAX([#~alias#]_oa.modified_on) FROM exf_object_action [#~alias#]_oa WHERE [#~alias#]_oa.action_app_oid = [#~alias#].oid), 1970-01-01)\n)",
+            "DATA_ADDRESS": "GREATEST(\n\t[#~alias#].modified_on, \n    IFNULL((SELECT GREATEST(IFNULL(MAX([#~alias#]_o.modified_on), 1970-01-01), IFNULL(MAX([#~alias#]_at.modified_on), 1970-01-01)) FROM exf_attribute [#~alias#]_at LEFT JOIN exf_object [#~alias#]_o ON [#~alias#]_o.oid = [#~alias#]_at.object_oid WHERE [#~alias#]_o.oid = [#~alias#].oid), 1970-01-01),\n   \t\/*IFNULL((SELECT MAX([#~alias#]_dt.modified_on) FROM exf_data_source [#~alias#]_dt WHERE [#~alias#]_dt.app_oid = [#~alias#].oid), 1970-01-01), -- ignore data sources because of possible custom connections and query builders *\/\n    IFNULL((SELECT MAX([#~alias#]_ob.modified_on) FROM exf_object_behaviors [#~alias#]_ob WHERE [#~alias#]_ob.behavior_app_oid = [#~alias#].oid), 1970-01-01),\n    IFNULL((SELECT MAX([#~alias#]_dc.modified_on) FROM exf_data_connection [#~alias#]_dc WHERE [#~alias#]_dc.app_oid = [#~alias#].oid), 1970-01-01),\n    IFNULL((SELECT MAX([#~alias#]_er.modified_on) FROM exf_error [#~alias#]_er WHERE [#~alias#]_er.app_oid = [#~alias#].oid), 1970-01-01),\n    IFNULL((SELECT MAX([#~alias#]_oa.modified_on) FROM exf_object_action [#~alias#]_oa WHERE [#~alias#]_oa.action_app_oid = [#~alias#].oid), 1970-01-01)\n)",
             "OBJECT": "0x35370000000000000000000000000000",
             "FORMATTER": "",
             "DISPLAYORDER": null,

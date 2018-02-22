@@ -53,7 +53,8 @@ class Profiler implements ExfaceClassInterface
     {
         try {
             $query = $event->getCurrentQuery();
-            $this->getWorkbench()->getLogger()->debug($event->getDataConnection()->getAlias() . ': ' . substr($query->toString(), 0, 50), array(), $query);
+            $message = $event->getDataConnection()->getAlias() . ': ' . substr(str_replace(array("\r", "\n", "\t", "  "), '', $query->toString(false)), 0, 50);
+            $this->getWorkbench()->getLogger()->debug($message, array(), $query);
             $this->stopwatch->stop($query->exportString());
         } catch (\Throwable $e){
             $this->getWorkbench()->getLogger()->logException($e);
