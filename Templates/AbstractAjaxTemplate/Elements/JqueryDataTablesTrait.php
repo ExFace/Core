@@ -289,7 +289,7 @@ JS;
     protected function buildJsDataSource($js_filters = '')
     {
         $widget = $this->getWidget();
-        
+        $configurator_element = $this->getTemplate()->getElement($widget->getConfiguratorWidget());
         $ajax_data = <<<JS
 			function ( d ) {
 				{$this->buildJsBusyIconShow()}
@@ -299,7 +299,7 @@ JS;
 				d.element = "{$widget->getId()}";
 				d.object = "{$this->getWidget()->getMetaObject()->getId()}";
                 d.q = $('#{$this->getId()}_quickSearch').val();
-				d.data = {$this->getTemplate()->getElement($widget->getConfiguratorWidget())->buildJsDataGetter()};
+				d.data = {$configurator_element->buildJsDataGetter()};
 				
 				{$this->buildJsFilterIndicatorUpdater()}
 			}
@@ -322,6 +322,11 @@ JS;
                 if ({$this->getId()}_jquery.data("_skipNextLoad") === true) {
                     {$this->getId()}_jquery.data("_skipNextLoad", false);
                     {$this->buildJsBusyIconHide()}
+                    return false;
+                }
+                if (! {$configurator_element->buildJsValidator()}) {
+                    {$this->buildJsBusyIconHide()}
+                    console.warn('Invalid filters set for {$this->getId()}: skipping reload!');
                     return false;
                 }
             }

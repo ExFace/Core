@@ -54,4 +54,14 @@ trait JqueryDataConfiguratorTrait
 
 JS;
     }
+                
+    /**
+     * In a configurator, all filters must be validated before it's data can be used.
+     * 
+     * @see JqueryContainerTrait::getWidgetsToValidate()
+     */
+    protected function getWidgetsToValidate()
+    {
+        return $this->getWidget()->getFilters();
+    }
 }

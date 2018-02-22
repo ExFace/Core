@@ -84,5 +84,25 @@ trait JqueryFilterTrait {
     {
         return call_user_method_array($name, $this->getInputElement(), $arguments);
     }
+    
+    /**
+     * 
+     * {@inheritdoc}
+     * @see AbstractJqueryElement::buildJsValidator()
+     */
+    public function buildJsValidator()
+    {
+        return $this->getInputElement()->buildJsValidator();
+    }
+    
+    /**
+     *
+     * {@inheritdoc}
+     * @see AbstractJqueryElement::buildJsValidationError()
+     */
+    public function buildJsValidationError()
+    {
+        return $this->getInputElement()->buildJsValidationError();
+    }
 }
 ?>

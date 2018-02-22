@@ -174,14 +174,23 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
             if ($uxon->hasProperty('apply_on_change')) {
                 $apply_on_change = $uxon->getProperty('apply_on_change');
                 $uxon->unsetProperty('apply_on_change');
-            } else {
-                $apply_on_change = false;
-            }
+            } 
+            if ($uxon->hasProperty('required')) {
+                $required = $uxon->getProperty('required');
+                $uxon->unsetProperty('required');
+            } 
             
             $filter = $this->getPage()->createWidget('Filter', $this->getFilterTab());
             $filter->setComparator($comparator);
-            $filter->setApplyOnChange($apply_on_change);
+            if (isset($apply_on_change)){
+                $filter->setApplyOnChange($apply_on_change);
+            }
             $filter->setInputWidget(WidgetFactory::createFromUxon($page, $uxon, $filter));
+            
+            // Set the required option after instantiation to ensure the input widget gets it too.
+            if (isset($required)) {
+                $filter->setRequired($required);
+            }
             
             return $filter;
     }
