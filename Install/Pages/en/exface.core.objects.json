@@ -34,10 +34,6 @@
             },
             {
                 "attribute_alias": "PARENT_OBJECT"
-            },
-            {
-                "attribute_alias": "OBJECT_ACTION__UID:COUNT",
-                "comparator": ">"
             }
         ],
         "columns": [
