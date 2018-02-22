@@ -146,7 +146,7 @@ trait JqueryContainerTrait {
      */
     protected function getWidgetsToValidate()
     {
-        return $widget->getInputWidgets();
+        return $this->getWidget()->getInputWidgets();
     }
 }
 ?>
