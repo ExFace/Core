@@ -407,7 +407,7 @@ abstract class AbstractJqueryElement implements ExfaceClassInterface
      */
     public function buildJsValueSetterMethod($value)
     {
-        return 'val(' . $value . ')';
+        return 'val(' . $value . ').trigger("change")';
     }
 
     /**

@@ -86,7 +86,7 @@ trait JqueryContainerTrait {
             return '{}';
         }
     }
-
+    
     /**
      * Returns an inline JS snippet which validates the input elements of the container.
      * Returns true if all elements are valid, returns false if at least one element is
@@ -100,7 +100,7 @@ trait JqueryContainerTrait {
         
         $output = '
 				(function(){';
-        foreach ($widget->getInputWidgets() as $child) {
+        foreach ($this->getWidgetsToValidate() as $child) {
             $validator = $this->getTemplate()->getElement($child)->buildJsValidator();
             $output .= '
 					if(!' . $validator . ') { return false; }';
@@ -111,7 +111,7 @@ trait JqueryContainerTrait {
         
         return $output;
     }
-
+    
     /**
      * Returns a JavaScript snippet which handles the situation where not all input elements are
      * valid.
@@ -125,7 +125,7 @@ trait JqueryContainerTrait {
         
         $output = '
 				var invalidElements = [];';
-        foreach ($widget->getInputWidgets() as $child) {
+        foreach ($this->getWidgetsToValidate() as $child) {
             $validator = $this->getTemplate()->getElement($child)->buildJsValidator();
             if (! $alias = $child->getCaption()) {
                 $alias = method_exists($child, 'getAttributeAlias') ? $child->getAttributeAlias() : $child->getMetaObject()->getAliasWithNamespace();
@@ -137,6 +137,16 @@ trait JqueryContainerTrait {
 				' . $this->buildJsShowMessageError('"' . $this->translate('MESSAGE.FILL_REQUIRED_ATTRIBUTES') . '" + invalidElements.join(", ")');
         
         return $output;
+    }
+    
+    /**
+     * Returns all children of the widget represented by this element, that need validation
+     * 
+     * @return \exface\Core\Interfaces\WidgetInterface[]
+     */
+    protected function getWidgetsToValidate()
+    {
+        return $this->getWidget()->getInputWidgets();
     }
 }
 ?>
