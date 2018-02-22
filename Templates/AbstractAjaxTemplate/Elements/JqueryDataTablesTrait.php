@@ -5,6 +5,8 @@ use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\Actions\iReadData;
 use exface\Core\Templates\AbstractAjaxTemplate\Interfaces\JsValueDecoratingInterface;
+use exface\Core\Exceptions\Templates\TemplateOutputError;
+use exface\Core\Widgets\DataTable;
 
 /**
  * This trait contains common methods for template elements using the jQuery DataTables library.
@@ -240,12 +242,26 @@ JS;
         } else {
             // TODO
         }
+        
+        $uid_column = $this->getWidget()->getUidColumn();
         if (is_null($column)) {
-            $column = $this->getWidget()->getMetaObject()->getUidAttributeAlias();
+            $column_widget = $uid_column;
         } else {
-            // TODO
+            // FIXME #uid-column-missing remove this ugly if once UID column are added to tables by default again
+            if ($column == $uid_column->getDataColumnName()) {
+                $column_widget = $uid_column;
+            } else {
+                $column_widget = $this->getWidget()->getColumnByDataColumnName($column);
+            }
         }
-        return $output . "[0]['" . $column . "']";
+        
+        if (! $column_widget) {
+            throw new TemplateOutputError('Cannot render fetch data from column "' . $column . '" of ' . $this->getWidget()->getWidgetType() . ' - column not found!');
+        }
+        
+        $column_name = $column_widget->getDataColumnName();
+        $delimiter = $column_widget->getAttribute()->getValueListDelimiter();
+        return "{$output}.pluck('{$column_name}').join('{$delimiter}')";
     }
     
     /**
@@ -556,6 +572,8 @@ JS;
 		{$rightclick_script}
 	});
 
+    {$this->buildJsOnChangeHandler()}
+
 JS;
     }
 		
@@ -613,6 +631,21 @@ JS;
     }
 
 JS;
+    }
+        
+    protected function buildJsOnChangeHandler()
+    {
+        $js = '';
+        if ($script = $this->getOnChangeScript()) {
+            $js = <<<JS
+
+    {$this->getId()}_table.on( 'select', function ( e, dt, type, indexes ) {
+        {$script}
+    });
+
+JS;
+        }
+        return $js;
     }
 }
 ?>
