@@ -246,6 +246,7 @@ class Filter extends Container implements iCanBeRequired, iShowSingleAttribute
 
     public function setRequired($value)
     {
+        $value = BooleanDataType::cast($value);
         $this->required = $value;
         if ($this->getInputWidget() && $this->getInputWidget() instanceof iCanBeRequired) {
             $this->getInputWidget()->setRequired($value);
