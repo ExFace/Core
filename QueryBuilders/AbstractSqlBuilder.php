@@ -1227,15 +1227,15 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             $comp = EXF_COMPARATOR_EQUALS;
         } elseif ($attr->isExactly($this->getMainObject()->getUidAttribute()) && $comp != EXF_COMPARATOR_IN && ! $qpart->getAggregator()) {
             $comp = EXF_COMPARATOR_EQUALS;
-        } elseif (($qpart->getDataType() instanceof NumberDataType) && $comp == EXF_COMPARATOR_IS && is_numeric($val)) {
+        } elseif (($qpart->getDataType() instanceof NumberDataType) && ($comp == EXF_COMPARATOR_IS || $comp == EXF_COMPARATOR_IS_NOT) && is_numeric($val)) {
             // also use equals for the NUMBER data type, but make sure, the value to compare to is really a number (otherwise the query will fail!)
-            $comp = EXF_COMPARATOR_EQUALS;
-        } elseif (($qpart->getDataType() instanceof BooleanDataType) && $comp == EXF_COMPARATOR_IS) {
+            $comp = $comp === EXF_COMPARATOR_IS ? EXF_COMPARATOR_EQUALS : EXF_COMPARATOR_EQUALS_NOT;
+        } elseif (($qpart->getDataType() instanceof BooleanDataType) && ($comp == EXF_COMPARATOR_IS || $comp == EXF_COMPARATOR_IS_NOT)) {
             // also use equals for the BOOLEAN data type
-            $comp = EXF_COMPARATOR_EQUALS;
-        } elseif (($qpart->getDataType() instanceof DateDataType) && $comp == EXF_COMPARATOR_IS) {
+            $comp = $comp === EXF_COMPARATOR_IS ? EXF_COMPARATOR_EQUALS : EXF_COMPARATOR_EQUALS_NOT;
+        } elseif (($qpart->getDataType() instanceof DateDataType) && ($comp == EXF_COMPARATOR_IS || $comp == EXF_COMPARATOR_IS_NOT)) {
             // also use equals for the NUMBER data type, but make sure, the value to compare to is really a number (otherwise the query will fail!)
-            $comp = EXF_COMPARATOR_EQUALS;
+            $comp = $comp === EXF_COMPARATOR_IS ? EXF_COMPARATOR_EQUALS : EXF_COMPARATOR_EQUALS_NOT;
         }
         return $comp;
     }
