@@ -69,9 +69,9 @@ abstract class AbstractDataQuery implements DataQueryInterface
      *
      * @see \exface\Core\Interfaces\iCanBePrinted::toString()
      */
-    public function toString()
+    public function toString($prettify = true)
     {
-        return $this->exportUxonObject()->toJson(true);
+        return $this->exportUxonObject()->toJson($prettify);
     }
 
     /**
