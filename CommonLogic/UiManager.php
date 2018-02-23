@@ -1,8 +1,6 @@
 <?php
 namespace exface\Core\CommonLogic;
 
-use exface\Core\Widgets\AbstractWidget;
-use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Factories\UiPageFactory;
 use exface\Core\Interfaces\Templates\TemplateInterface;
 use exface\Core\Interfaces\Model\UiPageInterface;
@@ -25,7 +23,7 @@ class UiManager implements UiManagerInterface
 
     private $page_current = null;
 
-    function __construct(\exface\Core\CommonLogic\Workbench $exface)
+    public function __construct(\exface\Core\CommonLogic\Workbench $exface)
     {
         $this->exface = $exface;
     }
@@ -37,49 +35,13 @@ class UiManager implements UiManagerInterface
      * @param string $template
      * @return TemplateInterface
      */
-    function getTemplate($template = null)
+    public function getTemplate($selectorOrString)
     {
-        if (! $template)
-            return $this->getTemplateFromRequest();
-        
-        if (! $instance = $this->loaded_templates[$template]) {
-            $instance = TemplateFactory::createFromString($template, $this->exface);
-            $this->loaded_templates[$template] = $instance;
+        if (! $instance = $this->loaded_templates[$selectorOrString]) {
+            $instance = TemplateFactory::createFromString($selectorOrString, $this->exface);
+            $this->loaded_templates[$selectorOrString] = $instance;
         }
-        
         return $instance;
-    }
-
-    /**
-     * Output the final UI code for a given widget
-     * IDEA Remove this method from the UI in favor of template::buildWidget() after template handling has been moved to the actions
-     * 
-     * @param AbstractWidget $widget
-     * @param TemplateInterface $template ui_template to use when drawing
-     * @return string
-     */
-    function buildWidget(WidgetInterface $widget, TemplateInterface $template = null)
-    {
-        if (is_null($template))
-            $template = $this->getTemplateFromRequest();
-        return $template->buildWidget($widget);
-    }
-
-    /**
-     * Output document headers, needed for the widget.
-     * This could be JS-Includes, stylesheets - anything, that needs to be placed in the
-     * resulting document separately from the renderen widget itself.
-     * IDEA Remove this method from the UI in favor of template::buildIncludes() after template handling has been moved to the actions
-     * 
-     * @param WidgetInterface $widget
-     * @param TemplateInterface $template ui_template to use when drawing
-     * @return string
-     */
-    function buildIncludes(WidgetInterface $widget, TemplateInterface $template = null)
-    {
-        if (is_null($template))
-            $template = $this->getTemplateFromRequest();
-        return $template->buildIncludes($widget);
     }
 
     public function getWorkbench()
@@ -123,22 +85,12 @@ class UiManager implements UiManagerInterface
         $this->page_current = $pageCurrent;
         return $this;
     }
-
-    public function getTemplateFromRequest()
-    {
-        if (is_null($this->base_template)) {
-            // $this->base_template = $this->getTemplate($this->getWorkbench()->getConfig()->getOption('TEMPLATES.DEFAULT_UI_TEMPLATE'));
-            $this->base_template = $this->getWorkbench()->getConfig()->getOption('TEMPLATES.DEFAULT_UI_TEMPLATE');
-        }
-        return $this->getTemplate($this->base_template);
-    }
-
-    public function setBaseTemplateAlias($qualified_alias)
-    {
-        $this->base_template = $qualified_alias;
-        return $this;
-    }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\UiManagerInterface::getTemplateForUri()
+     */
     public function getTemplateForUri(UriInterface $uri) : TemplateInterface
     {
         $url = $uri->getPath() . '?' . $uri->getQuery();

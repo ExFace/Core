@@ -177,4 +177,10 @@ interface TaskInterface extends ExfaceClassInterface
      */
     public function hasOriginWidget() : bool;
     
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function hasOriginPage() : bool;   
 }

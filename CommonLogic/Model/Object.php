@@ -857,7 +857,7 @@ class Object implements MetaObjectInterface
     public function getDataAddressProperties()
     {
         if (is_null($this->data_address_properties)) {
-            $this->data_address_properties = $this->getWorkbench()->createUxonObject();
+            $this->data_address_properties = new UxonObject();
         }
         return $this->data_address_properties;
     }
@@ -1016,7 +1016,7 @@ class Object implements MetaObjectInterface
     public function getDefaultEditorUxon()
     {
         if (is_null($this->default_editor_uxon)) {
-            $this->default_editor_uxon = $this->getWorkbench()->createUxonObject();
+            $this->default_editor_uxon = new UxonObject();
         } elseif (! ($this->default_editor_uxon instanceof UxonObject)) {
             $this->default_editor_uxon = UxonObject::fromJson($this->default_editor_uxon);
         }

@@ -1029,7 +1029,7 @@ class UiPage implements UiPageInterface
     public function exportUxonObject()
     {
         /** @var UxonObject $uxon */
-        $uxon = $this->getWorkbench()->createUxonObject();
+        $uxon = new UxonObject();
         $uxon->setProperty('id', $this->getId());
         $uxon->setProperty('alias_with_namespace', $this->getAliasWithNamespace());
         $uxon->setProperty('menu_parent_page_alias', $this->getMenuParentPageAlias());

@@ -66,6 +66,16 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iDefin
         }
         return $this->action;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iTriggerAction::hasAction()
+     */
+    public function hasAction()
+    {
+        return $this->getAction() ? true : false;
+    }
 
     /**
      * Sets the action, that the button will trigger.

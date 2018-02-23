@@ -131,7 +131,7 @@ abstract class AbstractContext implements ContextInterface
      */
     public function exportUxonObject()
     {
-        return $this->getWorkbench()->createUxonObject();
+        return new UxonObject();
     }
 
     /**

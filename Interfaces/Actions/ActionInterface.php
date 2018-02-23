@@ -7,7 +7,6 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Exceptions\Actions\ActionObjectNotSpecifiedError;
-use exface\Core\Exceptions\Actions\ActionInputError;
 use exface\Core\Interfaces\iCanBeCopied;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
@@ -17,6 +16,7 @@ use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\Tasks\TaskResultInterface;
 use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
+use exface\Core\Interfaces\TaskHandlerInterface;
 
 /**
  * Common interface for all actions.
@@ -41,7 +41,7 @@ use exface\Core\Interfaces\iCanBeConvertedToUxon;
  * @author Andrej Kabachnik
  *
  */
-interface ActionInterface extends ExfaceClassInterface, AliasInterface, iCanBeCopied, iCanBeConvertedToUxon
+interface ActionInterface extends ExfaceClassInterface, AliasInterface, iCanBeCopied, iCanBeConvertedToUxon, TaskHandlerInterface
 {
     
     /**

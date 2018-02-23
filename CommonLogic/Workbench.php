@@ -26,6 +26,8 @@ use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Interfaces\Selectors\AppSelectorInterface;
 use exface\Core\CommonLogic\Selectors\AppSelector;
 use exface\Core\Interfaces\WorkbenchInterface;
+use exface\Core\Interfaces\Tasks\TaskResultInterface;
+use exface\Core\Exceptions\AppNotFoundError;
 
 class Workbench implements WorkbenchInterface
 {
@@ -312,54 +314,6 @@ class Workbench implements WorkbenchInterface
         }
     }
 
-    public function processRequest()
-    {
-        // Determine the template
-        $template_alias = $this->getRequestParam('exftpl');
-        $this->removeRequestParam('exftpl');
-        
-        // Process request
-        if ($template_alias) {
-            $this->ui()->setBaseTemplateAlias($template_alias);
-            echo $this->ui()->getTemplate($template_alias)->processRequest();
-        } else {
-            // If template alias not given - it's not an AJAX request, so do not do anything here, wait for the CMS to call request processing
-            // The reason for this is, that the CMS will select the template.
-            // IDEA this a bit a strange approach. Perhaps, the CMS should also call this method but give the desired template as a parameter
-        }
-        return;
-    }
-
-    /**
-     * Returns the parameters of the current request (URL params for GET-requests, data of POST-requests, etc.)
-     *
-     * @return array
-     */
-    public function getRequestParams()
-    {
-        if (is_null($this->request_params)) {
-            $this->request_params = $this->getCMS()->removeSystemRequestParams($_REQUEST);
-        }
-        return $this->request_params;
-    }
-
-    public function getRequestParam($param_name)
-    {
-        $request = $this->getRequestParams();
-        return urldecode($request[$param_name]);
-    }
-
-    public function removeRequestParam($param_name)
-    {
-        unset($this->request_params[$param_name]);
-    }
-
-    public function setRequestParam($param_name, $value)
-    {
-        $this->request_params[$param_name] = $value;
-        return $this;
-    }
-
     /**
      * Get the utilities class
      *
@@ -378,11 +332,6 @@ class Workbench implements WorkbenchInterface
     public function eventManager()
     {
         return $this->event_manager;
-    }
-
-    public function createUxonObject()
-    {
-        return new \exface\Core\CommonLogic\UxonObject();
     }
 
     /**
@@ -544,9 +493,16 @@ class Workbench implements WorkbenchInterface
         return $this;
     }
     
-    public function handle(TaskInterface $taks)
+    public function handle(TaskInterface $task) : TaskResultInterface
     {
-        
+        if (! $task->hasAction()) {
+            throw new AppNotFoundError('Cannot handle task without an action selector!');
+        }
+        // TODO #api-v4 remove page current in general - just use the task pages!
+        if ($task->hasOriginPage()) {
+            $this->ui()->setPageCurrent($this->ui()->getPage($task->getOriginPageSelector()));
+        }
+        return $this->getApp($task->getActionSelector()->getAppAlias())->handle($task);
     }
 
 }

@@ -195,7 +195,7 @@ class GenericTask implements TaskInterface
      */
     public function getMetaObject(): MetaObjectInterface
     {
-        if (is_null($this->object) && ! is_null($this->objectSelector)) {
+        if (is_null($this->object) && ! is_null($this->objectSelector)){
             $this->object = $this->getWorkbench()->model()->getObject($this->objectSelector);
         }
         return $this->object;
@@ -269,6 +269,16 @@ class GenericTask implements TaskInterface
      * @see \exface\Core\Interfaces\Tasks\TaskInterface::hasOriginWidget()
      */
     public function hasOriginWidget(): bool
+    {
+        return is_null($this->originPageSelctor) ? false : true;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Tasks\TaskInterface::hasOriginPage()
+     */
+    public function hasOriginPage(): bool
     {
         return is_null($this->originPageSelctor) ? false : true;
     }

@@ -109,7 +109,7 @@ class Diagram extends Container implements iSupportLazyLoading
     public function getDiagramObjectSelectorWidget()
     {
         if (is_null($this->diagram_object_selector_widget)) {
-            $this->setDiagramObjectSelectorWidget($this->getWorkbench()->createUxonObject());
+            $this->setDiagramObjectSelectorWidget(new UxonObject());
         }
         
         return $this->diagram_object_selector_widget;
