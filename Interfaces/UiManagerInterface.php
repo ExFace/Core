@@ -2,37 +2,36 @@
 namespace exface\Core\Interfaces;
 
 use exface\Core\Interfaces\Templates\TemplateInterface;
+use Psr\Http\Message\UriInterface;
+use exface\Core\Interfaces\Model\UiPageInterface;
+use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
 
 interface UiManagerInterface extends ExfaceClassInterface
 {
-
-    /**
-     * Output the final UI code for a given widget
-     * IDEA Remove this method from the UI in favor of template::buildWidget() after template handling has been moved to the actions
-     * 
-     * @param WidgetInterface $widget            
-     * @param TemplateInterface $template ui_template to use when drawing
-     * @return string
-     */
-    function buildWidget(WidgetInterface $widget, TemplateInterface $template = null);
-
-    /**
-     * Output document headers, needed for the widget.
-     * This could be JS-Includes, stylesheets - anything, that needs to be placed in the
-     * resulting document separately from the renderen widget itself.
-     * IDEA Remove this method from the UI in favor of template::buildIncludes() after template handling has been moved to the actions
-     * 
-     * @param WidgetInterface $widget            
-     * @param TemplateInterface $template ui_template to use when drawing
-     * @return string
-     */
-    function buildIncludes(WidgetInterface $widget, TemplateInterface $template = null);
-
     /**
      * 
+     * @param UriInterface $uri
      * @return TemplateInterface
      */
-    public function getTemplateFromRequest();
+    public function getTemplateForUri(UriInterface $uri) : TemplateInterface;
+    
+    /**
+     * Returns the UI page with the given $page_alias.
+     * If the $page_alias is ommitted or ='', the default (initially empty) page is returned.
+     *
+     * @param UiPageSelectorInterface|string $selectorOrString
+     * @return UiPageInterface
+     */
+    public function getPage($selectorOrString);
+    
+    /**
+     * Returns a template instance for a given template alias.
+     * If no alias given, returns the current template.
+     *
+     * @param string $template
+     * @return TemplateInterface
+     */
+    public function getTemplate($selectorOrString);
 }
 
 ?>

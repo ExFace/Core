@@ -70,7 +70,7 @@ class DataColumnTotal implements iCanBeConvertedToUxon, ExfaceClassInterface
 
     public function exportUxonObject()
     {
-        $uxon = $this->getColumn()->getDataSheet()->getWorkbench()->createUxonObject();
+        $uxon = new UxonObject();
         $uxon->setProperty('function', $this->getAggregator()->exportString());
         return $uxon;
     }

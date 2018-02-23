@@ -556,7 +556,7 @@ abstract class AbstractAction implements ActionInterface
      */
     public function exportUxonObject()
     {
-        $uxon = $this->getWorkbench()->createUxonObject();
+        $uxon = new UxonObject();
         $uxon->setProperty('alias', $this->getAliasWithNamespace());
         if ($this->getTriggerWidget()) {
             $uxon->setProperty('trigger_widget', $this->getTriggerWidget()->createWidgetLink()->exportUxonObject());

@@ -7,8 +7,6 @@ use exface\Core\Exceptions\Actions\ActionNotFoundError;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\LogicException;
 use exface\Core\Interfaces\Selectors\AppSelectorInterface;
-use exface\Core\Interfaces\Tasks\TaskInterface;
-use exface\Core\Interfaces\Tasks\TaskResultInterface;
 
 /**
  * The app class provieds access to actions, configs, translations, etc. of
@@ -24,7 +22,7 @@ use exface\Core\Interfaces\Tasks\TaskResultInterface;
  * @author Andrej Kabachnik
  *
  */
-interface AppInterface extends ExfaceClassInterface, AliasInterface
+interface AppInterface extends ExfaceClassInterface, AliasInterface, TaskHandlerInterface
 {
     
     const CONFIG_SCOPE_SYSTEM = 'SYSTEM';
@@ -32,13 +30,6 @@ interface AppInterface extends ExfaceClassInterface, AliasInterface
     const CONFIG_SCOPE_INSTALLATION = 'INSTALLATION';
     
     const CONFIG_SCOPE_USER = 'USER';
-    
-    /**
-     * 
-     * @param TaskInterface $task
-     * @return TaskResultInterface
-     */
-    public function handle(TaskInterface $task) : TaskResultInterface;
 
     /**
      * Returns the path to the app's folder relative to the vendor folder

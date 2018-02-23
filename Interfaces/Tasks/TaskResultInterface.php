@@ -64,4 +64,17 @@ interface TaskResultInterface extends ExfaceClassInterface
      * @return TaskResultInterface
      */
     public function setDataModified(bool $value) : TaskResultInterface;
+    
+    
+    /**
+     *
+     * @return int|null
+     */
+    public function getResponseCode();
+    
+    /**
+     *
+     * @param int $number
+     */
+    public function setReponseCode(int $number) : TaskResultInterface;
 }

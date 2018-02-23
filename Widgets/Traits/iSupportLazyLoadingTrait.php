@@ -116,4 +116,14 @@ trait iSupportLazyLoadingTrait {
     {
         return $this->getLazyLoadingAction();
     }
+    
+    /**
+     * 
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\Widgets\iTriggerAction::hasAction()
+     */
+    public function hasAction()
+    {
+        return $this->getAction() ? true : false;
+    }
 }

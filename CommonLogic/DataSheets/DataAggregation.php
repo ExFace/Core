@@ -46,7 +46,7 @@ class DataAggregation implements iCanBeConvertedToUxon
 
     public function exportUxonObject()
     {
-        $uxon = $this->getDataSheet()->getWorkbench()->createUxonObject();
+        $uxon = new UxonObject();
         $uxon->setProperty('attribute_alias', $this->getAttributeAlias());
         return $uxon;
     }

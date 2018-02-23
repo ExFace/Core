@@ -2,13 +2,12 @@
 namespace exface\Core\Interfaces;
 
 use exface\Core\Interfaces\Events\EventManagerInterface;
-use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Interfaces\Contexts\ContextManagerInterface;
 use exface\Core\Interfaces\DataSources\DataManagerInterface;
 use exface\Core\CommonLogic\Filemanager;
 
-interface WorkbenchInterface
+interface WorkbenchInterface extends TaskHandlerInterface
 {
     public function start();
     
@@ -76,8 +75,6 @@ interface WorkbenchInterface
     public function getCoreApp();
     
     public function stop();
-    
-    public function handle(TaskInterface $taks);
     
     /**
      * Returns the central event manager (dispatcher)

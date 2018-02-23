@@ -413,9 +413,12 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
         $action_alias = $action_alias ? $action_alias : $this->getRequestActionAlias();
         
         $object_id = $this->getRequestObjectId();
+        
+        // TODO #api-v4
         if ($this->getSubrequestId())
             $this->getWorkbench()->context()->getScopeRequest()->setSubrequestId($this->getSubrequestId());
         
+        /*
         if ($called_in_resource_alias) {
             try {
                 $this->getWorkbench()->ui()->setPageCurrent($this->getWorkbench()->ui()->getPage($called_in_resource_alias));
@@ -431,13 +434,7 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
                     throw $e;
                 }
             }
-        }
-        
-        // Remove system variables from the request. These are ones a tempalte always adds to the request for it's own needs.
-        // They should be defined in the init() method of the template
-        foreach ($this->getRequestSystemVars() as $var) {
-            $this->getWorkbench()->removeRequestParam($var);
-        }
+        }*/
         
         // Do the actual processing
         try {

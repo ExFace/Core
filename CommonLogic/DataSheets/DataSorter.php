@@ -76,7 +76,7 @@ class DataSorter implements iCanBeConvertedToUxon, ExfaceClassInterface
 
     public function exportUxonObject()
     {
-        $uxon = $this->getWorkbench()->createUxonObject();
+        $uxon = new UxonObject();
         $uxon->setProperty('attribute_alias', $this->getAttributeAlias());
         $uxon->setProperty('direction', $this->getDirection());
         return $uxon;

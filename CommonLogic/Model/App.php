@@ -20,6 +20,8 @@ use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Exceptions\LogicException;
 use exface\Core\Interfaces\Selectors\AppSelectorInterface;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
+use exface\Core\Interfaces\Widgets\iTriggerAction;
+use exface\Core\Interfaces\Actions\iShowWidget;
 
 /**
  * This is the base implementation of the AppInterface aimed at providing an
@@ -426,7 +428,22 @@ class App implements AppInterface
     
     public function handle(TaskInterface $task): TaskResultInterface
     {
-        // TODO
+        if ($task->hasOriginWidget()) {
+            $widget = $task->getOriginWidget();
+            if (! $task->hasMetaObject()) {
+                $task->setMetaObject($widget->getMetaObject());
+            }
+            
+            if ($widget instanceof iTriggerAction && (! $task->hasAction() || ($widget->hasAction() && strcasecmp($task->getActionSelector()->getAliasWithNamespace(), $widget->getAction()->getAliasWithNamespace()) === 0))) {
+                $action = $widget->getAction();
+            }
+        }
+        
+        if (! isset($action)) {
+            $action = ActionFactory::create($task->getActionSelector(), ($widget ? $widget : null));
+        }
+        
+        return $action->handle($task);
     }
 
 }

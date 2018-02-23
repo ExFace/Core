@@ -187,7 +187,7 @@ class WidgetLink implements WidgetLinkInterface
         if ($this->getWidgetId() && $uxon->getProperty('widget_id') != $this->getWidgetId()) {
             $uxon = $this->findWidgetIdInUxon($uxon, $this->getWidgetId());
             if ($uxon === false) {
-                $uxon = $this->exface->createUxonObject();
+                $uxon = new UxonObject();
             }
         }
         return $uxon;
@@ -229,7 +229,7 @@ class WidgetLink implements WidgetLinkInterface
      */
     public function exportUxonObject()
     {
-        $uxon = $this->exface->createUxonObject();
+        $uxon = new UxonObject();
         $uxon->setProperty('widget_id', $this->widget_id);
         $uxon->setProperty('page_alias', $this->getPage()->getAliasWithNamespace());
         $uxon->setProperty('widget_id_space', $this->widget_id_space);

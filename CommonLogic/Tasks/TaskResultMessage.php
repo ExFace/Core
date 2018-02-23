@@ -23,6 +23,8 @@ class TaskResultMessage implements TaskResultInterface
     
     private $workbench = null;
     
+    private $responseCode = null;
+    
     /**
      * 
      * @param TaskInterface $task
@@ -133,4 +135,20 @@ class TaskResultMessage implements TaskResultInterface
         $this->message = $string;
         return $this;
     }
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Tasks\TaskResultInterface::setReponseCode()
+     */
+    public function setReponseCode(int $number) : TaskResultInterface
+    {
+        $this->responseCode = $number;
+        return $this;
+    }
+
+    public function getResponseCode()
+    {
+        return $this->responseCode;
+    }
+
 }

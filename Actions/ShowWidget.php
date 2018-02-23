@@ -72,6 +72,11 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
      */
     public function perform(TaskInterface $task, DataTransactionInterface $transaction) : TaskResultInterface
     {
+        // Check, if the action has a widget. If not, give it the widget from the task
+        if (! $this->isWidgetDefined() && $task->hasOriginWidget()) {
+            $this->setWidget($task->getOriginWidget());
+        }
+        
         $widget = $this->getWidget();
         // TODO copy the widget before prefill because otherwise the action cannot hanlde more than one task!
         $widget = $this->prefillWidget($task, $widget);
