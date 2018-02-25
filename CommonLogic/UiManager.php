@@ -6,8 +6,6 @@ use exface\Core\Interfaces\Templates\TemplateInterface;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\UiManagerInterface;
 use exface\Core\Factories\TemplateFactory;
-use Psr\Http\Message\UriInterface;
-use exface\Core\Exceptions\Templates\TemplateRoutingError;
 use exface\Core\CommonLogic\Selectors\UiPageSelector;
 
 class UiManager implements UiManagerInterface
@@ -84,22 +82,6 @@ class UiManager implements UiManagerInterface
     {
         $this->page_current = $pageCurrent;
         return $this;
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\UiManagerInterface::getTemplateForUri()
-     */
-    public function getTemplateForUri(UriInterface $uri) : TemplateInterface
-    {
-        $url = $uri->getPath() . '?' . $uri->getQuery();
-        foreach ($this->getWorkbench()->getConfig()->getOption('TEMPLATE.ROUTES') as $pattern => $templateAlias) {
-            if (preg_match($pattern, $url) === 1) {
-                return $this->getTemplate($templateAlias);
-            }
-        }
-        throw new TemplateRoutingError('No route can be found for URL "' . $url . '" - please check system configuration option TEMPLATE.ROUTES!');
     }
 }
 

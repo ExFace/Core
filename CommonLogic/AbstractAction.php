@@ -278,11 +278,6 @@ abstract class AbstractAction implements ActionInterface
     {
         $this->dispatchEvent('Perform.Before');
         
-        // Register the action in the action context of the window. Since it is passed by reference, we can
-        // safely do it here, befor perform(). On the other hand, this gives all kinds of action event handlers
-        // the possibility to access the current action and it's current state
-        $this->getApp()->getWorkbench()->context()->getScopeWindow()->getActionContext()->addAction($this);
-        
         // Start a new transaction if none passed
         if (is_null($transaction)) {
             $transaction = $this->getWorkbench()->data()->startTransaction();
@@ -292,6 +287,12 @@ abstract class AbstractAction implements ActionInterface
         $result = $this->perform($task, $transaction);
         
         $this->dispatchEvent('Perform.After');
+        
+        // Register the action in the action context of the window. Since it is passed by reference, we can
+        // safely do it here, befor perform(). On the other hand, this gives all kinds of action event handlers
+        // the possibility to access the current action and it's current state
+        // FIXME re-enable action context: maybe make it work with events?
+        // $this->getApp()->getWorkbench()->context()->getScopeWindow()->getActionContext()->addAction($this);
         
         // Commit the transaction if autocommit is on
         if ($this->getAutocommit() && $result->isDataModified()) {
@@ -391,7 +392,7 @@ abstract class AbstractAction implements ActionInterface
      *
      * @return void
      */
-    abstract protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : TaskResultInterface;
+    protected abstract function perform(TaskInterface $task, DataTransactionInterface $transaction) : TaskResultInterface;
 
     /**
      *
@@ -448,7 +449,7 @@ abstract class AbstractAction implements ActionInterface
     public function getMetaObject()
     {
         if (is_null($this->meta_object)) {
-            if ($this->getInputDataSheet()) {
+            if ($this->hasInputDataPreset()) {
                 $this->meta_object = $this->getInputDataSheet()->getMetaObject();
             } elseif ($this->getTriggerWidget()) {
                 $this->meta_object = $this->getTriggerWidget()->getMetaObject();

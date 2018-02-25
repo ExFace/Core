@@ -20,7 +20,8 @@ abstract class AbstractHttpTemplate extends AbstractTemplate implements HttpTemp
         // IDEA Middleware goes here!        
         try {
             $task = new GenericHttpTask($this, $request);
-            return $this->createResponse($this->getWorkbench()->handle($task));
+            $result = $this->getWorkbench()->handle($task);
+            return $this->createResponse($result);
         } catch (\Throwable $e) {
             return $this->createResponseError($e);
         }
@@ -30,11 +31,11 @@ abstract class AbstractHttpTemplate extends AbstractTemplate implements HttpTemp
     {
         $headers = [];
         $status_code = $result->getResponseCode();
-        
-        return new Response($status_code, $headers, $result->getTask()->getActionSelector()->toString() . ' Done!');
+        $body = $result->getTask()->getActionSelector()->toString() . ' Done!';
+        return new Response($status_code, $headers, $body);
     }
     
     protected function createResponseError(\Throwable $e) {
-        
+        throw $e;
     }
 }

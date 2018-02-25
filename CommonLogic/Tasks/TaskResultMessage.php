@@ -23,7 +23,7 @@ class TaskResultMessage implements TaskResultInterface
     
     private $workbench = null;
     
-    private $responseCode = null;
+    private $responseCode = 200;
     
     /**
      * 

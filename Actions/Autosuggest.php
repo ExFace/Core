@@ -4,6 +4,8 @@ namespace exface\Core\Actions;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
+use exface\Core\Interfaces\Tasks\TaskResultInterface;
+use exface\Core\Interfaces\WidgetInterface;
 
 /**
  * The autosuggest action is similar to the general ReadData, but it does not affect the current window filter context because the user
@@ -35,7 +37,7 @@ class Autosuggest extends ReadData
      * {@inheritDoc}
      * @see \exface\Core\Actions\ReadData::perform()
      */
-    protected function perform(TaskInterface $task, DataTransactionInterface $transaction)
+    protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : TaskResultInterface
     {
         // IDEA Include recently used objects in the autosuggest results. But where can we get those object from?
         // Another window context? The filter context?
@@ -47,7 +49,7 @@ class Autosuggest extends ReadData
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\AbstractAction::getTriggerWidget()
      */
-    public function getTriggerWidget()
+    public function getTriggerWidget() : WidgetInterface
     {
         // This IF makes sure, the autosuggest works even if the calling widget is not specified.
         // TODO This is a potential security issue as an attacker could get access to some data (UIDs and LABELs)
