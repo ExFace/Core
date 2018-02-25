@@ -4,6 +4,7 @@ namespace exface\Core\CommonLogic\Tasks;
 use exface\Core\Interfaces\Tasks\TaskResultDataInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\Factories\DataSheetFactory;
 
 /**
  * Generic task result implementation.
@@ -15,9 +16,12 @@ class TaskResultData extends TaskResultMessage implements TaskResultDataInterfac
 {
     private $dataSheet = null;
     
-    public function __construct(TaskInterface $task, DataSheetInterface $dataSheet)
+    public function __construct(TaskInterface $task, DataSheetInterface $dataSheet = null)
     {
         parent::__construct($task);
+        if (is_null($dataSheet)) {
+            $dataSheet = DataSheetFactory::createFromObject($task->getMetaObject());
+        }
         $this->setData($dataSheet);
     }
         

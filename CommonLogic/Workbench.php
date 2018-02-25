@@ -1,7 +1,7 @@
 <?php
 namespace exface\Core\CommonLogic;
 
-require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'Interfaces' . DIRECTORY_SEPARATOR . 'WorkbenchInterface.php';
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'autoload.php';
 
 use exface\Core\CommonLogic\Log\Log;
 use exface\Core\Interfaces\CmsConnectorInterface;
@@ -66,9 +66,6 @@ class Workbench implements WorkbenchInterface
         if (substr(phpversion(), 0, 1) == 5) {
             require_once 'Php5Compatibility.php';
         }
-        
-        // Init composer autoload
-        require_once ($this->getVendorDirPath() . DIRECTORY_SEPARATOR . 'autoload.php');
         
         // If the config overrides the installation path, use the config value, otherwise go one level up from the vendor folder.
         if ($this->getConfig()->hasOption('FOLDERS.INSTALLATION_PATH_ABSOLUTE') && $installation_path = $this->getConfig()->getOption("FOLDERS.INSTALLATION_PATH_ABSOLUTE")) {

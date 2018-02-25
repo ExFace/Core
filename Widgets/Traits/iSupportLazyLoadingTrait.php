@@ -122,7 +122,7 @@ trait iSupportLazyLoadingTrait {
      * {@inheritdoc}
      * @see \exface\Core\Interfaces\Widgets\iTriggerAction::hasAction()
      */
-    public function hasAction()
+    public function hasAction() : bool
     {
         return $this->getAction() ? true : false;
     }

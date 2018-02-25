@@ -2,19 +2,11 @@
 namespace exface\Core\Interfaces;
 
 use exface\Core\Interfaces\Templates\TemplateInterface;
-use Psr\Http\Message\UriInterface;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
 
 interface UiManagerInterface extends ExfaceClassInterface
 {
-    /**
-     * 
-     * @param UriInterface $uri
-     * @return TemplateInterface
-     */
-    public function getTemplateForUri(UriInterface $uri) : TemplateInterface;
-    
     /**
      * Returns the UI page with the given $page_alias.
      * If the $page_alias is ommitted or ='', the default (initially empty) page is returned.
