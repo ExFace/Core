@@ -753,51 +753,6 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
     }
     
     /**
-     * 
-     * @param unknown $serializable_data
-     * @param string $add_extras
-     * @throws TemplateOutputError
-     * @return string
-     */
-    public function encodeData($serializable_data, $add_extras = false)
-    {
-        if ($add_extras){
-            $serializable_data['extras'] = [
-                'ContextBar' => $this->buildResponseExtraForContextBar()
-            ];
-        }
-        
-        $result = json_encode($serializable_data, JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_QUOT);
-        if (! $result) {
-            throw new TemplateOutputError('Error encoding data: ' . json_last_error() . ' ' . json_last_error_msg());
-        }
-        return $result;
-    }
-    
-    public function buildResponseExtraForContextBar()
-    {
-        $extra = [];
-        try {
-            $contextBar = $this->getWorkbench()->ui()->getPageCurrent()->getContextBar();
-            foreach ($contextBar->getButtons() as $btn){
-                $btn_element = $this->getElement($btn);
-                $context = $contextBar->getContextForButton($btn);
-                $extra[$btn_element->getId()] = [
-                    'visibility' => $context->getVisibility(),
-                    'icon' => $btn_element->buildCssIconClass($btn->getIcon()),
-                    'color' => $context->getColor(),
-                    'hint' => $btn->getHint(),
-                    'indicator' => ! is_null($context->getIndicator()) ? $contextBar->getContextForButton($btn)->getIndicator() : '',
-                    'bar_widget_id' => $btn->getId()
-                ];
-            }
-        } catch (\Throwable $e){
-            $this->getWorkbench()->getLogger()->logException($e);
-        }
-        return $extra;
-    }
-    
-    /**
      * Returns the data type formatter for the given data type.
      * 
      * @param DataTypeInterface $dataType

@@ -25,7 +25,6 @@ use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\Tasks\TaskResultInterface;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
-use exface\Core\Interfaces\Actions\iUsePrefillData;
 
 /**
  * The abstract action is a generic implementation of the ActionInterface, that simplifies 
