@@ -65,6 +65,19 @@ interface TaskResultInterface extends ExfaceClassInterface
      */
     public function setDataModified(bool $value) : TaskResultInterface;
     
+    /**
+     * 
+     * @return bool
+     */
+    public function isContextModified() : bool;
+    
+    /**
+     * 
+     * @param bool $trueOrFalse
+     * @return TaskResultInterface
+     */
+    public function setContextModified(bool $trueOrFalse) : TaskResultInterface;
+    
     
     /**
      *

@@ -1,7 +1,6 @@
 <?php
 namespace exface\Core\CommonLogic\Tasks;
 
-use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\Tasks\TaskResultInterface;
 
@@ -16,6 +15,8 @@ class TaskResultMessage implements TaskResultInterface
     private $task = null;
     
     private $isDataModified = false;
+    
+    private $isContextModified = false;
     
     private $message = null;
     
@@ -150,5 +151,17 @@ class TaskResultMessage implements TaskResultInterface
     {
         return $this->responseCode;
     }
+    
+    public function isContextModified(): bool
+    {
+        return $this->isContextModified;
+    }
+
+    public function setContextModified(bool $trueOrFalse): TaskResultInterface
+    {
+        $this->isContextModified = $trueOrFalse;
+        return $this;
+    }
+
 
 }

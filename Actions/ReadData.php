@@ -8,6 +8,7 @@ use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Tasks\TaskResultInterface;
 use exface\Core\CommonLogic\Tasks\TaskResultData;
+use exface\Core\Exceptions\Actions\ActionCallingWidgetNotSpecifiedError;
 
 /**
  * 
@@ -28,6 +29,9 @@ class ReadData extends AbstractAction implements iReadData
      */
     protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : TaskResultInterface
     {
+        if (! $this->checkPermissions($task)) {
+            // TODO Throw exception!
+        }
         $data_sheet = $this->getInputDataSheet($task);
         $data_sheet->removeRows();
         $affected_rows = $data_sheet->dataRead();
@@ -46,6 +50,14 @@ class ReadData extends AbstractAction implements iReadData
         $result->setUndoable(false);
         
         return $result;
+    }
+    
+    protected function checkPermissions(TaskInterface $task) : bool
+    {
+        if (! $this->hasTriggerWidget() && ! $task->hasOriginWidget()) {
+            throw new ActionCallingWidgetNotSpecifiedError($this, 'Security violaion! Cannot read data without a target widget in action "' . $this->getAliasWithNamespace() . '"!', '6T5DOSV');
+        }
+        return true;
     }
     
     /**
