@@ -37,6 +37,14 @@ interface ExpressionInterface extends ExfaceClassInterface, iCanBeCopied
     public function isConstant();
     
     /**
+     * Returns TRUE if the expression can be evaluated without a data context and FALSE otherwise: 
+     * i.e. the expression ist static if it does not depend on the contents of data sheets.
+     * 
+     * @return bool
+     */
+    public function isStatic() : bool;
+    
+    /**
      * Returns TRUE if the expression has no value (expression->toString() = NULL) and FALSE otherwise
      *
      * @return boolean
@@ -100,7 +108,7 @@ interface ExpressionInterface extends ExfaceClassInterface, iCanBeCopied
      * E.g. "ORDER->POSITION->PRODUCT->ID" will become "PRODUCT->ID" after calling rebase(ORDER->POSITION) on it.
      *
      * @param string $relation_path_to_new_base_object
-     * @return ExpressionInterfaceInterface
+     * @return ExpressionInterface
      */
     public function rebase($relation_path_to_new_base_object);
     
