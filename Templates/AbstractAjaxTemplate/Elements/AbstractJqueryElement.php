@@ -836,6 +836,17 @@ abstract class AbstractJqueryElement implements ExfaceClassInterface
     }
     
     /**
+     * 
+     * @return string
+     */
+    protected function getTooltip()
+    {
+        $widget = $this->getWidget();
+        $caption = $widget->getCaption();
+        return ($caption ? $caption . ': ' : '') . $widget->getHint();
+    }
+    
+    /**
      * Returns TRUE if this element is the only one visible within it's parent container and FALSE otherwise.
      *
      * @return boolean
