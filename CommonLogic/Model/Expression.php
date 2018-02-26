@@ -499,7 +499,7 @@ class Expression implements ExpressionInterface
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\iCanBeCopied::copy()
-     * @return ExpressionInterfaceInterface
+     * @return ExpressionInterface
      */
     public function copy()
     {
@@ -507,5 +507,22 @@ class Expression implements ExpressionInterface
         $copy->parse($this->toString());
         return $copy;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\ExpressionInterface::isStatic()
+     */
+    public function isStatic() : bool
+    {
+        switch (true) {
+            case $this->isConstant():
+            case $this->isEmpty():
+                return true;
+            case $this->isFormula():
+                return $this->formula->isStatic();
+        }
+        return false;
+    }   
 }
 ?>
