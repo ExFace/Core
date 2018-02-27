@@ -2,10 +2,10 @@
 namespace exface\Core\CommonLogic\Model;
 
 use exface\Core\Factories\DataTypeFactory;
-use exface\Core\Interfaces\ExfaceClassInterface;
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Formulas\FormulaInterface;
+use exface\Core\Interfaces\Model\ExpressionInterface;
 
 /**
  * Data functions are much like Excel functions.
@@ -118,6 +118,10 @@ abstract class Formula implements FormulaInterface
         return $this->required_attributes;
     }
 
+    /**
+     * 
+     * @return ExpressionInterface[]
+     */
     public function getArguments()
     {
         return $this->arguments;
@@ -220,6 +224,24 @@ abstract class Formula implements FormulaInterface
     {
         $this->current_row_number = $value;
         return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Formulas\FormulaInterface::isStatic()
+     */
+    public function isStatic() : bool
+    {
+        // A formula is static if it has no arguments or all arguments are static.
+        // In other words, it is static if it does not have non-static arguments.
+        foreach ($this->getArguments() as $expr) {
+            if (! $expr->isStatic()) {
+                return false;
+            }
+        }
+        
+        return true;
     }
 }
 ?>

@@ -76,4 +76,12 @@ interface FormulaInterface extends ExfaceClassInterface
      * @return integer
      */
     public function getCurrentRowNumber();
+    
+    /**
+     * Returns TRUE if the formula can be evaluated without a data sheet (e.g. NOW()) and FALSE otherwise.
+     *
+     * @return bool
+     */
+    public function isStatic() : bool;
+    
 }
