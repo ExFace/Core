@@ -97,12 +97,14 @@ class ButtonGroup extends Container implements iHaveButtons, iCanBeAligned, iUse
      */
     public function getButtonWidgetType()
     {
-        if ($this->getParent() instanceof Toolbar){
-            return $this->getParent()->getButtonWidgetType();
-        } elseif (method_exists($this->getInputWidget(), 'getButtonWidgetType')){
-            return $this->getInputWidget()->getButtonWidgetType();
+        if ($this->getParent() instanceof iHaveButtons){
+            $type = $this->getParent()->getButtonWidgetType();
+        } elseif ($this->getInputWidget() instanceof iHaveButtons){
+            $type = $this->getInputWidget()->getButtonWidgetType();
+        } else {
+            $type = 'Button';
         }
-        return 'Button';
+        return $type;
     }
 
     /**
