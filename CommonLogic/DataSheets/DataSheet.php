@@ -1604,12 +1604,15 @@ class DataSheet implements DataSheetInterface
      */
     public function copy()
     {
-        $exface = $this->getWorkbench();
-        $copy = DataSheetFactory::createFromUxon($exface, $this->exportUxonObject());
-        // Copy internal properties, that do not get exported to UXON
-        foreach ($this->getColumns() as $key => $col) {
-            if ($col->getIgnoreFixedValues()) {
-                $copy->getColumns()->get($key)->setIgnoreFixedValues($col->getIgnoreFixedValues());
+        if ($this->isBlank()) {
+            $copy = clone $this;
+        } else {
+            $copy = DataSheetFactory::createFromUxon($this->getWorkbench(), $this->exportUxonObject());
+            // Copy internal properties, that do not get exported to UXON
+            foreach ($this->getColumns() as $key => $col) {
+                if ($col->getIgnoreFixedValues()) {
+                    $copy->getColumns()->get($key)->setIgnoreFixedValues($col->getIgnoreFixedValues());
+                }
             }
         }
         return $copy;

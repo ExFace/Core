@@ -2,16 +2,13 @@
 namespace exface\Core\Interfaces\DataSheets;
 
 use exface\Core\CommonLogic\Model\ConditionGroup;
-use exface\Core\CommonLogic\Model\Condition;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
-use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\Core\Interfaces\DataSheets\DataColumnInterface;
 use exface\Core\Interfaces\ExfaceClassInterface;
 use exface\Core\Interfaces\iCanBeCopied;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
-use exface\Core\CommonLogic\DataSheets\DataColumn;
 use exface\Core\Exceptions\DataSheets\DataSheetColumnNotFoundError;
+use exface\Core\CommonLogic\DataSheets\DataSheetList;
 
 interface DataSheetInterface extends ExfaceClassInterface, iCanBeCopied, iCanBeConvertedToUxon
 {
@@ -49,14 +46,10 @@ interface DataSheetInterface extends ExfaceClassInterface, iCanBeCopied, iCanBeC
      * IDEA improve performance by checking, which data sheet has less rows and iterating through that one instead of alwasy the left one.
      * This would be especially effective if there is nothing to join...
      *
-     * @param
-     *            \exface\Core\Interfaces\DataSheets\DataSheetInterface data_sheet
-     * @param
-     *            string left_key_column
-     * @param
-     *            string right_key_column
-     * @param
-     *            string column_prefix
+     * @param DataSheetInterface data_sheet
+     * @param string left_key_column
+     * @param string right_key_column
+     * @param string column_prefix
      * @return \exface\Core\Interfaces\DataSheets\DataSheetInterface
      */
     public function joinLeft(\exface\Core\Interfaces\DataSheets\DataSheetInterface $data_sheet, $left_key_column = null, $right_key_column = null, $relation_path = '');
@@ -90,12 +83,9 @@ interface DataSheetInterface extends ExfaceClassInterface, iCanBeCopied, iCanBeC
      * via $totals_values in the same manner. This is usefull when applying data functions to columns.
      * NOTE: if the data sheet does not contain a column with the given name, it will be added automatically.
      *
-     * @param
-     *            string column_name
-     * @param
-     *            mixed|array column_values
-     * @param
-     *            mixed|array totals_values
+     * @param string column_name
+     * @param mixed|array column_values
+     * @param mixed|array totals_values
      * @return DataSheetInterface
      */
     public function setColumnValues($column_name, $column_values, $totals_values = null);
@@ -110,10 +100,8 @@ interface DataSheetInterface extends ExfaceClassInterface, iCanBeCopied, iCanBeC
      * Populates the data sheet with actual data from the respecitve data sources.
      * Returns the number of rows created in the sheet.
      *
-     * @param
-     *            integer offset
-     * @param
-     *            integer limit
+     * @param integer offset
+     * @param integer limit
      * @return integer
      */
     public function dataRead($limit = null, $offset = null);
@@ -256,7 +244,7 @@ interface DataSheetInterface extends ExfaceClassInterface, iCanBeCopied, iCanBeC
     /**
      * Returns an array of DataColumns
      *
-     * @return DataColumnListInterface|DataColumn[]
+     * @return DataColumnListInterface|DataColumnInterface[]
      */
     public function getColumns();
 
@@ -326,7 +314,7 @@ interface DataSheetInterface extends ExfaceClassInterface, iCanBeCopied, iCanBeC
      * Removes all rows with the given value in the UID column
      *
      * @param string $instance_uid
-     *            return DataSheetInterface
+     * @return DataSheetInterface
      */
     public function removeRowsByUid($uid);
 
