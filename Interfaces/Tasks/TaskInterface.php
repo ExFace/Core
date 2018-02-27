@@ -172,6 +172,12 @@ interface TaskInterface extends ExfaceClassInterface
     public function getOriginWidget() : WidgetInterface;
     
     /**
+     * Returns TRUE if the task originates from a specific widget in a page and FALSE otherwise.
+     * 
+     * In contrast to hasOriginPage() this method checks, if there is an explicit widget reference.
+     * Having a page reference is enough for getOriginWidget() to work, but you can still use
+     * this method to check, if it was an explicitly referenced widget or the main widget of the
+     * page was just assumed to be the right one.
      * 
      * @return bool
      */
@@ -179,6 +185,10 @@ interface TaskInterface extends ExfaceClassInterface
     
     
     /**
+     * Returns TRUE if the task originates from a specific page and FALSE otherwise.
+     * 
+     * NOTE: This does not yet mean, that the origin widget is known. Use hasOriginWidget() to
+     * find out if.
      * 
      * @return bool
      */

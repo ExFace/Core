@@ -2,7 +2,7 @@
 use GuzzleHttp\Psr7\ServerRequest;
 use exface\Core\Templates\AbstractHttpTemplate\Middleware\TemplateResolverMiddleware;
 use exface\Core\Templates\AbstractHttpTemplate\HttpRequestHandler;
-use GuzzleHttp\Psr7\Response;
+use exface\Core\Templates\AbstractHttpTemplate\NotFoundHandler;
 
 error_reporting(E_ALL & ~E_NOTICE);
 
@@ -15,7 +15,7 @@ $workbench->start();
 // If the middleware will not be able to match a rout, the handler will return the
 // fallback response created here - which is an empty 404. This is enough for a
 // simple API endpoint.
-$handler = new HttpRequestHandler(new Response(404));
+$handler = new HttpRequestHandler(new NotFoundHandler());
 $handler->add(new TemplateResolverMiddleware($workbench));
 $response = $handler->handle(ServerRequest::fromGlobals());
 
