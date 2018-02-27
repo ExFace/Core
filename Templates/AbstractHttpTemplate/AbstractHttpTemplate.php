@@ -11,9 +11,18 @@ use exface\Core\CommonLogic\Tasks\TaskResultData;
 use exface\Core\CommonLogic\Tasks\TaskResultWidget;
 use exface\Core\Exceptions\Templates\TemplateOutputError;
 use exface\Core\Interfaces\Tasks\TaskResultUriInterface;
+use exface\Core\Interfaces\Model\UiPageInterface;
+use exface\Core\Factories\UiPageFactory;
+use exface\Core\Interfaces\Exceptions\ExceptionInterface;
+use exface\Core\Exceptions\RuntimeException;
+use Symfony\Component\Debug\Exception\FatalThrowableError;
+use Psr\Http\Server\MiddlewareInterface;
+use exface\Core\Templates\AbstractHttpTemplate\Middleware\TaskReaderMiddleware;
 
 abstract class AbstractHttpTemplate extends AbstractTemplate implements HttpTemplateInterface
 {
+    private $middleWareStack = [];
+    
     /**
      * 
      * {@inheritDoc}
@@ -21,14 +30,25 @@ abstract class AbstractHttpTemplate extends AbstractTemplate implements HttpTemp
      */
     public function handle(ServerRequestInterface $request) : ResponseInterface
     {
-        // IDEA Middleware goes here!        
+        if ($request->getAttribute('task') === null) {
+            $handler = new HttpRequestHandler($this);
+            $handler->add($this->getTaskReaderMiddleware('task'));
+            // TODO Throw event to allow adding middleware from outside (e.g. a PhpDebugBar or similar)
+            return $handler->handle($request);
+        }        
+        
         try {
-            $task = new GenericHttpTask($this, $request);
+            $task = $request->getAttribute('task');
             $result = $this->getWorkbench()->handle($task);
             return $this->createResponse($result);
         } catch (\Throwable $e) {
             return $this->createResponseError($e);
         }
+    }
+    
+    protected function getTaskReaderMiddleware($attributeName = 'task') : MiddlewareInterface
+    {
+        return new TaskReaderMiddleware($this, $attributeName);
     }
     
     /**
@@ -121,7 +141,39 @@ abstract class AbstractHttpTemplate extends AbstractTemplate implements HttpTemp
      * @param \Throwable $e
      * @return ResponseInterface
      */
-    protected function createResponseError(\Throwable $e) {
-        throw $e;
+    protected function createResponseError(\Throwable $exception, UiPageInterface $page = null) {
+        $page = ! is_null($page) ? $page : UiPageFactory::createEmpty($this->getWorkbench()->ui());
+        
+        $status_code = is_numeric($exception->getStatusCode()) ? $exception->getStatusCode() : 500;
+        $headers = [];
+        $body = '';
+        
+        try {
+            $debug_widget = $exception->createWidget($page);
+            if ($page->getWorkbench()->getConfig()->getOption('DEBUG.SHOW_ERROR_DETAILS_TO_ADMINS_ONLY') && ! $page->getWorkbench()->context()->getScopeUser()->getUserCurrent()->isUserAdmin()) {
+                foreach ($debug_widget->getTabs() as $nr => $tab) {
+                    if ($nr > 0) {
+                        $tab->setHidden(true);
+                    }
+                }
+            }
+            $body = $this->buildIncludes($debug_widget) . "\n" . $this->buildWidget($debug_widget);
+        } catch (\Throwable $e) {
+            // If anything goes wrong when trying to prettify the original error, drop prettifying
+            // and throw the original exception wrapped in a notice about the failed prettification
+            $this->getWorkbench()->getLogger()->logException($e);
+            $log_id = $e instanceof ExceptionInterface ? $e->getId() : '';
+            throw new RuntimeException('Failed to create error report widget: "' . $e->getMessage() . '" - see ' . ($log_id ? 'log ID ' . $log_id : 'logs') . ' for more details! Find the orignal error detail below.', null, $exception);
+        } catch (FatalThrowableError $e) {
+            // If anything goes wrong when trying to prettify the original error, drop prettifying
+            // and throw the original exception wrapped in a notice about the failed prettification
+            $this->getWorkbench()->getLogger()->logException($e);
+            $log_id = $e instanceof ExceptionInterface ? $e->getId() : '';
+            throw new RuntimeException('Failed to create error report widget: "' . $e->getMessage() . '" - see ' . ($log_id ? 'log ID ' . $log_id : 'logs') . ' for more details! Find the orignal error detail below.', null, $exception);
+        }
+        
+        $this->getWorkbench()->getLogger()->logException($exception);
+        
+        return new Response($status_code, $headers, $body);
     }
 }

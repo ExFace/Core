@@ -18,15 +18,15 @@ use Psr\Http\Message\ServerRequestInterface;
 class HttpRequestHandler implements RequestHandlerInterface
 {
     private $middleware = [];
-    private $fallbackResponse = null;
+    private $fallbackHandler = null;
     
     /**
      * 
      * @param ResponseInterface $fallbackResponse
      */
-    public function __construct(ResponseInterface $fallbackResponse)
+    public function __construct(RequestHandlerInterface $fallbackHandler)
     {
-        $this->fallbackResponse = $fallbackResponse;
+        $this->fallbackHandler = $fallbackHandler;
     }
     
     /**
@@ -47,8 +47,8 @@ class HttpRequestHandler implements RequestHandlerInterface
     public function handle(ServerRequestInterface $request) : ResponseInterface
     {
         // Last middleware in the queue has called on the request handler.
-        if (0 === count($this->middleware)) {
-            return $this->fallbackResponse;
+        if (empty($this->middleware)) {
+            return $this->fallbackHandler;
         }
         
         $middleware = array_shift($this->middleware);

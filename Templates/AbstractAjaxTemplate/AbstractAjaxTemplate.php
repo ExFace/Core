@@ -34,6 +34,7 @@ use exface\Core\Templates\AbstractAjaxTemplate\Formatters\JsEnumFormatter;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Templates\AbstractAjaxTemplate\Formatters\JsBooleanFormatter;
 use exface\Core\Templates\AbstractHttpTemplate\AbstractHttpTemplate;
+use Psr\Http\Server\MiddlewareInterface;
 
 abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
 {
@@ -258,147 +259,6 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
         return $this->getWorkbench()->getCMS()->createLinkInternal($page_or_id_or_alias, $url_params);
     }
 
-    public function getDataSheetFromRequest($object_id = NULL, $widget = NULL)
-    {
-        if (! $this->request_data_sheet) {
-            // Look for actual data rows in the request
-            if ($this->getWorkbench()->getRequestParams()['data']) {
-                if (! is_array($this->getWorkbench()->getRequestParams()['data'])) {
-                    if ($decoded = @json_decode($this->getWorkbench()->getRequestParams()['data'], true))
-                        $this->getWorkbench()->setRequestParam('data', $decoded);
-                }
-                $request_data = $this->getWorkbench()->getRequestParams()['data'];
-                // If there is a data request parameter, create a data sheet from it
-                if (is_array($request_data) && $request_data['oId']) {
-                    // Remove rows as they may need to be split a few lines later
-                    if (is_array($request_data['rows'])) {
-                        $rows = $request_data['rows'];
-                        unset($request_data['rows']);
-                    }
-                    // Create a data sheet from the JSON passed via data parameter
-                    $data_sheet = DataSheetFactory::createFromUxon($this->getWorkbench(), UxonObject::fromArray($request_data));
-                    // Now take care of the rows, we split off before
-                    if ($rows) {
-                        // If there is only one row and it has a UID column, check if the only UID cell has a concatennated value
-                        if (count($rows) == 1) {
-                            $rows = $this->splitRowsByMultivalueFields($rows, $data_sheet);
-                        }
-                        $data_sheet->addRows($rows);
-                    }
-                }
-            }
-            
-            // Look for filter data
-            $filters = $this->getRequestFilters();
-            // Add filters for quick search
-            if ($widget && $quick_search = $this->getRequestQuickSearchValue()) {
-                $quick_search_filter = $widget->getMetaObject()->getLabelAttributeAlias();
-                if ($widget->is('Data') && count($widget->getAttributesForQuickSearch()) > 0) {
-                    foreach ($widget->getAttributesForQuickSearch() as $attr) {
-                        $quick_search_filter .= ($quick_search_filter ? EXF_LIST_SEPARATOR : '') . $attr;
-                    }
-                }
-                if ($quick_search_filter) {
-                    $filters[$quick_search_filter][] = $quick_search;
-                } else {
-                    throw new TemplateRequestParsingError('Cannot perform quick search on object "' . $widget->getMetaObject()->getAliasWithNamespace() . '": either mark one of the attributes as a label in the model or set inlude_in_quick_search = true for one of the filters in the widget definition!', '6T6HSL4');
-                }
-            }
-            
-            /* @var $data_sheet \exface\Core\CommonLogic\DataSheets\DataSheet */
-            if (! $data_sheet || $data_sheet->isEmpty()) {
-                if ($widget) {
-                    $data_sheet = $widget->prepareDataSheetToRead($data_sheet);
-                } elseif ($object_id) {
-                    $data_sheet = $this->getWorkbench()->data()->createDataSheet($this->getWorkbench()->model()->getObject($object_id));
-                } else {
-                    return null;
-                }
-            }
-            
-            // Set filters
-            foreach ($filters as $fltr_attr => $fltr) {
-                if (is_array($fltr)) {
-                    foreach ($fltr as $val) {
-                        $data_sheet->addFilterFromString($fltr_attr, $val);
-                    }
-                }
-            }
-            
-            // Set sorting options
-            $sort_by = $this->getRequestSortingSortBy();
-            $order = $this->getRequestSortingDirection();
-            if ($sort_by && $order) {
-                $sort_by = explode(',', $sort_by);
-                $order = explode(',', $order);
-                foreach ($sort_by as $nr => $sort) {
-                    $data_sheet->getSorters()->addFromString($sort, $order[$nr]);
-                }
-            }
-            
-            // Set pagination options
-            $data_sheet->setRowOffset($this->getRequestPagingOffset());
-            $data_sheet->setRowsOnPage($this->getRequestPagingRows());
-            
-            $this->request_data_sheet = $data_sheet;
-        }
-        
-        return $this->request_data_sheet;
-    }
-
-    /**
-     * This method takes care of single-row data, that has columns with delimited 
-     * lists or arrays.
-     *
-     * If there are multiple rows, they will be returned as is. In case of a
-     * single row, it will be split if it contains values for valid attributes, 
-     * that
-     * - are arrays or
-     * - represent attributes, that are UIDs of their object or relations and
-     *   contain the value list delimiter of their respective attribute.
-     *   
-     * Splitting a row will result in as many rows as separate values were found,
-     * each containing one of the split values and the same set of values in all
-     * other columns.
-     * 
-     * @param array $rows            
-     * @param DataSheetInterface $data_sheet            
-     * @return array
-     */
-    protected function splitRowsByMultivalueFields(array $rows, DataSheetInterface $data_sheet)
-    {
-        $result = $rows;
-        if (count($rows) == 1) {
-            $row = reset($rows);
-            foreach ($row as $field => $val) {
-                if ($data_sheet->getMetaObject()->hasAttribute($field)){
-                    $attr = $data_sheet->getMetaObject()->getAttribute($field);
-                    if (is_string($val) && ($attr->isUidForObject() || $attr->isRelation())){
-                        $delim = $attr->getValueListDelimiter();
-                        if (strpos($val, $delim)){
-                            $val = explode($delim, $val);
-                        }
-                    }
-                }
-                if (is_array($val)) {
-                    if ($attr || $data_sheet->getMetaObject()->hasAttribute($field)) {
-                        $result_before = $result;
-                        foreach ($result_before as $nr => $r){
-                            unset($result[$nr]);
-                            $result = array_values($result);
-                            foreach ($val as $v) {
-                                $result[] = array_merge($r, [$field => $v]);
-                            }
-                        }
-                    } else {
-                        $result[0][$field] = implode(EXF_LIST_SEPARATOR, $val);
-                    }
-                }
-            }
-        }
-        return $result;
-    }
-
     /**
      *
      * {@inheritdoc}
@@ -500,113 +360,6 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
         }
         
         return $this->getResponse();
-    }
-
-    protected function setResponseFromAction(ActionInterface $action)
-    {
-        $output = $action->getResultOutput();
-        if (! $output && $action->getResultMessage()) {
-            $response = array();
-            $response['success'] = $action->getResultMessage();
-            if ($action->isUndoable()) {
-                $response['undoable'] = '1';
-            }
-            // check if result is a properly formed link
-            if (is_string($action->getResult())) {
-                $url = filter_var($action->getResult(), FILTER_SANITIZE_STRING);
-                if (substr($url, 0, 4) == 'http') {
-                    $response['redirect'] = $url;
-                }
-            }
-            // Encode the response object to JSON converting <, > and " to HEX-values (e.g. \u003C). Without that conversion
-            // there might be trouble with HTML in the responses (e.g. jEasyUI will break it when parsing the response)
-            $output = $this->encodeData($response, $action instanceof iModifyContext ? true : false);
-        }
-        
-        $this->setResponse($output);
-        return $this;
-    }
-
-    protected function setResponseFromError(ErrorExceptionInterface $exception, UiPageInterface $page)
-    {
-        $http_status_code = is_numeric($exception->getStatusCode()) ? $exception->getStatusCode() : 500;
-        if (is_numeric($http_status_code)) {
-            http_response_code($http_status_code);
-        } else {
-            http_response_code(500);
-        }
-        
-        try {
-            $debug_widget = $exception->createWidget($page);
-            if ($page->getWorkbench()->getConfig()->getOption('DEBUG.SHOW_ERROR_DETAILS_TO_ADMINS_ONLY') && ! $page->getWorkbench()->context()->getScopeUser()->getUserCurrent()->isUserAdmin()) {
-                foreach ($debug_widget->getTabs() as $nr => $tab) {
-                    if ($nr > 0) {
-                        $tab->setHidden(true);
-                    }
-                }
-            }
-            $output = $this->buildIncludes($debug_widget) . "\n" . $this->buildWidget($debug_widget);
-        } catch (\Throwable $e) {
-            // If anything goes wrong when trying to prettify the original error, drop prettifying
-            // and throw the original exception wrapped in a notice about the failed prettification
-            $this->getWorkbench()->getLogger()->logException($e);
-            $log_id = $e instanceof ExceptionInterface ? $e->getId() : '';
-            throw new RuntimeException('Failed to create error report widget: "' . $e->getMessage() . '" - see ' . ($log_id ? 'log ID ' . $log_id : 'logs') . ' for more details! Find the orignal error detail below.', null, $exception);
-        } catch (FatalThrowableError $e) {
-            // If anything goes wrong when trying to prettify the original error, drop prettifying
-            // and throw the original exception wrapped in a notice about the failed prettification
-            $this->getWorkbench()->getLogger()->logException($e);
-            $log_id = $e instanceof ExceptionInterface ? $e->getId() : '';
-            throw new RuntimeException('Failed to create error report widget: "' . $e->getMessage() . '" - see ' . ($log_id ? 'log ID ' . $log_id : 'logs') . ' for more details! Find the orignal error detail below.', null, $exception);
-        }
-        
-        $this->getWorkbench()->getLogger()->log($exception->getLogLevel(), $exception->getMessage(), array(), $exception);
-        
-        $this->setResponse($output);
-        return $this;
-    }
-
-    /**
-     * Returns the prefill data from the request or FALSE if no prefill data was sent
-     *
-     * @param AbstractWidget $widget_to_prefill            
-     * @return DataSheetInterface | boolean
-     */
-    public function getRequestPrefillData(AbstractWidget $widget_to_prefill)
-    {
-        // Look for prefill data
-        if ($prefill_string = $this->getWorkbench()->getRequestParams()['prefill']) {
-            $prefill_uxon = UxonObject::fromAnything($prefill_string);
-            if ($prefill_string && $prefill_uxon->isEmpty()) {
-                throw new TemplateRequestParsingError('Invalid prefill URL parameter "' . $prefill_string . '"!');
-            }
-        }
-        if ($prefill_uxon && ! $prefill_uxon->isEmpty()) {
-            $exface = $this->getWorkbench();
-            if (! $prefill_uxon->getProperty('meta_object_id') && $prefill_uxon->getProperty('oId')) {
-                $prefill_uxon->setProperty('meta_object_id', $prefill_uxon->getProperty('oId'));
-            }
-            $prefill_data = DataSheetFactory::createFromUxon($exface, $prefill_uxon);
-            $this->getWorkbench()->removeRequestParam('prefill');
-            
-            if ($prefill_data) {
-                // Add columns to be prefilled to the data sheet from the request
-                $prefill_data = $widget_to_prefill->prepareDataSheetToPrefill($prefill_data);
-                // If new colums are added, the sheet is marked as outdated, so we need to fetch the data from the data source
-                if (! $prefill_data->isFresh()) {
-                    $prefill_data->addFilterInFromString($prefill_data->getMetaObject()->getUidAttributeAlias(), $prefill_data->getColumnValues($prefill_data->getMetaObject()->getUidAttributeAlias()));
-                    $prefill_data->dataRead();
-                }
-                
-                $this->request_prefill_data = $prefill_data;
-            } else {
-                $this->request_prefill_data = false;
-            }
-        }
-        
-        // It is important to save the prefill data sheet in the request, because multiple action can be performed in one request
-        // and they all will need the prefill data, not just the first one.
-        return $this->request_prefill_data;
     }
 
     /**
@@ -767,6 +520,20 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
             case $dataType instanceof BooleanDataType: return new JsBooleanFormatter($dataType);
         }
         return new JsTransparentFormatter($dataType);
+    }
+    
+    protected function getTaskReaderMiddleware($attributeName = 'task') : MiddlewareInterface
+    {
+        $reader = parent::getTaskReaderMiddleware($attributeName);
+        
+        $reader->setParamNameAction('action');
+        $reader->setParamNameObject('object');
+        $reader->setParamNamePage('resource');
+        $reader->setParamNameWidget('widget');
+        $reader->setParamNameData('data');
+        $reader->setParamNamePrefill('action');
+        
+        return $reader;
     }
 }
 ?>

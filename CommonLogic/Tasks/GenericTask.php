@@ -183,6 +183,17 @@ class GenericTask implements TaskInterface
     public function getInputData(): DataSheetInterface
     {
         if (is_null($this->inputData)) {
+            switch (true) {
+                case $this->hasOriginWidget():
+                    $this->inputData = DataSheetFactory::createFromObject($this->getOriginWidget()->getMetaObject());
+                    break;
+                case $this->hasMetaObject():
+                    $this->inputData = DataSheetFactory::createFromObject($this->getMetaObject());
+                    break;
+                case $this->hasOriginPage():
+                    $this->inputData = DataSheetFactory::createFromObject($this->getOriginWidget()->getMetaObject());
+                    break;
+            }
             $this->inputData = DataSheetFactory::createFromObject($this->getMetaObject());
         }
         return $this->inputData->copy();
@@ -270,7 +281,7 @@ class GenericTask implements TaskInterface
      */
     public function hasOriginWidget(): bool
     {
-        return is_null($this->originPageSelctor) ? false : true;
+        return is_null($this->originWigetId) ? false : true;
     }
     
     /**
