@@ -13,7 +13,7 @@ abstract class DataColumnFactory extends AbstractFactory
     /**
      *
      * @param DataSheetInterface $data_sheet            
-     * @param string|ExpressionInterfaceInterface $expression_or_string            
+     * @param string|ExpressionInterface $expression_or_string            
      * @param string $name            
      * @return DataColumn
      */
