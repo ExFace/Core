@@ -40,8 +40,6 @@ class Toolbar extends Container implements iHaveButtons, iContainButtonGroups, i
     
     private $position = null;
     
-    private $buttonWidgetType = 'Button';
-    
     use iUseInputWidgetTrait;
     
     /**
@@ -307,14 +305,17 @@ class Toolbar extends Container implements iHaveButtons, iContainButtonGroups, i
         return $this;
     }
     
-    public function setButtonWidgetType(string $buttonWidgetType) {
-        $this->buttonWidgetType = $buttonWidgetType;
-        return $this;
-    }
-    
     public function getButtonWidgetType()
     {
-        return $this->buttonWidgetType;
+        if ($this->getParent() instanceof iHaveButtons){
+            $type = $this->getParent()->getButtonWidgetType();
+        } elseif ($this->getInputWidget() instanceof iHaveButtons){
+            $type = $this->getInputWidget()->getButtonWidgetType();
+        } else {
+            $type = 'Button';
+        }
+        
+        return $type;
     }
     
     /**

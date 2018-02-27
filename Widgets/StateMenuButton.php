@@ -38,10 +38,6 @@ class StateMenuButton extends MenuButton
                 throw new BehaviorConfigurationError('StateMenuButton: The object ' . $this->getMetaObject()->getAliasWithNamespace() . ' has no StateMachineBehavior attached.');
             }
             
-            if ($dialogWidget = $this->getParentByType('exface\\Core\\Widgets\\Dialog')) {
-                $menu->setButtonWidgetType('DialogButton');
-            }
-            
             if (($data_sheet = $this->getPrefillData()) && ($state_column = $data_sheet->getColumnValues($smb->getStateAttributeAlias()))) {
                 $current_state = $state_column[0];
             } else {
