@@ -400,6 +400,10 @@ class DataColumn implements DataColumnInterface
             if ($this->getAttribute()->getDataType() !== $this->getDataType()) {
                 $uxon->setProperty('data_type', $this->getDataType()->getAliasWithNamespace());
             }
+            
+            if ($this->getAttribute()->getFormula() !== $this->getFormula()) {
+                $uxon->setProperty('formula', $this->getFormula()->toString());
+            }
         } else {
             // If it's not an attribute, export everything
             $uxon->setProperty('expression', $this->getExpressionObj()->toString());
