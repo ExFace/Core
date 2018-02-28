@@ -529,7 +529,7 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
         $reader->setParamNameAction('action');
         $reader->setParamNameObject('object');
         $reader->setParamNamePage('resource');
-        $reader->setParamNameWidget('widget');
+        $reader->setParamNameWidget('element');
         $reader->setParamNameData('data');
         $reader->setParamNamePrefill('action');
         

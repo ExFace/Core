@@ -109,7 +109,7 @@ class TaskReaderMiddleware implements MiddlewareInterface
     
     protected function readWidgetId(ServerRequestInterface $request, HttpTaskInterface $task) : HttpTaskInterface
     {
-        $param = $this->getParamNameAction();
+        $param = $this->getParamNameWidget();
         if ($task->hasParameter($param)) {
             $task->setOriginWidgetId($task->getParameter($param));
         }
