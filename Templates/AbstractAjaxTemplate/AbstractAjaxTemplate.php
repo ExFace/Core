@@ -362,27 +362,7 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
         return $this->getResponse();
     }
 
-    /**
-     * Returns an array of key-value-pairs for filters contained in the current HTTP request (e.g.
-     * [ "DATE_FROM" => ">01.01.2010", "LABEL" => "axenox", ... ]
-     *
-     * @return array
-     */
-    public function getRequestFilters()
-    {
-        // Filters a passed as request values with a special prefix: fltr01_, fltr02_, etc.
-        if (empty($this->request_filters_array)) {
-            foreach ($this->getWorkbench()->getRequestParams() as $var => $val) {
-                if (strpos($var, 'fltr') === 0) {
-                    $this->request_filters_array[urldecode(substr($var, 7))][] = urldecode($val);
-                    $this->getWorkbench()->removeRequestParam($var);
-                }
-            }
-        }
-        return $this->request_filters_array;
-    }
-
-    public function getRequestQuickSearchValue()
+   public function getRequestQuickSearchValue()
     {
         if (! $this->request_quick_search_value) {
             $this->request_quick_search_value = ! is_null($this->getWorkbench()->getRequestParams()['q']) ? $this->getWorkbench()->getRequestParams()['q'] : NULL;
@@ -531,7 +511,33 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
         $reader->setParamNamePage('resource');
         $reader->setParamNameWidget('element');
         $reader->setParamNameData('data');
-        $reader->setParamNamePrefill('action');
+        $reader->setParamNamePrefill('prefill');
+        //$reader->setParamNamePagingOffset('');
+        
+        $reader->setFilterParser(function(array $params){
+            $filters = [];
+            // Filters a passed as request values with a special prefix: fltr01_, fltr02_, etc.
+            foreach ($params as $var => $val) {
+                if (strpos($var, 'fltr') === 0) {
+                    $filters[urldecode(substr($var, 7))][] = urldecode($val);
+                }
+            }
+            return $filters;
+        });
+        
+        $reader->setSorterParser(function(array $params) {
+            $sorters = [];
+            $sort_by = isset($params['order']) ? strval($params['order']) : null;
+            $order = isset($params['sort']) ? strval($params['sort']) : null;
+            if (! is_null($sort_by) && ! is_null($order)) {
+                $sort_by = explode(',', $sort_by);
+                $order = explode(',', $order);
+                foreach ($sort_by as $nr => $sort) {
+                    $sorters[$sort] = $order[$nr];
+                }
+            }
+            return $sorters;
+        });
         
         return $reader;
     }
