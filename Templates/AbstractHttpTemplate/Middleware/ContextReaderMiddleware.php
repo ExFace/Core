@@ -49,7 +49,7 @@ class ContextReaderMiddleware implements MiddlewareInterface
      */
     protected function getSubrequestId(ServerRequestInterface $request) : string
     {
-        $params = $request->getQueryParams()['exfrid'];
+        $params = $request->getQueryParams();
         return array_key_exists('exfrid', $params) ? urldecode($params['exfrid']) : '';
     }
 }

@@ -23,9 +23,9 @@ use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Templates\AbstractAjaxTemplate\Formatters\JsBooleanFormatter;
 use exface\Core\Templates\AbstractHttpTemplate\AbstractHttpTemplate;
 use Psr\Http\Server\MiddlewareInterface;
-use exface\Core\CommonLogic\Contexts\Scopes\RequestContextScope;
-use exface\Core\Interfaces\Contexts\ContextManagerInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Message\ResponseInterface;
 
 abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
 {
@@ -56,6 +56,17 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
         $this->getWorkbench()->eventManager()->addListener('#.Widget.Remove.After', function (WidgetEvent $event) {
             $this->removeElement($event->getWidget());
         });
+    }
+    
+    public function handle(ServerRequestInterface $request, $pageSelectorString = null, $actionSelectorString = null) : ResponseInterface
+    {
+        if (! is_null($pageSelectorString)) {
+            $request = $request->withAttribute(static::REQUEST_ATTRIBUTE_NAME_PAGE, $pageSelectorString);
+        }
+        if (! is_null($actionSelectorString)) {
+            $request = $request->withAttribute(static::REQUEST_ATTRIBUTE_NAME_ACTION, $actionSelectorString);
+        }
+        return parent::handle($request);
     }
 
     /**
