@@ -48,7 +48,7 @@ class HttpRequestHandler implements RequestHandlerInterface
     {
         // Last middleware in the queue has called on the request handler.
         if (empty($this->middleware)) {
-            return $this->fallbackHandler;
+            return $this->fallbackHandler->handle($request);
         }
         
         $middleware = array_shift($this->middleware);

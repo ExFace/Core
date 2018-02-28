@@ -34,6 +34,9 @@ class ReadData extends AbstractAction implements iReadData
         }
         $data_sheet = $this->getInputDataSheet($task);
         $data_sheet->removeRows();
+        if ($task->hasOriginWidget()) {
+            $data_sheet = $task->getOriginWidget()->prepareDataSheetToRead($data_sheet);
+        }
         $affected_rows = $data_sheet->dataRead();
         $this->setAffectedRows($affected_rows);
         

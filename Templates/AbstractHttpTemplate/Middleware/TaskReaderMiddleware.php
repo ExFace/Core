@@ -16,6 +16,9 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Exceptions\Templates\TemplateRequestParsingError;
+use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\UriInterface;
+use exface\Core\Exceptions\DomainException;
 
 /**
  * This PSR-15 middleware...
@@ -42,6 +45,14 @@ class TaskReaderMiddleware implements MiddlewareInterface
     private $paramNameData = null;
     
     private $paramNamePrefill = null;
+    
+    private $paramNamePagingOffset = null;
+    
+    private $paramNamePagingLength = null;
+    
+    private $sorterParser = null;
+    
+    private $filterParser = null;
     
     /**
      * 
@@ -120,16 +131,16 @@ class TaskReaderMiddleware implements MiddlewareInterface
     {
         $param = $this->getParamNameData();
         if ($task->hasParameter($param)) {
-            $data_sheet = $this->parseRequestData($param);
+            $data_sheet = $this->parseRequestData($task->getParameter($param), $task->getWorkbench());
         } else {
             $data_sheet = $task->getInputData();
         }
         
         // Look for filter data
-        $filters = $this->getRequestFilters();
+        $filters = $this->parseRequestFilters($task->getParameters());
         // Add filters for quick search
-        if ($this->hasOriginWidget() && $quick_search = $this->getParameter($this->getParamNameQuickSearch())) {
-            $widget = $this->getOriginWidget();
+        if ($task->hasOriginWidget() && $quick_search = $task->getParameter($this->getParamNameQuickSearch())) {
+            $widget = $task->getOriginWidget();
             $quick_search_filter = $widget->getMetaObject()->getLabelAttributeAlias();
             if ($widget->is('Data') && count($widget->getAttributesForQuickSearch()) > 0) {
                 foreach ($widget->getAttributesForQuickSearch() as $attr) {
@@ -152,20 +163,9 @@ class TaskReaderMiddleware implements MiddlewareInterface
             }
         }
         
-        // Set sorting options
-        $sort_by = $this->getRequestSortingSortBy();
-        $order = $this->getRequestSortingDirection();
-        if ($sort_by && $order) {
-            $sort_by = explode(',', $sort_by);
-            $order = explode(',', $order);
-            foreach ($sort_by as $nr => $sort) {
-                $data_sheet->getSorters()->addFromString($sort, $order[$nr]);
-            }
-        }
-        
         // Set pagination options
-        $data_sheet->setRowOffset($this->getRequestPagingOffset());
-        $data_sheet->setRowsOnPage($this->getRequestPagingRows());
+        //$data_sheet->setRowOffset($this->getRequestPagingOffset());
+        //$data_sheet->setRowsOnPage($this->getRequestPagingRows());
         
         $task->setInputData($data_sheet);
         return $task;
@@ -321,7 +321,53 @@ class TaskReaderMiddleware implements MiddlewareInterface
         return $this->paramNameQuickSearch;
     }
     
-    protected function parseRequestData($requestParam)
+    /**
+     *
+     * @param string $string
+     * @return TaskReaderMiddleware
+     */
+    public function setParamNamePagingOffset($string) : TaskReaderMiddleware
+    {
+        $this->paramNamePagingOffset = $string;
+        return $this;
+    }
+    
+    /**
+     * Returns the name of the URL parameter holding the pagination offset or NULL
+     * if no such URL parameter exists (i.e. the template does not support explicit
+     * paging options).
+     *
+     * @return string|null
+     */
+    protected function getParamNamePagingOffset()
+    {
+        return $this->paramNamePagingOffset;
+    }
+    
+    /**
+     *
+     * @param string $string
+     * @return TaskReaderMiddleware
+     */
+    public function setParamNamePagingLength($string) : TaskReaderMiddleware
+    {
+        $this->paramNamePagingLength = $string;
+        return $this;
+    }
+    
+    /**
+     * Returns the name of the URL parameter holding the pagination page length or NULL
+     * if no such URL parameter exists (i.e. the template does not support explicit
+     * paging options).
+     *
+     * @return string|null
+     */
+    protected function getParamNamePagingLength()
+    {
+        return $this->paramNamePagingLength;
+    }
+    
+    protected function parseRequestData($requestParam, WorkbenchInterface $workbench)
     {
         $data_sheet = null;
         
@@ -335,7 +381,7 @@ class TaskReaderMiddleware implements MiddlewareInterface
                 $uxon->unsetProperty('rows');
             }
             // Create a data sheet from the UXON object
-            $data_sheet = DataSheetFactory::createFromUxon($this->getWorkbench(), $uxon);
+            $data_sheet = DataSheetFactory::createFromUxon($workbench, $uxon);
             // Now take care of the rows, we split off before
             if ($rows) {
                 // If there is only one row and it has a UID column, check if the only UID cell has a concatennated value
@@ -400,5 +446,96 @@ class TaskReaderMiddleware implements MiddlewareInterface
             }
         }
         return $result;
+    }
+    
+    
+    
+    /**
+     * Returns an array of key-value-pairs for filters contained in the current HTTP request (e.g.
+     * [ "DATE_FROM" => ">01.01.2010", "LABEL" => "axenox", ... ]
+     *
+     * @return array
+     */
+    protected function parseRequestFilters(array $queryParams) : array
+    {
+        $filters = [];
+        $parser = $this->getFilterParser();
+        
+        if (is_callable($parser)) {
+            $filters = call_user_func($this->filterParser, $queryParams);
+            if (! is_array($filters)) {
+                throw new DomainException('Invalid return type "' . gettype($filters) . '" of request filter parser: array expected!');
+            }
+        }
+        return call_user_func($this->getFilterParser(), $queryParams);
+    }
+    
+    /**
+     * Sets a callback function to be used to fetch filters from the task parameters.
+     * 
+     * The function must take an array of query parameters as the only argument and
+     * return an associative array of the form [attribute_alias => [value1, value2, ...]].
+     * The values may contain operator prefixes.
+     * 
+     * @param callable $function
+     * @return TaskReaderMiddleware
+     */
+    public function setFilterParser(callable $callback) : TaskReaderMiddleware
+    {
+        $this->filterParser = $callback;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return callable|null
+     */
+    protected function getFilterParser()
+    {
+        return $this->filterParser;
+    }
+    
+    /**
+     * Returns an array of key-value-pairs for sorters contained in the current HTTP request (e.g.
+     * [ "DATE_FROM" => ">01.01.2010", "LABEL" => "axenox", ... ]
+     *
+     * @return array
+     */
+    protected function parseRequestSorters(array $queryParams) : array
+    {
+        $sorters = [];
+        $parser = $this->getSorterParser();
+        
+        if (is_callable($parser)) {
+            $sorters = call_user_func($this->sorterParser, $queryParams);
+            if (! is_array($sorters)) {
+                throw new DomainException('Invalid return type "' . gettype($sorters) . '" of request sorter parser: array expected!');
+            }
+        }
+        return call_user_func($this->getSorterParser(), $queryParams);
+    }
+    
+    /**
+     * Sets a callback function to be used to fetch sorters from the task parameters.
+     *
+     * The function must take an array of query parameters as the only argument and
+     * return an associative array of the form [attribute_alias => direction].
+     *
+     * @param callable $function
+     * @return TaskReaderMiddleware
+     */
+    public function setSorterParser(callable $callback) : TaskReaderMiddleware
+    {
+        $this->sorterParser = $callback;
+        return $this;
+    }
+    
+    /**
+     *
+     * @return callable|null
+     */
+    protected function getSorterParser()
+    {
+        return $this->sorterParser;
     }
 }
