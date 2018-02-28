@@ -30,7 +30,11 @@ class TaskReaderMiddleware implements MiddlewareInterface
 {
     private $template = null;
     
-    private $requestAttributeName = null;
+    private $attributeNameRequest = null;
+    
+    private $attributeNameAction = null;
+    
+    private $attributeNamePage = null;
     
     private $paramNameAction = null;
     
@@ -56,10 +60,12 @@ class TaskReaderMiddleware implements MiddlewareInterface
      * 
      * @param WorkbenchInterface $workbench
      */
-    public function __construct(HttpTemplateInterface $template, $requestAttributeName = '')
+    public function __construct(HttpTemplateInterface $template, $requestAttributeName = 'task', $pageAttributeName = 'page', $actionAttributeName = 'action')
     {
         $this->template = $template;
-        $this->requestAttributeName = $requestAttributeName;
+        $this->attributeNameRequest = $requestAttributeName;
+        $this->attributeNamePage = $pageAttributeName;
+        $this->attributeNameAction = $actionAttributeName;
     }
     
     /**
@@ -69,19 +75,27 @@ class TaskReaderMiddleware implements MiddlewareInterface
      */
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        $task = $request->getAttribute($this->requestAttributeName);
+        $task = $request->getAttribute($this->attributeNameRequest);
         if ($task === null) {
             $task = new GenericHttpTask($this->template, $request);
         }
         
-        $task = $this->readActionSelector($request, $task);
+        if ($action = $request->getAttribute($this->attributeNameAction)) {
+            $task->setActionSelector(new ActionSelector($task->getWorkbench(), $action));
+        } else {
+            $task = $this->readActionSelector($request, $task);
+        }
+        if ($page = $request->getAttribute($this->attributeNamePage)) {
+            $task->setOriginPageSelector(new UiPageSelector($task->getWorkbench(), $page));
+        } else {
+            $task = $this->readPageSelector($request, $task);
+        }
         $task = $this->readObjectSelector($request, $task);
-        $task = $this->readPageSelector($request, $task);
         $task = $this->readWidgetId($request, $task);
         $task = $this->readInputData($request, $task);
         $task = $this->readPrefillData($request, $task);
         
-        return $handler->handle($request->withAttribute($this->requestAttributeName, $task));
+        return $handler->handle($request->withAttribute($this->attributeNameRequest, $task));
     }
     
     protected function getTask() : HttpTaskInterface

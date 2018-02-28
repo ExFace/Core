@@ -206,8 +206,16 @@ class GenericTask implements TaskInterface
      */
     public function getMetaObject(): MetaObjectInterface
     {
-        if (is_null($this->object) && ! is_null($this->objectSelector)){
-            $this->object = $this->getWorkbench()->model()->getObject($this->objectSelector);
+        if (is_null($this->object)){
+            if (! is_null($this->objectSelector)){
+                $this->object = $this->getWorkbench()->model()->getObject($this->objectSelector);
+            } elseif ($this->hasInputData()) {
+                $this->object = $this->getInputData()->getMetaObject();
+            } elseif ($this->hasOriginWidget() ) {
+                $this->object = $this->getOriginWidget()->getMetaObject();
+            } elseif ($this->hasOriginPage()) {
+                $this->object = $this->getOriginWidget()->getMetaObject();
+            }
         }
         return $this->object;
     }

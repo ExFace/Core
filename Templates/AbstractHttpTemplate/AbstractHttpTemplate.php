@@ -24,6 +24,8 @@ use exface\Core\Templates\AbstractHttpTemplate\Middleware\ContextReaderMiddlewar
 abstract class AbstractHttpTemplate extends AbstractTemplate implements HttpTemplateInterface
 {
     const REQUEST_ATTRIBUTE_NAME_TASK = 'task';
+    const REQUEST_ATTRIBUTE_NAME_PAGE = 'page';
+    const REQUEST_ATTRIBUTE_NAME_ACTION = 'action';
     
     /**
      * 
@@ -78,15 +80,18 @@ abstract class AbstractHttpTemplate extends AbstractTemplate implements HttpTemp
      */
     protected function createResponse(TaskResultInterface $result)
     {
+        /* @var $headers array [header_name => array_of_values] */
         $headers = [];
+        /* @var $status_code int */
         $status_code = $result->getResponseCode();
-        // $body = $result->getTask()->getActionSelector()->toString() . ' Done!';
+        
         $template = $result->getTask()->getTemplate();
         switch (true) {
             case $result instanceof TaskResultData:
                 $elem = $template->getElement($result->getTask()->getOriginWidget());
                 $data = $elem->prepareData($result->getData());
                 $body = $template->encodeData($data);
+                $headers['Content-type'] = ['application/json;charset=utf-8'];
                 break;
             case $result instanceof TaskResultWidget:
                 $body = $template->buildWidget($result->getWidget());
