@@ -18,9 +18,9 @@ class TaskResultMessage implements TaskResultInterface
     
     private $isContextModified = false;
     
-    private $message = null;
-    
     private $isUndoable = false;
+    
+    private $message = null;
     
     private $workbench = null;
     

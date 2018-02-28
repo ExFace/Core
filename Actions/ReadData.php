@@ -50,7 +50,6 @@ class ReadData extends AbstractAction implements iReadData
         
         $result = new TaskResultData($task, $data_sheet);
         $result->setMessage($this->getAffectedRows() . ' entries read');
-        $result->setUndoable(false);
         
         return $result;
     }

@@ -18,10 +18,12 @@ use exface\Core\Exceptions\RuntimeException;
 use Symfony\Component\Debug\Exception\FatalThrowableError;
 use Psr\Http\Server\MiddlewareInterface;
 use exface\Core\Templates\AbstractHttpTemplate\Middleware\TaskReaderMiddleware;
+use exface\Core\Exceptions\InternalError;
+use exface\Core\Templates\AbstractHttpTemplate\Middleware\ContextReaderMiddleware;
 
 abstract class AbstractHttpTemplate extends AbstractTemplate implements HttpTemplateInterface
 {
-    private $middleWareStack = [];
+    const REQUEST_ATTRIBUTE_NAME_TASK = 'task';
     
     /**
      * 
@@ -30,25 +32,43 @@ abstract class AbstractHttpTemplate extends AbstractTemplate implements HttpTemp
      */
     public function handle(ServerRequestInterface $request) : ResponseInterface
     {
-        if ($request->getAttribute('task') === null) {
+        if ($request->getAttribute(static::REQUEST_ATTRIBUTE_NAME_TASK) === null) {
             $handler = new HttpRequestHandler($this);
-            $handler->add($this->getTaskReaderMiddleware('task'));
+            foreach ($this->getMiddleware() as $middleware) {
+                $handler->add($middleware);
+            }
             // TODO Throw event to allow adding middleware from outside (e.g. a PhpDebugBar or similar)
             return $handler->handle($request);
         }        
         
         try {
-            $task = $request->getAttribute('task');
+            $task = $request->getAttribute(static::REQUEST_ATTRIBUTE_NAME_TASK);
             $result = $this->getWorkbench()->handle($task);
             return $this->createResponse($result);
         } catch (\Throwable $e) {
+            if (! $e instanceof ExceptionInterface){
+                $e = new InternalError($e->getMessage(), null, $e);
+            }
             return $this->createResponseError($e);
         }
     }
     
-    protected function getTaskReaderMiddleware($attributeName = 'task') : MiddlewareInterface
+    protected function getMiddleware() : array
     {
-        return new TaskReaderMiddleware($this, $attributeName);
+        return [
+            $this->getMiddlewareTaskReader(),
+            $this->getMiddlewareContextReader()
+        ];
+    }
+    
+    protected function getMiddlewareContextReader()
+    {
+        return new ContextReaderMiddleware($this->getWorkbench()->context());
+    }
+    
+    protected function getMiddlewareTaskReader() : MiddlewareInterface
+    {
+        return new TaskReaderMiddleware($this, static::REQUEST_ATTRIBUTE_NAME_TASK);
     }
     
     /**
