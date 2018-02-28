@@ -50,9 +50,7 @@ class TaskReaderMiddleware implements MiddlewareInterface
     
     private $paramNamePagingLength = null;
     
-    private $sorterParser = null;
-    
-    private $filterParser = null;
+    private $dataParserStack = [];
     
     /**
      * 
@@ -136,9 +134,19 @@ class TaskReaderMiddleware implements MiddlewareInterface
             $data_sheet = $task->getInputData();
         }
         
-        // Look for filter data
-        $filters = $this->parseRequestFilters($task->getParameters());
-        // Add filters for quick search
+        // Parse additional request parameters relevant for the input data
+        foreach ($this->dataParserStack as $callback) {
+            $data_sheet = call_user_func($callback, $task->getParameters(), $data_sheet);
+            if (! ($data_sheet instanceof DataSheetInterface)) {
+                throw new DomainException('Invalid return type "' . gettype($data_sheet) . '" of request sorter parser: expecting a data sheet!');
+            }
+        }
+        
+        // Add filter for quick search
+        // TODO replace this by $widget->getQuickSearchFilterCondition($value) or similar. The widget
+        // should be responsible for how to perform the quick search - not the template. After all,
+        // the quick search filters are defined in the UXON of the widget.
+        $filters = [];
         if ($task->hasOriginWidget() && $quick_search = $task->getParameter($this->getParamNameQuickSearch())) {
             $widget = $task->getOriginWidget();
             $quick_search_filter = $widget->getMetaObject()->getLabelAttributeAlias();
@@ -148,24 +156,12 @@ class TaskReaderMiddleware implements MiddlewareInterface
                 }
             }
             if ($quick_search_filter) {
-                $filters[$quick_search_filter][] = $quick_search;
+                $filters[][] = $quick_search;
+                $data_sheet->addFilterFromString($quick_search_filter, $quick_search);
             } else {
                 throw new TemplateRequestParsingError('Cannot perform quick search on object "' . $widget->getMetaObject()->getAliasWithNamespace() . '": either mark one of the attributes as a label in the model or set inlude_in_quick_search = true for one of the filters in the widget definition!', '6T6HSL4');
             }
         }
-        
-        // Set filters
-        foreach ($filters as $fltr_attr => $fltr) {
-            if (is_array($fltr)) {
-                foreach ($fltr as $val) {
-                    $data_sheet->addFilterFromString($fltr_attr, $val);
-                }
-            }
-        }
-        
-        // Set pagination options
-        //$data_sheet->setRowOffset($this->getRequestPagingOffset());
-        //$data_sheet->setRowsOnPage($this->getRequestPagingRows());
         
         $task->setInputData($data_sheet);
         return $task;
@@ -448,94 +444,51 @@ class TaskReaderMiddleware implements MiddlewareInterface
         return $result;
     }
     
-    
-    
     /**
-     * Returns an array of key-value-pairs for filters contained in the current HTTP request (e.g.
-     * [ "DATE_FROM" => ">01.01.2010", "LABEL" => "axenox", ... ]
-     *
-     * @return array
-     */
-    protected function parseRequestFilters(array $queryParams) : array
-    {
-        $filters = [];
-        $parser = $this->getFilterParser();
-        
-        if (is_callable($parser)) {
-            $filters = call_user_func($this->filterParser, $queryParams);
-            if (! is_array($filters)) {
-                throw new DomainException('Invalid return type "' . gettype($filters) . '" of request filter parser: array expected!');
-            }
-        }
-        return call_user_func($this->getFilterParser(), $queryParams);
-    }
-    
-    /**
-     * Sets a callback function to be used to fetch filters from the task parameters.
+     * Sets a callback function to be used to add filters from the request parameters to a given data sheet.
      * 
-     * The function must take an array of query parameters as the only argument and
-     * return an associative array of the form [attribute_alias => [value1, value2, ...]].
-     * The values may contain operator prefixes.
+     * The callback must return a data sheet will be called with 2 arguments:
+     * - an array with request parameters [parameter => value]
+     * - the data sheet, that should get the filters from the request
      * 
      * @param callable $function
      * @return TaskReaderMiddleware
      */
     public function setFilterParser(callable $callback) : TaskReaderMiddleware
     {
-        $this->filterParser = $callback;
+        $this->dataParserStack[] = $callback;
         return $this;
     }
     
     /**
+     * Sets a callback function to be used to add sorters from the request parameters to a given data sheet.
      * 
-     * @return callable|null
-     */
-    protected function getFilterParser()
-    {
-        return $this->filterParser;
-    }
-    
-    /**
-     * Returns an array of key-value-pairs for sorters contained in the current HTTP request (e.g.
-     * [ "DATE_FROM" => ">01.01.2010", "LABEL" => "axenox", ... ]
-     *
-     * @return array
-     */
-    protected function parseRequestSorters(array $queryParams) : array
-    {
-        $sorters = [];
-        $parser = $this->getSorterParser();
-        
-        if (is_callable($parser)) {
-            $sorters = call_user_func($this->sorterParser, $queryParams);
-            if (! is_array($sorters)) {
-                throw new DomainException('Invalid return type "' . gettype($sorters) . '" of request sorter parser: array expected!');
-            }
-        }
-        return call_user_func($this->getSorterParser(), $queryParams);
-    }
-    
-    /**
-     * Sets a callback function to be used to fetch sorters from the task parameters.
-     *
-     * The function must take an array of query parameters as the only argument and
-     * return an associative array of the form [attribute_alias => direction].
-     *
+     * The callback must return a data sheet will be called with 2 arguments:
+     * - an array with request parameters [parameter => value]
+     * - the data sheet, that should get the filters from the request
+     * 
      * @param callable $function
      * @return TaskReaderMiddleware
      */
     public function setSorterParser(callable $callback) : TaskReaderMiddleware
     {
-        $this->sorterParser = $callback;
+        $this->dataParserStack[] = $callback;
         return $this;
     }
     
     /**
+     * Sets a callback function to be used to add pagination from the request parameters to a given data sheet.
      *
-     * @return callable|null
+     * The callback must return a data sheet will be called with 2 arguments:
+     * - an array with request parameters [parameter => value]
+     * - the data sheet, that should get the filters from the request
+     *
+     * @param callable $function
+     * @return TaskReaderMiddleware
      */
-    protected function getSorterParser()
+    public function setPaginationParser(callable $callback) : TaskReaderMiddleware
     {
-        return $this->sorterParser;
+        $this->dataParserStack[] = $callback;
+        return $this;
     }
 }
