@@ -30,10 +30,13 @@ class TaskResultMessage implements TaskResultInterface
      * 
      * @param TaskInterface $task
      */
-    public function __construct(TaskInterface $task)
+    public function __construct(TaskInterface $task, $message = '')
     {
         $this->task = $task;
         $this->workbench = $task->getWorkbench();
+        if ($message !== '') {
+            $this->setMessage($message);
+        }
     }
     
     /**

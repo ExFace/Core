@@ -26,6 +26,7 @@ abstract class AbstractHttpTemplate extends AbstractTemplate implements HttpTemp
     const REQUEST_ATTRIBUTE_NAME_TASK = 'task';
     const REQUEST_ATTRIBUTE_NAME_PAGE = 'page';
     const REQUEST_ATTRIBUTE_NAME_ACTION = 'action';
+    const REQUEST_ATTRIBUTE_NAME_RENDERING_MODE = 'rendering_mode';
     
     /**
      * 
@@ -34,7 +35,7 @@ abstract class AbstractHttpTemplate extends AbstractTemplate implements HttpTemp
      */
     public function handle(ServerRequestInterface $request) : ResponseInterface
     {
-        if ($request->getAttribute(static::REQUEST_ATTRIBUTE_NAME_TASK) === null) {
+        if ($request->getAttribute($this->getRequestAttributeForTask()) === null) {
             $handler = new HttpRequestHandler($this);
             foreach ($this->getMiddleware() as $middleware) {
                 $handler->add($middleware);
@@ -44,14 +45,14 @@ abstract class AbstractHttpTemplate extends AbstractTemplate implements HttpTemp
         }        
         
         try {
-            $task = $request->getAttribute(static::REQUEST_ATTRIBUTE_NAME_TASK);
+            $task = $request->getAttribute($this->getRequestAttributeForTask());
             $result = $this->getWorkbench()->handle($task);
-            return $this->createResponse($result);
+            return $this->createResponse($request, $result);
         } catch (\Throwable $e) {
             if (! $e instanceof ExceptionInterface){
                 $e = new InternalError($e->getMessage(), null, $e);
             }
-            return $this->createResponseError($e);
+            return $this->createResponseError($request, $e);
         }
     }
     
@@ -78,7 +79,7 @@ abstract class AbstractHttpTemplate extends AbstractTemplate implements HttpTemp
      * @param TaskResultInterface $result
      * @return ResponseInterface
      */
-    protected function createResponse(TaskResultInterface $result)
+    protected function createResponse(ServerRequestInterface $request, TaskResultInterface $result)
     {
         /* @var $headers array [header_name => array_of_values] */
         $headers = [];
@@ -166,7 +167,7 @@ abstract class AbstractHttpTemplate extends AbstractTemplate implements HttpTemp
      * @param \Throwable $e
      * @return ResponseInterface
      */
-    protected function createResponseError(\Throwable $exception, UiPageInterface $page = null) {
+    protected function createResponseError(ServerRequestInterface $request, \Throwable $exception, UiPageInterface $page = null) {
         $page = ! is_null($page) ? $page : UiPageFactory::createEmpty($this->getWorkbench()->ui());
         
         $status_code = is_numeric($exception->getStatusCode()) ? $exception->getStatusCode() : 500;
@@ -200,5 +201,45 @@ abstract class AbstractHttpTemplate extends AbstractTemplate implements HttpTemp
         $this->getWorkbench()->getLogger()->logException($exception);
         
         return new Response($status_code, $headers, $body);
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Templates\HttpTemplateInterface::getRequestAttributeForAction()
+     */
+    public function getRequestAttributeForAction() : string
+    {
+        return static::REQUEST_ATTRIBUTE_NAME_ACTION;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Templates\HttpTemplateInterface::getRequestAttributeForTask()
+     */
+    public function getRequestAttributeForTask() : string
+    {
+        return static::REQUEST_ATTRIBUTE_NAME_TASK;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Templates\HttpTemplateInterface::getRequestAttributeForPage()
+     */
+    public function getRequestAttributeForPage() : string
+    {
+        return static::REQUEST_ATTRIBUTE_NAME_PAGE;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Templates\HttpTemplateInterface::getRequestAttributeForRenderingMode()
+     */
+    public function getRequestAttributeForRenderingMode() : string
+    {
+        return static::REQUEST_ATTRIBUTE_NAME_RENDERING_MODE;
     }
 }

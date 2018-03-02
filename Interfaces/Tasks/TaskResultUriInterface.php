@@ -10,14 +10,7 @@ use Psr\Http\Message\UriInterface;
  *
  */
 interface TaskResultUriInterface extends TaskResultInterface
-{
-    /**
-     * 
-     * @param TaskInterface $task
-     * @param UriInterface $uri
-     */
-    public function __construct(TaskInterface $task, UriInterface $uri = null);
-    
+{    
     /**
      * 
      * @return UriInterface

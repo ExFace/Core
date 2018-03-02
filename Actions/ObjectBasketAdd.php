@@ -7,6 +7,11 @@ use exface\Core\CommonLogic\Contexts\ContextActionTrait;
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\Interfaces\Actions\iModifyContext;
 use exface\Core\Interfaces\Contexts\ContextManagerInterface;
+use exface\Core\Interfaces\Tasks\TaskInterface;
+use exface\Core\Interfaces\DataSources\DataTransactionInterface;
+use exface\Core\Interfaces\Tasks\TaskResultInterface;
+use exface\Core\Interfaces\Contexts\ContextScopeInterface;
+use exface\Core\Factories\TaskResultFactory;
 
 /**
  * Adds the input rows to the object basket in a specified context_scope (by default, the window scope)
@@ -22,6 +27,11 @@ class ObjectBasketAdd extends AbstractAction implements iModifyContext
         getContextScope as parentGetContextScope;
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AbstractAction::init()
+     */
     protected function init()
     {
         parent::init();
@@ -32,7 +42,11 @@ class ObjectBasketAdd extends AbstractAction implements iModifyContext
         $this->setContextScope(ContextManagerInterface::CONTEXT_SCOPE_WINDOW);
     }
 
-    public function getContextScope()
+    /**
+     * 
+     * @return ContextScopeInterface
+     */
+    public function getContextScope() : ContextScopeInterface
     {
         if (! $this->parentGetContextScope()) {
             $this->setContextScope(ContextManagerInterface::CONTEXT_SCOPE_WINDOW);
@@ -40,14 +54,17 @@ class ObjectBasketAdd extends AbstractAction implements iModifyContext
         return $this->parentGetContextScope();
     }
 
-    protected function perform()
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AbstractAction::perform()
+     */
+    protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : TaskResultInterface
     {
-        $this->getContext()->add($this->getInputDataSheet());
-        $this->setResultMessage($this->translate('RESULT', array(
-            '%context_name%' => $this->getContext()->getName(),
-            '%number%' => $this->getInputDataSheet()->countRows()
-        ), $this->getInputDataSheet()->countRows()));
-        $this->setResult('');
+        $input = $this->getInputDataSheet($task);
+        $this->getContext()->add($input);
+        $message = $this->translate('RESULT', ['%context_name%' => $this->getContext()->getName(), '%number%' => $input->countRows()], $input->countRows());
+        return TaskResultFactory::createMessageResult($task, $message);
     }
 }
 ?>

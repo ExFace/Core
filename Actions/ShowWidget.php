@@ -70,10 +70,10 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
      * 
      * @return TaskResultWidgetInterface
      */
-    public function perform(TaskInterface $task, DataTransactionInterface $transaction) : TaskResultInterface
+    protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : TaskResultInterface
     {
         // Check, if the action has a widget. If not, give it the widget from the task
-        if (! $this->isWidgetDefined() && $task->hasOriginWidget()) {
+        if (! $this->isWidgetDefined() && $task->hasOriginPage()) {
             $this->setWidget($task->getOriginWidget());
         }
         
@@ -97,15 +97,20 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
     public function getWidget()
     {
         if (is_null($this->widget)) {
-            if ($this->getWidgetUxon()) {
-                $this->widget = WidgetFactory::createFromUxon($this->getCalledOnUiPage(), $this->getWidgetUxon(), ($this->hasTriggerWidget() ? $this->getTriggerWidget() : null), $this->getDefaultWidgetType());
-            } elseif ($this->widget_id && ! $this->page_alias) {
-                $this->widget = $this->getCalledOnUiPage()->getWidget($this->widget_id);
-            } elseif ($this->page_alias && ! $this->widget_id) {
-                // TODO this causes problems with simple links to other pages, as the action attempts to load them here...
-                // $this->widget = $this->getApp()->getWorkbench()->ui()->getPage($this->page_alias)->getWidgetRoot();
-            } elseif ($this->page_alias && $this->widget_id) {
-                $this->widget = $this->getPage()->getWidget($this->widget_id);
+            switch (true) {
+                case $this->getWidgetUxon():
+                    $this->widget = WidgetFactory::createFromUxon($this->getCalledOnUiPage(), $this->getWidgetUxon(), ($this->hasTriggerWidget() ? $this->getTriggerWidget() : null), $this->getDefaultWidgetType());
+                    break;
+                case $this->widget_id && ! $this->page_alias:
+                    $this->widget = $this->getCalledOnUiPage()->getWidget($this->widget_id);
+                    break;
+                case $this->page_alias && ! $this->widget_id:
+                    // TODO this causes problems with simple links to other pages, as the action attempts to load them here...
+                    // $this->widget = $this->getApp()->getWorkbench()->ui()->getPage($this->page_alias)->getWidgetRoot();
+                    break;
+                case $this->page_alias && $this->widget_id:
+                    $this->widget = $this->getPage()->getWidget($this->widget_id);
+                    break;
             }
         }
         return $this->widget;
@@ -129,12 +134,12 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
     public function isWidgetDefined() : bool
     {
         try {
-            $this->getWidget();
+            $widget = $this->getWidget();
         } catch (\Throwable $e) {
             return false;
         }
         
-        return true;
+        return is_null($widget) ? false : true;
     }
 
     /**
@@ -317,7 +322,7 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
             $sheet = $this->getInputDataPreset();
         } else {
             // If there is neither task nor preset data, create a new data sheet
-            $sheet = DataSheetFactory::createFromObject($this->getMetaObject());
+            $sheet = DataSheetFactory::createFromObject($task->getMetaObject());
         }
         
         return $sheet;

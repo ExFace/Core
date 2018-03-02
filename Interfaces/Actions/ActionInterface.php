@@ -36,7 +36,7 @@ use exface\Core\Interfaces\TaskHandlerInterface;
  * programmatically via UXON or using the action's interfaces in OOP style directly.
  * 
  * @see TaskInterface
- * @see TaskResultTextInterface
+ * @see TaskResultTextContentInterface
  * 
  * @author Andrej Kabachnik
  *

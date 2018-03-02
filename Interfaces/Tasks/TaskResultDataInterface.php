@@ -4,14 +4,7 @@ namespace exface\Core\Interfaces\Tasks;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 
 interface TaskResultDataInterface extends TaskResultInterface
-{
-    /**
-     * 
-     * @param TaskInterface $task
-     * @param DataSheetInterface $dataSheet
-     */
-    public function __construct(TaskInterface $task, DataSheetInterface $dataSheet = null);
-    
+{    
     /**
      * 
      * {@inheritDoc}

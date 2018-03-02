@@ -10,14 +10,7 @@ use exface\Core\Interfaces\WidgetInterface;
  *
  */
 interface TaskResultWidgetInterface extends TaskResultInterface
-{
-    /**
-     * 
-     * @param TaskInterface $task
-     * @param WidgetInterface $widget
-     */
-    public function __construct(TaskInterface $task, WidgetInterface $widget = null);
-    
+{    
     /**
      * 
      * @return WidgetInterface

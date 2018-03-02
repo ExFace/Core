@@ -211,7 +211,7 @@ class GenericTask implements TaskInterface
                 $this->object = $this->getWorkbench()->model()->getObject($this->objectSelector);
             } elseif ($this->hasInputData()) {
                 $this->object = $this->getInputData()->getMetaObject();
-            } elseif ($this->hasOriginWidget() ) {
+            } elseif ($this->hasOriginWidget()) {
                 $this->object = $this->getOriginWidget()->getMetaObject();
             } elseif ($this->hasOriginPage()) {
                 $this->object = $this->getOriginWidget()->getMetaObject();

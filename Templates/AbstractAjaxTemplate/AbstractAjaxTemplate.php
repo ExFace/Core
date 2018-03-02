@@ -26,9 +26,14 @@ use Psr\Http\Server\MiddlewareInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use exface\Core\Interfaces\Tasks\TaskResultInterface;
+use exface\Core\Interfaces\Tasks\TaskResultWidgetInterface;
 
 abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
 {
+    const MODE_HEAD = 'HEAD';
+    const MODE_BODY = 'BODY';
+    const MODE_FULL = '';
 
     private $elements = array();
     
@@ -58,13 +63,18 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
         });
     }
     
-    public function handle(ServerRequestInterface $request, $pageSelectorString = null, $actionSelectorString = null) : ResponseInterface
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Templates\AbstractHttpTemplate\AbstractHttpTemplate::handle()
+     */
+    public function handle(ServerRequestInterface $request, $pageSelectorString = null, $actionSelectorString = null, $renderingMode = self::MODE_FULL) : ResponseInterface
     {
         if (! is_null($pageSelectorString)) {
-            $request = $request->withAttribute(static::REQUEST_ATTRIBUTE_NAME_PAGE, $pageSelectorString);
+            $request = $request->withAttribute($this->getRequestAttributeForPage(), $pageSelectorString);
         }
         if (! is_null($actionSelectorString)) {
-            $request = $request->withAttribute(static::REQUEST_ATTRIBUTE_NAME_ACTION, $actionSelectorString);
+            $request = $request->withAttribute($this->getRequestAttributeForAction(), $actionSelectorString);
         }
         return parent::handle($request);
     }
@@ -324,6 +334,37 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
         });
         
         return $reader;
+    }
+    
+    protected function createResponse(ServerRequestInterface $request, TaskResultInterface $result)
+    {
+        $response = parent::createResponse($request, $result);
+        if ($result instanceof TaskResultWidgetInterface) {
+            $mode = $request->getAttribute($this->getRequestAttributeForRenderingMode(), static::MODE_FULL);
+            $widget = $result->getWidget();
+            switch ($mode) {
+                case static::MODE_HEAD:
+                    $body = $this->buildIncludes($widget);
+                    break;
+                case static::MODE_BODY:
+                    $body = $this->buildWidget($widget);
+                    break;
+                case static::MODE_FULL:
+                    $body = $this->buildIncludes($widget) . "\n" . $this->buildWidget($widget);
+            }
+            return $response->withBody(\GuzzleHttp\Psr7\stream_for($body));            
+        }
+        return $response;
+    }
+    
+    protected function createResponseError(ServerRequestInterface $request, \Throwable $exception, UiPageInterface $page = null)
+    {
+        $mode = $request->getAttribute($this->getRequestAttributeForRenderingMode(), static::MODE_FULL);
+        if ($mode === static::MODE_HEAD) {
+            throw $exception;
+        }
+        
+        return parent::createResponse($request, $exception, $page);
     }
 }
 ?>

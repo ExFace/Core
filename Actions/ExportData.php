@@ -6,6 +6,11 @@ use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\CommonLogic\Filemanager;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\CommonLogic\Constants\Icons;
+use exface\Core\Interfaces\Tasks\TaskInterface;
+use exface\Core\Interfaces\DataSources\DataTransactionInterface;
+use exface\Core\Interfaces\Tasks\TaskResultInterface;
+use exface\Core\Factories\TaskResultFactory;
+use GuzzleHttp\Psr7\Uri;
 
 /**
  * This action exports the raw data received by a widget as a file for download.
@@ -36,26 +41,36 @@ class ExportData extends ReadData implements iExportData
         parent::init();
         $this->setIcon(Icons::DOWNLOAD);
     }
+    
     /**
      * 
      * {@inheritDoc}
      * @see \exface\Core\Actions\ReadData::perform()
      */
-    protected function perform(){
-        $dataSheet = $this->getInputDataSheet();
+    protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : TaskResultInterface
+    {        
+        $dataSheet = $this->readData($task);
+        $url = $this->export($dataSheet);
+        $uri = new Uri($url);
+        $message = 'Download ready. If not id does not start automatically, click <a href="' . $url . '">here</a>.';
+        $result = TaskResultFactory::createFileResult($task, $uri);
+        $result->setMessage($message);
+        return $result;
+    }
+    
+    protected function readData(TaskInterface $task) : DataSheetInterface
+    {
+        $dataSheet = $this->getInputDataSheet($task);
         // Make sure, the input data has all the columns required for the widget
         // we export from. Generally this will not be the case, because the
         // widget calling the action is a button and it normally does not know
         // which columns to export.
-        if ($this->getTriggerWidget() && $this->getTriggerWidget()->is('Button')){
+        if ($this->hasTriggerWidget() && $this->getTriggerWidget()->is('Button')){
             $this->getTriggerWidget()->getInputWidget()->prepareDataSheetToRead($dataSheet);
         }
         
-        $this->setAffectedRows($dataSheet->removeRows()->dataRead());
-        $this->setResultDataSheet($dataSheet);
-        $url = $this->export($this->getResultDataSheet());
-        $this->setResult($url);
-        $this->setResultMessage('Download ready. If not id does not start automatically, click <a href="' . $url . '">here</a>.');
+        $dataSheet->removeRows()->dataRead();
+        return $dataSheet;
     }
 
     /**

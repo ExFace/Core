@@ -450,7 +450,7 @@ abstract class AbstractAction implements ActionInterface
         if (is_null($this->meta_object)) {
             if ($this->hasInputDataPreset()) {
                 $this->meta_object = $this->getInputDataSheet()->getMetaObject();
-            } elseif ($this->getTriggerWidget()) {
+            } elseif ($this->hasTriggerWidget()) {
                 $this->meta_object = $this->getTriggerWidget()->getMetaObject();
             } else {
                 throw new ActionObjectNotSpecifiedError($this, 'Cannot determine the meta object, the action is performed upon! An action must either have an input data sheet or a reference to the widget, that called it, or an explicitly specified object_alias option to determine the meta object.');
@@ -888,7 +888,7 @@ abstract class AbstractAction implements ActionInterface
             $sheet = $this->getInputDataPreset();
         } else {
             // If there is neither task nor preset data, create a new data sheet
-            $sheet = DataSheetFactory::createFromObject($this->getMetaObject());    
+            $sheet = DataSheetFactory::createFromObject($task->getMetaObject());    
         }
         
         // Apply the input mappers
