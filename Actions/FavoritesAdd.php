@@ -3,6 +3,7 @@ namespace exface\Core\Actions;
 
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\Interfaces\Contexts\ContextManagerInterface;
+use exface\Core\Interfaces\Contexts\ContextScopeInterface;
 
 /**
  * Adds instances from the input data to the favorites basket of the current user.
@@ -38,10 +39,9 @@ class FavoritesAdd extends ObjectBasketAdd
      * In constrast to the generic object basket, favorites are always stored in the user context scope.
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Actions\ObjectBasketAdd::getContextScope()
      */
-    public function getContextScope()
+    public function getContextScope() : ContextScopeInterface
     {
         $this->setContextScope(ContextManagerInterface::CONTEXT_SCOPE_USER);
         return parent::getContextScope();

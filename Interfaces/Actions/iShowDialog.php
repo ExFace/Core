@@ -15,8 +15,6 @@ interface iShowDialog extends ActionInterface
 
     public function getDialogWidget();
     
-    
-    
     /**
      * Returns TRUE if the opened dialog should be maximized, FALSE if not and NULL if
      * no specific behavior was specified.

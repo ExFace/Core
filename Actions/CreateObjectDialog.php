@@ -2,6 +2,9 @@
 namespace exface\Core\Actions;
 
 use exface\Core\CommonLogic\Constants\Icons;
+use exface\Core\Interfaces\Tasks\TaskInterface;
+use exface\Core\Interfaces\DataSources\DataTransactionInterface;
+use exface\Core\Interfaces\Tasks\TaskResultInterface;
 
 class CreateObjectDialog extends EditObjectDialog
 {
@@ -18,13 +21,6 @@ class CreateObjectDialog extends EditObjectDialog
         $this->setPrefillWithInputData(false);
         // We do want to get prefills from context, however.
         $this->setPrefillWithFilterContext(true);
-    }
-
-    protected function perform()
-    {
-        $this->prefillWidget();
-        $this->setResultDataSheet($this->getInputDataSheet());
-        $this->setResult($this->getWidget());
     }
 }
 ?>

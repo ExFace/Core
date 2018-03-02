@@ -36,6 +36,8 @@ class TaskReaderMiddleware implements MiddlewareInterface
     
     private $attributeNamePage = null;
     
+    private $attributeNameMode = null;
+    
     private $paramNameAction = null;
     
     private $paramNameObject = null;
@@ -60,12 +62,13 @@ class TaskReaderMiddleware implements MiddlewareInterface
      * 
      * @param WorkbenchInterface $workbench
      */
-    public function __construct(HttpTemplateInterface $template, $requestAttributeName = 'task', $pageAttributeName = 'page', $actionAttributeName = 'action')
+    public function __construct(HttpTemplateInterface $template, $requestAttributeName = 'task', $pageAttributeName = 'page', $actionAttributeName = 'action', $modeAttributeName = 'rendering_mode')
     {
         $this->template = $template;
         $this->attributeNameRequest = $requestAttributeName;
         $this->attributeNamePage = $pageAttributeName;
         $this->attributeNameAction = $actionAttributeName;
+        $this->attributeNameMode = $modeAttributeName;
     }
     
     /**
@@ -80,16 +83,9 @@ class TaskReaderMiddleware implements MiddlewareInterface
             $task = new GenericHttpTask($this->template, $request);
         }
         
-        if ($action = $request->getAttribute($this->attributeNameAction)) {
-            $task->setActionSelector(new ActionSelector($task->getWorkbench(), $action));
-        } else {
-            $task = $this->readActionSelector($request, $task);
-        }
-        if ($page = $request->getAttribute($this->attributeNamePage)) {
-            $task->setOriginPageSelector(new UiPageSelector($task->getWorkbench(), $page));
-        } else {
-            $task = $this->readPageSelector($request, $task);
-        }
+        $task = $this->readActionSelector($request, $task);
+        $task = $this->readPageSelector($request, $task);
+        $task = $this->readRenderingMode($request, $task);
         $task = $this->readObjectSelector($request, $task);
         $task = $this->readWidgetId($request, $task);
         $task = $this->readInputData($request, $task);
@@ -103,11 +99,23 @@ class TaskReaderMiddleware implements MiddlewareInterface
         return $this->task;
     }
     
+    protected function readRenderingMode(ServerRequestInterface $request, HttpTaskInterface $task) : HttpTaskInterface
+    {
+        if ($mode = $request->getAttribute($this->attributeNameMode)) {
+            $task->setRenderingMode($mode);
+        }
+        return $task;
+    }
+    
     protected function readActionSelector(ServerRequestInterface $request, HttpTaskInterface $task) : HttpTaskInterface
     {
-        $param = $this->getParamNameAction();
-        if ($task->hasParameter($param)) {
-            $task->setActionSelector(new ActionSelector($this->template->getWorkbench(), $task->getParameter($param)));
+        if ($action = $request->getAttribute($this->attributeNameAction)) {
+            $task->setActionSelector(new ActionSelector($task->getWorkbench(), $action));
+        } else {
+            $param = $this->getParamNameAction();
+            if ($task->hasParameter($param)) {
+                $task->setActionSelector(new ActionSelector($this->template->getWorkbench(), $task->getParameter($param)));
+            }
         }
         return $task;
     }
@@ -123,9 +131,13 @@ class TaskReaderMiddleware implements MiddlewareInterface
     
     protected function readPageSelector(ServerRequestInterface $request, HttpTaskInterface $task) : HttpTaskInterface
     {
-        $param = $this->getParamNamePage();
-        if ($task->hasParameter($param)) {
-            $task->setOriginPageSelector(new UiPageSelector($this->template->getWorkbench(), $task->getParameter($param)));
+        if ($page = $request->getAttribute($this->attributeNamePage)) {
+            $task->setOriginPageSelector(new UiPageSelector($task->getWorkbench(), $page));
+        } else {
+            $param = $this->getParamNamePage();
+            if ($task->hasParameter($param)) {
+                $task->setOriginPageSelector(new UiPageSelector($this->template->getWorkbench(), $task->getParameter($param)));
+            }
         }
         return $task;
     }

@@ -4,6 +4,11 @@ namespace exface\Core\Actions;
 use exface\Core\Interfaces\Actions\iDeleteData;
 use exface\Core\CommonLogic\AbstractAction;
 use exface\Core\CommonLogic\Constants\Icons;
+use exface\Core\Interfaces\Tasks\TaskInterface;
+use exface\Core\Interfaces\DataSources\DataTransactionInterface;
+use exface\Core\Factories\DataSheetFactory;
+use exface\Core\CommonLogic\Tasks\TaskResultMessage;
+use exface\Core\Interfaces\Tasks\TaskResultInterface;
 
 class DeleteObject extends AbstractAction implements iDeleteData
 {
@@ -17,13 +22,14 @@ class DeleteObject extends AbstractAction implements iDeleteData
         $this->setIcon(Icons::TRASH_O);
     }
 
-    protected function perform()
+    protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : TaskResultInterface
     {
+        $input_data = $this->getInputDataSheet($task);
         /* @var $data_sheet \exface\Core\Interfaces\DataSheets\DataSheetInterface */
-        $obj = $this->getInputDataSheet()->getMetaObject();
-        $ds = $this->getApp()->getWorkbench()->data()->createDataSheet($obj);
+        $obj = $input_data->getMetaObject();
+        $ds = DataSheetFactory::createFromObject($obj);
         $instances = array();
-        foreach ($this->getInputDataSheet()->getRows() as $row) {
+        foreach ($input_data->getRows() as $row) {
             $instances[] = $row[$obj->getUidAttributeAlias()];
         }
         
@@ -31,14 +37,10 @@ class DeleteObject extends AbstractAction implements iDeleteData
             $ds->addFilterInFromString($obj->getUidAttributeAlias(), $instances);
             $this->setAffectedRows($this->getAffectedRows() + $ds->dataDelete($this->getTransaction()));
         }
-        $this->setResult('');
-        $this->setResultMessage($this->translate('RESULT', array(
-            '%number%' => $this->getAffectedRows()
-        ), $this->getAffectedRows()));
-        // IDEA Currently the delete action returns an empty data sheet with a filter, but
-        // no columns. Perhaps it is more elegant to return the input data sheet with a filter
-        // and not data, but the columns still being there...
-        $this->setResultDataSheet($ds);
+        
+        $result = new TaskResultMessage($task);
+        $result->setMessage($this->translate('RESULT', ['%number%' => $this->getAffectedRows()], $this->getAffectedRows()));
+        return $result;
     }
 
     protected function getAffectedRows()
