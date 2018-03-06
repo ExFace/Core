@@ -65,8 +65,13 @@ class ExportData extends ReadData implements iExportData
         // we export from. Generally this will not be the case, because the
         // widget calling the action is a button and it normally does not know
         // which columns to export.
-        if ($this->hasTriggerWidget() && $this->getTriggerWidget()->is('Button')){
-            $this->getTriggerWidget()->getInputWidget()->prepareDataSheetToRead($dataSheet);
+        if ($this->isDefinedInWidget()) {
+            $widget = $this->getWidgetDefinedIn();
+        } elseif ($task->isTriggeredOnPage()) {
+            $widget = $task->getWidgetTriggeredBy();
+        }
+        if (isset($widget) && $this->getWidgetDefinedIn()->is('Button')){
+            $this->getWidgetDefinedIn()->getInputWidget()->prepareDataSheetToRead($dataSheet);
         }
         
         $dataSheet->removeRows()->dataRead();
@@ -120,7 +125,7 @@ class ExportData extends ReadData implements iExportData
     
     protected function export(DataSheetInterface $dataSheet)
     {
-        $elem = $this->getApp()->getWorkbench()->ui()->getTemplate()->getElement($this->getTriggerWidget());
+        $elem = $this->getApp()->getWorkbench()->ui()->getTemplate()->getElement($this->getWidgetDefinedIn());
         $output = $elem->prepareData($dataSheet);
         $contents = $this->getApp()->getWorkbench()->ui()->getTemplate()->encodeData($output, false);
         If (is_null($this->getMimeType())){

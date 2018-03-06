@@ -5,7 +5,6 @@ use exface\Core\Interfaces\Selectors\ActionSelectorInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\ExfaceClassInterface;
 use exface\Core\Interfaces\Templates\TemplateInterface;
-use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Selectors\MetaObjectSelectorInterface;
 use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
@@ -145,52 +144,52 @@ interface TaskInterface extends ExfaceClassInterface
      * 
      * @return UiPageSelectorInterface
      */
-    public function getOriginPageSelector() : UiPageSelectorInterface;
+    public function getPageSelector() : UiPageSelectorInterface;
     
     /**
      * 
      * @param UiPageSelectorInterface $selector
      * @return TaskInterface
      */
-    public function setOriginPageSelector(UiPageSelectorInterface $selector) : TaskInterface;
-    
-    /**
-     * @return string
-     */
-    public function getOriginWidgetId();
+    public function setPageSelector(UiPageSelectorInterface $selector) : TaskInterface;
     
     /**
      * 
+     * @see isTriggeredByWidget()
+     * 
      * @param string $string
+     * @return TaskInterface
      */
-    public function setOriginWidgetId($string) : TaskInterface;
+    public function setWidgetIdTriggeredBy($string) : TaskInterface;
     
     /**
+     * 
+     * @see isTriggeredByWidget()
      * 
      * @return WidgetInterface
      */
-    public function getOriginWidget() : WidgetInterface;
+    public function getWidgetTriggeredBy() : WidgetInterface;
     
     /**
      * Returns TRUE if the task originates from a specific widget in a page and FALSE otherwise.
      * 
-     * In contrast to hasOriginPage() this method checks, if there is an explicit widget reference.
-     * Having a page reference is enough for getOriginWidget() to work, but you can still use
+     * In contrast to isTriggeredOnPage() this method checks, if there is an explicit widget reference.
+     * Having a page reference is enough for getWidgetTriggeredBy() to work, but you can still use
      * this method to check, if it was an explicitly referenced widget or the main widget of the
      * page was just assumed to be the right one.
      * 
      * @return bool
      */
-    public function hasOriginWidget() : bool;
+    public function isTriggeredByWidget() : bool;
     
     
     /**
      * Returns TRUE if the task originates from a specific page and FALSE otherwise.
      * 
-     * NOTE: This does not yet mean, that the origin widget is known. Use hasOriginWidget() to
+     * NOTE: This does not yet mean, that the origin widget is known. Use isTriggeredByWidget() to
      * find out if.
      * 
      * @return bool
      */
-    public function hasOriginPage() : bool;   
+    public function isTriggeredOnPage() : bool;   
 }

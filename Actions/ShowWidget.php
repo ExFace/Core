@@ -73,8 +73,8 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
     protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : TaskResultInterface
     {
         // Check, if the action has a widget. If not, give it the widget from the task
-        if (! $this->isWidgetDefined() && $task->hasOriginPage()) {
-            $this->setWidget($task->getOriginWidget());
+        if (! $this->isWidgetDefined() && $task->isTriggeredOnPage()) {
+            $this->setWidget($task->getWidgetTriggeredBy());
         }
         
         $widget = $this->getWidget();
@@ -99,7 +99,7 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
         if (is_null($this->widget)) {
             switch (true) {
                 case $this->getWidgetUxon():
-                    $this->widget = WidgetFactory::createFromUxon($this->getCalledOnUiPage(), $this->getWidgetUxon(), ($this->hasTriggerWidget() ? $this->getTriggerWidget() : null), $this->getDefaultWidgetType());
+                    $this->widget = WidgetFactory::createFromUxon($this->getCalledOnUiPage(), $this->getWidgetUxon(), ($this->isDefinedInWidget() ? $this->getWidgetDefinedIn() : null), $this->getDefaultWidgetType());
                     break;
                 case $this->widget_id && ! $this->page_alias:
                     $this->widget = $this->getCalledOnUiPage()->getWidget($this->widget_id);

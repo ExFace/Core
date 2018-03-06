@@ -47,9 +47,9 @@ class Autosuggest extends ReadData
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\CommonLogic\AbstractAction::getTriggerWidget()
+     * @see \exface\Core\CommonLogic\AbstractAction::getWidgetDefinedIn()
      */
-    public function getTriggerWidget() : WidgetInterface
+    public function getWidgetDefinedIn() : WidgetInterface
     {
         // This IF makes sure, the autosuggest works even if the calling widget is not specified.
         // TODO This is a potential security issue as an attacker could get access to some data (UIDs and LABELs)
@@ -58,15 +58,15 @@ class Autosuggest extends ReadData
         // rewritten.
         // IDEA Once there is some kind of default table widget for meta object, we could use it here instead of
         // simply outputting the UID and LABEL
-        if (! parent::hasTriggerWidget() && $this->getWorkbench()->ui()->getPageCurrent()) {
+        if (! parent::isDefinedInWidget() && $this->getWorkbench()->ui()->getPageCurrent()) {
             /* @var $reading_widget \exface\Core\Widgets\DataTable */
             $reading_widget = WidgetFactory::create($this->getWorkbench()->ui()->getPageCurrent(), 'DataTable');
             $reading_widget->setMetaObject($this->getMetaObject());
             $reading_widget->addColumn($reading_widget->createColumnFromAttribute($this->getMetaObject()->getLabelAttribute()));
-            $this->setTriggerWidget($reading_widget);
+            $this->setWidgetDefinedIn($reading_widget);
             $this->setInputDataPreset($reading_widget->prepareDataSheetToRead($this->getInputDataPreset()));
         }
-        return parent::getTriggerWidget();
+        return parent::getWidgetDefinedIn();
     }
 }
 ?>

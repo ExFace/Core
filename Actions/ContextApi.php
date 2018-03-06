@@ -10,6 +10,10 @@ use exface\Core\Interfaces\Actions\iModifyContext;
 use exface\Core\Interfaces\Contexts\ContextInterface;
 use exface\Core\CommonLogic\Contexts\ContextActionTrait;
 use exface\Core\Exceptions\Contexts\ContextScopeNotFoundError;
+use exface\Core\Interfaces\Tasks\TaskInterface;
+use exface\Core\Interfaces\DataSources\DataTransactionInterface;
+use exface\Core\Factories\TaskResultFactory;
+use exface\Core\Interfaces\Tasks\TaskResultInterface;
 
 /**
  * This action provides a RESTful API to work with contexts. 
@@ -53,23 +57,21 @@ class ContextApi extends AbstractAction implements iModifyContext
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\AbstractAction::perform()
      */
-    protected function perform()
+    protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : TaskResultInterface
     {
         if (!method_exists($this->getContext(), $this->getOperation())){
             throw new ActionConfigurationError($this, 'Invalid operation "' . $this->getOperation() . '" for context "' . $this->getContext()->getAlias() . '": method not found!');
         }
         $return_value = call_user_func(array($this->getContext(), $this->getOperation()));
         if (is_string($return_value)){
-            $this->setResult('');
-            $this->setResultMessage($return_value);
+            $result = TaskResultFactory::createMessageResult($task, $return_value);
         } elseif ($return_value instanceof ContextInterface) { 
-            $this->setResult('');
             $operation_name = ucfirst(strtolower(preg_replace('/(?<!^)[A-Z]/', ' $0', $this->getOperation())));
-            $this->setResultMessage($this->translate('RESULT', ['%operation_name%' => $operation_name]));
+            $result = TaskResultFactory::createMessageResult($task, $this->translate('RESULT', ['%operation_name%' => $operation_name]));
         } else {
-            $this->setResult($return_value);
+            $result = TaskResultFactory::createTextContentResult($task, $return_value);
         }
-        return;
+        return $result;
     }
     
     /**

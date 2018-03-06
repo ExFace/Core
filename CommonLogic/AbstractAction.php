@@ -107,7 +107,7 @@ abstract class AbstractAction implements ActionInterface
         $this->app = $app;
         $this->exface = $app->getWorkbench();
         if ($trigger_widget) {
-            $this->setTriggerWidget($trigger_widget);
+            $this->setWidgetDefinedIn($trigger_widget);
         }
         $this->init();
     }
@@ -238,9 +238,9 @@ abstract class AbstractAction implements ActionInterface
 
     /**
      * {@inheritdoc}
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::getTriggerWidget()
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::getWidgetDefinedIn()
      */
-    public function getTriggerWidget() : WidgetInterface
+    public function getWidgetDefinedIn() : WidgetInterface
     {
         return $this->trigger_widget;
     }
@@ -248,9 +248,9 @@ abstract class AbstractAction implements ActionInterface
     /**
      *
      * {@inheritdoc}
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::setTriggerWidget()
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::setWidgetDefinedIn()
      */
-    public function setTriggerWidget($widget_or_widget_link)
+    public function setWidgetDefinedIn($widget_or_widget_link)
     {
         if ($widget_or_widget_link instanceof WidgetInterface) {
             $this->trigger_widget = $widget_or_widget_link;
@@ -450,8 +450,8 @@ abstract class AbstractAction implements ActionInterface
         if (is_null($this->meta_object)) {
             if ($this->hasInputDataPreset()) {
                 $this->meta_object = $this->getInputDataSheet()->getMetaObject();
-            } elseif ($this->hasTriggerWidget()) {
-                $this->meta_object = $this->getTriggerWidget()->getMetaObject();
+            } elseif ($this->isDefinedInWidget()) {
+                $this->meta_object = $this->getWidgetDefinedIn()->getMetaObject();
             } else {
                 throw new ActionObjectNotSpecifiedError($this, 'Cannot determine the meta object, the action is performed upon! An action must either have an input data sheet or a reference to the widget, that called it, or an explicitly specified object_alias option to determine the meta object.');
             }
@@ -545,7 +545,7 @@ abstract class AbstractAction implements ActionInterface
     public function getUndoAction() : ActionInterface
     {
         if ($this->isUndoable()) {
-            return ActionFactory::createFromString($this->exface, 'exface.Core.UndoAction', $this->getTriggerWidget());
+            return ActionFactory::createFromString($this->exface, 'exface.Core.UndoAction', $this->getWidgetDefinedIn());
         }
     }
 
@@ -558,8 +558,8 @@ abstract class AbstractAction implements ActionInterface
     {
         $uxon = new UxonObject();
         $uxon->setProperty('alias', $this->getAliasWithNamespace());
-        if ($this->getTriggerWidget()) {
-            $uxon->setProperty('trigger_widget', $this->getTriggerWidget()->createWidgetLink()->exportUxonObject());
+        if ($this->getWidgetDefinedIn()) {
+            $uxon->setProperty('trigger_widget', $this->getWidgetDefinedIn()->createWidgetLink()->exportUxonObject());
         }
         $uxon->setProperty('template_alias', $this->getTemplateAlias());
         $uxon->setProperty('input_data_sheet',  $this->getInputDataSheet(false)->exportUxonObject());
@@ -838,7 +838,7 @@ abstract class AbstractAction implements ActionInterface
      */
     public function setInputMapper(UxonObject $uxon)
     {
-        if ($calling_widget = $this->getTriggerWidget()) {
+        if ($calling_widget = $this->getWidgetDefinedIn()) {
             if ($calling_widget instanceof iUseInputWidget) {
                 $from_object = $calling_widget->getInputWidget()->getMetaObject();
             } else {
@@ -905,9 +905,9 @@ abstract class AbstractAction implements ActionInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::hasTriggerWidget()
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::isDefinedInWidget()
      */
-    public function hasTriggerWidget(): bool
+    public function isDefinedInWidget(): bool
     {
         return is_null($this->trigger_widget) ? false : true;
     }

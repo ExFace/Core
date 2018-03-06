@@ -496,8 +496,8 @@ class Workbench implements WorkbenchInterface
             throw new AppNotFoundError('Cannot handle task without an action selector!');
         }
         // TODO #api-v4 remove page current in general - just use the task pages!
-        if ($task->hasOriginPage()) {
-            $this->ui()->setPageCurrent($this->ui()->getPage($task->getOriginPageSelector()));
+        if ($task->isTriggeredOnPage()) {
+            $this->ui()->setPageCurrent($this->ui()->getPage($task->getPageSelector()));
         }
         return $this->getApp($task->getActionSelector()->getAppAlias())->handle($task);
     }

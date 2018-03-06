@@ -184,14 +184,14 @@ class GenericTask implements TaskInterface
     {
         if (is_null($this->inputData)) {
             switch (true) {
-                case $this->hasOriginWidget():
-                    $this->inputData = DataSheetFactory::createFromObject($this->getOriginWidget()->getMetaObject());
+                case $this->isTriggeredByWidget():
+                    $this->inputData = DataSheetFactory::createFromObject($this->getWidgetTriggeredBy()->getMetaObject());
                     break;
                 case $this->hasMetaObject():
                     $this->inputData = DataSheetFactory::createFromObject($this->getMetaObject());
                     break;
-                case $this->hasOriginPage():
-                    $this->inputData = DataSheetFactory::createFromObject($this->getOriginWidget()->getMetaObject());
+                case $this->isTriggeredOnPage():
+                    $this->inputData = DataSheetFactory::createFromObject($this->getWidgetTriggeredBy()->getMetaObject());
                     break;
             }
             $this->inputData = DataSheetFactory::createFromObject($this->getMetaObject());
@@ -211,10 +211,10 @@ class GenericTask implements TaskInterface
                 $this->object = $this->getWorkbench()->model()->getObject($this->objectSelector);
             } elseif ($this->hasInputData()) {
                 $this->object = $this->getInputData()->getMetaObject();
-            } elseif ($this->hasOriginWidget()) {
-                $this->object = $this->getOriginWidget()->getMetaObject();
-            } elseif ($this->hasOriginPage()) {
-                $this->object = $this->getOriginWidget()->getMetaObject();
+            } elseif ($this->isTriggeredByWidget()) {
+                $this->object = $this->getWidgetTriggeredBy()->getMetaObject();
+            } elseif ($this->isTriggeredOnPage()) {
+                $this->object = $this->getWidgetTriggeredBy()->getMetaObject();
             }
         }
         return $this->object;
@@ -285,9 +285,9 @@ class GenericTask implements TaskInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Tasks\TaskInterface::hasOriginWidget()
+     * @see \exface\Core\Interfaces\Tasks\TaskInterface::isTriggeredByWidget()
      */
-    public function hasOriginWidget(): bool
+    public function isTriggeredByWidget(): bool
     {
         return is_null($this->originWigetId) ? false : true;
     }
@@ -295,9 +295,9 @@ class GenericTask implements TaskInterface
     /**
      *
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Tasks\TaskInterface::hasOriginPage()
+     * @see \exface\Core\Interfaces\Tasks\TaskInterface::isTriggeredOnPage()
      */
-    public function hasOriginPage(): bool
+    public function isTriggeredOnPage(): bool
     {
         return is_null($this->originPageSelctor) ? false : true;
     }
@@ -305,19 +305,9 @@ class GenericTask implements TaskInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Tasks\TaskInterface::getOriginWidgetId()
+     * @see \exface\Core\Interfaces\Tasks\TaskInterface::setWidgetIdTriggeredBy()
      */
-    public function getOriginWidgetId()
-    {
-        return $this->originWigetId;
-    }
-
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Tasks\TaskInterface::setOriginWidgetId()
-     */
-    public function setOriginWidgetId($string) : TaskInterface
+    public function setWidgetIdTriggeredBy($string) : TaskInterface
     {
         $this->originWigetId = $string;
         return $this;
@@ -326,24 +316,24 @@ class GenericTask implements TaskInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Tasks\TaskInterface::getOriginWidget()
+     * @see \exface\Core\Interfaces\Tasks\TaskInterface::getWidgetTriggeredBy()
      */
-    public function getOriginWidget(): WidgetInterface
+    public function getWidgetTriggeredBy(): WidgetInterface
     {
-        $page = $this->getWorkbench()->ui()->getPage($this->getOriginPageSelector());
+        $page = $this->getWorkbench()->ui()->getPage($this->getPageSelector());
         if (is_null($this->originWigetId)) {
             return $page->getWidgetRoot();
         } else {
-            return $page->getWidget($this->getOriginWidgetId());
+            return $page->getWidget($this->originWigetId);
         }
     }
 
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Tasks\TaskInterface::getOriginPageSelector()
+     * @see \exface\Core\Interfaces\Tasks\TaskInterface::getPageSelector()
      */
-    public function getOriginPageSelector(): UiPageSelectorInterface
+    public function getPageSelector(): UiPageSelectorInterface
     {
         return $this->originPageSelctor;
     }
@@ -351,9 +341,9 @@ class GenericTask implements TaskInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Tasks\TaskInterface::setOriginPageSelector()
+     * @see \exface\Core\Interfaces\Tasks\TaskInterface::setPageSelector()
      */
-    public function setOriginPageSelector(UiPageSelectorInterface $selector): TaskInterface
+    public function setPageSelector(UiPageSelectorInterface $selector): TaskInterface
     {
         $this->originPageSelctor = $selector;
         return $this;

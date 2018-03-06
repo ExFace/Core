@@ -28,6 +28,20 @@ interface TaskResultFileInterface extends TaskResultInterface
      * 
      * @return bool
      */
-    public function hasDownload() : bool;    
+    public function hasDownload() : bool;
+    
+    /**
+     * 
+     * @return string
+     */
+    public function getPathAbsolute() : string;
+    
+    /**
+     * Sets the path to the result file: either absolute or relative to the installation folder.
+     * 
+     * @param string $path
+     * @return TaskResultFileInterface
+     */
+    public function setPath(string $path) : TaskResultFileInterface;
     
 }

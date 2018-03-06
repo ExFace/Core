@@ -2,6 +2,8 @@
 namespace exface\Core\Actions;
 
 use exface\Core\CommonLogic\Constants\Icons;
+use exface\Core\Interfaces\Tasks\TaskInterface;
+use exface\Core\Interfaces\WidgetInterface;
 
 class DuplicateObjectDialog extends EditObjectDialog
 {
@@ -18,9 +20,9 @@ class DuplicateObjectDialog extends EditObjectDialog
      * duplicated object will get new ids.
      *
      * {@inheritdoc} 
-     * @see \exface\Core\Actions\ShowWidget::getPrefillDataSheet()
+     * @see \exface\Core\Actions\ShowWidget::prefillWidget()
      */
-    protected function prefillWidget()
+    protected function prefillWidget(TaskInterface $task, WidgetInterface $widget) : WidgetInterface
     {
         $data_sheet = $this->getInputDataSheet();
         

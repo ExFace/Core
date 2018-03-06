@@ -11,6 +11,10 @@ use exface\Core\Interfaces\Actions\iRunTemplateScript;
 use exface\Core\Interfaces\ActionListInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
+use exface\Core\Interfaces\Tasks\TaskInterface;
+use exface\Core\Interfaces\DataSources\DataTransactionInterface;
+use exface\Core\Interfaces\Tasks\TaskResultInterface;
+use exface\Core\CommonLogic\Tasks\TaskResultData;
 
 /**
  * This action chains other actions together and performs them one after another.
@@ -65,44 +69,41 @@ class ActionChain extends AbstractAction
         $this->actions = new ActionList($this->getWorkbench(), $this);
     }
 
-    protected function perform()
+    protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : TaskResultInterface
     {
         if ($this->getActions()->isEmpty()) {
             throw new ActionConfigurationError($this, 'An action chain must contain at least one action!', '6U5TRGK');
         }
         
-        $result = null;
-        $output = '';
-        $data = $this->getInputDataSheet();
+        $data = $this->getInputDataSheet($task);
+        $data_modified = false;
+        $t = clone $task;
         foreach ($this->getActions() as $action) {
             // Prepare the action
-            // All actions obviously run in the same template
-            $action->setTemplateAlias($this->getTemplateAlias());
-            // They are all called by the widget, that called the chain
-            if ($this->getTriggerWidget()) {
-                $action->setTriggerWidget($this->getTriggerWidget());
+            // All actions are all called by the widget, that called the chain
+            if ($this->isDefinedInWidget()) {
+                $action->setWidgetDefinedIn($this->getWidgetDefinedIn());
             }
             // If the chain should run in a single transaction, this transaction must be set for every action to run in
-            if ($this->getUseSingleTransaction()) {
-                $action->setTransaction($this->getTransaction());
-            }
+            $ts = $this->getUseSingleTransaction() ? $transaction : $this->getWorkbench()->data()->startTransaction();
             // Every action gets the data resulting from the previous action as input data
-            $action->setInputDataSheet($data);
+            $t->setInputData($data);
             
             // Perform
-            $data = $action->getResultDataSheet();
-            $output = $action->getResultOutput();
-            $result = $action->getResult();
-            $this->addResultMessage($action->getResultMessage() . "\n");
-            if ($action->isDataModified()) {
-                $this->setDataModified(true);
+            $result = $action->handle($t, $ts);
+            $message .= $action->getResultMessage() . "\n";
+            if ($result->isDataModified()) {
+                $data_modified = true;
+            }
+            if ($result instanceof TaskResultData) {
+                $data = $result->getData();
             }
         }
-        if ($data) {
-            $this->setResultDataSheet($data);
-        }
-        $this->setResult($result);
-        $this->output = $output;
+        
+        $result->setDataModified($data_modified);
+        $result->setMessage($message);
+        
+        return $result;
     }
 
     /**

@@ -42,9 +42,9 @@ class ShowHelpDialog extends ShowDialog
         // IMPORTANT: remove help button from the help dialog to prevent infinite help popups
         $dialog->setHideHelpButton(true);
         
-        if ($this->getTriggerWidget() && $this->getTriggerWidget() instanceof iTriggerAction) {
-            if ($this->getTriggerWidget()->getInputWidget() instanceof iHaveContextualHelp) {
-                $this->getTriggerWidget()->getInputWidget()->getHelpWidget($dialog);
+        if ($this->getWidgetDefinedIn() && $this->getWidgetDefinedIn() instanceof iTriggerAction) {
+            if ($this->getWidgetDefinedIn()->getInputWidget() instanceof iHaveContextualHelp) {
+                $this->getWidgetDefinedIn()->getInputWidget()->getHelpWidget($dialog);
             } else {
                 throw new ActionLogicError($this, 'Calling widget cannot generate contextual help: id does not implement the interface iHaveContextualHelp!', '6V9XDV4');
             }

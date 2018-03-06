@@ -28,6 +28,8 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use exface\Core\Interfaces\Tasks\TaskResultInterface;
 use exface\Core\Interfaces\Tasks\TaskResultWidgetInterface;
+use exface\Core\Interfaces\Tasks\TaskResultUriInterface;
+use exface\Core\Interfaces\Tasks\TaskResultFileInterface;
 
 abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
 {
@@ -353,7 +355,26 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
                     $body = $this->buildIncludes($widget) . "\n" . $this->buildWidget($widget);
             }
             return $response->withBody(\GuzzleHttp\Psr7\stream_for($body));            
+        } elseif ($result instanceof TaskResultUriInterface) {
+            // FIXME how how to pass redirects to the UI?
+            $uri = $result->getUri();
+            if ($result->getOpenInNewWindow()) {
+                $uri = $uri->withQuery($uri->getQuery() ."target=_blank");
+            }
+            $json = [
+                "redirect" => $uri->__toString()
+            ];
+        } elseif ($result instanceof TaskResultFileInterface) {
+            $message = 'Download ready. If it does not start automatically, click <a href="' . $result->getDownloadUri()->__toString() . '">here</a>.';
+            $json = [
+                "success" => $message
+            ];
         }
+        
+        if (! empty($json)) {
+            return $response->withBody(\GuzzleHttp\Psr7\stream_for($this->encodeData($json)));
+        } 
+            
         return $response;
     }
     

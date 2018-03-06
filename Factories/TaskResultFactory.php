@@ -15,6 +15,9 @@ use exface\Core\CommonLogic\Tasks\TaskResultTextContent;
 use Psr\Http\Message\UriInterface;
 use exface\Core\Interfaces\Tasks\TaskResultFileInterface;
 use exface\Core\CommonLogic\Tasks\TaskResultFile;
+use exface\Core\Interfaces\Tasks\TaskResultUriInterface;
+use exface\Core\CommonLogic\Tasks\TaskResultUri;
+use GuzzleHttp\Psr7\Uri;
 
 /**
  * Creates all kinds of task results. 
@@ -44,9 +47,13 @@ class TaskResultFactory extends AbstractFactory
      * @param DataSheetInterface $dataSheet
      * @return TaskResultDataInterface
      */
-    public static function createDataResult(TaskInterface $task, DataSheetInterface $dataSheet) : TaskResultDataInterface
+    public static function createDataResult(TaskInterface $task, DataSheetInterface $dataSheet, string $message = null) : TaskResultDataInterface
     {
-        return new TaskResultData($task, $dataSheet);
+        $result = new TaskResultData($task, $dataSheet);
+        if (! is_null($message)) {
+            $result->setMessage($message);
+        }
+        return $result;
     }
     
     /**
@@ -74,12 +81,54 @@ class TaskResultFactory extends AbstractFactory
     /**
      * 
      * @param TaskInterface $task
-     * @param UriInterface $download
+     * @param string $path
      * @return TaskResultFileInterface
      */
-    public static function createFileResult(TaskInterface $task, UriInterface $download) : TaskResultFileInterface
+    public static function createFileResult(TaskInterface $task, string $path) : TaskResultFileInterface
     {
-        return new TaskResultFile($task, $download);
+        $result = new TaskResultFile($task);
+        $result->setPath($path);
+        return $result;
+    }
+    
+    /**
+     * 
+     * @param TaskInterface $task
+     * @param string $path
+     * @return TaskResultFileInterface
+     */
+    public static function createDownloadResult(TaskInterface $task, string $path) : TaskResultFileInterface
+    {
+        $result = static::createFileResult($task, $path);
+        return $result;
+    }
+    
+    /**
+     * 
+     * @param TaskInterface $task
+     * @return TaskResultInterface
+     */
+    public static function createEmptyResult(TaskInterface $task) : TaskResultInterface
+    {
+        return new TaskResultMessage($task);
+    }
+
+    /**
+     * 
+     * @param TaskInterface $task
+     * @param UriInterface|string $uriOrString
+     * @return TaskResultUriInterface
+     */
+    public static function createUriResult(TaskInterface $task, $uriOrString) : TaskResultUriInterface
+    {
+        $result = new TaskResultUri($task);
+        if ($uriOrString instanceof UriInterface) {
+            $uri = $uriOrString;
+        } else {
+            $uri = new Uri($uriOrString);
+        }
+        $result->setUri($uri);
+        return $result;
     }
 }
 ?>

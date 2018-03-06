@@ -89,7 +89,7 @@ abstract class AbstractHttpTemplate extends AbstractTemplate implements HttpTemp
         $template = $result->getTask()->getTemplate();
         switch (true) {
             case $result instanceof TaskResultData:
-                $elem = $template->getElement($result->getTask()->getOriginWidget());
+                $elem = $template->getElement($result->getTask()->getWidgetTriggeredBy());
                 $data = $elem->prepareData($result->getData());
                 $body = $template->encodeData($data);
                 $headers['Content-type'] = ['application/json;charset=utf-8'];

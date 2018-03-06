@@ -10,6 +10,9 @@ use exface\Core\Exceptions\Actions\ActionInputMissingError;
 use exface\Core\Exceptions\Actions\ActionInputInvalidObjectError;
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Interfaces\Tasks\TaskInterface;
+use exface\Core\Interfaces\DataSources\DataTransactionInterface;
+use exface\Core\Interfaces\Tasks\TaskResultInterface;
 
 class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuery
 {
@@ -50,7 +53,7 @@ class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuer
     public function getDataConnection()
     {
         if (is_null($this->data_connection)) {
-            $this->setDataConnection($this->getTriggerWidget()->getMetaObject()->getDataConnection());
+            $this->setDataConnection($this->getWidgetDefinedIn()->getMetaObject()->getDataConnection());
         }
         return $this->data_connection;
     }
@@ -85,7 +88,12 @@ class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuer
         return $this;
     }
 
-    protected function perform()
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AbstractAction::perform()
+     */
+    protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : TaskResultInterface
     {
         $counter = 0;
         $data_sheet = $this->getInputDataSheet();

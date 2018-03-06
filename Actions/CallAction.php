@@ -6,6 +6,9 @@ use exface\Core\Factories\ActionFactory;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\Actions\iRunTemplateScript;
 use exface\Core\Exceptions\Actions\ActionInputError;
+use exface\Core\Interfaces\Tasks\TaskInterface;
+use exface\Core\Interfaces\DataSources\DataTransactionInterface;
+use exface\Core\Interfaces\Tasks\TaskResultInterface;
 
 /**
  * This action performs another action specified in the action_alias property or via request parameter "call=your_action_alias".
@@ -24,13 +27,14 @@ class CallAction extends AbstractAction
 
     private $action_alias = null;
 
-    protected function perform()
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AbstractAction::perform()
+     */
+    protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : TaskResultInterface
     {
-        $this->setResult($this->getAction()->getResult());
-        $this->setResultMessage($this->getAction()->getResultMessage());
-        if ($parent_result = $this->getAction()->getResultDataSheet()) {
-            $this->setResultDataSheet($parent_result);
-        }
+        return $this->getAction()->handle($task, $transaction);
     }
 
     /**
@@ -40,7 +44,7 @@ class CallAction extends AbstractAction
     public function getAction()
     {
         if (is_null($this->action)) {
-            $action = ActionFactory::createFromString($this->getWorkbench(), $this->getActionAlias(), $this->getTriggerWidget());
+            $action = ActionFactory::createFromString($this->getWorkbench(), $this->getActionAlias(), ($this->isDefinedInWidget() ? $this->getWidgetDefinedIn() : null));
             $this->validateAction($action);
             $this->action = $action;
         }

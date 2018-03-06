@@ -6,6 +6,7 @@ use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\Tasks\TaskResultFileInterface;
 use exface\Core\Interfaces\Tasks\TaskResultUriInterface;
 use Psr\Http\Message\UriInterface;
+use GuzzleHttp\Psr7\Uri;
 
 /**
  * Task result containing a downloadable file: i.e. text, code, etc..
@@ -16,6 +17,8 @@ use Psr\Http\Message\UriInterface;
 class TaskResultFile extends TaskResultMessage implements TaskResultFileInterface
 {
     private $uri = null;
+    
+    private $pathAbsolute = '';
     
     /**
      * 
@@ -46,6 +49,10 @@ class TaskResultFile extends TaskResultMessage implements TaskResultFileInterfac
      */
     public function getDownloadUri(): UriInterface
     {
+        if (is_null($this->uri)) {
+            $url = $this->getWorkbench()->getCMS()->createLinkToFile($this->getPathAbsolute());
+            $this->uri = new Uri($url);
+        }
         return $this->uri;
     }
 
@@ -56,8 +63,28 @@ class TaskResultFile extends TaskResultMessage implements TaskResultFileInterfac
      */
     public function hasDownload(): bool
     {
-        return is_null($this->uri) ? false : true;
+        return is_null($this->uri) && is_null($this->pathAbsolute) ? false : true;
+    }
+    
+    public function setPath(string $path): TaskResultFileInterface
+    {
+        $filemanager = $this->getWorkbench()->filemanager();
+        if ($filemanager::pathIsAbsolute($path)) {
+            $path = $path;
+        } else {
+            $path = $filemanager::pathJoin([$filemanager::getPathToBaseFolder(), $path]);
+        }
+        $this->pathAbsolute = $filemanager::pathNormalize($path);
+        return $this;
     }
 
-    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Tasks\TaskResultFileInterface::getPathAbsolute()
+     */
+    public function getPathAbsolute(): string
+    {
+        return $this->pathAbsolute;
+    }
 }
