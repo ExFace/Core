@@ -22,7 +22,7 @@ class ShowPopup extends ShowWidget implements iShowPopup
      */
     protected function createPopupContainer(AbstractWidget $contained_widget = NULL)
     {
-        $popup = $this->getCalledOnUiPage()->createWidget('Container', $this->getTriggerWidget());
+        $popup = $this->getCalledOnUiPage()->createWidget('Container', $this->getWidgetDefinedIn());
         $popup->setMetaObject($this->getMetaObject());
         
         if ($contained_widget) {

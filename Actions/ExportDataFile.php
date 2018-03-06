@@ -77,10 +77,7 @@ abstract class ExportDataFile extends ExportData
         
         // Datei abschliessen und zum Download bereitstellen
         $this->writeFileResult($dataSheetMaster);
-        $url = $this->getWorkbench()->getCMS()->createLinkToFile($this->getPathname());
-        $uri = new Uri($url);
-        $result = TaskResultFactory::createFileResult($task, $uri);
-        $result->setMessage($resultMessage ? $resultMessage : 'Download ready. If it does not start automatically, click <a href="' . $url . '">here</a>.');
+        $result = TaskResultFactory::createFileResult($task, $this->getPathname());
         return $result;
     }
 
@@ -119,7 +116,7 @@ abstract class ExportDataFile extends ExportData
     abstract protected function getWriter();
 
     /**
-     * Returns the complete path to the file.
+     * Returns the absolute path to the file.
      *
      * @return string
      */

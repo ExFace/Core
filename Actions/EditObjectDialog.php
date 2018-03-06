@@ -2,7 +2,6 @@
 namespace exface\Core\Actions;
 
 use exface\Core\Widgets\AbstractWidget;
-use exface\Core\Widgets\Dialog;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Widgets\Button;
 use exface\Core\CommonLogic\Constants\Icons;
@@ -39,7 +38,7 @@ class EditObjectDialog extends ShowObjectDialog
      * Creates the dialog widget.
      * Just the dialog itself, no contents!
      *
-     * @return \exface\Core\Widgets\exfDialog
+     * @return WidgetInterface
      */
     protected function createDialogWidget(AbstractWidget $contained_widget = NULL)
     {
@@ -53,9 +52,9 @@ class EditObjectDialog extends ShowObjectDialog
             ->setVisibility(EXF_WIDGET_VISIBILITY_PROMOTED)
             ->setAlign(EXF_ALIGN_OPPOSITE);
         // Make the save button refresh the same widget as the Button showing the dialog would do
-        if ($this->getTriggerWidget() instanceof Button) {
-            $save_button->setRefreshWidgetLink($this->getTriggerWidget()->getRefreshWidgetLink());
-            $this->getTriggerWidget()->setRefreshWidgetLink(null);
+        if ($this->getWidgetDefinedIn() instanceof Button) {
+            $save_button->setRefreshWidgetLink($this->getWidgetDefinedIn()->getRefreshWidgetLink());
+            $this->getWidgetDefinedIn()->setRefreshWidgetLink(null);
         }
         $dialog->addButton($save_button);
         return $dialog;

@@ -7,8 +7,8 @@ use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Factories\DataSheetFactory;
-use exface\Core\CommonLogic\Tasks\TaskResultMessage;
 use exface\Core\Interfaces\Tasks\TaskResultInterface;
+use exface\Core\Factories\TaskResultFactory;
 
 class DeleteObject extends AbstractAction implements iDeleteData
 {
@@ -38,19 +38,8 @@ class DeleteObject extends AbstractAction implements iDeleteData
             $this->setAffectedRows($this->getAffectedRows() + $ds->dataDelete($this->getTransaction()));
         }
         
-        $result = new TaskResultMessage($task);
-        $result->setMessage($this->translate('RESULT', ['%number%' => $this->getAffectedRows()], $this->getAffectedRows()));
+        $result = TaskResultFactory::createMessageResult($task, $this->translate('RESULT', ['%number%' => $this->getAffectedRows()], $this->getAffectedRows()));
         return $result;
-    }
-
-    protected function getAffectedRows()
-    {
-        return $this->affected_rows;
-    }
-
-    protected function setAffectedRows($value)
-    {
-        $this->affected_rows = $value;
     }
 }
 ?>

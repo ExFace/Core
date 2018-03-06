@@ -5,8 +5,6 @@ use exface\Core\Widgets\Dialog;
 
 /**
  * 
- * @method Dialog getResult()
- * 
  * @author Andrej Kabachnik
  *
  */
@@ -19,9 +17,9 @@ interface iShowDialog extends ActionInterface
      * Returns TRUE if the opened dialog should be maximized, FALSE if not and NULL if
      * no specific behavior was specified.
      *
-     * @return boolean|null
+     * @return boolean|mixed
      */
-    public function getMaximize();
+    public function getMaximize($default = false);
     
     /**
      * Set to TRUE to maximize the dialog when opened.

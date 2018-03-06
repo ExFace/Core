@@ -17,6 +17,7 @@ use exface\Core\Interfaces\Tasks\TaskResultInterface;
 use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Interfaces\TaskHandlerInterface;
+use exface\Core\Exceptions\Widgets\WidgetNotFoundError;
 
 /**
  * Common interface for all actions.
@@ -86,48 +87,57 @@ interface ActionInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
     public function setAlias($value);
 
     /**
-     * Returns the trigger widget for the action - that is the widget, where
-     * this action was instantiated.
+     * Returns the widget, where this action was instantiated or throws WidgetNotFound exception.
      * 
-     * @see hasTriggerWidget()
+     * Use isDefinedInWidget() to check, if the action was defined in a widget without raising
+     * exceptions.
+     * 
+     * @see isDefinedInWidget()
      *
+     * @throws WidgetNotFoundError
+     * 
      * @return WidgetInterface 
      */
-    public function getTriggerWidget() : WidgetInterface;
+    public function getWidgetDefinedIn() : WidgetInterface;
 
     /**
-     * Sets a trigger widget for the action.
+     * Sets the widget defining the action.
      * 
-     * @see hasTriggerWidget()
+     * @see isDefinedInWidget()
      * 
      * @param WidgetInterface|WidgetLinkInterface|string $widget_or_widget_link
      * @return ActionInterface
      */
-    public function setTriggerWidget($widget_or_widget_link);
+    public function setWidgetDefinedIn($widget_or_widget_link);
     
     /**
-     * Returns TRUE if the trigger widget of this action is known and FALSE otherwise.
+     * Returns TRUE if the action is instantiated within a widget and FALSE otherwise
+     * (e.g. actions originating from API calls or being instantiated programmatically).
      * 
-     * NOTE, that the trigger widget is not neccesarily the one that actually called
-     * the action - it's the widget, that instantiated it. In other words, the one, 
+     * NOTE: the widget, that instantiated the action is not neccesarily the one that 
+     * actually called it - it's the widget, that configured it. In other words, the one, 
      * that defines the action's model. Other widgets may than call the action by using
-     * widget links, etc. It is important, that while the trigger widget is known 
-     * right from the instantiation of the action, the actuall caller is only accessible 
-     * while the action handles a task - see TaskInterface::getOriginWidget().
+     * widget links, etc. 
      * 
      * All actions, that originate from the UI, are instantiated as part of the 
      * definition of Buttons, Menus and other widgets, that can trigger actions. 
-     * These actions "know" their widgets and have access to them even if they 
-     * are not actually called.
-     *
-     * However ther are also cases, when actions are called without a widget 
-     * even being involved (e.g. via API). In this case, the action does not have
-     * a trigger widget and event the task being handled might not have an
-     * origin widget.
+     * These actions "know" their parent widgets and have access to them even before 
+     * they are not actually called. This enables actions to inherit various properties
+     * of their defining widget - e.g. the action EditObjectDialog knows what object it
+     * is going to be editing even if it is not explicitly defined in the action's UXON
+     * because it simply inherits it from it's widget.
+     * 
+     * NOTE: Use TaskInterface::getWidgetTriggeredBy() to get the widget, that actually called
+     * the action. In contrast to the defining widget, the actuall trigger widget is only
+     * known at the moment when the action has actually being performed. 
+     * 
+     * There are also cases, when actions are called without a widget even being 
+     * involved (e.g. via API). In this case, the action does not have a trigger widget and 
+     * even the task being handled might not have an origin widget.
      * 
      * @return bool
      */
-    public function hasTriggerWidget() : bool;
+    public function isDefinedInWidget() : bool;
 
     /**
      * Sets preset input data for the action.

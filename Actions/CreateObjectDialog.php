@@ -2,10 +2,18 @@
 namespace exface\Core\Actions;
 
 use exface\Core\CommonLogic\Constants\Icons;
-use exface\Core\Interfaces\Tasks\TaskInterface;
-use exface\Core\Interfaces\DataSources\DataTransactionInterface;
-use exface\Core\Interfaces\Tasks\TaskResultInterface;
 
+/**
+ * Displays a dialog to edit the meta object of the action.
+ * 
+ * If no dialog is explicitly defined within the action, it will automatically use the
+ * default editor of the object from it's metamodel. If there is no default editor, the
+ * action will attempt to create a simple editor dialog like the EditObjectDialog action
+ * would do.
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
 class CreateObjectDialog extends EditObjectDialog
 {
 

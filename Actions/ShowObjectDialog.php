@@ -122,8 +122,8 @@ class ShowObjectDialog extends ShowDialog
         
         // If there is a default editor, make sure it gets it's own id space, so widget links inside still work
         // if multiple editors of the same object are located in the same page (e.g. for creating, editing, etc.)
-        if ($this->getTriggerWidget() && ! $default_editor_uxon->isEmpty()) {
-            $default_editor_uxon->setProperty('id_space', $this->getTriggerWidget()->getId());
+        if ($this->getWidgetDefinedIn() && ! $default_editor_uxon->isEmpty()) {
+            $default_editor_uxon->setProperty('id_space', $this->getWidgetDefinedIn()->getId());
         }
         
         // If the content is explicitly defined, just add it to the dialog

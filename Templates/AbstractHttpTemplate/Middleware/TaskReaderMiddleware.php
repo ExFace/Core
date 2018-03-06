@@ -132,11 +132,11 @@ class TaskReaderMiddleware implements MiddlewareInterface
     protected function readPageSelector(ServerRequestInterface $request, HttpTaskInterface $task) : HttpTaskInterface
     {
         if ($page = $request->getAttribute($this->attributeNamePage)) {
-            $task->setOriginPageSelector(new UiPageSelector($task->getWorkbench(), $page));
+            $task->setPageSelector(new UiPageSelector($task->getWorkbench(), $page));
         } else {
             $param = $this->getParamNamePage();
             if ($task->hasParameter($param)) {
-                $task->setOriginPageSelector(new UiPageSelector($this->template->getWorkbench(), $task->getParameter($param)));
+                $task->setPageSelector(new UiPageSelector($this->template->getWorkbench(), $task->getParameter($param)));
             }
         }
         return $task;
@@ -146,7 +146,7 @@ class TaskReaderMiddleware implements MiddlewareInterface
     {
         $param = $this->getParamNameWidget();
         if ($task->hasParameter($param)) {
-            $task->setOriginWidgetId($task->getParameter($param));
+            $task->setWidgetIdTriggeredBy($task->getParameter($param));
         }
         return $task;
     }
@@ -173,8 +173,8 @@ class TaskReaderMiddleware implements MiddlewareInterface
         // should be responsible for how to perform the quick search - not the template. After all,
         // the quick search filters are defined in the UXON of the widget.
         $filters = [];
-        if ($task->hasOriginWidget() && $quick_search = $task->getParameter($this->getParamNameQuickSearch())) {
-            $widget = $task->getOriginWidget();
+        if ($task->isTriggeredByWidget() && $quick_search = $task->getParameter($this->getParamNameQuickSearch())) {
+            $widget = $task->getWidgetTriggeredBy();
             $quick_search_filter = $widget->getMetaObject()->getLabelAttributeAlias();
             if ($widget->is('Data') && count($widget->getAttributesForQuickSearch()) > 0) {
                 foreach ($widget->getAttributesForQuickSearch() as $attr) {

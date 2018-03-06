@@ -428,8 +428,8 @@ class App implements AppInterface
     
     public function handle(TaskInterface $task): TaskResultInterface
     {
-        if ($task->hasOriginWidget()) {
-            $widget = $task->getOriginWidget();
+        if ($task->isTriggeredByWidget()) {
+            $widget = $task->getWidgetTriggeredBy();
             if (! $task->hasMetaObject()) {
                 $task->setMetaObject($widget->getMetaObject());
             }

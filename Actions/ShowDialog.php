@@ -34,7 +34,7 @@ class ShowDialog extends ShowWidget implements iShowDialog
     protected function createDialogWidget(AbstractWidget $contained_widget = NULL)
     {
         /* @var $dialog \exface\Core\Widgets\Dialog */
-        $parent_widget = $this->getTriggerWidget();
+        $parent_widget = $this->getWidgetDefinedIn();
         $dialog = $this->getCalledOnUiPage()->createWidget('Dialog', $parent_widget);
         $dialog->setMetaObject($this->getMetaObject());
         
@@ -64,9 +64,9 @@ class ShowDialog extends ShowWidget implements iShowDialog
     {
         
         // If the widget calling the action (typically a button) is known, inherit some of it's attributes
-        if ($this->getTriggerWidget()) {
-            if (! $dialog->getIcon() && ($this->getTriggerWidget() instanceof iHaveIcon)) {
-                $dialog->setIcon($this->getTriggerWidget()->getIcon());
+        if ($this->getWidgetDefinedIn()) {
+            if (! $dialog->getIcon() && ($this->getWidgetDefinedIn() instanceof iHaveIcon)) {
+                $dialog->setIcon($this->getWidgetDefinedIn()->getIcon());
             }
         } else {
             if (! $dialog->getIcon()) {
@@ -82,8 +82,8 @@ class ShowDialog extends ShowWidget implements iShowDialog
             $dialog->setButtons($this->getDialogButtonsUxon());
         }
         
-        if (! is_null($this->getMaximize())) {
-            $dialog->setMaximized($this->getMaximize());
+        if (! is_null($this->getMaximize(null))) {
+            $dialog->setMaximized($this->getMaximize(null));
         }
         
         return $dialog;
@@ -91,8 +91,8 @@ class ShowDialog extends ShowWidget implements iShowDialog
 
     protected function getDialogCaption()
     {
-        if ($this->getTriggerWidget()) {
-            $caption = $this->getTriggerWidget()->getCaption();
+        if ($this->getWidgetDefinedIn()) {
+            $caption = $this->getWidgetDefinedIn()->getCaption();
         }
         if (! $caption) {
             $caption = $this->getName();
@@ -216,9 +216,9 @@ class ShowDialog extends ShowWidget implements iShowDialog
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Actions\iShowDialog::getMaximize()
      */
-    public function getMaximize()
+    public function getMaximize($default = false)
     {
-        return $this->maximize;
+        return is_null($this->maximize) ? $default : $this->maximize;
     }
 
     /**

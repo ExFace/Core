@@ -6,6 +6,10 @@ use exface\Core\CommonLogic\AbstractAction;
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Exceptions\Actions\ActionRuntimeError;
+use exface\Core\Interfaces\Tasks\TaskInterface;
+use exface\Core\Interfaces\DataSources\DataTransactionInterface;
+use exface\Core\Interfaces\Tasks\TaskResultInterface;
+use exface\Core\Factories\TaskResultFactory;
 
 /**
  * This action opens a URL for a given object instance.
@@ -51,7 +55,12 @@ class GoToUrl extends AbstractAction implements iShowUrl
         return $this;
     }
 
-    protected function perform()
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AbstractAction::perform()
+     */
+    protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : TaskResultInterface
     {
         $vars = array();
         $vals = array();
@@ -65,13 +74,14 @@ class GoToUrl extends AbstractAction implements iShowUrl
         if (substr($result, 0, 4) !== 'http') {
             $result = $this->getWorkbench()->getCMS()->createLinkToFile($result);
         }
+        
+        $result = TaskResultFactory::createUriResult($task, $result);
+        $result->setMessage($this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.GOTOURL.SUCCESS'));
         if ($this->getOpenInNewWindow()) {
-            $result .= (strrpos($result, "?") !== false ? "&" : "?") . "target=_blank";
+            $result->setOpenInNewWindow(true);
         }
-        $this->setResult($result);
-        $this->setResultMessage($this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.GOTOURL.SUCCESS'));
-        $this->setResultDataSheet($this->getInputDataSheet());
-        return $this;
+        
+        return $result;
     }
 
     public function getOpenInNewWindow()

@@ -30,4 +30,30 @@ interface TaskResultUriInterface extends TaskResultInterface
      */
     public function hasUri() : bool;    
     
+    /**
+     * 
+     * @return bool
+     */
+    public function getAutoRedirect() : bool;
+    
+    /**
+     * 
+     * @param bool $trueOrFalse
+     * @return TaskResultUriInterface
+     */
+    public function setAutoRedirect($trueOrFalse) : TaskResultUriInterface;
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function getOpenInNewWindow() : bool;
+    
+    /**
+     * 
+     * @param unknown $trueOrFalse
+     * @return TaskResultUriInterface
+     */
+    public function setOpenInNewWindow($trueOrFalse) : TaskResultUriInterface;
+    
 }

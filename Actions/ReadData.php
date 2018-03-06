@@ -34,8 +34,8 @@ class ReadData extends AbstractAction implements iReadData
         }
         $data_sheet = $this->getInputDataSheet($task);
         $data_sheet->removeRows();
-        if ($task->hasOriginWidget()) {
-            $data_sheet = $task->getOriginWidget()->prepareDataSheetToRead($data_sheet);
+        if ($task->isTriggeredByWidget()) {
+            $data_sheet = $task->getWidgetTriggeredBy()->prepareDataSheetToRead($data_sheet);
         }
         $affected_rows = $data_sheet->dataRead();
         $this->setAffectedRows($affected_rows);
@@ -56,7 +56,7 @@ class ReadData extends AbstractAction implements iReadData
     
     protected function checkPermissions(TaskInterface $task) : bool
     {
-        if (! $this->hasTriggerWidget() && ! $task->hasOriginWidget()) {
+        if (! $this->isDefinedInWidget() && ! $task->isTriggeredByWidget()) {
             throw new ActionCallingWidgetNotSpecifiedError($this, 'Security violaion! Cannot read data without a target widget in action "' . $this->getAliasWithNamespace() . '"!', '6T5DOSV');
         }
         return true;
