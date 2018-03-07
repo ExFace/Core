@@ -23,17 +23,4 @@ interface HttpTaskInterface extends TaskInterface
      * @return ServerRequestInterface
      */
     public function getHttpRequest() : ServerRequestInterface;
-    
-    /**
-     * 
-     * @return string|null
-     */
-    public function getRenderingMode();
-    
-    /**
-     * 
-     * @param string $bodyOrHead
-     * @return string
-     */
-    public function setRenderingMode(string $bodyOrHead) : HttpTaskInterface;
 }

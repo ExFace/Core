@@ -8,7 +8,7 @@ use Psr\Http\Server\RequestHandlerInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Interfaces\Templates\HttpTemplateInterface;
 use exface\Core\Interfaces\Tasks\HttpTaskInterface;
-use exface\Core\Templates\AbstractHttpTemplate\GenericHttpTask;
+use exface\Core\CommonLogic\Tasks\HttpTask;
 use exface\Core\CommonLogic\Selectors\ActionSelector;
 use exface\Core\CommonLogic\Selectors\MetaObjectSelector;
 use exface\Core\CommonLogic\Selectors\UiPageSelector;
@@ -16,8 +16,6 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Exceptions\Templates\TemplateRequestParsingError;
-use Psr\Http\Message\RequestInterface;
-use Psr\Http\Message\UriInterface;
 use exface\Core\Exceptions\DomainException;
 
 /**
@@ -80,12 +78,11 @@ class TaskReaderMiddleware implements MiddlewareInterface
     {
         $task = $request->getAttribute($this->attributeNameRequest);
         if ($task === null) {
-            $task = new GenericHttpTask($this->template, $request);
+            $task = new HttpTask($this->template, $request);
         }
         
         $task = $this->readActionSelector($request, $task);
         $task = $this->readPageSelector($request, $task);
-        $task = $this->readRenderingMode($request, $task);
         $task = $this->readObjectSelector($request, $task);
         $task = $this->readWidgetId($request, $task);
         $task = $this->readInputData($request, $task);
@@ -97,14 +94,6 @@ class TaskReaderMiddleware implements MiddlewareInterface
     protected function getTask() : HttpTaskInterface
     {
         return $this->task;
-    }
-    
-    protected function readRenderingMode(ServerRequestInterface $request, HttpTaskInterface $task) : HttpTaskInterface
-    {
-        if ($mode = $request->getAttribute($this->attributeNameMode)) {
-            $task->setRenderingMode($mode);
-        }
-        return $task;
     }
     
     protected function readActionSelector(ServerRequestInterface $request, HttpTaskInterface $task) : HttpTaskInterface

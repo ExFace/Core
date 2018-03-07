@@ -9,7 +9,7 @@ use Psr\Http\Message\UriInterface;
 use GuzzleHttp\Psr7\Uri;
 
 /**
- * Task result containing a downloadable file: i.e. text, code, etc..
+ * Task result containing a file.
  * 
  * @author Andrej Kabachnik
  *
