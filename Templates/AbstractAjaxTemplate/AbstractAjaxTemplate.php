@@ -30,6 +30,12 @@ use exface\Core\Interfaces\Tasks\TaskResultInterface;
 use exface\Core\Interfaces\Tasks\TaskResultWidgetInterface;
 use exface\Core\Interfaces\Tasks\TaskResultUriInterface;
 use exface\Core\Interfaces\Tasks\TaskResultFileInterface;
+use exface\Core\Interfaces\Tasks\TaskResultDataInterface;
+use GuzzleHttp\Psr7\Response;
+use exface\Core\Exceptions\Templates\TemplateOutputError;
+use exface\Core\Exceptions\RuntimeException;
+use Symfony\Component\Debug\Exception\FatalThrowableError;
+use exface\Core\Factories\UiPageFactory;
 
 abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
 {
@@ -87,7 +93,7 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
      *
      * @see \exface\Core\Templates\AbstractTemplate\AbstractTemplate::buildWidget()
      */
-    function buildWidget(WidgetInterface $widget)
+    public function buildWidget(WidgetInterface $widget)
     {
         $output = '';
         try {
@@ -338,54 +344,172 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
         return $reader;
     }
     
-    protected function createResponse(ServerRequestInterface $request, TaskResultInterface $result)
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Templates\AbstractHttpTemplate\AbstractHttpTemplate::createResponse()
+     */
+    protected function createResponse(ServerRequestInterface $request, TaskResultInterface $result) : ResponseInterface
     {
-        $response = parent::createResponse($request, $result);
-        if ($result instanceof TaskResultWidgetInterface) {
-            $mode = $request->getAttribute($this->getRequestAttributeForRenderingMode(), static::MODE_FULL);
-            $widget = $result->getWidget();
-            switch ($mode) {
-                case static::MODE_HEAD:
-                    $body = $this->buildIncludes($widget);
-                    break;
-                case static::MODE_BODY:
-                    $body = $this->buildWidget($widget);
-                    break;
-                case static::MODE_FULL:
-                    $body = $this->buildIncludes($widget) . "\n" . $this->buildWidget($widget);
-            }
-            return $response->withBody(\GuzzleHttp\Psr7\stream_for($body));            
-        } elseif ($result instanceof TaskResultUriInterface) {
-            // FIXME how how to pass redirects to the UI?
-            $uri = $result->getUri();
-            if ($result->getOpenInNewWindow()) {
-                $uri = $uri->withQuery($uri->getQuery() ."target=_blank");
-            }
-            $json = [
-                "redirect" => $uri->__toString()
-            ];
-        } elseif ($result instanceof TaskResultFileInterface) {
-            $message = 'Download ready. If it does not start automatically, click <a href="' . $result->getDownloadUri()->__toString() . '">here</a>.';
-            $json = [
-                "success" => $message
-            ];
+        /* @var $headers array [header_name => array_of_values] */
+        $headers = [];
+        /* @var $status_code int */
+        $status_code = $result->getResponseCode();
+        
+        switch (true) {
+            case $result instanceof TaskResultDataInterface:
+                $elem = $this->getElement($result->getTask()->getWidgetTriggeredBy());
+                $json = $elem->prepareData($result->getData());
+                $json["success"] = $result->getMessage();
+                $headers['Content-type'] = ['application/json;charset=utf-8'];
+                break;
+                
+            case $result instanceof TaskResultWidgetInterface:
+                $mode = $request->getAttribute($this->getRequestAttributeForRenderingMode(), static::MODE_FULL);
+                $widget = $result->getWidget();
+                switch ($mode) {
+                    case static::MODE_HEAD:
+                        $body = $this->buildIncludes($widget);
+                        break;
+                    case static::MODE_BODY:
+                        $body = $this->buildWidget($widget);
+                        break;
+                    case static::MODE_FULL:
+                        $body = $this->buildIncludes($widget) . "\n" . $this->buildWidget($widget);
+                }
+                break;
+                
+            case $result instanceof TaskResultFileInterface:
+                $message = 'Download ready. If it does not start automatically, click <a href="' . $result->getDownloadUri()->__toString() . '">here</a>.';
+                $json = [
+                    "success" => $message
+                ];
+                break;            
+            case $result instanceof TaskResultUriInterface:
+                // FIXME how how to pass redirects to the UI?
+                $uri = $result->getUri();
+                if ($result->getOpenInNewWindow()) {
+                    $uri = $uri->withQuery($uri->getQuery() ."target=_blank");
+                }
+                $json = [
+                    "redirect" => $uri->__toString()
+                ];
+                break;
+                
+            default:
+                $response = array();
+                $response['success'] = $result->getMessage();
+                if ($result->isUndoable()) {
+                    $response['undoable'] = '1';
+                }
+                // check if result is a properly formed link
+                if ($result instanceof TaskResultUriInterface) {
+                    $url = filter_var($result->getUri()->__toString(), FILTER_SANITIZE_STRING);
+                    if (substr($url, 0, 4) == 'http') {
+                        $response['redirect'] = $url;
+                    }
+                }
+                // Encode the response object to JSON converting <, > and " to HEX-values (e.g. \u003C). Without that conversion
+                // there might be trouble with HTML in the responses (e.g. jEasyUI will break it when parsing the response)
+                $body = $this->encodeData($response, $result->isContextModified() ? true : false);
         }
         
         if (! empty($json)) {
-            return $response->withBody(\GuzzleHttp\Psr7\stream_for($this->encodeData($json)));
-        } 
-            
-        return $response;
+            $body = $this->encodeData($json);
+        }
+        
+        return new Response($status_code, $headers, $body);
     }
     
-    protected function createResponseError(ServerRequestInterface $request, \Throwable $exception, UiPageInterface $page = null)
+    /**
+     *
+     * @param array|\stdClass $serializable_data
+     * @param string $add_extras
+     * @throws TemplateOutputError
+     * @return string
+     */
+    protected function encodeData($serializable_data, $add_extras = false)
     {
+        if ($add_extras){
+            $serializable_data['extras'] = [
+                'ContextBar' => $this->buildResponseExtraForContextBar()
+            ];
+        }
+        
+        $result = json_encode($serializable_data, JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_QUOT);
+        if (! $result) {
+            throw new TemplateOutputError('Error encoding data: ' . json_last_error() . ' ' . json_last_error_msg());
+        }
+        return $result;
+    }
+    
+    protected function buildResponseExtraForContextBar()
+    {
+        $extra = [];
+        try {
+            $contextBar = $this->getWorkbench()->ui()->getPageCurrent()->getContextBar();
+            foreach ($contextBar->getButtons() as $btn){
+                $btn_element = $this->getElement($btn);
+                $context = $contextBar->getContextForButton($btn);
+                $extra[$btn_element->getId()] = [
+                    'visibility' => $context->getVisibility(),
+                    'icon' => $btn_element->buildCssIconClass($btn->getIcon()),
+                    'color' => $context->getColor(),
+                    'hint' => $btn->getHint(),
+                    'indicator' => ! is_null($context->getIndicator()) ? $contextBar->getContextForButton($btn)->getIndicator() : '',
+                    'bar_widget_id' => $btn->getId()
+                ];
+            }
+        } catch (\Throwable $e){
+            $this->getWorkbench()->getLogger()->logException($e);
+        }
+        return $extra;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Templates\AbstractHttpTemplate\AbstractHttpTemplate::createResponseError()
+     */
+    protected function createResponseError(ServerRequestInterface $request, \Throwable $exception, UiPageInterface $page = null) : ResponseInterface {
         $mode = $request->getAttribute($this->getRequestAttributeForRenderingMode(), static::MODE_FULL);
         if ($mode === static::MODE_HEAD) {
             throw $exception;
         }
         
-        return parent::createResponse($request, $exception, $page);
+        $page = ! is_null($page) ? $page : UiPageFactory::createEmpty($this->getWorkbench()->ui());
+        
+        $status_code = is_numeric($exception->getStatusCode()) ? $exception->getStatusCode() : 500;
+        $headers = [];
+        $body = '';
+        
+        try {
+            $debug_widget = $exception->createWidget($page);
+            if ($page->getWorkbench()->getConfig()->getOption('DEBUG.SHOW_ERROR_DETAILS_TO_ADMINS_ONLY') && ! $page->getWorkbench()->context()->getScopeUser()->getUserCurrent()->isUserAdmin()) {
+                foreach ($debug_widget->getTabs() as $nr => $tab) {
+                    if ($nr > 0) {
+                        $tab->setHidden(true);
+                    }
+                }
+            }
+            $body = $this->buildIncludes($debug_widget) . "\n" . $this->buildWidget($debug_widget);
+        } catch (\Throwable $e) {
+            // If anything goes wrong when trying to prettify the original error, drop prettifying
+            // and throw the original exception wrapped in a notice about the failed prettification
+            $this->getWorkbench()->getLogger()->logException($e);
+            $log_id = $e instanceof ExceptionInterface ? $e->getId() : '';
+            throw new RuntimeException('Failed to create error report widget: "' . $e->getMessage() . '" - see ' . ($log_id ? 'log ID ' . $log_id : 'logs') . ' for more details! Find the orignal error detail below.', null, $exception);
+        } catch (FatalThrowableError $e) {
+            // If anything goes wrong when trying to prettify the original error, drop prettifying
+            // and throw the original exception wrapped in a notice about the failed prettification
+            $this->getWorkbench()->getLogger()->logException($e);
+            $log_id = $e instanceof ExceptionInterface ? $e->getId() : '';
+            throw new RuntimeException('Failed to create error report widget: "' . $e->getMessage() . '" - see ' . ($log_id ? 'log ID ' . $log_id : 'logs') . ' for more details! Find the orignal error detail below.', null, $exception);
+        }
+        
+        $this->getWorkbench()->getLogger()->logException($exception);
+        
+        return new Response($status_code, $headers, $body);
     }
 }
 ?>
