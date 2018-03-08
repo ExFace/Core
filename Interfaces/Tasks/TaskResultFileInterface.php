@@ -9,7 +9,7 @@ use Psr\Http\Message\UriInterface;
  * @author Andrej Kabachnik
  *
  */
-interface TaskResultFileInterface extends TaskResultInterface
+interface TaskResultFileInterface extends TaskResultStreamInterface
 {    
     /**
      * 

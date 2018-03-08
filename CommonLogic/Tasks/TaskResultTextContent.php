@@ -4,6 +4,7 @@ namespace exface\Core\CommonLogic\Tasks;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\Tasks\TaskResultTextContentInterface;
+use exface\Core\Interfaces\Tasks\TaskResultStreamInterface;
 
 /**
  * Task result containing textual content: i.e. text, code, etc..
@@ -14,6 +15,8 @@ use exface\Core\Interfaces\Tasks\TaskResultTextContentInterface;
 class TaskResultTextContent extends TaskResultMessage implements TaskResultTextContentInterface
 {
     private $content = null;
+    
+    private $mimeType = null;
     
     /**
      * 
@@ -42,5 +45,29 @@ class TaskResultTextContent extends TaskResultMessage implements TaskResultTextC
         return $this->content;
     }
 
-
+    
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Tasks\TaskResultStreamInterface::getMimeType()
+     */
+    public function getMimeType(): string
+    {
+        if (is_null($this->mimeType)) {
+            return GuzzleHttp\Psr7\mimetype_from_filename($this->getPathAbsolute());
+        }
+        return $this->mimeType;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Tasks\TaskResultStreamInterface::setMimeType()
+     */
+    public function setMimeType(string $string): TaskResultStreamInterface
+    {
+        $this->mimeType = $string;
+        return $this;
+    }
 }
