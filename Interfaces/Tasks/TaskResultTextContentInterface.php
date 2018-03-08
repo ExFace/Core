@@ -1,7 +1,7 @@
 <?php
 namespace exface\Core\Interfaces\Tasks;
 
-interface TaskResultTextContentInterface extends TaskResultInterface
+interface TaskResultTextContentInterface extends TaskResultStreamInterface
 {
     /**
      * 

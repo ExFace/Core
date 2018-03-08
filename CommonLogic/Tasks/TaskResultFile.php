@@ -4,6 +4,7 @@ namespace exface\Core\CommonLogic\Tasks;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\Tasks\TaskResultFileInterface;
+use exface\Core\Interfaces\Tasks\TaskResultStreamInterface;
 use exface\Core\Interfaces\Tasks\TaskResultUriInterface;
 use Psr\Http\Message\UriInterface;
 use GuzzleHttp\Psr7\Uri;
@@ -19,6 +20,8 @@ class TaskResultFile extends TaskResultMessage implements TaskResultFileInterfac
     private $uri = null;
     
     private $pathAbsolute = '';
+    
+    private $mimeType = null;
     
     /**
      * 
@@ -87,4 +90,30 @@ class TaskResultFile extends TaskResultMessage implements TaskResultFileInterfac
     {
         return $this->pathAbsolute;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Tasks\TaskResultStreamInterface::getMimeType()
+     */
+    public function getMimeType(): string
+    {
+        if (is_null($this->mimeType)) {
+            return GuzzleHttp\Psr7\mimetype_from_filename($this->getPathAbsolute());
+        }
+        return $this->mimeType;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Tasks\TaskResultStreamInterface::setMimeType()
+     */
+    public function setMimeType(string $string): TaskResultStreamInterface
+    {
+        $this->mimeType = $string;
+        return $this;
+    }
+
+
 }
