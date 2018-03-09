@@ -52,10 +52,10 @@ class TaskResultTextContent extends TaskResultMessage implements TaskResultTextC
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Tasks\TaskResultStreamInterface::getMimeType()
      */
-    public function getMimeType(): string
+    public function getMimeType($default = null): string
     {
         if (is_null($this->mimeType)) {
-            return GuzzleHttp\Psr7\mimetype_from_filename($this->getPathAbsolute());
+            return $default;
         }
         return $this->mimeType;
     }

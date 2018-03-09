@@ -81,9 +81,9 @@ class ExportData extends ReadData implements iExportData
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Actions\iExportData::getDownload()
+     * @see \exface\Core\Interfaces\Actions\iExportData::isDownloadable()
      */
-    public function getDownload()
+    public function isDownloadable()
     {
         return $this->download;
     }
@@ -91,9 +91,9 @@ class ExportData extends ReadData implements iExportData
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Actions\iExportData::setDownload()
+     * @see \exface\Core\Interfaces\Actions\iExportData::setDownloadable()
      */
-    public function setDownload($true_or_false)
+    public function setDownloadable($true_or_false) : iExportData
     {
         $this->download = BooleanDataType::cast($true_or_false);
         return $this;
@@ -117,7 +117,7 @@ class ExportData extends ReadData implements iExportData
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Actions\iExportData::setFilename()
      */
-    public function setFilename($filename)
+    public function setFilename($filename) : iExportData
     {
         $this->filename = $filename;
         return $this;
@@ -128,11 +128,11 @@ class ExportData extends ReadData implements iExportData
         $elem = $this->getApp()->getWorkbench()->ui()->getTemplate()->getElement($this->getWidgetDefinedIn());
         $output = $elem->prepareData($dataSheet);
         $contents = $this->getApp()->getWorkbench()->ui()->getTemplate()->encodeData($output, false);
-        If (is_null($this->getMimeType())){
-            // TODO get the mime type from the template somehow
-            $this->setMimeType('application/json');
+        $result = $this->createDownload($contents);
+        if (! is_null($this->getMimeType())){
+            $result->setMimeType($this->getMimeType());
         }
-        return $this->createDownload($contents);
+        return $result;
     }
     
     /**
@@ -147,20 +147,12 @@ class ExportData extends ReadData implements iExportData
         
         file_put_contents($pathname, $contents);
         
-        /*header('Content-Description: File Transfer');
-         header('Content-Type: text/csv');
-         header('Content-Disposition: attachment; filename=data.csv');
-         header('Content-Transfer-Encoding: binary');
-         header('Expires: 0');
-         header('Cache-Control: must-revalidate');
-         header('Pragma: public');
-         header('Content-Length: ' . filesize($tmpName));*/
         $url = $this->getWorkbench()->getCMS()->createLinkToFile($pathname);
         
         return ($url);
     }
     
-    public function getFileExtension(){
+    protected function getFileExtension(){
         switch ($this->getMimeType()){
             case 'application/json': return 'json';
             case 'text/xml': return 'xml';
@@ -186,15 +178,10 @@ class ExportData extends ReadData implements iExportData
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Actions\iExportData::setMimeType()
      */
-    public function setMimeType($mimeType)
+    public function setMimeType($mimeType) : iExportData
     {
         $this->mimeType = $mimeType;
         return $this;
-    }
- 
-    public function getResultOutput(){
-        return '';
-    }
-    
+    }    
 }
 ?>

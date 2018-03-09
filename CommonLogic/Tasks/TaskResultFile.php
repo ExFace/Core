@@ -5,9 +5,7 @@ use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\Tasks\TaskResultFileInterface;
 use exface\Core\Interfaces\Tasks\TaskResultStreamInterface;
-use exface\Core\Interfaces\Tasks\TaskResultUriInterface;
 use Psr\Http\Message\UriInterface;
-use GuzzleHttp\Psr7\Uri;
 
 /**
  * Task result containing a file.
@@ -17,7 +15,7 @@ use GuzzleHttp\Psr7\Uri;
  */
 class TaskResultFile extends TaskResultMessage implements TaskResultFileInterface
 {
-    private $uri = null;
+    private $downloadable = false;
     
     private $pathAbsolute = '';
     
@@ -33,40 +31,15 @@ class TaskResultFile extends TaskResultMessage implements TaskResultFileInterfac
         parent::__construct($task);
         $this->setDownloadUri($download);
     }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Tasks\TaskResultFileInterface::setDownloadUri()
-     */
-    public function setDownloadUri(UriInterface $uri): TaskResultUriInterface
-    {
-        $this->uri = $uri;
-        return $this;
-    }
 
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Tasks\TaskResultFileInterface::getDownloadUri()
+     * @see \exface\Core\Interfaces\Tasks\TaskResultFileInterface::isDownloadable()
      */
-    public function getDownloadUri(): UriInterface
+    public function isDownloadable(): bool
     {
-        if (is_null($this->uri)) {
-            $url = $this->getWorkbench()->getCMS()->createLinkToFile($this->getPathAbsolute());
-            $this->uri = new Uri($url);
-        }
-        return $this->uri;
-    }
-
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Tasks\TaskResultFileInterface::hasDownload()
-     */
-    public function hasDownload(): bool
-    {
-        return is_null($this->uri) && is_null($this->pathAbsolute) ? false : true;
+        return $this->downloadable;
     }
     
     public function setPath(string $path): TaskResultFileInterface

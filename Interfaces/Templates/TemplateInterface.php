@@ -5,19 +5,9 @@ use exface\Core\CommonLogic\Configuration;
 use exface\Core\Interfaces\ExfaceClassInterface;
 use exface\Core\Interfaces\AliasInterface;
 use exface\Core\Interfaces\AppInterface;
-use exface\Core\Interfaces\WidgetInterface;
 
 interface TemplateInterface extends ExfaceClassInterface, AliasInterface
 {
-
-    public function buildWidget(WidgetInterface $widget);
-
-    /**
-     *
-     * @return string
-     */
-    public function getAlias();
-
     /**
      * Returns TRUE if this template matches the given template alias and false otherwise (case insensitive!)
      *
