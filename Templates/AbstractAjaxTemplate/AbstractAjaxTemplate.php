@@ -36,6 +36,7 @@ use exface\Core\Exceptions\Templates\TemplateOutputError;
 use exface\Core\Exceptions\RuntimeException;
 use Symfony\Component\Debug\Exception\FatalThrowableError;
 use exface\Core\Factories\UiPageFactory;
+use exface\Core\Templates\FileServerTemplate\FileServerTemplate;
 
 abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
 {
@@ -380,11 +381,14 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
                 break;
                 
             case $result instanceof TaskResultFileInterface:
-                $message = 'Download ready. If it does not start automatically, click <a href="' . $result->getDownloadUri()->__toString() . '">here</a>.';
+                $url = FileServerTemplate::buildUrlForDownload($this->getWorkbench(), $result->getPathAbsolute());
+                $message = 'Download ready. If it does not start automatically, click <a href="' . $url . '">here</a>.';
                 $json = [
-                    "success" => $message
+                    "success" => $message,
+                    "download" => $url
                 ];
-                break;            
+                break;   
+                
             case $result instanceof TaskResultUriInterface:
                 // FIXME how how to pass redirects to the UI?
                 $uri = $result->getUri();
