@@ -25,6 +25,7 @@ use exface\Core\Interfaces\Model\MetaAttributeGroupInterface;
 use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
+use exface\Core\DataTypes\StringDataType;
 
 class Object implements MetaObjectInterface
 {
@@ -1047,7 +1048,7 @@ class Object implements MetaObjectInterface
     public function getDataAddressRequiredPlaceholders($includeStaticPlaceholders = true, $includeDynamicPlaceholders = true)
     {
         $result = [];
-        foreach ($this->getModel()->getWorkbench()->utils()->findPlaceholdersInString($this->getDataAddress()) as $ph) {
+        foreach (StringDataType::findPlaceholders($this->getDataAddress()) as $ph) {
             if (substr($ph, 0, 1) === '~') {
                 if ($includeStaticPlaceholders) {
                     $result[] = $ph; 

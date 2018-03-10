@@ -13,6 +13,7 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Tasks\TaskResultInterface;
+use exface\Core\DataTypes\StringDataType;
 
 class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuery
 {
@@ -113,7 +114,7 @@ class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuer
             foreach ($this->getQueries() as $query) {
                 // See if the query has any placeholders
                 $placeholders = array();
-                foreach ($this->getWorkbench()->utils()->findPlaceholdersInString($query) as $ph) {
+                foreach (StringDataType::findPlaceholders($query) as $ph) {
                     /* @var $col exface\Core\CommonLogic\DataSheets\DataColumn */
                     if (! $col = $data_sheet->getColumns()->get(DataColumn::sanitizeColumnName($ph))) {
                         throw new ActionInputMissingError($this, 'Cannot perform custom query in "' . $this->getAliasWithNamespace() . '": placeholder "' . $ph . '" not found in inupt data!', '6T5DNWE');
