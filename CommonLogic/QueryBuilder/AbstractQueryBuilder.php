@@ -8,6 +8,7 @@ use exface\Core\Exceptions\QueryBuilderException;
 use exface\Core\Factories\ConditionFactory;
 use exface\Core\Exceptions\Model\MetaObjectDataConnectionNotFoundError;
 use exface\Core\Interfaces\Model\AggregatorInterface;
+use exface\Core\DataTypes\StringDataType;
 
 abstract class AbstractQueryBuilder
 {
@@ -591,7 +592,7 @@ abstract class AbstractQueryBuilder
     
     protected function replacePlaceholdersByFilterValues($string)
     {
-        foreach ($this->getWorkbench()->utils()->findPlaceholdersInString($string) as $ph) {
+        foreach (StringDataType::findPlaceholders($string) as $ph) {
             if ($ph_filter = $this->getFilter($ph)) {
                 if (! is_null($ph_filter->getCompareValue())) {
                     $string = str_replace('[#' . $ph . '#]', $ph_filter->getCompareValue(), $string);

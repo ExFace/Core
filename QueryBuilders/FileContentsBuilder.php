@@ -5,6 +5,7 @@ use exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder;
 use exface\Core\CommonLogic\AbstractDataConnector;
 use exface\Core\CommonLogic\DataQueries\FileContentsDataQuery;
 use exface\Core\Exceptions\QueryBuilderException;
+use exface\Core\DataTypes\StringDataType;
 
 /**
  * A query builder to the raw contents of a file.
@@ -122,7 +123,7 @@ class FileContentsBuilder extends AbstractQueryBuilder
      */
     protected function replacePlaceholdersInPath($path)
     {
-        foreach ($this->getWorkbench()->utils()->findPlaceholdersInString($path) as $ph) {
+        foreach (StringDataType::findPlaceholders($path) as $ph) {
             if ($ph_filter = $this->getFilter($ph)) {
                 if (! is_null($ph_filter->getCompareValue())) {
                     $path = str_replace('[#' . $ph . '#]', $ph_filter->getCompareValue(), $path);

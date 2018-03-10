@@ -7,6 +7,7 @@ use exface\Core\Widgets\Button;
 use exface\Core\Interfaces\Actions\iShowWidget;
 use exface\Core\Actions\GoToPage;
 use exface\Core\Actions\RefreshWidget;
+use exface\Core\DataTypes\StringDataType;
 
 trait JqueryButtonTrait {
 
@@ -44,7 +45,7 @@ trait JqueryButtonTrait {
     protected function buildJsPlaceholderReplacer($js_var, $js_values_object, $string_with_placeholders, $js_sanitizer_function = null)
     {
         $output = '';
-        $placeholders = $this->getTemplate()->getWorkbench()->utils()->findPlaceholdersInString($string_with_placeholders);
+        $placeholders = StringDataType::findPlaceholders($string_with_placeholders);
         foreach ($placeholders as $ph) {
             $value = $js_values_object . "['" . $ph . "']";
             if ($js_sanitizer_function) {

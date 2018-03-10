@@ -3,7 +3,6 @@ namespace exface\Core\CommonLogic;
 
 use exface\Core\CommonLogic\Log\Log;
 use exface\Core\Interfaces\CmsConnectorInterface;
-use exface\Core\utils;
 use exface\Core\Factories\DataConnectorFactory;
 use exface\Core\Factories\CmsConnectorFactory;
 use exface\Core\Factories\AppFactory;
@@ -104,8 +103,6 @@ class Workbench
         // start the event dispatcher
         $this->event_manager = new EventManager($this);
         $this->event_manager->dispatch(EventFactory::createBasicEvent($this, 'Start'));
-        // Initialize utilities
-        $this->utils = new utils();
         
         // load the CMS connector
         $this->cms = CmsConnectorFactory::create($this->createNameResolver($this->getConfig()->getOption('CMS_CONNECTOR'), NameResolver::OBJECT_TYPE_CMS_CONNECTOR));
@@ -355,16 +352,6 @@ class Workbench
     {
         $this->request_params[$param_name] = $value;
         return $this;
-    }
-
-    /**
-     * Get the utilities class
-     *
-     * @return utils
-     */
-    public function utils()
-    {
-        return $this->utils;
     }
 
     /**

@@ -6,6 +6,7 @@ use exface\Core\CommonLogic\AbstractAction;
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Exceptions\Actions\ActionRuntimeError;
+use exface\Core\DataTypes\StringDataType;
 
 /**
  * This action opens a URL for a given object instance.
@@ -99,7 +100,7 @@ class GoToUrl extends AbstractAction implements iShowUrl
     public function buildUrlFromDataSheet(DataSheetInterface $data_sheet, $row_nr = 0)
     {
         $url = $this->getUrl();
-        $placeholders = $this->getWorkbench()->utils()->findPlaceholdersInString($url);
+        $placeholders = StringDataType::findPlaceholders($url);
         foreach ($placeholders as $ph){
             if ($col = $data_sheet->getColumns()->getByExpression($ph)){
                 $url = str_replace('[#' . $ph . '#]', $col->getCellValue($row_nr), $url);
