@@ -5,7 +5,6 @@ require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATO
 
 use exface\Core\CommonLogic\Log\Log;
 use exface\Core\Interfaces\CmsConnectorInterface;
-use exface\Core\utils;
 use exface\Core\Factories\DataConnectorFactory;
 use exface\Core\Factories\CmsConnectorFactory;
 use exface\Core\Factories\AppFactory;
@@ -106,8 +105,6 @@ class Workbench implements WorkbenchInterface
         // start the event dispatcher
         $this->event_manager = new EventManager($this);
         $this->event_manager->dispatch(EventFactory::createBasicEvent($this, 'Start'));
-        // Initialize utilities
-        $this->utils = new utils();
         
         // load the CMS connector
         $this->cms = CmsConnectorFactory::create($this->createNameResolver($this->getConfig()->getOption('CMS_CONNECTOR'), NameResolver::OBJECT_TYPE_CMS_CONNECTOR));
@@ -309,16 +306,6 @@ class Workbench implements WorkbenchInterface
             $this->data()->disconnectAll();
             $this->eventManager()->dispatch(EventFactory::createBasicEvent($this, 'Stop'));
         }
-    }
-
-    /**
-     * Get the utilities class
-     *
-     * @return utils
-     */
-    public function utils()
-    {
-        return $this->utils;
     }
 
     /**

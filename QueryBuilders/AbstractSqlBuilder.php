@@ -1667,7 +1667,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             $prefix = $relation_path->toString();
         }
         
-        foreach ($this->getWorkbench()->utils()->findPlaceholdersInString($data_address) as $ph) {
+        foreach (StringDataType::findPlaceholders($data_address) as $ph) {
             $ph_attribute_alias = RelationPath::relationPathAdd($prefix, $ph);
             if (! $qpart = $this->getAttribute($ph_attribute_alias)) {
                 // Throw an error if the attribute cannot be resolved relative to the main object of the query

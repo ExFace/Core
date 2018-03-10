@@ -307,7 +307,15 @@ class Toolbar extends Container implements iHaveButtons, iContainButtonGroups, i
     
     public function getButtonWidgetType()
     {
-        return 'Button';
+        if ($this->getParent() instanceof iHaveButtons){
+            $type = $this->getParent()->getButtonWidgetType();
+        } elseif ($this->getInputWidget() instanceof iHaveButtons){
+            $type = $this->getInputWidget()->getButtonWidgetType();
+        } else {
+            $type = 'Button';
+        }
+        
+        return $type;
     }
     
     /**

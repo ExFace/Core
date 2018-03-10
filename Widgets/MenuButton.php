@@ -143,7 +143,14 @@ class MenuButton extends Button implements iHaveMenu, iHaveButtons
      */
     public function getButtonWidgetType()
     {
-        return $this->getMenu()->getButtonWidgetType();
+        if ($this->getParent() instanceof iHaveButtons){
+            $type = $this->getParent()->getButtonWidgetType();
+        } elseif ($this->getInputWidget() instanceof iHaveButtons){
+            $type = $this->getInputWidget()->getButtonWidgetType();
+        } else {
+            $type = 'Button';
+        }
+        return $type;
     }
     
     /**

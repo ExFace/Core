@@ -10,6 +10,7 @@ use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Tasks\TaskResultInterface;
 use exface\Core\Factories\TaskResultFactory;
+use exface\Core\DataTypes\StringDataType;
 
 /**
  * This action opens a URL for a given object instance.
@@ -109,7 +110,7 @@ class GoToUrl extends AbstractAction implements iShowUrl
     public function buildUrlFromDataSheet(DataSheetInterface $data_sheet, $row_nr = 0)
     {
         $url = $this->getUrl();
-        $placeholders = $this->getWorkbench()->utils()->findPlaceholdersInString($url);
+        $placeholders = StringDataType::findPlaceholders($url);
         foreach ($placeholders as $ph){
             if ($col = $data_sheet->getColumns()->getByExpression($ph)){
                 $url = str_replace('[#' . $ph . '#]', $col->getCellValue($row_nr), $url);
