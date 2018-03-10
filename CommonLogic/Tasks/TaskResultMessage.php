@@ -3,6 +3,7 @@ namespace exface\Core\CommonLogic\Tasks;
 
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\Tasks\TaskResultInterface;
+use exface\Core\DataTypes\StringDataType;
 
 /**
  * Generic task result implementation.
@@ -93,8 +94,8 @@ class TaskResultMessage implements TaskResultInterface
             $message = '';
         } else {
             $message = $this->message;
-            $placeholders = $this->getWorkbench()->utils()->findPlaceholdersInString($message);
-            if ($placeholders) {
+            $placeholders = StringDataType::findPlaceholders($message);
+            if (! empty($placeholders)) {
                 $message = '';
                 foreach ($this->getResultDataSheet()->getRows() as $row) {
                     $message_line = $this->getResultMessageText();
