@@ -162,12 +162,16 @@ trait JqueryButtonTrait {
 									data: requestData
 								},
 								success: function(data, textStatus, jqXHR) {
-									var response = {};
-									try {
-										response = $.parseJSON(data);
-									} catch (e) {
-										response.error = data;
-									}
+                                    if (typeof data === 'object') {
+                                        response = data;
+                                    } else {
+                                        var response = {};
+    									try {
+    										response = $.parseJSON(data);
+    									} catch (e) {
+    										response.error = data;
+    									}
+                                    }
 				                   	if (response.success){
 										" . $this->buildJsCloseDialog($widget, $input_element) . "
 										" . $this->buildJsInputRefresh($widget, $input_element) . "
