@@ -25,6 +25,7 @@ use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\Tasks\TaskResultInterface;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
+use exface\Core\Interfaces\Actions\iModifyData;
 
 /**
  * The abstract action is a generic implementation of the ActionInterface, that simplifies 
@@ -293,8 +294,10 @@ abstract class AbstractAction implements ActionInterface
         // FIXME re-enable action context: maybe make it work with events?
         // $this->getApp()->getWorkbench()->context()->getScopeWindow()->getActionContext()->addAction($this);
         
-        // Commit the transaction if autocommit is on
-        if ($this->getAutocommit() && $result->isDataModified()) {
+        // Commit the transaction if autocommit is on and the action COULD have modified data
+        // We cannot rely on $result->isDataModified() at this point as it is not allways possible to determine
+        // it within the action (some data source simply do give relieable feedback).
+        if ($this->getAutocommit() && ($this instanceof iModifyData)) {
             $transaction->commit();
         }
         

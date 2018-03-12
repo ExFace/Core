@@ -37,11 +37,15 @@ class CreateData extends SaveData implements iCreateData
             $affected_rows += $data_sheet->dataCreate(true, $transaction);
         }
         
-        // FIXME #api-v4 implement undo
-        // $this->setUndoDataSheet($data_sheet);
+        $this->setUndoDataSheet($data_sheet);
         
         $message = $this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.CREATEDATA.RESULT', ['%number%' => $affected_rows], $affected_rows);
-        return TaskResultFactory::createDataResult($task, $data_sheet, $message);
+        $result = TaskResultFactory::createDataResult($task, $data_sheet, $message);
+        if ($affected_rows > 0) {
+            $result->setDataModified(true);
+        }
+        
+        return $result;
     }
 
     /**
