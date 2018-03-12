@@ -16,13 +16,7 @@ use exface\Core\Interfaces\WidgetInterface;
  *
  */
 interface TaskInterface extends ExfaceClassInterface
-{
-    /**
-     * 
-     * @param TemplateInterface $template
-     */
-    public function __construct(TemplateInterface $template);
-    
+{    
     /**
      * 
      * @return ActionSelectorInterface

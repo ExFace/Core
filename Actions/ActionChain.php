@@ -61,8 +61,6 @@ class ActionChain extends AbstractAction
 
     private $use_single_transaction = true;
 
-    private $output = '';
-
     protected function init()
     {
         parent::init();
@@ -91,7 +89,7 @@ class ActionChain extends AbstractAction
             
             // Perform
             $result = $action->handle($t, $ts);
-            $message .= $action->getResultMessage() . "\n";
+            $message .= $result->getMessage() . "\n";
             if ($result->isDataModified()) {
                 $data_modified = true;
             }
@@ -160,11 +158,6 @@ class ActionChain extends AbstractAction
     {
         $this->use_single_transaction = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;
-    }
-
-    public function getResultOutput()
-    {
-        return $this->output;
     }
 
     public function getInputRowsMin()

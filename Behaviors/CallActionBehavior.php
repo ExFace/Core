@@ -7,6 +7,8 @@ use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\ActionFactory;
 use exface\Core\Events\DataSheetEvent;
+use exface\Core\CommonLogic\Tasks\GenericTask;
+use exface\Core\Factories\TaskFactory;
 
 /**
  * Attachable to DataSheetEvents, calls any action.
@@ -125,10 +127,10 @@ class CallActionBehavior extends AbstractBehavior
             return;
         }
         
-        if ($this->getAction()) {
-            $action = $this->getAction()->copy();
-            $action->setInputDataSheet($data_sheet);
-            $action->getResult();
+        if ($action = $this->getAction()) {
+            $task = TaskFactory::createFromDataSheet($data_sheet);
+            // FIXME #api-v4 pass the transaction to the action once it is available in the data sheet event
+            $action->handle($task);
         }
     }
 }

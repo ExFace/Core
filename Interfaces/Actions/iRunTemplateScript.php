@@ -47,12 +47,5 @@ interface iRunTemplateScript
      * @return string valid java script
      */
     public function buildScriptHelperFunctions();
-
-    /**
-     * The output of custom template script actions is text
-     *
-     * @return string
-     */
-    public function getResult();
 }
 ?>

@@ -5,6 +5,7 @@ use exface\Core\Interfaces\Tasks\HttpTaskInterface;
 use exface\Core\Interfaces\Templates\TemplateInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use GuzzleHttp\Psr7\ServerRequest;
+use exface\Core\Interfaces\WorkbenchInterface;
 
 /**
  * 
@@ -20,9 +21,9 @@ class HttpTask extends GenericTask implements HttpTaskInterface
      * @param TemplateInterface $template
      * @param ServerRequestInterface $request
      */
-    public function __construct(TemplateInterface $template, ServerRequestInterface $request = null)
+    public function __construct(WorkbenchInterface $workbench, TemplateInterface $template = null, ServerRequestInterface $request = null)
     {
-        parent::__construct($template);
+        parent::__construct($workbench, $template);
         if (is_null($request)) {
             $request = ServerRequest::fromGlobals();
         }

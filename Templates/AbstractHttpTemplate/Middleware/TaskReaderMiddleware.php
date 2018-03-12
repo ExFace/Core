@@ -17,6 +17,7 @@ use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Exceptions\Templates\TemplateRequestParsingError;
 use exface\Core\Exceptions\DomainException;
+use exface\Core\Factories\TaskFactory;
 
 /**
  * This PSR-15 middleware...
@@ -78,7 +79,7 @@ class TaskReaderMiddleware implements MiddlewareInterface
     {
         $task = $request->getAttribute($this->attributeNameRequest);
         if ($task === null) {
-            $task = new HttpTask($this->template, $request);
+            $task = TaskFactory::createHttpTask($this->template, $request);
         }
         
         $task = $this->readActionSelector($request, $task);
