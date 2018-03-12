@@ -295,6 +295,7 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
         $reader->setParamNameWidget('element');
         $reader->setParamNameData('data');
         $reader->setParamNamePrefill('prefill');
+        $reader->setParamNameQuickSearch('q');
         
         $reader->setFilterParser(function(array $params, DataSheetInterface $dataSheet) {
             // Filters a passed as request values with a special prefix: fltr01_, fltr02_, etc.
