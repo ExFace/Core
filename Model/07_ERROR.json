@@ -1380,6 +1380,28 @@
             "ERROR_CODE": "6Z5MAVK",
             "ERROR_TEXT": "Invalid configuration for the DataRowGrouper",
             "DESCRIPTION": ""
+        },
+        {
+            "CREATED_ON": "2018-03-12 12:48:09",
+            "MODIFIED_ON": "2018-03-12 12:48:09",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e825f39dc88a37afe20205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "ERROR_CODE": "6ZISUAJ",
+            "ERROR_TEXT": "Cannot delete dependent data",
+            "DESCRIPTION": "When trying to delete a business object, the system automatically looks for related data, that depends on it and attempts to remove it first. This error indicates, that this operation failed.\n\nRemoving dependent data is important as it would become meaningless garbage without the object it depends on: e.g. an order position cannot exist if the order was physically deleted.\n\nIf the related data cannot be removed automatically, you should try deleting it manually and retry the failed delete operation."
+        },
+        {
+            "CREATED_ON": "2018-03-12 13:07:22",
+            "MODIFIED_ON": "2018-03-12 13:07:22",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e825f64d3bb61dafe20205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "ERROR_CODE": "6ZIT36X",
+            "ERROR_TEXT": "No data source defined for object",
+            "DESCRIPTION": "This error occurs if an operation requiring a data source (e.g. reading or writing) was called on an object that does not have one. \n\nObjects without data sources are quite legitimate. For example, they can be used to model the input data for an action, which is not a direct replica of data source entry. However, these objects only exist in the runtime. If an attempt is made to persist such an object, this error will occur."
         }
     ],
     "totals_rows": [],
