@@ -6,8 +6,8 @@ use exface\Core\CommonLogic\AbstractAction;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
-use exface\Core\Interfaces\Tasks\TaskResultInterface;
-use exface\Core\CommonLogic\Tasks\TaskResultData;
+use exface\Core\Interfaces\Tasks\ResultInterface;
+use exface\Core\CommonLogic\Tasks\ResultData;
 use exface\Core\Exceptions\Actions\ActionCallingWidgetNotSpecifiedError;
 
 /**
@@ -27,7 +27,7 @@ class ReadData extends AbstractAction implements iReadData
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\AbstractAction::perform()
      */
-    protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : TaskResultInterface
+    protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {
         if (! $this->checkPermissions($task)) {
             // TODO Throw exception!
@@ -48,7 +48,7 @@ class ReadData extends AbstractAction implements iReadData
             $this->updateFilterContext($data_sheet);
         }
         
-        $result = new TaskResultData($task, $data_sheet);
+        $result = new ResultData($task, $data_sheet);
         $result->setMessage($affected_rows . ' entries read');
         
         return $result;

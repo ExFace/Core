@@ -12,9 +12,9 @@ use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
-use exface\Core\Interfaces\Tasks\TaskResultInterface;
+use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\DataTypes\StringDataType;
-use exface\Core\Factories\TaskResultFactory;
+use exface\Core\Factories\ResultFactory;
 
 class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuery
 {
@@ -95,7 +95,7 @@ class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuer
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\AbstractAction::perform()
      */
-    protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : TaskResultInterface
+    protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {
         $counter = 0;
         $data_sheet = $this->getInputDataSheet($task);
@@ -141,7 +141,7 @@ class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuer
         }
         $data_sheet->dataRead();
         
-        $result = TaskResultFactory::createDataResult($task, $data_sheet);
+        $result = ResultFactory::createDataResult($task, $data_sheet);
         $result->setMessage($this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.CUSTOMDATAQUERY.RESULT', array(
             '%number%' => $counter
         ), $counter));

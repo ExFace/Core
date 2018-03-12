@@ -3,8 +3,8 @@ namespace exface\Core\CommonLogic\Tasks;
 
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
-use exface\Core\Interfaces\Tasks\TaskResultFileInterface;
-use exface\Core\Interfaces\Tasks\TaskResultUriInterface;
+use exface\Core\Interfaces\Tasks\ResultFileInterface;
+use exface\Core\Interfaces\Tasks\ResultUriInterface;
 use Psr\Http\Message\UriInterface;
 use exface\Core\DataTypes\BooleanDataType;
 
@@ -14,7 +14,7 @@ use exface\Core\DataTypes\BooleanDataType;
  * @author Andrej Kabachnik
  *
  */
-class TaskResultUri extends TaskResultMessage implements TaskResultUriInterface
+class ResultUri extends ResultMessage implements ResultUriInterface
 {
     private $uri = null;
     
@@ -25,9 +25,9 @@ class TaskResultUri extends TaskResultMessage implements TaskResultUriInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Tasks\TaskResultUriInterface::setUri()
+     * @see \exface\Core\Interfaces\Tasks\ResultUriInterface::setUri()
      */
-    public function setUri(UriInterface $uri): TaskResultUriInterface
+    public function setUri(UriInterface $uri): ResultUriInterface
     {
         $this->uri = $uri;
         return $this;
@@ -36,7 +36,7 @@ class TaskResultUri extends TaskResultMessage implements TaskResultUriInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Tasks\TaskResultUriInterface::getUri()
+     * @see \exface\Core\Interfaces\Tasks\ResultUriInterface::getUri()
      */
     public function getUri(): UriInterface
     {
@@ -46,7 +46,7 @@ class TaskResultUri extends TaskResultMessage implements TaskResultUriInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Tasks\TaskResultUriInterface::hasUri()
+     * @see \exface\Core\Interfaces\Tasks\ResultUriInterface::hasUri()
      */
     public function hasUri(): bool
     {
@@ -56,7 +56,7 @@ class TaskResultUri extends TaskResultMessage implements TaskResultUriInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Tasks\TaskResultUriInterface::getAutoRedirect()
+     * @see \exface\Core\Interfaces\Tasks\ResultUriInterface::getAutoRedirect()
      */
     public function getAutoRedirect() : bool
     {
@@ -66,9 +66,9 @@ class TaskResultUri extends TaskResultMessage implements TaskResultUriInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Tasks\TaskResultUriInterface::setAutoRedirect()
+     * @see \exface\Core\Interfaces\Tasks\ResultUriInterface::setAutoRedirect()
      */
-    public function setAutoRedirect($trueOrFalse) : TaskResultUriInterface
+    public function setAutoRedirect($trueOrFalse) : ResultUriInterface
     {
         $this->autoRedirect = BooleanDataType::cast($trueOrFalse);
         return $this;
@@ -77,9 +77,9 @@ class TaskResultUri extends TaskResultMessage implements TaskResultUriInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Tasks\TaskResultUriInterface::setOpenInNewWindow()
+     * @see \exface\Core\Interfaces\Tasks\ResultUriInterface::setOpenInNewWindow()
      */
-    public function setOpenInNewWindow($trueOrFalse): TaskResultUriInterface
+    public function setOpenInNewWindow($trueOrFalse): ResultUriInterface
     {
         $this->openInNewWindow = BooleanDataType::cast($trueOrFalse);
         return $this;
@@ -88,7 +88,7 @@ class TaskResultUri extends TaskResultMessage implements TaskResultUriInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Tasks\TaskResultUriInterface::getOpenInNewWindow()
+     * @see \exface\Core\Interfaces\Tasks\ResultUriInterface::getOpenInNewWindow()
      */
     public function getOpenInNewWindow(): bool
     {

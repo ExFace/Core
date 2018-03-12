@@ -6,8 +6,8 @@ use exface\Core\CommonLogic\AbstractAction;
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
-use exface\Core\Interfaces\Tasks\TaskResultInterface;
-use exface\Core\Factories\TaskResultFactory;
+use exface\Core\Interfaces\Tasks\ResultInterface;
+use exface\Core\Factories\ResultFactory;
 
 class GoBack extends AbstractAction implements iNavigate
 {
@@ -17,9 +17,9 @@ class GoBack extends AbstractAction implements iNavigate
         $this->setIcon(Icons::ARROW_LEFT);
     }
 
-    protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : TaskResultInterface
+    protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {
-        return TaskResultFactory::createEmptyResult($task);
+        return ResultFactory::createEmptyResult($task);
     }
 }
 ?>

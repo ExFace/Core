@@ -6,7 +6,7 @@ use exface\Core\Factories\ActionFactory;
 use exface\Core\Factories\ConfigurationFactory;
 use exface\Core\Interfaces\ConfigurationInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
-use exface\Core\Interfaces\Tasks\TaskResultInterface;
+use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Interfaces\Contexts\ContextManagerInterface;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\TranslationInterface;
@@ -426,7 +426,7 @@ class App implements AppInterface
         return $ds;
     }
     
-    public function handle(TaskInterface $task): TaskResultInterface
+    public function handle(TaskInterface $task): ResultInterface
     {
         if ($task->isTriggeredByWidget()) {
             $widget = $task->getWidgetTriggeredBy();

@@ -25,7 +25,7 @@ use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Interfaces\Selectors\AppSelectorInterface;
 use exface\Core\CommonLogic\Selectors\AppSelector;
 use exface\Core\Interfaces\WorkbenchInterface;
-use exface\Core\Interfaces\Tasks\TaskResultInterface;
+use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Exceptions\AppNotFoundError;
 
 class Workbench implements WorkbenchInterface
@@ -477,7 +477,7 @@ class Workbench implements WorkbenchInterface
         return $this;
     }
     
-    public function handle(TaskInterface $task) : TaskResultInterface
+    public function handle(TaskInterface $task) : ResultInterface
     {
         if (! $task->hasAction()) {
             throw new AppNotFoundError('Cannot handle task without an action selector!');

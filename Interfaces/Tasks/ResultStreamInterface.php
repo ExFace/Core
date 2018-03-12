@@ -1,7 +1,7 @@
 <?php
 namespace exface\Core\Interfaces\Tasks;
 
-interface TaskResultStreamInterface extends TaskResultInterface
+interface ResultStreamInterface extends ResultInterface
 {
     /**
      * 
@@ -12,7 +12,7 @@ interface TaskResultStreamInterface extends TaskResultInterface
     /**
      * 
      * @param string $string
-     * @return TaskResultStreamInterface
+     * @return ResultStreamInterface
      */
-    public function setMimeType(string $string) : TaskResultStreamInterface;
+    public function setMimeType(string $string) : ResultStreamInterface;
 }

@@ -13,7 +13,7 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\DataSheets\DataSheetMapperInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
-use exface\Core\Interfaces\Tasks\TaskResultInterface;
+use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Interfaces\TaskHandlerInterface;
@@ -37,7 +37,7 @@ use exface\Core\Exceptions\Widgets\WidgetNotFoundError;
  * programmatically via UXON or using the action's interfaces in OOP style directly.
  * 
  * @see TaskInterface
- * @see TaskResultTextContentInterface
+ * @see ResultTextContentInterface
  * 
  * @author Andrej Kabachnik
  *
@@ -48,9 +48,9 @@ interface ActionInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
     /**
      * 
      * @param TaskInterface $task
-     * @return TaskResultInterface
+     * @return ResultInterface
      */
-    public function handle(TaskInterface $task, DataTransactionInterface $transaction = null) : TaskResultInterface;
+    public function handle(TaskInterface $task, DataTransactionInterface $transaction = null) : ResultInterface;
 
     /**
      *

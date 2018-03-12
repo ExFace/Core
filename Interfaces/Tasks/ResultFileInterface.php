@@ -7,7 +7,7 @@ namespace exface\Core\Interfaces\Tasks;
  * @author Andrej Kabachnik
  *
  */
-interface TaskResultFileInterface extends TaskResultStreamInterface
+interface ResultFileInterface extends ResultStreamInterface
 {    
     /**
      * 
@@ -25,8 +25,8 @@ interface TaskResultFileInterface extends TaskResultStreamInterface
      * Sets the path to the result file: either absolute or relative to the installation folder.
      * 
      * @param string $path
-     * @return TaskResultFileInterface
+     * @return ResultFileInterface
      */
-    public function setPath(string $path) : TaskResultFileInterface;
+    public function setPath(string $path) : ResultFileInterface;
     
 }

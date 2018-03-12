@@ -9,7 +9,7 @@ use Psr\Http\Message\UriInterface;
  * @author Andrej Kabachnik
  *
  */
-interface TaskResultUriInterface extends TaskResultInterface
+interface ResultUriInterface extends ResultInterface
 {    
     /**
      * 
@@ -20,9 +20,9 @@ interface TaskResultUriInterface extends TaskResultInterface
     /**
      * 
      * @param UriInterface $uri
-     * @return TaskResultUriInterface
+     * @return ResultUriInterface
      */
-    public function setUri(UriInterface $uri) : TaskResultUriInterface;
+    public function setUri(UriInterface $uri) : ResultUriInterface;
     
     /**
      * 
@@ -39,9 +39,9 @@ interface TaskResultUriInterface extends TaskResultInterface
     /**
      * 
      * @param bool $trueOrFalse
-     * @return TaskResultUriInterface
+     * @return ResultUriInterface
      */
-    public function setAutoRedirect($trueOrFalse) : TaskResultUriInterface;
+    public function setAutoRedirect($trueOrFalse) : ResultUriInterface;
     
     /**
      * 
@@ -52,8 +52,8 @@ interface TaskResultUriInterface extends TaskResultInterface
     /**
      * 
      * @param unknown $trueOrFalse
-     * @return TaskResultUriInterface
+     * @return ResultUriInterface
      */
-    public function setOpenInNewWindow($trueOrFalse) : TaskResultUriInterface;
+    public function setOpenInNewWindow($trueOrFalse) : ResultUriInterface;
     
 }

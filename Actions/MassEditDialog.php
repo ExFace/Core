@@ -6,7 +6,7 @@ use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
-use exface\Core\Interfaces\Tasks\TaskResultInterface;
+use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\WidgetInterface;
 
@@ -40,7 +40,7 @@ class MassEditDialog extends ShowDialog
      * {@inheritDoc}
      * @see \exface\Core\Actions\ShowWidget::perform()
      */
-    protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : TaskResultInterface
+    protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {
         $data_sheet = $this->getInputDataSheet($task);
         if ($this->isWidgetDefined()) {

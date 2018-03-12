@@ -13,8 +13,8 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
-use exface\Core\Interfaces\Tasks\TaskResultInterface;
-use exface\Core\CommonLogic\Tasks\TaskResultData;
+use exface\Core\Interfaces\Tasks\ResultInterface;
+use exface\Core\CommonLogic\Tasks\ResultData;
 
 /**
  * This action chains other actions together and performs them one after another.
@@ -67,7 +67,7 @@ class ActionChain extends AbstractAction
         $this->actions = new ActionList($this->getWorkbench(), $this);
     }
 
-    protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : TaskResultInterface
+    protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {
         if ($this->getActions()->isEmpty()) {
             throw new ActionConfigurationError($this, 'An action chain must contain at least one action!', '6U5TRGK');
@@ -93,7 +93,7 @@ class ActionChain extends AbstractAction
             if ($result->isDataModified()) {
                 $data_modified = true;
             }
-            if ($result instanceof TaskResultData) {
+            if ($result instanceof ResultData) {
                 $data = $result->getData();
             }
         }

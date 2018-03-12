@@ -2,7 +2,7 @@
 namespace exface\Core\CommonLogic\Tasks;
 
 use exface\Core\Interfaces\WidgetInterface;
-use exface\Core\Interfaces\Tasks\TaskResultWidgetInterface;
+use exface\Core\Interfaces\Tasks\ResultWidgetInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 
 /**
@@ -11,7 +11,7 @@ use exface\Core\Interfaces\Tasks\TaskInterface;
  * @author Andrej Kabachnik
  *
  */
-class TaskResultWidget extends TaskResultMessage implements TaskResultWidgetInterface
+class ResultWidget extends ResultMessage implements ResultWidgetInterface
 {
     private $widget = null;
     
@@ -29,7 +29,7 @@ class TaskResultWidget extends TaskResultMessage implements TaskResultWidgetInte
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Tasks\TaskResultWidgetInterface::getWidget()
+     * @see \exface\Core\Interfaces\Tasks\ResultWidgetInterface::getWidget()
      */
     public function getWidget(): WidgetInterface
     {
@@ -39,9 +39,9 @@ class TaskResultWidget extends TaskResultMessage implements TaskResultWidgetInte
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Tasks\TaskResultWidgetInterface::setWidget()
+     * @see \exface\Core\Interfaces\Tasks\ResultWidgetInterface::setWidget()
      */
-    public function setWidget(WidgetInterface $widget): TaskResultWidgetInterface
+    public function setWidget(WidgetInterface $widget): ResultWidgetInterface
     {
         $this->widget = $widget;
         return $this;
@@ -50,7 +50,7 @@ class TaskResultWidget extends TaskResultMessage implements TaskResultWidgetInte
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Tasks\TaskResultWidgetInterface::hasWidget()
+     * @see \exface\Core\Interfaces\Tasks\ResultWidgetInterface::hasWidget()
      */
     public function hasWidget(): bool
     {

@@ -1,7 +1,7 @@
 <?php
 namespace exface\Core\CommonLogic\Tasks;
 
-use exface\Core\Interfaces\Tasks\TaskResultDataInterface;
+use exface\Core\Interfaces\Tasks\ResultDataInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Factories\DataSheetFactory;
@@ -12,7 +12,7 @@ use exface\Core\Factories\DataSheetFactory;
  * @author Andrej Kabachnik
  *
  */
-class TaskResultData extends TaskResultMessage implements TaskResultDataInterface
+class ResultData extends ResultMessage implements ResultDataInterface
 {
     private $dataSheet = null;
     
@@ -28,7 +28,7 @@ class TaskResultData extends TaskResultMessage implements TaskResultDataInterfac
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Tasks\TaskResultInterface::getData()
+     * @see \exface\Core\Interfaces\Tasks\ResultInterface::getData()
      */
     public function getData(): DataSheetInterface
     {
@@ -41,9 +41,9 @@ class TaskResultData extends TaskResultMessage implements TaskResultDataInterfac
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Tasks\TaskResultDataInterface::setData()
+     * @see \exface\Core\Interfaces\Tasks\ResultDataInterface::setData()
      */
-    public function setData(DataSheetInterface $dataSheet): TaskResultDataInterface
+    public function setData(DataSheetInterface $dataSheet): ResultDataInterface
     {
         $this->dataSheet = $dataSheet;
         return $this;
@@ -52,7 +52,7 @@ class TaskResultData extends TaskResultMessage implements TaskResultDataInterfac
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Tasks\TaskResultDataInterface::hasData()
+     * @see \exface\Core\Interfaces\Tasks\ResultDataInterface::hasData()
      */
     public function hasData(): bool
     {

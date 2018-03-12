@@ -9,7 +9,7 @@ use exface\Core\Interfaces\WidgetInterface;
  * @author Andrej Kabachnik
  *
  */
-interface TaskResultWidgetInterface extends TaskResultInterface
+interface ResultWidgetInterface extends ResultInterface
 {    
     /**
      * 
@@ -20,9 +20,9 @@ interface TaskResultWidgetInterface extends TaskResultInterface
     /**
      * 
      * @param WidgetInterface $widget
-     * @return TaskResultWidgetInterface
+     * @return ResultWidgetInterface
      */
-    public function setWidget(WidgetInterface $widget) : TaskResultWidgetInterface;
+    public function setWidget(WidgetInterface $widget) : ResultWidgetInterface;
     
     /**
      * 

@@ -3,21 +3,21 @@ namespace exface\Core\Interfaces\Tasks;
 
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 
-interface TaskResultDataInterface extends TaskResultInterface
+interface ResultDataInterface extends ResultInterface
 {    
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Tasks\TaskResultInterface::getData()
+     * @see \exface\Core\Interfaces\Tasks\ResultInterface::getData()
      */
     public function getData(): DataSheetInterface;
     
     /**
      * 
      * @param DataSheetInterface $dataSheet
-     * @return TaskResultDataInterface
+     * @return ResultDataInterface
      */
-    public function setData(DataSheetInterface $dataSheet) : TaskResultDataInterface;
+    public function setData(DataSheetInterface $dataSheet) : ResultDataInterface;
     
     /**
      * 

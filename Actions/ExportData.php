@@ -8,8 +8,8 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
-use exface\Core\Interfaces\Tasks\TaskResultInterface;
-use exface\Core\Factories\TaskResultFactory;
+use exface\Core\Interfaces\Tasks\ResultInterface;
+use exface\Core\Factories\ResultFactory;
 use GuzzleHttp\Psr7\Uri;
 
 /**
@@ -47,13 +47,13 @@ class ExportData extends ReadData implements iExportData
      * {@inheritDoc}
      * @see \exface\Core\Actions\ReadData::perform()
      */
-    protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : TaskResultInterface
+    protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {        
         $dataSheet = $this->readData($task);
         $url = $this->export($dataSheet);
         $uri = new Uri($url);
         $message = 'Download ready. If not id does not start automatically, click <a href="' . $url . '">here</a>.';
-        $result = TaskResultFactory::createFileResult($task, $uri);
+        $result = ResultFactory::createFileResult($task, $uri);
         $result->setMessage($message);
         return $result;
     }

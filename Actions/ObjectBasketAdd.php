@@ -9,9 +9,9 @@ use exface\Core\Interfaces\Actions\iModifyContext;
 use exface\Core\Interfaces\Contexts\ContextManagerInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
-use exface\Core\Interfaces\Tasks\TaskResultInterface;
+use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Interfaces\Contexts\ContextScopeInterface;
-use exface\Core\Factories\TaskResultFactory;
+use exface\Core\Factories\ResultFactory;
 
 /**
  * Adds the input rows to the object basket in a specified context_scope (by default, the window scope)
@@ -59,13 +59,13 @@ class ObjectBasketAdd extends AbstractAction implements iModifyContext
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\AbstractAction::perform()
      */
-    protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : TaskResultInterface
+    protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {
         $input = $this->getInputDataSheet($task);
         $this->getContext()->add($input);
         
         $message = $this->translate('RESULT', ['%context_name%' => $this->getContext()->getName(), '%number%' => $input->countRows()], $input->countRows());
-        $result = TaskResultFactory::createMessageResult($task, $message);
+        $result = ResultFactory::createMessageResult($task, $message);
         $result->setContextModified(true);
         
         return $result;

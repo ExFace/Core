@@ -3,7 +3,7 @@ namespace exface\Core\Actions;
 
 use exface\Core\Exceptions\Actions\ActionInputMissingError;
 use exface\Core\Exceptions\Actions\ActionRuntimeError;
-use exface\Core\Interfaces\Tasks\TaskResultInterface;
+use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 
@@ -30,7 +30,7 @@ class SwitchAction extends ActionChain
      * {@inheritDoc}
      * @see \exface\Core\Actions\ActionChain::perform()
      */
-    protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : TaskResultInterface
+    protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {
         $input = $this->getInputDataSheet($task);
         if (! $input->getColumns()->getByExpression($this->getSwitchAttributeAlias())) {

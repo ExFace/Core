@@ -11,8 +11,8 @@ use exface\Core\Exceptions\Actions\ActionUndoFailedError;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\Interfaces\Tasks\TaskInterface;
-use exface\Core\Factories\TaskResultFactory;
-use exface\Core\Interfaces\Tasks\TaskResultInterface;
+use exface\Core\Factories\ResultFactory;
+use exface\Core\Interfaces\Tasks\ResultInterface;
 
 class SaveData extends AbstractAction implements iModifyData, iCanBeUndone
 {
@@ -38,13 +38,13 @@ class SaveData extends AbstractAction implements iModifyData, iCanBeUndone
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\AbstractAction::perform()
      */
-    protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : TaskResultInterface
+    protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {
         $data_sheet = $this->getInputDataSheet($task);
         $affected_rows = $data_sheet->dataSave($transaction);
         
         $message = $this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.SAVEDATA.RESULT', ['%number%' => $affected_rows], $affected_rows);
-        $result = TaskResultFactory::createDataResult($task, $data_sheet, $message);
+        $result = ResultFactory::createDataResult($task, $data_sheet, $message);
         
         if ($affected_rows > 0) {
             $result->setDataModified(true);

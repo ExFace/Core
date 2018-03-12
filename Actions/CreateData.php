@@ -6,8 +6,8 @@ use exface\Core\Exceptions\Actions\ActionUndoFailedError;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Interfaces\Tasks\TaskInterface;
-use exface\Core\Factories\TaskResultFactory;
-use exface\Core\Interfaces\Tasks\TaskResultInterface;
+use exface\Core\Factories\ResultFactory;
+use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 
 class CreateData extends SaveData implements iCreateData
@@ -19,7 +19,7 @@ class CreateData extends SaveData implements iCreateData
      * {@inheritDoc}
      * @see \exface\Core\Actions\SaveData::perform()
      */
-    protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : TaskResultInterface
+    protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {
         $data_sheet = $this->getInputDataSheet($task);
         $affected_rows = 0;
@@ -40,7 +40,7 @@ class CreateData extends SaveData implements iCreateData
         $this->setUndoDataSheet($data_sheet);
         
         $message = $this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.CREATEDATA.RESULT', ['%number%' => $affected_rows], $affected_rows);
-        $result = TaskResultFactory::createDataResult($task, $data_sheet, $message);
+        $result = ResultFactory::createDataResult($task, $data_sheet, $message);
         if ($affected_rows > 0) {
             $result->setDataModified(true);
         }

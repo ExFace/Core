@@ -6,7 +6,7 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\ActionFactory;
 use exface\Core\Exceptions\Contexts\ContextLoadError;
 use exface\Core\CommonLogic\Contexts\AbstractContext;
-use exface\Core\Interfaces\Tasks\TaskResultInterface;
+use exface\Core\Interfaces\Tasks\ResultInterface;
 
 class ActionContext extends AbstractContext
 {
@@ -46,7 +46,7 @@ class ActionContext extends AbstractContext
      * @param ActionInterface $action            
      * @return \exface\Core\Contexts\ActionContext
      */
-    public function addAction(ActionInterface $action, TaskResultInterface $result)
+    public function addAction(ActionInterface $action, ResultInterface $result)
     {
         $this->current_actions[] = $action;
         return $this;
