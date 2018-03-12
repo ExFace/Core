@@ -338,7 +338,7 @@ trait JqueryFlotTrait {
         return $output;
     }
     
-    public function generateHeaders()
+    public function buildHtmlHeadTags()
     {
         $includes = [];
         // flot

@@ -82,7 +82,7 @@ trait JqueryToolbarTrait
     protected function buildHtmlButtons(){
         $button_html = '';
         foreach ($this->getWidget()->getButtonGroups() as $grp){
-            $button_html .= $this->getTemplate()->getElement($grp)->generateHtml();
+            $button_html .= $this->getTemplate()->getElement($grp)->buildHtml();
         }
         return $button_html;
     }
@@ -94,17 +94,17 @@ trait JqueryToolbarTrait
     protected function buildJsButtons(){
         $output = '';
         foreach ($this->getWidget()->getButtons() as $button) {
-            $output .= $this->getTemplate()->generateJs($button);
+            $output .= $this->getTemplate()->buildJs($button);
         }
         return $output;
     }
     
-    public function generateJs()
+    public function buildJs()
     {
         return $this->buildJsButtons();
     }
     
-    public function generateHtml()
+    public function buildHtml()
     {
         return $this->buildHtmlToolbarWrapper($this->buildHtmlButtons());
     }

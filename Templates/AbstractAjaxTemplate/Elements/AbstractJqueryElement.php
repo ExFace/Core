@@ -79,12 +79,12 @@ abstract class AbstractJqueryElement implements ExfaceClassInterface
     /**
      * Returns the complete JS code needed for the element
      */
-    abstract public function generateJs();
+    abstract public function buildJs();
 
     /**
      * Returns the complete HTML code needed for the element
      */
-    abstract public function generateHtml();
+    abstract public function buildHtml();
 
     /**
      * Returns JavaScript headers, needed for the element as an array of lines.
@@ -99,12 +99,12 @@ abstract class AbstractJqueryElement implements ExfaceClassInterface
      *
      * @return string[]
      */
-    public function generateHeaders()
+    public function buildHtmlHeadTags()
     {
         $headers = array();
         if ($this->getWidget()->isContainer()) {
             foreach ($this->getWidget()->getChildren() as $child) {
-                $headers = array_merge($headers, $this->getTemplate()->getElement($child)->generateHeaders());
+                $headers = array_merge($headers, $this->getTemplate()->getElement($child)->buildHtmlHeadTags());
             }
         }
         return $headers;

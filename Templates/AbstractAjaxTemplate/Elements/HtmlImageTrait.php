@@ -17,18 +17,18 @@ trait HtmlImageTrait
     
     /**
      * 
-     * @see AbstractJqueryElement::generateHtml()
+     * @see AbstractJqueryElement::buildHtml()
      */
-    public function generateHtml()
+    public function buildHtml()
     {
         return $this->buildHtmlImage($this->getWidget()->getUri());
     }
 
     /**
      *
-     * @see AbstractJqueryElement::generateJs()
+     * @see AbstractJqueryElement::buildJs()
      */
-    public function generateJs()
+    public function buildJs()
     {
         return '';
     }

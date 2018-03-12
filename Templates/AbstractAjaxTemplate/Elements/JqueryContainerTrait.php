@@ -13,12 +13,12 @@ use exface\Core\Widgets\Container;
  */
 trait JqueryContainerTrait {
 
-    public function generateHtml()
+    public function buildHtml()
     {
         return $this->buildHtmlForChildren();
     }
 
-    public function generateJs()
+    public function buildJs()
     {
         return $this->buildJsForChildren();
     }
@@ -26,7 +26,7 @@ trait JqueryContainerTrait {
     public function buildHtmlForChildren()
     {
         foreach ($this->getWidget()->getChildren() as $subw) {
-            $output .= $this->getTemplate()->getElement($subw)->generateHtml() . "\n";
+            $output .= $this->getTemplate()->getElement($subw)->buildHtml() . "\n";
         }
         ;
         return $output;
@@ -35,7 +35,7 @@ trait JqueryContainerTrait {
     public function buildJsForChildren()
     {
         foreach ($this->getWidget()->getChildren() as $subw) {
-            $output .= $this->getTemplate()->getElement($subw)->generateJs() . "\n";
+            $output .= $this->getTemplate()->getElement($subw)->buildJs() . "\n";
         }
         ;
         return $output;
@@ -44,7 +44,7 @@ trait JqueryContainerTrait {
     public function buildHtmlForWidgets()
     {
         foreach ($this->getWidget()->getWidgets() as $subw) {
-            $output .= $this->getTemplate()->getElement($subw)->generateHtml() . "\n";
+            $output .= $this->getTemplate()->getElement($subw)->buildHtml() . "\n";
         }
         ;
         return $output;
@@ -53,7 +53,7 @@ trait JqueryContainerTrait {
     public function buildJsForWidgets()
     {
         foreach ($this->getWidget()->getWidgets() as $subw) {
-            $output .= $this->getTemplate()->getElement($subw)->generateJs() . "\n";
+            $output .= $this->getTemplate()->getElement($subw)->buildJs() . "\n";
         }
         ;
         return $output;
