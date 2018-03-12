@@ -119,6 +119,7 @@ class ShowDialog extends ShowWidget implements iShowDialog
                 $page = UiPageFactory::createEmpty($this->getWorkbench()->ui());
             }
             $widget = $this->createDialogWidget($page);
+            $this->setWidget($widget);
         }
         
         if (! ($widget instanceof Dialog)) {
@@ -128,6 +129,7 @@ class ShowDialog extends ShowWidget implements iShowDialog
         
         if (! $this->widget_was_enhanced) {
             $widget = $this->enhanceDialogWidget($widget);
+            $this->setWidget($widget);
             $this->widget_was_enhanced = true;
         }
         return $widget;
