@@ -26,6 +26,7 @@ use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 use exface\Core\DataTypes\StringDataType;
+use exface\Core\Exceptions\Model\MetaObjectHasNoDataSourceError;
 
 class Object implements MetaObjectInterface
 {
@@ -779,6 +780,9 @@ class Object implements MetaObjectInterface
      */
     public function getDataConnection()
     {
+        if (! $this->hasDataSource()) {
+            throw new MetaObjectHasNoDataSourceError($this, 'Cannot get the data connection for "' . $this->getName() . '" (' . $this->getAliasWithNamespace() . '): the object does not have a data source!');
+        }
         return $this->getModel()->getWorkbench()->data()->getDataConnection($this->data_source_id, $this->data_connection_alias);
     }
 
@@ -795,8 +799,16 @@ class Object implements MetaObjectInterface
         return $this;
     }
 
-    function getQueryBuilder()
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaObjectInterface::getQueryBuilder()
+     */
+    public function getQueryBuilder()
     {
+        if (! $this->hasDataSource()) {
+            throw new MetaObjectHasNoDataSourceError($this, 'Cannot create a query builder for "' . $this->getName() . '" (' . $this->getAliasWithNamespace() . '): the object does not have a data source!');
+        }
         return $this->getModel()->getWorkbench()->data()->getQueryBuilder($this->data_source_id);
     }
 
