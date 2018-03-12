@@ -489,6 +489,11 @@ class Attribute implements MetaAttributeInterface
             $this->default_value = $value;
         }
     }
+    
+    public function hasDefaultValue() : bool
+    {
+        return ! is_null($this->default_value);
+    }
 
     /**
      * 
@@ -511,6 +516,34 @@ class Attribute implements MetaAttributeInterface
     public function setFixedValue($value)
     {
         $this->fixed_value = $value;
+    }
+    
+    public function hasFixedValue() : bool
+    {
+        return ! is_null($this->fixed_value);
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::getFallbackValue()
+     */
+    public function getFallbackValue()
+    {
+        if ($this->hasFixedValue()) {
+            return $this->getFallbackValue();
+        }
+        return $this->getDefaultValue();
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::hasFallbackValue()
+     */
+    public function hasFallbackValue() : bool
+    {
+        return $this->hasDefaultValue() || $this->hasFixedValue();
     }
 
     /**
