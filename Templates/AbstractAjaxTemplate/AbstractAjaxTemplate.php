@@ -430,11 +430,6 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
         return $result;
     }
     
-    protected function buildResponseExtraForContextBar()
-    {
-        
-    }
-    
     /**
      * 
      * {@inheritDoc}
