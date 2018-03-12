@@ -2,14 +2,13 @@
 namespace exface\Core\Widgets\Traits;
 
 use exface\Core\DataTypes\BooleanDataType;
-use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Factories\ActionFactory;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Exceptions\Widgets\WidgetPropertyNotSetError;
 
 trait iSupportLazyLoadingTrait {
     
-    private $lazy_loading = true;
+    private $lazy_loading = null;
     
     private $lazy_loading_action_alias = null;
     
@@ -22,9 +21,9 @@ trait iSupportLazyLoadingTrait {
      *
      * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::getLazyLoading()
      */
-    public function getLazyLoading()
+    public function getLazyLoading($default = true) : bool
     {
-        return $this->lazy_loading;
+        return is_null($this->lazy_loading) ? $default : $this->lazy_loading;
     }
     
     /**

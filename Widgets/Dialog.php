@@ -37,7 +37,6 @@ class Dialog extends Form implements iAmClosable, iHaveContextualHelp, iHaveHead
     protected function init()
     {
         parent::init();
-        $this->setLazyLoading(true);
         $this->getToolbarMain()->addButton($this->getCloseButton());
     }
 
