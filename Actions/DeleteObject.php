@@ -50,6 +50,11 @@ class DeleteObject extends AbstractAction implements iDeleteData
         }
         
         $result = TaskResultFactory::createMessageResult($task, $this->translate('RESULT', ['%number%' => $deletedRows], $deletedRows));
+        
+        if ($deletedRows > 0) {
+            $result->setDataModified(true);
+        }
+        
         return $result;
     }
 }
