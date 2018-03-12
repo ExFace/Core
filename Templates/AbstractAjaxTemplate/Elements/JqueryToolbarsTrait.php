@@ -20,7 +20,7 @@ trait JqueryToolbarsTrait
     {
         $output = '';
         foreach ($this->getWidget()->getToolbars() as $toolbar){
-            $output .= $this->getTemplate()->getElement($toolbar)->generateHtml();
+            $output .= $this->getTemplate()->getElement($toolbar)->buildHtml();
         }
         return $output;
     }
@@ -32,7 +32,7 @@ trait JqueryToolbarsTrait
     protected function buildJsButtons(){
         $output = '';
         foreach ($this->getWidget()->getToolbars() as $toolbar) {
-            $output .= $this->getTemplate()->generateJs($toolbar);
+            $output .= $this->getTemplate()->buildJs($toolbar);
         }
         return $output;
     }

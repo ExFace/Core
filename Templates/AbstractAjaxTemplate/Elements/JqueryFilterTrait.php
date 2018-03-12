@@ -23,14 +23,14 @@ trait JqueryFilterTrait {
         return '"' . $this->getWidget()->getComparator() . '"';
     }
 
-    public function generateHtml()
+    public function buildHtml()
     {
-        return $this->getInputElement()->generateHtml();
+        return $this->getInputElement()->buildHtml();
     }
 
-    public function generateJs()
+    public function buildJs()
     {
-        return $this->getInputElement()->generateJs();
+        return $this->getInputElement()->buildJs();
     }
 
     public function buildJsValueGetter()

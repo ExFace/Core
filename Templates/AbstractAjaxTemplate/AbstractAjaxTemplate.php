@@ -95,8 +95,8 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
      */
     public function buildWidget(WidgetInterface $widget)
     {
-        $output = $this->generateHtml($widget);
-        $js = $this->generateJs($widget);
+        $output = $this->buildHtml($widget);
+        $js = $this->buildJs($widget);
         if ($js) {
             $output .= "\n" . '<script type="text/javascript">' . $js . '</script>';
         }
@@ -109,10 +109,10 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
      *
      * @param \exface\Core\Widgets\AbstractWidget $widget            
      */
-    public function generateJs(\exface\Core\Widgets\AbstractWidget $widget)
+    public function buildJs(\exface\Core\Widgets\AbstractWidget $widget)
     {
         $instance = $this->getElement($widget);
-        return $instance->generateJs();
+        return $instance->buildJs();
     }
 
     /**
@@ -120,10 +120,10 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
      *
      * @param WidgetInterface $widget            
      */
-    public function generateHtml(WidgetInterface $widget)
+    public function buildHtml(WidgetInterface $widget)
     {
         $instance = $this->getElement($widget);
-        return $instance->generateHtml();
+        return $instance->buildHtml();
     }
 
     /**
@@ -131,11 +131,11 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
      *
      * @return string
      */
-    public function buildIncludes(WidgetInterface $widget)
+    public function buildHtmlHead(WidgetInterface $widget)
     {
         try {
             $instance = $this->getElement($widget);
-            $result = implode("\n", array_unique($instance->generateHeaders()));
+            $result = implode("\n", array_unique($instance->buildHtmlHeadTags()));
         } catch (ErrorExceptionInterface $e) {
             // TODO Is there a way to display errors in the header nicely?
             /*
@@ -355,14 +355,14 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
                 $widget = $result->getWidget();
                 switch ($mode) {
                     case static::MODE_HEAD:
-                        $body = $this->buildIncludes($widget);
+                        $body = $this->buildHtmlHead($widget);
                         break;
                     case static::MODE_BODY:
                         $body = $this->buildWidget($widget);
                         break;
                     case static::MODE_FULL:
                     default:
-                        $body = $this->buildIncludes($widget) . "\n" . $this->buildWidget($widget);
+                        $body = $this->buildHtmlHead($widget) . "\n" . $this->buildWidget($widget);
                 }
                 break;
                 
@@ -456,7 +456,7 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
                     }
                 }
             }
-            $body = $this->buildIncludes($debug_widget) . "\n" . $this->buildWidget($debug_widget);
+            $body = $this->buildHtmlHead($debug_widget) . "\n" . $this->buildWidget($debug_widget);
         } catch (\Throwable $e) {
             // If anything goes wrong when trying to prettify the original error, drop prettifying
             // and throw the original exception wrapped in a notice about the failed prettification

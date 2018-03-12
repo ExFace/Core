@@ -78,7 +78,7 @@ trait JqueryButtonGroupTrait
         return $this->more_buttons_menu;
     }
     
-    public function generateHtml()
+    public function buildHtml()
     {   
         return $this->buildHtmlButtonGroupWrapper($this->buildHtmlButtons());
     }
@@ -114,7 +114,7 @@ trait JqueryButtonGroupTrait
                 // Optional buttons were already placed in the more-buttons-menu in init()
                 if (! $button->isHidden()) {
                     if ($button->getVisibility() !== EXF_WIDGET_VISIBILITY_OPTIONAL){
-                        $button_html .= $this->getTemplate()->generateHtml($button);
+                        $button_html .= $this->getTemplate()->buildHtml($button);
                     } else {
                         $this->getMoreButtonsMenu()->addButton($button);
                         $widget->removeButton($button);
@@ -125,7 +125,7 @@ trait JqueryButtonGroupTrait
         
         // Add the menu button - even if there were no regular buttons!
         if ($more_buttons_menu->hasButtons()) {
-            $button_html .= $this->getTemplate()->getElement($more_buttons_menu)->generateHtml();
+            $button_html .= $this->getTemplate()->getElement($more_buttons_menu)->buildHtml();
         }
         
         return $button_html;
@@ -140,11 +140,11 @@ trait JqueryButtonGroupTrait
         return '<div style="' . $style . '" class="exf-btn-group">' . $buttons_html . '</div>';
     }
     
-    public function generateJs()
+    public function buildJs()
     {
         $js = '';
         foreach ($this->getWidget()->getButtons() as $button) {
-            $js .= $this->getTemplate()->generateJs($button);
+            $js .= $this->getTemplate()->buildJs($button);
         }
         return $js;
     }
