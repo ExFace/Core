@@ -204,13 +204,49 @@ interface MetaAttributeInterface extends ExfaceClassInterface, iCanBeCopied
     public function setDefaultValue($value);
     
     /**
-     * Returns an expression for value of this attribute, which is to be set or updated every time the attribute is saved to the data source.
+     * Returns TRUE if the attribute has a defaultvalue and FALSE otherwise.
+     * 
+     * @return bool
+     */
+    public function hasDefaultValue() : bool;
+    
+    /**
+     * Returns an expression for value of this attribute, which is to be set 
+     * or updated every time the attribute is saved to the data source.
      *
      * @return \exface\Core\Interfaces\Model\ExpressionInterface
      */
     public function getFixedValue();
     
+    /**
+     * 
+     * @param ExpressionInterface|string $value
+     */
     public function setFixedValue($value);
+    
+    /**
+     * Returns TRUE if the attribute has a fixed value and FALSE otherwise.
+     * @return bool
+     */
+    public function hasFixedValue() : bool;
+    
+    /**
+     * Returns the fallback value of the attribute to use in a data sheet if not 
+     * value is specified explicitly: the fixed value if set, otherwise the defualt
+     * value.
+     * 
+     * Returns null if no fallback existis (neither fixed nor default values).
+     *
+     * @return ExpressionInterface|null
+     */
+    public function getFallbackValue();
+    
+    /**
+     * Returns TRUE if the attribute has a fallback value: a default or a fixed value.
+     * 
+     * @return bool
+     */
+    public function hasFallbackValue() : bool;
     
     /**
      *
