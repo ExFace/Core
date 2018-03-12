@@ -2,7 +2,6 @@
 namespace exface\Core\Actions;
 
 use exface\Core\Interfaces\Actions\iShowDialog;
-use exface\Core\Widgets\AbstractWidget;
 use exface\Core\Widgets\Dialog;
 use exface\Core\Interfaces\Widgets\iHaveIcon;
 use exface\Core\CommonLogic\UxonObject;
@@ -11,6 +10,9 @@ use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Factories\UiPageFactory;
+use exface\Core\Interfaces\Tasks\TaskInterface;
+use exface\Core\Interfaces\DataSources\DataTransactionInterface;
+use exface\Core\Interfaces\Tasks\TaskResultInterface;
 
 class ShowDialog extends ShowWidget implements iShowDialog
 {
@@ -19,6 +21,16 @@ class ShowDialog extends ShowWidget implements iShowDialog
     private $dialog_buttons_uxon = null;
     
     private $maximize = null;
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Actions\ShowWidget::perform()
+     */
+    protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : TaskResultInterface
+    {
+        return parent::perform($task, $transaction);
+    }
 
     /**
      * Creates the dialog widget.

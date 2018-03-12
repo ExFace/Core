@@ -538,9 +538,9 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveToolbars, iHave
      *
      * @see \exface\Core\Interfaces\Widgets\iSupportLazyLoading::getLazyLoading()
      */
-    public function getLazyLoading()
+    public function getLazyLoading($default = true) : bool
     {
-        return $this->getData()->getLazyLoading();
+        return $this->getData()->getLazyLoading($default);
     }
 
     /**
