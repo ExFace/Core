@@ -16,7 +16,30 @@ trait JqueryContextBarAjaxTrait {
 
     public function generateHtml()
     {
-        return $this->getTemplate()->encodeData($this->getTemplate()->buildResponseExtraForContextBar(), false);
+        return $this->getTemplate()->encodeData($this->buildJsonContextBarUpdate());
+    }
+    
+    public function buildJsonContextBarUpdate()
+    {
+        $widget = $this->getWidget();
+        $extra = [];
+        try {
+            foreach ($widget->getButtons() as $btn){
+                $btn_element = $this->getTemplate()->getElement($btn);
+                $context = $widget->getContextForButton($btn);
+                $extra[$btn_element->getId()] = [
+                    'visibility' => $context->getVisibility(),
+                    'icon' => $btn_element->buildCssIconClass($btn->getIcon()),
+                    'color' => $context->getColor(),
+                    'hint' => $btn->getHint(),
+                    'indicator' => ! is_null($context->getIndicator()) ? $widget->getContextForButton($btn)->getIndicator() : '',
+                    'bar_widget_id' => $btn->getId()
+                ];
+            }
+        } catch (\Throwable $e){
+            $this->getWorkbench()->getLogger()->logException($e);
+        }
+        return $extra;
     }
     
     public function generateJs()
