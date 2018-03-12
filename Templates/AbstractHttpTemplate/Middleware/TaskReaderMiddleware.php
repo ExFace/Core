@@ -388,7 +388,7 @@ class TaskReaderMiddleware implements MiddlewareInterface
         if (! $uxon->isEmpty()) {
             // Remove rows as they may need to be split a few lines later
             if ($uxon->hasProperty('rows')) {
-                $rows = $uxon->getProperty('rows');
+                $rows = $uxon->getProperty('rows')->toArray();
                 $uxon->unsetProperty('rows');
             }
             // Create a data sheet from the UXON object
