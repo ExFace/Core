@@ -71,21 +71,6 @@ class CallAction extends AbstractAction
         return $this->getAction()->implementsInterface($string);
     }
 
-    public function getResultOutput()
-    {
-        return $this->getAction()->getResultOutput();
-    }
-
-    public function getResultStringified()
-    {
-        return $this->getAction()->getResultStringified();
-    }
-
-    public function isDataModified()
-    {
-        return $this->getAction()->isDataModified();
-    }
-
     public function isUndoable() : bool
     {
         // TODO make action wrapper undoable if wrapped action is undoable!

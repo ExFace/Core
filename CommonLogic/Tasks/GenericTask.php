@@ -10,6 +10,7 @@ use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
 use exface\Core\Interfaces\Templates\TemplateInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Factories\DataSheetFactory;
+use exface\Core\Interfaces\WorkbenchInterface;
 
 /**
  * Generic task implementation to create task programmatically.
@@ -20,6 +21,8 @@ use exface\Core\Factories\DataSheetFactory;
 class GenericTask implements TaskInterface
 {
     private $template = null;
+    
+    private $workbench = null;
     
     private $parameters = [];
     
@@ -45,9 +48,10 @@ class GenericTask implements TaskInterface
      * 
      * @param TemplateInterface $template
      */
-    public function __construct(TemplateInterface $template)
+    public function __construct(WorkbenchInterface $workbench, TemplateInterface $template = null)
     {
         $this->template = $template;
+        $this->workbench = $workbench;
     }
     
     /**
