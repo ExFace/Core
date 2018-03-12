@@ -15,7 +15,7 @@ interface iCanBeUndone extends ActionInterface
      *
      * @return DataSheetInterface
      */
-    public function undo(DataTransactionInterface $transaction = null);
+    public function undo(DataTransactionInterface $transaction) : DataSheetInterface;
 
     /**
      * Returns a serializable UXON object with all the data neede to perform an undo operation later.

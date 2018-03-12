@@ -8,6 +8,7 @@ use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Factories\TaskResultFactory;
 use exface\Core\Interfaces\Tasks\TaskResultInterface;
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 
 class CreateData extends SaveData implements iCreateData
 {
@@ -48,7 +49,7 @@ class CreateData extends SaveData implements iCreateData
      * {@inheritDoc}
      * @see \exface\Core\Actions\SaveData::undo()
      */
-    public function undo(DataTransactionInterface $transaction)
+    public function undo(DataTransactionInterface $transaction) : DataSheetInterface
     {
         if (! $data_sheet = $this->getUndoDataSheet()) {
             throw new ActionUndoFailedError($this, 'Cannot undo action "' . $this->getAliasWithNamespace() . '": Failed to load history for this action!', '6T5DLGN');

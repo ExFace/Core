@@ -94,7 +94,7 @@ class SaveData extends AbstractAction implements iModifyData, iCanBeUndone
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Actions\iCanBeUndone::undo()
      */
-    public function undo(DataTransactionInterface $transaction = null)
+    public function undo(DataTransactionInterface $transaction) : DataSheetInterface
     {
         throw new ActionUndoFailedError($this, 'Undo functionality not implemented yet for action "' . $this->getAlias() . '"!', '6T5DS00');
     }
