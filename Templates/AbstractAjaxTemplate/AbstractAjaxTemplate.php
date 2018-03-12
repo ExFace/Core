@@ -418,7 +418,7 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
      * @throws TemplateOutputError
      * @return string
      */
-    protected function encodeData($serializable_data, $add_extras = false)
+    public function encodeData($serializable_data, $add_extras = false)
     {
         if ($add_extras){
             $serializable_data['extras'] = [
