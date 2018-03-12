@@ -9,7 +9,6 @@ use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Events\WidgetEvent;
 use exface\Core\Interfaces\Exceptions\ExceptionInterface;
-use exface\Core\Exceptions\InternalError;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\DataTypes\NumberDataType;
 use exface\Core\Templates\AbstractAjaxTemplate\Formatters\JsNumberFormatter;
@@ -349,7 +348,6 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
                 $elem = $this->getElement($result->getTask()->getWidgetTriggeredBy());
                 $json = $elem->prepareData($result->getData());
                 $json["success"] = $result->getMessage();
-                $headers['Content-type'] = ['application/json;charset=utf-8'];
                 break;
                 
             case $result instanceof ResultWidgetInterface:
@@ -405,7 +403,12 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
         // Encode the response object to JSON converting <, > and " to HEX-values (e.g. \u003C). Without that conversion
         // there might be trouble with HTML in the responses (e.g. jEasyUI will break it when parsing the response)
         if (! empty($json)) {
-            $body = $this->encodeData($json, $result->isContextModified() ? true : false);
+            if ($result->isContextModified()) {
+                $context_bar = $result->getTask()->getWidgetTriggeredBy()->getPage()->getContextBar();
+                $json['extras']['ContextBar'] = $this->getElement($context_bar)->buildJsonContextBarUpdate();
+            }
+            $headers['Content-type'] = ['application/json;charset=utf-8'];
+            $body = $this->encodeData($json);
         }
         
         return new Response($status_code, $headers, $body);
@@ -418,14 +421,8 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
      * @throws TemplateOutputError
      * @return string
      */
-    public function encodeData($serializable_data, $add_extras = false)
-    {
-        if ($add_extras){
-            $serializable_data['extras'] = [
-                'ContextBar' => $this->buildResponseExtraForContextBar()
-            ];
-        }
-        
+    public function encodeData($serializable_data)
+    {        
         $result = json_encode($serializable_data, JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_QUOT);
         if (! $result) {
             throw new TemplateOutputError('Error encoding data: ' . json_last_error() . ' ' . json_last_error_msg());
@@ -435,25 +432,7 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
     
     protected function buildResponseExtraForContextBar()
     {
-        $extra = [];
-        try {
-            $contextBar = $this->getWorkbench()->ui()->getPageCurrent()->getContextBar();
-            foreach ($contextBar->getButtons() as $btn){
-                $btn_element = $this->getElement($btn);
-                $context = $contextBar->getContextForButton($btn);
-                $extra[$btn_element->getId()] = [
-                    'visibility' => $context->getVisibility(),
-                    'icon' => $btn_element->buildCssIconClass($btn->getIcon()),
-                    'color' => $context->getColor(),
-                    'hint' => $btn->getHint(),
-                    'indicator' => ! is_null($context->getIndicator()) ? $contextBar->getContextForButton($btn)->getIndicator() : '',
-                    'bar_widget_id' => $btn->getId()
-                ];
-            }
-        } catch (\Throwable $e){
-            $this->getWorkbench()->getLogger()->logException($e);
-        }
-        return $extra;
+        
     }
     
     /**
