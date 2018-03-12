@@ -96,22 +96,8 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
      */
     public function buildWidget(WidgetInterface $widget)
     {
-        $output = '';
-        try {
-            $output = $this->generateHtml($widget);
-            $js = $this->generateJs($widget);
-        } catch (\Throwable $e) {
-            if ($this->getWorkbench()->getConfig()->getOption('DEBUG.DISABLE_TEMPLATE_ERROR_HANDLERS')) {
-                throw $e;
-            }
-            
-            if (! $e instanceof ExceptionInterface){
-                $e = new InternalError($e->getMessage(), null, $e);
-            }
-            
-            $this->setResponseFromError($e, $widget->getPage());
-            $output = $this->getResponse();
-        }
+        $output = $this->generateHtml($widget);
+        $js = $this->generateJs($widget);
         if ($js) {
             $output .= "\n" . '<script type="text/javascript">' . $js . '</script>';
         }
@@ -133,9 +119,9 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
     /**
      * Generates the HTML for a given Widget
      *
-     * @param \exface\Core\Widgets\AbstractWidget $widget            
+     * @param WidgetInterface $widget            
      */
-    public function generateHtml(\exface\Core\Widgets\AbstractWidget $widget)
+    public function generateHtml(WidgetInterface $widget)
     {
         $instance = $this->getElement($widget);
         return $instance->generateHtml();
@@ -376,6 +362,7 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
                         $body = $this->buildWidget($widget);
                         break;
                     case static::MODE_FULL:
+                    default:
                         $body = $this->buildIncludes($widget) . "\n" . $this->buildWidget($widget);
                 }
                 break;
@@ -401,25 +388,23 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
                 break;
                 
             default:
-                $response = array();
-                $response['success'] = $result->getMessage();
+                $json['success'] = $result->getMessage();
                 if ($result->isUndoable()) {
-                    $response['undoable'] = '1';
+                    $json['undoable'] = '1';
                 }
                 // check if result is a properly formed link
                 if ($result instanceof TaskResultUriInterface) {
                     $url = filter_var($result->getUri()->__toString(), FILTER_SANITIZE_STRING);
                     if (substr($url, 0, 4) == 'http') {
-                        $response['redirect'] = $url;
+                        $json['redirect'] = $url;
                     }
                 }
-                // Encode the response object to JSON converting <, > and " to HEX-values (e.g. \u003C). Without that conversion
-                // there might be trouble with HTML in the responses (e.g. jEasyUI will break it when parsing the response)
-                $body = $this->encodeData($response, $result->isContextModified() ? true : false);
         }
         
+        // Encode the response object to JSON converting <, > and " to HEX-values (e.g. \u003C). Without that conversion
+        // there might be trouble with HTML in the responses (e.g. jEasyUI will break it when parsing the response)
         if (! empty($json)) {
-            $body = $this->encodeData($json);
+            $body = $this->encodeData($json, $result->isContextModified() ? true : false);
         }
         
         return new Response($status_code, $headers, $body);

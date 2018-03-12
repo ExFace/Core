@@ -6,6 +6,7 @@ use exface\Core\Factories\UiPageFactory;
 use exface\Core\CommonLogic\Contexts\ContextActionTrait;
 use exface\Core\Widgets\AbstractWidget;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Interfaces\Model\UiPageInterface;
 
 /**
  * Displays a popup-table with all instances of a meta object in the object basket.
@@ -35,13 +36,8 @@ class ObjectBasketShowDialog extends ShowDialog
      * {@inheritDoc}
      * @see \exface\Core\Actions\ShowDialog::createDialogWidget()
      */
-    protected function createDialogWidget(AbstractWidget $contained_widget = null)
+    protected function createDialogWidget(UiPageInterface $page, WidgetFactory $contained_widget = null)
     {
-        try {
-            $page = $this->getCalledOnUiPage();
-        } catch (\Throwable $e) {
-            $page = UiPageFactory::createEmpty($this->getWorkbench()->ui());
-        }
         /* @var $dialog \exface\Core\Widgets\Dialog */
         $dialog = WidgetFactory::create($page, 'Dialog', $this->getWidgetDefinedIn());
         $dialog->setCaption($this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.OBJECTBASKET'));

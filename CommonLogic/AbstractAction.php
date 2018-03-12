@@ -514,7 +514,7 @@ abstract class AbstractAction implements ActionInterface
      * {@inheritdoc}
      * @see \exface\Core\Interfaces\Actions\ActionInterface::isUndoable()
      */
-    public function isUndoable()
+    public function isUndoable() : bool
     {
         if (is_null($this->is_undoable)) {
             if ($this instanceof iCanBeUndone) {

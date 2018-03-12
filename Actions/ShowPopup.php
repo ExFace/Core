@@ -5,6 +5,7 @@ use exface\Core\Widgets\AbstractWidget;
 use exface\Core\Widgets\Dialog;
 use exface\Core\Interfaces\Actions\iShowPopup;
 use exface\Core\Widgets\Container;
+use exface\Core\Factories\WidgetFactory;
 
 class ShowPopup extends ShowWidget implements iShowPopup
 {
@@ -22,7 +23,7 @@ class ShowPopup extends ShowWidget implements iShowPopup
      */
     protected function createPopupContainer(AbstractWidget $contained_widget = NULL)
     {
-        $popup = $this->getCalledOnUiPage()->createWidget('Container', $this->getWidgetDefinedIn());
+        $popup = WidgetFactory::create($this->getWidgetDefinedIn()->getPage(), 'Container', $this->getWidgetDefinedIn());
         $popup->setMetaObject($this->getMetaObject());
         
         if ($contained_widget) {

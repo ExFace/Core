@@ -12,6 +12,7 @@ use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Factories\TaskResultFactory;
+use exface\Core\Interfaces\Tasks\TaskResultInterface;
 
 class SaveData extends AbstractAction implements iModifyData, iCanBeUndone
 {
@@ -37,7 +38,7 @@ class SaveData extends AbstractAction implements iModifyData, iCanBeUndone
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\AbstractAction::perform()
      */
-    protected function perform(TaskInterface $task, DataTransactionInterface $transaction)
+    protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : TaskResultInterface
     {
         $data_sheet = $this->getInputDataSheet();
         $affected_rows = $data_sheet->dataSave($this->getTransaction());
@@ -82,7 +83,7 @@ class SaveData extends AbstractAction implements iModifyData, iCanBeUndone
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Actions\iCanBeUndone::setUndoData()
      */
-    public function setUndoData(UxonObject $uxon_object)
+    public function setUndoData(UxonObject $uxon_object) : iCanBeUndone
     {
         $exface = $this->getApp()->getWorkbench();
         $this->undo_data_sheet = DataSheetFactory::createFromUxon($exface, $uxon_object);

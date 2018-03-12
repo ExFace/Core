@@ -60,7 +60,7 @@ class ShowLookupDialog extends ShowDialog
     protected function enhanceDialogWidget(Dialog $dialog)
     {
         $dialog = parent::enhanceDialogWidget($dialog);
-        $page = $this->getCalledOnUiPage();
+        $page = $this->getWidgetDefinedIn()->getPage();
         
         if ($dialog->isEmpty()) {
             $data_table = WidgetFactory::create($page, 'DataTable', $dialog);

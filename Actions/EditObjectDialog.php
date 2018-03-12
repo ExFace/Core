@@ -5,6 +5,7 @@ use exface\Core\Widgets\AbstractWidget;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Widgets\Button;
 use exface\Core\CommonLogic\Constants\Icons;
+use exface\Core\Interfaces\Model\UiPageInterface;
 
 class EditObjectDialog extends ShowObjectDialog
 {
@@ -40,9 +41,9 @@ class EditObjectDialog extends ShowObjectDialog
      *
      * @return WidgetInterface
      */
-    protected function createDialogWidget(AbstractWidget $contained_widget = NULL)
+    protected function createDialogWidget(UiPageInterface $page, WidgetInterface $contained_widget = NULL)
     {
-        $dialog = parent::createDialogWidget($contained_widget);
+        $dialog = parent::createDialogWidget($page, $contained_widget);
         // TODO add save button via followup actions in the init() method instead of the button directly
         /* @var $save_button \exface\Core\Widgets\Button */
         $save_button = $dialog->createButton();
