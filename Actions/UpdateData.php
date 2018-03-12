@@ -9,11 +9,17 @@ use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\Tasks\TaskResultInterface;
 use exface\Core\Factories\TaskResultFactory;
 use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 
 class UpdateData extends SaveData implements iUpdateData, iCanBeUndone
 {
     private $use_context_filters = false;
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Actions\SaveData::perform()
+     */
     protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : TaskResultInterface
     {
         $data_sheet = $this->getInputDataSheet($task);
@@ -48,7 +54,12 @@ class UpdateData extends SaveData implements iUpdateData, iCanBeUndone
         return $result;
     }
 
-    public function undo(DataTransactionInterface $transaction)
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Actions\SaveData::undo()
+     */
+    public function undo(DataTransactionInterface $transaction) : DataSheetInterface
     {
         if (! $data_sheet = $this->getUndoDataSheet()) {
             throw new ActionUndoFailedError($this, 'Cannot undo action "' . $this->getAlias() . '": Failed to load history for this action!', '6T5DLGN');
