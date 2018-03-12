@@ -88,12 +88,12 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
     }
 
     /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Templates\AbstractTemplate\AbstractTemplate::buildWidget()
+     * Returns the HTML/JS-code for the given widget to be placed in the BODY of the page
+     * 
+     * @param WidgetInterface $widget
+     * @return string
      */
-    public function buildWidget(WidgetInterface $widget)
+    public function buildHtmlBody(WidgetInterface $widget)
     {
         $output = $this->buildHtml($widget);
         $js = $this->buildJs($widget);
@@ -127,8 +127,10 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
     }
 
     /**
-     * Generates the declaration of the JavaScript sources
+     * Returns the HTML/JS-code for the given widget to be placed in the BODY of the page
      *
+     * @param WidgetInterface $widget
+     * 
      * @return string
      */
     public function buildHtmlHead(WidgetInterface $widget)
@@ -241,23 +243,23 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
         return $this->getWorkbench()->getCMS()->createLinkInternal($page_or_id_or_alias, $url_params);
     }
 
-    public function getClassPrefix()
+    protected function getClassPrefix()
     {
         return $this->class_prefix;
     }
 
-    public function setClassPrefix($value)
+    protected function setClassPrefix($value)
     {
         $this->class_prefix = $value;
         return $this;
     }
 
-    public function getClassNamespace()
+    protected function getClassNamespace()
     {
         return $this->class_namespace;
     }
 
-    public function setClassNamespace($value)
+    protected function setClassNamespace($value)
     {
         $this->class_namespace = $value;
     }
@@ -358,11 +360,11 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
                         $body = $this->buildHtmlHead($widget);
                         break;
                     case static::MODE_BODY:
-                        $body = $this->buildWidget($widget);
+                        $body = $this->buildHtmlBody($widget);
                         break;
                     case static::MODE_FULL:
                     default:
-                        $body = $this->buildHtmlHead($widget) . "\n" . $this->buildWidget($widget);
+                        $body = $this->buildHtmlHead($widget) . "\n" . $this->buildHtmlBody($widget);
                 }
                 break;
                 
@@ -456,7 +458,7 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
                     }
                 }
             }
-            $body = $this->buildHtmlHead($debug_widget) . "\n" . $this->buildWidget($debug_widget);
+            $body = $this->buildHtmlHead($debug_widget) . "\n" . $this->buildHtmlBody($debug_widget);
         } catch (\Throwable $e) {
             // If anything goes wrong when trying to prettify the original error, drop prettifying
             // and throw the original exception wrapped in a notice about the failed prettification
