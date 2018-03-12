@@ -337,6 +337,17 @@ class TaskReaderMiddleware implements MiddlewareInterface
      * @param string $string
      * @return TaskReaderMiddleware
      */
+    public function setParamNameQuickSearch($string) : TaskReaderMiddleware
+    {
+        $this->paramNameQuickSearch = $string;
+        return $this;
+    }
+    
+    /**
+     *
+     * @param string $string
+     * @return TaskReaderMiddleware
+     */
     public function setParamNamePagingOffset($string) : TaskReaderMiddleware
     {
         $this->paramNamePagingOffset = $string;
