@@ -30,6 +30,8 @@ use exface\Core\Exceptions\DataSheets\DataSheetReadError;
 use exface\Core\Exceptions\DataSheets\DataSheetMissingRequiredValueError;
 use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 use exface\Core\Interfaces\Model\MetaRelationInterface;
+use exface\Core\Exceptions\DataSheets\DataSheetDeleteError;
+use exface\Core\Exceptions\Model\MetaObjectHasNoDataSourceError;
 
 /**
  * Internal data respresentation object in exface.
@@ -949,11 +951,18 @@ class DataSheet implements DataSheetInterface
             
             // First check if the sheet theoretically can have data - that is, if it has UIDs in it's rows or at least some filters
             // This makes sure, reading data in the next step will not return the entire table, which would then get deleted of course!
-            if ((! $ds->getUidColumn() || $ds->getUidColumn()->isEmpty()) && $ds->getFilters()->isEmpty())
+            if ((! $ds->hasUidColumn() || $ds->getUidColumn()->isEmpty()) && $ds->getFilters()->isEmpty()) {
                 continue;
+            }
             // If the there can be data, but there are no rows, read the data
-            if ($ds->dataRead()) {
-                $ds->dataDelete($transaction);
+            try {
+                if ($ds->dataRead()) {
+                    $ds->dataDelete($transaction);
+                }
+            } catch (MetaObjectHasNoDataSourceError $e) {
+                // Just ignore objects without data sources - there is nothing to delete there!
+            } catch (\Throwable $e) {
+                throw new DataSheetDeleteError($ds, 'Cannot delete related data for "' . $this->getMetaObject()->getName() . '" (' . $this->getMetaObject()->getAliasWithNamespace() . '). Please remove related "' . $ds->getMetaObject()->getName() . '" (' . $ds->getMetaObject()->getAliasWithNamespace() . ') manually and try again.', '6ZISUAJ', $e);
             }
         }
         
