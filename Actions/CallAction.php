@@ -9,6 +9,7 @@ use exface\Core\Exceptions\Actions\ActionInputError;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Tasks\TaskResultInterface;
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 
 /**
  * This action performs another action specified in the action_alias property or via request parameter "call=your_action_alias".
@@ -157,9 +158,9 @@ class CallAction extends AbstractAction
         return $this->getAction()->setInputDataSheet($data_sheet_or_uxon);
     }
 
-    public function getInputDataSheet()
+    public function getInputDataSheet(TaskInterface $task) : DataSheetInterface
     {
-        return $this->getAction()->getInputDataSheet();
+        return $this->getAction()->getInputDataSheet($task);
     }
 
     public function getInputRowsMax()

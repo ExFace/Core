@@ -63,8 +63,12 @@ class ObjectBasketAdd extends AbstractAction implements iModifyContext
     {
         $input = $this->getInputDataSheet($task);
         $this->getContext()->add($input);
+        
         $message = $this->translate('RESULT', ['%context_name%' => $this->getContext()->getName(), '%number%' => $input->countRows()], $input->countRows());
-        return TaskResultFactory::createMessageResult($task, $message);
+        $result = TaskResultFactory::createMessageResult($task, $message);
+        $result->setContextModified(true);
+        
+        return $result;
     }
 }
 ?>

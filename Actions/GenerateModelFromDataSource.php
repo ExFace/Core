@@ -30,7 +30,7 @@ class GenerateModelFromDataSource extends AbstractAction
         $input_data = $this->getInputDataSheet($task);
         
         if (! $input_data->getMetaObject()->is('exface.Core.MODEL_BUILDER_INPUT')) {
-            throw new ActionInputInvalidObjectError($this, 'Action "' . $this->getAlias() . '" exprects exface.Core.MODEL_BUILDER_INPUT as input, "' . $this->getInputDataSheet()->getMetaObject()->getAliasWithNamespace() . '" given instead!');
+            throw new ActionInputInvalidObjectError($this, 'Action "' . $this->getAlias() . '" exprects exface.Core.MODEL_BUILDER_INPUT as input, "' . $input_data->getMetaObject()->getAliasWithNamespace() . '" given instead!');
         }
         
         $obj_col = $input_data->getColumns()->getByExpression('OBJECT');

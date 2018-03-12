@@ -14,6 +14,7 @@ use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Tasks\TaskResultInterface;
 use exface\Core\DataTypes\StringDataType;
+use exface\Core\Factories\TaskResultFactory;
 
 class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuery
 {
@@ -97,7 +98,7 @@ class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuer
     protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : TaskResultInterface
     {
         $counter = 0;
-        $data_sheet = $this->getInputDataSheet();
+        $data_sheet = $this->getInputDataSheet($task);
         // Check if the action is aplicable to the input object
         if ($this->getAplicableToObjectAlias()) {
             if (! $data_sheet->getMetaObject()->is($this->getAplicableToObjectAlias())) {
@@ -139,11 +140,13 @@ class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuer
             $data_sheet->addFilterFromColumnValues($data_sheet->getUidColumn());
         }
         $data_sheet->dataRead();
-        $this->setResultDataSheet($data_sheet);
-        $this->setResult('');
-        $this->setResultMessage($this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.CUSTOMDATAQUERY.RESULT', array(
+        
+        $result = TaskResultFactory::createDataResult($task, $data_sheet);
+        $result->setMessage($this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.CUSTOMDATAQUERY.RESULT', array(
             '%number%' => $counter
         ), $counter));
+        
+        return $result;
     }
 }
 ?>

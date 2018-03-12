@@ -31,7 +31,7 @@ class ObjectBasketContext extends AbstractContext
     public function add(DataSheetInterface $data_sheet)
     {
         if (! $data_sheet->getUidColumn()) {
-            throw new ContextRuntimeError($this, 'Cannot add object "' . $this->getInputDataSheet()->getMetaObject()->getAliasWithNamespace() . '" to object basket: missing UID-column "' . $this->getInputDataSheet()->getMetaObject()->getUidAttributeAlias() . '"!', '6TMQR5N');
+            throw new ContextRuntimeError($this, 'Cannot add object "' . $data_sheet->getMetaObject()->getAliasWithNamespace() . '" to object basket: missing UID-column "' . $data_sheet->getMetaObject()->getUidAttributeAlias() . '"!', '6TMQR5N');
         }
         
         $basket_data = $this->createBasketSheet($data_sheet->getMetaObject());

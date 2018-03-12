@@ -1,7 +1,6 @@
 <?php
 namespace exface\Core\Actions;
 
-use exface\Core\Widgets\AbstractWidget;
 use exface\Core\Factories\ActionFactory;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Widgets\Dialog;
@@ -15,27 +14,27 @@ use exface\Core\Widgets\Dialog;
  * widget once the dialog is closed.
  *
  * Basic Example:
- * {
- * "widget_type": "Form",
- * "object_alias" "my.app.ORDER"
- * "widgets": [
- * {
- * "widget_type": "ComboTable",
- * "attribute_alias": "CUSTOMER",
- * "id": "customer_selector"
- * }
- * ],
- * "buttons": [
- * {
- * "action":
- * {
- * "alias": "exface.Core.ShowLookupDialog",
- * "object_alias": "my.app.CUSTOMER",
- * "target_widget_id": "customer_selector"
- * }
- * }
- * ]
- * }
+ *  {
+ *      "widget_type": "Form",
+ *      "object_alias" "my.app.ORDER"
+ *      "widgets": [
+ *          {
+ *              "widget_type": "ComboTable",
+ *              "attribute_alias": "CUSTOMER",
+ *              "id": "customer_selector"
+ *          }
+ *      ],
+ *      "buttons": [
+ *          {
+ *              "action":
+ *                  {
+ *                      "alias": "exface.Core.ShowLookupDialog",
+ *                      "object_alias": "my.app.CUSTOMER",
+ *                      "target_widget_id": "customer_selector"
+ *                  }
+ *          }
+ *      ]
+ *  }
  *
  * This action can be used with any widget, that accepts input.
  *
@@ -47,6 +46,11 @@ class ShowLookupDialog extends ShowDialog
 
     private $target_widget_id = null;
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Actions\ShowWidget::init()
+     */
     protected function init()
     {
         parent::init();
@@ -57,6 +61,11 @@ class ShowLookupDialog extends ShowDialog
         }
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Actions\ShowDialog::enhanceDialogWidget()
+     */
     protected function enhanceDialogWidget(Dialog $dialog)
     {
         $dialog = parent::enhanceDialogWidget($dialog);

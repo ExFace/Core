@@ -11,6 +11,12 @@ use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Factories\UiPageFactory;
 
+/**
+ * Renders a dialog with any contents specified in the widget-property.
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
 class ShowDialog extends ShowWidget implements iShowDialog
 {
     private $widget_was_enhanced = false;

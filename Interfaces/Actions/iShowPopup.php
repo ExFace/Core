@@ -1,18 +1,18 @@
 <?php
 namespace exface\Core\Interfaces\Actions;
 
-use exface\Core\Widgets\Container;
+use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 
 /**
- * 
- * @method Container getResult()
- * 
+ *  
  * @author Andrej Kabachnik
  *
  */
 interface iShowPopup extends ActionInterface
 {
-
-    public function getPopupContainer();
-
+    /**
+     * 
+     * @return iContainOtherWidgets
+     */
+    public function getPopupContainer() : iContainOtherWidgets;
 }
