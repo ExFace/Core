@@ -5,9 +5,23 @@ use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\WidgetInterface;
 
+/**
+ * Renders a dialog to create a copy of the input object.
+ * 
+ * Dialog rendering works just like in EditObjectDialog, but the save-button creates a copy
+ * instead of modifying the given object.
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
 class DuplicateObjectDialog extends EditObjectDialog
 {
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Actions\EditObjectDialog::init()
+     */
     protected function init()
     {
         parent::init();
@@ -24,7 +38,7 @@ class DuplicateObjectDialog extends EditObjectDialog
      */
     protected function prefillWidget(TaskInterface $task, WidgetInterface $widget) : WidgetInterface
     {
-        $data_sheet = $this->getInputDataSheet();
+        $data_sheet = $this->getInputDataSheet($task);
         
         if ($data_sheet->getUidColumn()) {
             $data_sheet = $this->getWidget()->prepareDataSheetToPrefill($data_sheet);
@@ -35,7 +49,9 @@ class DuplicateObjectDialog extends EditObjectDialog
             $data_sheet->getColumns()->removeByKey($data_sheet->getUidColumn()->getName());
         }
         
-        $this->getWidget()->prefill($data_sheet);
+        $widget->prefill($data_sheet);
+        
+        return $widget;
     }
 }
 ?>

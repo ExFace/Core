@@ -10,6 +10,7 @@ use exface\Core\Interfaces\Widgets\iCanBeRequired;
 use exface\Core\Interfaces\Widgets\iCanBeDisabled;
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\Interfaces\Model\UiPageInterface;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 
 /**
  * This action will show a dialog displaying the default editor of a meta object in read-only mode.
@@ -40,10 +41,15 @@ use exface\Core\Interfaces\Model\UiPageInterface;
 class ShowObjectDialog extends ShowDialog
 {
 
-    private $show_only_editable_attributes = null;
+    private $show_only_editable_attributes = false;
 
     private $disable_editing = true;
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Actions\ShowWidget::init()
+     */
     protected function init()
     {
         parent::init();
@@ -98,7 +104,14 @@ class ShowObjectDialog extends ShowDialog
         return $editors;
     }
 
-    function createWidgetFromAttribute($obj, $attribute_alias, $parent_widget)
+    /**
+     * 
+     * @param MetaObjectInterface $obj
+     * @param string $attribute_alias
+     * @param WidgetInterface $parent_widget
+     * @return WidgetInterface
+     */
+    protected function createWidgetFromAttribute(MetaObjectInterface $obj, $attribute_alias, WidgetInterface $parent_widget) : WidgetInterface
     {
         $attr = $obj->getAttribute($attribute_alias);
         $page = $this->getWidgetDefinedIn()->getPage();
@@ -112,7 +125,6 @@ class ShowObjectDialog extends ShowDialog
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Actions\ShowDialog::createDialogWidget()
      */
     protected function createDialogWidget(UiPageInterface $page, WidgetInterface $contained_widget = NULL)
@@ -157,6 +169,11 @@ class ShowObjectDialog extends ShowDialog
         return $dialog;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Actions\ShowDialog::enhanceDialogWidget()
+     */
     protected function enhanceDialogWidget(Dialog $dialog)
     {
         $dialog = parent::enhanceDialogWidget($dialog);
@@ -168,33 +185,50 @@ class ShowObjectDialog extends ShowDialog
         return $dialog;
     }
 
-    public function setDialogWidget(AbstractWidget $widget)
-    {
-        $this->dialog_widget = $widget;
-    }
-
     /**
      * Returns TRUE if only widgets for editable attributes should be shown or FALSE, if all visible widgets should appear (some being disabled).
      *
      * @return boolean
      */
-    public function getShowOnlyEditableAttributes()
+    public function getShowOnlyEditableAttributes() : bool
     {
         return $this->show_only_editable_attributes;
     }
 
-    public function setShowOnlyEditableAttributes($value)
+    /**
+     * Set to FALSE to show all attributes and FALSE to only show editable object attributes.
+     * 
+     * @uxon-property show_only_editable_attributes
+     * @uxon-type boolean
+     * 
+     * @param boolean $value
+     * @return \exface\Core\Actions\ShowObjectDialog
+     */
+    public function setShowOnlyEditableAttributes($value) : ShowObjectDialog
     {
         $this->show_only_editable_attributes = $value;
         return $this;
     }
 
-    public function getDisableEditing()
+    /**
+     * 
+     * @return bool
+     */
+    public function getDisableEditing() : bool
     {
         return $this->disable_editing;
     }
 
-    public function setDisableEditing($value)
+    /**
+     * Set to TRUE to prevent editing of the object regardless of wether the dialog has active editing widgets.
+     * 
+     * @uxon-property disable_editing
+     * @uxon-type boolean
+     * 
+     * @param boolean $value
+     * @return \exface\Core\Actions\ShowObjectDialog
+     */
+    public function setDisableEditing($value) : ShowObjectDialog
     {
         $this->disable_editing = BooleanDataType::cast($value);
         return $this;

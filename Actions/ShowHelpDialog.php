@@ -21,6 +21,11 @@ use exface\Core\CommonLogic\Constants\Icons;
 class ShowHelpDialog extends ShowDialog
 {
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Actions\ShowWidget::init()
+     */
     protected function init()
     {
         parent::init();

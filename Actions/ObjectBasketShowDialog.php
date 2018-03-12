@@ -21,6 +21,11 @@ class ObjectBasketShowDialog extends ShowDialog
 {
     use ContextActionTrait; 
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Actions\ShowWidget::init()
+     */
     protected function init()
     {
         parent::init();

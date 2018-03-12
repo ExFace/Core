@@ -65,7 +65,7 @@ class GoToUrl extends AbstractAction implements iShowUrl
     {
         $vars = array();
         $vals = array();
-        foreach ($this->getInputDataSheet()->getRow(0) as $var => $val) {
+        foreach ($this->getInputDataSheet($task)->getRow(0) as $var => $val) {
             $vars[] = '[#' . $var . '#]';
             $vals[] = urlencode($val);
         }

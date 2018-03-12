@@ -3,7 +3,14 @@ namespace exface\Core\Actions;
 
 use exface\Core\Widgets\AbstractWidget;
 use exface\Core\Interfaces\Contexts\ContextScopeInterface;
+use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 
+/**
+ * Shows a popup for the user to interact with a context (e.g. list of favorites for the favorites context).
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
 class ShowContextPopup extends ShowPopup
 {
     
@@ -16,7 +23,7 @@ class ShowContextPopup extends ShowPopup
      * {@inheritDoc}
      * @see \exface\Core\Actions\ShowPopup::createPopupContainer()
      */
-    protected function createPopupContainer(AbstractWidget $contained_widget = NULL)
+    protected function createPopupContainer(AbstractWidget $contained_widget = NULL) : iContainOtherWidgets
     {
         $popup = parent::createPopupContainer($contained_widget);
         

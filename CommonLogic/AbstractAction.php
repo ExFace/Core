@@ -452,7 +452,7 @@ abstract class AbstractAction implements ActionInterface
     {
         if (is_null($this->meta_object)) {
             if ($this->hasInputDataPreset()) {
-                $this->meta_object = $this->getInputDataSheet()->getMetaObject();
+                $this->meta_object = $this->getInputDataPreset()->getMetaObject();
             } elseif ($this->isDefinedInWidget()) {
                 $this->meta_object = $this->getWidgetDefinedIn()->getMetaObject();
             } else {
@@ -564,8 +564,9 @@ abstract class AbstractAction implements ActionInterface
         if ($this->getWidgetDefinedIn()) {
             $uxon->setProperty('trigger_widget', $this->getWidgetDefinedIn()->createWidgetLink()->exportUxonObject());
         }
-        $uxon->setProperty('template_alias', $this->getTemplateAlias());
-        $uxon->setProperty('input_data_sheet',  $this->getInputDataSheet(false)->exportUxonObject());
+        if ($this->hasInputDataPreset()) {
+            $uxon->setProperty('input_data_sheet',  $this->getInputDataPreset()->exportUxonObject());
+        }
         $uxon->setProperty('disabled_behaviors', UxonObject::fromArray($this->getDisabledBehaviors()));
         
         if (empty($this->getInputMappers())){
