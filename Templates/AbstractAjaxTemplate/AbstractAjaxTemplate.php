@@ -26,11 +26,11 @@ use Psr\Http\Server\MiddlewareInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
-use exface\Core\Interfaces\Tasks\TaskResultInterface;
-use exface\Core\Interfaces\Tasks\TaskResultWidgetInterface;
-use exface\Core\Interfaces\Tasks\TaskResultUriInterface;
-use exface\Core\Interfaces\Tasks\TaskResultFileInterface;
-use exface\Core\Interfaces\Tasks\TaskResultDataInterface;
+use exface\Core\Interfaces\Tasks\ResultInterface;
+use exface\Core\Interfaces\Tasks\ResultWidgetInterface;
+use exface\Core\Interfaces\Tasks\ResultUriInterface;
+use exface\Core\Interfaces\Tasks\ResultFileInterface;
+use exface\Core\Interfaces\Tasks\ResultDataInterface;
 use GuzzleHttp\Psr7\Response;
 use exface\Core\Exceptions\Templates\TemplateOutputError;
 use exface\Core\Exceptions\RuntimeException;
@@ -337,7 +337,7 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
      * {@inheritDoc}
      * @see \exface\Core\Templates\AbstractHttpTemplate\AbstractHttpTemplate::createResponse()
      */
-    protected function createResponse(ServerRequestInterface $request, TaskResultInterface $result) : ResponseInterface
+    protected function createResponse(ServerRequestInterface $request, ResultInterface $result) : ResponseInterface
     {
         /* @var $headers array [header_name => array_of_values] */
         $headers = [];
@@ -345,14 +345,14 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
         $status_code = $result->getResponseCode();
         
         switch (true) {
-            case $result instanceof TaskResultDataInterface:
+            case $result instanceof ResultDataInterface:
                 $elem = $this->getElement($result->getTask()->getWidgetTriggeredBy());
                 $json = $elem->prepareData($result->getData());
                 $json["success"] = $result->getMessage();
                 $headers['Content-type'] = ['application/json;charset=utf-8'];
                 break;
                 
-            case $result instanceof TaskResultWidgetInterface:
+            case $result instanceof ResultWidgetInterface:
                 $mode = $request->getAttribute($this->getRequestAttributeForRenderingMode(), static::MODE_FULL);
                 $widget = $result->getWidget();
                 switch ($mode) {
@@ -368,7 +368,7 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
                 }
                 break;
                 
-            case $result instanceof TaskResultFileInterface:
+            case $result instanceof ResultFileInterface:
                 $url = FileServerTemplate::buildUrlForDownload($this->getWorkbench(), $result->getPathAbsolute());
                 $message = 'Download ready. If it does not start automatically, click <a href="' . $url . '">here</a>.';
                 $json = [
@@ -377,7 +377,7 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
                 ];
                 break;   
                 
-            case $result instanceof TaskResultUriInterface:
+            case $result instanceof ResultUriInterface:
                 // FIXME how how to pass redirects to the UI?
                 $uri = $result->getUri();
                 if ($result->getOpenInNewWindow()) {
@@ -394,7 +394,7 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
                     $json['undoable'] = '1';
                 }
                 // check if result is a properly formed link
-                if ($result instanceof TaskResultUriInterface) {
+                if ($result instanceof ResultUriInterface) {
                     $url = filter_var($result->getUri()->__toString(), FILTER_SANITIZE_STRING);
                     if (substr($url, 0, 4) == 'http') {
                         $json['redirect'] = $url;

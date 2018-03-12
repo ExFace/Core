@@ -8,8 +8,8 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Exceptions\Actions\ActionRuntimeError;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
-use exface\Core\Interfaces\Tasks\TaskResultInterface;
-use exface\Core\Factories\TaskResultFactory;
+use exface\Core\Interfaces\Tasks\ResultInterface;
+use exface\Core\Factories\ResultFactory;
 use exface\Core\DataTypes\StringDataType;
 
 /**
@@ -61,7 +61,7 @@ class GoToUrl extends AbstractAction implements iShowUrl
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\AbstractAction::perform()
      */
-    protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : TaskResultInterface
+    protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {
         $vars = array();
         $vals = array();
@@ -76,7 +76,7 @@ class GoToUrl extends AbstractAction implements iShowUrl
             $result = $this->getWorkbench()->getCMS()->createLinkToFile($result);
         }
         
-        $result = TaskResultFactory::createUriResult($task, $result);
+        $result = ResultFactory::createUriResult($task, $result);
         $result->setMessage($this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.GOTOURL.SUCCESS'));
         if ($this->getOpenInNewWindow()) {
             $result->setOpenInNewWindow(true);

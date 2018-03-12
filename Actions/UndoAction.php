@@ -7,8 +7,8 @@ use exface\Core\Exceptions\Actions\ActionUndoFailedError;
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
-use exface\Core\Interfaces\Tasks\TaskResultInterface;
-use exface\Core\Factories\TaskResultFactory;
+use exface\Core\Interfaces\Tasks\ResultInterface;
+use exface\Core\Factories\ResultFactory;
 
 /**
  * This action performs an undo operation on one or more other actions from the action context history.
@@ -35,7 +35,7 @@ class UndoAction extends AbstractAction implements iUndoActions
      * {@inheritdoc}
      * @see \exface\Core\Interfaces\Actions\ActionInterface::perform()
      */
-    protected function perform(TaskInterface $task, DataTransactionInterface $transactions) : TaskResultInterface
+    protected function perform(TaskInterface $task, DataTransactionInterface $transactions) : ResultInterface
     {
         $undone_actions = 0;
         foreach ($this->getActionsToUndo($task) as $undo_action) {
@@ -49,7 +49,7 @@ class UndoAction extends AbstractAction implements iUndoActions
             }
         }
         
-        $result = TaskResultFactory::createDataResult($task, $result_sheet);
+        $result = ResultFactory::createDataResult($task, $result_sheet);
         $result->setMessage($this->translate('RESULT', ['%number%' => $undone_actions], $undone_actions));
         
         return $result;

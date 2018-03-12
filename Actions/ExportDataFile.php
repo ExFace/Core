@@ -5,11 +5,11 @@ use exface\Core\CommonLogic\Filemanager;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Exceptions\Actions\ActionExportDataError;
 use exface\Core\Exceptions\Actions\ActionConfigurationError;
-use exface\Core\Interfaces\Tasks\TaskResultInterface;
+use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use GuzzleHttp\Psr7\Uri;
-use exface\Core\Factories\TaskResultFactory;
+use exface\Core\Factories\ResultFactory;
 
 /**
  * This action is the base class for a number of actions, which export raw data as a file
@@ -36,7 +36,7 @@ abstract class ExportDataFile extends ExportData
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\AbstractAction::perform()
      */
-    protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : TaskResultInterface
+    protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {
         $resultMessage = '';
         
@@ -72,7 +72,7 @@ abstract class ExportDataFile extends ExportData
         
         // Datei abschliessen und zum Download bereitstellen
         $this->writeFileResult($dataSheetMaster);
-        $result = TaskResultFactory::createFileResult($task, $this->getPathname());
+        $result = ResultFactory::createFileResult($task, $this->getPathname());
         return $result;
     }
 

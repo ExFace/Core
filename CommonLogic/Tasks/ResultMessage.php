@@ -2,7 +2,7 @@
 namespace exface\Core\CommonLogic\Tasks;
 
 use exface\Core\Interfaces\Tasks\TaskInterface;
-use exface\Core\Interfaces\Tasks\TaskResultInterface;
+use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\DataTypes\StringDataType;
 
 /**
@@ -11,7 +11,7 @@ use exface\Core\DataTypes\StringDataType;
  * @author Andrej Kabachnik
  *
  */
-class TaskResultMessage implements TaskResultInterface
+class ResultMessage implements ResultInterface
 {
     private $task = null;
     
@@ -43,9 +43,9 @@ class TaskResultMessage implements TaskResultInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Tasks\TaskResultInterface::setDataModified()
+     * @see \exface\Core\Interfaces\Tasks\ResultInterface::setDataModified()
      */
-    public function setDataModified(bool $value): TaskResultInterface
+    public function setDataModified(bool $value): ResultInterface
     {
         $this->isDataModified = $value;
         return $this;
@@ -54,7 +54,7 @@ class TaskResultMessage implements TaskResultInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Tasks\TaskResultInterface::isUndoable()
+     * @see \exface\Core\Interfaces\Tasks\ResultInterface::isUndoable()
      */
     public function isUndoable(): bool
     {
@@ -64,9 +64,9 @@ class TaskResultMessage implements TaskResultInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Tasks\TaskResultInterface::setUndoable()
+     * @see \exface\Core\Interfaces\Tasks\ResultInterface::setUndoable()
      */
-    public function setUndoable(bool $trueOrFalse): TaskResultInterface
+    public function setUndoable(bool $trueOrFalse): ResultInterface
     {
         $this->isUndoable = $trueOrFalse;
         return $this;
@@ -75,7 +75,7 @@ class TaskResultMessage implements TaskResultInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Tasks\TaskResultInterface::isDataModified()
+     * @see \exface\Core\Interfaces\Tasks\ResultInterface::isDataModified()
      */
     public function isDataModified(): bool
     {
@@ -85,7 +85,7 @@ class TaskResultMessage implements TaskResultInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Tasks\TaskResultInterface::getMessage()
+     * @see \exface\Core\Interfaces\Tasks\ResultInterface::getMessage()
      */
     public function getMessage(): string
     {
@@ -123,7 +123,7 @@ class TaskResultMessage implements TaskResultInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Tasks\TaskResultInterface::getTask()
+     * @see \exface\Core\Interfaces\Tasks\ResultInterface::getTask()
      */
     public function getTask(): TaskInterface
     {
@@ -133,9 +133,9 @@ class TaskResultMessage implements TaskResultInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Tasks\TaskResultInterface::setMessage()
+     * @see \exface\Core\Interfaces\Tasks\ResultInterface::setMessage()
      */
-    public function setMessage(string $string): TaskResultInterface
+    public function setMessage(string $string): ResultInterface
     {
         $this->message = $string;
         return $this;
@@ -143,9 +143,9 @@ class TaskResultMessage implements TaskResultInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Tasks\TaskResultInterface::setReponseCode()
+     * @see \exface\Core\Interfaces\Tasks\ResultInterface::setReponseCode()
      */
-    public function setReponseCode(int $number) : TaskResultInterface
+    public function setReponseCode(int $number) : ResultInterface
     {
         $this->responseCode = $number;
         return $this;
@@ -161,7 +161,7 @@ class TaskResultMessage implements TaskResultInterface
         return $this->isContextModified;
     }
 
-    public function setContextModified(bool $trueOrFalse): TaskResultInterface
+    public function setContextModified(bool $trueOrFalse): ResultInterface
     {
         $this->isContextModified = $trueOrFalse;
         return $this;

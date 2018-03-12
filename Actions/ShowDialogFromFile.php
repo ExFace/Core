@@ -8,7 +8,7 @@ use exface\Core\Factories\WidgetFactory;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
-use exface\Core\Interfaces\Tasks\TaskResultInterface;
+use exface\Core\Interfaces\Tasks\ResultInterface;
 
 /**
  * This creates and displays a widget from a JSON file containing some UXON description of the widget.
@@ -83,7 +83,7 @@ class ShowDialogFromFile extends ShowDialog
         return $this;
     }
 
-    protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : TaskResultInterface
+    protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {
         if (! $idCol = $this->getInputDataSheet($task)->getColumns()->getByExpression($this->getFilePathAttributeAlias())) {
             throw new ActionInputMissingError($this, 'Column "' . $this->getFilePathAttributeAlias() . '" not found in input data!');

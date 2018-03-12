@@ -6,8 +6,8 @@ use exface\Core\Interfaces\Actions\iCanBeUndone;
 use exface\Core\Exceptions\Actions\ActionUndoFailedError;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
-use exface\Core\Interfaces\Tasks\TaskResultInterface;
-use exface\Core\Factories\TaskResultFactory;
+use exface\Core\Interfaces\Tasks\ResultInterface;
+use exface\Core\Factories\ResultFactory;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 
@@ -20,7 +20,7 @@ class UpdateData extends SaveData implements iUpdateData, iCanBeUndone
      * {@inheritDoc}
      * @see \exface\Core\Actions\SaveData::perform()
      */
-    protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : TaskResultInterface
+    protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {
         $data_sheet = $this->getInputDataSheet($task);
         
@@ -47,7 +47,7 @@ class UpdateData extends SaveData implements iUpdateData, iCanBeUndone
         
         $affectedRows = $data_sheet->dataUpdate(false, $transaction);
         
-        $result = TaskResultFactory::createDataResult($task, $data_sheet);
+        $result = ResultFactory::createDataResult($task, $data_sheet);
         $result->setMessage($this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.UPDATEDATA.RESULT', ['%number%' => $affectedRows], $affectedRows));
         $result->setUndoable($undoable);
         if ($affectedRows > 0) {

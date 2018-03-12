@@ -12,8 +12,8 @@ use exface\Core\CommonLogic\Contexts\ContextActionTrait;
 use exface\Core\Exceptions\Contexts\ContextScopeNotFoundError;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
-use exface\Core\Factories\TaskResultFactory;
-use exface\Core\Interfaces\Tasks\TaskResultInterface;
+use exface\Core\Factories\ResultFactory;
+use exface\Core\Interfaces\Tasks\ResultInterface;
 
 /**
  * This action provides a RESTful API to work with contexts. 
@@ -57,19 +57,19 @@ class ContextApi extends AbstractAction implements iModifyContext
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\AbstractAction::perform()
      */
-    protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : TaskResultInterface
+    protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {
         if (!method_exists($this->getContext(), $this->getOperation())){
             throw new ActionConfigurationError($this, 'Invalid operation "' . $this->getOperation() . '" for context "' . $this->getContext()->getAlias() . '": method not found!');
         }
         $return_value = call_user_func(array($this->getContext(), $this->getOperation()));
         if (is_string($return_value)){
-            $result = TaskResultFactory::createMessageResult($task, $return_value);
+            $result = ResultFactory::createMessageResult($task, $return_value);
         } elseif ($return_value instanceof ContextInterface) { 
             $operation_name = ucfirst(strtolower(preg_replace('/(?<!^)[A-Z]/', ' $0', $this->getOperation())));
-            $result = TaskResultFactory::createMessageResult($task, $this->translate('RESULT', ['%operation_name%' => $operation_name]));
+            $result = ResultFactory::createMessageResult($task, $this->translate('RESULT', ['%operation_name%' => $operation_name]));
         } else {
-            $result = TaskResultFactory::createTextContentResult($task, $return_value);
+            $result = ResultFactory::createTextContentResult($task, $return_value);
         }
         return $result;
     }

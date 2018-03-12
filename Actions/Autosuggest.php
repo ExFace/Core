@@ -4,7 +4,7 @@ namespace exface\Core\Actions;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
-use exface\Core\Interfaces\Tasks\TaskResultInterface;
+use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Interfaces\WidgetInterface;
 
 /**
@@ -37,7 +37,7 @@ class Autosuggest extends ReadData
      * {@inheritDoc}
      * @see \exface\Core\Actions\ReadData::perform()
      */
-    protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : TaskResultInterface
+    protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {
         // IDEA Include recently used objects in the autosuggest results. But where can we get those object from?
         // Another window context? The filter context?

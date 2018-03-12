@@ -3,8 +3,8 @@ namespace exface\Core\CommonLogic\Tasks;
 
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
-use exface\Core\Interfaces\Tasks\TaskResultTextContentInterface;
-use exface\Core\Interfaces\Tasks\TaskResultStreamInterface;
+use exface\Core\Interfaces\Tasks\ResultTextContentInterface;
+use exface\Core\Interfaces\Tasks\ResultStreamInterface;
 
 /**
  * Task result containing textual content: i.e. text, code, etc..
@@ -12,7 +12,7 @@ use exface\Core\Interfaces\Tasks\TaskResultStreamInterface;
  * @author Andrej Kabachnik
  *
  */
-class TaskResultTextContent extends TaskResultMessage implements TaskResultTextContentInterface
+class ResultTextContent extends ResultMessage implements ResultTextContentInterface
 {
     private $content = null;
     
@@ -29,7 +29,7 @@ class TaskResultTextContent extends TaskResultMessage implements TaskResultTextC
         $this->setContent($content);
     }
     
-    public function setContent(string $content): TaskResultTextContentInterface
+    public function setContent(string $content): ResultTextContentInterface
     {
         $this->content = $content;
         return $this;
@@ -50,7 +50,7 @@ class TaskResultTextContent extends TaskResultMessage implements TaskResultTextC
     /**
      *
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Tasks\TaskResultStreamInterface::getMimeType()
+     * @see \exface\Core\Interfaces\Tasks\ResultStreamInterface::getMimeType()
      */
     public function getMimeType($default = null): string
     {
@@ -63,9 +63,9 @@ class TaskResultTextContent extends TaskResultMessage implements TaskResultTextC
     /**
      *
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Tasks\TaskResultStreamInterface::setMimeType()
+     * @see \exface\Core\Interfaces\Tasks\ResultStreamInterface::setMimeType()
      */
-    public function setMimeType(string $string): TaskResultStreamInterface
+    public function setMimeType(string $string): ResultStreamInterface
     {
         $this->mimeType = $string;
         return $this;

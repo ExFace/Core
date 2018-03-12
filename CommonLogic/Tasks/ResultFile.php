@@ -3,8 +3,8 @@ namespace exface\Core\CommonLogic\Tasks;
 
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
-use exface\Core\Interfaces\Tasks\TaskResultFileInterface;
-use exface\Core\Interfaces\Tasks\TaskResultStreamInterface;
+use exface\Core\Interfaces\Tasks\ResultFileInterface;
+use exface\Core\Interfaces\Tasks\ResultStreamInterface;
 use Psr\Http\Message\UriInterface;
 
 /**
@@ -13,7 +13,7 @@ use Psr\Http\Message\UriInterface;
  * @author Andrej Kabachnik
  *
  */
-class TaskResultFile extends TaskResultMessage implements TaskResultFileInterface
+class ResultFile extends ResultMessage implements ResultFileInterface
 {
     private $downloadable = false;
     
@@ -35,14 +35,14 @@ class TaskResultFile extends TaskResultMessage implements TaskResultFileInterfac
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Tasks\TaskResultFileInterface::isDownloadable()
+     * @see \exface\Core\Interfaces\Tasks\ResultFileInterface::isDownloadable()
      */
     public function isDownloadable(): bool
     {
         return $this->downloadable;
     }
     
-    public function setPath(string $path): TaskResultFileInterface
+    public function setPath(string $path): ResultFileInterface
     {
         $filemanager = $this->getWorkbench()->filemanager();
         if ($filemanager::pathIsAbsolute($path)) {
@@ -57,7 +57,7 @@ class TaskResultFile extends TaskResultMessage implements TaskResultFileInterfac
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Tasks\TaskResultFileInterface::getPathAbsolute()
+     * @see \exface\Core\Interfaces\Tasks\ResultFileInterface::getPathAbsolute()
      */
     public function getPathAbsolute(): string
     {
@@ -67,7 +67,7 @@ class TaskResultFile extends TaskResultMessage implements TaskResultFileInterfac
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Tasks\TaskResultStreamInterface::getMimeType()
+     * @see \exface\Core\Interfaces\Tasks\ResultStreamInterface::getMimeType()
      */
     public function getMimeType(): string
     {
@@ -80,9 +80,9 @@ class TaskResultFile extends TaskResultMessage implements TaskResultFileInterfac
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Tasks\TaskResultStreamInterface::setMimeType()
+     * @see \exface\Core\Interfaces\Tasks\ResultStreamInterface::setMimeType()
      */
-    public function setMimeType(string $string): TaskResultStreamInterface
+    public function setMimeType(string $string): ResultStreamInterface
     {
         $this->mimeType = $string;
         return $this;

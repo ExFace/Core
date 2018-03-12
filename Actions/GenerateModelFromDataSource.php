@@ -6,8 +6,8 @@ use exface\Core\Exceptions\Actions\ActionInputInvalidObjectError;
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
-use exface\Core\Interfaces\Tasks\TaskResultInterface;
-use exface\Core\Factories\TaskResultFactory;
+use exface\Core\Interfaces\Tasks\ResultInterface;
+use exface\Core\Factories\ResultFactory;
 
 /**
  * This action runs one or more selected test steps
@@ -25,7 +25,7 @@ class GenerateModelFromDataSource extends AbstractAction
         $this->setInputRowsMax(null);
     }
 
-    protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : TaskResultInterface
+    protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {
         $input_data = $this->getInputDataSheet($task);
         
@@ -66,7 +66,7 @@ class GenerateModelFromDataSource extends AbstractAction
             $message .= 'Created ' . $created . ' objects, ' . $skipped . ' skipped as duplicates.';
         }
         
-        return TaskResultFactory::createMessageResult($task, $message);
+        return ResultFactory::createMessageResult($task, $message);
     }
 }
 ?>

@@ -4,8 +4,8 @@ namespace exface\Core\Actions;
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
-use exface\Core\Interfaces\Tasks\TaskResultInterface;
-use exface\Core\Factories\TaskResultFactory;
+use exface\Core\Interfaces\Tasks\ResultInterface;
+use exface\Core\Factories\ResultFactory;
 
 /**
  * Removes meta object instances matching the input data from the object basket in the given context scope (window scope by default)
@@ -34,7 +34,7 @@ class ObjectBasketRemove extends ObjectBasketAdd
      * {@inheritDoc}
      * @see \exface\Core\Actions\ObjectBasketAdd::perform()
      */
-    protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : TaskResultInterface
+    protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {
         $input = $this->getInputDataSheet($task);
         $object = $input->getMetaObject();
@@ -58,7 +58,7 @@ class ObjectBasketRemove extends ObjectBasketAdd
             ), $removed);
         }
         
-        $result = TaskResultFactory::createMessageResult($task, $message);
+        $result = ResultFactory::createMessageResult($task, $message);
         if ($removed > 0) {
             $result->setContextModified(true);
         }

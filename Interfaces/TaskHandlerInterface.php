@@ -2,14 +2,14 @@
 namespace exface\Core\Interfaces;
 
 use exface\Core\Interfaces\Tasks\TaskInterface;
-use exface\Core\Interfaces\Tasks\TaskResultInterface;
+use exface\Core\Interfaces\Tasks\ResultInterface;
 
 interface TaskHandlerInterface
 {
     /**
      * 
      * @param TaskInterface $taks
-     * @return TaskResultInterface
+     * @return ResultInterface
      */
-    public function handle(TaskInterface $taks) : TaskResultInterface;
+    public function handle(TaskInterface $taks) : ResultInterface;
 }

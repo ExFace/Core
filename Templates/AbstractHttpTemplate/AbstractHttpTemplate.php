@@ -5,7 +5,7 @@ use exface\Core\Templates\AbstractTemplate\AbstractTemplate;
 use exface\Core\Interfaces\Templates\HttpTemplateInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
-use exface\Core\Interfaces\Tasks\TaskResultInterface;
+use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 use Psr\Http\Server\MiddlewareInterface;
@@ -92,10 +92,10 @@ abstract class AbstractHttpTemplate extends AbstractTemplate implements HttpTemp
     /**
      *
      * @param ServerRequestInterface $request
-     * @param TaskResultInterface $result
+     * @param ResultInterface $result
      * @return ResponseInterface
      */
-    protected abstract function createResponse(ServerRequestInterface $request, TaskResultInterface $result): ResponseInterface;
+    protected abstract function createResponse(ServerRequestInterface $request, ResultInterface $result): ResponseInterface;
     
     /**
      * 

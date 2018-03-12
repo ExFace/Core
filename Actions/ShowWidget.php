@@ -18,9 +18,9 @@ use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\Interfaces\Actions\iReferenceWidget;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
-use exface\Core\Interfaces\Tasks\TaskResultInterface;
-use exface\Core\Interfaces\Tasks\TaskResultWidgetInterface;
-use exface\Core\CommonLogic\Tasks\TaskResultWidget;
+use exface\Core\Interfaces\Tasks\ResultInterface;
+use exface\Core\Interfaces\Tasks\ResultWidgetInterface;
+use exface\Core\CommonLogic\Tasks\ResultWidget;
 
 /**
  * The ShowWidget action is the base for all actions, that render widgets.
@@ -68,9 +68,9 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\AbstractAction::perform()
      * 
-     * @return TaskResultWidgetInterface
+     * @return ResultWidgetInterface
      */
-    protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : TaskResultInterface
+    protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {
         $widget = $this->getWidget();
         
@@ -81,7 +81,7 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
         // TODO copy the widget before prefill because otherwise the action cannot hanlde more than one task!
         $widget = $this->prefillWidget($task, $widget);
         
-        return new TaskResultWidget($task, $widget);
+        return new ResultWidget($task, $widget);
     }
 
     /**

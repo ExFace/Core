@@ -9,7 +9,7 @@ use exface\Core\Interfaces\ExfaceClassInterface;
  * @author Andrej Kabachnik
  *
  */
-interface TaskResultInterface extends ExfaceClassInterface
+interface ResultInterface extends ExfaceClassInterface
 {
     /**
      * 
@@ -31,9 +31,9 @@ interface TaskResultInterface extends ExfaceClassInterface
     /**
      * 
      * @param string $string
-     * @return TaskResultInterface
+     * @return ResultInterface
      */
-    public function setMessage(string $string) : TaskResultInterface;
+    public function setMessage(string $string) : ResultInterface;
     
     /**
      * 
@@ -44,9 +44,9 @@ interface TaskResultInterface extends ExfaceClassInterface
     /**
      * 
      * @param bool $trueOrFalse
-     * @return TaskResultInterface
+     * @return ResultInterface
      */
-    public function setUndoable(bool $trueOrFalse) : TaskResultInterface;
+    public function setUndoable(bool $trueOrFalse) : ResultInterface;
     
     /**
      * Returns TRUE, if the action modifies data in a data source or FALSE otherwise.
@@ -61,9 +61,9 @@ interface TaskResultInterface extends ExfaceClassInterface
     /**
      *
      * @param bool $value
-     * @return TaskResultInterface
+     * @return ResultInterface
      */
-    public function setDataModified(bool $value) : TaskResultInterface;
+    public function setDataModified(bool $value) : ResultInterface;
     
     /**
      * 
@@ -74,9 +74,9 @@ interface TaskResultInterface extends ExfaceClassInterface
     /**
      * 
      * @param bool $trueOrFalse
-     * @return TaskResultInterface
+     * @return ResultInterface
      */
-    public function setContextModified(bool $trueOrFalse) : TaskResultInterface;
+    public function setContextModified(bool $trueOrFalse) : ResultInterface;
     
     
     /**
@@ -89,5 +89,5 @@ interface TaskResultInterface extends ExfaceClassInterface
      *
      * @param int $number
      */
-    public function setReponseCode(int $number) : TaskResultInterface;
+    public function setReponseCode(int $number) : ResultInterface;
 }

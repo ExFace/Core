@@ -8,7 +8,7 @@ use exface\Core\Interfaces\Actions\iRunTemplateScript;
 use exface\Core\Exceptions\Actions\ActionInputError;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
-use exface\Core\Interfaces\Tasks\TaskResultInterface;
+use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 
 /**
@@ -33,7 +33,7 @@ class CallAction extends AbstractAction
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\AbstractAction::perform()
      */
-    protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : TaskResultInterface
+    protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {
         return $this->getAction()->handle($task, $transaction);
     }

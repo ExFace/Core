@@ -23,7 +23,7 @@ use exface\Core\Interfaces\Widgets\iUseInputWidget;
 use exface\Core\CommonLogic\Selectors\ActionSelector;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
-use exface\Core\Interfaces\Tasks\TaskResultInterface;
+use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Interfaces\Actions\iModifyData;
 
@@ -274,7 +274,7 @@ abstract class AbstractAction implements ActionInterface
      * 
      * @see \exface\Core\Interfaces\Actions\ActionInterface::handle()
      */
-    public final function handle(TaskInterface $task, DataTransactionInterface $transaction = null) : TaskResultInterface
+    public final function handle(TaskInterface $task, DataTransactionInterface $transaction = null) : ResultInterface
     {
         $this->dispatchEvent('Perform.Before');
         
@@ -394,7 +394,7 @@ abstract class AbstractAction implements ActionInterface
      *
      * @return void
      */
-    protected abstract function perform(TaskInterface $task, DataTransactionInterface $transaction) : TaskResultInterface;
+    protected abstract function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface;
 
     /**
      *

@@ -3,7 +3,7 @@ namespace exface\Core\Templates\FileServerTemplate;
 
 use exface\Core\Templates\AbstractHttpTemplate\AbstractHttpTemplate;
 use Psr\Http\Message\ServerRequestInterface;
-use exface\Core\Interfaces\Tasks\TaskResultInterface;
+use exface\Core\Interfaces\Tasks\ResultInterface;
 use Psr\Http\Message\ResponseInterface;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
@@ -20,7 +20,7 @@ class FileServerTemplate extends AbstractHttpTemplate
      * {@inheritDoc}
      * @see \exface\Core\Templates\AbstractHttpTemplate\AbstractHttpTemplate::createResponse()
      */
-    protected function createResponse(ServerRequestInterface $request, TaskResultInterface $result): ResponseInterface
+    protected function createResponse(ServerRequestInterface $request, ResultInterface $result): ResponseInterface
     {
         // TODO
     }

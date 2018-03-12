@@ -6,8 +6,8 @@ use exface\Core\CommonLogic\AbstractAction;
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
-use exface\Core\Interfaces\Tasks\TaskResultInterface;
-use exface\Core\Factories\TaskResultFactory;
+use exface\Core\Interfaces\Tasks\ResultInterface;
+use exface\Core\Factories\ResultFactory;
 
 class CustomTemplateScript extends AbstractAction implements iRunTemplateScript
 {
@@ -21,9 +21,9 @@ class CustomTemplateScript extends AbstractAction implements iRunTemplateScript
         $this->setIcon(Icons::CODE);
     }
 
-    protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : TaskResultInterface
+    protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {
-        return TaskResultFactory::createTextContentResult($task, $this->getScript());
+        return ResultFactory::createTextContentResult($task, $this->getScript());
     }
 
     public function getScriptLanguage()

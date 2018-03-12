@@ -1,7 +1,7 @@
 <?php
 namespace exface\Core\Interfaces\Tasks;
 
-interface TaskResultTextContentInterface extends TaskResultStreamInterface
+interface ResultTextContentInterface extends ResultStreamInterface
 {
     /**
      * 
@@ -12,9 +12,9 @@ interface TaskResultTextContentInterface extends TaskResultStreamInterface
     /**
      * 
      * @param string $content
-     * @return TaskResultTextContentInterface
+     * @return ResultTextContentInterface
      */
-    public function setContent(string $content) : TaskResultTextContentInterface;
+    public function setContent(string $content) : ResultTextContentInterface;
     
     /**
      * 
