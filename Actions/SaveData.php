@@ -41,8 +41,8 @@ class SaveData extends AbstractAction implements iModifyData, iCanBeUndone
     protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : TaskResultInterface
     {
         $data_sheet = $this->getInputDataSheet();
-        $affected_rows = $data_sheet->dataSave($this->getTransaction());
-        $message = $this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.SAVEDATA.RESULT', ['%number%' => $affected_rows], $this->getAffectedRows());
+        $affected_rows = $data_sheet->dataSave($transaction);
+        $message = $this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.SAVEDATA.RESULT', ['%number%' => $affected_rows], $affected_rows);
         return TaskResultFactory::createDataResult($task, $data_sheet, $message);
     }
 

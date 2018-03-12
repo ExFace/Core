@@ -10,11 +10,19 @@ use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\Tasks\TaskResultInterface;
 use exface\Core\Factories\TaskResultFactory;
 
+/**
+ * Deletes objects in the input data from their data sources.
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
 class DeleteObject extends AbstractAction implements iDeleteData
 {
-
-    private $affected_rows = 0;
-
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AbstractAction::init()
+     */
     protected function init()
     {
         $this->setInputRowsMin(1);
@@ -22,23 +30,26 @@ class DeleteObject extends AbstractAction implements iDeleteData
         $this->setIcon(Icons::TRASH_O);
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AbstractAction::perform()
+     */
     protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : TaskResultInterface
     {
         $input_data = $this->getInputDataSheet($task);
+        $deletedRows = 0;
         /* @var $data_sheet \exface\Core\Interfaces\DataSheets\DataSheetInterface */
         $obj = $input_data->getMetaObject();
         $ds = DataSheetFactory::createFromObject($obj);
-        $instances = array();
-        foreach ($input_data->getRows() as $row) {
-            $instances[] = $row[$obj->getUidAttributeAlias()];
+        $uids = $input_data->getUidColumn()->getValues(false);
+        
+        if (count($uids) > 0) {
+            $ds->addFilterInFromString($obj->getUidAttributeAlias(), $uids);
+            $deletedRows += $ds->dataDelete($transaction);
         }
         
-        if (count($instances) > 0) {
-            $ds->addFilterInFromString($obj->getUidAttributeAlias(), $instances);
-            $this->setAffectedRows($this->getAffectedRows() + $ds->dataDelete($this->getTransaction()));
-        }
-        
-        $result = TaskResultFactory::createMessageResult($task, $this->translate('RESULT', ['%number%' => $this->getAffectedRows()], $this->getAffectedRows()));
+        $result = TaskResultFactory::createMessageResult($task, $this->translate('RESULT', ['%number%' => $deletedRows], $deletedRows));
         return $result;
     }
 }

@@ -55,11 +55,6 @@ abstract class ExportDataFile extends ExportData
                 $dataSheet->setRowOffset($rowOffset);
                 $dataSheet->dataRead();
                 
-                // Das DataSheet kommt hier nur gestueckelt an, daher schwierig affectedRows
-                // und resultDataSheet zu setzen.
-                // $this->setAffectedRows($dataSheet->removeRows()->dataRead());
-                // $this->setResultDataSheet($dataSheet);
-                
                 $this->writeRows($dataSheet, $columnNames);
                 
                 $rowOffset += $rowsOnPage;

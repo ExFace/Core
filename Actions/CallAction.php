@@ -183,15 +183,4 @@ class CallAction extends AbstractAction
         $this->getAction()->setInputRowsMin($value);
         return $this;
     }
-
-    public function getTransaction()
-    {
-        return $this->getAction()->getTransaction();
-    }
-
-    public function setTransaction($transaction)
-    {
-        $this->getAction()->setTransaction($transaction);
-        return $this;
-    }
 }

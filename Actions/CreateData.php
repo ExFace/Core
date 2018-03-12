@@ -21,6 +21,7 @@ class CreateData extends SaveData implements iCreateData
     protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : TaskResultInterface
     {
         $data_sheet = $this->getInputDataSheet($task);
+        $affected_rows = 0;
         
         if ($this->getIgnoreRelatedObjectsInInputData()){
             $clean_sheet = $data_sheet->copy();
@@ -29,16 +30,16 @@ class CreateData extends SaveData implements iCreateData
                     $clean_sheet->getColumns()->remove($col);
                 }
             }
-            $affected_rows = $clean_sheet->dataCreate(true, $transaction);
+            $affected_rows += $clean_sheet->dataCreate(true, $transaction);
             $data_sheet->merge($clean_sheet);
         } else {
-            $affected_rows = $data_sheet->dataCreate(true, $transaction);
+            $affected_rows += $data_sheet->dataCreate(true, $transaction);
         }
         
         // FIXME #api-v4 implement undo
         // $this->setUndoDataSheet($data_sheet);
         
-        $message = $this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.CREATEDATA.RESULT', ['%number%' => $this->getAffectedRows()], $affected_rows);
+        $message = $this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.CREATEDATA.RESULT', ['%number%' => $affected_rows], $affected_rows);
         return TaskResultFactory::createDataResult($task, $data_sheet, $message);
     }
 
@@ -47,12 +48,12 @@ class CreateData extends SaveData implements iCreateData
      * {@inheritDoc}
      * @see \exface\Core\Actions\SaveData::undo()
      */
-    public function undo(DataTransactionInterface $transaction = null)
+    public function undo(DataTransactionInterface $transaction)
     {
         if (! $data_sheet = $this->getUndoDataSheet()) {
             throw new ActionUndoFailedError($this, 'Cannot undo action "' . $this->getAliasWithNamespace() . '": Failed to load history for this action!', '6T5DLGN');
         }
-        $data_sheet->dataDelete($transaction ? $transaction : $this->getTransaction());
+        $data_sheet->dataDelete($transaction);
         return $data_sheet;
     }
     

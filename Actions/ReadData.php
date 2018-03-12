@@ -32,13 +32,13 @@ class ReadData extends AbstractAction implements iReadData
         if (! $this->checkPermissions($task)) {
             // TODO Throw exception!
         }
+        
         $data_sheet = $this->getInputDataSheet($task);
         $data_sheet->removeRows();
         if ($task->isTriggeredByWidget()) {
             $data_sheet = $task->getWidgetTriggeredBy()->prepareDataSheetToRead($data_sheet);
         }
         $affected_rows = $data_sheet->dataRead();
-        $this->setAffectedRows($affected_rows);
         
         // Replace the filter conditions in the current window context by the ones in this data sheet
         // It is important to do it after the data had been read, because otherwise the newly set
@@ -49,7 +49,7 @@ class ReadData extends AbstractAction implements iReadData
         }
         
         $result = new TaskResultData($task, $data_sheet);
-        $result->setMessage($this->getAffectedRows() . ' entries read');
+        $result->setMessage($affected_rows . ' entries read');
         
         return $result;
     }
@@ -76,26 +76,6 @@ class ReadData extends AbstractAction implements iReadData
                 $context->addCondition($condition);
             } 
         }
-        return $this;
-    }
-
-    /**
-     * 
-     * @return int
-     */
-    protected function getAffectedRows()
-    {
-        return $this->affected_rows;
-    }
-
-    /**
-     * 
-     * @param int $value
-     * @return \exface\Core\Actions\ReadData
-     */
-    protected function setAffectedRows($value)
-    {
-        $this->affected_rows = $value;
         return $this;
     }
 
