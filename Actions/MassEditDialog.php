@@ -3,6 +3,7 @@ namespace exface\Core\Actions;
 
 use exface\Core\Widgets\Dialog;
 use exface\Core\CommonLogic\Constants\Icons;
+use exface\Core\Factories\WidgetFactory;
 
 class MassEditDialog extends ShowDialog
 {
@@ -24,7 +25,7 @@ class MassEditDialog extends ShowDialog
         $data_sheet = $this->getInputDataSheet();
         if ($this->getWidget()) {
             $this->getWidget()->setCaption(intval($data_sheet->countRows()));
-            if ($counter = $this->getCalledOnUiPage()->getWidget($this->getAffectedCounterWidgetId(), $this->getWidget())) {
+            if ($counter = $this->getWidgetDefinedIn()->getPage()->getWidget($this->getAffectedCounterWidgetId(), $this->getWidget())) {
                 $counter->setText($this->getAffectedCounterText());
             }
         }
@@ -34,7 +35,7 @@ class MassEditDialog extends ShowDialog
     protected function enhanceDialogWidget(Dialog $dialog)
     {
         // Add a message widget that displays what exactly we are editing here
-        $counter_widget = $this->getCalledOnUiPage()->createWidget('Message', $dialog);
+        $counter_widget = WidgetFactory::create($this->getWidgetDefinedIn()->getPage(), 'Message', $dialog);
         $this->setAffectedCounterWidgetId($counter_widget->getId());
         $counter_widget->setCaption('Affected objects');
         $counter_widget->setText($this->getAffectedCounterText());

@@ -73,9 +73,9 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
     protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : TaskResultInterface
     {
         // Check, if the action has a widget. If not, give it the widget from the task
-        if (! $this->isWidgetDefined() && $task->isTriggeredOnPage()) {
+        /*if (! $this->isWidgetDefined() && $task->isTriggeredOnPage()) {
             $this->setWidget($task->getWidgetTriggeredBy());
-        }
+        }*/
         
         $widget = $this->getWidget();
         // TODO copy the widget before prefill because otherwise the action cannot hanlde more than one task!
@@ -99,10 +99,10 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
         if (is_null($this->widget)) {
             switch (true) {
                 case $this->getWidgetUxon():
-                    $this->widget = WidgetFactory::createFromUxon($this->getCalledOnUiPage(), $this->getWidgetUxon(), ($this->isDefinedInWidget() ? $this->getWidgetDefinedIn() : null), $this->getDefaultWidgetType());
+                    $this->widget = WidgetFactory::createFromUxon($this->getWidgetDefinedIn()->getPage(), $this->getWidgetUxon(), ($this->isDefinedInWidget() ? $this->getWidgetDefinedIn() : null), $this->getDefaultWidgetType());
                     break;
                 case $this->widget_id && ! $this->page_alias:
-                    $this->widget = $this->getCalledOnUiPage()->getWidget($this->widget_id);
+                    $this->widget = $this->getWidgetDefinedIn()->getPage()->getWidget($this->widget_id);
                     break;
                 case $this->page_alias && ! $this->widget_id:
                     // TODO this causes problems with simple links to other pages, as the action attempts to load them here...
@@ -446,7 +446,7 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
     {
         $uxon = parent::exportUxonObject();
         $uxon->setProperty('widget_id', $this->getWidgetId());
-        $uxon->setProperty('page_alias', $this->page_alias ? $this->page_alias : $this->getCalledOnUiPage()->getAliasWithNamespace());
+        $uxon->setProperty('page_alias', $this->page_alias ? $this->page_alias : $this->getWidgetDefinedIn()->getPage()->getAliasWithNamespace());
         $uxon->setProperty('prefill_with_filter_context', $this->getPrefillWithFilterContext());
         $uxon->setProperty('prefill_with_input_data', $this->getPrefillWithInputData());
         if ($this->hasPrefillDataPreset()) {

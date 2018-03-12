@@ -9,6 +9,7 @@ use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Interfaces\Widgets\iCanBeRequired;
 use exface\Core\Interfaces\Widgets\iCanBeDisabled;
 use exface\Core\CommonLogic\Constants\Icons;
+use exface\Core\Interfaces\Model\UiPageInterface;
 
 /**
  * This action will show a dialog displaying the default editor of a meta object in read-only mode.
@@ -100,7 +101,7 @@ class ShowObjectDialog extends ShowDialog
     function createWidgetFromAttribute($obj, $attribute_alias, $parent_widget)
     {
         $attr = $obj->getAttribute($attribute_alias);
-        $page = $this->getCalledOnUiPage();
+        $page = $this->getWidgetDefinedIn()->getPage();
         $widget = WidgetFactory::createFromUxon($page, $attr->getDefaultEditorUxon(), $parent_widget);
         $widget->setAttributeAlias($attribute_alias);
         $widget->setCaption($attr->getName());
@@ -114,10 +115,9 @@ class ShowObjectDialog extends ShowDialog
      *
      * @see \exface\Core\Actions\ShowDialog::createDialogWidget()
      */
-    protected function createDialogWidget(AbstractWidget $contained_widget = NULL)
+    protected function createDialogWidget(UiPageInterface $page, WidgetInterface $contained_widget = NULL)
     {
-        $dialog = parent::createDialogWidget();
-        $page = $this->getCalledOnUiPage();
+        $dialog = parent::createDialogWidget($page);
         $default_editor_uxon = $dialog->getMetaObject()->getDefaultEditorUxon();
         
         // If there is a default editor, make sure it gets it's own id space, so widget links inside still work
@@ -127,11 +127,12 @@ class ShowObjectDialog extends ShowDialog
         }
         
         // If the content is explicitly defined, just add it to the dialog
-        if ($contained_widget) {
+        if (! is_null($contained_widget)) {
             $dialog->addWidget($contained_widget);
-        } // Otherwise try to generate the widget automatically
-          // First check, if there is a default editor for an object, and instantiate it if so
-        elseif ($default_editor_uxon && ! $default_editor_uxon->isEmpty()) {
+        } elseif ($default_editor_uxon && ! $default_editor_uxon->isEmpty()) {
+            // Otherwise try to generate the widget automatically
+            // First check, if there is a default editor for an object, and instantiate it if so
+            
             if (! $default_editor_uxon->getProperty('widget_type') || $default_editor_uxon->getProperty('widget_type') == 'Dialog') {
                 $dialog->importUxonObject($default_editor_uxon);
                 if ($dialog->isEmpty()) {
@@ -141,8 +142,9 @@ class ShowObjectDialog extends ShowDialog
                 $default_editor = WidgetFactory::createFromUxon($page, $default_editor_uxon, $dialog);
                 $dialog->addWidget($default_editor);
             }
-        } // Lastly, try to generate a usefull editor from the meta model
-else {
+        } else {
+            // Lastly, try to generate a usefull editor from the meta model
+            
             // If there is no editor defined, create one: Add a panel to the dialog and generate editors for all attributes
             // of the object in that panel.
             // IDEA A separate method "create_object_editor" would probably be handy, once we have attribute groups and

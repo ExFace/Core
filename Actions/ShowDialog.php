@@ -7,12 +7,13 @@ use exface\Core\Widgets\Dialog;
 use exface\Core\Interfaces\Widgets\iHaveIcon;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\Factories\WidgetFactory;
+use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\Interfaces\Model\UiPageInterface;
+use exface\Core\Factories\UiPageFactory;
 
 class ShowDialog extends ShowWidget implements iShowDialog
 {
-
-    private $include_headers = true;
-
     private $widget_was_enhanced = false;
 
     private $dialog_buttons_uxon = null;
@@ -31,11 +32,11 @@ class ShowDialog extends ShowWidget implements iShowDialog
      * @see enhance_dialog_widget()
      * @return \exface\Core\Widgets\Dialog
      */
-    protected function createDialogWidget(AbstractWidget $contained_widget = NULL)
+    protected function createDialogWidget(UiPageInterface $page, WidgetInterface $contained_widget = NULL)
     {
         /* @var $dialog \exface\Core\Widgets\Dialog */
         $parent_widget = $this->getWidgetDefinedIn();
-        $dialog = $this->getCalledOnUiPage()->createWidget('Dialog', $parent_widget);
+        $dialog = WidgetFactory::create($page, 'Dialog', $parent_widget);
         $dialog->setMetaObject($this->getMetaObject());
         
         if ($contained_widget) {
@@ -112,8 +113,17 @@ class ShowDialog extends ShowWidget implements iShowDialog
     public function getWidget()
     {
         $widget = parent::getWidget();
+        if (is_null($widget)) {
+            try {
+                $page = $this->getWidgetDefinedIn()->getPage();
+            } catch (\Throwable $e) {
+                $page = UiPageFactory::createEmpty($this->getWorkbench()->ui());
+            }
+            $widget = $this->createDialogWidget($page);
+        }
+        
         if (! ($widget instanceof Dialog)) {
-            $widget = $this->createDialogWidget($widget);
+            $widget = $this->createDialogWidget($widget->getPage(), $widget);
             $this->setWidget($widget);
         }
         
@@ -142,38 +152,6 @@ class ShowDialog extends ShowWidget implements iShowDialog
     public function getDialogWidget()
     {
         return $this->getWidget();
-    }
-
-    /**
-     * The output for action showing dialogs is either the rendered contents of the dialog (if lazy loading is enabled)
-     * or the rendered dialog itself.
-     *
-     * FIXME Remove outputting only the content of the dialog for ajax requests once all templates moved to fetching entire dialogs!
-     *
-     * @see \exface\Core\Actions\ShowWidget::getResultOutput()
-     */
-    public function getResultOutput()
-    {
-        $dialog = $this->getResult();
-        
-        $this->getResult()->setLazyLoading(false);
-        if ($this->getIncludeHeaders()) {
-            $code = $this->getTemplate()->buildIncludes($this->getResult());
-        }
-        $code .= parent::getResultOutput();
-        
-        return $code;
-    }
-
-    public function getIncludeHeaders()
-    {
-        return $this->include_headers;
-    }
-
-    public function setIncludeHeaders($value)
-    {
-        $this->include_headers = \exface\Core\DataTypes\BooleanDataType::cast($value);
-        return $this;
     }
 
     /**

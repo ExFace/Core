@@ -85,7 +85,7 @@ class CallAction extends AbstractAction
         return $this->getAction()->isDataModified();
     }
 
-    public function isUndoable()
+    public function isUndoable() : bool
     {
         // TODO make action wrapper undoable if wrapped action is undoable!
         return false;

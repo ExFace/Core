@@ -177,7 +177,7 @@ class ActionChain extends AbstractAction
         return $this->getActions()->getFirst()->getInputRowsMax();
     }
 
-    public function isUndoable()
+    public function isUndoable() : bool
     {
         return false;
     }
