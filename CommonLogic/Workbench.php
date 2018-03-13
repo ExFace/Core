@@ -92,8 +92,8 @@ class Workbench implements WorkbenchInterface
 
     public function start()
     {
-        // logger
-        $this->logger = Log::getErrorLogger($this);
+        // Init logger
+        $this->getLogger();
 
         // Start the error handler
         $dbg = new Debugger($this->logger);
@@ -390,6 +390,9 @@ class Workbench implements WorkbenchInterface
      */
     public function getLogger()
     {
+        if (is_null($this->logger)) {
+            $this->logger = Log::getErrorLogger($this);
+        }
         return $this->logger;
     }
     
