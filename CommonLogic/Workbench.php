@@ -90,8 +90,8 @@ class Workbench
 
     public function start()
     {
-        // logger
-        $this->logger = Log::getErrorLogger($this);
+        // Init logger
+        $this->getLogger();
 
         // Start the error handler
         $dbg = new Debugger($this->logger);
@@ -441,6 +441,9 @@ class Workbench
      */
     public function getLogger()
     {
+        if (is_null($this->logger)) {
+            $this->logger = Log::getErrorLogger($this);
+        }
         return $this->logger;
     }
     
