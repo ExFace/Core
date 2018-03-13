@@ -56,9 +56,9 @@ class Attribute implements MetaAttributeInterface
 
     private $formula;
 
-    private $default_value;
+    private $default_value = null;
 
-    private $fixed_value;
+    private $fixed_value = null;
     
     private $value_list_delimiter = EXF_LIST_SEPARATOR;
 
@@ -485,7 +485,7 @@ class Attribute implements MetaAttributeInterface
      */
     public function setDefaultValue($value)
     {
-        if ($value) {
+        if (! is_null($value) && $value !== '') {
             $this->default_value = $value;
         }
     }
@@ -515,7 +515,10 @@ class Attribute implements MetaAttributeInterface
      */
     public function setFixedValue($value)
     {
-        $this->fixed_value = $value;
+        if (! is_null($value) && $value !== '') {
+            $this->fixed_value = $value;
+        }
+        return $this;
     }
     
     public function hasFixedValue() : bool
