@@ -10,7 +10,7 @@ use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use exface\Core\Exceptions\InternalError;
-use exface\Core\Templates\AbstractHttpTemplate\Middleware\ContextReaderMiddleware;
+use exface\Core\Templates\AbstractHttpTemplate\Middleware\RequestContextReader;
 
 /**
  * Common base structure for HTTP templates.
@@ -59,23 +59,18 @@ abstract class AbstractHttpTemplate extends AbstractTemplate implements HttpTemp
     }
     
     /**
+     * Returns the middleware stack to use in the request handler.
+     * 
+     * Override this method to add/change middleware. For example, template can add their own
+     * middleware to read specific URL parameters built-in the used UI frameworks.
      * 
      * @return MiddlewareInterface[]
      */
     protected function getMiddleware() : array
     {
         return [
-            $this->getMiddlewareContextReader()
+            new RequestContextReader($this->getWorkbench()->context())
         ];
-    }
-    
-    /**
-     * 
-     * @return MiddlewareInterface
-     */
-    protected function getMiddlewareContextReader() : MiddlewareInterface
-    {
-        return new ContextReaderMiddleware($this->getWorkbench()->context());
     }
     
     /**

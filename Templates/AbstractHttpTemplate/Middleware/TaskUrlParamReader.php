@@ -5,11 +5,17 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
-use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Interfaces\Templates\HttpTemplateInterface;
+use exface\Core\Templates\AbstractHttpTemplate\Middleware\Traits\TaskRequestTrait;
 
 /**
- * This PSR-15 middleware...
+ * This PSR-15 middleware passes the value of a given URL/body parameter or attribute to the specified
+ * setter method of the HttpTask in the a attributes of the request.
+ * 
+ * If the constructor parameter $valueAttributeName is specified and the corresponding request attribute
+ * exists, it's value will be used. This is usefull if some other code had already determined the value
+ * and the middleware must noch change it. For example, the CMS will typically set action and page
+ * parameters explicitly, so they do not need to be read from the request by this middleware.
  * 
  * @author Andrej Kabachnik
  *
@@ -30,9 +36,13 @@ class TaskUrlParamReader implements MiddlewareInterface
     
     /**
      * 
-     * @param WorkbenchInterface $workbench
+     * @param HttpTemplateInterface $template
+     * @param string $readUrlParam
+     * @param string $passToMethod
+     * @param string $valueAttributeName
+     * @param string $taskAttributeName
      */
-    public function __construct(HttpTemplateInterface $template, string $readUrlParam, string $passToMethod, $valueAttributeName = null, $taskAttributeName = 'task')
+    public function __construct(HttpTemplateInterface $template, string $readUrlParam, string $passToMethod, string $valueAttributeName = null, string $taskAttributeName = 'task')
     {
         $this->template = $template;
         $this->taskAttributeName = $taskAttributeName;

@@ -5,10 +5,9 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
-use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Interfaces\Templates\HttpTemplateInterface;
-use exface\Core\Templates\AbstractHttpTemplate\Middleware\TaskRequestTrait;
-use exface\Core\Templates\AbstractHttpTemplate\Middleware\DataEnricherTrait;
+use exface\Core\Templates\AbstractHttpTemplate\Middleware\Traits\TaskRequestTrait;
+use exface\Core\Templates\AbstractHttpTemplate\Middleware\Traits\DataEnricherTrait;
 
 /**
  * This PSR-15 middleware reads inline-filters from the URL and passes them to the task
@@ -34,9 +33,13 @@ class PrefixedFilterUrlParamsReader implements MiddlewareInterface
     
     /**
      * 
-     * @param WorkbenchInterface $workbench
+     * @param HttpTemplateInterface $template
+     * @param string $paramPrefix
+     * @param string $dataGetterMethod
+     * @param string $dataSetterMethod
+     * @param string $taskAttributeName
      */
-    public function __construct(HttpTemplateInterface $template, string $paramPrefix, string $dataGetterMethod, string $dataSetterMethod, $taskAttributeName = 'task')
+    public function __construct(HttpTemplateInterface $template, string $paramPrefix, string $dataGetterMethod, string $dataSetterMethod, string $taskAttributeName = 'task')
     {
         $this->template = $template;
         $this->taskAttributeName = $taskAttributeName;
