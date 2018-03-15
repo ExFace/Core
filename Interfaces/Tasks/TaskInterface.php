@@ -25,10 +25,10 @@ interface TaskInterface extends ExfaceClassInterface
     
     /***
      * 
-     * @param ActionSelectorInterface $selector
+     * @param ActionSelectorInterface|string $selector
      * @return TaskInterface
      */
-    public function setActionSelector(ActionSelectorInterface $selector) : TaskInterface;
+    public function setActionSelector($selector) : TaskInterface;
     
     /**
      * 
@@ -123,10 +123,10 @@ interface TaskInterface extends ExfaceClassInterface
     
     /**
      * 
-     * @param MetaObjectSelectorInterface $selector
+     * @param MetaObjectSelectorInterface|string $selector
      * @return TaskInterface
      */
-    public function setMetaObjectSelector(MetaObjectSelectorInterface $selector) : TaskInterface;
+    public function setMetaObjectSelector($selectorOrString) : TaskInterface;
     
     /**
      * 
@@ -142,10 +142,10 @@ interface TaskInterface extends ExfaceClassInterface
     
     /**
      * 
-     * @param UiPageSelectorInterface $selector
+     * @param UiPageSelectorInterface|string $selector
      * @return TaskInterface
      */
-    public function setPageSelector(UiPageSelectorInterface $selector) : TaskInterface;
+    public function setPageSelector($selectorOrString) : TaskInterface;
     
     /**
      * 

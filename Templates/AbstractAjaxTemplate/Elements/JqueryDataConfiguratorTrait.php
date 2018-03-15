@@ -34,14 +34,40 @@ trait JqueryDataConfiguratorTrait
         return $result;
     }
     
-    public function buildJsDataGetter(ActionInterface $action = null)
+    /**
+     * The data JS-object of a configurator widget contains filters, sorters, etc., that are
+     * required to read the corresponding data.
+     * 
+     * NOTE: since data widgets are sometimes used within other widgets (i.e. ComboTable)
+     * without being really rendered, the data getter can be operate in two modes: rendered
+     * and unrendered. While the former relies on the current value of rendered elements,
+     * the latter will only include values defined in UXON. 
+     * 
+     * @param ActionInterface $action
+     * @param boolean $unrendered
+     * @return string
+     */
+    public function buildJsDataGetter(ActionInterface $action = null, $unrendered = false)
     {
         $widget = $this->getWidget();
-        foreach ($widget->getFilters() as $filter) {
-            $filters .= ', ' . $this->getTemplate()->getElement($filter)->buildJsConditionGetter();
+        $filters = [];
+        if (! $unrendered) {
+            foreach ($widget->getFilters() as $filter) {
+                $filters[] = $this->getTemplate()->getElement($filter)->buildJsConditionGetter();
+            }
+        } else {
+            foreach ($widget->getFilters() as $filter) {
+                if ($link = $filter->getValueWidgetLink()) {
+                    $linked_element = $this->getTemplate()->getElementByWidgetId($link->getWidgetId(), $widget->getPage());
+                    $filter_value = $linked_element->buildJsValueGetter($link->getColumnId());
+                } else {
+                    $filter_value = '"' . $filter->getValue() . '"';
+                }
+                $filters[] = $this->getTemplate()->getElement($filter)->buildJsConditionGetter($filter_value);
+            }
         }
-        $filters = $filters ? '{operator: "AND", conditions: [' . trim($filters, ",") . ']}' : '';
-        return "{oId: '" . $widget->getMetaObject()->getId() . "'" . ($filters ? ", filters: " . $filters : "") . "}";
+        $filter_group = ! empty($filters) ? '{operator: "AND", conditions: [' . implode(', ', $filters) . ']}' : '';
+        return "{oId: '" . $widget->getMetaObject()->getId() . "'" . ($filter_group !== '' ? ", filters: " . $filter_group : "") . "}";
     }
     
     public function buildJsRefreshOnEnter()

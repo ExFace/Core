@@ -11,6 +11,9 @@ use exface\Core\Interfaces\Templates\TemplateInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\WorkbenchInterface;
+use exface\Core\CommonLogic\Selectors\ActionSelector;
+use exface\Core\CommonLogic\Selectors\MetaObjectSelector;
+use exface\Core\CommonLogic\Selectors\UiPageSelector;
 
 /**
  * Generic task implementation to create task programmatically.
@@ -163,9 +166,13 @@ class GenericTask implements TaskInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Tasks\TaskInterface::setActionSelector()
      */
-    public function setActionSelector(ActionSelectorInterface $selector): TaskInterface
+    public function setActionSelector($selectorOrString): TaskInterface
     {
-        $this->actionSelector = $selector;
+        if ($selectorOrString instanceof ActionSelectorInterface) {
+            $this->actionSelector = $selectorOrString;
+        } else {
+            $this->actionSelector = new ActionSelector($this->getWorkbench(), $selectorOrString);
+        }
         return $this;
     }
 
@@ -260,9 +267,13 @@ class GenericTask implements TaskInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Tasks\TaskInterface::setMetaObjectSelector()
      */
-    public function setMetaObjectSelector(MetaObjectSelectorInterface $selector): TaskInterface
+    public function setMetaObjectSelector($selectorOrString): TaskInterface
     {
-        $this->objectSelector = $selector;
+        if ($selectorOrString instanceof MetaObjectSelectorInterface) {
+            $this->objectSelector = $selectorOrString;
+        } else {
+            $this->objectSelector = new MetaObjectSelector($this->getWorkbench(), $selectorOrString);
+        }
         return $this;
     }
     
@@ -347,9 +358,13 @@ class GenericTask implements TaskInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Tasks\TaskInterface::setPageSelector()
      */
-    public function setPageSelector(UiPageSelectorInterface $selector): TaskInterface
+    public function setPageSelector($selectorOrString): TaskInterface
     {
-        $this->originPageSelctor = $selector;
+        if ($selectorOrString instanceof UiPageSelectorInterface) {
+            $this->originPageSelctor = $selectorOrString;
+        } else {
+            $this->originPageSelctor = new UiPageSelector($this->getWorkbench(), $selectorOrString);
+        }
         return $this;
     }
 

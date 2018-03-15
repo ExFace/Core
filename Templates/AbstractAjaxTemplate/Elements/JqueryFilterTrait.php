@@ -12,10 +12,11 @@ use exface\Core\Widgets\Filter;
  */
 trait JqueryFilterTrait {
 
-    public function buildJsConditionGetter()
+    public function buildJsConditionGetter($valueJs = null)
     {
         $widget = $this->getWidget();
-        return '{expression: "' . $widget->getAttributeAlias() . '", comparator: ' . $this->buildJsComparatorGetter() . ', value: ' . $this->buildJsValueGetter() . ', object_alias: "' . $widget->getMetaObject()->getAliasWithNamespace() . '"}';
+        $value = is_null($valueJs) ? $this->buildJsValueGetter() : $valueJs;
+        return '{expression: "' . $widget->getAttributeAlias() . '", comparator: ' . $this->buildJsComparatorGetter() . ', value: ' . $value . ', object_alias: "' . $widget->getMetaObject()->getAliasWithNamespace() . '"}';
     }
     
     public function buildJsComparatorGetter()
