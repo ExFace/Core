@@ -21,8 +21,6 @@ use exface\Core\Templates\AbstractAjaxTemplate\Formatters\JsEnumFormatter;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Templates\AbstractAjaxTemplate\Formatters\JsBooleanFormatter;
 use exface\Core\Templates\AbstractHttpTemplate\AbstractHttpTemplate;
-use Psr\Http\Server\MiddlewareInterface;
-use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
@@ -40,6 +38,7 @@ use exface\Core\Templates\AbstractHttpTemplate\Middleware\TaskUrlParamReader;
 use exface\Core\Templates\AbstractHttpTemplate\Middleware\DataUrlParamReader;
 use exface\Core\Templates\AbstractHttpTemplate\Middleware\QuickSearchUrlParamReader;
 use exface\Core\Templates\AbstractHttpTemplate\Middleware\PrefixedFilterUrlParamsReader;
+use exface\Core\Templates\AbstractHttpTemplate\Middleware\RequestIdNegotiator;
 
 abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
 {
@@ -47,7 +46,9 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
     const MODE_BODY = 'BODY';
     const MODE_FULL = '';
 
-    private $elements = array();
+    private $elements = [];
+    
+    private $requestIdCache = [];
     
     /**
      * [ widget_type => qualified class name]
@@ -80,14 +81,18 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
      * {@inheritDoc}
      * @see \exface\Core\Templates\AbstractHttpTemplate\AbstractHttpTemplate::handle()
      */
-    public function handle(ServerRequestInterface $request, $pageSelectorString = null, $actionSelectorString = null, $renderingMode = self::MODE_FULL) : ResponseInterface
+    public function handle(ServerRequestInterface $request, $useCacheKey = null) : ResponseInterface
     {
-        if (! is_null($pageSelectorString)) {
-            $request = $request->withAttribute($this->getRequestAttributeForPage(), $pageSelectorString);
+        if (! is_null($useCacheKey)) {
+            $request = $request->withAttribute('result_cache_key', $useCacheKey);
         }
-        if (! is_null($actionSelectorString)) {
-            $request = $request->withAttribute($this->getRequestAttributeForAction(), $actionSelectorString);
+        
+        if ($cache = $this->requestIdCache[$request->getAttribute('result_cache_key')]) {
+            if ($cache instanceof ResultInterface) {
+                return $this->createResponse($request, $cache);
+            }
         }
+        
         return parent::handle($request);
     }
 
@@ -310,6 +315,10 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
      */
     protected function createResponse(ServerRequestInterface $request, ResultInterface $result) : ResponseInterface
     {
+        if ($cacheKey = $request->getAttribute('result_cache_key')) {
+            $this->requestIdCache[$cacheKey] = $result;
+        }
+        
         /* @var $headers array [header_name => array_of_values] */
         $headers = [];
         /* @var $status_code int */
