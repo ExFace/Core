@@ -6,7 +6,6 @@ use exface\Core\CommonLogic\Model\AppActionList;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\Model\MetaObjectActionListInterface;
-use exface\Core\Interfaces\NameResolverInstallerInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Model\ModelInterface;
 use exface\Core\Exceptions\Model\MetaObjectNotFoundError;
@@ -16,6 +15,7 @@ use exface\Core\Interfaces\Model\MetaRelationInterface;
 use exface\Core\Exceptions\Model\MetaRelationNotFoundError;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\Interfaces\NameResolverInterface;
+use exface\Core\Interfaces\SelectorInstallerInterface;
 
 interface ModelLoaderInterface
 {
@@ -139,7 +139,7 @@ interface ModelLoaderInterface
     /**
      * Returns the Installer, that will take care of setting up the model data source, keeping in upto date, etc.
      *
-     * @return NameResolverInstallerInterface
+     * @return SelectorInstallerInterface
      */
     public function getInstaller();
 }
