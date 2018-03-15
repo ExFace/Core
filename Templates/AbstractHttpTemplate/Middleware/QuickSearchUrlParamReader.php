@@ -5,12 +5,14 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
-use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Interfaces\Templates\HttpTemplateInterface;
 use exface\Core\Exceptions\Templates\TemplateRequestParsingError;
+use exface\Core\Templates\AbstractHttpTemplate\Middleware\Traits\DataEnricherTrait;
+use exface\Core\Templates\AbstractHttpTemplate\Middleware\Traits\TaskRequestTrait;
 
 /**
- * This PSR-15 middleware...
+ * This PSR-15 middleware transforms the specified URL or body parameter into a quick search
+ * filter set for a data sheet in the HttpTask within the request.
  * 
  * @author Andrej Kabachnik
  *
@@ -32,9 +34,13 @@ class QuickSearchUrlParamReader implements MiddlewareInterface
     
     /**
      * 
-     * @param WorkbenchInterface $workbench
+     * @param HttpTemplateInterface $template
+     * @param string $urlParamQuickSearch
+     * @param string $dataGetterMethod
+     * @param string $dataSetterMethod
+     * @param string $taskAttributeName
      */
-    public function __construct(HttpTemplateInterface $template, $urlParamQuickSearch, $dataGetterMethod, $dataSetterMethod, $taskAttributeName = 'task')
+    public function __construct(HttpTemplateInterface $template, string $urlParamQuickSearch, string $dataGetterMethod = 'getInputData', string $dataSetterMethod = 'setInputData', string $taskAttributeName = 'task')
     {
         $this->template = $template;
         $this->taskAttributeName = $taskAttributeName;

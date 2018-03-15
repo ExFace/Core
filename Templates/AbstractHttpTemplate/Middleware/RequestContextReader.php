@@ -5,7 +5,6 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
-use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Interfaces\Contexts\ContextManagerInterface;
 
 /**
@@ -15,13 +14,13 @@ use exface\Core\Interfaces\Contexts\ContextManagerInterface;
  * @author Andrej Kabachnik
  *
  */
-class ContextReaderMiddleware implements MiddlewareInterface
+class RequestContextReader implements MiddlewareInterface
 {
     private $context = null;
     
     /**
      * 
-     * @param WorkbenchInterface $workbench
+     * @param ContextManagerInterface $context
      */
     public function __construct(ContextManagerInterface $context)
     {

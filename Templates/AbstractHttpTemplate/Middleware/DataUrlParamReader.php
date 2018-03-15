@@ -10,9 +10,11 @@ use exface\Core\Interfaces\Templates\HttpTemplateInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\Templates\AbstractHttpTemplate\Middleware\Traits\TaskRequestTrait;
 
 /**
- * This PSR-15 middleware...
+ * This PSR-15 middleware reads a DataSheet from the given URL or body parameter
+ * and saves it into an HttpTask in the designated attribute of the request.
  * 
  * @author Andrej Kabachnik
  *
@@ -31,9 +33,12 @@ class DataUrlParamReader implements MiddlewareInterface
     
     /**
      * 
-     * @param WorkbenchInterface $workbench
+     * @param HttpTemplateInterface $template
+     * @param string $readUrlParam
+     * @param string $passToMethod
+     * @param string $taskAttributeName
      */
-    public function __construct(HttpTemplateInterface $template, $readUrlParam, $passToMethod, $taskAttributeName = 'task')
+    public function __construct(HttpTemplateInterface $template, string $readUrlParam, string $passToMethod = 'setInputData', string $taskAttributeName = 'task')
     {
         $this->template = $template;
         $this->taskAttributeName = $taskAttributeName;
@@ -64,10 +69,15 @@ class DataUrlParamReader implements MiddlewareInterface
         return $handler->handle($request->withAttribute($this->taskAttributeName, $task));
     }
     
-    protected function parseRequestData($requestParam, WorkbenchInterface $workbench)
+    /**
+     * Creates a DataSheet from the contents of the given value.
+     * 
+     * @param string|UxonObject $requestParam
+     * @param WorkbenchInterface $workbench
+     * @return DataSheetInterface
+     */
+    protected function parseRequestData($requestParam, WorkbenchInterface $workbench) : DataSheetInterface
     {
-        $data_sheet = null;
-        
         // Look for actual data rows in the request
         $uxon = UxonObject::fromAnything($requestParam);
         // If there is a data request parameter, create a data sheet from it

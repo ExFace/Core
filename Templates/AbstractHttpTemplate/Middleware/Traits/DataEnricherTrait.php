@@ -1,5 +1,5 @@
 <?php
-namespace exface\Core\Templates\AbstractHttpTemplate\Middleware;
+namespace exface\Core\Templates\AbstractHttpTemplate\Middleware\Traits;
 
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;

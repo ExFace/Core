@@ -1,11 +1,10 @@
 <?php
-namespace exface\Core\Templates\AbstractHttpTemplate\Middleware;
+namespace exface\Core\Templates\AbstractHttpTemplate\Middleware\Traits;
 
 use Psr\Http\Message\ServerRequestInterface;
 use exface\Core\Interfaces\Templates\HttpTemplateInterface;
 use exface\Core\Interfaces\Tasks\HttpTaskInterface;
 use exface\Core\Factories\TaskFactory;
-use exface\Core\Interfaces\Tasks\TaskInterface;
 
 /**
  * 
