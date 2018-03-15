@@ -14,6 +14,8 @@ use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\CommonLogic\Selectors\ActionSelector;
 use exface\Core\CommonLogic\Selectors\MetaObjectSelector;
 use exface\Core\CommonLogic\Selectors\UiPageSelector;
+use exface\Core\Factories\UiPageFactory;
+use exface\Core\Interfaces\Model\UiPageInterface;
 
 /**
  * Generic task implementation to create task programmatically.
@@ -366,6 +368,16 @@ class GenericTask implements TaskInterface
             $this->originPageSelctor = new UiPageSelector($this->getWorkbench(), $selectorOrString);
         }
         return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Tasks\TaskInterface::getPageTriggeredOn()
+     */
+    public function getPageTriggeredOn() : UiPageInterface
+    {
+        return UiPageFactory::createFromCmsPage($this->getWorkbench()->ui(), $this->getPageSelector());
     }
 
 }
