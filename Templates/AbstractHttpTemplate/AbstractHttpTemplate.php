@@ -11,6 +11,7 @@ use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use exface\Core\Exceptions\InternalError;
 use exface\Core\Templates\AbstractHttpTemplate\Middleware\RequestContextReader;
+use exface\Core\Templates\AbstractHttpTemplate\Middleware\RequestIdNegotiator;
 
 /**
  * Common base structure for HTTP templates.
@@ -69,7 +70,8 @@ abstract class AbstractHttpTemplate extends AbstractTemplate implements HttpTemp
     protected function getMiddleware() : array
     {
         return [
-            new RequestContextReader($this->getWorkbench()->context())
+            new RequestIdNegotiator(), // make sure, there is a X-Request-ID header
+            new RequestContextReader($this->getWorkbench()->context()) // Pass request data to the request context
         ];
     }
     

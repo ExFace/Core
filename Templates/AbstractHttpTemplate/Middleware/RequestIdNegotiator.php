@@ -17,10 +17,11 @@ use Ramsey\Uuid\Uuid;
  */
 class RequestIdNegotiator implements MiddlewareInterface
 {
+    const X_REQUEST_ID = 'X-Request-ID';
+    
     private $headerName = null;
     
-    
-    public function __construct($headerName = 'X-Request-ID')
+    public function __construct($headerName = self::X_REQUEST_ID)
     {
         $this->headerName = $headerName;
     }
@@ -32,9 +33,15 @@ class RequestIdNegotiator implements MiddlewareInterface
      */
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        if (! $request->hasHeader($this->headerName)) {
-            $request = $request->withHeader($this->headerName, Uuid::uuid1());
+        $headerName = $this->headerName;
+        if (! $request->hasHeader($headerName)) {
+            $request = $this->addRequestId($request);
         }
         return $handler->handle($request);
+    }
+    
+    public function addRequestId(ServerRequestInterface $request)
+    {
+        return $request->withHeader($this->headerName, Uuid::uuid1());
     }
 }
