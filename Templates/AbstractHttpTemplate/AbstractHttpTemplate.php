@@ -9,7 +9,6 @@ use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 use Psr\Http\Server\MiddlewareInterface;
-use exface\Core\Templates\AbstractHttpTemplate\Middleware\TaskReaderMiddleware;
 use exface\Core\Exceptions\InternalError;
 use exface\Core\Templates\AbstractHttpTemplate\Middleware\ContextReaderMiddleware;
 
@@ -66,7 +65,6 @@ abstract class AbstractHttpTemplate extends AbstractTemplate implements HttpTemp
     protected function getMiddleware() : array
     {
         return [
-            $this->getMiddlewareTaskReader(),
             $this->getMiddlewareContextReader()
         ];
     }
@@ -78,15 +76,6 @@ abstract class AbstractHttpTemplate extends AbstractTemplate implements HttpTemp
     protected function getMiddlewareContextReader() : MiddlewareInterface
     {
         return new ContextReaderMiddleware($this->getWorkbench()->context());
-    }
-    
-    /**
-     * 
-     * @return MiddlewareInterface
-     */
-    protected function getMiddlewareTaskReader() : MiddlewareInterface
-    {
-        return new TaskReaderMiddleware($this, static::REQUEST_ATTRIBUTE_NAME_TASK);
     }
     
     /**

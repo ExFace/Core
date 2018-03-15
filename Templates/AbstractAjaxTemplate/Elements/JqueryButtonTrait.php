@@ -226,10 +226,10 @@ JS;
             } 
             
             if ($action instanceof GoToPage){
-                $filters_cnt = 0;
                 /* @var $widgetLink \exface\Core\CommonLogic\WidgetLink */
+                $prefix = $this->getTemplate()->getUrlFilterPrefix();
                 foreach ($action->getTakeAlongFilters() as $attributeAlias => $widgetLink){
-                    $filters_param .= "&fltr" . str_pad($filters_cnt, 2, '0', STR_PAD_LEFT) . '_' . $attributeAlias . "='+" . $this->getTemplate()->getElement($widgetLink->getWidget())->buildJsValueGetter($widgetLink->getColumnId(), null) . "+'";
+                    $filters_param .= "&{$prefix}{$attributeAlias}='+{$this->getTemplate()->getElement($widgetLink->getWidget())->buildJsValueGetter($widgetLink->getColumnId(), null)}+'";
                 }
             }
             

@@ -36,6 +36,10 @@ use exface\Core\Exceptions\RuntimeException;
 use Symfony\Component\Debug\Exception\FatalThrowableError;
 use exface\Core\Factories\UiPageFactory;
 use exface\Core\Templates\FileServerTemplate\FileServerTemplate;
+use exface\Core\Templates\AbstractHttpTemplate\Middleware\TaskUrlParamReader;
+use exface\Core\Templates\AbstractHttpTemplate\Middleware\DataUrlParamReader;
+use exface\Core\Templates\AbstractHttpTemplate\Middleware\QuickSearchUrlParamReader;
+use exface\Core\Templates\AbstractHttpTemplate\Middleware\PrefixedFilterUrlParamsReader;
 
 abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
 {
@@ -281,56 +285,22 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
         return new JsTransparentFormatter($dataType);
     }
     
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Templates\AbstractHttpTemplate\AbstractHttpTemplate::getMiddlewareTaskReader()
-     */
-    protected function getMiddlewareTaskReader() : MiddlewareInterface
+    protected function getMiddleware() : array
     {
-        $reader = parent::getMiddlewareTaskReader();
+        $middleware = parent::getMiddleware();
         
-        $reader->setParamNameAction('action');
-        $reader->setParamNameObject('object');
-        $reader->setParamNamePage('resource');
-        $reader->setParamNameWidget('element');
-        $reader->setParamNameData('data');
-        $reader->setParamNamePrefill('prefill');
-        $reader->setParamNameQuickSearch('q');
+        $middleware[] = new TaskUrlParamReader($this, 'action', 'setActionSelector', $this->getRequestAttributeForAction(), $this->getRequestAttributeForTask());
+        $middleware[] = new TaskUrlParamReader($this, 'resource', 'setPageSelector', $this->getRequestAttributeForPage(), $this->getRequestAttributeForTask());
+        $middleware[] = new TaskUrlParamReader($this, 'object', 'setMetaObjectSelector');
+        $middleware[] = new TaskUrlParamReader($this, 'element', 'setWidgetIdTriggeredBy');
         
-        $reader->setFilterParser(function(array $params, DataSheetInterface $dataSheet) {
-            // Filters a passed as request values with a special prefix: fltr01_, fltr02_, etc.
-            foreach ($params as $var => $val) {
-                if (strpos($var, 'fltr') === 0) {
-                    $dataSheet->addFilterFromString(urldecode(substr($var, 7)), $val);
-                }
-            }
-            
-            return $dataSheet;
-        });
+        $middleware[] = new DataUrlParamReader($this, 'data', 'setInputData');
+        $middleware[] = new QuickSearchUrlParamReader($this, 'q', 'getInputData', 'setInputData');
+        $middleware[] = new PrefixedFilterUrlParamsReader($this, $this->getUrlFilterPrefix(), 'getInputData', 'setInputData');
         
-        $reader->setSorterParser(function(array $params, DataSheetInterface $dataSheet) {
-            $order = isset($params['order']) ? strval($params['order']) : null;
-            $sort_by = isset($params['sort']) ? strval($params['sort']) : null;
-            if (! is_null($sort_by) && ! is_null($order)) {
-                $sort_by = explode(',', $sort_by);
-                $order = explode(',', $order);
-                foreach ($sort_by as $nr => $sort) {
-                    $dataSheet->getSorters()->addFromString($sort, $order[$nr]);
-                }
-            }
-            return $dataSheet;
-        });
+        $middleware[] = new DataUrlParamReader($this, 'prefill', 'setPrefillData');
         
-        $reader->setPaginationParser(function(array $params, DataSheetInterface $dataSheet) {
-            $page_length = isset($params['rows']) ? intval($params['rows']) : 0;
-            $page_nr = isset($params['page']) ? intval($params['page']) : 1;
-            $dataSheet->setRowOffset(($page_nr - 1) * $page_length);
-            $dataSheet->setRowsOnPage($page_length);
-            return $dataSheet;
-        });
-        
-        return $reader;
+        return $middleware;
     }
     
     /**
@@ -476,6 +446,18 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
         $this->getWorkbench()->getLogger()->logException($exception);
         
         return new Response($status_code, $headers, $body);
+    }
+    
+    /**
+     * Returns the prefix to use for inline URL filters.
+     * 
+     * E.g. if &filter_MY_ATTRIBUTE=xxx is a valid inline URL filter, the prefix is "filter_".
+     * 
+     * @return string
+     */
+    public function getUrlFilterPrefix() : string
+    {
+        return 'filter_';
     }
 }
 ?>
