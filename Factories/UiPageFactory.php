@@ -6,6 +6,8 @@ use exface\Core\Interfaces\UiManagerInterface;
 use exface\Core\Exceptions\UiPage\UiPageNotFoundError;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Model\UiPageInterface;
+use exface\Core\CommonLogic\Selectors\UiPageSelector;
+use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
 
 class UiPageFactory extends AbstractFactory
 {
@@ -66,9 +68,14 @@ class UiPageFactory extends AbstractFactory
      * @param string $page_alias
      * @return UiPageInterface
      */
-    public static function createFromCmsPage(UiManagerInterface $ui, $page_alias)
+    public static function createFromCmsPage(UiManagerInterface $ui, $selectorOrString)
     {
-        return $ui->getWorkbench()->getCMS()->loadPage($page_alias);
+        if ($selectorOrString instanceof UiPageSelectorInterface) {
+            $alias = $selectorOrString->toString();
+        } else {
+            $alias = $selectorOrString;
+        }
+        return $ui->getWorkbench()->getCMS()->loadPage($alias);
     }
 
     /**

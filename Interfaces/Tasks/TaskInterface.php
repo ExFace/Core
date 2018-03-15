@@ -9,6 +9,7 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Selectors\MetaObjectSelectorInterface;
 use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
 use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\Interfaces\Model\UiPageInterface;
 
 /**
  * 
@@ -186,4 +187,10 @@ interface TaskInterface extends ExfaceClassInterface
      * @return bool
      */
     public function isTriggeredOnPage() : bool;   
+    
+    /**
+     * 
+     * @return UiPageInterface
+     */
+    public function getPageTriggeredOn() : UiPageInterface;
 }

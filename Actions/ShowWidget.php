@@ -21,6 +21,7 @@ use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Interfaces\Tasks\ResultWidgetInterface;
 use exface\Core\CommonLogic\Tasks\ResultWidget;
+use exface\Core\Factories\ResultFactory;
 
 /**
  * The ShowWidget action is the base for all actions, that render widgets.
@@ -74,14 +75,17 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
     {
         $widget = $this->getWidget();
         
-        if (is_null($widget) && $task->isTriggeredOnPage()) {
+        if (is_null($widget) && $task->isTriggeredOnPage() && ! $task->getPageTriggeredOn()->isEmpty()) {
             $widget = $task->getWidgetTriggeredBy();
         }
         
-        // TODO copy the widget before prefill because otherwise the action cannot hanlde more than one task!
-        $widget = $this->prefillWidget($task, $widget);
-        
-        return new ResultWidget($task, $widget);
+        if ($widget) {
+            // TODO copy the widget before prefill because otherwise the action cannot hanlde more than one task!
+            $widget = $this->prefillWidget($task, $widget);
+            return ResultFactory::createWidgetResult($task, $widget);
+        } else {
+            return ResultFactory::createEmptyResult($task);
+        }
     }
 
     /**
