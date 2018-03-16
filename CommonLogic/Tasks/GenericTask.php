@@ -251,7 +251,7 @@ class GenericTask implements TaskInterface
      */
     public function hasInputData(): bool
     {
-        return is_null($this->inputData) || $this->inputData->isBlank() ? false : true;
+        return is_null($this->inputData) ? false : true;
     }
 
     /**

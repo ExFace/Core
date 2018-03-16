@@ -73,7 +73,7 @@ class DataSheet implements DataSheetInterface
 
     private $aggregation_columns = array();
 
-    private $rows_on_page = NULL;
+    private $rows_on_page = null;
 
     private $row_offset = 0;
 
@@ -1494,7 +1494,7 @@ class DataSheet implements DataSheetInterface
      *
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::isEmpty()
      */
-    public function isEmpty()
+    public function isEmpty() : bool
     {
         if (empty($this->rows)) {
             return true;
@@ -1503,7 +1503,12 @@ class DataSheet implements DataSheetInterface
         }
     }
 
-    public function isBlank()
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::isBlank()
+     */
+    public function isBlank() : bool
     {
         if ($this->isUnfiltered() && $this->isEmpty()) {
             return true;
@@ -1511,12 +1516,22 @@ class DataSheet implements DataSheetInterface
         return false;
     }
 
-    public function isUnsorted()
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::isUnsorted()
+     */
+    public function isUnsorted() : bool
     {
         return $this->getSorters()->isEmpty() ? true : false;
     }
+    
+    public function isUnpaged() : bool
+    {
+        return $this->getRowsOnPage() === null ? true : false;
+    }
 
-    protected function setFresh($value)
+    protected function setFresh($value) : DataSheetInterface
     {
         foreach ($this->getColumns() as $col) {
             $col->setFresh($value);
@@ -1524,7 +1539,7 @@ class DataSheet implements DataSheetInterface
         return $this;
     }
 
-    public function isFresh()
+    public function isFresh() : bool
     {
         foreach ($this->getColumns() as $col) {
             if ($col->isFresh() === false) {
@@ -1706,7 +1721,7 @@ class DataSheet implements DataSheetInterface
      *
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::isUnfiltered()
      */
-    public function isUnfiltered()
+    public function isUnfiltered() : bool
     {
         if ((! $this->getUidColumn() || $this->getUidColumn()->isEmpty()) && $this->getFilters()->isEmpty()) {
             return true;

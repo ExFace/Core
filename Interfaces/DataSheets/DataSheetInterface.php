@@ -332,14 +332,14 @@ interface DataSheetInterface extends ExfaceClassInterface, iCanBeCopied, iCanBeC
      *
      * @return boolean
      */
-    public function isEmpty();
+    public function isEmpty() : bool;
 
     /**
      * Returns TRUE if the data in the sheet is up to date and FALSE otherwise (= if the data needs to be loaded)
      *
      * @return boolean
      */
-    public function isFresh();
+    public function isFresh() : bool;
 
     /**
      * Returns true if the data sheet will load all available data when performing data_read().
@@ -349,22 +349,28 @@ interface DataSheetInterface extends ExfaceClassInterface, iCanBeCopied, iCanBeC
      *
      * @return boolean
      */
-    public function isUnfiltered();
+    public function isUnfiltered() : bool;
 
     /**
-     * Returns TRUE if the data sheet has neither content nor filters (and thus will not contain any meaningfull data if read)
-     * and FALSE otherwise.
+     * Returns TRUE if the data sheet has neither content nor filters - and thus will not contain any meaningfull data if read.
      *
      * @return boolean
      */
-    public function isBlank();
+    public function isBlank() : bool;
 
     /**
      * Returns TRUE if the data sheet has no sorters and FALSE otherwise.
      *
      * @return boolean
      */
-    public function isUnsorted();
+    public function isUnsorted() : bool;
+    
+    /**
+     * Returns TRUE if the sheet includes all data (is not paged) and FALSE otherwise.
+     * 
+     * @return bool
+     */
+    public function isUnpaged() : bool;
 
     public function getRowsOnPage();
 
