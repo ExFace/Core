@@ -147,6 +147,8 @@ trait JqueryButtonTrait {
     {
         $widget = $this->getWidget();
         
+        $headers = ! empty($this->getAjaxHeaders()) ? 'headers: ' . json_encode($this->getAjaxHeaders()) . ',' : '';
+        
         $output = $this->buildJsRequestDataCollector($action, $input_element);
         $output .= "
 						if (" . $input_element->buildJsValidator() . ") {
@@ -154,6 +156,7 @@ trait JqueryButtonTrait {
 							$.ajax({
 								type: 'POST',
 								url: '" . $this->getAjaxUrl() . "',
+                                {$headers} 
 								data: {	
 									action: '" . $widget->getActionAlias() . "',
 									resource: '" . $widget->getPage()->getAliasWithNamespace() . "',

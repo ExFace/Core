@@ -131,6 +131,13 @@ interface CmsConnectorInterface extends ExfaceClassInterface
     public function getSiteUrl();
     
     /**
+     * Returns the full URL of the root of the plattform API site: e.g. https://www.exface.com/demo/api
+     *
+     * @return string
+     */
+    public function getApiUrl();
+    
+    /**
      * Returns the CMS-ID of the passed UiPage.
      * 
      * @param UiPageInterface $page
