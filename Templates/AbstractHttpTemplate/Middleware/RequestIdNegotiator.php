@@ -5,7 +5,7 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
-use Ramsey\Uuid\Uuid;
+use exface\Core\CommonLogic\Contexts\Scopes\RequestContextScope;
 
 /**
  * This PSR-15 middleware makes sure the request allways has a request id.
@@ -40,8 +40,22 @@ class RequestIdNegotiator implements MiddlewareInterface
         return $handler->handle($request);
     }
     
-    public function addRequestId(ServerRequestInterface $request)
+    /**
+     * 
+     * @param ServerRequestInterface $request
+     * @return ServerRequestInterface
+     */
+    public function addRequestId(ServerRequestInterface $request) : ServerRequestInterface
     {
-        return $request->withHeader($this->headerName, Uuid::uuid1());
+        return $request->withHeader($this->headerName, $this::generateRequestId());
+    }
+    
+    /**
+     * 
+     * @return string
+     */
+    public static function generateRequestId() : string
+    {
+        return RequestContextScope::generateRequestId();
     }
 }

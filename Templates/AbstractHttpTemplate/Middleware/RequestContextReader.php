@@ -34,8 +34,9 @@ class RequestContextReader implements MiddlewareInterface
      */
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        // TODO read request id (X-REQUEST-ID header?)
-        $this->context->getScopeRequest()->setSubrequestId($this->getSubrequestId($request));
+        $requestScope = $this->context->getScopeRequest();
+        $requestScope->setSubrequestId($this->getSubrequestId($request));
+        $requestScope->setRequestId($this->getHeaderValue($request, 'X-Request-ID'));
         // TODO add other parameters like request time or IP
         
         return $handler->handle($request);
@@ -48,7 +49,14 @@ class RequestContextReader implements MiddlewareInterface
      */
     protected function getSubrequestId(ServerRequestInterface $request) : string
     {
-        $params = $request->getQueryParams();
-        return array_key_exists('exfrid', $params) ? urldecode($params['exfrid']) : '';
+        return $this->getHeaderValue($request, 'Subrequest-ID');
+    }
+    
+    protected function getHeaderValue(ServerRequestInterface $request, string $headerName) : string
+    {
+        if ($request->hasHeader($headerName)) {
+            return $request->getHeaders()[$headerName][0];
+        }
+        return '';
     }
 }

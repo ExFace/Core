@@ -10,6 +10,8 @@ use Psr\Http\Server\RequestHandlerInterface;
  */
 interface HttpTemplateInterface extends TemplateInterface, RequestHandlerInterface
 {
+    public function getBaseUrl() : string;
+    
     public function getRequestAttributeForAction() : string;
     
     public function getRequestAttributeForTask() : string;
@@ -17,5 +19,7 @@ interface HttpTemplateInterface extends TemplateInterface, RequestHandlerInterfa
     public function getRequestAttributeForPage() : string;
     
     public function getRequestAttributeForRenderingMode() : string;
+    
+    public function getUrlRoutePatterns() : array;
 }
 ?>

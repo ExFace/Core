@@ -92,6 +92,7 @@ HTML;
         $widget = $this->getWidget();
         $collapse_icon_selector = '.' . str_replace(' ', '.', $this->getRowDetailsCollapseIcon());
         $expand_icon_selector = '.' . str_replace(' ', '.', $this->getRowDetailsExpandIcon());
+        $headers = ! empty($this->getAjaxHeaders()) ? 'headers: ' . json_encode($this->getAjaxHeaders()) . ',' : '';
         
         if ($widget->hasRowDetails()) {
             $output = <<<JS
@@ -113,6 +114,7 @@ HTML;
 			$.ajax({
 				url: '{$this->getAjaxUrl()}',
 				method: 'post',
+                {$headers}
 				data: {
 					action: '{$widget->getRowDetailsAction()}',
 					resource: '{$widget->getPage()->getAliasWithNamespace()}',
@@ -286,6 +288,9 @@ JS;
     {
         $widget = $this->getWidget();
         $configurator_element = $this->getTemplate()->getElement($widget->getConfiguratorWidget());
+        
+        $headers = ! empty($this->getAjaxHeaders()) ? 'headers: ' . json_encode($this->getAjaxHeaders()) . ',' : '';
+        
         $ajax_data = <<<JS
 			function ( d ) {
 				{$this->buildJsBusyIconShow()}
@@ -308,6 +313,7 @@ JS;
 		"ajax": {
 			"url": "{$this->getAjaxUrl()}",
 			"type": "POST",
+            {$headers}
 			"data": {$ajax_data},
 			"error": function(jqXHR, textStatus, errorThrown ){
 				{$this->buildJsBusyIconHide()}

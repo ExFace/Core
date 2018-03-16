@@ -213,11 +213,21 @@ abstract class AbstractJqueryElement implements ExfaceClassInterface
      */
     public function getAjaxUrl()
     {
-        if (is_null($this->ajax_url)) {
-            $this->ajax_url = $this->getTemplate()->getConfig()->getOption('DEFAULT_AJAX_URL');
-        }
+        return $this->getTemplate()->getBaseUrl();
+    }
+    
+    /**
+     * 
+     * @return string[]
+     */
+    public function getAjaxHeaders() : array
+    {
+        $headers = [];
         $subrequest_id = $this->getTemplate()->getWorkbench()->context()->getScopeRequest()->getSubrequestId();
-        return $this->ajax_url . ($subrequest_id ? '&exfrid=' . $subrequest_id : '');
+        if ($subrequest_id) {
+            $headers['Subrequest-ID'] = $subrequest_id;
+        }
+        return $headers;
     }
 
     /**

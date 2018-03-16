@@ -22,5 +22,7 @@
     "FOLDERS.BACKUP_PATH_ABSOLUTE": "",
     "FOLDERS.LOGS_PATH_ABSOLUTE": "",
     
-    "LOCALE.DEFAULT": "en_US"
+    "LOCALE.DEFAULT": "en_US",
+    
+    "TEMPLATE.ROUTES": {}
 }
