@@ -314,9 +314,9 @@ JS;
 				{$this->buildJsShowError('jqXHR.responseText', 'jqXHR.status + " " + jqXHR.statusText')}
 			},
             "beforeSend": function(jqXHR, settings) {
-                {$this->getId()}_jquery = $("#{$this->getId()}");
-                if ({$this->getId()}_jquery.data("_skipNextLoad") === true) {
-                    {$this->getId()}_jquery.data("_skipNextLoad", false);
+                jqself = $("#{$this->getId()}");
+                if (jqself.data("_skipNextLoad") === true) {
+                    jqself.data("_skipNextLoad", false);
                     {$this->buildJsBusyIconHide()}
                     return false;
                 }
