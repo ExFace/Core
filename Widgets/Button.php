@@ -100,7 +100,7 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iDefin
             // Although this feature is currently not explicitly used, it seems
             // a decent idea to share an action between buttons: e.g. a toolbar
             // button and a menu button which actually do exactly the same thing.
-            if (! $this->action->getWidgetDefinedIn()){
+            if (! $this->action->isDefinedInWidget()){
                 $this->action->setWidgetDefinedIn($this);
             }
         } elseif ($action_or_uxon instanceof UxonObject) {
