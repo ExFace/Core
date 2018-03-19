@@ -50,4 +50,14 @@ class FormToolbar extends Toolbar
         
         return $this;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Toolbar::getButtonWidgetType()
+     */
+    public function getButtonWidgetType()
+    {
+        return 'Button';
+    }
 }
