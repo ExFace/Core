@@ -32,6 +32,9 @@ class ObjectBasketShowDialog extends ShowDialog
         $this->setInputRowsMax(1);
         $this->setInputRowsMin(1);
         $this->setContextAlias('exface.Core.ObjectBasketContext');
+        // Never use the context for prefill because the ObjectBasket can be called on any page,
+        // so the context does not really have anything to do with the ObjectBasket
+        $this->setPrefillWithFilterContext(false);
     }
 
     /**
