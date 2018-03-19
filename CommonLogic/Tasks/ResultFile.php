@@ -1,11 +1,8 @@
 <?php
 namespace exface\Core\CommonLogic\Tasks;
 
-use exface\Core\Interfaces\WidgetInterface;
-use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\Tasks\ResultFileInterface;
 use exface\Core\Interfaces\Tasks\ResultStreamInterface;
-use Psr\Http\Message\UriInterface;
 
 /**
  * Task result containing a file.
@@ -20,17 +17,6 @@ class ResultFile extends ResultMessage implements ResultFileInterface
     private $pathAbsolute = '';
     
     private $mimeType = null;
-    
-    /**
-     * 
-     * @param TaskInterface $task
-     * @param WidgetInterface $widget
-     */
-    public function __construct(TaskInterface $task, UriInterface $download = null)
-    {
-        parent::__construct($task);
-        $this->setDownloadUri($download);
-    }
 
     /**
      * 
@@ -86,6 +72,16 @@ class ResultFile extends ResultMessage implements ResultFileInterface
     {
         $this->mimeType = $string;
         return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Tasks\ResultMessage::isEmpty()
+     */
+    public function isEmpty()
+    {
+        return parent::isEmpty() && ! $this->getPathAbsolute();
     }
 
 

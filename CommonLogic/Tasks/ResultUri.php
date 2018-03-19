@@ -1,9 +1,6 @@
 <?php
 namespace exface\Core\CommonLogic\Tasks;
 
-use exface\Core\Interfaces\WidgetInterface;
-use exface\Core\Interfaces\Tasks\TaskInterface;
-use exface\Core\Interfaces\Tasks\ResultFileInterface;
 use exface\Core\Interfaces\Tasks\ResultUriInterface;
 use Psr\Http\Message\UriInterface;
 use exface\Core\DataTypes\BooleanDataType;
@@ -95,6 +92,14 @@ class ResultUri extends ResultMessage implements ResultUriInterface
         return $this->openInNewWindow;
     }
 
-
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Tasks\ResultMessage::isEmpty()
+     */
+    public function isEmpty() : bool
+    {
+        return parent::isEmpty() && ! $this->hasUri();
+    }
     
 }

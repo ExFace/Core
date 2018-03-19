@@ -7,8 +7,8 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
-use exface\Core\CommonLogic\Tasks\ResultData;
 use exface\Core\Exceptions\Actions\ActionCallingWidgetNotSpecifiedError;
+use exface\Core\Factories\ResultFactory;
 
 /**
  * 
@@ -48,7 +48,7 @@ class ReadData extends AbstractAction implements iReadData
             $this->updateFilterContext($data_sheet);
         }
         
-        $result = new ResultData($task, $data_sheet);
+        $result = ResultFactory::createDataResult($task, $data_sheet);
         $result->setMessage($affected_rows . ' entries read');
         
         return $result;
