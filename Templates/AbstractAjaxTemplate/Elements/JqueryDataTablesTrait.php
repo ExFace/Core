@@ -236,6 +236,7 @@ JS;
     
     public function buildJsValueGetter($column = null, $row = null)
     {
+        $widget = $this->getWidget();
         $output = $this->getId() . "_table";
         if (is_null($row)) {
             $output .= ".rows('.selected').data()";
@@ -243,7 +244,7 @@ JS;
             // TODO
         }
         
-        $uid_column = $this->getWidget()->getUidColumn();
+        $uid_column = $widget->getUidColumn();
         if (is_null($column)) {
             $column_widget = $uid_column;
         } else {
@@ -251,12 +252,12 @@ JS;
             if ($column == $uid_column->getDataColumnName()) {
                 $column_widget = $uid_column;
             } else {
-                $column_widget = $this->getWidget()->getColumnByDataColumnName($column);
+                $column_widget = $widget->getColumnByDataColumnName($column);
             }
         }
         
         if (! $column_widget) {
-            throw new TemplateOutputError('Cannot render fetch data from column "' . $column . '" of ' . $this->getWidget()->getWidgetType() . ' - column not found!');
+            throw new TemplateOutputError('Column "' . $column . '" of ' . $widget->getWidgetType() . ' "' . $widget->getCaption() . '" required for in-page scripting is missing!');
         }
         
         $column_name = $column_widget->getDataColumnName();
