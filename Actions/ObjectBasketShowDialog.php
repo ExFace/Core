@@ -2,9 +2,7 @@
 namespace exface\Core\Actions;
 
 use exface\Core\Factories\WidgetFactory;
-use exface\Core\Factories\UiPageFactory;
 use exface\Core\CommonLogic\Contexts\ContextActionTrait;
-use exface\Core\Widgets\AbstractWidget;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Model\UiPageInterface;
 
