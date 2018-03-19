@@ -18,6 +18,7 @@ use exface\Core\CommonLogic\Tasks\ResultFile;
 use exface\Core\Interfaces\Tasks\ResultUriInterface;
 use exface\Core\CommonLogic\Tasks\ResultUri;
 use GuzzleHttp\Psr7\Uri;
+use exface\Core\CommonLogic\Tasks\ResultEmpty;
 
 /**
  * Creates all kinds of task results. 
@@ -38,7 +39,7 @@ class ResultFactory extends AbstractFactory
      */
     public static function createMessageResult(TaskInterface $task, string $message) : ResultInterface
     {
-        return new ResultMessage($task, $message);
+        return (new ResultMessage($task))->setMessage($message);
     }
     
     /**
@@ -49,7 +50,8 @@ class ResultFactory extends AbstractFactory
      */
     public static function createDataResult(TaskInterface $task, DataSheetInterface $dataSheet, string $message = null) : ResultDataInterface
     {
-        $result = new ResultData($task, $dataSheet);
+        $result = new ResultData($task);
+        $result->setData($dataSheet);
         if (! is_null($message)) {
             $result->setMessage($message);
         }
@@ -64,7 +66,7 @@ class ResultFactory extends AbstractFactory
      */
     public static function createWidgetResult(TaskInterface $task, WidgetInterface $widget) : ResultWidgetInterface
     {
-        return new ResultWidget($task, $widget);
+        return (new ResultWidget($task))->setWidget($widget);
     }
     
     /**
@@ -75,7 +77,7 @@ class ResultFactory extends AbstractFactory
      */
     public static function createTextContentResult(TaskInterface $task, string $content) : ResultTextContentInterface
     {
-        return new ResultTextContent($task, $content);
+        return (new ResultTextContent($task))->setContent($content);
     }
     
     /**
@@ -86,9 +88,7 @@ class ResultFactory extends AbstractFactory
      */
     public static function createFileResult(TaskInterface $task, string $path) : ResultFileInterface
     {
-        $result = new ResultFile($task);
-        $result->setPath($path);
-        return $result;
+        return (new ResultFile($task))->setPath($path);
     }
     
     /**
@@ -99,8 +99,7 @@ class ResultFactory extends AbstractFactory
      */
     public static function createDownloadResult(TaskInterface $task, string $path) : ResultFileInterface
     {
-        $result = static::createFileResult($task, $path);
-        return $result;
+        return (static::createFileResult($task, $path))->setDownloadable(true);
     }
     
     /**
@@ -110,7 +109,7 @@ class ResultFactory extends AbstractFactory
      */
     public static function createEmptyResult(TaskInterface $task) : ResultInterface
     {
-        return new ResultMessage($task);
+        return new ResultEmpty($task);
     }
 
     /**

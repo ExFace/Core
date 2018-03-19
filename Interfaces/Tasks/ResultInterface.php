@@ -90,4 +90,13 @@ interface ResultInterface extends ExfaceClassInterface
      * @param int $number
      */
     public function setReponseCode(int $number) : ResultInterface;
+    
+    /**
+     * Returns TRUE if the result does not contain any data.
+     * 
+     * NOTE: The result may still contain a meaningful response code.
+     * 
+     * @return bool
+     */
+    public function isEmpty() : bool;
 }

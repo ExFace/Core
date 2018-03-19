@@ -28,16 +28,14 @@ class ResultMessage implements ResultInterface
     private $responseCode = 200;
     
     /**
+     * @deprecated Use ResultFactory::createMessageResult() instead
      * 
      * @param TaskInterface $task
      */
-    public function __construct(TaskInterface $task, $message = '')
+    public function __construct(TaskInterface $task)
     {
         $this->task = $task;
         $this->workbench = $task->getWorkbench();
-        if ($message !== '') {
-            $this->setMessage($message);
-        }
     }
     
     /**
@@ -151,21 +149,44 @@ class ResultMessage implements ResultInterface
         return $this;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Tasks\ResultInterface::getResponseCode()
+     */
     public function getResponseCode()
     {
         return $this->responseCode;
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Tasks\ResultInterface::isContextModified()
+     */
     public function isContextModified(): bool
     {
         return $this->isContextModified;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Tasks\ResultInterface::setContextModified()
+     */
     public function setContextModified(bool $trueOrFalse): ResultInterface
     {
         $this->isContextModified = $trueOrFalse;
         return $this;
     }
 
-
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Tasks\ResultInterface::isEmpty()
+     */
+    public function isEmpty() : bool
+    {
+        return $this->getMessage() === '' && ! $this->isContextModified() && ! $this->isDataModified();   
+    }
 }

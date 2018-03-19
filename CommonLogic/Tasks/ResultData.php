@@ -2,12 +2,10 @@
 namespace exface\Core\CommonLogic\Tasks;
 
 use exface\Core\Interfaces\Tasks\ResultDataInterface;
-use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\Core\Factories\DataSheetFactory;
 
 /**
- * Generic task result implementation.
+ * Generic data result implementation - typical for actions like the core's ReadData, SaveData, etc.
  * 
  * @author Andrej Kabachnik
  *
@@ -15,15 +13,6 @@ use exface\Core\Factories\DataSheetFactory;
 class ResultData extends ResultMessage implements ResultDataInterface
 {
     private $dataSheet = null;
-    
-    public function __construct(TaskInterface $task, DataSheetInterface $dataSheet = null)
-    {
-        parent::__construct($task);
-        if (is_null($dataSheet)) {
-            $dataSheet = DataSheetFactory::createFromObject($task->getMetaObject());
-        }
-        $this->setData($dataSheet);
-    }
         
     /**
      * 
@@ -57,5 +46,10 @@ class ResultData extends ResultMessage implements ResultDataInterface
     public function hasData(): bool
     {
         return is_null($this->dataSheet) ? false : true;
+    }
+    
+    public function isEmpty() : bool
+    {
+        return parent::isEmpty() && ! $this->hasData();
     }
 }

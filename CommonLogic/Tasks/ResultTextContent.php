@@ -1,8 +1,6 @@
 <?php
 namespace exface\Core\CommonLogic\Tasks;
 
-use exface\Core\Interfaces\WidgetInterface;
-use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\Tasks\ResultTextContentInterface;
 use exface\Core\Interfaces\Tasks\ResultStreamInterface;
 
@@ -17,17 +15,6 @@ class ResultTextContent extends ResultMessage implements ResultTextContentInterf
     private $content = null;
     
     private $mimeType = null;
-    
-    /**
-     * 
-     * @param TaskInterface $task
-     * @param WidgetInterface $widget
-     */
-    public function __construct(TaskInterface $task, string $content = null)
-    {
-        parent::__construct($task);
-        $this->setContent($content);
-    }
     
     public function setContent(string $content): ResultTextContentInterface
     {
@@ -44,8 +31,6 @@ class ResultTextContent extends ResultMessage implements ResultTextContentInterf
     {
         return $this->content;
     }
-
-    
     
     /**
      *
@@ -69,5 +54,15 @@ class ResultTextContent extends ResultMessage implements ResultTextContentInterf
     {
         $this->mimeType = $string;
         return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Tasks\ResultMessage::isEmpty()
+     */
+    public function isEmpty() : bool
+    {
+        return parent::isEmpty() && $this->getContent() === '';
     }
 }

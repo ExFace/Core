@@ -328,6 +328,10 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
         /* @var $status_code int */
         $status_code = $result->getResponseCode();
         
+        if ($result->isEmpty()) {
+            return new Response($status_code, $headers);
+        }
+        
         switch (true) {
             case $result instanceof ResultDataInterface:
                 $elem = $this->getElement($result->getTask()->getWidgetTriggeredBy());

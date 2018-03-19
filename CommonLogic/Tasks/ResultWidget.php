@@ -3,7 +3,6 @@ namespace exface\Core\CommonLogic\Tasks;
 
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Tasks\ResultWidgetInterface;
-use exface\Core\Interfaces\Tasks\TaskInterface;
 
 /**
  * Generic task result implementation.
@@ -14,17 +13,6 @@ use exface\Core\Interfaces\Tasks\TaskInterface;
 class ResultWidget extends ResultMessage implements ResultWidgetInterface
 {
     private $widget = null;
-    
-    /**
-     * 
-     * @param TaskInterface $task
-     * @param WidgetInterface $widget
-     */
-    public function __construct(TaskInterface $task, WidgetInterface $widget = null)
-    {
-        parent::__construct($task);
-        $this->widget = $widget;
-    }
     
     /**
      * 
@@ -56,5 +44,14 @@ class ResultWidget extends ResultMessage implements ResultWidgetInterface
     {
         return is_null($this->widget) ? false : true;
     }
-
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\Tasks\ResultMessage::isEmpty()
+     */
+    public function isEmpty() : bool
+    {
+        return parent::isEmpty() && ! $this->hasWidget();
+    }
 }
