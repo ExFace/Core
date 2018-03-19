@@ -88,7 +88,7 @@ class JqueryDataTablesUrlParamsReader implements MiddlewareInterface
         $requestCols = $params['columns'];
         foreach ($order as $sorter) {
             if (! is_null($sorter['column'])) { // sonst wird nicht nach der 0. Spalte sortiert (0 == false)
-                if ($sort_attr = $requestCols[$sorter['column']]['data']) {
+                if ($sort_attr = $requestCols[$sorter['column']]['name']) {
                     $dataSheet->getSorters()->addFromString($sort_attr, $sorter['dir']);
                 }
             } elseif ($sorter['attribute_alias']) {
