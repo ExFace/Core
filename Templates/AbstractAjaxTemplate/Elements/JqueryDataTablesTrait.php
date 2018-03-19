@@ -201,8 +201,8 @@ JS;
         }
         
         $output = '{
-							name: "' . $col->getDataColumnName() . '"
-                            ' . ($col->getAttributeAlias() ? ', data: "' . $col->getDataColumnName() . '"' : '') . '
+							name: "' . $col->getAttributeAlias() . '"
+                            ' . ($col->hasAttributeReference() ? ', data: "' . $col->getDataColumnName() . '"' : '') . '
                             ' . ($col->isHidden() || $col->getVisibility() === EXF_WIDGET_VISIBILITY_OPTIONAL ? ', visible: false' : '') . '
                             ' . ($col->getWidth()->isTemplateSpecific() ? ', width: "' . $col->getWidth()->getValue() . '"': '') . '
                             , className: "' . $this->buildCssColumnClass($col) . '"' . '
@@ -400,7 +400,7 @@ JS;
             foreach ($widget->getColumns() as $nr => $col) {
                 if ($col->getAttributeAlias() == $sorter->getProperty('attribute_alias')) {
                     $column_exists = true;
-                    $default_sorters .= '[ ' . ($nr + $column_number_offset) . ', "' . $sorter->getProperty('direction') . '" ], ';
+                    $default_sorters .= '[ ' . ($nr + $column_number_offset) . ', "' . strtolower($sorter->getProperty('direction')) . '" ], ';
                 }
             }
             if (! $column_exists) {
