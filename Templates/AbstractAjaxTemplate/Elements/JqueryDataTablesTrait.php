@@ -7,6 +7,7 @@ use exface\Core\Interfaces\Actions\iReadData;
 use exface\Core\Templates\AbstractAjaxTemplate\Interfaces\JsValueDecoratingInterface;
 use exface\Core\Exceptions\Templates\TemplateOutputError;
 use exface\Core\Widgets\DataTable;
+use exface\Core\DataTypes\SortingDirectionsDataType;
 
 /**
  * This trait contains common methods for template elements using the jQuery DataTables library.
@@ -403,7 +404,7 @@ JS;
             foreach ($widget->getColumns() as $nr => $col) {
                 if ($col->getAttributeAlias() == $sorter->getProperty('attribute_alias')) {
                     $column_exists = true;
-                    $default_sorters .= '[ ' . ($nr + $column_number_offset) . ', "' . strtolower($sorter->getProperty('direction')) . '" ], ';
+                    $default_sorters .= '[ ' . ($nr + $column_number_offset) . ', "' . (strcasecmp($sorter->getProperty('direction'), SortingDirectionsDataType::ASC) === 0 ? 'asc' : 'desc') . '" ], ';
                 }
             }
             if (! $column_exists) {
