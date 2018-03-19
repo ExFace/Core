@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\Interfaces\Actions;
 
+use exface\Core\Interfaces\Templates\TemplateInterface;
+
 interface iRunTemplateScript
 {
 
@@ -20,7 +22,7 @@ interface iRunTemplateScript
      *
      * @return array()
      */
-    public function getIncludes();
+    public function getIncludes(TemplateInterface $template) : array;
 
     /**
      * Returns valid java script, that executes the action.
@@ -46,6 +48,6 @@ interface iRunTemplateScript
      * @param string $element_id            
      * @return string valid java script
      */
-    public function buildScriptHelperFunctions();
+    public function buildScriptHelperFunctions(TemplateInterface $template) : string;
 }
 ?>
