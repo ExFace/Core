@@ -168,7 +168,8 @@ abstract class AbstractAction implements ActionInterface
     public function getId()
     {
         if (is_null($this->id)) {
-            $this->id = md5($this->exportUxonObject()->toJson());
+            //$this->id = md5($this->exportUxonObject()->toJson());
+            $this->id = uniqid();
         }
         return $this->id;
     }
