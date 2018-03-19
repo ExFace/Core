@@ -38,8 +38,12 @@ use exface\Core\Templates\AbstractHttpTemplate\Middleware\TaskUrlParamReader;
 use exface\Core\Templates\AbstractHttpTemplate\Middleware\DataUrlParamReader;
 use exface\Core\Templates\AbstractHttpTemplate\Middleware\QuickSearchUrlParamReader;
 use exface\Core\Templates\AbstractHttpTemplate\Middleware\PrefixedFilterUrlParamsReader;
-use exface\Core\Templates\AbstractHttpTemplate\Middleware\RequestIdNegotiator;
 
+/**
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
 abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
 {
     const MODE_HEAD = 'HEAD';

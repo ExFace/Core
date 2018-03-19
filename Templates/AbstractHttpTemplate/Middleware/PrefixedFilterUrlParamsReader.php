@@ -59,8 +59,9 @@ class PrefixedFilterUrlParamsReader implements MiddlewareInterface
         $dataSheet = null;
         $prefix = strtolower($this->paramPrefix);
         $prefixLength = strlen($prefix);
+        $params = array_merge($request->getParsedBody(), $request->getQueryParams());
         
-        foreach ($request->getQueryParams() as $var => $val) {
+        foreach ($params as $var => $val) {
             if (strtolower(substr($var, 0, $prefixLength)) === $prefix) {
                 if (is_null($dataSheet)) {
                     $dataSheet = $this->getDataSheet($task, $this->getterMethodName);
