@@ -90,7 +90,9 @@ class RequestContextScope extends AbstractContextScope
     {
         $ids = explode(self::SUBREQUEST_SEPARATOR, $value);
         $this->main_request_id = $ids[0];
-        $this->setSubrequestId($ids[1]);
+        if (! is_null($ids[1])) {
+            $this->setSubrequestId($ids[1]);
+        }
         return $this;
     }
     
