@@ -92,7 +92,7 @@ HTML;
         $widget = $this->getWidget();
         $collapse_icon_selector = '.' . str_replace(' ', '.', $this->getRowDetailsCollapseIcon());
         $expand_icon_selector = '.' . str_replace(' ', '.', $this->getRowDetailsExpandIcon());
-        $headers = ! empty($this->getAjaxHeaders()) ? 'headers: ' . json_encode($this->getAjaxHeaders()) . ',' : '';
+        $headers = ! empty($this->getAjaxHeaders()) ? json_encode($this->getAjaxHeaders()) : '{}';
         
         if ($widget->hasRowDetails()) {
             $output = <<<JS
@@ -111,10 +111,13 @@ HTML;
 		} else {
 			// Open this row
 			row.child('<div id="detail'+row.data().{$widget->getMetaObject()->getUidAttributeAlias()}+'"></div>').show();
+            // Fetch content
+            var headers = {$headers};
+            headers['Subrequest-ID'] = row.data().{$widget->getMetaObject()->getUidAttributeAlias()};
 			$.ajax({
 				url: '{$this->getAjaxUrl()}',
 				method: 'post',
-                {$headers}
+                headers: headers,
 				data: {
 					action: '{$widget->getRowDetailsAction()}',
 					resource: '{$widget->getPage()->getAliasWithNamespace()}',
@@ -125,8 +128,7 @@ HTML;
 							{ {$widget->getMetaObject()->getUidAttributeAlias()}: row.data().{$widget->getMetaObject()->getUidAttributeAlias()} }
 						],
 						filters: {$this->buildJsDataFilters()}
-					},
-					exfrid: row.data().{$widget->getMetaObject()->getUidAttributeAlias()}
+					}
 				},
 				dataType: "html",
 				success: function(data){
