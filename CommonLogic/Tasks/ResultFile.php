@@ -79,7 +79,7 @@ class ResultFile extends ResultMessage implements ResultFileInterface
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\Tasks\ResultMessage::isEmpty()
      */
-    public function isEmpty()
+    public function isEmpty() : bool
     {
         return parent::isEmpty() && ! $this->getPathAbsolute();
     }
