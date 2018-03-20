@@ -1,5 +1,5 @@
 <?php
-namespace exface\Core\Templates\FileServerTemplate;
+namespace exface\Core\Templates\HttpFileServerTemplate;
 
 use exface\Core\Templates\AbstractHttpTemplate\AbstractHttpTemplate;
 use Psr\Http\Message\ServerRequestInterface;
@@ -8,7 +8,7 @@ use Psr\Http\Message\ResponseInterface;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
 
-class FileServerTemplate extends AbstractHttpTemplate
+class HttpFileServerTemplate extends AbstractHttpTemplate
 {
     public static function buildUrlForDownload(WorkbenchInterface $workbench, $absolutePath)
     {
@@ -34,6 +34,16 @@ class FileServerTemplate extends AbstractHttpTemplate
     {
         // TODO
     }
-
     
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Templates\HttpTemplateInterface::getUrlRoutePatterns()
+     */
+    public function getUrlRoutePatterns() : array
+    {
+        return [
+            "/\/api\/files[\/?]/"
+        ];
+    }
 }

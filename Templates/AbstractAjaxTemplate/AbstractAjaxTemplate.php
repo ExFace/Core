@@ -33,7 +33,7 @@ use exface\Core\Exceptions\Templates\TemplateOutputError;
 use exface\Core\Exceptions\RuntimeException;
 use Symfony\Component\Debug\Exception\FatalThrowableError;
 use exface\Core\Factories\UiPageFactory;
-use exface\Core\Templates\FileServerTemplate\FileServerTemplate;
+use exface\Core\Templates\HttpFileServerTemplate\HttpFileServerTemplate;
 use exface\Core\Templates\AbstractHttpTemplate\Middleware\TaskUrlParamReader;
 use exface\Core\Templates\AbstractHttpTemplate\Middleware\DataUrlParamReader;
 use exface\Core\Templates\AbstractHttpTemplate\Middleware\QuickSearchUrlParamReader;
@@ -356,16 +356,15 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
                 break;
                 
             case $result instanceof ResultFileInterface:
-                $url = FileServerTemplate::buildUrlForDownload($this->getWorkbench(), $result->getPathAbsolute());
+                $url = HttpFileServerTemplate::buildUrlForDownload($this->getWorkbench(), $result->getPathAbsolute());
                 $message = 'Download ready. If it does not start automatically, click <a href="' . $url . '">here</a>.';
                 $json = [
                     "success" => $message,
-                    "download" => $url
+                    "redirect" => $url
                 ];
                 break;   
                 
             case $result instanceof ResultUriInterface:
-                // FIXME how how to pass redirects to the UI?
                 $uri = $result->getUri();
                 if ($result->getOpenInNewWindow()) {
                     $uri = $uri->withQuery($uri->getQuery() ."target=_blank");
