@@ -182,18 +182,34 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
         return $this->elements[$widget->getPage()->getAliasWithNamespace()][$widget->getId()];
     }
 
-    public function removeElement(AbstractWidget $widget)
+    /**
+     * 
+     * @param AbstractWidget $widget
+     * @return AbstractAjaxTemplate
+     */
+    public function removeElement(WidgetInterface $widget)
     {
         unset($this->elements[$widget->getPage()->getAliasWithNamespace()][$widget->getId()]);
+        return $this;
     }
 
-    public function registerElement($element)
+    /**
+     * 
+     * @param AbstractJqueryElement $element
+     * @return \exface\Core\Templates\AbstractAjaxTemplate\AbstractAjaxTemplate
+     */
+    public function registerElement(AbstractJqueryElement $element)
     {
         $this->elements[$element->getWidget()->getPage()->getAliasWithNamespace()][$element->getWidget()->getId()] = $element;
         return $this;
     }
 
-    protected function getClass(WidgetInterface $widget)
+    /**
+     * 
+     * @param WidgetInterface $widget
+     * @return string
+     */
+    protected function getClass(WidgetInterface $widget) : string
     {
         $elem_class = $this->classes_by_widget_type[$widget->getWidgetType()];
         if (is_null($elem_class)) {
@@ -246,32 +262,60 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
         }
     }
 
+    /**
+     * 
+     * @param WidgetLink $link
+     * @return \exface\Core\Templates\AbstractAjaxTemplate\Elements\AbstractJqueryElement
+     */
     public function getElementFromWidgetLink(WidgetLink $link)
     {
         return $this->getElementByWidgetId($link->getWidgetId(), $link->getPage());
     }
 
+    /**
+     * 
+     * @param string $page_or_id_or_alias
+     * @param string $url_params
+     * @return string
+     */
     public function createLinkInternal($page_or_id_or_alias, $url_params = '')
     {
         return $this->getWorkbench()->getCMS()->createLinkInternal($page_or_id_or_alias, $url_params);
     }
 
-    protected function getClassPrefix()
+    /**
+     * 
+     * @return string
+     */
+    protected function getClassPrefix() : string
     {
         return $this->class_prefix;
     }
 
-    protected function setClassPrefix($value)
+    /**
+     * 
+     * @param string $value
+     * @return \exface\Core\Templates\AbstractAjaxTemplate\AbstractAjaxTemplate
+     */
+    protected function setClassPrefix($value) : AbstractAjaxTemplate
     {
         $this->class_prefix = $value;
         return $this;
     }
 
-    protected function getClassNamespace()
+    /**
+     * 
+     * @return string
+     */
+    protected function getClassNamespace() : string
     {
         return $this->class_namespace;
     }
 
+    /**
+     * 
+     * @param string $value
+     */
     protected function setClassNamespace($value)
     {
         $this->class_namespace = $value;
