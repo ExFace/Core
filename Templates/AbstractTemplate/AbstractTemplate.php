@@ -2,12 +2,11 @@
 namespace exface\Core\Templates\AbstractTemplate;
 
 use exface\Core\Interfaces\Templates\TemplateInterface;
-use exface\Core\Interfaces\NameResolverInterface;
-use exface\Core\Interfaces\AppInterface;
 use exface\Core\Factories\AppFactory;
-use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\CommonLogic\Workbench;
-use exface\Core\CommonLogic\NameResolver;
+use exface\Core\Interfaces\Selectors\TemplateSelectorInterface;
+use exface\Core\Interfaces\AppInterface;
+use exface\Core\Interfaces\ConfigurationInterface;
 
 abstract class AbstractTemplate implements TemplateInterface
 {
@@ -16,56 +15,46 @@ abstract class AbstractTemplate implements TemplateInterface
 
     private $app = null;
 
-    private $alias = '';
+    private $selector = null;
 
-    private $name_resolver = null;
-
-    public final function __construct(\exface\Core\CommonLogic\Workbench $exface)
+    public final function __construct(TemplateSelectorInterface $selector)
     {
-        $this->exface = $exface;
-        $this->alias = substr(get_class($this), (strrpos(get_class($this), DIRECTORY_SEPARATOR) + 1));
+        $this->exface = $selector->getWorkbench();
+        $this->selector = $selector;
         $this->init();
     }
 
     protected function init()
     {}
 
-    /**
-     *
-     * @return NameResolverInterface
-     */
-    public function getNameResolver()
+    public function getSelector() : TemplateSelectorInterface
     {
-        if (is_null($this->name_resolver)) {
-            $this->name_resolver = NameResolver::createFromString(get_class($this), NameResolver::OBJECT_TYPE_TEMPLATE, $this->exface);
-        }
-        return $this->name_resolver;
+        return $this->selector;
     }
 
     /**
-     *
-     * @param NameResolverInterface $value            
-     * @return \exface\Core\Templates\AbstractTemplate\AbstractTemplate
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\AliasInterface::getNamespace()
      */
-    public function setNameResolver(NameResolverInterface $value)
-    {
-        $this->name_resolver = $value;
-        return $this;
-    }
-
     public function getNamespace()
     {
-        return $this->getNameResolver()->getNamespace();
+        return $this->selector->getNamespace();
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\AliasInterface::getAliasWithNamespace()
+     */
     public function getAliasWithNamespace()
     {
-        return $this->getNameResolver()->getAliasWithNamespace();
+        return $this->selector->getAliasWithNamespace();
     }
 
     public function getAlias()
     {
-        return $this->alias;
+        return $this->selector->getAlias();
     }
 
     /**
@@ -80,7 +69,12 @@ abstract class AbstractTemplate implements TemplateInterface
         return $this->exface;
     }
 
-    public function is($template_alias)
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Templates\TemplateInterface::is()
+     */
+    public function is($template_alias) : bool
     {
         if (strcasecmp($this->getAlias(), $template_alias) === 0 || strcasecmp($this->getAliasWithNamespace(), $template_alias) === 0) {
             return true;
@@ -95,18 +89,12 @@ abstract class AbstractTemplate implements TemplateInterface
      *
      * @see \exface\Core\Interfaces\Templates\TemplateInterface::getApp()
      */
-    public function getApp()
+    public function getApp() : AppInterface
     {
         if (is_null($this->app)) {
-            $this->app = AppFactory::createFromAlias($this->getNameResolver()->getAliasWithNamespace(), $this->exface);
+            $this->app = AppFactory::createFromAlias($this->selector->getNamespace(), $this->exface);
         }
         return $this->app;
-    }
-
-    public function setApp(AppInterface $value)
-    {
-        $this->app = $value;
-        return $this;
     }
 
     /**
@@ -114,7 +102,7 @@ abstract class AbstractTemplate implements TemplateInterface
      * {@inheritdoc}
      * @see \exface\Core\Interfaces\Templates\TemplateInterface::getConfig()
      */
-    public function getConfig()
+    public function getConfig() : ConfigurationInterface
     {
         return $this->getApp()->getConfig();
     }

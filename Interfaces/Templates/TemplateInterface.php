@@ -5,6 +5,8 @@ use exface\Core\CommonLogic\Configuration;
 use exface\Core\Interfaces\ExfaceClassInterface;
 use exface\Core\Interfaces\AliasInterface;
 use exface\Core\Interfaces\AppInterface;
+use exface\Core\Interfaces\Selectors\TemplateSelectorInterface;
+use exface\Core\Interfaces\ConfigurationInterface;
 
 interface TemplateInterface extends ExfaceClassInterface, AliasInterface
 {
@@ -13,14 +15,14 @@ interface TemplateInterface extends ExfaceClassInterface, AliasInterface
      *
      * @param string $template_alias            
      */
-    public function is($template_alias);
+    public function is($template_alias) : bool;
 
     /**
      * Returns the app, that contains the template
      *
      * @return AppInterface
      */
-    public function getApp();
+    public function getApp() : AppInterface;
 
     /**
      * Returns the configuration object for this template.
@@ -28,6 +30,12 @@ interface TemplateInterface extends ExfaceClassInterface, AliasInterface
      *
      * @return Configuration
      */
-    public function getConfig();
+    public function getConfig() : ConfigurationInterface;
+    
+    /**
+     * 
+     * @return TemplateSelectorInterface
+     */
+    public function getSelector() : TemplateSelectorInterface;
 }
 ?>
