@@ -21,6 +21,13 @@ interface AliasSelectorInterface extends SelectorInterface, AliasInterface
     public function getAppAlias();
     
     /**
+     * Returns the selector for the app responsible for the selected component
+     * 
+     * @return AppSelectorInterface
+     */
+    public function getAppSelector() : AppSelectorInterface;
+    
+    /**
      * Returns the alias of the vendor (first part of the namespace)
      * 
      * @return string

@@ -13,7 +13,9 @@ use exface\Core\CommonLogic\Selectors\Traits\UidSelectorTrait;
  */
 class UiPageSelector extends AbstractSelector implements UiPageSelectorInterface
 {
-    use AliasSelectorTrait;
+    use AliasSelectorTrait {
+        getAppAliasFromNamespace as getAppAliasFromNamespaceViaTrait;
+    }
     use UidSelectorTrait;
     
     private $isCmsId = null;
@@ -44,6 +46,11 @@ class UiPageSelector extends AbstractSelector implements UiPageSelectorInterface
             $this->isCmsId = (! $this->isUid() && ! $this->isAlias()) ? true : false;
         }
         return $this->isCmsId;
+    }
+    
+    public static function getAppAliasFromNamespace($aliasWithNamespace)
+    {
+        return self::getAppAliasFromNamespaceViaTrait($aliasWithNamespace);
     }
     
 }

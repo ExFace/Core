@@ -3,6 +3,8 @@ namespace exface\Core\CommonLogic\Selectors\Traits;
 
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 use exface\Core\Exceptions\Selectors\SelectorInvalidError;
+use exface\Core\Interfaces\Selectors\AppSelectorInterface;
+use exface\Core\CommonLogic\Selectors\AppSelector;
 
 /**
  * Trait with shared logic for the AliasSelectorInterface
@@ -19,7 +21,7 @@ trait AliasSelectorTrait
      * @param string $aliasWithNamespace
      * @return boolean|string
      */
-    public static function getAppAliasFromNamespace($aliasWithNamespace)
+    protected static function getAppAliasFromNamespace($aliasWithNamespace)
     {
         $parts = explode(static::getAliasNamespaceDelimiter(), $aliasWithNamespace);
         if (count($parts) < 3) {
@@ -32,7 +34,7 @@ trait AliasSelectorTrait
      * 
      * @return string
      */
-    public static function getAliasNamespaceDelimiter()
+    protected static function getAliasNamespaceDelimiter()
     {
         return AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER;
     }
@@ -107,6 +109,11 @@ trait AliasSelectorTrait
         return array_slice($this->getAliasParts(), -1)[0];
     }
     
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Selectors\AliasSelectorInterface::isAlias()
+     */
     public function isAlias()
     {
         try {
@@ -115,5 +122,25 @@ trait AliasSelectorTrait
             return false;
         }
         return true;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Selectors\AliasSelectorInterface::getAppSelector()
+     */
+    public function getAppSelector() : AppSelectorInterface
+    {
+        return new AppSelector($this->getWorkbench(), $this->getAliasWithNamespace());
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Selectors\AliasSelectorInterface::getAliasWithNamespace()
+     */
+    public function getAliasWithNamespace()
+    {
+        return $this->toString();
     }
 }
