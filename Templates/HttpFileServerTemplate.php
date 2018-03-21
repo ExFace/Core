@@ -1,5 +1,5 @@
 <?php
-namespace exface\Core\Templates\HttpFileServerTemplate;
+namespace exface\Core\Templates;
 
 use exface\Core\Templates\AbstractHttpTemplate\AbstractHttpTemplate;
 use Psr\Http\Message\ServerRequestInterface;
