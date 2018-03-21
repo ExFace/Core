@@ -23,8 +23,7 @@ abstract class TemplateFactory extends AbstractSelectorFactory
             throw new InvalidArgumentException('Cannot create template from selector "' . get_class($selector) . '": expecting "TemplateSelector" or derivatives!');
         }
         
-        $class = $selector->getClassname();
-        return new $class($selector);
+        return $selector->getWorkbench()->getApp($selector->getAppSelector())->get($selector);
     }
 
     /**

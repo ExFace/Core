@@ -14,10 +14,15 @@ use exface\Core\CommonLogic\Selectors\Traits\ResolvableNameSelectorTrait;
  */
 class ActionSelector extends AbstractSelector implements ActionSelectorInterface
 {
-    use ResolvableNameSelectorTrait;    
+    use ResolvableNameSelectorTrait;
     
-    public function getPrototypeSubfolder()
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Selectors\SelectorInterface::getComponentType()
+     */
+    public function getComponentType() : string
     {
-        return 'Actions';
+        return 'action';
     }
 }

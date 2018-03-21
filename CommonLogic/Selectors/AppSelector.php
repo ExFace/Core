@@ -23,7 +23,7 @@ class AppSelector extends AbstractSelector implements AppSelectorInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Selectors\PrototypeSelectorInterface::getPrototypeSubfolder()
      */
-    public function getPrototypeSubfolder()
+    public function getPrototypeSubfolder() : string
     {
         return '';
     }
@@ -33,7 +33,7 @@ class AppSelector extends AbstractSelector implements AppSelectorInterface
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\Selectors\Traits\ResolvableNameSelectorTrait::getPrototypeSubfolder()
      */
-    protected function getPrototypeClassnameSuffix()
+    public function getPrototypeClassnameSuffix() : string
     {
         return 'App';
     }
@@ -51,5 +51,15 @@ class AppSelector extends AbstractSelector implements AppSelectorInterface
     public function getClassnameOfDefaultPrototype()
     {
         return '\\exface\\Core\\CommonLogic\\Model\\App';
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Selectors\SelectorInterface::getComponentType()
+     */
+    public function getComponentType() : string
+    {
+        return 'app';
     }
 }

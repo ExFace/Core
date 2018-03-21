@@ -22,6 +22,14 @@ use exface\Core\Interfaces\Selectors\AppSelectorInterface;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 use exface\Core\Interfaces\Widgets\iTriggerAction;
 use exface\Core\Interfaces\Actions\iShowWidget;
+use exface\Core\Interfaces\Selectors\SelectorInterface;
+use exface\Core\Interfaces\Selectors\PrototypeSelectorInterface;
+use exface\Core\Interfaces\Selectors\ActionSelectorInterface;
+use exface\Core\Interfaces\Actions\ActionInterface;
+use exface\Core\Exceptions\UnexpectedValueException;
+use exface\Core\Factories\SelectorFactory;
+use exface\Core\Exceptions\AppComponentFoundError;
+use exface\Core\Interfaces\Selectors\TemplateSelectorInterface;
 
 /**
  * This is the base implementation of the AppInterface aimed at providing an
@@ -445,6 +453,86 @@ class App implements AppInterface
         
         return $action->handle($task);
     }
+    
+    /**
+     * Checks and enriches a selector to work with this app or creates one if a string is given.
+     * 
+     * In particular, the app-specific paths and name convetions are set in this method.
+     * Override it to change those or even wrap the selector in a custom one.
+     * 
+     * @param SelectorInterface|string $selectorOrString
+     * @param string $selectorClass
+     * @throws UnexpectedValueException
+     * @return SelectorInterface
+     */
+    protected function getSelectorForComponent($selectorOrString, $selectorClass = null) : SelectorInterface
+    {
+        if ($selectorOrString instanceof SelectorInterface) {
+            $selector = $selectorOrString;
+        } elseif (! is_null($selectorClass)) {
+            $selector = SelectorFactory::createFromString($this->getWorkbench(), $selectorOrString, $selectorClass);
+        } else {
+            throw new UnexpectedValueException('Cannot get component ' . $selectorOrString . ' from app ' . $this->getAliasWithNamespace() . ': invalid selector or missing type!');
+        }
+        
+        switch (true) {
+            case $selector instanceof ActionSelectorInterface:
+                $selector->setPrototypeSubfolder('Actions');
+                break;
+            case $selector instanceof TemplateSelectorInterface:
+                $selector->setPrototypeSubfolder('Templates');
+                break;
+        }
+        
+        return $selector;
+    }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\AppInterface::get()
+     */
+    public function get($selectorOrString, $selectorClass = null)
+    {
+        $selector = $this->getSelectorForComponent($selectorOrString, $selectorClass);
+        
+        if (! $this->has($selector)) {
+            throw new AppComponentFoundError(ucfirst($selector->getComponentType()) . ' "' . $selector->toString() . '" not found in app ' . $this->getAliasWithNamespace());
+        }
+        
+        if ($selector instanceof PrototypeSelectorInterface) {
+            $class = $selector->getClassname();
+            return new $class($selector);
+        }
+        
+        throw new AppComponentFoundError('Cannot instantiate ' . ucfirst($selector->getComponentType()) . ' "' . $selector->toString() . '" in app ' . $this->getAliasWithNamespace() . ': unsupported selector type!');
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\AppInterface::has()
+     */
+    public function has($selectorOrString, $selectorClass = null)
+    {
+        $selector = $this->getSelectorForComponent($selectorOrString, $selectorClass);
+        
+        if ($selector instanceof PrototypeSelectorInterface) {
+            return $selector->prototypeClassExists();
+        }
+        
+        return false;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\AppInterface::getAction()
+     */
+    public function getAction(ActionSelectorInterface $selector, WidgetInterface $sourceWidget = null) : ActionInterface
+    {
+        $class = $selector->getClassname();
+        return new $class($this, $sourceWidget);
+    }
 }
 ?>
