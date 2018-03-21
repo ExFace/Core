@@ -3,10 +3,12 @@ namespace exface\Core\Interfaces;
 
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Contexts\DataContext;
-use exface\Core\Exceptions\Actions\ActionNotFoundError;
-use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\LogicException;
 use exface\Core\Interfaces\Selectors\AppSelectorInterface;
+use exface\Core\Interfaces\Selectors\ActionSelectorInterface;
+use Psr\Container\ContainerInterface;
+use exface\Core\Interfaces\Selectors\SelectorInterface;
+use exface\Core\Exceptions\AppComponentFoundError;
 
 /**
  * The app class provieds access to actions, configs, translations, etc. of
@@ -22,7 +24,7 @@ use exface\Core\Interfaces\Selectors\AppSelectorInterface;
  * @author Andrej Kabachnik
  *
  */
-interface AppInterface extends ExfaceClassInterface, AliasInterface, TaskHandlerInterface
+interface AppInterface extends ExfaceClassInterface, AliasInterface, TaskHandlerInterface, ContainerInterface
 {
     
     const CONFIG_SCOPE_SYSTEM = 'SYSTEM';
@@ -30,6 +32,44 @@ interface AppInterface extends ExfaceClassInterface, AliasInterface, TaskHandler
     const CONFIG_SCOPE_INSTALLATION = 'INSTALLATION';
     
     const CONFIG_SCOPE_USER = 'USER';
+    
+    /**
+     * Returns the component or service identified by the given selector.
+     * 
+     * The selector can either be an instance of the SelectorInterface or a string, but in
+     * the latter case a selector class must be passed as well.
+     * 
+     * In future apps will be extended by the possibility to add any custom services in
+     * order to act as true dependency injection containers. This is why the method also
+     * accepts strings.
+     * 
+     * @see \Psr\Container\ContainerInterface::get()
+     * 
+     * @param SelectorInterface|string $selectorOrString
+     * @param string $selectorClass
+     * 
+     * @throws AppComponentFoundError
+     * 
+     * @return mixed
+     */
+    public function get($selectorOrString, $selectorClass = null);
+    
+    /**
+     * Returns TRUE if the app contains a component or service specified by the given selector.
+     * 
+     * The selector can either be an instance of the SelectorInterface or a string, but in
+     * the latter case a selector class must be passed as well.
+     *
+     * @see \Psr\Container\ContainerInterface::has()
+     *
+     * @param SelectorInterface|string $selectorOrString
+     * @param string $selectorClass
+     *
+     * @return bool
+     */
+    public function has($selectorOrString, $selectorClass = null);
+    
+    public function getAction(ActionSelectorInterface $selector, WidgetInterface $sourceWidget) : ActionInterface;
 
     /**
      * Returns the path to the app's folder relative to the vendor folder

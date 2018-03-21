@@ -29,4 +29,10 @@ interface SelectorInterface extends ExfaceClassInterface
      * @return string
      */
     public function toString();
+    
+    /**
+     * Returns a user-friendly name of the component type selected by this selector: e.g. "action" for an action selector.
+     * @return string
+     */
+    public function getComponentType() : string;
 }

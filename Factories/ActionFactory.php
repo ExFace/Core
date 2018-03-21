@@ -14,6 +14,7 @@ use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Selectors\ActionSelectorInterface;
 use exface\Core\CommonLogic\Selectors\ActionSelector;
 use exface\Core\Interfaces\Selectors\SelectorInterface;
+use exface\Core\Exceptions\InvalidArgumentException;
 
 /**
  * Instantiates actions
@@ -32,8 +33,12 @@ abstract class ActionFactory extends AbstractSelectorFactory
      */
     public static function create(SelectorInterface $selector, WidgetInterface $trigger_widget = null, UxonObject $uxon = null)
     {
-        $app = $selector->getWorkbench()->getApp($selector->getAppAlias());
-        if ($selector->prototypeClassExists()) {
+        if (! ($selector instanceof ActionSelectorInterface)) {
+            throw new InvalidArgumentException('Cannot create action from ' . gettype($selector) . ': expecting ActionSelector or derivatives!');
+        }
+        
+        $app = $selector->getWorkbench()->getApp($selector->getAppSelector());
+        if ($app->has($selector)) {
             $action = static::createEmpty($selector, $app, $trigger_widget);
         } else {
             $action = $selector->getWorkbench()->model()->getModelLoader()->loadAction($app, $selector->getAlias(), $trigger_widget);
@@ -89,12 +94,12 @@ abstract class ActionFactory extends AbstractSelectorFactory
      */
     public static function createEmpty(ActionSelectorInterface $selector, AppInterface $app = null, WidgetInterface $trigger_widget = null)
     {
-        $app = $app ? $app : $selector->getWorkbench()->getApp($selector->getNamespace());
-        if (! $selector->prototypeClassExists()) {
-            throw new ActionNotFoundError('Cannot find action "' . $selector->getAliasWithNamespace() . '": class "' . $selector->getClassname() . '" not found!');
+        if (! ($selector instanceof ActionSelectorInterface)) {
+            throw new InvalidArgumentException('Cannot create action from ' . gettype($selector) . ': expecting ActionSelector or derivatives!');
         }
-        $class = $selector->getClassname();
-        return new $class($app, $trigger_widget);
+        
+        $app = $app ? $app : $selector->getWorkbench()->getApp($selector->getAppSelector());
+        return $app->getAction($selector, $trigger_widget);
     }
 
     /**

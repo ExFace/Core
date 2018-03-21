@@ -23,19 +23,6 @@ trait ResolvableNameSelectorTrait
     use PrototypeSelectorTrait;
     
     /**
-     * Returns the selector type specific suffix for class names.
-     * 
-     * E.g. "Template" for template selectors as all template classes end with
-     * "Template" like "AdminLteTemplate".
-     * 
-     * @return string
-     */
-    protected function getPrototypeClassnameSuffix()
-    {
-        return '';
-    }
-    
-    /**
      *
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Selectors\AliasSelectorInterface::isAlias()
@@ -90,7 +77,7 @@ trait ResolvableNameSelectorTrait
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Selectors\ClassSelectorInterface::getClassname()
      */
-    public function getClassname()
+    public function getClassname() : string
     {
         switch (true) {
             case ($this->isClassname()):
@@ -107,7 +94,7 @@ trait ResolvableNameSelectorTrait
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Selectors\PrototypeSelectorInterface::getPrototypeSubNamespace()
      */
-    public function getPrototypeSubNamespace()
+    public function getPrototypeSubNamespace() : string
     {
         return str_replace(FileSelectorInterface::NORMALIZED_DIRECTORY_SEPARATOR, ClassSelectorInterface::CLASS_NAMESPACE_SEPARATOR, $this->getPrototypeSubfolder());
     }
@@ -117,7 +104,7 @@ trait ResolvableNameSelectorTrait
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Selectors\PrototypeSelectorInterface::getPrototypeClass()
      */
-    public function getPrototypeClass()
+    public function getPrototypeClass() : string
     {
         return $this->getClassname();
     }

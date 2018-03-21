@@ -53,4 +53,13 @@ class UiPageSelector extends AbstractSelector implements UiPageSelectorInterface
         return self::getAppAliasFromNamespaceViaTrait($aliasWithNamespace);
     }
     
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Selectors\SelectorInterface::getComponentType()
+     */
+    public function getComponentType() : string
+    {
+        return 'page';
+    }
 }

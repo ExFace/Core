@@ -28,8 +28,23 @@ class MetaObjectSelector extends AbstractSelector implements MetaObjectSelectorI
         }
     }   
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Selectors\AliasSelectorInterface::isAlias()
+     */
     public function isAlias()
     {
         return $this->isUid() ? false : true;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Selectors\SelectorInterface::getComponentType()
+     */
+    public function getComponentType() : string
+    {
+        return 'meta object';
     }
 }

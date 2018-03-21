@@ -131,7 +131,7 @@ trait AliasSelectorTrait
      */
     public function getAppSelector() : AppSelectorInterface
     {
-        return new AppSelector($this->getWorkbench(), $this->getAliasWithNamespace());
+        return new AppSelector($this->getWorkbench(), $this->getAppAlias());
     }
     
     /**
