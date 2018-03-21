@@ -15,15 +15,6 @@ interface UiManagerInterface extends ExfaceClassInterface
      * @return UiPageInterface
      */
     public function getPage($selectorOrString);
-    
-    /**
-     * Returns a template instance for a given template alias.
-     * If no alias given, returns the current template.
-     *
-     * @param string $template
-     * @return TemplateInterface
-     */
-    public function getTemplate($selectorOrString);
 }
 
 ?>
