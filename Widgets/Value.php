@@ -20,6 +20,8 @@ use exface\Core\DataTypes\NumberDataType;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Interfaces\Widgets\iShowDataColumn;
+use exface\Core\CommonLogic\Model\Expression;
+use exface\Core\Formulas\Translate;
 
 /**
  * The Value widget simply shows a raw (unformatted) value.
@@ -419,6 +421,17 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
      */
     public function setEmptyText($value)
     {
+        if (Expression::detectFormula($value)) {
+            $expr = ExpressionFactory::createFromString($this->getWorkbench(), $value);
+            if ($expr->isStatic()) {
+                $data_sheet = DataSheetFactory::createFromObject($this->getMetaObject());
+                $data_sheet->addRow(['translate' => '']);
+                $value = $expr->evaluate($data_sheet, 'translate', 0);
+            }
+        }
+        if (Translate::isTranslationKey($value)) {
+            $value = Translate::translate($this->getWorkbench(), $value);
+        }
         $this->empty_text = $value;
         return $this;
     }

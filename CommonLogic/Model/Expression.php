@@ -155,7 +155,7 @@ class Expression implements ExpressionInterface
             return false;
     }
 
-    protected function parseQuotedString($expression)
+    protected static function parseQuotedString($expression)
     {
         if (substr($expression, 0, 1) == '"' || substr($expression, 0, 1) == "'") {
             return trim($expression, '"\'');
@@ -523,6 +523,21 @@ class Expression implements ExpressionInterface
                 return $this->formula->isStatic();
         }
         return false;
-    }   
+    }
+    
+    /**
+     * Returns true if a string contains a formula, false otherwise.
+     * 
+     * @param string $value
+     * @return boolean
+     */
+    public static function detectFormula(string $value)
+    {
+        $value = trim($value);
+        if ($value && self::parseQuotedString($value) == false && substr($value, 0, 1) == '=' && strpos($value, '(') !== false && strpos($value, ')') !== false) {
+            return true;
+        }
+        return false;
+    }
 }
 ?>
