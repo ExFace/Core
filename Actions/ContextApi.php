@@ -1,11 +1,8 @@
 <?php
 namespace exface\Core\Actions;
 
-use exface\Core\CommonLogic\Contexts\AbstractContext;
 use exface\Core\CommonLogic\AbstractAction;
 use exface\Core\Exceptions\Actions\ActionConfigurationError;
-use GuzzleHttp\Psr7\ServerRequest;
-use Psr\Http\Message\ServerRequestInterface;
 use exface\Core\Interfaces\Actions\iModifyContext;
 use exface\Core\Interfaces\Contexts\ContextInterface;
 use exface\Core\CommonLogic\Contexts\ContextActionTrait;
@@ -14,6 +11,8 @@ use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Factories\ResultFactory;
 use exface\Core\Interfaces\Tasks\ResultInterface;
+use exface\Core\Interfaces\Contexts\ContextScopeInterface;
+use exface\Core\Exceptions\Actions\ActionInputMissingError;
 
 /**
  * This action provides a RESTful API to work with contexts. 
@@ -26,30 +25,42 @@ use exface\Core\Interfaces\Tasks\ResultInterface;
  */
 class ContextApi extends AbstractAction implements iModifyContext
 {
+    const TASK_PARAMETER_CONTEXT_TYPE = 'ctype';
+    const TASK_PARAMETER_CONTEXT_SCOPE = 'cscope';
+    const TASK_PARAMETER_OPERATION = 'cop';
 
     use ContextActionTrait {
-        getContextAlias as traitGetContextAlias;
-        getContextScope as traitGetContextScope;
+        getContextAlias as getContextAliasViaTrait;
+        getContextScope as getContextScopeViaTrait;
     }
     
     private $operation = null;
 
-    public function getContextAlias()
+    public function getContextAlias(TaskInterface $task) : string
     {
-        if (is_null($this->traitGetContextAlias())){
-            $this->setContextAlias($this->getRequest()->getQueryParams()['ctype']);
+        if (is_null($this->getContextAliasViaTrait())){
+            if ($task->hasParameter($this::TASK_PARAMETER_CONTEXT_TYPE)) {
+                $this->setContextAlias($task->getParameter($this::TASK_PARAMETER_CONTEXT_TYPE));
+            } else {
+                throw new ActionInputMissingError($this, 'No context type defined for action ' . $this->getAliasWithNamespace() . ': either set a scope programmatically or pass it via task/request parameter "' . $this::TASK_PARAMETER_CONTEXT_TYPE . '"!');
+            }
         }
-        return $this->traitGetContextAlias();
+        return $this->getContextAliasViaTrait();
     }
     
-    public function getContextScope()
+    public function getContextScope(TaskInterface $task) : ContextScopeInterface
     {
         try{
-            $this->traitGetContextScope();
+            $this->getContextScopeViaTrait();
         } catch (ContextScopeNotFoundError $e){
-            $this->setContextScope($this->getRequest()->getQueryParams()['cscope']);
+            if ($task->hasParameter($this::TASK_PARAMETER_CONTEXT_SCOPE)) {
+                $this->setContextScope($task->getParameter($this::TASK_PARAMETER_CONTEXT_SCOPE));
+            } else {
+                throw new ActionInputMissingError($this, 'No context scope defined for action ' . $this->getAliasWithNamespace() . ': either set a scope programmatically or pass it via task/request parameter "' . $this::TASK_PARAMETER_CONTEXT_SCOPE . '"!');
+            }
+            
         }
-        return $this->traitGetContextScope();
+        return $this->getContextScopeViaTrait();
     }
     
     /**
@@ -59,10 +70,10 @@ class ContextApi extends AbstractAction implements iModifyContext
      */
     protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {
-        if (!method_exists($this->getContext(), $this->getOperation())){
-            throw new ActionConfigurationError($this, 'Invalid operation "' . $this->getOperation() . '" for context "' . $this->getContext()->getAlias() . '": method not found!');
+        if (!method_exists($this->getContext($task), $this->getOperation($task))){
+            throw new ActionConfigurationError($this, 'Invalid operation "' . $this->getOperation() . '" for context "' . $this->getContext($task)->getAlias() . '": method not found!');
         }
-        $return_value = call_user_func(array($this->getContext(), $this->getOperation()));
+        $return_value = call_user_func(array($this->getContext($task), $this->getOperation()));
         if (is_string($return_value)){
             $result = ResultFactory::createMessageResult($task, $return_value);
         } elseif ($return_value instanceof ContextInterface) { 
@@ -71,6 +82,7 @@ class ContextApi extends AbstractAction implements iModifyContext
         } else {
             $result = ResultFactory::createTextContentResult($task, $return_value);
         }
+        $result->setContextModified(true);
         return $result;
     }
     
@@ -79,10 +91,14 @@ class ContextApi extends AbstractAction implements iModifyContext
      * 
      * @return string
      */
-    public function getOperation()
+    public function getOperation(TaskInterface $task) : string
     {
         if (is_null($this->operation)){
-            $this->setOperation($this->getRequest()->getQueryParams()['cop']);
+            if ($task->hasParameter($this::TASK_PARAMETER_OPERATION)) {
+                $this->setOperation($task->getParameter($this::TASK_PARAMETER_OPERATION));
+            } else {
+                throw new ActionInputMissingError($this, 'No operation defined for action ' . $this->getAliasWithNamespace() . ': either set a scope programmatically or pass it via task/request parameter "' . $this::TASK_PARAMETER_OPERATION . '"!');
+            }
         }
         return $this->operation;
     }
@@ -95,21 +111,10 @@ class ContextApi extends AbstractAction implements iModifyContext
      * @param string $operation
      * @return \exface\Core\Actions\ContextApi
      */
-    public function setOperation($method_name)
+    public function setOperation(string $method_name) : ContextApi
     {
         $this->operation = $method_name;
         return $this;
-    }
-    
-    /**
-     * Returns the current PSR-7 ServerRequest
-     * 
-     * TODO Move this method to AbstractAction once the new PSR7-based API is available
-     * 
-     * @return ServerRequestInterface
-     */
-    public function getRequest(){
-        return ServerRequest::fromGlobals();
     }
 }
 ?>

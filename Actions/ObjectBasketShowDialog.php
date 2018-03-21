@@ -5,6 +5,10 @@ use exface\Core\Factories\WidgetFactory;
 use exface\Core\CommonLogic\Contexts\ContextActionTrait;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Model\UiPageInterface;
+use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\Interfaces\Tasks\ResultInterface;
+use exface\Core\Interfaces\DataSources\DataTransactionInterface;
+use exface\Core\Interfaces\Tasks\TaskInterface;
 
 /**
  * Displays a popup-table with all instances of a meta object in the object basket.
@@ -34,6 +38,19 @@ class ObjectBasketShowDialog extends ShowDialog
         // so the context does not really have anything to do with the ObjectBasket
         $this->setPrefillWithFilterContext(false);
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Actions\ShowWidget::perform()
+     */
+    protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
+    {
+        if ($task->hasParameter(ContextApi::TASK_PARAMETER_CONTEXT_SCOPE)) {
+            $this->setContextScope($task->getParameter(ContextApi::TASK_PARAMETER_CONTEXT_SCOPE));
+        }
+        return parent::perform($task, $transaction);
+    }
 
     /**
      * The ObjectBasketDialog auto-creates a table with a remove-button and a
@@ -42,7 +59,7 @@ class ObjectBasketShowDialog extends ShowDialog
      * {@inheritDoc}
      * @see \exface\Core\Actions\ShowDialog::createDialogWidget()
      */
-    protected function createDialogWidget(UiPageInterface $page, WidgetFactory $contained_widget = null)
+    protected function createDialogWidget(UiPageInterface $page, WidgetInterface $contained_widget = null)
     {
         /* @var $dialog \exface\Core\Widgets\Dialog */
         $dialog = WidgetFactory::create($page, 'Dialog', $this->getWidgetDefinedIn());

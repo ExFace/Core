@@ -46,7 +46,7 @@ class ObjectBasketAdd extends AbstractAction implements iModifyContext
      * 
      * @return ContextScopeInterface
      */
-    public function getContextScope() : ContextScopeInterface
+    public function getContextScope(TaskInterface $task = null) : ContextScopeInterface
     {
         if (! $this->parentGetContextScope()) {
             $this->setContextScope(ContextManagerInterface::CONTEXT_SCOPE_WINDOW);
@@ -62,9 +62,9 @@ class ObjectBasketAdd extends AbstractAction implements iModifyContext
     protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {
         $input = $this->getInputDataSheet($task);
-        $this->getContext()->add($input);
+        $this->getContext($task)->add($input);
         
-        $message = $this->translate('RESULT', ['%context_name%' => $this->getContext()->getName(), '%number%' => $input->countRows()], $input->countRows());
+        $message = $this->translate('RESULT', ['%context_name%' => $this->getContext($task)->getName(), '%number%' => $input->countRows()], $input->countRows());
         $result = ResultFactory::createMessageResult($task, $message);
         $result->setContextModified(true);
         

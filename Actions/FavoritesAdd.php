@@ -4,6 +4,7 @@ namespace exface\Core\Actions;
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\Interfaces\Contexts\ContextManagerInterface;
 use exface\Core\Interfaces\Contexts\ContextScopeInterface;
+use exface\Core\Interfaces\Tasks\TaskInterface;
 
 /**
  * Adds instances from the input data to the favorites basket of the current user.
@@ -29,10 +30,10 @@ class FavoritesAdd extends ObjectBasketAdd
      * {@inheritdoc}
      * @see \exface\Core\Actions\ObjectBasketAdd::getContextScope()
      */
-    public function getContextAlias()
+    public function getContextAlias(TaskInterface $task = null) : string
     {
         $this->setContextAlias('exface.Core.FavoritesContext');
-        return parent::getContextAlias();
+        return parent::getContextAlias($task);
     }
 
     /**
@@ -41,10 +42,10 @@ class FavoritesAdd extends ObjectBasketAdd
      * {@inheritdoc}
      * @see \exface\Core\Actions\ObjectBasketAdd::getContextScope()
      */
-    public function getContextScope() : ContextScopeInterface
+    public function getContextScope(TaskInterface $task = null) : ContextScopeInterface
     {
         $this->setContextScope(ContextManagerInterface::CONTEXT_SCOPE_USER);
-        return parent::getContextScope();
+        return parent::getContextScope($task);
     }
 }
 ?>
