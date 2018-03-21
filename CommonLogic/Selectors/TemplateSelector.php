@@ -12,12 +12,10 @@ use exface\Core\Interfaces\Selectors\TemplateSelectorInterface;
  * 
  * MyApp (root folder of the app)
  * +- Templates
- *   +- MyFirstTemplateAlias
- *   | +- MyFirstTemplateAlias.php
- *   | +- ... First template's dependencies
- *   +- MySecondTemplateAlias
- *     +- MySecondTemplateAlias.php
- *     +- ... First template's dependencies
+ *   +- Folders for dependencies
+ *   +- ...
+ *   +- MyFirstTemplateAlias.php
+ *   +- MySecondTemplateAlias.php
  * 
  * @see TemplateSelectorInterface
  * 
@@ -35,7 +33,7 @@ class TemplateSelector extends AbstractSelector implements TemplateSelectorInter
      */
     public function getPrototypeSubfolder()
     {
-        return 'Templates' . DIRECTORY_SEPARATOR . $this->getAlias();
+        return 'Templates';
     }
     
     /**
