@@ -11,17 +11,13 @@ use exface\Core\Interfaces\Contexts\ContextManagerInterface;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\TranslationInterface;
 use exface\Core\Interfaces\InstallerInterface;
-use exface\Core\Exceptions\InvalidArgumentException;
-use exface\Core\Exceptions\Actions\ActionNotFoundError;
 use exface\Core\CommonLogic\Translation;
 use exface\Core\CommonLogic\AppInstallers\AppInstallerContainer;
-use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Exceptions\LogicException;
 use exface\Core\Interfaces\Selectors\AppSelectorInterface;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 use exface\Core\Interfaces\Widgets\iTriggerAction;
-use exface\Core\Interfaces\Actions\iShowWidget;
 use exface\Core\Interfaces\Selectors\SelectorInterface;
 use exface\Core\Interfaces\Selectors\PrototypeSelectorInterface;
 use exface\Core\Interfaces\Selectors\ActionSelectorInterface;
@@ -33,11 +29,18 @@ use exface\Core\Interfaces\Selectors\TemplateSelectorInterface;
 
 /**
  * This is the base implementation of the AppInterface aimed at providing an
- * app instance for apps defined in the meta model.
+ * generic app instance.
  * 
- * If an app requires extra features (i.e. custom installers), it should get
- * it's own app class (appfolder\appaliasApp.php), which extends this class and
- * overrides methods or introduces new ones.
+ * Apps defined in the meta model will be represented by this generc app. If an 
+ * app requires extra features (i.e. custom installers, another folder structure, etc.), 
+ * it should get it's own app class (appfolder\MyAppAliasApp.php).
+ * 
+ * If extending the generic app, it is recommmended to keep it's folder structure, which
+ * is well visible in the Core app. Changing folder names and path convetions, the
+ * get(), has() and/or getSelectorForComponent() methods must be overridden.
+ * 
+ * The generic app provides default configuration and translation implementation, which
+ * again, may be changed if neccessary.
  * 
  * @author Andrej Kabachnik
  *
