@@ -5,11 +5,16 @@ use exface\Core\CommonLogic\Workbench;
 use exface\Core\Interfaces\ExfaceClassInterface;
 
 /**
- * Selectors are strings that uniquely identify a UXON model component or it's prototype.
+ * Selectors are strings that uniquely identify a component of the plattform or the model.
  * 
- * Depending on the model entity, different selectors can be used: action selectors
+ * Depending on the component, different selectors can be used: action selectors
  * can be aliases, class names or file paths, while meta object selectors can be
  * aliases or UIDs.
+ * 
+ * Selectors are used to fetch the respective PHP instances from the corresponding 
+ * container. In most cases, they are passed to the factory of the component and the 
+ * factory findes the container and fetches the instance: e.g. the ActionFactory will
+ * find the app and execute AppInterface::get($selector) to get the desired instance.
  * 
  * @author aka
  *

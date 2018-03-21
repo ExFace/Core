@@ -65,4 +65,11 @@ interface PrototypeSelectorInterface extends ClassSelectorInterface, FileSelecto
      * @return boolean
      */
     public function prototypeClassExists() : bool;
+    
+    /**
+     * Returns the selector for the app, that contains the prototype.
+     * 
+     * @return AppSelectorInterface
+     */
+    public function getPrototypeAppSelector() : AppSelectorInterface;
 }

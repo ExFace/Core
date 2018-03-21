@@ -11,15 +11,12 @@ use exface\Core\Interfaces\Selectors\SelectorInterface;
 use exface\Core\Exceptions\AppComponentFoundError;
 
 /**
- * The app class provieds access to actions, configs, translations, etc. of
- * an ExFace application.
+ * An app bundle code, model and all kinds of configuration needed for a meaningfull application.
  *
- * In a sence, it is the junction point for the meta model, the code and all
- * kinds of configuration. There is an instance of the app classe for every
- * app in the meta model. This instance knows, where the app folder is, which
- * hardcoded actions exist, etc.
- *
- * It is also the responsibility of the app class to load configs and translations.
+ * In the model the app acts as a container for model components like objects, actions, etc.
+ * 
+ * At code level the app acts as a dependency injection container, that resolves component selectors
+ * and provides model prototypes and general services like translation, configuration, etc.
  *
  * @author Andrej Kabachnik
  *
