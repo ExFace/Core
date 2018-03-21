@@ -6,6 +6,10 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Exceptions\Widgets\WidgetChildNotFoundError;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
+use exface\Core\CommonLogic\Model\Expression;
+use exface\Core\Factories\ExpressionFactory;
+use exface\Core\Factories\DataSheetFactory;
+use exface\Core\Formulas\Translate;
 
 /**
  * A Tile is basically a big fancy button, that can display additional information (KPIs, etc.).
@@ -152,6 +156,17 @@ class Tile extends Button
      */
     public function setSubtitle($text)
     {
+        if (Expression::detectFormula($text)) {
+            $expr = ExpressionFactory::createFromString($this->getWorkbench(), $text);
+            if ($expr->isStatic()) {
+                $data_sheet = DataSheetFactory::createFromObject($this->getMetaObject());
+                $data_sheet->addRow(['translate' => '']);
+                $text = $expr->evaluate($data_sheet, 'translate', 0);
+            }
+        }
+        if (Translate::isTranslationKey($text)) {
+            $text = Translate::translate($this->getWorkbench(), $text);
+        }
         $this->subtitle = $text;
         return $this;
     }

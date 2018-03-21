@@ -27,6 +27,9 @@ use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\CommonLogic\Translation;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
+use exface\Core\Factories\ExpressionFactory;
+use exface\Core\Factories\DataSheetFactory;
+use exface\Core\Formulas\Translate;
 
 /**
  * Basic ExFace widget
@@ -318,6 +321,17 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
      */
     function setCaption($caption)
     {
+        if (Expression::detectFormula($caption)) {
+            $expr = ExpressionFactory::createFromString($this->getWorkbench(), $caption);
+            if ($expr->isStatic()) {
+                $data_sheet = DataSheetFactory::createFromObject($this->getMetaObject());
+                $data_sheet->addRow(['translate' => '']);
+                $caption = $expr->evaluate($data_sheet, 'translate', 0);
+            }
+        }
+        if (Translate::isTranslationKey($caption)) {
+            $caption = Translate::translate($this->getWorkbench(), $caption);
+        }
         $this->caption = $caption;
         return $this;
     }
@@ -965,6 +979,17 @@ else {
      */
     public function setHint($value)
     {
+        if (Expression::detectFormula($value)) {
+            $expr = ExpressionFactory::createFromString($this->getWorkbench(), $value);
+            if ($expr->isStatic()) {
+                $data_sheet = DataSheetFactory::createFromObject($this->getMetaObject());
+                $data_sheet->addRow(['translate' => '']);
+                $value = $expr->evaluate($data_sheet, 'translate', 0);
+            }
+        }
+        if (Translate::isTranslationKey($value)) {
+            $value = Translate::translate($this->getWorkbench(), $value);
+        }
         $this->hint = $value;
         return $this;
     }

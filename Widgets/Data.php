@@ -27,6 +27,9 @@ use exface\Core\Interfaces\Widgets\iHaveHeader;
 use exface\Core\Interfaces\Widgets\iHaveFooter;
 use exface\Core\Widgets\Traits\iSupportLazyLoadingTrait;
 use exface\Core\Exceptions\Widgets\WidgetPropertyNotSetError;
+use exface\Core\CommonLogic\Model\Expression;
+use exface\Core\Factories\ExpressionFactory;
+use exface\Core\Formulas\Translate;
 
 /**
  * Data is the base for all widgets displaying tabular data.
@@ -1021,6 +1024,17 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
      */
     public function setEmptyText($value)
     {
+        if (Expression::detectFormula($value)) {
+            $expr = ExpressionFactory::createFromString($this->getWorkbench(), $value);
+            if ($expr->isStatic()) {
+                $data_sheet = DataSheetFactory::createFromObject($this->getMetaObject());
+                $data_sheet->addRow(['translate' => '']);
+                $value = $expr->evaluate($data_sheet, 'translate', 0);
+            }
+        }
+        if (Translate::isTranslationKey($value)) {
+            $value = Translate::translate($this->getWorkbench(), $value);
+        }
         $this->empty_text = $value;
         return $this;
     }
