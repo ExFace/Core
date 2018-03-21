@@ -2,44 +2,19 @@
 namespace exface\Core\CommonLogic;
 
 use exface\Core\Factories\UiPageFactory;
-use exface\Core\Interfaces\Templates\TemplateInterface;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\UiManagerInterface;
-use exface\Core\Factories\TemplateFactory;
 use exface\Core\CommonLogic\Selectors\UiPageSelector;
 
 class UiManager implements UiManagerInterface
 {
-
-    private $widget_id_forbidden_chars_regex = '[^A-Za-z0-9_\.]';
-
-    private $loaded_templates = array();
-
     private $exface = null;
-
-    private $base_template = null;
 
     private $page_current = null;
 
     public function __construct(\exface\Core\CommonLogic\Workbench $exface)
     {
         $this->exface = $exface;
-    }
-
-    /**
-     * Returns a template instance for a given template alias.
-     * If no alias given, returns the current template.
-     * 
-     * @param string $template
-     * @return TemplateInterface
-     */
-    public function getTemplate($selectorOrString)
-    {
-        if (! $instance = $this->loaded_templates[$selectorOrString]) {
-            $instance = TemplateFactory::createFromString($selectorOrString, $this->exface);
-            $this->loaded_templates[$selectorOrString] = $instance;
-        }
-        return $instance;
     }
 
     public function getWorkbench()

@@ -11,6 +11,7 @@ use exface\Core\Interfaces\Templates\HttpTemplateInterface;
 use exface\Core\Exceptions\Templates\TemplateRoutingError;
 use exface\Core\Exceptions\Templates\TemplateIncompatibleError;
 use exface\Core\Interfaces\Log\LoggerInterface;
+use exface\Core\Factories\TemplateFactory;
 
 /**
  * This PSR-15 middleware will look for a template responsible for the given request
@@ -70,7 +71,7 @@ class TemplateResolverMiddleware implements MiddlewareInterface
         $url = $uri->getPath() . '?' . $uri->getQuery();
         foreach ($this->workbench->getConfig()->getOption('TEMPLATE.ROUTES') as $pattern => $templateAlias) {
             if (preg_match($pattern, $url) === 1) {
-                return $this->workbench->ui()->getTemplate($templateAlias);
+                return TemplateFactory::createFromString($templateAlias, $this->workbench);
             }
         }
         throw new TemplateRoutingError('No route can be found for URL "' . $url . '" - please check system configuration option TEMPLATE.ROUTES!');
