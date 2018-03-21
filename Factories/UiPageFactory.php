@@ -75,7 +75,7 @@ class UiPageFactory extends AbstractFactory
         } else {
             $alias = $selectorOrString;
         }
-        return $ui->getWorkbench()->getCMS()->loadPage($alias);
+        return $ui->getWorkbench()->getCMS()->getPage($alias);
     }
 
     /**
@@ -86,7 +86,7 @@ class UiPageFactory extends AbstractFactory
      */
     public static function createFromCmsPageCurrent(UiManagerInterface $ui)
     {
-        return $ui->getWorkbench()->getCMS()->loadPageCurrent();
+        return $ui->getWorkbench()->getCMS()->getPageCurrent();
     }
 
     /**

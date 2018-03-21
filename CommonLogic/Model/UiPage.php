@@ -21,6 +21,8 @@ use exface\Core\Exceptions\UiPage\UiPageNotPartOfAppError;
 use Ramsey\Uuid\Uuid;
 use exface\Core\Exceptions\UiPage\UiPageNotFoundError;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
+use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
+use exface\Core\Factories\SelectorFactory;
 
 /**
  * This is the default implementation of the UiPageInterface.
@@ -1099,7 +1101,7 @@ class UiPage implements UiPageInterface
         
         if (! $page_or_id_or_alias instanceof UiPageInterface) {
             try {
-                $page_or_id_or_alias = $this->getWorkbench()->getCMS()->loadPage($page_id_or_alias, true);
+                $page_or_id_or_alias = $this->getWorkbench()->getCMS()->getPage($page_id_or_alias, true);
             } catch (UiPageNotFoundError $upnfe) {
                 return false;
             }
@@ -1134,7 +1136,7 @@ class UiPage implements UiPageInterface
     protected function compareToPageReplace(UiPageInterface $page1, UiPageInterface $page2)
     {
         try {
-            $replacedPage = $this->getWorkbench()->getCMS()->loadPage($page1->getAliasWithNamespace());
+            $replacedPage = $this->getWorkbench()->getCMS()->getPage($page1->getAliasWithNamespace());
         } catch (UiPageNotFoundError $uipnfe) {
             return false;
         }
@@ -1248,6 +1250,16 @@ class UiPage implements UiPageInterface
             $alias .= $characters[mt_rand(0, $charactersLength - 1)];
         }
         return $prefix . $alias;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::getSelector()
+     */
+    public function getSelector() : UiPageSelectorInterface
+    {
+        return SelectorFactory::createPageSelector($this->getWorkbench(), $this->getAliasWithNamespace());
     }
 }
 

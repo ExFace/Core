@@ -15,6 +15,7 @@ class UiPageSelector extends AbstractSelector implements UiPageSelectorInterface
 {
     use AliasSelectorTrait {
         getAppAliasFromNamespace as getAppAliasFromNamespaceViaTrait;
+        isAlias as isAliasViaTrait;
     }
     use UidSelectorTrait;
     
@@ -28,11 +29,21 @@ class UiPageSelector extends AbstractSelector implements UiPageSelectorInterface
     public function getAliasWithNamespace()
     {
         switch (true) {
-            case ($this->isAlias()):
+            case (! ($this->isUid() || $this->isCmsId())):
                 return $this->toString();
             default:
-                return $this->getWorkbench()->getCMS()->loadPage($this->toString())->getAliasWithNamespace();
+                return $this->getWorkbench()->getCMS()->getPage($this)->getAliasWithNamespace();
         }
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Selectors\AliasSelectorInterface::isAlias()
+     */
+    public function isAlias()
+    {
+        return $this->isCmsId() || $this->isUid() ? false : true;
     }
     
     /**
@@ -42,10 +53,14 @@ class UiPageSelector extends AbstractSelector implements UiPageSelectorInterface
      */
     public function isCmsId()
     {
-        if (is_null($this->isCmsId)) {
-            $this->isCmsId = (! $this->isUid() && ! $this->isAlias()) ? true : false;
+        // FIXME for some reason asking the CMS is significantly slower, but ideally the CMS should
+        // decide, wether the value is a valid cms page id. Although it is very probable, the page
+        // ids inside the CMS are numeric.
+        /*if (is_null($this->isCmsId)) {
+            $this->isCmsId = $this->getWorkbench()->getCMS()->validateCmsPageId($this->toString()) ? true : false;
         }
-        return $this->isCmsId;
+        return $this->isCmsId;*/
+        return is_numeric($this->toString());
     }
     
     public static function getAppAliasFromNamespace($aliasWithNamespace)

@@ -5,6 +5,7 @@ use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Exceptions\UiPage\UiPageNotFoundError;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Exceptions\UiPage\UiPageIdNotUniqueError;
+use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
 
 /**
  * A CMS-connector provides a generic interface for ExFace to communicate with
@@ -147,7 +148,7 @@ interface CmsConnectorInterface extends ExfaceClassInterface
     public function getPageIdInCms(UiPageInterface $page);
 
     /**
-     * Returns the page matching the given identifier: UID, namespaced alias or
+     * Returns the page matching the given selector: UID, qualified alias or
      * CMS-ID.
      * 
      * NOTE: If there is a page in the CMS, that replaces the matching page, the 
@@ -159,11 +160,7 @@ interface CmsConnectorInterface extends ExfaceClassInterface
      * the alias of one page and the CMS-ID of another, the page with the matching
      * alias will be returned by this method.
      * 
-     * NOTE: Instead of directly calling loadPage($page_id_or_alias) you should
-     * call exface->ui()->getPage($page_id_or_alias) because the pages are cached
-     * there.
-     * 
-     * @param string $page_id_or_alias
+     * @param UiPageSelectorInterface|string $selectorOrString
      * @param boolean $ignore_replacements
      * 
      * @throws UiPageNotFoundError if no matching page can be found
@@ -171,53 +168,14 @@ interface CmsConnectorInterface extends ExfaceClassInterface
      * 
      * @return UiPageInterface
      */
-    public function loadPage($page_id_or_alias, $ignore_replacements = false);
-
-    /**
-     * Returns the page matching the given alias (case insensitive!)
-     * 
-     * NOTE: If there is a page in the CMS, that replaces the matching page, the 
-     * replacement will be returned unless $ignore_replacements is TRUE. 
-     * 
-     * NOTE: Instead of directly calling loadPageByAlias($alias_with_namespace)
-     * you should call exface->ui()->getPage($alias_with_namespace) because the
-     * pages are cached there.
-     * 
-     * @param string $alias_with_namespace
-     * @param boolean $ignore_replacements
-     * 
-     * @throws UiPageNotFoundError if no matching page can be found
-     * @throws RuntimeException if there are multiple pages replacing this page
-     * 
-     * @return UiPageInterface
-     */
-    public function loadPageByAlias($alias_with_namespace, $ignore_replacements = false);
-
-    /**
-     * Returns the page matching the given UID (case insensitive!)
-     * 
-     * NOTE: If there is a page in the CMS, that replaces the matching page, the 
-     * replacement will be returned unless $ignore_replacements is TRUE. 
-     * 
-     * NOTE: Instead of directly calling loadPageById($uid) you should call
-     * exface->ui()->getPage($uid) because the pages are cached there.
-     * 
-     * @param string $uid
-     * @param boolean $ignore_replacements
-     * 
-     * @throws UiPageNotFoundError if no matching page can be found
-     * @throws RuntimeException if there are multiple pages replacing this page
-     * 
-     * @return UiPageInterface
-     */
-    public function loadPageById($uid, $ignore_replacements = false);
+    public function getPage($selectorOrString, $ignore_replacements = false) : UiPageInterface;
 
     /**
      * Returns the current page in the CMS.
      *
      * @return UiPageInterface
      */
-    public function loadPageCurrent();
+    public function getPageCurrent() : UiPageInterface;
 
     /**
      * Saves the given page to the CMS database by creating a new one or updating
@@ -272,10 +230,10 @@ interface CmsConnectorInterface extends ExfaceClassInterface
     /**
      * Returns if the page exists in the CMS.
      * 
-     * @param UiPageInterface|string $page_or_id_or_alias
-     * @return boolean
+     * @param UiPageSelectorInterface|string $selectorOrString
+     * @return bool
      */
-    public function hasPage($page_or_id_or_alias);
+    public function hasPage($selectorOrString) : bool;
 
     /**
      * Returns all pages assigned to the given app.
@@ -291,5 +249,12 @@ interface CmsConnectorInterface extends ExfaceClassInterface
      * @return integer
      */
     public function getPageIdRoot();
+    
+    /**
+     * 
+     * @param string $value
+     * @return bool
+     */
+    public function validateCmsPageId($value) : bool;
 }
 ?>
