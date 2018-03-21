@@ -40,19 +40,19 @@ class ObjectBasketRemove extends ObjectBasketAdd
         $object = $input->getMetaObject();
         if ($input->isEmpty()) {
             $removed = 1;
-            $this->getContext()->removeInstancesForObjectId($object->getId());
+            $this->getContext($task)->removeInstancesForObjectId($object->getId());
             $message = $this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.OBJECTBASKETREMOVE.RESULT_ALL', array(
-                '%context_name%' => $this->getContext()->getName(),
+                '%context_name%' => $this->getContext($task)->getName(),
                 '%object_name%' => $object->getName()
             ));
         } else {
             $removed = 0;
             foreach ($input->getUidColumn()->getValues(false) as $uid) {
-                $this->getContext()->removeInstance($object->getId(), $uid);
+                $this->getContext($task)->removeInstance($object->getId(), $uid);
                 $removed ++;
             }
             $message = $this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.OBJECTBASKETREMOVE.RESULT', array(
-                '%context_name%' => $this->getContext()->getName(),
+                '%context_name%' => $this->getContext($task)->getName(),
                 '%number%' => $removed,
                 '%object_name%' => $object->getName()
             ), $removed);
