@@ -38,7 +38,7 @@ abstract class SelectorFactory extends AbstractFactory
      * @param string $uidOrAlias
      * @return AppSelectorInterface
      */
-    public function createAppSelector(WorkbenchInterface $workbench, string $uidOrAlias) : AppSelectorInterface
+    public static function createAppSelector(WorkbenchInterface $workbench, string $uidOrAlias) : AppSelectorInterface
     {
         return new AppSelector($workbench, $uidOrAlias);   
     }
@@ -49,7 +49,7 @@ abstract class SelectorFactory extends AbstractFactory
      * @param string $uidOrAlias
      * @return ActionSelectorInterface
      */
-    public function createActionSelector(WorkbenchInterface $workbench, string $uidOrAlias) : ActionSelectorInterface
+    public static function createActionSelector(WorkbenchInterface $workbench, string $uidOrAlias) : ActionSelectorInterface
     {
         return new ActionSelector($workbench, $uidOrAlias);
     }
@@ -60,7 +60,7 @@ abstract class SelectorFactory extends AbstractFactory
      * @param string $uidOrAlias
      * @return TemplateSelectorInterface
      */
-    public function createTemplateSelector(WorkbenchInterface $workbench, string $selectorString) : TemplateSelectorInterface
+    public static function createTemplateSelector(WorkbenchInterface $workbench, string $selectorString) : TemplateSelectorInterface
     {
         return new TemplateSelector($workbench, $selectorString);
     }
