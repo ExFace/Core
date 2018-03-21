@@ -33,7 +33,7 @@ use exface\Core\Exceptions\Templates\TemplateOutputError;
 use exface\Core\Exceptions\RuntimeException;
 use Symfony\Component\Debug\Exception\FatalThrowableError;
 use exface\Core\Factories\UiPageFactory;
-use exface\Core\Templates\HttpFileServerTemplate\HttpFileServerTemplate;
+use exface\Core\Templates\HttpFileServerTemplate;
 use exface\Core\Templates\AbstractHttpTemplate\Middleware\TaskUrlParamReader;
 use exface\Core\Templates\AbstractHttpTemplate\Middleware\DataUrlParamReader;
 use exface\Core\Templates\AbstractHttpTemplate\Middleware\QuickSearchUrlParamReader;

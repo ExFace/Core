@@ -5,6 +5,8 @@ use exface\Core\Interfaces\InstallerInterface;
 use exface\Core\Factories\ConfigurationFactory;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\CommonLogic\Model\App;
+use exface\Core\Templates\AbstractHttpTemplate\HttpTemplateInstaller;
+use exface\Core\Factories\TemplateFactory;
 
 class CoreApp extends App
 {
@@ -17,9 +19,16 @@ class CoreApp extends App
     public function getInstaller(InstallerInterface $injected_installer = null)
     {
         $installer = parent::getInstaller($injected_installer);
+        
         // Add the custom core installer, that will take care of model schema updates, etc.
         // Make sure, it runs before any other installers do.
         $installer->addInstaller(new CoreInstaller($this->getSelector()), true);
+        
+        // Add template installers for core templates
+        $tplInstaller = new HttpTemplateInstaller($this->getSelector());
+        $tplInstaller->setTemplate(TemplateFactory::createFromString('exface.Core.HttpFileServerTemplate', $this->getWorkbench()));
+        $installer->addInstaller($tplInstaller);
+        
         return $installer;
     }
     
