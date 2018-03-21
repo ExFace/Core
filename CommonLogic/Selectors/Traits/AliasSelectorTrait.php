@@ -16,6 +16,8 @@ trait AliasSelectorTrait
 {
     private $aliasParts = null;
     
+    private $isAlias = null;
+    
     /**
      * 
      * @param string $aliasWithNamespace
@@ -116,12 +118,15 @@ trait AliasSelectorTrait
      */
     public function isAlias()
     {
-        try {
-            $this->getAliasParts();
-        } catch (SelectorInvalidError $e) {
-            return false;
+        if (is_null($this->isAlias)) {
+            try {
+                $this->getAliasParts();
+                $this->isAlias = true;
+            } catch (SelectorInvalidError $e) {
+                $this->isAlias = false;
+            }
         }
-        return true;
+        return $this->isAlias;
     }
     
     /**

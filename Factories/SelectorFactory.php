@@ -9,6 +9,8 @@ use exface\Core\Interfaces\Selectors\ActionSelectorInterface;
 use exface\Core\CommonLogic\Selectors\ActionSelector;
 use exface\Core\CommonLogic\Selectors\TemplateSelector;
 use exface\Core\Interfaces\Selectors\TemplateSelectorInterface;
+use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
+use exface\Core\CommonLogic\Selectors\UiPageSelector;
 
 /**
  * Static factory for selectors
@@ -57,12 +59,23 @@ abstract class SelectorFactory extends AbstractFactory
     /**
      *
      * @param WorkbenchInterface $workbench
-     * @param string $uidOrAlias
+     * @param string $selectorString
      * @return TemplateSelectorInterface
      */
     public static function createTemplateSelector(WorkbenchInterface $workbench, string $selectorString) : TemplateSelectorInterface
     {
         return new TemplateSelector($workbench, $selectorString);
+    }
+    
+    /**
+     *
+     * @param WorkbenchInterface $workbench
+     * @param string $selectorString
+     * @return UiPageSelectorInterface
+     */
+    public static function createPageSelector(WorkbenchInterface $workbench, string $selectorString) : UiPageSelectorInterface
+    {
+        return new UiPageSelector($workbench, $selectorString);
     }
 }
 ?>

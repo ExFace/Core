@@ -11,7 +11,7 @@ use exface\Core\Interfaces\AliasInterface;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Exceptions\RuntimeException;
-use exface\Core\CommonLogic\Model\UiPage;
+use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
 
 /**
  * A page represents on screen of the UI and is basically the model for a web page in most cases.
@@ -32,6 +32,11 @@ use exface\Core\CommonLogic\Model\UiPage;
  */
 interface UiPageInterface extends ExfaceClassInterface, AliasInterface, iCanBeConvertedToUxon
 {
+    /**
+     * 
+     * @return UiPageSelectorInterface
+     */
+    public function getSelector() : UiPageSelectorInterface;
 
     /**
      *
