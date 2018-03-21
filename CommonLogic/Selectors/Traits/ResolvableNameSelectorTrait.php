@@ -17,8 +17,6 @@ use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
  */
 trait ResolvableNameSelectorTrait
 {
-    use FileSelectorTrait;
-    use ClassSelectorTrait;
     use AliasSelectorTrait;
     use PrototypeSelectorTrait;
     
