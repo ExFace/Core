@@ -487,7 +487,7 @@ class Workbench implements WorkbenchInterface
         }
         // TODO #api-v4 remove page current in general - just use the task pages!
         if ($task->isTriggeredOnPage()) {
-            $this->ui()->setPageCurrent($this->ui()->getPage($task->getPageSelector()));
+            $this->ui()->setPageCurrent($task->getPageTriggeredOn());
         }
         return $this->getApp($task->getActionSelector()->getAppAlias())->handle($task);
     }

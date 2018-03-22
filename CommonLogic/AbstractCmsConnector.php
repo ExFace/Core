@@ -41,18 +41,8 @@ abstract class AbstractCmsConnector implements CmsConnectorInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\CmsConnectorInterface::getPage()
      */
-    public function getPage($selectorOrString, $ignore_replacements = false) : UiPageInterface
-    {
-        if (is_null($selectorOrString) || $selectorOrString === '') {
-            return $this->getPageEmpty();
-        }
-        
-        if ($selectorOrString instanceof UiPageSelectorInterface) {
-            $selector = $selectorOrString;
-        } else {
-            $selector = SelectorFactory::createPageSelector($this->getWorkbench(), $selectorOrString);
-        }
-        
+    public function getPage(UiPageSelectorInterface $selector, $ignore_replacements = false) : UiPageInterface
+    {        
         if (! $page = $this->getPageFromCache($selector)) {
             $page = $this->getPageFromCms($selector, $ignore_replacements);
         }
@@ -76,7 +66,7 @@ abstract class AbstractCmsConnector implements CmsConnectorInterface
      * @return UiPageInterface|boolean
      */
     protected function getPageFromCache(UiPageSelectorInterface $selector) {        
-        if (! $selector->isCmsId()) {
+        if (! $this->isCmsPageId($selector->toString())) {
             // Wurde keine CMS-ID uebergeben wird der Cache nach passenden Aliasen und UIDs durchsucht
             // und die uebergebene ID durch die CMS-ID ersetzt wenn eine passende Seite gefunden wird.
             foreach ($this->pageCacheByCmsId as $idCms => $page) {
@@ -88,7 +78,7 @@ abstract class AbstractCmsConnector implements CmsConnectorInterface
         }
         
         // Now, we know, that if the page is in the cache, the selector is it's UID.
-        if ($selector->isCmsId()) {
+        if ($this->isCmsPageId($selector->toString())) {
             $selectorString = $selector->toString();
             if (array_key_exists($selectorString, $this->pageCacheReplacements) && array_key_exists($this->pageCacheReplacements[$selectorString], $this->pageCacheByCmsId)) {
                 return $this->pageCacheByCmsId[$this->pageCacheReplacements[$selectorString]];
@@ -195,7 +185,7 @@ abstract class AbstractCmsConnector implements CmsConnectorInterface
     protected function getPageEmpty()
     {
         if (! $this->defaultPage) {
-            $this->defaultPage = UiPageFactory::createEmpty($this->getWorkbench()->ui());
+            $this->defaultPage = UiPageFactory::createEmpty($this->getWorkbench());
         }
         return $this->defaultPage;
     }

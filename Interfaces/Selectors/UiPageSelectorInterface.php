@@ -11,7 +11,16 @@ interface UiPageSelectorInterface extends AliasSelectorInterface, UidSelectorInt
     /**
      * Returns TRUE if this selector is a CMS specific page id.
      * 
-     * @return boolean
+     * @return bool
      */
-    public function isCmsId();
+    public function isCmsId() : bool;
+    
+    /**
+     * Return TRUE if the selector is empty (neither alias nor UID) and FALSE otherwise.
+     * 
+     * New pages have empty selectors.
+     * 
+     * @return bool
+     */
+    public function isEmpty() : bool;
 }

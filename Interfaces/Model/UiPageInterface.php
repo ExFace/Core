@@ -12,6 +12,7 @@ use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
+use exface\Core\Interfaces\Selectors\AppSelectorInterface;
 
 /**
  * A page represents on screen of the UI and is basically the model for a web page in most cases.
@@ -90,12 +91,6 @@ interface UiPageInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
      * @return UiPageInterface
      */
     public function removeWidget(WidgetInterface $widget, $remove_children_too = true);
-
-    /**
-     *
-     * @return UiManagerInterface
-     */
-    public function getUi();
 
     /**
      *
@@ -251,6 +246,13 @@ interface UiPageInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
      * @return string
      */
     public function getId();
+    
+    /**
+     * 
+     * @param string $uid
+     * @return UiPageInterface
+     */
+    public function setId(string $uid) : UiPageInterface;
 
     /**
      * Returns the name of the page.
@@ -366,7 +368,7 @@ interface UiPageInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
      * @param string $appUidOrAlias
      * @return UiPageInterface
      */
-    public function copy($page_alias = null, $page_uid = null, $appUidOrAlias = null);
+    public function copy($page_alias = null, $page_uid = null, AppSelectorInterface $appSelector = null) : UiPageInterface;
     
     /**
      * Compares two pages by their UIDs, aliases and CMS-IDs and returns
@@ -374,10 +376,10 @@ interface UiPageInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
      * 
      * If the passed page replaces this page this function also returns true.
      * 
-     * @param UiPageInterface|string $page_or_id_or_alias
+     * @param UiPageInterface|UiPageSelectorInterface|string $pageOrSelectorOrString
      * @return boolean
      */
-    public function is($page_or_id_or_alias);
+    public function is($pageOrSelectorOrString) : bool;
     
     /**
      * Compares two pages by their UIDs, aliases and CMS-IDs and returns
@@ -385,10 +387,10 @@ interface UiPageInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
      * 
      * If the passed page replaces this page this function returns false.
      * 
-     * @param UiPageInterface|string $page_or_id_or_alias
+     * @param UiPageInterface|UiPageSelectorInterface|string $pageOrSelectorOrString
      * @return boolean
      */
-    public function isExactly($page_or_id_or_alias);
+    public function isExactly($pageOrSelectorOrString) : bool;
     
     /**
      * Compares two pages by their attributes.
@@ -416,6 +418,15 @@ interface UiPageInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
      * @return string
      */
     public static function generateAlias($prefix);
+    
+    /**
+     * Makes the page become part of the app identified by the given selector
+     * 
+     * @param AppSelectorInterface $selector
+     * 
+     * @return UiPageInterface
+     */
+    public function setApp(AppSelectorInterface $selector) : UiPageInterface;
 }
 
 ?>

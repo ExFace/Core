@@ -4,6 +4,7 @@ namespace exface\Core\CommonLogic\Selectors;
 use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
 use exface\Core\CommonLogic\Selectors\Traits\AliasSelectorTrait;
 use exface\Core\CommonLogic\Selectors\Traits\UidSelectorTrait;
+use exface\Core\CommonLogic\Workbench;
 
 /**
  * Default implementation of the UiPageSelectorInterface
@@ -15,11 +16,26 @@ class UiPageSelector extends AbstractSelector implements UiPageSelectorInterface
 {
     use AliasSelectorTrait {
         getAppAliasFromNamespace as getAppAliasFromNamespaceViaTrait;
-        isAlias as isAliasViaTrait;
     }
     use UidSelectorTrait;
     
-    private $isCmsId = null;
+    private $isCmsId = false;
+    
+    public function __construct(Workbench $workbench, $selectorString)
+    {
+        parent::__construct($workbench, $selectorString);
+        if ($this->toString() === '') {
+            $this->isAlias = true;
+            $this->isUid = false;
+        } else {
+            if (! $this->isUid()) {
+                $this->isCmsId = $this->getWorkbench()->getCMS()->isCmsPageId($this->toString()) ? true : false;
+                $this->isAlias = ! $this->isCmsId;
+            } else {
+                $this->isAlias = false;
+            }
+        }
+    }
 
     /**
      * 
@@ -43,7 +59,7 @@ class UiPageSelector extends AbstractSelector implements UiPageSelectorInterface
      */
     public function isAlias()
     {
-        return $this->isCmsId() || $this->isUid() ? false : true;
+        return $this->isAlias;
     }
     
     /**
@@ -51,16 +67,9 @@ class UiPageSelector extends AbstractSelector implements UiPageSelectorInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Selectors\UiPageSelectorInterface::isCmsId()
      */
-    public function isCmsId()
+    public function isCmsId() : bool
     {
-        // FIXME for some reason asking the CMS is significantly slower, but ideally the CMS should
-        // decide, wether the value is a valid cms page id. Although it is very probable, the page
-        // ids inside the CMS are numeric.
-        /*if (is_null($this->isCmsId)) {
-            $this->isCmsId = $this->getWorkbench()->getCMS()->validateCmsPageId($this->toString()) ? true : false;
-        }
-        return $this->isCmsId;*/
-        return is_numeric($this->toString());
+        return $this->isCmsId;
     }
     
     public static function getAppAliasFromNamespace($aliasWithNamespace)
@@ -76,5 +85,15 @@ class UiPageSelector extends AbstractSelector implements UiPageSelectorInterface
     public function getComponentType() : string
     {
         return 'page';
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Selectors\UiPageSelectorInterface::isEmpty()
+     */
+    public function isEmpty() : bool
+    {
+        return $this->toString() === '';
     }
 }

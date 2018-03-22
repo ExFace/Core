@@ -31,9 +31,7 @@ class UiManager implements UiManagerInterface
      */
     public function getPage($selectorOrString = null)
     {
-        // FIXME use UiPageSelector in the factory and in the CMS interfaces
-        $string = $selectorOrString instanceof UiPageSelector ? $selectorOrString->toString() : $selectorOrString;
-        return UiPageFactory::createFromCmsPage($this, $string);
+        return UiPageFactory::createFromCmsPage($this->getWorkbench()->getCMS(), $selectorOrString);
     }
 
     /**
