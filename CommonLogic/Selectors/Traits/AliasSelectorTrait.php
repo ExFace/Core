@@ -126,7 +126,7 @@ trait AliasSelectorTrait
                 $this->isAlias = false;
             }
         }
-        return $this->isAlias;
+        return $this->is;
     }
     
     /**

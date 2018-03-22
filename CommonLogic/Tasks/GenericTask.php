@@ -49,6 +49,8 @@ class GenericTask implements TaskInterface
     
     private $originPageSelctor = null;
     
+    private $originPage = null;
+    
     /**
      * 
      * @param TemplateInterface $template
@@ -337,7 +339,7 @@ class GenericTask implements TaskInterface
      */
     public function getWidgetTriggeredBy(): WidgetInterface
     {
-        $page = $this->getWorkbench()->ui()->getPage($this->getPageSelector());
+        $page = $this->getPageTriggeredOn();
         if (is_null($this->originWigetId)) {
             return $page->getWidgetRoot();
         } else {
@@ -367,6 +369,7 @@ class GenericTask implements TaskInterface
         } else {
             $this->originPageSelctor = new UiPageSelector($this->getWorkbench(), $selectorOrString);
         }
+        $this->originPage = null;
         return $this;
     }
     
@@ -377,7 +380,10 @@ class GenericTask implements TaskInterface
      */
     public function getPageTriggeredOn() : UiPageInterface
     {
-        return UiPageFactory::createFromCmsPage($this->getWorkbench()->ui(), $this->getPageSelector());
+        if (is_null($this->originPage)) {
+            $this->originPage = UiPageFactory::create($this->getPageSelector());
+        }
+        return $this->originPage;
     }
 
 }

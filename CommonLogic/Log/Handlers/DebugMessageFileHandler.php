@@ -141,8 +141,7 @@ class DebugMessageFileHandler implements LogHandlerInterface
      */
     protected function createDebugMessage()
     {
-        $ui   = $this->getWorkbench()->ui();
-        $page = UiPageFactory::createEmpty($ui);
+        $page = UiPageFactory::createEmpty($this->getWorkbench());
 
         $debugMessage = new DebugMessage($page);
         $debugMessage->setMetaObject($page->getWorkbench()->model()->getObject('exface.Core.ERROR'));

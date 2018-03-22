@@ -122,7 +122,7 @@ class ShowDialog extends ShowWidget implements iShowDialog
             try {
                 $page = $this->getWidgetDefinedIn()->getPage();
             } catch (\Throwable $e) {
-                $page = UiPageFactory::createEmpty($this->getWorkbench()->ui());
+                $page = UiPageFactory::createEmpty($this->getWorkbench());
             }
             $widget = $this->createDialogWidget($page);
             $this->setWidget($widget);

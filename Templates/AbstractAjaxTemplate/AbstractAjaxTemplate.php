@@ -153,11 +153,7 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
             $result = implode("\n", array_unique($instance->buildHtmlHeadTags()));
         } catch (ErrorExceptionInterface $e) {
             // TODO Is there a way to display errors in the header nicely?
-            /*
-             * $ui = $this->getWorkbench()->ui();
-             * $page = UiPageFactory::create($ui, '');
-             * return $this->getWorkbench()->getDebugger()->printException($e, false);
-             */
+            // Maybe print the exception in plain text within a comment and add JavaScript to display a warning?
             throw $e;
         }
         return $result;
@@ -473,7 +469,7 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
             throw $exception;
         }
         
-        $page = ! is_null($page) ? $page : UiPageFactory::createEmpty($this->getWorkbench()->ui());
+        $page = ! is_null($page) ? $page : UiPageFactory::createEmpty($this->getWorkbench());
         
         $status_code = is_numeric($exception->getStatusCode()) ? $exception->getStatusCode() : 500;
         $headers = [];

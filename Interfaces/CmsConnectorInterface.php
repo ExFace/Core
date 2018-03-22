@@ -160,7 +160,7 @@ interface CmsConnectorInterface extends ExfaceClassInterface
      * the alias of one page and the CMS-ID of another, the page with the matching
      * alias will be returned by this method.
      * 
-     * @param UiPageSelectorInterface|string $selectorOrString
+     * @param UiPageSelectorInterface $selector
      * @param boolean $ignore_replacements
      * 
      * @throws UiPageNotFoundError if no matching page can be found
@@ -168,7 +168,7 @@ interface CmsConnectorInterface extends ExfaceClassInterface
      * 
      * @return UiPageInterface
      */
-    public function getPage($selectorOrString, $ignore_replacements = false) : UiPageInterface;
+    public function getPage(UiPageSelectorInterface $selector, $ignore_replacements = false) : UiPageInterface;
 
     /**
      * Returns the current page in the CMS.
@@ -212,13 +212,13 @@ interface CmsConnectorInterface extends ExfaceClassInterface
     /**
      * Deletes the given page from the CMS database.
      *
-     * @param UiPageInterface|string $page_or_id_or_alias
+     * @param UiPageInterface $page
      * 
      * @throws UiPageNotFoundError if no matching page is found in the CMS
      *
      * @return CmsConnectorInterface
      */
-    public function deletePage($page_or_id_or_alias);
+    public function deletePage(UiPageInterface $page) : CmsConnectorInterface;
 
     /**
      * Clears the recycle bin of the CMS (if present)
@@ -255,6 +255,6 @@ interface CmsConnectorInterface extends ExfaceClassInterface
      * @param string $value
      * @return bool
      */
-    public function validateCmsPageId($value) : bool;
+    public function isCmsPageId($value) : bool;
 }
 ?>
