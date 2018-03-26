@@ -26,6 +26,8 @@ use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Interfaces\Actions\iModifyData;
+use exface\Core\Interfaces\Selectors\ActionSelectorInterface;
+use exface\Core\Factories\SelectorFactory;
 
 /**
  * The abstract action is a generic implementation of the ActionInterface, that simplifies 
@@ -293,7 +295,7 @@ abstract class AbstractAction implements ActionInterface
         // safely do it here, befor perform(). On the other hand, this gives all kinds of action event handlers
         // the possibility to access the current action and it's current state
         // FIXME re-enable action context: maybe make it work with events?
-        // $this->getApp()->getWorkbench()->context()->getScopeWindow()->getActionContext()->addAction($this);
+        // $this->getApp()->getWorkbench()->getContext()->getScopeWindow()->getActionContext()->addAction($this);
         
         // Commit the transaction if autocommit is on and the action COULD have modified data
         // We cannot rely on $result->isDataModified() at this point as it is not allways possible to determine
@@ -724,7 +726,15 @@ abstract class AbstractAction implements ActionInterface
         if ($action_or_alias instanceof ActionInterface) {
             $alias = $action_or_alias->getAliasWithNamespace();
         } else {
-            $alias = $action_or_alias;
+            $selector = $action_or_alias instanceof ActionSelectorInterface ? $action_or_alias : SelectorFactory::createActionSelector($this->getWorkbench(), $action_or_alias);
+            switch (true) {
+                case $selector->isAlias():
+                    $alias = $action_or_alias;
+                    break;
+                default:
+                    throw new UnexpectedValueException('Cannot compare action ' . $this->getAliasWithNamespace() . ' to "' . $action_or_alias . '": only instantiated actions or aliases supported!');
+            }
+            
         }
         
         return strcasecmp($this->getAliasWithNamespace(), trim($alias)) === 0;
@@ -745,7 +755,11 @@ abstract class AbstractAction implements ActionInterface
                 return true;
             }
             $selector = new ActionSelector($this->getWorkbench(), $action_or_alias);
-            $class_name = $selector->getClassname();
+            if ($selector->isClassname()) {
+                $class_name = $selector->toString();
+            } else {
+                $class_name = get_class(ActionFactory::create($selector));
+            }
             return $this instanceof $class_name;
         } else {
             throw new UnexpectedValueException('Invalid value "' . gettype($action_or_alias) .'" passed to "ActionInterface::is()": instantiated action or action alias with namespace expected!');
