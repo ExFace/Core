@@ -13,7 +13,7 @@ use Psr\Container\NotFoundExceptionInterface;
  * @author Andrej Kabachnik
  *        
  */
-class AppComponentFoundError extends OutOfRangeException implements ErrorExceptionInterface, NotFoundExceptionInterface
+class AppComponentNotFoundError extends OutOfRangeException implements ErrorExceptionInterface, NotFoundExceptionInterface
 {
 }
 ?>

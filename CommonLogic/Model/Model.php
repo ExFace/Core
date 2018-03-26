@@ -109,7 +109,8 @@ class Model implements ModelInterface
         }
         
         if (! $object) {
-            $object = $this->getObjectByAlias($selector->getAlias(), $selector->getNamespace());
+            $alias = substr($selector->toString(), (strlen($selector->getAppAlias())+1));
+            $object = $this->getObjectByAlias($alias, $selector->getAppAlias());
         }
         
         return $object;

@@ -1,11 +1,14 @@
 <?php
-namespace exface\Core\CommonLogic;
+namespace exface\Core\CommonLogic\Model\Behaviors;
 
-use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Model\BehaviorListInterface;
-use exface\Core\Interfaces\NameResolverInterface;
+use exface\Core\Interfaces\Selectors\BehaviorSelectorInterface;
+use exface\Core\Interfaces\WorkbenchInterface;
+use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
+use exface\Core\CommonLogic\UxonObject;
+use exface\Core\CommonLogic\Traits\AliasTrait;
 
 /**
  *
@@ -14,8 +17,12 @@ use exface\Core\Interfaces\NameResolverInterface;
  */
 abstract class AbstractBehavior implements BehaviorInterface
 {
-
+    use ImportUxonObjectTrait;
+    use AliasTrait;
+    
     private $object = null;
+    
+    private $selector = null;
 
     private $behavior = null;
 
@@ -25,55 +32,40 @@ abstract class AbstractBehavior implements BehaviorInterface
 
     private $name_resolver = false;
 
-    public function __construct(MetaObjectInterface $object)
+    public function __construct(BehaviorSelectorInterface $selector, MetaObjectInterface $object = null)
     {
-        $this->setObject($object);
+        $this->object = $object;
+        $this->selector = $selector;
     }
 
     /**
-     *
-     * @return NameResolverInterface
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\BehaviorInterface::getSelector()
      */
-    public function getNameResolver()
+    public function getSelector() : BehaviorSelectorInterface
     {
-        return $this->name_resolver;
-    }
-
-    public function setNameResolver($value)
-    {
-        $this->name_resolver = $value;
-        return $this;
-    }
-
-    public function getAlias()
-    {
-        return $this->getNameResolver()->getAlias();
-    }
-
-    public function getAliasWithNamespace()
-    {
-        return $this->getNameResolver()->getAliasWithNamespace();
-    }
-
-    public function getNamespace()
-    {
-        return $this->getNameResolver()->getNamespace();
+        return $this->selector;
     }
 
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\Model\BehaviorInterface::getObject()
      */
-    public function getObject()
+    public function getObject() : MetaObjectInterface
     {
         return $this->object;
     }
-
-    public function setObject(MetaObjectInterface $value)
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\BehaviorInterface::setObject()
+     */
+    public function setObject(MetaObjectInterface $object) : BehaviorInterface
     {
-        $this->object = $value;
+        $this->object = $object;
         return $this;
     }
 
@@ -82,22 +74,16 @@ abstract class AbstractBehavior implements BehaviorInterface
      * {@inheritdoc}
      *
      * @see \exface\Core\Interfaces\ExfaceClassInterface::getWorkbench()
-     * @return exface
+     * @return WorkbenchInterface
      */
     public function getWorkbench()
     {
         return $this->getObject()->getWorkbench();
     }
 
-    public function importUxonObject(UxonObject $uxon)
-    {
-        return $uxon->mapToClassSetters($this);
-    }
-
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::exportUxonObject()
      */
     public function exportUxonObject()
@@ -110,10 +96,9 @@ abstract class AbstractBehavior implements BehaviorInterface
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\Model\BehaviorInterface::activate()
      */
-    abstract public function register();
+    abstract public function register() : BehaviorInterface;
 
     /**
      *
@@ -121,7 +106,7 @@ abstract class AbstractBehavior implements BehaviorInterface
      *
      * @see \exface\Core\Interfaces\Model\BehaviorInterface::isDisabled()
      */
-    public function isDisabled()
+    public function isDisabled() : bool
     {
         return $this->disabled;
     }
@@ -130,11 +115,10 @@ abstract class AbstractBehavior implements BehaviorInterface
      * This method does the same as enable() and disable().
      * It is important to be able to import UXON objects.
      *
-     * @param
-     *            boolean
+     * @param bool $value
      * @return BehaviorInterface
      */
-    public function setDisabled($value)
+    public function setDisabled($value) : BehaviorInterface
     {
         $this->disabled = $value;
         return $this;
@@ -146,7 +130,7 @@ abstract class AbstractBehavior implements BehaviorInterface
      *
      * @see \exface\Core\Interfaces\Model\BehaviorInterface::disable()
      */
-    public function disable()
+    public function disable() : BehaviorInterface
     {
         $this->disabled = true;
         return $this;
@@ -158,7 +142,7 @@ abstract class AbstractBehavior implements BehaviorInterface
      *
      * @see \exface\Core\Interfaces\Model\BehaviorInterface::enable()
      */
-    public function enable()
+    public function enable() : BehaviorInterface
     {
         if (! $this->isRegistered()) {
             $this->register();
@@ -176,7 +160,7 @@ abstract class AbstractBehavior implements BehaviorInterface
      * @param boolean $value            
      * @return BehaviorListInterface
      */
-    protected function setRegistered($value)
+    protected function setRegistered(bool $value) : BehaviorInterface
     {
         $this->registered = $value;
         return $this;
@@ -188,7 +172,7 @@ abstract class AbstractBehavior implements BehaviorInterface
      *
      * @see \exface\Core\Interfaces\Model\BehaviorInterface::isRegistered()
      */
-    public function isRegistered()
+    public function isRegistered() : bool
     {
         return $this->registered;
     }

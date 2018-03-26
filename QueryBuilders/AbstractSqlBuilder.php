@@ -24,6 +24,7 @@ use exface\Core\DataTypes\AggregatorFunctionsDataType;
 use exface\Core\CommonLogic\Model\Aggregator;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
+use exface\Core\Factories\QueryBuilderFactory;
 
 /**
  * A query builder for generic SQL syntax.
@@ -810,9 +811,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         
         // build a subquery
         /* @var $relq \exface\Core\QueryBuilders\AbstractSqlBuilder */
-        $qb_class = get_class($this);
-        // TODO Use QueryBuilderFactory here instead
-        $relq = new $qb_class();
+        $relq = QueryBuilderFactory::createFromSelector($this->getSelector());
         // the query is based on the first object after the reversed relation (CUSTOMER_CARD for the above example)
         $relq->setMainObject($rev_rel->getRelatedObject());
         $relq->setQueryId($this->getNextSubqueryId());

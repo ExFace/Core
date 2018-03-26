@@ -7,7 +7,7 @@ use exface\Core\Interfaces\DataSheets\DataAggregationInterface;
 use exface\Core\CommonLogic\DataSheets\DataAggregation;
 use exface\Core\Exceptions\UnexpectedValueException;
 
-abstract class DataAggregationFactory extends AbstractFactory
+abstract class DataAggregationFactory extends AbstractStaticFactory
 {
 
     /**

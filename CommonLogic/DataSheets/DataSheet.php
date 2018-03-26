@@ -446,7 +446,7 @@ class DataSheet implements DataSheetInterface
             $offset = $this->getRowOffset();
         
         // create new query for the main object
-        $query = QueryBuilderFactory::createFromAlias($this->exface, $this->getMetaObject()->getQueryBuilder());
+        $query = QueryBuilderFactory::createFromString($this->exface, $this->getMetaObject()->getQueryBuilder());
         $query->setMainObject($this->getMetaObject());
         
         foreach ($this->getColumns() as $col) {
@@ -645,7 +645,7 @@ class DataSheet implements DataSheetInterface
         }
         
         // Create a query
-        $query = QueryBuilderFactory::createFromAlias($this->exface, $this->getMetaObject()->getQueryBuilder());
+        $query = QueryBuilderFactory::createFromString($this->exface, $this->getMetaObject()->getQueryBuilder());
         $query->setMainObject($this->getMetaObject());
         // Add filters to the query
         $query->setFiltersConditionGroup($this->getFilters());
@@ -816,7 +816,7 @@ class DataSheet implements DataSheetInterface
         
         $this->getWorkbench()->eventManager()->dispatch(EventFactory::createDataSheetEvent($this, 'CreateData.Before'));
         // Create a query
-        $query = QueryBuilderFactory::createFromAlias($this->exface, $this->getMetaObject()->getQueryBuilder());
+        $query = QueryBuilderFactory::createFromString($this->exface, $this->getMetaObject()->getQueryBuilder());
         $query->setMainObject($this->getMetaObject());
         
         // Add values for columns based on attributes with defaults or fixed values
@@ -929,7 +929,7 @@ class DataSheet implements DataSheetInterface
         
         $affected_rows = 0;
         // create new query for the main object
-        $query = QueryBuilderFactory::createFromAlias($this->exface, $this->getMetaObject()->getQueryBuilder());
+        $query = QueryBuilderFactory::createFromString($this->exface, $this->getMetaObject()->getQueryBuilder());
         $query->setMainObject($this->getMetaObject());
         
         if ($this->isUnfiltered()) {

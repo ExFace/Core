@@ -2,8 +2,6 @@
 namespace exface\Core\Factories;
 
 use exface\Core\CommonLogic\Workbench;
-use exface\Core\CommonLogic\NameResolver;
-use exface\Core\Interfaces\NameResolverInterface;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Events\ExfaceEvent;
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
@@ -15,20 +13,8 @@ use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Events\WidgetEvent;
 use exface\Core\Interfaces\DataSources\DataQueryInterface;
 
-abstract class EventFactory extends AbstractNameResolverFactory
+abstract class EventFactory extends AbstractStaticFactory
 {
-
-    /**
-     * Creates a new action from the given name resolver
-     *
-     * @param NameResolver $name_resolver            
-     * @return ActionInterface
-     */
-    public static function create(NameResolverInterface $name_resolver)
-    {
-        // TODO
-    }
-
     /**
      *
      * @param exface $exface            

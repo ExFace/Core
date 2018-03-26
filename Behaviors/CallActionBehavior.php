@@ -1,13 +1,12 @@
 <?php
 namespace exface\Core\Behaviors;
 
-use exface\Core\CommonLogic\AbstractBehavior;
+use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\ActionFactory;
 use exface\Core\Events\DataSheetEvent;
-use exface\Core\CommonLogic\Tasks\GenericTask;
 use exface\Core\Factories\TaskFactory;
 
 /**
@@ -31,21 +30,22 @@ class CallActionBehavior extends AbstractBehavior
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\CommonLogic\AbstractBehavior::register()
+     * @see \exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior::register()
      */
-    public function register()
+    public function register() : BehaviorInterface
     {
         $this->getWorkbench()->eventManager()->addListener($this->getObject()->getAliasWithNamespace() . '.' . $this->getObjectEventAlias(), array(
             $this,
             'callAction'
         ));
         $this->setRegistered(true);
+        return $this;
     }
 
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\CommonLogic\AbstractBehavior::exportUxonObject()
+     * @see \exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior::exportUxonObject()
      */
     public function exportUxonObject()
     {

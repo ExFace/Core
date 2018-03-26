@@ -1,7 +1,7 @@
 <?php
 namespace exface\Core\Behaviors;
 
-use exface\Core\CommonLogic\AbstractBehavior;
+use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Events\DataSheetEvent;
 use exface\Core\Interfaces\Actions\iUndoActions;
@@ -9,6 +9,7 @@ use exface\Core\CommonLogic\DataSheets\DataColumn;
 use exface\Core\Exceptions\Behaviors\ConcurrentWriteError;
 use exface\Core\Exceptions\Behaviors\ConcurrentWritesCannotBePreventedWarning;
 use exface\Core\Exceptions\DataSheets\DataSheetColumnNotFoundError;
+use exface\Core\Interfaces\Model\BehaviorInterface;
 
 class TimeStampingBehavior extends AbstractBehavior
 {
@@ -21,7 +22,7 @@ class TimeStampingBehavior extends AbstractBehavior
 
     private $disabled = false;
 
-    public function register()
+    public function register() : BehaviorInterface
     {
         $this->getUpdatedOnAttribute()->setSystem(true)->setDefaultAggregateFunction('MAX');
         if ($this->getCheckForConflictsOnUpdate()) {
@@ -31,6 +32,7 @@ class TimeStampingBehavior extends AbstractBehavior
             ));
         }
         $this->setRegistered(true);
+        return $this;
     }
 
     public function getCreatedOnAttributeAlias()
@@ -88,7 +90,7 @@ class TimeStampingBehavior extends AbstractBehavior
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\CommonLogic\AbstractBehavior::exportUxonObject()
+     * @see \exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior::exportUxonObject()
      */
     public function exportUxonObject()
     {

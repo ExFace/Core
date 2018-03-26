@@ -13,7 +13,7 @@ use exface\Core\CommonLogic\Workbench;
  * @author SFL
  *
  */
-class UserFactory extends AbstractFactory
+class UserFactory extends AbstractStaticFactory
 {
 
     /**

@@ -180,7 +180,7 @@ class Attribute implements MetaAttributeInterface
     public function getDataType()
     {
         if (is_string($this->data_type)){
-            $this->data_type = DataTypeFactory::createFromUidOrAlias($this->getModel(), $this->data_type);
+            $this->data_type = DataTypeFactory::createFromString($this->getWorkbench(), $this->data_type);
             $this->data_type->importUxonObject($this->getCustomDataTypeUxon());
         }
         return $this->data_type;
@@ -569,7 +569,7 @@ class Attribute implements MetaAttributeInterface
         if ($value instanceof SortingDirectionsDataType){
             // everything is OK
         } elseif (SortingDirectionsDataType::isValidStaticValue(strtoupper($value))){
-            $value = new SortingDirectionsDataType($this->getWorkbench(), strtoupper($value));
+            $value = DataTypeFactory::createFromPrototype($this->getWorkbench(), SortingDirectionsDataType::class)->withValue(strtoupper($value));
         } else {
             throw new UnexpectedValueException('Invalid value "' . $value . '" for default sorting direction in attribute "' . $this->getName() . '": use ASC or DESC');
         }

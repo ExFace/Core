@@ -1,8 +1,6 @@
 <?php
 namespace exface\Core\Interfaces\Selectors;
 
-use exface\Core\Interfaces\AliasInterface;
-
 /**
  * Interface for app selectors.
  * 
@@ -14,7 +12,7 @@ use exface\Core\Interfaces\AliasInterface;
  * @author Andrej Kabachnik
  *
  */
-interface AppSelectorInterface extends AliasInterface, UidSelectorInterface, PrototypeSelectorInterface
+interface AppSelectorInterface extends AliasSelectorInterface, UidSelectorInterface, PrototypeSelectorInterface
 {
     
 }

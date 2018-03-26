@@ -456,7 +456,9 @@ class DataColumn implements DataColumnInterface
     public function importUxonObject(UxonObject $uxon)
     {
         $this->setHidden($uxon->getProperty('hidden'));
-        $this->setDataType($uxon->getProperty('data_type'));
+        if ($uxon->hasProperty('data_type')) {
+            $this->setDataType($uxon->getProperty('data_type'));
+        }
         $this->setFormula($uxon->getProperty('formula'));
         $this->setAttributeAlias($uxon->getProperty('attribute_alias'));
         if ($uxon->hasProperty('totals')) {

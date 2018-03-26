@@ -1,23 +1,24 @@
 <?php
 namespace exface\Core\Factories;
 
-use exface\Core\CommonLogic\NameResolver;
 use exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder;
-use exface\Core\Interfaces\NameResolverInterface;
-use exface\Core\CommonLogic\Workbench;
+use exface\Core\Interfaces\Selectors\QueryBuilderSelectorInterface;
+use exface\Core\Interfaces\WorkbenchInterface;
+use exface\Core\Interfaces\QueryBuilderInterface;
+use exface\Core\CommonLogic\Selectors\QueryBuilderSelector;
 
-abstract class QueryBuilderFactory extends AbstractNameResolverFactory
+abstract class QueryBuilderFactory extends AbstractSelectableComponentFactory
 {
 
     /**
      * Creates a new query builder based on the given name resolver
      *
-     * @param NameResolverInterface $name_resolver            
+     * @param QueryBuilderSelectorInterface $selector            
      * @return AbstractQueryBuilder
      */
-    public static function create(NameResolverInterface $name_resolver)
+    public static function create(QueryBuilderSelectorInterface $selector) : QueryBuilderInterface
     {
-        return parent::create($name_resolver);
+        return static::createFromSelector($selector);
     }
 
     /**
@@ -26,14 +27,14 @@ abstract class QueryBuilderFactory extends AbstractNameResolverFactory
      * - ExFace alias with namespace
      * - class name
      *
-     * @param Workbench $exface            
-     * @param string $alias_with_namespace            
+     * @param WorkbenchInterface $workbench            
+     * @param string $selectorString            
      * @return AbstractQueryBuilder
      */
-    public static function createFromAlias(Workbench $exface, $path_or_qualified_alias)
+    public static function createFromString(WorkbenchInterface $workbench, string $selectorString) : QueryBuilderInterface
     {
-        $name_resolver = $exface->createNameResolver($path_or_qualified_alias, NameResolver::OBJECT_TYPE_QUERY_BUILDER);
-        return static::create($name_resolver);
+        $selector = new QueryBuilderSelector($workbench, $selectorString);
+        return static::create($selector);
     }
 }
 ?>

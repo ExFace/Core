@@ -4,7 +4,7 @@ namespace exface\Core\CommonLogic\Selectors;
 use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
 use exface\Core\CommonLogic\Selectors\Traits\AliasSelectorTrait;
 use exface\Core\CommonLogic\Selectors\Traits\UidSelectorTrait;
-use exface\Core\CommonLogic\Workbench;
+use exface\Core\Interfaces\WorkbenchInterface;
 
 /**
  * Default implementation of the UiPageSelectorInterface
@@ -21,7 +21,7 @@ class UiPageSelector extends AbstractSelector implements UiPageSelectorInterface
     
     private $isCmsId = false;
     
-    public function __construct(Workbench $workbench, $selectorString)
+    public function __construct(WorkbenchInterface $workbench, string $selectorString)
     {
         parent::__construct($workbench, $selectorString);
         if ($this->toString() === '') {
@@ -34,21 +34,6 @@ class UiPageSelector extends AbstractSelector implements UiPageSelectorInterface
             } else {
                 $this->isAlias = false;
             }
-        }
-    }
-
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\AliasInterface::getAliasWithNamespace()
-     */
-    public function getAliasWithNamespace()
-    {
-        switch (true) {
-            case (! ($this->isUid() || $this->isCmsId())):
-                return $this->toString();
-            default:
-                return $this->getWorkbench()->getCMS()->getPage($this)->getAliasWithNamespace();
         }
     }
     

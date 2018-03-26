@@ -3,22 +3,27 @@ namespace exface\Core\CommonLogic\DataTypes;
 
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
-use exface\Core\CommonLogic\NameResolver;
-use exface\Core\Interfaces\NameResolverInterface;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\AppInterface;
-use exface\Core\CommonLogic\Workbench;
 use exface\Core\DataTypes\SortingDirectionsDataType;
 use exface\Core\Exceptions\DataTypes\DataTypeValidationError;
+use exface\Core\Interfaces\Selectors\DataTypeSelectorInterface;
+use exface\Core\Interfaces\ValueObjectInterface;
+use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
+use exface\Core\CommonLogic\Traits\AliasTrait;
+use exface\Core\Factories\DataTypeFactory;
 
 abstract class AbstractDataType implements DataTypeInterface
 {
     use ImportUxonObjectTrait;
+    use AliasTrait {
+        getAlias as getAliasFromSelector;
+    }
     
     private $workbench = null;
 
-    private $name_resolver = null;
+    private $selector = null;
     
     private $alias = null;
     
@@ -36,16 +41,21 @@ abstract class AbstractDataType implements DataTypeInterface
     
     private $value = null;
 
-    public function __construct(Workbench $workbench, $value = null, NameResolverInterface $name_resolver = null, UxonObject $configuration = null)
+    public function __construct(DataTypeSelectorInterface $selector, $value = null, UxonObject $configuration = null)
     {
-        $this->workbench = $workbench;
-        $this->name_resolver = $name_resolver;
+        $this->workbench = $selector->getWorkbench();
+        $this->selector = $selector;
         if (! is_null($configuration)) {
             $this->importUxonObject($configuration);
         }
         if (! is_null($value)) {
             $this->setValue($value);
         }
+    }
+    
+    protected function getClassnameSuffixToStripFromAlias()
+    {
+        return 'DataType';
     }
     
     /**
@@ -103,12 +113,8 @@ abstract class AbstractDataType implements DataTypeInterface
         if ($data_type_or_resolvable_name instanceof AbstractDataType) {
             $class = get_class($data_type_or_resolvable_name);
         } else {
-            $name_resolver = NameResolver::createFromString($data_type_or_resolvable_name, NameResolver::OBJECT_TYPE_DATATYPE, $this->getWorkbench());
-            if ($name_resolver->classExists()){
-                $class = $name_resolver->getClassNameWithNamespace();
-            } else {
-                return false;
-            }
+            $data_type = DataTypeFactory::createFromString($this->getWorkbench(), $data_type_or_resolvable_name);
+            $class = get_class($data_type);
         }
         return ($this instanceof $class);
     }
@@ -148,7 +154,7 @@ abstract class AbstractDataType implements DataTypeInterface
         }
         
         try {
-            $this->parse($value);
+            $this->parse($string);
         } catch (DataTypeValidationError $e) {
             return false;
         }
@@ -169,14 +175,11 @@ abstract class AbstractDataType implements DataTypeInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\DataTypes\DataTypeInterface::getNameResolver()
+     * @see \exface\Core\Interfaces\DataTypes\DataTypeInterface::getSelector()
      */
-    public function getNameResolver()
+    public function getSelector() : DataTypeSelectorInterface
     {
-        if (is_null($this->name_resolver)) {
-            $this->name_resolver = NameResolver::createFromString(__CLASS__, NameResolver::OBJECT_TYPE_DATATYPE, $this->getWorkbench());
-        }
-        return $this->name_resolver;
+        return $this->selector;
     }
     
     /**
@@ -186,7 +189,7 @@ abstract class AbstractDataType implements DataTypeInterface
      */
     public function getAlias()
     {
-        return is_null($this->alias) ? $this->getNameResolver()->getAlias() : $this->alias;
+        return $this->alias === null ? $this->getAliasFromSelector() : $this->alias;
     }
     
     public function setAlias($string)
@@ -201,7 +204,7 @@ abstract class AbstractDataType implements DataTypeInterface
      */
     public function getAliasWithNamespace()
     {
-        return $this->getNamespace() . NameResolver::NAMESPACE_SEPARATOR . $this->getAlias();
+        return $this->getNamespace() . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER . $this->getAlias();
     }
     
     /**
@@ -220,7 +223,7 @@ abstract class AbstractDataType implements DataTypeInterface
      */
     public function getApp()
     {
-        return is_null($this->app) ? $this->getWorkbench()->getApp($this->getNameResolver()->getAppAlias()) : $this->app;
+        return is_null($this->app) ? $this->getWorkbench()->getApp($this->selector->getAppSelector()) : $this->app;
     }
     
     public function setApp(AppInterface $app)
@@ -366,19 +369,34 @@ abstract class AbstractDataType implements DataTypeInterface
         return $this;
     }
     
-    public final function withValue($value)
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\ValueObjectInterface::withValue()
+     */
+    public final function withValue($value) : ValueObjectInterface
     {
         return $this->copy()->setValue($value);
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\ValueObjectInterface::getValue()
+     */
     public final function getValue()
     {
         return $this->value;
     }
     
-    public function hasValue()
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\ValueObjectInterface::hasValue()
+     */
+    public function hasValue() : bool
     {
-        return ! is_null($this->value);
+        return $this->value !== null;
     }
 
     protected final function setValue($value)
@@ -396,11 +414,11 @@ abstract class AbstractDataType implements DataTypeInterface
     }
     
     /**
-     * Compares one value object with another.
-     *
-     * @return boolean
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\ValueObjectInterface::equals()
      */
-    public final function equals(DataTypeInterface $valueObject)
+    public final function equals(ValueObjectInterface $valueObject) : bool
     {
         // TODO compare uxon configuration
         return $this->getValue() === $valueObject->getValue() && $this->getAliasWithNamespace() === $valueObject->getAliasWithNamespace() && get_called_class() == get_class($valueObject);

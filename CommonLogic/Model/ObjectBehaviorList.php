@@ -44,18 +44,35 @@ class ObjectBehaviorList extends EntityList implements BehaviorListInterface
     }
 
     /**
-     *
-     * @param string $qualified_alias            
-     * @return BehaviorInterface
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\BehaviorListInterface::getByAlias()
      */
-    public function getByAlias($qualified_alias)
+    public function getByAlias(string $qualified_alias) : BehaviorListInterface
     {
+        $result = new self($this->getWorkbench(), $this->getObject());
         foreach ($this->getAll() as $behavior) {
-            if (strcasecmp($behavior->getAliasWithNamespace(), $qualified_alias) == 0) {
-                return $behavior;
+            if (strcasecmp($behavior->getAliasWithNamespace(), $qualified_alias) === 0) {
+                $result->add($behavior);
             }
         }
-        return false;
+        return $result;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\BehaviorListInterface::getByPrototypeClass($className)
+     */
+    public function getByPrototypeClass(string $className) : BehaviorListInterface
+    {
+        $result = new self($this->getWorkbench(), $this->getObject());
+        foreach ($this->getAll() as $behavior) {
+            if ($behavior instanceof $className) {
+                $result->add($behavior);
+            }
+        }
+        return $result;
     }
 
     /**

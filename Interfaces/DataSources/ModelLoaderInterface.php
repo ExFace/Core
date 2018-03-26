@@ -14,23 +14,24 @@ use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Model\MetaRelationInterface;
 use exface\Core\Exceptions\Model\MetaRelationNotFoundError;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
-use exface\Core\Interfaces\NameResolverInterface;
 use exface\Core\Interfaces\SelectorInstallerInterface;
+use exface\Core\Interfaces\Selectors\DataTypeSelectorInterface;
+use exface\Core\Interfaces\Selectors\ModelLoaderSelectorInterface;
 
 interface ModelLoaderInterface
 {
 
     /**
      * 
-     * @param NameResolverInterface $model
+     * @param ModelLoaderSelectorInterface $selector
      * @return ModelLoaderInterface
      */
-    public function __construct(NameResolverInterface $nameResolver);
+    public function __construct(ModelLoaderSelectorInterface $selector);
     
     /**
-     * @return NameResolverInterface
+     * @return ModelLoaderSelectorInterface
      */
-    public function getNameResolver();
+    public function getSelector() : ModelLoaderSelectorInterface;
     
     /**
      * 
@@ -119,11 +120,11 @@ interface ModelLoaderInterface
     /**
      * Loads the data type matching the passed UID from the given model
      * 
-     * @param string $uid_or_alias
+     * @param DataTypeSelectorInterface $selector
      * 
      * @return DataTypeInterface
      */
-    public function loadDataType($uid_or_alias);
+    public function loadDataType(DataTypeSelectorInterface $selector) : DataTypeInterface;
 
     /**
      * Loads an action defined in the meta model.

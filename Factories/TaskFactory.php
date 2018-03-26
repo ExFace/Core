@@ -21,7 +21,7 @@ use exface\Core\CommonLogic\Selectors\UiPageSelector;
  * @author Andrej Kabachnik
  *
  */
-class TaskFactory extends AbstractFactory
+class TaskFactory extends AbstractStaticFactory
 {
     /**
      * 

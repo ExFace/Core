@@ -7,7 +7,7 @@ use exface\Core\CommonLogic\DataSheets\DataColumn;
 use exface\Core\CommonLogic\Model\Expression;
 use exface\Core\Interfaces\Model\ExpressionInterface;
 
-abstract class DataColumnFactory extends AbstractFactory
+abstract class DataColumnFactory extends AbstractStaticFactory
 {
 
     /**

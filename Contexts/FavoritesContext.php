@@ -4,8 +4,8 @@ namespace exface\Core\Contexts;
 use exface\Core\Interfaces\Contexts\ContextScopeInterface;
 use exface\Core\Exceptions\Contexts\ContextRuntimeError;
 use exface\Core\Exceptions\Contexts\ContextAccessDeniedError;
-use exface\Core\Interfaces\NameResolverInterface;
 use exface\Core\CommonLogic\Constants\Icons;
+use exface\Core\Interfaces\Selectors\ContextSelectorInterface;
 
 /**
  * 
@@ -15,9 +15,9 @@ use exface\Core\CommonLogic\Constants\Icons;
  */
 class FavoritesContext extends ObjectBasketContext
 {
-    public function __construct(NameResolverInterface $name_resolver){
-        parent::__construct($name_resolver);
-        if ($name_resolver->getWorkbench()->context()->getScopeUser()->getUserCurrent()->isUserAnonymous()){
+    public function __construct(ContextSelectorInterface $selector){
+        parent::__construct($selector);
+        if ($selector->getWorkbench()->context()->getScopeUser()->getUserCurrent()->isUserAnonymous()){
             throw new ContextAccessDeniedError($this, 'The favorites context cannot be used for anonymous users!');
         }
     }

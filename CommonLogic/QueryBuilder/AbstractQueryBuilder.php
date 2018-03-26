@@ -9,8 +9,10 @@ use exface\Core\Factories\ConditionFactory;
 use exface\Core\Exceptions\Model\MetaObjectDataConnectionNotFoundError;
 use exface\Core\Interfaces\Model\AggregatorInterface;
 use exface\Core\DataTypes\StringDataType;
+use exface\Core\Interfaces\Selectors\QueryBuilderSelectorInterface;
+use exface\Core\Interfaces\QueryBuilderInterface;
 
-abstract class AbstractQueryBuilder
+abstract class AbstractQueryBuilder implements QueryBuilderInterface
 {
 
     protected $main_object;
@@ -30,6 +32,26 @@ abstract class AbstractQueryBuilder
     protected $offset = 0;
 
     protected $values = array();
+    
+    private $selector = null;
+    
+    private $workbench = null;
+    
+    public function __construct(QueryBuilderSelectorInterface $selector)
+    {
+        $this->selector = $selector;
+        $this->workbench = $selector->getWorkbench();
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\QueryBuilderInterface::getSelector()
+     */
+    public function getSelector() : QueryBuilderSelectorInterface
+    {
+        return $this->selector;
+    }
 
     /**
      * Performs a create query.
@@ -487,7 +509,7 @@ abstract class AbstractQueryBuilder
 
     public function getWorkbench()
     {
-        return $this->getMainObject()->getModel()->getWorkbench();
+        return $this->workbench;
     }
 
     /**

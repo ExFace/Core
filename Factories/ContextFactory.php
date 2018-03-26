@@ -1,11 +1,11 @@
 <?php
 namespace exface\Core\Factories;
 
-use exface\Core\Interfaces\NameResolverInterface;
 use exface\Core\Interfaces\Contexts\ContextInterface;
 use exface\Core\Interfaces\Contexts\ContextScopeInterface;
 use exface\Core\CommonLogic\Workbench;
-use exface\Core\CommonLogic\NameResolver;
+use exface\Core\Interfaces\Selectors\ContextSelectorInterface;
+use exface\Core\CommonLogic\Selectors\ContextSelector;
 
 /**
  * This factory produces contexts
@@ -13,31 +13,30 @@ use exface\Core\CommonLogic\NameResolver;
  * @author Andrej Kabachnik
  *
  */
-abstract class ContextFactory extends AbstractNameResolverFactory
+abstract class ContextFactory extends AbstractSelectableComponentFactory
 {
 
     /**
      * Instantieates a new context without a scope.
      * 
-     * @param NameResolverInterface $name_resolver            
+     * @param ContextSelectorInterface $selector            
      * @return ContextInterface
      */
-    public static function create(NameResolverInterface $name_resolver)
+    public static function create(ContextSelectorInterface $selector) : ContextInterface
     {
-        $class = $name_resolver->getClassNameWithNamespace();
-        return new $class($name_resolver);
+        return static::createFromSelector($selector);
     }
     
     /**
      * Instantiates a new context in the given scope.
      * 
-     * @param NameResolverInterface $name_resolver
+     * @param ContextSelectorInterface $selector
      * @param ContextScopeInterface $context_scope
      * @return \exface\Core\Interfaces\Contexts\ContextInterface
      */
-    public static function createInScope(NameResolverInterface $name_resolver, ContextScopeInterface $context_scope)
+    public static function createInScope(ContextSelectorInterface $selector, ContextScopeInterface $context_scope) : ContextInterface
     {
-        $context = static::create($name_resolver);
+        $context = static::create($selector);
         $context->setScope($context_scope);
         return $context;
     }
@@ -46,17 +45,17 @@ abstract class ContextFactory extends AbstractNameResolverFactory
      * Instantiates a new context specified by it's qualified alias.
      *  
      * @param Workbench $workbench
-     * @param unknown $alias_with_namespace
+     * @param string $selectorString
      * @param ContextScopeInterface $context_scope
      * @return \exface\Core\Interfaces\Contexts\ContextInterface
      */
-    public static function createFromString(Workbench $workbench, $alias_with_namespace, ContextScopeInterface $context_scope = null)
+    public static function createFromString(Workbench $workbench, string $selectorString, ContextScopeInterface $context_scope = null)
     {
-        $name_resolver = NameResolver::createFromString($alias_with_namespace, NameResolver::OBJECT_TYPE_CONTEXT, $workbench);
-        if (is_null($context_scope)){
-            return static::create($name_resolver);
+        $selector = new ContextSelector($workbench, $selectorString);
+        if ($context_scope === null){
+            return static::create($selector);
         } else {
-            return static::createInScope($name_resolver, $context_scope);
+            return static::createInScope($selector, $context_scope);
         }
     }
 }

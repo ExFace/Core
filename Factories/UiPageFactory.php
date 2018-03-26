@@ -9,7 +9,7 @@ use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
 use exface\Core\Interfaces\CmsConnectorInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
 
-class UiPageFactory extends AbstractFactory
+class UiPageFactory extends AbstractStaticFactory
 {
 
     /**

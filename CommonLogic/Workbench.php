@@ -16,7 +16,6 @@ use exface\Core\Interfaces\ConfigurationInterface;
 use exface\Core\Interfaces\DebuggerInterface;
 use exface\Core\CoreApp;
 use exface\Core\Exceptions\InvalidArgumentException;
-use exface\Core\Interfaces\NameResolverInterface;
 use exface\Core\Exceptions\Configuration\ConfigOptionNotFoundError;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\DataSources\DataManagerInterface;
@@ -27,6 +26,9 @@ use exface\Core\CommonLogic\Selectors\AppSelector;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Exceptions\AppNotFoundError;
+use exface\Core\CommonLogic\Selectors\CmsConnectorSelector;
+use exface\Core\CommonLogic\Selectors\ModelLoaderSelector;
+use exface\Core\Exceptions\AppComponentNotFoundError;
 
 class Workbench implements WorkbenchInterface
 {
@@ -107,7 +109,7 @@ class Workbench implements WorkbenchInterface
         $this->event_manager->dispatch(EventFactory::createBasicEvent($this, 'Start'));
         
         // load the CMS connector
-        $this->cms = CmsConnectorFactory::create($this->createNameResolver($this->getConfig()->getOption('CMS_CONNECTOR'), NameResolver::OBJECT_TYPE_CMS_CONNECTOR));
+        $this->cms = CmsConnectorFactory::create(new CmsConnectorSelector($this, $this->getConfig()->getOption('CMS_CONNECTOR')));
         // init data module
         $this->data = new DataManager($this);
         
@@ -115,11 +117,12 @@ class Workbench implements WorkbenchInterface
         $this->mm = new \exface\Core\CommonLogic\Model\Model($this);
         
         // Init the ModelLoader
-        $model_loader_resolver = NameResolver::createFromString($this->getConfig()->getOption('MODEL_LOADER'), NameResolver::OBJECT_TYPE_MODEL_LOADER, $this);
-        if (! $model_loader_resolver->classExists()) {
-            throw new InvalidArgumentException('No valid model loader found in current configuration - please add a valid "MODEL_LOADER" : "file_path_or_qualified_alias_or_qualified_class_name" to your config in "' . $this->filemanager()->getPathToConfigFolder() . '"');
+        $model_loader_selector = new ModelLoaderSelector($this, $this->getConfig()->getOption('MODEL_LOADER'));
+        try {
+            $model_loader = ModelLoaderFactory::create($model_loader_selector);
+        } catch (AppComponentNotFoundError $e) {
+            throw new InvalidArgumentException('No valid model loader found in current configuration - please add a valid "MODEL_LOADER" : "file_path_or_qualified_alias_or_qualified_class_name" to your config in "' . $this->filemanager()->getPathToConfigFolder() . '"', null, $e);
         }
-        $model_loader = ModelLoaderFactory::create($model_loader_resolver);
         $model_connection = DataConnectorFactory::createFromAlias($this, $this->getConfig()->getOption('MODEL_DATA_CONNECTOR'));
         $model_loader->setDataConnection($model_connection);
         $this->model()->setModelLoader($model_loader);
@@ -260,7 +263,7 @@ class Workbench implements WorkbenchInterface
             }
         } else {
             foreach ($this->running_apps as $app) {
-                if (strcasecmp($app->getAliasWithNamespace(), $selector->getAliasWithNamespace()) === 0) {
+                if (strcasecmp($app->getAliasWithNamespace(), $selector->getAppAlias()) === 0) {
                     return $app;
                 }
             }
@@ -276,27 +279,6 @@ class Workbench implements WorkbenchInterface
     public function getCoreApp()
     {
         return $this->getApp('exface.Core');
-    }
-
-    /**
-     * Creates a default name resolver for an ExFace object specified by it's qualified alias and object type.
-     * The name
-     * resolver is a universal input container for factories in ExFace. Every factory hase a basic create() method that
-     * will create a new instance of whatever the name resolver describes.
-     *
-     * @param string $qualified_alias
-     *            A qualified alias may be
-     *            - An ExFace alias with a proper namespace like Workbench.Core.SaveData for the SaveData action of the core app
-     *            - A valid PHP class name
-     *            - A path to the desired PHP class
-     * @param string $object_type
-     *            One of the NameResolver::OBJECT_TYPE_xxx constants
-     *            
-     * @return NameResolverInterface
-     */
-    public function createNameResolver($qualified_alias, $object_type)
-    {
-        return NameResolver::createFromString($qualified_alias, $object_type, $this);
     }
 
     public function stop()

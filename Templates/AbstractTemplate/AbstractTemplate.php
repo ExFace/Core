@@ -2,14 +2,15 @@
 namespace exface\Core\Templates\AbstractTemplate;
 
 use exface\Core\Interfaces\Templates\TemplateInterface;
-use exface\Core\Factories\AppFactory;
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\Interfaces\Selectors\TemplateSelectorInterface;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Interfaces\ConfigurationInterface;
+use exface\Core\CommonLogic\Traits\AliasTrait;
 
 abstract class AbstractTemplate implements TemplateInterface
 {
+    use AliasTrait;
 
     private $exface = null;
 
@@ -27,34 +28,14 @@ abstract class AbstractTemplate implements TemplateInterface
     protected function init()
     {}
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Templates\TemplateInterface::getSelector()
+     */
     public function getSelector() : TemplateSelectorInterface
     {
         return $this->selector;
-    }
-
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\AliasInterface::getNamespace()
-     */
-    public function getNamespace()
-    {
-        return $this->selector->getNamespace();
-    }
-
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\AliasInterface::getAliasWithNamespace()
-     */
-    public function getAliasWithNamespace()
-    {
-        return $this->selector->getAliasWithNamespace();
-    }
-
-    public function getAlias()
-    {
-        return $this->selector->getAlias();
     }
 
     /**
@@ -92,7 +73,7 @@ abstract class AbstractTemplate implements TemplateInterface
     public function getApp() : AppInterface
     {
         if (is_null($this->app)) {
-            $this->app = AppFactory::createFromAlias($this->selector->getNamespace(), $this->exface);
+            $this->app = $this->getWorkbench()->getApp($this->selector->getAppSelector());
         }
         return $this->app;
     }

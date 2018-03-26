@@ -6,7 +6,7 @@ use exface\Core\CommonLogic\Model\Model;
 use exface\Core\CommonLogic\DataSource;
 use exface\Core\Interfaces\DataSources\DataSourceInterface;
 
-abstract class DataSourceFactory extends AbstractFactory
+abstract class DataSourceFactory extends AbstractStaticFactory
 {
 
     /**
