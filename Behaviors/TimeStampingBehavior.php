@@ -123,7 +123,7 @@ class TimeStampingBehavior extends AbstractBehavior
         
         $conflict_rows = array();
         // See, if the UndoAction is performed currently. It needs special treatment
-        $current_action = $this->getWorkbench()->context()->getScopeWindow()->getActionContext()->getCurrentAction();
+        $current_action = $this->getWorkbench()->getContext()->getScopeWindow()->getActionContext()->getCurrentAction();
         if ($current_action instanceof iUndoActions) {
             // FIXME To check for conflicts when performing and undo, we need to see, if the timestamp changed
             // since the undone action had been performed. The current problem is, however, that we do not store

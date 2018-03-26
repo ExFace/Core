@@ -475,7 +475,7 @@ class DataSheet implements DataSheetInterface
         // Set explicitly defined filters
         $query->setFiltersConditionGroup($this->getFilters());
         // Add filters from the contexts
-        foreach ($this->exface->context()->getScopeApplication()->getFilterContext()->getConditions($this->getMetaObject()) as $cond) {
+        foreach ($this->exface->getContext()->getScopeApplication()->getFilterContext()->getConditions($this->getMetaObject()) as $cond) {
             $query->addFilterCondition($cond);
         }
         
@@ -841,7 +841,7 @@ class DataSheet implements DataSheetInterface
                     // Try to get the value from the current filter contexts: if the missing attribute was used as a direct filter, we assume, that the data is saved
                     // in the same context, so we can set the attribute value to the filter value
                     // TODO Look in other context scopes, not only in the application scope. Still looking for an elegant solution here.
-                    foreach ($this->exface->context()->getScopeApplication()->getFilterContext()->getConditions($this->getMetaObject()) as $cond) {
+                    foreach ($this->exface->getContext()->getScopeApplication()->getFilterContext()->getConditions($this->getMetaObject()) as $cond) {
                         if ($req->getAlias() == $cond->getExpression()->toString() && ($cond->getComparator() == EXF_COMPARATOR_EQUALS || $cond->getComparator() == EXF_COMPARATOR_IS)) {
                             $this->setColumnValues($req->getAlias(), $cond->getValue());
                         }

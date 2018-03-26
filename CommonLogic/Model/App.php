@@ -225,7 +225,7 @@ class App implements AppInterface
         
         // Load the user config if the workbench is already fully started and thus the user is known
         if ($this->getWorkbench()->isStarted()) {
-            $config->loadConfigFile($this->getWorkbench()->context()->getScopeUser()->getUserDataFolderAbsolutePath() . DIRECTORY_SEPARATOR . static::CONFIG_FOLDER_IN_USER_DATA . DIRECTORY_SEPARATOR . $this->getConfigFileName(), AppInterface::CONFIG_SCOPE_USER);
+            $config->loadConfigFile($this->getWorkbench()->getContext()->getScopeUser()->getUserDataFolderAbsolutePath() . DIRECTORY_SEPARATOR . static::CONFIG_FOLDER_IN_USER_DATA . DIRECTORY_SEPARATOR . $this->getConfigFileName(), AppInterface::CONFIG_SCOPE_USER);
         }
         
         return $config;
@@ -334,7 +334,7 @@ class App implements AppInterface
         if (is_null($scope)) {
             $scope = $this->getContextDataDefaultScope();
         }
-        return $this->getWorkbench()->context()->getScope($scope)->getContext('Data');
+        return $this->getWorkbench()->getContext()->getScope($scope)->getContext('Data');
     }
     
     /**
@@ -374,7 +374,7 @@ class App implements AppInterface
     {
         if (is_null($this->translator)) {
             $translator = new Translation($this);
-            $translator->setLocale($this->getWorkbench()->context()->getScopeSession()->getSessionLocale());
+            $translator->setLocale($this->getWorkbench()->getContext()->getScopeSession()->getSessionLocale());
             $translator->setFallbackLocales(array(
                 'en_US'
             ));

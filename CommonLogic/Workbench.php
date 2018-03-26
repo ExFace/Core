@@ -178,7 +178,7 @@ class Workbench implements WorkbenchInterface
      * 
      * @return ContextManager
      */
-    public function context()
+    public function getContext()
     {
         if (is_null($this->context)){
             throw new RuntimeException('Workbench not started: missing context manager! Did you forget Workbench->start()?');
@@ -284,7 +284,7 @@ class Workbench implements WorkbenchInterface
     public function stop()
     {
         if ($this->isStarted()) {
-            $this->context()->saveContexts();
+            $this->getContext()->saveContexts();
             $this->data()->disconnectAll();
             $this->eventManager()->dispatch(EventFactory::createBasicEvent($this, 'Stop'));
         }

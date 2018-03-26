@@ -144,7 +144,7 @@ abstract class AbstractContextScope implements ContextScopeInterface
      */
     public function getContextManager()
     {
-        return $this->getWorkbench()->context();
+        return $this->getWorkbench()->getContext();
     }
 
     /**

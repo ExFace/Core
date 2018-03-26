@@ -224,7 +224,7 @@ class ExportXLSX extends ExportDataFile
         // Benutzername
         $this->getWriter()->writeSheetRow($this->getExcelInfoSheetName(), [
             $translator->translate('ACTION.EXPORTXLSX.USERNAME'),
-            $this->getWorkbench()->context()->getScopeUser()->getUsername()
+            $this->getWorkbench()->getContext()->getScopeUser()->getUsername()
         ]);
         
         // Zeitpunkt des Exports

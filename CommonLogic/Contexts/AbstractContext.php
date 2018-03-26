@@ -86,7 +86,7 @@ abstract class AbstractContext implements ContextInterface
      */
     public function getDefaultScope()
     {
-        return $this->getWorkbench()->context()->getScopeWindow();
+        return $this->getWorkbench()->getContext()->getScopeWindow();
     }
 
     /**

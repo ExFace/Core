@@ -17,7 +17,7 @@ class FavoritesContext extends ObjectBasketContext
 {
     public function __construct(ContextSelectorInterface $selector){
         parent::__construct($selector);
-        if ($selector->getWorkbench()->context()->getScopeUser()->getUserCurrent()->isUserAnonymous()){
+        if ($selector->getWorkbench()->getContext()->getScopeUser()->getUserCurrent()->isUserAnonymous()){
             throw new ContextAccessDeniedError($this, 'The favorites context cannot be used for anonymous users!');
         }
     }
@@ -30,7 +30,7 @@ class FavoritesContext extends ObjectBasketContext
      */
     public function getDefaultScope()
     {
-        return $this->getWorkbench()->context()->getScopeUser();
+        return $this->getWorkbench()->getContext()->getScopeUser();
     }
     
     public function getScope()

@@ -24,7 +24,7 @@ class UploadContext extends AbstractContext
      */
     public function getUploadsPath()
     {
-        return $this->getWorkbench()->context()->getScopeUser()->getUserDataFolderAbsolutePath() . DIRECTORY_SEPARATOR . $this->upload_folder . DIRECTORY_SEPARATOR . $this->getScope()->getScopeId();
+        return $this->getWorkbench()->getContext()->getScopeUser()->getUserDataFolderAbsolutePath() . DIRECTORY_SEPARATOR . $this->upload_folder . DIRECTORY_SEPARATOR . $this->getScope()->getScopeId();
     }
 
     /**
@@ -99,7 +99,7 @@ class UploadContext extends AbstractContext
      */
     public function getDefaultScope()
     {
-        return $this->getWorkbench()->context()->getScopeWindow();
+        return $this->getWorkbench()->getContext()->getScopeWindow();
     }
 }
 ?>

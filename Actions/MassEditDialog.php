@@ -83,7 +83,7 @@ class MassEditDialog extends ShowDialog
                 ), $counter);
             } else {
                 $filters = array();
-                $filter_conditions = array_merge($input_data->getFilters()->getConditions(), $this->getApp()->getWorkbench()->context()->getScopeWindow()->getFilterContext()->getConditions($input_data->getMetaObject()));
+                $filter_conditions = array_merge($input_data->getFilters()->getConditions(), $this->getApp()->getWorkbench()->getContext()->getScopeWindow()->getFilterContext()->getConditions($input_data->getMetaObject()));
                 if (is_array($filter_conditions) && count($filter_conditions) > 0) {
                     foreach ($filter_conditions as $cond) {
                         $filters[$cond->getExpression()->toString()] = $cond->getExpression()->getAttribute()->getName() . ' (' . $cond->getExpression()->getAttribute()->getDataAddress() . ') ' . $cond->getComparator() . ' ' . $cond->getValue();

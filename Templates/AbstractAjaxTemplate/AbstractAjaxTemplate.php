@@ -477,7 +477,7 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
         
         try {
             $debug_widget = $exception->createWidget($page);
-            if ($page->getWorkbench()->getConfig()->getOption('DEBUG.SHOW_ERROR_DETAILS_TO_ADMINS_ONLY') && ! $page->getWorkbench()->context()->getScopeUser()->getUserCurrent()->isUserAdmin()) {
+            if ($page->getWorkbench()->getConfig()->getOption('DEBUG.SHOW_ERROR_DETAILS_TO_ADMINS_ONLY') && ! $page->getWorkbench()->getContext()->getScopeUser()->getUserCurrent()->isUserAdmin()) {
                 foreach ($debug_widget->getTabs() as $nr => $tab) {
                     if ($nr > 0) {
                         $tab->setHidden(true);

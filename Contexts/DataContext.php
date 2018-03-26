@@ -141,7 +141,7 @@ class DataContext extends AbstractContext
      */
     public function getDefaultScope()
     {
-        return $this->getWorkbench()->context()->getScopeWindow();
+        return $this->getWorkbench()->getContext()->getScopeWindow();
     }
 
     /**

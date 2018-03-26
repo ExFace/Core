@@ -39,7 +39,7 @@ class JsNumberFormatter extends AbstractJsDataTypeFormatter
         
         $precision_max = is_null($dataType->getPrecisionMax()) ? 'undefined' : $dataType->getPrecisionMax();
         $precision_min = is_null($dataType->getPrecisionMin()) ? 'undefined' : $dataType->getPrecisionMin();
-        $locale = $this->getWorkbench()->context()->getScopeSession()->getSessionLocale();
+        $locale = $this->getWorkbench()->getContext()->getScopeSession()->getSessionLocale();
         $locale = is_null($locale) ? 'undefined' : "'" . str_replace('_', '-', $locale) . "'";
         $use_grouping = $this->getThousandsSeparator() ? 'true' : 'false';
         
