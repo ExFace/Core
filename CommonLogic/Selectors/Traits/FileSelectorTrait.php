@@ -2,7 +2,6 @@
 namespace exface\Core\CommonLogic\Selectors\Traits;
 
 use exface\Core\Interfaces\Selectors\FileSelectorInterface;
-use exface\Core\CommonLogic\Filemanager;
 
 /**
  * Trait with shared logic for the FileSelectorInterface.
@@ -29,35 +28,5 @@ trait FileSelectorTrait
             $this->isFilepath = (strtolower(substr($this->toString(), (-1*strlen($ext)))) === $ext);
         }
         return $this->isFilepath;
-    }
-    
-    /**
-     *
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Selectors\FileSelectorInterface::getPathAbsolute()
-     */
-    public function getPathAbsolute()
-    {
-        return Filemanager::pathJoin([$this->getWorkbench()->filemanager()->getPathToVendorFolder(), $this->getPathRelativeToVendorFolder()]);
-    }
-    
-    /**
-     *
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Selectors\FileSelectorInterface::getFolderAbsolute()
-     */
-    public function getFolderAbsolute()
-    {
-        return pathinfo($this->getPathAbsolute(), PATHINFO_DIRNAME);
-    }
-    
-    /**
-     *
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Selectors\FileSelectorInterface::getFolderRelativeToVendorFolder()
-     */
-    public function getFolderRelativeToVendorFolder()
-    {
-        return pathinfo($this->getPathRelativeToVendorFolder(), PATHINFO_DIRNAME);
     }
 }
