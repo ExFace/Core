@@ -6,6 +6,7 @@ use exface\Core\CommonLogic\Workbench;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Formulas\FormulaInterface;
 use exface\Core\Interfaces\Model\ExpressionInterface;
+use exface\Core\Interfaces\Selectors\FormulaSelectorInterface;
 
 /**
  * Data functions are much like Excel functions.
@@ -30,6 +31,8 @@ abstract class Formula implements FormulaInterface
     private $data_type = NULL;
 
     private $exface = null;
+    
+    private $selector = null;
 
     private $current_column_name = null;
 
@@ -40,9 +43,10 @@ abstract class Formula implements FormulaInterface
      * @deprecated use FormulaFactory instead!
      * @param Workbench $workbench            
      */
-    public function __construct(Workbench $workbench)
+    public function __construct(FormulaSelectorInterface $selector)
     {
-        $this->exface = $workbench;
+        $this->exface = $selector->getWorkbench();
+        $this->selector = $selector;
     }
 
     /**
@@ -54,6 +58,16 @@ abstract class Formula implements FormulaInterface
     public function getWorkbench()
     {
         return $this->exface;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Formulas\FormulaInterface::getSelector()
+     */
+    public function getSelector() : FormulaSelectorInterface
+    {
+        return $this->selector;
     }
 
     /**

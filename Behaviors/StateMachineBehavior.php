@@ -1,7 +1,7 @@
 <?php
 namespace exface\Core\Behaviors;
 
-use exface\Core\CommonLogic\AbstractBehavior;
+use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
 use exface\Core\Events\WidgetEvent;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
@@ -12,6 +12,8 @@ use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
 use exface\Core\Exceptions\UxonMapError;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\Interfaces\Model\BehaviorInterface;
+use exface\Core\CommonLogic\Model\Behaviors\StateMachineState;
 
 /**
  * A behavior that defines states and transitions between these states for an objects.
@@ -37,9 +39,9 @@ class StateMachineBehavior extends AbstractBehavior
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\CommonLogic\AbstractBehavior::register()
+     * @see \exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior::register()
      */
-    public function register()
+    public function register() : BehaviorInterface
     {
         $this->getWorkbench()->eventManager()->addListener($this->getObject()->getAliasWithNamespace() . '.Widget.Prefill.After', array(
             $this,
@@ -50,6 +52,7 @@ class StateMachineBehavior extends AbstractBehavior
             'checkForConflictsOnUpdate'
         ));
         $this->setRegistered(true);
+        return $this;
     }
 
     /**
@@ -292,7 +295,7 @@ class StateMachineBehavior extends AbstractBehavior
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\CommonLogic\AbstractBehavior::exportUxonObject()
+     * @see \exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior::exportUxonObject()
      */
     public function exportUxonObject()
     {

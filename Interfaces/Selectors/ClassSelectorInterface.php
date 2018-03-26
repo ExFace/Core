@@ -17,11 +17,4 @@ interface ClassSelectorInterface extends SelectorInterface
      * @return boolean
      */
     public function isClassname();
-    
-    /**
-     * Returns the fully qualified class name.
-     * 
-     * @return string
-     */
-    public function getClassname();
 }

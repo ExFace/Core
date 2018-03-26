@@ -1,10 +1,8 @@
 <?php
 namespace exface\Core\Interfaces\Selectors;
 
-use exface\Core\Interfaces\AliasInterface;
-
 /**
- * Interface for app selectors.
+ * Interface for UI template selectors.
  * 
  * A template can be identified by 
  * - fully qualified alias (with vendor and app prefix)
@@ -13,5 +11,5 @@ use exface\Core\Interfaces\AliasInterface;
  * @author Andrej Kabachnik
  *
  */
-interface TemplateSelectorInterface extends AliasInterface, PrototypeSelectorInterface
+interface TemplateSelectorInterface extends AliasSelectorInterface, PrototypeSelectorInterface
 {}

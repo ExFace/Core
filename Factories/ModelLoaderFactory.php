@@ -1,22 +1,21 @@
 <?php
 namespace exface\Core\Factories;
 
-use exface\Core\Interfaces\NameResolverInterface;
 use exface\Core\Interfaces\DataSources\ModelLoaderInterface;
+use exface\Core\Interfaces\Selectors\ModelLoaderSelectorInterface;
 
-abstract class ModelLoaderFactory extends AbstractNameResolverFactory
+abstract class ModelLoaderFactory extends AbstractSelectableComponentFactory
 {
 
     /**
      * Creates a ModelLoader
      *
-     * @param NameResolverInterface $name_resolver            
+     * @param ModelLoaderSelectorInterface $name_resolver            
      * @return ModelLoaderInterface
      */
-    public static function create(NameResolverInterface $name_resolver)
+    public static function create(ModelLoaderSelectorInterface $selector) : ModelLoaderInterface
     {
-        $class = $name_resolver->getClassNameWithNamespace();
-        return new $class($name_resolver);
+        return static::createFromSelector($selector);
     }
 }
 ?>

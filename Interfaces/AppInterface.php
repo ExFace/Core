@@ -8,7 +8,7 @@ use exface\Core\Interfaces\Selectors\AppSelectorInterface;
 use exface\Core\Interfaces\Selectors\ActionSelectorInterface;
 use Psr\Container\ContainerInterface;
 use exface\Core\Interfaces\Selectors\SelectorInterface;
-use exface\Core\Exceptions\AppComponentFoundError;
+use exface\Core\Exceptions\AppComponentNotFoundError;
 
 /**
  * An app bundle code, model and all kinds of configuration needed for a meaningfull application.
@@ -45,7 +45,7 @@ interface AppInterface extends ExfaceClassInterface, AliasInterface, TaskHandler
      * @param SelectorInterface|string $selectorOrString
      * @param string $selectorClass
      * 
-     * @throws AppComponentFoundError
+     * @throws AppComponentNotFoundError
      * 
      * @return mixed
      */

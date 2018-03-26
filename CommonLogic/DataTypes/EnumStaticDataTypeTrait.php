@@ -5,6 +5,7 @@ use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
 use exface\Core\Exceptions\BadMethodCallException;
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\Exceptions\DataTypes\DataTypeConfigurationError;
+use exface\Core\Factories\SelectorFactory;
 
 trait EnumStaticDataTypeTrait {
     
@@ -81,7 +82,8 @@ trait EnumStaticDataTypeTrait {
             if (! ($arguments[0] instanceof Workbench)) {
                 throw new BadMethodCallException("Argument 1 passed to " . get_called_class() . "::" . $name . "() must implement interface \exface\Core\CommonLogic\Workbench, " . gettype($arguments[0]) . " given!");
             }
-            return new static($arguments[0], $array[$name]);
+            $selector = SelectorFactory::createDataTypeSelector($arguments[0], static::class);
+            return new static($selector, $array[$name]);
         }
         
         throw new BadMethodCallException("No static method or enum constant '$name' in class " . get_called_class());

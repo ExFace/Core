@@ -1,5 +1,5 @@
 <?php
-namespace exface\Core\Behaviors;
+namespace exface\Core\CommonLogic\Model\Behaviors;
 
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\TranslationInterface;

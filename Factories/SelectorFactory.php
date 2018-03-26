@@ -11,6 +11,12 @@ use exface\Core\CommonLogic\Selectors\TemplateSelector;
 use exface\Core\Interfaces\Selectors\TemplateSelectorInterface;
 use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
 use exface\Core\CommonLogic\Selectors\UiPageSelector;
+use exface\Core\CommonLogic\Selectors\DataConnectorSelector;
+use exface\Core\Interfaces\Selectors\DataConnectorSelectorInterface;
+use exface\Core\Interfaces\Selectors\ContextSelectorInterface;
+use exface\Core\CommonLogic\Selectors\ContextSelector;
+use exface\Core\Interfaces\Selectors\DataTypeSelectorInterface;
+use exface\Core\CommonLogic\Selectors\DataTypeSelector;
 
 /**
  * Static factory for selectors
@@ -18,7 +24,7 @@ use exface\Core\CommonLogic\Selectors\UiPageSelector;
  * @author Andrej Kabachnik
  *
  */
-abstract class SelectorFactory extends AbstractFactory
+abstract class SelectorFactory extends AbstractStaticFactory
 {
 
     /**
@@ -76,6 +82,39 @@ abstract class SelectorFactory extends AbstractFactory
     public static function createPageSelector(WorkbenchInterface $workbench, string $selectorString) : UiPageSelectorInterface
     {
         return new UiPageSelector($workbench, $selectorString);
+    }
+    
+    /**
+     *
+     * @param WorkbenchInterface $workbench
+     * @param string $selectorString
+     * @return DataConnectorSelectorInterface
+     */
+    public static function createDataConnectorSelector(WorkbenchInterface $workbench, string $selectorString) : DataConnectorSelectorInterface
+    {
+        return new DataConnectorSelector($workbench, $selectorString);
+    }
+    
+    /**
+     *
+     * @param WorkbenchInterface $workbench
+     * @param string $selectorString
+     * @return ContextSelectorInterface
+     */
+    public static function createContextSelector(WorkbenchInterface $workbench, string $selectorString) : ContextSelectorInterface
+    {
+        return new ContextSelector($workbench, $selectorString);
+    }
+    
+    /**
+     *
+     * @param WorkbenchInterface $workbench
+     * @param string $selectorString
+     * @return DataTypeSelectorInterface
+     */
+    public static function createDataTypeSelector(WorkbenchInterface $workbench, string $selectorString) : DataTypeSelectorInterface
+    {
+        return new DataTypeSelector($workbench, $selectorString);
     }
 }
 ?>

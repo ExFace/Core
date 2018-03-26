@@ -1,46 +1,39 @@
 <?php
 namespace exface\Core\Factories;
 
-use exface\Core\CommonLogic\NameResolver;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Model\BehaviorInterface;
-use exface\Core\Interfaces\NameResolverInterface;
-use exface\Core\Exceptions\Behaviors\BehaviorNotFoundError;
+use exface\Core\CommonLogic\Selectors\BehaviorSelector;
+use exface\Core\Interfaces\Selectors\BehaviorSelectorInterface;
 
-abstract class BehaviorFactory extends AbstractNameResolverFactory
+abstract class BehaviorFactory extends AbstractSelectableComponentFactory
 {
-
     /**
-     *
-     * @param NameResolverInterface $name_resolver            
+     * 
+     * @param BehaviorSelectorInterface $selector
+     * @param MetaObjectInterface $object
      * @return BehaviorInterface
      */
-    public static function create(NameResolverInterface $name_resolver, MetaObjectInterface $object = null)
+    public static function create(BehaviorSelectorInterface $selector, MetaObjectInterface $object) : BehaviorInterface
     {
-        $class = $name_resolver->getClassNameWithNamespace();
-        $instance = new $class($object);
+        $instance = static::createFromSelector($selector);
+        $instance->setObject($object);
         return $instance;
     }
 
     /**
      *
      * @param MetaObjectInterface $object            
-     * @param string $behavior_name            
+     * @param string $selectorString            
      * @param UxonObject $uxon            
      * @return BehaviorInterface
      */
-    public static function createFromUxon(MetaObjectInterface $object, $behavior_name, UxonObject $uxon)
+    public static function createFromUxon(MetaObjectInterface $object, $selectorString, UxonObject $uxon)
     {
-        $exface = $object->getWorkbench();
-        $name_resolver = NameResolver::createFromString($behavior_name, NameResolver::OBJECT_TYPE_BEHAVIOR, $exface);
-        if (! $name_resolver->classExists()) {
-            throw new BehaviorNotFoundError($object, 'Behavior "' . $behavior_name . '" of object "' . $object->getAliasWithNamespace() . '" not found!');
-        }
-        $class = $name_resolver->getClassNameWithNamespace();
-        $instance = new $class($object);
+        $selector = new BehaviorSelector($object->getWorkbench(), $selectorString);
+        $instance = static::create($selector, $object);
         $instance->importUxonObject($uxon);
-        $instance->setNameResolver($name_resolver);
         return $instance;
     }
 }

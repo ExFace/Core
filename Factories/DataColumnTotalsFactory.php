@@ -7,7 +7,7 @@ use exface\Core\Interfaces\DataSheets\DataColumnTotalInterface;
 use exface\Core\CommonLogic\DataSheets\DataColumnTotal;
 use exface\Core\Interfaces\Model\AggregatorInterface;
 
-abstract class DataColumnTotalsFactory extends AbstractFactory
+abstract class DataColumnTotalsFactory extends AbstractStaticFactory
 {
 
     /**

@@ -7,6 +7,7 @@ use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Exceptions\DataSources\DataConnectionFailedError;
 use exface\Core\Exceptions\DataSources\DataConnectionCommitFailedError;
 use exface\Core\Exceptions\DataSources\DataConnectionRollbackFailedError;
+use exface\Core\Interfaces\Selectors\DataConnectorSelectorInterface;
 
 interface DataConnectionInterface extends ExfaceClassInterface, AliasInterface, iCanBeConvertedToUxon
 {
@@ -77,5 +78,11 @@ interface DataConnectionInterface extends ExfaceClassInterface, AliasInterface, 
      * @return ModelBuilderInterface
      */
     public function getModelBuilder();
+    
+    /**
+     * 
+     * @return DataConnectorSelectorInterface
+     */
+    public function getSelector() : DataConnectorSelectorInterface;
 }
 ?>

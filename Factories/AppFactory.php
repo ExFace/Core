@@ -4,10 +4,13 @@ namespace exface\Core\Factories;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Exceptions\AppNotFoundError;
 use exface\Core\CommonLogic\Workbench;
-use exface\Core\Interfaces\Selectors\SelectorInterface;
 use exface\Core\CommonLogic\Selectors\AppSelector;
-use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\Selectors\AppSelectorInterface;
+use exface\Core\CommonLogic\Filemanager;
+use exface\Core\DataTypes\StringDataType;
+use exface\Core\Interfaces\Selectors\FileSelectorInterface;
+use exface\Core\Interfaces\Selectors\ClassSelectorInterface;
+use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 
 /**
  * Instantiates apps.
@@ -15,7 +18,7 @@ use exface\Core\Interfaces\Selectors\AppSelectorInterface;
  * @author Andrej Kabachnik
  *
  */
-abstract class AppFactory extends AbstractSelectorFactory
+abstract class AppFactory extends AbstractSelectableComponentFactory
 {
 
     /**
@@ -24,18 +27,14 @@ abstract class AppFactory extends AbstractSelectorFactory
      * @param AppSelectorInterface $selector            
      * @return AppInterface
      */
-    public static function create(SelectorInterface $selector)
+    public static function create(AppSelectorInterface $selector) : AppInterface
     {
-        if (! ($selector instanceof AppSelectorInterface)) {
-            throw new InvalidArgumentException('Cannot create App from selector "' . get_class($selector) . '": expecting "AppSelector" or derivatives!');
-        }
-        
         if ($selector->isUid()) {
             return static::createFromUid($selector->toString(), $selector->getWorkbench());
         }
         
-        $class = $selector->getClassname();
-        if (! $selector->prototypeClassExists()) {
+        $class = static::getClassname($selector);
+        if (! class_exists($class)) {
             $class = $selector->getClassnameOfDefaultPrototype();
         }
         $app = new $class($selector);
@@ -43,13 +42,13 @@ abstract class AppFactory extends AbstractSelectorFactory
     }
 
     /**
-     * Creates a new app from the given NameResolver, UID or alias.
+     * Creates a new app from the given selector.
      * 
      * @param AppSelectorInterface|string $anything
      * @param Workbench $workbench
      * @return AppInterface
      */
-    public static function createFromAnything($anything, Workbench $workbench)
+    public static function createFromAnything($anything, Workbench $workbench) : AppInterface
     {
         if ($anything instanceof AppSelectorInterface) {
             return static::create($anything);
@@ -65,7 +64,7 @@ abstract class AppFactory extends AbstractSelectorFactory
      * @param Workbench $workbench            
      * @return AppInterface
      */
-    public static function createFromAlias($alias_with_namespace, Workbench $workbench)
+    public static function createFromAlias($alias_with_namespace, Workbench $workbench) : AppInterface
     {
         $selector = new AppSelector($workbench, $alias_with_namespace);
         return static::create($selector);
@@ -78,7 +77,7 @@ abstract class AppFactory extends AbstractSelectorFactory
      * @param Workbench $exface
      * @return AppInterface
      */
-    public static function createFromUid($uid, Workbench $exface)
+    public static function createFromUid($uid, Workbench $exface) : AppInterface
     {
         $appObject = $exface->model()->getObject('exface.Core.APP');
         $appDataSheet = DataSheetFactory::createFromObject($appObject);
@@ -90,6 +89,29 @@ abstract class AppFactory extends AbstractSelectorFactory
             throw new AppNotFoundError('No class found for app "' . $uid . '"!', '6T5DXWP');
         }
         return self::createFromAlias($appDataSheet->getRow(0)['ALIAS'], $exface);
+    }
+    
+    protected static function getClassname(AppSelectorInterface $selector) : string
+    {
+        $string = $selector->toString();
+        switch (true) {
+            case $selector->isClassname():
+                return $string;
+            case $selector->isFilepath():
+                $string = Filemanager::pathNormalize($string, FileSelectorInterface::NORMALIZED_DIRECTORY_SEPARATOR);
+                $vendorFolder = Filemanager::pathNormalize($this->getWorkbench()->filemanager()->getPathToVendorFolder());
+                if (StringDataType::startsWith($string, $vendorFolder)) {
+                    $string = substr($string, strlen($vendorFolder));
+                }
+                $ext = '.' . FileSelectorInterface::PHP_FILE_EXTENSION;
+                $string = substr($string, 0, (-1*strlen($ext)));
+                $string = str_replace(FileSelectorInterface::NORMALIZED_DIRECTORY_SEPARATOR, ClassSelectorInterface::CLASS_NAMESPACE_SEPARATOR, $string);
+                return $string;
+            case $selector->isAlias():
+                $vendorAlias = $selector->getVendorAlias();
+                $appAlias = substr($string, (strlen($vendorAlias)+1));
+                return str_replace(AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER, ClassSelectorInterface::CLASS_NAMESPACE_SEPARATOR, $selector->getAppAlias()) . ClassSelectorInterface::CLASS_NAMESPACE_SEPARATOR . $appAlias . 'App';
+        }
     }
 }
 ?>

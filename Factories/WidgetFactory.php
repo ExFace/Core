@@ -11,7 +11,7 @@ use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\Exceptions\LogicException;
 
-abstract class WidgetFactory extends AbstractFactory
+abstract class WidgetFactory extends AbstractStaticFactory
 {
 
     /**

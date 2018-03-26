@@ -6,6 +6,7 @@ use exface\Core\Interfaces\ExfaceClassInterface;
 use exface\Core\Widgets\Container;
 use exface\Core\Interfaces\AliasInterface;
 use exface\Core\Interfaces\AppInterface;
+use exface\Core\Interfaces\Selectors\ContextSelectorInterface;
 
 /**
  * A context is a container for stateful data, that needs to live longer, than
@@ -188,5 +189,11 @@ interface ContextInterface extends AliasInterface, iCanBeConvertedToUxon, Exface
      * @return AppInterface
      */
     public function getApp();
+    
+    /**
+     * 
+     * @return ContextSelectorInterface
+     */
+    public function getSelector() : ContextSelectorInterface;
 }
 ?>

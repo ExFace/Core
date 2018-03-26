@@ -1,8 +1,8 @@
 <?php
 namespace exface\Core\Interfaces\Selectors;
 
-use exface\Core\CommonLogic\Workbench;
 use exface\Core\Interfaces\ExfaceClassInterface;
+use exface\Core\Interfaces\WorkbenchInterface;
 
 /**
  * Selectors are strings that uniquely identify a component of the plattform or the model.
@@ -26,14 +26,14 @@ interface SelectorInterface extends ExfaceClassInterface
      * 
      * @param string $selectorString
      */
-    public function __construct(Workbench $workbench, $selectorString);
+    public function __construct(WorkbenchInterface $workbench, string $selectorString);
     
     /**
      * Returns the original selector string
      * 
      * @return string
      */
-    public function toString();
+    public function toString() : string;
     
     /**
      * Returns a user-friendly name of the component type selected by this selector: e.g. "action" for an action selector.

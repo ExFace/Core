@@ -7,8 +7,8 @@ use exface\Core\Contexts\FilterContext;
 use exface\Core\Contexts\ActionContext;
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\Exceptions\Contexts\ContextNotFoundError;
-use exface\Core\CommonLogic\NameResolver;
 use exface\Core\Factories\ContextFactory;
+use exface\Core\Factories\SelectorFactory;
 
 abstract class AbstractContextScope implements ContextScopeInterface
 {
@@ -80,14 +80,10 @@ abstract class AbstractContextScope implements ContextScopeInterface
     {
         // If no context matching the alias exists, try to create one
         if (! $this->active_contexts[$alias]) {
-            $name_resolver = NameResolver::createFromString($alias, NameResolver::OBJECT_TYPE_CONTEXT, $this->getWorkbench());            
-            if ($name_resolver->classExists()){
-                $context = ContextFactory::createInScope($name_resolver, $this);
-                $this->loadContextData($context);
-                $this->active_contexts[$alias] = $context;
-            } else {
-                throw new ContextNotFoundError('Cannot create context "' . $alias . '": class "' . $name_resolver->getClassNameWithNamespace() . '" not found!', '6T5E24E');
-            }
+            $selector = SelectorFactory::createContextSelector($this->getWorkbench(), $alias);            
+            $context = ContextFactory::createInScope($selector, $this);
+            $this->loadContextData($context);
+            $this->active_contexts[$alias] = $context;
         }
         return $this->active_contexts[$alias];
     }

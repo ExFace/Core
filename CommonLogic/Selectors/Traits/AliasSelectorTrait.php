@@ -14,7 +14,7 @@ use exface\Core\CommonLogic\Selectors\AppSelector;
  */
 trait AliasSelectorTrait
 {
-    private $aliasParts = null;
+    private $splitParts = null;
     
     private $isAlias = null;
     
@@ -25,20 +25,11 @@ trait AliasSelectorTrait
      */
     protected static function getAppAliasFromNamespace($aliasWithNamespace)
     {
-        $parts = explode(static::getAliasNamespaceDelimiter(), $aliasWithNamespace);
+        $parts = explode(AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER, $aliasWithNamespace);
         if (count($parts) < 3) {
             return false;
         }
-        return implode(static::getAliasNamespaceDelimiter(), array_slice($parts, 0, 2));
-    }
-    
-    /**
-     * 
-     * @return string
-     */
-    protected static function getAliasNamespaceDelimiter()
-    {
-        return AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER;
+        return implode(AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER, array_slice($parts, 0, 2));
     }
     
     /**
@@ -48,37 +39,21 @@ trait AliasSelectorTrait
      * 
      * @return string[]
      */
-    protected function getAliasParts()
+    protected function split()
     {
-        if (is_null($this->aliasParts)) {
-            $parts = explode($this::getAliasNamespaceDelimiter(), $this->getAliasWithNamespace());
-            if (! $this->validateAliasParts($parts)) {
-                throw new SelectorInvalidError('"' . $this->getAliasWithNamespace() . '" is not a valid alias!');
-            }
-            $this->aliasParts = $parts;
+        if ($this->splitParts === null) {
+            $this->splitParts = explode(AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER, $this->toString());
         }
-        return $this->aliasParts;
+        return $this->splitParts;
     }
     
     /**
-     * Returns TRUE if the given array contains parts of a valid alias and FALSE otherwise
-     * 
-     * @param array $parts
-     * @return boolean
-     */
-    protected function validateAliasParts(array $parts)
-    {
-        return count($parts) < 3 ? false : true;
-    }
-    
-    /**
-     *
-     * {@inheritDoc}
+     * {@inheritdoc}
      * @see \exface\Core\Interfaces\Selectors\AliasSelectorInterface::getVendorAlias()
      */
-    public function getVendorAlias()
+    public function getVendorAlias() : string
     {
-        return $this->getAliasParts()[0];
+        return $this->split()[0];
     }
     
     /**
@@ -86,29 +61,9 @@ trait AliasSelectorTrait
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Selectors\AliasSelectorInterface::getAppAlias()
      */
-    public function getAppAlias()
+    public function getAppAlias() : string
     {
-        return implode($this::getAliasNamespaceDelimiter(), array_slice($this->getAliasParts(), 0, 2));
-    }
-    
-    /**
-     *
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Selectors\AliasSelectorInterface::getNamespace()
-     */
-    public function getNamespace()
-    {
-        return implode($this::getAliasNamespaceDelimiter(), array_slice($this->getAliasParts(), 0, -1));
-    }
-    
-    /**
-     *
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Selectors\AliasSelectorInterface::getAlias()
-     */
-    public function getAlias()
-    {
-        return array_slice($this->getAliasParts(), -1)[0];
+        return implode(AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER, array_slice($this->split(), 0, 2));
     }
     
     /**
@@ -120,7 +75,7 @@ trait AliasSelectorTrait
     {
         if (is_null($this->isAlias)) {
             try {
-                $this->getAliasParts();
+                $this->split();
                 $this->isAlias = true;
             } catch (SelectorInvalidError $e) {
                 $this->isAlias = false;
@@ -137,15 +92,5 @@ trait AliasSelectorTrait
     public function getAppSelector() : AppSelectorInterface
     {
         return new AppSelector($this->getWorkbench(), $this->getAppAlias());
-    }
-    
-    /**
-     *
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Selectors\AliasSelectorInterface::getAliasWithNamespace()
-     */
-    public function getAliasWithNamespace()
-    {
-        return $this->toString();
     }
 }

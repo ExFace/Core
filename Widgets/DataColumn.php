@@ -22,6 +22,7 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Interfaces\Widgets\iHaveValue;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\Interfaces\Widgets\iCanBeAligned;
+use exface\Core\Factories\DataTypeFactory;
 
 /**
  * The DataColumn represents a column in Data-widgets a DataTable.
@@ -496,7 +497,7 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
         if ($asc_or_desc instanceof SortingDirectionsDataType){
             // Everything OK. Just proceed
         } elseif (SortingDirectionsDataType::isValidValue(strtoupper($asc_or_desc))){
-            $asc_or_desc = new SortingDirectionsDataType($this->getWorkbench(), strtoupper($asc_or_desc));
+            $asc_or_desc = DataTypeFactory::createFromPrototype($this->getWorkbench(), SortingDirectionsDataType::class)->withValue(strtoupper($asc_or_desc));
         } else {
             throw new WidgetPropertyInvalidValueError($this, 'Invalid value "' . $asc_or_desc . '" for default sorting direction in data column: use ASC or DESC');
         }

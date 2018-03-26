@@ -3,6 +3,8 @@ namespace exface\Core\Widgets;
 
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\CommonLogic\Model\RelationPath;
+use exface\Core\CommonLogic\Model\Behaviors\StateMachineState;
+use exface\Core\Behaviors\StateMachineBehavior;
 
 /**
  * This is a special InputSelect widget for the state attribute of objects with the StateMachineBehavior.
@@ -57,7 +59,7 @@ class StateInputSelect extends InputSelect
     {
         // Check if the attribute is the state in the StateMachineBehavior of it's object
         /* @var $smb \exface\Core\Behaviors\StateMachineBehavior */
-        $smb = $this->getAttribute()->getObject()->getBehaviors()->getByAlias('exface.Core.Behaviors.StateMachineBehavior');
+        $smb = $this->getAttribute()->getObject()->getBehaviors()->getByPrototypeClass(StateMachineBehavior::class)->getFirst();
         if (! $smb || ! $this->getAttribute() || $this->getAttribute()->getAlias() != $smb->getStateAttributeAlias()) {
             $error_text = 'Cannot use the widget "' . $this->getWidgetType() . '" for attribute "' . $this->getAttributeAlias() . '" of object "' . $this->getMetaObject()->getAliasWithNamespace() . '": ';
             if (! $smb) {
@@ -80,7 +82,7 @@ class StateInputSelect extends InputSelect
 
     protected function addStateNumbers($options)
     {
-        $smb = $this->getAttribute()->getObject()->getBehaviors()->getByAlias('exface.Core.Behaviors.StateMachineBehavior');
+        $smb = $this->getAttribute()->getObject()->getBehaviors()->getByPrototypeClass(StateMachineBehavior::class)->getFirst();
         if (! $smb)
             return parent::getSelectableOptions();
         
@@ -108,7 +110,7 @@ class StateInputSelect extends InputSelect
      */
     protected function applyStateNames($options)
     {
-        if (! ($smb = $this->getAttribute()->getObject()->getBehaviors()->getByAlias('exface.Core.Behaviors.StateMachineBehavior'))) {
+        if (! ($smb = $this->getAttribute()->getObject()->getBehaviors()->getByPrototypeClass(StateMachineBehavior::class)->getFirst())) {
             return $options;
         }
         

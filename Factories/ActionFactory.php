@@ -13,8 +13,6 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Selectors\ActionSelectorInterface;
 use exface\Core\CommonLogic\Selectors\ActionSelector;
-use exface\Core\Interfaces\Selectors\SelectorInterface;
-use exface\Core\Exceptions\InvalidArgumentException;
 
 /**
  * Instantiates actions
@@ -22,7 +20,7 @@ use exface\Core\Exceptions\InvalidArgumentException;
  * @author Andrej Kabachnik
  *
  */
-abstract class ActionFactory extends AbstractSelectorFactory
+abstract class ActionFactory extends AbstractSelectableComponentFactory
 {
 
     /**
@@ -31,19 +29,16 @@ abstract class ActionFactory extends AbstractSelectorFactory
      * @param ActionSelectorInterface $selector            
      * @return ActionInterface
      */
-    public static function create(SelectorInterface $selector, WidgetInterface $trigger_widget = null, UxonObject $uxon = null)
+    public static function create(ActionSelectorInterface $selector, WidgetInterface $trigger_widget = null, UxonObject $uxon = null) : ActionInterface
     {
-        if (! ($selector instanceof ActionSelectorInterface)) {
-            throw new InvalidArgumentException('Cannot create action from ' . gettype($selector) . ': expecting ActionSelector or derivatives!');
-        }
-        
         $app = $selector->getWorkbench()->getApp($selector->getAppSelector());
         if ($app->has($selector)) {
             $action = static::createEmpty($selector, $app, $trigger_widget);
         } else {
-            $action = $selector->getWorkbench()->model()->getModelLoader()->loadAction($app, $selector->getAlias(), $trigger_widget);
+            $actionAlias = substr($selector->toString(), (strlen($selector->getAppAlias())+1));
+            $action = $selector->getWorkbench()->model()->getModelLoader()->loadAction($app, $actionAlias, $trigger_widget);
             if (! $action) {
-                throw new ActionNotFoundError('Cannot find action "' . $selector->getAliasWithNamespace() . '"!');
+                throw new ActionNotFoundError('Cannot find action "' . $selector->toString() . '" in app "' . $selector->getAppAlias() . '"!');
             }
         }
         if ($uxon instanceof UxonObject) {
@@ -60,7 +55,7 @@ abstract class ActionFactory extends AbstractSelectorFactory
      * @throws UnexpectedValueException
      * @return ActionInterface
      */
-    public static function createFromUxon(Workbench $workbench, UxonObject $uxon, WidgetInterface $trigger_widget = null)
+    public static function createFromUxon(Workbench $workbench, UxonObject $uxon, WidgetInterface $trigger_widget = null) : ActionInterface
     {
         if ($action_alias = $uxon->getProperty('alias')) {
             $uxon->unsetProperty('alias');
@@ -79,7 +74,7 @@ abstract class ActionFactory extends AbstractSelectorFactory
      * @param UxonParserError $trigger_widget            
      * @return ActionInterface
      */
-    public static function createFromString(Workbench $workbench, $qualified_alias_or_class_or_file, AbstractWidget $trigger_widget = null)
+    public static function createFromString(Workbench $workbench, $qualified_alias_or_class_or_file, AbstractWidget $trigger_widget = null) : ActionInterface
     {
         $selector = new ActionSelector($workbench, $qualified_alias_or_class_or_file);
         return static::create($selector, $trigger_widget);
@@ -92,12 +87,8 @@ abstract class ActionFactory extends AbstractSelectorFactory
      * @throws ActionNotFoundError if the class name cannot be resolved
      * @return ActionInterface
      */
-    public static function createEmpty(ActionSelectorInterface $selector, AppInterface $app = null, WidgetInterface $trigger_widget = null)
+    public static function createEmpty(ActionSelectorInterface $selector, AppInterface $app = null, WidgetInterface $trigger_widget = null) : ActionInterface
     {
-        if (! ($selector instanceof ActionSelectorInterface)) {
-            throw new InvalidArgumentException('Cannot create action from ' . gettype($selector) . ': expecting ActionSelector or derivatives!');
-        }
-        
         $app = $app ? $app : $selector->getWorkbench()->getApp($selector->getAppSelector());
         return $app->getAction($selector, $trigger_widget);
     }
@@ -112,7 +103,7 @@ abstract class ActionFactory extends AbstractSelectorFactory
      * @throws ActionNotFoundError if the class name of the base action cannot be resolved
      * @return \exface\Core\Interfaces\Actions\ActionInterface
      */
-    public static function createFromModel($prototype_alias, $action_alias, AppInterface $app, MetaObjectInterface $object, UxonObject $uxon_description = null, WidgetInterface $trigger_widget = null)
+    public static function createFromModel($prototype_alias, $action_alias, AppInterface $app, MetaObjectInterface $object, UxonObject $uxon_description = null, WidgetInterface $trigger_widget = null) : ActionInterface
     {
         $selector = new ActionSelector($app->getWorkbench(), $prototype_alias);
         $action = static::createEmpty($selector, $app, $trigger_widget);

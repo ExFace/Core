@@ -1,23 +1,26 @@
 <?php
 namespace exface\Core\Factories;
 
-use exface\Core\Interfaces\NameResolverInterface;
 use exface\Core\Interfaces\CmsConnectorInterface;
+use exface\Core\Interfaces\Selectors\CmsConnectorSelectorInterface;
 
-abstract class CmsConnectorFactory extends AbstractNameResolverFactory
+/**
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
+abstract class CmsConnectorFactory extends AbstractSelectableComponentFactory
 {
 
     /**
      * Creates a new CMS connector
      *
-     * @param NameResolverInterface $name_resolver            
+     * @param CmsConnectorSelectorInterface $name_resolver            
      * @return CmsConnectorInterface
      */
-    public static function create(NameResolverInterface $name_resolver)
+    public static function create(CmsConnectorSelectorInterface $selector) : CmsConnectorInterface
     {
-        $class = $name_resolver->getClassNameWithNamespace();
-        $exface = $name_resolver->getWorkbench();
-        return new $class($exface);
+        return static::createFromSelector($selector);
     }
 }
 ?>

@@ -2,7 +2,6 @@
 namespace exface\Core\CommonLogic\Selectors\Traits;
 
 use exface\Core\Interfaces\Selectors\ClassSelectorInterface;
-use exface\Core\Interfaces\Selectors\FileSelectorInterface;
 
 /**
  * Trait with shared logic for the ClassSelectorInterface
@@ -15,20 +14,17 @@ trait ClassSelectorTrait
     private $isClassname = null;
     
     /**
-     *
      * {@inheritDoc}
+     * 
+     * A class path must contain at least one "\" and no "." (to make sure it is not a file path)
+     * 
      * @see \exface\Core\Interfaces\Selectors\ClassSelectorInterface::isClassname()
      */
     public function isClassname()
     {
-        if (is_null($this->isClassname)) {
-            // It's a classname if it starts with a \ and is not a filename (the latter only applies if
-            // the selector can be a file name, of course)
-            if (substr($this->toString(), 0, 1) === ClassSelectorInterface::CLASS_NAMESPACE_SEPARATOR) {
-                $this->isClassname = $this instanceof FileSelectorInterface ? (! $this->isFilepath()) : true;
-            } else {
-                $this->isClassname = false;
-            }
+        if ($this->isClassname === null) {
+            $string = $this->toString();
+            $this->isClassname = (strpos($string, '\\') !== false && strpos($string, '.') === false);
         }
         return $this->isClassname;
     }

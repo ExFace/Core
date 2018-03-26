@@ -2,7 +2,7 @@
 namespace exface\Core\CommonLogic\Selectors;
 
 use exface\Core\Interfaces\Selectors\SelectorInterface;
-use exface\Core\CommonLogic\Workbench;
+use exface\Core\Interfaces\WorkbenchInterface;
 
 /**
  * Base class for all kinds of selectors
@@ -16,7 +16,7 @@ abstract class AbstractSelector implements SelectorInterface
     
     private $workbench = null;
     
-    public function __construct(Workbench $workbench, $selectorString)
+    public function __construct(WorkbenchInterface $workbench, string $selectorString)
     {
         $this->selectorString = $selectorString;
         $this->workbench = $workbench;
@@ -37,7 +37,7 @@ abstract class AbstractSelector implements SelectorInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Selectors\SelectorInterface::toString()
      */
-    public function toString()
+    public function toString() : string
     {
         return $this->selectorString;
     }

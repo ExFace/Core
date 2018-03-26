@@ -29,7 +29,7 @@ use exface\Core\CommonLogic\Tasks\ResultEmpty;
  * @author Andrej Kabachnik
  *
  */
-class ResultFactory extends AbstractFactory
+class ResultFactory extends AbstractStaticFactory
 {
     /**
      * 

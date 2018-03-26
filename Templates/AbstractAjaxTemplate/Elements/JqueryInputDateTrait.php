@@ -5,6 +5,7 @@ use exface\Core\DataTypes\DateDataType;
 use exface\Core\Templates\AbstractAjaxTemplate\Formatters\JsDateFormatter;
 use exface\Core\Widgets\InputDate;
 use exface\Core\Widgets\InputDateTime;
+use exface\Core\Factories\DataTypeFactory;
 
 /**
  *
@@ -38,7 +39,7 @@ trait JqueryInputDateTrait {
             $widget = $this->getWidget();
             $type = $widget->getValueDataType();
             if (! $type instanceof DateDataType) {
-                $type = new DateDataType($this->getWorkbench());
+                $type = DataTypeFactory::createFromPrototype($this->getWorkbench(), DateDataType::class);
             }
             /* @var $formatter \exface\Core\Templates\AbstractAjaxTemplate\Formatters\JsDateFormatter */
             $this->formatter = $this->getTemplate()->getDataTypeFormatter($type);

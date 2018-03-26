@@ -5,7 +5,7 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 
-abstract class RelationPathFactory extends AbstractFactory
+abstract class RelationPathFactory extends AbstractStaticFactory
 {
 
     /**

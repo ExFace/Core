@@ -1,8 +1,6 @@
 <?php
 namespace exface\Core\Interfaces\Selectors;
 
-use exface\Core\Interfaces\AliasInterface;
-
 /**
  * Interface for action selectors.
  * 
@@ -14,7 +12,7 @@ use exface\Core\Interfaces\AliasInterface;
  * @author Andrej Kabachnik
  *
  */
-interface ActionSelectorInterface extends AliasInterface, PrototypeSelectorInterface
+interface ActionSelectorInterface extends AliasSelectorInterface, PrototypeSelectorInterface
 {
     
 }

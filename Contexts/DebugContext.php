@@ -15,10 +15,10 @@ use exface\Core\Events\ActionEvent;
 use exface\Core\Actions\ShowContextPopup;
 use exface\Core\Actions\ContextApi;
 use exface\Core\CommonLogic\Log\Handlers\BufferingHandler;
-use exface\Core\Interfaces\NameResolverInterface;
 use exface\Core\Exceptions\Contexts\ContextAccessDeniedError;
 use exface\Core\CommonLogic\Profiler;
 use exface\Core\Interfaces\Contexts\ContextInterface;
+use exface\Core\Interfaces\Selectors\ContextSelectorInterface;
 
 /**
  * This context offers usefull debugging tools right in the GUI.
@@ -42,14 +42,14 @@ class DebugContext extends AbstractContext
     
     private $profiler = null;
     
-    public function __construct(NameResolverInterface $name_resolver){
-        parent::__construct($name_resolver);
+    public function __construct(ContextSelectorInterface $selector){
+        parent::__construct($selector);
         
-        if ($name_resolver->getWorkbench()->context()->getScopeUser()->getUserCurrent()->isUserAnonymous()){
+        if ($selector->getWorkbench()->context()->getScopeUser()->getUserCurrent()->isUserAnonymous()){
             throw new ContextAccessDeniedError($this, 'The debug context cannot be used for anonymous users!');
         }
         
-        $this->profiler = new Profiler($name_resolver->getWorkbench());
+        $this->profiler = new Profiler($selector->getWorkbench());
     }
     
     /**

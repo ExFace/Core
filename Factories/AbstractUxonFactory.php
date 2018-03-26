@@ -6,7 +6,7 @@ use exface\Core\CommonLogic\Workbench;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Exceptions\UnexpectedValueException;
 
-abstract class AbstractUxonFactory extends AbstractFactory
+abstract class AbstractUxonFactory extends AbstractStaticFactory
 {
 
     /**

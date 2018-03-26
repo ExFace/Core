@@ -8,10 +8,13 @@ use exface\Core\Exceptions\UiPage\UiPageNotFoundError;
 use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
 use exface\Core\Factories\SelectorFactory;
 use exface\Core\Interfaces\WorkbenchInterface;
+use exface\Core\Interfaces\Selectors\CmsConnectorSelectorInterface;
 
 abstract class AbstractCmsConnector implements CmsConnectorInterface
 {
     private $workbench = null;
+    
+    private $selector = null;
     
     /**
      * Page cache [ cmsId => UiPage ]
@@ -31,9 +34,10 @@ abstract class AbstractCmsConnector implements CmsConnectorInterface
      * 
      * @param WorkbenchInterface $workbench
      */
-    public function __construct(WorkbenchInterface $workbench)
+    public function __construct(CmsConnectorSelectorInterface $selector)
     {
-        $this->workbench = $workbench;
+        $this->workbench = $selector->getWorkbench();
+        $this->selector = $selector;
     }
     
     /**

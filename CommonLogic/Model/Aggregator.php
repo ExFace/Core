@@ -9,6 +9,8 @@ use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\DataTypes\IntegerDataType;
 use exface\Core\DataTypes\NumberDataType;
 use exface\Core\Factories\DataTypeFactory;
+use exface\Core\Interfaces\Selectors\DataTypeSelectorInterface;
+use exface\Core\Factories\SelectorFactory;
 
 /**
  * Aggregators are special expressions to define data aggregation like SUM, AVG, but also COUNT_IF(condition).
@@ -68,13 +70,22 @@ class Aggregator implements AggregatorInterface {
     public function importString($aggregator_string)
     {
         if ($args_pos = strpos($aggregator_string, '(')) {
-            $this->function = new AggregatorFunctionsDataType($this->getWorkbench(), strtoupper(substr($aggregator_string, 0, $args_pos)));
+            $this->function = new AggregatorFunctionsDataType($this->getDataTypeSelector(), strtoupper(substr($aggregator_string, 0, $args_pos)));
             $this->arguments = explode(',', substr($aggregator_string, ($args_pos + 1), - 1));
             $this->arguments = array_map('trim', $this->arguments);
         } else {
-            $this->function = new AggregatorFunctionsDataType($this->getWorkbench(), $aggregator_string);
+            $this->function = new AggregatorFunctionsDataType($this->getDataTypeSelector(), $aggregator_string);
         }
         return $this;
+    }
+    
+    /**
+     * 
+     * @return DataTypeSelectorInterface
+     */
+    protected function getDataTypeSelector() : DataTypeSelectorInterface
+    {
+        return SelectorFactory::createDataTypeSelector($this->getWorkbench(), static::class);
     }
     
     public function __toString()
@@ -92,7 +103,7 @@ class Aggregator implements AggregatorInterface {
         switch ($this->getFunction()->__toString()) {
             case AggregatorFunctionsDataType::SUM:
                 if ($aggregatedType instanceof BooleanDataType) {
-                    $type = new IntegerDataType($this->getWorkbench());
+                    $type = DataTypeFactory::createFromPrototype($this->getWorkbench(), IntegerDataType::class);
                 } else {
                     $type = $aggregatedType->copy();
                 }
@@ -108,13 +119,13 @@ class Aggregator implements AggregatorInterface {
                         $type->setPrecisionMax(1);
                     }
                 } else {
-                    $type = new NumberDataType($this->getWorkbench());
+                    $type = DataTypeFactory::createFromPrototype($this->getWorkbench(), NumberDataType::class);
                 }
                 break;
             case AggregatorFunctionsDataType::COUNT:
             case AggregatorFunctionsDataType::COUNT_DISTINCT:
             case AggregatorFunctionsDataType::COUNT_IF:
-                $type = new IntegerDataType($this->getWorkbench());
+                $type = DataTypeFactory::createFromPrototype($this->getWorkbench(), IntegerDataType::class);
                 break;
             case AggregatorFunctionsDataType::MIN:
             case AggregatorFunctionsDataType::MAX:

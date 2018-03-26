@@ -15,18 +15,7 @@ use exface\Core\Exceptions\Selectors\SelectorTypeInvalidError;
 class MetaObjectSelector extends AbstractSelector implements MetaObjectSelectorInterface
 {
     use AliasSelectorTrait;
-    use UidSelectorTrait;
-    
-    public function getAliasWithNamespace()
-    {
-        switch (true) {
-            case $this->isAlias() :
-                return $this->toString();
-            case $this->isUid() :
-            default :
-                throw new SelectorTypeInvalidError('Cannot convert "' . $this->toString() . '" into meta object alias!');
-        }
-    }   
+    use UidSelectorTrait;  
     
     /**
      * 

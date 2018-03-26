@@ -21,8 +21,6 @@ use exface\Core\Factories\ActionFactory;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\CommonLogic\AppInstallers\SqlSchemaInstaller;
-use exface\Core\CommonLogic\NameResolver;
-use exface\Core\Interfaces\Model\ModelInterface;
 use exface\Core\CommonLogic\Model\Object;
 use exface\Core\CommonLogic\Model\Attribute;
 use exface\Core\CommonLogic\Model\Relation;
@@ -31,28 +29,39 @@ use exface\Core\Exceptions\DataTypes\DataTypeNotFoundError;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Exceptions\RuntimeException;
-use exface\Core\Interfaces\NameResolverInterface;
 use exface\Core\CommonLogic\Selectors\AppSelector;
+use exface\Core\Interfaces\Selectors\DataTypeSelectorInterface;
+use exface\Core\Interfaces\Selectors\ModelLoaderSelectorInterface;
+use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
+use exface\Core\Interfaces\Model\ModelInterface;
 
 class SqlModelLoader implements ModelLoaderInterface
 {
-
     private $data_connection = null;
     
     private $data_types_by_uid = [];
     
     private $data_type_uids = [];
     
-    private $nameResolver = null;
+    private $selector = null;
     
-    public function __construct(NameResolverInterface $nameResolver)
+    /**
+     * 
+     * @param ModelLoaderSelectorInterface $selector
+     */
+    public function __construct(ModelLoaderSelectorInterface $selector)
     {
-        $this->nameResolver = $nameResolver;
+        $this->selector = $selector;
     }
     
-    public function getNameResolver()
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSources\ModelLoaderInterface::getSelector()
+     */
+    public function getSelector() : ModelLoaderSelectorInterface
     {
-        return $this->nameResolver;
+        return $this->selector;
     }
     
     /**
@@ -575,15 +584,16 @@ class SqlModelLoader implements ModelLoaderInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSources\ModelLoaderInterface::loadDataType()
      */
-    public function loadDataType($uid_or_alias){
-        $cache = $this->getDataTypeCache($uid_or_alias);
+    public function loadDataType(DataTypeSelectorInterface $selector) : DataTypeInterface
+    {
+        $cache = $this->getDataTypeCache($selector);
         if (empty($cache)){
-            $this->cacheDataType($uid_or_alias);
-            $cache = $this->getDataTypeCache($uid_or_alias);
+            $this->cacheDataType($selector);
+            $cache = $this->getDataTypeCache($selector);
         }
         
         if (empty($cache)) {
-            throw new DataTypeNotFoundError('No data type "' . $uid_or_alias . '" found!');
+            throw new DataTypeNotFoundError('No data type "' . $selector . '" found!');
         }
         
         if ($cache instanceof DataTypeInterface) {
@@ -599,21 +609,21 @@ class SqlModelLoader implements ModelLoaderInterface
         }
     }
     
-    protected function getDataTypeCache($uid_or_alias)
+    protected function getDataTypeCache(DataTypeSelectorInterface $selector)
     {
-        if ($this->isUid($uid_or_alias)){
-            return $this->data_types_by_uid[$uid_or_alias];
+        if ($selector->isUid()){
+            return $this->data_types_by_uid[$selector->toString()];
         } else {
-            return $this->data_types_by_uid[$this->data_type_uids[$uid_or_alias]];
+            return $this->data_types_by_uid[$this->data_type_uids[$selector->toString()]];
         }
     }
     
-    protected function cacheDataType($uid_or_alias){
-        if ($this->isUid($uid_or_alias)){
-            $where = 'dt.app_oid = (SELECT fd.app_oid FROM exf_data_type fd WHERE fd.oid = ' . $uid_or_alias . ')';
+    protected function cacheDataType(DataTypeSelectorInterface $selector)
+    {
+        if ($selector->isUid()){
+            $where = 'dt.app_oid = (SELECT fd.app_oid FROM exf_data_type fd WHERE fd.oid = ' . $selector->toString() . ')';
         } else {
-            $name_resolver = NameResolver::createFromString($uid_or_alias, NameResolver::OBJECT_TYPE_DATATYPE, $this->getWorkbench());
-            $where = "dt.app_oid = (SELECT fa.oid FROM exf_app fa WHERE fa.app_alias = '" . $name_resolver->getNamespace() . "')";
+            $where = "dt.app_oid = (SELECT fa.oid FROM exf_app fa WHERE fa.app_alias = '" . $selector->getAppAlias() . "')";
         }
         $query = $this->getDataConnection()->runSql('
 				SELECT
@@ -633,7 +643,7 @@ class SqlModelLoader implements ModelLoaderInterface
     
     protected function getFullAlias($app_alias, $instance_alias)
     {
-        return $app_alias . NameResolver::NAMESPACE_SEPARATOR . $instance_alias;
+        return $app_alias . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER . $instance_alias;
     }
     
     protected function isUid($string)
@@ -643,12 +653,12 @@ class SqlModelLoader implements ModelLoaderInterface
     
     protected function getModel()
     {
-        return $this->getNameResolver()->getWorkbench()->model();
+        return $this->getWorkbench()->model();
     }
     
     public function getWorkbench()
     {
-        return $this->getNameResolver()->getWorkbench();
+        return $this->selector->getWorkbench();
     }
 }
 

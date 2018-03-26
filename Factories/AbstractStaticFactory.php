@@ -1,7 +1,7 @@
 <?php
 namespace exface\Core\Factories;
 
-abstract class AbstractFactory
+abstract class AbstractStaticFactory
 {
 
     /**

@@ -1,29 +1,23 @@
 <?php
 namespace exface\Core\Factories;
 
-use exface\Core\Interfaces\NameResolverInterface;
 use exface\Core\Interfaces\Templates\TemplateInterface;
-use exface\Core\Interfaces\Selectors\SelectorInterface;
 use exface\Core\Interfaces\Selectors\TemplateSelectorInterface;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\CommonLogic\Selectors\TemplateSelector;
 
-abstract class TemplateFactory extends AbstractSelectorFactory
+abstract class TemplateFactory extends AbstractSelectableComponentFactory
 {
 
     /**
      *
-     * @param NameResolverInterface $name_resolver            
+     * @param TemplateSelectorInterface $name_resolver            
      * @return TemplateInterface
      */
-    public static function create(SelectorInterface $selector)
+    public static function create(TemplateSelectorInterface $selector) : TemplateInterface
     {
-        if (! ($selector instanceof TemplateSelectorInterface)) {
-            throw new InvalidArgumentException('Cannot create template from selector "' . get_class($selector) . '": expecting "TemplateSelector" or derivatives!');
-        }
-        
-        return $selector->getWorkbench()->getApp($selector->getAppSelector())->get($selector);
+        return parent::createFromSelector($selector);
     }
 
     /**
@@ -32,7 +26,7 @@ abstract class TemplateFactory extends AbstractSelectorFactory
      * @param WorkbenchInterface $exface            
      * @return TemplateInterface
      */
-    public static function createFromString($aliasOrPathOrClassname, WorkbenchInterface $exface)
+    public static function createFromString($aliasOrPathOrClassname, WorkbenchInterface $exface) : TemplateInterface
     {
         $selector = new TemplateSelector($exface, $aliasOrPathOrClassname);
         return static::create($selector);
@@ -40,11 +34,11 @@ abstract class TemplateFactory extends AbstractSelectorFactory
 
     /**
      *
-     * @param string|NameResolverInterface|TemplateInterface $selectorOrString            
+     * @param string|TemplateSelectorInterface|TemplateInterface $selectorOrString            
      * @param WorkbenchInterface $exface            
      * @return \exface\Core\Interfaces\Templates\TemplateInterface
      */
-    public static function createFromAnything($selectorOrString, WorkbenchInterface $exface)
+    public static function createFromAnything($selectorOrString, WorkbenchInterface $exface) : TemplateInterface
     {
         if ($selectorOrString instanceof TemplateInterface) {
             $template = $selectorOrString;

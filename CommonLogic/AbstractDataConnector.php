@@ -2,35 +2,44 @@
 namespace exface\Core\CommonLogic;
 
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
-use exface\Core\Interfaces\NameResolverInterface;
 use exface\Core\Factories\EventFactory;
 use exface\Core\Interfaces\DataSources\DataQueryInterface;
 use exface\Core\Exceptions\DataSources\DataConnectionConfigurationError;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\Exceptions\UxonMapError;
 use exface\Core\Exceptions\ModelBuilders\ModelBuilderNotAvailableError;
+use exface\Core\Interfaces\Selectors\DataConnectorSelectorInterface;
+use exface\Core\CommonLogic\Traits\AliasTrait;
 
 abstract class AbstractDataConnector implements DataConnectionInterface
 {
-    
     use ImportUxonObjectTrait {
 		importUxonObject as importUxonObjectDefault;
 	}
+	use AliasTrait;
 
     private $config_array = array();
 
     private $exface = null;
+    
+    private $selector = null;
 
     /**
      *
      * @deprecated Use DataConnectorFactory instead!
      */
-    function __construct(Workbench $exface, UxonObject $config = null)
+    public function __construct(DataConnectorSelectorInterface $selector, UxonObject $config = null)
     {
-        $this->exface = $exface;
-        if ($config) {
+        $this->exface = $selector->getWorkbench();
+        $this->selector = $selector;
+        if ($config !== null) {
             $this->importUxonObject($config);
         }
+    }
+    
+    public function getSelector() : DataConnectorSelectorInterface
+    {
+        return $this->selector;
     }
 
     /**
@@ -58,52 +67,6 @@ abstract class AbstractDataConnector implements DataConnectionInterface
             throw new DataConnectionConfigurationError($this, 'Invalid data connection configuration: ' . $e->getMessage(), '6T4F41P', $e);
         }
         return;
-    }
-
-    /**
-     *
-     * @return NameResolverInterface
-     */
-    public function getNameResolver()
-    {
-        return $this->name_resolver;
-    }
-
-    /**
-     *
-     * @param NameResolverInterface $value            
-     */
-    public function setNameResolver(NameResolverInterface $value)
-    {
-        $this->name_resolver = $value;
-        return $this;
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\DataSources\DataConnectionInterface::getAlias()
-     */
-    public function getAlias()
-    {
-        return $this->getNameResolver()->getAlias();
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\DataSources\DataConnectionInterface::getAliasWithNamespace()
-     */
-    public function getAliasWithNamespace()
-    {
-        return $this->getNameResolver()->getAliasWithNamespace();
-    }
-
-    public function getNamespace()
-    {
-        return $this->getNameResolver()->getNamespace();
     }
 
     /**
