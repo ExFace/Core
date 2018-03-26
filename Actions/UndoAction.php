@@ -63,7 +63,7 @@ class UndoAction extends AbstractAction implements iUndoActions
     protected function getActionsToUndo(TaskInterface $task)
     {
         $data_sheet = $this->getInputDataSheet($task);
-        return $this->getApp()->getWorkbench()->context()->getScopeWindow()->getActionContext()->getActionHistory($data_sheet && $data_sheet->countRows() ? $data_sheet->countRows() : 1);
+        return $this->getApp()->getWorkbench()->getContext()->getScopeWindow()->getActionContext()->getActionHistory($data_sheet && $data_sheet->countRows() ? $data_sheet->countRows() : 1);
     }
 }
 ?>

@@ -223,7 +223,7 @@ abstract class AbstractJqueryElement implements ExfaceClassInterface
     public function getAjaxHeaders() : array
     {
         $headers = [];
-        $subrequest_id = $this->getTemplate()->getWorkbench()->context()->getScopeRequest()->getSubrequestId();
+        $subrequest_id = $this->getTemplate()->getWorkbench()->getContext()->getScopeRequest()->getSubrequestId();
         if ($subrequest_id) {
             $headers['Subrequest-ID'] = $subrequest_id;
         }
@@ -342,7 +342,7 @@ abstract class AbstractJqueryElement implements ExfaceClassInterface
     public function getId()
     {
         if (is_null($this->id)) {
-            $subrequest = $this->getTemplate()->getWorkbench()->context()->getScopeRequest()->getSubrequestId();
+            $subrequest = $this->getTemplate()->getWorkbench()->getContext()->getScopeRequest()->getSubrequestId();
             $this->id = $this->cleanId($this->getWidget()->getId()) . ($subrequest ? '_' . $subrequest : '');
         }
         return $this->id;

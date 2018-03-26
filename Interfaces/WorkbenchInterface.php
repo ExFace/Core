@@ -38,7 +38,7 @@ interface WorkbenchInterface extends TaskHandlerInterface
      *
      * @return ContextManagerInterface
      */
-    public function context();
+    public function getContext();
     
     /**
      *

@@ -103,7 +103,7 @@ class ActionContext extends AbstractContext
      */
     public function getDefaultScope()
     {
-        return $this->getWorkbench()->context()->getScopeSession();
+        return $this->getWorkbench()->getContext()->getScopeSession();
     }
 
     /**

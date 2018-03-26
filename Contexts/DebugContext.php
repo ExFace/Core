@@ -45,7 +45,7 @@ class DebugContext extends AbstractContext
     public function __construct(ContextSelectorInterface $selector){
         parent::__construct($selector);
         
-        if ($selector->getWorkbench()->context()->getScopeUser()->getUserCurrent()->isUserAnonymous()){
+        if ($selector->getWorkbench()->getContext()->getScopeUser()->getUserCurrent()->isUserAnonymous()){
             throw new ContextAccessDeniedError($this, 'The debug context cannot be used for anonymous users!');
         }
         
@@ -146,7 +146,7 @@ class DebugContext extends AbstractContext
      */
     public function getDefaultScope()
     {
-        return $this->getWorkbench()->context()->getScopeWindow();
+        return $this->getWorkbench()->getContext()->getScopeWindow();
     }
     
     /**

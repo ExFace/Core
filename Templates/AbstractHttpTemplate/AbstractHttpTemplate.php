@@ -73,7 +73,7 @@ abstract class AbstractHttpTemplate extends AbstractTemplate implements HttpTemp
     {
         return [
             new RequestIdNegotiator(), // make sure, there is a X-Request-ID header
-            new RequestContextReader($this->getWorkbench()->context()) // Pass request data to the request context
+            new RequestContextReader($this->getWorkbench()->getContext()) // Pass request data to the request context
         ];
     }
     

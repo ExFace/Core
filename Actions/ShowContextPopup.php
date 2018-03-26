@@ -60,7 +60,7 @@ class ShowContextPopup extends ShowPopup
      */
     public function getContextScope(TaskInterface $task = null) : ContextScopeInterface
     {
-        return $this->getWorkbench()->context()->getScope($this->context_scope_name);
+        return $this->getWorkbench()->getContext()->getScope($this->context_scope_name);
     }
     
     /**

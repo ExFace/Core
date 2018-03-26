@@ -26,7 +26,7 @@ class UpdateData extends SaveData implements iUpdateData, iCanBeUndone
         
         // Add filters from context if applicable
         if ($this->getUseContextFilters() || ! $data_sheet->getUidColumn()) {
-            $conditions = $this->getWorkbench()->context()->getScopeWindow()->getFilterContext()->getConditions($data_sheet->getMetaObject());
+            $conditions = $this->getWorkbench()->getContext()->getScopeWindow()->getFilterContext()->getConditions($data_sheet->getMetaObject());
             if (is_array($conditions) || ! empty($conditions)) {
                 foreach ($conditions as $condition) {
                     $data_sheet->getFilters()->addCondition($condition);

@@ -71,7 +71,7 @@ trait ContextActionTrait
     public function setContextScope($scope_or_string_name)
     {
         if (is_string($scope_or_string_name)){
-            $this->context_scope = $this->getWorkbench()->context()->getScope($scope_or_string_name);
+            $this->context_scope = $this->getWorkbench()->getContext()->getScope($scope_or_string_name);
         } elseif ($scope_or_string_name instanceof ContextScopeInterface){
             $this->context_scope = $scope_or_string_name;
         } else {
