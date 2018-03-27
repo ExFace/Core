@@ -5,6 +5,7 @@ use exface\Core\Interfaces\iCanBeCopied;
 use exface\Core\Interfaces\ExfaceClassInterface;
 use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\Interfaces\WidgetInterface;
 
 /**
  *
@@ -122,6 +123,6 @@ interface ExpressionInterface extends ExfaceClassInterface, iCanBeCopied
     /**
      * @return WidgetLinkInterface
      */
-    public function getWidgetLink();
+    public function getWidgetLink(WidgetInterface $sourceWidget) : WidgetLinkInterface;
 }
 

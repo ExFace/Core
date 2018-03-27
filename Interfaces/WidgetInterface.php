@@ -305,13 +305,6 @@ interface WidgetInterface extends ExfaceClassInterface, iCanBeCopied
     public function setParent(WidgetInterface $widget);
 
     /**
-     * Returns the UI manager
-     *
-     * @return \exface\Core\ui
-     */
-    public function getUi();
-
-    /**
      *
      * @return string
      */
@@ -425,13 +418,6 @@ interface WidgetInterface extends ExfaceClassInterface, iCanBeCopied
      * @param string $value            
      */
     public function setDataConnectionAlias($value);
-
-    /**
-     * Creates a link to this widget and returns the corresponding model object
-     *
-     * @return WidgetLink
-     */
-    public function createWidgetLink();
 
     /**
      *

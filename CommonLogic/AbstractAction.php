@@ -59,7 +59,7 @@ abstract class AbstractAction implements ActionInterface
     private $app = null;
 
     /** @var WidgetInterface widget, that called this action */
-    private $trigger_widget = null;
+    private $widget_defined_in = null;
 
     private $result_message_text = null;
 
@@ -246,7 +246,7 @@ abstract class AbstractAction implements ActionInterface
      */
     public function getWidgetDefinedIn() : WidgetInterface
     {
-        return $this->trigger_widget;
+        return $this->widget_defined_in;
     }
 
     /**
@@ -254,16 +254,9 @@ abstract class AbstractAction implements ActionInterface
      * {@inheritdoc}
      * @see \exface\Core\Interfaces\Actions\ActionInterface::setWidgetDefinedIn()
      */
-    public function setWidgetDefinedIn($widget_or_widget_link)
+    public function setWidgetDefinedIn(WidgetInterface $widget) : ActionInterface
     {
-        if ($widget_or_widget_link instanceof WidgetInterface) {
-            $this->trigger_widget = $widget_or_widget_link;
-        } elseif ($widget_or_widget_link instanceof WidgetLink) {
-            $this->trigger_widget = $widget_or_widget_link->getWidget();
-        } else {
-            $link = WidgetLinkFactory::createFromAnything($this->exface, $widget_or_widget_link);
-            $this->trigger_widget = $link->getWidget();
-        }
+        $this->widget_defined_in = $widget;
         return $this;
     }
 
@@ -565,7 +558,7 @@ abstract class AbstractAction implements ActionInterface
         $uxon = new UxonObject();
         $uxon->setProperty('alias', $this->getAliasWithNamespace());
         if ($this->getWidgetDefinedIn()) {
-            $uxon->setProperty('trigger_widget', $this->getWidgetDefinedIn()->createWidgetLink()->exportUxonObject());
+            $uxon->setProperty('trigger_widget', WidgetLinkFactory::createForWidget($this->getWidgetDefinedIn())->exportUxonObject());
         }
         if ($this->hasInputDataPreset()) {
             $uxon->setProperty('input_data_sheet',  $this->getInputDataPreset()->exportUxonObject());
@@ -928,7 +921,7 @@ abstract class AbstractAction implements ActionInterface
      */
     public function isDefinedInWidget(): bool
     {
-        return is_null($this->trigger_widget) ? false : true;
+        return is_null($this->widget_defined_in) ? false : true;
     }
 }
 ?>

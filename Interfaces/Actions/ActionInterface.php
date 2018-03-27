@@ -105,10 +105,10 @@ interface ActionInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
      * 
      * @see isDefinedInWidget()
      * 
-     * @param WidgetInterface|WidgetLinkInterface|string $widget_or_widget_link
+     * @param WidgetInterface
      * @return ActionInterface
      */
-    public function setWidgetDefinedIn($widget_or_widget_link);
+    public function setWidgetDefinedIn(WidgetInterface $widget) : ActionInterface;
     
     /**
      * Returns TRUE if the action is instantiated within a widget and FALSE otherwise

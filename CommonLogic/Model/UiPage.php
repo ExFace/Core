@@ -5,7 +5,6 @@ use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Templates\TemplateInterface;
 use exface\Core\Factories\WidgetFactory;
-use exface\Core\Interfaces\UiManagerInterface;
 use exface\Core\Exceptions\Widgets\WidgetIdConflictError;
 use exface\Core\Interfaces\Widgets\iHaveChildren;
 use exface\Core\DataTypes\StringDataType;
@@ -93,12 +92,10 @@ class UiPage implements UiPageInterface
     private $dirty = false;
 
     /**
-     *
      * @deprecated use UiPageFactory::create() instead!
-     * @param UiManagerInterface $ui
-     * @param string $alias
-     * @param string $uid
-     * @param string $appUidOrAlias
+     * 
+     * @param UiPageSelectorInterface $selector
+     * @param CmsConnectorInterface $cms
      */
     public function __construct(UiPageSelectorInterface $selector, CmsConnectorInterface $cms = null)
     {
@@ -674,7 +671,7 @@ class UiPage implements UiPageInterface
      */
     public function getMenuParentPage()
     {
-        return $this->getWorkbench()->ui()->getPage($this->getMenuParentPageSelector());
+        return UiPageFactory::createFromCmsPage($this->getCMS(), $this->getMenuParentPageSelector());
     }
 
     /**

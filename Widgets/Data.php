@@ -1130,9 +1130,10 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
      */
     public function setRefreshWithWidget($widget_link_or_uxon_or_string)
     {
-        $exface = $this->getWorkbench();
-        if ($link = WidgetLinkFactory::createFromAnything($exface, $widget_link_or_uxon_or_string, $this->getIdSpace())) {
-            $this->refresh_with_widget = $link;
+        if ($widget_link_or_uxon_or_string instanceof WidgetLinkInterface) {
+            $this->refresh_with_widget = $widget_link_or_uxon_or_string;
+        } else {
+            $this->refresh_with_widget = WidgetLinkFactory::createFromWidget($this, $widget_link_or_uxon_or_string);
         }
         return $this;
     }

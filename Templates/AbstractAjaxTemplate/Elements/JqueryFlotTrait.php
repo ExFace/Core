@@ -20,7 +20,7 @@ trait JqueryFlotTrait {
     {
         $output = '';
         if ($link = $this->getWidget()->getDataWidgetLink()) {
-            $linked_element = $this->getTemplate()->getElementByWidgetId($link->getWidgetId(), $this->getWidget()->getPage());
+            $linked_element = $this->getTemplate()->getElement($link->getTargetWidget());
             $output .= $this->buildJsFunctionPrefix() . 'plot(' . $linked_element->buildJsDataGetter() . ".rows);";
         }
         return $output;
@@ -45,7 +45,7 @@ trait JqueryFlotTrait {
     {
         if ($link = $this->getWidget()->getDataWidgetLink()) {
             /* @var $linked_element \exface\Templates\jEasyUI\Widgets\euiData */
-            $linked_element = $this->getTemplate()->getElementByWidgetId($link->getWidgetId(), $this->getWidget()->getPage());
+            $linked_element = $this->getTemplate()->getElement($link->getTargetWidget());
             if ($linked_element) {
                 $linked_element->addOnLoadSuccess($this->buildJsLiveReference());
             }

@@ -11,6 +11,8 @@ use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Factories\ResultFactory;
 use GuzzleHttp\Psr7\Uri;
+use exface\Core\Interfaces\Templates\TemplateInterface;
+use exface\Core\Templates\AbstractAjaxTemplate\AbstractAjaxTemplate;
 
 /**
  * This action exports the raw data received by a widget as a file for download.
@@ -50,7 +52,7 @@ class ExportData extends ReadData implements iExportData
     protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {        
         $dataSheet = $this->readData($task);
-        $url = $this->export($dataSheet);
+        $url = $this->export($dataSheet, $task->getTemplate());
         $uri = new Uri($url);
         $message = 'Download ready. If not id does not start automatically, click <a href="' . $url . '">here</a>.';
         $result = ResultFactory::createFileResult($task, $uri);
@@ -123,11 +125,11 @@ class ExportData extends ReadData implements iExportData
         return $this;
     }
     
-    protected function export(DataSheetInterface $dataSheet)
+    protected function export(DataSheetInterface $dataSheet, AbstractAjaxTemplate $template)
     {
-        $elem = $this->getApp()->getWorkbench()->ui()->getTemplate()->getElement($this->getWidgetDefinedIn());
+        $elem = $template->getElement($this->getWidgetDefinedIn());
         $output = $elem->prepareData($dataSheet);
-        $contents = $this->getApp()->getWorkbench()->ui()->getTemplate()->encodeData($output, false);
+        $contents = $template->encodeData($output, false);
         $result = $this->createDownload($contents);
         if (! is_null($this->getMimeType())){
             $result->setMimeType($this->getMimeType());

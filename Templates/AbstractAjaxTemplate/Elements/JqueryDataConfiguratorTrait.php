@@ -58,8 +58,8 @@ trait JqueryDataConfiguratorTrait
         } else {
             foreach ($widget->getFilters() as $filter) {
                 if ($link = $filter->getValueWidgetLink()) {
-                    $linked_element = $this->getTemplate()->getElementByWidgetId($link->getWidgetId(), $widget->getPage());
-                    $filter_value = $linked_element->buildJsValueGetter($link->getColumnId());
+                    $linked_element = $this->getTemplate()->getElement($link->getTargetWidget());
+                    $filter_value = $linked_element->buildJsValueGetter($link->getTargetColumnId());
                 } else {
                     $filter_value = '"' . $filter->getValue() . '"';
                 }

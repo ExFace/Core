@@ -5,34 +5,43 @@ use exface\Core\Widgets\AbstractWidget;
 use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 use exface\Core\Exceptions\Widgets\WidgetNotFoundError;
 use exface\Core\Exceptions\UnexpectedValueException;
+use exface\Core\Interfaces\Model\UiPageInterface;
+use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\Factories\UiPageFactory;
+use exface\Core\Factories\SelectorFactory;
 
 class WidgetLink implements WidgetLinkInterface
 {
 
-    private $exface;
+    private $sourcePage = null;
+    
+    private $sourceWidget = null;
 
-    private $page_alias;
+    private $targetPageAlias = null;
+    
+    private $targetPage = null;
 
-    private $widget_id;
+    private $targetWidgetId = null;
 
     private $widget_id_space = null;
 
-    private $column_id;
+    private $targetColumnId;
 
-    private $row_number;
+    private $targetRowNumber;
 
-    function __construct(\exface\Core\CommonLogic\Workbench $exface)
+    public function __construct(UiPageInterface $sourcePage, WidgetInterface $sourceWidget = null, $stringOrUxon)
     {
-        $this->exface = $exface;
+        $this->sourcePage = $sourcePage;
+        $this->sourceWidget = $sourceWidget;
+        $this->parseLink($stringOrUxon);
     }
 
     /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Widgets\WidgetLinkInterface::parseLink()
+     * 
+     * @param string|UxonObject $string_or_object
+     * @return WidgetLinkInterface
      */
-    public function parseLink($string_or_object)
+    protected function parseLink($string_or_object) : WidgetLinkInterface
     {
         if ($string_or_object instanceof UxonObject) {
             return $this->parseLinkUxon($string_or_object);
@@ -42,12 +51,12 @@ class WidgetLink implements WidgetLinkInterface
     }
 
     /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Widgets\WidgetLinkInterface::parseLinkString()
+     * 
+     * @param string $string
+     * @throws UnexpectedValueException
+     * @return WidgetLinkInterface
      */
-    public function parseLinkString($string)
+    protected function parseLinkString(string $string) : WidgetLinkInterface
     {
         $string = trim($string);
         // Check for reference to specific page_alias
@@ -88,7 +97,12 @@ class WidgetLink implements WidgetLinkInterface
         return $this;
     }
 
-    public function parseLinkUxon(UxonObject $object)
+    /**
+     * 
+     * @param UxonObject $object
+     * @return WidgetLinkInterface
+     */
+    protected function parseLinkUxon(UxonObject $object) : WidgetLinkInterface
     {
         $this->setPageAlias($object->getProperty('page_alias'));
         $this->setWidgetId($object->getProperty('widget_id'));
@@ -98,7 +112,6 @@ class WidgetLink implements WidgetLinkInterface
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::importUxonObject()
      */
     public function importUxonObject(UxonObject $uxon)
@@ -107,38 +120,35 @@ class WidgetLink implements WidgetLinkInterface
     }
 
     /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Widgets\WidgetLinkInterface::getWidgetId()
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\WidgetLinkInterface::getTargetWidgetId()
      */
-    public function getWidgetId()
+    public function getTargetWidgetId() : string
     {
-        return ($this->getWidgetIdSpace() ? $this->getWidgetIdSpace() . $this->getPage()->getWidgetIdSpaceSeparator() : '') . $this->widget_id;
+        return ($this->getTargetWidgetIdSpace() ? $this->getTargetWidgetIdSpace() . $this->getTargetPage()->getWidgetIdSpaceSeparator() : '') . $this->targetWidgetId;
     }
 
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\Widgets\WidgetLinkInterface::setWidgetId()
      */
-    public function setWidgetId($value)
+    protected function setWidgetId($value)
     {
-        $this->widget_id = $value;
+        $this->targetWidgetId = $value;
     }
 
     /**
-     * Returns the widget instance referenced by this link
-     *
-     * @throws uiWidgetNotFoundException if no widget with a matching id can be found in the specified resource
-     * @return AbstractWidget
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\WidgetLinkInterface::getTargetWidget()
      */
-    public function getWidget()
+    public function getTargetWidget() : WidgetInterface
     {
-        $widget = $this->getPage()->getWidget($this->getWidgetId());
+        $widget = $this->getTargetPage()->getWidget($this->getTargetWidgetId());
         if (! $widget) {
-            throw new WidgetNotFoundError('Cannot find widget "' . $this->getWidgetId() . '" in resource "' . $this->getPage()->getAliasWithNamespace() . '"!');
+            throw new WidgetNotFoundError('Cannot find widget "' . $this->getTargetWidgetId() . '" in resource "' . $this->getTargetPage()->getAliasWithNamespace() . '"!');
         }
         return $widget;
     }
@@ -146,46 +156,51 @@ class WidgetLink implements WidgetLinkInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Widgets\WidgetLinkInterface::getPageAlias()
+     * @see \exface\Core\Interfaces\Widgets\WidgetLinkInterface::getTargetPageAlias()
      */
-    public function getPageAlias()
+    public function getTargetPageAlias() : string
     {
-        return $this->page_alias;
+        return $this->targetPageAlias;
     }
 
     /**
      * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Widgets\WidgetLinkInterface::setPageAlias()
+     * @param string $pageAlias
+     * @return \exface\Core\CommonLogic\WidgetLink
      */
-    public function setPageAlias($pageAlias)
+    protected function setPageAlias($pageAlias)
     {
-        $this->page_alias = $pageAlias;
+        $this->targetPageAlias = $pageAlias;
         return $this;
     }
 
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Widgets\WidgetLinkInterface::getPage()
+     * @see \exface\Core\Interfaces\Widgets\WidgetLinkInterface::getTargetPage()
      */
-    public function getPage()
+    public function getTargetPage() : UiPageInterface
     {
-        if (is_null($this->getPageAlias())) {
-            return $this->getWorkbench()->ui()->getPageCurrent();
+        if ($this->targetPage === null) {
+            if ($this->targetPageAlias === null) {
+                $this->targetPage = $this->sourcePage;
+            } else {
+                $this->targetPage = UiPageFactory::create(SelectorFactory::createPageSelector($this->getWorkbench(), $this->targetPageAlias));
+            }
         }
-        return $this->getWorkbench()->ui()->getPage($this->page_alias);
+        return $this->targetPage;
     }
 
     /**
-     *
-     * @return UxonObject
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\WidgetLinkInterface::getTargetWidgetUxon()
      */
-    public function getWidgetUxon()
+    public function getTargetWidgetUxon() : UxonObject
     {
-        $uxon = $this->getPage()->getContentsUxon();
-        if ($this->getWidgetId() && $uxon->getProperty('widget_id') != $this->getWidgetId()) {
-            $uxon = $this->findWidgetIdInUxon($uxon, $this->getWidgetId());
+        $uxon = $this->getTargetPage()->getContentsUxon();
+        if ($this->getTargetWidgetId() && $uxon->getProperty('widget_id') != $this->getTargetWidgetId()) {
+            $uxon = $this->findWidgetIdInUxon($uxon, $this->getTargetWidgetId());
             if ($uxon === false) {
                 $uxon = new UxonObject();
             }
@@ -224,98 +239,110 @@ class WidgetLink implements WidgetLinkInterface
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::exportUxonObject()
      */
     public function exportUxonObject()
     {
         $uxon = new UxonObject();
-        $uxon->setProperty('widget_id', $this->widget_id);
-        $uxon->setProperty('page_alias', $this->getPage()->getAliasWithNamespace());
+        $uxon->setProperty('widget_id', $this->targetWidgetId);
+        $uxon->setProperty('page_alias', $this->getTargetPage()->getAliasWithNamespace());
         $uxon->setProperty('widget_id_space', $this->widget_id_space);
-        $uxon->setProperty('column_id', $this->column_id);
-        $uxon->setProperty('row_number', $this->row_number);
+        $uxon->setProperty('column_id', $this->targetColumnId);
+        $uxon->setProperty('row_number', $this->targetRowNumber);
         return $uxon;
     }
 
     /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Widgets\WidgetLinkInterface::getColumnId()
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\WidgetLinkInterface::getTargetColumnId()
      */
-    public function getColumnId()
+    public function getTargetColumnId()
     {
-        return $this->column_id;
+        return $this->targetColumnId;
     }
 
     /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Widgets\WidgetLinkInterface::setColumnId()
+     * 
+     * @param string $value
+     * @return WidgetLinkInterface
      */
-    public function setColumnId($value)
+    protected function setColumnId(string $value) : WidgetLinkInterface
     {
-        $this->column_id = $value;
+        $this->targetColumnId = $value;
+        return $this;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\WidgetLinkInterface::getTargetRowNumber()
+     */
+    public function getTargetRowNumber()
+    {
+        return $this->targetRowNumber;
+    }
+
+    /**
+     * 
+     * @param int $value
+     * @return WidgetLinkInterface
+     */
+    protected function setRowNumber(int $value) : WidgetLinkInterface
+    {
+        $this->targetRowNumber = $value;
         return $this;
     }
 
     /**
      *
      * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Widgets\WidgetLinkInterface::getRowNumber()
-     */
-    public function getRowNumber()
-    {
-        return $this->row_number;
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Widgets\WidgetLinkInterface::setRowNumber()
-     */
-    public function setRowNumber($value)
-    {
-        $this->row_number = $value;
-        return $this;
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\ExfaceClassInterface::getWorkbench()
      */
     public function getWorkbench()
     {
-        return $this->exface;
+        return $this->sourcePage->getWorkbench();
     }
 
     /**
      *
      * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Widgets\WidgetLinkInterface::getWidgetIdSpace()
+     * @see \exface\Core\Interfaces\Widgets\WidgetLinkInterface::getTargetWidgetIdSpace()
      */
-    public function getWidgetIdSpace()
+    protected function getTargetWidgetIdSpace()
     {
-        return $this->widget_id_space;
+        return $this->getSourceWidget()->getIdSpace();
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\WidgetLinkInterface::getSourceWidget()
+     */
+    public function getSourceWidget(): WidgetInterface
+    {
+        return $this->sourceWidget;
     }
 
     /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Widgets\WidgetLinkInterface::setWidgetIdSpace()
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\WidgetLinkInterface::getSourcePage()
      */
-    public function setWidgetIdSpace($value)
+    public function getSourcePage(): UiPageInterface
     {
-        $this->widget_id_space = $value;
-        return $this;
+        return $this->sourcePage;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\WidgetLinkInterface::hasSourceWidget()
+     */
+    public function hasSourceWidget() : bool
+    {
+        return $this->sourceWidget !== null;
+    }
+
 }
 ?>

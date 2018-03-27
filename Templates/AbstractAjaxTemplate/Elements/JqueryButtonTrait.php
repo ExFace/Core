@@ -15,7 +15,7 @@ trait JqueryButtonTrait {
     {
         $js = ($widget->getRefreshInput() && $input_element->buildJsRefresh() ? $input_element->buildJsRefresh(true) . ";" : "");
         if ($link = $widget->getRefreshWidgetLink()) {
-            if ($widget->getPage()->is($link->getPageAlias()) && $linked_element = $this->getTemplate()->getElement($link->getWidget())) {
+            if ($widget->getPage()->is($link->getTargetPageAlias()) && $linked_element = $this->getTemplate()->getElement($link->getTargetWidget())) {
                 $js .= "\n" . $linked_element->buildJsRefresh(true);
             }
         }
@@ -232,7 +232,7 @@ JS;
                 /* @var $widgetLink \exface\Core\CommonLogic\WidgetLink */
                 $prefix = $this->getTemplate()->getUrlFilterPrefix();
                 foreach ($action->getTakeAlongFilters() as $attributeAlias => $widgetLink){
-                    $filters_param .= "&{$prefix}{$attributeAlias}='+{$this->getTemplate()->getElement($widgetLink->getWidget())->buildJsValueGetter($widgetLink->getColumnId(), null)}+'";
+                    $filters_param .= "&{$prefix}{$attributeAlias}='+{$this->getTemplate()->getElement($widgetLink->getWidget())->buildJsValueGetter($widgetLink->getTargetColumnId(), null)}+'";
                 }
             }
             

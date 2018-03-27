@@ -260,16 +260,6 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
 
     /**
      * 
-     * @param WidgetLink $link
-     * @return \exface\Core\Templates\AbstractAjaxTemplate\Elements\AbstractJqueryElement
-     */
-    public function getElementFromWidgetLink(WidgetLink $link)
-    {
-        return $this->getElementByWidgetId($link->getWidgetId(), $link->getPage());
-    }
-
-    /**
-     * 
      * @param string $page_or_id_or_alias
      * @param string $url_params
      * @return string
