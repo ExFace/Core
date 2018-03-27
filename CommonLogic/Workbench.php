@@ -40,8 +40,6 @@ class Workbench implements WorkbenchInterface
 
     private $mm;
 
-    private $ui;
-
     private $db;
 
     private $debugger;
@@ -202,19 +200,6 @@ class Workbench implements WorkbenchInterface
     public function data()
     {
         return $this->data;
-    }
-    
-    /**
-     * 
-     * @return \exface\Core\CommonLogic\UiManager
-     */
-    public function ui()
-    {   
-        if (is_null($this->ui)){
-            $this->ui = new \exface\Core\CommonLogic\UiManager($this);
-        }
-            
-        return $this->ui;
     }
 
     /**
@@ -466,10 +451,6 @@ class Workbench implements WorkbenchInterface
     {
         if (! $task->hasAction()) {
             throw new AppNotFoundError('Cannot handle task without an action selector!');
-        }
-        // TODO #api-v4 remove page current in general - just use the task pages!
-        if ($task->isTriggeredOnPage()) {
-            $this->ui()->setPageCurrent($task->getPageTriggeredOn());
         }
         return $this->getApp($task->getActionSelector()->getAppAlias())->handle($task);
     }

@@ -62,9 +62,10 @@ class TemplateResolverMiddleware implements MiddlewareInterface
     }
     
     /**
-     *
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\UiManagerInterface::getTemplateForUri()
+     * 
+     * @param UriInterface $uri
+     * @throws TemplateRoutingError
+     * @return HttpTemplateInterface
      */
     protected function getTemplateForUri(UriInterface $uri) : HttpTemplateInterface
     {

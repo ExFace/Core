@@ -53,12 +53,6 @@ interface WorkbenchInterface extends TaskHandlerInterface
     public function data();
     
     /**
-     *
-     * @return \exface\Core\CommonLogic\UiManager
-     */
-    public function ui();
-    
-    /**
      * Launches an ExFace app and returns it.
      * Apps are cached and kept running for script (request) window
      *

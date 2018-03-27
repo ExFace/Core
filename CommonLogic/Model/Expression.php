@@ -17,6 +17,9 @@ use exface\Core\DataTypes\IntegerDataType;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\Interfaces\Model\AggregatorInterface;
+use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
+use exface\Core\Exceptions\RuntimeException;
 
 class Expression implements ExpressionInterface
 {
@@ -81,7 +84,7 @@ class Expression implements ExpressionInterface
                 $this->attributes = array_merge($this->attributes, $this->formula->getRequiredAttributes());
             } else {
                 $this->type = self::TYPE_REFERENCE;
-                $this->widget_link = WidgetLinkFactory::createFromAnything($this->exface, substr($expression, 1));
+                $this->widget_link = substr($expression, 1);
             }
         } else { // attribute_alias
             if (! $this->getMetaObject() || ($this->getMetaObject() && $this->getMetaObject()->hasAttribute($expression))) {
@@ -490,9 +493,13 @@ class Expression implements ExpressionInterface
      * {@inheritdoc}
      * @see \exface\Core\Interfaces\Model\ExpressionInterface::getWidgetLink()
      */
-    public function getWidgetLink()
+    public function getWidgetLink(WidgetInterface $sourceWidget) : WidgetLinkInterface
     {
-        return $this->widget_link;
+        if ($this->widget_link === null) {
+            throw new RuntimeException('Cannot get widget linke from expression of type "' . $this->getType() . '"!');
+        }
+        
+        return WidgetLinkFactory::createFromWidget($sourceWidget, $this->widget_link);
     }
 
     /**

@@ -363,12 +363,13 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iDefin
      */
     public function setRefreshWidgetLink($widget_link_or_uxon_or_string)
     {
-        if (is_null($widget_link_or_uxon_or_string)) {
+        if ($widget_link_or_uxon_or_string === null) {
             $this->refresh_widget_link = null;
         } else {
-            $exface = $this->getWorkbench();
-            if ($link = WidgetLinkFactory::createFromAnything($exface, $widget_link_or_uxon_or_string, $this->getIdSpace())) {
-                $this->refresh_widget_link = $link;
+            if ($widget_link_or_uxon_or_string instanceof WidgetLinkInterface) {
+                $this->refresh_widget_link = $widget_link_or_uxon_or_string;
+            } else {
+                $this->refresh_widget_link = WidgetLinkFactory::createFromWidget($this, $widget_link_or_uxon_or_string);
             }
         }
         return $this;

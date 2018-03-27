@@ -428,7 +428,7 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
     {
         if (is_null($this->meta_object)) {
             if ($this->getObjectQualifiedAlias()) {
-                $obj = $this->getUi()->getWorkbench()->model()->getObject($this->getObjectQualifiedAlias());
+                $obj = $this->getWorkbench()->model()->getObject($this->getObjectQualifiedAlias());
             } elseif ($this->getParent()) {
                 $obj = $this->getParent()->getMetaObject();
             } else {
@@ -598,8 +598,7 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
     {
         $link = null;
         if ($this->getValueExpression() && $this->getValueExpression()->isReference()) {
-            $link = $this->getValueExpression()->getWidgetLink();
-            $link->setWidgetIdSpace($this->getIdSpace());
+            $link = $this->getValueExpression()->getWidgetLink($this);
         }
         return $link;
     }
@@ -752,9 +751,9 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
     public function setObjectAlias($full_or_object_alias)
     {
         // If it's a fully qualified alias, use it directly
-        if ($ns = $this->getUi()->getWorkbench()->model()->getNamespaceFromQualifiedAlias($full_or_object_alias)) {
+        if ($ns = $this->getWorkbench()->model()->getNamespaceFromQualifiedAlias($full_or_object_alias)) {
             $this->object_qualified_alias = $full_or_object_alias;
-            $this->object_alias = $this->getUi()->getWorkbench()->model()->getObjectAliasFromQualifiedAlias($full_or_object_alias);
+            $this->object_alias = $this->getWorkbench()->model()->getObjectAliasFromQualifiedAlias($full_or_object_alias);
         }  // ... if the namespace is missing, get it from the app of the parent object
 else {
             if ($this->getParent()) {
@@ -925,17 +924,6 @@ else {
     {
         $this->parent = $widget;
         return $this;
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\WidgetInterface::getUi()
-     */
-    public function getUi()
-    {
-        return $this->getPage()->getWorkbench()->ui();
     }
 
     /**
@@ -1155,21 +1143,6 @@ else {
         $this->data_connection_alias_specified_by_user = $value;
         $this->getMetaObject()->setDataConnectionAlias($value);
         return $this;
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\WidgetInterface::createWidgetLink()
-     */
-    public function createWidgetLink()
-    {
-        $exface = $this->getWorkbench();
-        $link = new WidgetLink($exface);
-        $link->setWidgetId($this->getId());
-        $link->setPageAlias($this->getPage()->getAliasWithNamespace());
-        return $link;
     }
 
     /**

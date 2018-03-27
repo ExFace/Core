@@ -101,7 +101,7 @@ class DiagramShape extends Form implements iShowDataSet, iHaveBorders
     {
         if (is_null($this->data)) {
             if ($link = $this->getDataWidgetLink()) {
-                return $link->getWidget();
+                return $link->getTargetWidget();
             } else {
                 throw new WidgetConfigurationError($this, 'Cannot get data for ' . $this->getWidgetType() . ' "' . $this->getId() . '": either data or data_widget_link must be defined in the UXON description!', '6T90WFX');
             }
@@ -116,8 +116,7 @@ class DiagramShape extends Form implements iShowDataSet, iHaveBorders
 
     public function setDataWidgetLink($value)
     {
-        $exface = $this->getWorkbench();
-        $this->data_widget_link = WidgetLinkFactory::createFromAnything($exface, $value, $this->getIdSpace());
+        $this->data_widget_link = WidgetLinkFactory::createFromWidget($this, $value);
         return $this;
     }
 

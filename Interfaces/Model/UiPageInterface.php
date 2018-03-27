@@ -6,7 +6,6 @@ use exface\Core\Widgets\ContextBar;
 use exface\Core\Exceptions\Widgets\WidgetNotFoundError;
 use exface\Core\Interfaces\ExfaceClassInterface;
 use exface\Core\Interfaces\WidgetInterface;
-use exface\Core\Interfaces\UiManagerInterface;
 use exface\Core\Interfaces\AliasInterface;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Interfaces\AppInterface;

@@ -70,7 +70,7 @@ class GoToPage extends ShowWidget
         $array = [];
         foreach ($takeAlongFilters as $attributeAlias => $widgetLink) {
             if (! $widgetLink instanceof WidgetLinkInterface) {
-                $array[$attributeAlias] = WidgetLinkFactory::createFromAnything($this->getWorkbench(), $widgetLink);
+                $array[$attributeAlias] = WidgetLinkFactory::createFromWidget($this->getWidgetDefinedIn(), $widgetLink);
             }
         }
         

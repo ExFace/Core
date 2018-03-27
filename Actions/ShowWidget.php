@@ -22,6 +22,7 @@ use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Interfaces\Tasks\ResultWidgetInterface;
 use exface\Core\CommonLogic\Tasks\ResultWidget;
 use exface\Core\Factories\ResultFactory;
+use exface\Core\Factories\UiPageFactory;
 
 /**
  * The ShowWidget action is the base for all actions, that render widgets.
@@ -469,7 +470,7 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
         if ($this->isWidgetDefined()) {
             return $this->getWidget()->getPage();
         }
-        return $this->getWorkbench()->ui()->getPage($this->page_alias);
+        return UiPageFactory::createFromCmsPage($this->getWorkbench()->getCMS(), $this->page_alias);
     }
     
     public function getPageAlias()
@@ -519,9 +520,8 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
      */
     public function setPrefillWithDataFromWidgetLink($string_or_widget_link) : iUsePrefillData
     {
-        $exface = $this->getWorkbench();
         if ($string_or_widget_link) {
-            $this->prefill_with_data_from_widget_link = WidgetLinkFactory::createFromAnything($exface, $string_or_widget_link);
+            $this->prefill_with_data_from_widget_link = WidgetLinkFactory::createFromWidget($this->getWidgetDefinedIn(), $string_or_widget_link);
         }
         return $this;
     }

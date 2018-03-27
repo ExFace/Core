@@ -6,6 +6,7 @@ use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\Factories\UiPageFactory;
 
 /**
  * The autosuggest action is similar to the general ReadData, but it does not affect the current window filter context because the user
@@ -58,9 +59,10 @@ class Autosuggest extends ReadData
         // rewritten.
         // IDEA Once there is some kind of default table widget for meta object, we could use it here instead of
         // simply outputting the UID and LABEL
-        if (! parent::isDefinedInWidget() && $this->getWorkbench()->ui()->getPageCurrent()) {
+        if (! parent::isDefinedInWidget()) {
+            $page = UiPageFactory::createEmpty($this->getWorkbench());
             /* @var $reading_widget \exface\Core\Widgets\DataTable */
-            $reading_widget = WidgetFactory::create($this->getWorkbench()->ui()->getPageCurrent(), 'DataTable');
+            $reading_widget = WidgetFactory::create($page, 'DataTable');
             $reading_widget->setMetaObject($this->getMetaObject());
             $reading_widget->addColumn($reading_widget->createColumnFromAttribute($this->getMetaObject()->getLabelAttribute()));
             $this->setWidgetDefinedIn($reading_widget);
