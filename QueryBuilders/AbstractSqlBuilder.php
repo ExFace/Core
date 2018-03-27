@@ -1389,8 +1389,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             
             // build a subquery
             /* @var $relq \exface\Core\QueryBuilders\AbstractSqlBuilder */
-            $qb_class = get_class($this);
-            $relq = new $qb_class();
+            $relq = QueryBuilderFactory::createFromSelector($this->getSelector());
             $relq->setMainObject($start_rel->getRelatedObject());
             $relq->setQueryId($this->getNextSubqueryId());
             if ($start_rel->isReverseRelation()) {
