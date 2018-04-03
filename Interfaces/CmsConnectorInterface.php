@@ -28,17 +28,16 @@ interface CmsConnectorInterface extends ExfaceClassInterface
      *            e.g. &param1=val1&param2=val2
      * @return string
      */
-    public function createLinkInternal($page_or_id_or_alias, $url_params = '');
+    public function buildUrlToPage($page_or_id_or_alias, $url_params = '');
 
     /**
      * Returns an href-link compilant with the current CMS based on a given URL.
-     * This allows to wrap
-     * any URL in CMS-specific code, add trackers, etc.
+     * This allows to wrap any URL in CMS-specific code, add trackers, etc.
      *
      * @param string $url            
      * @return string
      */
-    public function createLinkExternal($url);
+    public function buildUrlExternal($url);
 
     /**
      * Returns an internal file link compliant with the current CMS based on a given URL.
@@ -48,17 +47,7 @@ interface CmsConnectorInterface extends ExfaceClassInterface
      * @param string $path_absolute            
      * @return string
      */
-    public function createLinkToFile($path_absolute);
-
-    /**
-     * Removes parameters used by the CMS for internal needs from the given parameter array.
-     * $_GET or $_POST
-     * can be passed to this method to get rid of all kinds of CMS-specific variables
-     *
-     * @param array $param_array            
-     * @return array
-     */
-    public function removeSystemRequestParams(array $param_array);
+    public function buildUrlToFile($path_absolute);
 
     /**
      * Returns the user name if a user is currently logged in and an empty string otherwise.
@@ -129,14 +118,23 @@ interface CmsConnectorInterface extends ExfaceClassInterface
      * 
      * @return string
      */
-    public function getSiteUrl();
+    public function buildUrlToSiteRoot();
     
     /**
      * Returns the full URL of the root of the plattform API site: e.g. https://www.exface.com/demo/api
      *
      * @return string
      */
-    public function getApiUrl();
+    public function buildUrlToApi();
+    
+    /**
+     * Returns the URL to include a given path in the template code: e.g. for CSS/JS tags in the HTML head.
+     * 
+     * @param string $pathFromVendorFolder
+     * 
+     * @return string
+     */
+    public function buildUrlToInclude(string $pathFromVendorFolder) : string;
     
     /**
      * Returns the CMS-ID of the passed UiPage.

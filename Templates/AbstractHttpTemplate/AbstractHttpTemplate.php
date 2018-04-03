@@ -136,7 +136,7 @@ abstract class AbstractHttpTemplate extends AbstractTemplate implements HttpTemp
     
     public function getBaseUrl() : string{
         if (is_null($this->url)) {
-            $this->url = $this->getWorkbench()->getCMS()->getApiUrl() . $this->getConfig()->getOption('DEFAULT_AJAX_URL');
+            $this->url = $this->getWorkbench()->getCMS()->buildUrlToApi() . $this->getConfig()->getOption('DEFAULT_AJAX_URL');
         }
         return $this->url;
     }

@@ -149,7 +149,7 @@ class ExportData extends ReadData implements iExportData
         
         file_put_contents($pathname, $contents);
         
-        $url = $this->getWorkbench()->getCMS()->createLinkToFile($pathname);
+        $url = $this->getWorkbench()->getCMS()->buildUrlToFile($pathname);
         
         return ($url);
     }

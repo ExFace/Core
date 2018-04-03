@@ -146,11 +146,15 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
      * 
      * @return string
      */
-    public function buildHtmlHead(WidgetInterface $widget)
+    public function buildHtmlHead(WidgetInterface $widget, $includeCommonLibs = false)
     {
+        $result = '';
+        if ($includeCommonLibs) {
+            $result .= implode("\n", $this->buildHtmlHeadCommonIncludes());
+        }
         try {
             $instance = $this->getElement($widget);
-            $result = implode("\n", array_unique($instance->buildHtmlHeadTags()));
+            $result .= implode("\n", array_unique($instance->buildHtmlHeadTags()));
         } catch (ErrorExceptionInterface $e) {
             // TODO Is there a way to display errors in the header nicely?
             // Maybe print the exception in plain text within a comment and add JavaScript to display a warning?
@@ -264,9 +268,9 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
      * @param string $url_params
      * @return string
      */
-    public function createLinkInternal($page_or_id_or_alias, $url_params = '')
+    public function buildUrlToPage($page_or_id_or_alias, $url_params = '')
     {
-        return $this->getWorkbench()->getCMS()->createLinkInternal($page_or_id_or_alias, $url_params);
+        return $this->getWorkbench()->getCMS()->buildUrlToPage($page_or_id_or_alias, $url_params);
     }
 
     /**
@@ -374,7 +378,7 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
                 $widget = $result->getWidget();
                 switch ($mode) {
                     case static::MODE_HEAD:
-                        $body = $this->buildHtmlHead($widget);
+                        $body = $this->buildHtmlHead($widget, true);
                         break;
                     case static::MODE_BODY:
                         $body = $this->buildHtmlBody($widget);
@@ -505,5 +509,18 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
     {
         return 'filter_';
     }
+    
+    /**
+     * 
+     * @param string $configOption
+     * @return string
+     */
+    public function buildUrlToSource(string $configOption) : string
+    {
+        $path = $this->getConfig()->getOption($configOption);
+        return $this->getWorkbench()->getCMS()->buildUrlToInclude($path);
+    }
+    
+    public abstract function buildHtmlHeadCommonIncludes() : array;
 }
 ?>

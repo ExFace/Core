@@ -303,7 +303,7 @@ trait ExceptionTrait {
     public function getSystemByPage(UiPageInterface $page)
     {
         if( $this->system == FALSE) {
-            $this->system = $page->getWorkbench()->getCMS()->getSiteUrl();
+            $this->system = $page->getWorkbench()->getCMS()->buildUrlToSiteRoot();
         }
         return $this->system;
     }
