@@ -74,9 +74,12 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
      */
     protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {
+        // Try to instantiate a widget from the action's description
         $widget = $this->getWidget();
         
-        if (is_null($widget) && $task->isTriggeredOnPage() && ! $task->getPageTriggeredOn()->isEmpty()) {
+        // If the action does not have a widget defined, we can get it from the task if the task was
+        // sent from a page and either has an explicit trigger widget or the page has a root widget (= is not empty).
+        if ($widget === null && $task->isTriggeredOnPage() && ($task->isTriggeredByWidget() || ! $task->getPageTriggeredOn()->isEmpty())) {
             $widget = $task->getWidgetTriggeredBy();
         }
         
