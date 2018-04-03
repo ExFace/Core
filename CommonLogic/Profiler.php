@@ -2,12 +2,10 @@
 namespace exface\Core\CommonLogic;
 
 use Symfony\Component\Stopwatch\Stopwatch;
-use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Events\ActionEvent;
 use exface\Core\Events\DataConnectionEvent;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\ExfaceClassInterface;
-use exface\Core\Interfaces\Log\LoggerInterface;
 
 class Profiler implements ExfaceClassInterface
 {

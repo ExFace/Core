@@ -48,8 +48,6 @@ class DebugContext extends AbstractContext
         if ($selector->getWorkbench()->getContext()->getScopeUser()->getUserCurrent()->isUserAnonymous()){
             throw new ContextAccessDeniedError($this, 'The debug context cannot be used for anonymous users!');
         }
-        
-        $this->profiler = new Profiler($selector->getWorkbench());
     }
     
     /**
@@ -83,6 +81,8 @@ class DebugContext extends AbstractContext
     public function startDebugging()
     {
         $this->is_debugging = true;
+        $this->startProfiler();
+        
         // Log everything
         $workbench = $this->getWorkbench();
         $this->log_handlers = [
@@ -293,9 +293,15 @@ class DebugContext extends AbstractContext
     /**
      * @return Profiler
      */
-    public function getProfiler()
+    public function getProfiler() : Profiler
     {
         return $this->profiler;
     }    
+    
+    protected function startProfiler() : Profiler
+    {
+        $this->profiler = new Profiler($this->getWorkbench());
+        return $this->profiler;
+    }
 }
 ?>

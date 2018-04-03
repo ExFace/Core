@@ -36,7 +36,7 @@ class ContextApi extends AbstractAction implements iModifyContext
     
     private $operation = null;
 
-    public function getContextAlias(TaskInterface $task) : string
+    public function getContextAlias(TaskInterface $task = null) : string
     {
         if (is_null($this->getContextAliasViaTrait())){
             if ($task->hasParameter($this::TASK_PARAMETER_CONTEXT_TYPE)) {
@@ -48,7 +48,7 @@ class ContextApi extends AbstractAction implements iModifyContext
         return $this->getContextAliasViaTrait();
     }
     
-    public function getContextScope(TaskInterface $task) : ContextScopeInterface
+    public function getContextScope(TaskInterface $task = null) : ContextScopeInterface
     {
         try{
             $this->getContextScopeViaTrait();
@@ -70,14 +70,15 @@ class ContextApi extends AbstractAction implements iModifyContext
      */
     protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {
-        if (!method_exists($this->getContext($task), $this->getOperation($task))){
-            throw new ActionConfigurationError($this, 'Invalid operation "' . $this->getOperation() . '" for context "' . $this->getContext($task)->getAlias() . '": method not found!');
+        $operation = $this->getOperation($task);
+        if (!method_exists($this->getContext($task), $operation)){
+            throw new ActionConfigurationError($this, 'Invalid operation "' . $operation . '" for context "' . $this->getContext($task)->getAlias() . '": method not found!');
         }
-        $return_value = call_user_func(array($this->getContext($task), $this->getOperation()));
+        $return_value = call_user_func(array($this->getContext($task), $operation));
         if (is_string($return_value)){
             $result = ResultFactory::createMessageResult($task, $return_value);
         } elseif ($return_value instanceof ContextInterface) { 
-            $operation_name = ucfirst(strtolower(preg_replace('/(?<!^)[A-Z]/', ' $0', $this->getOperation())));
+            $operation_name = ucfirst(strtolower(preg_replace('/(?<!^)[A-Z]/', ' $0', $operation)));
             $result = ResultFactory::createMessageResult($task, $this->translate('RESULT', ['%operation_name%' => $operation_name]));
         } else {
             $result = ResultFactory::createTextContentResult($task, $return_value);
