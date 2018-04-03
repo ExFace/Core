@@ -340,21 +340,25 @@ trait JqueryFlotTrait {
     
     public function buildHtmlHeadTags()
     {
+        $template = $this->getTemplate();
         $includes = [];
         // flot
-        $includes[] = '<script type="text/javascript" src="exface/vendor/npm-asset/flot-charts/jquery.flot.js"></script>';
-        $includes[] = '<script type="text/javascript" src="exface/vendor/npm-asset/flot-charts/jquery.flot.resize.js"></script>';
-        $includes[] = '<script type="text/javascript" src="exface/vendor/npm-asset/flot-charts/jquery.flot.categories.js"></script>';
-        $includes[] = '<script type="text/javascript" src="exface/vendor/npm-asset/flot-charts/jquery.flot.time.js"></script>';
-        $includes[] = '<script type="text/javascript" src="exface/vendor/npm-asset/flot-charts/jquery.flot.crosshair.js"></script>';
+        $includes[] = '<script type="text/javascript" src="' . $template->buildUrlToSource('SOURCES.FLOT.CORE_FOLDER') . 'jquery.flot.js"></script>';
+        $includes[] = '<script type="text/javascript" src="' . $template->buildUrlToSource('SOURCES.FLOT.CORE_FOLDER') . 'jquery.flot.resize.js"></script>';
+        $includes[] = '<script type="text/javascript" src="' . $template->buildUrlToSource('SOURCES.FLOT.CORE_FOLDER') . 'jquery.flot.categories.js"></script>';
+        $includes[] = '<script type="text/javascript" src="' . $template->buildUrlToSource('SOURCES.FLOT.CORE_FOLDER') . 'jquery.flot.time.js"></script>';
+        $includes[] = '<script type="text/javascript" src="' . $template->buildUrlToSource('SOURCES.FLOT.CORE_FOLDER') . 'jquery.flot.crosshair.js"></script>';
         
         if ($this->getWidget()->getStackSeries()) {
-            $includes[] = '<script type="text/javascript" src="exface/vendor/npm-asset/flot-charts/jquery.flot.stack.js"></script>';
+            $includes[] = '<script type="text/javascript" src="' . $template->buildUrlToSource('SOURCES.FLOT.CORE_FOLDER') . 'jquery.flot.stack.js"></script>';
         }
         
         if ($this->isPieChart()) {
-            $includes[] = '<script type="text/javascript" src="exface/vendor/npm-asset/flot-charts/jquery.flot.pie.js"></script>';
+            $includes[] = '<script type="text/javascript" src="' . $template->buildUrlToSource('SOURCES.FLOT.CORE_FOLDER') . 'jquery.flot.pie.js"></script>';
         }
+        
+        $includes[] = '<script type="text/javascript" src="' . $template->buildUrlToSource('SOURCES.FLOT.PLUGINS.AXISLABELS') . '"></script>';
+        $includes[] = '<script type="text/javascript" src="' . $template->buildUrlToSource('SOURCES.FLOT.PLUGINS.ORDERBARS') . '"></script>';
         
         return $includes;
     }
