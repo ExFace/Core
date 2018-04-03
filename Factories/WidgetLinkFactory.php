@@ -28,7 +28,7 @@ abstract class WidgetLinkFactory extends AbstractUxonFactory
      */
     public static function createFromPage(UiPageInterface $sourcePage, $stringOrUxon) : WidgetLinkInterface
     {
-        return new WidgetLink($sourcePage, $stringOrUxon);
+        return new WidgetLink($sourcePage, null, $stringOrUxon);
     }
     
     /**
