@@ -238,7 +238,7 @@ JS;
             
             $output .= <<<JS
             {$input_element->buildJsBusyIconShow()}
-			window.location.href = '{$this->getTemplate()->createLinkInternal($action->getPageAlias())}?{$prefill_param}{$filters_param}';
+			window.location.href = '{$this->getTemplate()->buildUrlToPage($action->getPageAlias())}?{$prefill_param}{$filters_param}';
 JS;
         }
         return $output;

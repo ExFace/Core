@@ -12,7 +12,7 @@ class HttpFileServerTemplate extends AbstractHttpTemplate
 {
     public static function buildUrlForDownload(WorkbenchInterface $workbench, $absolutePath)
     {
-        return $workbench->getCMS()->createLinkToFile($absolutePath);
+        return $workbench->getCMS()->buildUrlToFile($absolutePath);
     }
     
     /**
