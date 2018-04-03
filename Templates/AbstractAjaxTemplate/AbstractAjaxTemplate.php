@@ -38,6 +38,7 @@ use exface\Core\Templates\AbstractHttpTemplate\Middleware\TaskUrlParamReader;
 use exface\Core\Templates\AbstractHttpTemplate\Middleware\DataUrlParamReader;
 use exface\Core\Templates\AbstractHttpTemplate\Middleware\QuickSearchUrlParamReader;
 use exface\Core\Templates\AbstractHttpTemplate\Middleware\PrefixedFilterUrlParamsReader;
+use exface\Core\CommonLogic\Tasks\ResultEmpty;
 
 /**
  * 
@@ -357,13 +358,22 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
             $this->requestIdCache[$cacheKey] = $result;
         }
         
+        $mode = $request->getAttribute($this->getRequestAttributeForRenderingMode(), static::MODE_FULL);
+        
         /* @var $headers array [header_name => array_of_values] */
         $headers = [];
         /* @var $status_code int */
         $status_code = $result->getResponseCode();
         
         if ($result->isEmpty()) {
-            return new Response($status_code, $headers);
+            // Empty results must still produce output if rendering HTML HEAD - the common includes must still
+            // be there for the template to work.
+            if ($mode === static::MODE_HEAD) {
+                $body = implode("\n", $this->buildHtmlHeadCommonIncludes());
+            } else {
+                $body = null;
+            }
+            return new Response($status_code, $headers, $body);
         }
         
         switch (true) {
@@ -374,7 +384,6 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
                 break;
                 
             case $result instanceof ResultWidgetInterface:
-                $mode = $request->getAttribute($this->getRequestAttributeForRenderingMode(), static::MODE_FULL);
                 $widget = $result->getWidget();
                 switch ($mode) {
                     case static::MODE_HEAD:
@@ -406,8 +415,7 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
                 $json = [
                     "redirect" => $uri->__toString()
                 ];
-                break;
-                
+                break;                
             default:
                 $json['success'] = $result->getMessage();
                 if ($result->isUndoable()) {
