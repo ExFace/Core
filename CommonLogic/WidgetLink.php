@@ -311,7 +311,7 @@ class WidgetLink implements WidgetLinkInterface
      */
     protected function getTargetWidgetIdSpace()
     {
-        return $this->getSourceWidget()->getIdSpace();
+        return $this->hasSourceWidget() ? $this->getSourceWidget()->getIdSpace() : '';
     }
     
     /**
