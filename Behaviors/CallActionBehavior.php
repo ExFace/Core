@@ -129,7 +129,7 @@ class CallActionBehavior extends AbstractBehavior
         
         if ($action = $this->getAction()) {
             $task = TaskFactory::createFromDataSheet($data_sheet);
-            // FIXME #api-v4 pass the transaction to the action once it is available in the data sheet event
+            // FIXME #events-v2 pass the transaction to the action once it is available in the data sheet event
             $action->handle($task);
         }
     }
