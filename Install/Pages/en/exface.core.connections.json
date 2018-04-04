@@ -57,21 +57,17 @@
         ],
         "buttons": [
             {
-                "action_alias": "exface.Core.CreateObjectDialog",
-                "caption": "Neu"
+                "action_alias": "exface.Core.CreateObjectDialog"
             },
             {
                 "action_alias": "exface.Core.EditObjectDialog",
-                "caption": "Bearbeiten",
                 "bind_to_double_click": true
             },
             {
-                "action_alias": "exface.Core.DuplicateObjectDialog",
-                "caption": "Duplizieren"
+                "action_alias": "exface.Core.DuplicateObjectDialog"
             },
             {
-                "action_alias": "exface.Core.DeleteObject",
-                "caption": "L\u00f6schen"
+                "action_alias": "exface.Core.DeleteObject"
             }
         ]
     }

@@ -1,53 +1,75 @@
 <?php
 namespace exface\Core\Formulas;
 
-use exface\Core\CommonLogic\NameResolver;
-use exface\Core\Exceptions\InvalidArgumentException;
-use exface\Core\CommonLogic\Workbench;
-
+/**
+ * This formula can be used to translate certain widget-attributes, e.g. caption.
+ * 
+ * @author SFL
+ *
+ */
 class Translate extends \exface\Core\CommonLogic\Model\Formula
 {
-    
-    public function run(string $translationKey)
+
+    /**
+     * Translates the passed messageId using the translator of the passed app and the passed values for
+     * placeholders and plurification.
+     * 
+     * The $placeholderValues has to be a string, e.g. "%placeholder1%=>value1|%placeholder2%=>value2".
+     * The pluralNumber has to be a string, e.g. "5".
+     * 
+     * @param string $appAlias
+     * @param string $messageId
+     * @param string $placeholderValues
+     * @param string $pluralNumber
+     * @return string
+     */
+    public function run(string $appAlias, string $messageId, string $placeholderValues = null, string $pluralNumber = null)
     {
         try {
-            $numOfPoints = substr_count($translationKey, NameResolver::NAMESPACE_SEPARATOR);
-            if ($numOfPoints < 2) {
-                throw new InvalidArgumentException('The translation key must be prepended with the app alias, i.e. "exface.Core.TRANSLATION_KEY".');
+            if ($placeholderValues) {
+                $placeholder = $this->parsePlaceholderValues($placeholderValues);
             }
-            $sndPointPos = strpos($translationKey, NameResolver::NAMESPACE_SEPARATOR, strpos($translationKey, NameResolver::NAMESPACE_SEPARATOR) + 1);
-            $appAlias = substr($translationKey, 0, $sndPointPos);
-            $key = substr($translationKey, $sndPointPos + 1);
-            $output = $this->getWorkbench()->getApp($appAlias)->getTranslator()->translate($key);
-            return $output;
+            if ($pluralNumber) {
+                $plural = $this->parsePluralNumber($pluralNumber);
+            }
+            return $this->getWorkbench()->getApp($appAlias)->getTranslator()->translate($messageId, $placeholder, $plural);
         } catch (\Exception $e) {
-            return $translationKey;
+            return $messageId;
         }
     }
-    
-    public static function isTranslationKey(string $translationKey)
+
+    /**
+     * Returns an array with keys and values parsed from the passed $input string.
+     * 
+     * e.g.:
+     * $input: "%placeholder1%=>value1|%placeholder2%=>value2"
+     * return: ["%placeholder1%" => "value1", "%placeholder2%" => "value2"]
+     * 
+     * @param string $input
+     * @return string[]|null
+     */
+    private function parsePlaceholderValues(string $input)
     {
-        $key = trim($translationKey);
-        if (substr($key, 0, 1) == '%' && substr($key, count($key) - 1, 1) == '%') {
-            return true;
-        }
-        return false;
-    }
-    
-    public static function translate(Workbench $exface, string $translationKey) {
-        try {
-            $translationKey = trim($translationKey, " \t\n\r\0\x0B%");
-            $numOfPoints = substr_count($translationKey, NameResolver::NAMESPACE_SEPARATOR);
-            if ($numOfPoints < 2) {
-                throw new InvalidArgumentException('The translation key must be prepended with the app alias, i.e. "exface.Core.TRANSLATION_KEY".');
+        // trennt die array-Elemente anhand der trennenden |
+        $array1 = explode('|', trim($input));
+        // trennt keys und values anhand der trennenden => und erzeugt ein array
+        foreach ($array1 as $array1Value) {
+            list($key, $value) = explode('=>', trim($array1Value));
+            if ($key && $value) {
+                $output[trim($key)] = trim($value);
             }
-            $sndPointPos = strpos($translationKey, NameResolver::NAMESPACE_SEPARATOR, strpos($translationKey, NameResolver::NAMESPACE_SEPARATOR) + 1);
-            $appAlias = substr($translationKey, 0, $sndPointPos);
-            $key = substr($translationKey, $sndPointPos + 1);
-            $output = $exface->getApp($appAlias)->getTranslator()->translate($key);
-            return $output;
-        } catch (\Exception $e) {
-            return $translationKey;
         }
+        return $output;
+    }
+
+    /**
+     * Returns the integer-value of the passed $input string.
+     * 
+     * @param string $input
+     * @return number
+     */
+    private function parsePluralNumber(string $input)
+    {
+        return intval(trim($input));
     }
 }

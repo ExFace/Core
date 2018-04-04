@@ -4,10 +4,6 @@ namespace exface\Core\Widgets;
 use exface\Core\Interfaces\Widgets\iShowText;
 use exface\Core\Widgets\Traits\iCanBeAlignedTrait;
 use exface\Core\Interfaces\Widgets\iHaveColor;
-use exface\Core\CommonLogic\Model\Expression;
-use exface\Core\Factories\ExpressionFactory;
-use exface\Core\Factories\DataSheetFactory;
-use exface\Core\Formulas\Translate;
 
 /**
  * The text widget simply shows text with an optional title created from the caption of the widget
@@ -39,18 +35,7 @@ class Text extends Display implements iShowText, iHaveColor
 
     public function setText($value)
     {
-        if (Expression::detectFormula($value)) {
-            $expr = ExpressionFactory::createFromString($this->getWorkbench(), $value);
-            if ($expr->isStatic()) {
-                $data_sheet = DataSheetFactory::createFromObject($this->getMetaObject());
-                $data_sheet->addRow(['translate' => '']);
-                $value = $expr->evaluate($data_sheet, 'translate', 0);
-            }
-        }
-        if (Translate::isTranslationKey($value)) {
-            $value = Translate::translate($this->getWorkbench(), $value);
-        }
-        $this->text = $value;
+        $this->text = $this->translateValue($value);
         return $this;
     }
     
