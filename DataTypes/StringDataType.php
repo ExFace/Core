@@ -238,5 +238,103 @@ class StringDataType extends AbstractDataType
         preg_match_all("/\[#([^\]\[#]+)#\]/", $string, $placeholders);
         return is_array($placeholders[1]) ? $placeholders[1] : array();
     }
+    
+    /**
+     * Returns the part of the given string ($haystack) preceeding the first occurrence of $needle.
+     * 
+     * Using the optional parameters you can make the search case sensitive and
+     * search for the last occurrence instead of the first one.
+     * 
+     * Returns $default if the $needle was not found.
+     * 
+     * @param string $haystack
+     * @param string $needle
+     * @param mixed $default
+     * @param bool $caseSensitive
+     * @param bool $useLastOccurance
+     * @return string|boolean
+     */
+    public static function substringBefore(string $haystack, string $needle, $default = false, bool $caseSensitive = false, bool $useLastOccurance = false)
+    {
+        $substr = '';
+        if ($caseSensitive === true) {
+            if ($useLastOccurance === true) {
+                $pos = strrpos($haystack, $needle);
+                if ($pos === false) {
+                    $substr = $default;
+                } else {
+                    $substr = substr($haystack, 0, $pos);
+                }
+            } else {
+                $substr = strstr($haystack, $needle, true);
+                if ($substr === false) {
+                    $substr = $default;
+                }
+            }
+        } else {
+            if ($useLastOccurance) {
+                $pos = strripos($haystack, $needle);
+                if ($pos === false) {
+                    $substr = $default;
+                } else {
+                    $substr = substr($haystack, 0, $pos);
+                }
+            } else {
+                $substr = stristr($haystack, $needle, true);
+                if ($substr === false) {
+                    $substr = $default;
+                }
+            }
+        }
+        return $substr;
+    }
+    
+    /**
+     * Returns the part of the given string ($haystack) following the first occurrence of $needle.
+     * 
+     * Using the optional parameters you can make the search case sensitive and
+     * search for the last occurrence instead of the first one.
+     * 
+     * @param string $haystack
+     * @param string $needle
+     * @param mixed $default
+     * @param bool $caseSensitive
+     * @param bool $useLastOccurance
+     * @return string|boolean
+     */
+    public static function substringAfter(string $haystack, string $needle, $default = false, bool $caseSensitive = false, bool $useLastOccurance = false)
+    {
+        $substr = '';
+        if ($caseSensitive === true) {
+            if ($useLastOccurance === true) {
+                $pos = strrpos($haystack, $needle);
+                if ($pos === false) {
+                    $substr = $default;
+                } else {
+                    $substr = substr($haystack, ($pos+1));
+                }
+            } else {
+                $substr = strstr($haystack, $needle);
+                if ($substr === false) {
+                    $substr = $default;
+                }
+            }
+        } else {
+            if ($useLastOccurance) {
+                $pos = strripos($haystack, $needle);
+                if ($pos === false) {
+                    $substr = $default;
+                } else {
+                    $substr = substr($haystack, ($pos+1));
+                }
+            } else {
+                $substr = stristr($haystack, $needle);
+                if ($substr === false) {
+                    $substr = $default;
+                }
+            }
+        }
+        return $substr;
+    }
 }
 ?>
