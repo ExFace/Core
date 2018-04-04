@@ -71,6 +71,8 @@
 	
 	"ACTION.SHOWHELPDIALOG.NAME": "Help",
 	
+	"ACTION.SHOWMODELBUILDERDIALOG.NAME": "Model Builder",
+	
 	"ACTION.SHOWOBJECTDIALOG.NAME": "Information",
 	
 	"ACTION.UNDOACTION.NAME": "Undo",
@@ -125,6 +127,19 @@
     "LOCALIZATION.NUMBER.THOUSANDS_SEPARATOR": " ",
     "LOCALIZATION.PRICE.PRECISION_MAX": 2,
     "LOCALIZATION.PRICE.PRECISION_MIN": 2,
+    
+    "UIPAGE.ACTION": "Action|Actions",
+    "UIPAGE.APP_ALIAS": "App alias",
+    "UIPAGE.ATTRIBUTE": "Attribute|Attributes",
+    "UIPAGE.BASEOBJECT": "Base object",
+    "UIPAGE.BEHAVIOR": "Behavior|Behaviors",
+    "UIPAGE.CONNECTION": "Connection|Connections",
+    "UIPAGE.CONNECTION_READONLY": "Connection readonly",
+    "UIPAGE.CREDENTIALS": "Credentials",
+    "UIPAGE.DATA_SOURCE": "Data source|Data sources",
+    "UIPAGE.OBJECT": "Object|Objects",
+    "UIPAGE.READ": "Read",
+    "UIPAGE.RELATION_TO": "Relation to",
     
     "WIDGET.SELECT_ALL": "All",
 	"WIDGET.SELECT_YES": "Yes",

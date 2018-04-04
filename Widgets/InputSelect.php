@@ -16,9 +16,6 @@ use exface\Core\Interfaces\DataSheets\DataColumnInterface;
 use exface\Core\Interfaces\Model\MetaRelationInterface;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
-use exface\Core\CommonLogic\Model\Expression;
-use exface\Core\Factories\ExpressionFactory;
-use exface\Core\Formulas\Translate;
 
 /**
  * A dropdown menu to select from.
@@ -256,19 +253,7 @@ class InputSelect extends Input implements iSupportMultiSelect
         
         //Translate options
         foreach ($options as $key => $value) {
-            if (Expression::detectFormula($value)) {
-                $expr = ExpressionFactory::createFromString($this->getWorkbench(), $value);
-                if ($expr->isStatic()) {
-                    $data_sheet = DataSheetFactory::createFromObject($this->getMetaObject());
-                    $data_sheet->addRow(['translate' => '']);
-                    $translation = $expr->evaluate($data_sheet, 'translate', 0);
-                    $options[$key] = $translation;
-                }
-            }
-            if (Translate::isTranslationKey($value)) {
-                $translation = Translate::translate($this->getWorkbench(), $value);
-                $options[$key] = $translation;
-            }
+            $options[$key] = $this->translateValue($value);
         }
         
         $this->selectable_options = $options;

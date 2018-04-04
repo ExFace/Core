@@ -36,7 +36,7 @@
         ],
         "buttons": [
             {
-                "caption": "Read",
+                "caption": "=TRANSLATE('exface.Core', 'UIPAGE.READ')",
                 "bind_to_double_click": true,
                 "action": {
                     "alias": "exface.Core.ShowDialog",
