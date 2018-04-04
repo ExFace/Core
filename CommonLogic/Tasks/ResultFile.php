@@ -3,6 +3,7 @@ namespace exface\Core\CommonLogic\Tasks;
 
 use exface\Core\Interfaces\Tasks\ResultFileInterface;
 use exface\Core\Interfaces\Tasks\ResultStreamInterface;
+use exface\Core\DataTypes\BooleanDataType;
 
 /**
  * Task result containing a file.
@@ -26,6 +27,17 @@ class ResultFile extends ResultMessage implements ResultFileInterface
     public function isDownloadable(): bool
     {
         return $this->downloadable;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Tasks\ResultFileInterface::setDownloadable()
+     */
+    public function setDownloadable(bool $trueOrFalse) : ResultFileInterface
+    {
+        $this->downloadable = $trueOrFalse;
+        return $this;
     }
     
     public function setPath(string $path): ResultFileInterface
