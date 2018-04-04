@@ -612,5 +612,15 @@ class App implements AppInterface
         $class = $this->getPrototypeClass($selector);
         return new $class($this, $sourceWidget);
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\AliasInterface::getAlias()
+     */
+    public function getAlias()
+    {
+        return StringDataType::substringAfter($this->getAliasWithNamespace(), AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER);
+    }
 }
 ?>
