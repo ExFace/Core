@@ -16,6 +16,13 @@ interface ResultFileInterface extends ResultStreamInterface
     public function isDownloadable() : bool;
     
     /**
+     *
+     * @param bool $trueOrFalse
+     * @return ResultFileInterface
+     */
+    public function setDownloadable(bool $trueOrFalse) : ResultFileInterface;
+    
+    /**
      * 
      * @return string
      */
