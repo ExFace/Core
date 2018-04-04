@@ -156,7 +156,7 @@ class Expression implements ExpressionInterface
             return false;
     }
 
-    protected static function parseQuotedString($expression)
+    protected function parseQuotedString($expression)
     {
         if (substr($expression, 0, 1) == '"' || substr($expression, 0, 1) == "'") {
             return trim($expression, '"\'');
