@@ -317,6 +317,8 @@ class StringDataType extends AbstractDataType
                 $substr = strstr($haystack, $needle);
                 if ($substr === false) {
                     $substr = $default;
+                } else {
+                    $substr = substr($substr, 1);
                 }
             }
         } else {
@@ -331,6 +333,8 @@ class StringDataType extends AbstractDataType
                 $substr = stristr($haystack, $needle);
                 if ($substr === false) {
                     $substr = $default;
+                } else {
+                    $substr = substr($substr, 1);
                 }
             }
         }

@@ -5,6 +5,8 @@ use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 
 trait AliasTrait {
     
+    private $alias = null;
+    
     /**
      *
      * {@inheritdoc}
@@ -12,11 +14,15 @@ trait AliasTrait {
      */
     public function getAlias()
     {
-        $class = substr(strrchr(get_class($this), '\\'), 1);
-        if ($suffix = $this->getClassnameSuffixToStripFromAlias()) {
-            return substr($class, 0, (-1*strlen($suffix)));
+        if ($this->alias === null) {
+            $class = substr(strrchr(get_class($this), '\\'), 1);
+            if ($suffix = $this->getClassnameSuffixToStripFromAlias()) {
+                $this->alias = substr($class, 0, (-1*strlen($suffix)));
+            } else {
+                $this->alias = $class;
+            }
         }
-        return $class;
+        return $this->alias;
     }
     
     /**
