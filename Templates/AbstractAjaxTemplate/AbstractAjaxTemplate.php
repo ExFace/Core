@@ -529,6 +529,9 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
         return $this->getWorkbench()->getCMS()->buildUrlToInclude($path);
     }
     
-    public abstract function buildHtmlHeadCommonIncludes() : array;
+    protected function buildHtmlHeadCommonIncludes() : array
+    {
+        return [];
+    }
 }
 ?>
