@@ -266,7 +266,7 @@ class StringDataType extends AbstractDataType
         foreach ($phs as $ph) {
             if (! isset($placeholders[$ph])) {
                 if ($strict === true) {
-                    throw new RangeException('Missing value for placeholder "' . $ph . '"!');
+                    throw new RangeException('Missing value for "' . $ph . '"!');
                 } else {
                     $replace[] = '';
                 }
@@ -349,14 +349,14 @@ class StringDataType extends AbstractDataType
                 if ($pos === false) {
                     $substr = $default;
                 } else {
-                    $substr = substr($haystack, ($pos+1));
+                    $substr = substr($haystack, ($pos+strlen($needle)));
                 }
             } else {
                 $substr = strstr($haystack, $needle);
                 if ($substr === false) {
                     $substr = $default;
                 } else {
-                    $substr = substr($substr, 1);
+                    $substr = substr($substr, strlen($needle));
                 }
             }
         } else {
@@ -365,14 +365,14 @@ class StringDataType extends AbstractDataType
                 if ($pos === false) {
                     $substr = $default;
                 } else {
-                    $substr = substr($haystack, ($pos+1));
+                    $substr = substr($haystack, ($pos+strlen($needle)));
                 }
             } else {
                 $substr = stristr($haystack, $needle);
                 if ($substr === false) {
                     $substr = $default;
                 } else {
-                    $substr = substr($substr, 1);
+                    $substr = substr($substr, strlen($needle));
                 }
             }
         }
