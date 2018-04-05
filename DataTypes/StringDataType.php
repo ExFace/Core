@@ -3,6 +3,8 @@ namespace exface\Core\DataTypes;
 
 use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
 use exface\Core\CommonLogic\DataTypes\AbstractDataType;
+use exface\Core\Exceptions\UnderflowException;
+use exface\Core\Exceptions\RangeException;
 
 /**
  * Basic data type for textual values.
@@ -237,6 +239,42 @@ class StringDataType extends AbstractDataType
         $placeholders = array();
         preg_match_all("/\[#([^\]\[#]+)#\]/", $string, $placeholders);
         return is_array($placeholders[1]) ? $placeholders[1] : array();
+    }
+    
+    /**
+     * Looks for placeholders ([#...#]) in a string and replaces them with values from
+     * the given array, where the key matches the placeholder.
+     * 
+     * Examples:
+     * - replacePlaceholder('Hello [#world#][#dot#]', ['world'=>'WORLD', 'dot'=>'!']) -> "Hello WORLD!"
+     * - replacePlaceholder('Hello [#world#][#dot#]', ['world'=>'WORLD']) -> exception
+     * - replacePlaceholder('Hello [#world#][#dot#]', ['world'=>'WORLD'], false) -> "Hello WORLD"
+     * 
+     * @param string $string
+     * @param string[] $placeholders
+     * @param bool $strict
+     * 
+     * @throws RangeException if no value is found for a placeholder
+     * 
+     * @return string
+     */
+    public static function replacePlaceholders(string $string, array $placeholders, bool $strict = true) : string
+    {
+        $phs = static::findPlaceholders($string);
+        $search = [];
+        $replace = [];
+        foreach ($phs as $ph) {
+            if (! isset($placeholders[$ph])) {
+                if ($strict === true) {
+                    throw new RangeException('Missing value for placeholder "' . $ph . '"!');
+                } else {
+                    $replace[] = '';
+                }
+            }
+            $search[] = '[#' . $ph . '#]';
+            $replace[] = $placeholders[$ph];
+        }
+        return str_replace($search, $replace, $string);
     }
     
     /**
