@@ -49,7 +49,7 @@ class DownloadZippedFolder extends AbstractAction
      */
     protected function createZip(TaskInterface $task) : ArchiveManager
     {
-        $zip = new ArchiveManager($this->getWorkbench(), $this->getZipPath());
+        $zip = new ArchiveManager($this->getWorkbench(), $this->getZipPathAbsolute());
         $zip->addFolder($this->getFolderPathAbsolute());
         $zip->close();
         return $zip;
