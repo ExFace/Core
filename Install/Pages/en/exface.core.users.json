@@ -46,12 +46,12 @@
                     "alias": "exface.Core.GoToPage",
                     "page_alias": "exface.core.credentials"
                 },
-                "caption": "=TRANSLATE('exface.Core', 'UIPAGE.CREDENTIALS')"
+                "caption": "=TRANSLATE('exface.Core', 'PAGE.USERS.CREDENTIALS')"
             },
             {
                 "action_alias": "exface.Core.GoToPage",
                 "action_page_alias": "exface.core.connection-credentials",
-                "caption": "=TRANSLATE('exface.Core', 'UIPAGE.CONNECTION', '', '2')"
+                "caption": "=TRANSLATE('exface.Core', 'GLOBAL.MODEL.CONNECTION', '', '2')"
             }
         ]
     }

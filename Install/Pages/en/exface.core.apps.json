@@ -65,15 +65,15 @@
             },
             {
                 "attribute_alias": "OBJECT__UID:COUNT",
-                "caption": "=TRANSLATE('exface.Core', 'UIPAGE.OBJECT', '', '2')"
+                "caption": "=TRANSLATE('exface.Core', 'GLOBAL.MODEL.OBJECT', '', '2')"
             },
             {
                 "attribute_alias": "DATASRC__UID:COUNT",
-                "caption": "=TRANSLATE('exface.Core', 'UIPAGE.DATA_SOURCE', '', '2')"
+                "caption": "=TRANSLATE('exface.Core', 'GLOBAL.MODEL.DATA_SOURCE', '', '2')"
             },
             {
                 "attribute_alias": "CONNECTION__UID:COUNT",
-                "caption": "=TRANSLATE('exface.Core', 'UIPAGE.CONNECTION', '', '2')"
+                "caption": "=TRANSLATE('exface.Core', 'GLOBAL.MODEL.CONNECTION', '', '2')"
             }
         ],
         "buttons": [
@@ -89,14 +89,14 @@
             {
                 "action_alias": "exface.Core.GoToPage",
                 "action_page_alias": "exface.core.objects",
-                "caption": "=TRANSLATE('exface.Core', 'UIPAGE.OBJECT', '', '2')"
+                "caption": "=TRANSLATE('exface.Core', 'GLOBAL.MODEL.OBJECT', '', '2')"
             },
             {
                 "action_alias": "axenox.PackageManager.ExportAppModel"
             },
             {
                 "action_alias": "axenox.PackageManager.InstallApp",
-                "caption": "=TRANSLATE('axenox.PackageManager', 'UIPAGE.REPAIR')"
+                "caption": "=TRANSLATE('axenox.PackageManager', 'PAGE.APPS.REPAIR')"
             },
             {
                 "action_alias": "axenox.PackageManager.ImportAppModel"
