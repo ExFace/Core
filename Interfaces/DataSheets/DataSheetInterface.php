@@ -4,13 +4,13 @@ namespace exface\Core\Interfaces\DataSheets;
 use exface\Core\CommonLogic\Model\ConditionGroup;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
-use exface\Core\Interfaces\ExfaceClassInterface;
+use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\iCanBeCopied;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Exceptions\DataSheets\DataSheetColumnNotFoundError;
 use exface\Core\CommonLogic\DataSheets\DataSheetList;
 
-interface DataSheetInterface extends ExfaceClassInterface, iCanBeCopied, iCanBeConvertedToUxon
+interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, iCanBeConvertedToUxon
 {
 
     /**

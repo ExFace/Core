@@ -3,7 +3,7 @@ namespace exface\Core\Interfaces\Tasks;
 
 use exface\Core\Interfaces\Selectors\ActionSelectorInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\Core\Interfaces\ExfaceClassInterface;
+use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\Templates\TemplateInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Selectors\MetaObjectSelectorInterface;
@@ -16,7 +16,7 @@ use exface\Core\Interfaces\Model\UiPageInterface;
  * @author Andrej Kabachnik
  *
  */
-interface TaskInterface extends ExfaceClassInterface
+interface TaskInterface extends WorkbenchDependantInterface
 {    
     /**
      * 

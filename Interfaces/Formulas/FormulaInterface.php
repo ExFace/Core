@@ -1,13 +1,13 @@
 <?php
 namespace exface\Core\Interfaces\Formulas;
 
-use exface\Core\Interfaces\ExfaceClassInterface;
+use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\Interfaces\DataSheets\DataColumnInterface;
 use exface\Core\Interfaces\Selectors\FormulaSelectorInterface;
 
-interface FormulaInterface extends ExfaceClassInterface
+interface FormulaInterface extends WorkbenchDependantInterface
 {
 
     /**

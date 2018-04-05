@@ -1,11 +1,11 @@
 <?php
 namespace exface\Core\Interfaces;
 
-use exface\Core\Interfaces\ExfaceClassInterface;
+use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\OutOfBoundsException;
 
-interface ConfigurationInterface extends ExfaceClassInterface, iCanBeConvertedToUxon
+interface ConfigurationInterface extends WorkbenchDependantInterface, iCanBeConvertedToUxon
 {
 
     /**

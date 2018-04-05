@@ -5,9 +5,9 @@ use Symfony\Component\Stopwatch\Stopwatch;
 use exface\Core\Events\ActionEvent;
 use exface\Core\Events\DataConnectionEvent;
 use exface\Core\Interfaces\Actions\ActionInterface;
-use exface\Core\Interfaces\ExfaceClassInterface;
+use exface\Core\Interfaces\WorkbenchDependantInterface;
 
-class Profiler implements ExfaceClassInterface
+class Profiler implements WorkbenchDependantInterface
 {
 
     private $stopwatch = null;
@@ -133,7 +133,7 @@ class Profiler implements ExfaceClassInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\ExfaceClassInterface::getWorkbench()
+     * @see \exface\Core\Interfaces\WorkbenchDependantInterface::getWorkbench()
      */
     public function getWorkbench()
     {

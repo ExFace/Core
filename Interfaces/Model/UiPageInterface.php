@@ -4,7 +4,7 @@ namespace exface\Core\Interfaces\Model;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Widgets\ContextBar;
 use exface\Core\Exceptions\Widgets\WidgetNotFoundError;
-use exface\Core\Interfaces\ExfaceClassInterface;
+use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\AliasInterface;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
@@ -30,7 +30,7 @@ use exface\Core\Interfaces\Selectors\AppSelectorInterface;
  * @author Andrej Kabachnik
  *
  */
-interface UiPageInterface extends ExfaceClassInterface, AliasInterface, iCanBeConvertedToUxon
+interface UiPageInterface extends WorkbenchDependantInterface, AliasInterface, iCanBeConvertedToUxon
 {
     /**
      * 

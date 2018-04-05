@@ -75,7 +75,7 @@ class BufferingHandler implements LogHandlerInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\ExfaceClassInterface::getWorkbench()
+     * @see \exface\Core\Interfaces\WorkbenchDependantInterface::getWorkbench()
      */
     public function getWorkbench()
     {

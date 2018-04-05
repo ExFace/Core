@@ -2,11 +2,11 @@
 namespace exface\Core\CommonLogic;
 
 use Symfony\Component\Filesystem\Filesystem;
-use exface\Core\Interfaces\ExfaceClassInterface;
+use exface\Core\Interfaces\WorkbenchDependantInterface;
 use Webmozart\PathUtil\Path;
 use exface\Core\Exceptions\Configuration\ConfigOptionNotFoundError;
 
-class Filemanager extends Filesystem implements ExfaceClassInterface
+class Filemanager extends Filesystem implements WorkbenchDependantInterface
 {
 
     const FOLDER_NAME_VENDOR = 'vendor';
@@ -278,7 +278,7 @@ class Filemanager extends Filesystem implements ExfaceClassInterface
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\Interfaces\ExfaceClassInterface::getWorkbench()
+     * @see \exface\Core\Interfaces\WorkbenchDependantInterface::getWorkbench()
      */
     public function getWorkbench()
     {

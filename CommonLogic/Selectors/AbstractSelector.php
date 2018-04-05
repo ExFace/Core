@@ -25,7 +25,7 @@ abstract class AbstractSelector implements SelectorInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\ExfaceClassInterface::getWorkbench()
+     * @see \exface\Core\Interfaces\WorkbenchDependantInterface::getWorkbench()
      */
     public function getWorkbench()
     {

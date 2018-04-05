@@ -4,7 +4,7 @@ namespace exface\Core\Interfaces;
 use exface\Core\CommonLogic\Model\User;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 
-interface UserInterface extends ExfaceClassInterface
+interface UserInterface extends WorkbenchDependantInterface
 {
 
     /**

@@ -2,13 +2,13 @@
 namespace exface\Core\Interfaces\Templates;
 
 use exface\Core\CommonLogic\Configuration;
-use exface\Core\Interfaces\ExfaceClassInterface;
+use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\AliasInterface;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Interfaces\Selectors\TemplateSelectorInterface;
 use exface\Core\Interfaces\ConfigurationInterface;
 
-interface TemplateInterface extends ExfaceClassInterface, AliasInterface
+interface TemplateInterface extends WorkbenchDependantInterface, AliasInterface
 {
     /**
      * Returns TRUE if this template matches the given template alias and false otherwise (case insensitive!)

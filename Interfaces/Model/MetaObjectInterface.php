@@ -1,7 +1,7 @@
 <?php
 namespace exface\Core\Interfaces\Model;
 
-use exface\Core\Interfaces\ExfaceClassInterface;
+use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\Model\MetaRelationInterface;
 use exface\Core\Exceptions\Model\MetaRelationNotFoundError;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
@@ -14,7 +14,7 @@ use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Interfaces\AliasInterface;
 
-interface MetaObjectInterface extends ExfaceClassInterface, AliasInterface
+interface MetaObjectInterface extends WorkbenchDependantInterface, AliasInterface
 {
     function __construct(ModelInterface $model);
     

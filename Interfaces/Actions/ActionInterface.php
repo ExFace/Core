@@ -1,7 +1,7 @@
 <?php
 namespace exface\Core\Interfaces\Actions;
 
-use exface\Core\Interfaces\ExfaceClassInterface;
+use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\AliasInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\WidgetInterface;
@@ -42,7 +42,7 @@ use exface\Core\Exceptions\Widgets\WidgetNotFoundError;
  * @author Andrej Kabachnik
  *
  */
-interface ActionInterface extends ExfaceClassInterface, AliasInterface, iCanBeCopied, iCanBeConvertedToUxon, TaskHandlerInterface
+interface ActionInterface extends WorkbenchDependantInterface, AliasInterface, iCanBeCopied, iCanBeConvertedToUxon, TaskHandlerInterface
 {
     
     /**

@@ -73,7 +73,7 @@ abstract class AbstractBehavior implements BehaviorInterface
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\Interfaces\ExfaceClassInterface::getWorkbench()
+     * @see \exface\Core\Interfaces\WorkbenchDependantInterface::getWorkbench()
      * @return WorkbenchInterface
      */
     public function getWorkbench()

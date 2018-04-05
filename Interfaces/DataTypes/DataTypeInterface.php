@@ -3,7 +3,7 @@ namespace exface\Core\Interfaces\DataTypes;
 
 use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
 use exface\Core\CommonLogic\Model\Model;
-use exface\Core\Interfaces\ExfaceClassInterface;
+use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\AliasInterface;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Interfaces\iCanBeCopied;
@@ -20,7 +20,7 @@ use exface\Core\Interfaces\Selectors\DataTypeSelectorInterface;
  * @author Andrej Kabachnik
  *
  */
-interface DataTypeInterface extends ExfaceClassInterface, AliasInterface, iCanBeCopied, iCanBeConvertedToUxon, MetaModelPrototypeInterface, ValueObjectInterface
+interface DataTypeInterface extends WorkbenchDependantInterface, AliasInterface, iCanBeCopied, iCanBeConvertedToUxon, MetaModelPrototypeInterface, ValueObjectInterface
 {
     /**
      * @param string $string

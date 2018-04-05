@@ -1,13 +1,13 @@
 <?php
 namespace exface\Core\Interfaces\Model;
 
-use exface\Core\Interfaces\ExfaceClassInterface;
+use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\iCanBeCopied;
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\DataTypes\SortingDirectionsDataType;
 
-interface MetaAttributeInterface extends ExfaceClassInterface, iCanBeCopied
+interface MetaAttributeInterface extends WorkbenchDependantInterface, iCanBeCopied
 {
     public function __construct(MetaObjectInterface $object);
     
