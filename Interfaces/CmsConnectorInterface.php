@@ -17,7 +17,7 @@ use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
  * @author Andrej Kabachnik
  *
  */
-interface CmsConnectorInterface extends ExfaceClassInterface
+interface CmsConnectorInterface extends WorkbenchDependantInterface
 {
 
     /**

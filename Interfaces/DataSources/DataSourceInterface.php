@@ -3,10 +3,10 @@ namespace exface\Core\Interfaces\DataSources;
 
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\CommonLogic\Model\Model;
-use exface\Core\Interfaces\ExfaceClassInterface;
+use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\CommonLogic\UxonObject;
 
-interface DataSourceInterface extends ExfaceClassInterface
+interface DataSourceInterface extends WorkbenchDependantInterface
 {
 
     /**

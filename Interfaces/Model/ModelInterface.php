@@ -2,7 +2,7 @@
 namespace exface\Core\Interfaces\Model;
 
 use exface\Core\Interfaces\DataSources\ModelLoaderInterface;
-use exface\Core\Interfaces\ExfaceClassInterface;
+use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Selectors\MetaObjectSelectorInterface;
 
@@ -15,7 +15,7 @@ use exface\Core\Interfaces\Selectors\MetaObjectSelectorInterface;
  * @author aka
  *
  */
-interface ModelInterface extends ExfaceClassInterface
+interface ModelInterface extends WorkbenchDependantInterface
 {
 
     /**

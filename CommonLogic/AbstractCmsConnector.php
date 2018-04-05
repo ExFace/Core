@@ -245,7 +245,7 @@ abstract class AbstractCmsConnector implements CmsConnectorInterface
     /**
      *
      * {@inheritdoc}
-     * @see \exface\Core\Interfaces\ExfaceClassInterface::getWorkbench()
+     * @see \exface\Core\Interfaces\WorkbenchDependantInterface::getWorkbench()
      */
     public function getWorkbench()
     {

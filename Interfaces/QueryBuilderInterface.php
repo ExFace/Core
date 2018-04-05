@@ -9,7 +9,7 @@ use exface\Core\Interfaces\Selectors\QueryBuilderSelectorInterface;
  * @author Andrej Kabachnik
  *
  */
-interface QueryBuilderInterface extends ExfaceClassInterface
+interface QueryBuilderInterface extends WorkbenchDependantInterface
 {  
     /**
      * 

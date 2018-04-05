@@ -12,7 +12,7 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 use exface\Core\Interfaces\Model\UiPageInterface;
 
-interface WidgetInterface extends ExfaceClassInterface, iCanBeCopied
+interface WidgetInterface extends WorkbenchDependantInterface, iCanBeCopied
 {
 
     /**

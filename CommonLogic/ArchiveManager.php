@@ -1,12 +1,12 @@
 <?php
 namespace exface\Core\CommonLogic;
 
-use exface\Core\Interfaces\ExfaceClassInterface;
+use exface\Core\Interfaces\WorkbenchDependantInterface;
 use ZipArchive;
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Exceptions\RuntimeException;
 
-class ArchiveManager implements ExfaceClassInterface
+class ArchiveManager implements WorkbenchDependantInterface
 {
 
     private $exface = null;
@@ -30,7 +30,7 @@ class ArchiveManager implements ExfaceClassInterface
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\Interfaces\ExfaceClassInterface::getWorkbench()
+     * @see \exface\Core\Interfaces\WorkbenchDependantInterface::getWorkbench()
      */
     public function getWorkbench()
     {

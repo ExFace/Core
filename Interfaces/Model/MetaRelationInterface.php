@@ -1,11 +1,11 @@
 <?php
 namespace exface\Core\Interfaces\Model;
 
-use exface\Core\Interfaces\ExfaceClassInterface;
+use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\Exceptions\RuntimeException;
 
-interface MetaRelationInterface extends ExfaceClassInterface
+interface MetaRelationInterface extends WorkbenchDependantInterface
 {
     const RELATION_TYPE_FORWARD = 'n1';
     

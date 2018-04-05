@@ -3,9 +3,9 @@ namespace exface\Core\Templates\AbstractAjaxTemplate\Formatters;
 
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\Templates\AbstractAjaxTemplate\Interfaces\JsDataTypeFormatterInterface;
-use exface\Core\Interfaces\ExfaceClassInterface;
+use exface\Core\Interfaces\WorkbenchDependantInterface;
 
-abstract class AbstractJsDataTypeFormatter implements JsDataTypeFormatterInterface, ExfaceClassInterface
+abstract class AbstractJsDataTypeFormatter implements JsDataTypeFormatterInterface, WorkbenchDependantInterface
 {
     /**
      * 

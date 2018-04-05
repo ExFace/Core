@@ -2,7 +2,7 @@
 namespace exface\Core\Interfaces\Model;
 
 use exface\Core\Interfaces\iCanBeCopied;
-use exface\Core\Interfaces\ExfaceClassInterface;
+use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\WidgetInterface;
@@ -12,7 +12,7 @@ use exface\Core\Interfaces\WidgetInterface;
  * @author Andrej Kabachnik
  *
  */
-interface ExpressionInterface extends ExfaceClassInterface, iCanBeCopied
+interface ExpressionInterface extends WorkbenchDependantInterface, iCanBeCopied
 {
     /**
      * 

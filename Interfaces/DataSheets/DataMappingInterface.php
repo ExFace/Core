@@ -2,7 +2,7 @@
 namespace exface\Core\Interfaces\DataSheets;
 
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
-use exface\Core\Interfaces\ExfaceClassInterface;
+use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\CommonLogic\UxonObject;
 
 /**
@@ -11,7 +11,7 @@ use exface\Core\CommonLogic\UxonObject;
  * @author Andrej Kabachnik
  *
  */
-interface DataMappingInterface extends iCanBeConvertedToUxon, ExfaceClassInterface
+interface DataMappingInterface extends iCanBeConvertedToUxon, WorkbenchDependantInterface
 {
     
     /**

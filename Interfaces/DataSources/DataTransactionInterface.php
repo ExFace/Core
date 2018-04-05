@@ -1,7 +1,7 @@
 <?php
 namespace exface\Core\Interfaces\DataSources;
 
-use exface\Core\Interfaces\ExfaceClassInterface;
+use exface\Core\Interfaces\WorkbenchDependantInterface;
 
 /**
  * DataTranscactions represent atomic data operations on the level of DataSheets.
@@ -17,7 +17,7 @@ use exface\Core\Interfaces\ExfaceClassInterface;
  * @author Andrej Kabachnik
  *        
  */
-interface DataTransactionInterface extends ExfaceClassInterface
+interface DataTransactionInterface extends WorkbenchDependantInterface
 {
 
     /**

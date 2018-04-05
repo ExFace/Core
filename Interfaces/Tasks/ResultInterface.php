@@ -1,7 +1,7 @@
 <?php
 namespace exface\Core\Interfaces\Tasks;
 
-use exface\Core\Interfaces\ExfaceClassInterface;
+use exface\Core\Interfaces\WorkbenchDependantInterface;
 
 /**
  * Common interface for all task results basically only returning a message and a code.
@@ -9,7 +9,7 @@ use exface\Core\Interfaces\ExfaceClassInterface;
  * @author Andrej Kabachnik
  *
  */
-interface ResultInterface extends ExfaceClassInterface
+interface ResultInterface extends WorkbenchDependantInterface
 {
     /**
      * 

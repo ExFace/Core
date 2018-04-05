@@ -1,7 +1,7 @@
 <?php
 namespace exface\Core\Interfaces\Widgets;
 
-use exface\Core\Interfaces\ExfaceClassInterface;
+use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Model\UiPageInterface;
@@ -13,7 +13,7 @@ use exface\Core\Exceptions\Widgets\WidgetNotFoundError;
  * @author Andrej Kabachnik
  *        
  */
-interface WidgetLinkInterface extends ExfaceClassInterface, iCanBeConvertedToUxon
+interface WidgetLinkInterface extends WorkbenchDependantInterface, iCanBeConvertedToUxon
 {
 
     /**

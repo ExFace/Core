@@ -21,7 +21,7 @@ use exface\Core\Exceptions\AppComponentNotFoundError;
  * @author Andrej Kabachnik
  *
  */
-interface AppInterface extends ExfaceClassInterface, AliasInterface, TaskHandlerInterface, ContainerInterface
+interface AppInterface extends WorkbenchDependantInterface, AliasInterface, TaskHandlerInterface, ContainerInterface
 {
     
     const CONFIG_SCOPE_SYSTEM = 'SYSTEM';

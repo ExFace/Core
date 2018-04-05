@@ -2,7 +2,7 @@
 namespace exface\Core\Interfaces\Contexts;
 
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
-use exface\Core\Interfaces\ExfaceClassInterface;
+use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Widgets\Container;
 use exface\Core\Interfaces\AliasInterface;
 use exface\Core\Interfaces\AppInterface;
@@ -33,7 +33,7 @@ use exface\Core\Interfaces\Selectors\ContextSelectorInterface;
  * @author Andrej Kabachnik
  *
  */
-interface ContextInterface extends AliasInterface, iCanBeConvertedToUxon, ExfaceClassInterface
+interface ContextInterface extends AliasInterface, iCanBeConvertedToUxon, WorkbenchDependantInterface
 {
     
     const CONTEXT_BAR_SHOW_ALLWAYS = 'show_allways';

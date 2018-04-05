@@ -1,7 +1,7 @@
 <?php
 namespace exface\Core\Interfaces\Selectors;
 
-use exface\Core\Interfaces\ExfaceClassInterface;
+use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
 
 /**
@@ -28,7 +28,7 @@ use exface\Core\Interfaces\WorkbenchInterface;
  * @author Andrej Kabachnik
  *
  */
-interface SelectorInterface extends ExfaceClassInterface
+interface SelectorInterface extends WorkbenchDependantInterface
 {
     /**
      * A selector class can be created from the selector string and the target workbench.

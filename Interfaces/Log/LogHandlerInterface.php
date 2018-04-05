@@ -2,9 +2,9 @@
 namespace exface\Core\Interfaces\Log;
 
 use exface\Core\Interfaces\iCanGenerateDebugWidgets;
-use exface\Core\Interfaces\ExfaceClassInterface;
+use exface\Core\Interfaces\WorkbenchDependantInterface;
 
-interface LogHandlerInterface extends ExfaceClassInterface
+interface LogHandlerInterface extends WorkbenchDependantInterface
 {
     /**
      * Handles a single log message.

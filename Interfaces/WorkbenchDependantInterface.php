@@ -3,7 +3,7 @@ namespace exface\Core\Interfaces;
 
 use exface\Core\CommonLogic\Workbench;
 
-interface ExfaceClassInterface
+interface WorkbenchDependantInterface
 {
 
     /**

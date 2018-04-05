@@ -7,13 +7,13 @@ use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Templates\AbstractAjaxTemplate\AbstractAjaxTemplate;
 use exface\Core\Exceptions\Configuration\ConfigOptionNotFoundError;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
-use exface\Core\Interfaces\ExfaceClassInterface;
+use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\CommonLogic\Translation;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\Interfaces\Widgets\iLayoutWidgets;
 use exface\Core\Widgets\Container;
 
-abstract class AbstractJqueryElement implements ExfaceClassInterface
+abstract class AbstractJqueryElement implements WorkbenchDependantInterface
 {
 
     private $exf_widget = null;
