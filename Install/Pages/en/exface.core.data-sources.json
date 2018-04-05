@@ -37,7 +37,7 @@
             },
             {
                 "attribute_alias": "BASE_OBJECT__LABEL",
-                "caption": "=TRANSLATE('exface.Core', 'UIPAGE.BASEOBJECT')"
+                "caption": "=TRANSLATE('exface.Core', 'PAGE.DATA_SOURCES.BASE_OBJECT')"
             },
             {
                 "attribute_alias": "READABLE_FLAG"
@@ -47,7 +47,7 @@
             },
             {
                 "attribute_alias": "CONNECTION__READONLY",
-                "caption": "=TRANSLATE('exface.Core', 'UIPAGE.CONNECTION_READONLY')"
+                "caption": "=TRANSLATE('exface.Core', 'PAGE.DATA_SOURCES.CONNECTION_READONLY')"
             },
             {
                 "attribute_alias": "APP__LABEL"
