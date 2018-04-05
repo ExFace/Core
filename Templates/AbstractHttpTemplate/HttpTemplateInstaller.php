@@ -27,6 +27,7 @@ class HttpTemplateInstaller extends AbstractAppInstaller
         try {
             $config = $this->getWorkbench()->getConfig();
             $routes = $config->getOption('TEMPLATE.ROUTES');
+            $before = $routes->toJson();
             foreach ($this->getTemplate()->getUrlRoutePatterns() as $pattern) {
                 $routes->setProperty($pattern, $this->getTemplate()->getAliasWithNamespace());
             }      
@@ -35,7 +36,11 @@ class HttpTemplateInstaller extends AbstractAppInstaller
             throw new InstallerRuntimeError($this, 'Failed to setup HTTP template routing!', null, $e);
         }
         
-        return 'Updated HTTP template routing configuration';
+        if ($routes->toJson() === $before) {
+            return 'HTTP template routing already up to date';    
+        } else {
+            return 'Updated HTTP template routing configuration';
+        }
     }
 
     /**

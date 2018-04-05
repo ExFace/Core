@@ -32,4 +32,17 @@ class AppSelector extends AbstractSelector implements AppSelectorInterface
     {
         return 'app';
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Selectors\AppSelectorInterface::getFolderRelativePath()
+     */
+    public function getFolderRelativePath() : string
+    {
+        // The workbench is actually responsible for placing apps in folders, but since
+        // the selector knows it's workbench, it can allways ask it for the folder for
+        // itself.
+        return $this->getWorkbench()->getAppFolder($this);
+    }
 }

@@ -6,6 +6,7 @@ use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Interfaces\Contexts\ContextManagerInterface;
 use exface\Core\Interfaces\DataSources\DataManagerInterface;
 use exface\Core\CommonLogic\Filemanager;
+use exface\Core\Interfaces\Selectors\AppSelectorInterface;
 
 interface WorkbenchInterface extends TaskHandlerInterface
 {
@@ -56,10 +57,17 @@ interface WorkbenchInterface extends TaskHandlerInterface
      * Launches an ExFace app and returns it.
      * Apps are cached and kept running for script (request) window
      *
-     * @param string $appSelectorString
+     * @param AppSelectorInterface|string $appSelectorString
      * @return AppInterface
      */
     public function getApp($selectorOrString);
+    
+    /**
+     *
+     * @param AppSelectorInterface $selector
+     * @return string
+     */
+    public function getAppFolder(AppSelectorInterface $selector) : string;
     
     /**
      * Returns the core app

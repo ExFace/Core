@@ -29,6 +29,7 @@ use exface\Core\Exceptions\AppNotFoundError;
 use exface\Core\CommonLogic\Selectors\CmsConnectorSelector;
 use exface\Core\CommonLogic\Selectors\ModelLoaderSelector;
 use exface\Core\Exceptions\AppComponentNotFoundError;
+use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 
 class Workbench implements WorkbenchInterface
 {
@@ -453,6 +454,11 @@ class Workbench implements WorkbenchInterface
             throw new AppNotFoundError('Cannot handle task without an action selector!');
         }
         return $this->getApp($task->getActionSelector()->getAppAlias())->handle($task);
+    }
+    
+    public function getAppFolder(AppSelectorInterface $selector) : string 
+    {
+        return str_replace(AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER, DIRECTORY_SEPARATOR, $selector->getAppAlias());
     }
 
 }
