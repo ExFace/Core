@@ -179,5 +179,12 @@ interface AppInterface extends ExfaceClassInterface, AliasInterface, TaskHandler
      * @return AppSelectorInterface
      */
     public function getSelector();
+    
+    /**
+     * Returns the ISO 639-1 code for the default language of the app.
+     * 
+     * @return string
+     */
+    public function getDefaultLanguageCode() : string;
 }
 ?>

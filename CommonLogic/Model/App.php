@@ -430,7 +430,12 @@ class App implements AppInterface
         return $app_installer;
     }
     
-    public function getDefaultLanguageCode()
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\AppInterface::getDefaultLanguageCode()
+     */
+    public function getDefaultLanguageCode() : string
     {
         return $this->getAppModelDataSheet()->getCellValue('DEFAULT_LANGUAGE_CODE', 0);
     }
