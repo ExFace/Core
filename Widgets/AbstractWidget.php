@@ -1226,7 +1226,7 @@ else {
      * @param string $string
      * @return string
      */
-    public function evaluatePropertyExpression($string) : string
+    protected function evaluatePropertyExpression(string $string) : string
     {
         if (Expression::detectFormula($string)) {
             $expr = ExpressionFactory::createFromString($this->getWorkbench(), $string);
