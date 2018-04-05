@@ -14,5 +14,10 @@ namespace exface\Core\Interfaces\Selectors;
  */
 interface AppSelectorInterface extends AliasSelectorInterface, UidSelectorInterface, PrototypeSelectorInterface
 {
-    
+    /**
+     * Returns the app folder path relative to the vendor folder of the current workbench.
+     * 
+     * @return string
+     */
+    public function getFolderRelativePath() : string;
 }
