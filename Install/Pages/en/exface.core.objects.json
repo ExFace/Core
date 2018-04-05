@@ -59,7 +59,7 @@
             },
             {
                 "attribute_alias": "OBJECT_ACTION__UID:COUNT",
-                "caption": "=TRANSLATE('exface.Core', 'GLOBAL.MODEL.ACTIONSS')"
+                "caption": "=TRANSLATE('exface.Core', 'GLOBAL.MODEL.ACTIONS')"
             },
             {
                 "attribute_alias": "OBJECT_BEHAVIORS__UID:COUNT",
