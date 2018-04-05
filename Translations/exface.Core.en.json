@@ -98,8 +98,6 @@
     "CONTEXT.OBJECTBASKET.REMOVE": "Remove",
     "CONTEXT.OBJECTBASKET.REMOVE_ALL": "Remove all",
 	
-	"GLOBAL.ACTIONS": "Actions",
-	
 	"GLOBAL.AGGREGATOR_FUNCTIONS.SUM": "Sum",
 	"GLOBAL.AGGREGATOR_FUNCTIONS.AVG": "Average",
 	"GLOBAL.AGGREGATOR_FUNCTIONS.MIN": "Minimum",
@@ -110,12 +108,12 @@
 	"GLOBAL.AGGREGATOR_FUNCTIONS.COUNT_DISTINCT": "Count distinct",
 	"GLOBAL.AGGREGATOR_FUNCTIONS.COUNT_IF": "Count if",
 	
-	"GLOBAL.MODEL.ACTION": "Action|Actions",
-    "GLOBAL.MODEL.ATTRIBUTE": "Attribute|Attributes",
-	"GLOBAL.MODEL.BEHAVIOR": "Behavior|Behaviors",
-    "GLOBAL.MODEL.CONNECTION": "Connection|Connections",
-    "GLOBAL.MODEL.DATA_SOURCE": "Data source|Data sources",
-    "GLOBAL.MODEL.OBJECT": "Object|Objects",
+	"GLOBAL.MODEL.ACTIONS": "Actions",
+	"GLOBAL.MODEL.ATTRIBUTES": "Attributes",
+	"GLOBAL.MODEL.BEHAVIORS": "Behaviors",
+    "GLOBAL.MODEL.CONNECTIONS": "Connections",
+    "GLOBAL.MODEL.DATA_SOURCES": "Data sources",
+    "GLOBAL.MODEL.OBJECTS": "Objects",
     
 	"GLOBAL.SORTING_DIRECTIONS.ASC": "Ascending",
 	"GLOBAL.SORTING_DIRECTIONS.DESC": "Descending",

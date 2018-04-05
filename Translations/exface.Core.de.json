@@ -97,9 +97,7 @@
     "CONTEXT.OBJECTBASKET.SHOW_DETAILS_DIALOG": "Inhalt anzeigen",
     "CONTEXT.OBJECTBASKET.REMOVE": "Entfernen",
     "CONTEXT.OBJECTBASKET.REMOVE_ALL": "Alle entfernen",
-    
-	"GLOBAL.ACTIONS": "Aktionen",
-    
+	
     "GLOBAL.AGGREGATOR_FUNCTIONS.SUM": "Summe",
 	"GLOBAL.AGGREGATOR_FUNCTIONS.AVG": "Durchschnitt",
 	"GLOBAL.AGGREGATOR_FUNCTIONS.MIN": "Minimum",
@@ -110,12 +108,12 @@
 	"GLOBAL.AGGREGATOR_FUNCTIONS.COUNT_DISTINCT": "Anzahl unterschiedlicher Werte",
 	"GLOBAL.AGGREGATOR_FUNCTIONS.COUNT_IF": "Anzahl mit Filter",
 	
-	"GLOBAL.MODEL.ACTION": "Action|Actions",
-    "GLOBAL.MODEL.ATTRIBUTE": "Attribut|Attribute",
-    "GLOBAL.MODEL.BEHAVIOR": "Behavior|Behaviors",
-    "GLOBAL.MODEL.CONNECTION": "Verbindung|Verbindungen",
-    "GLOBAL.MODEL.DATA_SOURCE": "Datenquelle|Datenquellen",
-    "GLOBAL.MODEL.OBJECT": "Objekt|Objekte",
+	"GLOBAL.MODEL.ACTIONS": "Aktionen",
+    "GLOBAL.MODEL.ATTRIBUTES": "Attribute",
+    "GLOBAL.MODEL.BEHAVIORS": "Behaviors",
+    "GLOBAL.MODEL.CONNECTIONS": "Verbindungen",
+    "GLOBAL.MODEL.DATA_SOURCES": "Datenquellen",
+    "GLOBAL.MODEL.OBJECTS": "Objekte",
     
 	"GLOBAL.SORTING_DIRECTIONS.ASC": "Aufsteigend",
 	"GLOBAL.SORTING_DIRECTIONS.DESC": "Absteigend",
