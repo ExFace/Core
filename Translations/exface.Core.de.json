@@ -70,6 +70,8 @@
 	"ACTION.SHOWLOOKUPDIALOG.SAVE_BUTTON": "Übernehmen",
 
 	"ACTION.SHOWHELPDIALOG.NAME": "Hilfe",
+	
+	"ACTION.SHOWMODELBUILDERDIALOG.NAME": "Modell generieren",
 
 	"ACTION.SHOWOBJECTDIALOG.NAME": "Info",
 
@@ -125,6 +127,19 @@
     "LOCALIZATION.NUMBER.THOUSANDS_SEPARATOR": " ",
     "LOCALIZATION.PRICE.PRECISION_MAX": 2,
     "LOCALIZATION.PRICE.PRECISION_MIN": 2,
+    
+    "UIPAGE.ACTION": "Action|Actions",
+    "UIPAGE.APP_ALIAS": "App Alias",
+    "UIPAGE.ATTRIBUTE": "Attribut|Attribute",
+    "UIPAGE.BASEOBJECT": "Basisobjekt",
+    "UIPAGE.BEHAVIOR": "Behavior|Behaviors",
+    "UIPAGE.CONNECTION": "Verbindung|Verbindungen",
+    "UIPAGE.CONNECTION_READONLY": "Verbindung nur lesend",
+    "UIPAGE.CREDENTIALS": "Zugangsdaten",
+    "UIPAGE.DATA_SOURCE": "Datenquelle|Datenquellen",
+    "UIPAGE.OBJECT": "Objekt|Objekte",
+    "UIPAGE.READ": "Lesen",
+    "UIPAGE.RELATION_TO": "Verknüpft mit",
     
 	"WIDGET.SELECT_ALL": "Alle",
 	"WIDGET.SELECT_YES": "Ja",
