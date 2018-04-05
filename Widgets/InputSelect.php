@@ -251,6 +251,11 @@ class InputSelect extends Input implements iSupportMultiSelect
             $options = $array;
         }
         
+        //Translate options
+        foreach ($options as $key => $value) {
+            $options[$key] = $this->evaluatePropertyExpression($value);
+        }
+        
         $this->selectable_options = $options;
         return $this;
     }
