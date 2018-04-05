@@ -419,7 +419,7 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
      */
     public function setEmptyText($value)
     {
-        $this->empty_text = $this->translateValue($value);
+        $this->empty_text = $this->evaluatePropertyExpression($value);
         return $this;
     }
     

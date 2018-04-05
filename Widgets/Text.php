@@ -35,7 +35,7 @@ class Text extends Display implements iShowText, iHaveColor
 
     public function setText($value)
     {
-        $this->text = $this->translateValue($value);
+        $this->text = $this->evaluatePropertyExpression($value);
         return $this;
     }
     

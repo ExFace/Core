@@ -152,7 +152,7 @@ class Tile extends Button
      */
     public function setSubtitle($text)
     {
-        $this->subtitle = $this->translateValue($text);
+        $this->subtitle = $this->evaluatePropertyExpression($text);
         return $this;
     }
 
