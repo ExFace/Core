@@ -83,7 +83,7 @@
             },
             {
                 "attribute_alias": "RELATED_OBJ__LABEL",
-                "caption": "=TRANSLATE('exface.Core', 'UIPAGE.RELATION_TO')"
+                "caption": "=TRANSLATE('exface.Core', 'PAGE.OBJECT_EDITOR.RELATION_TO')"
             },
             {
                 "attribute_alias": "CREATED_ON"
