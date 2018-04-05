@@ -319,7 +319,7 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
      */
     function setCaption($caption)
     {
-        $this->caption = $this->translateValue($caption);
+        $this->caption = $this->evaluatePropertyExpression($caption);
         return $this;
     }
     
@@ -966,7 +966,7 @@ else {
      */
     public function setHint($value)
     {
-        $this->hint = $this->translateValue($value);
+        $this->hint = $this->evaluatePropertyExpression($value);
         return $this;
     }
 
@@ -1223,18 +1223,18 @@ else {
      * 
      * Only static formulas are evaluated, otherwise the passed $value is returned.
      * 
-     * @param string $value
+     * @param string $string
      * @return string
      */
-    public function translateValue($value)
+    public function evaluatePropertyExpression($string) : string
     {
-        if (Expression::detectFormula($value)) {
-            $expr = ExpressionFactory::createFromString($this->getWorkbench(), $value);
+        if (Expression::detectFormula($string)) {
+            $expr = ExpressionFactory::createFromString($this->getWorkbench(), $string);
             if ($expr->isStatic()) {
                 return $expr->evaluate();
             }
         }
-        return $value;
+        return $string;
     }
 
     /**
