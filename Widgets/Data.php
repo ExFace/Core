@@ -1021,7 +1021,7 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
      */
     public function setEmptyText($value)
     {
-        $this->empty_text = $value;
+        $this->empty_text = $this->evaluatePropertyExpression($value);
         return $this;
     }
 

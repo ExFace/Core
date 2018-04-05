@@ -17,6 +17,7 @@ use exface\Core\DataTypes\IntegerDataType;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\Interfaces\Model\AggregatorInterface;
+use exface\Core\Exceptions\InvalidArgumentException;
 
 class Expression implements ExpressionInterface
 {
@@ -241,23 +242,36 @@ class Expression implements ExpressionInterface
      * {@inheritdoc}
      * @see \exface\Core\Interfaces\Model\ExpressionInterface::evaluate()
      */
-    public function evaluate(\exface\Core\Interfaces\DataSheets\DataSheetInterface $data_sheet, $column_name, $row_number = null)
+    public function evaluate(\exface\Core\Interfaces\DataSheets\DataSheetInterface $data_sheet = null, $column_name = null, $row_number = null)
     {
-        if (is_null($row_number)) {
-            $result = array();
-            $rows_and_totals_count = $data_sheet->countRowsLoaded() + count($data_sheet->getTotalsRows());
-            for ($r = 0; $r < $rows_and_totals_count; $r ++) {
-                $result[] = $this->evaluate($data_sheet, $column_name, $r);
-            }
-            return $result;
-        }
-        switch ($this->type) {
-            case self::TYPE_ATTRIBUTE:
-                return $data_sheet->getCellValue($this->attribute_alias, $row_number);
-            case self::TYPE_FORMULA:
-                return $this->formula->evaluate($data_sheet, $column_name, $row_number);
-            default:
+        if ($this->isStatic()) {
+            if ($this->isFormula()) {
+                return $this->formula->evaluate();
+            } else {
                 return $this->value;
+            }
+            
+        } else {
+            if (is_null($data_sheet) || is_null($column_name)) {
+                throw new InvalidArgumentException('In a non-static expression $data_sheet and $column_name are mandatory arguments.');
+            }
+            
+            if (is_null($row_number)) {
+                $result = array();
+                $rows_and_totals_count = $data_sheet->countRowsLoaded() + count($data_sheet->getTotalsRows());
+                for ($r = 0; $r < $rows_and_totals_count; $r ++) {
+                    $result[] = $this->evaluate($data_sheet, $column_name, $r);
+                }
+                return $result;
+            }
+            switch ($this->type) {
+                case self::TYPE_ATTRIBUTE:
+                    return $data_sheet->getCellValue($this->attribute_alias, $row_number);
+                case self::TYPE_FORMULA:
+                    return $this->formula->evaluate($data_sheet, $column_name, $row_number);
+                default:
+                    return $this->value;
+            }
         }
     }
 
@@ -523,6 +537,20 @@ class Expression implements ExpressionInterface
                 return $this->formula->isStatic();
         }
         return false;
-    }   
+    }
+    
+    /**
+     * Returns true if a string contains a formula, false otherwise.
+     * 
+     * @param string $value
+     * @return boolean
+     */
+    public static function detectFormula($value)
+    {
+        if ($value && substr(trim($value), 0, 1) === '=') {
+            return true;
+        }
+        return false;
+    }
 }
 ?>
