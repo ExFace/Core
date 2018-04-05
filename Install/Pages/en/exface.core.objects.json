@@ -55,15 +55,15 @@
             },
             {
                 "attribute_alias": "ATTRIBUTE__UID:COUNT",
-                "caption": "=TRANSLATE('exface.Core', 'GLOBAL.MODEL.ATTRIBUTE', '', '2')"
+                "caption": "=TRANSLATE('exface.Core', 'GLOBAL.MODEL.ATTRIBUTES')"
             },
             {
                 "attribute_alias": "OBJECT_ACTION__UID:COUNT",
-                "caption": "=TRANSLATE('exface.Core', 'GLOBAL.MODEL.ACTION', '', '2')"
+                "caption": "=TRANSLATE('exface.Core', 'GLOBAL.MODEL.ACTIONSS')"
             },
             {
                 "attribute_alias": "OBJECT_BEHAVIORS__UID:COUNT",
-                "caption": "=TRANSLATE('exface.Core', 'GLOBAL.MODEL.BEHAVIOR', '', '2')"
+                "caption": "=TRANSLATE('exface.Core', 'GLOBAL.MODEL.BEHAVIORS')"
             },
             {
                 "attribute_alias": "UID"
@@ -100,7 +100,7 @@
                     "alias": "exface.Core.GoToPage",
                     "page_alias": "exface.core.attributes"
                 },
-                "caption": "=TRANSLATE('exface.Core', 'GLOBAL.MODEL.ATTRIBUTE', '', '2')"
+                "caption": "=TRANSLATE('exface.Core', 'GLOBAL.MODEL.ATTRIBUTES')"
             },
             {
                 "action_alias": "exface.Core.ShowModelBuilderDialog",
