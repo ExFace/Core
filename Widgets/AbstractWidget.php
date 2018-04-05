@@ -27,6 +27,7 @@ use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\CommonLogic\Translation;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
+use exface\Core\Factories\ExpressionFactory;
 
 /**
  * Basic ExFace widget
@@ -318,7 +319,7 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
      */
     function setCaption($caption)
     {
-        $this->caption = $caption;
+        $this->caption = $this->evaluatePropertyExpression($caption);
         return $this;
     }
     
@@ -953,7 +954,7 @@ else {
      */
     public function setHint($value)
     {
-        $this->hint = $value;
+        $this->hint = $this->evaluatePropertyExpression($value);
         return $this;
     }
 
@@ -1183,6 +1184,30 @@ else {
     {
         $message_id = trim($message_id);
         return $this->getWorkbench()->getCoreApp()->getTranslator()->translate($message_id, $placeholders, $number_for_plurification);
+    }
+
+    /**
+     * Evaluates the formula in the passed $value and returns the result.
+     * 
+     * This can be used to translate certain attributes, e.g. the caption:
+     * =TRANSLATE('exface.Core', 'TRANSLATION.KEY', '%placeholder1%=>value1|%placeholder2%=>value2', '1')
+     * =TRANSLATE('exface.Core', 'ACTION.CREATEDATA.RESULT', '%number%=>Zwei', '2')
+     * =TRANSLATE('exface.Core', 'ACTION.CREATEDATA.NAME')
+     * 
+     * Only static formulas are evaluated, otherwise the passed $value is returned.
+     * 
+     * @param string $string
+     * @return string
+     */
+    public function evaluatePropertyExpression($string) : string
+    {
+        if (Expression::detectFormula($string)) {
+            $expr = ExpressionFactory::createFromString($this->getWorkbench(), $string);
+            if ($expr->isStatic()) {
+                return $expr->evaluate();
+            }
+        }
+        return $string;
     }
 
     /**

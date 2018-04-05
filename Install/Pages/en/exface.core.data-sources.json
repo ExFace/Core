@@ -37,7 +37,7 @@
             },
             {
                 "attribute_alias": "BASE_OBJECT__LABEL",
-                "caption": "Basisobjekt"
+                "caption": "=TRANSLATE('exface.Core', 'UIPAGE.BASEOBJECT')"
             },
             {
                 "attribute_alias": "READABLE_FLAG"
@@ -47,7 +47,7 @@
             },
             {
                 "attribute_alias": "CONNECTION__READONLY",
-                "caption": "Connection readonly"
+                "caption": "=TRANSLATE('exface.Core', 'UIPAGE.CONNECTION_READONLY')"
             },
             {
                 "attribute_alias": "APP__LABEL"
@@ -74,7 +74,8 @@
                 "action_alias": "exface.Core.DeleteObject"
             },
             {
-                "action_alias": "exface.Core.ShowModelBuilderDialog"
+                "action_alias": "exface.Core.ShowModelBuilderDialog",
+                "caption": "=TRANSLATE('exface.Core', 'ACTION.SHOWMODELBUILDERDIALOG.NAME')"
             }
         ]
     }

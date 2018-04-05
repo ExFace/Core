@@ -101,7 +101,7 @@ class Translation implements TranslationInterface
      */
     public function hasTranslation($message_id)
     {
-        return $this->tranlate($message_id) === $message_id ? false : true;
+        return $this->translate($message_id) === $message_id ? false : true;
     }
 }
 

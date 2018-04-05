@@ -7,6 +7,7 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Formulas\FormulaInterface;
 use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\Interfaces\Selectors\FormulaSelectorInterface;
+use exface\Core\Exceptions\InvalidArgumentException;
 
 /**
  * Data functions are much like Excel functions.
@@ -92,16 +93,28 @@ abstract class Formula implements FormulaInterface
      *
      * @see \exface\Core\Interfaces\Formulas\FormulaInterface::evaluate()
      */
-    public function evaluate(\exface\Core\Interfaces\DataSheets\DataSheetInterface $data_sheet, $column_name, $row_number)
+    public function evaluate(\exface\Core\Interfaces\DataSheets\DataSheetInterface $data_sheet = null, $column_name = null, $row_number = null)
     {
         $args = array();
-        foreach ($this->arguments as $expr) {
-            $args[] = $expr->evaluate($data_sheet, $column_name, $row_number);
-        }
         
-        $this->setDataSheet($data_sheet);
-        $this->setCurrentColumnName($column_name);
-        $this->setCurrentRowNumber($row_number);
+        if ($this->isStatic()) {
+            foreach ($this->arguments as $expr) {
+                $args[] = $expr->evaluate();
+            }
+            
+        } else {
+            if (is_null($data_sheet) || is_null($column_name) || is_null($row_number)) {
+                throw new InvalidArgumentException('In a non-static formula $data_sheet, $column_name and $row_number are mandatory arguments.');
+            }
+            
+            foreach ($this->arguments as $expr) {
+                $args[] = $expr->evaluate($data_sheet, $column_name, $row_number);
+            }
+            
+            $this->setDataSheet($data_sheet);
+            $this->setCurrentColumnName($column_name);
+            $this->setCurrentRowNumber($row_number);
+        }
         
         return call_user_func_array(array(
             $this,
