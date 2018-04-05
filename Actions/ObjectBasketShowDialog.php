@@ -102,7 +102,7 @@ class ObjectBasketShowDialog extends ShowDialog
         // Add actions menu
         /* @var $menu \exface\Core\Widgets\MenuButton */
         $menu = $dialog->createButton(UxonObject::fromArray(['widget_type' => 'MenuButton']));
-        $menu->setCaption($this->getWorkbench()->getCoreApp()->getTranslator()->translate('GLOBAL.ACTIONS'));
+        $menu->setCaption($this->getWorkbench()->getCoreApp()->getTranslator()->translate('GLOBAL.MODEL.ACTIONS'));
         $menu->setVisibility(EXF_WIDGET_VISIBILITY_PROMOTED);
         $menu->setInputWidget($table);
         foreach ($this->getMetaObject()->getActions()->getUsedInObjectBasket() as $a) {

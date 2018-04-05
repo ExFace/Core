@@ -1,13 +1,13 @@
 {
-	"ACTION.AUTOSUGGEST.NAME": "Autosuggest",
+	"ACTION.AUTOSUGGEST.NAME": "Подсказка",
 	
-	"ACTION.CREATEDATA.RESULT": "%number% item created.|%number% items created.",
-	"ACTION.CREATEDATA.NAME": "Create",
-	"ACTION.CREATEOBJECTDIALOG.NAME": "New",
+	"ACTION.CREATEDATA.RESULT": "%number% объект создано.|%number% объекта создано.|%number% объектов создано.",
+	"ACTION.CREATEDATA.NAME": "Новый объект",
+	"ACTION.CREATEOBJECTDIALOG.NAME": "Создать",
 	
-	"ACTION.CONTEXTAPI.RESULT": "'%operation_name%' completed!",
+	"ACTION.CONTEXTAPI.RESULT": "'%operation_name%' завершено!",
     
-    "ACTION.CUSTOMDATAQUERY.RESULT": "%number% row affected.|%number% rows affected.",
+    "ACTION.CUSTOMDATAQUERY.RESULT": "%number% строка затронута.|%number% строки затронуты.|%number% строк затронуто.|",
 	
 	"ACTION.DELETEOBJECT.RESULT": "%number% item deleted.|%number% items deleted.",
 	"ACTION.DELETEOBJECT.NAME": "Delete",
@@ -108,15 +108,15 @@
 	"GLOBAL.AGGREGATOR_FUNCTIONS.COUNT_DISTINCT": "Count distinct",
 	"GLOBAL.AGGREGATOR_FUNCTIONS.COUNT_IF": "Count if",
 	
-	"GLOBAL.MODEL.ACTIONS": "Actions",
-	"GLOBAL.MODEL.ATTRIBUTES": "Attributes",
-	"GLOBAL.MODEL.BEHAVIORS": "Behaviors",
-    "GLOBAL.MODEL.CONNECTIONS": "Connections",
-    "GLOBAL.MODEL.DATA_SOURCES": "Data sources",
-    "GLOBAL.MODEL.OBJECTS": "Objects",
+	"GLOBAL.MODEL.ACTIONS": "Действия",
+	"GLOBAL.MODEL.ATTRIBUTES": "Аттрибуты",
+	"GLOBAL.MODEL.BEHAVIORS": "Поведения",
+    "GLOBAL.MODEL.CONNECTIONS": "Соединения",
+    "GLOBAL.MODEL.DATA_SOURCES": "Источники данных",
+    "GLOBAL.MODEL.OBJECTS": "Объекты",
     
-	"GLOBAL.SORTING_DIRECTIONS.ASC": "Ascending",
-	"GLOBAL.SORTING_DIRECTIONS.DESC": "Descending",
+	"GLOBAL.SORTING_DIRECTIONS.ASC": "По возхождению",
+	"GLOBAL.SORTING_DIRECTIONS.DESC": "По уменьшения",
 	
 	"INSTALLER.SQLSCHEMA.SUCCESS": "%counter% SQL-schema-update installed|%counter% SQL-schema-updates installed",
     "INSTALLER.SQLSCHEMA.FAILED": "SQL-schema-update %first_failed_id% failed: %error_text%|%counter% SQL-schema-updates failed starting with update %first_failed_id%: %error_text%",
