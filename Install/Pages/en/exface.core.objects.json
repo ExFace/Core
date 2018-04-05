@@ -42,7 +42,7 @@
             },
             {
                 "attribute_alias": "APP__ALIAS",
-                "caption": "=TRANSLATE('exface.Core', 'UIPAGE.APP_ALIAS')"
+                "caption": "=TRANSLATE('exface.Core', 'PAGE.OBJECTS.APP_ALIAS')"
             },
             {
                 "attribute_alias": "ALIAS"
@@ -55,15 +55,15 @@
             },
             {
                 "attribute_alias": "ATTRIBUTE__UID:COUNT",
-                "caption": "=TRANSLATE('exface.Core', 'UIPAGE.ATTRIBUTE', '', '2')"
+                "caption": "=TRANSLATE('exface.Core', 'GLOBAL.MODEL.ATTRIBUTE', '', '2')"
             },
             {
                 "attribute_alias": "OBJECT_ACTION__UID:COUNT",
-                "caption": "=TRANSLATE('exface.Core', 'UIPAGE.ACTION', '', '2')"
+                "caption": "=TRANSLATE('exface.Core', 'GLOBAL.MODEL.ACTION', '', '2')"
             },
             {
                 "attribute_alias": "OBJECT_BEHAVIORS__UID:COUNT",
-                "caption": "=TRANSLATE('exface.Core', 'UIPAGE.BEHAVIOR', '', '2')"
+                "caption": "=TRANSLATE('exface.Core', 'GLOBAL.MODEL.BEHAVIOR', '', '2')"
             },
             {
                 "attribute_alias": "UID"
@@ -100,7 +100,7 @@
                     "alias": "exface.Core.GoToPage",
                     "page_alias": "exface.core.attributes"
                 },
-                "caption": "=TRANSLATE('exface.Core', 'UIPAGE.ATTRIBUTE', '', '2')"
+                "caption": "=TRANSLATE('exface.Core', 'GLOBAL.MODEL.ATTRIBUTE', '', '2')"
             },
             {
                 "action_alias": "exface.Core.ShowModelBuilderDialog",
