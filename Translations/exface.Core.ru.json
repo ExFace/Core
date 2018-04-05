@@ -1,0 +1,180 @@
+{
+	"ACTION.AUTOSUGGEST.NAME": "Подсказка",
+	
+	"ACTION.CREATEDATA.RESULT": "%number% объект создано.|%number% объекта создано.|%number% объектов создано.",
+	"ACTION.CREATEDATA.NAME": "Новый объект",
+	"ACTION.CREATEOBJECTDIALOG.NAME": "Создать",
+	
+	"ACTION.CONTEXTAPI.RESULT": "'%operation_name%' завершено!",
+    
+    "ACTION.CUSTOMDATAQUERY.RESULT": "%number% строка затронута.|%number% строки затронуты.|%number% строк затронуто.|",
+	
+	"ACTION.DELETEOBJECT.RESULT": "%number% item deleted.|%number% items deleted.",
+	"ACTION.DELETEOBJECT.NAME": "Delete",
+	
+	"ACTION.DUPLICATEOBJECTDIALOG.NAME": "Copy",
+	
+	"ACTION.EDITOBJECTDIALOG.SAVE_BUTTON": "Save",
+	"ACTION.EDITOBJECTDIALOG.NAME": "Edit",
+	"ACTION.EDITOBJECTDIALOG.NO_EDITABLE_ATTRIBUTES": "No editable attributes found!",
+
+	"ACTION.EXPORTCSV.NAME": "Export CSV",
+	"ACTION.EXPORTDATA.NAME": "Export",
+	"ACTION.EXPORTDATA.ROWOVERFLOW": "The maximum number of %number% entries was written to the file. ",
+	"ACTION.EXPORTJSON.NAME": "Export JSON",
+	"ACTION.EXPORTXLSX.NAME": "Export Excel",
+	"ACTION.EXPORTXLSX.USERNAME": "Username",
+	"ACTION.EXPORTXLSX.TIMESTAMP": "Date and time of export",
+	"ACTION.EXPORTXLSX.OBJECT": "Exported object",
+	"ACTION.EXPORTXLSX.FILTER": "Used filters",
+
+	"ACTION.FAVORITESADD.NAME": "Add to favorites",
+    "ACTION.FAVORITESADD.RESULT": "%number% objects added to favorites.",
+    
+	"ACTION.GENERATEMODELFROMDATASOURCE.NAME": "Generate Model",
+	"ACTION.GENERATEMODELFROMDATASOURCE.RESULT_FOR_OBJECT": "Created %created_counter% attribute(s) for %object_counter% object(s). %skipped_counter% attributes skipped as duplicates!",
+	
+	"ACTION.GOBACK.NAME": "Back",
+	"ACTION.GOTOURL.NAME": "Visit URL",
+	"ACTION.GOTOURL.SUCCESS": "Redirecting...",
+	"ACTION.GOTOPAGE.NAME": "Go to",
+	
+	"ACTION.MASSEDITDIALOG.NAME": "Mass edit",
+	"ACTION.MASSEDITDIALOG.EDITING_BY_FILTER": "Editing all objects matching the following filters: %filters%",
+	"ACTION.MASSEDITDIALOG.EDITING_ALL": "Editing all objects",
+	"ACTION.MASSEDITDIALOG.EDITING_SELECTED": "Editing %number% object|Editing %number% objects",
+	
+	"ACTION.OBJECTBASKET": "Object basket",
+    "ACTION.OBJECTBASKETADD.NAME": "Add to object basket",
+    "ACTION.OBJECTBASKETADD.RESULT": "%number% objects added to object basket.",
+    "ACTION.OBJECTBASKETSHOWDIALOG.NAME": "Show object basket",
+    "ACTION.OBJECTBASKETREMOVE.NAME": "Remove",
+    "ACTION.OBJECTBASKETREMOVE.RESULT": "%context_name%: %number%x %object_name% removed.",
+    "ACTION.OBJECTBASKETREMOVE.RESULT_ALL": "%context_name%: All objects of type %object_name% removed.",
+    
+    "ACTION.READDATA.NAME": "Search",
+    "ACTION.READDATA.SEARCH": "Search",
+    "ACTION.REFRESHWIDGET.NAME": "Refresh",
+	
+	"ACTION.SAVEDATA.RESULT": "%number% item created or updated.|%number% items created or updated.",
+	"ACTION.SAVEDATA.NAME": "Save",
+	
+	"ACTION.SETCONTEXT.NAME": "Set context",
+	
+	"ACTION.SHOWDIALOG.NAME": "Open dialog",
+	"ACTION.SHOWDIALOG.CANCEL_BUTTON": "Cancel",
+	
+	"ACTION.SHOWDIALOGFROMFILE.NAME": "Show saved widget",
+	
+	"ACTION.SHOWLOOKUPDIALOG.NAME": "Search",
+	"ACTION.SHOWLOOKUPDIALOG.SAVE_BUTTON": "Apply",
+	
+	"ACTION.SHOWHELPDIALOG.NAME": "Help",
+	
+	"ACTION.SHOWMODELBUILDERDIALOG.NAME": "Model Builder",
+	
+	"ACTION.SHOWOBJECTDIALOG.NAME": "Information",
+	
+	"ACTION.UNDOACTION.NAME": "Undo",
+	"ACTION.UNDOACTION.RESULT": "Successfully undone %number% action.|Successfully undone %number% actions.",
+	
+	"ACTION.UPDATEDATA.NAME": "Update",
+	"ACTION.UPDATEDATA.RESULT": "%number% item updated.|%number% items updated.",
+	
+	"CONTEXT.ACTIONTEST.NAME": "ActionTest",
+    
+    "CONTEXT.DATA.NAME": "Data",
+    
+    "CONTEXT.DEBUG.NAME": "Debugger",
+    "CONTEXT.DEBUG.START": "Start tracing",
+    "CONTEXT.DEBUG.STOP": "Stop tracing",
+    
+    "CONTEXT.FAVORITES.NAME": "Favorites",
+    
+    "CONTEXT.FILTER.NAME": "Filters",
+    
+    "CONTEXT.OBJECTBASKET.NAME": "Object Basket",
+    "CONTEXT.OBJECTBASKET.SHOW_DETAILS_DIALOG": "Show content",
+    "CONTEXT.OBJECTBASKET.REMOVE": "Remove",
+    "CONTEXT.OBJECTBASKET.REMOVE_ALL": "Remove all",
+	
+	"GLOBAL.AGGREGATOR_FUNCTIONS.SUM": "Sum",
+	"GLOBAL.AGGREGATOR_FUNCTIONS.AVG": "Average",
+	"GLOBAL.AGGREGATOR_FUNCTIONS.MIN": "Minimum",
+	"GLOBAL.AGGREGATOR_FUNCTIONS.MAX": "Maximum",
+	"GLOBAL.AGGREGATOR_FUNCTIONS.LIST": "List",
+	"GLOBAL.AGGREGATOR_FUNCTIONS.LIST_DISTINCT": "List distinct",
+	"GLOBAL.AGGREGATOR_FUNCTIONS.COUNT": "Count",
+	"GLOBAL.AGGREGATOR_FUNCTIONS.COUNT_DISTINCT": "Count distinct",
+	"GLOBAL.AGGREGATOR_FUNCTIONS.COUNT_IF": "Count if",
+	
+	"GLOBAL.MODEL.ACTIONS": "Действия",
+	"GLOBAL.MODEL.ATTRIBUTES": "Аттрибуты",
+	"GLOBAL.MODEL.BEHAVIORS": "Поведения",
+    "GLOBAL.MODEL.CONNECTIONS": "Соединения",
+    "GLOBAL.MODEL.DATA_SOURCES": "Источники данных",
+    "GLOBAL.MODEL.OBJECTS": "Объекты",
+    
+	"GLOBAL.SORTING_DIRECTIONS.ASC": "По возхождению",
+	"GLOBAL.SORTING_DIRECTIONS.DESC": "По уменьшения",
+	
+	"INSTALLER.SQLSCHEMA.SUCCESS": "%counter% SQL-schema-update installed|%counter% SQL-schema-updates installed",
+    "INSTALLER.SQLSCHEMA.FAILED": "SQL-schema-update %first_failed_id% failed: %error_text%|%counter% SQL-schema-updates failed starting with update %first_failed_id%: %error_text%",
+	
+	"LOCALIZATION.DATE.DATE_FORMAT": "d.m.Y",
+    "LOCALIZATION.DATE.DATE_FORMAT_JS": "dd.MM.yyyy",
+    "LOCALIZATION.DATE.DATE_FORMAT_EXCEL": "DD.MM.YYYY",
+	"LOCALIZATION.DATE.DATETIME_FORMAT": "d.m.Y H:i:s",
+    "LOCALIZATION.DATE.DATETIME_FORMAT_JS": "dd.MM.yyyy HH:mm:ss",
+    "LOCALIZATION.DATE.DATETIME_FORMAT_EXCEL": "DD.MM.YYYY HH:MM:SS",
+	"LOCALIZATION.DATE.TIME_FORMAT": "H:i:s",
+    "LOCALIZATION.NUMBER.DECIMAL_SEPARATOR": ".",
+    "LOCALIZATION.NUMBER.THOUSANDS_SEPARATOR": " ",
+    "LOCALIZATION.PRICE.PRECISION_MAX": 2,
+    "LOCALIZATION.PRICE.PRECISION_MIN": 2,
+    
+    "PAGE.APPS.REPAIR": "Repair",
+    "PAGE.OBJECTS.APP_ALIAS": "App alias",
+    "PAGE.DATA_SOURCES.BASE_OBJECT": "Base object",
+    "PAGE.DATA_SOURCES.CONNECTION_READONLY": "Connection readonly",
+    "PAGE.USERS.CREDENTIALS": "Credentials",
+    "PAGE.DOCS.READ": "Read",
+    "PAGE.OBJECT_EDITOR.RELATION_TO": "Relation to",
+    
+    "WIDGET.SELECT_ALL": "All",
+	"WIDGET.SELECT_YES": "Yes",
+	"WIDGET.SELECT_NO": "No",
+	"WIDGET.SELECT_NONE": "-",
+	"WIDGET.SELECT_EMPTY": "Empty",
+	
+	"WIDGET.STATEMENUBUTTON.CAPTION": "Change state",
+	
+	"WIDGET.DATA.NO_DATA_FOUND": "No data could be found for the current set of filters!",
+	"WIDGET.DATA.HELP.FILTERS": "Filters",
+	"WIDGET.DATA.HELP.COLUMNS": "Columns",
+	"WIDGET.DATA.NOT_LOADED": "No data was loaded for performance reasons. Please first set the filters, then press Search/Reload!",
+	
+	"WIDGET.DATACONFIGURATOR.FILTER_TAB_CAPTION": "Filters",
+	"WIDGET.DATACONFIGURATOR.SORTER_TAB_CAPTION": "Sorting",
+	"WIDGET.DATACONFIGURATOR.COLUMN_TAB_CAPTION": "Columns",
+	"WIDGET.DATACONFIGURATOR.AGGREGATION_TAB_CAPTION": "Grouping",
+	
+	"WIDGET.DIALOG.CLOSE_BUTTON_CAPTION": "Cancel",
+	
+	"WIDGET.TEXT.EMPTY_TEXT": "-",
+	"WIDGET.TEXT.STYLE_BOLD": "Bold",
+	"WIDGET.TEXT.STYLE_NORMAL": "Normal",
+	"WIDGET.TEXT.STYLE_UNDERLINE": "Underline",
+	"WIDGET.TEXT.STYLE_ITALIC": "Italic",
+	"WIDGET.TEXT.STYLE_STRIKETHROUGH": "Strike-through",
+	
+	"WIDGET.INPUT.EMPTY_TEXT": "",
+	
+	"ERROR.CAPTION": "Error",
+	"ERROR.REQUEST_CAPTION": "Request",
+	"ERROR.CONTEXT_CAPTION": "Context",
+	"ERROR.STACKTRACE_CAPTION": "Stacktrace",
+	"ERROR.SUPPORT_HINT": "Please be sure to include the LOG-number of this error when contacting <a href=\"mailto:%support_mail%?subject=[%system_name%]%20%error_id%\">support</a>: \"%error_id%\"!",
+	"WARNING.CAPTION": "Warning"
+	
+}
