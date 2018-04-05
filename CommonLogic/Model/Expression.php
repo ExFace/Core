@@ -547,7 +547,7 @@ class Expression implements ExpressionInterface
      */
     public static function detectFormula($value)
     {
-        if ($value && substr(trim($value), 0, 1) == '=') {
+        if ($value && substr(trim($value), 0, 1) === '=') {
             return true;
         }
         return false;
