@@ -114,6 +114,8 @@
     "GLOBAL.MODEL.CONNECTIONS": "Connections",
     "GLOBAL.MODEL.DATA_SOURCES": "Data sources",
     "GLOBAL.MODEL.OBJECTS": "Objects",
+    "GLOBAL.MODEL.UID": "UID",
+    "GLOBAL.MODEL.LABEL": "Label",
     
 	"GLOBAL.SORTING_DIRECTIONS.ASC": "Ascending",
 	"GLOBAL.SORTING_DIRECTIONS.DESC": "Descending",
@@ -140,6 +142,10 @@
     "PAGE.USERS.CREDENTIALS": "Credentials",
     "PAGE.DOCS.READ": "Read",
     "PAGE.OBJECT_EDITOR.RELATION_TO": "Relation to",
+    "PAGE.OBJECT_EDITOR.DEFAULT_EDITOR": "Default Editor",
+    "PAGE.OBJECT_EDITOR.DATA_ADDRESS": "Data Address",
+    "PAGE.ATTRIBUTES.DISPLAY_ORDER": "Disp. Pos.",
+    "PAGE.TABS.GENERAL": "General",
     
     "WIDGET.SELECT_ALL": "All",
 	"WIDGET.SELECT_YES": "Yes",
