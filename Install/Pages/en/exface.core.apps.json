@@ -96,7 +96,7 @@
             },
             {
                 "action_alias": "axenox.PackageManager.InstallApp",
-                "caption": "=TRANSLATE('axenox.PackageManager', 'PAGE.APPS.REPAIR')"
+                "caption": "=TRANSLATE('exface.Core', 'PAGE.APPS.REPAIR')"
             },
             {
                 "action_alias": "axenox.PackageManager.ImportAppModel"
