@@ -37,11 +37,11 @@ class JsNumberFormatter extends AbstractJsDataTypeFormatter
             return $jsInput;
         }
         
-        $precision_max = is_null($dataType->getPrecisionMax()) ? 'undefined' : $dataType->getPrecisionMax();
-        $precision_min = is_null($dataType->getPrecisionMin()) ? 'undefined' : $dataType->getPrecisionMin();
+        $precision_max = $dataType->getPrecisionMax() === null ? 'undefined' : $dataType->getPrecisionMax();
+        $precision_min = $dataType->getPrecisionMin() === null ? 'undefined' : $dataType->getPrecisionMin();
         $locale = $this->getWorkbench()->getContext()->getScopeSession()->getSessionLocale();
         $locale = is_null($locale) ? 'undefined' : "'" . str_replace('_', '-', $locale) . "'";
-        $use_grouping = $this->getThousandsSeparator() ? 'true' : 'false';
+        $use_grouping = $dataType->getGroupDigits() && $this->getThousandsSeparator() ? 'true' : 'false';
         
         return <<<JS
         function() {
