@@ -8,6 +8,8 @@ use exface\Core\Templates\AbstractAjaxTemplate\Interfaces\JsValueDecoratingInter
 use exface\Core\Exceptions\Templates\TemplateOutputError;
 use exface\Core\Widgets\DataTable;
 use exface\Core\DataTypes\SortingDirectionsDataType;
+use exface\Core\Interfaces\Widgets\iTakeInput;
+use exface\Core\Widgets\Input;
 
 /**
  * This trait contains common methods for template elements using the jQuery DataTables library.
@@ -198,18 +200,32 @@ JS;
     {
         // Data type specific formatting
         $formatter_js = '';
-        $cellTpl = $this->getTemplate()->getElement($col->getCellWidget());
+        $cellWidget = $col->getCellWidget();
+        $cellTpl = $this->getTemplate()->getElement($cellWidget);
         if (($cellTpl instanceof JsValueDecoratingInterface) && $cellTpl->hasDecorator()) {
             $formatter_js = $cellTpl->buildJsValueDecorator('data');
+        } elseif ($cellWidget instanceof Input) {
+            // FIXME how to place the data into the cell editor? Maybe use the data setter?
+            $cellData = $col->hasAttributeReference() ? 'data' : "''";
+            $cellHtml = $cellTpl->buildHtml();
+            $cellHtml = preg_replace('/id="[^"]*"/', '', $cellHtml);
+            $cellHtml = preg_replace('/name="[^"]*"/', '', $cellHtml);
+            $cellHtml = preg_replace('/\s\s+/', ' ', $cellHtml);
+            $formatter_js = "'" . $cellHtml . "'";
         }
+        
+        // In datatables with remote source sorting is allways performed remotely, so
+        // it cannot be done for columns without attribute binding (the server cannot
+        // sort those)
+        $sortable = $col->hasAttributeReference() ? $col->getSortable() : 'false';
         
         $output = '{
 							name: "' . $col->getAttributeAlias() . '"
-                            ' . ($col->hasAttributeReference() ? ', data: "' . $col->getDataColumnName() . '"' : '') . '
+                            , data: ' . ($col->hasAttributeReference() ? '"' . $col->getDataColumnName() . '"' : 'null') . '
                             ' . ($col->isHidden() || $col->getVisibility() === EXF_WIDGET_VISIBILITY_OPTIONAL ? ', visible: false' : '') . '
                             ' . ($col->getWidth()->isTemplateSpecific() ? ', width: "' . $col->getWidth()->getValue() . '"': '') . '
                             , className: "' . $this->buildCssColumnClass($col) . '"' . '
-                            , orderable: ' . ($col->getSortable() ? 'true' : 'false') . '
+                            , orderable: ' . $sortable . '
                             ' . ($formatter_js ? ", render: function(data, type, row){try {return " . $formatter_js . "} catch (e) {return data;} }" : '') . '
                             
                     }';
