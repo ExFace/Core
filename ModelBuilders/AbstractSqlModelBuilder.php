@@ -63,21 +63,21 @@ abstract class AbstractSqlModelBuilder extends AbstractModelBuilder implements M
             case 'INTEGER':
             case 'DECIMAL':
             case 'FLOAT':
-                $data_type = DataTypeFactory::createFromAlias($workbench, 'exface.Core.Number');
+                $data_type = DataTypeFactory::createFromString($workbench, 'exface.Core.Number');
                 break;
             case 'TIMESTAMP':
             case 'DATETIME':
-                $data_type = DataTypeFactory::createFromAlias($workbench, 'exface.Core.Timestamp');
+                $data_type = DataTypeFactory::createFromString($workbench, 'exface.Core.Timestamp');
                 break;
             case 'DATE':
-                $data_type = DataTypeFactory::createFromAlias($workbench, 'exface.Core.Date');
+                $data_type = DataTypeFactory::createFromString($workbench, 'exface.Core.Date');
                 break;
             case 'TEXT':
             case 'LONGTEXT':
-                $data_type = DataTypeFactory::createFromAlias($workbench, 'exface.Core.Text');
+                $data_type = DataTypeFactory::createFromString($workbench, 'exface.Core.Text');
                 break;
             default:
-                $data_type = DataTypeFactory::createFromAlias($workbench, 'exface.Core.String');
+                $data_type = DataTypeFactory::createFromString($workbench, 'exface.Core.String');
         }
         return $data_type;
     }

@@ -367,7 +367,7 @@ class Expression implements ExpressionInterface
                     $this->data_type = $this->formula->getDataType();
                     break;
                 case self::TYPE_CONSTANT:
-                    $this->data_type = DataTypeFactory::createFromAlias($this->exface, 'exface.Core.String');
+                    $this->data_type = DataTypeFactory::createFromString($this->exface, 'exface.Core.String');
                     break;
                 case self::TYPE_ATTRIBUTE:
                     if (! is_null($this->getMetaObject())) {
