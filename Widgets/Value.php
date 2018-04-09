@@ -279,8 +279,8 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
     public function getCaption()
     {
         if (! parent::getCaption()) {
-            if ($attr = $this->getAttribute()) {
-                $this->setCaption($attr->getName());
+            if ($this->hasAttributeReference()) {
+                $this->setCaption($this->getAttribute()->getName());
             }
         }
         return parent::getCaption();
@@ -366,7 +366,7 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
     public function exportUxonObject()
     {
         $uxon = parent::exportUxonObject();
-        if (! is_null($this->getAttributeAlias())) {
+        if ($this->hasAttributeReference()) {
             $uxon->setProperty('attribute_alias', $this->getAttributeAlias());
         }
         if (! is_null($this->empty_text)) {

@@ -2,7 +2,6 @@
 namespace exface\Core\Templates\AbstractAjaxTemplate;
 
 use exface\Core\Widgets\AbstractWidget;
-use exface\Core\CommonLogic\WidgetLink;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Templates\AbstractAjaxTemplate\Elements\AbstractJqueryElement;
 use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;
@@ -31,14 +30,13 @@ use exface\Core\Interfaces\Tasks\ResultDataInterface;
 use GuzzleHttp\Psr7\Response;
 use exface\Core\Exceptions\Templates\TemplateOutputError;
 use exface\Core\Exceptions\RuntimeException;
-use Symfony\Component\Debug\Exception\FatalThrowableError;
 use exface\Core\Factories\UiPageFactory;
 use exface\Core\Templates\HttpFileServerTemplate;
 use exface\Core\Templates\AbstractHttpTemplate\Middleware\TaskUrlParamReader;
 use exface\Core\Templates\AbstractHttpTemplate\Middleware\DataUrlParamReader;
 use exface\Core\Templates\AbstractHttpTemplate\Middleware\QuickSearchUrlParamReader;
 use exface\Core\Templates\AbstractHttpTemplate\Middleware\PrefixedFilterUrlParamsReader;
-use exface\Core\CommonLogic\Tasks\ResultEmpty;
+use exface\Core\Factories\ResultFactory;
 
 /**
  * 
@@ -159,7 +157,7 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
         } catch (ErrorExceptionInterface $e) {
             // TODO Is there a way to display errors in the header nicely?
             // Maybe print the exception in plain text within a comment and add JavaScript to display a warning?
-            throw $e;
+            $this->getWorkbench()->getLogger()->logException($e);
         }
         return $result;
     }
@@ -466,11 +464,6 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
      * @see \exface\Core\Templates\AbstractHttpTemplate\AbstractHttpTemplate::createResponseError()
      */
     protected function createResponseError(ServerRequestInterface $request, \Throwable $exception, UiPageInterface $page = null) : ResponseInterface {
-        $mode = $request->getAttribute($this->getRequestAttributeForRenderingMode(), static::MODE_FULL);
-        if ($mode === static::MODE_HEAD) {
-            throw $exception;
-        }
-        
         $page = ! is_null($page) ? $page : UiPageFactory::createEmpty($this->getWorkbench());
         
         $status_code = is_numeric($exception->getStatusCode()) ? $exception->getStatusCode() : 500;
@@ -493,15 +486,16 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
             $this->getWorkbench()->getLogger()->logException($e);
             $log_id = $e instanceof ExceptionInterface ? $e->getId() : '';
             throw new RuntimeException('Failed to create error report widget: "' . $e->getMessage() . '" - see ' . ($log_id ? 'log ID ' . $log_id : 'logs') . ' for more details! Find the orignal error detail below.', null, $exception);
-        } catch (FatalThrowableError $e) {
-            // If anything goes wrong when trying to prettify the original error, drop prettifying
-            // and throw the original exception wrapped in a notice about the failed prettification
-            $this->getWorkbench()->getLogger()->logException($e);
-            $log_id = $e instanceof ExceptionInterface ? $e->getId() : '';
-            throw new RuntimeException('Failed to create error report widget: "' . $e->getMessage() . '" - see ' . ($log_id ? 'log ID ' . $log_id : 'logs') . ' for more details! Find the orignal error detail below.', null, $exception);
         }
         
         $this->getWorkbench()->getLogger()->logException($exception);
+        
+        // If using the cache, we can store the error widget in that cache to make sure it is shown.
+        // Otherwise if the error only occurs in certain modes, it might never get really shown!
+        if ($cacheKey = $request->getAttribute('result_cache_key')) {
+            $task = $request->getAttribute($this->getRequestAttributeForTask());
+            $this->requestIdCache[$cacheKey] = ResultFactory::createWidgetResult($task, $debug_widget);
+        }
         
         return new Response($status_code, $headers, $body);
     }
