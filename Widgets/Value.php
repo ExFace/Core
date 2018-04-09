@@ -351,7 +351,7 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
         if ($data_type_or_string instanceof DataTypeInterface) {
             $this->data_type = $data_type_or_string;
         } elseif (is_string($data_type_or_string)) {
-            $this->data_type = DataTypeFactory::createFromAlias($this->getWorkbench(), $data_type_or_string);
+            $this->data_type = DataTypeFactory::createFromString($this->getWorkbench(), $data_type_or_string);
         } else {
             throw new WidgetConfigurationError($this, 'Cannot set custom data type for widget ' . $this->getWidgetType() . ': invalid value "' . gettype($data_type_or_string) . '" given - expecting an instantiated data type or a string selector!');
         }

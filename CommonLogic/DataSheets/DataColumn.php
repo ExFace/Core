@@ -255,7 +255,7 @@ class DataColumn implements DataColumnInterface
                 $this->data_type = $data_type_or_string;
             } else {
                 $exface = $this->getWorkbench();
-                $this->data_type = DataTypeFactory::createFromAlias($exface, $data_type_or_string);
+                $this->data_type = DataTypeFactory::createFromString($exface, $data_type_or_string);
             }
         }
         return $this;

@@ -9,6 +9,7 @@ use exface\Core\Interfaces\Selectors\DataTypeSelectorInterface;
 use exface\Core\CommonLogic\Selectors\DataTypeSelector;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\DataTypes\StringDataType;
+use exface\Core\Interfaces\Selectors\SelectorInterface;
 
 abstract class DataTypeFactory extends AbstractSelectableComponentFactory
 {
@@ -22,17 +23,19 @@ abstract class DataTypeFactory extends AbstractSelectableComponentFactory
     {
         return static::createFromSelector($selector);
     }
-
+    
     /**
      * 
-     * @param WorkbenchInterface $workbench            
-     * @param string $alias_with_namespace            
-     * @return DataTypeInterface
+     * @param SelectorInterface $selector
+     * @return \exface\Core\Interfaces\DataTypes\DataTypeInterface
      */
-    public static function createFromAlias(WorkbenchInterface $workbench, string $alias_with_namespace) : DataTypeInterface
+    public static function createFromSelector(SelectorInterface $selector)
     {
-        $selector = new DataTypeSelector($workbench, $alias_with_namespace);
-        return static::create($selector);
+        if ($selector->isUid()) {
+            return $selector->getWorkbench()->model()->getModelLoader()->loadDataType($selector);
+        } else {
+            return parent::createFromSelector($selector);
+        }
     }
     
     /**
@@ -55,7 +58,7 @@ abstract class DataTypeFactory extends AbstractSelectableComponentFactory
      */
     public static function createFromPrototype(WorkbenchInterface $workbench, string $prototypeSelector) : DataTypeInterface
     {
-        return static::create(new DataTypeSelector($workbench, $prototypeSelector));
+        return static::createFromSelector(new DataTypeSelector($workbench, $prototypeSelector));
     }
     
     /**
@@ -67,10 +70,7 @@ abstract class DataTypeFactory extends AbstractSelectableComponentFactory
     public static function createFromString(WorkbenchInterface $workbench, string $selectorString) : DataTypeInterface
     {
         $selector = new DataTypeSelector($workbench, $selectorString);
-        if ($selector->isClassname() || $selector->isFilepath()) {
-            return static::createFromSelector($selector);
-        }
-        return $workbench->model()->getModelLoader()->loadDataType($selector);
+        return static::createFromSelector($selector);
     }
     
     /**

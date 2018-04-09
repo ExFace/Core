@@ -39,6 +39,8 @@ use exface\Core\Interfaces\Selectors\FileSelectorInterface;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\Selectors\ClassSelectorInterface;
 use exface\Core\CommonLogic\Traits\AliasTrait;
+use exface\Core\CommonLogic\Selectors\DataTypeSelector;
+use exface\Core\Factories\DataTypeFactory;
 
 /**
  * This is the base implementation of the AppInterface aimed at providing an
@@ -569,10 +571,27 @@ class App implements AppInterface
             }
         }
         
-        $cache = $this->selector_cache[(string) $selectorOrString];
-        $selector = $cache[0];
-        $class = $cache[1];
-        return new $class($selector);
+        if ($selectorOrString instanceof SelectorInterface) {
+            $selector = $selectorOrString;
+        } elseif ($selectorClass !== null) {
+            $selector = SelectorFactory::createFromString($this->getWorkbench(), $selectorOrString, $selectorClass);
+        } else {
+            throw new UnexpectedValueException('Cannot get component ' . $selectorOrString . ' from app ' . $this->getAliasWithNamespace() . ': invalid selector or missing type!');
+        }
+        
+        $cache = $this->selector_cache[$selector->toString()][get_class($selector)];
+        if ($cache !== null) {
+            $selector = $cache['selector'];
+            $class = $cache['class'];
+            if ($class !== null) {
+                return new $class($selector);
+            } else {
+                return $this->loadFromModel($selector);
+            }
+        }
+        
+        $type = $selectorOrString instanceof SelectorInterface ? ucfirst($selectorOrString->getComponentType()) : '';
+        throw new AppComponentNotFoundError($type . ' "' . $selectorOrString . '" not found in app ' . $this->getAliasWithNamespace());
     }
     
     /**
@@ -597,14 +616,30 @@ class App implements AppInterface
         try {
             $class = $this->getPrototypeClass($selector);
             if (class_exists($class)){
-                $this->selector_cache[(string) $selectorOrString] = [$selector, $class];
+                $this->selector_cache[$selector->toString()][get_class($selector)] = ['selector' => $selector, 'class' => $class];
                 return true;
+            } else {
+                try {
+                    $this->loadFromModel($selector);
+                    $this->selector_cache[$selector->toString()][get_class($selector)] = ['selector' => $selector];
+                    return true;
+                } catch (\Throwable $e) {
+                    return false;
+                }
             }
         } catch(\Throwable $e) {
             throw new LogicException('Cannot check if ' . $selector->getComponentType() . ' exists in app ' . $this->getAliasWithNamespace() . ': only prototype-selectors supported!', null, $e);
         }
         
         return false;
+    }
+    
+    protected function loadFromModel(SelectorInterface $selector) 
+    {
+        if ($selector instanceof DataTypeSelectorInterface) {
+            return $this->getWorkbench()->model()->getModelLoader()->loadDataType($selector);
+        }
+        throw new AppComponentNotFoundError(ucfirst($selector->getComponentType()) . ' "' . $selector->toString() . '" not found in app ' . $this->getAliasWithNamespace());
     }
     
     /**
