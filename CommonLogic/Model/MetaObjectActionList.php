@@ -9,7 +9,7 @@ use exface\Core\Interfaces\Model\MetaObjectActionListInterface;
  * @author Andrej Kabachnik
  *        
  */
-class ObjectActionList extends ActionList implements MetaObjectActionListInterface
+class MetaObjectActionList extends ActionList implements MetaObjectActionListInterface
 {
 
     private $object_basket_action_aliases = array();

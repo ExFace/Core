@@ -21,7 +21,7 @@ use exface\Core\Factories\ActionFactory;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\CommonLogic\AppInstallers\SqlSchemaInstaller;
-use exface\Core\CommonLogic\Model\Object;
+use exface\Core\CommonLogic\Model\MetaObject;
 use exface\Core\CommonLogic\Model\Attribute;
 use exface\Core\CommonLogic\Model\Relation;
 use exface\Core\Interfaces\ActionListInterface;
@@ -71,7 +71,7 @@ class SqlModelLoader implements ModelLoaderInterface
      */
     public function loadObjectById(ModelInterface $model, $object_id)
     {
-        $obj = new Object($model);
+        $obj = new MetaObject($model);
         $obj->setId($object_id);
         return $this->loadObject($obj);
     }
@@ -83,7 +83,7 @@ class SqlModelLoader implements ModelLoaderInterface
      */
     public function loadObjectByAlias(AppInterface $app, $object_alias)
     {
-        $obj = new Object($app->getWorkbench()->model());
+        $obj = new MetaObject($app->getWorkbench()->model());
         $obj->setAlias($object_alias);
         $obj->setNamespace($app->getAliasWithNamespace());
         return $this->loadObject($obj);        
