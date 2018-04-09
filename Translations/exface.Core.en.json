@@ -113,6 +113,7 @@
 	"GLOBAL.MODEL.BEHAVIORS": "Behaviors",
     "GLOBAL.MODEL.CONNECTIONS": "Connections",
     "GLOBAL.MODEL.DATA_SOURCES": "Data sources",
+    "GLOBAL.MODEL.OBJECT": "Object",
     "GLOBAL.MODEL.OBJECTS": "Objects",
     "GLOBAL.MODEL.UID": "UID",
     "GLOBAL.MODEL.LABEL": "Label",
@@ -179,6 +180,7 @@
 	"ERROR.CAPTION": "Error",
 	"ERROR.REQUEST_CAPTION": "Request",
 	"ERROR.CONTEXT_CAPTION": "Context",
+	"ERROR.OBJECT_CAPTION": "Object \"%name%\"",
 	"ERROR.STACKTRACE_CAPTION": "Stacktrace",
 	"ERROR.SUPPORT_HINT": "Please be sure to include the LOG-number of this error when contacting <a href=\"mailto:%support_mail%?subject=[%system_name%]%20%error_id%\">support</a>: \"%error_id%\"!",
 	"WARNING.CAPTION": "Warning"

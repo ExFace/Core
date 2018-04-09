@@ -11,6 +11,7 @@ use exface\Core\Widgets\DebugMessage;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Widgets\iTakeInput;
+use exface\Core\Widgets\Filter;
 
 /**
  * This trait enables an exception to output meta object specific debug information: properties, attributes, behaviors, etc.
@@ -83,7 +84,7 @@ trait MetaObjectExceptionTrait {
         
         $object_tab = WidgetFactory::create($page, 'Tab', $error_message);
         $object_tab->setMetaObject($this->getMetaObject());
-        $object_tab->setCaption('Object ' . $this->getMetaObject()->getName());
+        $object_tab->setCaption($object_tab->translate("ERROR.OBJECT_CAPTION", ["%name%" => $this->getMetaObject()->getName()]));
         $object_tab->setIdSpace($object_tab->getId());
         $error_message->addTab($object_tab);
         
@@ -93,7 +94,7 @@ trait MetaObjectExceptionTrait {
         $object_editor_descr = $this->removeKeysFromUxon($object_editor_descr, 'buttons');
         $object_editor = WidgetFactory::createFromUxon($page, new UxonObject($object_editor_descr), $object_tab);
         foreach ($object_editor->getChildrenRecursive() as $child) {
-            if ($child instanceof iTakeInput) {
+            if ($child instanceof iTakeInput && ! ($child instanceof Filter)) {
                 $child->setDisabled(true);
             }
             // Make sure, no widgets use lazy loading, as it won't work for a widget, that is not part of the page explicitly
