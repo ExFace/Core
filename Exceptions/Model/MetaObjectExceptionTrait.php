@@ -94,7 +94,7 @@ trait MetaObjectExceptionTrait {
         $object_editor_descr = $this->removeKeysFromUxon($object_editor_descr, 'buttons');
         $object_editor = WidgetFactory::createFromUxon($page, new UxonObject($object_editor_descr), $object_tab);
         foreach ($object_editor->getChildrenRecursive() as $child) {
-            if ($child instanceof iTakeInput && ! ($child instanceof Filter)) {
+            if ($child instanceof iTakeInput && ! ($child->getParent() instanceof Filter)) {
                 $child->setDisabled(true);
             }
             // Make sure, no widgets use lazy loading, as it won't work for a widget, that is not part of the page explicitly
