@@ -28,7 +28,7 @@ use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\Model\MetaObjectHasNoDataSourceError;
 
-class Object implements MetaObjectInterface
+class MetaObject implements MetaObjectInterface
 {
 
     private $id;
@@ -85,7 +85,7 @@ class Object implements MetaObjectInterface
         $this->model = $model;
         $this->attributes = AttributeListFactory::createForObject($this);
         $this->default_sorters = EntityListFactory::createEmpty($exface, $this);
-        $this->behaviors = new ObjectBehaviorList($exface, $this);
+        $this->behaviors = new MetaObjectBehaviorList($exface, $this);
     }
 
     /**
@@ -1172,7 +1172,7 @@ class Object implements MetaObjectInterface
     public function getActions()
     {
         if (! ($this->actions instanceof MetaObjectActionListInterface)) {
-            $this->actions = $this->getModel()->getModelLoader()->loadObjectActions(new ObjectActionList($this->getWorkbench(), $this));
+            $this->actions = $this->getModel()->getModelLoader()->loadObjectActions(new MetaObjectActionList($this->getWorkbench(), $this));
         }
         return $this->actions;
     }

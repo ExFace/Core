@@ -11,7 +11,7 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
  * @author Andrej Kabachnik
  *        
  */
-class ObjectBehaviorList extends EntityList implements BehaviorListInterface
+class MetaObjectBehaviorList extends EntityList implements BehaviorListInterface
 {
 
     /**
@@ -78,7 +78,7 @@ class ObjectBehaviorList extends EntityList implements BehaviorListInterface
     /**
      *
      * @param MetaObjectInterface $value            
-     * @return ObjectBehaviorList
+     * @return MetaObjectBehaviorList
      */
     public function setObject(MetaObjectInterface $value)
     {
