@@ -53,7 +53,7 @@ class MySqlConnector extends AbstractSqlConnector
             }
         }
         if (! $conn) {
-            throw new DataConnectionFailedError($this, 'Failed to create the database connection for "' . $this->getAliasWithNamespace() . '"!', '6T2TBVR', $e);
+            throw new DataConnectionFailedError($this, 'Failed to create the database connection for "' . $this->getAliasWithNamespace() . '"' . ($e ? ': ' . $e->getMessage() : '') . '!', '6T2TBVR', $e);
         } else {
             // Apply autocommit option
             if ($this->getAutocommit()) {
