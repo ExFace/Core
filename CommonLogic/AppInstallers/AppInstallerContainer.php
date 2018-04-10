@@ -56,7 +56,8 @@ class AppInstallerContainer implements AppInstallerInterface, InstallerContainer
         $result = '';
         // TODO Dispatch App.Install.Before
         foreach ($this->getInstallers() as $installer) {
-            $result .= $installer->install($source_absolute_path);
+            $res = $installer->install($source_absolute_path);
+            $result .= rtrim($res, " .\n\r") . '. ';
         }
         // TODO Dispatch App.Install.After
         return $result;
