@@ -95,7 +95,7 @@ class ObjectBasketShowDialog extends ShowDialog
         
         // Add info button
         $info_button = $dialog->createButton();
-        $info_button->setActionAlias('exface.Core.ShowObjectDialog');
+        $info_button->setActionAlias('exface.Core.ShowObjectInfoDialog');
         $info_button->setInputWidget($table);
         $dialog->addButton($info_button);
         

@@ -8,19 +8,19 @@ use exface\Core\Interfaces\WidgetInterface;
 /**
  * Renders a dialog to create a copy of the input object.
  * 
- * Dialog rendering works just like in EditObjectDialog, but the save-button creates a copy
+ * Dialog rendering works just like in ShowObjectEditDialog, but the save-button creates a copy
  * instead of modifying the given object.
  * 
  * @author Andrej Kabachnik
  *
  */
-class DuplicateObjectDialog extends EditObjectDialog
+class ShowObjectCopyDialog extends ShowObjectEditDialog
 {
 
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Actions\EditObjectDialog::init()
+     * @see \exface\Core\Actions\ShowObjectEditDialog::init()
      */
     protected function init()
     {

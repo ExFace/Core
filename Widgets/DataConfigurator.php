@@ -82,9 +82,9 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
      *
      * Relations and aggregations are fully supported by filters
      *
-     * Note, that ComboTable widgets will be automatically generated for related objects if the corresponding
+     * Note, that InputComboTable widgets will be automatically generated for related objects if the corresponding
      * filter is defined by the attribute, representing the relation: e.g. for a table of ORDER_POSITIONS,
-     * adding the filter ORDER (relation to the order) will give you a ComboTable, while the filter ORDER__NUMBER
+     * adding the filter ORDER (relation to the order) will give you a InputComboTable, while the filter ORDER__NUMBER
      * will yield a numeric input field, because it filter over a number, even thoug a related one.
      *
      * Advanced users can also instantiate a Filter widget manually (widget_type = Filter) gaining control
@@ -418,7 +418,7 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
     protected function setLazyLoadingForFilter(Filter $filter_widget)
     {
         // Disable filters on Relations if lazy loading is disabled
-        if (! $this->getWidgetConfigured()->getLazyLoading() && $filter_widget->getAttribute() && $filter_widget->getAttribute()->isRelation() && $filter_widget->getInputWidget()->is('ComboTable')) {
+        if (! $this->getWidgetConfigured()->getLazyLoading() && $filter_widget->getAttribute() && $filter_widget->getAttribute()->isRelation() && $filter_widget->getInputWidget()->is('InputComboTable')) {
             $filter_widget->setDisabled(true);
         }
         return $filter_widget;

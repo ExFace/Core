@@ -5,7 +5,7 @@
 	
 	"TEMPLATES.DEFAULT_UI_TEMPLATE": "exface.JEasyUiTemplate.JEasyUiTemplate",
     "TEMPLATES.DEFAULT_WIDGET_FOR_UNKNOWN_DATA_TYPES" : "Input",
-    "TEMPLATES.DEFAULT_WIDGET_FOR_RELATIONS" : "ComboTable",
+    "TEMPLATES.DEFAULT_WIDGET_FOR_RELATIONS" : "InputComboTable",
 	
 	"WIDGET.CONTEXTBAR": {
 	   "contexts": [

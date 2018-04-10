@@ -11,19 +11,19 @@ use exface\Core\Exceptions\Widgets\WidgetLogicError;
 use exface\Core\CommonLogic\Model\Condition;
 
 /**
- * A ComboTable is similar to InputCombo, but it uses a DataTable to show the autosuggest values.
+ * A InputComboTable is similar to InputCombo, but it uses a DataTable to show the autosuggest values.
  *
- * Thus, the user can see more information about every suggested object. The ComboTable is very often used with relations,
+ * Thus, the user can see more information about every suggested object. The InputComboTable is very often used with relations,
  * where the related object may have many more data, then merely it's id (which is the value of the relation attribute).
  *
  * The DataTable for autosuggests can either be genreated automatically based on the meta object, or specified by the user via
  * UXON or even extended from any other ready-made DataTable!
  *
- * While not every UI-framework supports such a kind of widget, there are many ways to implement the main idea of the ComboTable:
+ * While not every UI-framework supports such a kind of widget, there are many ways to implement the main idea of the InputComboTable:
  * showing more data about a selectable object in the autosuggest. Mobile templates might use cards like in Googles material design,
  * for example.
  *
- * ComboTables support two type of live references to other objects: in the value and in the data filters. Concider the following
+ * InputComboTables support two type of live references to other objects: in the value and in the data filters. Concider the following
  * example, where we need a product selector for an order position. We order a specific product variant, but we need a two-step
  * selector, so we can select the product first and choose one of it's variants afterwards. To do this, we need an extra product
  * selector befor the actual variant selector for our order position. The product selector does not refer to an order attribute,
@@ -40,14 +40,14 @@ use exface\Core\CommonLogic\Model\Condition;
  *      "object_alias": "MY.APP.ORDER_POSITION",
  *      ...
  *      {
- *          "widget_type": "ComboTable",
+ *          "widget_type": "InputComboTable",
  *          "object_alias": "MY.APP.PRODUCT",
  *          "id": "product_selector",
  *          "value": "=product_variant_selector!product_id",
  *          "display_only": true
  *      },
  *      {
- *          "widget_type": "ComboTable",
+ *          "widget_type": "InputComboTable",
  *          "attribute_alias: "PRODUCT_VARIANT"
  *          "id": "product_variant_selector",
  *          "table": {
@@ -84,7 +84,7 @@ use exface\Core\CommonLogic\Model\Condition;
  * @author Andrej Kabachnik
  *        
  */
-class ComboTable extends InputCombo implements iHaveChildren
+class InputComboTable extends InputCombo implements iHaveChildren
 {
 
     private $text_column_id = null;
@@ -97,7 +97,7 @@ class ComboTable extends InputCombo implements iHaveChildren
 
     /**
      * Returns the relation, this widget represents or FALSE if the widget stands for a direct attribute.
-     * This shortcut function is very handy because a ComboTable often stands for a relation.
+     * This shortcut function is very handy because a InputComboTable often stands for a relation.
      *
      * @return \exface\Core\CommonLogic\Model\relation
      */
@@ -111,7 +111,7 @@ class ComboTable extends InputCombo implements iHaveChildren
     }
 
     /**
-     * Returns the DataTable, that is used for autosuggesting in a ComboTable or false if a DataTable cannot be created
+     * Returns the DataTable, that is used for autosuggesting in a InputComboTable or false if a DataTable cannot be created
      *
      * @return \exface\Core\Widgets\DataTable|boolean
      */
@@ -128,7 +128,7 @@ class ComboTable extends InputCombo implements iHaveChildren
     {
         // This will only work if there is an attribute_alias specified
         if (! $this->getAttributeAlias()) {
-            throw new WidgetConfigurationError($this, 'Cannot create a DataTable for a ComboTable before an attribute_alias for the Comobo is specified!', '6T91QQ8');
+            throw new WidgetConfigurationError($this, 'Cannot create a DataTable for a InputComboTable before an attribute_alias for the Comobo is specified!', '6T91QQ8');
             return false;
         }
         
@@ -162,7 +162,7 @@ class ComboTable extends InputCombo implements iHaveChildren
         $table->setLazyLoading($this->getLazyLoading());
         $table->setLazyLoadingActionAlias($this->getLazyLoadingActionAlias());
         
-        // Ensure, that special columns needed for the ComboTable are present. This must be done after $this->data_table is
+        // Ensure, that special columns needed for the InputComboTable are present. This must be done after $this->data_table is
         // set, because the method may use autogeneration of the text column, which needs to know about the DataTable
         $this->addComboColumns();
         return $table;
@@ -190,7 +190,7 @@ class ComboTable extends InputCombo implements iHaveChildren
      * @param UxonObject|DataTable $widget_or_uxon_object            
      * @throws WidgetConfigurationError
      * @throws WidgetPropertyInvalidValueError
-     * @return ComboTable
+     * @return InputComboTable
      */
     public function setTable($widget_or_uxon_object)
     {
@@ -214,7 +214,7 @@ class ComboTable extends InputCombo implements iHaveChildren
      * NOTE: the columns are only added if they are not there already (= if they are not part of the default columns)
      * and they will be automatically hidden, if the corresponding attribute is hidden!
      *
-     * @return ComboTable
+     * @return InputComboTable
      */
     protected function addComboColumns()
     {
@@ -482,9 +482,9 @@ class ComboTable extends InputCombo implements iHaveChildren
     }
 
     /**
-     * Since the ComboTable contains a DataTable widget, we need to return it as a child widget to allow ajax data loaders to
+     * Since the InputComboTable contains a DataTable widget, we need to return it as a child widget to allow ajax data loaders to
      * find the table a load data for it.
-     * This does not make the ComboTable a container though!
+     * This does not make the InputComboTable a container though!
      *
      * @see \exface\Core\Widgets\AbstractWidget::getChildren()
      */
@@ -517,7 +517,7 @@ class ComboTable extends InputCombo implements iHaveChildren
      * @uxon-type string
      *
      * @param string $value            
-     * @return \exface\Core\Widgets\ComboTable
+     * @return \exface\Core\Widgets\InputComboTable
      */
     public function setTableObjectAlias($value)
     {
@@ -536,7 +536,7 @@ class ComboTable extends InputCombo implements iHaveChildren
     }
     
     /**
-     * The options object of a ComboTable is the meta object of the relation it 
+     * The options object of a InputComboTable is the meta object of the relation it 
      * represents if not specified explicitly.
      * 
      * {@inheritDoc}
@@ -555,8 +555,8 @@ class ComboTable extends InputCombo implements iHaveChildren
     /**
      * Sets an optional array of filter-objects to be used when fetching autosugest data from a data source.
      *
-     * For example, if we have a ComboTable for customer ids, but we only wish to show customers of a certain
-     * class (assuming every custer hase a relation "CUSOMTER_CLASS"), we would need the following ComboTable:
+     * For example, if we have a InputComboTable for customer ids, but we only wish to show customers of a certain
+     * class (assuming every custer hase a relation "CUSOMTER_CLASS"), we would need the following InputComboTable:
      *  {
      *      "options_object_alias": "my.app.CUSTOMER",
      *      "filters": [
@@ -564,8 +564,8 @@ class ComboTable extends InputCombo implements iHaveChildren
      *      ]
      *  }
      *
-     * We can even use widget references to get the filters. Imagine, the ComboTable for customers above is
-     * placed in a form, where the customer class can be selected explicitly in another ComboTable or a InputSelect
+     * We can even use widget references to get the filters. Imagine, the InputComboTable for customers above is
+     * placed in a form, where the customer class can be selected explicitly in another InputComboTable or a InputSelect
      * with the id "customer_class_selector".
      *  {
      *      "options_object_alias": "my.app.CUSTOMER",

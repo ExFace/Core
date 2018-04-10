@@ -119,9 +119,9 @@ class Diagram extends Container implements iSupportLazyLoading
     {
         if ($widget_or_uxon instanceof UxonObject) {
             // $this->diagram_object_selector_widget = $this->getPage()->createWidget('Filter', $this);
-            /* @var $widget \exface\Core\Widgets\ComboTable */
+            /* @var $widget \exface\Core\Widgets\InputComboTable */
             
-            $widget = WidgetFactory::createFromUxon($this->getPage(), $widget_or_uxon, $this, 'ComboTable');
+            $widget = WidgetFactory::createFromUxon($this->getPage(), $widget_or_uxon, $this, 'InputComboTable');
             $widget->setMetaObject($this->getMetaObject());
             $widget->setAttributeAlias($this->getMetaObject()->getUidAttributeAlias());
             $widget->setTableObjectAlias($this->getMetaObject()->getAliasWithNamespace());

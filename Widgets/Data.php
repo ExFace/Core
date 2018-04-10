@@ -31,7 +31,7 @@ use exface\Core\Exceptions\Widgets\WidgetPropertyNotSetError;
 /**
  * Data is the base for all widgets displaying tabular data.
  *
- * Many widgets like Chart, ComboTable, etc. contain internal Data sub-widgets, that define the data set used
+ * Many widgets like Chart, InputComboTable, etc. contain internal Data sub-widgets, that define the data set used
  * by these widgets. Datas are much like tables: you can define columns, sorters, filters, pagination rules, etc.
  * 
  * @method DataButton[] getButtons()
@@ -603,9 +603,9 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
      *
      * Relations and aggregations are fully supported by filters
      *
-     * Note, that ComboTable widgets will be automatically generated for related objects if the corresponding
+     * Note, that InputComboTable widgets will be automatically generated for related objects if the corresponding
      * filter is defined by the attribute, representing the relation: e.g. for a table of ORDER_POSITIONS,
-     * adding the filter ORDER (relation to the order) will give you a ComboTable, while the filter ORDER__NUMBER
+     * adding the filter ORDER (relation to the order) will give you a InputComboTable, while the filter ORDER__NUMBER
      * will yield a numeric input field, because it filter over a number, even thoug a related one.
      *
      * Advanced users can also instantiate a Filter widget manually (widget_type = Filter) gaining control
@@ -1340,7 +1340,7 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
     /**
      * The generic Data widget has a simple toolbar, that should merely be a 
      * container for potential buttons. This makes sure all widgets using data
-     * internally (like ComboTables, Charts, etc.) do not have to create complex
+     * internally (like InputComboTables, Charts, etc.) do not have to create complex
      * toolbars, that get automatically generated for DataTables, etc.
      * 
      * {@inheritDoc}

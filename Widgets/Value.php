@@ -93,7 +93,7 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
         /*
          * if ($this->getValueExpression() && $this->getValueExpression()->isReference()){
          *  $ref_widget = $this->getValueExpression()->getWidgetLink()->getWidget();
-         *  if ($ref_widget instanceof ComboTable){
+         *  if ($ref_widget instanceof InputComboTable){
          *      $data_column = $ref_widget->getTable()->getColumn($this->getValueExpression()->getWidgetLink()->getColumnId());
          *      var_dump($data_column->getAttributeAlias());
          *  }

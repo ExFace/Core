@@ -394,7 +394,7 @@ interface WidgetInterface extends WorkbenchDependantInterface, iCanBeCopied
     /**
      * Returns all actions callable from this widget or it's children as an array.
      * Optional filters can be used to
-     * return only actions with a specified id (would be a single one in most cases) or qualified action alias (e.g. "exface.EditObjectDialog")
+     * return only actions with a specified id (would be a single one in most cases) or qualified action alias (e.g. "exface.ShowObjectEditDialog")
      *
      * @param string $qualified_action_alias            
      * @param string $action_type            

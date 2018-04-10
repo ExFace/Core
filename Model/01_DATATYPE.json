@@ -231,7 +231,7 @@
             "PROTOTYPE": "exface\/Core\/DataTypes\/BooleanDataType.php",
             "CONFIG_UXON": "",
             "VALIDATION_ERROR": "",
-            "DEFAULT_EDITOR_UXON": "{\"widget_type\": \"CheckBox\"}",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\": \"InputCheckBox\"}",
             "ALIAS": "Boolean",
             "SHORT_DESCRIPTION": ""
         },
@@ -246,7 +246,7 @@
             "PROTOTYPE": "exface\/Core\/DataTypes\/FlagTreeFolderDataType.php",
             "CONFIG_UXON": "",
             "VALIDATION_ERROR": "",
-            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"CheckBox\"}",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"InputCheckBox\"}",
             "ALIAS": "FlagTreeFolder",
             "SHORT_DESCRIPTION": ""
         },
