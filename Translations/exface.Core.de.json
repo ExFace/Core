@@ -3,7 +3,7 @@
 
 	"ACTION.CREATEDATA.RESULT": "%number% Objekt erstellt.|%number% Objekte erstellt.",
 	"ACTION.CREATEDATA.NAME": "Speichern",
-	"ACTION.CREATEOBJECTDIALOG.NAME": "Neu",
+	"ACTION.SHOWOBJECTCREATEDIALOG.NAME": "Neu",
     
     "ACTION.CONTEXTAPI.RESULT": "'%operation_name%' erfolgreich!",
 	
@@ -12,11 +12,11 @@
 	"ACTION.DELETEOBJECT.RESULT": "%number% Objekt gelöscht.|%number% Objekte gelöscht.",
 	"ACTION.DELETEOBJECT.NAME": "Löschen",
 
-	"ACTION.DUPLICATEOBJECTDIALOG.NAME": "Duplizieren",
+	"ACTION.SHOWOBJECTCOPYDIALOG.NAME": "Duplizieren",
 
-	"ACTION.EDITOBJECTDIALOG.SAVE_BUTTON": "Speichern",
-	"ACTION.EDITOBJECTDIALOG.NAME": "Bearbeiten",
-	"ACTION.EDITOBJECTDIALOG.NO_EDITABLE_ATTRIBUTES": "Keine editierbaren Attribute gefunden!",
+	"ACTION.SHOWOBJECTEDITDIALOG.SAVE_BUTTON": "Speichern",
+	"ACTION.SHOWOBJECTEDITDIALOG.NAME": "Bearbeiten",
+	"ACTION.SHOWOBJECTEDITDIALOG.NO_EDITABLE_ATTRIBUTES": "Keine editierbaren Attribute gefunden!",
 
 	"ACTION.EXPORTCSV.NAME": "CSV exportieren",
 	"ACTION.EXPORTDATA.NAME": "Exportieren",
@@ -39,10 +39,10 @@
 	"ACTION.GOTOURL.SUCCESS": "Sie werden weitergeleitet...",
 	"ACTION.GOTOPAGE.NAME": "Anzeigen",
 
-	"ACTION.MASSEDITDIALOG.NAME": "Massenbearbeitung",
-	"ACTION.MASSEDITDIALOG.EDITING_BY_FILTER": "Bearbeitung aller Objekte, die folgenden Filtern entsprechen: %filters%",
-	"ACTION.MASSEDITDIALOG.EDITING_ALL": "Bearbeitung aller Objekte",
-	"ACTION.MASSEDITDIALOG.EDITING_SELECTED": "Bearbeitung für %number% Objekt|Bearbeitung für %number% Objekte",
+	"ACTION.SHOWMASSEDITDIALOG.NAME": "Massenbearbeitung",
+	"ACTION.SHOWMASSEDITDIALOG.EDITING_BY_FILTER": "Bearbeitung aller Objekte, die folgenden Filtern entsprechen: %filters%",
+	"ACTION.SHOWMASSEDITDIALOG.EDITING_ALL": "Bearbeitung aller Objekte",
+	"ACTION.SHOWMASSEDITDIALOG.EDITING_SELECTED": "Bearbeitung für %number% Objekt|Bearbeitung für %number% Objekte",
 
 	"ACTION.OBJECTBASKET": "Objektkorb",
     "ACTION.OBJECTBASKETADD.NAME": "In den Objektkorb",

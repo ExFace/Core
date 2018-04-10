@@ -7,7 +7,7 @@ namespace exface\Core\Widgets;
  * @author Andrej Kabachnik
  *        
  */
-class CheckBox extends Input
+class InputCheckBox extends Input
 {
 
     public function transformIntoSelect()

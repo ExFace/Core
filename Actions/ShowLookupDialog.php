@@ -19,7 +19,7 @@ use exface\Core\Widgets\Dialog;
  *      "object_alias" "my.app.ORDER"
  *      "widgets": [
  *          {
- *              "widget_type": "ComboTable",
+ *              "widget_type": "InputComboTable",
  *              "attribute_alias": "CUSTOMER",
  *              "id": "customer_selector"
  *          }

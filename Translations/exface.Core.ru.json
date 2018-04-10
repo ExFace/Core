@@ -3,7 +3,7 @@
 	
 	"ACTION.CREATEDATA.RESULT": "%number% объект создано.|%number% объекта создано.|%number% объектов создано.",
 	"ACTION.CREATEDATA.NAME": "Новый объект",
-	"ACTION.CREATEOBJECTDIALOG.NAME": "Создать",
+	"ACTION.SHOWOBJECTCREATEDIALOG.NAME": "Создать",
 	
 	"ACTION.CONTEXTAPI.RESULT": "'%operation_name%' завершено!",
     
@@ -12,11 +12,11 @@
 	"ACTION.DELETEOBJECT.RESULT": "%number% item deleted.|%number% items deleted.",
 	"ACTION.DELETEOBJECT.NAME": "Delete",
 	
-	"ACTION.DUPLICATEOBJECTDIALOG.NAME": "Copy",
+	"ACTION.SHOWOBJECTCOPYDIALOG.NAME": "Copy",
 	
-	"ACTION.EDITOBJECTDIALOG.SAVE_BUTTON": "Save",
-	"ACTION.EDITOBJECTDIALOG.NAME": "Edit",
-	"ACTION.EDITOBJECTDIALOG.NO_EDITABLE_ATTRIBUTES": "No editable attributes found!",
+	"ACTION.SHOWOBJECTEDITDIALOG.SAVE_BUTTON": "Save",
+	"ACTION.SHOWOBJECTEDITDIALOG.NAME": "Edit",
+	"ACTION.SHOWOBJECTEDITDIALOG.NO_EDITABLE_ATTRIBUTES": "No editable attributes found!",
 
 	"ACTION.EXPORTCSV.NAME": "Export CSV",
 	"ACTION.EXPORTDATA.NAME": "Export",
@@ -39,10 +39,10 @@
 	"ACTION.GOTOURL.SUCCESS": "Redirecting...",
 	"ACTION.GOTOPAGE.NAME": "Go to",
 	
-	"ACTION.MASSEDITDIALOG.NAME": "Mass edit",
-	"ACTION.MASSEDITDIALOG.EDITING_BY_FILTER": "Editing all objects matching the following filters: %filters%",
-	"ACTION.MASSEDITDIALOG.EDITING_ALL": "Editing all objects",
-	"ACTION.MASSEDITDIALOG.EDITING_SELECTED": "Editing %number% object|Editing %number% objects",
+	"ACTION.SHOWMASSEDITDIALOG.NAME": "Mass edit",
+	"ACTION.SHOWMASSEDITDIALOG.EDITING_BY_FILTER": "Editing all objects matching the following filters: %filters%",
+	"ACTION.SHOWMASSEDITDIALOG.EDITING_ALL": "Editing all objects",
+	"ACTION.SHOWMASSEDITDIALOG.EDITING_SELECTED": "Editing %number% object|Editing %number% objects",
 	
 	"ACTION.OBJECTBASKET": "Object basket",
     "ACTION.OBJECTBASKETADD.NAME": "Add to object basket",

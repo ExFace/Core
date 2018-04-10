@@ -1,15 +1,15 @@
 {
-    "id": "0xb863f248949e11e7917c028037ec0200",
-    "alias_with_namespace": "exface.core.data-connectors",
-    "menu_parent_page_alias": "exface.core.documentation",
-    "menu_index": "7",
+    "id": "0x9d1ad1d03bda11e8934200a0c6000012",
+    "alias_with_namespace": "exface.core.translations",
+    "menu_parent_page_alias": "exface.core.metamodel",
+    "menu_index": "8",
     "menu_visible": true,
-    "name": "Data Connectors",
+    "name": "Translations",
     "description": "",
     "intro": "",
     "replaces_page_alias": null,
     "contents": {
-        "object_alias": "exface.core.DATA_CONNECTOR",
+        "object_alias": "exface.core.TRANSLATIONS",
         "widget_type": "DataTable",
         "filters": [
             {
@@ -35,7 +35,11 @@
         ],
         "buttons": [
             {
-                "action_alias": "exface.Core.ShowObjectInfoDialog",
+                "action_alias": "exface.Core.ShowObjectEditDialog",
+                "bind_to_double_click": true
+            },
+            {
+                "action_alias": "exface.Core.ShowObjectCopyDialog",
                 "bind_to_double_click": true
             }
         ]

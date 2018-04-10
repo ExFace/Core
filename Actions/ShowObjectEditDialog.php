@@ -7,7 +7,7 @@ use exface\Core\Widgets\Button;
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\Interfaces\Model\UiPageInterface;
 
-class EditObjectDialog extends ShowObjectDialog
+class ShowObjectEditDialog extends ShowObjectInfoDialog
 {
 
     private $save_action_alias = null;
@@ -49,7 +49,7 @@ class EditObjectDialog extends ShowObjectDialog
         $save_button = $dialog->createButton();
         $save_button
             ->setActionAlias($this->getSaveActionAlias())
-            ->setCaption($this->getWorkbench()->getCoreApp()->getTranslator()->translate("ACTION.EDITOBJECTDIALOG.SAVE_BUTTON"))
+            ->setCaption($this->getWorkbench()->getCoreApp()->getTranslator()->translate("ACTION.SHOWOBJECTEDITDIALOG.SAVE_BUTTON"))
             ->setVisibility(EXF_WIDGET_VISIBILITY_PROMOTED)
             ->setAlign(EXF_ALIGN_OPPOSITE);
         // Make the save button refresh the same widget as the Button showing the dialog would do

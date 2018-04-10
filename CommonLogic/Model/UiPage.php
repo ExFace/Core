@@ -276,7 +276,7 @@ class UiPage implements UiPageInterface
      *           
      * Here are some examples, of how the searching works:
      * 
-     * (1) Searching for the Filter-ComboTable with id DT_TC_CA_FI2_CT. The id will get identified as
+     * (1) Searching for the Filter-InputComboTable with id DT_TC_CA_FI2_CT. The id will get identified as
      * a path because it starts with DT, which is the id of the root widget. Iterating over the children
      * of DT will immediately yield a path-match on DT_TC. The search continues there and so on until
      * a full match is found.

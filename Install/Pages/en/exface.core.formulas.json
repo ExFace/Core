@@ -35,7 +35,7 @@
         ],
         "buttons": [
             {
-                "action_alias": "exface.Core.ShowObjectDialog",
+                "action_alias": "exface.Core.ShowObjectInfoDialog",
                 "bind_to_double_click": true
             }
         ]

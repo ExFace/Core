@@ -1,7 +1,7 @@
 <?php
 namespace exface\Core\Widgets;
 
-class ImageSlider extends DataCards
+class ImageCarousel extends DataCards
 {
 
     private $image_url_column_id = null;
@@ -31,7 +31,7 @@ class ImageSlider extends DataCards
     }
 
     /**
-     * Keine sinnvolle Funktion fuer ImageSlider, gibt daher immer true zurueck.
+     * Keine sinnvolle Funktion fuer ImageCarousel, gibt daher immer true zurueck.
      * 
      * {@inheritDoc}
      * @see \exface\Core\Widgets\DataCards::getAutoloadData()

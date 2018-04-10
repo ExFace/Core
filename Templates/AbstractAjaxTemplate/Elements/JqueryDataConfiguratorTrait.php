@@ -38,7 +38,7 @@ trait JqueryDataConfiguratorTrait
      * The data JS-object of a configurator widget contains filters, sorters, etc., that are
      * required to read the corresponding data.
      * 
-     * NOTE: since data widgets are sometimes used within other widgets (i.e. ComboTable)
+     * NOTE: since data widgets are sometimes used within other widgets (i.e. InputComboTable)
      * without being really rendered, the data getter can be operate in two modes: rendered
      * and unrendered. While the former relies on the current value of rendered elements,
      * the latter will only include values defined in UXON. 

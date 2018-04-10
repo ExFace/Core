@@ -61,7 +61,7 @@ class Filter extends Container implements iCanBeRequired, iShowSingleAttribute
         $this->widget = WidgetFactory::createFromAnything($page, $widget_or_uxon_object, $this);
         
         // Some widgets need to be transformed to be a meaningfull filter
-        if ($this->widget->getWidgetType() == 'CheckBox') {
+        if ($this->widget->is('InputCheckBox')) {
             $this->widget = $this->widget->transformIntoSelect();
         }
         

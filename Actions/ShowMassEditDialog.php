@@ -16,7 +16,7 @@ use exface\Core\Interfaces\WidgetInterface;
  * @author Andrej Kabachnik
  *
  */
-class MassEditDialog extends ShowDialog
+class ShowMassEditDialog extends ShowDialog
 {
 
     private $affected_counter_widget = NULL;
@@ -110,7 +110,7 @@ class MassEditDialog extends ShowDialog
     /**
      * 
      * @param WidgetInterface $widget
-     * @return \exface\Core\Actions\MassEditDialog
+     * @return \exface\Core\Actions\ShowMassEditDialog
      */
     protected function setAffectedCounterWidget(WidgetInterface $widget)
     {

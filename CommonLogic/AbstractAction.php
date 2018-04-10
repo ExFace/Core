@@ -781,7 +781,7 @@ abstract class AbstractAction implements ActionInterface
      * 
      * For example, if you want to have an action, that will create a support
      * ticket for a selected purchase order, you will probably use a the
-     * action CreateObjectDialog (or a derivative) based on the ticket object.
+     * action ShowObjectCreateDialog (or a derivative) based on the ticket object.
      * Now, you can use input mappers to prefill it with data from the (totally
      * unrelated) purchase order object:
      * 

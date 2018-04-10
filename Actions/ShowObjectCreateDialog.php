@@ -8,13 +8,13 @@ use exface\Core\CommonLogic\Constants\Icons;
  * 
  * If no dialog is explicitly defined within the action, it will automatically use the
  * default editor of the object from it's metamodel. If there is no default editor, the
- * action will attempt to create a simple editor dialog like the EditObjectDialog action
+ * action will attempt to create a simple editor dialog like the ShowObjectEditDialog action
  * would do.
  * 
  * @author Andrej Kabachnik
  *
  */
-class CreateObjectDialog extends EditObjectDialog
+class ShowObjectCreateDialog extends ShowObjectEditDialog
 {
 
     protected function init()

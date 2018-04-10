@@ -54,10 +54,10 @@ use exface\Core\Exceptions\Widgets\WidgetLogicError;
  *              "action_alias": "exface.Core.UpdateData"
  *          },
  *          {
- *              "action_alias": "exface.Core.CreateObjectDialog"
+ *              "action_alias": "exface.Core.ShowObjectCreateDialog"
  *          },
  *          {
- *              "action_alias": "exface.Core.EditObjectDialog",
+ *              "action_alias": "exface.Core.ShowObjectEditDialog",
  *              "bind_to_double_click": true
  *          },
  *          {

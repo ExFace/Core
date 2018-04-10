@@ -281,7 +281,7 @@ class DebugContext extends AbstractContext
         // Add the detail button an bind it to the left click
         /* @var $details_button \exface\Core\Widgets\DataButton */
         $details_button = $data_list->createButton()
-            ->setActionAlias('exface.Core.ShowObjectDialog')
+            ->setActionAlias('exface.Core.ShowObjectInfoDialog')
             ->setBindToLeftClick(true)
             ->setHidden(true);
         $data_list->addButton($details_button);

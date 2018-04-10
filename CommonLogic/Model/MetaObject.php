@@ -1038,7 +1038,7 @@ class MetaObject implements MetaObjectInterface
 
     /**
      * Sets the UXON description for the default editor widget for this object (e.g.
-     * to build the EditObjectDialog)
+     * to build the ShowObjectEditDialog)
      *
      * @param UxonObject $value            
      * @return MetaObjectInterface

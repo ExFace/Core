@@ -123,7 +123,7 @@ interface ActionInterface extends WorkbenchDependantInterface, AliasInterface, i
      * definition of Buttons, Menus and other widgets, that can trigger actions. 
      * These actions "know" their parent widgets and have access to them even before 
      * they are not actually called. This enables actions to inherit various properties
-     * of their defining widget - e.g. the action EditObjectDialog knows what object it
+     * of their defining widget - e.g. the action ShowObjectEditDialog knows what object it
      * is going to be editing even if it is not explicitly defined in the action's UXON
      * because it simply inherits it from it's widget.
      * 

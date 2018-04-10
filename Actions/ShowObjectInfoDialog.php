@@ -38,7 +38,7 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
  * @author Andrej Kabachnik
  *        
  */
-class ShowObjectDialog extends ShowDialog
+class ShowObjectInfoDialog extends ShowDialog
 {
 
     private $show_only_editable_attributes = false;
@@ -96,7 +96,7 @@ class ShowObjectDialog extends ShowDialog
         if (count($editors) == 0){
             $editors[] = WidgetFactory::create($parent_widget->getPage(), 'Message', $parent_widget)
             ->setType(EXF_MESSAGE_TYPE_WARNING)
-            ->setText($this->getApp()->getTranslator()->translate('ACTION.EDITOBJECTDIALOG.NO_EDITABLE_ATTRIBUTES'));
+            ->setText($this->getApp()->getTranslator()->translate('ACTION.SHOWOBJECTEDITDIALOG.NO_EDITABLE_ATTRIBUTES'));
         }
         
         ksort($editors);
@@ -202,9 +202,9 @@ class ShowObjectDialog extends ShowDialog
      * @uxon-type boolean
      * 
      * @param boolean $value
-     * @return \exface\Core\Actions\ShowObjectDialog
+     * @return \exface\Core\Actions\ShowObjectInfoDialog
      */
-    public function setShowOnlyEditableAttributes($value) : ShowObjectDialog
+    public function setShowOnlyEditableAttributes($value) : ShowObjectInfoDialog
     {
         $this->show_only_editable_attributes = $value;
         return $this;
@@ -226,9 +226,9 @@ class ShowObjectDialog extends ShowDialog
      * @uxon-type boolean
      * 
      * @param boolean $value
-     * @return \exface\Core\Actions\ShowObjectDialog
+     * @return \exface\Core\Actions\ShowObjectInfoDialog
      */
-    public function setDisableEditing($value) : ShowObjectDialog
+    public function setDisableEditing($value) : ShowObjectInfoDialog
     {
         $this->disable_editing = BooleanDataType::cast($value);
         return $this;
