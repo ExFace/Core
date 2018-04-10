@@ -232,7 +232,7 @@ JS;
                 /* @var $widgetLink \exface\Core\CommonLogic\WidgetLink */
                 $prefix = $this->getTemplate()->getUrlFilterPrefix();
                 foreach ($action->getTakeAlongFilters() as $attributeAlias => $widgetLink){
-                    $filters_param .= "&{$prefix}{$attributeAlias}='+{$this->getTemplate()->getElement($widgetLink->getWidget())->buildJsValueGetter($widgetLink->getTargetColumnId(), null)}+'";
+                    $filters_param .= "&{$prefix}{$attributeAlias}='+{$this->getTemplate()->getElement($widgetLink->getTargetWidget())->buildJsValueGetter($widgetLink->getTargetColumnId(), null)}+'";
                 }
             }
             
