@@ -73,7 +73,7 @@
 	
 	"ACTION.SHOWMODELBUILDERDIALOG.NAME": "Modell generieren",
 
-	"ACTION.SHOWOBJECTDIALOG.NAME": "Info",
+	"ACTION.SHOWOBJECTINFODIALOG.NAME": "Info",
 
 	"ACTION.UNDOACTION.NAME": "Undo",
 	"ACTION.UNDOACTION.RESULT": "%number% Aktion wurde rückgängig gemacht.|%number% Aktionen wurden rückgängig gemacht.",
