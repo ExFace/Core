@@ -74,7 +74,7 @@ class CoreInstaller extends AbstractAppInstaller
         $file = Filemanager::pathJoin([$this->getWorkbench()->getInstallationPath(), '.htaccess']);
         if (! file_exists($file)) {
             try {
-                $this->getWorkbench()->filemanager()->copy($this->getInstallFolderAbsolutePath($source_absolute_path) . DIRECTORY_SEPARATOR . '.htaccess', $file);
+                $this->getWorkbench()->filemanager()->copy($this->getInstallFolderAbsolutePath($source_absolute_path) . DIRECTORY_SEPARATOR . 'default.htaccess', $file);
                 $result .= "\nGenerated default .htaccess file in plattform root.";
             } catch (\Exception $e) {
                 $result .= "\nFailed to copy default .htaccss file: " . $e->getMessage() . ' in ' . $e->getFile() . ' at ' . $e->getLine() . '.';
