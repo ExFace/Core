@@ -35,12 +35,17 @@
         ],
         "buttons": [
             {
-                "action_alias": "exface.Core.ShowObjectEditDialog",
+                "action_alias": "exface.Core.CreateObjectDialog"
+            },
+            {
+                "action_alias": "exface.Core.EditObjectDialog",
                 "bind_to_double_click": true
             },
             {
-                "action_alias": "exface.Core.ShowObjectCopyDialog",
-                "bind_to_double_click": true
+                "action_alias": "exface.Core.DuplicateObjectDialog"
+            },
+            {
+                "action_alias": "exface.Core.DeleteObject"
             }
         ]
     }
