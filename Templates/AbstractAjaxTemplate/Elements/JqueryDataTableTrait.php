@@ -14,7 +14,7 @@ use exface\Core\Widgets\DataTable;
  */
 trait JqueryDataTableTrait {
     
-    private $editable = false;
+    private $editable = null;
     
     private $editors = [];
 
@@ -43,6 +43,15 @@ trait JqueryDataTableTrait {
     
     public function isEditable()
     {
+        if ($this->editable === null) {
+            $columns = $this->getWidget()->getColumns();
+            foreach ($columns as $col) {
+                if ($col->isEditable()) {
+                    $this->editable = true;
+                    break;
+                }
+            }
+        }
         return $this->editable;
     }
     
