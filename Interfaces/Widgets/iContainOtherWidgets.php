@@ -143,6 +143,14 @@ interface iContainOtherWidgets extends iHaveChildren
     public function findChildrenByAttribute(MetaAttributeInterface $attribute);
     
     /**
+     * Returns an array of child widgets matching the filter.
+     * 
+     * @param callable $filter
+     * @return WidgetInterface[]
+     */
+    public function findChildrenRecursive(callable $filterCallback, $maxDepth = null) : array;
+    
+    /**
      * Returns the direct child widget with the given id or boolean FALSE if there is no matching child.
      *
      * @param string $widget_id

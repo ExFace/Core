@@ -11,6 +11,7 @@ use exface\Core\Interfaces\Widgets\iTakeInput;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Exceptions\Widgets\WidgetChildNotFoundError;
 use exface\Core\Exceptions\UnderflowException;
+use exface\Core\Interfaces\Widgets\iHaveChildren;
 
 /**
  * The Container is a basic widget, that contains other widgets - typically simple ones like inputs.
@@ -329,6 +330,25 @@ class Container extends AbstractWidget implements iContainOtherWidgets
             }
         }
         
+        return $result;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::findChildrenRecursive()
+     */
+    public function findChildrenRecursive(callable $filterCallback, $maxDepth = null) : array
+    {
+        $result = [];
+        foreach ($this->getChildren() as $child) {
+            if (call_user_func($filterCallback, $child) === true) {
+                $result[] = $child;
+            }
+            if (($maxDepth === null || $maxDepth > 0) && $child instanceof iHaveChildren) {
+                $result = array_merge($result, $child->findChildrenRecursive($filterCallback, ($maxDepth !== null ? $maxDepth-1 : null)));
+            }
+        }
         return $result;
     }
 
