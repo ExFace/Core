@@ -47,7 +47,8 @@
                                 "widget_type": "Markdown",
                                 "width": "max",
                                 "hide_caption": true,
-                                "attribute_alias": "CONTENTS"
+                                "attribute_alias": "CONTENTS",
+                                "base_url_attribute_alias": "PATH_ABSOLUTE"
                             }
                         ]
                     }
