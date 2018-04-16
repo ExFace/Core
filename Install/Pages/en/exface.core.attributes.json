@@ -52,6 +52,9 @@
         ],
         "columns": [
             {
+                "attribute_alias": "OBJECT__APP__LABEL"
+            },
+            {
                 "attribute_alias": "OBJECT__LABEL"
             },
             {
@@ -93,9 +96,6 @@
             }
         ],
         "buttons": [
-            {
-                "action_alias": "exface.Core.UpdateData"
-            },
             {
                 "action_alias": "exface.Core.ShowObjectCreateDialog"
             },
