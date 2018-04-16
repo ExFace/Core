@@ -1,4 +1,4 @@
-# The app as dependency container
+# The app as a dependency container
 
 As described in the [metamodel section](../understanding_the_metamodel/app.md), an app contains everything needed for a meaningfull application to run on the plattform. So, from the point of view of a developer, it is nothing else than an installable package with it's own dependency container allowing code from outside to access it's functionality in a standardized way.
 
@@ -8,7 +8,7 @@ Just like all autoloadable PHP packages, an app is located in a vendor folder wi
 
 ## Dependency injection container
 
-The app class described above is a dependency container and is compilant to the PSR-11 standard. It provieds access to all services or components offered by the app via it's <code>get($selector)</code> method. In addition to the PSR-11 standard, requested dependencies can be identified no only by strings, but also by [selectors](selectors.md). 
+The app class described above is a dependency container and is compilant to the [PSR-11](https://www.php-fig.org/psr/psr-11/) standard. It provieds access to all services or components offered by the app via it's <code>get($selector)</code> method. In addition to the PSR-11 standard, requested dependencies can be identified no only by strings, but also by [selectors](selectors.md). 
 
 In addition to the generic getter, the <code>AppInterface</code> defines a couple of mandatory services, every app must offer: e.g. translation (<code>AppInterface::getTranslator()</code>), configuration (<code>AppInterface::getConfig()</code>), etc.
 
@@ -33,6 +33,6 @@ To simplify the development of apps, there is a built-in app class available, wh
 
 Note: The core app uses the component type as suffix in the alias and class name (e.g. "MySqlConnector"), which has proven to be a good practice to make sure the component type is allways visible in the file header of the IDE.
 
-## Difference between apps and PHP packages
+## Difference between apps and "ordinary" PHP packages
 
 Every app can be exported as a composer-compatible PHP package and, thus, can be put in a versioning system (like git), published in a cataloge (like packagist.org), etc. App packages are handled by all these tools no different than other packages. The magic starts, once the app is installed on a workbench: then it's metamodel is extracted and it is ready to 
