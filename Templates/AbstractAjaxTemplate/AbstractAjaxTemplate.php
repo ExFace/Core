@@ -479,7 +479,18 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
                     }
                 }
             }
-            $body = $this->buildHtmlHead($debug_widget) . "\n" . $this->buildHtmlBody($debug_widget);
+            $mode = $request->getAttribute($this->getRequestAttributeForRenderingMode(), static::MODE_FULL);
+            switch ($mode) {
+                case static::MODE_HEAD:
+                    $body = $this->buildHtmlHead($debug_widget, true);
+                    break;
+                case static::MODE_BODY:
+                    $body = $this->buildHtmlBody($debug_widget);
+                    break;
+                case static::MODE_FULL:
+                default:
+                    $body = $this->buildHtmlHead($debug_widget) . "\n" . $this->buildHtmlBody($debug_widget);
+            }
         } catch (\Throwable $e) {
             // If anything goes wrong when trying to prettify the original error, drop prettifying
             // and throw the original exception wrapped in a notice about the failed prettification
