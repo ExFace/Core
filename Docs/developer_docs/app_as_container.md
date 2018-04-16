@@ -12,7 +12,7 @@ The app class described above is a dependency container and is compilant to the 
 
 In addition to the generic getter, the <code>AppInterface</code> defines a couple of mandatory services, every app must offer: e.g. translation (<code>AppInterface::getTranslator()</code>), configuration (<code>AppInterface::getConfig()</code>), etc.
 
-How exaclty the container finds the requested dependencies and how they actually work is completely up to the app developer. Keep in mind, however, that the UIs of the model designer expect to find model [prototypes](../understanding_the_meta_model/prototypes.md) like actions, behaviors, etc. in the default folders (see below). Prototypes placed otherwere will not be listed automatically. Other components can be relocated freely.
+How exaclty the container finds the requested dependencies and how they actually work is completely up to the app developer. Keep in mind, however, that the UIs of the model designer expect to find model [prototypes](../understanding_the_metamodel/prototypes.md) like actions, behaviors, etc. in the default folders (see below). Prototypes placed otherwere will not be listed automatically. Other components can be relocated freely.
 
 ## Built-in base app
 
