@@ -60,6 +60,17 @@
             "CONFIG_UXON": "{}",
             "OBJECT": "0x32370000000000000000000000000000",
             "APP": "0x31000000000000000000000000000000"
+        },
+        {
+            "CREATED_ON": "2018-04-16 11:56:16",
+            "MODIFIED_ON": "2018-04-16 11:55:39",
+            "CREATED_BY_USER": "0x11e7add6fab63cc6997b74e5434dc47d",
+            "MODIFIED_BY_USER": "0x11e7add6fab63cc6997b74e5434dc47d",
+            "UID": "0x11e8415c67741bddafce74e5434dc47d",
+            "BEHAVIOR": "exface\/Core\/Behaviors\/TimeStampingBehavior.php",
+            "CONFIG_UXON": "{\"updated_on_attribute_alias\":\"TS_UPDATE\"}",
+            "OBJECT": "0x11e6afd8efb4743f8943e4b318306b9a",
+            "APP": "0x31000000000000000000000000000000"
         }
     ],
     "totals_rows": [],
