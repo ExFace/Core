@@ -6,6 +6,8 @@ use exface\Core\CommonLogic\AbstractDataConnector;
 use exface\Core\CommonLogic\Filemanager;
 use exface\Core\CommonLogic\DataQueries\FileFinderDataQuery;
 use Symfony\Component\Finder\SplFileInfo;
+use exface\Core\DataTypes\TimestampDataType;
+use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
 
 /**
  *
@@ -169,6 +171,33 @@ class FileFinderBuilder extends AbstractQueryBuilder
         return $this->getResultTotalRows();
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder::update()
+     */
+    public function update(AbstractDataConnector $data_connection = null)
+    {
+        $updatedFileNr = 0;
+        
+        $query = $this->buildQuery();
+        if ($files = $data_connection->query($query)->getFinder()) {
+            $fileArray = iterator_to_array($files, false);
+            $contentArray = $this->getValue('CONTENTS')->getValues();
+            
+            if (count($fileArray) !== count($contentArray)) {
+                throw new BehaviorRuntimeError($this->getMainObject(), 'The number of passed files doen\'t match the number of passed file contents.');
+            }
+            
+            for ($i = 0; $i < count($fileArray); $i++) {
+                file_put_contents($fileArray[$i], $contentArray[$i]);
+                $updatedFileNr++;
+            }
+        }
+        
+        return $updatedFileNr;
+    }
+
     protected function buildResultRow(SplFileInfo $file, FileFinderDataQuery $query)
     {
         $row = array();
@@ -215,7 +244,8 @@ class FileFinderBuilder extends AbstractQueryBuilder
             'name' => $file->getExtension() ? str_replace('.' . $file->getExtension(), '', $file->getFilename()) : $file->getFilename(),
             'path_relative' => $base_path ? str_replace($base_path, '', $path) : $path,
             'pathname_absolute' => $file->getRealPath(),
-            'pathname_relative' => $base_path ? str_replace($base_path, '', $pathname) : $pathname
+            'pathname_relative' => $base_path ? str_replace($base_path, '', $pathname) : $pathname,
+            'mtime' => TimestampDataType::cast('@' . $file->getMTime())
         );
         
         return $file_data;
