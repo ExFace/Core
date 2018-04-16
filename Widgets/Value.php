@@ -456,5 +456,19 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
     {
         return is_null($this->getValue()) ? false : true;
     }
+    
+    /**
+     * Returns TRUE if the widget represents a cell in a data widget.
+     * 
+     * This way, in-table editors and display widgets can be easily detected.
+     * 
+     * @see Data::setCellWidget()
+     * 
+     * @return bool
+     */
+    public function isInTable() : bool
+    {
+        return $this->getParent() instanceof DataColumn;
+    }
 }
 ?>

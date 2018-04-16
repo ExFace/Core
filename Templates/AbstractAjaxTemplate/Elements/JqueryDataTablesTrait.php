@@ -172,6 +172,7 @@ JS;
             return $this->getTemplate()->getElement($this->getWidget()->getConfiguratorWidget())->buildJsDataGetter($action);
         } elseif ($this->isEditable() && $action->implementsInterface('iModifyData')) {
             // TODO
+            $rows = "[]";
         } else {
             $rows = "Array.prototype.slice.call(" . $this->getId() . "_table.rows({selected: true}).data())";
         }
