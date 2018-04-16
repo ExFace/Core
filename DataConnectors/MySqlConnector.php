@@ -83,7 +83,9 @@ class MySqlConnector extends AbstractSqlConnector
     protected function performDisconnect()
     {
         try {
-            mysqli_close($this->getCurrentConnection());
+            if ($conn = $this->getCurrentConnection()) {
+                mysqli_close($conn);
+            }
         } catch (\Throwable $e) {
             // ignore errors on close
         }

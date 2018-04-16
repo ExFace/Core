@@ -26,7 +26,7 @@ abstract class TemplateFactory extends AbstractSelectableComponentFactory
      * @param WorkbenchInterface $exface            
      * @return TemplateInterface
      */
-    public static function createFromString($aliasOrPathOrClassname, WorkbenchInterface $exface) : TemplateInterface
+    public static function createFromString(string $aliasOrPathOrClassname, WorkbenchInterface $exface) : TemplateInterface
     {
         $selector = new TemplateSelector($exface, $aliasOrPathOrClassname);
         return static::create($selector);
