@@ -16,7 +16,8 @@ class Markdown extends Html
      */
     public function getMarkdown()
     {
-        return $this->getValue();
+        $md = $this->getValue();
+        return $md === null ? '' : $md;
     }
 
     /**
