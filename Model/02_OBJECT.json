@@ -141,7 +141,7 @@
         },
         {
             "CREATED_ON": "2007-01-01 00:00:00",
-            "MODIFIED_ON": "2017-10-12 12:21:04",
+            "MODIFIED_ON": "2018-04-17 10:30:21",
             "CREATED_BY_USER": "",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x32340000000000000000000000000000",
@@ -152,7 +152,7 @@
             "SHORT_DESCRIPTION": "Each system ExFace is connected to is a data source. The meta model describes objects from one or more data sources, but each object is always located in a single source. A data source can have different connections: e.g. for a test-DB, a prod-DB, et",
             "PARENT_OBJECT": "",
             "DATA_ADDRESS_PROPS": "{}",
-            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Form\",\"widgets\":[{\"attribute_alias\":\"LABEL\"},{\"attribute_alias\":\"ALIAS\"},{\"attribute_alias\":\"APP\"},{\"attribute_alias\":\"BASE_OBJECT\"},{\"attribute_alias\":\"DEFAULT_QUERY_BUILDER\"},{\"attribute_alias\":\"CUSTOM_QUERY_BUILDER\"},{\"attribute_alias\":\"DEFAULT_CONNECTION\"},{\"attribute_alias\":\"CUSTOM_CONNECTION\"},{\"attribute_alias\":\"READABLE_FLAG\"},{\"attribute_alias\":\"WRITABLE_FLAG\"}]}",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Form\",\"widgets\":[{\"widget_type\":\"WidgetGroup\",\"widgets\":[{\"attribute_alias\":\"LABEL\"},{\"attribute_alias\":\"APP\"},{\"attribute_alias\":\"ALIAS\"},{\"attribute_alias\":\"BASE_OBJECT\"},{\"attribute_alias\":\"READABLE_FLAG\"},{\"attribute_alias\":\"WRITABLE_FLAG\"}]},{\"widget_type\":\"WidgetGroup\",\"caption\":\"=TRANSLATE('exface.Core', 'PAGE.DATA_SOURCE_EDITOR.DEFAULTS')\",\"widgets\":[{\"attribute_alias\":\"DEFAULT_CONNECTION\"},{\"attribute_alias\":\"DEFAULT_QUERY_BUILDER\"}]},{\"widget_type\":\"WidgetGroup\",\"caption\":\"=TRANSLATE('exface.Core', 'PAGE.DATA_SOURCE_EDITOR.CUSTOM_CONFIG')\",\"widgets\":[{\"attribute_alias\":\"CUSTOM_CONNECTION\"},{\"attribute_alias\":\"CUSTOM_QUERY_BUILDER\"}]}]}",
             "LABEL": "Data Source",
             "ALIAS": "DATASRC",
             "DATA_ADDRESS": "exf_data_source"
