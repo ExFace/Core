@@ -6,7 +6,7 @@ use exface\Core\Widgets\Data;
 use exface\Core\CommonLogic\WidgetLink;
 use exface\Core\CommonLogic\UxonObject;
 
-interface iShowDataSet extends WidgetInterface
+interface iUseData extends WidgetInterface
 {
 
     /**

@@ -94,7 +94,7 @@ class MetaObject implements MetaObjectInterface
      * relations (of different types), the respective element of the relations array will be an array in
      * turn.
      *
-     * @return relation[] [relation_alias => relation | relation[]]
+     * @return MetaRelationInterface[] [relation_alias => relation | relation[]]
      */
     function getRelationsArray()
     {
@@ -417,7 +417,7 @@ class MetaObject implements MetaObjectInterface
      * where it comes from). I like this kind of naming, but it needs to be extended by the possibility to
      * specify which of the two reverse relation to use (e.g. LOCATION->ADDRESS[SHIPPING_ADDRESS] or something)
      *
-     * @param relation $relation            
+     * @param MetaRelationInterface $relation            
      * @return MetaObjectInterface
      */
     function addRelation(MetaRelationInterface $relation)
