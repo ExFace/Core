@@ -3,6 +3,7 @@ namespace exface\Core\Templates\AbstractAjaxTemplate\Elements;
 
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Widgets\Container;
+use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 
 /**
  *
@@ -147,6 +148,46 @@ trait JqueryContainerTrait {
     protected function getWidgetsToValidate()
     {
         return $this->getWidget()->getInputWidgets();
+    }
+    
+    /**
+     * Builds a JS snippet wrapped in an IIFE, that fills values of elements in the container with
+     * data from the given JS data sheet. 
+     * 
+     * The input must be valid JS code representing or returning a JS data sheet.
+     * 
+     * For example, this code will extract data from a table and put it into a container:
+     * $container->buildJsDataSetter($table->buildJsDataGetter())
+     * 
+     * @param string $jsInput
+     * @return string
+     */
+    public function buildJsDataSetter(string $jsInput) : string
+    {
+        $setters = '';
+        foreach ($this->getWidget()->getWidgets() as $child) {
+            if (! ($child instanceof iShowSingleAttribute) || ! $child->hasAttributeReference()) {
+                continue;
+            }
+            $setters .= <<<JS
+            
+                if (row['{$child->getAttributeAlias()}']) {
+                    {$this->getTemplate()->getElement($child)->buildJsValueSetter('row["' . $child->getAttributeAlias() . '"]')};
+                }
+JS;
+        }
+        return <<<JS
+
+        function() {
+            var data = {$jsInput};
+            var row = data.rows[0];
+            if (! row || row.length === 0) {
+                return;
+            }
+            {$setters}
+        }()
+
+JS;
     }
 }
 ?>

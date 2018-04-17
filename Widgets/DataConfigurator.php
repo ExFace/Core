@@ -388,7 +388,7 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
     /**
      * Creates and adds a filter based on the given relation
      *
-     * @param relation $relation
+     * @param MetaRelationInterface $relation
      * @return \exface\Core\Widgets\AbstractWidget
      */
     public function createFilterFromRelation(MetaRelationInterface $relation)
