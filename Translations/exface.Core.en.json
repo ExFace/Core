@@ -146,6 +146,7 @@
     "PAGE.OBJECT_EDITOR.RELATION_TO": "Relation to",
     "PAGE.OBJECT_EDITOR.DEFAULT_EDITOR": "Default Editor",
     "PAGE.OBJECT_EDITOR.DATA_ADDRESS": "Data Address",
+    "PAGE.OBJECT_EDITOR.DATA_SOURCE_BASE_OBJECT": "Base Object of Data Source",
     "PAGE.ATTRIBUTES.DISPLAY_ORDER": "Disp. Pos.",
     "PAGE.TABS.GENERAL": "General",
     

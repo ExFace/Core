@@ -145,6 +145,7 @@
     "PAGE.OBJECT_EDITOR.RELATION_TO": "Verknüpft mit",
     "PAGE.OBJECT_EDITOR.DEFAULT_EDITOR": "Standard-Editor",
     "PAGE.OBJECT_EDITOR.DATA_ADDRESS": "Datenadresse",
+    "PAGE.OBJECT_EDITOR.DATA_SOURCE_BASE_OBJECT": "Basisobjekt der Datenquelle",
     "PAGE.ATTRIBUTES.DISPLAY_ORDER": "Anzeige-Pos.",
     "PAGE.TABS.GENERAL": "Allgemein",
     
