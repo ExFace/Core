@@ -36,6 +36,14 @@
         {
             "name": "APP",
             "attribute_alias": "APP"
+        },
+        {
+            "name": "NAME",
+            "attribute_alias": "NAME"
+        },
+        {
+            "name": "DESCRIPTION",
+            "attribute_alias": "DESCRIPTION"
         }
     ],
     "rows": [
@@ -48,7 +56,9 @@
             "BEHAVIOR": "exface\/Core\/Behaviors\/TimeStampingBehavior.php",
             "CONFIG_UXON": "{\"created_on_attribute_alias\":\"CREATED_ON\",\"updated_on_attribute_alias\":\"MODIFIED_ON\"}",
             "OBJECT": "0x32370000000000000000000000000000",
-            "APP": "0x31000000000000000000000000000000"
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Save access time",
+            "DESCRIPTION": null
         },
         {
             "CREATED_ON": "2017-06-05 06:43:28",
@@ -59,7 +69,9 @@
             "BEHAVIOR": "exface\/Core\/Behaviors\/CacheClearingBehavior.php",
             "CONFIG_UXON": "{}",
             "OBJECT": "0x32370000000000000000000000000000",
-            "APP": "0x31000000000000000000000000000000"
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Clear cache on save",
+            "DESCRIPTION": null
         }
     ],
     "totals_rows": [],
