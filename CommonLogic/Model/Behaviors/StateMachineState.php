@@ -42,7 +42,7 @@ class StateMachineState
      * Defines the state id.
      *
      * @param integer|string $value            
-     * @return \exface\Core\Behaviors\StateMachineState
+     * @return \exface\Core\CommonLogic\Model\Behaviors\StateMachineState
      */
     public function setStateId($value)
     {
@@ -86,7 +86,7 @@ class StateMachineState
      *  }
      *
      * @param UxonObject $value            
-     * @return \exface\Core\Behaviors\StateMachineState
+     * @return \exface\Core\CommonLogic\Model\Behaviors\StateMachineState
      */
     public function setButtons($value)
     {
@@ -103,7 +103,7 @@ class StateMachineState
      *  ]
      *
      * @param UxonObject|string[] $value            
-     * @return \exface\Core\Behaviors\StateMachineState
+     * @return \exface\Core\CommonLogic\Model\Behaviors\StateMachineState
      */
     public function setDisabledAttributesAliases($value)
     {
@@ -166,7 +166,7 @@ class StateMachineState
      *  } 
      *
      * @param UxonObject|integer[] $value            
-     * @return \exface\Core\Behaviors\StateMachineState
+     * @return \exface\Core\CommonLogic\Model\Behaviors\StateMachineState
      */
     public function setTransitions($value)
     {
