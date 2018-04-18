@@ -15,6 +15,9 @@ use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Exceptions\InvalidArgumentException;
+use exface\Core\Interfaces\DataTypes\DataTypeInterface;
+use exface\Core\DataTypes\StringDataType;
+use exface\Core\DataTypes\NumberDataType;
 
 class Expression implements ExpressionInterface
 {
@@ -22,7 +25,8 @@ class Expression implements ExpressionInterface
     // Expression types
     const TYPE_FORMULA = 'formula';
     const TYPE_ATTRIBUTE = 'attribute_alias';
-    const TYPE_CONSTANT = 'constant';
+    const TYPE_STRING = 'string';
+    const TYPE_NUMBER = 'number';
     const TYPE_REFERENCE = 'reference';
     
     private $attributes = array();
@@ -69,25 +73,46 @@ class Expression implements ExpressionInterface
         $expression = trim($expression);
         // see, what type of expression it is. Depending on the type, the evaluate() method will give different results.
         $str = $this->parseQuotedString($expression);
-        if (! $expression || $str !== false) {
-            $this->type = self::TYPE_CONSTANT;
+        if ($expression === '' || $expression === null || $str !== false) {
+            // Check, if it's a string
+            // Empty expressions are treated as strings in any case!
+            $this->type = self::TYPE_STRING;
             $this->value = $str;
+        } elseif ($this::detectNumber($expression)) {
+            // Check, if it's a number
+            $this->type = self::TYPE_NUMBER;
+            $this->value = $expression;
         } elseif (substr($expression, 0, 1) === '=') {
+            // If it starts with "=", it can still be anything, so check all possibilities agian 
             if (strpos($expression, '(') !== false && strpos($expression, ')') !== false) {
+                // If opening and closing parenthes are present, it's a formula
                 $this->type = self::TYPE_FORMULA;
                 $this->formula = $this->parseFormula($expression);
                 $this->attributes = array_merge($this->attributes, $this->formula->getRequiredAttributes());
             } else {
-                $this->type = self::TYPE_REFERENCE;
-                $this->widget_link = substr($expression, 1);
+                // Otherwise do checks with whatever follows the "="
+                $str = substr($expression, 1);
+                if ($this::detectQuotedString($str)) {
+                    $this->type = self::TYPE_STRING;
+                    $this->value = $this->parseQuotedString($str);
+                } elseif ($this::detectNumber($str)) {
+                    $this->type = self::TYPE_NUMBER;
+                    $this->value = $str;
+                } else {
+                    // If it's neither a quoted string nor a number, it must be a widget link
+                    $this->type = self::TYPE_REFERENCE;
+                    $this->widget_link = substr($expression, 1);
+                }
             }
-        } else { // attribute_alias
+        } else {
+            // Finally, if it's neither a quoted string, nor a number nor does it start with "=", it must be an attribute alias.
             if (! $this->getMetaObject() || ($this->getMetaObject() && $this->getMetaObject()->hasAttribute($expression))) {
                 $this->type = self::TYPE_ATTRIBUTE;
                 $this->attribute_alias = $expression;
                 $this->attributes[] = $expression;
             } else {
-                $this->type = self::TYPE_CONSTANT;
+                // In the unlikely event, that is not a valid attribute, still treat it as string
+                $this->type = self::TYPE_STRING;
                 $this->value = $str === false ? '' : $str;
             }
         }
@@ -99,7 +124,7 @@ class Expression implements ExpressionInterface
      * {@inheritdoc}
      * @see \exface\Core\Interfaces\Model\ExpressionInterface::isMetaAttribute()
      */
-    public function isMetaAttribute()
+    public function isMetaAttribute() : bool
     {
         if ($this->type === self::TYPE_ATTRIBUTE)
             return true;
@@ -111,7 +136,7 @@ class Expression implements ExpressionInterface
      * {@inheritdoc}
      * @see \exface\Core\Interfaces\Model\ExpressionInterface::isFormula()
      */
-    public function isFormula()
+    public function isFormula() : bool
     {
         if ($this->type === SELF::TYPE_FORMULA)
             return true;
@@ -123,39 +148,53 @@ class Expression implements ExpressionInterface
      * {@inheritdoc}
      * @see \exface\Core\Interfaces\Model\ExpressionInterface::isConstant()
      */
-    public function isConstant()
+    public function isConstant() : bool
     {
-        if ($this->type === self::TYPE_CONSTANT)
-            return true;
-        else
-            return false;
+        return ($this->type === self::TYPE_STRING || $this->type === self::TYPE_NUMBER);
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\ExpressionInterface::isString()
+     */
+    public function isString() : bool
+    {
+        return $this->type === self::TYPE_STRING;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\ExpressionInterface::isNumber()
+     */
+    public function isNumber() : bool
+    {
+        return $this->type === self::TYPE_NUMBER;
     }
 
     /**
-     * Returns TRUE if the expression has no value (expression->toString() = NULL) and FALSE otherwise
-     *
-     * @return boolean
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\ExpressionInterface::isEmpty()
      */
-    public function isEmpty()
+    public function isEmpty() : bool
     {
-        return is_null($this->toString()) ? true : false;
+        return $this->toString() === null;
     }
 
     /**
      * {@inheritdoc}
      * @see \exface\Core\Interfaces\Model\ExpressionInterface::isReference()
      */
-    public function isReference()
+    public function isReference() : bool
     {
-        if ($this->type === SELF::TYPE_REFERENCE)
-            return true;
-        else
-            return false;
+        return $this->type === SELF::TYPE_REFERENCE;
     }
 
     protected function parseQuotedString($expression)
     {
-        if (substr($expression, 0, 1) == '"' || substr($expression, 0, 1) == "'") {
+        if ($this::detectQuotedString($expression)) {
             return trim($expression, '"\'');
         } else {
             return false;
@@ -359,15 +398,18 @@ class Expression implements ExpressionInterface
      * {@inheritdoc}
      * @see \exface\Core\Interfaces\Model\ExpressionInterface::getDataType()
      */
-    public function getDataType()
+    public function getDataType() : DataTypeInterface
     {
         if (is_null($this->data_type)) {
             switch ($this->type) {
+                case self::TYPE_STRING:
+                    $this->data_type = DataTypeFactory::createFromString($this->exface, StringDataType::class);
+                    break;
+                case self::TYPE_NUMBER:
+                    $this->data_type = DataTypeFactory::createFromString($this->exface, NumberDataType::class);
+                    break;
                 case self::TYPE_FORMULA:
                     $this->data_type = $this->formula->getDataType();
-                    break;
-                case self::TYPE_CONSTANT:
-                    $this->data_type = DataTypeFactory::createFromString($this->exface, 'exface.Core.String');
                     break;
                 case self::TYPE_ATTRIBUTE:
                     if (! is_null($this->getMetaObject())) {
@@ -541,17 +583,50 @@ class Expression implements ExpressionInterface
     }
     
     /**
-     * Returns true if a string contains a formula, false otherwise.
-     * 
-     * @param string $value
-     * @return boolean
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\ExpressionInterface::detectFormula()
      */
-    public static function detectFormula($value)
+    public static function detectFormula($value) : bool
     {
         if ($value && substr(trim($value), 0, 1) === '=') {
             return true;
         }
         return false;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\ExpressionInterface::detectString()
+     */
+    public static function detectQuotedString($value) : bool
+    {
+        if ($value === '') {
+            return true;
+        }
+        $value = trim($value);
+        $start = substr($value, 0, 1);
+        if ($start === '"' || $start === "'") {
+            $end = substr($value, -1);
+            if ($start === '"' && $end === '"') {
+                return true;
+            }
+            if ($start === "'" && $end === "'") {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\ExpressionInterface::detectNumber()
+     */
+    public static function detectNumber($value) : bool
+    {
+        return is_numeric($value);
     }
 }
 ?>
