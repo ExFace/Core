@@ -51,7 +51,8 @@
                 "attribute_alias": "DATA_SOURCE__LABEL"
             },
             {
-                "attribute_alias": "DATA_ADDRESS"
+                "attribute_alias": "DATA_ADDRESS",
+                "width_max": "300px"
             },
             {
                 "attribute_alias": "ATTRIBUTE__UID:COUNT",

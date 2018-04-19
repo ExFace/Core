@@ -67,7 +67,8 @@
                 "attribute_alias": "DISPLAYORDER"
             },
             {
-                "attribute_alias": "DATA_ADDRESS"
+                "attribute_alias": "DATA_ADDRESS",
+                "width_max": "300px"
             },
             {
                 "attribute_alias": "DATATYPE__LABEL"
