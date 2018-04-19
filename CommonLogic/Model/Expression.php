@@ -18,6 +18,7 @@ use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\DataTypes\NumberDataType;
+use exface\Core\Exceptions\LogicException;
 
 class Expression implements ExpressionInterface
 {
@@ -29,7 +30,7 @@ class Expression implements ExpressionInterface
     const TYPE_NUMBER = 'number';
     const TYPE_REFERENCE = 'reference';
     
-    private $attributes = array();
+    private $attributes = null;
 
     private $formula = null;
 
@@ -43,7 +44,7 @@ class Expression implements ExpressionInterface
 
     private $relation_path = '';
 
-    private $string = '';
+    private $originalString = '';
 
     private $data_type = null;
 
@@ -60,7 +61,7 @@ class Expression implements ExpressionInterface
         $this->exface = $exface;
         $this->meta_object = $meta_object;
         $this->parse($string);
-        $this->string = $string;
+        $this->originalString = $string;
     }
 
     /**
@@ -87,8 +88,6 @@ class Expression implements ExpressionInterface
             if (strpos($expression, '(') !== false && strpos($expression, ')') !== false) {
                 // If opening and closing parenthes are present, it's a formula
                 $this->type = self::TYPE_FORMULA;
-                $this->formula = $this->parseFormula($expression);
-                $this->attributes = array_merge($this->attributes, $this->formula->getRequiredAttributes());
             } else {
                 // Otherwise do checks with whatever follows the "="
                 $str = substr($expression, 1);
@@ -107,9 +106,8 @@ class Expression implements ExpressionInterface
         } else {
             // Finally, if it's neither a quoted string, nor a number nor does it start with "=", it must be an attribute alias.
             if (! $this->getMetaObject() || ($this->getMetaObject() && $this->getMetaObject()->hasAttribute($expression))) {
-                $this->type = self::TYPE_ATTRIBUTE;
                 $this->attribute_alias = $expression;
-                $this->attributes[] = $expression;
+                $this->type = self::TYPE_ATTRIBUTE;
             } else {
                 // In the unlikely event, that is not a valid attribute, still treat it as string
                 $this->type = self::TYPE_STRING;
@@ -282,7 +280,7 @@ class Expression implements ExpressionInterface
     {
         if ($this->isStatic()) {
             if ($this->isFormula()) {
-                return $this->formula->evaluate();
+                return $this->getFormula()->evaluate();
             } else {
                 return $this->value;
             }
@@ -304,7 +302,7 @@ class Expression implements ExpressionInterface
                 case self::TYPE_ATTRIBUTE:
                     return $data_sheet->getCellValue($this->attribute_alias, $row_number);
                 case self::TYPE_FORMULA:
-                    return $this->formula->evaluate($data_sheet, $column_name, $row_number);
+                    return $this->getFormula()->evaluate($data_sheet, $column_name, $row_number);
                 default:
                     return $this->value;
             }
@@ -317,6 +315,17 @@ class Expression implements ExpressionInterface
      */
     public function getRequiredAttributes()
     {
+        if (is_null($this->attributes)) {
+            $this->attributes = [];
+            switch ($this->getType()) {
+                case self::TYPE_ATTRIBUTE:
+                    $this->attributes[] = $this->attribute_alias;
+                    break;
+                case self::TYPE_FORMULA:
+                    $this->attributes = $this->getFormula()->getRequiredAttributes();
+                    break;
+            }            
+        }
         return $this->attributes;
     }
 
@@ -347,7 +356,7 @@ class Expression implements ExpressionInterface
         // remove old relation path
         if ($this->relation_path) {
             $path_length = strlen($this->relation_path . RelationPath::RELATION_SEPARATOR);
-            foreach ($this->attributes as $key => $a) {
+            foreach ($this->getRequiredAttributes() as $key => $a) {
                 $this->attributes[$key] = substr($a, $path_length);
             }
         }
@@ -355,13 +364,13 @@ class Expression implements ExpressionInterface
         // set new relation path
         $this->relation_path = $relation_path;
         if ($relation_path) {
-            foreach ($this->attributes as $key => $a) {
+            foreach ($this->getRequiredAttributes() as $key => $a) {
                 $this->attributes[$key] = $relation_path . RelationPath::RELATION_SEPARATOR . $a;
             }
         }
         
-        if ($this->formula)
-            $this->formula->setRelationPath($relation_path);
+        if ($this->isFormula())
+            $this->getFormula()->setRelationPath($relation_path);
         if ($this->attribute_alias)
             $this->attribute_alias = $relation_path . RelationPath::RELATION_SEPARATOR . $this->attribute_alias;
     }
@@ -372,7 +381,7 @@ class Expression implements ExpressionInterface
      */
     public function toString()
     {
-        return $this->string;
+        return $this->originalString;
     }
 
     /**
@@ -409,7 +418,7 @@ class Expression implements ExpressionInterface
                     $this->data_type = DataTypeFactory::createFromString($this->exface, NumberDataType::class);
                     break;
                 case self::TYPE_FORMULA:
-                    $this->data_type = $this->formula->getDataType();
+                    $this->data_type = $this->getFormula()->getDataType();
                     break;
                 case self::TYPE_ATTRIBUTE:
                     if (! is_null($this->getMetaObject())) {
@@ -443,13 +452,13 @@ class Expression implements ExpressionInterface
      */
     public function mapAttribute($map_from, $map_to)
     {
-        foreach ($this->attributes as $id => $attr) {
+        foreach ($this->getRequiredAttributes() as $id => $attr) {
             if ($attr == $map_from) {
                 $this->attributes[$id] = $map_to;
             }
         }
-        if ($this->formula)
-            $this->formula->mapAttribute($map_from, $map_to);
+        if ($this->isFormula())
+            $this->getFormula()->mapAttribute($map_from, $map_to);
     }
 
     /**
@@ -577,7 +586,7 @@ class Expression implements ExpressionInterface
             case $this->isEmpty():
                 return true;
             case $this->isFormula():
-                return $this->formula->isStatic();
+                return $this->getFormula()->isStatic();
         }
         return false;
     }
@@ -627,6 +636,24 @@ class Expression implements ExpressionInterface
     public static function detectNumber($value) : bool
     {
         return is_numeric($value);
+    }
+    
+    /**
+     * 
+     * @throws LogicException
+     * @return FormulaInterface
+     */
+    protected function getFormula() : FormulaInterface
+    {
+        if (! $this->isFormula()) {
+            throw new LogicException('Cannot use expression "' . $this->toString() . '" as a formula!');
+        }
+        
+        if ($this->formula === null) {
+            $this->formula = $this->parseFormula($this->toString());
+        }
+        
+        return $this->formula;
     }
 }
 ?>
