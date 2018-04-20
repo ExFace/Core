@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\Widgets;
 
+use exface\Core\DataTypes\BooleanDataType;
+
 /**
  * A special type of button to use in dialogs.
  * Additionally to the normal button functionality
@@ -17,24 +19,68 @@ class DialogButton extends Button
 
     private $close_dialog_after_action_fails = false;
 
-    public function getCloseDialogAfterActionSucceeds()
+    /**
+     * 
+     * @return bool
+     */
+    public function getCloseDialogAfterActionSucceeds() : bool
     {
         return $this->close_dialog_after_action_succeeds;
     }
 
-    public function setCloseDialogAfterActionSucceeds($value)
+    /**
+     * Makes the button close the dialog once it's action is performed successfully - TRUE by default.
+     * 
+     * @uxon-property close_dialog_after_action_succeeds
+     * @uxon-type boolean 
+     * 
+     * @param bool|int|string $value
+     * @return DialogButton
+     */
+    public function setCloseDialogAfterActionSucceeds($value) : DialogButton
     {
-        $this->close_dialog_after_action_succeeds = $value;
+        $this->close_dialog_after_action_succeeds = BooleanDataType::cast($value);
+        return $this;
     }
 
-    public function getCloseDialogAfterActionFails()
+    /**
+     * 
+     * @return bool
+     */
+    public function getCloseDialogAfterActionFails() : bool
     {
         return $this->close_dialog_after_action_fails;
     }
 
-    public function setCloseDialogAfterActionFails($value)
+    /**
+     * Makes the button close the dialog if it's action causes an error (before showing the error) - FALSE by default.
+     * 
+     * @uxon-property close_dialog_after_action_fails
+     * @uxon-type boolean 
+     * 
+     * @param bool|int|string $value
+     * @return DialogButton
+     */
+    public function setCloseDialogAfterActionFails($value) : DialogButton
     {
-        $this->close_dialog_after_action_fails = $value;
+        $this->close_dialog_after_action_fails = BooleanDataType::cast($value);
+        return $this;
+    }
+    
+    /**
+     * Makes the button close (TRUE) or leave open (FALSE) the dialog after it had been pressed - regardless of the result.
+     *
+     * @uxon-property close_dialog_after_action_succeeds
+     * @uxon-type boolean
+     *
+     * @param bool|int|string $value
+     * @return DialogButton
+     */
+    public function setCloseDialog($value) : DialogButton
+    {
+        $this->setCloseDialogAfterActionFails($value);
+        $this->setCloseDialogAfterActionSucceeds($value);
+        return $this;
     }
 
     /**
