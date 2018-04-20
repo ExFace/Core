@@ -58,7 +58,7 @@
             "OBJECT": "0x32370000000000000000000000000000",
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Save access time",
-            "DESCRIPTION": null
+            "DESCRIPTION": ""
         },
         {
             "CREATED_ON": "2017-06-05 06:43:28",
@@ -71,7 +71,7 @@
             "OBJECT": "0x32370000000000000000000000000000",
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Clear cache on save",
-            "DESCRIPTION": null
+            "DESCRIPTION": ""
         }
     ],
     "totals_rows": [],
