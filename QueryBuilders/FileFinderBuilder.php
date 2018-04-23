@@ -56,6 +56,7 @@ class FileFinderBuilder extends AbstractQueryBuilder
                     default: // TODO
                 }
             } else {
+                $this->addAttribute($qpart->getExpression()->toString());
                 $qpart->setApplyAfterReading(true);
                 $query->setFullScanRequired(true);
             }
