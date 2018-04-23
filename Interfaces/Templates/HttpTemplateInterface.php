@@ -12,14 +12,6 @@ interface HttpTemplateInterface extends TemplateInterface, RequestHandlerInterfa
 {
     public function getBaseUrl() : string;
     
-    public function getRequestAttributeForAction() : string;
-    
-    public function getRequestAttributeForTask() : string;
-    
-    public function getRequestAttributeForPage() : string;
-    
-    public function getRequestAttributeForRenderingMode() : string;
-    
     public function getUrlRoutePatterns() : array;
 }
 ?>
