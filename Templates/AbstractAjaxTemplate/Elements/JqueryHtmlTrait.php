@@ -27,7 +27,7 @@ trait JqueryHtmlTrait {
             $style .= 'margin: 10px;';
         }
         
-        $output .= '<div id="' . $this->getId() . '" style="' . $style . '">' . $this->getWidget()->getHtml() . '</div>';
+        $output .= '<div id="' . $this->getId() . '" style="' . $style . '" class="' . $this->buildCssElementClass() . '">' . $this->getWidget()->getHtml() . '</div>';
         return $this->buildHtmlGridItemWrapper($output);
     }
     
