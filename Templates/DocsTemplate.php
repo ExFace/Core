@@ -67,7 +67,7 @@ class DocsTemplate extends AbstractTemplate implements HttpTemplateInterface
     public function getUrlRoutePatterns() : array
     {
         return [
-            "/\/api\/files[\/?]/"
+            "/\/api\/docs[\/?]/"
         ];
     }
 }
