@@ -42,6 +42,7 @@ class DocsTemplate extends AbstractTemplate implements HttpTemplateInterface
         $reader = new MarkdownDocsReader($this->getWorkbench());
         $templatePath = Filemanager::pathJoin([$this->getApp()->getDirectoryAbsolutePath(), 'Templates/DocsTemplate/template.html']);
         $template = new PlaceholderFileTemplate($templatePath, $this->getBaseUrl());
+        $template->setBreadcrumbsRootName('Documentation');
         $router = new FileRouteMiddleware($matcher, $this->getWorkbench()->filemanager()->getPathToVendorFolder(), $reader, $template);
         
         $response = $router->process($request, new NotFoundHandler());
