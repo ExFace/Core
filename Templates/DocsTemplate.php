@@ -7,13 +7,12 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use kabachello\FileRoute\FileRouteMiddleware;
 use Psr\Http\Message\UriInterface;
-use kabachello\FileRoute\FileReaders\MarkdownReader;
 use kabachello\FileRoute\Templates\PlaceholderFileTemplate;
 use exface\Core\Templates\AbstractHttpTemplate\NotFoundHandler;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\CommonLogic\Filemanager;
-use GuzzleHttp\Psr7\Response;
 use function GuzzleHttp\Psr7\stream_for;
+use exface\Core\Templates\DocsTemplate\MarkdownDocsReader;
 
 /**
  *  
@@ -33,9 +32,14 @@ class DocsTemplate extends AbstractTemplate implements HttpTemplateInterface
     {
         $matcher = function(UriInterface $uri) {
             $path = $uri->getPath();
-            return StringDataType::substringAfter($path, 'api/docs/');
+            $url = StringDataType::substringAfter($path, '/api/docs');
+            $url = ltrim($url, "/");
+            if ($q = $uri->getQuery()) {
+                $url .= '?' . $q;
+            }
+            return $url;
         };
-        $reader = new MarkdownReader();
+        $reader = new MarkdownDocsReader($this->getWorkbench());
         $templatePath = Filemanager::pathJoin([$this->getApp()->getDirectoryAbsolutePath(), 'Templates/DocsTemplate/template.html']);
         $template = new PlaceholderFileTemplate($templatePath, $this->getBaseUrl());
         $router = new FileRouteMiddleware($matcher, $this->getWorkbench()->filemanager()->getPathToVendorFolder(), $reader, $template);
