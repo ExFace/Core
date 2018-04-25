@@ -78,11 +78,6 @@ trait JqueryButtonGroupTrait
         return $this->more_buttons_menu;
     }
     
-    public function buildHtml()
-    {   
-        return $this->buildHtmlButtonGroupWrapper($this->buildHtmlButtons());
-    }
-    
     /**
      * Returns the HTML code including all buttons in this group plus a MenuButton 
      * for buttons with visibility=optional.
@@ -138,15 +133,6 @@ trait JqueryButtonGroupTrait
             $style = 'float: right;';
         }
         return '<div style="' . $style . '" class="exf-btn-group">' . $buttons_html . '</div>';
-    }
-    
-    public function buildJs()
-    {
-        $js = '';
-        foreach ($this->getWidget()->getButtons() as $button) {
-            $js .= $this->getTemplate()->buildJs($button);
-        }
-        return $js;
     }
     
     /**
