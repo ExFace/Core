@@ -14,22 +14,12 @@ use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
  */
 trait JqueryContainerTrait {
 
-    public function buildHtml()
-    {
-        return $this->buildHtmlForChildren();
-    }
-
-    public function buildJs()
-    {
-        return $this->buildJsForChildren();
-    }
-
     public function buildHtmlForChildren()
     {
         foreach ($this->getWidget()->getChildren() as $subw) {
             $output .= $this->getTemplate()->getElement($subw)->buildHtml() . "\n";
         }
-        ;
+        
         return $output;
     }
 
