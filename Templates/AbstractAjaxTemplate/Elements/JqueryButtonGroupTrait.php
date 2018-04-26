@@ -158,4 +158,17 @@ trait JqueryButtonGroupTrait
     protected function getMoreButtonsMenuIcon(){
         return '';
     }
+    
+    /**
+     * 
+     * @return string
+     */
+    protected function buildJsForButtons() : string
+    {
+        $js = '';
+        foreach ($this->getWidget()->getButtons() as $button) {
+            $js .= $this->getTemplate()->buildJs($button);
+        }
+        return $js;
+    }
 }
