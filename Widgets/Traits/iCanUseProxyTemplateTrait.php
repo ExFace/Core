@@ -4,10 +4,13 @@ namespace exface\Core\Widgets\Traits;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Interfaces\Widgets\iCanUseProxyTemplate;
 use exface\Core\Templates\ProxyTemplate;
+use exface\Core\Factories\TemplateFactory;
 
 trait iCanUseProxyTemplateTrait {
     
     private $useProxy = false;
+    
+    private $proxy = null;
     
     /**
      *
@@ -38,6 +41,25 @@ trait iCanUseProxyTemplateTrait {
     {
         $this->useProxy = BooleanDataType::cast($trueOrFalse);
         return $this;
+    }
+    
+    /**
+     *
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\Widgets\iCanUseProxyTemplate::buildProxyUrl()
+     */
+    public function buildProxyUrl(string $uri) : string
+    {
+        return $this->getProxyTemplate()->getProxyUrl($uri);
+    }
+    
+    /**
+     * 
+     * @return ProxyTemplate
+     */
+    protected function getProxyTemplate() : ProxyTemplate
+    {
+        return TemplateFactory::createFromString(ProxyTemplate::class, $this->getWorkbench());
     }
     
 }

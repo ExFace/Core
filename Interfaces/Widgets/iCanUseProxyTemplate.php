@@ -23,4 +23,11 @@ interface iCanUseProxyTemplate extends WidgetInterface
      * @return iCanUseProxyTemplate
      */
     public function setUseProxy($trueOrFalse) : iCanUseProxyTemplate;
+    
+    /**
+     *
+     * @param string $uri
+     * @return string
+     */
+    public function buildProxyUrl(string $uri) : string;
 }

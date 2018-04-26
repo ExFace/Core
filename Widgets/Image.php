@@ -38,9 +38,7 @@ class Image extends Display implements iCanBeAligned, iCanUseProxyTemplate
     {
         $uri = parent::getValue();
         if ($uri !== null && $this->getUseProxy()) {
-            /* @var $proxy \exface\Core\Templates\ProxyTemplate */
-            $proxy = TemplateFactory::createFromString(ProxyTemplate::class, $this->getWorkbench());
-            return $proxy->getProxyUrl($uri);
+            return $this->buildProxyUrl($uri);
         }
         return $uri;
     }
