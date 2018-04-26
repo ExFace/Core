@@ -173,12 +173,23 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
     public function getElement(\exface\Core\Widgets\AbstractWidget $widget)
     {
         if (! array_key_exists($widget->getPage()->getAliasWithNamespace(), $this->elements) || ! array_key_exists($widget->getId(), $this->elements[$widget->getPage()->getAliasWithNamespace()])) {
-            $elem_class = $this->getClass($widget);
-            $instance = new $elem_class($widget, $this);
+            $instance = $this->createElement($widget);
             // $this->elements[$widget->getPage()->getAliasWithNamespace()][$widget->getId()] = $instance;
         }
         
         return $this->elements[$widget->getPage()->getAliasWithNamespace()][$widget->getId()];
+    }
+    
+    /**
+     * 
+     * @param WidgetInterface $widget
+     * @return AbstractJqueryElement
+     */
+    protected function createElement(WidgetInterface $widget) : AbstractJqueryElement
+    {
+        $elem_class = $this->getClass($widget);
+        $instance = new $elem_class($widget, $this);
+        return $instance;
     }
 
     /**
