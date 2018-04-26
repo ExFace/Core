@@ -31,7 +31,13 @@ abstract class AbstractHttpTemplate extends AbstractTemplate implements HttpTemp
     const REQUEST_ATTRIBUTE_NAME_ACTION = 'action';
     const REQUEST_ATTRIBUTE_NAME_RENDERING_MODE = 'rendering_mode';
     
-    private $url = null;
+    protected function init()
+    {
+        parent::init();
+        if (! $this->getWorkbench()->isStarted()){
+            $this->getWorkbench()->start();
+        }
+    }
     
     /**
      *
@@ -134,6 +140,10 @@ abstract class AbstractHttpTemplate extends AbstractTemplate implements HttpTemp
         return static::REQUEST_ATTRIBUTE_NAME_RENDERING_MODE;
     }
     
+    /**
+     * 
+     * @return string
+     */
     public function getBaseUrl() : string{
         if (is_null($this->url)) {
             $this->url = $this->getWorkbench()->getCMS()->buildUrlToApi() . $this->getConfig()->getOption('DEFAULT_AJAX_URL');

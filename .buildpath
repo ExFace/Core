@@ -19,5 +19,6 @@
 	<buildpathentry external="true" kind="lib" path="C:/wamp/www/exface/exface/vendor/cebe/markdown"/>
 	<buildpathentry external="true" kind="lib" path="C:/wamp/www/exface/exface/vendor/ramsey/uuid/src/"/>
 	<buildpathentry external="true" kind="lib" path="C:/wamp/www/exface/exface/vendor/kabachello/fileroute/"/>
+	<buildpathentry external="true" kind="lib" path="C:/wamp/www/exface/exface/vendor/guzzlehttp/guzzle/src"/>
 	<buildpathentry kind="con" path="org.eclipse.php.core.LANGUAGE"/>
 </buildpath>

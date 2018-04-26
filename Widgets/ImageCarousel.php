@@ -1,8 +1,18 @@
 <?php
 namespace exface\Core\Widgets;
 
-class ImageCarousel extends DataCards
+use exface\Core\Interfaces\Widgets\iCanUseProxyTemplate;
+use exface\Core\Widgets\Traits\iCanUseProxyTemplateTrait;
+
+/**
+ * Shows an image carousel with images from data rows.
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
+class ImageCarousel extends DataCards implements iCanUseProxyTemplate
 {
+    use iCanUseProxyTemplateTrait;
 
     private $image_url_column_id = null;
 
