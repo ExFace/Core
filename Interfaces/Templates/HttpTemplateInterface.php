@@ -9,9 +9,7 @@ use Psr\Http\Server\RequestHandlerInterface;
  *
  */
 interface HttpTemplateInterface extends TemplateInterface, RequestHandlerInterface
-{
-    public function getBaseUrl() : string;
-    
+{    
     public function getUrlRoutePatterns() : array;
 }
 ?>

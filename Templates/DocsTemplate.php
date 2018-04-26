@@ -23,6 +23,14 @@ class DocsTemplate extends AbstractTemplate implements HttpTemplateInterface
 {    
     private $url = null;
     
+    protected function init()
+    {
+        parent::init();
+        if (! $this->getWorkbench()->isStarted()){
+            $this->getWorkbench()->start();
+        }
+    }
+    
     /**
      * 
      * {@inheritDoc}
@@ -53,6 +61,10 @@ class DocsTemplate extends AbstractTemplate implements HttpTemplateInterface
         return $response->withBody(stream_for($html));
     }
     
+    /**
+     * 
+     * @return string
+     */
     public function getBaseUrl() : string{
         if (is_null($this->url)) {
             $this->url = $this->getWorkbench()->getCMS()->buildUrlToApi() . '/api/docs';
