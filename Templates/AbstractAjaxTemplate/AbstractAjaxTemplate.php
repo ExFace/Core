@@ -172,7 +172,7 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
      */
     public function getElement(\exface\Core\Widgets\AbstractWidget $widget)
     {
-        if (! array_key_exists($widget->getPage()->getAliasWithNamespace(), $this->elements) || ! array_key_exists($widget->getId(), $this->elements[$widget->getPage()->getAliasWithNamespace()])) {
+        if (empty($this->elements[$widget->getPage()->getAliasWithNamespace()]) || empty($this->elements[$widget->getPage()->getAliasWithNamespace()][$widget->getId()])) {
             $instance = $this->createElement($widget);
             // $this->elements[$widget->getPage()->getAliasWithNamespace()][$widget->getId()] = $instance;
         }
