@@ -390,6 +390,7 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
                 $elem = $this->getElement($result->getTask()->getWidgetTriggeredBy());
                 $json = $elem->prepareData($result->getData());
                 $json["success"] = $result->getMessage();
+                $headers['Access-Control-Allow-Origin'] = $this->buildHeaderAccessControlAllowOrigin();
                 break;
                 
             case $result instanceof ResultWidgetInterface:
@@ -548,6 +549,25 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
     protected function buildHtmlHeadCommonIncludes() : array
     {
         return [];
+    }
+    
+    /**
+     * Returns an array of allowed origins for AJAX requests to the template.
+     * 
+     * The core config key TEMPLATES.AJAX.ACCESS_CONTROL_ALLOW_ORIGIN provides basic configuration
+     * for all AJAX templates. Templates are free to use their own configuration though - please
+     * refer to the documentation of the template used.
+     * 
+     * @return string[]
+     */
+    protected function buildHeaderAccessControlAllowOrigin() : array
+    {
+        $origins = $this->getWorkbench()->getConfig()->getOption('TEMPLATES.AJAX.ACCESS_CONTROL_ALLOW_ORIGIN')->toArray();
+        /*if (array_search('localhost', $origins) !== false) {
+            $baseUrlParts = parse_url($this->getBaseUrl());
+            $origins[] = ($baseUrlParts['scheme'] ? $baseUrlParts['scheme'] . '://' : '') . $baseUrlParts['host'];
+        }*/
+        return $origins;
     }
 }
 ?>
