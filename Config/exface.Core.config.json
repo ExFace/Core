@@ -4,9 +4,13 @@
 	"METAMODEL.OBJECT_LABEL_ALIAS": "LABEL",
 	
 	"TEMPLATES.DEFAULT_UI_TEMPLATE": "exface.JEasyUiTemplate.JEasyUiTemplate",
-	"TEMPLATES.AJAX.ACCESS_CONTROL_ALLOW_ORIGIN" : [
-		"localhost"
-	],
+	"TEMPLATES.AJAX.HEADERS.ACCESS_CONTROL" : {
+		"Access-Control-Allow-Origin": "",
+		"Access-Control-Allow-Credentials": "true",
+		"Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE",
+		"Access-Control-Allow-Headers": "",
+		"Access-Control-Expose-Headers": ""
+	},
     "TEMPLATES.DEFAULT_WIDGET_FOR_UNKNOWN_DATA_TYPES" : "Input",
     "TEMPLATES.DEFAULT_WIDGET_FOR_RELATIONS" : "InputComboTable",
 	

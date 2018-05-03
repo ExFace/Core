@@ -390,7 +390,7 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
                 $elem = $this->getElement($result->getTask()->getWidgetTriggeredBy());
                 $json = $elem->prepareData($result->getData());
                 $json["success"] = $result->getMessage();
-                $headers['Access-Control-Allow-Origin'] = $this->buildHeaderAccessControlAllowOrigin();
+                $headers = array_merge($headers, $this->buildHeadersAccessControl());
                 break;
                 
             case $result instanceof ResultWidgetInterface:
@@ -560,14 +560,14 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
      * 
      * @return string[]
      */
-    protected function buildHeaderAccessControlAllowOrigin() : array
+    protected function buildHeadersAccessControl() : array
     {
-        $origins = $this->getWorkbench()->getConfig()->getOption('TEMPLATES.AJAX.ACCESS_CONTROL_ALLOW_ORIGIN')->toArray();
-        /*if (array_search('localhost', $origins) !== false) {
-            $baseUrlParts = parse_url($this->getBaseUrl());
-            $origins[] = ($baseUrlParts['scheme'] ? $baseUrlParts['scheme'] . '://' : '') . $baseUrlParts['host'];
-        }*/
-        return $origins;
+        if (! $this->getConfig()->hasOption('TEMPLATES.AJAX.HEADERS.ACCESS_CONTROL')) {
+            $headers = $this->getWorkbench()->getConfig()->getOption('TEMPLATES.AJAX.HEADERS.ACCESS_CONTROL')->toArray();
+        } else {
+            $headers = $this->getConfig()->getOption('TEMPLATES.AJAX.HEADERS.ACCESS_CONTROL')->toArray();
+        }
+        return array_filter($headers);
     }
 }
 ?>
