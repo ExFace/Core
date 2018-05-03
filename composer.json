@@ -14,7 +14,7 @@
         "issues": "https://github.com/exface/core/issues"
     },
     "require": {
-        "php": ">=5.4",
+        "php": ">=7.0",
         "symfony/FileSystem": "^3.1||^4.0",
         "symfony/Event-Dispatcher": "^3.1||^4.0",
         "symfony/translation": "^3.1||^4.0",
@@ -37,7 +37,7 @@
         "league/csv": "^8.0",
         "jdorn/sql-formatter": "~1.2.17",
         "cebe/markdown": "^1.1.2",
-        "kabachello/fileroute": "^0.1",
+        "kabachello/fileroute": "~0.1",
         "guzzlehttp/guzzle": "^6.2.2"
     },
     "extra": {
