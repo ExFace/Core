@@ -66,6 +66,18 @@ interface DataColumnListInterface extends EntityListInterface
      * @return DataColumnInterface
      */
     public function addFromAttribute(MetaAttributeInterface $attribute);
+    
+    /**
+     * 
+     * @return DataColumnInterface
+     */
+    public function addFromUidAttribute() : DataColumnInterface;
+    
+    /**
+     * 
+     * @return DataColumnInterface
+     */
+    public function addFromLabelAttribute() : DataColumnInterface;
 
     /**
      * Removes the given entity from the list
