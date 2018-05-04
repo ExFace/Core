@@ -13,6 +13,7 @@ use exface\Core\Interfaces\EntityListInterface;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Interfaces\AliasInterface;
+use exface\Core\CommonLogic\Model\Attribute;
 
 interface MetaObjectInterface extends WorkbenchDependantInterface, AliasInterface
 {
@@ -84,7 +85,7 @@ interface MetaObjectInterface extends WorkbenchDependantInterface, AliasInterfac
     /**
      * Returns a list of all direct attributes of this object (including inherited ones!)
      *
-     * @return MetaAttributeListInterface
+     * @return MetaAttributeListInterface|Attribute[]
      */
     public function getAttributes();
     
