@@ -10,6 +10,7 @@ use exface\Core\Exceptions\Behaviors\ConcurrentWriteError;
 use exface\Core\Exceptions\Behaviors\ConcurrentWritesCannotBePreventedWarning;
 use exface\Core\Exceptions\DataSheets\DataSheetColumnNotFoundError;
 use exface\Core\Interfaces\Model\BehaviorInterface;
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 
 class TimeStampingBehavior extends AbstractBehavior
 {
@@ -123,7 +124,7 @@ class TimeStampingBehavior extends AbstractBehavior
         
         $conflict_rows = array();
         // See, if the UndoAction is performed currently. It needs special treatment
-        $current_action = $this->getWorkbench()->getContext()->getScopeWindow()->getActionContext()->getCurrentAction();
+        $current_action = $this->getCurrentAction();
         if ($current_action instanceof iUndoActions) {
             // FIXME To check for conflicts when performing and undo, we need to see, if the timestamp changed
             // since the undone action had been performed. The current problem is, however, that we do not store
@@ -132,10 +133,7 @@ class TimeStampingBehavior extends AbstractBehavior
             // is very small. Still, this really needs to be fixed!
         } else {
             // Check the current update timestamp in the data source
-            $check_sheet = $data_sheet->copy()->removeRows();
-            $check_sheet->addFilterFromColumnValues($data_sheet->getUidColumn());
-            $check_sheet->dataRead();
-            
+            $check_sheet = $this->readCurrentData($data_sheet);
             $check_column = $check_sheet->getColumns()->getByAttribute($this->getUpdatedOnAttribute());
             $check_nr = count($check_column->getValues());
             
@@ -206,6 +204,24 @@ class TimeStampingBehavior extends AbstractBehavior
             $data_sheet->dataMarkInvalid();
             throw new ConcurrentWriteError($data_sheet, 'Cannot update data in data sheet with "' . $data_sheet->getMetaObject()->getAliasWithNamespace() . '": row(s) ' . implode(',', $conflict_rows) . ' changed by another user!');
         }
+    }
+    
+    /**
+     * 
+     * @param DataSheetInterface $originalSheet
+     * @return DataSheetInterface
+     */
+    protected function readCurrentData(DataSheetInterface $originalSheet) : DataSheetInterface
+    {
+        $check_sheet = $originalSheet->copy()->removeRows();
+        $check_sheet->addFilterFromColumnValues($originalSheet->getUidColumn());
+        $check_sheet->dataRead();
+        return $check_sheet;
+    }
+    
+    protected function getCurrentAction()
+    {
+        return $this->getWorkbench()->getContext()->getScopeWindow()->getActionContext()->getCurrentAction();
     }
 }
 
