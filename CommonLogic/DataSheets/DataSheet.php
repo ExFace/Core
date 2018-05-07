@@ -32,6 +32,10 @@ use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 use exface\Core\Interfaces\Model\MetaRelationInterface;
 use exface\Core\Exceptions\DataSheets\DataSheetDeleteError;
 use exface\Core\Exceptions\Model\MetaObjectHasNoDataSourceError;
+use exface\Core\CommonLogic\Model\Condition;
+use exface\Core\CommonLogic\QueryBuilder\RowDataArrayFilter;
+use exface\Core\Exceptions\RuntimeException;
+use exface\Core\Interfaces\Model\ConditionalExpressionInterface;
 
 /**
  * Internal data respresentation object in exface.
@@ -1743,6 +1747,37 @@ class DataSheet implements DataSheetInterface
             }
         }
         return false;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::extract()
+     */
+    public function extract(ConditionalExpressionInterface $conditionOrGroup) : DataSheetInterface
+    {
+        $conditions = $conditionOrGroup->toConditionGroup();
+        $ds = $this->copy();
+        $filter = new RowDataArrayFilter();
+        if ($conditions->getOperator() === EXF_LOGICAL_AND) {
+            foreach ($conditions->getConditions() as $condition) {
+                $col = $this->getColumns()->getByExpression($condition->getExpression());
+                if ($col === false) {
+                    throw new RuntimeException('Cannot extract data from data sheet: missing column for extraction filter "' . $condition->toString() . '"!');
+                }
+                $filter->addAnd($col->getName(), $condition->getValue(), $condition->getComparator());
+            }
+            $rows = $filter->filter($this->getRows());
+        } else {
+            throw new RuntimeException('Unsupported condition group operator "' . $conditions->getOperator() . '" for data sheet extraction: only AND currently supported!');
+        }
+        
+        if ($conditions->countNestedGroups() > 0) {
+            throw new RuntimeException('Cannot extract data from data sheet using a condition group with nested groups: currently not supported!');
+        }
+        
+        $ds->removeRows()->addRows($rows);
+        return $ds;
     }
 }
 
