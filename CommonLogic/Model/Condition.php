@@ -2,7 +2,6 @@
 namespace exface\Core\CommonLogic\Model;
 
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Exceptions\RangeException;
 use exface\Core\Exceptions\UnexpectedValueException;
@@ -10,17 +9,23 @@ use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\DataTypes\NumberDataType;
 use exface\Core\DataTypes\RelationDataType;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
+use exface\Core\Interfaces\Model\ConditionInterface;
+use exface\Core\Interfaces\Model\ConditionGroupInterface;
+use exface\Core\Factories\ConditionGroupFactory;
+use exface\Core\Factories\ConditionFactory;
+use exface\Core\Interfaces\WorkbenchDependantInterface;
+use exface\Core\Interfaces\Model\ConditionalExpressionInterface;
+use exface\Core\Exceptions\LogicException;
 
 /**
- * .
- * Thus, a condition is basically
- * something like "expr = a" or "date > 01.01.1970", etc, while a ConditionGroup can be used to combine multiple conditions using
- * logical operators like AND, OR, etc.
+ * Default implementation of the ConditionInterface
+ * 
+ * @see ConditionInterface
  *
  * @author Andrej Kabachnik
  *        
  */
-class Condition implements iCanBeConvertedToUxon
+class Condition implements ConditionInterface
 {
 
     private $exface = null;
@@ -36,52 +41,68 @@ class Condition implements iCanBeConvertedToUxon
     private $data_type = null;
 
     /**
-     *
      * @deprecated use ConditionFactory instead!
-     * @param \exface\Core\CommonLogic\Workbench $exface            
+     * 
+     * All parameters except for the workbench are optional in order to be able to create empty conditions
+     * - primarily to be filled with values from a UXON object
+     * 
+     * @param \exface\Core\CommonLogic\Workbench $exface   
+     * @param ExpressionInterface $leftExpression
+     * @param string $comparator
+     * @param string $rightExpression         
      */
-    public function __construct(\exface\Core\CommonLogic\Workbench $exface)
+    public function __construct(\exface\Core\CommonLogic\Workbench $exface, ExpressionInterface $leftExpression = null, string $comparator = null, string $rightExpression = null)
     {
         $this->exface = $exface;
+        if ($leftExpression !== null) {
+            $this->setExpression($leftExpression);
+        }
+        if ($rightExpression !== null) {
+            $this->setValue($rightExpression);
+        }
+        if ($comparator !== null) {
+            $this->setComparator($comparator);
+        }
     }
 
     /**
-     * Returns the expression to filter
      *
-     * @return ExpressionInterface
+     * {@inheritdoc}
+     * @see ConditionInterface::getExpression()
      */
-    public function getExpression()
+    public function getExpression() : ExpressionInterface
     {
         return $this->expression;
     }
 
     /**
-     * Sets the expression that will be compared to the value
-     *
-     * @param ExpressionInterface $expression            
+     * 
+     * @param ExpressionInterface $expression
+     * @return ConditionInterface
      */
-    public function setExpression(ExpressionInterface $expression)
+    protected function setExpression(ExpressionInterface $expression) : ConditionInterface
     {
         $this->expression = $expression;
+        return $this;
     }
 
     /**
-     * Returns the value to compare to
      *
-     * @return mixed
+     * {@inheritdoc}
+     * @see ConditionInterface::getValue()
      */
-    public function getValue()
+    public function getValue() : ?string
     {
         return $this->value;
     }
 
     /**
-     * Sets the value to compare to
-     *
-     * @param mixed $value            
+     * 
+     * @param string $value
      * @throws RangeException
+     * @return ConditionInterface
      */
-    public function setValue($value)
+    protected function setValue(string $value) : ConditionInterface
     {
         $this->value_set = true;
         try {
@@ -92,15 +113,15 @@ class Condition implements iCanBeConvertedToUxon
             $this->unset();
         }
         $this->value = $value;
+        return $this;
     }
 
     /**
-     * Returns the comparison operator from this condition.
-     * Normally it is one of the EXF_COMPARATOR_xxx constants.
      *
-     * @return string
+     * {@inheritdoc}
+     * @see ConditionInterface::getComparator()
      */
-    public function getComparator()
+    public function getComparator() : string
     {
         if (is_null($this->comparator)) {
             $this->comparator = $this->guessComparator();
@@ -108,6 +129,10 @@ class Condition implements iCanBeConvertedToUxon
         return $this->comparator;
     }
     
+    /**
+     * 
+     * @return string
+     */
     protected function guessComparator()
     {
         if (!$base_object = $this->getExpression()->getMetaObject()){
@@ -158,7 +183,10 @@ class Condition implements iCanBeConvertedToUxon
         } else {
             $comparator = EXF_COMPARATOR_IS;
         }
-        $this->setValue($value);
+        
+        if ($value !== null) {
+            $this->setValue($value);
+        }
         
         // Take care of values with delimited lists
         if (substr($value, 0, 1) == '[' && substr($value, - 1) == ']') {
@@ -179,14 +207,12 @@ class Condition implements iCanBeConvertedToUxon
     }
 
     /**
-     * Sets the comparison operator for this condition.
-     * Use one of the EXF_COMPARATOR_xxx constants.
-     *
-     * @param string $value            
-     * @throws UnexpectedValueException if the value does not match one of the EXF_COMPARATOR_xxx constants
-     * @return Condition
+     * 
+     * @param string $value
+     * @throws UnexpectedValueException
+     * @return ConditionInterface
      */
-    public function setComparator($value)
+    protected function setComparator(string $value) : ConditionInterface
     {
         try {
             $this->comparator = static::sanitizeComparator($value);
@@ -197,7 +223,13 @@ class Condition implements iCanBeConvertedToUxon
         return $this;
     }
     
-    public static function sanitizeComparator($value){
+    /**
+     *
+     * {@inheritdoc}
+     * @see ConditionInterface::sanitizeComparator()
+     */
+    public static function sanitizeComparator(string $value) : string
+    {
         $validated = false;
         foreach (get_defined_constants(true)['user'] as $constant => $comparator) {
             if (substr($constant, 0, 15) === 'EXF_COMPARATOR_') {
@@ -216,29 +248,21 @@ class Condition implements iCanBeConvertedToUxon
 
     /**
      *
-     * @return DataTypeInterface
+     * {@inheritdoc}
+     * @see ConditionInterface::getDataType()
      */
-    public function getDataType()
+    public function getDataType() : DataTypeInterface
     {
-        if (is_null($this->data_type)) {
+        if ($this->data_type === null) {
             $this->data_type = DataTypeFactory::createBaseDataType($this->exface);
         }
         return $this->data_type;
     }
 
     /**
-     *
-     * @param DataTypeInterface $value            
-     */
-    public function setDataType(DataTypeInterface $value)
-    {
-        $this->data_type = $value;
-    }
-
-    /**
-     * Returns the attribute_alias to filter if the filter is based upon an attribute or FALSE otherwise
-     *
-     * @return string|boolean
+     * 
+     * {@inheritdoc}
+     * @see ConditionInterface::getAttributeAlias()
      */
     public function getAttributeAlias()
     {
@@ -249,16 +273,30 @@ class Condition implements iCanBeConvertedToUxon
         }
     }
 
-    public function toString()
+    /**
+     *
+     * {@inheritdoc}
+     * @see ConditionalExpressionInterface::toString()
+     */
+    public function toString() : string
     {
         return $this->getExpression()->toString() . ' ' . $this->getComparator() . ' ' . $this->getValue();
     }
 
+    /**
+     * 
+     * @return string
+     */
     public function __toString()
     {
         return $this->toString();
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::exportUxonObject()
+     */
     public function exportUxonObject()
     {
         $uxon = new UxonObject();
@@ -276,6 +314,9 @@ class Condition implements iCanBeConvertedToUxon
      */
     public function importUxonObject(UxonObject $uxon_object)
     {
+        if (! $this->isEmpty()) {
+            throw new LogicException('Cannot import UXON description into a non-empty condition (' . $this->toString() . ')!');
+        }
         if ($uxon_object->hasProperty('expression')) {
             $expression = $uxon_object->getProperty('expression');
         } elseif ($uxon_object->hasProperty('attribute_alias')) {
@@ -292,30 +333,44 @@ class Condition implements iCanBeConvertedToUxon
             }
         }
     }
-
-    public function getModel()
-    {
-        return $this->exface->model();
-    }
     
     /**
-     * Returns TRUE if the condition does not affect anything and FALSE otherwise.
      * 
-     * @return boolean
+     * {@inheritdoc}
+     * @see ConditionalExpressionInterface::isEmpty()
      */
-    public function isEmpty()
+    public function isEmpty() : bool
     {
         return ! $this->value_set;
     }
-    
+
     /**
-     * Unsets the value of the condition making query builders etc. ignore it.
-     * 
-     * @return Condition
+     * {@inheritdoc}
+     * @see WorkbenchDependantInterface::getWorkbench()
      */
-    public function unsetValue()
+    public function getWorkbench()
     {
-        $this->value = null;
-        $this->value_set = false;
+        return $this->exface;
     }
+
+    /**
+     * {@inheritdoc}
+     * @see ConditionalExpressionInterface::toConditionGroup()
+     */
+    public function toConditionGroup() : ConditionGroupInterface
+    {
+        $conditionGroup = ConditionGroupFactory::createEmpty($this->getWorkbench(), EXF_LOGICAL_AND);
+        $conditionGroup->addCondition($this);
+        return $conditionGroup;
+    }
+
+    /**
+     * 
+     * @return \exface\Core\Interfaces\iCanBeConvertedToUxon|\exface\Core\CommonLogic\Model\Condition
+     */
+    public function copy()
+    {
+        return ConditionFactory::createFromUxon($this->getWorkbench(), $this->exportUxonObject());
+    }
+
 }

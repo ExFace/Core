@@ -9,6 +9,7 @@ use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Exceptions\Model\ConditionIncompleteError;
+use exface\Core\Interfaces\Model\ConditionInterface;
 
 abstract class ConditionFactory extends AbstractUxonFactory
 {
@@ -19,7 +20,7 @@ abstract class ConditionFactory extends AbstractUxonFactory
      * @param Workbench $exface
      * @return \exface\Core\CommonLogic\Model\Condition
      */
-    public static function createEmpty(Workbench $exface)
+    public static function createEmpty(Workbench $exface) : ConditionInterface
     {
         return new Condition($exface);
     }
@@ -34,16 +35,11 @@ abstract class ConditionFactory extends AbstractUxonFactory
      * 
      * @return Condition
      */
-    public static function createFromExpressionString(MetaObjectInterface $object, $expression_string, $value, $comparator = null)
+    public static function createFromExpressionString(MetaObjectInterface $object, string $expression_string, $value, string $comparator = null) : ConditionInterface
     {
         $workbench = $object->getWorkbench();
-        $condition = static::createEmpty($workbench);
-        $condition->setExpression($workbench->model()->parseExpression($expression_string, $object));
-        $condition->setValue($value);
-        if ($comparator){
-            $condition->setComparator($comparator);
-        }
-        return $condition;
+        $expression = $workbench->model()->parseExpression($expression_string, $object);
+        return new Condition($workbench, $expression, $comparator, $value);
     }
 
     /**
@@ -57,17 +53,9 @@ abstract class ConditionFactory extends AbstractUxonFactory
      * @param string $comparator            
      * @return Condition
      */
-    public static function createFromExpression(Workbench $exface, ExpressionInterface $expression = NULL, $value = NULL, $comparator = null)
+    public static function createFromExpression(Workbench $exface, ExpressionInterface $expression = NULL, $value = NULL, string $comparator = null) : ConditionInterface
     {
-        $condition = static::createEmpty($exface);
-        if ($expression) {
-            $condition->setExpression($expression);
-        }
-        $condition->setValue($value);
-        if ($comparator){
-            $condition->setComparator($comparator);
-        }
-        return $condition;
+        return new Condition($exface, $expression, $comparator, $value);
     }
 
     /**
@@ -76,13 +64,12 @@ abstract class ConditionFactory extends AbstractUxonFactory
      * @param array $array_notation            
      * @return Condition
      */
-    public static function createFromArray(Workbench $exface, array $array_notation)
+    public static function createFromArray(Workbench $exface, array $array_notation) : ConditionInterface
     {
-        $condition = self::create($exface);
-        $condition->setExpression($exface->model()->parseExpression($array_notation[1], $exface->model()->getObject($array_notation[0])));
-        $condition->setComparator($array_notation[2]);
-        $condition->setValue($array_notation[3]);
-        return $condition;
+        $expression = $exface->model()->parseExpression($array_notation[1], $exface->model()->getObject($array_notation[0]));
+        $comparator = $array_notation[2];
+        $value = $array_notation[3];
+        return new Condition($exface, $expression, $comparator, $value);
     }
 
     /**
@@ -92,7 +79,7 @@ abstract class ConditionFactory extends AbstractUxonFactory
      * @throws UnexpectedValueException
      * @return Condition
      */
-    public static function createFromUxonOrArray(Workbench $exface, $uxon_or_array)
+    public static function createFromUxonOrArray(Workbench $exface, $uxon_or_array) : ConditionInterface
     {
         if ($uxon_or_array instanceof UxonObject) {
             return self::createFromUxon($exface, $uxon_or_array);
@@ -114,7 +101,7 @@ abstract class ConditionFactory extends AbstractUxonFactory
      * @param MetaObjectInterface $object
      * @return \exface\Core\CommonLogic\Model\Condition
      */
-    public static function createFromString(Workbench $workbench, $string, MetaObjectInterface $object = null)
+    public static function createFromString(Workbench $workbench, string $string, MetaObjectInterface $object = null) : ConditionInterface
     {
         $tokens = explode(' ', $string);
         $left = '';
@@ -135,10 +122,7 @@ abstract class ConditionFactory extends AbstractUxonFactory
         if (! is_null($object)) {
             $condition = static::createFromExpressionString($object, $left, $right, $comp);
         } else {
-            $condition = static::createEmpty($workbench);
-            $condition->setExpression(ExpressionFactory::createFromString($workbench, $left));
-            $condition->setComparator($comp);
-            $condition->setValue($right);
+            $condition = new Condition($workbench, ExpressionFactory::createFromString($workbench, $left), $comp, $right);
         }
         return $condition;
     }
@@ -150,7 +134,7 @@ abstract class ConditionFactory extends AbstractUxonFactory
      * @param string $string
      * @return \exface\Core\CommonLogic\Model\Condition
      */
-    public static function createFromStringRelativeToExpression(ExpressionInterface $expression, $string)
+    public static function createFromStringRelativeToExpression(ExpressionInterface $expression, $string) : ConditionInterface
     {
         $string = trim($string);
         $tokens = explode(' ', $string);
