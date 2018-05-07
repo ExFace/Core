@@ -269,7 +269,13 @@ class Filemanager extends Filesystem implements WorkbenchDependantInterface
         } else {
             $files = glob($absolutePath . '*');
         }
-        array_map('unlink', $files);
+        array_map(function($path) {
+            if (is_dir($path)) {
+                rmdir($path);
+            } else {
+                unlink($path);
+            }
+        }, $files);
 
         return;
     }
@@ -339,11 +345,10 @@ class Filemanager extends Filesystem implements WorkbenchDependantInterface
     /**
      * Checks a path folder by folder to determine if they are present, constructs folders that aren't
      *
-     * @param
-     *            $path
+     * @param string $path
      * @return string
      */
-    public static function pathConstruct($path)
+    public static function pathConstruct(string $path)
     {
         $path = self::pathNormalize($path, DIRECTORY_SEPARATOR);
         $paths = explode(DIRECTORY_SEPARATOR, $path);
