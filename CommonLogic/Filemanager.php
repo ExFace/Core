@@ -388,5 +388,11 @@ class Filemanager extends Filesystem implements WorkbenchDependantInterface
         }
         return TRUE;
     }
+    
+    public function copyFile(string $source, string $destination)
+    {
+        copy($source, $destination);
+        return;
+    }
 }
 ?>
