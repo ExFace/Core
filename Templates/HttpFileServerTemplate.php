@@ -18,9 +18,9 @@ class HttpFileServerTemplate extends AbstractHttpTemplate
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Templates\AbstractHttpTemplate\AbstractHttpTemplate::createResponse()
+     * @see \exface\Core\Templates\AbstractHttpTemplate\AbstractHttpTemplate::createResponseFromTaskResult()
      */
-    protected function createResponse(ServerRequestInterface $request, ResultInterface $result): ResponseInterface
+    protected function createResponseFromTaskResult(ServerRequestInterface $request, ResultInterface $result): ResponseInterface
     {
         // TODO
     }
