@@ -28,9 +28,9 @@ class HttpFileServerTemplate extends AbstractHttpTemplate
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Templates\AbstractHttpTemplate\AbstractHttpTemplate::createResponseError()
+     * @see \exface\Core\Templates\AbstractHttpTemplate\AbstractHttpTemplate::createResponseFromError()
      */
-    protected function createResponseError(ServerRequestInterface $request, \Throwable $exception, UiPageInterface $page = null): ResponseInterface
+    protected function createResponseFromError(ServerRequestInterface $request, \Throwable $exception, UiPageInterface $page = null): ResponseInterface
     {
         // TODO
     }
