@@ -92,7 +92,7 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
         
         if ($cache = $this->requestIdCache[$request->getAttribute('result_cache_key')]) {
             if ($cache instanceof ResultInterface) {
-                return $this->createResponse($request, $cache);
+                return $this->createResponseFromTaskResult($request, $cache);
             }
         }
         
@@ -338,6 +338,11 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
         return new JsTransparentFormatter($dataType);
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Templates\AbstractHttpTemplate\AbstractHttpTemplate::getMiddleware()
+     */
     protected function getMiddleware() : array
     {
         $middleware = parent::getMiddleware();
@@ -359,9 +364,9 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Templates\AbstractHttpTemplate\AbstractHttpTemplate::createResponse()
+     * @see \exface\Core\Templates\AbstractHttpTemplate\AbstractHttpTemplate::createResponseFromTaskResult()
      */
-    protected function createResponse(ServerRequestInterface $request, ResultInterface $result) : ResponseInterface
+    protected function createResponseFromTaskResult(ServerRequestInterface $request, ResultInterface $result) : ResponseInterface
     {
         if ($cacheKey = $request->getAttribute('result_cache_key')) {
             $this->requestIdCache[$cacheKey] = $result;
@@ -473,9 +478,9 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Templates\AbstractHttpTemplate\AbstractHttpTemplate::createResponseError()
+     * @see \exface\Core\Templates\AbstractHttpTemplate\AbstractHttpTemplate::createResponseFromError()
      */
-    protected function createResponseError(ServerRequestInterface $request, \Throwable $exception, UiPageInterface $page = null) : ResponseInterface {
+    protected function createResponseFromError(ServerRequestInterface $request, \Throwable $exception, UiPageInterface $page = null) : ResponseInterface {
         $page = ! is_null($page) ? $page : UiPageFactory::createEmpty($this->getWorkbench());
         
         $status_code = is_numeric($exception->getStatusCode()) ? $exception->getStatusCode() : 500;

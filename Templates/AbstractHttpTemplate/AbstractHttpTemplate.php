@@ -54,16 +54,35 @@ abstract class AbstractHttpTemplate extends AbstractTemplate implements HttpTemp
             // TODO Throw event to allow adding middleware from outside (e.g. a PhpDebugBar or similar)
             return $handler->handle($request);
         }
-        
+        return $this->createResponse($request);
+    }
+    
+    /**
+     * Makes the template create an HTTP response for the given request - after all middlewares were run.
+     * 
+     * This method retrieves the task from the request attributes and attempts to let the workbench
+     * handle it. If it succeseeds, the task result is passed on to createResponseFromTaskResult(),
+     * otherwise, any exception caught is passed to createResponseFromError(). These methods are
+     * reponsible for the actual rendering of the response and differ from template to template,
+     * while the generic createResponse() method can mostly be used as-is.
+     * 
+     * @see createResponseFromTaskResult()
+     * @see createResponseFromError()
+     * 
+     * @param ServerRequestInterface $request
+     * @return ResponseInterface
+     */
+    protected function createResponse(ServerRequestInterface $request) : ResponseInterface
+    {
         try {
             $task = $request->getAttribute($this->getRequestAttributeForTask());
             $result = $this->getWorkbench()->handle($task);
-            return $this->createResponse($request, $result);
+            return $this->createResponseFromTaskResult($request, $result);
         } catch (\Throwable $e) {
             if (! $e instanceof ExceptionInterface){
                 $e = new InternalError($e->getMessage(), null, $e);
             }
-            return $this->createResponseError($request, $e);
+            return $this->createResponseFromError($request, $e);
         }
     }
     
@@ -84,21 +103,23 @@ abstract class AbstractHttpTemplate extends AbstractTemplate implements HttpTemp
     }
     
     /**
-     *
+     * Creates and returns an HTTP response from the given task result.
+     * 
      * @param ServerRequestInterface $request
      * @param ResultInterface $result
      * @return ResponseInterface
      */
-    protected abstract function createResponse(ServerRequestInterface $request, ResultInterface $result): ResponseInterface;
+    protected abstract function createResponseFromTaskResult(ServerRequestInterface $request, ResultInterface $result): ResponseInterface;
     
     /**
-     *
+     * Creates and returns an HTTP response from the given exception.
+     * 
      * @param ServerRequestInterface $request
      * @param \Throwable $exception
      * @param UiPageInterface $page
      * @return ResponseInterface
      */
-    protected abstract function createResponseError(ServerRequestInterface $request, \Throwable $exception, UiPageInterface $page = null) : ResponseInterface;
+    protected abstract function createResponseFromError(ServerRequestInterface $request, \Throwable $exception, UiPageInterface $page = null) : ResponseInterface;
     
     /**
      *
