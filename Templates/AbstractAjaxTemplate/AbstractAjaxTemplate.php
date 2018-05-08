@@ -37,6 +37,7 @@ use exface\Core\Templates\AbstractHttpTemplate\Middleware\DataUrlParamReader;
 use exface\Core\Templates\AbstractHttpTemplate\Middleware\QuickSearchUrlParamReader;
 use exface\Core\Templates\AbstractHttpTemplate\Middleware\PrefixedFilterUrlParamsReader;
 use exface\Core\Factories\ResultFactory;
+use exface\Core\Templates\AbstractHttpTemplate\Middleware\ContextBarApi;
 
 /**
  * 
@@ -346,6 +347,8 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
     protected function getMiddleware() : array
     {
         $middleware = parent::getMiddleware();
+        
+        $middleware[] = new ContextBarApi($this);
         
         $middleware[] = new TaskUrlParamReader($this, 'action', 'setActionSelector', $this->getRequestAttributeForAction(), $this->getRequestAttributeForTask());
         $middleware[] = new TaskUrlParamReader($this, 'resource', 'setPageSelector', $this->getRequestAttributeForPage(), $this->getRequestAttributeForTask());
