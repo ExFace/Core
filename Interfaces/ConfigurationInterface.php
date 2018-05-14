@@ -12,9 +12,16 @@ interface ConfigurationInterface extends WorkbenchDependantInterface, iCanBeConv
      * Returns a single configuration value specified by the given key
      *
      * @param string $key            
-     * @return multitype
+     * @return mixed
      */
     public function getOption($key);
+    
+    /**
+     * 
+     * @param string $regEx
+     * @return array
+     */
+    public function findOptions(string $regEx) : array;
 
     /**
      * Sets a single configuration value specified by the given key. If a scope

@@ -74,6 +74,23 @@ class Configuration implements ConfigurationInterface
     /**
      * 
      * {@inheritDoc}
+     * @see \exface\Core\Interfaces\ConfigurationInterface::findOptions()
+     */
+    public function findOptions(string $regEx) : array
+    {
+        $array = $this->config_uxon->toArray();
+        $result = [];
+        foreach($array as $key => $value) {
+            if (preg_match($regEx,$key)){
+                $result[$key] = $value;
+            }
+        }
+        return $result;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
      * @see \exface\Core\Interfaces\ConfigurationInterface::hasOption()
      */
     public function hasOption($key)
