@@ -9,7 +9,8 @@ use exface\Core\Exceptions\UnexpectedValueException;
  * a comparator (e.g. =, <, etc.) and a (right) value expression: e.g. "expr = a" or 
  * "date > 01.01.1970", etc.
  * 
- * Conditions can be combined to condition groups using logical operators like AND, OR, etc.
+ * Conditions can be combined to condition groups (see CondtionGroupInterface) using 
+ * logical operators like AND, OR, etc.
  * 
  * Conditions are immutable!
  * 
