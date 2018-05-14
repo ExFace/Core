@@ -16,9 +16,26 @@ use exface\Core\Factories\ConditionFactory;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\Model\ConditionalExpressionInterface;
 use exface\Core\Exceptions\LogicException;
+use exface\Core\Exceptions\UxonParserError;
 
 /**
- * Default implementation of the ConditionInterface
+ * A condition is a simple conditional predicate consisting of a (left) expression,
+ * a comparator (e.g. =, <, etc.) and a (right) value expression: e.g. "expr = a" or 
+ * "date > 01.01.1970", etc.
+ * 
+ * Conditions can be combined to condition groups (see CondtionGroupInterface) using 
+ * logical operators like AND, OR, etc.
+ * 
+ * A condition can be expressed in UXON:
+ * 
+ * {
+ *  "object_alias": "my.App.myObject",
+ *  "expression": "myAttribute",
+ *  "comparator": "=",
+ *  "value" = "myValue"
+ * }
+ * 
+ * Depending on the comparator, the value may be a scalar or an array (for IN-comparators).
  * 
  * @see ConditionInterface
  *
@@ -323,12 +340,31 @@ class Condition implements ConditionInterface
             $expression = $uxon_object->getProperty('attribute_alias');
         }
         $this->setExpression($this->exface->model()->parseExpression($expression, $this->exface->model()->getObject($uxon_object->getProperty('object_alias'))));
-        if ($uxon_object->hasProperty('comparator') && $uxon_object->getProperty('comparator')) {
-            $this->setComparator($uxon_object->getProperty('comparator'));
+        if ($uxon_object->hasProperty('comparator') && $comp = $uxon_object->getProperty('comparator')) {
+            $this->setComparator($comp);
         }
         if ($uxon_object->hasProperty('value')){
             $value = $uxon_object->getProperty('value');
             if (! is_null($value) && $value !== ''){
+                if ($value instanceof UxonObject) {
+                    if (! $comp || $comp === EXF_COMPARATOR_IS) {
+                        $comp = EXF_COMPARATOR_IN;
+                    }
+                    
+                    if (! $comp || $comp === EXF_COMPARATOR_IS_NOT) {
+                        $comp = EXF_COMPARATOR_NOT_IN;
+                    }
+                    if ($this->getExpression()->isMetaAttribute()) {
+                        $glue = $this->getExpression()->getAttribute()->getValueListDelimiter();
+                    } else {
+                        $glue = EXF_LIST_SEPARATOR;
+                    }
+                    $value = implode($glue, $value->toArray());
+                    
+                    if ($comp !== EXF_COMPARATOR_IN && $comp !== EXF_COMPARATOR_NOT_IN) {
+                        throw new UxonParserError($uxon_object, 'Cannot use comparator "' . $comp . '" with a list of values "' . $value . '"!');    
+                    }
+                }
                 $this->setValue($value);
             }
         }
