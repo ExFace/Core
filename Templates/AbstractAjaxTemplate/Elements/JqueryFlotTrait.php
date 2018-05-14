@@ -44,7 +44,6 @@ trait JqueryFlotTrait {
     protected function registerLiveReferenceAtLinkedElement()
     {
         if ($link = $this->getWidget()->getDataWidgetLink()) {
-            /* @var $linked_element \exface\Templates\jEasyUI\Widgets\euiData */
             $linked_element = $this->getTemplate()->getElement($link->getTargetWidget());
             if ($linked_element) {
                 $linked_element->addOnLoadSuccess($this->buildJsLiveReference());
@@ -53,7 +52,35 @@ trait JqueryFlotTrait {
         return $this;
     }
     
-    protected function buildJsPlotFunction()
+    protected function buildJsFunctions()
+    {
+        return <<<JS
+    
+    // Plot given data on chart
+    function {$this->buildJsFunctionPrefix()}plot(data){
+	   {$this->buildJsPlotter('data')};
+    }
+
+    // Create the load function to fetch the data via AJAX or from another widget
+    function {$this->buildJsFunctionPrefix()}load(){
+        {$this->buildJsDataLoader()}
+    }
+
+    // Initialize the DOM element for the tooltip
+    {$this->buildJsTooltipInit()}
+            
+    // Call the data loader to populate the Chart initially
+    {$this->buildJsRefresh()}
+
+JS;
+    }
+    
+    /**
+     * 
+     * @param string $dataJs
+     * @return string
+     */
+    protected function buildJsPlotter($dataJs = 'data') : string
     {
         $widget = $this->getWidget();
         $output = '';
@@ -65,12 +92,7 @@ trait JqueryFlotTrait {
             $this->getWidget()->setHideAxes(true);
         }
         
-        // Create the function to process fetched data
-        $output .= '
-			function ' . $this->buildJsFunctionPrefix() . 'plot(data){
-				';
-        
-        $js_rows = 'data' . $this->buildJsDataRowsSelector();
+        $js_rows = $dataJs . $this->buildJsDataRowsSelector();
         
         // Transform the input data to a flot dataset
         foreach ($widget->getSeries() as $series) {
@@ -137,12 +159,6 @@ trait JqueryFlotTrait {
         // Call the on_change_script
         $output .= $this->getOnChangeScript();
         
-        // End plot() function
-        $output .= '}';
-        
-        // Create the load function to fetch the data via AJAX or from another widget
-        $output .= $this->buildJsAjaxLoaderFunction();
-        $output .= $this->buildJsTooltipInit();
         return $output;
     }
     
@@ -216,6 +232,19 @@ trait JqueryFlotTrait {
     public function buildJsRefresh()
     {
         return $this->buildJsFunctionPrefix() . 'load();';
+    }
+    
+    /**
+     * Returns an inline JS snippet (no semicolon!) to redraw the chart using the data from the given JS expression.
+     * 
+     * By default functionPrefix_plot(data)
+     * 
+     * @param string $dataJs
+     * @return string
+     */
+    protected function buildJsRedraw(string $dataJs) : string
+    {
+        return $this->buildJsFunctionPrefix() . 'plot(' . $dataJs . ')';
     }
     
     protected function buildJsTooltipInit()
@@ -338,27 +367,27 @@ trait JqueryFlotTrait {
         return $output;
     }
     
-    public function buildHtmlHeadTags()
+    protected function buildHtmlHeadDefaultIncludes()
     {
         $template = $this->getTemplate();
         $includes = [];
         // flot
-        $includes[] = '<script type="text/javascript" src="' . $template->buildUrlToSource('SOURCES.FLOT.CORE_FOLDER') . 'jquery.flot.js"></script>';
-        $includes[] = '<script type="text/javascript" src="' . $template->buildUrlToSource('SOURCES.FLOT.CORE_FOLDER') . 'jquery.flot.resize.js"></script>';
-        $includes[] = '<script type="text/javascript" src="' . $template->buildUrlToSource('SOURCES.FLOT.CORE_FOLDER') . 'jquery.flot.categories.js"></script>';
-        $includes[] = '<script type="text/javascript" src="' . $template->buildUrlToSource('SOURCES.FLOT.CORE_FOLDER') . 'jquery.flot.time.js"></script>';
-        $includes[] = '<script type="text/javascript" src="' . $template->buildUrlToSource('SOURCES.FLOT.CORE_FOLDER') . 'jquery.flot.crosshair.js"></script>';
+        $includes[] = '<script type="text/javascript" src="' . $template->buildUrlToSource('LIBS.FLOT.CORE_FOLDER') . 'jquery.flot.js"></script>';
+        $includes[] = '<script type="text/javascript" src="' . $template->buildUrlToSource('LIBS.FLOT.CORE_FOLDER') . 'jquery.flot.resize.js"></script>';
+        $includes[] = '<script type="text/javascript" src="' . $template->buildUrlToSource('LIBS.FLOT.CORE_FOLDER') . 'jquery.flot.categories.js"></script>';
+        $includes[] = '<script type="text/javascript" src="' . $template->buildUrlToSource('LIBS.FLOT.CORE_FOLDER') . 'jquery.flot.time.js"></script>';
+        $includes[] = '<script type="text/javascript" src="' . $template->buildUrlToSource('LIBS.FLOT.CORE_FOLDER') . 'jquery.flot.crosshair.js"></script>';
         
         if ($this->getWidget()->getStackSeries()) {
-            $includes[] = '<script type="text/javascript" src="' . $template->buildUrlToSource('SOURCES.FLOT.CORE_FOLDER') . 'jquery.flot.stack.js"></script>';
+            $includes[] = '<script type="text/javascript" src="' . $template->buildUrlToSource('LIBS.FLOT.CORE_FOLDER') . 'jquery.flot.stack.js"></script>';
         }
         
         if ($this->isPieChart()) {
-            $includes[] = '<script type="text/javascript" src="' . $template->buildUrlToSource('SOURCES.FLOT.CORE_FOLDER') . 'jquery.flot.pie.js"></script>';
+            $includes[] = '<script type="text/javascript" src="' . $template->buildUrlToSource('LIBS.FLOT.CORE_FOLDER') . 'jquery.flot.pie.js"></script>';
         }
         
-        $includes[] = '<script type="text/javascript" src="' . $template->buildUrlToSource('SOURCES.FLOT.PLUGINS.AXISLABELS') . '"></script>';
-        $includes[] = '<script type="text/javascript" src="' . $template->buildUrlToSource('SOURCES.FLOT.PLUGINS.ORDERBARS') . '"></script>';
+        $includes[] = '<script type="text/javascript" src="' . $template->buildUrlToSource('LIBS.FLOT.PLUGINS.AXISLABELS') . '"></script>';
+        $includes[] = '<script type="text/javascript" src="' . $template->buildUrlToSource('LIBS.FLOT.PLUGINS.ORDERBARS') . '"></script>';
         
         return $includes;
     }
