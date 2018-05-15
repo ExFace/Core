@@ -681,7 +681,7 @@
         },
         {
             "CREATED_ON": "2018-04-09 16:02:28",
-            "MODIFIED_ON": "2018-04-16 15:41:32",
+            "MODIFIED_ON": "2018-04-16 17:19:43",
             "CREATED_BY_USER": "0x11e7add6fab63cc6997b74e5434dc47d",
             "MODIFIED_BY_USER": "0x11e7add6fab63cc6997b74e5434dc47d",
             "UID": "0x11e83bfea324861e86d30205857feb80",
@@ -692,7 +692,7 @@
             "SHORT_DESCRIPTION": "",
             "PARENT_OBJECT": "",
             "DATA_ADDRESS_PROPS": "{}",
-            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Panel\",\"widgets\":[{\"attribute_alias\":\"NAME\",\"width\":\"100%\"},{\"attribute_alias\":\"CONTENTS\",\"widget_type\":\"InputJson\",\"height\":12,\"formatted_json_export\":true}]}",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Panel\",\"widgets\":[{\"attribute_alias\":\"NAME\",\"width\":\"100%\"},{\"attribute_alias\":\"APP\",\"widget_type\":\"InputComboTable\",\"disabled\":false},{\"attribute_alias\":\"LANGUAGE\",\"widget_type\":\"InputSelect\",\"selectable_options\":{\"de\":\"Deutsch\",\"en\":\"English\",\"fr\":\"Francais\"},\"disabled\":false},{\"attribute_alias\":\"CONTENTS\",\"widget_type\":\"InputJson\",\"height\":12,\"formatted_json_export\":true}]}",
             "LABEL": "Translations",
             "ALIAS": "TRANSLATIONS",
             "DATA_ADDRESS": "*\/*\/Translations\/*.json"
