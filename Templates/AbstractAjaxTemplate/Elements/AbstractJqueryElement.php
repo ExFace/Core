@@ -828,7 +828,7 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface
      */
     public function getPageId()
     {
-        return $this->getWidget()->getPage()->getId();
+        return $this->getWidget()->getPage()->getAliasWithNamespace();
     }
     
     /**
