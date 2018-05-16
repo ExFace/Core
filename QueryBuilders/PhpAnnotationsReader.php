@@ -10,6 +10,7 @@ use exface\Core\CommonLogic\Filemanager;
 use exface\Core\Exceptions\QueryBuilderException;
 use Wingu\OctopusCore\Reflection\ReflectionDocComment;
 use exface\Core\Exceptions\DataSources\DataQueryFailedError;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
 
 /**
  * A query builder to read annotations for PHP classes, their methods and properties.
