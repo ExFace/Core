@@ -25,6 +25,7 @@ use exface\Core\CommonLogic\Model\Aggregator;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\Factories\QueryBuilderFactory;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
 
 /**
  * A query builder for generic SQL syntax.
@@ -286,7 +287,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      */
     function create(AbstractDataConnector $data_connection = null)
     {
-        /* @var $data_connection \exface\Core\AbstractSqlConnector */
+        /* @var $data_connection \exface\Core\DataConnectors\AbstractSqlConnector */
         if (! $data_connection)
             $data_connection = $this->getMainObject()->getDataConnection();
         if (! $this->isWritable())
@@ -572,7 +573,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      * or UPDATE queries.
      * IDEA create a new qpart for input values and use it as an argument in this method. Only need one argument then.
      *
-     * @param multitype $value            
+     * @param mixed $value            
      * @param DataTypeInterface $data_type            
      * @param string $sql_data_type            
      * @return string
@@ -1015,7 +1016,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      * @param string $rely_on_joins            
      * @return string
      * 
-     * @see BuildSqlWhere
+     * @see buildSqlWhere()
      */
     protected function buildSqlHaving(QueryPartFilterGroup $qpart, $rely_on_joins = true)
     {
@@ -1686,6 +1687,19 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             $data_address = str_replace('[#' . $ph . '#]', $this->buildSqlSelect($qpart, $select_from, null, false), $data_address);
         }
         return $data_address;
+    }
+    
+    /**
+     * The SQL builder can join of related objects as long as they are located in the same database.
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder::canRead()
+     */
+    public function canRead(MetaAttributeInterface $attribute) : bool
+    {
+        // TODO Check if all objects along the relation path also belong to the data source
+        // TODO Instead of checking the data source, check if it points to the same data base
+        return $attribute->getObject()->getDataSourceId() === $this->getMainObject()->getDataSourceId();
     }
 }
 ?>

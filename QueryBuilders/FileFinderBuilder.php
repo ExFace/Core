@@ -6,6 +6,7 @@ use exface\Core\CommonLogic\AbstractDataConnector;
 use exface\Core\CommonLogic\Filemanager;
 use exface\Core\CommonLogic\DataQueries\FileFinderDataQuery;
 use Symfony\Component\Finder\SplFileInfo;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
 
 /**
  *
@@ -188,7 +189,7 @@ class FileFinderBuilder extends AbstractQueryBuilder
                         // TODO
                     }
                 } elseif (substr($field, 0, 7) === 'subpath') {
-                    list($start_pos, $end_pos) = explode(',', trim(substr($field, 7), '()'));
+                    // list($start_pos, $end_pos) = explode(',', trim(substr($field, 7), '()'));
                     // TODO
                 } else {
                     $method_name = 'get' . ucfirst($field);
@@ -220,6 +221,17 @@ class FileFinderBuilder extends AbstractQueryBuilder
         );
         
         return $file_data;
+    }
+    
+    /**
+     * The FileFinderBuilder can only handle attributes of one object - no relations (JOINs) supported!
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder::canRead()
+     */
+    public function canRead(MetaAttributeInterface $attribute) : bool
+    {
+        return $attribute->getRelationPath()->isEmpty();
     }
 }
 ?>

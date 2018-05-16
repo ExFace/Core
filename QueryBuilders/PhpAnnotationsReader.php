@@ -235,7 +235,7 @@ class PhpAnnotationsReader extends AbstractQueryBuilder
      *
      * @param ReflectionClass $class            
      * @param ReflectionDocComment $comment            
-     * @param unknown $row            
+     * @param array $row            
      * @return string
      */
     protected function buildRowFromCommentTags(ReflectionClass $class, ReflectionDocComment $comment, $row)
@@ -393,6 +393,17 @@ class PhpAnnotationsReader extends AbstractQueryBuilder
     {
         $this->last_query = $value;
         return $this;
+    }
+    
+    /**
+     * The PhpAnnotationsReader can only handle attributes of one object - no relations (JOINs) supported!
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder::canRead()
+     */
+    public function canRead(MetaAttributeInterface $attribute) : bool
+    {
+        return $attribute->getRelationPath()->isEmpty();
     }
 }
 ?>
