@@ -38,6 +38,7 @@ use exface\Core\Templates\AbstractHttpTemplate\Middleware\QuickSearchUrlParamRea
 use exface\Core\Templates\AbstractHttpTemplate\Middleware\PrefixedFilterUrlParamsReader;
 use exface\Core\Factories\ResultFactory;
 use exface\Core\Templates\AbstractHttpTemplate\Middleware\ContextBarApi;
+use exface\Core\DataTypes\StringDataType;
 
 /**
  * 
@@ -551,7 +552,11 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
     public function buildUrlToSource(string $configOption) : string
     {
         $path = $this->getConfig()->getOption($configOption);
-        return $this->getWorkbench()->getCMS()->buildUrlToInclude($path);
+        if (StringDataType::startsWith($path, 'https:', false) || StringDataType::startsWith($path, 'http:', false)) {
+            return $path;
+        } else {
+            return $this->getWorkbench()->getCMS()->buildUrlToInclude($path);
+        }
     }
     
     protected function buildHtmlHeadCommonIncludes() : array
