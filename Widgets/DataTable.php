@@ -196,16 +196,18 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
      * Set "expand" to FALSE to collapse all groups initially. Set "show_count" to TRUE to include the number
      * of rows within the group in it's header.
      *
+     * ```json
      * Example:
      * {
      *  "widget_type": "DataTable",
      *  ...
      *  "row_grouper": {
      *      "group_by_attribute_alias": "MY_ATTRIBUTE",
-     *      "expand": true,
+     *      "expand_all_groups": true,
      *      "show_count": true
      *  }
      * }
+     * ```
      *
      * @uxon-property row_grouper
      * @uxon-type \exface\Core\Widgets\DataRowGrouper
