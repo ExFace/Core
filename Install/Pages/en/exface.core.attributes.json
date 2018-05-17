@@ -64,14 +64,16 @@
                 "attribute_alias": "ALIAS"
             },
             {
-                "attribute_alias": "DISPLAYORDER"
+                "attribute_alias": "DISPLAYORDER",
+                "caption": "=TRANSLATE('exface.Core', 'PAGE.ATTRIBUTES.DISPLAY_ORDER')"
             },
             {
                 "attribute_alias": "DATA_ADDRESS",
                 "width_max": "300px"
             },
             {
-                "attribute_alias": "DATATYPE__LABEL"
+                "attribute_alias": "DATATYPE__LABEL",
+                "width_max": "100px"
             },
             {
                 "attribute_alias": "LABELFLAG"
@@ -88,6 +90,10 @@
             {
                 "attribute_alias": "RELATED_OBJ__LABEL",
                 "caption": "=TRANSLATE('exface.Core', 'PAGE.OBJECT_EDITOR.RELATION_TO')"
+            },
+            {
+                "attribute_alias": "DATA_ADDRESS_PROPS",
+                "width_max": "200px"
             },
             {
                 "attribute_alias": "CREATED_ON"
