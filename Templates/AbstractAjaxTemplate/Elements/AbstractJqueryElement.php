@@ -800,7 +800,7 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface
     }
 
     /**
-     * Returns an inline JS snippet which enables the widget.
+     * Returns an inline JS snippet which enables the widget (no tailing semicolon!).
      *
      * @return string
      */
@@ -810,7 +810,7 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface
     }
 
     /**
-     * Returns an inline JS snippet which disables the widget.
+     * Returns an inline JS snippet which disables the widget (no tailing semicolon!).
      *
      * @return string
      */
