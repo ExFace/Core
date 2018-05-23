@@ -17,7 +17,8 @@
 	"ACTION.SHOWOBJECTEDITDIALOG.SAVE_BUTTON": "Save",
 	"ACTION.SHOWOBJECTEDITDIALOG.NAME": "Edit",
 	"ACTION.SHOWOBJECTEDITDIALOG.NO_EDITABLE_ATTRIBUTES": "No editable attributes found!",
-
+	"ACTION.SHOWOBJECTEDITDIALOG.DATA_SOURCE_NOT_WRITABLE": "Editing prohibited by data source settings!",
+	
 	"ACTION.EXPORTCSV.NAME": "Export CSV",
 	"ACTION.EXPORTDATA.NAME": "Export",
 	"ACTION.EXPORTDATA.ROWOVERFLOW": "The maximum number of %number% entries was written to the file. ",
