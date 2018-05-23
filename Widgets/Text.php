@@ -16,8 +16,6 @@ class Text extends Display implements iShowText, iHaveColor
     use iCanBeAlignedTrait {
         getAlign as getAlignDefault;
     }
-    
-    private $text = NULL;
 
     private $size = null;
 
@@ -27,15 +25,12 @@ class Text extends Display implements iShowText, iHaveColor
 
     public function getText()
     {
-        if (is_null($this->text)) {
-            return $this->getValue();
-        }
-        return $this->text;
+        return $this->getValue();
     }
 
     public function setText($value)
     {
-        $this->text = $this->evaluatePropertyExpression($value);
+        $this->setValue($this->evaluatePropertyExpression($value));
         return $this;
     }
     
@@ -98,9 +93,6 @@ class Text extends Display implements iShowText, iHaveColor
         }
         if (! is_null($this->align)) {
             $uxon->setProperty('align', $this->align);
-        }
-        if (! is_null($this->text)) {
-            $uxon->setProperty('text', $this->text);
         }
         return $uxon;
     }
