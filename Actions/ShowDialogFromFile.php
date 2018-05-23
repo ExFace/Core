@@ -105,7 +105,7 @@ class ShowDialogFromFile extends ShowDialog
             $completeFilename = $basePath . '/' . $filename . ($this->getFileExtension() ? '.' . ltrim($this->getFileExtension(), ".") : '');
             if (file_exists($completeFilename)) {
                 $json = file_get_contents($completeFilename);
-                $this->setWidget(WidgetFactory::createFromUxon($this->getDialogWidget()->getPage(), UxonObject::fromJson($json), $this->getDialogWidget()));
+                $this->getDialogWidget()->addWidget(WidgetFactory::createFromUxon($this->getDialogWidget()->getPage(), UxonObject::fromJson($json), $this->getDialogWidget()));
             } else {
                 throw new FileNotFoundError('File "' . $completeFilename . '" not found!');
             }
