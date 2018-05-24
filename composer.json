@@ -14,7 +14,7 @@
         "issues": "https://github.com/exface/core/issues"
     },
     "require": {
-        "php": ">=7.0",
+        "php": "^7.1",
         "symfony/FileSystem": "^3.1||^4.0",
         "symfony/Event-Dispatcher": "^3.1||^4.0",
         "symfony/translation": "^3.1||^4.0",
