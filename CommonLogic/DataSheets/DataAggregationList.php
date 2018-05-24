@@ -5,6 +5,7 @@ use exface\Core\Factories\DataAggregationFactory;
 use exface\Core\Interfaces\DataSheets\DataAggregationListInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\EntityList;
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 
 class DataAggregationList extends EntityList implements DataAggregationListInterface
 {
@@ -30,7 +31,7 @@ class DataAggregationList extends EntityList implements DataAggregationListInter
      *
      * @see \exface\Core\CommonLogic\EntityList::importUxonObject()
      */
-    public function importUxonObject(UxonObject $uxon)
+    public function importUxonObject(UxonObject $uxon, $factory_class_name = null)
     {
         $data_sheet = $this->getParent();
         foreach ($uxon as $u) {
