@@ -23,6 +23,8 @@ use exface\Core\Interfaces\Widgets\iHaveValue;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\Interfaces\Widgets\iCanBeAligned;
 use exface\Core\Factories\DataTypeFactory;
+use exface\Core\CommonLogic\WidgetDimension;
+use exface\Core\Factories\WidgetDimensionFactory;
 
 /**
  * The DataColumn represents a column in Data-widgets a DataTable.
@@ -53,8 +55,8 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     private $sortable = true;
 
     private $footer = false;
-
-    private $fixed_width = false;
+    
+    private $widthMax = null;
 
     /**
      * 
@@ -162,17 +164,6 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     public function setFooter($value)
     {
         $this->footer = $value;
-        return $this;
-    }
-
-    public function getFixedWidth()
-    {
-        return $this->fixed_width;
-    }
-
-    public function setFixedWidth($value)
-    {
-        $this->fixed_width = $value;
         return $this;
     }
 
@@ -531,6 +522,37 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     public function getDataWidget()
     {
         return $this->getParent()->getDataWidget();
+    }
+    
+    /**
+     * 
+     * @return WidgetDimension
+     */
+    public function getWidthMax() : WidgetDimension
+    {
+        if ($this->widthMax === null) {
+            $this->widthMax = WidgetDimensionFactory::createEmpty($this->getWorkbench());
+        }
+        return $this->widthMax;
+    }
+    
+    /**
+     * Sets the maximum width for a column.
+     * 
+     * This property takes the same values as "width" or "height", but unlike "width" it
+     * will allow the column to be smaller, but never wider, than the given value. "Width"
+     * on the other hand, will make the column have a fixed width.
+     * 
+     * @uxon-property width_max
+     * @uxon-type string
+     * 
+     * @param string|WidgetDimension $stringOrDimension
+     * @return DataColumn
+     */
+    public function setWidthMax($stringOrDimension) : DataColumn
+    {
+        $this->widthMax = WidgetDimensionFactory::createFromAnything($this->getWorkbench(), $stringOrDimension);
+        return $this;
     }
 }
 ?>

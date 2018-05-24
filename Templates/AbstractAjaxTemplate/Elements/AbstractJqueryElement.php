@@ -170,7 +170,7 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface
     /**
      * Returns a ready-to-use hint text, that will generally be included in float-overs for template elements
      *
-     * @param unknown $hint_text            
+     * @param string $hint_text            
      * @param string $remove_linebreaks            
      * @return string
      */
@@ -507,7 +507,7 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface
     /**
      * Returns the width of one relative width unit in pixels
      *
-     * @return \exface\Core\CommonLogic\multitype
+     * @return string
      */
     public function getWidthRelativeUnit()
     {
@@ -520,7 +520,7 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface
     /**
      * Returns the minimum width of one relative width unit in pixels
      *
-     * @return \exface\Core\CommonLogic\multitype
+     * @return string
      */
     public function getWidthMinimum()
     {
@@ -533,7 +533,7 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface
     /**
      * Returns the height of one relative height unit in pixels
      *
-     * @return \exface\Core\CommonLogic\multitype
+     * @return string
      */
     public function getHeightRelativeUnit()
     {
@@ -800,23 +800,23 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface
     }
 
     /**
-     * Returns an inline JS snippet which enables the widget.
+     * Returns an inline JS snippet which enables the widget (no tailing semicolon!).
      *
      * @return string
      */
     public function buildJsEnabler()
     {
-        return '$("#' . $this->getId() . '").prop("disabled", false)';
+        return '$("#' . $this->getId() . '").removeProp("disabled")';
     }
 
     /**
-     * Returns an inline JS snippet which disables the widget.
+     * Returns an inline JS snippet which disables the widget (no tailing semicolon!).
      *
      * @return string
      */
     public function buildJsDisabler()
     {
-        return '$("#' . $this->getId() . '").prop("disabled", true)';
+        return '$("#' . $this->getId() . '").prop("disabled", "disabled")';
     }
     
     /**
@@ -828,7 +828,7 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface
      */
     public function getPageId()
     {
-        return $this->getWidget()->getPage()->getId();
+        return $this->getWidget()->getPage()->getAliasWithNamespace();
     }
     
     /**

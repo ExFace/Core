@@ -9,7 +9,6 @@ error_reporting(E_ALL & ~E_NOTICE);
 // Start the workbench
 require_once('CommonLogic/Workbench.php');
 $workbench = new \exface\Core\CommonLogic\Workbench();
-$workbench->start();
 
 // Create a simple request handler and add the default routing middleware
 // If the middleware will not be able to match a rout, the handler will return the

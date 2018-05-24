@@ -1,12 +1,13 @@
 <?php
 namespace exface\Core\Widgets;
 
-use exface\Core\Interfaces\Widgets\iShowDataSet;
+use exface\Core\Interfaces\Widgets\iUseData;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
+use exface\Core\Interfaces\Widgets\iShowData;
 
 /**
  *
@@ -21,9 +22,9 @@ class DataCarousel extends SplitHorizontal
 
     /**
      * 
-     * @return iShowDataSet
+     * @return iShowData
      */
-    public function getDataWidget() : WidgetInterface
+    public function getDataWidget() : iShowData
     {
         $details = $this->getDetailsWidget();
         foreach ($details->getChildrenRecursive() as $child) {
@@ -36,10 +37,10 @@ class DataCarousel extends SplitHorizontal
 
     /**
      * 
-     * @param iShowDataSet $dataWidget
+     * @param iShowData $dataWidget
      * @return DataCarousel
      */
-    public function setDataWidget(WidgetInterface $dataWidget) : DataCarousel
+    protected function setDataWidget(iShowData $dataWidget) : DataCarousel
     {
         $this->dataWidget = $dataWidget;
         return $this;
@@ -48,14 +49,23 @@ class DataCarousel extends SplitHorizontal
     public function setData(UxonObject $uxon) : DataCarousel
     {
         $widget = WidgetFactory::createFromUxon($this->getPage(), $uxon, $this, 'DataList');
-        $this->setDataWidget($widget);
+        if ($widget instanceof iUseData) {
+            $this->setDataWidget($widget->getData());
+        } else {
+            $this->setDataWidget($widget);
+        }
+        $this->addWidget($widget, 0);
         return $this;
     }
-
+    
+    public function getMasterWidget() : WidgetInterface
+    {
+        return $this->getWidget(0);
+    }
 
     /**
      * 
-     * @return unkown
+     * @return iContainOtherWidgets
      */
     public function getDetailsWidget() : iContainOtherWidgets
     {
@@ -64,25 +74,21 @@ class DataCarousel extends SplitHorizontal
 
     /**
      * 
-     * @param WidgetInterface $detailsWidget
+     * @param WidgetInterface $container
      * @return DataCarousel
      */
-    public function setDetailsWidget(iContainOtherWidgets $detailsWidget) : DataCarousel
+    public function setDetailsWidget(iContainOtherWidgets $container) : DataCarousel
     {
-        $this->detailsWidget = $detailsWidget;
+        $this->detailsWidget = $container;
         return $this;
     }
     
     public function setDetails(UxonObject $uxon) : DataCarousel
     {
         $widget = WidgetFactory::createFromUxon($this->getPage(), $uxon, $this, 'Form');
+        $this->addWidget($widget, 1);
         $this->setDetailsWidget($widget);
         return $this;
-    }
-    
-    public function getWidgets(callable $filter = null)
-    {
-        return [$this->getDataWidget(), $this->getDetailsWidget()];
     }
 
 }

@@ -32,6 +32,10 @@ use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 use exface\Core\Interfaces\Model\MetaRelationInterface;
 use exface\Core\Exceptions\DataSheets\DataSheetDeleteError;
 use exface\Core\Exceptions\Model\MetaObjectHasNoDataSourceError;
+use exface\Core\CommonLogic\Model\Condition;
+use exface\Core\CommonLogic\QueryBuilder\RowDataArrayFilter;
+use exface\Core\Exceptions\RuntimeException;
+use exface\Core\Interfaces\Model\ConditionalExpressionInterface;
 
 /**
  * Internal data respresentation object in exface.
@@ -330,15 +334,16 @@ class DataSheet implements DataSheetInterface
      */
     protected function getDataForColumn(DataColumnInterface $col, \exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder $query)
     {
+        $sheetObject = $this->getMetaObject();
         // add the required attributes
         foreach ($col->getExpressionObj()->getRequiredAttributes() as $attr) {
             try {
-                $attribute = $this->getMetaObject()->getAttribute($attr);
+                $attribute = $sheetObject->getAttribute($attr);
             } catch (MetaAttributeNotFoundError $e) {
                 continue;
             }
-            // if the attributes data source is the same, as the one of the main object, add the attribute to the query
-            if ($attribute->getObject()->getDataSourceId() == $this->getMetaObject()->getDataSourceId()) {
+            // If the QueryBuilder for the current object can read the attribute, add it
+            if ($query->canRead($attribute)) {
                 // if a formula is applied to the attribute, get all attributes required for the formula
                 // if it is just a plain attribute, add it and nothing else
                 if ($expr = $attribute->getFormula()) {
@@ -351,8 +356,8 @@ class DataSheet implements DataSheetInterface
                 } else {
                     $query->addAttribute($attr);
                 }
-            } else {
-                // If the attribute belongs to a related object with a different data source than the main object, make a subsheet and ultimately a separate query.
+            } elseif (! $attribute->getRelationPath()->isEmpty()) {
+                // If the query builder cannot read the attribute, make a subsheet and ultimately a separate query.
                 // To create a subsheet we need to split the relation path to the current attribute into the part leading to the foreign key in the main data source
                 // and the part in the next data source. We always split into two parts by the first data source border: if there are more data sources involved,
                 // the subsheet will take care of splitting the rest of the path. Here is an example: Concider comparing turnover between the point-of-sale system and
@@ -370,7 +375,7 @@ class DataSheet implements DataSheetInterface
                 $rels = RelationPath::relationPathParse($attribute->getAliasWithRelationPath());
                 foreach ($rels as $depth => $rel) {
                     $rel_path = RelationPath::relationPathAdd($last_rel_path, $rel);
-                    if ($this->getMetaObject()->getRelatedObject($rel_path)->getDataSourceId() == $this->getMetaObject()->getDataSourceId()) {
+                    if ($query->canRead($sheetObject->getRelation($rel_path)->getRelatedObjectKeyAttribute())) {
                         $rel_path_in_main_ds = $last_rel_path;
                     } else {
                         if (! $rel_path_to_subsheet) {
@@ -387,10 +392,10 @@ class DataSheet implements DataSheetInterface
                 }
                 // Create a subsheet for the relation if not yet existent and add the required attribute
                 if (! $subsheet = $this->getSubsheets()->get($rel_path_to_subsheet)) {
-                    $subsheet_object = $this->getMetaObject()->getRelatedObject($rel_path_to_subsheet);
+                    $subsheet_object = $sheetObject->getRelatedObject($rel_path_to_subsheet);
                     $subsheet = DataSheetSubsheetFactory::createForObject($subsheet_object, $this);
                     $this->getSubsheets()->add($subsheet, $rel_path_to_subsheet);
-                    if (! $this->getMetaObject()->getRelation($rel_path_to_subsheet)->isReverseRelation()) {
+                    if (! $sheetObject->getRelation($rel_path_to_subsheet)->isReverseRelation()) {
                         // add the foreign key to the main query and to this sheet
                         $query->addAttribute($rel_path_to_subsheet);
                         // IDEA do we need to add the column to the sheet? This is just useless data...
@@ -402,11 +407,13 @@ class DataSheet implements DataSheetInterface
                 // Add the current attribute to the subsheet prefixing it with it's relation path relative to the subsheet's object
                 $subsheet->getColumns()->addFromExpression(RelationPath::relationPathAdd($rel_path_in_subsheet, $attribute->getAlias()));
                 // Add the related object key alias of the relation to the subsheet to that subsheet. This will be the right key in the future JOIN.
-                if ($rel_path_to_subsheet_right_key = $this->getMetaObject()->getRelation($rel_path_to_subsheet)->getRelatedObjectKeyAlias()) {
+                if ($rel_path_to_subsheet_right_key = $sheetObject->getRelation($rel_path_to_subsheet)->getRelatedObjectKeyAlias()) {
                     $subsheet->getColumns()->addFromExpression(RelationPath::relationPathAdd($rel_path_in_main_ds, $rel_path_to_subsheet_right_key));
                 } else {
-                    throw new DataSheetUidColumnNotFoundError($this, 'Cannot find UID (primary key) for subsheet: no key alias can be determined for the relation "' . $rel_path_to_subsheet . '" from "' . $this->getMetaObject()->getAliasWithNamespace() . '" to "' . $this->getMetaObject()->getRelation($rel_path_to_subsheet)->getRelatedObject()->getAliasWithNamespace() . '"!');
+                    throw new DataSheetUidColumnNotFoundError($this, 'Cannot find UID (primary key) for subsheet: no key alias can be determined for the relation "' . $rel_path_to_subsheet . '" from "' . $sheetObject->getAliasWithNamespace() . '" to "' . $sheetObject->getRelation($rel_path_to_subsheet)->getRelatedObject()->getAliasWithNamespace() . '"!');
                 }
+            } else {
+                throw new DataSheetReadError($this, 'QueryBuilder "' . get_class($query) . '" cannot read attribute "' . $attribute->getAliasWithRelationPath() . '" of object "' . $attribute->getObject()->getAliasWithNamespace() .'"!');
             }
             
             if ($attribute->getFormatter()) {
@@ -1743,6 +1750,37 @@ class DataSheet implements DataSheetInterface
             }
         }
         return false;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::extract()
+     */
+    public function extract(ConditionalExpressionInterface $conditionOrGroup) : DataSheetInterface
+    {
+        $conditions = $conditionOrGroup->toConditionGroup();
+        $ds = $this->copy();
+        $filter = new RowDataArrayFilter();
+        if ($conditions->getOperator() === EXF_LOGICAL_AND) {
+            foreach ($conditions->getConditions() as $condition) {
+                $col = $this->getColumns()->getByExpression($condition->getExpression());
+                if ($col === false) {
+                    throw new RuntimeException('Cannot extract data from data sheet: missing column for extraction filter "' . $condition->toString() . '"!');
+                }
+                $filter->addAnd($col->getName(), $condition->getValue(), $condition->getComparator());
+            }
+            $rows = $filter->filter($this->getRows());
+        } else {
+            throw new RuntimeException('Unsupported condition group operator "' . $conditions->getOperator() . '" for data sheet extraction: only AND currently supported!');
+        }
+        
+        if ($conditions->countNestedGroups() > 0) {
+            throw new RuntimeException('Cannot extract data from data sheet using a condition group with nested groups: currently not supported!');
+        }
+        
+        $ds->removeRows()->addRows($rows);
+        return $ds;
     }
 }
 

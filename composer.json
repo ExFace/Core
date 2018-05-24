@@ -14,15 +14,15 @@
         "issues": "https://github.com/exface/core/issues"
     },
     "require": {
-        "php": ">=5.4",
-        "symfony/FileSystem": "^2.8 || ^3.1",
-        "symfony/Event-Dispatcher": "^2.8 || ^3.1",
-        "symfony/translation": "^2.8 || ^3.1",
-        "symfony/config": "^2.8 || ^3.1",
-        "symfony/debug": "^3.3",
-        "symfony/var-dumper": "^3.2",
-        "symfony/finder": "~3.1.7",
-        "symfony/StopWatch": "^3.1.2",
+        "php": ">=7.0",
+        "symfony/FileSystem": "^3.1||^4.0",
+        "symfony/Event-Dispatcher": "^3.1||^4.0",
+        "symfony/translation": "^3.1||^4.0",
+        "symfony/config": "^3.1||^4.0",
+        "symfony/debug": "^3.3||^4.0",
+        "symfony/var-dumper": "^3.2||^4.0",
+        "symfony/finder": "~3.1.7||^4.0",
+        "symfony/StopWatch": "^3.1.2||^4.0",
         "jmikola/Wildcard-Event-Dispatcher": "^1.1",
         "webmozart/path-util": "^2.3",
         "monolog/monolog": "^1.22.1",
@@ -36,14 +36,16 @@
         "wingu/reflection": "~1.0.5",
         "league/csv": "^8.0",
         "jdorn/sql-formatter": "~1.2.17",
-        "cebe/markdown": "^1.1.2"
+        "cebe/markdown": "^1.1.2",
+        "kabachello/fileroute": "~0.2",
+        "guzzlehttp/guzzle": "^6.2.2"
     },
     "extra": {
         "app": {
             "app_uid": "0x31000000000000000000000000000000",
             "app_alias": "exface.Core",
-            "model_md5": "79c5cdce958acdf6130dfb4e8b8ff6ac",
-            "model_timestamp": "2018-04-16 17:19:43"
+            "model_md5": "ce4edac0eb6a243cba3694621dc33f0b",
+            "model_timestamp": "2018-05-17 12:14:49"
         }
     },
     "autoload": {

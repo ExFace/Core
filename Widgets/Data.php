@@ -27,6 +27,7 @@ use exface\Core\Interfaces\Widgets\iHaveHeader;
 use exface\Core\Interfaces\Widgets\iHaveFooter;
 use exface\Core\Widgets\Traits\iSupportLazyLoadingTrait;
 use exface\Core\Exceptions\Widgets\WidgetPropertyNotSetError;
+use exface\Core\Interfaces\Widgets\iShowData;
 
 /**
  * Data is the base for all widgets displaying tabular data.
@@ -41,7 +42,7 @@ use exface\Core\Exceptions\Widgets\WidgetPropertyNotSetError;
  * @author Andrej Kabachnik
  *        
  */
-class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColumns, iHaveColumnGroups, iHaveToolbars, iHaveButtons, iHaveFilters, iSupportLazyLoading, iHaveContextualHelp, iHaveConfigurator
+class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColumns, iHaveColumnGroups, iHaveToolbars, iHaveButtons, iHaveFilters, iSupportLazyLoading, iHaveContextualHelp, iHaveConfigurator, iShowData
 {
     use iHaveButtonsAndToolbarsTrait;
     use iSupportLazyLoadingTrait {
@@ -1089,7 +1090,7 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
      *
      * @return boolean
      */
-    public function isEditable()
+    public function isEditable() : bool
     {
         return $this->is_editable;
     }
@@ -1100,12 +1101,12 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
      *
      * @uxon-property editable
      * @uxon-type boolean
-     *
-     * @return \exface\Core\Widgets\Data
+     * 
+     * @see \exface\Core\Interfaces\Widgets\iShowData::setEditable()
      */
-    public function setEditable($value = true)
+    public function setEditable($value = true) : iShowData
     {
-        $this->editable = \exface\Core\DataTypes\BooleanDataType::cast($value);
+        $this->is_editable = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;
     }
 

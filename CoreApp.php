@@ -7,6 +7,9 @@ use exface\Core\Interfaces\AppInterface;
 use exface\Core\CommonLogic\Model\App;
 use exface\Core\Templates\AbstractHttpTemplate\HttpTemplateInstaller;
 use exface\Core\Factories\TemplateFactory;
+use exface\Core\Templates\DocsTemplate;
+use exface\Core\Templates\HttpFileServerTemplate;
+use exface\Core\Templates\ProxyTemplate;
 
 class CoreApp extends App
 {
@@ -26,7 +29,15 @@ class CoreApp extends App
         
         // Add template installers for core templates
         $tplInstaller = new HttpTemplateInstaller($this->getSelector());
-        $tplInstaller->setTemplate(TemplateFactory::createFromString('exface.Core.HttpFileServerTemplate', $this->getWorkbench()));
+        $tplInstaller->setTemplate(TemplateFactory::createFromString(HttpFileServerTemplate::class, $this->getWorkbench()));
+        $installer->addInstaller($tplInstaller);
+        
+        $tplInstaller = new HttpTemplateInstaller($this->getSelector());
+        $tplInstaller->setTemplate(TemplateFactory::createFromString(DocsTemplate::class, $this->getWorkbench()));
+        $installer->addInstaller($tplInstaller);
+        
+        $tplInstaller = new HttpTemplateInstaller($this->getSelector());
+        $tplInstaller->setTemplate(TemplateFactory::createFromString(ProxyTemplate::class, $this->getWorkbench()));
         $installer->addInstaller($tplInstaller);
         
         return $installer;

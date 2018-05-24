@@ -68,10 +68,25 @@ class ShowObjectInfoDialog extends ShowDialog
      */
     protected function createWidgetsForAttributes(AbstractWidget $parent_widget)
     {
-        $editors = array();
+        $object = $this->getMetaObject();
+        $editors = [];
         $cnt = 0;
+        
+        if ($object->hasDataSource()) {
+            $objectWritable = $object->isWritable();
+        } else {
+            $objectWritable = true;
+        }
+        
+        if ($objectWritable === false){
+            $editors[] = WidgetFactory::create($parent_widget->getPage(), 'Message', $parent_widget)
+            ->setType(EXF_MESSAGE_TYPE_WARNING)
+            ->setWidth('100%')
+            ->setText($this->getApp()->getTranslator()->translate('ACTION.SHOWOBJECTEDITDIALOG.DATA_SOURCE_NOT_WRITABLE'));
+        }
+        
         /* @var $attr \exface\Core\Interfaces\Model\MetaAttributeInterface */
-        foreach ($this->getMetaObject()->getAttributes() as $attr) {
+        foreach ($object->getAttributes() as $attr) {
             $cnt ++;
             // Ignore hidden attributes if they are not system attributes
             if ($attr->isHidden())
@@ -90,6 +105,11 @@ class ShowObjectInfoDialog extends ShowDialog
             if ($ed instanceof iCanBeDisabled) {
                 $ed->setDisabled(($attr->isEditable() ? false : true));
             }
+            
+            if (! $objectWritable) {
+                $ed->setDisabled(true);
+            }
+            
             $editors[] = $ed;
         }
         

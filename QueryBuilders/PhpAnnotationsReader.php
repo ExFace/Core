@@ -10,6 +10,7 @@ use exface\Core\CommonLogic\Filemanager;
 use exface\Core\Exceptions\QueryBuilderException;
 use Wingu\OctopusCore\Reflection\ReflectionDocComment;
 use exface\Core\Exceptions\DataSources\DataQueryFailedError;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
 
 /**
  * A query builder to read annotations for PHP classes, their methods and properties.
@@ -235,7 +236,7 @@ class PhpAnnotationsReader extends AbstractQueryBuilder
      *
      * @param ReflectionClass $class            
      * @param ReflectionDocComment $comment            
-     * @param unknown $row            
+     * @param array $row            
      * @return string
      */
     protected function buildRowFromCommentTags(ReflectionClass $class, ReflectionDocComment $comment, $row)
@@ -393,6 +394,17 @@ class PhpAnnotationsReader extends AbstractQueryBuilder
     {
         $this->last_query = $value;
         return $this;
+    }
+    
+    /**
+     * The PhpAnnotationsReader can only handle attributes of one object - no relations (JOINs) supported!
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder::canRead()
+     */
+    public function canRead(MetaAttributeInterface $attribute) : bool
+    {
+        return $attribute->getRelationPath()->isEmpty();
     }
 }
 ?>

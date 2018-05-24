@@ -20,6 +20,6 @@ class NotFoundHandler implements RequestHandlerInterface
      */
     public function handle(ServerRequestInterface $request) : ResponseInterface
     {
-        return new Response(404);
+        return new Response(404, [], 'Error 404: Document not found!');
     }
 }

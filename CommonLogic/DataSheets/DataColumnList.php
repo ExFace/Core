@@ -126,6 +126,26 @@ class DataColumnList extends EntityList implements DataColumnListInterface
     {
         return $this->addFromExpression($attribute->getAliasWithRelationPath());
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataColumnListInterface::addFromUidAttribute()
+     */
+    public function addFromUidAttribute() : DataColumnInterface
+    {
+        return $this->addFromAttribute($this->getDataSheet()->getMetaObject()->getUidAttribute());
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataColumnListInterface::addFromLabelAttribute()
+     */
+    public function addFromLabelAttribute() : DataColumnInterface
+    {
+        return $this->addFromAttribute($this->getDataSheet()->getMetaObject()->getLabelAttribute());
+    }
 
     /**
      *

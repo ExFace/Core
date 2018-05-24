@@ -9,50 +9,8 @@
     "intro": "",
     "replaces_page_alias": null,
     "contents": {
-        "widget_type": "DataTable",
+        "widget_type": "Browser",
         "object_alias": "exface.Core.Docs",
-        "filters": [
-            {
-                "attribute_alias": "TITLE"
-            },
-            {
-                "attribute_alias": "NAME"
-            },
-            {
-                "attribute_alias": "PATH_RELATIVE"
-            }
-        ],
-        "columns": [
-            {
-                "attribute_alias": "TITLE"
-            },
-            {
-                "attribute_alias": "PATH_RELATIVE"
-            },
-            {
-                "attribute_alias": "PATHNAME_RELATIVE",
-                "hidden": true
-            }
-        ],
-        "buttons": [
-            {
-                "caption": "=TRANSLATE('exface.Core', 'PAGE.DOCS.READ')",
-                "bind_to_double_click": true,
-                "action": {
-                    "alias": "exface.Core.ShowDialog",
-                    "widget": {
-                        "widget_type": "Dialog",
-                        "widgets": [
-                            {
-                                "widget_type": "Markdown",
-                                "width": "max",
-                                "hide_caption": true,
-                                "attribute_alias": "CONTENTS"
-                            }
-                        ]
-                    }
-                }
-            }
-        ]
+        "url_base": "[#api#]\/docs"
     }
 }

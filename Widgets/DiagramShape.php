@@ -3,7 +3,7 @@ namespace exface\Core\Widgets;
 
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Widgets\iHaveBorders;
-use exface\Core\Interfaces\Widgets\iShowDataSet;
+use exface\Core\Interfaces\Widgets\iUseData;
 use exface\Core\Factories\WidgetLinkFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\CommonLogic\Model\RelationPath;
@@ -20,7 +20,7 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
  * @author Andrej Kabachnik
  *        
  */
-class DiagramShape extends Form implements iShowDataSet, iHaveBorders
+class DiagramShape extends Form implements iUseData, iHaveBorders
 {
 
     const SHAPE_TYPE_POLYGON = 'polygon';

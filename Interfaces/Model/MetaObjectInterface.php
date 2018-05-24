@@ -13,6 +13,7 @@ use exface\Core\Interfaces\EntityListInterface;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Interfaces\AliasInterface;
+use exface\Core\CommonLogic\Model\Attribute;
 
 interface MetaObjectInterface extends WorkbenchDependantInterface, AliasInterface
 {
@@ -62,12 +63,12 @@ interface MetaObjectInterface extends WorkbenchDependantInterface, AliasInterfac
      * above example either the relation DATA_SOURCE or the object DATA_SOURCE must be
      * renamed to something else (the object's alias is currently DATASRC).
      *
-     * @param string $alias
+     * @param string $aliasOrPathString
      * @param string $foreign_key_alias
      * @throws MetaRelationNotFoundError if no matching relation found
      * @return MetaRelationInterface
      */
-    public function getRelation($alias, $foreign_key_alias = '');
+    public function getRelation($aliasOrPathString, $foreign_key_alias = '');
     
     /**
      * Returns TRUE if the object has a relation matching the given alias and FALSE otherwise.
@@ -84,7 +85,7 @@ interface MetaObjectInterface extends WorkbenchDependantInterface, AliasInterfac
     /**
      * Returns a list of all direct attributes of this object (including inherited ones!)
      *
-     * @return MetaAttributeListInterface
+     * @return MetaAttributeListInterface|Attribute[]
      */
     public function getAttributes();
     

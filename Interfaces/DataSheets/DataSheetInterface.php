@@ -9,6 +9,7 @@ use exface\Core\Interfaces\iCanBeCopied;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Exceptions\DataSheets\DataSheetColumnNotFoundError;
 use exface\Core\CommonLogic\DataSheets\DataSheetList;
+use exface\Core\Interfaces\Model\ConditionalExpressionInterface;
 
 interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, iCanBeConvertedToUxon
 {
@@ -442,6 +443,13 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * @return boolean
      */
     public function hasColumTotals();
+    
+    /**
+     * 
+     * @param ConditionalExpressionInterface $condition
+     * @return DataSheetInterface
+     */
+    public function extract(ConditionalExpressionInterface $condition) : DataSheetInterface;
 }
 
 ?>

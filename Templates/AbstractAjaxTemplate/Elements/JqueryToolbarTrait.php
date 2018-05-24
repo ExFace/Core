@@ -99,16 +99,6 @@ trait JqueryToolbarTrait
         return $output;
     }
     
-    public function buildJs()
-    {
-        return $this->buildJsButtons();
-    }
-    
-    public function buildHtml()
-    {
-        return $this->buildHtmlToolbarWrapper($this->buildHtmlButtons());
-    }
-    
     protected function buildHtmlToolbarWrapper($contents)
     {
         return <<<HTML

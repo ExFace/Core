@@ -8,7 +8,7 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Factories\WidgetLinkFactory;
 use exface\Core\Interfaces\Widgets\iHaveButtons;
 use exface\Core\Interfaces\Widgets\iSupportLazyLoading;
-use exface\Core\Interfaces\Widgets\iShowDataSet;
+use exface\Core\Interfaces\Widgets\iUseData;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Interfaces\Widgets\iFillEntireContainer;
@@ -26,7 +26,7 @@ use exface\Core\Widgets\Traits\iSupportLazyLoadingTrait;
  * @author Andrej Kabachnik
  *        
  */
-class Chart extends AbstractWidget implements iShowDataSet, iHaveToolbars, iHaveButtons, iHaveHeader, iHaveFooter, iHaveConfigurator, iSupportLazyLoading, iFillEntireContainer
+class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButtons, iHaveHeader, iHaveFooter, iHaveConfigurator, iSupportLazyLoading, iFillEntireContainer
 {
     use iHaveButtonsAndToolbarsTrait;
     use iSupportLazyLoadingTrait;
@@ -238,7 +238,7 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveToolbars, iHave
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\Interfaces\Widgets\iShowDataSet::setData()
+     * @see \exface\Core\Interfaces\Widgets\iUseData::setData()
      */
     public function setData(UxonObject $uxon_object)
     {
@@ -382,7 +382,7 @@ class Chart extends AbstractWidget implements iShowDataSet, iHaveToolbars, iHave
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\Interfaces\Widgets\iShowDataSet::setDataWidgetLink()
+     * @see \exface\Core\Interfaces\Widgets\iUseData::setDataWidgetLink()
      */
     public function setDataWidgetLink($value)
     {

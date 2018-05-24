@@ -68,19 +68,22 @@ class DirLimitingLogHandler extends LimitingWrapper
         
         $limitTime = max(0, time() - ($this->maxDays * 24 * 60 * 60));
         $logFiles = glob(LogHelper::getPattern($this->logPath, $this->filenameFormat, '/*', $this->staticFileNamePart));
-        foreach ($logFiles as $logFile) {
-            $mtime = filemtime($logFile);
-            if ($mtime > $limitTime)
-                continue;
-            
+        
+        // suppress errors here as unlink() might fail if two processes
+        // are cleaning up/rotating at the same time
+        set_error_handler(function ($errno, $errstr, $errfile, $errline) {});
+        foreach ($logFiles as $logFile) {            
             if (is_writable($logFile)) {
-                // suppress errors here as unlink() might fail if two processes
-                // are cleaning up/rotating at the same time
-                set_error_handler(function ($errno, $errstr, $errfile, $errline) {});
+                $mtime = filemtime($logFile);
+                if ($mtime > $limitTime) {
+                    continue;
+                }
                 unlink($logFile);
-                restore_error_handler();
             }
         }
+        restore_error_handler();
+        
+        $config->setOption('LOG.LAST_CLEANUP', date("Y-m-d H:i:s"), AppInterface::CONFIG_SCOPE_SYSTEM);
         
         return;
     }
