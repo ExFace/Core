@@ -69,21 +69,6 @@
             "CONFIG_UXON": "{\"file_path_attribute_alias\":\"id\",\"file_extension\":\"json\",\"folder_path\":\"logs\/details\",\"do_not_prefill\":true}",
             "APP": "0x31000000000000000000000000000000",
             "USE_IN_OBJECT_BASKET_FLAG": "0"
-        },
-        {
-            "CREATED_ON": "2017-11-28 21:19:28",
-            "MODIFIED_ON": "2017-11-29 12:48:37",
-            "CREATED_BY_USER": "0x31000000000000000000000000000000",
-            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
-            "UID": "0x11e7d481a51d0ba4a3da0205857feb80",
-            "OBJECT": "0x11e7d420b3ff7730a3da0205857feb80",
-            "ACTION_PROTOTYPE": "exface\/Core\/Actions\/ShowDialog.php",
-            "ALIAS": "ShowModelBuilderDialog",
-            "NAME": "Model Builder",
-            "SHORT_DESCRIPTION": "Shows a dialog allowing to generate meta objects and attributes from a data source",
-            "CONFIG_UXON": "{\"object_alias\":\"exface.Core.MODEL_BUILDER_INPUT\",\"widget\":{\"widget_type\":\"Dialog\",\"object_alias\":\"exface.Core.MODEL_BUILDER_INPUT\",\"widgets\":[{\"attribute_alias\":\"APP\",\"id\":\"modelbuilder_app_selector\"},{\"attribute_alias\":\"DATA_SOURCE\"},{\"attribute_alias\":\"OBJECT\",\"widget_type\":\"InputComboTable\",\"multi_select\":true,\"id\":\"modelbuilder_object_selector\",\"table\":{\"columns\":[{\"attribute_group_alias\":\"~DEFAULT_DISPLAY\"},{\"attribute_alias\":\"DATA_ADDRESS\"}],\"filters\":[{\"attribute_alias\":\"APP\",\"value\":\"=modelbuilder_app_selector!UID\"},{\"attribute_alias\":\"READABLE_FLAG\",\"value\":1}]}},{\"attribute_alias\":\"OBJECT_DATA_ADDRESS_MASK\",\"disable_condition\":{\"widget_link\":\"modelbuilder_object_selector!DATA_ADDRESS\",\"comparator\":\"!=\",\"value\":\"\"},\"value\":\"=modelbuilder_object_selector!DATA_ADDRESS\"}],\"buttons\":[{\"action_alias\":\"exface.Core.GenerateModelFromDataSource\",\"align\":\"opposite\",\"visibility\":\"promoted\"}]},\"input_mappers\":[{\"from_object_alias\":\"exface.Core.DATASRC\",\"column_mappings\":[{\"from\":\"UID\",\"to\":\"DATA_SOURCE\"},{\"from\":\"LABEL\",\"to\":\"DATA_SOURCE__LABEL\"},{\"from\":\"APP\",\"to\":\"APP\"},{\"from\":\"APP__LABEL\",\"to\":\"APP__NAME\"}]},{\"from_object_alias\":\"exface.Core.OBJECT\",\"column_mappings\":[{\"from\":\"UID\",\"to\":\"OBJECT\"},{\"from\":\"LABEL\",\"to\":\"OBJECT__LABEL\"},{\"from\":\"DATA_SOURCE\",\"to\":\"DATA_SOURCE\"},{\"from\":\"DATA_SOURCE__LABEL\",\"to\":\"DATA_SOURCE__LABEL\"},{\"from\":\"APP\",\"to\":\"APP\"},{\"from\":\"APP__LABEL\",\"to\":\"APP__NAME\"},{\"from\":\"DATA_ADDRESS\",\"to\":\"OBJECT_DATA_ADDRESS_MASK\"}]}]}",
-            "APP": "0x31000000000000000000000000000000",
-            "USE_IN_OBJECT_BASKET_FLAG": "0"
         }
     ],
     "totals_rows": [],

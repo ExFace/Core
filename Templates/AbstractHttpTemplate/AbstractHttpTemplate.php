@@ -15,12 +15,12 @@ use exface\Core\Templates\AbstractHttpTemplate\Middleware\RequestIdNegotiator;
 
 /**
  * Common base structure for HTTP templates.
- * 
+ *
  * Uses a middleware bus internally to transform incoming HTTP requests into tasks.
  * To standardise the middleware somehat, this template getter methods for names
  * of most important request attributes needed for tasks, page and action selectors,
  * etc.
- * 
+ *
  * @author Andrej Kabachnik
  *
  */
@@ -31,10 +31,16 @@ abstract class AbstractHttpTemplate extends AbstractTemplate implements HttpTemp
     const REQUEST_ATTRIBUTE_NAME_ACTION = 'action';
     const REQUEST_ATTRIBUTE_NAME_RENDERING_MODE = 'rendering_mode';
     
-    private $url = null;
+    protected function init()
+    {
+        parent::init();
+        if (! $this->getWorkbench()->isStarted()){
+            $this->getWorkbench()->start();
+        }
+    }
     
     /**
-     * 
+     *
      * {@inheritDoc}
      * @see \Psr\Http\Server\RequestHandlerInterface::handle()
      */
@@ -47,26 +53,45 @@ abstract class AbstractHttpTemplate extends AbstractTemplate implements HttpTemp
             }
             // TODO Throw event to allow adding middleware from outside (e.g. a PhpDebugBar or similar)
             return $handler->handle($request);
-        }        
-        
+        }
+        return $this->createResponse($request);
+    }
+    
+    /**
+     * Makes the template create an HTTP response for the given request - after all middlewares were run.
+     * 
+     * This method retrieves the task from the request attributes and attempts to let the workbench
+     * handle it. If it succeseeds, the task result is passed on to createResponseFromTaskResult(),
+     * otherwise, any exception caught is passed to createResponseFromError(). These methods are
+     * reponsible for the actual rendering of the response and differ from template to template,
+     * while the generic createResponse() method can mostly be used as-is.
+     * 
+     * @see createResponseFromTaskResult()
+     * @see createResponseFromError()
+     * 
+     * @param ServerRequestInterface $request
+     * @return ResponseInterface
+     */
+    protected function createResponse(ServerRequestInterface $request) : ResponseInterface
+    {
         try {
             $task = $request->getAttribute($this->getRequestAttributeForTask());
             $result = $this->getWorkbench()->handle($task);
-            return $this->createResponse($request, $result);
+            return $this->createResponseFromTaskResult($request, $result);
         } catch (\Throwable $e) {
             if (! $e instanceof ExceptionInterface){
                 $e = new InternalError($e->getMessage(), null, $e);
             }
-            return $this->createResponseError($request, $e);
+            return $this->createResponseFromError($request, $e);
         }
     }
     
     /**
      * Returns the middleware stack to use in the request handler.
-     * 
+     *
      * Override this method to add/change middleware. For example, template can add their own
      * middleware to read specific URL parameters built-in the used UI frameworks.
-     * 
+     *
      * @return MiddlewareInterface[]
      */
     protected function getMiddleware() : array
@@ -78,24 +103,26 @@ abstract class AbstractHttpTemplate extends AbstractTemplate implements HttpTemp
     }
     
     /**
-     *
+     * Creates and returns an HTTP response from the given task result.
+     * 
      * @param ServerRequestInterface $request
      * @param ResultInterface $result
      * @return ResponseInterface
      */
-    protected abstract function createResponse(ServerRequestInterface $request, ResultInterface $result): ResponseInterface;
+    protected abstract function createResponseFromTaskResult(ServerRequestInterface $request, ResultInterface $result): ResponseInterface;
     
     /**
+     * Creates and returns an HTTP response from the given exception.
      * 
      * @param ServerRequestInterface $request
      * @param \Throwable $exception
      * @param UiPageInterface $page
      * @return ResponseInterface
      */
-    protected abstract function createResponseError(ServerRequestInterface $request, \Throwable $exception, UiPageInterface $page = null) : ResponseInterface;
-        
+    protected abstract function createResponseFromError(ServerRequestInterface $request, \Throwable $exception, UiPageInterface $page = null) : ResponseInterface;
+    
     /**
-     * 
+     *
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Templates\HttpTemplateInterface::getRequestAttributeForAction()
      */
@@ -105,7 +132,7 @@ abstract class AbstractHttpTemplate extends AbstractTemplate implements HttpTemp
     }
     
     /**
-     * 
+     *
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Templates\HttpTemplateInterface::getRequestAttributeForTask()
      */
@@ -115,7 +142,7 @@ abstract class AbstractHttpTemplate extends AbstractTemplate implements HttpTemp
     }
     
     /**
-     * 
+     *
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Templates\HttpTemplateInterface::getRequestAttributeForPage()
      */
@@ -125,7 +152,7 @@ abstract class AbstractHttpTemplate extends AbstractTemplate implements HttpTemp
     }
     
     /**
-     * 
+     *
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Templates\HttpTemplateInterface::getRequestAttributeForRenderingMode()
      */
@@ -134,6 +161,10 @@ abstract class AbstractHttpTemplate extends AbstractTemplate implements HttpTemp
         return static::REQUEST_ATTRIBUTE_NAME_RENDERING_MODE;
     }
     
+    /**
+     * 
+     * @return string
+     */
     public function getBaseUrl() : string{
         if (is_null($this->url)) {
             $this->url = $this->getWorkbench()->getCMS()->buildUrlToApi() . $this->getConfig()->getOption('DEFAULT_AJAX_URL');

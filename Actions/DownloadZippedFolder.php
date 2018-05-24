@@ -140,7 +140,7 @@ class DownloadZippedFolder extends AbstractAction
      */
     protected function getZipNameDefault() : string
     {
-        return date('Ymd_Hmi') . '.zip';
+        return date('Ymd_His') . '.zip';
     }
 }
 ?>

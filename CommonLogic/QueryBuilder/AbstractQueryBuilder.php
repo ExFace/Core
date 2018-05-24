@@ -11,6 +11,8 @@ use exface\Core\Interfaces\Model\AggregatorInterface;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\Selectors\QueryBuilderSelectorInterface;
 use exface\Core\Interfaces\QueryBuilderInterface;
+use exface\Core\CommonLogic\Model\RelationPath;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
 
 abstract class AbstractQueryBuilder implements QueryBuilderInterface
 {
@@ -465,7 +467,7 @@ abstract class AbstractQueryBuilder implements QueryBuilderInterface
     /**
      * Returns the value query part specified by the given attribute alias
      *
-     * @param unknown $attribute_alias            
+     * @param mixed $attribute_alias            
      * @return QueryPartValue
      */
     protected function getValue($attribute_alias)
@@ -629,4 +631,18 @@ abstract class AbstractQueryBuilder implements QueryBuilderInterface
         }
         return $string;
     }
+    
+    /**
+     * Returns TRUE if the given attribute can be added to this query and FALSE otherwise.
+     * 
+     * Depending on the QueryBuilder, even related attributes can be included in a query 
+     * (e.g. in SQL via JOIN or oData via $expand).
+     * 
+     * This method is used by the core to determine, if a read operation on a DataSheet must 
+     * be split into multiple subsheets and joind afterwards in-memory.
+     * 
+     * @param MetaAttributeInterface $attribute
+     * @return bool
+     */
+    abstract public function canRead(MetaAttributeInterface $attribute) : bool;
 }

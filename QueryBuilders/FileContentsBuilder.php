@@ -6,6 +6,7 @@ use exface\Core\CommonLogic\AbstractDataConnector;
 use exface\Core\CommonLogic\DataQueries\FileContentsDataQuery;
 use exface\Core\Exceptions\QueryBuilderException;
 use exface\Core\DataTypes\StringDataType;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
 
 /**
  * A query builder to the raw contents of a file.
@@ -136,6 +137,17 @@ class FileContentsBuilder extends AbstractQueryBuilder
             }
         }
         return $path;
+    }
+    
+    /**
+     * The FileContentsBuilder can only handle attributes of one object - no relations (JOINs) supported!
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder::canRead()
+     */
+    public function canRead(MetaAttributeInterface $attribute) : bool
+    {
+        return $attribute->getRelationPath()->isEmpty();
     }
 }
 ?>

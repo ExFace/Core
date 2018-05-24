@@ -37,6 +37,8 @@ use exface\Core\Templates\AbstractHttpTemplate\Middleware\DataUrlParamReader;
 use exface\Core\Templates\AbstractHttpTemplate\Middleware\QuickSearchUrlParamReader;
 use exface\Core\Templates\AbstractHttpTemplate\Middleware\PrefixedFilterUrlParamsReader;
 use exface\Core\Factories\ResultFactory;
+use exface\Core\Templates\AbstractHttpTemplate\Middleware\ContextBarApi;
+use exface\Core\DataTypes\StringDataType;
 
 /**
  * 
@@ -92,7 +94,7 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
         
         if ($cache = $this->requestIdCache[$request->getAttribute('result_cache_key')]) {
             if ($cache instanceof ResultInterface) {
-                return $this->createResponse($request, $cache);
+                return $this->createResponseFromTaskResult($request, $cache);
             }
         }
         
@@ -172,13 +174,24 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
      */
     public function getElement(\exface\Core\Widgets\AbstractWidget $widget)
     {
-        if (! array_key_exists($widget->getPage()->getAliasWithNamespace(), $this->elements) || ! array_key_exists($widget->getId(), $this->elements[$widget->getPage()->getAliasWithNamespace()])) {
-            $elem_class = $this->getClass($widget);
-            $instance = new $elem_class($widget, $this);
+        if (empty($this->elements[$widget->getPage()->getAliasWithNamespace()]) || empty($this->elements[$widget->getPage()->getAliasWithNamespace()][$widget->getId()])) {
+            $instance = $this->createElement($widget);
             // $this->elements[$widget->getPage()->getAliasWithNamespace()][$widget->getId()] = $instance;
         }
         
         return $this->elements[$widget->getPage()->getAliasWithNamespace()][$widget->getId()];
+    }
+    
+    /**
+     * 
+     * @param WidgetInterface $widget
+     * @return AbstractJqueryElement
+     */
+    protected function createElement(WidgetInterface $widget) : AbstractJqueryElement
+    {
+        $elem_class = $this->getClass($widget);
+        $instance = new $elem_class($widget, $this);
+        return $instance;
     }
 
     /**
@@ -327,9 +340,16 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
         return new JsTransparentFormatter($dataType);
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Templates\AbstractHttpTemplate\AbstractHttpTemplate::getMiddleware()
+     */
     protected function getMiddleware() : array
     {
         $middleware = parent::getMiddleware();
+        
+        $middleware[] = new ContextBarApi($this);
         
         $middleware[] = new TaskUrlParamReader($this, 'action', 'setActionSelector', $this->getRequestAttributeForAction(), $this->getRequestAttributeForTask());
         $middleware[] = new TaskUrlParamReader($this, 'resource', 'setPageSelector', $this->getRequestAttributeForPage(), $this->getRequestAttributeForTask());
@@ -348,9 +368,9 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Templates\AbstractHttpTemplate\AbstractHttpTemplate::createResponse()
+     * @see \exface\Core\Templates\AbstractHttpTemplate\AbstractHttpTemplate::createResponseFromTaskResult()
      */
-    protected function createResponse(ServerRequestInterface $request, ResultInterface $result) : ResponseInterface
+    protected function createResponseFromTaskResult(ServerRequestInterface $request, ResultInterface $result) : ResponseInterface
     {
         if ($cacheKey = $request->getAttribute('result_cache_key')) {
             $this->requestIdCache[$cacheKey] = $result;
@@ -379,6 +399,7 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
                 $elem = $this->getElement($result->getTask()->getWidgetTriggeredBy());
                 $json = $elem->prepareData($result->getData());
                 $json["success"] = $result->getMessage();
+                $headers = array_merge($headers, $this->buildHeadersAccessControl());
                 break;
                 
             case $result instanceof ResultWidgetInterface:
@@ -461,9 +482,9 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Templates\AbstractHttpTemplate\AbstractHttpTemplate::createResponseError()
+     * @see \exface\Core\Templates\AbstractHttpTemplate\AbstractHttpTemplate::createResponseFromError()
      */
-    protected function createResponseError(ServerRequestInterface $request, \Throwable $exception, UiPageInterface $page = null) : ResponseInterface {
+    protected function createResponseFromError(ServerRequestInterface $request, \Throwable $exception, UiPageInterface $page = null) : ResponseInterface {
         $page = ! is_null($page) ? $page : UiPageFactory::createEmpty($this->getWorkbench());
         
         $status_code = is_numeric($exception->getStatusCode()) ? $exception->getStatusCode() : 500;
@@ -479,7 +500,18 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
                     }
                 }
             }
-            $body = $this->buildHtmlHead($debug_widget) . "\n" . $this->buildHtmlBody($debug_widget);
+            $mode = $request->getAttribute($this->getRequestAttributeForRenderingMode(), static::MODE_FULL);
+            switch ($mode) {
+                case static::MODE_HEAD:
+                    $body = $this->buildHtmlHead($debug_widget, true);
+                    break;
+                case static::MODE_BODY:
+                    $body = $this->buildHtmlBody($debug_widget);
+                    break;
+                case static::MODE_FULL:
+                default:
+                    $body = $this->buildHtmlHead($debug_widget) . "\n" . $this->buildHtmlBody($debug_widget);
+            }
         } catch (\Throwable $e) {
             // If anything goes wrong when trying to prettify the original error, drop prettifying
             // and throw the original exception wrapped in a notice about the failed prettification
@@ -520,12 +552,35 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
     public function buildUrlToSource(string $configOption) : string
     {
         $path = $this->getConfig()->getOption($configOption);
-        return $this->getWorkbench()->getCMS()->buildUrlToInclude($path);
+        if (StringDataType::startsWith($path, 'https:', false) || StringDataType::startsWith($path, 'http:', false)) {
+            return $path;
+        } else {
+            return $this->getWorkbench()->getCMS()->buildUrlToInclude($path);
+        }
     }
     
     protected function buildHtmlHeadCommonIncludes() : array
     {
         return [];
+    }
+    
+    /**
+     * Returns an array of allowed origins for AJAX requests to the template.
+     * 
+     * The core config key TEMPLATES.AJAX.ACCESS_CONTROL_ALLOW_ORIGIN provides basic configuration
+     * for all AJAX templates. Templates are free to use their own configuration though - please
+     * refer to the documentation of the template used.
+     * 
+     * @return string[]
+     */
+    protected function buildHeadersAccessControl() : array
+    {
+        if (! $this->getConfig()->hasOption('TEMPLATES.AJAX.HEADERS.ACCESS_CONTROL')) {
+            $headers = $this->getWorkbench()->getConfig()->getOption('TEMPLATES.AJAX.HEADERS.ACCESS_CONTROL')->toArray();
+        } else {
+            $headers = $this->getConfig()->getOption('TEMPLATES.AJAX.HEADERS.ACCESS_CONTROL')->toArray();
+        }
+        return array_filter($headers);
     }
 }
 ?>

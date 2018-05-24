@@ -187,7 +187,7 @@ class GenericTask implements TaskInterface
      */
     public function getWorkbench()
     {
-        return $this->template->getWorkbench();
+        return $this->workbench;
     }
 
     /**

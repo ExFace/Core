@@ -17,6 +17,7 @@
 	"ACTION.SHOWOBJECTEDITDIALOG.SAVE_BUTTON": "Speichern",
 	"ACTION.SHOWOBJECTEDITDIALOG.NAME": "Bearbeiten",
 	"ACTION.SHOWOBJECTEDITDIALOG.NO_EDITABLE_ATTRIBUTES": "Keine editierbaren Attribute gefunden!",
+	"ACTION.SHOWOBJECTEDITDIALOG.DATA_SOURCE_NOT_WRITABLE": "Kein Schreibzugriff auf Datenquelle erlaubt!",
 
 	"ACTION.EXPORTCSV.NAME": "CSV exportieren",
 	"ACTION.EXPORTDATA.NAME": "Exportieren",
@@ -138,13 +139,16 @@
     
     "PAGE.APPS.REPAIR": "Reparieren",
     "PAGE.OBJECTS.APP_ALIAS": "App Alias",
-    "PAGE.DATA_SOURCES.BASE_OBJECT": "Basisobjekt",
-    "PAGE.DATA_SOURCES.CONNECTION_READONLY": "Verbindung nur lesend",
-    "PAGE.USERS.CREDENTIALS": "Zugangsdaten",
-    "PAGE.DOCS.READ": "Lesen",
     "PAGE.OBJECT_EDITOR.RELATION_TO": "Verknüpft mit",
     "PAGE.OBJECT_EDITOR.DEFAULT_EDITOR": "Standard-Editor",
     "PAGE.OBJECT_EDITOR.DATA_ADDRESS": "Datenadresse",
+    "PAGE.OBJECT_EDITOR.DATA_SOURCE_BASE_OBJECT": "Basisobjekt der Datenquelle",
+    "PAGE.DATA_SOURCES.BASE_OBJECT": "Basisobjekt",
+    "PAGE.DATA_SOURCES.CONNECTION_READONLY": "Verbindung nur lesend",
+    "PAGE.DATA_SOURCE_EDITOR.DEFAULTS": "Standard-Konfiguration",
+    "PAGE.DATA_SOURCE_EDITOR.CUSTOM_CONFIG": "Abweichende Einstellungen",
+    "PAGE.USERS.CREDENTIALS": "Zugangsdaten",
+    "PAGE.DOCS.READ": "Lesen",
     "PAGE.ATTRIBUTES.DISPLAY_ORDER": "Anzeige-Pos.",
     "PAGE.TABS.GENERAL": "Allgemein",
     

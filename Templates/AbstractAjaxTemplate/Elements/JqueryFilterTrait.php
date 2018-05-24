@@ -24,16 +24,6 @@ trait JqueryFilterTrait {
         return '"' . $this->getWidget()->getComparator() . '"';
     }
 
-    public function buildHtml()
-    {
-        return $this->getInputElement()->buildHtml();
-    }
-
-    public function buildJs()
-    {
-        return $this->getInputElement()->buildJs();
-    }
-
     public function buildJsValueGetter()
     {
         return $this->getInputElement()->buildJsValueGetter();

@@ -4,7 +4,7 @@ namespace exface\Core\CommonLogic\Model\Behaviors;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\TranslationInterface;
 use exface\Core\Exceptions\UnexpectedValueException;
-use exface\Core\CommonLogic\Constants\Colors;
+use exface\Core\DataTypes\BooleanDataType;
 
 /**
  * Defines a state for the StateMachineBehavior.
@@ -19,6 +19,10 @@ class StateMachineState
     private $buttons = [];
 
     private $disabled_attributes_aliases = [];
+    
+    private $disable_editing = false;
+    
+    private $disable_delete = false;
 
     private $transitions = [];
 
@@ -42,7 +46,7 @@ class StateMachineState
      * Defines the state id.
      *
      * @param integer|string $value            
-     * @return \exface\Core\Behaviors\StateMachineState
+     * @return \exface\Core\CommonLogic\Model\Behaviors\StateMachineState
      */
     public function setStateId($value)
     {
@@ -86,7 +90,7 @@ class StateMachineState
      *  }
      *
      * @param UxonObject $value            
-     * @return \exface\Core\Behaviors\StateMachineState
+     * @return \exface\Core\CommonLogic\Model\Behaviors\StateMachineState
      */
     public function setButtons($value)
     {
@@ -103,7 +107,7 @@ class StateMachineState
      *  ]
      *
      * @param UxonObject|string[] $value            
-     * @return \exface\Core\Behaviors\StateMachineState
+     * @return \exface\Core\CommonLogic\Model\Behaviors\StateMachineState
      */
     public function setDisabledAttributesAliases($value)
     {
@@ -166,7 +170,7 @@ class StateMachineState
      *  } 
      *
      * @param UxonObject|integer[] $value            
-     * @return \exface\Core\Behaviors\StateMachineState
+     * @return \exface\Core\CommonLogic\Model\Behaviors\StateMachineState
      */
     public function setTransitions($value)
     {
@@ -270,5 +274,56 @@ class StateMachineState
     {
         return $this->color;
     }
+
+    /**
+     * 
+     * @return bool
+     */
+    public function getDisableEditing() : bool
+    {
+        return $this->disable_editing;
+    }
+
+    /**
+     * Prevents instances of the object from being edited/changed in this state if set to TRUE.
+     * 
+     * This is a shortcut to putting all editable attributes into disabled_attribute_aliases.
+     * 
+     * @uxon-property disable_editing
+     * @uxon-type bool
+     * 
+     * @param int|string|bool $trueOrFalse
+     * @return StateMachineState
+     */
+    public function setDisableEditing($trueOrFalse) : StateMachineState
+    {
+        $this->disable_editing = BooleanDataType::cast($trueOrFalse);
+        return $this;
+    }
+
+    /**
+     * 
+     * @return bool
+     */
+    public function getDisableDelete() : bool
+    {
+        return $this->disable_delete;
+    }
+
+    /**
+     * Prevents instances of the object in the current state from being deleted if set to TRUE.
+     * 
+     * @uxon-property disable_delete
+     * @uxon-type boolean
+     * 
+     * @param int|string|bool $trueOrFalse
+     * @return StateMachineState
+     */
+    public function setDisableDelete($trueOrFalse) : StateMachineState
+    {
+        $this->disable_delete = BooleanDataType::cast($trueOrFalse);
+        return $this;
+    }
+
 }
 ?>

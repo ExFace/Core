@@ -14,11 +14,6 @@ namespace exface\Core\Templates\AbstractAjaxTemplate\Elements;
  */
 trait JqueryContextBarAjaxTrait {
 
-    public function buildHtml()
-    {
-        return $this->getTemplate()->encodeData($this->buildJsonContextBarUpdate());
-    }
-    
     public function buildJsonContextBarUpdate()
     {
         $widget = $this->getWidget();
@@ -40,11 +35,5 @@ trait JqueryContextBarAjaxTrait {
             $this->getWorkbench()->getLogger()->logException($e);
         }
         return $extra;
-    }
-    
-    public function buildJs()
-    {
-        return '';
-    }
-    
+    }    
 }

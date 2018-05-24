@@ -94,7 +94,7 @@ class MetaObject implements MetaObjectInterface
      * relations (of different types), the respective element of the relations array will be an array in
      * turn.
      *
-     * @return relation[] [relation_alias => relation | relation[]]
+     * @return MetaRelationInterface[] [relation_alias => relation | relation[]]
      */
     function getRelationsArray()
     {
@@ -123,41 +123,17 @@ class MetaObject implements MetaObjectInterface
     }
 
     /**
-     * Returns a relation specified by it's alias.
-     * The alias can also be a relation path consisting of multiple
-     * relations. In this case, the last relation will be returned
-     *
-     * If there are multiple (reverse) relations sharing the alias,
-     * a $foreign_key_alias can be specified to select exactly one relation. If there is no
-     * $foreign_key_alias specified, and multiple relations are found, the following fallbacks are used:
-     * 1) if there is a regular relation with such alias, it will always be selected
-     * 2) if all relations are reversed, the first one will be returned
-     *
-     * IDEA Perhaps we could also mark one relation as default for reverse relations in the model. On the other hand,
-     * this would make it more difficult to create relations just to handle a fairly rare exception. I'm not
-     * sure, if this is a good idea since one of the main principles of ExFace is a minimum of requirements.
-     * Alternatively we could rely on some naming conventions like the main relation should have an alias
-     * matchnig the related object alias or so.
-     *
-     * There are multiple cases, when there could be more than one relation with the same alias.
-     * For example, a reverse relation could overwrite some other relation. This can be the case
-     * if an Object references another one, while the latter again references the first, but
-     * with a different meaning. The metamodel of ExFace has such a circular reference:
-     * OBJECT->DATA_SOURCE and DATA_SOURCE->BASE_OBJECT. In these cases the alias of the
-     * relation-attribute must not be the same as the alias of the related object. In the
-     * above example either the relation DATA_SOURCE or the object DATA_SOURCE must be
-     * renamed to something else (the object's alias is currently DATASRC).
-     *
-     * @param string $alias            
-     * @param string $foreign_key_alias            
-     * @throws MetaRelationNotFoundError if no matching relation found
-     * @return MetaRelationInterface
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaObjectInterface::getRelation()
      */
-    public function getRelation($alias, $foreign_key_alias = '')
+    public function getRelation($aliasOrPathString, $foreign_key_alias = '')
     {
-        if ($rel = RelationPath::relationPathParse($alias, 1)) {
+        if ($rel = RelationPath::relationPathParse($aliasOrPathString, 1)) {
             $relation = $this->getRelatedObject($rel[0])->getRelation($rel[1]);
             return $relation;
+        } else {
+            $alias = $aliasOrPathString;
         }
         
         $rel = $this->relations[$alias];
@@ -417,7 +393,7 @@ class MetaObject implements MetaObjectInterface
      * where it comes from). I like this kind of naming, but it needs to be extended by the possibility to
      * specify which of the two reverse relation to use (e.g. LOCATION->ADDRESS[SHIPPING_ADDRESS] or something)
      *
-     * @param relation $relation            
+     * @param MetaRelationInterface $relation            
      * @return MetaObjectInterface
      */
     function addRelation(MetaRelationInterface $relation)

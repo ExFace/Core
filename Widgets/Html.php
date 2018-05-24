@@ -2,9 +2,11 @@
 namespace exface\Core\Widgets;
 
 use exface\Core\DataTypes\BooleanDataType;
-
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\Templates\HttpFileServerTemplate;
 /**
  * The HTML widget simply shows some HTML.
+ * 
  * In contrast to a Text widget it will be seamlessly embedded in an HTML-based template
  * and not put into a paragraph as plain text.
  *
@@ -21,6 +23,10 @@ class Html extends Display
     private $headTags = null;
     
     private $margins = false;
+    
+    private $baseUrl = '';
+    
+    private $baseUrlAttributeAlias = null;
 
     /**
      * 
@@ -45,6 +51,16 @@ class Html extends Display
     public function setHtml($value)
     {
         return $this->setValue($value);
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\AbstractWidget::setValue()
+     */
+    public function setValue($value)
+    {
+        return parent::setValue($this->rebaseRelativeLinks($value));
     }
 
     /**
@@ -154,10 +170,105 @@ class Html extends Display
      */
     public function setHeadTags($html)
     {
-        $this->headTags = $html;
+        $this->headTags = $this->rebaseRelativeLinks($html);
         return $this;
     }
 
+    /**
+     * Sets a static base URL: all relative links will be resolved relative to this URL.
+     * 
+     * @uxon-property base_url
+     * @uxon-type string
+     * 
+     * @param string $url
+     * @return Html
+     */
+    public function setBaseUrl(string $url) : Html
+    {
+        $this->baseUrl = $url;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return string
+     */
+    public function getBaseUrl() : string
+    {
+        return $this->baseUrl;
+    }
+    
+    /**
+     * 
+     * @return string|null
+     */
+    public function getBaseUrlAttributeAlias()
+    {
+        return $this->baseUrlAttributeAlias;
+    }
 
+    /**
+     * Sets a dynamic base URL to be fetched from prefill data.
+     * 
+     * @uxon-property base_url
+     * @uxon-type string
+     * 
+     * @param string $string
+     * @return Html
+     */
+    public function setBaseUrlAttributeAlias(string $string) : Html
+    {
+        $this->baseUrlAttributeAlias = $string;
+        return $this;
+    }
+    
+    protected function doPrefill(DataSheetInterface $dataSheet)
+    {
+        if ($baseAlias = $this->getBaseUrlAttributeAlias()) {
+            if ($dataSheet->getMetaObject()->is($this->getMetaObject())) {
+                $column = $dataSheet->getColumns()->getByExpression($baseAlias);
+                $this->setBaseUrl($column->getValues(false)[0]);
+            } else {
+                // TODO
+            }
+        }
+        parent::doPrefill($dataSheet);
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Value::prepareDataSheetToPrefill()
+     */
+    public function prepareDataSheetToPrefill(DataSheetInterface $data_sheet = null) : DataSheetInterface
+    {
+        $data_sheet = parent::prepareDataSheetToPrefill($data_sheet);
+        if ($baseAlias = $this->getBaseUrlAttributeAlias()) {
+            if ($data_sheet->getMetaObject()->is($this->getMetaObject())) {
+                $data_sheet->getColumns()->addFromAttribute($this->getMetaObject()->getAttribute($baseAlias));
+            } else {
+                // TODO
+            }
+        }
+        return $data_sheet;
+    }
+    
+    /**
+     * 
+     * @param string $html
+     * @return mixed
+     */
+    protected function rebaseRelativeLinks(string $html) : string
+    {
+        if ($base = $this->getBaseUrl()) {
+            $fm = $this->getWorkbench()->filemanager();
+            if ($fm::pathGetCommonBase([$base, $fm->getPathToBaseFolder()])) {
+                $base = HttpFileServerTemplate::buildUrlForDownload($this->getWorkbench(), $base);
+            }
+            $base = rtrim($base, "/\\") . '/';
+            $html = preg_replace('#(href|src)="([^:"]*)("|(?:(?:%20|\s|\+)[^"]*"))#','$1="' . $base . '$2$3', $html);
+        }
+        return $html;
+    }
 }
 ?>
