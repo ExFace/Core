@@ -3,6 +3,7 @@ namespace exface\Core\CommonLogic\QueryBuilder;
 
 use exface\Core\CommonLogic\Model\Condition;
 use exface\Core\CommonLogic\Model\RelationPath;
+use exface\Core\Interfaces\iCanBeCopied;
 
 /**
  * The filter query part represents one filter within a query (in SQL it translates to a WHERE-statement).
@@ -12,7 +13,7 @@ use exface\Core\CommonLogic\Model\RelationPath;
  * @author Andrej Kabachnik
  *        
  */
-class QueryPartFilter extends QueryPartAttribute
+class QueryPartFilter extends QueryPartAttribute implements iCanBeCopied
 {
 
     private $compare_value = null;
@@ -159,6 +160,17 @@ class QueryPartFilter extends QueryPartAttribute
     public function isValueDataAddress()
     {
         return $this->value_is_data_address;
+    }
+
+    /**
+     * 
+     * @return \exface\Core\CommonLogic\QueryBuilder\QueryPartFilter
+     */
+    public function copy()
+    {
+        $copy = clone $this;
+        $copy->condition = $this->getCondition()->copy();
+        return $copy;
     }
 }
 ?>
