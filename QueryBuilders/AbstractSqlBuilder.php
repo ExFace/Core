@@ -488,7 +488,11 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 }
                 
                 foreach ($qpart->getValues() as $row_nr => $value) {
-                    $value = $this->prepareInputValue($value, $qpart->getDataType(), $attr->getDataAddressProperty('SQL_DATA_TYPE'));
+                    try {
+                        $value = $this->prepareInputValue($value, $qpart->getDataType(), $attr->getDataAddressProperty('SQL_DATA_TYPE'));
+                    } catch (\Throwable $e) {
+                        throw new QueryBuilderException('Cannot build SQL SET clause for query part "' . $qpart->getAlias() . '" with value "' . $value . '"!');
+                    }
                     if ($custom_update_sql) {
                         // If there is a custom update SQL for the attribute, use it ONLY if there is no value
                         // Otherwise there would not be any possibility to save explicit values

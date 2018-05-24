@@ -60,7 +60,7 @@ class JsonDataType extends TextDataType
             return null;
         }
         
-        return static::decodeJson($string);
+        return $string;
     }
 
     /**
