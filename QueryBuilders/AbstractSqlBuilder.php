@@ -1294,7 +1294,10 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                         continue;
                     }
                     // Normalize non-empty values
-                    $values[$nr] = $this->prepareWhereValue($val, $data_type, $sql_data_type);
+                    $val = $this->prepareWhereValue($val, $data_type, $sql_data_type);
+                    if ($data_type instanceof StringDataType) {
+                        $values[$nr] = "'" . $val . "'";
+                    }
                 }
                 $value = '(' . (! empty($values) ? implode(',', $values) : 'NULL') . ')' . ($value ? ' OR ' . $value : '');
             }
