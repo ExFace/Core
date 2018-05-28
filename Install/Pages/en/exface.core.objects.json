@@ -34,6 +34,10 @@
             },
             {
                 "attribute_alias": "PARENT_OBJECT"
+            },
+            {
+                "attribute_alias": "DEFAULT_EDITOR_UXON",
+                "widget_type": "Input"
             }
         ],
         "columns": [

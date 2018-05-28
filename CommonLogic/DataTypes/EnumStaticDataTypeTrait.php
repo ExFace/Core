@@ -6,6 +6,8 @@ use exface\Core\Exceptions\BadMethodCallException;
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\Exceptions\DataTypes\DataTypeConfigurationError;
 use exface\Core\Factories\SelectorFactory;
+use exface\Core\Interfaces\WorkbenchInterface;
+use exface\Core\Factories\DataTypeFactory;
 
 trait EnumStaticDataTypeTrait {
     
@@ -124,5 +126,16 @@ trait EnumStaticDataTypeTrait {
     public function setValues($uxon_or_array)
     {
         throw new DataTypeConfigurationError($this, 'Cannot override values in static enumeration data type ' . $this->getAliasWithNamespace() . '!', '6XGNBJB');
-    }    
+    }   
+    
+    /**
+     * 
+     * @param WorkbenchInterface $workbench
+     * @param string $value
+     * @return \exface\Core\Interfaces\ValueObjectInterface
+     */
+    public static function fromValue(WorkbenchInterface $workbench, string $value)
+    {
+        return DataTypeFactory::createFromPrototype($workbench, __CLASS__)->withValue(strtoupper($value));
+    }
 }

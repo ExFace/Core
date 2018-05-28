@@ -1460,6 +1460,14 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
     {
         return $this->translate('WIDGET.DATA.NOT_LOADED');
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveColumns::getColumnDefaultWidgetType()
+     */
+    public function getColumnDefaultWidgetType() : string
+    {
+        return 'DataColumn';
+    }
 }
-
-?>

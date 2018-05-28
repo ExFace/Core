@@ -103,8 +103,6 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
     private $header_sort_multiple = false;
 
     private $context_menu = null;
-    
-    private $responsive = null;
 
     function hasRowDetails()
     {
@@ -571,34 +569,6 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
     public function getConfiguratorWidgetType()
     {
         return 'DataTableConfigurator';
-    }
-    
-    /**
-     * Forces responsive behavior on small screens (TRUE) or disables it (FALSE).
-     * 
-     * The exact behavior of responsive tables depends on the template used:
-     * common options are stacking less important columns or collapsible row 
-     * details. Which columns will get hidden depends on the visibility setting
-     * of each column.
-     * 
-     * If this option is not set, the default setting of the template will be used.
-     * 
-     * @param  boolean $true_or_false
-     * @return \exface\Core\Widgets\DataTable
-     */
-    public function setResponsive($true_or_false)
-    {
-        $this->responsive = BooleanDataType::cast($true_or_false);
-        return $this;
-    }
-    
-    /**
-     * 
-     * @return NULL|boolean
-     */
-    public function isResponsive()
-    {
-        return $this->responsive;
     }
     
     /**
