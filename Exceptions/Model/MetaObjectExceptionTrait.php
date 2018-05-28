@@ -90,6 +90,8 @@ trait MetaObjectExceptionTrait {
         
         /* @var $object_editor \exface\Core\Widgets\Tabs */
         $object_editor_descr = $object_object->getDefaultEditorUxon()->toArray();
+        // The object editor is a dialog, so make the top widget a container to make it fit in well.
+        $object_editor_descr['widget_type'] = 'Container';
         // Remove all buttons from the UXON - do it here to make sure, they are not even instantiated as widgets!
         $object_editor_descr = $this->removeKeysFromUxon($object_editor_descr, 'buttons');
         $object_editor = WidgetFactory::createFromUxon($page, new UxonObject($object_editor_descr), $object_tab);
