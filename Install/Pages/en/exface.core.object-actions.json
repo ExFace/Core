@@ -1,0 +1,81 @@
+{
+    "id": "0x2cbeb8ba628211e8b7db0205857feb80",
+    "alias_with_namespace": "exface.core.object-actions",
+    "menu_parent_page_alias": "exface.core.objects",
+    "menu_index": "0",
+    "menu_visible": true,
+    "name": "Object Actions",
+    "description": "",
+    "intro": "",
+    "replaces_page_alias": null,
+    "contents": {
+        "widget_type": "DataTable",
+        "object_alias": "exface.Core.OBJECT_ACTION",
+        "filters": [
+            {
+                "attribute_alias": "OBJECT"
+            },
+            {
+                "attribute_alias": "NAME"
+            },
+            {
+                "attribute_alias": "ACTION_PROTOTYPE"
+            },
+            {
+                "attribute_alias": "APP"
+            },
+            {
+                "attribute_alias": "OBJECT__DATA_SOURCE"
+            },
+            {
+                "attribute_alias": "CONFIG_UXON",
+                "widget_type": "Input",
+                "height": 1,
+                "width": 1
+            }
+        ],
+        "columns": [
+            {
+                "attribute_alias": "APP__LABEL"
+            },
+            {
+                "attribute_alias": "ALIAS"
+            },
+            {
+                "attribute_alias": "NAME"
+            },
+            {
+                "attribute_alias": "ACTION_PROTOTYPE",
+                "width_max": "300px"
+            },
+            {
+                "attribute_alias": "OBJECT__APP__LABEL",
+                "caption": "Object App"
+            },
+            {
+                "attribute_alias": "OBJECT__LABEL"
+            },
+            {
+                "attribute_alias": "CREATED_ON"
+            },
+            {
+                "attribute_alias": "MODIFIED_ON"
+            }
+        ],
+        "buttons": [
+            {
+                "action_alias": "exface.Core.ShowObjectCreateDialog"
+            },
+            {
+                "action_alias": "exface.Core.ShowObjectEditDialog",
+                "bind_to_double_click": true
+            },
+            {
+                "action_alias": "exface.Core.ShowObjectCopyDialog"
+            },
+            {
+                "action_alias": "exface.Core.DeleteObject"
+            }
+        ]
+    }
+}
