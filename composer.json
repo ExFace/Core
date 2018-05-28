@@ -40,6 +40,9 @@
         "kabachello/fileroute": "~0.2",
         "guzzlehttp/guzzle": "^6.2.2"
     },
+    "suggest": {
+        "npm-asset/workbox-sw": "Allows templates to use the tools from the AbstractServiceWorkerTemplate"
+    },
     "extra": {
         "app": {
             "app_uid": "0x31000000000000000000000000000000",
