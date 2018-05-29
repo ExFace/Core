@@ -10,6 +10,7 @@ use exface\Core\Widgets\DataTable;
 use exface\Core\DataTypes\SortingDirectionsDataType;
 use exface\Core\Interfaces\Widgets\iTakeInput;
 use exface\Core\Widgets\Input;
+use exface\Core\Widgets\DataTableResponsive;
 
 /**
  * This trait contains common methods for template elements using the jQuery DataTables library.
@@ -69,6 +70,10 @@ trait JqueryDataTablesTrait {
         
         if ($tfoot) {
             $tfoot = '<tfoot>' . $tfoot . '</tfoot>';
+        }
+        
+        if ($this->isResponsive()) {
+            $css_class .= ' responsive';
         }
         
         return <<<HTML
@@ -546,9 +551,27 @@ JS;
 			{$this->getOnLoadSuccess()}
 		}
 		{$footer_callback}
+		{$this->buildJsOptionResponsive()}
 	} );
 
 JS;
+    }
+		
+    protected function buildJsOptionResponsive() : string
+    {
+        $js = '';
+        if ($this->isResponsive()) {
+            return <<<JS
+, responsive: {
+            details: {
+                display: $.fn.dataTable.Responsive.display.childRowImmediate,
+                type: ''
+            }
+}
+
+JS;
+        }
+        return $js;
     }
     
     /**
@@ -674,6 +697,39 @@ JS;
 JS;
         }
         return $js;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    protected function isResponsive() : bool
+    {
+        return $this->getWidget() instanceof DataTableResponsive;
+    }
+    
+    public function buildHtmlHeadTags()
+    {
+        $includes = parent::buildHtmlHeadTags();
+        $template = $this->getTemplate();
+        // DataTables
+        $includes[] = '<link rel="stylesheet" type="text/css" href="' . $template->buildUrlToSource('LIBS.DATATABLES.THEME.CSS') . '">';
+        $includes[] = '<script type="text/javascript" src="' . $template->buildUrlToSource('LIBS.DATATABLES.CORE.JS') . '"></script>';
+        $includes[] = '<script type="text/javascript" src="' . $template->buildUrlToSource('LIBS.DATATABLES.THEME.JS') . '"></script>';
+        $includes[] = '<script type="text/javascript" src="' . $template->buildUrlToSource('LIBS.DATATABLES.SELECT.JS') . '"></script>';
+        $includes[] = '<link rel="stylesheet" type="text/css" href="' . $template->buildUrlToSource('LIBS.DATATABLES.SELECT.CSS') . '">';
+        
+        if ($this->getWidget()->hasRowGroups()){
+            $includes[] = '<script type="text/javascript" src="' . $template->buildUrlToSource('LIBS.DATATABLES.ROWGROUP.JS') . '"></script>';
+            $includes[] = '<link rel="stylesheet" type="text/css" href="' . $template->buildUrlToSource('LIBS.DATATABLES.ROWGROUP.CSS') . '">';
+        }
+        
+        if ($this->isResponsive()){
+            $includes[] = '<script type="text/javascript" src="' . $template->buildUrlToSource('LIBS.DATATABLES.RESPONSIVE.JS') . '"></script>';
+            $includes[] = '<link rel="stylesheet" type="text/css" href="' . $template->buildUrlToSource('LIBS.DATATABLES.RESPONSIVE.CSS') . '">';
+        }
+        
+        return $includes;
     }
 }
 ?>
