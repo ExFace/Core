@@ -22,6 +22,9 @@
                 "attribute_alias": "NAME"
             },
             {
+                "attribute_alias": "MENU_PARENT__ALIAS"
+            },
+            {
                 "attribute_alias": "CONTENT",
                 "widget_type": "Input",
                 "height": 1
