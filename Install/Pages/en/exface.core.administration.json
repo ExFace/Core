@@ -8,5 +8,8 @@
     "description": "",
     "intro": "",
     "replaces_page_alias": null,
-    "contents": ""
+    "contents": {
+        "widget_type": "NavTiles",
+        "object_alias": "exface.Core.PAGE"
+    }
 }
