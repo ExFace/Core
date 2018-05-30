@@ -19,6 +19,9 @@
                 "attribute_alias": "NAME"
             },
             {
+                "attribute_alias": "ALIAS"
+            },
+            {
                 "attribute_alias": "ACTION_PROTOTYPE"
             },
             {
