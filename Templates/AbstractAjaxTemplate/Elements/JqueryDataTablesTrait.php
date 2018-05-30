@@ -68,6 +68,14 @@ trait JqueryDataTablesTrait {
             }
         }
         
+        // Extra column for expand-button if rows have details
+        if ($this->isResponsive()) {
+            $thead = '<th></th>' . $thead;
+            if ($tfoot) {
+                $tfoot = '<th></th>' . $tfoot;
+            }
+        }
+        
         if ($tfoot) {
             $tfoot = '<tfoot>' . $tfoot . '</tfoot>';
         }
@@ -419,6 +427,19 @@ JS;
             $column_number_offset ++;
         }
         
+        // Expand-Button for responsive tables with collapsible overflow
+        if ($this->isResponsive()) {
+            $columns[] = '
+					{
+						"class": "details-control text-center",
+						"orderable": false,
+						"data": null,
+						"defaultContent": \'<i class="fa fa-chevron-down"></i>\'
+					}
+					';
+            $column_number_offset ++;
+        }
+        
         // Sorters
         $default_sorters = '';
         foreach ($widget->getSorters() as $sorter) {
@@ -561,11 +582,15 @@ JS;
     {
         $js = '';
         if ($this->isResponsive()) {
+            $widget = $this->getWidget();
+        
+            $display = $widget->getOverflowCollapsed() ? '$.fn.dataTable.Responsive.display.childRow' : '$.fn.dataTable.Responsive.display.childRowImmediate';
+        
             return <<<JS
 , responsive: {
             details: {
-                display: $.fn.dataTable.Responsive.display.childRowImmediate,
-                type: ''
+                display: {$display},
+                type: 'column'
             }
 }
 
