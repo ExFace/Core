@@ -2,7 +2,7 @@
 namespace exface\Core\DataConnectors;
 
 /**
- * Data Connector to perform MDX queries on Microsoft Analytics Services via TSQL. 
+ * Data Connector to perform MDX queries on Microsoft Analytics Services via TSQL (EXPERIMENTAL!). 
  * 
  * This connector uses a linked server for the respective OLAP cube, which it creates
  * when connecting and drops when disconnecting.
