@@ -97,6 +97,8 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
     private $has_system_columns = false;
 
     private $autoload_data = true;
+    
+    private $autoload_disabled_hint = null;
 
     protected function init()
     {
@@ -1439,6 +1441,9 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
     /**
      * Set to FALSE to prevent initial loading of data or TRUE (default) to enable it.
      * 
+     * NOTE: if autoload is disabled, the widget will show a message specified in the
+     * `autoload_disabled_hint` property.
+     * 
      * @uxon-property autoload_data
      * @uxon-type boolean
      * 
@@ -1456,9 +1461,27 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
      * 
      * @return string
      */
-    public function getTextNotLoaded()
+    public function getAutoloadDisabledHint()
     {
-        return $this->translate('WIDGET.DATA.NOT_LOADED');
+        if ($this->autoload_disabled_hint === null) {
+            return $this->translate('WIDGET.DATA.NOT_LOADED');
+        }
+        return $this->autoload_disabled_hint;
+    }
+    
+    /**
+     * Overrides the text shown if autoload_data is set to FALSE.
+     * 
+     * @uxon-property autoload_disabled_hint
+     * @uxon-type string
+     * 
+     * @param string $text
+     * @return Data
+     */
+    public function setAutoloadDisabledHint(string $text) : Data
+    {
+        $this->autoload_disabled_hint = $this->evaluatePropertyExpression($text);
+        return $this;
     }
     
     /**
