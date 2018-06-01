@@ -37,28 +37,15 @@ class QueryPartAttribute extends QueryPart
     public function getUsedRelations($relation_type = null)
     {
         $rels = array();
-        // first check the cache
+        
         if (is_array($this->used_relations)) {
             $rels = $this->used_relations;
-        } else {
-            // fetch relations
-            // first make sure, the attribute has a relation path (otherwise we do not need to to anything
-            if ($this->getAttribute()->getRelationPath()->toString()) {
-                // split the path in case it contains multiple relations
-                $rel_aliases = RelationPath::relationPathParse($this->getAttribute()->getRelationPath()->toString());
-                // if it is one relation only, use it
-                if (! $rel_aliases && $this->getAttribute()->getRelationPath()->toString())
-                    $rel_aliases[] = $this->getAttribute()->getRelationPath()->toString();
-                // iterate through the found relations
-                if ($rel_aliases) {
-                    $last_alias = '';
-                    foreach ($rel_aliases as $alias) {
-                        $rels[$last_alias . $alias] = $this->getQuery()->getMainObject()->getRelation($last_alias . $alias);
-                        $last_alias .= $alias . RelationPath::getRelationSeparator();
-                    }
-                }
+        } else {            
+            $last_alias = '';
+            foreach ($this->getAttribute()->getRelationPath()->getRelations() as $rel) {
+                $rels[$last_alias . $rel->getAlias()] = $rel;
+                $last_alias .= $rel->getAlias() . RelationPath::getRelationSeparator();
             }
-            // cache the result
             $this->used_relations = $rels;
         }
         
