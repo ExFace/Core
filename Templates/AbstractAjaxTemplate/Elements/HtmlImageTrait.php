@@ -72,7 +72,7 @@ trait HtmlImageTrait
 function() {
     var url = encodeURI({$value_js});
     var proxyUrl = "{$this->getWidget()->buildProxyUrl('xxurixx')}";
-    proxyUrl.replace("xxurixx", url);
+    proxyUrl = proxyUrl.replace("xxurixx", url);
     return '{$this->buildHtmlImage("'+proxyUrl+'")}'
 }()
 
