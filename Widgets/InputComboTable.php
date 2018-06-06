@@ -9,6 +9,7 @@ use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\Widgets\WidgetLogicError;
 use exface\Core\CommonLogic\Model\Condition;
+use exface\Core\Factories\WidgetFactory;
 
 /**
  * A InputComboTable is similar to InputCombo, but it uses a DataTable to show the autosuggest values.
@@ -220,6 +221,9 @@ class InputComboTable extends InputCombo implements iHaveChildren
     {
         $table = $this->getTable();
         $table_meta_object = $this->getTable()->getMetaObject();
+        
+        // If there is no text column, use text_attribute_alias: first see if there already is a corresponding
+        // column in the table and use it then, otherwise add one.
         if (! $this->getTextColumnId()) {
             // If there is no text column explicitly defined, take the label attribute as text column
             if ($text_column = $this->getTable()->getColumnByAttributeAlias($this->getTextAttributeAlias())) {
@@ -238,6 +242,7 @@ class InputComboTable extends InputCombo implements iHaveChildren
             }
         }
         
+        // Same goes for the value column: use the first existing column for value_attribute_alias or create a new one.
         if (! $this->getValueColumnId()) {
             if ($value_column = $this->getTable()->getColumnByAttributeAlias($this->getValueAttributeAlias())) {
                 $this->setValueColumnId($value_column->getId());
@@ -247,6 +252,16 @@ class InputComboTable extends InputCombo implements iHaveChildren
                 $this->setValueColumnId($value_column->getId());
             }
         }
+        
+        // Make sure, the table has the corret quick search filter
+        // If not, the quick search would only get performed on the object label, which is not neccessarily 
+        // the text attribute of the widget. And object without a label would not work at all
+        $quickSearchFilter = WidgetFactory::createFromUxon($this->getPage(), new UxonObject([
+            "widget_type" => 'InputHidden',
+            "attribute_alias" => $this->getTextAttributeAlias()
+        ]), $table);
+        $table->addFilter($quickSearchFilter, true);
+        
         return $this;
     }
 
