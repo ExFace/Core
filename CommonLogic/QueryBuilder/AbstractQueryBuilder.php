@@ -644,5 +644,15 @@ abstract class AbstractQueryBuilder implements QueryBuilderInterface
      * @param MetaAttributeInterface $attribute
      * @return bool
      */
-    abstract public function canRead(MetaAttributeInterface $attribute) : bool;
+    abstract public function canReadAttribute(MetaAttributeInterface $attribute) : bool;
+    
+    /**
+     * 
+     * @param string $modelAliasExpression
+     * @return bool
+     */
+    public function canRead(string $modelAliasExpression) : bool
+    {
+        return $this->canReadAttribute($this->getMainObject()->getAttribute($modelAliasExpression));
+    }
 }

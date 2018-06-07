@@ -822,7 +822,8 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         $relq->setQueryId($this->getNextSubqueryId());
         
         // Add the key alias relative to the first reverse relation (TYPE->LABEL for the above example)
-        $relq->addAttribute(str_replace($rev_rel_path->toString() . RelationPath::getRelationSeparator(), '', $qpart->getAlias()));
+        $relq_attribute_alias = str_replace($rev_rel_path->toString() . RelationPath::getRelationSeparator(), '', $qpart->getAlias());
+        $relq->addAttribute($relq_attribute_alias);
         
         // Let the subquery inherit all filters of the main query, that need to be applied to objects beyond the reverse relation.
         // In our examplte, those would be any filter on ORDER->CUSTOMER<-CUSTOMER_CARD or ORDER->CUSTOMER<-CUSTOMER_CARD->TYPE, etc. Filters
@@ -1700,9 +1701,9 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      * The SQL builder can join of related objects as long as they are located in the same database.
      * 
      * {@inheritDoc}
-     * @see \exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder::canRead()
+     * @see \exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder::canReadAttribute()
      */
-    public function canRead(MetaAttributeInterface $attribute) : bool
+    public function canReadAttribute(MetaAttributeInterface $attribute) : bool
     {
         // TODO Check if all objects along the relation path also belong to the data source
         // TODO Instead of checking the data source, check if it points to the same data base

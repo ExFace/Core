@@ -143,9 +143,9 @@ class FileContentsBuilder extends AbstractQueryBuilder
      * The FileContentsBuilder can only handle attributes of one object - no relations (JOINs) supported!
      * 
      * {@inheritDoc}
-     * @see \exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder::canRead()
+     * @see \exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder::canReadAttribute()
      */
-    public function canRead(MetaAttributeInterface $attribute) : bool
+    public function canReadAttribute(MetaAttributeInterface $attribute) : bool
     {
         return $attribute->getRelationPath()->isEmpty();
     }
