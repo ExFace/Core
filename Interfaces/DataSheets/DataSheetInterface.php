@@ -186,7 +186,7 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
     /**
      * Returns an array of data sorters
      *
-     * @return DataSorterListInterface
+     * @return DataSorterListInterface|DataSorterInterface[]
      */
     public function getSorters();
 
@@ -271,7 +271,7 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
 
     /**
      *
-     * @return DataAggregationListInterface
+     * @return DataAggregationListInterface|DataAggregationInterface[]
      */
     public function getAggregations();
 
@@ -450,6 +450,14 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * @return DataSheetInterface
      */
     public function extract(ConditionalExpressionInterface $condition) : DataSheetInterface;
+    
+    /**
+     * Sorts the current rows according to the given sorter list.
+     * 
+     * @param DataSorterListInterface $sorters
+     * @return DataSheetInterface
+     */
+    public function sort(DataSorterListInterface $sorters) : DataSheetInterface;
 }
 
 ?>

@@ -104,4 +104,9 @@ class DataSorter implements iCanBeConvertedToUxon, WorkbenchDependantInterface
     {
         return clone $this;
     }
+    
+    public function __toString()
+    {
+        return $this->getAttributeAlias() . ':' . $this->getDirection();
+    }
 }

@@ -36,6 +36,8 @@ use exface\Core\CommonLogic\Model\Condition;
 use exface\Core\CommonLogic\QueryBuilder\RowDataArrayFilter;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Interfaces\Model\ConditionalExpressionInterface;
+use exface\Core\CommonLogic\Model\Aggregator;
+use exface\Core\CommonLogic\QueryBuilder\RowDataArraySorter;
 
 /**
  * Internal data respresentation object in exface.
@@ -158,20 +160,21 @@ class DataSheet implements DataSheetInterface
         $this->getColumns()->addMultiple($right_cols, $relation_path);
         // Now process the data and join rows
         if (! is_null($left_key_column) && ! is_null($right_key_column)) {
-            foreach ($this->rows as $left_row => $row) {
-                if (! $data_sheet->getColumns()->get($right_key_column)) {
+            foreach ($this->rows as $left_row_nr => $row) {
+                if (! $rCol = $data_sheet->getColumns()->get($right_key_column)) {
                     throw new DataSheetMergeError($this, 'Cannot find right key column "' . $right_key_column . '" for a left join!', '6T5E849');
                 }
-                $right_row = $data_sheet->getColumns()->get($right_key_column)->findRowByValue($row[$left_key_column]);
-                if ($right_row !== false) {
-                    foreach ($data_sheet->getColumns() as $col) {
-                        $this->setCellValue(RelationPath::relationPathAdd($relation_path, $col->getName()), $left_row, $data_sheet->getCellValue($col->getName(), $right_row));
+                $right_row_nr = $rCol->findRowByValue($row[$left_key_column]);
+                if ($right_row_nr !== false) {
+                    $right_row = $data_sheet->getRow($right_row_nr);
+                    foreach ($right_row as $col_name => $val) {
+                        $this->setCellValue(RelationPath::relationPathAdd($relation_path, $col_name), $left_row_nr, $val);
                     }
                 }
             }
         } elseif (is_null($left_key_column) && is_null($right_key_column)) {
-            foreach ($this->rows as $left_row => $row) {
-                $this->rows[$left_row] = array_merge($row, $data_sheet->getRow($left_row));
+            foreach ($this->rows as $left_row_nr => $row) {
+                $this->rows[$left_row_nr] = array_merge($row, $data_sheet->getRow($left_row_nr));
             }
         } else {
             throw new DataSheetJoinError($this, 'Cannot join data sheets, if only one key column specified!', '6T5V0GU');
@@ -339,11 +342,12 @@ class DataSheet implements DataSheetInterface
         foreach ($col->getExpressionObj()->getRequiredAttributes() as $attr) {
             try {
                 $attribute = $sheetObject->getAttribute($attr);
+                $attribute_aggregator = DataAggregation::getAggregatorFromAlias($this->getWorkbench(), $attr);
             } catch (MetaAttributeNotFoundError $e) {
                 continue;
             }
             // If the QueryBuilder for the current object can read the attribute, add it
-            if ($query->canRead($attribute)) {
+            if ($query->canReadAttribute($attribute)) {
                 // if a formula is applied to the attribute, get all attributes required for the formula
                 // if it is just a plain attribute, add it and nothing else
                 if ($expr = $attribute->getFormula()) {
@@ -375,7 +379,7 @@ class DataSheet implements DataSheetInterface
                 $rels = RelationPath::relationPathParse($attribute->getAliasWithRelationPath());
                 foreach ($rels as $depth => $rel) {
                     $rel_path = RelationPath::relationPathAdd($last_rel_path, $rel);
-                    if ($query->canRead($sheetObject->getRelation($rel_path)->getRelatedObjectKeyAttribute())) {
+                    if ($query->canReadAttribute($sheetObject->getRelation($rel_path)->getRelatedObjectKeyAttribute())) {
                         $rel_path_in_main_ds = $last_rel_path;
                     } else {
                         if (! $rel_path_to_subsheet) {
@@ -407,6 +411,9 @@ class DataSheet implements DataSheetInterface
                 }
                 // Add the current attribute to the subsheet prefixing it with it's relation path relative to the subsheet's object
                 $subsheet_attribute_alias = RelationPath::relationPathAdd($rel_path_in_subsheet, $attribute->getAlias());
+                if ($attribute_aggregator) {
+                    $subsheet_attribute_alias = DataAggregation::addAggregatorToAlias($subsheet_attribute_alias, $attribute_aggregator);
+                }
                 $subsheet->getColumns()->addFromExpression($subsheet_attribute_alias);
                 // Add the related object key alias of the relation to the subsheet to that subsheet. This will be the right key in the future JOIN.
                 if ($rel_path_to_subsheet_right_key = $sheetObject->getRelation($rel_path_to_subsheet)->getRelatedObjectKeyAlias()) {
@@ -445,6 +452,8 @@ class DataSheet implements DataSheetInterface
     {
         $this->getWorkbench()->eventManager()->dispatch(EventFactory::createDataSheetEvent($this, 'ReadData.Before'));
         
+        $thisObject = $this->getMetaObject();
+        
         // Empty the data before reading
         // IDEA Enable incremental reading by distinguishing between reading the same page an reading a new page
         $this->removeRows();
@@ -455,8 +464,8 @@ class DataSheet implements DataSheetInterface
             $offset = $this->getRowOffset();
         
         // create new query for the main object
-        $query = QueryBuilderFactory::createFromString($this->exface, $this->getMetaObject()->getQueryBuilder());
-        $query->setMainObject($this->getMetaObject());
+        $query = QueryBuilderFactory::createFromString($this->exface, $thisObject->getQueryBuilder());
+        $query->setMainObject($thisObject);
         
         foreach ($this->getColumns() as $col) {
             $this->getDataForColumn($col, $query);
@@ -469,7 +478,7 @@ class DataSheet implements DataSheetInterface
         // FIXME With growing numbers of behaviors and system attributes, this becomes a pain, as more and more possibly
         // aggregated columns are added automatically - even if the sheet is only meant for reading. Maybe we should let
         // the code creating the sheet add the system columns. The behaviors will prduce errors if this does not happen anyway.
-        foreach ($this->getMetaObject()->getAttributes()->getSystem()->getAll() as $attr) {
+        foreach ($thisObject->getAttributes()->getSystem()->getAll() as $attr) {
             if (! $this->getColumns()->getByAttribute($attr)) {
                 // Check if the system attribute has a default aggregator if the data sheet is being aggregated
                 if ($this->hasAggregations() && $attr->getDefaultAggregateFunction()) {
@@ -484,19 +493,32 @@ class DataSheet implements DataSheetInterface
         // Set explicitly defined filters
         $query->setFiltersConditionGroup($this->getFilters());
         // Add filters from the contexts
-        foreach ($this->exface->getContext()->getScopeApplication()->getFilterContext()->getConditions($this->getMetaObject()) as $cond) {
+        foreach ($this->exface->getContext()->getScopeApplication()->getFilterContext()->getConditions($thisObject) as $cond) {
             $query->addFilterCondition($cond);
         }
         
         // set aggregations
         foreach ($this->getAggregations() as $aggr) {
+            if (! $query->canReadAttribute($thisObject->getAttribute($aggr->getAttributeAlias()))) {
+                throw new DataSheetReadError($this, 'Cannot apply aggregation "' . $aggr->getAttributeAlias() . '": Aggregations over attributes in other data sources, than the man sheet object are currently not supported!');
+            }
             $query->addAggregation($aggr->getAttributeAlias());
         }
         
         // set sorting
-        $sorters = $this->hasSorters() ? $this->getSorters() : $this->getMetaObject()->getDefaultSorters();
+        $sorters = $this->hasSorters() ? $this->getSorters() : $thisObject->getDefaultSorters();
+        $postprocessorSorters = new DataSorterList($this->getWorkbench(), $this);
         foreach ($sorters as $sorter) {
-            $query->addSorter($sorter->getAttributeAlias(), $sorter->getDirection());
+            // If the sorter can be applied by the query, pass it to the query, otherwise
+            // save it for a runtime sort after reading the data.
+            if (! $query->canReadAttribute($thisObject->getAttribute($sorter->getAttributeAlias()))) {
+                $postprocessorSorters->add($sorter);
+            } else {
+                if (! $postprocessorSorters->isEmpty()) {
+                    throw new DataSheetReadError($this, 'Cannot apply sorter ' . $sorter . ' after ' . $postprocessorSorters->getLast() . ', because the latter cannot be performed by the data source and, thus, must be applied after reading data.');
+                }
+                $query->addSorter($sorter->getAttributeAlias(), $sorter->getDirection());
+            }
         }
         
         if ($limit > 0) {
@@ -504,7 +526,7 @@ class DataSheet implements DataSheetInterface
         }
         
         try {
-            $result = $query->read($this->getMetaObject()->getDataConnection());
+            $result = $query->read($thisObject->getDataConnection());
         } catch (\Throwable $e) {
             throw new DataSheetReadError($this, $e->getMessage(), ($e instanceof ExceptionInterface ? $e->getAlias() : null), $e);
         }
@@ -516,21 +538,21 @@ class DataSheet implements DataSheetInterface
         // load data for subsheets if needed
         if ($this->countRows()) {
             foreach ($this->getSubsheets() as $rel_path => $subsheet) {
-                if (! $this->getMetaObject()->getRelation($rel_path)->isReverseRelation()) {
+                if (! $thisObject->getRelation($rel_path)->isReverseRelation()) {
                     $foreign_keys = $this->getColumnValues($rel_path);
-                    $subsheet->addFilterFromString($this->getMetaObject()->getRelation($rel_path)->getRelatedObjectKeyAlias(), implode($this->getMetaObject()->getRelation($rel_path)->getRelatedObjectKeyAttribute()->getValueListDelimiter(), array_unique($foreign_keys)), EXF_COMPARATOR_IN);
+                    $subsheet->addFilterFromString($thisObject->getRelation($rel_path)->getRelatedObjectKeyAlias(), implode($thisObject->getRelation($rel_path)->getRelatedObjectKeyAttribute()->getValueListDelimiter(), array_unique($foreign_keys)), EXF_COMPARATOR_IN);
                     $left_key_column = $rel_path;
-                    $right_key_column = $this->getMetaObject()->getRelation($rel_path)->getRelatedObjectKeyAlias();
+                    $right_key_column = $thisObject->getRelation($rel_path)->getRelatedObjectKeyAlias();
                 } else {
-                    if ($this->getMetaObject()->getRelation($rel_path)->getMainObjectKeyAttribute()) {
+                    if ($thisObject->getRelation($rel_path)->getMainObjectKeyAttribute()) {
                         throw new DataSheetJoinError($this, 'Joining subsheets via reverse relations with explicitly specified foreign keys, not implemented yet!', '6T5V36I');
                     } else {
                         $foreign_keys = $this->getUidColumn()->getValues();
-                        $subsheet->addFilterFromString($this->getMetaObject()->getRelation($rel_path)->getForeignKeyAlias(), implode($this->getMetaObject()->getRelation($rel_path)->getForeignKeyAttribute()->getValueListDelimiter(), array_unique($foreign_keys)), EXF_COMPARATOR_IN);
+                        $subsheet->addFilterFromString($thisObject->getRelation($rel_path)->getForeignKeyAlias(), implode($thisObject->getRelation($rel_path)->getForeignKeyAttribute()->getValueListDelimiter(), array_unique($foreign_keys)), EXF_COMPARATOR_IN);
                         // FIXME Fix Reverse relations key bug. Getting the left key column from the reversed relation here is a crude hack, but
                         // the get_main_object_key_alias() strangely does not work for reverse relations
-                        $left_key_column = $this->getMetaObject()->getRelation($rel_path)->getReversedRelation()->getRelatedObjectKeyAlias();
-                        $right_key_column = $this->getMetaObject()->getRelation($rel_path)->getForeignKeyAlias();
+                        $left_key_column = $thisObject->getRelation($rel_path)->getReversedRelation()->getRelatedObjectKeyAlias();
+                        $right_key_column = $thisObject->getRelation($rel_path)->getForeignKeyAlias();
                     }
                 }
                 $subsheet->dataRead();
@@ -558,6 +580,11 @@ class DataSheet implements DataSheetInterface
             }
             $this->setColumnValues($name, $vals, $totals);
         }
+        
+        if (! $postprocessorSorters->isEmpty()) {
+            $this->sort($postprocessorSorters);
+        }
+        
         $this->getWorkbench()->eventManager()->dispatch(EventFactory::createDataSheetEvent($this, 'ReadData.After'));
         return $result;
     }
@@ -1104,9 +1131,9 @@ class DataSheet implements DataSheetInterface
     }
 
     /**
-     * Returns an array of data sorters
-     *
-     * @return DataSorterListInterface
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::getSorters()
      */
     function getSorters()
     {
@@ -1235,6 +1262,9 @@ class DataSheet implements DataSheetInterface
         return $this;
     }
 
+    /**
+     * 
+     */
     public function removeRowsForColumn($column_name)
     {
         foreach (array_keys($this->getRows()) as $id) {
@@ -1294,14 +1324,20 @@ class DataSheet implements DataSheetInterface
         return true;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::getMetaObject()
+     */
     public function getMetaObject()
     {
         return $this->meta_object;
     }
 
     /**
-     *
-     * @return DataAggregationListInterface
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::getAggregations()
      */
     public function getAggregations()
     {
@@ -1783,6 +1819,25 @@ class DataSheet implements DataSheetInterface
         
         $ds->removeRows()->addRows($rows);
         return $ds;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::sort()
+     */
+    public function sort(DataSorterListInterface $sorters) : DataSheetInterface
+    {
+        if ($this->isEmpty()) {
+            return $this;
+        }
+        
+        $sorter = new RowDataArraySorter();
+        foreach ($sorters as $sorter) {
+            $sorter->addCriteria($sorter->getAttributeAlias(), $sorter->getDirection());
+        }
+        $this->rows = $sorter->sort($this->getRows());
+        return $this;
     }
 }
 
