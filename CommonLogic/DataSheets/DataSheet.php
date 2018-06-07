@@ -387,8 +387,9 @@ class DataSheet implements DataSheetInterface
                         }
                     }
                     $last_rel_path = $rel_path;
-                    if ($depth == (count($rels) - 2))
+                    if ($depth == (count($rels) - 2)) {
                         break; // stop one path step before the end because that would be the attribute of the related object
+                    }
                 }
                 // Create a subsheet for the relation if not yet existent and add the required attribute
                 if (! $subsheet = $this->getSubsheets()->get($rel_path_to_subsheet)) {
@@ -405,7 +406,8 @@ class DataSheet implements DataSheetInterface
                     }
                 }
                 // Add the current attribute to the subsheet prefixing it with it's relation path relative to the subsheet's object
-                $subsheet->getColumns()->addFromExpression(RelationPath::relationPathAdd($rel_path_in_subsheet, $attribute->getAlias()));
+                $subsheet_attribute_alias = RelationPath::relationPathAdd($rel_path_in_subsheet, $attribute->getAlias());
+                $subsheet->getColumns()->addFromExpression($subsheet_attribute_alias);
                 // Add the related object key alias of the relation to the subsheet to that subsheet. This will be the right key in the future JOIN.
                 if ($rel_path_to_subsheet_right_key = $sheetObject->getRelation($rel_path_to_subsheet)->getRelatedObjectKeyAlias()) {
                     $subsheet->getColumns()->addFromExpression(RelationPath::relationPathAdd($rel_path_in_main_ds, $rel_path_to_subsheet_right_key));
