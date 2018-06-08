@@ -372,6 +372,7 @@ class SqlModelLoader implements ModelLoaderInterface
             if ($data_source->getWorkbench()->getConfig()->getOption('INSTALLER.SQL_UPDATE_LAST_PERFORMED_ID') < 8){
                 $sql = '
 				SELECT
+					ds.name as data_source_name,
 					ds.custom_query_builder,
 					ds.default_query_builder,
 					dc.read_only_flag AS connection_read_only,
@@ -385,6 +386,7 @@ class SqlModelLoader implements ModelLoaderInterface
             } else {
                 $sql = '
 				SELECT
+					ds.name as data_source_name,
 					ds.custom_query_builder,
 					ds.default_query_builder,
 					ds.readable_flag AS data_source_readable,
@@ -407,6 +409,7 @@ class SqlModelLoader implements ModelLoaderInterface
             }
             $ds = $ds[0];
             $data_source->setDataConnectorAlias($ds['data_connector']);
+            $data_source->setName($ds['data_source_name']);
             $data_source->setConnectionId($ds['data_connection_oid']);
             if (! is_null($ds['data_source_readable'])){
                 $data_source->setReadable($ds['data_source_readable']);

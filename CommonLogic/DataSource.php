@@ -18,6 +18,8 @@ class DataSource implements DataSourceInterface
     private $query_builder;
 
     private $data_source_id;
+    
+    private $data_source_name;
 
     private $connection_config = array();
 
@@ -207,6 +209,17 @@ class DataSource implements DataSourceInterface
     {
         $this->writable = BooleanDataType::cast($true_or_false);
         return $this;
+    }
+    
+    public function setName(string $readableName) : DataSourceInterface
+    {
+        $this->data_source_name = $readableName;
+        return $this;
+    }
+    
+    public function getName() : string
+    {
+        return $this->data_source_name;
     }
 
 }
