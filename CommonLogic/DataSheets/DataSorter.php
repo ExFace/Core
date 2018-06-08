@@ -8,6 +8,7 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Exceptions\DataSheets\DataSheetStructureError;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
 
 class DataSorter implements iCanBeConvertedToUxon, WorkbenchDependantInterface
 {
@@ -108,5 +109,10 @@ class DataSorter implements iCanBeConvertedToUxon, WorkbenchDependantInterface
     public function __toString()
     {
         return $this->getAttributeAlias() . ':' . $this->getDirection();
+    }
+
+    public function getAttribute() : MetaAttributeInterface
+    {
+        return $this->getDataSheet()->getMetaObject()->getAttribute($this->getAttributeAlias());
     }
 }

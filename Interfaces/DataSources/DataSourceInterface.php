@@ -113,5 +113,18 @@ interface DataSourceInterface extends WorkbenchDependantInterface
      * @return Model
      */
     public function getModel();
+    
+    /**
+     * 
+     * @param string $readableName
+     * @return DataSourceInterface
+     */
+    public function setName(string $readableName) : DataSourceInterface;
+    
+    /**
+     * 
+     * @return string
+     */
+    public function getName() : string;
 }
 ?>

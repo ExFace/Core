@@ -38,6 +38,7 @@ use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Interfaces\Model\ConditionalExpressionInterface;
 use exface\Core\CommonLogic\Model\Aggregator;
 use exface\Core\CommonLogic\QueryBuilder\RowDataArraySorter;
+use exface\Core\Exceptions\DataSheets\DataSheetStructureError;
 
 /**
  * Internal data respresentation object in exface.
@@ -582,6 +583,9 @@ class DataSheet implements DataSheetInterface
         }
         
         if (! $postprocessorSorters->isEmpty()) {
+            if ($this->countRowsAll() > $this->countRowsLoaded(false)) {
+                throw new DataSheetReadError($this, 'Cannot sort by columns from different data sources when using pagination: either increase page length or filter data to fit on one page!');
+            }
             $this->sort($postprocessorSorters);
         }
         
@@ -1833,8 +1837,12 @@ class DataSheet implements DataSheetInterface
         }
         
         $sorter = new RowDataArraySorter();
-        foreach ($sorters as $sorter) {
-            $sorter->addCriteria($sorter->getAttributeAlias(), $sorter->getDirection());
+        foreach ($sorters as $s) {
+            $col = $this->getColumns()->getByAttribute($s->getAttribute());
+            if ($col === false) {
+                throw new DataSheetStructureError($this, 'Cannot sort data sheet via ' . $s->getAttributeAlias() . ': no corresponding column found!');
+            }
+            $sorter->addCriteria($col->getName(), $s->getDirection());
         }
         $this->rows = $sorter->sort($this->getRows());
         return $this;
