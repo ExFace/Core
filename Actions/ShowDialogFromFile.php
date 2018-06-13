@@ -62,6 +62,18 @@ class ShowDialogFromFile extends ShowDialog
     private $file_path_attribute_alias = null;
 
     private $file_extension = null;
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Actions\ShowWidget::init()
+     */
+    protected function init()
+    {
+        parent::init();
+        $this->setInputRowsMin(1);
+        $this->setInputRowsMax(1);
+    }
 
     /**
      *
