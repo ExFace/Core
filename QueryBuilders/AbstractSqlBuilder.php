@@ -1417,7 +1417,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                     // e.g. if we are filtering over a SUM of natural numbers with "> 0", we could simply add a "> 0" filter 
                     // without any aggregation and it should yield the same results
                     $rel_filter .= DataAggregation::AGGREGATION_SEPARATOR . $qpart->getAggregator()->exportString();
-                    $relq->addAggregation($start_rel->getLeftKeyAttribute()->getAlias());
+                    $relq->addAggregation($start_rel->getRightKeyAttribute()->getAlias());
                     
                     // If we are in a WHERE subquery of a filter with an aggregator, this means, we want to filter
                     // over the aggregated value. However, there might be other filters, that affect this aggregated
@@ -1450,7 +1450,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                     $rev_rel_path = $prefix_rel_path->copy()->appendRelation($start_rel);
                     $relq->setFiltersConditionGroup($this->getFilters()->getConditionGroup()->rebase($rev_rel_path->toString(), $relq_condition_filter));
                 }
-                $relq->addAttribute($start_rel->getLeftKeyAttribute()->getAlias());
+                $relq->addAttribute($start_rel->getRightKeyAttribute()->getAlias());
                 
                 // Add the filter relative to the first reverse relation with the same $value and $comparator
                 if ($qpart->isValueDataAddress()) {
@@ -1469,7 +1469,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 // If we are dealing with a regular relation, build a subquery to select primary keys from joined tables and match them to the foreign key of the main table
                 $relq->addFilter($qpart->rebase($relq, $start_rel->getAlias()));
                 $relq->addAttribute($start_rel->getRightKeyAttribute()->getAlias());
-                $junction_qpart = new QueryPartSelect($start_rel->getLeftKeyAttribute()->getAlias(), $this);
+                $junction_qpart = new querypartse($start_rel->getLeftKeyAttribute()->getAlias(), $this);
                 $junction = $this->buildSqlSelect($junction_qpart, null, null, '');
             }
             
