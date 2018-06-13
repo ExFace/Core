@@ -1402,6 +1402,28 @@
             "ERROR_CODE": "6ZIT36X",
             "ERROR_TEXT": "No data source defined for object",
             "DESCRIPTION": "This error occurs if an operation requiring a data source (e.g. reading or writing) was called on an object that does not have one. \n\nObjects without data sources are quite legitimate. For example, they can be used to model the input data for an action, which is not a direct replica of data source entry. However, these objects only exist in the runtime. If an attempt is made to persist such an object, this error will occur."
+        },
+        {
+            "CREATED_ON": "2018-06-12 13:28:30",
+            "MODIFIED_ON": "2018-06-13 07:33:59",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e86e447b80b01a9e9e0205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "ERROR_CODE": "70U52B4",
+            "ERROR_TEXT": "Error in metamodel: relations to objects without primary keys (UIDs) must have an explicit key attribute",
+            "DESCRIPTION": "This error occurs if a relation, that does not have a specific target key attribute, points to an object without a primary key (UID attribute).\n\nNormally you do not have to specify, which attribute of the related object is to be used as key. By default, the UID of that object is used. This, of course, does not work, if there is no UID attribute. So you should either specify, which attribute the relation is attached to or add a UID to the target object. "
+        },
+        {
+            "CREATED_ON": "2018-06-13 07:37:29",
+            "MODIFIED_ON": "2018-06-13 07:37:29",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e86edc9c5a731e9e9e0205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "ERROR_CODE": "70UJ2GV",
+            "ERROR_TEXT": "Error in metamodel: orphaned model components detected",
+            "DESCRIPTION": "This error indicates, that an instance of a model component references a non-existant entity: e.g. an attribute for an object, that does not exist. See specific error text for details."
         }
     ],
     "totals_rows": [],
