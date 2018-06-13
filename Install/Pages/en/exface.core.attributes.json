@@ -44,6 +44,9 @@
                 "attribute_alias": "FORMATTER"
             },
             {
+                "attribute_alias": "UID"
+            },
+            {
                 "attribute_alias": "DEFAULT_EDITOR_UXON",
                 "widget_type": "Input",
                 "height": 1,
