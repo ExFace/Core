@@ -138,61 +138,65 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
     
     public function createFilterWidget($attribute_alias = null, UxonObject $uxon_object = null)
     {
-        if (is_null($attribute_alias)) {
+        if ($attribute_alias === null) {
             if ($uxon_object->hasProperty('attribute_alias')) {
                 $attribute_alias = $uxon_object->getProperty('attribute_alias');
             } elseif (($uxon_object->getProperty('input_widget') instanceof UxonObject) && $uxon_object->getProperty('input_widget')->hasProperty('attribute_alias')) {
                 $attribute_alias = $uxon_object->getProperty('input_widget')->getProperty('attribute_alias');
             }
         }
+        
         // a filter can only be applied, if the attribute alias is specified and the attribute exists
-        if (! $attribute_alias)
+        if ($attribute_alias === null || $attribute_alias === '') {
             throw new WidgetPropertyInvalidValueError($this, 'Cannot create a filter for an empty attribute alias in widget "' . $this->getId() . '"!', '6T91AR9');
-            try {
-                $attr = $this->getMetaObject()->getAttribute($attribute_alias);
-            } catch (MetaAttributeNotFoundError $e) {
-                throw new WidgetPropertyInvalidValueError($this, 'Cannot create a filter for attribute alias "' . $attribute_alias . '" in widget "' . $this->getId() . '": attribute not found for object "' . $this->getMetaObject()->getAliasWithNamespace() . '"!', '6T91AR9', $e);
-            }
-            // determine the widget for the filter
-            $uxon = $attr->getDefaultEditorUxon()->copy();
-            if ($uxon_object) {
-                $uxon = $uxon->extend($uxon_object);
-            }
-            // Set a special caption for filters on relations, which is derived from the relation itself
-            // IDEA this might be obsolete since it probably allways returns the attribute name anyway, but I'm not sure
-            if (! $uxon->hasProperty('caption') && $attr->isRelation()) {
-                $uxon->setProperty('caption', $this->getMetaObject()->getRelation($attribute_alias)->getName());
-            }
-            $page = $this->getPage();
-            
-            // Set properties of the filter explicitly while passing everything else to it's input widget.
-            // TODO move this to the filter's importUxonObject() method.
-            if ($uxon->hasProperty('comparator')) {
-                $comparator = $uxon->getProperty('comparator');
-                $uxon->unsetProperty('comparator');
-            }
-            if ($uxon->hasProperty('apply_on_change')) {
-                $apply_on_change = $uxon->getProperty('apply_on_change');
-                $uxon->unsetProperty('apply_on_change');
-            } 
-            if ($uxon->hasProperty('required')) {
-                $required = $uxon->getProperty('required');
-                $uxon->unsetProperty('required');
-            } 
-            
-            $filter = $this->getPage()->createWidget('Filter', $this->getFilterTab());
-            $filter->setComparator($comparator);
-            if (isset($apply_on_change)){
-                $filter->setApplyOnChange($apply_on_change);
-            }
-            $filter->setInputWidget(WidgetFactory::createFromUxon($page, $uxon, $filter));
-            
-            // Set the required option after instantiation to ensure the input widget gets it too.
-            if (isset($required)) {
-                $filter->setRequired($required);
-            }
-            
-            return $filter;
+        }
+        
+        try {
+            $attr = $this->getMetaObject()->getAttribute($attribute_alias);
+        } catch (MetaAttributeNotFoundError $e) {
+            throw new WidgetPropertyInvalidValueError($this, 'Cannot create a filter for attribute alias "' . $attribute_alias . '" in widget "' . $this->getId() . '": attribute not found for object "' . $this->getMetaObject()->getAliasWithNamespace() . '"!', '6T91AR9', $e);
+        }
+        
+        // determine the widget for the filter
+        $uxon = $attr->getDefaultEditorUxon()->copy();
+        if ($uxon_object) {
+            $uxon = $uxon->extend($uxon_object);
+        }
+        // Set a special caption for filters on relations, which is derived from the relation itself
+        // IDEA this might be obsolete since it probably allways returns the attribute name anyway, but I'm not sure
+        if (! $uxon->hasProperty('caption') && $attr->isRelation()) {
+            $uxon->setProperty('caption', $this->getMetaObject()->getRelation($attribute_alias)->getName());
+        }
+        $page = $this->getPage();
+        
+        // Set properties of the filter explicitly while passing everything else to it's input widget.
+        // TODO move this to the filter's importUxonObject() method.
+        if ($uxon->hasProperty('comparator')) {
+            $comparator = $uxon->getProperty('comparator');
+            $uxon->unsetProperty('comparator');
+        }
+        if ($uxon->hasProperty('apply_on_change')) {
+            $apply_on_change = $uxon->getProperty('apply_on_change');
+            $uxon->unsetProperty('apply_on_change');
+        } 
+        if ($uxon->hasProperty('required')) {
+            $required = $uxon->getProperty('required');
+            $uxon->unsetProperty('required');
+        } 
+        
+        $filter = $this->getPage()->createWidget('Filter', $this->getFilterTab());
+        $filter->setComparator($comparator);
+        if (isset($apply_on_change)){
+            $filter->setApplyOnChange($apply_on_change);
+        }
+        $filter->setInputWidget(WidgetFactory::createFromUxon($page, $uxon, $filter));
+        
+        // Set the required option after instantiation to ensure the input widget gets it too.
+        if (isset($required)) {
+            $filter->setRequired($required);
+        }
+        
+        return $filter;
     }
     
     /**

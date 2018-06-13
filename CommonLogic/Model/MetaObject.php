@@ -313,7 +313,7 @@ class MetaObject implements MetaObjectInterface
                 $rev_rel = $this->getRelation($alias);
                 if ($rev_rel->isReverseRelation()) {
                     try {
-                        $rel_attr = $rev_rel->getRightObject()->getAttribute($rev_rel->getLeftKeyAttribute()->getAlias());
+                        $rel_attr = $rev_rel->getRightObject()->getAttribute($rev_rel->getRightKeyAttribute()->getAlias());
                         $attr = $rel_attr->copy();
                         $attr->getRelationPath()->prependRelation($rev_rel);
                         $this->setAttributeCache($alias, $attr);
