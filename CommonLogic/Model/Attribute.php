@@ -398,15 +398,6 @@ class Attribute implements MetaAttributeInterface
 
     /**
      * 
-     * @param MetaRelationPathInterface $path
-     */
-    public function setRelationPath(MetaRelationPathInterface $path)
-    {
-        $this->relation_path = $path;
-    }
-
-    /**
-     * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::getObject()
      */
@@ -753,13 +744,39 @@ class Attribute implements MetaAttributeInterface
     }
 
     /**
+     * Returns an copy of the attribute.
      * 
-     * {@inheritDoc}
+     * Copies of attributes with a relation path will get a copy of that path by default. Seting $ignoreRelationPath to TRUE
+     * will make the copy not have a relation path at all.
+     * 
      * @see \exface\Core\Interfaces\iCanBeCopied::copy()
+     * 
+     * @param bool $ignoreRelationPath
+     * 
+     * @return MetaAttributeInterface
      */
-    public function copy()
+    public function copy(bool $ignoreRelationPath = false)
     {
-        return $this->rebase($this->getRelationPath()->copy());
+        $copy = clone $this;
+        
+        // If the relation path is not specified or empty, just remove it. This leads to the creation
+        // of a new path object when $copy->getRelationPath() is called, thus making sure relation path objects
+        // are not shared between attributes and cannot get out of sync. The same happens if the caller
+        // chooses to ignore the relation path explicitly.
+        if ($ignoreRelationPath === true || $this->relation_path === null || $this->relation_path->isEmpty()) {
+            $copy->relation_path = null;
+        } else {
+            // If the relation path is not empty and should be kept, copy it too in order to still make
+            // sure, instances are not shared.
+            $copy->relation_path = $this->relation_path->copy();
+        }
+        
+        // Do not use getDefaultEditorUxon() here as it already performs some enrichment
+        if ($this->default_editor_uxon instanceof UxonObject){
+            $copy->setDefaultEditorUxon($this->default_editor_uxon->copy());
+        }
+        
+        return $copy;
     }
 
     /**
@@ -767,18 +784,13 @@ class Attribute implements MetaAttributeInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::rebase()
      */
-    public function rebase(MetaRelationPathInterface $path)
+    public function rebase(MetaRelationPathInterface $path) : MetaAttributeInterface
     {
-        $copy = clone $this;
-        
-        // Explicitly copy properties, that are objects themselves
-        $copy->setRelationPath($path);
-        
-        // Do not use getDefaultEditorUxon() here as it already performs some enrichment
-        if ($this->default_editor_uxon instanceof UxonObject){
-            $copy->setDefaultEditorUxon($this->default_editor_uxon->copy());
+        if ($path->getEndObject() !== $this->getObject()) {
+            throw new UnexpectedValueException('Cannot rebase attribute "' . $this->getAlias() . '" of object "' . $this->getObject()->getAliasWithNamespace() . '" relative to "' . $path->toString() . '": the relation path must point to the same object, but points to "' . $path->getEndObject()->getAliasWithNamespace() . '" instead!');
         }
-        
+        $copy = $this->copy(true);
+        $copy->relation_path = $path;
         return $copy;
     }
 

@@ -358,13 +358,14 @@ interface MetaAttributeInterface extends WorkbenchDependantInterface, iCanBeCopi
     public function is(MetaAttributeInterface $attribute);
     
     /**
-     * Creates a copy of the attribute relative to a given relation path.
-     * This is usefull if you want to rebase an attribute.
+     * Creates a copy of the attribute relative to the given relation path.
+     * 
+     * This is usefull if you want to rebase an attribute relatively to another object.
      *
      * @param MetaRelationPathInterface $path
      * @return \exface\Core\Interfaces\Model\MetaAttributeInterface
      */
-    public function rebase(MetaRelationPathInterface $path);
+    public function rebase(MetaRelationPathInterface $path) : MetaAttributeInterface;
     
     /**
      * Returns TRUE if this attribute is a system attribute.

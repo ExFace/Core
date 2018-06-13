@@ -71,6 +71,7 @@ class RelationPath implements MetaRelationPathInterface
     public function prependRelation(MetaRelationInterface $relation)
     {
         array_unshift($this->relations, $relation);
+        $this->start_object = $relation->getLeftObject();
         return $this;
     }
 
@@ -147,7 +148,7 @@ class RelationPath implements MetaRelationPathInterface
     public function getEndObject()
     {
         if (! $this->isEmpty()) {
-            return $this->getRelationLast()->getRelatedObject();
+            return $this->getRelationLast()->getRightObject();
         } else {
             return $this->getStartObject();
         }
@@ -283,7 +284,7 @@ class RelationPath implements MetaRelationPathInterface
             }
             
             $reverse_aliases[] = $rel->getReversedRelation()->getAlias();
-            $current_object = $rel->getRelatedObject();
+            $current_object = $rel->getRightObject();
         }
         $reverse_aliases = array_reverse($reverse_aliases);
         $output = implode(self::RELATION_SEPARATOR, $reverse_aliases);
@@ -314,7 +315,7 @@ class RelationPath implements MetaRelationPathInterface
             return new self($this->getEndObject());
         } elseif ($start_index >= 0 && $start_index < $this->countRelations()) {
             // If the start index fits in the range of relation keys, make the subpath start with the main object of the relation at the index
-            $subpath = new self($this->getRelation($start_index)->getMainObject());
+            $subpath = new self($this->getRelation($start_index)->getLeftObject());
         } else {
             throw new OutOfRangeException('Subpath starting with illegal index "' . $start_index . '" requested for relation path "' . $this->toString() . '" with ' . $this->countRelations() . ' relations!');
         }

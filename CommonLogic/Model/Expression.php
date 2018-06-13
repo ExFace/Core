@@ -515,7 +515,7 @@ class Expression implements ExpressionInterface
                 // IDEA A bit awqard is rebasing "POSITION->ORDER" from ORDER to POSITION as it will result in ORDER<-POSITION->ORDER, which
                 // is a loop: first we would fetch the order, than it's positions than again all orders of thouse position, which will result in
                 // that one order we fetched in step 1 again. Not sure, if these loops can be prevented somehow...
-                if (! ($rel->isReverseRelation() && $relation_path_to_new_base_object == $rel->getAlias() && ($relation_path_to_new_base_object == $this->toString() || $rel->getRelatedObjectKeyAlias() == $this->toString()))) {
+                if (! ($rel->isReverseRelation() && $relation_path_to_new_base_object == $rel->getAlias() && ($relation_path_to_new_base_object == $this->toString() || $rel->getRightKeyAttribute()->getAlias() == $this->toString()))) {
                     $new_expression_string = RelationPath::relationPathAdd($new_expression_string, $this->toString());
                 }
             }
@@ -525,10 +525,10 @@ class Expression implements ExpressionInterface
             // we know, that the related_object_key of the last relation was actually ment (probably the UID of the CUSTOMER_CLASS in our
             // example), so we just append it to our empty expression here.
             if ($new_expression_string == '') {
-                $new_expression_string .= $rel->getRelatedObjectKeyAlias();
+                $new_expression_string .= $rel->getRightKeyAttribute()->getAlias();
             }
             
-            return $this->getWorkbench()->model()->parseExpression($new_expression_string, $rel->getRelatedObject());
+            return $this->getWorkbench()->model()->parseExpression($new_expression_string, $rel->getRightObject());
         } else {
             // In all other cases (i.e. for constants), just leave the expression as it is. It does not depend on any meta model!
             return $this;

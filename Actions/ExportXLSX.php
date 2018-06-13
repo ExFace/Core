@@ -271,7 +271,7 @@ class ExportXLSX extends ExportDataFile
                 // die UID geschrieben werden
                 if ($filterExpression->isMetaAttribute()) {
                     if (($metaAttribute = $dataSheet->getMetaObject()->getAttribute($filterExpression->toString())) && $metaAttribute->isRelation()) {
-                        $relatedObject = $metaAttribute->getRelation()->getRelatedObject();
+                        $relatedObject = $metaAttribute->getRelation()->getRightObject();
                         $filterValueRequestSheet = DataSheetFactory::createFromObject($relatedObject);
                         $filterValueRequestSheet->getColumns()->addFromAttribute($relatedObject->getUidAttribute());
                         $filterValueRequestSheet->getColumns()->addFromAttribute($relatedObject->getLabelAttribute());

@@ -34,6 +34,9 @@ use exface\Core\Interfaces\Selectors\DataTypeSelectorInterface;
 use exface\Core\Interfaces\Selectors\ModelLoaderSelectorInterface;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 use exface\Core\Interfaces\Model\ModelInterface;
+use exface\Core\DataTypes\RelationTypeDataType;
+use exface\Core\Exceptions\Model\MetaObjectHasNoUidAttributeError;
+use exface\Core\Exceptions\Model\MetaRelationBrokenError;
 
 class SqlModelLoader implements ModelLoaderInterface
 {
@@ -181,6 +184,7 @@ class SqlModelLoader implements ModelLoaderInterface
 				FROM exf_attribute a LEFT JOIN exf_object o ON a.object_oid = o.oid
 				WHERE a.object_oid = ' . $object->getId() . ' OR a.related_object_oid = ' . $object->getId());
         if ($res = $query->getResultArray()) {
+            $relation_attrs = [];
             // use a for here instead of foreach because we want to extend the array from within the loop on some occasions
             $l = count($res);
             for ($i = 0; $i < $l; $i ++) {
@@ -234,44 +238,77 @@ class SqlModelLoader implements ModelLoaderInterface
                     $object->getAttributes()->add($attr, $attr->getAlias());
                 }
                 
-                // Now populate relations, if the attribute is a relation. This is done for own attributes as well as inherited ones because
-                // the latter may be involved in reverse relations. But this means also, that direct relations can only be created from direct
-                // attributes.
+                // If the attribute is a relation, save it for later processing. We can't create relations here right away because we need to
+                // instantiate all attributes first - otherwise we may not be able to find left keys of reverse relations!
                 if ($row['related_object_oid']) {
-                    // we have a reverse (1-n) relation if the attribute belongs to another object and that object is not being extended from
-                    // Otherwise it's a normal n-1 relation
-                    // IDEA What if we also create relations between parent and child objects. The inheriting object should probably get a direct
-                    // relation to the parent. Would that be usefull for objects sharing attributes but using different data_addresses?
-                    if ($object->getId() != $row['object_oid'] && ! in_array($row['object_oid'], $object->getParentObjectsIds())) {
-                        // FIXME what is the related_object_key_alias for reverse relations?
-                        $rel = new Relation(
-                            $exface, 
-                            $row['oid'], // id
-                            $row['rev_relation_alias'], // alias
-                            $row['rev_relation_name'], // name (used for captions)
-                            $row['related_object_oid'], // main object
-                            $row['attribute_alias'], // foreign key in the main object
-                            $row['object_oid'], // related object
-                            null, // related object key attribute (uid)
-                            MetaRelationInterface::RELATION_TYPE_REVERSE); // relation type
-                    } elseif ($attr) {
-                        // At this point, we know, it is a direct relation. This can only happen if the object has a corresponding direct
-                        // attribute. This is why the elseif($attr) is there.
-                        $rel = new Relation(
-                            $exface, 
-                            $attr->getId(), // relation id
-                            $attr->getAlias(), // alias
-                            $attr->getName(), // name for captions
-                            $object->getId(), // main object
-                            $attr->getAlias(), // foreign key in main object
-                            $row['related_object_oid'], // related object
-                            $row['related_object_special_key_attribute_oid'], // related object key attribute (UID will be used if not set)
-                            MetaRelationInterface::RELATION_TYPE_FORWARD); // relation type
+                    $relation_attrs[] = [
+                        'attr' => $attr,
+                        'row' => $row
+                    ];
+                }
+            }
+            
+            // Now populate the relations of the object 
+            foreach ($relation_attrs as $data) {
+                $attr = $data['attr'];
+                $row = $data['row'];
+                
+                // If we have a reverse (1-n) relation if the attribute belongs to another object and that object is not being extended from
+                // Otherwise it's a normal n-1 relation
+                // IDEA What if we also create relations between parent and child objects. The inheriting object should probably get a direct
+                // relation to the parent. Would that be usefull for objects sharing attributes but using different data_addresses?
+                if ($object->getId() != $row['object_oid'] && ! in_array($row['object_oid'], $object->getParentObjectsIds())) {
+                    if ($leftKeyId = $row['related_object_special_key_attribute_oid']) {
+                        $leftKeyAttr = $object->getAttributes()->getByAttributeId($leftKeyId);
+                    } else {
+                        try {
+                            $leftKeyAttr = $object->getUidAttribute();
+                        } catch (MetaObjectHasNoUidAttributeError $e) {
+                            try {
+                                $rightObject = $this->getModel()->getObjectById($row['object_oid']);
+                                $error = 'Broken relation "' . $row['attribute_alias'] . '" from ' . $rightObject->getAliasWithNamespace() . ' to ' . $object->getAliasWithNamespace() . ': ' . $e->getMessage();
+                            } catch (\Throwable $ee) {
+                                throw new MetaModelLoadingFailedError('No relations to default key attribute of object ' . $object->getAliasWithNamespace() . ' possible: ' . $e->getMessage(), '70U52B4', $e);
+                            }
+                            throw new MetaRelationBrokenError($rightObject, $error, '70U52B4', $e);
+                        }
                     }
                     
-                    if ($rel) {
-                        $object->addRelation($rel);
+                    if ($row['rev_relation_alias'] === '' || $row['rev_relation_alias'] === null) {
+                        throw new MetaModelLoadingFailedError('Object with UID "' . $row['object_oid'] . '" does not exist, but is referenced by the attribute "' . $row['attribute_alias'] . '" (UID "' . $row['uid'] . '"). Please repair the model or delete the orphaned attribute!', '70UJ2GV');
                     }
+                    
+                    $rel = new Relation(
+                        $exface,
+                        RelationTypeDataType::REVERSE($exface),
+                        $row['oid'], // relation id
+                        $row['rev_relation_alias'], // relation alias
+                        $row['attribute_alias'], // relation modifier: the alias of the right key attribute
+                        $row['rev_relation_name'], // name (used for captions)
+                        $object, // left object
+                        $leftKeyAttr, // left key in the main object
+                        $row['object_oid'], // right object UID
+                        $row['oid'] // right object key attribute id
+                        );
+                } elseif ($attr) {
+                    // At this point, we know, it is a direct relation. This can only happen if the object has a corresponding direct
+                    // attribute. This is why the elseif($attr) is there.
+                    $rel = new Relation(
+                        $exface,
+                        RelationTypeDataType::REGULAR($exface),
+                        $attr->getId(), // relation id
+                        $attr->getAlias(), // relation alias
+                        '', // alias modifier allways empty for direct regular relations
+                        $attr->getName(),
+                        $object, //  left object
+                        $attr, // left key attribute
+                        $row['related_object_oid'], // right object UID
+                        $row['related_object_special_key_attribute_oid'] // related object key attribute (UID will be used if not set)
+                        );
+                }
+                
+                if ($rel) {
+                    $object->addRelation($rel);
                 }
             }
         }

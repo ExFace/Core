@@ -4,128 +4,136 @@ namespace exface\Core\Interfaces\Model;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\Exceptions\RuntimeException;
+use exface\Core\DataTypes\RelationTypeDataType;
+use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 
+/**
+ * A relation in the metamodel symbolizes a key-based relationship between to objects.
+ * 
+ * In UXON alias expressions, relations are symbolized by a double underscore "__". By concatenating aliases
+ * via double underscore, it is possible to "travel" along relation paths: e.g. ORDER__COMPANY__COUNTRY__NAME.
+ * 
+ * A relation is allways to be read from left to right: e.g. ORDER__PAYEE would be the alias of the relation 
+ * PAYEE of the object ORDER, where the relation's left object is ORDER and it's right object is whatever 
+ * the relation PAYEE points to - in this case, the COMPANY. There is allways also the reverse relation
+ * COMPANY__ORDER, or more precisely COMPANY__ORDER[PAYEE], which stands for the connection between a COMPANY 
+ * to all ORDERS, where this COMPANY is the target of the PAYEE relation. The left object of that relation
+ * is COMPANY and the right one - ORDER. Although both relations describe the same key set of the underlying
+ * relational data model, they are two distinct relations of different type in the metamodel: a "regular" and a 
+ * "reverse" one. 
+ * 
+ * Under the hood, a relation actually connects two attributes and not merely two objects. In the above example,
+ * the ORDER object will probably have other relations to COMPANY, like CONTRACTOR, AGENT, etc. So the ORDER
+ * object will have multiple attributes, that hold foreign keys of COMPANY entities. Additionally, relations are 
+ * not always based on an explict foreig key. In particular relations between object from differen data sources, 
+ * may be based on some string identifiers like invoice numbers, id-codes, etc.
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
 interface MetaRelationInterface extends WorkbenchDependantInterface
 {
-    const RELATION_TYPE_FORWARD = 'n1';
-    
-    const RELATION_TYPE_REVERSE = '1n';
-    
-    const RELATION_TYPE_ONE_TO_ONE = '11';
-    
     /**
-     *
-     * @param unknown $id
-     * @param unknown $alias
-     * @param unknown $name
-     * @param unknown $main_object
-     * @param unknown $foreign_key_alias
-     * @param unknown $related_object_id
-     * @param string $type
-     *            one of the MetaRelationInterface::RELATION_TYPE_xxx constants
+     * 
+     * @param Workbench $workbench
+     * @param RelationTypeDataType $type
+     * @param string $uid
+     * @param string $alias
+     * @param string $aliasModifier
+     * @param string $name
+     * @param MetaObjectInterface $leftObject
+     * @param MetaAttributeInterface $leftKeyAttribute
+     * @param string $rightObjectUid
+     * @param string $rightObjectKeyAttributeUid
      */
-    public function __construct(Workbench $workbench, $relation_id, $alias, $name, $main_object_id, $foreign_key_alias, $related_object_id, $related_object_key_attribute_id = null, $type = 'n1');
+    public function __construct(
+        Workbench $workbench, 
+        RelationTypeDataType $type, 
+        string $uid, 
+        string $alias, 
+        string $aliasModifier = '', 
+        string $name, 
+        MetaObjectInterface $leftObject, 
+        MetaAttributeInterface $leftKeyAttribute, 
+        string $rightObjectUid, 
+        string $rightObjectKeyAttributeUid = null);
     
-    public function getRelatedObject();
+    public function getId() : string;
     
-    public function getId();
+    public function getAlias() : string;
     
-    public function setId($value);
+    public function getAliasModifier() : string;
     
-    public function getAlias();
-    
-    public function setAlias($value);
-    
-    public function getName();
-    
-    public function setName($value);
-    
-    public function getRelatedObjectId();
-    
-    public function setRelatedObjectId($value);
+    public function getName() : string;
     
     /**
-     * Returns the attribute, that is the foreign key in the main object.
-     * Same as calling getMainObjectKeyAttribute()
+     * 
+     * @return string
+     */
+    public function getRightObjectId() : string;
+    
+    /**
+     * 
+     * @return MetaObjectInterface
+     */
+    public function getRightObject() : MetaObjectInterface;
+    
+    /**
+     * Returns the key attribute of the right object.
+     * 
+     * For regular relations, it is typically the primary key (UID) of the right object,
+     * while for reverse relations it is the foreign key.
+     * 
+     * @return MetaAttributeInterface
+     */
+    public function getRightKeyAttribute() : MetaAttributeInterface;
+       
+    /**
+     * Returns the attribute of the left object, that holds the relation key.
+     * 
+     * E.g. for the relation ORDER__PAYEE it would return the foreign key for COMPANY stored in ORDER data.
      *
      * @return MetaAttributeInterface
      */
-    public function getForeignKeyAttribute();
+    public function getLeftKeyAttribute() : MetaAttributeInterface;
     
-    /**
-     * Returns the alias of the foreign key in the main object.
-     * E.g. for the relation ORDER->USER it would return USER_UID, which is a attribute of the object ORDER.
-     *
-     * @return string
-     */
-    public function getForeignKeyAlias();
+    public function getLeftObject() : MetaObjectInterface;
     
-    public function setForeignKeyAlias($value);
-    
-    public function getJoinType();
-    
-    public function setJoinType($value);
-    
-    public function getMainObject();
-    
-    public function setMainObject(\exface\Core\Interfaces\Model\MetaObjectInterface $obj);
-    
-    public function getType();
-    
-    public function setType($value);
-    
-    /**
-     * Returns the alias of the attribute, that identifies the related object in this relation.
-     * In most cases it is the UID
-     * of the related object, but can also be another attribute.
-     * E.g. for the relation ORDER->USER it would return UID, which is the alias of the id attribute of the object USER.
-     *
-     * @return string
-     */
-    public function getRelatedObjectKeyAlias();
-    
-    public function setRelatedObjectKeyAlias($value);
-    
-    /**
-     * Returns the foreign key attribute or NULL if there is no key attribute
-     *
-     * FIXME Fix Reverse relations key bug. For some reason, the foreign key is set incorrectly: e.g. for exface.Core.WIDGET__PHP_ANNOTATION the
-     * foreign key is FILE, but there is no FILE attribute in the WIDGET object (the UID is PATHNAME_RELATIVE).
-     *
-     * @return \exface\Core\Interfaces\Model\MetaAttributeInterface
-     */
-    public function getMainObjectKeyAttribute();
-    
-    public function getRelatedObjectKeyAttribute();
+    public function getType() : RelationTypeDataType;
     
     /**
      * Returns the UID of the object, this attribute was inherited from or NULL if it is a direct attribute of it's object
      *
-     * @return string
+     * @return string|null
      */
-    public function getInheritedFromObjectId();
+    public function getInheritedFromObjectId() : ?string;
     
     /**
      *
      * @param string $value
+     * @return MetaRelationInterface
      */
-    public function setInheritedFromObjectId($value);
+    public function setInheritedFromObjectId($value) : MetaRelationInterface;
     
     /**
      * Returns TRUE if this Relation was inherited from a parent object
      *
-     * @return boolean
+     * @return bool
      */
-    public function isInherited();
+    public function isInherited() : bool;
     
     /**
-     * Returns a related attribute as if it was queried via $object->getAttribute("this_relation_alias->attribute_alias").
-     * An attribute returned by this function has a relation path relative to the main object of this relation!
+     * Returns a related attribute as if it was queried via $object->getAttribute("this_relation_alias__attribute_alias").
+     * 
+     * The attribute returned by this function has a relation path relative to the left object of this relation!
      *
-     * @param string $attribute_alias
-     * @return \exface\Core\Interfaces\Model\MetaAttributeInterface
+     * @param string $aliasRelativeToRightObject
+     * 
+     * @throws MetaAttributeNotFoundError
+     * 
+     * @return MetaAttributeInterface
      */
-    public function getRelatedAttribute($attribute_alias);
+    public function getRightAttribute(string $aliasRelativeToRightObject) : MetaAttributeInterface;
     
     /**
      * Returns the relation in the opposite direction: ORDER->POSITION will become POSITION->ORDER
@@ -134,41 +142,48 @@ interface MetaRelationInterface extends WorkbenchDependantInterface
      *
      * @return MetaRelationInterface
      */
-    public function getReversedRelation();
+    public function getReversedRelation() : MetaRelationInterface;
+    
+    /**
+     * Same as getReversedRelation()
+     * 
+     * @return MetaRelationInterface
+     */
+    public function reverse() : MetaRelationInterface;
     
     /**
      * Clones the attribute keeping the model and object
      *
      * @return MetaRelationInterface
      */
-    public function copy();
+    public function copy() : MetaRelationInterface;
     
     /**
      *
-     * @return \exface\Core\CommonLogic\Model\Model
+     * @return ModelInterface
      */
-    public function getModel();
+    public function getModel() : ModelInterface;
     
     /**
      * Returns TRUE if this is a reverse relation and FALSE otherwise
      *
-     * @return boolean
+     * @return bool
      */
-    public function isReverseRelation();
+    public function isReverseRelation() : bool;
     
     /**
      * Returns TRUE if this is a regular (forward) relation and FALSE otherwise
      *
-     * @return boolean
+     * @return bool
      */
-    public function isForwardRelation();
+    public function isForwardRelation() : bool;
     
     /**
      * Returns TRUE if this is a one-to-one relation and FALSE otherwise
      *
-     * @return boolean
+     * @return bool
      */
-    public function isOneToOneRelation();
+    public function isOneToOneRelation() : bool;
     
     /**
      * Returns TRUE if this relation equals the given relation or is derived (inherited) from it and FALSE otherwise.
@@ -178,18 +193,18 @@ interface MetaRelationInterface extends WorkbenchDependantInterface
      * The method is_exaclty() would return FALSE in this situation.
      *
      * @param MetaRelationInterface $other_relation
-     * @return boolean
+     * @return bool
      */
-    public function is(MetaRelationInterface $other_relation);
+    public function is(MetaRelationInterface $other_relation) : bool;
     
     /**
      * Returns TRUE if this relation is exactly the same as the given one and belongs to the same object.
      * Otherwise returns FALSE.
      *
      * @param MetaRelationInterface $other_relation
-     * @return boolean
+     * @return bool
      */
-    public function isExactly(MetaRelationInterface $other_relation);
+    public function isExactly(MetaRelationInterface $other_relation) : bool;
     
     /**
      * Returns a string representation of this relation: e.g. "ORDER_POSITION[ORDER_ID] -> ORDER[ID]".
@@ -198,5 +213,5 @@ interface MetaRelationInterface extends WorkbenchDependantInterface
      *
      * @return string
      */
-    public function toString();
+    public function toString() : string;
 }

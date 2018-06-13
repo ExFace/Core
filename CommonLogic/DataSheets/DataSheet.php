@@ -39,6 +39,7 @@ use exface\Core\Interfaces\Model\ConditionalExpressionInterface;
 use exface\Core\CommonLogic\Model\Aggregator;
 use exface\Core\CommonLogic\QueryBuilder\RowDataArraySorter;
 use exface\Core\Exceptions\DataSheets\DataSheetStructureError;
+use exface\Core\DataTypes\RelationTypeDataType;
 
 /**
  * Internal data respresentation object in exface.
@@ -380,7 +381,7 @@ class DataSheet implements DataSheetInterface
                 $rels = RelationPath::relationPathParse($attribute->getAliasWithRelationPath());
                 foreach ($rels as $depth => $rel) {
                     $rel_path = RelationPath::relationPathAdd($last_rel_path, $rel);
-                    if ($query->canReadAttribute($sheetObject->getRelation($rel_path)->getRelatedObjectKeyAttribute())) {
+                    if ($query->canReadAttribute($sheetObject->getRelation($rel_path)->getRightKeyAttribute())) {
                         $rel_path_in_main_ds = $last_rel_path;
                     } else {
                         if (! $rel_path_to_subsheet) {
@@ -417,10 +418,10 @@ class DataSheet implements DataSheetInterface
                 }
                 $subsheet->getColumns()->addFromExpression($subsheet_attribute_alias);
                 // Add the related object key alias of the relation to the subsheet to that subsheet. This will be the right key in the future JOIN.
-                if ($rel_path_to_subsheet_right_key = $sheetObject->getRelation($rel_path_to_subsheet)->getRelatedObjectKeyAlias()) {
+                if ($rel_path_to_subsheet_right_key = $sheetObject->getRelation($rel_path_to_subsheet)->getRightKeyAttribute()->getAlias()) {
                     $subsheet->getColumns()->addFromExpression(RelationPath::relationPathAdd($rel_path_in_main_ds, $rel_path_to_subsheet_right_key));
                 } else {
-                    throw new DataSheetUidColumnNotFoundError($this, 'Cannot find UID (primary key) for subsheet: no key alias can be determined for the relation "' . $rel_path_to_subsheet . '" from "' . $sheetObject->getAliasWithNamespace() . '" to "' . $sheetObject->getRelation($rel_path_to_subsheet)->getRelatedObject()->getAliasWithNamespace() . '"!');
+                    throw new DataSheetUidColumnNotFoundError($this, 'Cannot find UID (primary key) for subsheet: no key alias can be determined for the relation "' . $rel_path_to_subsheet . '" from "' . $sheetObject->getAliasWithNamespace() . '" to "' . $sheetObject->getRelation($rel_path_to_subsheet)->getRightObject()->getAliasWithNamespace() . '"!');
                 }
             } else {
                 throw new DataSheetReadError($this, 'QueryBuilder "' . get_class($query) . '" cannot read attribute "' . $attribute->getAliasWithRelationPath() . '" of object "' . $attribute->getObject()->getAliasWithNamespace() .'"!');
@@ -539,21 +540,22 @@ class DataSheet implements DataSheetInterface
         // load data for subsheets if needed
         if ($this->countRows()) {
             foreach ($this->getSubsheets() as $rel_path => $subsheet) {
-                if (! $thisObject->getRelation($rel_path)->isReverseRelation()) {
+                $rel = $thisObject->getRelation($rel_path);
+                if (! $rel->isReverseRelation()) {
                     $foreign_keys = $this->getColumnValues($rel_path);
-                    $subsheet->addFilterFromString($thisObject->getRelation($rel_path)->getRelatedObjectKeyAlias(), implode($thisObject->getRelation($rel_path)->getRelatedObjectKeyAttribute()->getValueListDelimiter(), array_unique($foreign_keys)), EXF_COMPARATOR_IN);
+                    $subsheet->addFilterFromString($rel->getRightKeyAttribute()->getAlias(), implode($rel->getRightKeyAttribute()->getValueListDelimiter(), array_unique($foreign_keys)), EXF_COMPARATOR_IN);
                     $left_key_column = $rel_path;
-                    $right_key_column = $thisObject->getRelation($rel_path)->getRelatedObjectKeyAlias();
+                    $right_key_column = $rel->getRightKeyAttribute()->getAlias();
                 } else {
-                    if ($thisObject->getRelation($rel_path)->getMainObjectKeyAttribute()) {
+                    if ($rel->getLeftKeyAttribute()) {
                         throw new DataSheetJoinError($this, 'Joining subsheets via reverse relations with explicitly specified foreign keys, not implemented yet!', '6T5V36I');
                     } else {
                         $foreign_keys = $this->getUidColumn()->getValues();
-                        $subsheet->addFilterFromString($thisObject->getRelation($rel_path)->getForeignKeyAlias(), implode($thisObject->getRelation($rel_path)->getForeignKeyAttribute()->getValueListDelimiter(), array_unique($foreign_keys)), EXF_COMPARATOR_IN);
-                        // FIXME Fix Reverse relations key bug. Getting the left key column from the reversed relation here is a crude hack, but
+                        $subsheet->addFilterFromString($rel->getLeftKeyAttribute()->getAlias(), implode($rel->getLeftKeyAttribute()->getValueListDelimiter(), array_unique($foreign_keys)), EXF_COMPARATOR_IN);
+                        // FIXME reverse-relation-key bug. Getting the left key column from the reversed relation here is a crude hack, but
                         // the get_main_object_key_alias() strangely does not work for reverse relations
-                        $left_key_column = $thisObject->getRelation($rel_path)->getReversedRelation()->getRelatedObjectKeyAlias();
-                        $right_key_column = $thisObject->getRelation($rel_path)->getForeignKeyAlias();
+                        $left_key_column = $rel->getReversedRelation()->getRightKeyAttribute()->getAlias();
+                        $right_key_column = $rel->getLeftKeyAttribute()->getAlias();
                     }
                 }
                 $subsheet->dataRead();
@@ -721,7 +723,7 @@ class DataSheet implements DataSheetInterface
                     if ($this->getMetaObject()->getRelation($rel_path)->isForwardRelation()) {
                         $uid_column_alias = $rel_path;
                     } else {
-                        // $uid_column = $this->getColumn($this->getMetaObject()->getRelation($rel_path)->getMainObjectKeyAttribute()->getAliasWithRelationPath());
+                        // $uid_column = $this->getColumn($this->getMetaObject()->getRelation($rel_path)->getLeftKeyAttribute()->getAliasWithRelationPath());
                         throw new DataSheetWriteError($this, 'Updating attributes from reverse relations ("' . $column->getExpressionObj()->toString() . '") is not supported yet!', '6T5V4HW');
                     }
                 } else {
@@ -1038,13 +1040,12 @@ class DataSheet implements DataSheetInterface
         // This is the case, if the deleted object has reverse relations (1-to-many), where the relation is a mandatory
         // attribute of the related object (that is, if the related object cannot exist without the one we are deleting)
         /* @var $rel \exface\Core\Interfaces\Model\MetaRelationInterface */
-        foreach ($this->getMetaObject()->getRelations(MetaRelationInterface::RELATION_TYPE_REVERSE) as $rel) {
-            // FIXME use $rel->getRelatedObjectKeyAttribute() here instead. This must be fixed first though, as it returns false now
-            if (! $rel->getRelatedObject()->getAttribute($rel->getForeignKeyAlias())->isRequired()) {
-                // FIXME Throw a warning here! Need to be able to show warning along with success messages!
-                // throw new DataSheetWriteError($this, 'Cascading deletion via optional relations not yet implemented: no instances were deleted for relation "' . $rel->getAlias() . '" to object "' . $rel->getRelatedObject()->getAliasWithNamespace() . '"!');
+        foreach ($this->getMetaObject()->getRelations(RelationTypeDataType::REVERSE) as $rel) {
+            if (! $rel->getRightKeyAttribute()->isRequired()) {
+                // FIXME Show a warning here! Need to be able to show warning along with success messages!
+                // throw new DataSheetWriteError($this, 'Cascading deletion via optional relations not yet implemented: no instances were deleted for relation "' . $rel->getAlias() . '" to object "' . $rel->getRightObject()->getAliasWithNamespace() . '"!');
             } else {
-                $ds = DataSheetFactory::createFromObject($rel->getRelatedObject());
+                $ds = DataSheetFactory::createFromObject($rel->getRightObject());
                 // Use all filters of the original query in the cascading queries
                 $ds->setFilters($this->getFilters()->rebase($rel->getAlias()));
                 // Additionally add a filter over UIDs in the original query, if it has data with UIDs. This makes sure, the cascading deletes
