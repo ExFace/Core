@@ -981,7 +981,7 @@ class Attribute implements MetaAttributeInterface
     public function getDefaultEditorUxon()
     {
         // If there is no default widget uxon defined, use the UXON from the data type
-        if (is_null($this->default_editor_uxon)) {
+        if ($this->default_editor_uxon === null) {
             if ($this->isRelation()) {
                 $this->default_editor_uxon = new UxonObject([
                     "widget_type" => $this->getWorkbench()->getConfig()->getOption('TEMPLATES.DEFAULT_WIDGET_FOR_RELATIONS')
