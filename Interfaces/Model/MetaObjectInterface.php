@@ -14,28 +14,18 @@ use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Interfaces\AliasInterface;
 use exface\Core\CommonLogic\Model\Attribute;
+use exface\Core\DataTypes\RelationTypeDataType;
 
 interface MetaObjectInterface extends WorkbenchDependantInterface, AliasInterface
 {
-    function __construct(ModelInterface $model);
-    
-    /**
-     * Returns all relations as an array with the relation alias as key.
-     * If an ALIAS stands for multiple
-     * relations (of different types), the respective element of the relations array will be an array in
-     * turn.
-     *
-     * @return MetaRelationInterface[] [relation_alias => relation | relation[]]
-     */
-    public function getRelationsArray();
-    
     /**
      * Returns all direct relations of this object as a flat array.
      * Optionally filtered by relation type.
      *
+     * @param RelationTypeDataType|string $relation_type
      * @return MetaRelationInterface[]
      */
-    public function getRelations($relation_type = null);
+    public function getRelations($relation_type = null) : array;
     
     /**
      * Returns a relation specified by it's alias.
@@ -64,11 +54,11 @@ interface MetaObjectInterface extends WorkbenchDependantInterface, AliasInterfac
      * renamed to something else (the object's alias is currently DATASRC).
      *
      * @param string $aliasOrPathString
-     * @param string $foreign_key_alias
+     * @param string $modifier
      * @throws MetaRelationNotFoundError if no matching relation found
      * @return MetaRelationInterface
      */
-    public function getRelation($aliasOrPathString, $foreign_key_alias = '');
+    public function getRelation(string $aliasOrPathString, string $modifier = '') : MetaRelationInterface;
     
     /**
      * Returns TRUE if the object has a relation matching the given alias and FALSE otherwise.
@@ -129,7 +119,7 @@ interface MetaObjectInterface extends WorkbenchDependantInterface, AliasInterfac
      * @param string $relation_path_string
      * @return MetaObjectInterface
      */
-    public function getRelatedObject($relation_path_string);
+    public function getRelatedObject($relation_path_string) : MetaObjectInterface;
     
     /**
      * Adds a relation to the object.
@@ -146,7 +136,7 @@ interface MetaObjectInterface extends WorkbenchDependantInterface, AliasInterfac
      * @param MetaRelationInterface $relation
      * @return MetaObjectInterface
      */
-    public function addRelation(MetaRelationInterface $relation);
+    public function addRelation(MetaRelationInterface $relation) : MetaObjectInterface;
     
     /**
      * Inherits all attributes, relations and actions from the given parent object.
@@ -192,11 +182,10 @@ interface MetaObjectInterface extends WorkbenchDependantInterface, AliasInterfac
      * FILE-object because PHP_FILE extends FILE.
      *
      * @param string $related_object_id
-     * @param string $relation_type
-     *            one of the MetaRelationInterface::RELATION_TYPE_xxx constants
+     * @param RelationTypeDataType|string $relation_type
      * @return MetaRelationInterface[]
      */
-    public function findRelations($related_object_id, $relation_type = null);
+    public function findRelations(string $related_object_id, $relation_type = null) : array;
     
     /**
      * Returns the relation path to a given object or FALSE that object is not related to the current one.

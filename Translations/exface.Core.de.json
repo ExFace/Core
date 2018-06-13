@@ -116,6 +116,10 @@
     "GLOBAL.MODEL.DATA_SOURCES": "Datenquellen",
     "GLOBAL.MODEL.MODEL": "Modell",
     "GLOBAL.MODEL.OBJECTS": "Objekte",
+    "GLOBAL.MODEL.RELATIONS": "Relationen",
+    "GLOBAL.MODEL.RELATION_TYPE.REGULAR": "Forwärts",
+    "GLOBAL.MODEL.RELATION_TYPE.REVERSE": "Rückwärts",
+    "GLOBAL.MODEL.RELATION_TYPE.ONE_TO_ONE": "Eins-zu-eins",
     "GLOBAL.MODEL.UID": "UID",
     "GLOBAL.MODEL.LABEL": "Label",
     

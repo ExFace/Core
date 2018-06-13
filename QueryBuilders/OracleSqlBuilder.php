@@ -12,6 +12,7 @@ use exface\Core\CommonLogic\Model\Aggregator;
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
 use exface\Core\Interfaces\Model\AggregatorInterface;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
+use exface\Core\DataTypes\RelationTypeDataType;
 
 /**
  * A query builder for Oracle SQL.
@@ -155,7 +156,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
                     // they should be done after pagination as they are potentially very time consuming
                     if ($this->checkForSqlStatement($qpart->getAttribute()->getDataAddress()) && (! $group_by || ! $qpart->getAggregator())) {
                         continue;
-                    } elseif ($qpart->getUsedRelations(MetaRelationInterface::RELATION_TYPE_REVERSE) && ! $this->getAggregation($qpart->getAlias()) && $this->isQpartRelatedToAggregator($qpart)) {
+                    } elseif ($qpart->getUsedRelations(RelationTypeDataType::REVERSE) && ! $this->getAggregation($qpart->getAlias()) && $this->isQpartRelatedToAggregator($qpart)) {
                         // Also skip selects with reverse relations that can be joined later in the enrichment.                      
                         // Selecting them in the core query would only slow it down. The filtering is done explicitly in build_sql_where_condition()
                         // The trick is, that we need to check, if the reverse relation can be joined onto something coming out of the GROUP BY:

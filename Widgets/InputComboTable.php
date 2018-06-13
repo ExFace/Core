@@ -413,7 +413,7 @@ class InputComboTable extends InputCombo implements iHaveChildren
         // and see if their related object is the same as the related object of the relation represented by the combo.
         foreach ($data_sheet->getColumns()->getAll() as $column) {
             if ($column->getAttribute() && $column->getAttribute()->isRelation()) {
-                if ($column->getAttribute()->getRelation()->getRelatedObject()->is($this->getRelation()->getRelatedObject())) {
+                if ($column->getAttribute()->getRelation()->getRightObject()->is($this->getRelation()->getRightObject())) {
                     $this->setValuesFromArray($column->getValues(false));
                     return;
                 }
@@ -484,8 +484,8 @@ class InputComboTable extends InputCombo implements iHaveChildren
             if ($text_column_name) {
                 $data_sheet->getColumns()->addFromExpression($text_column_name);
             }
-        } elseif ($this->getRelation() && $this->getRelation()->getRelatedObject()->is($data_sheet->getMetaObject())) {
-            $data_sheet->getColumns()->addFromExpression($this->getRelation()->getRelatedObjectKeyAlias());
+        } elseif ($this->getRelation() && $this->getRelation()->getRightObject()->is($data_sheet->getMetaObject())) {
+            $data_sheet->getColumns()->addFromAttribute($this->getRelation()->getRightKeyAttribute());
             foreach ($this->getTable()->getColumns() as $col) {
                 $data_sheet->getColumns()->addFromExpression($col->getAttributeAlias(), $col->getDataColumnName());
             }
@@ -561,7 +561,7 @@ class InputComboTable extends InputCombo implements iHaveChildren
     {
         if (! $this->isOptionsObjectSpecified()) {
             if ($this->getAttribute()->isRelation()) {
-                $this->setOptionsObject($this->getMetaObject()->getRelation($this->getAttributeAlias())->getRelatedObject());
+                $this->setOptionsObject($this->getMetaObject()->getRelation($this->getAttributeAlias())->getRightObject());
             }
         }
         return parent::getOptionsObject();

@@ -10,6 +10,7 @@ use exface\Core\CommonLogic\EntityList;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Model\ExpressionInterface;
+use exface\Core\Exceptions\DataSheets\DataSheetStructureError;
 
 /**
  *
@@ -124,7 +125,20 @@ class DataColumnList extends EntityList implements DataColumnListInterface
      */
     public function addFromAttribute(MetaAttributeInterface $attribute)
     {
-        return $this->addFromExpression($attribute->getAliasWithRelationPath());
+        $sheetObject = $this->getDataSheet()->getMetaObject();
+        // Make sure, it is clear, how the attribute is related to the sheet object. Pay attention to
+        // the fact, that the attribute may have a relation path.
+        if ($sheetObject->is($attribute->getRelationPath()->getStartObject())) {
+            // If the relation path starts with the sheet object, just add the attribute as-is.
+            return $this->addFromExpression($attribute->getAliasWithRelationPath());
+        } elseif ($sheetObject->is($attribute->getObject())) {
+            // If the relation path starts with another object, but the attribute itself belongs 
+            // to the sheet object, we can still add it by cutting off the relation path.
+            return $this->addFromExpression($attribute->getAlias());
+        } else {
+            // If none of the above worked, it's an error!
+            throw new DataSheetStructureError($this->getDataSheet(), 'Cannot add attribute "' . $attribute->getAliasWithRelationPath() . '" to data sheet of "' . $sheetObject->getAliasWithNamespace() . '": no relation to the attribute could be found!');
+        }
     }
     
     /**

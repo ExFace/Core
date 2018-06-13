@@ -20,6 +20,7 @@ use exface\Core\DataTypes\NumberDataType;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Interfaces\Widgets\iShowDataColumn;
+use exface\Core\DataTypes\RelationTypeDataType;
 
 /**
  * The Value widget simply shows a raw (unformatted) value.
@@ -133,12 +134,13 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
                     }
                     // If the prefill object is not in the widget's relation path, try to find a relation from this widget's
                     // object to the data sheet object and vice versa
-                } elseif ($this->getAttribute()->isRelation() && $prefill_object->is($this->getAttribute()->getRelation()->getRelatedObject())) {
-                    // If this widget represents the direct relation attribute, the attribute to display would be the UID of the
-                    // of the related object (e.g. trying to fill the order positions attribute "ORDER" relative to the object
-                    // "ORDER" should result in the attribute UID of ORDER because it holds the same value)
-                        
-                    $data_sheet->getColumns()->addFromExpression($this->getAttribute()->getRelation()->getRelatedObjectKeyAlias());
+                    
+                } elseif ($this->getAttribute()->isRelation() && $prefill_object->is($this->getAttribute()->getRelation()->getRightObject())) {
+                    // If this widget represents the relation from the sheet object to the prefill object, the prefill value would be the 
+                    // right key of the relation (e.g. trying to prefill the order positions attribute "ORDER" relative to the object
+                    // "ORDER" should result in the attribute UID of ORDER because it is the right key and must have a value matching the 
+                    // left key). 
+                    $data_sheet->getColumns()->addFromAttribute($this->getAttribute()->getRelation()->getRightKeyAttribute());
                 } else {
                     // If the attribute is not a relation itself, we still can use it for prefills if we find a relation to access
                     // it from the $data_sheet's object. In order to do this, we need to find relations from the prefill object to
@@ -148,11 +150,10 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
                     // the prefill object to an object, this widget's object extends, can still be used in most cases, but a direct
                     // relation is safer. Not sure, if inherited relations will work if the extending object has a different data address...
                     
-                    
                     // Iterate over all forward relations
                     $inherited_rel = null;
                     $direct_rel = null;
-                    foreach ($prefill_object->findRelations($widget_object->getId(), MetaRelationInterface::RELATION_TYPE_FORWARD) as $rel) {
+                    foreach ($prefill_object->findRelations($widget_object->getId(), RelationTypeDataType::REGULAR) as $rel) {
                         if ($rel->isInherited() && ! $inherited_rel) {
                             // Remember the first inherited relation in case there will be no direct relations
                             $inherited_rel = $rel;

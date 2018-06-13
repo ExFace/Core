@@ -285,7 +285,7 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
             // time. If data for the other filters will be found in the prefill sheet when actually doing the prefilling,
             // it should, of course, be applied too, but we do not tell ExFace to always fetch this data.
             foreach ($relevant_filters as $fltr) {
-                if ($fltr->getAttribute()->isRelation() && $fltr->getAttribute()->getRelation()->getRelatedObject()->isExactly($data_sheet->getMetaObject())) {
+                if ($fltr->getAttribute()->isRelation() && $fltr->getAttribute()->getRelation()->getRightObject()->isExactly($data_sheet->getMetaObject())) {
                     $data_sheet = $fltr->prepareDataSheetToPrefill($data_sheet);
                     $uid_filters_found = true;
                 }

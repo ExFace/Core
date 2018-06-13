@@ -4,6 +4,10 @@ namespace exface\Core\CommonLogic\Model;
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\Interfaces\Model\MetaRelationInterface;
 use exface\Core\Exceptions\RuntimeException;
+use exface\Core\DataTypes\RelationTypeDataType;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
+use exface\Core\Interfaces\Model\ModelInterface;
 
 class Relation implements MetaRelationInterface
 {
@@ -12,22 +16,24 @@ class Relation implements MetaRelationInterface
     private $id;
 
     private $alias;
+    
+    private $aliasModifier = '';
 
     private $name;
+    
+    private $leftObject = null;
+    
+    private $leftKeyAttribute = null;
+    
+    private $rightObjectUid = null;
+    
+    private $rightObject = null;
+    
+    private $rightKeyAttributeUid = null;
+    
+    private $rightKeyAttribute = null;
 
-    private $main_object_id;
-
-    private $related_object_id;
-
-    private $related_object_key_attribute_id;
-
-    private $related_object_key_alias;
-
-    private $join_type = 'LEFT';
-
-    private $foreign_key_alias;
-
-    private $type = MetaRelationInterface::RELATION_TYPE_FORWARD;
+    private $type = null;
 
     private $inherited_from_object_id = null;
 
@@ -36,44 +42,39 @@ class Relation implements MetaRelationInterface
 
     /**
      *
-     * @param unknown $id            
-     * @param unknown $alias            
-     * @param unknown $name            
-     * @param unknown $main_object            
-     * @param unknown $foreign_key_alias            
-     * @param unknown $related_object_id            
-     * @param string $type
-     *            one of the MetaRelationInterface::RELATION_TYPE_xxx constants
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::__construct()
      */
-    function __construct(Workbench $workbench, $relation_id, $alias, $name, $main_object_id, $foreign_key_alias, $related_object_id, $related_object_key_attribute_id = null, $type = 'n1')
+    public function __construct(
+        Workbench $workbench,
+        RelationTypeDataType $type,
+        string $uid,
+        string $alias,
+        string $aliasModifier = '',
+        string $name,
+        MetaObjectInterface $leftObject,
+        MetaAttributeInterface $leftKeyAttribute,
+        string $rightObjectUid,
+        string $rightObjectKeyAttributeUid = null)
     {
         $this->exface = $workbench;
-        $this->id = $relation_id;
+        $this->id = $uid;
         $this->alias = $alias;
+        $this->aliasModifier = $aliasModifier;
         $this->name = $name;
-        $this->main_object_id = $main_object_id;
-        $this->foreign_key_alias = $foreign_key_alias;
-        $this->related_object_id = $related_object_id;
-        $this->related_object_key_attribute_id = $related_object_key_attribute_id;
+        $this->leftObject = $leftObject;
+        $this->leftKeyAttribute = $leftKeyAttribute;
+        $this->rightObjectUid = $rightObjectUid;
+        $this->rightKeyAttributeUid = $rightObjectKeyAttributeUid;
         $this->type = $type;
     }
     
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::getRelatedObject()
-     */
-    public function getRelatedObject()
-    {
-        return $this->getModel()->getObject($this->related_object_id, $this->getAlias());
-    }
-
-    /**
-     * 
-     * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaRelationInterface::getId()
      */
-    public function getId()
+    public function getId() : string
     {
         return $this->id;
     }
@@ -81,31 +82,16 @@ class Relation implements MetaRelationInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::setId()
-     */
-    public function setId($value)
-    {
-        $this->id = $value;
-    }
-
-    /**
-     * 
-     * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaRelationInterface::getAlias()
      */
-    public function getAlias()
+    public function getAlias() : string
     {
         return $this->alias;
     }
-
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::setAlias()
-     */
-    public function setAlias($value)
+    
+    public function getAliasModifier() : string
     {
-        $this->alias = $value;
+        return $this->aliasModifier;
     }
 
     /**
@@ -113,7 +99,7 @@ class Relation implements MetaRelationInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaRelationInterface::getName()
      */
-    public function getName()
+    public function getName() : string
     {
         return $this->name;
     }
@@ -121,98 +107,72 @@ class Relation implements MetaRelationInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::setName()
+     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::getLeftObject()
      */
-    public function setName($value)
+    public function getLeftObject() : MetaObjectInterface
     {
-        $this->name = $value;
-    }
-
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::getRelatedObjectId()
-     */
-    public function getRelatedObjectId()
-    {
-        return $this->related_object_id;
-    }
-
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::setRelatedObjectId()
-     */
-    public function setRelatedObjectId($value)
-    {
-        $this->related_object_id = $value;
+        return $this->leftObject;
     }
     
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::getForeignKeyAttribute()
+     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::getLeftKeyAttribute()
      */
-    public function getForeignKeyAttribute(){
-        return $this->getMainObjectKeyAttribute();
+    public function getLeftKeyAttribute() : MetaAttributeInterface
+    {
+        return $this->leftKeyAttribute;
     }
 
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::getForeignKeyAlias()
+     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::getRightObject()
      */
-    public function getForeignKeyAlias()
+    public function getRightObject() : MetaObjectInterface
     {
-        return $this->foreign_key_alias;
+        if ($this->rightObject === null) {
+            $this->rightObject = $this->getModel()->getObjectById($this->rightObjectUid);
+        }
+        return $this->rightObject;
     }
-
+    
     /**
      * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::getRightObjectId()
      */
-    public function setForeignKeyAlias($value)
+    public function getRightObjectId() : string
     {
-        $this->foreign_key_alias = $value;
+        return $this->rightObjectUid;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::getRightKeyAttribute()
+     */
+    public function getRightKeyAttribute() : MetaAttributeInterface
+    {
+        if ($this->rightKeyAttribute === null) {
+            if ($this->rightKeyAttributeUid !== null) {
+                $attr = $this->getRightObject()->getAttributes()->getByAttributeId($this->rightKeyAttributeUid);
+            } else {
+                $attr = $this->getRightObject()->getUidAttribute();
+            }
+            $this->rightKeyAttribute = $this->getRightAttribute($attr->getAlias());
+        }
+        return $this->rightKeyAttribute;
     }
 
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::getJoinType()
+     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::getRightAttribute()
      */
-    public function getJoinType()
+    public function getRightAttribute(string $aliasRelativeToRightObject) : MetaAttributeInterface
     {
-        return $this->join_type;
-    }
-
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::setJoinType()
-     */
-    public function setJoinType($value)
-    {
-        $this->join_type = $value;
-    }
-
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::getMainObject()
-     */
-    public function getMainObject()
-    {
-        return $this->getModel()->getObject($this->main_object_id);
-    }
-
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::setMainObject()
-     */
-    public function setMainObject(\exface\Core\Interfaces\Model\MetaObjectInterface $obj)
-    {
-        $this->main_object_id = $obj->getId();
+        return $this->getLeftObject()->getAttribute(RelationPath::relationPathAdd($this->getAlias(), $aliasRelativeToRightObject));
     }
 
     /**
@@ -220,7 +180,7 @@ class Relation implements MetaRelationInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaRelationInterface::getType()
      */
-    public function getType()
+    public function getType() : RelationTypeDataType
     {
         return $this->type;
     }
@@ -228,75 +188,9 @@ class Relation implements MetaRelationInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::setType()
-     */
-    public function setType($value)
-    {
-        $this->type = $value;
-    }
-
-   /**
-    * 
-    * {@inheritDoc}
-    * @see \exface\Core\Interfaces\Model\MetaRelationInterface::getRelatedObjectKeyAlias()
-    */
-    public function getRelatedObjectKeyAlias()
-    {
-        // If there is no special related_object_key_alias set, use the UID
-        if (! $this->related_object_key_alias) {
-            if ($this->related_object_key_attribute_id) {
-                $this->related_object_key_alias = $this->getRelatedObject()->getAttributes()->getByAttributeId($this->related_object_key_attribute_id)->getAlias();
-            } else {
-                $this->related_object_key_alias = $this->getRelatedObject()->getUidAttributeAlias();
-            }
-        }
-        return $this->related_object_key_alias;
-    }
-
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::setRelatedObjectKeyAlias()
-     */
-    public function setRelatedObjectKeyAlias($value)
-    {
-        $this->related_object_key_alias = $value;
-    }
-    
-    /**
-     * FIXME Fix Reverse relations key bug. For some reason, the foreign key is set incorrectly: e.g. for exface.Core.WIDGET__PHP_ANNOTATION the
-     * foreign key is FILE, but there is no FILE attribute in the WIDGET object (the UID is PATHNAME_RELATIVE).
-     *
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::getMainObjectKeyAttribute()
-     */
-    public function getMainObjectKeyAttribute()
-    {
-        try {
-            return $this->getMainObject()->getAttribute($this->getForeignKeyAlias());
-        } catch (\exface\Core\Exceptions\Model\MetaAttributeNotFoundError $e) {
-            return null;
-        }
-    }
-
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::getRelatedObjectKeyAttribute()
-     */
-    public function getRelatedObjectKeyAttribute()
-    {
-        return $this->getRelatedAttribute($this->getRelatedObjectKeyAlias());
-        // Backup of an old version, that returned an attribute withou a relation path
-        // return $this->getRelatedObject()->getAttribute($this->getRelatedObjectKeyAlias());
-    }
-
-    /**
-     * 
-     * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaRelationInterface::getInheritedFromObjectId()
      */
-    public function getInheritedFromObjectId()
+    public function getInheritedFromObjectId() : ?string
     {
         return $this->inherited_from_object_id;
     }
@@ -306,9 +200,10 @@ class Relation implements MetaRelationInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaRelationInterface::setInheritedFromObjectId()
      */
-    public function setInheritedFromObjectId($value)
+    public function setInheritedFromObjectId($value) : MetaRelationInterface
     {
         $this->inherited_from_object_id = $value;
+        return $this;
     }
 
     /**
@@ -316,19 +211,9 @@ class Relation implements MetaRelationInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaRelationInterface::isInherited()
      */
-    public function isInherited()
+    public function isInherited() : bool
     {
-        return is_null($this->getInheritedFromObjectId()) ? true : false;
-    }
-
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::getRelatedAttribute()
-     */
-    public function getRelatedAttribute($attribute_alias)
-    {
-        return $this->getMainObject()->getAttribute(RelationPath::relationPathAdd($this->getAlias(), $attribute_alias));
+        return $this->inherited_from_object_id === null ? true : false;
     }
 
     /**
@@ -336,18 +221,18 @@ class Relation implements MetaRelationInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaRelationInterface::getReversedRelation()
      */
-    public function getReversedRelation()
+    public function getReversedRelation() : MetaRelationInterface
     {
-        if ($this->getType() == MetaRelationInterface::RELATION_TYPE_FORWARD) {
+        if ($this->getType()->__toString() === RelationTypeDataType::REGULAR) {
             // If it is a regular relation, it will be a reverse one from the point of view of the related object. That is identified by the
             // alias of the object it leads to (in our case, the current object)
-            $reverse = $this->getRelatedObject()->getRelation($this->getMainObject()->getAlias(), $this->getAlias());
-        } elseif ($this->getType() == MetaRelationInterface::RELATION_TYPE_REVERSE || $this->getType() == MetaRelationInterface::RELATION_TYPE_ONE_TO_ONE) {
+            $reverse = $this->getRightObject()->getRelation($this->getLeftObject()->getAlias(), $this->getAlias());
+        } elseif ($this->getType()->__toString() === RelationTypeDataType::REVERSE || $this->getType()->__toString() === RelationTypeDataType::ONE_TO_ONE) {
             // If it is a reverse relation, it will be a regular one from the point of view of the related object. That is identified by its alias.
             // TODO Will it also work for one-to-one relations?
-            $reverse = $this->getRelatedObject()->getRelation($this->getForeignKeyAlias());
+            $reverse = $this->getRightObject()->getRelation($this->getLeftKeyAttribute()->getAlias());
         } else {
-            throw new RuntimeException('Cannot reverse relation "' . $this->toString() . '" of meta object "' . $this->getMainObject()->getAliasWithNamespace() . '": invalid relation type!');
+            throw new RuntimeException('Cannot reverse relation "' . $this->toString() . '" of meta object "' . $this->getLeftObject()->getAliasWithNamespace() . '": invalid relation type!');
         }
         return $reverse;
     }
@@ -357,7 +242,7 @@ class Relation implements MetaRelationInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaRelationInterface::copy()
      */
-    public function copy()
+    public function copy() : MetaRelationInterface
     {
         return clone $this;
     }
@@ -377,7 +262,7 @@ class Relation implements MetaRelationInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaRelationInterface::getModel()
      */
-    public function getModel()
+    public function getModel() : ModelInterface
     {
         return $this->getWorkbench()->model();
     }
@@ -387,9 +272,9 @@ class Relation implements MetaRelationInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaRelationInterface::isReverseRelation()
      */
-    public function isReverseRelation()
+    public function isReverseRelation() : bool
     {
-        return $this->getType() == MetaRelationInterface::RELATION_TYPE_REVERSE ? true : false;
+        return $this->getType()->__toString() == RelationTypeDataType::REVERSE ? true : false;
     }
 
     /**
@@ -397,9 +282,9 @@ class Relation implements MetaRelationInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaRelationInterface::isForwardRelation()
      */
-    public function isForwardRelation()
+    public function isForwardRelation() : bool
     {
-        return $this->getType() == MetaRelationInterface::RELATION_TYPE_FORWARD ? true : false;
+        return $this->getType()->__toString() == RelationTypeDataType::REGULAR ? true : false;
     }
 
     /**
@@ -407,9 +292,9 @@ class Relation implements MetaRelationInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaRelationInterface::isOneToOneRelation()
      */
-    public function isOneToOneRelation()
+    public function isOneToOneRelation() : bool
     {
-        return $this->getType() == MetaRelationInterface::RELATION_TYPE_ONE_TO_ONE ? true : false;
+        return $this->getType()->__toString() == RelationTypeDataType::ONE_TO_ONE ? true : false;
     }
 
     /**
@@ -417,9 +302,9 @@ class Relation implements MetaRelationInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaRelationInterface::is()
      */
-    public function is(MetaRelationInterface $other_relation)
+    public function is(MetaRelationInterface $other_relation) : bool
     {
-        return $this->getId() === $other_relation->getId() && $this->getType() === $other_relation->getType() ? true : false;
+        return $this->getId() === $other_relation->getId() && $this->getType()->equals($other_relation->getType()) ? true : false;
     }
 
     /**
@@ -427,9 +312,9 @@ class Relation implements MetaRelationInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaRelationInterface::isExactly()
      */
-    public function isExactly(MetaRelationInterface $other_relation)
+    public function isExactly(MetaRelationInterface $other_relation) : bool
     {
-        if ($this->is($other_relation) && $this->getMainObject()->isExactly($other_relation->getMainObject())) {
+        if ($this->is($other_relation) && $this->getLeftObject()->isExactly($other_relation->getLeftObject())) {
             return true;
         } else {
             return false;
@@ -441,8 +326,19 @@ class Relation implements MetaRelationInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaRelationInterface::toString()
      */
-    public function toString(){
-        return $this->getMainObject()->getAliasWithNamespace() . '[' . $this->getForeignKeyAlias() . '] -> ' . $this->getRelatedObject()->getAliasWithNamespace() . '[' . $this->getRelatedObjectKeyAlias() . ']';
+    public function toString() : string
+    {
+        return $this->getLeftObject()->getAliasWithNamespace() . '[' . $this->getLeftKeyAttribute()->getAlias() . '] -> ' . $this->getRightObject()->getAliasWithNamespace() . '[' . $this->getRightKeyAttribute()->getAlias() . ']';
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::reverse()
+     */
+    public function reverse() : MetaRelationInterface
+    {
+        return $this->getReversedRelation();
     }
 }
 ?>

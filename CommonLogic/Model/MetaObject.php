@@ -21,13 +21,19 @@ use exface\Core\Interfaces\Model\MetaObjectActionListInterface;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Model\MetaRelationInterface;
 use exface\Core\Interfaces\Model\MetaAttributeListInterface;
-use exface\Core\Interfaces\Model\MetaAttributeGroupInterface;
 use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\Model\MetaObjectHasNoDataSourceError;
+use exface\Core\DataTypes\RelationTypeDataType;
 
+/**
+ * Default implementation of the MetaObjectInterface
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
 class MetaObject implements MetaObjectInterface
 {
 
@@ -45,19 +51,37 @@ class MetaObject implements MetaObjectInterface
 
     private $uid_alias;
 
-    private $attributes = array();
+    private $attributes = null;
     
     private $attributes_alias_cache = array();
 
+    /**
+     * Array holding all direct relations to/from the object with the following structure:
+     * 
+     * [
+     *  relation_alias1 => [
+     *      0 => relation_instance for the direct regular relation (if exists),
+     *      modifier1 => reverse_relation_instance 1,
+     *      modifier2 => reverse_relation_instance 2
+     *  ],
+     *  relation_alias2 => [...]
+     * ]
+     * 
+     * This structure aims to focus on the following requirements:
+     * - fast access to regular relations without name conflicts (majority of cases): $this->relations['alias'][0])
+     * - fast search for relation alias
+     * 
+     * @var array
+     */
     private $relations = array();
 
     private $data_source_id;
 
-    private $data_connection_alias = NULL;
+    private $data_connection_alias = null;
 
     private $parent_objects_ids = array();
 
-    private $default_sorters = array();
+    private $default_sorters = null;
 
     private $model;
 
@@ -71,7 +95,7 @@ class MetaObject implements MetaObjectInterface
 
     private $attribute_groups = array();
 
-    private $behaviors = array();
+    private $behaviors = null;
 
     private $actions = array();
     
@@ -89,36 +113,33 @@ class MetaObject implements MetaObjectInterface
     }
 
     /**
-     * Returns all relations as an array with the relation alias as key.
-     * If an ALIAS stands for multiple
-     * relations (of different types), the respective element of the relations array will be an array in
-     * turn.
-     *
-     * @return MetaRelationInterface[] [relation_alias => relation | relation[]]
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaObjectInterface::getRelations()
      */
-    function getRelationsArray()
+    public function getRelations($relation_type = null) : array
     {
-        return $this->relations;
-    }
-
-    /**
-     * Returns all direct relations of this object as a flat array.
-     * Optionally filtered by relation type.
-     *
-     * @return MetaRelationInterface[]
-     */
-    function getRelations($relation_type = null)
-    {
+        if ($relation_type !== null) {
+            if ($relation_type instanceof RelationTypeDataType) {
+                $type = $relation_type;
+            } else {
+                $type = RelationTypeDataType::fromValue($this->getWorkbench(), $relation_type);
+            }
+        }
+        
         $result = array();
-        foreach ($this->getRelationsArray() as $rel) {
-            if (is_null($relation_type) || (is_array($rel) && $relation_type == MetaRelationInterface::RELATION_TYPE_REVERSE) || $relation_type == $rel->getType()) {
-                if (is_array($rel)) {
-                    $result = array_merge($result, $rel);
-                } else {
-                    $result[] = $rel;
+        foreach ($this->relations as $set) {
+            foreach ($set as $rel) {
+                if ($type === null || $type->__toString() === RelationTypeDataType::REVERSE || $type->equals($rel->getType())) {
+                    $alias = $rel->getAlias();
+                    if ($rel->getAliasModifier() !== '') {
+                        $alias .= '[' . $rel->getAliasModifier() . ']';
+                    }
+                    $result[$alias] = $rel;
                 }
             }
         }
+        
         return $result;
     }
 
@@ -127,56 +148,53 @@ class MetaObject implements MetaObjectInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaObjectInterface::getRelation()
      */
-    public function getRelation($aliasOrPathString, $foreign_key_alias = '')
+    public function getRelation(string $aliasOrPathString, string $modifier = '') : MetaRelationInterface
     {
         if ($rel = RelationPath::relationPathParse($aliasOrPathString, 1)) {
-            $relation = $this->getRelatedObject($rel[0])->getRelation($rel[1]);
+            $relation = $this->getRelatedObject($rel[0])->getRelation($rel[1], $modifier);
             return $relation;
         } else {
             $alias = $aliasOrPathString;
         }
         
-        $rel = $this->relations[$alias];
+        $rels = $this->relations[$alias];
+        
         // If the object does not have a relation with a matching alias
-        if (! $rel) {
+        if (empty($rels)) {
             // Check, if a foreign key is specified in the alias (e.g. ADDRESS->COMPANY[SHIPPING_ADDRESS])
             // If so, extract it and call get_relation() again using the separated alias and foreign_key_alias
             if ($start = strpos($alias, '[')) {
                 if (! $end = strpos($alias, ']'))
                     throw new MetaRelationNotFoundError($this, 'Missing "]" in relation alias "' . $alias . '"', '6T91HJK');
-                $foreign_key_alias = substr($alias, $start + 1, $end - $start - 1);
+                $modifier = substr($alias, $start + 1, $end - $start - 1);
                 $alias = substr($alias, 0, $start);
-                return $this->getRelation($alias, $foreign_key_alias);
+                return $this->getRelation($alias, $modifier);
             } else {
-                throw new MetaRelationNotFoundError($this, 'Relation "' . $alias . ($foreign_key_alias ? '[' . $foreign_key_alias . ']' : '') . '" not found for object "' . $this->getAliasWithNamespace() . '"!');
+                throw new MetaRelationNotFoundError($this, 'Relation "' . $alias . ($modifier ? '[' . $modifier . ']' : '') . '" not found for object "' . $this->getAliasWithNamespace() . '"!');
             }
         }
         
-        if (! is_array($rel)) {
-            return $rel;
-        } else {
-            $first_rel = false;
-            /* @var $r \exface\Core\CommonLogic\Model\relation */
-            foreach ($rel as $r) {
-                // If there is no specific foreign key alias, try to select the most feasable relation,
-                // otherwise just look for a relation with with a matching foreign key alias
-                if (! $foreign_key_alias) {
-                    // Always return the regular relation if there are regular and reverse ones in the array.
-                    // In this case, the reverse relation can only be addressed using the $foreign_key_alias
-                    // There can only be at most one regular relation with the same alias for one object, but there
-                    // can be multiple reverse relations with the same alias.
-                    if ($r->isForwardRelation()) {
-                        return $r;
-                    } elseif ($first_rel === false) {
-                        $first_rel = $r;
-                    }
-                } elseif ($r->getForeignKeyAlias() == $foreign_key_alias) {
-                    return $r;
-                }
-            }
-            return $first_rel;
+        $modifier = $this->sanitizeRelationModifier($modifier);
+        
+        // If there is an exact match for the given modifier, return it right away
+        // This will also be the case if no modifier is set and there is a default 
+        // (regular) relation
+        if ($match = $rels[$modifier]) {
+            return $match;
         }
-        throw new MetaRelationNotFoundError($this, 'Relation "' . $alias . ($foreign_key_alias ? '[' . $foreign_key_alias . ']' : '') . '" not found for object "' . $this->getAliasWithNamespace() . '"!');
+        
+        // If there is no relation explicitly matching the modifier, we are looking for 
+        // the default (first) reverse relation.
+        
+        /* @var $rel \exface\Core\Interfaces\Model\MetaRelationInterface */
+        foreach ($rels as $rel) {
+            if ($rel->isReverseRelation()) {
+                return $rel;
+            }
+        }
+        
+        // Finally, throw exception if none of the above worked
+        throw new MetaRelationNotFoundError($this, 'Relation "' . $alias . ($modifier ? '[' . $modifier . ']' : '') . '" not found for object "' . $this->getAliasWithNamespace() . '"!');
     }
 
     /**
@@ -295,7 +313,7 @@ class MetaObject implements MetaObjectInterface
                 $rev_rel = $this->getRelation($alias);
                 if ($rev_rel->isReverseRelation()) {
                     try {
-                        $rel_attr = $rev_rel->getRelatedObject()->getAttribute($rev_rel->getForeignKeyAlias());
+                        $rel_attr = $rev_rel->getRightObject()->getAttribute($rev_rel->getLeftKeyAttribute()->getAlias());
                         $attr = $rel_attr->copy();
                         $attr->getRelationPath()->prependRelation($rev_rel);
                         $this->setAttributeCache($alias, $attr);
@@ -370,51 +388,36 @@ class MetaObject implements MetaObjectInterface
     }
 
     /**
-     * Returns the object related to the current one via the given relation path string
-     *
-     * @param string $relation_path_string            
-     * @return MetaObjectInterface
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaObjectInterface::getRelatedObject()
      */
-    public function getRelatedObject($relation_path_string)
+    public function getRelatedObject($relation_path_string) : MetaObjectInterface
     {
         $relation_path = RelationPathFactory::createFromString($this, $relation_path_string);
         return $relation_path->getEndObject();
     }
 
     /**
-     * Adds a relation to the object.
-     *
-     * NOTE: Adding multiple relations with the same alias will work differently depending on the relation type:
-     * - Regular relations will get overwritten with every new relation with the same alias (important for extending objects!)
-     * - Reverse relations will be accumulated in an array
-     *
-     * TODO When adding reverse relations, it is possible, that there are two relations from the same object,
-     * thus having the same aliases (the alias of the reverse relation is currently the alias of the object,
-     * where it comes from). I like this kind of naming, but it needs to be extended by the possibility to
-     * specify which of the two reverse relation to use (e.g. LOCATION->ADDRESS[SHIPPING_ADDRESS] or something)
-     *
-     * @param MetaRelationInterface $relation            
-     * @return MetaObjectInterface
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaObjectInterface::addRelation()
      */
-    function addRelation(MetaRelationInterface $relation)
-    {
-        // If there already is a relation with this alias, add another one, making it an array of relations
-        // Make sure, this only happens to reverse relation!!! Direct relation MUST have different aliases!
-        if ($relation->isReverseRelation() && $this->hasRelation($relation->getAlias())) {
-            $duplicate = $this->getRelation($relation->getAlias());
-            // Create an array for the alias or just add the relation to the array if there already is one
-            if (is_array($duplicate)) {
-                $this->relations[$relation->getAlias()][] = $relation;
-            } else {
-                $this->relations[$relation->getAlias()] = array(
-                    $duplicate,
-                    $relation
-                );
-            }
-        } else {
-            $this->relations[$relation->getAlias()] = $relation;
-        }
+    public function addRelation(MetaRelationInterface $relation) : MetaObjectInterface
+    {        
+        $modifier = $this->sanitizeRelationModifier($relation->getAliasModifier());
+        $this->relations[$relation->getAlias()][$modifier] = $relation;
         return $this;
+    }
+    
+    /**
+     * 
+     * @param string $modifier
+     * @return string
+     */
+    protected function sanitizeRelationModifier(string $modifier) : string
+    {
+        return $modifier === '' ? 0 : $modifier;
     }
 
     /**
@@ -493,7 +496,7 @@ class MetaObject implements MetaObjectInterface
         }
         
         // Inherit Relations
-        foreach ($parent->getRelationsArray() as $rel) {
+        foreach ($parent->getRelations() as $rel) {
             $rel_clone = clone $rel;
             // Save the parent's id, if there isn't one already (that would mean, that the parent inherited the attribute too)
             if (is_null($rel->getInheritedFromObjectId())) {
@@ -533,8 +536,8 @@ class MetaObject implements MetaObjectInterface
         $first_relation = false;
         foreach ($this->getRelations() as $rel) {
             // It is important to compare the ids only, because otherwise the related object will need to be loaded.
-            // Don't call getRelatedObject() here to loading half the model just to look through relations.
-            if ($related_object->is($rel->getRelatedObjectId())) {
+            // Don't call getRightObject() here to loading half the model just to look through relations.
+            if ($related_object->is($rel->getRightObjectId())) {
                 if (! $rel->isInherited() || ! $prefer_direct_relations) {
                     return $rel;
                 } else {
@@ -546,25 +549,23 @@ class MetaObject implements MetaObjectInterface
     }
 
     /**
-     * Finds all relations to the specified object including those targeting objects it inherits from.
-     * If the relation
-     * type is not set, all relations will be returned in one array (forward and reverse ones).
-     *
-     * Example for inheritance handling: concider the object PHP_FILE, which extends FILE and the object FILE_CONTENTS,
-     * that has a forward relation to the FILE. FILE_CONTENTS->findRelations(PHP_FILE) will find the relation to the
-     * FILE-object because PHP_FILE extends FILE.
-     *
-     * @param string $related_object_id            
-     * @param string $relation_type
-     *            one of the MetaRelationInterface::RELATION_TYPE_xxx constants
-     * @return MetaRelationInterface[]
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaObjectInterface::findRelations()
      */
-    public function findRelations($related_object_id, $relation_type = null)
+    public function findRelations(string $related_object_id, $relation_type = null) : array
     {
         $rels = array();
+        if ($relation_type !== null) {
+            if ($relation_type instanceof RelationTypeDataType) {
+                $type = $relation_type;
+            } else {
+                $type = RelationTypeDataType::fromValue($this->getWorkbench(), $relation_type);
+            }
+        }
         foreach ($this->getRelations() as $rel) {
             try {
-                if ($rel->getRelatedObject()->is($related_object_id) && ($relation_type == null || $relation_type == $rel->getType()))
+                if ($rel->getRightObject()->is($related_object_id) && ($type === null || $type->equals($rel->getType())))
                     $rels[] = $rel;
             } catch (MetaObjectNotFoundError $e) {
                 // FIXME for some reason calling find_relations on alexa.RMS.STYLE produces a relation with the object 0x11E678F8FD442F59ACD40205857FEB80,
