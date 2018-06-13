@@ -145,9 +145,9 @@
     "rows": [
         {
             "CREATED_ON": "2017-04-28 10:11:31",
-            "MODIFIED_ON": "2017-05-05 11:07:53",
+            "MODIFIED_ON": "2018-06-12 13:47:08",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
-            "MODIFIED_BY_USER": "",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e72bfb09d76d8ca3bee4b318306b9a",
             "SORTABLEFLAG": "1",
             "FILTERABLEFLAG": "1",
@@ -166,7 +166,7 @@
             "FORMATTER": "",
             "DISPLAYORDER": null,
             "LABELFLAG": "0",
-            "UIDFLAG": "0",
+            "UIDFLAG": "1",
             "HIDDENFLAG": "0",
             "EDITABLEFLAG": "0",
             "REQUIREDFLAG": "0",
@@ -175,7 +175,7 @@
             "SORTERDIR": "",
             "RELATED_OBJ_ATTR": "",
             "SHORT_DESCRIPTION": "",
-            "DATA_ADDRESS_PROPS": "",
+            "DATA_ADDRESS_PROPS": "{}",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
             "CUSTOM_DATA_TYPE": "{}"
