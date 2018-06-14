@@ -365,12 +365,11 @@ class InputSelect extends Input implements iSupportMultiSelect
      * @return void
      */
     protected function doPrefillWithRelatedObject(DataSheetInterface $data_sheet, MetaRelationInterface $relation_from_options_to_prefill_object)
-    {
-        
+    { 
         // Now see if the prefill object can be used to filter values
         if (! $this->getUsePrefillValuesAsOptions() && $this->getUsePrefillToFilterOptions()) {
             // Use this relation as filter to query the data source for selectable options
-            if ($col = $data_sheet->getColumns()->getByAttribute($relation_from_options_to_prefill_object->getRightKeyAttribute())) {
+            if ($col = $data_sheet->getColumns()->getByAttribute($relation_from_options_to_prefill_object->getRightKeyAttribute(true))) {
                 $this->getOptionsDataSheet()->addFilterInFromString($relation_from_options_to_prefill_object->getAlias(), $col->getValues(false));
             }
         }

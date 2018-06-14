@@ -140,7 +140,7 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
                     // right key of the relation (e.g. trying to prefill the order positions attribute "ORDER" relative to the object
                     // "ORDER" should result in the attribute UID of ORDER because it is the right key and must have a value matching the 
                     // left key). 
-                    $data_sheet->getColumns()->addFromAttribute($this->getAttribute()->getRelation()->getRightKeyAttribute());
+                    $data_sheet->getColumns()->addFromAttribute($this->getAttribute()->getRelation()->getRightKeyAttribute(true));
                 } else {
                     // If the attribute is not a relation itself, we still can use it for prefills if we find a relation to access
                     // it from the $data_sheet's object. In order to do this, we need to find relations from the prefill object to

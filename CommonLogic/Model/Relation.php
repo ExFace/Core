@@ -168,7 +168,7 @@ class Relation implements MetaRelationInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaRelationInterface::getRightKeyAttribute()
      */
-    public function getRightKeyAttribute($appendRelationPath = true) : MetaAttributeInterface
+    public function getRightKeyAttribute(bool $appendRelationPath = false) : MetaAttributeInterface
     {
         if ($this->rightKeyAttribute === null) {
             if ($this->rightKeyAttributeUid !== null) {

@@ -110,9 +110,10 @@ interface MetaRelationInterface extends WorkbenchDependantInterface
      * For regular relations, it is typically the primary key (UID) of the right object,
      * while for reverse relations it is the foreign key.
      * 
+     * @param bool $appendRelationPath
      * @return MetaAttributeInterface
      */
-    public function getRightKeyAttribute() : MetaAttributeInterface;
+    public function getRightKeyAttribute(bool $appendRelationPath = false) : MetaAttributeInterface;
        
     /**
      * Returns the attribute of the left object, that holds the relation key.
