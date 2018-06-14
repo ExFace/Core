@@ -58,12 +58,38 @@ interface MetaRelationInterface extends WorkbenchDependantInterface
         string $rightObjectUid, 
         string $rightObjectKeyAttributeUid = null);
     
+    /**
+     * Returns the unique id of the attribute, where the relation is defined.
+     * 
+     * @return string
+     */
     public function getId() : string;
     
+    /**
+     * Returns the alias of the relation (without any modifiers).
+     * 
+     * @return string
+     */
     public function getAlias() : string;
     
+    /**
+     * Returns the modifier of this relation or an empty string if no modifier exists.
+     * 
+     * @return string
+     */
     public function getAliasModifier() : string;
     
+    /**
+     * Returns the full alias of the relation including the modifier.
+     * @return string
+     */
+    public function getAliasWithModifier() : string;
+    
+    /**
+     * Returns the relation name in the current session language.
+     * 
+     * @return string
+     */
     public function getName() : string;
     
     /**
