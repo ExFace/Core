@@ -1,0 +1,59 @@
+{
+    "id": "0x078d42f06f1611e8bb520205857feb80",
+    "alias_with_namespace": "exface.core.relations",
+    "menu_parent_page_alias": "exface.core.objects",
+    "menu_index": "3",
+    "menu_visible": true,
+    "name": "Relations",
+    "description": "Browse relations for a selected meta object",
+    "intro": "Select a meta object and browse it's relation tree",
+    "replaces_page_alias": null,
+    "contents": {
+        "object_alias": "exface.Core.RELATION_TREE_VIEW",
+        "widget_type": "DataTree",
+        "tree_parent_id_attribute_alias": "LEFT_OBJECT",
+        "tree_folder_filter_attribute_alias": "RIGHT_OBJECT",
+        "uid_column_id": "RELATION_ALIAS_SHORT",
+        "tree_leaf_id_concatenate": "__",
+        "tree_leaf_id_column_id": "RELATION_PATH",
+        "filters": [
+            {
+                "attribute_alias": "LEFT_OBJECT"
+            },
+            {
+                "attribute_alias": "RELATION_ALIAS_SHORT"
+            }
+        ],
+        "columns": [
+            {
+                "attribute_alias": "RELATION_ALIAS_SHORT",
+                "id": "RELATION_ALIAS_SHORT"
+            },
+            {
+                "attribute_alias": "DIRECTION"
+            },
+            {
+                "attribute_alias": "RIGHT_OBJECT__LABEL"
+            },
+            {
+                "attribute_alias": "RIGHT_OBJECT__APP__ALIAS",
+                "caption": "R. App"
+            },
+            {
+                "attribute_alias": "RIGHT_OBJECT__ALIAS",
+                "caption": "R. Object Alias"
+            },
+            {
+                "attribute_alias": "RIGHT_OBJECT",
+                "hidden": true
+            },
+            {
+                "attribute_alias": "ATTRIBUTE__LABEL"
+            },
+            {
+                "id": "RELATION_PATH",
+                "caption": "Relation Path"
+            }
+        ]
+    }
+}
