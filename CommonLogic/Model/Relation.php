@@ -8,6 +8,7 @@ use exface\Core\DataTypes\RelationTypeDataType;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Model\ModelInterface;
+use exface\Core\DataTypes\RelationDataType;
 
 class Relation implements MetaRelationInterface
 {
@@ -89,9 +90,24 @@ class Relation implements MetaRelationInterface
         return $this->alias;
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::getAliasModifier()
+     */
     public function getAliasModifier() : string
     {
         return $this->aliasModifier;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::getAliasWithModifier()
+     */
+    public function getAliasWithModifier() : string
+    {
+        return $this->getAlias() . ($this->getAliasModifier() && $this->requiresModifier() ? '[' . $this->getAliasModifier() . ']' : '');
     }
 
     /**
@@ -152,7 +168,7 @@ class Relation implements MetaRelationInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaRelationInterface::getRightKeyAttribute()
      */
-    public function getRightKeyAttribute() : MetaAttributeInterface
+    public function getRightKeyAttribute($appendRelationPath = true) : MetaAttributeInterface
     {
         if ($this->rightKeyAttribute === null) {
             if ($this->rightKeyAttributeUid !== null) {
@@ -160,7 +176,7 @@ class Relation implements MetaRelationInterface
             } else {
                 $attr = $this->getRightObject()->getUidAttribute();
             }
-            $this->rightKeyAttribute = $this->getRightAttribute($attr->getAlias());
+            $this->rightKeyAttribute = $appendRelationPath !== true ? $attr : $this->getRightAttribute($attr->getAlias());
         }
         return $this->rightKeyAttribute;
     }
@@ -339,6 +355,27 @@ class Relation implements MetaRelationInterface
     public function reverse() : MetaRelationInterface
     {
         return $this->getReversedRelation();
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function requiresModifier() : bool
+    {
+        if ($this->isForwardRelation()) {
+            return true;
+        }
+        
+        try {
+            if ($this->getLeftObject()->getRelation($this->getAlias()) === $this) {
+                return true;
+            }
+        } catch (\exface\Core\Exceptions\Model\MetaRelationNotFoundError $e) {
+            return false;
+        }
+        
+        return false;
     }
 }
 ?>

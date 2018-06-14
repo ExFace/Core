@@ -27,6 +27,7 @@ use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\Model\MetaObjectHasNoDataSourceError;
 use exface\Core\DataTypes\RelationTypeDataType;
+use exface\Core\Exceptions\Model\MetaRelationAliasAmbiguousError;
 
 /**
  * Default implementation of the MetaObjectInterface
@@ -155,6 +156,7 @@ class MetaObject implements MetaObjectInterface
             return $relation;
         } else {
             $alias = $aliasOrPathString;
+            $aliasWithModifier = $alias . ($modifier ? '[' . $modifier . ']' : '');
         }
         
         $rels = $this->relations[$alias];
@@ -170,31 +172,54 @@ class MetaObject implements MetaObjectInterface
                 $alias = substr($alias, 0, $start);
                 return $this->getRelation($alias, $modifier);
             } else {
-                throw new MetaRelationNotFoundError($this, 'Relation "' . $alias . ($modifier ? '[' . $modifier . ']' : '') . '" not found for object "' . $this->getAliasWithNamespace() . '"!');
+                throw new MetaRelationNotFoundError($this, 'Relation "' . $aliasWithModifier . '" not found for object "' . $this->getAliasWithNamespace() . '": no relations with alias "' . $alias . '" exist!');
             }
         }
         
-        $modifier = $this->sanitizeRelationModifier($modifier);
+        $key = $this->sanitizeRelationModifier($modifier);
         
         // If there is an exact match for the given modifier, return it right away
         // This will also be the case if no modifier is set and there is a default 
         // (regular) relation
-        if ($match = $rels[$modifier]) {
+        if ($match = $rels[$key]) {
             return $match;
         }
         
+        if ($modifier !== '') {
+            throw new MetaRelationNotFoundError($this, 'Relation "' . $aliasWithModifier . ' not found for object "' . $this->getAliasWithNamespace() . '": invalid modifier "' . $modifier . '"!');
+        }
+        
         // If there is no relation explicitly matching the modifier, we are looking for 
-        // the default (first) reverse relation.
+        // the default reverse relation. A reverse relation can be used by default, if
+        // a) it is the only reverse relation with this alias
+        // b) it is the only required relation with this alias
         
         /* @var $rel \exface\Core\Interfaces\Model\MetaRelationInterface */
+        $revRels = 0;
+        $revRelsReq = 0;
+        $lastReqRel = null;
         foreach ($rels as $rel) {
-            if ($rel->isReverseRelation()) {
+            if ($rel->isForwardRelation()) {
                 return $rel;
+            }
+            $revRels++;
+            if ($rel->getRightKeyAttribute(false)->isRequired()) {
+                $revRelsReq++;
+                $lastReqRel = $rel;
             }
         }
         
-        // Finally, throw exception if none of the above worked
-        throw new MetaRelationNotFoundError($this, 'Relation "' . $alias . ($modifier ? '[' . $modifier . ']' : '') . '" not found for object "' . $this->getAliasWithNamespace() . '"!');
+        if ($revRels === 1) {
+            return $rel;
+        } elseif ($revRelsReq === 1) {
+            return $lastReqRel;
+        }
+        
+        // Now we know, multiple potential matches exist, so the relation is ambiguos
+        // 1) there is more than one reverse relation matching the alias
+        // 2) there was no modifier specified
+        // 3) none of the reverse relations can be used by default (= is the only required relation)
+        throw new MetaRelationAliasAmbiguousError($this, 'Relation "' . $aliasWithModifier . '" ambiguously defined for object "' . $this->getAliasWithNamespace() . '"!');
     }
 
     /**
