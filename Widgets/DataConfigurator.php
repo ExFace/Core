@@ -401,19 +401,8 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
         // Create a new hidden filter if there is no such filter already
         if (! $filter_widget) {
             $page = $this->getPage();
-            // FIXME #reverse-relation-bug This is a workaround for the known issues, that get_main_object_key_attribute() does not work for
-            // reverse relations. When the issue is fixed, this if needs to be rewritten.
-            if (! $relation->getLeftKeyAttribute() && $relation->isReverseRelation()) {
-                $filter_widget = WidgetFactory::createFromUxon($page, $relation->getRightKeyAttribute()->getDefaultEditorUxon(), $this);
-                if ($filter_widget->getMetaObject()->hasAttribute($relation->getRightKeyAttribute()->getAlias())){
-                    $filter_widget->setAttributeAlias($relation->getRightKeyAttribute()->getAlias());
-                } else {
-                    throw new WidgetLogicError($this, 'Cannot automatically create filter for relation "' . $relation->toString() . '" in a "' . $this->getWidgetType() . '" widget based on ' . $this->getMetaObject()->getAliasWithNamespace() . '!');
-                }
-            } else {
-                $filter_widget = WidgetFactory::createFromUxon($page, $relation->getLeftKeyAttribute()->getDefaultEditorUxon(), $this);
-                $filter_widget->setAttributeAlias($relation->getLeftKeyAttribute()->getAlias());
-            }
+            $filter_widget = WidgetFactory::createFromUxon($page, $relation->getLeftKeyAttribute()->getDefaultEditorUxon(), $this);
+            $filter_widget->setAttributeAlias($relation->getLeftKeyAttribute()->getAlias());
             $this->addFilter($filter_widget);
         }
         return $filter_widget;
