@@ -552,10 +552,11 @@ class DataSheet implements DataSheetInterface
                     } else {
                         $foreign_keys = $this->getUidColumn()->getValues();
                         $subsheet->addFilterFromString($rel->getLeftKeyAttribute()->getAlias(), implode($rel->getLeftKeyAttribute()->getValueListDelimiter(), array_unique($foreign_keys)), EXF_COMPARATOR_IN);
-                        // FIXME reverse-relation-key bug. Getting the left key column from the reversed relation here is a crude hack, but
-                        // the get_main_object_key_alias() strangely does not work for reverse relations
-                        $left_key_column = $rel->getReversedRelation()->getRightKeyAttribute()->getAlias();
-                        $right_key_column = $rel->getLeftKeyAttribute()->getAlias();
+                        // TODO what if the column names are not the aliases? Need to do something like
+                        // $this->getColumn()->getByAttribute($rel->getLeftKeyAttribute)->getDataColumnName()
+                        // but which column from which sheet?
+                        $left_key_column = $rel->getLeftKeyAttribute()->getAlias();
+                        $right_key_column = $rel->getRightKeyAttribute()->getAlias();
                     }
                 }
                 $subsheet->dataRead();
