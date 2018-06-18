@@ -3,7 +3,7 @@ namespace exface\Core\Exceptions\Model;
 
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Exceptions\UnexpectedValueException;
-use exface\Core\Interfaces\Exceptions\MetaObjectExceptionInterface;
+use exface\Core\Interfaces\Exceptions\MetaRelationResolverExceptionInterface;
 
 /**
  * Exception thrown if a requested relation alias matches more than one relation.
@@ -11,7 +11,7 @@ use exface\Core\Interfaces\Exceptions\MetaObjectExceptionInterface;
  * @author Andrej Kabachnik
  *        
  */
-class MetaRelationAliasAmbiguousError extends UnexpectedValueException implements MetaObjectExceptionInterface
+class MetaRelationAliasAmbiguousError extends UnexpectedValueException implements MetaRelationResolverExceptionInterface
 {
     use MetaObjectExceptionTrait;
     
