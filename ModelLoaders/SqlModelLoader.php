@@ -3,7 +3,6 @@
 namespace exface\Core\ModelLoaders;
 
 use exface\Core\Interfaces\DataSources\ModelLoaderInterface;
-use exface\Core\Interfaces\Model\MetaRelationInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\DataSorterFactory;
@@ -179,8 +178,7 @@ class SqlModelLoader implements ModelLoaderInterface
 					' . $this->buildSqlUuidSelector('a.data_type_oid') . ' as data_type_oid,
 					' . $this->buildSqlUuidSelector('a.related_object_oid') . ' as related_object_oid,
 					' . $this->buildSqlUuidSelector('a.related_object_special_key_attribute_oid') . ' as related_object_special_key_attribute_oid,
-					o.object_alias as rev_relation_alias,
-					o.object_name AS rev_relation_name
+					o.object_alias as rev_relation_alias
 				FROM exf_attribute a LEFT JOIN exf_object o ON a.object_oid = o.oid
 				WHERE a.object_oid = ' . $object->getId() . ' OR a.related_object_oid = ' . $object->getId());
         if ($res = $query->getResultArray()) {
@@ -284,7 +282,7 @@ class SqlModelLoader implements ModelLoaderInterface
                         $row['oid'], // relation id
                         $row['rev_relation_alias'], // relation alias
                         $row['attribute_alias'], // relation modifier: the alias of the right key attribute
-                        $row['rev_relation_name'], // name (used for captions)
+                        null, // the name cannot be specified at this point, as it depends on what other reverse relations will exist
                         $object, // left object
                         $leftKeyAttr, // left key in the main object
                         $row['object_oid'], // right object UID

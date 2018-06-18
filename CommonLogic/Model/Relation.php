@@ -8,7 +8,6 @@ use exface\Core\DataTypes\RelationTypeDataType;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Model\ModelInterface;
-use exface\Core\DataTypes\RelationDataType;
 
 class Relation implements MetaRelationInterface
 {
@@ -52,7 +51,7 @@ class Relation implements MetaRelationInterface
         string $uid,
         string $alias,
         string $aliasModifier = '',
-        string $name,
+        string $name = null,
         MetaObjectInterface $leftObject,
         MetaAttributeInterface $leftKeyAttribute,
         string $rightObjectUid,
@@ -117,6 +116,16 @@ class Relation implements MetaRelationInterface
      */
     public function getName() : string
     {
+        if ($this->name === null) {
+            if ($this->isReverseRelation()) {
+                $this->name = $this->getRightObject()->getName();
+                if ($this->requiresModifier()) {
+                    $this->name .= ' (' . $this->getRightKeyAttribute()->getAlias() . ')';
+                }
+            } else {
+                $this->name = $this->getLeftKeyAttribute()->getName();
+            }
+        }
         return $this->name;
     }
 
