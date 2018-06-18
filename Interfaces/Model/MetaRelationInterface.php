@@ -52,7 +52,7 @@ interface MetaRelationInterface extends WorkbenchDependantInterface
         string $uid, 
         string $alias, 
         string $aliasModifier = '', 
-        string $name, 
+        string $name = null, 
         MetaObjectInterface $leftObject, 
         MetaAttributeInterface $leftKeyAttribute, 
         string $rightObjectUid, 
