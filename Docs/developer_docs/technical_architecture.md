@@ -2,7 +2,7 @@
 
 In a nutshell the platform acts as command bus behind a changable facade:
 
-![Processing a request](../diagrams/sequence_overview.png)
+![Processing a request](diagrams/sequence_overview.png)
 
 Regardless of where it is called from (an HTTP endpoint, a console application or anything else), the caller talks to a template (= facade), which actually defines what sort of input it accepts and what the output will be. This input data can be anything, but in general, it must contain some kind of reference to the action that is to be performed. Once the caller passes some valid input data (e.g. an HTTP request or a CLI command), this data gets transformed by the template into an internal structure called "Task", which essentially is a data trasnfer object (DTO) similar to a classical command. The task contains all information neccessary for further processing. 
 
