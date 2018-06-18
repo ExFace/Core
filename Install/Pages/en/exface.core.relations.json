@@ -26,6 +26,9 @@
         ],
         "columns": [
             {
+                "attribute_alias": "RELATION_NAME"
+            },
+            {
                 "attribute_alias": "RELATION_ALIAS_SHORT",
                 "id": "RELATION_ALIAS_SHORT"
             },
@@ -48,11 +51,44 @@
                 "hidden": true
             },
             {
-                "attribute_alias": "ATTRIBUTE__LABEL"
+                "attribute_alias": "LEFT_OBJECT",
+                "hidden": true
             },
             {
                 "id": "RELATION_PATH",
                 "caption": "Relation Path"
+            }
+        ],
+        "buttons": [
+            {
+                "caption": "Open left object",
+                "action": {
+                    "alias": "exface.Core.ShowObjectEditDialog",
+                    "object_alias": "exface.Core.OBJECT",
+                    "input_mapper": {
+                        "column_to_column_mappings": [
+                            {
+                                "from": "LEFT_OBJECT",
+                                "to": "UID"
+                            }
+                        ]
+                    }
+                }
+            },
+            {
+                "caption": "Open right object",
+                "action": {
+                    "alias": "exface.Core.ShowObjectEditDialog",
+                    "object_alias": "exface.Core.OBJECT",
+                    "input_mapper": {
+                        "column_to_column_mappings": [
+                            {
+                                "from": "RIGHT_OBJECT",
+                                "to": "UID"
+                            }
+                        ]
+                    }
+                }
             }
         ]
     }

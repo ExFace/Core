@@ -811,14 +811,14 @@
         },
         {
             "CREATED_ON": "2016-12-28 15:45:05",
-            "MODIFIED_ON": "2016-12-28 15:45:05",
+            "MODIFIED_ON": "2018-06-18 07:21:36",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6cd148b0f8ed993cce4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6T91HJK",
             "ERROR_TEXT": "Malformed relation path",
-            "DESCRIPTION": ""
+            "DESCRIPTION": "A relation path consists of relation\/attribute aliases concatenated via \"__\" (double underscore). Each relation alias may include a modifier enclosed in square brackets. In case of reverse relations (1-to-N), the alias will mostly include an aggregator function separated by a semicolon.\n\nExamples (based on an imaginary meta object COMPANY):\n\n- `Billing_ADDRESS__STREET` - the street name of the company's billing address\n- `ORDER[PAYEE]__ORDER_NO:COUNT` - number of orders, where the company is the payee\n- `EMPLOYEE__ID:COUNT` - number of employees of the compay (no modifier needed as there is only one relation from EMPLOYEE to COMPANY. `EMPLOYEE[COMPANY]__ID:COUNT` would work too, of course."
         },
         {
             "CREATED_ON": "2016-12-28 15:47:05",
@@ -1424,6 +1424,17 @@
             "ERROR_CODE": "70UJ2GV",
             "ERROR_TEXT": "Error in metamodel: orphaned model components detected",
             "DESCRIPTION": "This error indicates, that an instance of a model component references a non-existant entity: e.g. an attribute for an object, that does not exist. See specific error text for details."
+        },
+        {
+            "CREATED_ON": "2018-06-18 07:34:52",
+            "MODIFIED_ON": "2018-06-18 07:34:52",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e872ca11c4a1939e9e0205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "ERROR_CODE": "70X3MLA",
+            "ERROR_TEXT": "Ambiguous relation alias",
+            "DESCRIPTION": "This error occurs, when a relation within an alias expression is ambiguously defined: that is, multiple relations matching the alias were found. \n\nThis happens typically, when the relations modifier (the square-brackets-part) is omitted in reverse relations. Since the alias of the right object is used in relation paths for reverse relations, there can easily be multiple reverse relations with the same alias. \n\nConsider the following example with a meta object ORDER, which has two different relations to the object COMPANY: PAYEE and CONTRACTOR. The expression COMPANY__ORDER (all order of a company) is ambiguous, because it is unclear, which relation is meant, so the correct notation would be COMPANY__ORDER[PAYEE] or COMPANY__ORDER[CONTRACTOR]. \n\nThe part in square brackets is called *modifier* and is required for reverse relations, unless one of the following conditions applies:\n\n- There is only one relation from the right to the left object (e.g. if there would be only one relation from ORDER to COMPANY)\n- There are multiple relations, but only one of them is required for the right object (e.g. only PAYEE would be required for ORDER) - in this case, the required relations is used by default.\n\nIn any case, the full notation with the modifier is allways possible. The short one is just a convenience shortcut.\n\n"
         }
     ],
     "totals_rows": [],
