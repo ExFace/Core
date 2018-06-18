@@ -170,7 +170,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
                         } else {
                             $core_selects[$qpart->getAlias()] = $this->buildSqlSelect($qpart);
                         }
-                        $enrichment_select .= ', ' . $this->buildSqlSelect($qpart, 'EXFCOREQ', $this->getShortAlias($qpart->getAlias()), null, false);
+                        $enrichment_select .= ', ' . $this->buildSqlSelect($qpart, 'EXFCOREQ', '"' . $this->getShortAlias($qpart->getAlias()) . '"', null, false);
                     }
                     unset($enrichment_selects[$nr]);
                 }
@@ -324,7 +324,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
         if (count($this->getTotals()) > 0) {
             // determine all joins, needed to perform the totals functions
             foreach ($this->getTotals() as $qpart) {
-                $totals_selects[] = $this->buildSqlSelect($qpart, 'EXFCOREQ', $this->getShortAlias($qpart->getAlias()), null, $qpart->getTotalAggregator());
+                $totals_selects[] = $this->buildSqlSelect($qpart, 'EXFCOREQ', '"' . $this->getShortAlias($qpart->getAlias()) . '"', null, $qpart->getTotalAggregator());
                 $totals_core_selects[] = $this->buildSqlSelect($qpart);
                 $totals_joins = array_merge($totals_joins, $this->buildSqlJoins($qpart));
             }
@@ -591,6 +591,11 @@ class OracleSqlBuilder extends AbstractSqlBuilder
         }
         
         return $insert_ids;
+    }
+    
+    protected function escapeColumnName(string $name) : string
+    {
+        return '"' . $name . '"';
     }
 }
 ?>
