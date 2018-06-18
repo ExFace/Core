@@ -19,6 +19,8 @@ use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\DataTypes\NumberDataType;
 use exface\Core\Exceptions\LogicException;
+use exface\Core\Exceptions\Model\MetaRelationAliasAmbiguousError;
+use exface\Core\Interfaces\Exceptions\MetaRelationResolverExceptionInterface;
 
 class Expression implements ExpressionInterface
 {
@@ -104,12 +106,24 @@ class Expression implements ExpressionInterface
                 }
             }
         } else {
+            try {
+                if (! $this->getMetaObject() || ($this->getMetaObject() && $this->getMetaObject()->hasAttribute($expression))) {
+                    $isAttributeAlias = true;
+                } else {
+                    $isAttributeAlias = false;
+                }
+            } catch (MetaRelationResolverExceptionInterface $ea) {
+                $isAttributeAlias = false;
+            }
             // Finally, if it's neither a quoted string, nor a number nor does it start with "=", it must be an attribute alias.
-            if (! $this->getMetaObject() || ($this->getMetaObject() && $this->getMetaObject()->hasAttribute($expression))) {
+            if ($isAttributeAlias) {
                 $this->attribute_alias = $expression;
                 $this->type = self::TYPE_ATTRIBUTE;
             } else {
-                // In the unlikely event, that is not a valid attribute, still treat it as string
+                // If the expression is neither a formular nor a valid attribute, still treat it as string (this happens mostly
+                // when setting widget values (just about in every prefill).
+                // FIXME If the prefill value happens to be the same as an attribute or relation path, this is going to produce 
+                // strange behavior!
                 $this->type = self::TYPE_STRING;
                 $this->value = $str === false ? '' : $str;
             }

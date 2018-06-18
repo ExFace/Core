@@ -186,7 +186,7 @@ class MetaObject implements MetaObjectInterface
         }
         
         if ($modifier !== '') {
-            throw new MetaRelationNotFoundError($this, 'Relation "' . $aliasWithModifier . ' not found for object "' . $this->getAliasWithNamespace() . '": invalid modifier "' . $modifier . '"!');
+            throw new MetaRelationNotFoundError($this, 'Relation "' . $aliasWithModifier . ' not found for object "' . $this->getAliasWithNamespace() . '": no match for modifier "' . $modifier . '"!');
         }
         
         // If there is no relation explicitly matching the modifier, we are looking for 
@@ -219,7 +219,7 @@ class MetaObject implements MetaObjectInterface
         // 1) there is more than one reverse relation matching the alias
         // 2) there was no modifier specified
         // 3) none of the reverse relations can be used by default (= is the only required relation)
-        throw new MetaRelationAliasAmbiguousError($this, 'Relation "' . $aliasWithModifier . '" ambiguously defined for object "' . $this->getAliasWithNamespace() . '"!');
+        throw new MetaRelationAliasAmbiguousError($this, 'Relation "' . $aliasWithModifier . '" ambiguously defined for object "' . $this->getAliasWithNamespace() . '"!', '70X3MLA');
     }
 
     /**

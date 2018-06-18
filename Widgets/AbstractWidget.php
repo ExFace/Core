@@ -619,7 +619,7 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
         if ($expression_or_string instanceof expression) {
             $this->value = $expression_or_string;
         } else {
-            $this->value = $this->getWorkbench()->model()->parseExpression($expression_or_string, $this->getMetaObject());
+            $this->value = ExpressionFactory::createFromString($this->getWorkbench(), $expression_or_string, $this->getMetaObject());
         }
         return $this;
     }
