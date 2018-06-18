@@ -13,7 +13,6 @@ use exface\Core\Factories\DataColumnFactory;
 use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Factories\DataSheetSubsheetFactory;
 use exface\Core\Factories\DataColumnTotalsFactory;
-use exface\Core\Interfaces\DataSheets\DataAggregationListInterface;
 use exface\Core\Interfaces\DataSheets\DataSorterListInterface;
 use exface\Core\Interfaces\DataSheets\DataColumnInterface;
 use exface\Core\Factories\EventFactory;
@@ -36,7 +35,6 @@ use exface\Core\CommonLogic\Model\Condition;
 use exface\Core\CommonLogic\QueryBuilder\RowDataArrayFilter;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Interfaces\Model\ConditionalExpressionInterface;
-use exface\Core\CommonLogic\Model\Aggregator;
 use exface\Core\CommonLogic\QueryBuilder\RowDataArraySorter;
 use exface\Core\Exceptions\DataSheets\DataSheetStructureError;
 use exface\Core\DataTypes\RelationTypeDataType;
@@ -544,20 +542,13 @@ class DataSheet implements DataSheetInterface
                 if (! $rel->isReverseRelation()) {
                     $foreign_keys = $this->getColumnValues($rel_path);
                     $subsheet->addFilterFromString($rel->getRightKeyAttribute()->getAlias(), implode($rel->getRightKeyAttribute()->getValueListDelimiter(), array_unique($foreign_keys)), EXF_COMPARATOR_IN);
-                    $left_key_column = $rel_path;
-                    $right_key_column = $rel->getRightKeyAttribute()->getAlias();
+                    $left_key_column = $this->getColumns()->getByAttribute($thisObject->getAttribute($rel_path))->getName();
+                    $right_key_column = $subsheet->getColumns()->getByAttribute($rel->getRightKeyAttribute())->getName();
                 } else {
-                    if ($rel->getLeftKeyAttribute()) {
-                        throw new DataSheetJoinError($this, 'Joining subsheets via reverse relations with explicitly specified foreign keys, not implemented yet!', '6T5V36I');
-                    } else {
-                        $foreign_keys = $this->getUidColumn()->getValues();
-                        $subsheet->addFilterFromString($rel->getLeftKeyAttribute()->getAlias(), implode($rel->getLeftKeyAttribute()->getValueListDelimiter(), array_unique($foreign_keys)), EXF_COMPARATOR_IN);
-                        // TODO what if the column names are not the aliases? Need to do something like
-                        // $this->getColumn()->getByAttribute($rel->getLeftKeyAttribute)->getDataColumnName()
-                        // but which column from which sheet?
-                        $left_key_column = $rel->getLeftKeyAttribute()->getAlias();
-                        $right_key_column = $rel->getRightKeyAttribute()->getAlias();
-                    }
+                    $foreign_keys = $this->getColumnValues($rel->getLeftKeyAttribute()->getAlias(), false);
+                    $subsheet->addFilterFromString($rel->getRightKeyAttribute()->getAlias(), implode($rel->getRightKeyAttribute()->getValueListDelimiter(), array_unique($foreign_keys)), EXF_COMPARATOR_IN);
+                    $left_key_column = $this->getColumns()->getByAttribute($rel->getLeftKeyAttribute())->getName();
+                    $right_key_column = $subsheet->getColumns()->getByAttribute($rel->getRightKeyAttribute())->getName();
                 }
                 $subsheet->dataRead();
                 // add the columns from the sub-sheets, but prefix their names with the relation alias, because they came from this relation!
