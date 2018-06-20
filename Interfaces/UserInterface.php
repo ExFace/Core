@@ -112,4 +112,11 @@ interface UserInterface extends WorkbenchDependantInterface
      * @return boolean
      */
     public function isUserAnonymous();
+    
+    /**
+     * Returns TRUE if the user has a model and, thus, may have a credential storage, etc.
+     * 
+     * @return bool
+     */
+    public function hasModel() : bool;
 }

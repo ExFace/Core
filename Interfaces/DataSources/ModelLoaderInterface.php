@@ -17,6 +17,9 @@ use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\Interfaces\SelectorInstallerInterface;
 use exface\Core\Interfaces\Selectors\DataTypeSelectorInterface;
 use exface\Core\Interfaces\Selectors\ModelLoaderSelectorInterface;
+use exface\Core\Interfaces\UserInterface;
+use exface\Core\Exceptions\UserNotFoundError;
+use exface\Core\Exceptions\UserNotUniqueError;
 
 interface ModelLoaderInterface
 {
@@ -143,5 +146,41 @@ interface ModelLoaderInterface
      * @return SelectorInstallerInterface
      */
     public function getInstaller();
+    
+    
+    /**
+     * 
+     * @param UserInterface $user
+     * 
+     * @throws UserNotFoundError
+     * @throws UserNotUniqueError
+     * 
+     * @return UserInterface
+     */
+    public function loadUserData(UserInterface $user) : UserInterface;
+    
+    /**
+     * Creates the passed Exface user.
+     *
+     * @param UserInterface $user
+     * @return ModelLoaderInterface
+     */
+    public function createUser(UserInterface $user) : ModelLoaderInterface;
+    
+    /**
+     * Updates the passed Exface user.
+     *
+     * @param UserInterface $user
+     * @return ModelLoaderInterface
+     */
+    public function updateUser(UserInterface $user) : ModelLoaderInterface;
+    
+    /**
+     * Deletes the passed Exface user.
+     *
+     * @param UserInterface $user
+     * @return ModelLoaderInterface
+     */
+    public function deleteUser(UserInterface $user) : ModelLoaderInterface;
 }
 ?>
