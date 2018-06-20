@@ -77,6 +77,12 @@ class User implements UserInterface
         }
         return $this->uid;
     }
+    
+    public function setUid(string $value) : UserInterface
+    {
+        $this->uid = $value;
+        return $this;
+    }
 
     /**
      * 

@@ -717,16 +717,12 @@ class SqlModelLoader implements ModelLoaderInterface
         if ($userSheet->countRows() == 0) {
             throw new UserNotFoundError('No user "' . $user->getUsername() . '" exists in the metamodel.');
         } elseif ($userSheet->countRows() == 1) {
-            $userRow = $userSheet->getRow(0);
-            foreach ($userRow as $key => $val) {
-                $setterCamelCased = 'set' . StringDataType::convertCaseUnderscoreToPascal(strtolower($key));
-                if (method_exists($user, $setterCamelCased)) {
-                    call_user_func([
-                        $user,
-                        $setterCamelCased
-                    ], $val);
-                }
-            }
+            $row = $userSheet->getRow(0);
+            $user->setUid($row['UID']);
+            $user->setLocale($row['LOCALE']);
+            $user->setFirstName($row['FIRST_NAME']);
+            $user->setLastName($row['LAST_NAME']);
+            $user->setEmail($row['EMAIL']);
         } else {
             throw new UserNotUniqueError('More than one user exist in the metamodel for username "' . $user->getUsername() . '".');
         }
