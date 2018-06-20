@@ -1,11 +1,10 @@
 <?php
 namespace exface\Core\Factories;
 
-use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\CommonLogic\Model\User;
-use exface\Core\DataTypes\StringDataType;
 use exface\Core\CommonLogic\Workbench;
+use exface\Core\Interfaces\UserInterface;
+use exface\Core\Exceptions\UserNotFoundError;
 
 /**
  * Factory class to create Users.
@@ -29,8 +28,7 @@ class UserFactory extends AbstractStaticFactory
      */
     public static function create(Workbench $exface, $username, $firstname, $lastname, $locale, $email)
     {
-        $user = new User($exface);
-        $user->setUsername($username);
+        $user = self::createEmpty($exface, $username);
         $user->setFirstName($firstname);
         $user->setLastName($lastname);
         $user->setLocale($locale);
@@ -42,11 +40,16 @@ class UserFactory extends AbstractStaticFactory
      * Creates an empty user.
      * 
      * @param Workbench $exface
+     * @param string $username
      * @return User
      */
-    public static function createEmpty(Workbench $exface)
+    public static function createEmpty(Workbench $exface, string $username)
     {
-        return new User($exface);
+        if ($username === '') {
+            throw new UserNotFoundError('Empty username not allowed!');
+        }
+        
+        return new User($exface, $username);
     }
 
     /**
@@ -60,40 +63,15 @@ class UserFactory extends AbstractStaticFactory
      */
     public static function createAnonymous(Workbench $exface)
     {
-        return new User($exface, null, true);
+        return new User($exface);
     }
-
-    /**
-     * Creates a user from the passed DataSheet with 'exface.Core.USER' containing exactly one
-     * row of user data.
-     * 
-     * @param DataSheetInterface $datasheet
-     * @throws InvalidArgumentException
-     * @return User
-     */
-    public static function createFromDataSheet(DataSheetInterface $datasheet)
+    
+    public static function createFromModel(Workbench $workbench, string $username) : UserInterface
     {
-        if (! $datasheet->getMetaObject()->isExactly('exface.Core.USER')) {
-            throw new InvalidArgumentException('Datasheet with "' . $datasheet->getMetaObject()->getAliasWithNamespace() . '" passed. Expected "exface.Core.USER".');
-        }
-        if ($datasheet->countRows() != 1) {
-            throw new InvalidArgumentException('DataSheet with ' . $datasheet->countRows() . ' rows passed. Expected exactly one row.');
+        if ($username === '') {
+            throw new UserNotFoundError('Empty username not allowed!');
         }
         
-        $exface = $datasheet->getWorkbench();
-        
-        $user = new User($exface, $datasheet);
-        $userRow = $datasheet->getRow(0);
-        foreach ($userRow as $key => $val) {
-            $setterCamelCased = 'set' . StringDataType::convertCaseUnderscoreToPascal(strtolower($key));
-            if (method_exists($user, $setterCamelCased)) {
-                call_user_func([
-                    $user,
-                    $setterCamelCased
-                ], $val);
-            }
-        }
-        
-        return $user;
+        return new User($workbench, $username, $workbench->model()->getModelLoader());
     }
 }

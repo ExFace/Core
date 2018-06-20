@@ -2,12 +2,9 @@
 namespace exface\Core\CommonLogic\Contexts\Scopes;
 
 use exface\Core\Interfaces\Contexts\ContextInterface;
-use exface\Core\Factories\DataSheetFactory;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\Model\User;
 use exface\Core\Factories\UserFactory;
-use exface\Core\Exceptions\UserNotFoundError;
-use exface\Core\Exceptions\UserNotUniqueError;
 
 class UserContextScope extends AbstractContextScope
 {
@@ -126,68 +123,6 @@ class UserContextScope extends AbstractContextScope
     }
 
     /**
-     * Returns the Exface user defined by the passed username.
-     * 
-     * @param string $username
-     * @throws UserNotFoundError
-     * @throws UserNotUniqueError
-     * @return User
-     */
-    public function getUserByName($username)
-    {
-        if (! $username) {
-            throw new UserNotFoundError('Empty username passed.');
-        }
-        
-        $userModel = $this->getWorkbench()->model()->getObject('exface.Core.USER');
-        $userSheet = DataSheetFactory::createFromObject($userModel);
-        foreach ($userModel->getAttributes() as $attr) {
-            $userSheet->getColumns()->addFromAttribute($attr);
-        }
-        $userSheet->getFilters()->addConditionsFromString($userModel, 'USERNAME', $username, EXF_COMPARATOR_EQUALS);
-        $userSheet->dataRead();
-        
-        if ($userSheet->countRows() == 0) {
-            throw new UserNotFoundError('No Exface user with username "' . $username . '" defined.');
-        } elseif ($userSheet->countRows() == 1) {
-            return UserFactory::createFromDataSheet($userSheet);
-        } else {
-            throw new UserNotUniqueError('More than one Exface users with username "' . $username . '" defined.');
-        }
-    }
-
-    /**
-     * Returns the Exface user defined by the passed UID.
-     * 
-     * @param string $uid
-     * @throws UserNotFoundError
-     * @throws UserNotUniqueError
-     * @return User
-     */
-    public function getUserById($uid)
-    {
-        if (! $uid) {
-            throw new UserNotFoundError('Empty UID passed.');
-        }
-        
-        $userModel = $this->getWorkbench()->model()->getObject('exface.Core.USER');
-        $userSheet = DataSheetFactory::createFromObject($userModel);
-        foreach ($userModel->getAttributes() as $attr) {
-            $userSheet->getColumns()->addFromAttribute($attr);
-        }
-        $userSheet->getFilters()->addConditionsFromString($userModel, $userModel->getUidAttributeAlias(), $uid, EXF_COMPARATOR_EQUALS);
-        $userSheet->dataRead();
-        
-        if ($userSheet->countRows() == 0) {
-            throw new UserNotFoundError('No Exface user with UID "' . $uid . '" defined.');
-        } elseif ($userSheet->countRows() == 1) {
-            return UserFactory::createFromDataSheet($userSheet);
-        } else {
-            throw new UserNotUniqueError('More than one Exface users with UID "' . $uid . '" defined.');
-        }
-    }
-
-    /**
      * Returns the Exface user which is currently logged in in the CMS.
      * 
      * If no user is logged in in the CMS, an anonymous user is returned.
@@ -198,48 +133,12 @@ class UserContextScope extends AbstractContextScope
     {
         if (! $this->user) {
             if ($this->getWorkbench()->getCMS()->isUserLoggedIn()) {
-                $this->user = $this->getUserByName($this->getWorkbench()->getCMS()->getUserName());
+                $this->user = UserFactory::createFromModel($this->getWorkbench(), $this->getWorkbench()->getCMS()->getUserName());
             } else {
                 $this->user = UserFactory::createAnonymous($this->getWorkbench());
             }
         }
         return $this->user;
-    }
-
-    /**
-     * Creates the passed Exface user.
-     * 
-     * @param User $user
-     * @return UserContextScope
-     */
-    public function createUser(User $user)
-    {
-        $user->exportDataSheet()->dataCreate();
-        return $this;
-    }
-
-    /**
-     * Updates the passed Exface user.
-     * 
-     * @param User $user
-     * @return UserContextScope
-     */
-    public function updateUser(User $user)
-    {
-        $user->exportDataSheet()->dataUpdate();
-        return $this;
-    }
-
-    /**
-     * Deletes the passed Exface user.
-     * 
-     * @param User $user
-     * @return UserContextScope
-     */
-    public function deleteUser(User $user)
-    {
-        $user->exportDataSheet()->dataDelete();
-        return $this;
     }
 }
 ?>

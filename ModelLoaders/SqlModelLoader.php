@@ -36,6 +36,11 @@ use exface\Core\Interfaces\Model\ModelInterface;
 use exface\Core\DataTypes\RelationTypeDataType;
 use exface\Core\Exceptions\Model\MetaObjectHasNoUidAttributeError;
 use exface\Core\Exceptions\Model\MetaRelationBrokenError;
+use exface\Core\Interfaces\UserInterface;
+use exface\Core\Factories\DataSheetFactory;
+use exface\Core\Exceptions\UserNotFoundError;
+use exface\Core\Exceptions\UserNotUniqueError;
+use exface\Core\DataTypes\StringDataType;
 
 class SqlModelLoader implements ModelLoaderInterface
 {
@@ -697,6 +702,71 @@ class SqlModelLoader implements ModelLoaderInterface
     public function getWorkbench()
     {
         return $this->selector->getWorkbench();
+    }
+    
+    public function loadUserData(UserInterface $user) : UserInterface
+    {
+        $userModel = $this->getWorkbench()->model()->getObject('exface.Core.USER');
+        $userSheet = DataSheetFactory::createFromObject($userModel);
+        foreach ($userModel->getAttributes() as $attr) {
+            $userSheet->getColumns()->addFromAttribute($attr);
+        }
+        $userSheet->getFilters()->addConditionsFromString($userModel, 'USERNAME', $user->getUsername(), EXF_COMPARATOR_EQUALS);
+        $userSheet->dataRead();
+        
+        if ($userSheet->countRows() == 0) {
+            throw new UserNotFoundError('No user "' . $user->getUsername() . '" exists in the metamodel.');
+        } elseif ($userSheet->countRows() == 1) {
+            $userRow = $userSheet->getRow(0);
+            foreach ($userRow as $key => $val) {
+                $setterCamelCased = 'set' . StringDataType::convertCaseUnderscoreToPascal(strtolower($key));
+                if (method_exists($user, $setterCamelCased)) {
+                    call_user_func([
+                        $user,
+                        $setterCamelCased
+                    ], $val);
+                }
+            }
+        } else {
+            throw new UserNotUniqueError('More than one user exist in the metamodel for username "' . $user->getUsername() . '".');
+        }
+        return $user;
+    }
+    
+    /**
+     * Creates the passed Exface user.
+     *
+     * @param UserInterface $user
+     * @return ModelLoaderInterface
+     */
+    public function createUser(UserInterface $user) : ModelLoaderInterface
+    {
+        $user->exportDataSheet()->dataCreate();
+        return $this;
+    }
+    
+    /**
+     * Updates the passed Exface user.
+     *
+     * @param UserInterface $user
+     * @return ModelLoaderInterface
+     */
+    public function updateUser(UserInterface $user) : ModelLoaderInterface
+    {
+        $user->exportDataSheet()->dataUpdate();
+        return $this;
+    }
+    
+    /**
+     * Deletes the passed Exface user.
+     *
+     * @param UserInterface $user
+     * @return ModelLoaderInterface
+     */
+    public function deleteUser(UserInterface $user) : ModelLoaderInterface
+    { 
+        $user->exportDataSheet()->dataDelete();
+        return $this;
     }
 }
 
