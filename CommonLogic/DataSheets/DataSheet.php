@@ -611,6 +611,10 @@ class DataSheet implements DataSheetInterface
      */
     public function dataUpdate($create_if_uid_not_found = false, DataTransactionInterface $transaction = null)
     {
+        if ($this->getMetaObject()->isWritable() === false) {
+            throw new DataSheetWriteError($this, 'Cannot update data for object ' . $this->getMetaObject()->getAliasWithNamespace() . ': object is not writeable!', '70Y6HAK');
+        }
+        
         $counter = 0;
         
         // Start a new transaction, if not given
@@ -692,8 +696,11 @@ class DataSheet implements DataSheetInterface
         // - A data sheet with a single row and a UID column, where the one row references multiple object explicitly selected by the user (the UID
         // column will have one cell with a list of UIDs in this case.
         foreach ($this->getColumns() as $column) {
-            // Skip columns, that do not represent a meta attribute
             if (! $column->getExpressionObj()->isMetaAttribute()) {
+                // Skip columns, that do not represent a meta attribute
+                continue;
+            } elseif (! $column->getAttribute()->isWritable()) {
+                // Skip read-only attributes
                 continue;
             } elseif (! $column->getAttribute()) {
                 // Skip columns, that reference non existing attributes
@@ -840,6 +847,10 @@ class DataSheet implements DataSheetInterface
      */
     public function dataCreate($update_if_uid_found = true, DataTransactionInterface $transaction = null)
     {
+        if ($this->getMetaObject()->isWritable() === false) {
+            throw new DataSheetWriteError($this, 'Cannot create data for object ' . $this->getMetaObject()->getAliasWithNamespace() . ': object is not writeable!', '70Y6HAK');
+        }
+        
         // Start a new transaction, if not given
         if (! $transaction) {
             $transaction = $this->getWorkbench()->data()->startTransaction();
@@ -865,6 +876,12 @@ class DataSheet implements DataSheetInterface
         
         // Check, if all required attributes are present
         foreach ($this->getMetaObject()->getAttributes()->getRequired() as $req) {
+            // Skip read-only attributes. They can also be marked as required if the are allways present, but
+            // since they are not writeable, we cannot explicitly create tehm.
+            if ($req->isWritable() === false) {
+                continue;
+            }
+            
             if (! $req_col = $this->getColumns()->getByAttribute($req)) {
                 // If there is no column for the required attribute, add one
                 $col = $this->getColumns()->addFromExpression($req->getAlias());
@@ -894,8 +911,13 @@ class DataSheet implements DataSheetInterface
         $values_found = false;
         foreach ($this->getColumns() as $column) {
             // Skip columns, that do not represent a meta attribute
-            if (! $column->getExpressionObj()->isMetaAttribute())
+            if (! $column->getExpressionObj()->isMetaAttribute()) {
                 continue;
+            }
+            // Skip columns with read-only attributes
+            if (! $column->getAttribute()->isWritable()) {
+                continue;
+            }
             // Check if the meta attribute really exists
             if (! $column->getAttribute()) {
                 throw new MetaAttributeNotFoundError($this->getMetaObject(), 'Cannot find attribute for data sheet column "' . $column->getName() . '"!');
@@ -951,6 +973,10 @@ class DataSheet implements DataSheetInterface
      */
     public function dataDelete(DataTransactionInterface $transaction = null)
     {
+        if ($this->getMetaObject()->isWritable() === false) {
+            throw new DataSheetWriteError($this, 'Cannot delete data for object ' . $this->getMetaObject()->getAliasWithNamespace() . ': object is not writeable!', '70Y6HAK');
+        }
+        
         // Start a new transaction, if not given
         if (! $transaction) {
             $transaction = $this->getWorkbench()->data()->startTransaction();
@@ -1033,19 +1059,25 @@ class DataSheet implements DataSheetInterface
         // attribute of the related object (that is, if the related object cannot exist without the one we are deleting)
         /* @var $rel \exface\Core\Interfaces\Model\MetaRelationInterface */
         foreach ($this->getMetaObject()->getRelations(RelationTypeDataType::REVERSE) as $rel) {
+            // Skip objects, that are not writable
+            if ($rel->getRightObject()->isWritable() === false) {
+                continue;
+            }
+            
+            // See if the relation is mandatory for the right (= related) object
             if (! $rel->getRightKeyAttribute()->isRequired()) {
                 // FIXME Show a warning here! Need to be able to show warning along with success messages!
                 // throw new DataSheetWriteError($this, 'Cascading deletion via optional relations not yet implemented: no instances were deleted for relation "' . $rel->getAlias() . '" to object "' . $rel->getRightObject()->getAliasWithNamespace() . '"!');
             } else {
                 $ds = DataSheetFactory::createFromObject($rel->getRightObject());
                 // Use all filters of the original query in the cascading queries
-                $ds->setFilters($this->getFilters()->rebase($rel->getAlias()));
+                $ds->setFilters($this->getFilters()->rebase($rel->getAliasWithModifier()));
                 // Additionally add a filter over UIDs in the original query, if it has data with UIDs. This makes sure, the cascading deletes
                 // only affect the loaded rows and nothing "invisible" to the user!
                 if ($this->getUidColumn()) {
                     $uids = $this->getUidColumn()->getValues(false);
                     if (! empty($uids)) {
-                        $ds->addFilterInFromString($this->getUidColumn()->getExpressionObj()->rebase($rel->getAlias())->toString(), $uids);
+                        $ds->addFilterInFromString($this->getUidColumn()->getExpressionObj()->rebase($rel->getAliasWithModifier())->toString(), $uids);
                     }
                 }
                 $subsheets[] = $ds;

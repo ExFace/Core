@@ -283,7 +283,7 @@ class RelationPath implements MetaRelationPathInterface
                 continue;
             }
             
-            $reverse_aliases[] = $rel->getReversedRelation()->getAlias();
+            $reverse_aliases[] = $rel->getReversedRelation()->getAliasWithModifier();
             $current_object = $rel->getRightObject();
         }
         $reverse_aliases = array_reverse($reverse_aliases);
