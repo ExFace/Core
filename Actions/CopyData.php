@@ -14,6 +14,7 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 use exface\Core\Factories\RelationPathFactory;
 use exface\Core\Exceptions\Actions\ActionRuntimeError;
+use exface\Core\CommonLogic\Constants\Icons;
 
 /**
  * Copies all input objects in the input data including dependent objects defined via copy_related_objects.
@@ -25,6 +26,17 @@ class CopyData extends SaveData implements iCreateData
 {
   
     private $copyRelatedObjects = [];
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Actions\SaveData::init()
+     */
+    public function init()
+    {
+        parent::init();
+        $this->setIcon(Icons::CLONE_);
+    }
 
     /**
      * 
@@ -48,7 +60,7 @@ class CopyData extends SaveData implements iCreateData
         }
         
         $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
-        $message = $translator->translate('ACTION.COPYDATA.RESULT', ['%number%' => $copyCounter], $copyCounter) . $translator->translate('ACTION.COPYDATA.RESULT_DEPENDENCIES', ['%number%' => $dependencyCounter], $dependencyCounter);
+        $message = $translator->translate('ACTION.COPYDATA.RESULT', ['%number%' => $copyCounter], $copyCounter) . ' ' . $translator->translate('ACTION.COPYDATA.RESULT_DEPENDENCIES', ['%number%' => $dependencyCounter], $dependencyCounter);
         $result = ResultFactory::createDataResult($task, $inputSheet, $message);
         
         if ($copyCounter > 0) {
@@ -158,7 +170,7 @@ class CopyData extends SaveData implements iCreateData
             // Gather data for the related objects to be copied
             // Need to to this before
             foreach ($relationsToCopy as $rel) {
-                if ($rel->isReverseRelations() === false) {
+                if ($rel->isReverseRelation() === false) {
                     throw new ActionRuntimeError($this, 'Cannot copy related object for relation ' . $rel->getAliasWithModifier() . ': only reverse relations currently supported!');    
                 }
                 
@@ -174,7 +186,8 @@ class CopyData extends SaveData implements iCreateData
                 
                 // Read data filtered by the left key of the reverse relations. The values for the filter come
                 // from the input column, which is the left key of the regular relation.
-                $relSheet->addFilterFromString($relRev->getLeftKeyAttribute()->getAlias(), $inputSheet->getColumns()->getByAttribute($rel->getLeftKeyAttribute())->getCellValue($rownr), EXF_COMPARATOR_EQUALS);
+                $oldLeftKeyValue = $currentData->getColumns()->getByAttribute($rel->getLeftKeyAttribute())->getCellValue($rownr);
+                $relSheet->addFilterFromString($relRev->getLeftKeyAttribute()->getAlias(), $oldLeftKeyValue, EXF_COMPARATOR_EQUALS);
                 $relSheet->dataRead();
                 
                 // Once the data is read, remove all filters to make sure, there are no links with the original
@@ -182,7 +195,8 @@ class CopyData extends SaveData implements iCreateData
                 $relSheet->getFilters()->removeAll();
                 
                 // Replace keys (left key of the reverse relation) with values from the already copied main sheet
-                $relSheet->getColumns()->getByAttribute($relRev->getLeftKeyAttribute())->setValues($mainSheet->getColumns()->getByAttribute($relRev->getRightKeyAttribute())->getCellValue(0));
+                $newLefKeyValue = $mainSheet->getColumns()->getByAttribute($relRev->getRightKeyAttribute())->getCellValue(0);
+                $relSheet->getColumns()->getByAttribute($relRev->getLeftKeyAttribute())->setValues($newLefKeyValue);
 
                 // Call the copy-method for the sheet with the related data (don't forget the relation path)
                 $relPath = $relationPathFromHeadObject->copy()->appendRelation($rel);

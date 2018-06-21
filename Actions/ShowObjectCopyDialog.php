@@ -110,7 +110,7 @@ class ShowObjectCopyDialog extends ShowObjectEditDialog
      * {@inheritDoc}
      * @see \exface\Core\Actions\ShowObjectEditDialog::getSaveActionAlias()
      */
-    protected function getSaveActionAlias()
+    protected function getSaveActionAlias() : string
     {
         if ($this->isDeepCopy()) {
             return 'exface.Core.CopyData';
