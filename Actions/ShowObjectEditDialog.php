@@ -6,11 +6,14 @@ use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Widgets\Button;
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\Interfaces\Model\UiPageInterface;
+use exface\Core\CommonLogic\UxonObject;
 
 class ShowObjectEditDialog extends ShowObjectInfoDialog
 {
 
     private $save_action_alias = null;
+    
+    private $save_action_uxon = null;
 
     protected function init()
     {
@@ -44,11 +47,9 @@ class ShowObjectEditDialog extends ShowObjectInfoDialog
     protected function createDialogWidget(UiPageInterface $page, WidgetInterface $contained_widget = NULL)
     {
         $dialog = parent::createDialogWidget($page, $contained_widget);
-        // TODO add save button via followup actions in the init() method instead of the button directly
         /* @var $save_button \exface\Core\Widgets\Button */
-        $save_button = $dialog->createButton();
+        $save_button = $dialog->createButton(new UxonObject(['action' => $this->getSaveActionUxon()]));
         $save_button
-            ->setActionAlias($this->getSaveActionAlias())
             ->setCaption($this->getWorkbench()->getCoreApp()->getTranslator()->translate("ACTION.SHOWOBJECTEDITDIALOG.SAVE_BUTTON"))
             ->setVisibility(EXF_WIDGET_VISIBILITY_PROMOTED)
             ->setAlign(EXF_ALIGN_OPPOSITE);
@@ -66,14 +67,57 @@ class ShowObjectEditDialog extends ShowObjectInfoDialog
         $this->dialog_widget = $widget;
     }
 
-    public function getSaveActionAlias()
+    /**
+     * @deprecated use setSaveAction() instead
+     * 
+     * @param string $value
+     * @return ShowObjectEditDialog
+     */
+    public function setSaveActionAlias(string $value) : ShowObjectEditDialog
+    {
+        $this->save_action_alias = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return string
+     */
+    protected function getSaveActionAlias() : string
     {
         return $this->save_action_alias;
     }
-
-    public function setSaveActionAlias($value)
+    
+    /**
+     * Defines a custom action for the save-button of the dialog.
+     * 
+     * @uxon-property save_action
+     * @uxon-type \exface\Core\Actions\SaveData
+     * 
+     * @param UxonObject $uxon
+     * @return ShowObjectEditDialog
+     */
+    public function setSaveAction(UxonObject $uxon) : ShowObjectEditDialog
     {
-        $this->save_action_alias = $value;
+        $this->save_action_uxon = $uxon;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return UxonObject
+     */
+    public function getSaveActionUxon() : UxonObject
+    {
+        if ($this->save_action_uxon === null) {
+            $this->save_action_uxon = new UxonObject();
+        }
+        
+        if ($this->save_action_uxon->hasProperty('alias') === false) {
+            $this->save_action_uxon->setProperty('alias', $this->getSaveActionAlias());
+        }
+        
+        return $this->save_action_uxon;
     }
 }
 ?>

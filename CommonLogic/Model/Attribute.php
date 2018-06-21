@@ -1010,5 +1010,15 @@ class Attribute implements MetaAttributeInterface
         $this->default_editor_uxon = $uxon;
         return $this;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::isRelated()
+     */
+    public function isRelated() : bool
+    {
+        return $this->getRelationPath()->isEmpty() === false;
+    }
 }
 ?>

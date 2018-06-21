@@ -3,6 +3,9 @@
 	
 	"ACTION.CREATEDATA.RESULT": "%number% item created.|%number% items created.",
 	"ACTION.CREATEDATA.NAME": "Create",
+	"ACTION.COPYDATA.RESULT": "Copied %number% object|Copied %number% objects",
+	"ACTION.COPYDATA.RESULT_DEPENDENCIES": " including %number% dependency| including %number% dependencies",
+	"ACTION.COPYDATA.NAME": "Copy Data",
 	"ACTION.SHOWOBJECTCREATEDIALOG.NAME": "New",
 	
 	"ACTION.CONTEXTAPI.RESULT": "'%operation_name%' completed!",

@@ -5,6 +5,7 @@ use exface\Core\CommonLogic\EntityList;
 use exface\Core\Factories\AttributeListFactory;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Model\MetaAttributeListInterface;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
 
 /**
  *
@@ -129,7 +130,37 @@ class AttributeList extends EntityList implements MetaAttributeListInterface
         }
         return $output;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeListInterface::getWritable()
+     */
+    public function getWritable() : MetaAttributeListInterface
+    {
+        return $this->getMetaObject()->getAttributeGroup(AttributeGroup::WRITABLE);
+    }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeListInterface::getReadable()
+     */
+    public function getReadable() : MetaAttributeListInterface
+    {
+        return $this->getMetaObject()->getAttributeGroup(AttributeGroup::READABLE);
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeListInterface::getEditable()
+     */
+    public function getEditable() : MetaAttributeListInterface
+    {
+        return $this->getMetaObject()->getAttributeGroup(AttributeGroup::EDITABLE);
+    }
+    
     /**
      * 
      * {@inheritdoc}
