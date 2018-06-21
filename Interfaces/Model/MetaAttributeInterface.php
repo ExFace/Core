@@ -492,4 +492,11 @@ interface MetaAttributeInterface extends WorkbenchDependantInterface, iCanBeCopi
      * @param UxonObject $uxon_object
      */
     public function setDefaultEditorUxon(UxonObject $uxon_object);
+    
+    /**
+     * Returns TRUE if the attribute belongs to a related object an FALSE otherwise.
+     * 
+     * @return bool
+     */
+    public function isRelated() : bool;
 }

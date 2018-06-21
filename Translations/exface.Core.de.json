@@ -3,6 +3,8 @@
 
 	"ACTION.CREATEDATA.RESULT": "%number% Objekt erstellt.|%number% Objekte erstellt.",
 	"ACTION.CREATEDATA.NAME": "Speichern",
+	"ACTION.COPYDATA.RESULT": "%number% Objekt kopiert|%number% Objekte kopiert",
+	"ACTION.COPYDATA.RESULT_DEPENDENCIES": " inkl. %number% abhängiges Objekt| inkl. %number% Abhängigkeiten",
 	"ACTION.SHOWOBJECTCREATEDIALOG.NAME": "Neu",
     
     "ACTION.CONTEXTAPI.RESULT": "'%operation_name%' erfolgreich!",
