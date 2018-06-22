@@ -14,6 +14,7 @@ use exface\Core\Exceptions\Widgets\WidgetLogicError;
  * is to be performed, etc.
  * 
  * Example:
+ * 
  * ```json
  * {
  *  "widget_type": "DataTable",
@@ -24,6 +25,7 @@ use exface\Core\Exceptions\Widgets\WidgetLogicError;
  *      "show_counter": true
  *  }
  * }
+ * 
  * ```
  * 
  * @method DataTable getParent()
