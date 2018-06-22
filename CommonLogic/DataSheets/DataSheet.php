@@ -379,11 +379,12 @@ class DataSheet implements DataSheetInterface
                 $rels = RelationPath::relationPathParse($attribute->getAliasWithRelationPath());
                 foreach ($rels as $depth => $rel) {
                     $rel_path = RelationPath::relationPathAdd($last_rel_path, $rel);
-                    if ($query->canReadAttribute($sheetObject->getRelation($rel_path)->getRightKeyAttribute())) {
+                    $rel_right_key_alias = RelationPath::relationPathAdd($rel_path, $sheetObject->getRelation($rel_path)->getRightKeyAttribute()->getAlias());
+                    if ($query->canReadAttribute($sheetObject->getAttribute($rel_right_key_alias))) {
                         $rel_path_in_main_ds = $last_rel_path;
                     } else {
                         if (! $rel_path_to_subsheet) {
-                            // Remember the path to the relation to the object with the other data source
+                            // Remember the path to the relation to the object of the other query
                             $rel_path_to_subsheet = $rel_path;
                         } else {
                             // All path parts following the one to the other data source, go into the subsheet
