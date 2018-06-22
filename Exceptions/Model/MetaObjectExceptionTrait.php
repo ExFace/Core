@@ -94,29 +94,35 @@ trait MetaObjectExceptionTrait {
         $object_editor_descr['widget_type'] = 'Container';
         // Remove all buttons from the UXON - do it here to make sure, they are not even instantiated as widgets!
         $object_editor_descr = $this->removeKeysFromUxon($object_editor_descr, 'buttons');
-        $object_editor = WidgetFactory::createFromUxon($page, new UxonObject($object_editor_descr), $object_tab);
-        foreach ($object_editor->getChildrenRecursive() as $child) {
-            if ($child instanceof iTakeInput && ! ($child->getParent() instanceof Filter)) {
-                $child->setDisabled(true);
-            }
-            // Make sure, no widgets use lazy loading, as it won't work for a widget, that is not part of the page explicitly
-            // for security reasons
-            // TODO many non-lazy tales take a long time to load, so we need to be able to lazy load them somehow. This is
-            // currenlty impossible due to the limitation, that a table can only read data if it is defined in the page, the
-            // request comes from. To get rid of this, we can either identify error widgets somehow and treat them differently
-            // or we need to wait for ABAC to allow reading access based on rules.
-            if ($child instanceof iSupportLazyLoading) {
-                $child->setLazyLoading(false);
-            }
-        }
-        $object_tab->addWidget($object_editor);
         
-        // Prefill the debug widget with data of the current meta object
-        $object_data = DataSheetFactory::createFromObject($object_object);
-        $object_data->addFilterFromString($object_object->getUidAttributeAlias(), $this->getMetaObject()->getId(), EXF_COMPARATOR_EQUALS);
-        $object_data = $error_message->prepareDataSheetToPrefill($object_data);
-        $object_data->dataRead();
-        $error_message->prefill($object_data);
+        try {
+            $object_editor = WidgetFactory::createFromUxon($page, new UxonObject($object_editor_descr), $object_tab);
+            foreach ($object_editor->getChildrenRecursive() as $child) {
+                if ($child instanceof iTakeInput && ! ($child->getParent() instanceof Filter)) {
+                    $child->setDisabled(true);
+                }
+                // Make sure, no widgets use lazy loading, as it won't work for a widget, that is not part of the page explicitly
+                // for security reasons
+                // TODO many non-lazy tales take a long time to load, so we need to be able to lazy load them somehow. This is
+                // currenlty impossible due to the limitation, that a table can only read data if it is defined in the page, the
+                // request comes from. To get rid of this, we can either identify error widgets somehow and treat them differently
+                // or we need to wait for ABAC to allow reading access based on rules.
+                if ($child instanceof iSupportLazyLoading) {
+                    $child->setLazyLoading(false);
+                }
+            }
+            $object_tab->addWidget($object_editor);
+            
+            // Prefill the debug widget with data of the current meta object
+            $object_data = DataSheetFactory::createFromObject($object_object);
+            $object_data->addFilterFromString($object_object->getUidAttributeAlias(), $this->getMetaObject()->getId(), EXF_COMPARATOR_EQUALS);
+            $object_data = $error_message->prepareDataSheetToPrefill($object_data);
+            $object_data->dataRead();
+            $object_tab->prefill($object_data);
+            
+        } catch (\Throwable $e) {
+            $page->getWorkbench()->getLogger()->logException($e);
+        }
         
         return $error_message;
     }
