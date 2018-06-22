@@ -444,14 +444,17 @@ JS;
         $default_sorters = '';
         foreach ($widget->getSorters() as $sorter) {
             $column_exists = false;
+            $sorter_alias = $sorter->getProperty('attribute_alias');
+            $sorter_dir = strcasecmp($sorter->getProperty('direction'), SortingDirectionsDataType::ASC) === 0 ? 'asc' : 'desc';
             foreach ($widget->getColumns() as $nr => $col) {
-                if ($col->getAttributeAlias() == $sorter->getProperty('attribute_alias')) {
+                if ($col->getAttributeAlias() == $sorter_alias) {
                     $column_exists = true;
-                    $default_sorters .= '[ ' . ($nr + $column_number_offset) . ', "' . (strcasecmp($sorter->getProperty('direction'), SortingDirectionsDataType::ASC) === 0 ? 'asc' : 'desc') . '" ], ';
+                    $default_sorters .= '[ ' . ($nr + $column_number_offset) . ', "' . $sorter_dir . '" ], ';
                 }
             }
             if (! $column_exists) {
-                // TODO add a hidden column
+                $widget->addColumn($widget->createColumnFromAttribute($widget->getMetaObject()->getAttribute($sorter_alias), null, true));
+                $default_sorters .= '[ ' . ($nr + 1 + $column_number_offset) . ', "' . $sorter_dir . '" ], ';
             }
         }
         // Remove tailing comma
