@@ -15,6 +15,8 @@ use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 use exface\Core\Factories\RelationPathFactory;
 use exface\Core\Exceptions\Actions\ActionRuntimeError;
 use exface\Core\CommonLogic\Constants\Icons;
+use exface\Core\CommonLogic\Model\RelationPath;
+use exface\Core\Exceptions\Actions\ActionConfigurationError;
 
 /**
  * Copies all input objects in the input data including dependent objects defined via copy_related_objects.
@@ -178,9 +180,8 @@ class CopyData extends SaveData implements iCreateData
                 
                 // Create a data sheet for the right object of the relation with all it's
                 // writable attributes.
-                // IDEA take writable attributes or editable ones (like above)?
                 $relSheet = DataSheetFactory::createFromObject($rel->getRightObject());
-                foreach ($relSheet->getMetaObject()->getAttributes()->getWritable() as $attr) {
+                foreach ($relSheet->getMetaObject()->getAttributes()->getEditable() as $attr) {
                     $relSheet->getColumns()->addFromAttribute($attr);
                 }
                 
@@ -262,6 +263,9 @@ class CopyData extends SaveData implements iCreateData
         $rels = [];
         $obj = $this->getMetaObject();
         foreach ($this->getCopyRelatedObjects() as $alias) {
+            if (count(RelationPath::relationPathParse($alias)) > 1) {
+                throw new ActionConfigurationError($this, 'Cannot copy related objects from relation "' . $alias . '": only direct relations supported - no paths!');
+            }
             $rels[] = $obj->getRelation($alias);
         }
         return $rels;
