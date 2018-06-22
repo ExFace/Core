@@ -194,8 +194,10 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
      * Set "expand" to FALSE to collapse all groups initially. Set "show_count" to TRUE to include the number
      * of rows within the group in it's header.
      *
-     * ```json
+     * 
      * Example:
+     * 
+     * ```json
      * {
      *  "widget_type": "DataTable",
      *  ...
@@ -205,6 +207,7 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
      *      "show_count": true
      *  }
      * }
+     * 
      * ```
      *
      * @uxon-property row_grouper
