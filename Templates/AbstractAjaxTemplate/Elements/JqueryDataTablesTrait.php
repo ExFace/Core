@@ -521,19 +521,22 @@ JS;
         }
         
         if ($widget->hasRowGroups()){
-            if ($widget->getRowGrouper()->getShowCounter()){
+            $grouper = $widget->getRowGrouper();
+            if ($grouper->getShowCounter()){
                 $rowGroupConter = "' ('+rows.count()+')'";
             } else {
                 $rowGroupConter = "''";
             }
             
-            if (! $widget->getRowGrouper()->getExpandAllGroups()){
-                // TODO
+            if ($grouper->getExpandFirstGroupOnly() === true) {
+                $this->addOnLoadSuccess("setTimeout(function(){ $('#{$this->getId()} > tbody > tr').not(':first-child').trigger('click');}, 0);\n");
+            } elseif ($grouper->getExpandAllGroups() === false){
+                $this->addOnLoadSuccess("setTimeout(function(){ $('#{$this->getId()} > tbody > tr').trigger('click');}, 0);\n");
             }
             
             $rowGroup = <<<JS
         , "rowGroup": {
-            dataSrc: '{$widget->getRowGrouper()->getGroupByColumn()->getDataColumnName()}',
+            dataSrc: '{$grouper->getGroupByColumn()->getDataColumnName()}',
             startRender: function ( rows, group ) {
                 var counter = {$rowGroupConter} ;
                 return $('<tr onclick="{$this->buildJsFunctionPrefix()}RowGroupToggle(this);"/>')
@@ -541,6 +544,7 @@ JS;
             }
         }
 JS;
+            
         }
         
         return <<<JS
