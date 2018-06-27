@@ -285,9 +285,9 @@ class SessionContextScope extends AbstractContextScope
     {
         if ($this->session_locale === null) {
             try {
-                return $this->getContextManager()->getScopeUser()->getUserCurrent()->getLocale();
+                $this->session_locale = $this->getContextManager()->getScopeUser()->getUserCurrent()->getLocale();
             } catch (UserException $e){
-                return $this->getWorkbench()->getConfig()->getOption('LOCALE.DEFAULT');
+                $this->session_locale = $this->getWorkbench()->getConfig()->getOption('LOCALE.DEFAULT');
             }
         }
         return $this->session_locale;
