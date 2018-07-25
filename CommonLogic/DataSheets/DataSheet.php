@@ -38,6 +38,7 @@ use exface\Core\Interfaces\Model\ConditionalExpressionInterface;
 use exface\Core\CommonLogic\QueryBuilder\RowDataArraySorter;
 use exface\Core\Exceptions\DataSheets\DataSheetStructureError;
 use exface\Core\DataTypes\RelationTypeDataType;
+use exface\Core\Interfaces\Model\ExpressionInterface;
 
 /**
  * Internal data respresentation object in exface.
@@ -557,7 +558,7 @@ class DataSheet implements DataSheetInterface
             }
         }
         
-        // FIXME This foreach calculates the expressions in all columns, which is not a good idea, because most columns are simple attributes
+        // FIXME #column-duplicates This foreach calculates the expressions in all columns, which is not a good idea, because most columns are simple attributes
         // and already have their values. However, if the column name has special characters like ":", the column name is not the same, as the
         // the attribute alias, that is the key in the rows. So, this foreach here actually doubles all columns with special characters: e.g. copying
         // row values with the key SOME_ATTRIBUTE:SUM to a key SOME_ATTRIBUTE_SUM. This leads to useless increase of memory consumption, but I'm
@@ -1345,9 +1346,14 @@ class DataSheet implements DataSheetInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::hasUidColumn()
      */
-    public function hasUidColumn()
+    public function hasUidColumn(bool $checkValues = false) : bool
     {
-        if (is_null($this->getUidColumn())){
+        $col = $this->getUidColumn();
+        if ($col === null){
+            return false;
+        }
+        
+        if ($checkValues === true && $col->isEmpty(true)) {
             return false;
         }
         

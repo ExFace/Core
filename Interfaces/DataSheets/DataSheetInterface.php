@@ -257,11 +257,16 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
     public function getUidColumn();
     
     /**
-     * Returns TRUE if the sheet has a UID column and FALSE otherwise.
+     * Returns TRUE if the sheet has a UID column optionally checking for non-empty values and FALSE otherwise.
+     * 
+     * hasUidColumn() will return TRUE even if the column is empty, while hasUidColumn(true) will only return TRUE
+     * if the column has at least one non-empty value.
+     * 
+     * @param bool $checkValues
      * 
      * @return boolean
      */
-    public function hasUidColumn();
+    public function hasUidColumn(bool $checkValues = false) : bool;
 
     /**
      *
