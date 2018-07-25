@@ -982,13 +982,19 @@ class Attribute implements MetaAttributeInterface
     {
         // If there is no default widget uxon defined, use the UXON from the data type
         if ($this->default_editor_uxon === null) {
+            // Relations do not use the data type widget, but rather the special relation widget type from the config,
+            // which will be set set later on. Setting it here would not work if a default editor is specified, but
+            // no widget_type is set explicitly (why should a user do that if a decent type is selected by default?)
             if ($this->isRelation()) {
-                $this->default_editor_uxon = new UxonObject([
-                    "widget_type" => $this->getWorkbench()->getConfig()->getOption('TEMPLATES.DEFAULT_WIDGET_FOR_RELATIONS')
-                ]);
+                $this->default_editor_uxon = new UxonObject();
             } else {
                 $this->default_editor_uxon = $this->getDataType()->getDefaultEditorUxon()->copy();
             }
+        }
+        
+        // If the attribute is a relation and no widget type was specified explicitly, take it from the config!
+        if ($this->isRelation() && ! $this->default_editor_uxon->hasProperty('widget_type')) {
+            $this->default_editor_uxon->setProperty("widget_type", $this->getWorkbench()->getConfig()->getOption('TEMPLATES.DEFAULT_WIDGET_FOR_RELATIONS'));
         }
         
         $uxon = $this->default_editor_uxon->copy();
