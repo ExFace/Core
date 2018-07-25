@@ -179,8 +179,9 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
             $apply_on_change = $uxon->getProperty('apply_on_change');
             $uxon->unsetProperty('apply_on_change');
         } 
-        if ($uxon->hasProperty('required')) {
-            $required = $uxon->getProperty('required');
+        if ($uxon_object !== null && $uxon_object->hasProperty('required')) {
+            // A filter is only required, if a user explicitly marked it as required in the filter's UXON
+            $required = $uxon_object->getProperty('required');
             $uxon->unsetProperty('required');
         } 
         

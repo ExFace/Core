@@ -56,6 +56,7 @@ class Input extends Value implements iTakeInput, iHaveDefaultValue
     public function setRequired($value)
     {
         $this->required = $value;
+        return $this;
     }
 
     /**
