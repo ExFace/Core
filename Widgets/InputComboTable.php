@@ -197,7 +197,11 @@ class InputComboTable extends InputCombo implements iHaveChildren
     {
         if ($widget_or_uxon_object instanceof DataTable) {
             $this->data_table = $widget_or_uxon_object;
+            $this->setTableObjectAlias($widget_or_uxon_object->getMetaObject()->getAliasWithNamespace());
         } elseif ($widget_or_uxon_object instanceof UxonObject) {
+            if ($widget_or_uxon_object->hasProperty('object_alias')) {
+                $this->setTableObjectAlias($widget_or_uxon_object->getProperty('object_alias'));
+            }
             // Do noting, the table will be initialized later, when all the other UXON properties have been processed.
             // TODO this works fine with creating widgets from UXON but will not work if a UXON object is being passed
             // programmatically - need to save the given UXON in an extra variable if we are to support this.
