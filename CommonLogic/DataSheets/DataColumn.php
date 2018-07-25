@@ -422,7 +422,7 @@ class DataColumn implements DataColumnInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::isAttribute()
      */
-    public function isAttribute()
+    public function isAttribute() : bool
     {
         return $this->getAttributeAlias() ? true : false;
     }
@@ -432,7 +432,7 @@ class DataColumn implements DataColumnInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::isFormula()
      */
-    public function isFormula()
+    public function isFormula() : bool
     {
         return is_null($this->formula) || $this->formula === '' ? false : true; 
     }
@@ -442,9 +442,14 @@ class DataColumn implements DataColumnInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::isCalculated()
      */
-    public function isCalculated()
+    public function isCalculated() : bool
     {
-        return $this->isFormula();
+        return $this->isFormula() || $this->getExpressionObj()->isConstant();
+    }
+    
+    public function isStatic() : bool
+    {
+        return $this->getExpressionObj()->isStatic();
     }
 
     /**

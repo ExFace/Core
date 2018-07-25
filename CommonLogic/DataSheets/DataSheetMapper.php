@@ -86,7 +86,7 @@ class DataSheetMapper implements DataSheetMapperInterface {
     protected function prepareFromSheet(DataSheetInterface $data_sheet)
     {
         // Only try to add new columns if the sheet has a UID column and is fresh (no values changed)
-        if ($data_sheet->hasUidColumn() && $data_sheet->isFresh()){
+        if ($data_sheet->hasUidColumn(true) && $data_sheet->isFresh()){
             foreach ($this->getColumnToColumnMappings() as $map){
                 $from_expression = $map->getFromExpression();
                 if (! $data_sheet->getColumns()->getByExpression($from_expression)){
