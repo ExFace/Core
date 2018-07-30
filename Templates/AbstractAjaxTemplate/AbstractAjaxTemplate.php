@@ -582,5 +582,22 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
         }
         return array_filter($headers);
     }
+    
+    protected function buildHtmlHeadIcons() : array
+    {
+        $tags = [];
+        $icons = $this->getWorkbench()->getCMS()->getFavIcons();
+        $favicon = $icons[0];
+        if (is_array($favicon)) {
+            $tags[] = '<link rel="shortcut icon" href="' . $favicon['src'] . '">';
+        }
+        foreach ($icons as $icon) {
+            if ($icon['sizes'] == '192x192') {
+                $tags[] = '<link rel="icon" type="' . $icon['type'] . '" href="' . $icon['src'] . '" sizes="192x192">';
+                $tags[] = '<link rel="apple-touch-icon" type="' . $icon['type'] . '" href="' . $icon['src'] . '" sizes="192x192">';
+            }  
+        }
+        return $tags;
+    }
 }
 ?>

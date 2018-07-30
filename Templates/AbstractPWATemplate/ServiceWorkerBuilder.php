@@ -1,5 +1,5 @@
 <?php
-namespace exface\Core\Templates\AbstractProgressiveAppTemplate;
+namespace exface\Core\Templates\AbstractPWATemplate;
 
 use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Templates\AbstractAjaxTemplate\AbstractAjaxTemplate;
