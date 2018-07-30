@@ -38,7 +38,8 @@
         "jdorn/sql-formatter": "~1.2.17",
         "cebe/markdown": "^1.1.2",
         "kabachello/fileroute": "~0.2",
-        "guzzlehttp/guzzle": "^6.2.2"
+        "guzzlehttp/guzzle": "^6.2.2",
+        "npm-asset/workbox-sw": "^3.0.0"
     },
     "suggest": {
         "npm-asset/workbox-sw": "Allows templates to use the tools from the AbstractServiceWorkerTemplate"
