@@ -254,5 +254,12 @@ interface CmsConnectorInterface extends WorkbenchDependantInterface
      * @return bool
      */
     public function isCmsPageId($value) : bool;
+    
+    /**
+     * Returns an array with favicons structured according to the rules of Web App Manifest (property "icons").
+     * 
+     * @return array
+     */
+    public function getFavIcons() : array;
 }
 ?>
