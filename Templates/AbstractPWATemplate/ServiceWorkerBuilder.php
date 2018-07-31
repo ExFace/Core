@@ -1,32 +1,78 @@
 <?php
 namespace exface\Core\Templates\AbstractPWATemplate;
 
-use exface\Core\Interfaces\WorkbenchDependantInterface;
-use exface\Core\Templates\AbstractAjaxTemplate\AbstractAjaxTemplate;
-
-class ServiceWorkerBuilder implements WorkbenchDependantInterface
+/**
+ * Generates the JS for a ServiceWorker based on the workbox toolkit.
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
+class ServiceWorkerBuilder
 {
-    private $template = null;
+    private $routesToCache = [];
     
-    private $workbench = null;
+    private $workboxImportPath = null;
     
-    /**
-     * 
-     * @param AbstractAjaxTemplate $template
-     */
-    public function __construct(AbstractAjaxTemplate $template)
+    public function __construct(string $workboxImportPath = 'workbox-sw/build/workbox-sw.js')
     {
-        $this->template = $template;
-        $this->workbench = $template->getWorkbench();
+        $this->workboxImportPath = $workboxImportPath;
     }
     
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\WorkbenchDependantInterface::getWorkbench()
-     */
-    public function getWorkbench()
+    public function buildJs() : string
     {
-        return $this->workbench;
+        return <<<JS
+importScripts('{$this->workboxImportPath}');
+
+{$this->buildJsRoutesToCache()}
+
+JS;
+    }
+    
+    public function addRouteToCache(string $id, string $regex, string $strategy, string $cacheName = null, int $maxEntries = null, int $maxAgeSeconds = null)
+    {
+        $this->routesToCache[$id] = [
+            'regex' => $regex,
+            'strategy' => $strategy,
+            'cacheName' => $cacheName, 
+            'maxEntries' => $maxEntries,
+            'maxAgeSeconds' => $maxAgeSeconds
+        ];
+        return $this;
+    }
+    
+    protected function getRoutesToCache() : array
+    {
+        return $this->routesToCache;
+    }
+    
+    protected function buildJsRoutesToCache() : string
+    {
+        $js = '';
+        foreach ($this->getRoutesToCache() as $id => $route) {
+            
+            $plugins = '';
+            if ($route['maxAgeSeconds'] || $route['maxEntries']) {
+                $params = '{' . ($route['maxAgeSeconds'] ? 'maxAgeSeconds: ' . $route['maxAgeSeconds'] . ', ' : '') 
+                        . ($route['maxEntries'] ? 'maxEntries: ' . $route['maxEntries'] . '' : '') . '}';
+                $plugins .= "new workbox.expiration.Plugin({$params})\n            ";
+            }
+            
+            $cacheName = $route['cacheName'] ? 'cacheName : "' . $route['cacheName'] . '",' : '';
+            
+            $js .= <<<JS
+
+// {$id}
+workbox.routing.registerRoute(
+    /{$route['regex']}/,
+    workbox.strategies.{$route['strategy']}({
+        {$cacheName}
+        plugins: [
+            {$plugins}
+        ],
+    })
+);
+JS;
+        }
+        return $js;
     }
 }
