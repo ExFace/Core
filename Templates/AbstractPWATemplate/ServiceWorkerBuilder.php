@@ -52,8 +52,8 @@ JS;
             
             $plugins = '';
             if ($route['maxAgeSeconds'] || $route['maxEntries']) {
-                $params = '{' . ($route['maxAgeSeconds'] ? 'maxAgeSeconds: ' . $route['maxAgeSeconds'] . ', ' : '') 
-                        . ($route['maxEntries'] ? 'maxEntries: ' . $route['maxEntries'] . '' : '') . '}';
+                $params = '{' . ($route['maxAgeSeconds'] ? 'maxAgeSeconds: ' . $route['maxAgeSeconds'] : '') 
+                        . ($route['maxEntries'] ? ', maxEntries: ' . $route['maxEntries'] . '' : '') . '}';
                 $plugins .= "new workbox.expiration.Plugin({$params})\n            ";
             }
             
