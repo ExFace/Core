@@ -51,10 +51,15 @@ JS;
         foreach ($this->getRoutesToCache() as $id => $route) {
             
             $plugins = '';
-            if ($route['maxAgeSeconds'] || $route['maxEntries']) {
-                $params = '{' . ($route['maxAgeSeconds'] ? 'maxAgeSeconds: ' . $route['maxAgeSeconds'] : '') 
-                        . ($route['maxEntries'] ? ', maxEntries: ' . $route['maxEntries'] . '' : '') . '}';
-                $plugins .= "new workbox.expiration.Plugin({$params})\n            ";
+            $params = [];
+            if ($route['maxAgeSeconds']) {
+                $params[] = 'maxAgeSeconds: ' . $route['maxAgeSeconds'];
+            }
+            if ($route['maxEntries']) {
+                $params[] = 'maxEntries: ' . $route['maxEntries'];
+            }
+            if (! empty($params)) {
+                $plugins .= "new workbox.expiration.Plugin({" . implode(', ', $params) . "})\n            ";
             }
             
             $cacheName = $route['cacheName'] ? 'cacheName : "' . $route['cacheName'] . '",' : '';
