@@ -28,9 +28,10 @@ importScripts('{$this->workboxImportPath}');
 JS;
     }
     
-    public function addRouteToCache(string $id, string $regex, string $strategy, string $cacheName = null, int $maxEntries = null, int $maxAgeSeconds = null)
+    public function addRouteToCache(string $id, string $regex, string $strategy, string $description = null, string $cacheName = null, int $maxEntries = null, int $maxAgeSeconds = null)
     {
         $this->routesToCache[$id] = [
+            'description' => $description,
             'regex' => $regex,
             'strategy' => $strategy,
             'cacheName' => $cacheName, 
@@ -66,7 +67,8 @@ JS;
             
             $js .= <<<JS
 
-// {$id}
+// Route "{$id}"
+// {$route['description']}
 workbox.routing.registerRoute(
     /{$route['regex']}/,
     workbox.strategies.{$route['strategy']}({
