@@ -47,20 +47,19 @@ class DataColumnList extends EntityList implements DataColumnListInterface
                 $column->setDataSheet($data_sheet);
             }
             
+            $result = parent::add($column, (is_null($key) && $column->getName() ? $column->getName() : $key));
+            
             // Mark the data as outdated if new columns are added because the values for these columns should be fetched now
-            $column->setFresh(false);
-            /* TODO actually we do not need to mark static columns not fresh - we could recalculate them right away without
-             * querying the data source. This currently does not work, however, because of the #column-duplicates bug. Once
-             * it is fixed, the code below may be included instead of the line above.
+            // Actually we do not need to mark static columns not fresh - we could recalculate them right away without
+            // querying the data source.
             if ($column->isStatic()) {
                 // If we are adding a static column, no data source refresh is actually needed - a recalculation is enough.
                 $column->setValuesByExpression($column->getExpressionObj(), true);
             } else {
                 $column->setFresh(false);
             }
-            */
             
-            $result = parent::add($column, (is_null($key) && $column->getName() ? $column->getName() : $key));
+            return $this;            
         }
         
         // If the original column had values, use them to overwrite the values in the newly added column

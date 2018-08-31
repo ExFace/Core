@@ -40,9 +40,9 @@ class CsvBuilder extends FileContentsBuilder
         $field_map = array();
         foreach ($this->getAttributes() as $qpart) {
             if ($this->getFileProperty($query, $qpart->getDataAddress()) !== false) {
-                $static_values[$qpart->getAlias()] = $this->getFileProperty($query, $qpart->getDataAddress());
+                $static_values[$qpart->getColumnKey()] = $this->getFileProperty($query, $qpart->getDataAddress());
             } else {
-                $field_map[$qpart->getAlias()] = $qpart->getDataAddress();
+                $field_map[$qpart->getColumnKey()] = $qpart->getDataAddress();
             }
         }
         

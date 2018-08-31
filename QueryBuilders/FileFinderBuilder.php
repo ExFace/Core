@@ -275,7 +275,7 @@ class FileFinderBuilder extends AbstractQueryBuilder
                         ));
                     }
                 }
-                $row[$qpart->getAlias()] = $value;
+                $row[$qpart->getColumnKey()] = $value;
             }
         }
         

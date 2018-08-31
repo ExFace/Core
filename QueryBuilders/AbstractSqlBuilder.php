@@ -27,6 +27,7 @@ use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\Factories\QueryBuilderFactory;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\DataTypes\RelationTypeDataType;
+use exface\Core\CommonLogic\DataSheets\DataColumn;
 
 /**
  * A query builder for generic SQL syntax.
@@ -236,7 +237,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             $this->result_total_count = $totals[0]['EXFCNT'];
             // now save the custom totals.
             foreach ($this->totals as $qpart) {
-                $this->result_totals[$qpart->getRow()][$qpart->getAlias()] = $totals[0][$this->getShortAlias($qpart->getAlias())];
+                $this->result_totals[$qpart->getRow()][$qpart->getColumnKey()] = $totals[0][$this->getShortAlias($qpart->getColumnKey())];
             }
         }
         return count($this->result_rows);
@@ -711,7 +712,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             $select_from .= $this->getQueryId();
         }
         
-        $select_as = $this->getShortAlias(is_null($select_as) ? $qpart->getAlias() : $select_as);
+        $select_as = $this->getShortAlias($select_as ?? $qpart->getColumnKey());
         $select_from = $this->getShortAlias($select_from);
         $aggregator = ! is_null($aggregator) ? $aggregator : $qpart->getAggregator();
         
@@ -1460,7 +1461,8 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 }
                 // FIXME add support for related_object_special_key_alias
                 if (! $prefix_rel_path->isEmpty()) {
-                    $prefix_rel_qpart = new QueryPartSelect(RelationPath::relationPathAdd($prefix_rel_path->toString(), $this->getMainObject()->getRelatedObject($prefix_rel_path->toString())->getUidAttributeAlias()), $this);
+                    $prefix_rel_str = RelationPath::relationPathAdd($prefix_rel_path->toString(), $this->getMainObject()->getRelatedObject($prefix_rel_path->toString())->getUidAttributeAlias());
+                    $prefix_rel_qpart = new QueryPartSelect($prefix_rel_str, $this, DataColumn::sanitizeColumnName($prefix_rel_str));
                     $junction = $this->buildSqlSelect($prefix_rel_qpart, null, null, '');
                 } else {
                     $junction = $this->getShortAlias($this->getMainObject()->getAlias() . $this->getQueryId()) . '.' . $this->getMainObject()->getUidAttribute()->getDataAddress();
@@ -1469,7 +1471,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 // If we are dealing with a regular relation, build a subquery to select primary keys from joined tables and match them to the foreign key of the main table
                 $relq->addFilter($qpart->rebase($relq, $start_rel->getAlias()));
                 $relq->addAttribute($start_rel->getRightKeyAttribute()->getAlias());
-                $junction_qpart = new querypartse($start_rel->getLeftKeyAttribute()->getAlias(), $this);
+                $junction_qpart = new QueryPartSelect($start_rel->getLeftKeyAttribute()->getAlias(), $this);
                 $junction = $this->buildSqlSelect($junction_qpart, null, null, '');
             }
             
@@ -1494,7 +1496,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         if ($qpart->getDataAddressProperty("ORDER_BY")) {
             $output = $this->getShortAlias($this->getMainObject()->getAlias()) . '.' . $qpart->getDataAddressProperty("ORDER_BY");
         } else {
-            $output = $this->getShortAlias($qpart->getAlias());
+            $output = $this->getShortAlias($qpart->getColumnKey());
         }
         $output .= ' ' . $qpart->getOrder();
         return $output;
@@ -1683,7 +1685,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             if (! $qpart = $this->getAttribute($ph_attribute_alias)) {
                 // Throw an error if the attribute cannot be resolved relative to the main object of the query
                 try {
-                    $qpart = new QueryPartSelect($ph_attribute_alias, $this);
+                    $qpart = new QueryPartSelect($ph_attribute_alias, $this, DataColumn::sanitizeColumnName($string));
                 } catch (MetaAttributeNotFoundError $e){
                     throw new QueryBuilderException('Cannot use placeholder [#' . $ph . '#] in data address "' . $original_data_address . '": no attribute "' . $ph_attribute_alias . '" found for query base object ' . $this->getMainObject()->getAliasWithNamespace() . '!', null, $e);
                 }

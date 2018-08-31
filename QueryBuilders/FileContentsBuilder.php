@@ -101,7 +101,7 @@ class FileContentsBuilder extends AbstractQueryBuilder
         
         foreach ($this->getAttributes() as $qpart) {
             if ($this->getFileProperty($query, $qpart->getDataAddress())) {
-                $result_rows[$qpart->getAlias()] = $this->getFileProperty($query, $qpart->getDataAddress());
+                $result_rows[$qpart->getColumnKey()] = $this->getFileProperty($query, $qpart->getDataAddress());
             }
         }
         

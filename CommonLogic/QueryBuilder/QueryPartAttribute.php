@@ -7,6 +7,7 @@ use exface\Core\CommonLogic\DataSheets\DataAggregation;
 use exface\Core\Interfaces\Model\AggregatorInterface;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\Factories\ExpressionFactory;
+use exface\Core\CommonLogic\DataSheets\DataColumn;
 
 class QueryPartAttribute extends QueryPart
 {
@@ -141,6 +142,16 @@ class QueryPartAttribute extends QueryPart
         $qpart->setAttribute($new_expression->getAttribute());
         $qpart->setAlias($new_expression->toString());
         return $qpart;
+    }
+    
+    /**
+     * Returns the key of the column in the query results, that this query part would produce.
+     * 
+     * @return string
+     */
+    public function getColumnKey() : string
+    {
+        return DataColumn::sanitizeColumnName($this->getAlias());
     }
 }
 ?>

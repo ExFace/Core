@@ -558,12 +558,12 @@ class DataSheet implements DataSheetInterface
             }
         }
         
-        // FIXME #column-duplicates This foreach calculates the expressions in all columns, which is not a good idea, because most columns are simple attributes
-        // and already have their values. However, if the column name has special characters like ":", the column name is not the same, as the
-        // the attribute alias, that is the key in the rows. So, this foreach here actually doubles all columns with special characters: e.g. copying
-        // row values with the key SOME_ATTRIBUTE:SUM to a key SOME_ATTRIBUTE_SUM. This leads to useless increase of memory consumption, but I'm
-        // not sure, how to fix this.
+        // Look for columns, that need calculation and perform that calculation
         foreach ($this->getColumns() as $name => $col) {
+            if (! $col->getExpressionObj()->isFormula()) {
+                continue;
+            }
+            
             $vals = $col->getExpressionObj()->evaluate($this, $name);
             if (is_array($vals)) {
                 // See if the expression returned more results, than there were rows. If so, it was also performed on

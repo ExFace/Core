@@ -314,7 +314,7 @@ class Expression implements ExpressionInterface
             }
             switch ($this->type) {
                 case self::TYPE_ATTRIBUTE:
-                    return $data_sheet->getCellValue($this->attribute_alias, $row_number);
+                    return $data_sheet->getColumns()->getByExpression($this->attribute_alias)->getCellValue($row_number);
                 case self::TYPE_FORMULA:
                     return $this->getFormula()->evaluate($data_sheet, $column_name, $row_number);
                 default:
