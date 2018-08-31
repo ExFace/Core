@@ -11,8 +11,8 @@ use exface\Core\Interfaces\Model\AggregatorInterface;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\Selectors\QueryBuilderSelectorInterface;
 use exface\Core\Interfaces\QueryBuilderInterface;
-use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
+use exface\Core\CommonLogic\DataSheets\DataColumn;
 
 abstract class AbstractQueryBuilder implements QueryBuilderInterface
 {
@@ -136,11 +136,12 @@ abstract class AbstractQueryBuilder implements QueryBuilderInterface
      * @param string $attribute_alias 
      * @return QueryPartAttribute           
      */
-    public function addAttribute($alias)
+    public function addAttribute(string $attribute_alias, string $column_name = null) : QueryPartSelect
     {
-        $qpart = new QueryPartSelect($alias, $this);
+        $column_name = $column_name ?? DataColumn::sanitizeColumnName($attribute_alias);
+        $qpart = new QueryPartSelect($attribute_alias, $this, $column_name);
         if ($qpart->isValid()) {
-            $this->attributes[$alias] = $qpart;
+            $this->attributes[$column_name] = $qpart;
         }
         return $qpart;
     }

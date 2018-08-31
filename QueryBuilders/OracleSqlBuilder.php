@@ -170,7 +170,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
                         } else {
                             $core_selects[$qpart->getAlias()] = $this->buildSqlSelect($qpart);
                         }
-                        $enrichment_select .= ', ' . $this->buildSqlSelect($qpart, 'EXFCOREQ', '"' . $this->getShortAlias($qpart->getAlias()) . '"', null, false);
+                        $enrichment_select .= ', ' . $this->buildSqlSelect($qpart, 'EXFCOREQ', '"' . $this->getShortAlias($qpart->getColumnKey()) . '"', null, false);
                     }
                     unset($enrichment_selects[$nr]);
                 }
@@ -324,7 +324,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
         if (count($this->getTotals()) > 0) {
             // determine all joins, needed to perform the totals functions
             foreach ($this->getTotals() as $qpart) {
-                $totals_selects[] = $this->buildSqlSelect($qpart, 'EXFCOREQ', '"' . $this->getShortAlias($qpart->getAlias()) . '"', null, $qpart->getTotalAggregator());
+                $totals_selects[] = $this->buildSqlSelect($qpart, 'EXFCOREQ', '"' . $this->getShortAlias($qpart->getColumnKey()) . '"', null, $qpart->getTotalAggregator());
                 $totals_core_selects[] = $this->buildSqlSelect($qpart);
                 $totals_joins = array_merge($totals_joins, $this->buildSqlJoins($qpart));
             }
@@ -390,7 +390,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
         if ($qpart->getDataAddressProperty("ORDER_BY")) {
             $output = ($select_from ? $select_from : $this->getShortAlias($qpart->getAttribute()->getRelationPath()->toString())) . '.' . $qpart->getDataAddressProperty("ORDER_BY");
         } else {
-            $output = '"' . $this->getShortAlias($qpart->getAlias()) . '"';
+            $output = '"' . $this->getShortAlias($qpart->getColumnKey()) . '"';
             
             // Make sure, NULLs are treated as 0 in numeric columns. Otherwise
             // they will be put at the beginning or the end of the result making

@@ -81,7 +81,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
 else {
                 foreach ($this->getAttributes() as $qpart) {
                     if (! $this->checkForSqlStatement($qpart->getDataAddress())) {
-                        $order_by .= ', ' . $qpart->getAlias() . ' DESC';
+                        $order_by .= ', ' . $qpart->getColumnKey() . ' DESC';
                         break;
                     }
                 }
@@ -133,7 +133,7 @@ elseif (! $group_by || $qpart->getAggregator() || $this->getAggregation($qpart->
             // If we have attributes, that need reverse relations, we must move the group by to the outer (enrichment) query, because
             // the subselects of the subqueries will reference UIDs of the core rows, thus making grouping in the core query impossible
             if (! $skipped && $group_by && $has_attributes_with_reverse_relations) {
-                $enrichment_select .= ', ' . $this->buildSqlSelect($qpart, 'EXFCOREQ', $this->getShortAlias($qpart->getAlias()));
+                $enrichment_select .= ', ' . $this->buildSqlSelect($qpart, 'EXFCOREQ', $this->getShortAlias($qpart->getColumnKey()));
             }
         }
         $select = implode(', ', array_unique($selects));
@@ -187,7 +187,7 @@ elseif (! $group_by || $qpart->getAggregator() || $this->getAggregation($qpart->
         if (count($this->getTotals()) > 0) {
             // determine all joins, needed to perform the totals functions
             foreach ($this->getTotals() as $qpart) {
-                $totals_selects[] = $this->buildSqlSelect($qpart, 'EXFCOREQ', $this->getShortAlias($qpart->getAlias()), null, $qpart->getTotalAggregator());
+                $totals_selects[] = $this->buildSqlSelect($qpart, 'EXFCOREQ', $this->getShortAlias($qpart->getColumnKey()), null, $qpart->getTotalAggregator());
                 $totals_core_selects[] = $this->buildSqlSelect($qpart);
                 $totals_joins = array_merge($totals_joins, $this->buildSqlJoins($qpart));
             }
