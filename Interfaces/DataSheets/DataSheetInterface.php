@@ -245,7 +245,7 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
     /**
      * Returns an array of DataColumns
      *
-     * @return DataColumnListInterface|DataColumnInterface[]
+     * @return DataColumnInterface[]|DataColumnListInterface
      */
     public function getColumns();
 

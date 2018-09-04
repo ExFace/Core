@@ -57,7 +57,7 @@ interface DataColumnListInterface extends EntityListInterface
      * @param string $hidden            
      * @return DataColumnInterface
      */
-    public function addFromExpression($expression_or_string, $name = '', $hidden = false);
+    public function addFromExpression($expression_or_string, $name = null, $hidden = false);
 
     /**
      * Adds a new column with the given attribute and returns it
