@@ -8,6 +8,7 @@ use exface\Core\Interfaces\Formulas\FormulaInterface;
 use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\Interfaces\Selectors\FormulaSelectorInterface;
 use exface\Core\Exceptions\InvalidArgumentException;
+use exface\Core\Exceptions\FormulaError;
 
 /**
  * Data functions are much like Excel functions.
@@ -97,29 +98,35 @@ abstract class Formula implements FormulaInterface
     {
         $args = array();
         
-        if ($this->isStatic()) {
-            foreach ($this->arguments as $expr) {
-                $args[] = $expr->evaluate();
+        try {
+            if ($this->isStatic()) {
+                foreach ($this->arguments as $expr) {
+                    $args[] = $expr->evaluate();
+                }
+                
+            } else {
+                if (is_null($data_sheet) || is_null($column_name) || is_null($row_number)) {
+                    throw new InvalidArgumentException('In a non-static formula $data_sheet, $column_name and $row_number are mandatory arguments.');
+                }
+                
+                
+                foreach ($this->arguments as $expr) {
+                    $args[] = $expr->evaluate($data_sheet, $column_name, $row_number);
+                }
+                
+                
+                $this->setDataSheet($data_sheet);
+                $this->setCurrentColumnName($column_name);
+                $this->setCurrentRowNumber($row_number);
             }
             
-        } else {
-            if (is_null($data_sheet) || is_null($column_name) || is_null($row_number)) {
-                throw new InvalidArgumentException('In a non-static formula $data_sheet, $column_name and $row_number are mandatory arguments.');
-            }
-            
-            foreach ($this->arguments as $expr) {
-                $args[] = $expr->evaluate($data_sheet, $column_name, $row_number);
-            }
-            
-            $this->setDataSheet($data_sheet);
-            $this->setCurrentColumnName($column_name);
-            $this->setCurrentRowNumber($row_number);
+            return call_user_func_array(array(
+                $this,
+                'run'
+            ), $args);
+        } catch (\Throwable $e) {
+            throw new FormulaError('Cannot evaluate formula "' . $this->selector->toString() . '" on column "' . $column_name . '" for row ' . $row_number . '.', null, $e);
         }
-        
-        return call_user_func_array(array(
-            $this,
-            'run'
-        ), $args);
     }
 
     public function getRelationPath()

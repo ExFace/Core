@@ -19,9 +19,13 @@ use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\DataTypes\NumberDataType;
 use exface\Core\Exceptions\LogicException;
-use exface\Core\Exceptions\Model\MetaRelationAliasAmbiguousError;
 use exface\Core\Interfaces\Exceptions\MetaRelationResolverExceptionInterface;
 
+/**
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
 class Expression implements ExpressionInterface
 {
 

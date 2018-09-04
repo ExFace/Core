@@ -6,6 +6,7 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\DataSheets\DataColumn;
 use exface\Core\CommonLogic\Model\Expression;
 use exface\Core\Interfaces\Model\ExpressionInterface;
+use exface\Core\Exceptions\DataSheets\DataSheetRuntimeError;
 
 abstract class DataColumnFactory extends AbstractStaticFactory
 {
@@ -19,6 +20,9 @@ abstract class DataColumnFactory extends AbstractStaticFactory
      */
     public static function createFromString(DataSheetInterface $data_sheet, $expression_or_string, $name = null)
     {
+        if ($expression_or_string === null || $expression_or_string === '') {
+            throw new DataSheetRuntimeError($data_sheet, 'Cannot create data sheet column from empty string!');
+        }
         return new DataColumn($expression_or_string, $name, $data_sheet);
     }
 

@@ -39,6 +39,7 @@ use exface\Core\CommonLogic\QueryBuilder\RowDataArraySorter;
 use exface\Core\Exceptions\DataSheets\DataSheetStructureError;
 use exface\Core\DataTypes\RelationTypeDataType;
 use exface\Core\Interfaces\Model\ExpressionInterface;
+use exface\Core\Interfaces\QueryBuilderInterface;
 
 /**
  * Internal data respresentation object in exface.
@@ -336,7 +337,7 @@ class DataSheet implements DataSheetInterface
      * @param DataColumnInterface $col            
      * @param \exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder $query            
      */
-    protected function getDataForColumn(DataColumnInterface $col, \exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder $query)
+    protected function getDataForColumn(DataColumnInterface $col, QueryBuilderInterface $query)
     {
         $sheetObject = $this->getMetaObject();
         // add the required attributes
@@ -347,20 +348,20 @@ class DataSheet implements DataSheetInterface
             } catch (MetaAttributeNotFoundError $e) {
                 continue;
             }
+            
+            // If the sheet does not have such a column yet, add it as a hidden column. This means, that we
+            // are dealing with an expression argument, that references a column, that is not explicitly
+            // in the sheet.
+            // Checking first, wether the column is a regular attribute reference, just prevents unneeded
+            // searching through the columns. If the column represents an attribute, it is obvious that this
+            // attribute is already in the sheet :)
+            if (! $col->getExpressionObj()->isMetaAttribute() && ! $this->getColumns()->getByExpression($attr)) {
+                $this->getColumns()->addFromExpression($attr, null, true);
+            }
+            
             // If the QueryBuilder for the current object can read the attribute, add it
             if ($query->canReadAttribute($attribute)) {
-                // if a formula is applied to the attribute, get all attributes required for the formula
-                // if it is just a plain attribute, add it and nothing else
-                if ($expr = $attribute->getFormula()) {
-                    if ($expr->isFormula()) {
-                        $expr = $attribute->get_data_expression();
-                        $expr->setRelationPath($attribute->getRelationPath()->toString());
-                        $this->getColumns()->addFromExpression($expr, $attr);
-                        $this->getDataForColumn($this->getColumn($attr), $query);
-                    }
-                } else {
-                    $query->addAttribute($attr);
-                }
+                $query->addAttribute($attr);
             } elseif (! $attribute->getRelationPath()->isEmpty()) {
                 // If the query builder cannot read the attribute, make a subsheet and ultimately a separate query.
                 // To create a subsheet we need to split the relation path to the current attribute into the part leading to the foreign key in the main data source
@@ -1270,7 +1271,6 @@ class DataSheet implements DataSheetInterface
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::getColumns()
      */
     public function getColumns()

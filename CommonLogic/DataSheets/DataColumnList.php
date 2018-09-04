@@ -104,7 +104,7 @@ class DataColumnList extends EntityList implements DataColumnListInterface
                 if (! $this->get($col_name)) {
                     try {
                         $this->addFromExpression($col_name);
-                    } catch (\Exception $e) {
+                    } catch (\Throwable $e) {
                         // TODO How to distinguish between unwanted garbage and bad column names?
                     }
                 }
@@ -119,7 +119,7 @@ class DataColumnList extends EntityList implements DataColumnListInterface
      *
      * @see \exface\Core\Interfaces\DataSheets\DataColumnListInterface::addFromExpression()
      */
-    public function addFromExpression($expression_or_string, $name = '', $hidden = false)
+    public function addFromExpression($expression_or_string, $name = null, $hidden = false)
     {
         $data_sheet = $this->getDataSheet();
         $col = DataColumnFactory::createFromString($data_sheet, $expression_or_string, $name);
