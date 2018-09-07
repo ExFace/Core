@@ -20,15 +20,9 @@ if (swTools == undefined) {
 		 * @returns Promise
 		 */ 
 		serializeRequest: function (request) {
-			  var headers = {};
-			  // `for(... of ...)` is ES6 notation but current browsers supporting SW, support this
-			  // notation as well and this is the only way of retrieving all the headers.
-			  for (var entry of request.headers.entries()) {
-			    headers[entry[0]] = entry[1];
-			  }
 			  var serialized = {
 			    url: request.url,
-			    headers: headers,
+			    headers: swTools.serializeHeaders(request.headers),
 			    method: request.method,
 			    mode: request.mode,
 			    credentials: request.credentials,
@@ -64,14 +58,8 @@ if (swTools == undefined) {
 		 * @returns Promise
 		 */ 
 		serializeResponse: function (response) {
-			  var headers = {};
-			  // `for(... of ...)` is ES6 notation but current browsers supporting SW, support this
-			  // notation as well and this is the only way of retrieving all the headers.
-			  for (var entry of response.headers.entries()) {
-			    headers[entry[0]] = entry[1];
-			  }
 			  var serialized = {
-			    headers: headers,
+			    headers: swTools.serializeHeaders(response.headers),
 			    status: response.status,
 			    statusText: response.statusText
 			  };
@@ -80,6 +68,16 @@ if (swTools == undefined) {
 			      serialized.body = body;
 			      return Promise.resolve(serialized);
 			  });
+		},
+		
+		serializeHeaders: function(headers) {
+			var serialized = {};
+			// `for(... of ...)` is ES6 notation but current browsers supporting SW, support this
+			// notation as well and this is the only way of retrieving all the headers.
+			for (var entry of headers.entries()) {
+			    serialized[entry[0]] = entry[1];
+			}
+			return serialized
 		},
 
 		/**
