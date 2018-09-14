@@ -219,7 +219,6 @@ trait JqueryButtonTrait {
             if ($action->getPrefillWithPrefillData()){
                 $output = <<<JS
     				{$this->buildJsRequestDataCollector($action, $input_element)}
-    				{$input_element->buildJsBusyIconShow()}
     				var prefillRows = [];
     				if (requestData.rows && requestData.rows.length > 0 && requestData.rows[0]["{$widget->getMetaObject()->getUidAttributeAlias()}"]){
     					prefillRows.push({{$widget->getMetaObject()->getUidAttributeAlias()}: requestData.rows[0]["{$widget->getMetaObject()->getUidAttributeAlias()}"]});
@@ -238,10 +237,23 @@ JS;
             
             $output .= <<<JS
             {$input_element->buildJsBusyIconShow()}
-			window.location.href = '{$this->getTemplate()->buildUrlToPage($action->getPageAlias())}?{$prefill_param}{$filters_param}';
+			{$this->buildJsNavigateToPage($action->getPageAlias(), $prefill_param . $filters_param, $input_element)}
 JS;
         }
         return $output;
+    }
+    
+    /**
+     * Generates the JS code to navigate to another UI page.
+     * 
+     * @param string $pageSelector
+     * @param string $urlParams
+     * 
+     * @return string
+     */
+    protected function buildJsNavigateToPage(string $pageSelector, string $urlParams = '', AbstractJqueryElement $input_element) : string
+    {
+        return "window.location.href = '{$this->getTemplate()->buildUrlToPage($pageSelector)}?{$urlParams}';";
     }
 
     protected function buildJsClickGoBack(ActionInterface $action, AbstractJqueryElement $input_element)
