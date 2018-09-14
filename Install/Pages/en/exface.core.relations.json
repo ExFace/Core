@@ -26,7 +26,8 @@
         ],
         "columns": [
             {
-                "attribute_alias": "RELATION_NAME"
+                "attribute_alias": "RELATION_NAME",
+                "caption": "Relation"
             },
             {
                 "attribute_alias": "RELATION_ALIAS_SHORT",
