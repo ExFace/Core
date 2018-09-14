@@ -7,6 +7,34 @@
  * - EcmaScript 6
  * - Dexie (IndexedDB wrapper)
  * 
+ * Example in ServiceWorker.js
+ * 
+-----------------------------------------------------------
+importScripts('exface/vendor/npm-asset/dexie/dist/dexie.min.js');
+importScripts('exface/vendor/exface/Core/Templates/AbstractPWATemplate/sw_tools.js');
+
+const handler = ({url, event, params}) => {
+    // Try to get the response from the network
+    return Promise.resolve(
+		fetch(event.request.clone())
+		.then(function(response) {
+			// And store it in the cache for later
+			swTools.cache.put(event.request.clone(), response.clone());
+			return response;
+	    })
+		.catch(function() {
+			return swTools.cache.match(event.request.clone());
+		})
+	);
+};
+
+workbox.routing.registerRoute(
+    /.*\/api\/jeasyui.* /i,
+    handler,
+	'POST'
+);
+-----------------------------------------------------------
+ * 
  * @author Andrej Kabachnik
  */
 if (swTools == undefined) {
