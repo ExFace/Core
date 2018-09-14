@@ -5,6 +5,7 @@ use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\iCanBeCopied;
 use exface\Core\Exceptions\InvalidArgumentException;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
 
 interface DataSorterInterface extends iCanBeConvertedToUxon, iCanBeCopied
 {
@@ -50,4 +51,10 @@ interface DataSorterInterface extends iCanBeConvertedToUxon, iCanBeCopied
      * @return DataSorterInterface
      */
     public function setDataSheet(DataSheetInterface $data_sheet);
+    
+    /**
+     * 
+     * @return MetaAttributeInterface
+     */
+    public function getAttribute() : MetaAttributeInterface;
 }

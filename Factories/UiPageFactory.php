@@ -2,97 +2,129 @@
 namespace exface\Core\Factories;
 
 use exface\Core\CommonLogic\Model\UiPage;
-use exface\Core\Interfaces\UiManagerInterface;
 use exface\Core\Exceptions\UiPage\UiPageNotFoundError;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Model\UiPageInterface;
+use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
+use exface\Core\Interfaces\CmsConnectorInterface;
+use exface\Core\Interfaces\WorkbenchInterface;
 
-class UiPageFactory extends AbstractFactory
+class UiPageFactory extends AbstractStaticFactory
 {
 
     /**
-     * Creates an empty page (even without a root container) with the passed UID and alias.
+     * Creates a page for the passed selector automatically loading it from 
+     * the CMS if it exists there.
      * 
-     * @param UiManagerInterface $ui
-     * @param string $pageAlias
-     * @param string $pageUid
-     * @param string $appUidOrAlias The app the page belongs to.
-     * @throws UiPageNotFoundError if the page id is invalid (i.e. not a number or a string)
+     * @param UiPageSelectorInterface $selector
+     * @param CmsConnectorInterface $cms
+     * 
      * @return UiPageInterface
      */
-    public static function create(UiManagerInterface $ui, $pageAlias, $pageUid = null, $appUidOrAlias = null)
+    public static function create(UiPageSelectorInterface $selector, CmsConnectorInterface $cms = null) : UiPageInterface
     {
-        if (is_null($pageAlias)) {
-            throw new UiPageNotFoundError('Cannot fetch UI page: page alias not specified!');
+        $cms = is_null($cms) ? $selector->getWorkbench()->getCMS() : $cms;
+        $page = null;
+        if (! $selector->isEmpty()) {
+            try {
+                $page = $cms->getPage($selector);
+            } catch (UiPageNotFoundError $e) {
+                // do nothing
+            }
         }
-        $page = new UiPage($ui, $pageAlias, $pageUid, $appUidOrAlias);
+        return ! is_null($page) ? $page : new UiPage($selector, $cms);
+    }
+    
+    /**
+     * Creates an empty page (even without a root container) for the passed selector.
+     * 
+     * @param WorkbenchInterface $workbench
+     * @param UiPageSelectorInterface|string $selectorOrString
+     * @param CmsConnectorInterface $cms
+     * 
+     * @return UiPageInterface
+     */
+    public static function createBlank(WorkbenchInterface $workbench, $selectorOrString, CmsConnectorInterface $cms = null) : UiPageInterface
+    {
+        $selector = $selectorOrString instanceof UiPageSelectorInterface ? $selectorOrString : SelectorFactory::createPageSelector($workbench, $selectorOrString);
+        return new UiPage($selector, $cms);
+    }
+
+    /**
+     * Creates a page with a simple root container widget without any meta object.
+     * 
+     * @param WorkbenchInterface $workbench
+     * @param UiPageSelectorInterface|string $page_alias
+     * 
+     * @return UiPageInterface
+     */
+    public static function createEmpty(WorkbenchInterface $workbench, $selectorOrString = '') : UiPageInterface
+    {
+        $page = static::createBlank($workbench, $selectorOrString);
+        $page->addWidget(WidgetFactory::create($page, 'Container'));
         return $page;
     }
 
     /**
-     * Creates an empty page with a simple root container without any meta object.
+     * Creates a page from with the specified selector and fills it with the given contents.
      * 
-     * @param UiManagerInterface $ui
-     * @param string $page_alias
+     * @param UiPageSelectorInterface $selector
+     * @param string $contents
+     * @param CmsConnectorInterface $cms
      * @return UiPageInterface
      */
-    public static function createEmpty(UiManagerInterface $ui, $page_alias = '')
+    public static function createFromString(UiPageSelectorInterface $selector, string $contents) : UiPageInterface
     {
-        $page = static::create($ui, $page_alias);
-        $root_container = WidgetFactory::create($page, 'Container');
-        $page->addWidget($root_container);
-        return $page;
-    }
-
-    /**
-     * Creates a page with the passed alias and the passed content.
-     * 
-     * @param UiManagerInterface $ui
-     * @param string $page_alias
-     * @param string $page_text
-     * @return UiPageInterface
-     */
-    public static function createFromString(UiManagerInterface $ui, $page_alias, $page_text)
-    {
-        $page = static::create($ui, $page_alias);
-        $page->setContents($page_text);
+        $page = static::createBlank($selector);
+        $page->setContents($contents);
         return $page;
     }
 
     /**
      * Creates a page which is obtained from the CMS by the passed alias.
      * 
-     * @param UiManagerInterface $ui
-     * @param string $page_alias
+     * @param CmsConnectorFactory $cms
+     * @param UiPageSelectorInterface|string $selectorOrString
+     * 
+     * @throws UiPageNotFoundError
+     * 
      * @return UiPageInterface
      */
-    public static function createFromCmsPage(UiManagerInterface $ui, $page_alias)
+    public static function createFromCmsPage(CmsConnectorInterface $cms, $selectorOrString) : UiPageInterface
     {
-        return $ui->getWorkbench()->getCMS()->loadPage($page_alias);
+        if ($selectorOrString instanceof UiPageSelectorInterface) {
+            $selector = $selectorOrString;
+        } else {
+            $selector = SelectorFactory::createPageSelector($cms->getWorkbench(), $selectorOrString);
+        }
+        
+        return $cms->getPage($selector);
     }
 
     /**
      * Creates a page which is obtained from the current CMS page.
      * 
-     * @param UiManagerInterface $ui
+     * @param CmsConnectorInterface $cms
      * @return UiPageInterface
      */
-    public static function createFromCmsPageCurrent(UiManagerInterface $ui)
+    public static function createFromCmsPageCurrent(CmsConnectorInterface $cms) : UiPageInterface
     {
-        return $ui->getWorkbench()->getCMS()->loadPageCurrent();
+        return $cms->getPageCurrent();
     }
 
     /**
      * Creates a page from a uxon description.
      * 
-     * @param UiManagerInterface $ui
+     * @param WorkbenchInterface $workbench
      * @param UxonObject $uxon
+     * @param CmsConnectorInterface $cms
      * @param array $skip_property_names
+     * 
      * @return UiPageInterface
      */
-    public static function createFromUxon(UiManagerInterface $ui, UxonObject $uxon, array $skip_property_names = array())
+    public static function createFromUxon(WorkbenchInterface $workbench, UxonObject $uxon, CmsConnectorInterface $cms = null, array $skip_property_names = array())
     {
-        $page = static::create($ui, '');
+        $page = static::createBlank($workbench, '', $cms);
         $page->importUxonObject($uxon, $skip_property_names);
         return $page;
     }

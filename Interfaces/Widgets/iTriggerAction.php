@@ -16,4 +16,11 @@ interface iTriggerAction extends WidgetInterface
      * @return ActionInterface
      */
     public function getAction();
+    
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function hasAction() : bool;
 }

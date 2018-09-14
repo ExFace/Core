@@ -31,6 +31,10 @@ class RefreshWidget extends ReadData implements iRefreshInputWidget
     }
     
     /**
+     * Set to TRUE to move back to the first page (if pagination is used).
+     * 
+     * @uxon-property reset_pagination
+     * @uxon-type boolean
      * 
      * @param boolean $true_or_false
      * @return \exface\Core\Actions\RefreshWidget

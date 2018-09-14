@@ -6,7 +6,7 @@ use exface\Core\Interfaces\Contexts\ContextInterface;
 class RequestContextScope extends AbstractContextScope
 {
     
-    const SUBREQUEST_SEPARATOR = '-';
+    const SUBREQUEST_SEPARATOR = ':';
 
     /**
      * Unique id of the request, that is being handled by this instance
@@ -62,11 +62,18 @@ class RequestContextScope extends AbstractContextScope
     public function getRequestId()
     {
         if (is_null($this->main_request_id)){
-            // TODO use a UUID here or maybe something shorter but only unique
-            // withing a limited timerange (e.g. a year)
-            $this->main_request_id = md5(uniqid(rand(), true));
+            $this->main_request_id = $this::generateRequestId();
         }
         return $this->main_request_id. ($this->getSubrequestId() ? self::SUBREQUEST_SEPARATOR . $this->getSubrequestId() : '');
+    }
+    
+    /**
+     * 
+     * @return string
+     */
+    public static function generateRequestId() : string
+    {
+        return md5(uniqid(rand(), true));
     }
     
     /**
@@ -83,7 +90,9 @@ class RequestContextScope extends AbstractContextScope
     {
         $ids = explode(self::SUBREQUEST_SEPARATOR, $value);
         $this->main_request_id = $ids[0];
-        $this->setSubrequestId($ids[1]);
+        if (! is_null($ids[1])) {
+            $this->setSubrequestId($ids[1]);
+        }
         return $this;
     }
     

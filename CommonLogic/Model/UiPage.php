@@ -3,16 +3,14 @@ namespace exface\Core\CommonLogic\Model;
 
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\WidgetInterface;
-use exface\Core\Interfaces\TemplateInterface;
+use exface\Core\Interfaces\Templates\TemplateInterface;
 use exface\Core\Factories\WidgetFactory;
-use exface\Core\Interfaces\UiManagerInterface;
 use exface\Core\Exceptions\Widgets\WidgetIdConflictError;
 use exface\Core\Interfaces\Widgets\iHaveChildren;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Factories\EventFactory;
 use exface\Core\Exceptions\Widgets\WidgetNotFoundError;
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\CommonLogic\NameResolver;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Factories\UiPageFactory;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
@@ -21,6 +19,11 @@ use exface\Core\DataTypes\NumberDataType;
 use exface\Core\Exceptions\UiPage\UiPageNotPartOfAppError;
 use Ramsey\Uuid\Uuid;
 use exface\Core\Exceptions\UiPage\UiPageNotFoundError;
+use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
+use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
+use exface\Core\Factories\SelectorFactory;
+use exface\Core\Interfaces\CmsConnectorInterface;
+use exface\Core\Interfaces\Selectors\AppSelectorInterface;
 
 /**
  * This is the default implementation of the UiPageInterface.
@@ -48,13 +51,15 @@ class UiPage implements UiPageInterface
 
     private $template = null;
 
-    private $ui = null;
+    private $cms = null;
+    
+    private $selector = null;
 
     private $widget_root = null;
 
     private $context_bar = null;
 
-    private $appUidOrAlias = null;
+    private $appSelector = null;
 
     private $updateable = true;
 
@@ -70,9 +75,11 @@ class UiPage implements UiPageInterface
 
     private $id = null;
 
-    private $name = null;
+    private $name = '';
+    
+    private $description = '';
 
-    private $shortDescription = null;
+    private $intro = '';
 
     private $replacesPageAlias = null;
 
@@ -85,19 +92,17 @@ class UiPage implements UiPageInterface
     private $dirty = false;
 
     /**
-     *
      * @deprecated use UiPageFactory::create() instead!
-     * @param UiManagerInterface $ui
-     * @param string $alias
-     * @param string $uid
-     * @param string $appUidOrAlias
+     * 
+     * @param UiPageSelectorInterface $selector
+     * @param CmsConnectorInterface $cms
      */
-    public function __construct(UiManagerInterface $ui, $alias = null, $uid = null, $appUidOrAlias = null)
+    public function __construct(UiPageSelectorInterface $selector, CmsConnectorInterface $cms = null)
     {
-        $this->ui = $ui;
-        $this->setAliasWithNamespace($alias);
-        $this->setId($uid);
-        $this->setAppUidOrAlias($appUidOrAlias);
+        $this->selector = $selector;
+        $this->cms = is_null($cms) ? $selector->getWorkbench() : $cms;
+        // FIXME still needed?
+        // $this->setAppUidOrAlias($appUidOrAlias);
     }
 
     /**
@@ -271,7 +276,7 @@ class UiPage implements UiPageInterface
      *           
      * Here are some examples, of how the searching works:
      * 
-     * (1) Searching for the Filter-ComboTable with id DT_TC_CA_FI2_CT. The id will get identified as
+     * (1) Searching for the Filter-InputComboTable with id DT_TC_CA_FI2_CT. The id will get identified as
      * a path because it starts with DT, which is the id of the root widget. Iterating over the children
      * of DT will immediately yield a path-match on DT_TC. The search continues there and so on until
      * a full match is found.
@@ -439,7 +444,7 @@ class UiPage implements UiPageInterface
 
     /**
      *
-     * @return \exface\Core\Interfaces\TemplateInterface
+     * @return \exface\Core\Interfaces\Templates\TemplateInterface
      */
     public function getTemplate()
     {
@@ -530,22 +535,13 @@ class UiPage implements UiPageInterface
 
     /**
      *
-     * @return UiManagerInterface
-     */
-    public function getUi()
-    {
-        return $this->ui;
-    }
-
-    /**
-     *
      * {@inheritdoc}
      *
-     * @see \exface\Core\Interfaces\ExfaceClassInterface::getWorkbench()
+     * @see \exface\Core\Interfaces\WorkbenchDependantInterface::getWorkbench()
      */
     public function getWorkbench()
     {
-        return $this->getUi()->getWorkbench();
+        return $this->getSelector()->getWorkbench();
     }
 
     /**
@@ -598,22 +594,21 @@ class UiPage implements UiPageInterface
      */
     public function getApp()
     {
-        if ($this->appUidOrAlias) {
-            return $this->getWorkbench()->getApp($this->appUidOrAlias);
+        if (! is_null($this->appSelector)) {
+            return $this->getWorkbench()->getApp($this->appSelector);
         } else {
             throw new UiPageNotPartOfAppError('The page "' . $this->getAliasWithNamespace() . '" is not part of any app!');
         }
     }
 
     /**
-     * Sets the app UID or alias, this page belongs to.
      * 
-     * @param string $appUidOrAlias
-     * @return UiPageInterface
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::setApp()
      */
-    protected function setAppUidOrAlias($appUidOrAlias)
+    public function setApp(AppSelectorInterface $selector) : UiPageInterface
     {
-        $this->appUidOrAlias = $appUidOrAlias;
+        $this->appSelector = $selector;
         return $this;
     }
 
@@ -676,7 +671,7 @@ class UiPage implements UiPageInterface
      */
     public function getMenuParentPage()
     {
-        return $this->getWorkbench()->ui()->getPage($this->getMenuParentPageSelector());
+        return UiPageFactory::createFromCmsPage($this->getCMS(), $this->getMenuParentPageSelector());
     }
 
     /**
@@ -796,18 +791,23 @@ class UiPage implements UiPageInterface
      */
     public function getId()
     {
+        if (is_null($this->id) && $this->selector->isUid()) {
+            $this->setId($this->selector->toString());
+        }
         return $this->id;
     }
 
     /**
-     * Overwrites the unique id of the page
      * 
-     * @param string $uid
-     * @return UiPageInterface
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::setId()
      */
-    protected function setId($uid)
+    public function setId(string $uid) : UiPageInterface
     {
         $this->id = $uid;
+        if ($this->getSelector()->isEmpty()) {
+            $this->selector = SelectorFactory::createPageSelector($this->getWorkbench(), $uid);
+        }
         return $this;
     }
 
@@ -831,25 +831,59 @@ class UiPage implements UiPageInterface
         $this->name = $string;
         return $this;
     }
-
+    
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\UiPageInterface::getShortDescription()
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::getDescription()
      */
-    public function getShortDescription()
+    public function getDescription()
     {
-        return $this->shortDescription;
+        return $this->description;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::setDescription()
+     */
+    public function setDescription($string)
+    {
+        $this->description = $string;
+        return $this;
+    }
+     
+    /**
+     * @deprecated use setDescription() instead. To be removed in july 2018
+     * 
+     * @TODO remove in july 2018
+     * 
+     * @param string $string
+     * @return UiPageInterface
+     */
+    public function setShortDescription($string)
+    {
+        return $this->setDescription($string);
     }
 
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\UiPageInterface::setShortDescription()
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::getIntro()
      */
-    public function setShortDescription($string)
+    public function getIntro()
     {
-        $this->shortDescription = $string;
+        return $this->intro;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::setIntro()
+     */
+    public function setIntro($text)
+    {
+        $this->intro = $text;
         return $this;
     }
 
@@ -940,7 +974,7 @@ class UiPage implements UiPageInterface
      */
     public function getAlias()
     {
-        if (($sepPos = strrpos($this->getAliasWithNamespace(), NameResolver::NAMESPACE_SEPARATOR)) !== false) {
+        if (($sepPos = strrpos($this->getAliasWithNamespace(), AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER)) !== false) {
             $alias = substr($this->getAliasWithNamespace(), $sepPos + 1);
         } else {
             $alias = $this->getAliasWithNamespace();
@@ -955,6 +989,9 @@ class UiPage implements UiPageInterface
      */
     public function getAliasWithNamespace()
     {
+        if ($this->aliasWithNamespace === null && $this->selector->isAlias()) {
+            $this->aliasWithNamespace = $this->selector->toString();
+        }
         return $this->aliasWithNamespace;
     }
 
@@ -966,6 +1003,9 @@ class UiPage implements UiPageInterface
      */
     protected function setAliasWithNamespace($aliasWithNamespace)
     {
+        if ($this->getSelector()->isEmpty()) {
+            $this->selector = SelectorFactory::createPageSelector($this->getWorkbench(), $aliasWithNamespace);
+        }
         $this->aliasWithNamespace = $aliasWithNamespace;
         return $this;
     }
@@ -977,7 +1017,7 @@ class UiPage implements UiPageInterface
      */
     public function getNamespace()
     {
-        if (($sepPos = strrpos($this->getAliasWithNamespace(), NameResolver::NAMESPACE_SEPARATOR)) !== false) {
+        if (($sepPos = strrpos($this->getAliasWithNamespace(), AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER)) !== false) {
             $namespace = substr($this->getAliasWithNamespace(), 0, $sepPos);
         } else {
             $namespace = '';
@@ -993,14 +1033,15 @@ class UiPage implements UiPageInterface
     public function exportUxonObject()
     {
         /** @var UxonObject $uxon */
-        $uxon = $this->getWorkbench()->createUxonObject();
+        $uxon = new UxonObject();
         $uxon->setProperty('id', $this->getId());
         $uxon->setProperty('alias_with_namespace', $this->getAliasWithNamespace());
         $uxon->setProperty('menu_parent_page_alias', $this->getMenuParentPageAlias());
         $uxon->setProperty('menu_index', $this->getMenuIndex());
         $uxon->setProperty('menu_visible', $this->getMenuVisible());
         $uxon->setProperty('name', $this->getName());
-        $uxon->setProperty('short_description', $this->getShortDescription());
+        $uxon->setProperty('description', $this->getDescription());
+        $uxon->setProperty('intro', $this->getIntro());
         $uxon->setProperty('replaces_page_alias', $this->getReplacesPageAlias());
         
         $contents = trim($this->getContents());
@@ -1029,20 +1070,20 @@ class UiPage implements UiPageInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\UiPageInterface::copy()
      */
-    public function copy($page_alias = null, $page_uid = null, $appUidOrAlias = null)
+    public function copy($page_alias = null, $page_uid = null, AppSelectorInterface $appSelector = null) : UiPageInterface
     {
-        $copy = UiPageFactory::createFromUxon($this->getUi(), $this->exportUxonObject());
-        if ($page_uid) {
+        $copy = UiPageFactory::createFromUxon($this->getWorkbench(), $this->exportUxonObject());
+        if (! is_null($page_uid)) {
             $copy->setId($page_uid);
         }
-        if ($page_alias) {
+        if (! is_null($page_alias)) {
             $copy->setAliasWithNamespace($page_alias);
         }
         // Copy internal properties, that do not get exported to UXON
-        if ($appUidOrAlias) {
-            $copy->setAppUidOrAlias($appUidOrAlias);
+        if (! is_null($appSelector)) {
+            $copy->setApp($appSelector);
         } else {
-            $copy->setAppUidOrAlias($this->appUidOrAlias);
+            $copy->setApp($this->$appSelector);
         }
         $copy->setMenuDefaultPosition($this->getMenuDefaultPosition());
         return $copy;
@@ -1053,26 +1094,29 @@ class UiPage implements UiPageInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\UiPageInterface::is()
      */
-    public function is($page_or_id_or_alias)
+    public function is($pageOrSelectorOrString) : bool
     {
-        if ($this->isExactly($page_or_id_or_alias)) {
+        if ($this->isExactly($pageOrSelectorOrString)) {
             // Die uebergebene Seite ist genau diese Seite.
             return true;
         }
         
-        if (! $page_or_id_or_alias instanceof UiPageInterface) {
+        if (! $pageOrSelectorOrString instanceof UiPageInterface) {
             try {
-                $page_or_id_or_alias = $this->getWorkbench()->getCMS()->loadPage($page_id_or_alias, true);
+                $selector = $pageOrSelectorOrString instanceof UiPageSelectorInterface ? $pageOrSelectorOrString : SelectorFactory::createPageSelector($this->getWorkbench(), $pageOrSelectorOrString);
+                $page = $this->getCMS()->getPage($selector, true);
             } catch (UiPageNotFoundError $upnfe) {
                 return false;
             }
+        } else {
+            $page = $pageOrSelectorOrString;
         }
         
-        if ($page_or_id_or_alias->getReplacesPageAlias() && $this->compareToPageReplace($this, $page_or_id_or_alias)) {
+        if ($page->getReplacesPageAlias() && $this->compareToPageReplace($this, $page)) {
             // Ersetzt die uebergebene Seite eine andere Seite, koennte es diese Seite sein (auch
             // ueber eine Kette von Ersetzungen).
             return true;
-        } elseif ($this->getReplacesPageAlias() && $this->compareToPageReplace($page_or_id_or_alias, $this)) {
+        } elseif ($this->getReplacesPageAlias() && $this->compareToPageReplace($page, $this)) {
             // Ersetzt diese Seite eine andere Seite, koennte es die uebergebene Seite sein (auch
             // ueber eine Kette von Ersetzungen).
             return true;
@@ -1097,7 +1141,7 @@ class UiPage implements UiPageInterface
     protected function compareToPageReplace(UiPageInterface $page1, UiPageInterface $page2)
     {
         try {
-            $replacedPage = $this->getWorkbench()->getCMS()->loadPage($page1->getAliasWithNamespace());
+            $replacedPage = $this->getCMS()->getPage($page1->getSelector());
         } catch (UiPageNotFoundError $uipnfe) {
             return false;
         }
@@ -1113,12 +1157,12 @@ class UiPage implements UiPageInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\UiPageInterface::isExactly()
      */
-    public function isExactly($page_or_id_or_alias)
+    public function isExactly($pageOrSelectorOrString) : bool
     {
-        if ($page_or_id_or_alias instanceof UiPageInterface) {
-            return $this->compareToIdAlias($page_or_id_or_alias->getId(), $page_or_id_or_alias->getAliasWithNamespace());
+        if ($pageOrSelectorOrString instanceof UiPageInterface) {
+            return $this->compareToIdAlias($pageOrSelectorOrString->getId(), $pageOrSelectorOrString->getAliasWithNamespace());
         } else {
-            return $this->compareToIdAlias($page_or_id_or_alias, $page_or_id_or_alias);
+            return $this->compareToIdAlias($pageOrSelectorOrString, $pageOrSelectorOrString);
         }
     }
 
@@ -1170,7 +1214,10 @@ class UiPage implements UiPageInterface
         if ($this->getName() != $page->getName() && ! in_array('name', $ignore_properties)) {
             return false;
         }
-        if ($this->getShortDescription() != $page->getShortDescription() && ! in_array('shortdescription', $ignore_properties)) {
+        if ($this->getDescription() != $page->getDescription() && ! in_array('description', $ignore_properties)) {
+            return false;
+        }
+        if ($this->getIntro() != $page->getIntro() && ! in_array('intro', $ignore_properties)) {
             return false;
         }
         if ($this->getReplacesPageAlias() != $page->getReplacesPageAlias() && ! in_array('replacespagealias', $ignore_properties)) {
@@ -1208,6 +1255,25 @@ class UiPage implements UiPageInterface
             $alias .= $characters[mt_rand(0, $charactersLength - 1)];
         }
         return $prefix . $alias;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::getSelector()
+     */
+    public function getSelector() : UiPageSelectorInterface
+    {
+        return $this->selector;
+    }
+    
+    /**
+     * 
+     * @return \exface\Core\Interfaces\CmsConnectorInterface
+     */
+    public function getCMS()
+    {
+        return $this->cms;
     }
 }
 

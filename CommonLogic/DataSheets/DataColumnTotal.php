@@ -3,14 +3,14 @@ namespace exface\Core\CommonLogic\DataSheets;
 
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\Interfaces\ExfaceClassInterface;
+use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\DataSheets\DataColumnInterface;
 use exface\Core\Exceptions\DomainException;
 use exface\Core\Exceptions\DataSheets\DataSheetStructureError;
 use exface\Core\CommonLogic\Model\Aggregator;
 use exface\Core\Interfaces\Model\AggregatorInterface;
 
-class DataColumnTotal implements iCanBeConvertedToUxon, ExfaceClassInterface
+class DataColumnTotal implements iCanBeConvertedToUxon, WorkbenchDependantInterface
 {
 
     private $function = null;
@@ -70,7 +70,7 @@ class DataColumnTotal implements iCanBeConvertedToUxon, ExfaceClassInterface
 
     public function exportUxonObject()
     {
-        $uxon = $this->getColumn()->getDataSheet()->getWorkbench()->createUxonObject();
+        $uxon = new UxonObject();
         $uxon->setProperty('function', $this->getAggregator()->exportString());
         return $uxon;
     }

@@ -17,18 +17,18 @@ trait HtmlImageTrait
     
     /**
      * 
-     * @see AbstractJqueryElement::generateHtml()
+     * @see AbstractJqueryElement::buildHtml()
      */
-    public function generateHtml()
+    public function buildHtml()
     {
         return $this->buildHtmlImage($this->getWidget()->getUri());
     }
 
     /**
      *
-     * @see AbstractJqueryElement::generateJs()
+     * @see AbstractJqueryElement::buildJs()
      */
-    public function generateJs()
+    public function buildJs()
     {
         return '';
     }
@@ -67,6 +67,17 @@ trait HtmlImageTrait
      */
     public function buildJsValueDecorator($value_js)
     {
+        if ($this->getWidget()->getUseProxy()) {
+            return <<<JS
+function() {
+    var url = encodeURI({$value_js});
+    var proxyUrl = "{$this->getWidget()->buildProxyUrl('xxurixx')}";
+    proxyUrl = proxyUrl.replace("xxurixx", url);
+    return '{$this->buildHtmlImage("'+proxyUrl+'")}'
+}()
+
+JS;
+        }
         return <<<JS
 '{$this->buildHtmlImage("'+" . $value_js . "+'")}'
 JS;

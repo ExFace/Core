@@ -12,7 +12,7 @@ class UserNameProcessor extends AbstractColumnPositionProcessor
 
     protected function getContent()
     {
-        return $this->getWorkbench()->context()->getScopeUser()->getUsername();
+        return $this->getWorkbench()->getContext()->getScopeUser()->getUsername();
     }
 
     protected function getIndexColumns()

@@ -157,7 +157,7 @@ class DataManager implements DataManagerInterface
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\Interfaces\ExfaceClassInterface::getWorkbench()
+     * @see \exface\Core\Interfaces\WorkbenchDependantInterface::getWorkbench()
      */
     function getWorkbench()
     {

@@ -1,13 +1,13 @@
 <?php
 namespace exface\Core\Interfaces\Model;
 
-use exface\Core\Interfaces\ExfaceClassInterface;
+use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\iCanBeCopied;
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\DataTypes\SortingDirectionsDataType;
 
-interface MetaAttributeInterface extends ExfaceClassInterface, iCanBeCopied
+interface MetaAttributeInterface extends WorkbenchDependantInterface, iCanBeCopied
 {
     public function __construct(MetaObjectInterface $object);
     
@@ -204,13 +204,49 @@ interface MetaAttributeInterface extends ExfaceClassInterface, iCanBeCopied
     public function setDefaultValue($value);
     
     /**
-     * Returns an expression for value of this attribute, which is to be set or updated every time the attribute is saved to the data source.
+     * Returns TRUE if the attribute has a defaultvalue and FALSE otherwise.
+     * 
+     * @return bool
+     */
+    public function hasDefaultValue() : bool;
+    
+    /**
+     * Returns an expression for value of this attribute, which is to be set 
+     * or updated every time the attribute is saved to the data source.
      *
      * @return \exface\Core\Interfaces\Model\ExpressionInterface
      */
     public function getFixedValue();
     
+    /**
+     * 
+     * @param ExpressionInterface|string $value
+     */
     public function setFixedValue($value);
+    
+    /**
+     * Returns TRUE if the attribute has a fixed value and FALSE otherwise.
+     * @return bool
+     */
+    public function hasFixedValue() : bool;
+    
+    /**
+     * Returns the fallback value of the attribute to use in a data sheet if not 
+     * value is specified explicitly: the fixed value if set, otherwise the defualt
+     * value.
+     * 
+     * Returns null if no fallback existis (neither fixed nor default values).
+     *
+     * @return ExpressionInterface|null
+     */
+    public function getFallbackValue();
+    
+    /**
+     * Returns TRUE if the attribute has a fallback value: a default or a fixed value.
+     * 
+     * @return bool
+     */
+    public function hasFallbackValue() : bool;
     
     /**
      *
@@ -322,13 +358,14 @@ interface MetaAttributeInterface extends ExfaceClassInterface, iCanBeCopied
     public function is(MetaAttributeInterface $attribute);
     
     /**
-     * Creates a copy of the attribute relative to a given relation path.
-     * This is usefull if you want to rebase an attribute.
+     * Creates a copy of the attribute relative to the given relation path.
+     * 
+     * This is usefull if you want to rebase an attribute relatively to another object.
      *
      * @param MetaRelationPathInterface $path
      * @return \exface\Core\Interfaces\Model\MetaAttributeInterface
      */
-    public function rebase(MetaRelationPathInterface $path);
+    public function rebase(MetaRelationPathInterface $path) : MetaAttributeInterface;
     
     /**
      * Returns TRUE if this attribute is a system attribute.
@@ -455,4 +492,11 @@ interface MetaAttributeInterface extends ExfaceClassInterface, iCanBeCopied
      * @param UxonObject $uxon_object
      */
     public function setDefaultEditorUxon(UxonObject $uxon_object);
+    
+    /**
+     * Returns TRUE if the attribute belongs to a related object an FALSE otherwise.
+     * 
+     * @return bool
+     */
+    public function isRelated() : bool;
 }

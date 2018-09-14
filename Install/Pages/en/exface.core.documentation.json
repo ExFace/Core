@@ -5,7 +5,10 @@
     "menu_index": "1",
     "menu_visible": true,
     "name": "Documentation",
-    "short_description": "",
+    "description": "Browse available widgets, actions, data connectors, etc.",
+    "intro": "",
     "replaces_page_alias": null,
-    "contents": "429"
+    "contents": {
+        "extend_widget": "[exface.core.docs]"
+    }
 }

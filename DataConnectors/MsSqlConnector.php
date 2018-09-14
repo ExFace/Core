@@ -11,7 +11,7 @@ use exface\Core\Exceptions\DataSources\DataQueryFailedError;
 use exface\Core\ModelBuilders\MsSqlModelBuilder;
 
 /**
- * Datbase API object of Microsoft SQL Server
+ * Microsoft SQL Server connector via sqlsrv PHP extension.
  *
  * @author Andrej Kabachnik
  *        
@@ -32,10 +32,12 @@ class MsSqlConnector extends AbstractSqlConnector
         $connectInfo = array();
         $connectInfo["Database"] = $this->getDatabase();
         $connectInfo["CharacterSet"] = $this->getCharacterSet();
-        if ($this->getUID())
+        if ($this->getUID()) {
             $connectInfo["UID"] = $this->getUID();
-        if ($this->getPWD())
+        }
+        if ($this->getPWD()) {
             $connectInfo["PWD"] = $this->getPWD();
+        }
         
         if (! $conn = sqlsrv_connect($this->getServerName() . ($this->getPort() ? ', ' . $this->getPort() : ''), $connectInfo)) {
             throw new DataConnectionFailedError($this, "Failed to create the database connection! " . $this->getLastError());

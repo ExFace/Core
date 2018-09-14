@@ -1,7 +1,7 @@
 <?php
 namespace exface\Core\Interfaces\Events;
 
-use exface\Core\Interfaces\ExfaceClassInterface;
+use exface\Core\Interfaces\WorkbenchDependantInterface;
 
 /**
  * The event manager takes care of events in ExFace: registering listeners, dispatching events, etc.
@@ -10,7 +10,7 @@ use exface\Core\Interfaces\ExfaceClassInterface;
  * component. The WildCardDispatcher adds support for listening to many events with one listener, like #.Action.Performed
  * to listen to any action being performed!
  */
-interface EventManagerInterface extends ExfaceClassInterface
+interface EventManagerInterface extends WorkbenchDependantInterface
 {
 
     /**

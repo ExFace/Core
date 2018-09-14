@@ -2,17 +2,23 @@
 namespace exface\Core\Actions;
 
 use exface\Core\Interfaces\Actions\iShowDialog;
-use exface\Core\Widgets\AbstractWidget;
 use exface\Core\Widgets\Dialog;
 use exface\Core\Interfaces\Widgets\iHaveIcon;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\Factories\WidgetFactory;
+use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\Interfaces\Model\UiPageInterface;
+use exface\Core\Factories\UiPageFactory;
 
+/**
+ * Renders a dialog with any contents specified in the widget-property.
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
 class ShowDialog extends ShowWidget implements iShowDialog
 {
-
-    private $include_headers = true;
-
     private $widget_was_enhanced = false;
 
     private $dialog_buttons_uxon = null;
@@ -31,11 +37,11 @@ class ShowDialog extends ShowWidget implements iShowDialog
      * @see enhance_dialog_widget()
      * @return \exface\Core\Widgets\Dialog
      */
-    protected function createDialogWidget(AbstractWidget $contained_widget = NULL)
+    protected function createDialogWidget(UiPageInterface $page, WidgetInterface $contained_widget = NULL)
     {
         /* @var $dialog \exface\Core\Widgets\Dialog */
-        $parent_widget = $this->getCalledByWidget();
-        $dialog = $this->getCalledOnUiPage()->createWidget('Dialog', $parent_widget);
+        $parent_widget = $this->getWidgetDefinedIn();
+        $dialog = WidgetFactory::create($page, 'Dialog', $parent_widget);
         $dialog->setMetaObject($this->getMetaObject());
         
         if ($contained_widget) {
@@ -64,9 +70,9 @@ class ShowDialog extends ShowWidget implements iShowDialog
     {
         
         // If the widget calling the action (typically a button) is known, inherit some of it's attributes
-        if ($this->getCalledByWidget()) {
-            if (! $dialog->getIcon() && ($this->getCalledByWidget() instanceof iHaveIcon)) {
-                $dialog->setIcon($this->getCalledByWidget()->getIcon());
+        if ($this->getWidgetDefinedIn()) {
+            if (! $dialog->getIcon() && ($this->getWidgetDefinedIn() instanceof iHaveIcon)) {
+                $dialog->setIcon($this->getWidgetDefinedIn()->getIcon());
             }
         } else {
             if (! $dialog->getIcon()) {
@@ -82,8 +88,8 @@ class ShowDialog extends ShowWidget implements iShowDialog
             $dialog->setButtons($this->getDialogButtonsUxon());
         }
         
-        if (! is_null($this->getMaximize())) {
-            $dialog->setMaximized($this->getMaximize());
+        if (! is_null($this->getMaximize(null))) {
+            $dialog->setMaximized($this->getMaximize(null));
         }
         
         return $dialog;
@@ -91,8 +97,8 @@ class ShowDialog extends ShowWidget implements iShowDialog
 
     protected function getDialogCaption()
     {
-        if ($this->getCalledByWidget()) {
-            $caption = $this->getCalledByWidget()->getCaption();
+        if ($this->getWidgetDefinedIn()) {
+            $caption = $this->getWidgetDefinedIn()->getCaption();
         }
         if (! $caption) {
             $caption = $this->getName();
@@ -112,13 +118,24 @@ class ShowDialog extends ShowWidget implements iShowDialog
     public function getWidget()
     {
         $widget = parent::getWidget();
+        if (is_null($widget)) {
+            try {
+                $page = $this->getWidgetDefinedIn()->getPage();
+            } catch (\Throwable $e) {
+                $page = UiPageFactory::createEmpty($this->getWorkbench());
+            }
+            $widget = $this->createDialogWidget($page);
+            $this->setWidget($widget);
+        }
+        
         if (! ($widget instanceof Dialog)) {
-            $widget = $this->createDialogWidget($widget);
+            $widget = $this->createDialogWidget($widget->getPage(), $widget);
             $this->setWidget($widget);
         }
         
         if (! $this->widget_was_enhanced) {
             $widget = $this->enhanceDialogWidget($widget);
+            $this->setWidget($widget);
             $this->widget_was_enhanced = true;
         }
         return $widget;
@@ -142,38 +159,6 @@ class ShowDialog extends ShowWidget implements iShowDialog
     public function getDialogWidget()
     {
         return $this->getWidget();
-    }
-
-    /**
-     * The output for action showing dialogs is either the rendered contents of the dialog (if lazy loading is enabled)
-     * or the rendered dialog itself.
-     *
-     * FIXME Remove outputting only the content of the dialog for ajax requests once all templates moved to fetching entire dialogs!
-     *
-     * @see \exface\Core\Actions\ShowWidget::getResultOutput()
-     */
-    public function getResultOutput()
-    {
-        $dialog = $this->getResult();
-        
-        $this->getResult()->setLazyLoading(false);
-        if ($this->getIncludeHeaders()) {
-            $code = $this->getTemplate()->drawHeaders($this->getResult());
-        }
-        $code .= parent::getResultOutput();
-        
-        return $code;
-    }
-
-    public function getIncludeHeaders()
-    {
-        return $this->include_headers;
-    }
-
-    public function setIncludeHeaders($value)
-    {
-        $this->include_headers = \exface\Core\DataTypes\BooleanDataType::cast($value);
-        return $this;
     }
 
     /**
@@ -216,9 +201,9 @@ class ShowDialog extends ShowWidget implements iShowDialog
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Actions\iShowDialog::getMaximize()
      */
-    public function getMaximize()
+    public function getMaximize($default = false)
     {
-        return $this->maximize;
+        return is_null($this->maximize) ? $default : $this->maximize;
     }
 
     /**

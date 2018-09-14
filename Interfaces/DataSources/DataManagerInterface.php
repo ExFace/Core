@@ -1,9 +1,9 @@
 <?php
 namespace exface\Core\Interfaces\DataSources;
 
-use exface\Core\Interfaces\ExfaceClassInterface;
+use exface\Core\Interfaces\WorkbenchDependantInterface;
 
-interface DataManagerInterface extends ExfaceClassInterface
+interface DataManagerInterface extends WorkbenchDependantInterface
 {
 
     /**

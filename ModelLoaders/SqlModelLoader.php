@@ -3,7 +3,6 @@
 namespace exface\Core\ModelLoaders;
 
 use exface\Core\Interfaces\DataSources\ModelLoaderInterface;
-use exface\Core\Interfaces\Model\MetaRelationInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\DataSorterFactory;
@@ -21,9 +20,7 @@ use exface\Core\Factories\ActionFactory;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\CommonLogic\AppInstallers\SqlSchemaInstaller;
-use exface\Core\CommonLogic\NameResolver;
-use exface\Core\Interfaces\Model\ModelInterface;
-use exface\Core\CommonLogic\Model\Object;
+use exface\Core\CommonLogic\Model\MetaObject;
 use exface\Core\CommonLogic\Model\Attribute;
 use exface\Core\CommonLogic\Model\Relation;
 use exface\Core\Interfaces\ActionListInterface;
@@ -31,27 +28,47 @@ use exface\Core\Exceptions\DataTypes\DataTypeNotFoundError;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Exceptions\RuntimeException;
-use exface\Core\Interfaces\NameResolverInterface;
+use exface\Core\CommonLogic\Selectors\AppSelector;
+use exface\Core\Interfaces\Selectors\DataTypeSelectorInterface;
+use exface\Core\Interfaces\Selectors\ModelLoaderSelectorInterface;
+use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
+use exface\Core\Interfaces\Model\ModelInterface;
+use exface\Core\DataTypes\RelationTypeDataType;
+use exface\Core\Exceptions\Model\MetaObjectHasNoUidAttributeError;
+use exface\Core\Exceptions\Model\MetaRelationBrokenError;
+use exface\Core\Interfaces\UserInterface;
+use exface\Core\Factories\DataSheetFactory;
+use exface\Core\Exceptions\UserNotFoundError;
+use exface\Core\Exceptions\UserNotUniqueError;
+use exface\Core\DataTypes\StringDataType;
 
 class SqlModelLoader implements ModelLoaderInterface
 {
-
     private $data_connection = null;
     
     private $data_types_by_uid = [];
     
     private $data_type_uids = [];
     
-    private $nameResolver = null;
+    private $selector = null;
     
-    public function __construct(NameResolverInterface $nameResolver)
+    /**
+     * 
+     * @param ModelLoaderSelectorInterface $selector
+     */
+    public function __construct(ModelLoaderSelectorInterface $selector)
     {
-        $this->nameResolver = $nameResolver;
+        $this->selector = $selector;
     }
     
-    public function getNameResolver()
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSources\ModelLoaderInterface::getSelector()
+     */
+    public function getSelector() : ModelLoaderSelectorInterface
     {
-        return $this->nameResolver;
+        return $this->selector;
     }
     
     /**
@@ -61,7 +78,7 @@ class SqlModelLoader implements ModelLoaderInterface
      */
     public function loadObjectById(ModelInterface $model, $object_id)
     {
-        $obj = new Object($model);
+        $obj = new MetaObject($model);
         $obj->setId($object_id);
         return $this->loadObject($obj);
     }
@@ -73,7 +90,7 @@ class SqlModelLoader implements ModelLoaderInterface
      */
     public function loadObjectByAlias(AppInterface $app, $object_alias)
     {
-        $obj = new Object($app->getWorkbench()->model());
+        $obj = new MetaObject($app->getWorkbench()->model());
         $obj->setAlias($object_alias);
         $obj->setNamespace($app->getAliasWithNamespace());
         return $this->loadObject($obj);        
@@ -166,11 +183,11 @@ class SqlModelLoader implements ModelLoaderInterface
 					' . $this->buildSqlUuidSelector('a.data_type_oid') . ' as data_type_oid,
 					' . $this->buildSqlUuidSelector('a.related_object_oid') . ' as related_object_oid,
 					' . $this->buildSqlUuidSelector('a.related_object_special_key_attribute_oid') . ' as related_object_special_key_attribute_oid,
-					o.object_alias as rev_relation_alias,
-					o.object_name AS rev_relation_name
+					o.object_alias as rev_relation_alias
 				FROM exf_attribute a LEFT JOIN exf_object o ON a.object_oid = o.oid
 				WHERE a.object_oid = ' . $object->getId() . ' OR a.related_object_oid = ' . $object->getId());
         if ($res = $query->getResultArray()) {
+            $relation_attrs = [];
             // use a for here instead of foreach because we want to extend the array from within the loop on some occasions
             $l = count($res);
             for ($i = 0; $i < $l; $i ++) {
@@ -224,44 +241,77 @@ class SqlModelLoader implements ModelLoaderInterface
                     $object->getAttributes()->add($attr, $attr->getAlias());
                 }
                 
-                // Now populate relations, if the attribute is a relation. This is done for own attributes as well as inherited ones because
-                // the latter may be involved in reverse relations. But this means also, that direct relations can only be created from direct
-                // attributes.
+                // If the attribute is a relation, save it for later processing. We can't create relations here right away because we need to
+                // instantiate all attributes first - otherwise we may not be able to find left keys of reverse relations!
                 if ($row['related_object_oid']) {
-                    // we have a reverse (1-n) relation if the attribute belongs to another object and that object is not being extended from
-                    // Otherwise it's a normal n-1 relation
-                    // IDEA What if we also create relations between parent and child objects. The inheriting object should probably get a direct
-                    // relation to the parent. Would that be usefull for objects sharing attributes but using different data_addresses?
-                    if ($object->getId() != $row['object_oid'] && ! in_array($row['object_oid'], $object->getParentObjectsIds())) {
-                        // FIXME what is the related_object_key_alias for reverse relations?
-                        $rel = new Relation(
-                            $exface, 
-                            $row['oid'], // id
-                            $row['rev_relation_alias'], // alias
-                            $row['rev_relation_name'], // name (used for captions)
-                            $row['related_object_oid'], // main object
-                            $row['attribute_alias'], // foreign key in the main object
-                            $row['object_oid'], // related object
-                            null, // related object key attribute (uid)
-                            MetaRelationInterface::RELATION_TYPE_REVERSE); // relation type
-                    } elseif ($attr) {
-                        // At this point, we know, it is a direct relation. This can only happen if the object has a corresponding direct
-                        // attribute. This is why the elseif($attr) is there.
-                        $rel = new Relation(
-                            $exface, 
-                            $attr->getId(), // relation id
-                            $attr->getAlias(), // alias
-                            $attr->getName(), // name for captions
-                            $object->getId(), // main object
-                            $attr->getAlias(), // foreign key in main object
-                            $row['related_object_oid'], // related object
-                            $row['related_object_special_key_attribute_oid'], // related object key attribute (UID will be used if not set)
-                            MetaRelationInterface::RELATION_TYPE_FORWARD); // relation type
+                    $relation_attrs[] = [
+                        'attr' => $attr,
+                        'row' => $row
+                    ];
+                }
+            }
+            
+            // Now populate the relations of the object 
+            foreach ($relation_attrs as $data) {
+                $attr = $data['attr'];
+                $row = $data['row'];
+                
+                // If we have a reverse (1-n) relation if the attribute belongs to another object and that object is not being extended from
+                // Otherwise it's a normal n-1 relation
+                // IDEA What if we also create relations between parent and child objects. The inheriting object should probably get a direct
+                // relation to the parent. Would that be usefull for objects sharing attributes but using different data_addresses?
+                if ($object->getId() != $row['object_oid'] && ! in_array($row['object_oid'], $object->getParentObjectsIds())) {
+                    if ($leftKeyId = $row['related_object_special_key_attribute_oid']) {
+                        $leftKeyAttr = $object->getAttributes()->getByAttributeId($leftKeyId);
+                    } else {
+                        try {
+                            $leftKeyAttr = $object->getUidAttribute();
+                        } catch (MetaObjectHasNoUidAttributeError $e) {
+                            try {
+                                $rightObject = $this->getModel()->getObjectById($row['object_oid']);
+                                $error = 'Broken relation "' . $row['attribute_alias'] . '" from ' . $rightObject->getAliasWithNamespace() . ' to ' . $object->getAliasWithNamespace() . ': ' . $e->getMessage();
+                            } catch (\Throwable $ee) {
+                                throw new MetaModelLoadingFailedError('No relations to default key attribute of object ' . $object->getAliasWithNamespace() . ' possible: ' . $e->getMessage(), '70U52B4', $e);
+                            }
+                            throw new MetaRelationBrokenError($rightObject, $error, '70U52B4', $e);
+                        }
                     }
                     
-                    if ($rel) {
-                        $object->addRelation($rel);
+                    if ($row['rev_relation_alias'] === '' || $row['rev_relation_alias'] === null) {
+                        throw new MetaModelLoadingFailedError('Object with UID "' . $row['object_oid'] . '" does not exist, but is referenced by the attribute "' . $row['attribute_alias'] . '" (UID "' . $row['uid'] . '"). Please repair the model or delete the orphaned attribute!', '70UJ2GV');
                     }
+                    
+                    $rel = new Relation(
+                        $exface,
+                        RelationTypeDataType::REVERSE($exface),
+                        $row['oid'], // relation id
+                        $row['rev_relation_alias'], // relation alias
+                        $row['attribute_alias'], // relation modifier: the alias of the right key attribute
+                        null, // the name cannot be specified at this point, as it depends on what other reverse relations will exist
+                        $object, // left object
+                        $leftKeyAttr, // left key in the main object
+                        $row['object_oid'], // right object UID
+                        $row['oid'] // right object key attribute id
+                        );
+                } elseif ($attr) {
+                    // At this point, we know, it is a direct relation. This can only happen if the object has a corresponding direct
+                    // attribute. This is why the elseif($attr) is there.
+                    $rel = new Relation(
+                        $exface,
+                        RelationTypeDataType::REGULAR($exface),
+                        $attr->getId(), // relation id
+                        $attr->getAlias(), // relation alias
+                        '', // alias modifier allways empty for direct regular relations
+                        $attr->getName(),
+                        $object, //  left object
+                        $attr, // left key attribute
+                        $row['related_object_oid'], // right object UID
+                        $row['related_object_special_key_attribute_oid'] // related object key attribute (UID will be used if not set)
+                        );
+                }
+                
+                if ($rel) {
+                    $object->addRelation($rel);
                 }
             }
         }
@@ -350,7 +400,7 @@ class SqlModelLoader implements ModelLoaderInterface
             }
             
             // If there is a user logged in, fetch his specific connctor config (credentials)
-            if ($user_name = $data_source->getWorkbench()->context()->getScopeUser()->getUsername()) {
+            if ($user_name = $data_source->getWorkbench()->getContext()->getScopeUser()->getUsername()) {
                 $join_user_credentials = ' LEFT JOIN (exf_data_connection_credentials dcc LEFT JOIN exf_user_credentials uc ON dcc.user_credentials_oid = uc.oid INNER JOIN exf_user u ON uc.user_oid = u.oid AND u.username = "' . $user_name . '") ON dcc.data_connection_oid = dc.oid';
                 $select_user_credentials = ', uc.data_connector_config AS user_connector_config';
             }
@@ -362,6 +412,7 @@ class SqlModelLoader implements ModelLoaderInterface
             if ($data_source->getWorkbench()->getConfig()->getOption('INSTALLER.SQL_UPDATE_LAST_PERFORMED_ID') < 8){
                 $sql = '
 				SELECT
+					ds.name as data_source_name,
 					ds.custom_query_builder,
 					ds.default_query_builder,
 					dc.read_only_flag AS connection_read_only,
@@ -375,6 +426,7 @@ class SqlModelLoader implements ModelLoaderInterface
             } else {
                 $sql = '
 				SELECT
+					ds.name as data_source_name,
 					ds.custom_query_builder,
 					ds.default_query_builder,
 					ds.readable_flag AS data_source_readable,
@@ -397,6 +449,7 @@ class SqlModelLoader implements ModelLoaderInterface
             }
             $ds = $ds[0];
             $data_source->setDataConnectorAlias($ds['data_connector']);
+            $data_source->setName($ds['data_source_name']);
             $data_source->setConnectionId($ds['data_connection_oid']);
             if (! is_null($ds['data_source_readable'])){
                 $data_source->setReadable($ds['data_source_readable']);
@@ -413,7 +466,7 @@ class SqlModelLoader implements ModelLoaderInterface
                 // Register the filters in the application context scope
                 foreach ($filter_context as $filter) {
                     $condition = ConditionFactory::createFromUxonOrArray($exface, $filter);
-                    $data_source->getWorkbench()->context()->getScopeApplication()->getFilterContext()->addCondition($condition);
+                    $data_source->getWorkbench()->getContext()->getScopeApplication()->getFilterContext()->addCondition($condition);
                 }
             }
         }
@@ -489,10 +542,10 @@ class SqlModelLoader implements ModelLoaderInterface
         return $this->loadActionsFromModel($empty_list, $sql_where);
     }
 
-    public function loadAction(AppInterface $app, $action_alias, WidgetInterface $called_by_widget = null)
+    public function loadAction(AppInterface $app, $action_alias, WidgetInterface $trigger_widget = null)
     {
         $sql_where = 'a.app_alias = "' . $app->getAliasWithNamespace() . '" AND oa.alias = "' . $action_alias . '"';
-        $actions = $this->loadActionsFromModel(new AppActionList($app->getWorkbench(), $app), $sql_where, $called_by_widget);
+        $actions = $this->loadActionsFromModel(new AppActionList($app->getWorkbench(), $app), $sql_where, $trigger_widget);
         return $actions->getFirst();
     }
 
@@ -502,7 +555,7 @@ class SqlModelLoader implements ModelLoaderInterface
      * @param string $sql_where            
      * @return \exface\Core\CommonLogic\Model\ActionList
      */
-    protected function loadActionsFromModel(ActionListInterface $action_list, $sql_where, WidgetInterface $called_by_widget = null)
+    protected function loadActionsFromModel(ActionListInterface $action_list, $sql_where, WidgetInterface $trigger_widget = null)
     {
         $basket_aliases = ($action_list instanceof MetaObjectActionListInterface) ? $action_list->getObjectBasketActionAliases() : array();
         
@@ -525,7 +578,7 @@ class SqlModelLoader implements ModelLoaderInterface
                 }
                 $app = $action_list->getWorkbench()->getApp($row['app_alias']);
                 $object = $action_list instanceof MetaObjectActionListInterface ? $action_list->getMetaObject() : $action_list->getWorkbench()->model()->getObjectById($row['object_oid']);
-                $a = ActionFactory::createFromModel($row['action'], $row['alias'], $app, $object, $action_uxon, $called_by_widget);
+                $a = ActionFactory::createFromModel($row['action'], $row['alias'], $app, $object, $action_uxon, $trigger_widget);
                 $a->setName($row['name']);
                 $action_list->add($a);
                 
@@ -544,7 +597,7 @@ class SqlModelLoader implements ModelLoaderInterface
 
     public function getInstaller()
     {
-        $installer = new SqlSchemaInstaller(NameResolver::createFromString('exface.Core', NameResolver::OBJECT_TYPE_APP, $this->getDataConnection()->getWorkbench()));
+        $installer = new SqlSchemaInstaller(new AppSelector($this->getDataConnection()->getWorkbench(), 'exface.Core'));
         $installer->setDataConnection($this->getDataConnection());
         return $installer;
     }
@@ -574,15 +627,16 @@ class SqlModelLoader implements ModelLoaderInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSources\ModelLoaderInterface::loadDataType()
      */
-    public function loadDataType($uid_or_alias){
-        $cache = $this->getDataTypeCache($uid_or_alias);
+    public function loadDataType(DataTypeSelectorInterface $selector) : DataTypeInterface
+    {
+        $cache = $this->getDataTypeCache($selector);
         if (empty($cache)){
-            $this->cacheDataType($uid_or_alias);
-            $cache = $this->getDataTypeCache($uid_or_alias);
+            $this->cacheDataType($selector);
+            $cache = $this->getDataTypeCache($selector);
         }
         
         if (empty($cache)) {
-            throw new DataTypeNotFoundError('No data type "' . $uid_or_alias . '" found!');
+            throw new DataTypeNotFoundError('No data type "' . $selector . '" found!');
         }
         
         if ($cache instanceof DataTypeInterface) {
@@ -598,21 +652,21 @@ class SqlModelLoader implements ModelLoaderInterface
         }
     }
     
-    protected function getDataTypeCache($uid_or_alias)
+    protected function getDataTypeCache(DataTypeSelectorInterface $selector)
     {
-        if ($this->isUid($uid_or_alias)){
-            return $this->data_types_by_uid[$uid_or_alias];
+        if ($selector->isUid()){
+            return $this->data_types_by_uid[$selector->toString()];
         } else {
-            return $this->data_types_by_uid[$this->data_type_uids[$uid_or_alias]];
+            return $this->data_types_by_uid[$this->data_type_uids[$selector->toString()]];
         }
     }
     
-    protected function cacheDataType($uid_or_alias){
-        if ($this->isUid($uid_or_alias)){
-            $where = 'dt.app_oid = (SELECT fd.app_oid FROM exf_data_type fd WHERE fd.oid = ' . $uid_or_alias . ')';
+    protected function cacheDataType(DataTypeSelectorInterface $selector)
+    {
+        if ($selector->isUid()){
+            $where = 'dt.app_oid = (SELECT fd.app_oid FROM exf_data_type fd WHERE fd.oid = ' . $selector->toString() . ')';
         } else {
-            $name_resolver = NameResolver::createFromString($uid_or_alias, NameResolver::OBJECT_TYPE_DATATYPE, $this->getWorkbench());
-            $where = "dt.app_oid = (SELECT fa.oid FROM exf_app fa WHERE fa.app_alias = '" . $name_resolver->getNamespace() . "')";
+            $where = "dt.app_oid = (SELECT fa.oid FROM exf_app fa WHERE fa.app_alias = '" . $selector->getAppAlias() . "')";
         }
         $query = $this->getDataConnection()->runSql('
 				SELECT
@@ -632,7 +686,7 @@ class SqlModelLoader implements ModelLoaderInterface
     
     protected function getFullAlias($app_alias, $instance_alias)
     {
-        return $app_alias . NameResolver::NAMESPACE_SEPARATOR . $instance_alias;
+        return $app_alias . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER . $instance_alias;
     }
     
     protected function isUid($string)
@@ -642,12 +696,73 @@ class SqlModelLoader implements ModelLoaderInterface
     
     protected function getModel()
     {
-        return $this->getNameResolver()->getWorkbench()->model();
+        return $this->getWorkbench()->model();
     }
     
     public function getWorkbench()
     {
-        return $this->getNameResolver()->getWorkbench();
+        return $this->selector->getWorkbench();
+    }
+    
+    public function loadUserData(UserInterface $user) : UserInterface
+    {
+        $userModel = $this->getWorkbench()->model()->getObject('exface.Core.USER');
+        $userSheet = DataSheetFactory::createFromObject($userModel);
+        foreach ($userModel->getAttributes() as $attr) {
+            $userSheet->getColumns()->addFromAttribute($attr);
+        }
+        $userSheet->getFilters()->addConditionsFromString($userModel, 'USERNAME', $user->getUsername(), EXF_COMPARATOR_EQUALS);
+        $userSheet->dataRead();
+        
+        if ($userSheet->countRows() == 0) {
+            throw new UserNotFoundError('No user "' . $user->getUsername() . '" exists in the metamodel.');
+        } elseif ($userSheet->countRows() == 1) {
+            $row = $userSheet->getRow(0);
+            $user->setUid($row['UID']);
+            $user->setLocale($row['LOCALE']);
+            $user->setFirstName($row['FIRST_NAME']);
+            $user->setLastName($row['LAST_NAME']);
+            $user->setEmail($row['EMAIL']);
+        } else {
+            throw new UserNotUniqueError('More than one user exist in the metamodel for username "' . $user->getUsername() . '".');
+        }
+        return $user;
+    }
+    
+    /**
+     * Creates the passed Exface user.
+     *
+     * @param UserInterface $user
+     * @return ModelLoaderInterface
+     */
+    public function createUser(UserInterface $user) : ModelLoaderInterface
+    {
+        $user->exportDataSheet()->dataCreate();
+        return $this;
+    }
+    
+    /**
+     * Updates the passed Exface user.
+     *
+     * @param UserInterface $user
+     * @return ModelLoaderInterface
+     */
+    public function updateUser(UserInterface $user) : ModelLoaderInterface
+    {
+        $user->exportDataSheet()->dataUpdate();
+        return $this;
+    }
+    
+    /**
+     * Deletes the passed Exface user.
+     *
+     * @param UserInterface $user
+     * @return ModelLoaderInterface
+     */
+    public function deleteUser(UserInterface $user) : ModelLoaderInterface
+    { 
+        $user->exportDataSheet()->dataDelete();
+        return $this;
     }
 }
 

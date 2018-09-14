@@ -3,13 +3,14 @@ namespace exface\Core\CommonLogic\DataSheets;
 
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\Interfaces\ExfaceClassInterface;
+use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Exceptions\DataSheets\DataSheetStructureError;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
 
-class DataSorter implements iCanBeConvertedToUxon, ExfaceClassInterface
+class DataSorter implements iCanBeConvertedToUxon, WorkbenchDependantInterface
 {
 
     const DIRECTION_ASC = 'ASC';
@@ -76,7 +77,7 @@ class DataSorter implements iCanBeConvertedToUxon, ExfaceClassInterface
 
     public function exportUxonObject()
     {
-        $uxon = $this->getWorkbench()->createUxonObject();
+        $uxon = new UxonObject();
         $uxon->setProperty('attribute_alias', $this->getAttributeAlias());
         $uxon->setProperty('direction', $this->getDirection());
         return $uxon;
@@ -103,5 +104,15 @@ class DataSorter implements iCanBeConvertedToUxon, ExfaceClassInterface
     public function copy()
     {
         return clone $this;
+    }
+    
+    public function __toString()
+    {
+        return $this->getAttributeAlias() . ':' . $this->getDirection();
+    }
+
+    public function getAttribute() : MetaAttributeInterface
+    {
+        return $this->getDataSheet()->getMetaObject()->getAttribute($this->getAttributeAlias());
     }
 }

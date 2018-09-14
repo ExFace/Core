@@ -2,10 +2,11 @@
     "id": "0x25d98c16949f11e7b780028037ec0200",
     "alias_with_namespace": "exface.core.data-types",
     "menu_parent_page_alias": "exface.core.metamodel",
-    "menu_index": "5",
+    "menu_index": "4",
     "menu_visible": true,
     "name": "Data Types",
-    "short_description": "",
+    "description": "",
+    "intro": "",
     "replaces_page_alias": null,
     "contents": {
         "object_alias": "exface.Core.DATATYPE",
@@ -32,14 +33,14 @@
         ],
         "buttons": [
             {
-                "action_alias": "exface.Core.CreateObjectDialog"
+                "action_alias": "exface.Core.ShowObjectCreateDialog"
             },
             {
-                "action_alias": "exface.Core.EditObjectDialog",
+                "action_alias": "exface.Core.ShowObjectEditDialog",
                 "bind_to_double_click": true
             },
             {
-                "action_alias": "exface.Core.DuplicateObjectDialog"
+                "action_alias": "exface.Core.ShowObjectCopyDialog"
             },
             {
                 "action_alias": "exface.Core.DeleteObject"

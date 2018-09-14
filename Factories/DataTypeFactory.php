@@ -1,64 +1,64 @@
 <?php
 namespace exface\Core\Factories;
 
-use exface\Core\CommonLogic\Workbench;
-use exface\Core\Interfaces\NameResolverInterface;
-use exface\Core\Exceptions\DataTypes\DataTypeNotFoundError;
-use exface\Core\CommonLogic\NameResolver;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Model\ModelInterface;
 use exface\Core\Interfaces\AppInterface;
+use exface\Core\Interfaces\Selectors\DataTypeSelectorInterface;
+use exface\Core\CommonLogic\Selectors\DataTypeSelector;
+use exface\Core\Interfaces\WorkbenchInterface;
+use exface\Core\DataTypes\StringDataType;
+use exface\Core\Interfaces\Selectors\SelectorInterface;
 
-abstract class DataTypeFactory extends AbstractNameResolverFactory
+abstract class DataTypeFactory extends AbstractSelectableComponentFactory
 {
 
     /**
      *
-     * @param NameResolverInterface $name_resolver            
+     * @param DataTypeSelectorInterface $name_resolver            
      * @return DataTypeInterface
      */
-    public static function create(NameResolverInterface $name_resolver)
+    public static function create(DataTypeSelectorInterface $selector) : DataTypeInterface
     {
-        if ($name_resolver->classExists()){
-            $class = $name_resolver->getClassNameWithNamespace();
-            return new $class($name_resolver->getWorkbench(), null, $name_resolver);
-        } else {
-            throw new DataTypeNotFoundError('Data type "' . $name_resolver->getAliasWithNamespace() . '" not found in class "' . $name_resolver->getClassNameWithNamespace() . '"!');
-        }
-    }
-
-    /**
-     * 
-     * @param Workbench $exface            
-     * @param string $alias_with_namespace            
-     * @return DataTypeInterface
-     */
-    public static function createFromAlias(Workbench $workbench, $alias_with_namespace)
-    {
-        return static::createFromUidOrAlias($workbench->model(), $alias_with_namespace);
+        return static::createFromSelector($selector);
     }
     
     /**
      * 
-     * @param Workbench $workbench
-     * @return DataTypeInterface
-     */
-    public static function createBaseDataType(Workbench $workbench)
-    {
-        $name_resolver = NameResolver::createFromString($workbench->getCoreApp()->getAliasWithNamespace() . NameResolver::NAMESPACE_SEPARATOR . 'String', NameResolver::OBJECT_TYPE_DATATYPE, $workbench);
-        return static::create($name_resolver);
-    }
-    
-    /**
-     * 
-     * @param Workbench $workbench
-     * @param string $prototype_alias
+     * @param SelectorInterface $selector
      * @return \exface\Core\Interfaces\DataTypes\DataTypeInterface
      */
-    public static function createFromPrototype(Workbench $workbench, $prototype_resolvable_name)
+    public static function createFromSelector(SelectorInterface $selector)
     {
-        return static::create(NameResolver::createFromString($prototype_resolvable_name, NameResolver::OBJECT_TYPE_DATATYPE, $workbench));
+        if ($selector->isUid()) {
+            return $selector->getWorkbench()->model()->getModelLoader()->loadDataType($selector);
+        } else {
+            return parent::createFromSelector($selector);
+        }
+    }
+    
+    /**
+     * 
+     * @param WorkbenchInterface $workbench
+     * @return DataTypeInterface
+     */
+    public static function createBaseDataType(WorkbenchInterface $workbench) : DataTypeInterface
+    {
+        $type = StringDataType::class;
+        $selector = new DataTypeSelector($workbench, $type);
+        return static::create($selector);
+    }
+    
+    /**
+     * 
+     * @param WorkbenchInterface $workbench
+     * @param string $prototypeSelector
+     * @return \exface\Core\Interfaces\DataTypes\DataTypeInterface
+     */
+    public static function createFromPrototype(WorkbenchInterface $workbench, string $prototypeSelector) : DataTypeInterface
+    {
+        return static::createFromSelector(new DataTypeSelector($workbench, $prototypeSelector));
     }
     
     /**
@@ -67,9 +67,10 @@ abstract class DataTypeFactory extends AbstractNameResolverFactory
      * @param string $uid
      * @return \exface\Core\Interfaces\DataTypes\DataTypeInterface
      */
-    public static function createFromUidOrAlias(ModelInterface $model, $id_or_alias)
+    public static function createFromString(WorkbenchInterface $workbench, string $selectorString) : DataTypeInterface
     {
-        return $model->getModelLoader()->loadDataType($id_or_alias);
+        $selector = new DataTypeSelector($workbench, $selectorString);
+        return static::createFromSelector($selector);
     }
     
     /**
@@ -84,7 +85,8 @@ abstract class DataTypeFactory extends AbstractNameResolverFactory
      * 
      * @return \exface\Core\Interfaces\DataTypes\DataTypeInterface
      */
-    public static function createFromModel($prototype_alias, $alias, AppInterface $app, UxonObject $uxon, $name = null, $short_description = null, $validation_error_code = null, $validation_error_text = null, UxonObject $default_editor_uxon = null){
+    public static function createFromModel($prototype_alias, $alias, AppInterface $app, UxonObject $uxon, $name = null, $short_description = null, $validation_error_code = null, $validation_error_text = null, UxonObject $default_editor_uxon = null) : DataTypeInterface
+    {
         $data_type = static::createFromPrototype($app->getWorkbench(), $prototype_alias);
         $data_type->setApp($app);
         $data_type->setAlias($alias);

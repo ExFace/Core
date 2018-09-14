@@ -1,9 +1,9 @@
 <?php
 namespace exface\Core\Interfaces\Contexts;
 
-use exface\Core\Interfaces\ExfaceClassInterface;
+use exface\Core\Interfaces\WorkbenchDependantInterface;
 
-interface ContextScopeInterface extends ExfaceClassInterface
+interface ContextScopeInterface extends WorkbenchDependantInterface
 {
 
     /**

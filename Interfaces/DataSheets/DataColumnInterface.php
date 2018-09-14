@@ -314,7 +314,7 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
      * 
      * @return boolean
      */
-    public function isAttribute();
+    public function isAttribute() : bool;
     
     /**
      * 
@@ -322,12 +322,19 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
      * 
      * @return boolean
      */
-    public function isFormula();
+    public function isFormula() : bool;
     
     /**
      * Returns TRUE if this is a calculated column - that is, it's data does not (only) come from a data source.
      * 
      * @return boolean
      */
-    public function isCalculated();
+    public function isCalculated() : bool;
+    
+    /**
+     * Returns TRUE if the value of this column does not depend on any data (e.g. is a fixed string, number or a static formula) and FALSE otherwise.
+     * 
+     * @return bool
+     */
+    public function isStatic() : bool;
 }

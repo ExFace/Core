@@ -5,6 +5,12 @@ use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\Actions\iReadData;
 use exface\Core\Templates\AbstractAjaxTemplate\Interfaces\JsValueDecoratingInterface;
+use exface\Core\Exceptions\Templates\TemplateOutputError;
+use exface\Core\Widgets\DataTable;
+use exface\Core\DataTypes\SortingDirectionsDataType;
+use exface\Core\Interfaces\Widgets\iTakeInput;
+use exface\Core\Widgets\Input;
+use exface\Core\Widgets\DataTableResponsive;
 
 /**
  * This trait contains common methods for template elements using the jQuery DataTables library.
@@ -62,8 +68,20 @@ trait JqueryDataTablesTrait {
             }
         }
         
+        // Extra column for expand-button if rows have details
+        if ($this->isResponsive()) {
+            $thead = '<th></th>' . $thead;
+            if ($tfoot) {
+                $tfoot = '<th></th>' . $tfoot;
+            }
+        }
+        
         if ($tfoot) {
             $tfoot = '<tfoot>' . $tfoot . '</tfoot>';
+        }
+        
+        if ($this->isResponsive()) {
+            $css_class .= ' responsive';
         }
         
         return <<<HTML
@@ -90,6 +108,7 @@ HTML;
         $widget = $this->getWidget();
         $collapse_icon_selector = '.' . str_replace(' ', '.', $this->getRowDetailsCollapseIcon());
         $expand_icon_selector = '.' . str_replace(' ', '.', $this->getRowDetailsExpandIcon());
+        $headers = ! empty($this->getAjaxHeaders()) ? json_encode($this->getAjaxHeaders()) : '{}';
         
         if ($widget->hasRowDetails()) {
             $output = <<<JS
@@ -108,9 +127,13 @@ HTML;
 		} else {
 			// Open this row
 			row.child('<div id="detail'+row.data().{$widget->getMetaObject()->getUidAttributeAlias()}+'"></div>').show();
+            // Fetch content
+            var headers = {$headers};
+            headers['Subrequest-ID'] = row.data().{$widget->getMetaObject()->getUidAttributeAlias()};
 			$.ajax({
 				url: '{$this->getAjaxUrl()}',
 				method: 'post',
+                headers: headers,
 				data: {
 					action: '{$widget->getRowDetailsAction()}',
 					resource: '{$widget->getPage()->getAliasWithNamespace()}',
@@ -121,8 +144,7 @@ HTML;
 							{ {$widget->getMetaObject()->getUidAttributeAlias()}: row.data().{$widget->getMetaObject()->getUidAttributeAlias()} }
 						],
 						filters: {$this->buildJsDataFilters()}
-					},
-					exfrid: row.data().{$widget->getMetaObject()->getUidAttributeAlias()}
+					}
 				},
 				dataType: "html",
 				success: function(data){
@@ -163,6 +185,7 @@ JS;
             return $this->getTemplate()->getElement($this->getWidget()->getConfiguratorWidget())->buildJsDataGetter($action);
         } elseif ($this->isEditable() && $action->implementsInterface('iModifyData')) {
             // TODO
+            $rows = "[]";
         } else {
             $rows = "Array.prototype.slice.call(" . $this->getId() . "_table.rows({selected: true}).data())";
         }
@@ -175,11 +198,7 @@ JS;
      */
     protected function isLazyLoading()
     {
-        $widget_option = $this->getWidget()->getLazyLoading();
-        if (is_null($widget_option)) {
-            return true;
-        }
-        return $widget_option;
+        return $this->getWidget()->getLazyLoading(true);
     }
     
     public function buildJsRefresh($keep_pagination_position = false)
@@ -195,18 +214,32 @@ JS;
     {
         // Data type specific formatting
         $formatter_js = '';
-        $cellTpl = $this->getTemplate()->getElement($col->getCellWidget());
+        $cellWidget = $col->getCellWidget();
+        $cellTpl = $this->getTemplate()->getElement($cellWidget);
         if (($cellTpl instanceof JsValueDecoratingInterface) && $cellTpl->hasDecorator()) {
             $formatter_js = $cellTpl->buildJsValueDecorator('data');
+        } elseif ($cellWidget instanceof Input) {
+            // FIXME how to place the data into the cell editor? Maybe use the data setter?
+            $cellData = $col->hasAttributeReference() ? 'data' : "''";
+            $cellHtml = $cellTpl->buildHtml();
+            $cellHtml = preg_replace('/id="[^"]*"/', '', $cellHtml);
+            $cellHtml = preg_replace('/name="[^"]*"/', '', $cellHtml);
+            $cellHtml = preg_replace('/\s\s+/', ' ', $cellHtml);
+            $formatter_js = "'" . $cellHtml . "'";
         }
         
+        // In datatables with remote source sorting is allways performed remotely, so
+        // it cannot be done for columns without attribute binding (the server cannot
+        // sort those)
+        $sortable = $col->hasAttributeReference() ? ($col->getSortable() ? 'true' : 'false') : 'false';
+        
         $output = '{
-							name: "' . $col->getDataColumnName() . '"
-                            ' . ($col->getAttributeAlias() ? ', data: "' . $col->getDataColumnName() . '"' : '') . '
+							name: "' . $col->getAttributeAlias() . '"
+                            , data: ' . ($col->hasAttributeReference() ? '"' . $col->getDataColumnName() . '"' : 'null') . '
                             ' . ($col->isHidden() || $col->getVisibility() === EXF_WIDGET_VISIBILITY_OPTIONAL ? ', visible: false' : '') . '
                             ' . ($col->getWidth()->isTemplateSpecific() ? ', width: "' . $col->getWidth()->getValue() . '"': '') . '
                             , className: "' . $this->buildCssColumnClass($col) . '"' . '
-                            , orderable: ' . ($col->getSortable() ? 'true' : 'false') . '
+                            , orderable: ' . $sortable . '
                             ' . ($formatter_js ? ", render: function(data, type, row){try {return " . $formatter_js . "} catch (e) {return data;} }" : '') . '
                             
                     }';
@@ -234,18 +267,33 @@ JS;
     
     public function buildJsValueGetter($column = null, $row = null)
     {
+        $widget = $this->getWidget();
         $output = $this->getId() . "_table";
         if (is_null($row)) {
             $output .= ".rows('.selected').data()";
         } else {
             // TODO
         }
+        
+        $uid_column = $widget->getUidColumn();
         if (is_null($column)) {
-            $column = $this->getWidget()->getMetaObject()->getUidAttributeAlias();
+            $column_widget = $uid_column;
         } else {
-            // TODO
+            // FIXME #uid-column-missing remove this ugly if once UID column are added to tables by default again
+            if ($column == $uid_column->getDataColumnName()) {
+                $column_widget = $uid_column;
+            } else {
+                $column_widget = $widget->getColumnByDataColumnName($column);
+            }
         }
-        return $output . "[0]['" . $column . "']";
+        
+        if (! $column_widget) {
+            throw new TemplateOutputError('Column "' . $column . '" of ' . $widget->getWidgetType() . ' "' . $widget->getCaption() . '" required for in-page scripting is missing!');
+        }
+        
+        $column_name = $column_widget->getDataColumnName();
+        $delimiter = $column_widget->getAttribute()->getValueListDelimiter();
+        return "{$output}.pluck('{$column_name}').join('{$delimiter}')";
     }
     
     /**
@@ -273,6 +321,9 @@ JS;
     protected function buildJsDataSource($js_filters = '')
     {
         $widget = $this->getWidget();
+        $configurator_element = $this->getTemplate()->getElement($widget->getConfiguratorWidget());
+        
+        $headers = ! empty($this->getAjaxHeaders()) ? 'headers: ' . json_encode($this->getAjaxHeaders()) . ',' : '';
         
         $ajax_data = <<<JS
 			function ( d ) {
@@ -283,7 +334,7 @@ JS;
 				d.element = "{$widget->getId()}";
 				d.object = "{$this->getWidget()->getMetaObject()->getId()}";
                 d.q = $('#{$this->getId()}_quickSearch').val();
-				d.data = {$this->getTemplate()->getElement($widget->getConfiguratorWidget())->buildJsDataGetter()};
+				d.data = {$configurator_element->buildJsDataGetter()};
 				
 				{$this->buildJsFilterIndicatorUpdater()}
 			}
@@ -296,16 +347,22 @@ JS;
 		"ajax": {
 			"url": "{$this->getAjaxUrl()}",
 			"type": "POST",
+            {$headers}
 			"data": {$ajax_data},
 			"error": function(jqXHR, textStatus, errorThrown ){
 				{$this->buildJsBusyIconHide()}
 				{$this->buildJsShowError('jqXHR.responseText', 'jqXHR.status + " " + jqXHR.statusText')}
 			},
             "beforeSend": function(jqXHR, settings) {
-                {$this->getId()}_jquery = $("#{$this->getId()}");
-                if ({$this->getId()}_jquery.data("_skipNextLoad") === true) {
-                    {$this->getId()}_jquery.data("_skipNextLoad", false);
+                jqself = $("#{$this->getId()}");
+                if (jqself.data("_skipNextLoad") === true) {
+                    jqself.data("_skipNextLoad", false);
                     {$this->buildJsBusyIconHide()}
+                    return false;
+                }
+                if (! {$configurator_element->buildJsValidator()}) {
+                    {$this->buildJsBusyIconHide()}
+                    console.warn('Invalid filters set for {$this->getId()}: skipping reload!');
                     return false;
                 }
             }
@@ -370,18 +427,34 @@ JS;
             $column_number_offset ++;
         }
         
+        // Expand-Button for responsive tables with collapsible overflow
+        if ($this->isResponsive()) {
+            $columns[] = '
+					{
+						"class": "details-control text-center",
+						"orderable": false,
+						"data": null,
+						"defaultContent": \'<i class="fa fa-chevron-down"></i>\'
+					}
+					';
+            $column_number_offset ++;
+        }
+        
         // Sorters
         $default_sorters = '';
         foreach ($widget->getSorters() as $sorter) {
             $column_exists = false;
+            $sorter_alias = $sorter->getProperty('attribute_alias');
+            $sorter_dir = strcasecmp($sorter->getProperty('direction'), SortingDirectionsDataType::ASC) === 0 ? 'asc' : 'desc';
             foreach ($widget->getColumns() as $nr => $col) {
-                if ($col->getAttributeAlias() == $sorter->getProperty('attribute_alias')) {
+                if ($col->getAttributeAlias() == $sorter_alias) {
                     $column_exists = true;
-                    $default_sorters .= '[ ' . ($nr + $column_number_offset) . ', "' . $sorter->getProperty('direction') . '" ], ';
+                    $default_sorters .= '[ ' . ($nr + $column_number_offset) . ', "' . $sorter_dir . '" ], ';
                 }
             }
             if (! $column_exists) {
-                // TODO add a hidden column
+                $widget->addColumn($widget->createColumnFromAttribute($widget->getMetaObject()->getAttribute($sorter_alias), null, true));
+                $default_sorters .= '[ ' . ($nr + 1 + $column_number_offset) . ', "' . $sorter_dir . '" ], ';
             }
         }
         // Remove tailing comma
@@ -448,19 +521,22 @@ JS;
         }
         
         if ($widget->hasRowGroups()){
-            if ($widget->getRowGroupsShowCount()){
+            $grouper = $widget->getRowGrouper();
+            if ($grouper->getShowCounter()){
                 $rowGroupConter = "' ('+rows.count()+')'";
             } else {
                 $rowGroupConter = "''";
             }
             
-            if ($widget->getRowGroupsExpand() == 'all'){
-                // TODO
+            if ($grouper->getExpandFirstGroupOnly() === true) {
+                $this->addOnLoadSuccess("setTimeout(function(){ $('#{$this->getId()} > tbody > tr').not(':first-child').trigger('click');}, 0);\n");
+            } elseif ($grouper->getExpandAllGroups() === false){
+                $this->addOnLoadSuccess("setTimeout(function(){ $('#{$this->getId()} > tbody > tr').trigger('click');}, 0);\n");
             }
             
             $rowGroup = <<<JS
         , "rowGroup": {
-            dataSrc: '{$widget->getRowGroupsByColumnId()}',
+            dataSrc: '{$grouper->getGroupByColumn()->getDataColumnName()}',
             startRender: function ( rows, group ) {
                 var counter = {$rowGroupConter} ;
                 return $('<tr onclick="{$this->buildJsFunctionPrefix()}RowGroupToggle(this);"/>')
@@ -468,6 +544,7 @@ JS;
             }
         }
 JS;
+            
         }
         
         return <<<JS
@@ -502,9 +579,31 @@ JS;
 			{$this->getOnLoadSuccess()}
 		}
 		{$footer_callback}
+		{$this->buildJsOptionResponsive()}
 	} );
 
 JS;
+    }
+		
+    protected function buildJsOptionResponsive() : string
+    {
+        $js = '';
+        if ($this->isResponsive()) {
+            $widget = $this->getWidget();
+        
+            $display = $widget->getOverflowCollapsed() ? '$.fn.dataTable.Responsive.display.childRow' : '$.fn.dataTable.Responsive.display.childRowImmediate';
+        
+            return <<<JS
+, responsive: {
+            details: {
+                display: {$display},
+                type: 'column'
+            }
+}
+
+JS;
+        }
+        return $js;
     }
     
     /**
@@ -555,6 +654,8 @@ JS;
 	$('#{$this->getId()} tbody').on( 'rightclick', '{$this->buildCssSelectorDataRows()}', function(e){
 		{$rightclick_script}
 	});
+
+    {$this->buildJsOnChangeHandler()}
 
 JS;
     }
@@ -613,6 +714,54 @@ JS;
     }
 
 JS;
+    }
+        
+    protected function buildJsOnChangeHandler()
+    {
+        $js = '';
+        if ($script = $this->getOnChangeScript()) {
+            $js = <<<JS
+
+    {$this->getId()}_table.on( 'select', function ( e, dt, type, indexes ) {
+        {$script}
+    });
+
+JS;
+        }
+        return $js;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    protected function isResponsive() : bool
+    {
+        return $this->getWidget() instanceof DataTableResponsive;
+    }
+    
+    public function buildHtmlHeadTags()
+    {
+        $includes = parent::buildHtmlHeadTags();
+        $template = $this->getTemplate();
+        // DataTables
+        $includes[] = '<link rel="stylesheet" type="text/css" href="' . $template->buildUrlToSource('LIBS.DATATABLES.THEME.CSS') . '">';
+        $includes[] = '<script type="text/javascript" src="' . $template->buildUrlToSource('LIBS.DATATABLES.CORE.JS') . '"></script>';
+        $includes[] = '<script type="text/javascript" src="' . $template->buildUrlToSource('LIBS.DATATABLES.THEME.JS') . '"></script>';
+        $includes[] = '<script type="text/javascript" src="' . $template->buildUrlToSource('LIBS.DATATABLES.SELECT.JS') . '"></script>';
+        $includes[] = '<link rel="stylesheet" type="text/css" href="' . $template->buildUrlToSource('LIBS.DATATABLES.SELECT.CSS') . '">';
+        
+        if ($this->getWidget()->hasRowGroups()){
+            $includes[] = '<script type="text/javascript" src="' . $template->buildUrlToSource('LIBS.DATATABLES.ROWGROUP.JS') . '"></script>';
+            $includes[] = '<link rel="stylesheet" type="text/css" href="' . $template->buildUrlToSource('LIBS.DATATABLES.ROWGROUP.CSS') . '">';
+        }
+        
+        if ($this->isResponsive()){
+            $includes[] = '<script type="text/javascript" src="' . $template->buildUrlToSource('LIBS.DATATABLES.RESPONSIVE.JS') . '"></script>';
+            $includes[] = '<link rel="stylesheet" type="text/css" href="' . $template->buildUrlToSource('LIBS.DATATABLES.RESPONSIVE.CSS') . '">';
+        }
+        
+        return $includes;
     }
 }
 ?>

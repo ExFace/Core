@@ -1,11 +1,12 @@
 {
     "id": "0xfcda43fa949e11e789c6028037ec0200",
     "alias_with_namespace": "exface.core.attributes",
-    "menu_parent_page_alias": "exface.core.metamodel",
-    "menu_index": "4",
+    "menu_parent_page_alias": "exface.core.objects",
+    "menu_index": "0",
     "menu_visible": true,
     "name": "Attributes",
-    "short_description": "",
+    "description": "",
+    "intro": "Hier k\u00f6nnen Meta-Attribute gepflegt werden.",
     "replaces_page_alias": null,
     "contents": {
         "id": "attributes",
@@ -43,6 +44,9 @@
                 "attribute_alias": "FORMATTER"
             },
             {
+                "attribute_alias": "UID"
+            },
+            {
                 "attribute_alias": "DEFAULT_EDITOR_UXON",
                 "widget_type": "Input",
                 "height": 1,
@@ -50,6 +54,9 @@
             }
         ],
         "columns": [
+            {
+                "attribute_alias": "OBJECT__APP__LABEL"
+            },
             {
                 "attribute_alias": "OBJECT__LABEL"
             },
@@ -60,13 +67,16 @@
                 "attribute_alias": "ALIAS"
             },
             {
-                "attribute_alias": "DISPLAYORDER"
+                "attribute_alias": "DISPLAYORDER",
+                "caption": "=TRANSLATE('exface.Core', 'PAGE.ATTRIBUTES.DISPLAY_ORDER')"
             },
             {
-                "attribute_alias": "DATA_ADDRESS"
+                "attribute_alias": "DATA_ADDRESS",
+                "width_max": "300px"
             },
             {
-                "attribute_alias": "DATATYPE__LABEL"
+                "attribute_alias": "DATATYPE__LABEL",
+                "width_max": "100px"
             },
             {
                 "attribute_alias": "LABELFLAG"
@@ -82,7 +92,11 @@
             },
             {
                 "attribute_alias": "RELATED_OBJ__LABEL",
-                "caption": "Relation to"
+                "caption": "=TRANSLATE('exface.Core', 'PAGE.OBJECT_EDITOR.RELATION_TO')"
+            },
+            {
+                "attribute_alias": "DATA_ADDRESS_PROPS",
+                "width_max": "200px"
             },
             {
                 "attribute_alias": "CREATED_ON"
@@ -93,17 +107,14 @@
         ],
         "buttons": [
             {
-                "action_alias": "exface.Core.UpdateData"
+                "action_alias": "exface.Core.ShowObjectCreateDialog"
             },
             {
-                "action_alias": "exface.Core.CreateObjectDialog"
-            },
-            {
-                "action_alias": "exface.Core.EditObjectDialog",
+                "action_alias": "exface.Core.ShowObjectEditDialog",
                 "bind_to_double_click": true
             },
             {
-                "action_alias": "exface.Core.DuplicateObjectDialog"
+                "action_alias": "exface.Core.ShowObjectCopyDialog"
             },
             {
                 "action_alias": "exface.Core.DeleteObject"

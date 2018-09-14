@@ -3,7 +3,10 @@
 	
 	"ACTION.CREATEDATA.RESULT": "%number% item created.|%number% items created.",
 	"ACTION.CREATEDATA.NAME": "Create",
-	"ACTION.CREATEOBJECTDIALOG.NAME": "New",
+	"ACTION.COPYDATA.RESULT": "Copied %number% object|Copied %number% objects",
+	"ACTION.COPYDATA.RESULT_DEPENDENCIES": " including %number% dependency| including %number% dependencies",
+	"ACTION.COPYDATA.NAME": "Copy Data",
+	"ACTION.SHOWOBJECTCREATEDIALOG.NAME": "New",
 	
 	"ACTION.CONTEXTAPI.RESULT": "'%operation_name%' completed!",
     
@@ -12,12 +15,13 @@
 	"ACTION.DELETEOBJECT.RESULT": "%number% item deleted.|%number% items deleted.",
 	"ACTION.DELETEOBJECT.NAME": "Delete",
 	
-	"ACTION.DUPLICATEOBJECTDIALOG.NAME": "Copy",
+	"ACTION.SHOWOBJECTCOPYDIALOG.NAME": "Copy",
 	
-	"ACTION.EDITOBJECTDIALOG.SAVE_BUTTON": "Save",
-	"ACTION.EDITOBJECTDIALOG.NAME": "Edit",
-	"ACTION.EDITOBJECTDIALOG.NO_EDITABLE_ATTRIBUTES": "No editable attributes found!",
-
+	"ACTION.SHOWOBJECTEDITDIALOG.SAVE_BUTTON": "Save",
+	"ACTION.SHOWOBJECTEDITDIALOG.NAME": "Edit",
+	"ACTION.SHOWOBJECTEDITDIALOG.NO_EDITABLE_ATTRIBUTES": "No editable attributes found!",
+	"ACTION.SHOWOBJECTEDITDIALOG.DATA_SOURCE_NOT_WRITABLE": "Editing prohibited by data source settings!",
+	
 	"ACTION.EXPORTCSV.NAME": "Export CSV",
 	"ACTION.EXPORTDATA.NAME": "Export",
 	"ACTION.EXPORTDATA.ROWOVERFLOW": "The maximum number of %number% entries was written to the file. ",
@@ -39,10 +43,10 @@
 	"ACTION.GOTOURL.SUCCESS": "Redirecting...",
 	"ACTION.GOTOPAGE.NAME": "Go to",
 	
-	"ACTION.MASSEDITDIALOG.NAME": "Mass edit",
-	"ACTION.MASSEDITDIALOG.EDITING_BY_FILTER": "Editing all objects matching the following filters: %filters%",
-	"ACTION.MASSEDITDIALOG.EDITING_ALL": "Editing all objects",
-	"ACTION.MASSEDITDIALOG.EDITING_SELECTED": "Editing %number% object|Editing %number% objects",
+	"ACTION.SHOWMASSEDITDIALOG.NAME": "Mass edit",
+	"ACTION.SHOWMASSEDITDIALOG.EDITING_BY_FILTER": "Editing all objects matching the following filters: %filters%",
+	"ACTION.SHOWMASSEDITDIALOG.EDITING_ALL": "Editing all objects",
+	"ACTION.SHOWMASSEDITDIALOG.EDITING_SELECTED": "Editing %number% object|Editing %number% objects",
 	
 	"ACTION.OBJECTBASKET": "Object basket",
     "ACTION.OBJECTBASKETADD.NAME": "Add to object basket",
@@ -71,7 +75,9 @@
 	
 	"ACTION.SHOWHELPDIALOG.NAME": "Help",
 	
-	"ACTION.SHOWOBJECTDIALOG.NAME": "Information",
+	"ACTION.SHOWMODELBUILDERDIALOG.NAME": "Model Builder",
+	
+	"ACTION.SHOWOBJECTINFODIALOG.NAME": "Information",
 	
 	"ACTION.UNDOACTION.NAME": "Undo",
 	"ACTION.UNDOACTION.RESULT": "Successfully undone %number% action.|Successfully undone %number% actions.",
@@ -96,8 +102,6 @@
     "CONTEXT.OBJECTBASKET.REMOVE": "Remove",
     "CONTEXT.OBJECTBASKET.REMOVE_ALL": "Remove all",
 	
-	"GLOBAL.ACTIONS": "Actions",
-	
 	"GLOBAL.AGGREGATOR_FUNCTIONS.SUM": "Sum",
 	"GLOBAL.AGGREGATOR_FUNCTIONS.AVG": "Average",
 	"GLOBAL.AGGREGATOR_FUNCTIONS.MIN": "Minimum",
@@ -108,6 +112,21 @@
 	"GLOBAL.AGGREGATOR_FUNCTIONS.COUNT_DISTINCT": "Count distinct",
 	"GLOBAL.AGGREGATOR_FUNCTIONS.COUNT_IF": "Count if",
 	
+	"GLOBAL.MODEL.ACTIONS": "Actions",
+	"GLOBAL.MODEL.ATTRIBUTES": "Attributes",
+	"GLOBAL.MODEL.BEHAVIORS": "Behaviors",
+    "GLOBAL.MODEL.CONNECTIONS": "Connections",
+    "GLOBAL.MODEL.DATA_SOURCES": "Data sources",
+    "GLOBAL.MODEL.MODEL": "Model",
+    "GLOBAL.MODEL.OBJECT": "Object",
+    "GLOBAL.MODEL.OBJECTS": "Objects",
+    "GLOBAL.MODEL.RELATIONS": "Relations",
+    "GLOBAL.MODEL.RELATION_TYPE.REGULAR": "Regular",
+    "GLOBAL.MODEL.RELATION_TYPE.REVERSE": "Reverse",
+    "GLOBAL.MODEL.RELATION_TYPE.ONE_TO_ONE": "One-to-one",
+    "GLOBAL.MODEL.UID": "UID",
+    "GLOBAL.MODEL.LABEL": "Label",
+    
 	"GLOBAL.SORTING_DIRECTIONS.ASC": "Ascending",
 	"GLOBAL.SORTING_DIRECTIONS.DESC": "Descending",
 	
@@ -126,6 +145,21 @@
     "LOCALIZATION.PRICE.PRECISION_MAX": 2,
     "LOCALIZATION.PRICE.PRECISION_MIN": 2,
     
+    "PAGE.APPS.REPAIR": "Repair",
+    "PAGE.OBJECTS.APP_ALIAS": "App alias",
+    "PAGE.OBJECT_EDITOR.RELATION_TO": "Relation to",
+    "PAGE.OBJECT_EDITOR.DEFAULT_EDITOR": "Default Editor",
+    "PAGE.OBJECT_EDITOR.DATA_ADDRESS": "Data Address",
+    "PAGE.OBJECT_EDITOR.DATA_SOURCE_BASE_OBJECT": "Base Object of Data Source",
+    "PAGE.DATA_SOURCES.BASE_OBJECT": "Base object",
+    "PAGE.DATA_SOURCES.CONNECTION_READONLY": "Connection readonly",
+    "PAGE.DATA_SOURCE_EDITOR.DEFAULTS": "Defaults",
+    "PAGE.DATA_SOURCE_EDITOR.CUSTOM_CONFIG": "Custom Configuration",
+    "PAGE.USERS.CREDENTIALS": "Credentials",
+    "PAGE.DOCS.READ": "Read",
+    "PAGE.ATTRIBUTES.DISPLAY_ORDER": "Disp. Pos.",
+    "PAGE.TABS.GENERAL": "General",
+    
     "WIDGET.SELECT_ALL": "All",
 	"WIDGET.SELECT_YES": "Yes",
 	"WIDGET.SELECT_NO": "No",
@@ -137,7 +171,7 @@
 	"WIDGET.DATA.NO_DATA_FOUND": "No data could be found for the current set of filters!",
 	"WIDGET.DATA.HELP.FILTERS": "Filters",
 	"WIDGET.DATA.HELP.COLUMNS": "Columns",
-	"WIDGET.DATA.NOT_LOADED": "No data was loaded for performance reasons. Please first set the filters, then press Search/Reload!",
+	"WIDGET.DATA.NOT_LOADED": "Please fill the required filters and press the search-button!",
 	
 	"WIDGET.DATACONFIGURATOR.FILTER_TAB_CAPTION": "Filters",
 	"WIDGET.DATACONFIGURATOR.SORTER_TAB_CAPTION": "Sorting",
@@ -158,6 +192,7 @@
 	"ERROR.CAPTION": "Error",
 	"ERROR.REQUEST_CAPTION": "Request",
 	"ERROR.CONTEXT_CAPTION": "Context",
+	"ERROR.OBJECT_CAPTION": "Object \"%name%\"",
 	"ERROR.STACKTRACE_CAPTION": "Stacktrace",
 	"ERROR.SUPPORT_HINT": "Please be sure to include the LOG-number of this error when contacting <a href=\"mailto:%support_mail%?subject=[%system_name%]%20%error_id%\">support</a>: \"%error_id%\"!",
 	"WARNING.CAPTION": "Warning"

@@ -43,6 +43,10 @@ class SessionContextScope extends AbstractContextScope
             }
         }
         
+        if ($locale = $this->getSessionData('locale')) {
+            $this->setSessionLocale($locale);
+        }
+        
         // It is important to save the session once we have read the data, because otherwise it will block concurrent ajax-requests
         $this->sessionClose();
         
@@ -71,9 +75,9 @@ class SessionContextScope extends AbstractContextScope
     public function getSavedContexts($context_alias = null)
     {
         if ($context_alias) {
-            $obj = $this->getSessionData()[$context_alias];
+            $obj = $this->getSessionContextData()[$context_alias];
         } else {
-            $obj = $this->getSessionData();
+            $obj = $this->getSessionContextData();
         }
         
         return UxonObject::fromAnything($obj);
@@ -96,11 +100,14 @@ class SessionContextScope extends AbstractContextScope
                 // causes errors when reading the session: all used classes must be declared (included) before the
                 // session is initialized. So as long as we are using the CMS session here, we can only store built-in
                 // types. If ExFace will create own sessions, this can be changed!
-                $this->setSessionData($context->getAliasWithNamespace(), $uxon->toJson());
+                $this->setSessionContextData($context->getAliasWithNamespace(), $uxon->toJson());
             } else {
                 $this->removeContext($context->getAliasWithNamespace());
             }
         }
+        
+        // Save other session data
+        $this->setSessionData('locale', $this->session_locale);
         
         // It is important to save the session once we have read the data, because otherwise it will block concurrent ajax-requests
         $this->sessionClose();
@@ -227,7 +234,7 @@ class SessionContextScope extends AbstractContextScope
      *
      * @return array
      */
-    protected function getSessionData()
+    protected function getSessionContextData()
     {
         return $_SESSION['exface']['contexts'];
     }
@@ -239,9 +246,31 @@ class SessionContextScope extends AbstractContextScope
      * @param string $value            
      * @return \exface\Core\CommonLogic\Contexts\Scopes\SessionContextScope
      */
-    protected function setSessionData($key, $value)
+    protected function setSessionContextData($key, $value)
     {
         $_SESSION['exface']['contexts'][$key] = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @param string $key
+     * @return mixed
+     */
+    protected function getSessionData(string $key)
+    {
+        return $_SESSION['exface'][$key];
+    }
+    
+    /**
+     * 
+     * @param string $key
+     * @param string|array $data
+     * @return SessionContextScope
+     */
+    protected function setSessionData(string $key, $data) : SessionContextScope
+    {
+        $_SESSION['exface'][$key] = $data;
         return $this;
     }
 
@@ -254,11 +283,11 @@ class SessionContextScope extends AbstractContextScope
      */
     public function getSessionLocale()
     {
-        if (is_null($this->session_locale)) {
+        if ($this->session_locale === null) {
             try {
-                return $this->getContextManager()->getScopeUser()->getUserCurrent()->getLocale();
+                $this->session_locale = $this->getContextManager()->getScopeUser()->getUserCurrent()->getLocale();
             } catch (UserException $e){
-                return $this->getWorkbench()->getConfig()->getOption('LOCALE.DEFAULT');
+                $this->session_locale = $this->getWorkbench()->getConfig()->getOption('LOCALE.DEFAULT');
             }
         }
         return $this->session_locale;

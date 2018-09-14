@@ -4,14 +4,14 @@ namespace exface\Core\Interfaces\Model;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Widgets\ContextBar;
 use exface\Core\Exceptions\Widgets\WidgetNotFoundError;
-use exface\Core\Interfaces\ExfaceClassInterface;
+use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\WidgetInterface;
-use exface\Core\Interfaces\UiManagerInterface;
 use exface\Core\Interfaces\AliasInterface;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Exceptions\RuntimeException;
-use exface\Core\CommonLogic\Model\UiPage;
+use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
+use exface\Core\Interfaces\Selectors\AppSelectorInterface;
 
 /**
  * A page represents on screen of the UI and is basically the model for a web page in most cases.
@@ -30,8 +30,13 @@ use exface\Core\CommonLogic\Model\UiPage;
  * @author Andrej Kabachnik
  *
  */
-interface UiPageInterface extends ExfaceClassInterface, AliasInterface, iCanBeConvertedToUxon
+interface UiPageInterface extends WorkbenchDependantInterface, AliasInterface, iCanBeConvertedToUxon
 {
+    /**
+     * 
+     * @return UiPageSelectorInterface
+     */
+    public function getSelector() : UiPageSelectorInterface;
 
     /**
      *
@@ -85,12 +90,6 @@ interface UiPageInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
      * @return UiPageInterface
      */
     public function removeWidget(WidgetInterface $widget, $remove_children_too = true);
-
-    /**
-     *
-     * @return UiManagerInterface
-     */
-    public function getUi();
 
     /**
      *
@@ -246,6 +245,13 @@ interface UiPageInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
      * @return string
      */
     public function getId();
+    
+    /**
+     * 
+     * @param string $uid
+     * @return UiPageInterface
+     */
+    public function setId(string $uid) : UiPageInterface;
 
     /**
      * Returns the name of the page.
@@ -263,27 +269,45 @@ interface UiPageInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
      * @return UiPageInterface
      */
     public function setName($string);
-
+    
     /**
-     * Returns a short description of the page.
+     * Returns the description of this page.
      * 
-     * The short description will be used as menu hint or intro-text by most
-     * templates.
+     * The description is used as hint, tooltip or similar by most templates.
+     * It is a short text describing, what functionality the page offers:
+     * e.g. "View an manage meta object of installed apps" for the object-page
+     * in the metamodel editor.
      * 
      * @return string
      */
-    public function getShortDescription();
+    public function getDescription();
+    
+    /**
+     * Overwrites the description of this page.
+     *
+     * The description is used as hint, tooltip or similar by most templates.
+     * It is a short text describing, what functionality the page offers:
+     * e.g. "View an manage meta object of installed apps" for the object-page
+     * in the metamodel editor.
+     *
+     * @return string
+     */
+    public function setDescription($string);
 
     /**
-     * Overwrites the short description of the page.
+     * Returns an introduction text for the page to be used in contextual help, etc.
      * 
-     * The short description will be used as menu hint or intro-text by most
-     * templates.
+     * @return string
+     */
+    public function getIntro();
+
+    /**
+     * Overwrites introduction text for the page.
      * 
      * @param string $string
      * @return UiPageInterface
      */
-    public function setShortDescription($string);
+    public function setIntro($text);
 
     /**
      * Returns the qualified alias of the page, this one should replace when resolving widget links.
@@ -343,7 +367,7 @@ interface UiPageInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
      * @param string $appUidOrAlias
      * @return UiPageInterface
      */
-    public function copy($page_alias = null, $page_uid = null, $appUidOrAlias = null);
+    public function copy($page_alias = null, $page_uid = null, AppSelectorInterface $appSelector = null) : UiPageInterface;
     
     /**
      * Compares two pages by their UIDs, aliases and CMS-IDs and returns
@@ -351,10 +375,10 @@ interface UiPageInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
      * 
      * If the passed page replaces this page this function also returns true.
      * 
-     * @param UiPageInterface|string $page_or_id_or_alias
+     * @param UiPageInterface|UiPageSelectorInterface|string $pageOrSelectorOrString
      * @return boolean
      */
-    public function is($page_or_id_or_alias);
+    public function is($pageOrSelectorOrString) : bool;
     
     /**
      * Compares two pages by their UIDs, aliases and CMS-IDs and returns
@@ -362,10 +386,10 @@ interface UiPageInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
      * 
      * If the passed page replaces this page this function returns false.
      * 
-     * @param UiPageInterface|string $page_or_id_or_alias
+     * @param UiPageInterface|UiPageSelectorInterface|string $pageOrSelectorOrString
      * @return boolean
      */
-    public function isExactly($page_or_id_or_alias);
+    public function isExactly($pageOrSelectorOrString) : bool;
     
     /**
      * Compares two pages by their attributes.
@@ -393,6 +417,15 @@ interface UiPageInterface extends ExfaceClassInterface, AliasInterface, iCanBeCo
      * @return string
      */
     public static function generateAlias($prefix);
+    
+    /**
+     * Makes the page become part of the app identified by the given selector
+     * 
+     * @param AppSelectorInterface $selector
+     * 
+     * @return UiPageInterface
+     */
+    public function setApp(AppSelectorInterface $selector) : UiPageInterface;
 }
 
 ?>

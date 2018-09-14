@@ -3,9 +3,18 @@ namespace exface\Core\Actions;
 
 use exface\Core\Interfaces\Actions\iReadData;
 use exface\Core\CommonLogic\AbstractAction;
-use exface\Core\Exceptions\Actions\ActionCallingWidgetNotSpecifiedError;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\Interfaces\Tasks\TaskInterface;
+use exface\Core\Interfaces\DataSources\DataTransactionInterface;
+use exface\Core\Interfaces\Tasks\ResultInterface;
+use exface\Core\Exceptions\Actions\ActionCallingWidgetNotSpecifiedError;
+use exface\Core\Factories\ResultFactory;
 
+/**
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
 class ReadData extends AbstractAction implements iReadData
 {
 
@@ -13,10 +22,23 @@ class ReadData extends AbstractAction implements iReadData
 
     private $update_filter_context = true;
 
-    protected function perform()
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AbstractAction::perform()
+     */
+    protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {
-        $data_sheet = $this->getInputDataSheet();
-        $this->setAffectedRows($data_sheet->removeRows()->dataRead());
+        if (! $this->checkPermissions($task)) {
+            // TODO Throw exception!
+        }
+        
+        $data_sheet = $this->getInputDataSheet($task);
+        $data_sheet->removeRows();
+        if ($task->isTriggeredByWidget()) {
+            $data_sheet = $task->getWidgetTriggeredBy()->prepareDataSheetToRead($data_sheet);
+        }
+        $affected_rows = $data_sheet->dataRead();
         
         // Replace the filter conditions in the current window context by the ones in this data sheet
         // It is important to do it after the data had been read, because otherwise the newly set
@@ -26,13 +48,28 @@ class ReadData extends AbstractAction implements iReadData
             $this->updateFilterContext($data_sheet);
         }
         
-        $this->setResultDataSheet($data_sheet);
-        $this->setResultMessage($this->getAffectedRows() . ' entries read');
+        $result = ResultFactory::createDataResult($task, $data_sheet);
+        $result->setMessage($affected_rows . ' entries read');
+        
+        return $result;
     }
     
+    protected function checkPermissions(TaskInterface $task) : bool
+    {
+        if (! $this->isDefinedInWidget() && ! $task->isTriggeredByWidget()) {
+            throw new ActionCallingWidgetNotSpecifiedError($this, 'Security violaion! Cannot read data without a target widget in action "' . $this->getAliasWithNamespace() . '"!', '6T5DOSV');
+        }
+        return true;
+    }
+    
+    /**
+     * 
+     * @param DataSheetInterface $data_sheet
+     * @return \exface\Core\Actions\ReadData
+     */
     protected function updateFilterContext(DataSheetInterface $data_sheet)
     {
-        $context = $this->getApp()->getWorkbench()->context()->getScopeWindow()->getFilterContext();
+        $context = $this->getApp()->getWorkbench()->getContext()->getScopeWindow()->getFilterContext();
         $context->removeAllConditions();
         foreach ($data_sheet->getFilters()->getConditions() as $condition) {
             if (! $condition->isEmpty()){
@@ -42,38 +79,24 @@ class ReadData extends AbstractAction implements iReadData
         return $this;
     }
 
-    protected function getAffectedRows()
-    {
-        return $this->affected_rows;
-    }
-
-    protected function setAffectedRows($value)
-    {
-        if ($value == 0) {
-            $this->setUndoable(false);
-        }
-        $this->affected_rows = $value;
-    }
-
+    /**
+     * 
+     * @return bool
+     */
     public function getUpdateFilterContext()
     {
         return $this->update_filter_context;
     }
 
+    /**
+     * 
+     * @param bool $value
+     * @return \exface\Core\Actions\ReadData
+     */
     public function setUpdateFilterContext($value)
     {
         $this->update_filter_context = $value;
         return $this;
-    }
-
-    public function getResultOutput()
-    {
-        if (! $this->getCalledByWidget()) {
-            throw new ActionCallingWidgetNotSpecifiedError($this, 'Security violaion! Cannot read data without a target widget in action "' . $this->getAliasWithNamespace() . '"!', '6T5DOSV');
-        }
-        $elem = $this->getApp()->getWorkbench()->ui()->getTemplate()->getElement($this->getCalledByWidget());
-        $output = $elem->prepareData($this->getResultDataSheet());
-        return $this->getApp()->getWorkbench()->ui()->getTemplate()->encodeData($output);
     }
 }
 ?>

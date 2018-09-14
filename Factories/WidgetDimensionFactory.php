@@ -4,7 +4,7 @@ namespace exface\Core\Factories;
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\CommonLogic\WidgetDimension;
 
-abstract class WidgetDimensionFactory extends AbstractFactory
+abstract class WidgetDimensionFactory extends AbstractStaticFactory
 {
 
     /**

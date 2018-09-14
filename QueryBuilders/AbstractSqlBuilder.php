@@ -6,7 +6,6 @@ use exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartFilterGroup;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartAttribute;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartFilter;
-use exface\Core\CommonLogic\DataTypes\AbstractDataType;
 use exface\Core\CommonLogic\AbstractDataConnector;
 use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
@@ -16,17 +15,19 @@ use exface\Core\CommonLogic\DataQueries\SqlDataQuery;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartSelect;
 use exface\Core\Interfaces\Model\MetaRelationInterface;
 use exface\Core\CommonLogic\DataSheets\DataAggregation;
-use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\DataTypes\DateDataType;
 use exface\Core\DataTypes\RelationDataType;
-use exface\Core\Exceptions\DataTypes\DataTypeNotFoundError;
-use exface\Core\CommonLogic\QueryBuilder\QueryPart;
 use exface\Core\Interfaces\Model\AggregatorInterface;
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
 use exface\Core\CommonLogic\Model\Aggregator;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
+use exface\Core\Interfaces\DataTypes\DataTypeInterface;
+use exface\Core\Factories\QueryBuilderFactory;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
+use exface\Core\DataTypes\RelationTypeDataType;
+use exface\Core\CommonLogic\DataSheets\DataColumn;
 
 /**
  * A query builder for generic SQL syntax.
@@ -236,7 +237,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             $this->result_total_count = $totals[0]['EXFCNT'];
             // now save the custom totals.
             foreach ($this->totals as $qpart) {
-                $this->result_totals[$qpart->getRow()][$qpart->getAlias()] = $totals[0][$this->getShortAlias($qpart->getAlias())];
+                $this->result_totals[$qpart->getRow()][$qpart->getColumnKey()] = $totals[0][$this->getShortAlias($qpart->getColumnKey())];
             }
         }
         return count($this->result_rows);
@@ -288,7 +289,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      */
     function create(AbstractDataConnector $data_connection = null)
     {
-        /* @var $data_connection \exface\Core\AbstractSqlConnector */
+        /* @var $data_connection \exface\Core\DataConnectors\AbstractSqlConnector */
         if (! $data_connection)
             $data_connection = $this->getMainObject()->getDataConnection();
         if (! $this->isWritable())
@@ -320,7 +321,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             $columns[$attr->getDataAddress()] = $attr->getDataAddress();
             $custom_insert_sql = $qpart->getDataAddressProperty('SQL_INSERT');
             foreach ($qpart->getValues() as $row => $value) {
-                $value = $this->prepareInputValue($value, $attr->getDataType(), $attr->getDataAddressProperty('SQL_DATA_TYPE'));
+                $value = $this->prepareInputValue($value, $qpart->getDataType(), $attr->getDataAddressProperty('SQL_DATA_TYPE'));
                 if ($custom_insert_sql) {
                     // If there is a custom insert SQL for the attribute, use it 
                     // NOTE: if you just write some kind of generator here, it 
@@ -473,7 +474,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                         
             if (count($qpart->getValues()) == 1) {
                 $values = $qpart->getValues();
-                $value = $this->prepareInputValue(reset($values), $attr->getDataType(), $attr->getDataAddressProperty('SQL_DATA_TYPE'));
+                $value = $this->prepareInputValue(reset($values), $qpart->getDataType(), $attr->getDataAddressProperty('SQL_DATA_TYPE'));
                 if ($custom_update_sql) {
                     // If there is a custom update SQL for the attribute, use it ONLY if there is no value
                     // Otherwise there would not be any possibility to save explicit values
@@ -489,7 +490,11 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 }
                 
                 foreach ($qpart->getValues() as $row_nr => $value) {
-                    $value = $this->prepareInputValue($value, $attr->getDataType(), $attr->getDataAddressProperty('SQL_DATA_TYPE'));
+                    try {
+                        $value = $this->prepareInputValue($value, $qpart->getDataType(), $attr->getDataAddressProperty('SQL_DATA_TYPE'));
+                    } catch (\Throwable $e) {
+                        throw new QueryBuilderException('Cannot build SQL SET clause for query part "' . $qpart->getAlias() . '" with value "' . $value . '"!');
+                    }
                     if ($custom_update_sql) {
                         // If there is a custom update SQL for the attribute, use it ONLY if there is no value
                         // Otherwise there would not be any possibility to save explicit values
@@ -574,12 +579,12 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      * or UPDATE queries.
      * IDEA create a new qpart for input values and use it as an argument in this method. Only need one argument then.
      *
-     * @param multitype $value            
-     * @param AbstractDataType $data_type            
+     * @param mixed $value            
+     * @param DataTypeInterface $data_type            
      * @param string $sql_data_type            
      * @return string
      */
-    protected function prepareInputValue($value, AbstractDataType $data_type, $sql_data_type = NULL)
+    protected function prepareInputValue($value, DataTypeInterface $data_type, $sql_data_type = NULL)
     {
         $value = $data_type::cast($value);
         if ($data_type instanceof StringDataType) {
@@ -694,7 +699,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         if (! $select_from) {
             // if it's a relation, we need to select from a joined table except for reverse relations
             if ($select_from = $attribute->getRelationPath()->toString()) {
-                if ($rev_rel = $qpart->getFirstRelation(MetaRelationInterface::RELATION_TYPE_REVERSE)) {
+                if ($rev_rel = $qpart->getFirstRelation(RelationTypeDataType::REVERSE)) {
                     // In case of reverse relations, $select_from is used to connect the subselects.
                     // Here we use the table of the last regular relation relation before the reversed one.
                     $select_from = $attribute->getRelationPath()->getSubpath(0, $attribute->getRelationPath()->getIndexOf($rev_rel))->toString();
@@ -707,12 +712,12 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             $select_from .= $this->getQueryId();
         }
         
-        $select_as = $this->getShortAlias(is_null($select_as) ? $qpart->getAlias() : $select_as);
+        $select_as = $this->getShortAlias($select_as ?? $qpart->getColumnKey());
         $select_from = $this->getShortAlias($select_from);
         $aggregator = ! is_null($aggregator) ? $aggregator : $qpart->getAggregator();
         
         // build subselects for reverse relations if the body of the select is not specified explicitly
-        if (! $select_column && $qpart->getUsedRelations(MetaRelationInterface::RELATION_TYPE_REVERSE)) {
+        if (! $select_column && $qpart->getUsedRelations(RelationTypeDataType::REVERSE)) {
             $output = $this->buildSqlSelectSubselect($qpart, $select_from);
             if ($make_groupable && $aggregator){
                 if ($aggregator && $aggregator === $qpart->getAggregator()){
@@ -755,7 +760,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         if ($add_nvl) {
             // do some prettyfying
             // return zero for number fields if the subquery does not return anything
-            if ($attribute->getDataType() instanceof NumberDataType) {
+            if ($qpart->getDataType() instanceof NumberDataType) {
                 $output = $this->buildSqlSelectNullCheck($output, 0);
             }
         }
@@ -792,7 +797,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      */
     protected function buildSqlSelectSubselect(\exface\Core\CommonLogic\QueryBuilder\QueryPart $qpart, $select_from = null)
     {
-        $rev_rel = $qpart->getFirstRelation(MetaRelationInterface::RELATION_TYPE_REVERSE);
+        $rev_rel = $qpart->getFirstRelation(RelationTypeDataType::REVERSE);
         if (! $rev_rel)
             return '';
         
@@ -813,35 +818,43 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         
         // build a subquery
         /* @var $relq \exface\Core\QueryBuilders\AbstractSqlBuilder */
-        $qb_class = get_class($this);
-        // TODO Use QueryBuilderFactory here instead
-        $relq = new $qb_class();
+        $relq = QueryBuilderFactory::createFromSelector($this->getSelector());
         // the query is based on the first object after the reversed relation (CUSTOMER_CARD for the above example)
-        $relq->setMainObject($rev_rel->getRelatedObject());
+        $relq->setMainObject($rev_rel->getRightObject());
         $relq->setQueryId($this->getNextSubqueryId());
         
         // Add the key alias relative to the first reverse relation (TYPE->LABEL for the above example)
-        $relq->addAttribute(str_replace($rev_rel_path->toString() . RelationPath::getRelationSeparator(), '', $qpart->getAlias()));
+        $relq_attribute_alias = str_replace($rev_rel_path->toString() . RelationPath::getRelationSeparator(), '', $qpart->getAlias());
+        $relq->addAttribute($relq_attribute_alias);
         
-        // Set the filters of the subquery to all filters of the main query, that need to be applied to objects beyond the reverse relation.
+        // Let the subquery inherit all filters of the main query, that need to be applied to objects beyond the reverse relation.
         // In our examplte, those would be any filter on ORDER->CUSTOMER<-CUSTOMER_CARD or ORDER->CUSTOMER<-CUSTOMER_CARD->TYPE, etc. Filters
         // over ORDER oder ORDER->CUSTOMER would be applied to the base query and ar not neeede in the subquery any more.
-        // If we rebase and add all filters, it will still work, but the SQL would get much more complex and surely slow with large data sets.
-        // Set $remove_conditions_not_matching_the_path parameter to true, to make sure, only applicable filters will get rebased.
-        $relq->setFiltersConditionGroup($this->getFilters()->getConditionGroup()->rebase($rev_rel_path->toString(), true));
+        // If we would rebase and add all filters, it will still work, but the SQL would get much more complex and surely 
+        // slow with large data sets.
+        // Filtering out applicable filters (conditions) is done via the following callback, that returns TRUE only if the
+        // path we rebase to matches the beginning of the condition's relation path.
+        $relq_condition_filter = function($condition, $relation_path_to_new_base_object) {
+            if ($condition->getExpression()->isMetaAttribute() && stripos($condition->getExpression()->toString(), $relation_path_to_new_base_object) !== 0) {
+                return false;
+            } else {
+                return true;
+            }
+        };
+        $relq->setFiltersConditionGroup($this->getFilters()->getConditionGroup()->rebase($rev_rel_path->toString(), $relq_condition_filter));
         // Add a new filter to attach to the main query (WHERE CUSTOMER_CARD.CUSTOMER_ID = ORDER.CUSTOMER_ID for the above example)
         // This only makes sense, if we have a reference to the parent query (= the $select_from parameter is set)
         if ($select_from) {
             if (! $reg_rel_path->isEmpty()) {
                 // attach to the related object key of the last regular relation before the reverse one
-                $junction_attribute = $this->getMainObject()->getAttribute(RelationPath::relationPathAdd($reg_rel_path->toString(), $this->getMainObject()->getRelation($reg_rel_path->toString())->getRelatedObjectKeyAlias()));
+                $junction_attribute = $this->getMainObject()->getAttribute(RelationPath::relationPathAdd($reg_rel_path->toString(), $this->getMainObject()->getRelation($reg_rel_path->toString())->getRightKeyAttribute()->getAlias()));
                 $junction = $junction_attribute->getDataAddress();
             } else { // attach to the uid of the core query if there are no regular relations preceeding the reversed one
                 $junction = $this->getMainObject()->getUidAttribute()->getDataAddress();
             }
             // The filter needs to be an EQ, since we want a to compare by "=" to whatever we define without any quotes
             // Putting the value in brackets makes sure it is treated as an SQL expression and not a normal value
-            $relq->addFilterWithCustomSql($rev_rel->getForeignKeyAlias(), '(' . $select_from . '.' . $junction . ')', EXF_COMPARATOR_EQUALS);
+            $relq->addFilterWithCustomSql($rev_rel->getRightKeyAttribute()->getAlias(), '(' . $select_from . '.' . $junction . ')', EXF_COMPARATOR_EQUALS);
         }
         
         $output = '(' . $relq->buildSqlQuerySelect() . ')';
@@ -964,18 +977,16 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             } else {
                 // In most cases we will build joins for attributes of related objects.
                 $left_table_alias = $this->getShortAlias(($left_table_alias ? $left_table_alias : $this->getMainObject()->getAlias()) . $this->getQueryId());
-                $left_obj = $this->getMainObject();
                 foreach ($rels as $alias => $rel) {
                     if ($rel->isForwardRelation()) {
                         $right_table_alias = $this->getShortAlias($alias . $this->getQueryId());
                         $right_obj = $this->getMainObject()->getRelatedObject($alias);
                         // generate the join sql
-                        $left_join_on = $this->buildSqlJoinSide($left_obj->getAttribute($rel->getForeignKeyAlias())->getDataAddress(), $left_table_alias);
-                        $right_join_on = $this->buildSqlJoinSide($rel->getRelatedObjectKeyAttribute()->getDataAddress(), $right_table_alias);
-                        $joins[$right_table_alias] = "\n " . $rel->getJoinType() . ' JOIN ' . str_replace('[#~alias#]', $right_table_alias, $right_obj->getDataAddress()) . ' ' . $right_table_alias . ' ON ' . $left_join_on . ' = ' . $right_join_on;
+                        $left_join_on = $this->buildSqlJoinSide($rel->getLeftKeyAttribute()->getDataAddress(), $left_table_alias);
+                        $right_join_on = $this->buildSqlJoinSide($rel->getRightKeyAttribute()->getDataAddress(), $right_table_alias);
+                        $joins[$right_table_alias] = "\n " . $this->buildSqlJoinType($rel) . ' JOIN ' . str_replace('[#~alias#]', $right_table_alias, $right_obj->getDataAddress()) . ' ' . $right_table_alias . ' ON ' . $left_join_on . ' = ' . $right_join_on;
                         // continue with the related object
                         $left_table_alias = $right_table_alias;
-                        $left_obj = $right_obj;
                     } elseif ($rel->getType() == '11') {
                         // TODO 1-to-1 relations
                     } else {
@@ -986,6 +997,11 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             }
         }
         return $joins;
+    }
+    
+    protected function buildSqlJoinType(MetaRelationInterface $relation)
+    {
+        return 'LEFT';
     }
 
     protected function buildSqlJoinSide($data_address, $table_alias)
@@ -1010,7 +1026,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      * @param string $rely_on_joins            
      * @return string
      * 
-     * @see BuildSqlWhere
+     * @see buildSqlWhere()
      */
     protected function buildSqlHaving(QueryPartFilterGroup $qpart, $rely_on_joins = true)
     {
@@ -1034,7 +1050,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
 
     /**
      * Builds the SQL for a condition within the HAVING clause. This is similar
-     * to buildSqlWhereCondition but it takes care of filters with aggregators.
+     * to buildSqlWhereCondition() but it takes care of filters with aggregators.
      * 
      * @param QueryPartFilter $qpart            
      * @param boolean $rely_on_joins            
@@ -1051,8 +1067,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         
         $val = $qpart->getCompareValue();
         $attr = $qpart->getAttribute();
-        $comp = $qpart->getComparator();
-        $delimiter = $qpart->getValueListDelimiter();
+        $comp = $this->getOptimizedComparator($qpart);
         
         $select = $this->buildSqlSelectGrouped($qpart);
         $where = $qpart->getDataAddressProperty('WHERE');
@@ -1064,7 +1079,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             return false;
         }
         
-        // build the having
+        // build the HAVING clause
         if ($where) {
             // check if it has an explicit where clause. If not try to filter based on the select clause
             $output = $this->replacePlaceholdersInSqlAddress($where, $qpart->getAttribute()->getRelationPath(), ['~alias' => $table_alias, '~value' => $val], $table_alias);
@@ -1076,7 +1091,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 $subj = $select;
             }
             // Do the actual comparing
-            $output = $this->buildSqlWhereComparator($subj, $comp, $val, $attr->getDataType(), $attr->getDataAddressProperty('SQL_DATA_TYPE'), $delimiter);
+            $output = $this->buildSqlWhereComparator($subj, $comp, $val, $qpart->getDataType(), $attr->getDataAddressProperty('SQL_DATA_TYPE'), $delimiter);
         }
         
         return $output;
@@ -1152,7 +1167,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      */
     protected function checkFilterBelongsInHavingClause(QueryPartFilter $qpart, $rely_on_joins = true)
     {
-        return $qpart->getAggregator() && ! $qpart->getFirstRelation(MetaRelationInterface::RELATION_TYPE_REVERSE) ? true : false;
+        return $qpart->getAggregator() && ! $qpart->getFirstRelation(RelationTypeDataType::REVERSE) ? true : false;
     }
 
     /**
@@ -1171,24 +1186,8 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         
         $val = $qpart->getCompareValue();
         $attr = $qpart->getAttribute();
-        $comp = $qpart->getComparator();
+        $comp = $this->getOptimizedComparator($qpart);
         $delimiter = $qpart->getValueListDelimiter();
-        
-        if ($attr->isRelation() && $comp != EXF_COMPARATOR_IN) {
-            // always use the equals comparator for foreign keys! It's faster!
-            $comp = EXF_COMPARATOR_EQUALS;
-        } elseif ($attr->isExactly($this->getMainObject()->getUidAttribute()) && $comp != EXF_COMPARATOR_IN && ! $qpart->getAggregator()) {
-            $comp = EXF_COMPARATOR_EQUALS;
-        } elseif (($attr->getDataType() instanceof NumberDataType) && $comp == EXF_COMPARATOR_IS && is_numeric($val)) {
-            // also use equals for the NUMBER data type, but make sure, the value to compare to is really a number (otherwise the query will fail!)
-            $comp = EXF_COMPARATOR_EQUALS;
-        } elseif (($attr->getDataType() instanceof BooleanDataType) && $comp == EXF_COMPARATOR_IS) {
-            // also use equals for the BOOLEAN data type
-            $comp = EXF_COMPARATOR_EQUALS;
-        } elseif (($attr->getDataType() instanceof DateDataType) && $comp == EXF_COMPARATOR_IS) {
-            // also use equals for the NUMBER data type, but make sure, the value to compare to is really a number (otherwise the query will fail!)
-            $comp = EXF_COMPARATOR_EQUALS;
-        }
         
         $select = $attr->getDataAddress();
         $where = $qpart->getDataAddressProperty('WHERE');
@@ -1202,7 +1201,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             return false;
         }
         
-        if ($qpart->getFirstRelation(MetaRelationInterface::RELATION_TYPE_REVERSE) || ($rely_on_joins == false && count($qpart->getUsedRelations()) > 0)) {
+        if ($qpart->getFirstRelation(RelationTypeDataType::REVERSE) || ($rely_on_joins == false && count($qpart->getUsedRelations()) > 0)) {
             // Use subqueries for attributes with reverse relations and in case we know, tha main query will not have any joins (e.g. UPDATE queries)
             $output = $this->buildSqlWhereSubquery($qpart, $rely_on_joins);
         } else {
@@ -1222,9 +1221,33 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 }
             }
             // Do the actual comparing
-            $output = $this->buildSqlWhereComparator($subj, $comp, $val, $attr->getDataType(), $attr->getDataAddressProperty('SQL_DATA_TYPE'), $delimiter);
+            $output = $this->buildSqlWhereComparator($subj, $comp, $val, $qpart->getDataType(), $attr->getDataAddressProperty('SQL_DATA_TYPE'), $delimiter);
         }
         return $output;
+    }
+    
+    protected function getOptimizedComparator(QueryPartFilter $qpart)
+    {
+        $val = $qpart->getCompareValue();
+        $attr = $qpart->getAttribute();
+        $comp = $qpart->getComparator();
+        
+        if ($attr->isRelation() && $comp != EXF_COMPARATOR_IN) {
+            // always use the equals comparator for foreign keys! It's faster!
+            $comp = EXF_COMPARATOR_EQUALS;
+        } elseif ($attr->isExactly($this->getMainObject()->getUidAttribute()) && ($comp == EXF_COMPARATOR_IS || $comp == EXF_COMPARATOR_IS_NOT)) {
+            $comp = $comp === EXF_COMPARATOR_IS ? EXF_COMPARATOR_EQUALS : EXF_COMPARATOR_EQUALS_NOT;
+        } elseif (($qpart->getDataType() instanceof NumberDataType) && ($comp == EXF_COMPARATOR_IS || $comp == EXF_COMPARATOR_IS_NOT) && is_numeric($val)) {
+            // also use equals for the NUMBER data type, but make sure, the value to compare to is really a number (otherwise the query will fail!)
+            $comp = $comp === EXF_COMPARATOR_IS ? EXF_COMPARATOR_EQUALS : EXF_COMPARATOR_EQUALS_NOT;
+        } elseif (($qpart->getDataType() instanceof BooleanDataType) && ($comp == EXF_COMPARATOR_IS || $comp == EXF_COMPARATOR_IS_NOT)) {
+            // also use equals for the BOOLEAN data type
+            $comp = $comp === EXF_COMPARATOR_IS ? EXF_COMPARATOR_EQUALS : EXF_COMPARATOR_EQUALS_NOT;
+        } elseif (($qpart->getDataType() instanceof DateDataType) && ($comp == EXF_COMPARATOR_IS || $comp == EXF_COMPARATOR_IS_NOT)) {
+            // also use equals for the NUMBER data type, but make sure, the value to compare to is really a number (otherwise the query will fail!)
+            $comp = $comp === EXF_COMPARATOR_IS ? EXF_COMPARATOR_EQUALS : EXF_COMPARATOR_EQUALS_NOT;
+        }
+        return $comp;
     }
     
     /**
@@ -1232,12 +1255,12 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      * @param string $subject column name or subselect
      * @param string $comparator one of the EXF_COMPARATOR_xxx constants
      * @param string $value value or SQL expression to compare to
-     * @param AbstractDataType $data_type
+     * @param DataTypeInterface $data_type
      * @param string $sql_data_type value of SQL_DATA_TYPE data source setting
      * @param string $value_list_delimiter delimiter used to separate concatenated lists of values
      * @return string
      */
-    protected function buildSqlWhereComparator($subject, $comparator, $value, AbstractDataType $data_type, $sql_data_type = NULL, $value_list_delimiter = EXF_LIST_SEPARATOR)
+    protected function buildSqlWhereComparator($subject, $comparator, $value, DataTypeInterface $data_type, $sql_data_type = NULL, $value_list_delimiter = EXF_LIST_SEPARATOR)
     {
         // Check if the value is of valid type.
         try {
@@ -1277,7 +1300,10 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                         continue;
                     }
                     // Normalize non-empty values
-                    $values[$nr] = $this->prepareWhereValue($val, $data_type, $sql_data_type);
+                    $val = $this->prepareWhereValue($val, $data_type, $sql_data_type);
+                    if ($data_type instanceof StringDataType) {
+                        $values[$nr] = "'" . $val . "'";
+                    }
                 }
                 $value = '(' . (! empty($values) ? implode(',', $values) : 'NULL') . ')' . ($value ? ' OR ' . $value : '');
             }
@@ -1333,7 +1359,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         return $output;
     }
 
-    protected function prepareWhereValue($value, AbstractDataType $data_type, $sql_data_type = NULL)
+    protected function prepareWhereValue($value, DataTypeInterface $data_type, $sql_data_type = NULL)
     {
         // IDEA some data type specific procession here
         if ($data_type instanceof BooleanDataType) {
@@ -1364,7 +1390,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         // This is implicitly also the case, if there are no joins needed (= the data in the main query will be sufficient in any case)
         if ($rely_on_joins || count($qpart->getUsedRelations()) === 0) {
             // If so, just need to include those relations in the subquery, which follow a reverse relation
-            $start_rel = $qpart->getFirstRelation(MetaRelationInterface::RELATION_TYPE_REVERSE);
+            $start_rel = $qpart->getFirstRelation(RelationTypeDataType::REVERSE);
         } else {
             // Otherwise, all relations (starting from the first one) must be put into the subquery, because there are no joins in the main one
             $start_rel = $qpart->getFirstRelation();
@@ -1377,14 +1403,14 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             
             // build a subquery
             /* @var $relq \exface\Core\QueryBuilders\AbstractSqlBuilder */
-            $qb_class = get_class($this);
-            $relq = new $qb_class();
-            $relq->setMainObject($start_rel->getRelatedObject());
+            $relq = QueryBuilderFactory::createFromSelector($this->getSelector());
+            $relq->setMainObject($start_rel->getRightObject());
             $relq->setQueryId($this->getNextSubqueryId());
             if ($start_rel->isReverseRelation()) {
                 // If we are dealing with a reverse relation, build a subquery to select foreign keys from rows of the joined tables,
                 // that match the given filter
                 $rel_filter = $qpart->getAttribute()->rebase($qpart_rel_path->getSubpath($qpart_rel_path->getIndexOf($start_rel) + 1))->getAliasWithRelationPath();
+                
                 // Remember to keep the aggregator of the attribute filtered over. Since we are interested in a list of keys, the
                 // subquery should GROUP BY these kees.
                 if ($qpart->getAggregator()) {
@@ -1392,9 +1418,41 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                     // e.g. if we are filtering over a SUM of natural numbers with "> 0", we could simply add a "> 0" filter 
                     // without any aggregation and it should yield the same results
                     $rel_filter .= DataAggregation::AGGREGATION_SEPARATOR . $qpart->getAggregator()->exportString();
-                    $relq->addAggregation($start_rel->getForeignKeyAlias());
+                    $relq->addAggregation($start_rel->getRightKeyAttribute()->getAlias());
+                    
+                    // If we are in a WHERE subquery of a filter with an aggregator, this means, we want to filter
+                    // over the aggregated value. However, there might be other filters, that affect this aggregated
+                    // value: e.g. as SUM over transactions for a product will be different depending on the store
+                    // filter set for the query. So we need all applicale non-aggregating filters in our subquery.
+                    // This is achieved by rebasing all filters with the following filter callback, that excludes 
+                    // certain conditions.
+                    $relq_condition_filter = function($condition, $relation_path_to_new_base_object) use ($qpart) {
+                        // If the condition is not an attribute, keep it - other partsof the code will deal with it
+                        if (! $condition->getExpression()->isMetaAttribute()) {
+                            return true;
+                        }
+                        // If a condition matches the query part we are processing right now, skip it - we will
+                        // add it later explicitly.
+                        if ($condition->getExpression()->toString() === $qpart->getExpression()->toString()){
+                            return false;
+                        }
+                        // If a conditon  has an aggregator itself - skip it as it will get it's own subquery.
+                        if (DataAggregation::getAggregatorFromAlias($this->getWorkbench(), $condition->getExpression()->toString())) {
+                            return false;
+                        }
+                        // If a condition is not applicable (is applied to something else, then the tables in our
+                        // subquery) - skip it.
+                        if (stripos($condition->getExpression()->toString(), $relation_path_to_new_base_object) !== 0) {
+                            return false;
+                        }
+                        return true;
+                    };
+                    /* @var MetaRelationPathInterface complete path of the first reverse relation */
+                    $rev_rel_path = $prefix_rel_path->copy()->appendRelation($start_rel);
+                    $relq->setFiltersConditionGroup($this->getFilters()->getConditionGroup()->rebase($rev_rel_path->toString(), $relq_condition_filter));
                 }
-                $relq->addAttribute($start_rel->getForeignKeyAlias());
+                $relq->addAttribute($start_rel->getRightKeyAttribute()->getAlias());
+                
                 // Add the filter relative to the first reverse relation with the same $value and $comparator
                 if ($qpart->isValueDataAddress()) {
                     $relq->addFilterWithCustomSql($rel_filter, $qpart->getCompareValue(), $qpart->getComparator());
@@ -1403,7 +1461,8 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 }
                 // FIXME add support for related_object_special_key_alias
                 if (! $prefix_rel_path->isEmpty()) {
-                    $prefix_rel_qpart = new QueryPartSelect(RelationPath::relationPathAdd($prefix_rel_path->toString(), $this->getMainObject()->getRelatedObject($prefix_rel_path->toString())->getUidAttributeAlias()), $this);
+                    $prefix_rel_str = RelationPath::relationPathAdd($prefix_rel_path->toString(), $this->getMainObject()->getRelatedObject($prefix_rel_path->toString())->getUidAttributeAlias());
+                    $prefix_rel_qpart = new QueryPartSelect($prefix_rel_str, $this, DataColumn::sanitizeColumnName($prefix_rel_str));
                     $junction = $this->buildSqlSelect($prefix_rel_qpart, null, null, '');
                 } else {
                     $junction = $this->getShortAlias($this->getMainObject()->getAlias() . $this->getQueryId()) . '.' . $this->getMainObject()->getUidAttribute()->getDataAddress();
@@ -1411,8 +1470,8 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             } else {
                 // If we are dealing with a regular relation, build a subquery to select primary keys from joined tables and match them to the foreign key of the main table
                 $relq->addFilter($qpart->rebase($relq, $start_rel->getAlias()));
-                $relq->addAttribute($start_rel->getRelatedObjectKeyAlias());
-                $junction_qpart = new \exface\Core\CommonLogic\QueryBuilder\QueryPartSelect($start_rel->getForeignKeyAlias(), $this);
+                $relq->addAttribute($start_rel->getRightKeyAttribute()->getAlias());
+                $junction_qpart = new QueryPartSelect($start_rel->getLeftKeyAttribute()->getAlias(), $this);
                 $junction = $this->buildSqlSelect($junction_qpart, null, null, '');
             }
             
@@ -1437,7 +1496,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         if ($qpart->getDataAddressProperty("ORDER_BY")) {
             $output = $this->getShortAlias($this->getMainObject()->getAlias()) . '.' . $qpart->getDataAddressProperty("ORDER_BY");
         } else {
-            $output = $this->getShortAlias($qpart->getAlias());
+            $output = $this->getShortAlias($qpart->getColumnKey());
         }
         $output .= ' ' . $qpart->getOrder();
         return $output;
@@ -1553,7 +1612,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     {
         $result = array();
         foreach ($this->getAttributes() as $alias => $qpart) {
-            if ($qpart->getUsedRelations(MetaRelationInterface::RELATION_TYPE_REVERSE)) {
+            if ($qpart->getUsedRelations(RelationTypeDataType::REVERSE)) {
                 $result[$alias] = $qpart;
             }
         }
@@ -1621,12 +1680,12 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             $prefix = $relation_path->toString();
         }
         
-        foreach ($this->getWorkbench()->utils()->findPlaceholdersInString($data_address) as $ph) {
+        foreach (StringDataType::findPlaceholders($data_address) as $ph) {
             $ph_attribute_alias = RelationPath::relationPathAdd($prefix, $ph);
             if (! $qpart = $this->getAttribute($ph_attribute_alias)) {
                 // Throw an error if the attribute cannot be resolved relative to the main object of the query
                 try {
-                    $qpart = new QueryPartSelect($ph_attribute_alias, $this);
+                    $qpart = new QueryPartSelect($ph_attribute_alias, $this, DataColumn::sanitizeColumnName($string));
                 } catch (MetaAttributeNotFoundError $e){
                     throw new QueryBuilderException('Cannot use placeholder [#' . $ph . '#] in data address "' . $original_data_address . '": no attribute "' . $ph_attribute_alias . '" found for query base object ' . $this->getMainObject()->getAliasWithNamespace() . '!', null, $e);
                 }
@@ -1642,6 +1701,19 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             $data_address = str_replace('[#' . $ph . '#]', $this->buildSqlSelect($qpart, $select_from, null, false), $data_address);
         }
         return $data_address;
+    }
+    
+    /**
+     * The SQL builder can join of related objects as long as they are located in the same database.
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder::canReadAttribute()
+     */
+    public function canReadAttribute(MetaAttributeInterface $attribute) : bool
+    {
+        // TODO Check if all objects along the relation path also belong to the data source
+        // TODO Instead of checking the data source, check if it points to the same data base
+        return $attribute->getObject()->getDataSourceId() === $this->getMainObject()->getDataSourceId();
     }
 }
 ?>

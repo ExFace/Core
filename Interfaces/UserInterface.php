@@ -4,7 +4,7 @@ namespace exface\Core\Interfaces;
 use exface\Core\CommonLogic\Model\User;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 
-interface UserInterface extends ExfaceClassInterface
+interface UserInterface extends WorkbenchDependantInterface
 {
 
     /**
@@ -112,4 +112,11 @@ interface UserInterface extends ExfaceClassInterface
      * @return boolean
      */
     public function isUserAnonymous();
+    
+    /**
+     * Returns TRUE if the user has a model and, thus, may have a credential storage, etc.
+     * 
+     * @return bool
+     */
+    public function hasModel() : bool;
 }

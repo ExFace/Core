@@ -3,6 +3,7 @@ namespace exface\Core\Widgets;
 
 use exface\Core\Interfaces\Widgets\iShowText;
 use exface\Core\Widgets\Traits\iCanBeAlignedTrait;
+use exface\Core\Interfaces\Widgets\iHaveColor;
 
 /**
  * The text widget simply shows text with an optional title created from the caption of the widget
@@ -10,29 +11,26 @@ use exface\Core\Widgets\Traits\iCanBeAlignedTrait;
  * @author Andrej Kabachnik
  *        
  */
-class Text extends Display implements iShowText
+class Text extends Display implements iShowText, iHaveColor
 {
     use iCanBeAlignedTrait {
         getAlign as getAlignDefault;
     }
-    
-    private $text = NULL;
 
     private $size = null;
 
     private $style = null;
+    
+    private $color = null;
 
     public function getText()
     {
-        if (is_null($this->text)) {
-            return $this->getValue();
-        }
-        return $this->text;
+        return $this->getValue();
     }
 
     public function setText($value)
     {
-        $this->text = $value;
+        $this->setValue($this->evaluatePropertyExpression($value));
         return $this;
     }
     
@@ -96,10 +94,38 @@ class Text extends Display implements iShowText
         if (! is_null($this->align)) {
             $uxon->setProperty('align', $this->align);
         }
-        if (! is_null($this->text)) {
-            $uxon->setProperty('text', $this->text);
-        }
         return $uxon;
+    }
+    
+    /**
+     * Returns the color of the text or NULL if no color explicitly defined.
+     * 
+     * {@inheritdoc}
+     * @see iHaveColor::getColor()
+     */
+    public function getColor()
+    {
+        return $this->color;
+    }
+    
+    /**
+     * Sets a specific color for the text - if not set, templates will use their own color scheme.
+     *
+     * HTML color names are supported by default. Additionally any color selector supported by
+     * the current template can be used. Most HTML templates will support css colors.
+     *
+     * @link https://www.w3schools.com/colors/colors_groups.asp
+     *
+     * @uxon-property color
+     * @uxon-type string
+     *
+     * {@inheritdoc}
+     * @see iHaveColor::setColor()
+     */
+    public function setColor($color)
+    {
+        $this->color = $color;
+        return $this;
     }
 }
 ?>

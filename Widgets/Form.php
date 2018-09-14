@@ -4,6 +4,7 @@ namespace exface\Core\Widgets;
 use exface\Core\Interfaces\Widgets\iHaveButtons;
 use exface\Core\Widgets\Traits\iHaveButtonsAndToolbarsTrait;
 use exface\Core\Interfaces\Widgets\iHaveToolbars;
+use exface\Core\DataTypes\AggregatorFunctionsDataType;
 
 /**
  * A Form is a Panel with buttons.
@@ -34,6 +35,34 @@ class Form extends Panel implements iHaveButtons, iHaveToolbars
     
     public function getToolbarWidgetType(){
         return 'FormToolbar';
+    }
+    
+    /**
+     * Adds hidden inputs for system attributes etc. required for the action of the given button widget.
+     * 
+     * @param Button $button
+     * @return Form
+     */
+    public function addRequiredWidgets(Button $button)
+    {
+        // If the button has an action, that is supposed to modify data, we need to make sure, that the panel
+        // contains alls system attributes of the base object, because they may be needed by the business logic
+        if ($button->getAction() && $button->getAction()->getMetaObject()->is($this->getMetaObject()) && $button->getAction()->implementsInterface('iModifyData')) {
+            /* @var $attr \exface\Core\Interfaces\Model\MetaAttributeInterface */
+            foreach ($this->getMetaObject()->getAttributes()->getSystem() as $attr) {
+                if (count($this->findChildrenByAttribute($attr)) === 0) {
+                    $widget = $this->getPage()->createWidget('InputHidden', $this);
+                    $widget->setAttributeAlias($attr->getAlias());
+                    if ($attr->isUidForObject()) {
+                        $widget->setAggregator(AggregatorFunctionsDataType::LIST_ALL($this->getWorkbench()));
+                    } else {
+                        $widget->setAggregator($attr->getDefaultAggregateFunction());
+                    }
+                    $this->addWidget($widget);
+                }
+            }
+        }
+        return $this;
     }
 }
 ?>

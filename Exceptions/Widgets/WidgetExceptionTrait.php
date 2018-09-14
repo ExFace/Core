@@ -60,7 +60,15 @@ trait WidgetExceptionTrait {
             $uxon_tab->setNumberOfColumns(1);
             $request_widget = WidgetFactory::create($page, 'Html');
             $uxon_tab->addWidget($request_widget);
-            $request_widget->setHtml('<pre>' . (! $this->getWidget()->exportUxonObjectOriginal()->isEmpty() ? $this->getWidget()->exportUxonObjectOriginal()->toJson(true) : $this->getWidget()->exportUxonObject()->toJson(true)) . '</pre>');
+            $uxon = $this->getWidget()->exportUxonObjectOriginal();
+            if ($uxon->isEmpty()) {
+                try {
+                    $uxon = $this->getWidget()->exportUxonObject();
+                } catch (\Throwable $e) {
+                    // Do nothing - this will show the empty original UXON
+                }
+            }
+            $request_widget->setHtml('<pre>' . $uxon->toJson(true) . '</pre>');
             $debug_widget->addTab($uxon_tab);
         }
         return $debug_widget;

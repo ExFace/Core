@@ -24,5 +24,12 @@ interface DataQueryInterface extends iCanBeConvertedToUxon, iCanBeConvertedToStr
      * @return integer
      */
     public function countAffectedRows();
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\iCanBePrinted::toString()
+     */
+    public function toString($prettify = true);
 }
 ?>

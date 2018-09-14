@@ -5,6 +5,7 @@ use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Exceptions\UiPage\UiPageNotFoundError;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Exceptions\UiPage\UiPageIdNotUniqueError;
+use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
 
 /**
  * A CMS-connector provides a generic interface for ExFace to communicate with
@@ -16,7 +17,7 @@ use exface\Core\Exceptions\UiPage\UiPageIdNotUniqueError;
  * @author Andrej Kabachnik
  *
  */
-interface CmsConnectorInterface extends ExfaceClassInterface
+interface CmsConnectorInterface extends WorkbenchDependantInterface
 {
 
     /**
@@ -27,17 +28,16 @@ interface CmsConnectorInterface extends ExfaceClassInterface
      *            e.g. &param1=val1&param2=val2
      * @return string
      */
-    public function createLinkInternal($page_or_id_or_alias, $url_params = '');
+    public function buildUrlToPage($page_or_id_or_alias, $url_params = '');
 
     /**
      * Returns an href-link compilant with the current CMS based on a given URL.
-     * This allows to wrap
-     * any URL in CMS-specific code, add trackers, etc.
+     * This allows to wrap any URL in CMS-specific code, add trackers, etc.
      *
      * @param string $url            
      * @return string
      */
-    public function createLinkExternal($url);
+    public function buildUrlExternal($url);
 
     /**
      * Returns an internal file link compliant with the current CMS based on a given URL.
@@ -47,17 +47,7 @@ interface CmsConnectorInterface extends ExfaceClassInterface
      * @param string $path_absolute            
      * @return string
      */
-    public function createLinkToFile($path_absolute);
-
-    /**
-     * Removes parameters used by the CMS for internal needs from the given parameter array.
-     * $_GET or $_POST
-     * can be passed to this method to get rid of all kinds of CMS-specific variables
-     *
-     * @param array $param_array            
-     * @return array
-     */
-    public function removeSystemRequestParams(array $param_array);
+    public function buildUrlToFile($path_absolute);
 
     /**
      * Returns the user name if a user is currently logged in and an empty string otherwise.
@@ -128,7 +118,23 @@ interface CmsConnectorInterface extends ExfaceClassInterface
      * 
      * @return string
      */
-    public function getSiteUrl();
+    public function buildUrlToSiteRoot();
+    
+    /**
+     * Returns the full URL of the root of the plattform API site: e.g. https://www.exface.com/demo/api
+     *
+     * @return string
+     */
+    public function buildUrlToApi();
+    
+    /**
+     * Returns the URL to include a given path in the template code: e.g. for CSS/JS tags in the HTML head.
+     * 
+     * @param string $pathFromVendorFolder
+     * 
+     * @return string
+     */
+    public function buildUrlToInclude(string $pathFromVendorFolder) : string;
     
     /**
      * Returns the CMS-ID of the passed UiPage.
@@ -140,7 +146,7 @@ interface CmsConnectorInterface extends ExfaceClassInterface
     public function getPageIdInCms(UiPageInterface $page);
 
     /**
-     * Returns the page matching the given identifier: UID, namespaced alias or
+     * Returns the page matching the given selector: UID, qualified alias or
      * CMS-ID.
      * 
      * NOTE: If there is a page in the CMS, that replaces the matching page, the 
@@ -152,11 +158,7 @@ interface CmsConnectorInterface extends ExfaceClassInterface
      * the alias of one page and the CMS-ID of another, the page with the matching
      * alias will be returned by this method.
      * 
-     * NOTE: Instead of directly calling loadPage($page_id_or_alias) you should
-     * call exface->ui()->getPage($page_id_or_alias) because the pages are cached
-     * there.
-     * 
-     * @param string $page_id_or_alias
+     * @param UiPageSelectorInterface $selector
      * @param boolean $ignore_replacements
      * 
      * @throws UiPageNotFoundError if no matching page can be found
@@ -164,53 +166,14 @@ interface CmsConnectorInterface extends ExfaceClassInterface
      * 
      * @return UiPageInterface
      */
-    public function loadPage($page_id_or_alias, $ignore_replacements = false);
-
-    /**
-     * Returns the page matching the given alias (case insensitive!)
-     * 
-     * NOTE: If there is a page in the CMS, that replaces the matching page, the 
-     * replacement will be returned unless $ignore_replacements is TRUE. 
-     * 
-     * NOTE: Instead of directly calling loadPageByAlias($alias_with_namespace)
-     * you should call exface->ui()->getPage($alias_with_namespace) because the
-     * pages are cached there.
-     * 
-     * @param string $alias_with_namespace
-     * @param boolean $ignore_replacements
-     * 
-     * @throws UiPageNotFoundError if no matching page can be found
-     * @throws RuntimeException if there are multiple pages replacing this page
-     * 
-     * @return UiPageInterface
-     */
-    public function loadPageByAlias($alias_with_namespace, $ignore_replacements = false);
-
-    /**
-     * Returns the page matching the given UID (case insensitive!)
-     * 
-     * NOTE: If there is a page in the CMS, that replaces the matching page, the 
-     * replacement will be returned unless $ignore_replacements is TRUE. 
-     * 
-     * NOTE: Instead of directly calling loadPageById($uid) you should call
-     * exface->ui()->getPage($uid) because the pages are cached there.
-     * 
-     * @param string $uid
-     * @param boolean $ignore_replacements
-     * 
-     * @throws UiPageNotFoundError if no matching page can be found
-     * @throws RuntimeException if there are multiple pages replacing this page
-     * 
-     * @return UiPageInterface
-     */
-    public function loadPageById($uid, $ignore_replacements = false);
+    public function getPage(UiPageSelectorInterface $selector, $ignore_replacements = false) : UiPageInterface;
 
     /**
      * Returns the current page in the CMS.
      *
      * @return UiPageInterface
      */
-    public function loadPageCurrent();
+    public function getPageCurrent() : UiPageInterface;
 
     /**
      * Saves the given page to the CMS database by creating a new one or updating
@@ -247,13 +210,13 @@ interface CmsConnectorInterface extends ExfaceClassInterface
     /**
      * Deletes the given page from the CMS database.
      *
-     * @param UiPageInterface|string $page_or_id_or_alias
+     * @param UiPageInterface $page
      * 
      * @throws UiPageNotFoundError if no matching page is found in the CMS
      *
      * @return CmsConnectorInterface
      */
-    public function deletePage($page_or_id_or_alias);
+    public function deletePage(UiPageInterface $page) : CmsConnectorInterface;
 
     /**
      * Clears the recycle bin of the CMS (if present)
@@ -265,10 +228,10 @@ interface CmsConnectorInterface extends ExfaceClassInterface
     /**
      * Returns if the page exists in the CMS.
      * 
-     * @param UiPageInterface|string $page_or_id_or_alias
-     * @return boolean
+     * @param UiPageSelectorInterface|string $selectorOrString
+     * @return bool
      */
-    public function hasPage($page_or_id_or_alias);
+    public function hasPage($selectorOrString) : bool;
 
     /**
      * Returns all pages assigned to the given app.
@@ -284,5 +247,40 @@ interface CmsConnectorInterface extends ExfaceClassInterface
      * @return integer
      */
     public function getPageIdRoot();
+    
+    /**
+     * 
+     * @param string $value
+     * @return bool
+     */
+    public function isCmsPageId($value) : bool;
+    
+    /**
+     * Returns an array with favicons structured according to the rules of Web App Manifest (property "icons").
+     * 
+     * @return array
+     */
+    public function getFavIcons() : array;
+    
+    /**
+     * Makes the given content accessible via the specified URL relative to site root.
+     * 
+     * Using this method, you can make the CMS publish javascript, css files directly. This
+     * is especially important if you want to bypass the programatic routing (set $noRedirects = true).
+     * 
+     * @param string $relativeUrl
+     * @param string $content
+     * @param bool $noRedirects
+     * @return CmsConnectorInterface
+     */
+    public function createResource(string $relativeUrl, string $content, bool $noRedirects = false) : CmsConnectorInterface;
+    
+    /**
+     * Tells the CMS to remove a resource previously registered via createResource().
+     * 
+     * @param string $relativeUrl
+     * @return CmsConnectorInterface
+     */
+    public function deleteResource(string $relativeUrl) : CmsConnectorInterface;
 }
 ?>

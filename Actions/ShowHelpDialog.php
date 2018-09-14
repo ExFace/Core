@@ -21,6 +21,11 @@ use exface\Core\CommonLogic\Constants\Icons;
 class ShowHelpDialog extends ShowDialog
 {
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Actions\ShowWidget::init()
+     */
     protected function init()
     {
         parent::init();
@@ -42,9 +47,9 @@ class ShowHelpDialog extends ShowDialog
         // IMPORTANT: remove help button from the help dialog to prevent infinite help popups
         $dialog->setHideHelpButton(true);
         
-        if ($this->getCalledByWidget() && $this->getCalledByWidget() instanceof iTriggerAction) {
-            if ($this->getCalledByWidget()->getInputWidget() instanceof iHaveContextualHelp) {
-                $this->getCalledByWidget()->getInputWidget()->getHelpWidget($dialog);
+        if ($this->getWidgetDefinedIn() && $this->getWidgetDefinedIn() instanceof iTriggerAction) {
+            if ($this->getWidgetDefinedIn()->getInputWidget() instanceof iHaveContextualHelp) {
+                $this->getWidgetDefinedIn()->getInputWidget()->getHelpWidget($dialog);
             } else {
                 throw new ActionLogicError($this, 'Calling widget cannot generate contextual help: id does not implement the interface iHaveContextualHelp!', '6V9XDV4');
             }

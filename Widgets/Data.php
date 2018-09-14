@@ -27,11 +27,12 @@ use exface\Core\Interfaces\Widgets\iHaveHeader;
 use exface\Core\Interfaces\Widgets\iHaveFooter;
 use exface\Core\Widgets\Traits\iSupportLazyLoadingTrait;
 use exface\Core\Exceptions\Widgets\WidgetPropertyNotSetError;
+use exface\Core\Interfaces\Widgets\iShowData;
 
 /**
  * Data is the base for all widgets displaying tabular data.
  *
- * Many widgets like Chart, ComboTable, etc. contain internal Data sub-widgets, that define the data set used
+ * Many widgets like Chart, InputComboTable, etc. contain internal Data sub-widgets, that define the data set used
  * by these widgets. Datas are much like tables: you can define columns, sorters, filters, pagination rules, etc.
  * 
  * @method DataButton[] getButtons()
@@ -41,7 +42,7 @@ use exface\Core\Exceptions\Widgets\WidgetPropertyNotSetError;
  * @author Andrej Kabachnik
  *        
  */
-class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColumns, iHaveColumnGroups, iHaveToolbars, iHaveButtons, iHaveFilters, iSupportLazyLoading, iHaveContextualHelp, iHaveConfigurator
+class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColumns, iHaveColumnGroups, iHaveToolbars, iHaveButtons, iHaveFilters, iSupportLazyLoading, iHaveContextualHelp, iHaveConfigurator, iShowData
 {
     use iHaveButtonsAndToolbarsTrait;
     use iSupportLazyLoadingTrait {
@@ -96,6 +97,8 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
     private $has_system_columns = false;
 
     private $autoload_data = true;
+    
+    private $autoload_disabled_hint = null;
 
     protected function init()
     {
@@ -116,12 +119,28 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
         $this->getColumnGroupMain()->addColumn($column, $position);
         return $this;
     }
-
+    
+    /**
+     * Creates a DataColumn from a meta attribute.
+     * 
+     * The column is not automatically added to the column group - use addColumn() explicitly!
+     * 
+     * For relations the column will automatically show the label of the related object
+     *
+     * @param MetaAttributeInterface $attribute            
+     * @return \exface\Core\Widgets\DataColumn
+     */
     public function createColumnFromAttribute(MetaAttributeInterface $attribute, $caption = null, $hidden = null)
     {
         return $this->getColumnGroupMain()->createColumnFromAttribute($attribute, $caption, $hidden);
     }
     
+    /**
+     * The column is not automatically added to the column group - use addColumn() explicitly!
+     * 
+     * @param UxonObject $uxon
+     * @return \exface\Core\Widgets\DataColumn
+     */
     public function createColumnFromUxon(UxonObject $uxon)
     {
         return $this->getColumnGroupMain()->createColumnFromUxon($uxon);
@@ -266,7 +285,7 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
             // time. If data for the other filters will be found in the prefill sheet when actually doing the prefilling,
             // it should, of course, be applied too, but we do not tell ExFace to always fetch this data.
             foreach ($relevant_filters as $fltr) {
-                if ($fltr->getAttribute()->isRelation() && $fltr->getAttribute()->getRelation()->getRelatedObject()->isExactly($data_sheet->getMetaObject())) {
+                if ($fltr->getAttribute()->isRelation() && $fltr->getAttribute()->getRelation()->getRightObject()->isExactly($data_sheet->getMetaObject())) {
                     $data_sheet = $fltr->prepareDataSheetToPrefill($data_sheet);
                     $uid_filters_found = true;
                 }
@@ -587,9 +606,9 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
      *
      * Relations and aggregations are fully supported by filters
      *
-     * Note, that ComboTable widgets will be automatically generated for related objects if the corresponding
+     * Note, that InputComboTable widgets will be automatically generated for related objects if the corresponding
      * filter is defined by the attribute, representing the relation: e.g. for a table of ORDER_POSITIONS,
-     * adding the filter ORDER (relation to the order) will give you a ComboTable, while the filter ORDER__NUMBER
+     * adding the filter ORDER (relation to the order) will give you a InputComboTable, while the filter ORDER__NUMBER
      * will yield a numeric input field, because it filter over a number, even thoug a related one.
      *
      * Advanced users can also instantiate a Filter widget manually (widget_type = Filter) gaining control
@@ -1005,7 +1024,7 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
      */
     public function setEmptyText($value)
     {
-        $this->empty_text = $value;
+        $this->empty_text = $this->evaluatePropertyExpression($value);
         return $this;
     }
 
@@ -1073,7 +1092,7 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
      *
      * @return boolean
      */
-    public function isEditable()
+    public function isEditable() : bool
     {
         return $this->is_editable;
     }
@@ -1084,12 +1103,12 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
      *
      * @uxon-property editable
      * @uxon-type boolean
-     *
-     * @return \exface\Core\Widgets\Data
+     * 
+     * @see \exface\Core\Interfaces\Widgets\iShowData::setEditable()
      */
-    public function setEditable($value = true)
+    public function setEditable($value = true) : iShowData
     {
-        $this->editable = \exface\Core\DataTypes\BooleanDataType::cast($value);
+        $this->is_editable = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;
     }
 
@@ -1114,9 +1133,10 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
      */
     public function setRefreshWithWidget($widget_link_or_uxon_or_string)
     {
-        $exface = $this->getWorkbench();
-        if ($link = WidgetLinkFactory::createFromAnything($exface, $widget_link_or_uxon_or_string, $this->getIdSpace())) {
-            $this->refresh_with_widget = $link;
+        if ($widget_link_or_uxon_or_string instanceof WidgetLinkInterface) {
+            $this->refresh_with_widget = $widget_link_or_uxon_or_string;
+        } else {
+            $this->refresh_with_widget = WidgetLinkFactory::createFromWidget($this, $widget_link_or_uxon_or_string);
         }
         return $this;
     }
@@ -1201,8 +1221,8 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
         $table->setLazyLoading(false);
         $table->setPaginate(false);
         $table->setNowrap(false);
-        $table->setGroupRows(UxonObject::fromArray(array(
-            'group_by_column_id' => 'GROUP'
+        $table->setRowGrouper(UxonObject::fromArray(array(
+            'group_by_attribute_alias' => 'GROUP'
         )));
         
         // IMPORTANT: make sure the help table does not have a help button itself, because that would result in having
@@ -1323,7 +1343,7 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
     /**
      * The generic Data widget has a simple toolbar, that should merely be a 
      * container for potential buttons. This makes sure all widgets using data
-     * internally (like ComboTables, Charts, etc.) do not have to create complex
+     * internally (like InputComboTables, Charts, etc.) do not have to create complex
      * toolbars, that get automatically generated for DataTables, etc.
      * 
      * {@inheritDoc}
@@ -1421,6 +1441,9 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
     /**
      * Set to FALSE to prevent initial loading of data or TRUE (default) to enable it.
      * 
+     * NOTE: if autoload is disabled, the widget will show a message specified in the
+     * `autoload_disabled_hint` property.
+     * 
      * @uxon-property autoload_data
      * @uxon-type boolean
      * 
@@ -1438,10 +1461,36 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
      * 
      * @return string
      */
-    public function getTextNotLoaded()
+    public function getAutoloadDisabledHint()
     {
-        return $this->translate('WIDGET.DATA.NOT_LOADED');
+        if ($this->autoload_disabled_hint === null) {
+            return $this->translate('WIDGET.DATA.NOT_LOADED');
+        }
+        return $this->autoload_disabled_hint;
+    }
+    
+    /**
+     * Overrides the text shown if autoload_data is set to FALSE.
+     * 
+     * @uxon-property autoload_disabled_hint
+     * @uxon-type string
+     * 
+     * @param string $text
+     * @return Data
+     */
+    public function setAutoloadDisabledHint(string $text) : Data
+    {
+        $this->autoload_disabled_hint = $this->evaluatePropertyExpression($text);
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveColumns::getColumnDefaultWidgetType()
+     */
+    public function getColumnDefaultWidgetType() : string
+    {
+        return 'DataColumn';
     }
 }
-
-?>

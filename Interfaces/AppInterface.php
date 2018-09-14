@@ -1,29 +1,27 @@
 <?php
 namespace exface\Core\Interfaces;
 
-use exface\Core\Widgets\AbstractWidget;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Contexts\DataContext;
-use exface\Core\Exceptions\Actions\ActionNotFoundError;
-use exface\Core\Exceptions\InvalidArgumentException;
-use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\LogicException;
+use exface\Core\Interfaces\Selectors\AppSelectorInterface;
+use exface\Core\Interfaces\Selectors\ActionSelectorInterface;
+use Psr\Container\ContainerInterface;
+use exface\Core\Interfaces\Selectors\SelectorInterface;
+use exface\Core\Exceptions\AppComponentNotFoundError;
 
 /**
- * The app class provieds access to actions, configs, translations, etc. of
- * an ExFace application.
+ * An app bundle code, model and all kinds of configuration needed for a meaningfull application.
  *
- * In a sence, it is the junction point for the meta model, the code and all
- * kinds of configuration. There is an instance of the app classe for every
- * app in the meta model. This instance knows, where the app folder is, which
- * hardcoded actions exist, etc.
- *
- * It is also the responsibility of the app class to load configs and translations.
+ * In the model the app acts as a container for model components like objects, actions, etc.
+ * 
+ * At code level the app acts as a dependency injection container, that resolves component selectors
+ * and provides model prototypes and general services like translation, configuration, etc.
  *
  * @author Andrej Kabachnik
  *
  */
-interface AppInterface extends ExfaceClassInterface, AliasInterface
+interface AppInterface extends WorkbenchDependantInterface, AliasInterface, TaskHandlerInterface, ContainerInterface
 {
     
     const CONFIG_SCOPE_SYSTEM = 'SYSTEM';
@@ -33,17 +31,42 @@ interface AppInterface extends ExfaceClassInterface, AliasInterface
     const CONFIG_SCOPE_USER = 'USER';
     
     /**
-     * Returns an action object
-     *
-     * @param string $action_alias 
-     * @param WidgetInterface $called_by_widget
-     * @param UxonObject $uxon_description
-     *           
-     * @throws ActionNotFoundError if the alias cannot be resolved
+     * Returns the component or service identified by the given selector.
      * 
-     * @return ActionInterface
+     * The selector can either be an instance of the SelectorInterface or a string, but in
+     * the latter case a selector class must be passed as well.
+     * 
+     * In future apps will be extended by the possibility to add any custom services in
+     * order to act as true dependency injection containers. This is why the method also
+     * accepts strings.
+     * 
+     * @see \Psr\Container\ContainerInterface::get()
+     * 
+     * @param SelectorInterface|string $selectorOrString
+     * @param string $selectorClass
+     * 
+     * @throws AppComponentNotFoundError
+     * 
+     * @return mixed
      */
-    public function getAction($action_alias, WidgetInterface $called_by_widget = null, UxonObject $uxon_description = null);
+    public function get($selectorOrString, $selectorClass = null);
+    
+    /**
+     * Returns TRUE if the app contains a component or service specified by the given selector.
+     * 
+     * The selector can either be an instance of the SelectorInterface or a string, but in
+     * the latter case a selector class must be passed as well.
+     *
+     * @see \Psr\Container\ContainerInterface::has()
+     *
+     * @param SelectorInterface|string $selectorOrString
+     * @param string $selectorClass
+     *
+     * @return bool
+     */
+    public function has($selectorOrString, $selectorClass = null);
+    
+    public function getAction(ActionSelectorInterface $selector, WidgetInterface $sourceWidget) : ActionInterface;
 
     /**
      * Returns the path to the app's folder relative to the vendor folder
@@ -149,21 +172,19 @@ interface AppInterface extends ExfaceClassInterface, AliasInterface
      * @return AppInstallerInterface
      */
     public function getInstaller(InstallerInterface $injected_installer = null);
-
-    /**
-     * Returns TRUE if the given class is part of the app and FALSE otherwise.
-     *
-     * @param string|object $object_or_class_name            
-     * @throws InvalidArgumentException if the given argument is neither object nor string
-     * @return boolean
-     */
-    public function containsClass($object_or_class_name);
     
     /**
-     * Returns the name resolver, that can be used to instantiate the app
+     * Returns the selector, that can be used to instantiate the app
      * 
-     * @return NameResolverInterface
+     * @return AppSelectorInterface
      */
-    public function getNameResolver();
+    public function getSelector();
+    
+    /**
+     * Returns the ISO 639-1 code for the default language of the app.
+     * 
+     * @return string
+     */
+    public function getDefaultLanguageCode() : string;
 }
 ?>

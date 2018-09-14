@@ -1,7 +1,6 @@
 <?php
 namespace exface\Core\QueryBuilders;
 
-use exface\Core\CommonLogic\DataTypes\AbstractDataType;
 use exface\Core\CommonLogic\AbstractDataConnector;
 use exface\Core\Exceptions\QueryBuilderException;
 use exface\Core\Interfaces\Model\MetaRelationInterface;
@@ -9,10 +8,11 @@ use exface\Core\DataTypes\DateDataType;
 use exface\Core\DataTypes\TimestampDataType;
 use exface\Core\DataTypes\NumberDataType;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartAttribute;
-use exface\Core\CommonLogic\QueryBuilder\QueryPart;
 use exface\Core\CommonLogic\Model\Aggregator;
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
 use exface\Core\Interfaces\Model\AggregatorInterface;
+use exface\Core\Interfaces\DataTypes\DataTypeInterface;
+use exface\Core\DataTypes\RelationTypeDataType;
 
 /**
  * A query builder for Oracle SQL.
@@ -156,7 +156,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
                     // they should be done after pagination as they are potentially very time consuming
                     if ($this->checkForSqlStatement($qpart->getAttribute()->getDataAddress()) && (! $group_by || ! $qpart->getAggregator())) {
                         continue;
-                    } elseif ($qpart->getUsedRelations(MetaRelationInterface::RELATION_TYPE_REVERSE) && ! $this->getAggregation($qpart->getAlias()) && $this->isQpartRelatedToAggregator($qpart)) {
+                    } elseif ($qpart->getUsedRelations(RelationTypeDataType::REVERSE) && ! $this->getAggregation($qpart->getAlias()) && $this->isQpartRelatedToAggregator($qpart)) {
                         // Also skip selects with reverse relations that can be joined later in the enrichment.                      
                         // Selecting them in the core query would only slow it down. The filtering is done explicitly in build_sql_where_condition()
                         // The trick is, that we need to check, if the reverse relation can be joined onto something coming out of the GROUP BY:
@@ -170,7 +170,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
                         } else {
                             $core_selects[$qpart->getAlias()] = $this->buildSqlSelect($qpart);
                         }
-                        $enrichment_select .= ', ' . $this->buildSqlSelect($qpart, 'EXFCOREQ', $this->getShortAlias($qpart->getAlias()), null, false);
+                        $enrichment_select .= ', ' . $this->buildSqlSelect($qpart, 'EXFCOREQ', '"' . $this->getShortAlias($qpart->getColumnKey()) . '"', null, false);
                     }
                     unset($enrichment_selects[$nr]);
                 }
@@ -324,7 +324,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
         if (count($this->getTotals()) > 0) {
             // determine all joins, needed to perform the totals functions
             foreach ($this->getTotals() as $qpart) {
-                $totals_selects[] = $this->buildSqlSelect($qpart, 'EXFCOREQ', $this->getShortAlias($qpart->getAlias()), null, $qpart->getTotalAggregator());
+                $totals_selects[] = $this->buildSqlSelect($qpart, 'EXFCOREQ', '"' . $this->getShortAlias($qpart->getColumnKey()) . '"', null, $qpart->getTotalAggregator());
                 $totals_core_selects[] = $this->buildSqlSelect($qpart);
                 $totals_joins = array_merge($totals_joins, $this->buildSqlJoins($qpart));
             }
@@ -390,7 +390,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
         if ($qpart->getDataAddressProperty("ORDER_BY")) {
             $output = ($select_from ? $select_from : $this->getShortAlias($qpart->getAttribute()->getRelationPath()->toString())) . '.' . $qpart->getDataAddressProperty("ORDER_BY");
         } else {
-            $output = '"' . $this->getShortAlias($qpart->getAlias()) . '"';
+            $output = '"' . $this->getShortAlias($qpart->getColumnKey()) . '"';
             
             // Make sure, NULLs are treated as 0 in numeric columns. Otherwise
             // they will be put at the beginning or the end of the result making
@@ -433,7 +433,12 @@ class OracleSqlBuilder extends AbstractSqlBuilder
         return $sequence;
     }
 
-    protected function prepareInputValue($value, AbstractDataType $data_type, $sql_data_type = NULL)
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\QueryBuilders\AbstractSqlBuilder::prepareInputValue()
+     */
+    protected function prepareInputValue($value, DataTypeInterface $data_type, $sql_data_type = NULL)
     {
         if ($data_type instanceof DateDataType || $data_type instanceof TimestampDataType) {
             $value = "TO_DATE('" . $this->escapeString($value) . "', 'yyyy-mm-dd hh24:mi:ss')";
@@ -443,7 +448,12 @@ class OracleSqlBuilder extends AbstractSqlBuilder
         return $value;
     }
 
-    protected function prepareWhereValue($value, AbstractDataType $data_type, $sql_data_type = NULL)
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\QueryBuilders\AbstractSqlBuilder::prepareWhereValue()
+     */
+    protected function prepareWhereValue($value, DataTypeInterface $data_type, $sql_data_type = NULL)
     {
         if ($data_type instanceof DateDataType || $data_type instanceof TimestampDataType) {
             $output = "TO_DATE('" . $value . "', 'yyyy-mm-dd hh24:mi:ss')";
@@ -581,6 +591,11 @@ class OracleSqlBuilder extends AbstractSqlBuilder
         }
         
         return $insert_ids;
+    }
+    
+    protected function escapeColumnName(string $name) : string
+    {
+        return '"' . $name . '"';
     }
 }
 ?>

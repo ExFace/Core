@@ -8,8 +8,13 @@ use exface\Core\Exceptions\QueryBuilderException;
 use exface\Core\Factories\ConditionFactory;
 use exface\Core\Exceptions\Model\MetaObjectDataConnectionNotFoundError;
 use exface\Core\Interfaces\Model\AggregatorInterface;
+use exface\Core\DataTypes\StringDataType;
+use exface\Core\Interfaces\Selectors\QueryBuilderSelectorInterface;
+use exface\Core\Interfaces\QueryBuilderInterface;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
+use exface\Core\CommonLogic\DataSheets\DataColumn;
 
-abstract class AbstractQueryBuilder
+abstract class AbstractQueryBuilder implements QueryBuilderInterface
 {
 
     protected $main_object;
@@ -29,6 +34,26 @@ abstract class AbstractQueryBuilder
     protected $offset = 0;
 
     protected $values = array();
+    
+    private $selector = null;
+    
+    private $workbench = null;
+    
+    public function __construct(QueryBuilderSelectorInterface $selector)
+    {
+        $this->selector = $selector;
+        $this->workbench = $selector->getWorkbench();
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\QueryBuilderInterface::getSelector()
+     */
+    public function getSelector() : QueryBuilderSelectorInterface
+    {
+        return $this->selector;
+    }
 
     /**
      * Performs a create query.
@@ -111,11 +136,12 @@ abstract class AbstractQueryBuilder
      * @param string $attribute_alias 
      * @return QueryPartAttribute           
      */
-    public function addAttribute($alias)
+    public function addAttribute(string $attribute_alias, string $column_name = null) : QueryPartSelect
     {
-        $qpart = new QueryPartSelect($alias, $this);
+        $column_name = $column_name ?? DataColumn::sanitizeColumnName($attribute_alias);
+        $qpart = new QueryPartSelect($attribute_alias, $this, $column_name);
         if ($qpart->isValid()) {
-            $this->attributes[$alias] = $qpart;
+            $this->attributes[$column_name] = $qpart;
         }
         return $qpart;
     }
@@ -442,7 +468,7 @@ abstract class AbstractQueryBuilder
     /**
      * Returns the value query part specified by the given attribute alias
      *
-     * @param unknown $attribute_alias            
+     * @param mixed $attribute_alias            
      * @return QueryPartValue
      */
     protected function getValue($attribute_alias)
@@ -486,7 +512,7 @@ abstract class AbstractQueryBuilder
 
     public function getWorkbench()
     {
-        return $this->getMainObject()->getModel()->getWorkbench();
+        return $this->workbench;
     }
 
     /**
@@ -591,7 +617,7 @@ abstract class AbstractQueryBuilder
     
     protected function replacePlaceholdersByFilterValues($string)
     {
-        foreach ($this->getWorkbench()->utils()->findPlaceholdersInString($string) as $ph) {
+        foreach (StringDataType::findPlaceholders($string) as $ph) {
             if ($ph_filter = $this->getFilter($ph)) {
                 if (! is_null($ph_filter->getCompareValue())) {
                     $string = str_replace('[#' . $ph . '#]', $ph_filter->getCompareValue(), $string);
@@ -605,5 +631,29 @@ abstract class AbstractQueryBuilder
             }
         }
         return $string;
+    }
+    
+    /**
+     * Returns TRUE if the given attribute can be added to this query and FALSE otherwise.
+     * 
+     * Depending on the QueryBuilder, even related attributes can be included in a query 
+     * (e.g. in SQL via JOIN or oData via $expand).
+     * 
+     * This method is used by the core to determine, if a read operation on a DataSheet must 
+     * be split into multiple subsheets and joind afterwards in-memory.
+     * 
+     * @param MetaAttributeInterface $attribute
+     * @return bool
+     */
+    abstract public function canReadAttribute(MetaAttributeInterface $attribute) : bool;
+    
+    /**
+     * 
+     * @param string $modelAliasExpression
+     * @return bool
+     */
+    public function canRead(string $modelAliasExpression) : bool
+    {
+        return $this->canReadAttribute($this->getMainObject()->getAttribute($modelAliasExpression));
     }
 }

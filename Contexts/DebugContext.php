@@ -15,10 +15,10 @@ use exface\Core\Events\ActionEvent;
 use exface\Core\Actions\ShowContextPopup;
 use exface\Core\Actions\ContextApi;
 use exface\Core\CommonLogic\Log\Handlers\BufferingHandler;
-use exface\Core\Interfaces\NameResolverInterface;
 use exface\Core\Exceptions\Contexts\ContextAccessDeniedError;
 use exface\Core\CommonLogic\Profiler;
 use exface\Core\Interfaces\Contexts\ContextInterface;
+use exface\Core\Interfaces\Selectors\ContextSelectorInterface;
 
 /**
  * This context offers usefull debugging tools right in the GUI.
@@ -42,14 +42,12 @@ class DebugContext extends AbstractContext
     
     private $profiler = null;
     
-    public function __construct(NameResolverInterface $name_resolver){
-        parent::__construct($name_resolver);
+    public function __construct(ContextSelectorInterface $selector){
+        parent::__construct($selector);
         
-        if ($name_resolver->getWorkbench()->context()->getScopeUser()->getUserCurrent()->isUserAnonymous()){
+        if ($selector->getWorkbench()->getContext()->getScopeUser()->getUserCurrent()->isUserAnonymous()){
             throw new ContextAccessDeniedError($this, 'The debug context cannot be used for anonymous users!');
         }
-        
-        $this->profiler = new Profiler($name_resolver->getWorkbench());
     }
     
     /**
@@ -83,6 +81,8 @@ class DebugContext extends AbstractContext
     public function startDebugging()
     {
         $this->is_debugging = true;
+        $this->startProfiler();
+        
         // Log everything
         $workbench = $this->getWorkbench();
         $this->log_handlers = [
@@ -146,7 +146,7 @@ class DebugContext extends AbstractContext
      */
     public function getDefaultScope()
     {
-        return $this->getWorkbench()->context()->getScopeWindow();
+        return $this->getWorkbench()->getContext()->getScopeWindow();
     }
     
     /**
@@ -281,7 +281,7 @@ class DebugContext extends AbstractContext
         // Add the detail button an bind it to the left click
         /* @var $details_button \exface\Core\Widgets\DataButton */
         $details_button = $data_list->createButton()
-            ->setActionAlias('exface.Core.ShowObjectDialog')
+            ->setActionAlias('exface.Core.ShowObjectInfoDialog')
             ->setBindToLeftClick(true)
             ->setHidden(true);
         $data_list->addButton($details_button);
@@ -293,9 +293,15 @@ class DebugContext extends AbstractContext
     /**
      * @return Profiler
      */
-    public function getProfiler()
+    public function getProfiler() : Profiler
     {
         return $this->profiler;
     }    
+    
+    protected function startProfiler() : Profiler
+    {
+        $this->profiler = new Profiler($this->getWorkbench());
+        return $this->profiler;
+    }
 }
 ?>

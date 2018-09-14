@@ -2,14 +2,12 @@
 namespace exface\Core\CommonLogic;
 
 use Symfony\Component\Stopwatch\Stopwatch;
-use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Events\ActionEvent;
 use exface\Core\Events\DataConnectionEvent;
 use exface\Core\Interfaces\Actions\ActionInterface;
-use exface\Core\Interfaces\ExfaceClassInterface;
-use exface\Core\Interfaces\Log\LoggerInterface;
+use exface\Core\Interfaces\WorkbenchDependantInterface;
 
-class Profiler implements ExfaceClassInterface
+class Profiler implements WorkbenchDependantInterface
 {
 
     private $stopwatch = null;
@@ -53,7 +51,8 @@ class Profiler implements ExfaceClassInterface
     {
         try {
             $query = $event->getCurrentQuery();
-            $this->getWorkbench()->getLogger()->debug($event->getDataConnection()->getAlias() . ': ' . substr($query->toString(), 0, 50), array(), $query);
+            $message = $event->getDataConnection()->getAlias() . ': ' . substr(str_replace(array("\r", "\n", "\t", "  "), '', $query->toString(false)), 0, 50);
+            $this->getWorkbench()->getLogger()->debug($message, array(), $query);
             $this->stopwatch->stop($query->exportString());
         } catch (\Throwable $e){
             $this->getWorkbench()->getLogger()->logException($e);
@@ -134,7 +133,7 @@ class Profiler implements ExfaceClassInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\ExfaceClassInterface::getWorkbench()
+     * @see \exface\Core\Interfaces\WorkbenchDependantInterface::getWorkbench()
      */
     public function getWorkbench()
     {

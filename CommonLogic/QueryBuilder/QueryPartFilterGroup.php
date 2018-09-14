@@ -4,6 +4,8 @@ namespace exface\Core\CommonLogic\QueryBuilder;
 use exface\Core\CommonLogic\Model\Condition;
 use exface\Core\CommonLogic\Model\ConditionGroup;
 use exface\Core\Factories\ConditionGroupFactory;
+use exface\Core\Interfaces\iCanBeCopied;
+use exface\Core\DataTypes\BooleanDataType;
 
 /**
  * A filter group query part represents a condition group used for filtering in a query.
@@ -11,7 +13,7 @@ use exface\Core\Factories\ConditionGroupFactory;
  * @author Andrej Kabachnik
  *        
  */
-class QueryPartFilterGroup extends QueryPart
+class QueryPartFilterGroup extends QueryPart implements iCanBeCopied
 {
 
     private $operator = EXF_LOGICAL_AND;
@@ -198,9 +200,9 @@ class QueryPartFilterGroup extends QueryPart
      */
     public function getConditionGroup()
     {
-        $exface = $this->getWorkbench();
-        if (! $this->condition_group)
-            $this->condition_group = ConditionGroupFactory::createEmpty($exface, $this->getOperator());
+        if ($this->condition_group === null) {
+            $this->condition_group = ConditionGroupFactory::createEmpty($this->getWorkbench(), $this->getOperator());
+        }
         return $this->condition_group;
     }
 
@@ -224,6 +226,68 @@ class QueryPartFilterGroup extends QueryPart
         }
         
         return false;
+    }
+    
+    /**
+     * 
+     * @return QueryPartFilterGroup
+     */
+    public function copy()
+    {
+        $copy = new QueryPartFilterGroup($this->getAlias(), $this->getQuery());
+        $copy->setOperator($this->getOperator());
+        foreach ($this->getFilters() as $qpart) {
+            $copy->addFilter($qpart->copy());
+        }
+        foreach ($this->getNestedGroups() as $qpart) {
+            $copy->addNestedGroup($qpart->copy());
+        }
+        return $copy;
+    }
+
+    /**
+     * Removes the given filter from this group (not from the nested groups)
+     * 
+     * @param QueryPartFilter $qpart
+     * @return QueryPartFilterGroup
+     */
+    public function removeFilter(QueryPartFilter $qpart) : QueryPartFilterGroup
+    {
+        $key = array_search($qpart, $this->filters);
+        if ($key !== false) {
+            $this->getConditionGroup()->removeCondition($qpart->getCondition());
+            unset($this->filters[$key]);
+            $this->filters = array_values($this->filters);
+        }
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function hasFilters() : bool
+    {
+        return ! empty($this->filters);
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function hasNestedGroups() : bool
+    {
+        return ! empty($this->nested_groups);
+    }
+    
+    /**
+     * Returns TRUE if the group has neither filters nor nested groups.
+     * 
+     * @return bool
+     */
+    public function isEmpty() : bool
+    {
+        return ! ($this->hasFilters() || $this->hasNestedGroups());
     }
 }
 ?>

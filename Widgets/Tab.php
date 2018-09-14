@@ -56,7 +56,9 @@ class Tab extends Panel
     {
         $data_sheet = parent::prepareDataSheetToPrefill($data_sheet);
         
-        $data_sheet->getColumns()->addFromExpression($this->getBadgeAttributeAlias());
+        if ($this->getBadgeAttributeAlias()) {
+            $data_sheet->getColumns()->addFromExpression($this->getBadgeAttributeAlias());
+        }
         
         return $data_sheet;
     }

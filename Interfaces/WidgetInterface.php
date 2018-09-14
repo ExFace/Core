@@ -12,7 +12,7 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 use exface\Core\Interfaces\Model\UiPageInterface;
 
-interface WidgetInterface extends ExfaceClassInterface, iCanBeCopied
+interface WidgetInterface extends WorkbenchDependantInterface, iCanBeCopied
 {
 
     /**
@@ -305,13 +305,6 @@ interface WidgetInterface extends ExfaceClassInterface, iCanBeCopied
     public function setParent(WidgetInterface $widget);
 
     /**
-     * Returns the UI manager
-     *
-     * @return \exface\Core\ui
-     */
-    public function getUi();
-
-    /**
      *
      * @return string
      */
@@ -401,7 +394,7 @@ interface WidgetInterface extends ExfaceClassInterface, iCanBeCopied
     /**
      * Returns all actions callable from this widget or it's children as an array.
      * Optional filters can be used to
-     * return only actions with a specified id (would be a single one in most cases) or qualified action alias (e.g. "exface.EditObjectDialog")
+     * return only actions with a specified id (would be a single one in most cases) or qualified action alias (e.g. "exface.ShowObjectEditDialog")
      *
      * @param string $qualified_action_alias            
      * @param string $action_type            
@@ -425,13 +418,6 @@ interface WidgetInterface extends ExfaceClassInterface, iCanBeCopied
      * @param string $value            
      */
     public function setDataConnectionAlias($value);
-
-    /**
-     * Creates a link to this widget and returns the corresponding model object
-     *
-     * @return WidgetLink
-     */
-    public function createWidgetLink();
 
     /**
      *

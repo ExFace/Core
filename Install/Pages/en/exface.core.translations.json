@@ -1,0 +1,49 @@
+{
+    "id": "0x9d1ad1d03bda11e8934200a0c6000012",
+    "alias_with_namespace": "exface.core.translations",
+    "menu_parent_page_alias": "exface.core.metamodel",
+    "menu_index": "7",
+    "menu_visible": true,
+    "name": "Translations",
+    "description": "",
+    "intro": "",
+    "replaces_page_alias": null,
+    "contents": {
+        "object_alias": "exface.core.TRANSLATIONS",
+        "widget_type": "DataTable",
+        "filters": [
+            {
+                "attribute_alias": "NAME"
+            },
+            {
+                "attribute_alias": "PATHNAME_RELATIVE"
+            }
+        ],
+        "columns": [
+            {
+                "attribute_alias": "NAME"
+            },
+            {
+                "attribute_alias": "PATHNAME_RELATIVE"
+            },
+            {
+                "attribute_alias": "PATHNAME_ABSOLUTE"
+            },
+            {
+                "attribute_alias": "SIZE"
+            }
+        ],
+        "buttons": [
+            {
+                "action_alias": "exface.Core.ShowObjectCreateDialog"
+            },
+            {
+                "action_alias": "exface.Core.ShowObjectEditDialog",
+                "bind_to_double_click": true
+            },
+            {
+                "action_alias": "exface.Core.DeleteObject"
+            }
+        ]
+    }
+}

@@ -38,7 +38,7 @@ class AppInstallerContainer implements AppInstallerInterface, InstallerContainer
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\Interfaces\ExfaceClassInterface::getWorkbench()
+     * @see \exface\Core\Interfaces\WorkbenchDependantInterface::getWorkbench()
      */
     public function getWorkbench()
     {
@@ -56,7 +56,8 @@ class AppInstallerContainer implements AppInstallerInterface, InstallerContainer
         $result = '';
         // TODO Dispatch App.Install.Before
         foreach ($this->getInstallers() as $installer) {
-            $result .= $installer->install($source_absolute_path);
+            $res = $installer->install($source_absolute_path);
+            $result .= rtrim($res, " .\n\r") . '. ';
         }
         // TODO Dispatch App.Install.After
         return $result;
@@ -88,8 +89,8 @@ class AppInstallerContainer implements AppInstallerInterface, InstallerContainer
     {
         $exface = $this->getWorkbench();
         $app = $this->getApp();
-        $appNameResolver = $app->getNameResolver();
-        $appPath = $exface->filemanager()->getPathToVendorFolder() . $appNameResolver->getClassDirectory();
+        $appSelector = $app->getSelector();
+        $appPath = $exface->filemanager()->getPathToVendorFolder() . DIRECTORY_SEPARATOR . $appSelector->getFolderRelativePath();
         $result = '';
         $app->getWorkbench()->filemanager()->pathConstruct($destination_absolute_path);
         // TODO Dispatch App.Backup.Before

@@ -33,6 +33,8 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iDefin
     private $action_alias = null;
 
     private $action = null;
+    
+    private $action_uxon = null;
 
     private $active_condition = null;
 
@@ -54,12 +56,25 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iDefin
 
     public function getAction()
     {
-        if (! $this->action) {
+        if (is_null($this->action)) {
             if ($this->getActionAlias()) {
                 $this->action = ActionFactory::createFromString($this->getWorkbench(), $this->getActionAlias(), $this);
             }
+            if (! is_null($this->action_uxon)) {
+                $this->action->importUxonObject($this->action_uxon);
+            }
         }
         return $this->action;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iTriggerAction::hasAction()
+     */
+    public function hasAction() : bool
+    {
+        return $this->getAction() ? true : false;
     }
 
     /**
@@ -85,8 +100,8 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iDefin
             // Although this feature is currently not explicitly used, it seems
             // a decent idea to share an action between buttons: e.g. a toolbar
             // button and a menu button which actually do exactly the same thing.
-            if (! $this->action->getCalledByWidget()){
-                $this->action->setCalledByWidget($this);
+            if (! $this->action->isDefinedInWidget()){
+                $this->action->setWidgetDefinedIn($this);
             }
         } elseif ($action_or_uxon instanceof UxonObject) {
             $this->setActionAlias($action_or_uxon->getProperty('alias'));
@@ -168,11 +183,12 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iDefin
      */
     protected function setActionOptions(UxonObject $action_options)
     {
-        if (! $action = $this->getAction()) {
-            throw new WidgetPropertyInvalidValueError($this, 'Cannot set action properties prior to action initialization! Please ensure, that the action_alias is defined first!', '6T919D5');
+        if (is_null($this->action)) {
+            $this->action_uxon = $action_options;
         } else {
-            $action->importUxonObject($action_options);
+            $this->action->importUxonObject($action_options);
         }
+        
         return $this;
     }
 
@@ -347,12 +363,13 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iDefin
      */
     public function setRefreshWidgetLink($widget_link_or_uxon_or_string)
     {
-        if (is_null($widget_link_or_uxon_or_string)) {
+        if ($widget_link_or_uxon_or_string === null) {
             $this->refresh_widget_link = null;
         } else {
-            $exface = $this->getWorkbench();
-            if ($link = WidgetLinkFactory::createFromAnything($exface, $widget_link_or_uxon_or_string, $this->getIdSpace())) {
-                $this->refresh_widget_link = $link;
+            if ($widget_link_or_uxon_or_string instanceof WidgetLinkInterface) {
+                $this->refresh_widget_link = $widget_link_or_uxon_or_string;
+            } else {
+                $this->refresh_widget_link = WidgetLinkFactory::createFromWidget($this, $widget_link_or_uxon_or_string);
             }
         }
         return $this;

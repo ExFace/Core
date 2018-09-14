@@ -83,6 +83,9 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
 
     /**
      * Creates a DataColumn from a meta attribute.
+     * 
+     * The column is not automatically added to the column group - use addColumn() explicitly!
+     * 
      * For relations the column will automatically show the label of the related object
      *
      * @param MetaAttributeInterface $attribute            
@@ -94,7 +97,7 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
             $attribute = $this->getMetaObject()->getAttribute(RelationPath::relationPathAdd($attribute->getAlias(), $this->getMetaObject()->getRelatedObject($attribute->getAlias())->getLabelAttributeAlias()));
         }
         
-        $c = $this->getPage()->createWidget('DataColumn', $this);
+        $c = $this->getPage()->createWidget($this->getColumnDefaultWidgetType(), $this);
         $c->setAttributeAlias($attribute->getAliasWithRelationPath());
         
         if (! is_null($hidden)) {
@@ -271,9 +274,8 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
      */
     public function createColumnFromUxon(UxonObject $uxon)
     {
-        $caption = null;
-        
-        // preset some column properties based on meta attributes
+        // Create the column
+        $column = WidgetFactory::createFromUxon($this->getPage(), $uxon, $this, $this->getColumnDefaultWidgetType());
         
         // Set the caption to the attribute name or the relation name, if the attribute is the label of a related object.
         // This preset caption will get overwritten by one specified in UXON once the UXON object is overloaded
@@ -284,11 +286,10 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
             } else {
                 $caption = $attr->getName();
             }
+            $column->setCaption($caption);
         }
         
-        // Create the column
-        $column = WidgetFactory::createFromUxon($this->getPage(), $uxon, $this, 'DataColumn');
-        $column->setCaption($caption);
+        // Import the UXON object eventually overriding the above presets
         $column->importUxonObject($uxon);
         
         return $column;
@@ -362,6 +363,16 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
     public function getDataWidget()
     {
         return $this->getParent();
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveColumns::getColumnDefaultWidgetType()
+     */
+    public function getColumnDefaultWidgetType() : string
+    {
+        return $this->getDataWidget()->getColumnDefaultWidgetType();
     }
 }
 ?>

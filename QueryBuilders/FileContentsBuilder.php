@@ -5,6 +5,8 @@ use exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder;
 use exface\Core\CommonLogic\AbstractDataConnector;
 use exface\Core\CommonLogic\DataQueries\FileContentsDataQuery;
 use exface\Core\Exceptions\QueryBuilderException;
+use exface\Core\DataTypes\StringDataType;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
 
 /**
  * A query builder to the raw contents of a file.
@@ -99,7 +101,7 @@ class FileContentsBuilder extends AbstractQueryBuilder
         
         foreach ($this->getAttributes() as $qpart) {
             if ($this->getFileProperty($query, $qpart->getDataAddress())) {
-                $result_rows[$qpart->getAlias()] = $this->getFileProperty($query, $qpart->getDataAddress());
+                $result_rows[$qpart->getColumnKey()] = $this->getFileProperty($query, $qpart->getDataAddress());
             }
         }
         
@@ -122,7 +124,7 @@ class FileContentsBuilder extends AbstractQueryBuilder
      */
     protected function replacePlaceholdersInPath($path)
     {
-        foreach ($this->getWorkbench()->utils()->findPlaceholdersInString($path) as $ph) {
+        foreach (StringDataType::findPlaceholders($path) as $ph) {
             if ($ph_filter = $this->getFilter($ph)) {
                 if (! is_null($ph_filter->getCompareValue())) {
                     $path = str_replace('[#' . $ph . '#]', $ph_filter->getCompareValue(), $path);
@@ -135,6 +137,17 @@ class FileContentsBuilder extends AbstractQueryBuilder
             }
         }
         return $path;
+    }
+    
+    /**
+     * The FileContentsBuilder can only handle attributes of one object - no relations (JOINs) supported!
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder::canReadAttribute()
+     */
+    public function canReadAttribute(MetaAttributeInterface $attribute) : bool
+    {
+        return $attribute->getRelationPath()->isEmpty();
     }
 }
 ?>

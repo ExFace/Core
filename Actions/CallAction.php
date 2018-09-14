@@ -6,6 +6,10 @@ use exface\Core\Factories\ActionFactory;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\Actions\iRunTemplateScript;
 use exface\Core\Exceptions\Actions\ActionInputError;
+use exface\Core\Interfaces\Tasks\TaskInterface;
+use exface\Core\Interfaces\DataSources\DataTransactionInterface;
+use exface\Core\Interfaces\Tasks\ResultInterface;
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 
 /**
  * This action performs another action specified in the action_alias property or via request parameter "call=your_action_alias".
@@ -24,13 +28,14 @@ class CallAction extends AbstractAction
 
     private $action_alias = null;
 
-    protected function perform()
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AbstractAction::perform()
+     */
+    protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {
-        $this->setResult($this->getAction()->getResult());
-        $this->setResultMessage($this->getAction()->getResultMessage());
-        if ($parent_result = $this->getAction()->getResultDataSheet()) {
-            $this->setResultDataSheet($parent_result);
-        }
+        return $this->getAction()->handle($task, $transaction);
     }
 
     /**
@@ -40,7 +45,7 @@ class CallAction extends AbstractAction
     public function getAction()
     {
         if (is_null($this->action)) {
-            $action = ActionFactory::createFromString($this->getWorkbench(), $this->getActionAlias(), $this->getCalledByWidget());
+            $action = ActionFactory::createFromString($this->getWorkbench(), $this->getActionAlias(), ($this->isDefinedInWidget() ? $this->getWidgetDefinedIn() : null));
             $this->validateAction($action);
             $this->action = $action;
         }
@@ -66,22 +71,7 @@ class CallAction extends AbstractAction
         return $this->getAction()->implementsInterface($string);
     }
 
-    public function getResultOutput()
-    {
-        return $this->getAction()->getResultOutput();
-    }
-
-    public function getResultStringified()
-    {
-        return $this->getAction()->getResultStringified();
-    }
-
-    public function isDataModified()
-    {
-        return $this->getAction()->isDataModified();
-    }
-
-    public function isUndoable()
+    public function isUndoable() : bool
     {
         // TODO make action wrapper undoable if wrapped action is undoable!
         return false;
@@ -153,9 +143,9 @@ class CallAction extends AbstractAction
         return $this->getAction()->setInputDataSheet($data_sheet_or_uxon);
     }
 
-    public function getInputDataSheet()
+    public function getInputDataSheet(TaskInterface $task) : DataSheetInterface
     {
-        return $this->getAction()->getInputDataSheet();
+        return $this->getAction()->getInputDataSheet($task);
     }
 
     public function getInputRowsMax()
@@ -177,17 +167,6 @@ class CallAction extends AbstractAction
     public function setInputRowsMin($value)
     {
         $this->getAction()->setInputRowsMin($value);
-        return $this;
-    }
-
-    public function getTransaction()
-    {
-        return $this->getAction()->getTransaction();
-    }
-
-    public function setTransaction($transaction)
-    {
-        $this->getAction()->setTransaction($transaction);
         return $this;
     }
 }

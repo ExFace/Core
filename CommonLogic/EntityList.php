@@ -3,7 +3,6 @@ namespace exface\Core\CommonLogic;
 
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Interfaces\EntityListInterface;
-use exface\Core\Interfaces\NameResolverInterface;
 use exface\Core\Interfaces\iCanBeCopied;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Exceptions\UnexpectedValueException;
@@ -256,29 +255,6 @@ class EntityList extends AbstractExfaceClass implements EntityListInterface
     }
 
     /**
-     * Returns the name resolver for the entities in the list
-     *
-     * @return NameResolver
-     */
-    public function getEntityNameResolver()
-    {
-        return $this->entity_name_resolver;
-    }
-
-    /**
-     * Setting the name resolver allows the list to know exactly what it's contents can be an where to find the corresponding classes
-     * and factories.
-     * The name resolver takes care of resolving all the name conventions in ExFace.
-     *
-     * @param NameResolver $value            
-     */
-    public function setEntityNameResolver(NameResolverInterface $value)
-    {
-        $this->entity_name_resolver = $value;
-        return $this;
-    }
-
-    /**
      * Sorts the list by key values
      *
      * @return EntityList
@@ -291,11 +267,6 @@ class EntityList extends AbstractExfaceClass implements EntityListInterface
 
     public function getEntityFactoryName()
     {
-        if (is_null($this->endity_factory_name)) {
-            if ($this->getEntityNameResolver() && $factory = $this->getEntityNameResolver()->getFactoryClassName()) {
-                return $factory;
-            }
-        }
         return $this->entity_factory_name;
     }
 

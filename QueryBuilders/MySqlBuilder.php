@@ -2,12 +2,12 @@
 namespace exface\Core\QueryBuilders;
 
 use exface\Core\Exceptions\QueryBuilderException;
-use exface\Core\CommonLogic\DataTypes\AbstractDataType;
 use exface\Core\CommonLogic\AbstractDataConnector;
 use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\DataTypes\DateDataType;
 use exface\Core\CommonLogic\Model\Aggregator;
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
+use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 
 /**
  * A query builder for MySQL.
@@ -99,7 +99,7 @@ class MySqlBuilder extends AbstractSqlBuilder
                 // otherwise the enrichment joins won't work! Be carefull to apply this rule only to the plain UID column, not to columns
                 // using the UID with aggregate functions
                 $selects[] = $this->buildSqlSelect($qpart, null, null, null, new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::MAX));
-                $enrichment_select .= ', ' . $this->buildSqlSelect($qpart, 'EXFCOREQ', $this->getShortAlias($qpart->getAlias()));
+                $enrichment_select .= ', ' . $this->buildSqlSelect($qpart, 'EXFCOREQ', $this->getShortAlias($qpart->getColumnKey()));
             } elseif (! $group_by || $qpart->getAggregator() || $this->getAggregation($qpart->getAlias())) {
                 // If we are not aggregating or the attribute has a group function, add it regulary
                 $selects[] = $this->buildSqlSelect($qpart);
@@ -169,7 +169,7 @@ class MySqlBuilder extends AbstractSqlBuilder
         if (count($this->getTotals()) > 0) {
             // determine all joins, needed to perform the totals functions
             foreach ($this->getTotals() as $qpart) {
-                $totals_selects[] = $this->buildSqlSelect($qpart, 'EXFCOREQ', $this->getShortAlias($qpart->getAlias()), null, $qpart->getTotalAggregator());
+                $totals_selects[] = $this->buildSqlSelect($qpart, 'EXFCOREQ', $this->getShortAlias($qpart->getColumnKey()), null, $qpart->getTotalAggregator());
                 $totals_core_selects[] = $this->buildSqlSelect($qpart);
                 $totals_joins = array_merge($totals_joins, $this->buildSqlJoins($qpart));
             }
@@ -215,7 +215,12 @@ class MySqlBuilder extends AbstractSqlBuilder
         return $totals_query;
     }
 
-    protected function prepareWhereValue($value, AbstractDataType $data_type, $sql_data_type = NULL)
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\QueryBuilders\AbstractSqlBuilder::prepareWhereValue()
+     */
+    protected function prepareWhereValue($value, DataTypeInterface $data_type, $sql_data_type = NULL)
     {
         if ($data_type instanceof DateDataType) {
             $output = "{ts '" . $value . "'}";
@@ -225,6 +230,11 @@ class MySqlBuilder extends AbstractSqlBuilder
         return $output;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\QueryBuilders\AbstractSqlBuilder::buildSqlSelectNullCheckFunctionName()
+     */
     protected function buildSqlSelectNullCheckFunctionName()
     {
         return 'IFNULL';

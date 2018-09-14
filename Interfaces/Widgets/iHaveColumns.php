@@ -41,4 +41,9 @@ interface iHaveColumns extends iHaveChildren
      * @return iHaveColumns
      */
     public function removeColumn(DataColumn $column);
+    
+    /**
+     * @return string
+     */
+    public function getColumnDefaultWidgetType() : string;
 }

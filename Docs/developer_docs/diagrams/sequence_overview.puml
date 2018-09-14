@@ -1,0 +1,40 @@
+@startuml
+hide footbox
+
+participant Caller
+box "ExFace Plattform" #eeeeee
+participant Workbench
+participant Template
+participant App
+participant Action
+end box
+
+Caller -> Workbench: start
+activate Workbench
+Caller -> Workbench: get(TemplateSelector)
+Workbench -> Template: create
+activate Template
+Workbench --> Caller: Template
+Caller -> Template: Input data: e.g. HTTP request or CLI command
+Template -> Template: Transform input to task
+
+Template -> App: handle(task)
+activate App
+
+App -> Action: create
+activate Action
+App -> Action: handle(task)
+Action --> App: Result
+deactivate Action
+
+App --> Template: Result
+deactivate App
+
+Template -> Template: render Result
+Template --> Caller: Rendered response: e.g. HTML, JSON, etc.
+deactivate Template
+
+Caller -> Workbench: stop
+deactivate Workbench
+
+@enduml

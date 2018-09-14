@@ -4,6 +4,11 @@ namespace exface\Core\Actions;
 use exface\Core\Interfaces\Actions\iRunTemplateScript;
 use exface\Core\CommonLogic\AbstractAction;
 use exface\Core\CommonLogic\Constants\Icons;
+use exface\Core\Interfaces\Tasks\TaskInterface;
+use exface\Core\Interfaces\DataSources\DataTransactionInterface;
+use exface\Core\Interfaces\Tasks\ResultInterface;
+use exface\Core\Factories\ResultFactory;
+use exface\Core\Interfaces\Templates\TemplateInterface;
 
 class CustomTemplateScript extends AbstractAction implements iRunTemplateScript
 {
@@ -17,10 +22,9 @@ class CustomTemplateScript extends AbstractAction implements iRunTemplateScript
         $this->setIcon(Icons::CODE);
     }
 
-    protected function perform()
+    protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {
-        $this->setResultDataSheet($this->getInputDataSheet());
-        $this->setResult($this->getScript());
+        return ResultFactory::createTextContentResult($task, $this->getScript());
     }
 
     public function getScriptLanguage()
@@ -42,9 +46,14 @@ class CustomTemplateScript extends AbstractAction implements iRunTemplateScript
         return $this->script;
     }
 
+    /**
+     * 
+     * @param string $value
+     */
     public function setScript($value)
     {
         $this->script = $value;
+        return $this;
     }
 
     /**
@@ -58,12 +67,17 @@ class CustomTemplateScript extends AbstractAction implements iRunTemplateScript
         ));
     }
 
-    public function buildScriptHelperFunctions()
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\iRunTemplateScript::buildScriptHelperFunctions()
+     */
+    public function buildScriptHelperFunctions(TemplateInterface $template) : string
     {
         return '';
     }
 
-    public function getIncludes()
+    public function getIncludes(TemplateInterface $template) : array
     {
         return array();
     }

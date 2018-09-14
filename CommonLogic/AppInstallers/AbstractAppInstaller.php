@@ -8,7 +8,7 @@ use exface\Core\Interfaces\AppInstallerInterface;
  * @author Andrej Kabachnik
  *        
  */
-abstract class AbstractAppInstaller extends AbstractNameResolverInstaller implements AppInstallerInterface
+abstract class AbstractAppInstaller extends AbstractSelectorInstaller implements AppInstallerInterface
 {
 
     private $app = null;
@@ -22,7 +22,7 @@ abstract class AbstractAppInstaller extends AbstractNameResolverInstaller implem
     public function getApp()
     {
         if (is_null($this->app)) {
-            $this->app = $this->getWorkbench()->getApp($this->getNameResolver()->getAliasWithNamespace());
+            $this->app = $this->getWorkbench()->getApp($this->getSelectorInstalling());
         }
         return $this->app;
     }

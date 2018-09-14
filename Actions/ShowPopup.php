@@ -2,10 +2,17 @@
 namespace exface\Core\Actions;
 
 use exface\Core\Widgets\AbstractWidget;
-use exface\Core\Widgets\Dialog;
 use exface\Core\Interfaces\Actions\iShowPopup;
 use exface\Core\Widgets\Container;
+use exface\Core\Factories\WidgetFactory;
+use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 
+/**
+ * Shows a popup with any contents specified in the widget-property
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
 class ShowPopup extends ShowWidget implements iShowPopup
 {
 
@@ -20,9 +27,9 @@ class ShowPopup extends ShowWidget implements iShowPopup
      *
      * @return Container
      */
-    protected function createPopupContainer(AbstractWidget $contained_widget = NULL)
+    protected function createPopupContainer(AbstractWidget $contained_widget = NULL) : iContainOtherWidgets
     {
-        $popup = $this->getCalledOnUiPage()->createWidget('Container', $this->getCalledByWidget());
+        $popup = WidgetFactory::create($this->getWidgetDefinedIn()->getPage(), 'Container', $this->getWidgetDefinedIn());
         $popup->setMetaObject($this->getMetaObject());
         
         if ($contained_widget) {
@@ -57,7 +64,7 @@ class ShowPopup extends ShowWidget implements iShowPopup
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Actions\iShowPopup::getPopupContainer()
      */
-    public function getPopupContainer()
+    public function getPopupContainer() : iContainOtherWidgets
     {
         return $this->getWidget();
     }

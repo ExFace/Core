@@ -1,9 +1,10 @@
 <?php
 namespace exface\Core\CommonLogic;
 
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'autoload.php';
+
 use exface\Core\CommonLogic\Log\Log;
 use exface\Core\Interfaces\CmsConnectorInterface;
-use exface\Core\utils;
 use exface\Core\Factories\DataConnectorFactory;
 use exface\Core\Factories\CmsConnectorFactory;
 use exface\Core\Factories\AppFactory;
@@ -15,15 +16,23 @@ use exface\Core\Interfaces\ConfigurationInterface;
 use exface\Core\Interfaces\DebuggerInterface;
 use exface\Core\CoreApp;
 use exface\Core\Exceptions\InvalidArgumentException;
-use exface\Core\Interfaces\NameResolverInterface;
 use exface\Core\Exceptions\Configuration\ConfigOptionNotFoundError;
+use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\DataSources\DataManagerInterface;
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Exceptions\RuntimeException;
+use exface\Core\Interfaces\Selectors\AppSelectorInterface;
+use exface\Core\CommonLogic\Selectors\AppSelector;
+use exface\Core\Interfaces\WorkbenchInterface;
+use exface\Core\Interfaces\Tasks\ResultInterface;
+use exface\Core\Exceptions\AppNotFoundError;
+use exface\Core\CommonLogic\Selectors\CmsConnectorSelector;
+use exface\Core\CommonLogic\Selectors\ModelLoaderSelector;
+use exface\Core\Exceptions\AppComponentNotFoundError;
+use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 
-class Workbench
+class Workbench implements WorkbenchInterface
 {
-
     private $started = false;
 
     private $data;
@@ -31,8 +40,6 @@ class Workbench
     private $cms;
 
     private $mm;
-
-    private $ui;
 
     private $db;
 
@@ -60,9 +67,6 @@ class Workbench
             require_once 'Php5Compatibility.php';
         }
         
-        // Init composer autoload
-        require_once ($this->getVendorDirPath() . DIRECTORY_SEPARATOR . 'autoload.php');
-        
         // If the config overrides the installation path, use the config value, otherwise go one level up from the vendor folder.
         if ($this->getConfig()->hasOption('FOLDERS.INSTALLATION_PATH_ABSOLUTE') && $installation_path = $this->getConfig()->getOption("FOLDERS.INSTALLATION_PATH_ABSOLUTE")) {
             $this->setInstallationPath($installation_path);
@@ -89,8 +93,8 @@ class Workbench
 
     public function start()
     {
-        // logger
-        $this->logger = Log::getErrorLogger($this);
+        // Init logger
+        $this->getLogger();
 
         // Start the error handler
         $dbg = new Debugger($this->logger);
@@ -102,11 +106,9 @@ class Workbench
         // start the event dispatcher
         $this->event_manager = new EventManager($this);
         $this->event_manager->dispatch(EventFactory::createBasicEvent($this, 'Start'));
-        // Initialize utilities
-        $this->utils = new utils();
         
         // load the CMS connector
-        $this->cms = CmsConnectorFactory::create($this->createNameResolver($this->getConfig()->getOption('CMS_CONNECTOR'), NameResolver::OBJECT_TYPE_CMS_CONNECTOR));
+        $this->cms = CmsConnectorFactory::create(new CmsConnectorSelector($this, $this->getConfig()->getOption('CMS_CONNECTOR')));
         // init data module
         $this->data = new DataManager($this);
         
@@ -114,11 +116,12 @@ class Workbench
         $this->mm = new \exface\Core\CommonLogic\Model\Model($this);
         
         // Init the ModelLoader
-        $model_loader_resolver = NameResolver::createFromString($this->getConfig()->getOption('MODEL_LOADER'), NameResolver::OBJECT_TYPE_MODEL_LOADER, $this);
-        if (! $model_loader_resolver->classExists()) {
-            throw new InvalidArgumentException('No valid model loader found in current configuration - please add a valid "MODEL_LOADER" : "file_path_or_qualified_alias_or_qualified_class_name" to your config in "' . $this->filemanager()->getPathToConfigFolder() . '"');
+        $model_loader_selector = new ModelLoaderSelector($this, $this->getConfig()->getOption('MODEL_LOADER'));
+        try {
+            $model_loader = ModelLoaderFactory::create($model_loader_selector);
+        } catch (AppComponentNotFoundError $e) {
+            throw new InvalidArgumentException('No valid model loader found in current configuration - please add a valid "MODEL_LOADER" : "file_path_or_qualified_alias_or_qualified_class_name" to your config in "' . $this->filemanager()->getPathToConfigFolder() . '"', null, $e);
         }
-        $model_loader = ModelLoaderFactory::create($model_loader_resolver);
         $model_connection = DataConnectorFactory::createFromAlias($this, $this->getConfig()->getOption('MODEL_DATA_CONNECTOR'));
         $model_loader->setDataConnection($model_connection);
         $this->model()->setModelLoader($model_loader);
@@ -174,7 +177,7 @@ class Workbench
      * 
      * @return ContextManager
      */
-    public function context()
+    public function getContext()
     {
         if (is_null($this->context)){
             throw new RuntimeException('Workbench not started: missing context manager! Did you forget Workbench->start()?');
@@ -199,33 +202,28 @@ class Workbench
     {
         return $this->data;
     }
-    
-    /**
-     * 
-     * @return \exface\Core\CommonLogic\UiManager
-     */
-    public function ui()
-    {   
-        if (is_null($this->ui)){
-            $this->ui = new \exface\Core\CommonLogic\UiManager($this);
-        }
-            
-        return $this->ui;
-    }
 
     /**
      * Launches an ExFace app and returns it.
      * Apps are cached and kept running for script (request) window
      * 
-     * @param string $appUidOrAlias
+     * @param string $appSelectorString
      * @return AppInterface
      */
-    public function getApp($appUidOrAlias)
+    public function getApp($selectorOrString)
     {
-        if ($app = $this->findAppByUidOrAlias($appUidOrAlias)) {
+        if ($selectorOrString instanceof AppSelectorInterface) {
+            $selector = $selectorOrString;
+        } elseif (is_string($selectorOrString)) {
+            $selector = new AppSelector($this, $selectorOrString);
+        } else {
+            throw new InvalidArgumentException('Invalid app selector used: ' . $selectorOrString . '!');
+        }
+        
+        if ($app = $this->findAppRunning($selector)) {
             return $app;
         } else {
-            $app = AppFactory::createFromAnything($appUidOrAlias, $this);
+            $app = AppFactory::create($selector);
             $this->running_apps[] = $app;
             return $app;
         }
@@ -234,29 +232,29 @@ class Workbench
     /**
      * Returns an app, defined by its UID or alias, from the running_apps.
      * 
-     * @param string $appUidOrAlias
-     * @return AppInterface|null
+     * @param AppSelectorInterface $selector
+     * @return AppInterface|false
      */
-    protected function findAppByUidOrAlias($appUidOrAlias)
+    protected function findAppRunning(AppSelectorInterface $selector)
     {
-        if (AppFactory::isUid($appUidOrAlias) && $this->model()) {
+        if ($selector->isUid() && $this->model()) {
             // Die App-UID darf nur abgefragt werden, wenn tatsaechlich eine UID ueber-
             // geben wird, sonst kommt es zu Problemen beim Update. Um die UID der App zu
             // erhalten muss ausserdem das Model bereits existieren, sonst kommt es zu
             // einem Fehler in app->getUid().
             foreach ($this->running_apps as $app) {
-                if (strcasecmp($app->getUid(), $appUidOrAlias) === 0) {
+                if (strcasecmp($app->getUid(), $selector->toString()) === 0) {
                     return $app;
                 }
             }
         } else {
             foreach ($this->running_apps as $app) {
-                if (strcasecmp($app->getAliasWithNamespace(), $appUidOrAlias) === 0) {
+                if (strcasecmp($app->getAliasWithNamespace(), $selector->getAppAlias()) === 0) {
                     return $app;
                 }
             }
         }
-        return null;
+        return false;
     }
 
     /**
@@ -269,92 +267,13 @@ class Workbench
         return $this->getApp('exface.Core');
     }
 
-    /**
-     * Creates a default name resolver for an ExFace object specified by it's qualified alias and object type.
-     * The name
-     * resolver is a universal input container for factories in ExFace. Every factory hase a basic create() method that
-     * will create a new instance of whatever the name resolver describes.
-     *
-     * @param string $qualified_alias
-     *            A qualified alias may be
-     *            - An ExFace alias with a proper namespace like Workbench.Core.SaveData for the SaveData action of the core app
-     *            - A valid PHP class name
-     *            - A path to the desired PHP class
-     * @param string $object_type
-     *            One of the NameResolver::OBJECT_TYPE_xxx constants
-     *            
-     * @return NameResolverInterface
-     */
-    public function createNameResolver($qualified_alias, $object_type)
-    {
-        return NameResolver::createFromString($qualified_alias, $object_type, $this);
-    }
-
     public function stop()
     {
         if ($this->isStarted()) {
-            $this->context()->saveContexts();
+            $this->getContext()->saveContexts();
             $this->data()->disconnectAll();
             $this->eventManager()->dispatch(EventFactory::createBasicEvent($this, 'Stop'));
         }
-    }
-
-    public function processRequest()
-    {
-        // Determine the template
-        $template_alias = $this->getRequestParam('exftpl');
-        $this->removeRequestParam('exftpl');
-        
-        // Process request
-        if ($template_alias) {
-            $this->ui()->setBaseTemplateAlias($template_alias);
-            echo $this->ui()->getTemplate($template_alias)->processRequest();
-        } else {
-            // If template alias not given - it's not an AJAX request, so do not do anything here, wait for the CMS to call request processing
-            // The reason for this is, that the CMS will select the template.
-            // IDEA this a bit a strange approach. Perhaps, the CMS should also call this method but give the desired template as a parameter
-        }
-        return;
-    }
-
-    /**
-     * Returns the parameters of the current request (URL params for GET-requests, data of POST-requests, etc.)
-     *
-     * @return array
-     */
-    public function getRequestParams()
-    {
-        if (is_null($this->request_params)) {
-            $this->request_params = $this->getCMS()->removeSystemRequestParams($_REQUEST);
-        }
-        return $this->request_params;
-    }
-
-    public function getRequestParam($param_name)
-    {
-        $request = $this->getRequestParams();
-        return urldecode($request[$param_name]);
-    }
-
-    public function removeRequestParam($param_name)
-    {
-        unset($this->request_params[$param_name]);
-    }
-
-    public function setRequestParam($param_name, $value)
-    {
-        $this->request_params[$param_name] = $value;
-        return $this;
-    }
-
-    /**
-     * Get the utilities class
-     *
-     * @return utils
-     */
-    public function utils()
-    {
-        return $this->utils;
     }
 
     /**
@@ -365,11 +284,6 @@ class Workbench
     public function eventManager()
     {
         return $this->event_manager;
-    }
-
-    public function createUxonObject()
-    {
-        return new \exface\Core\CommonLogic\UxonObject();
     }
 
     /**
@@ -444,6 +358,9 @@ class Workbench
      */
     public function getLogger()
     {
+        if (is_null($this->logger)) {
+            $this->logger = Log::getErrorLogger($this);
+        }
         return $this->logger;
     }
     
@@ -530,5 +447,19 @@ class Workbench
         
         return $this;
     }
+    
+    public function handle(TaskInterface $task) : ResultInterface
+    {
+        if (! $task->hasAction()) {
+            throw new AppNotFoundError('Cannot handle task without an action selector!');
+        }
+        return $this->getApp($task->getActionSelector()->getAppAlias())->handle($task);
+    }
+    
+    public function getAppFolder(AppSelectorInterface $selector) : string 
+    {
+        return str_replace(AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER, DIRECTORY_SEPARATOR, $selector->getAppAlias());
+    }
+
 }
 ?>

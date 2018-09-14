@@ -10,6 +10,7 @@ use exface\Core\CommonLogic\Filemanager;
 use exface\Core\Exceptions\QueryBuilderException;
 use Wingu\OctopusCore\Reflection\ReflectionDocComment;
 use exface\Core\Exceptions\DataSources\DataQueryFailedError;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
 
 /**
  * A query builder to read annotations for PHP classes, their methods and properties.
@@ -192,23 +193,23 @@ class PhpAnnotationsReader extends AbstractQueryBuilder
         foreach ($this->getAttributesMissingInRow($row) as $qpart) {
             if (! $qpart->getDataAddress())
                 continue;
-            if (! array_key_exists($qpart->getAlias(), $row)) {
+            if (! array_key_exists($qpart->getColumnKey(), $row)) {
                 // First fill in the fields, any annotation row will need to know about it's class
                 switch ($qpart->getDataAddress()) {
                     case 'class':
-                        $row[$qpart->getAlias()] = $class->getName();
+                        $row[$qpart->getColumnKey()] = $class->getName();
                         break;
                     case 'classname':
-                        $row[$qpart->getAlias()] = str_replace($class->getNamespaceName().'\\', '', $class->getName());
+                        $row[$qpart->getColumnKey()] = str_replace($class->getNamespaceName().'\\', '', $class->getName());
                         break;
                     case 'namespace':
-                        $row[$qpart->getAlias()] = $class->getNamespaceName();
+                        $row[$qpart->getColumnKey()] = $class->getNamespaceName();
                         break;
                     case 'filename':
-                        $row[$qpart->getAlias()] = $file_pathname_absolute;
+                        $row[$qpart->getColumnKey()] = $file_pathname_absolute;
                         break;
                     case 'filename-relative':
-                        $row[$qpart->getAlias()] = $file_pathname_relative;
+                        $row[$qpart->getColumnKey()] = $file_pathname_relative;
                         break;
                 }
                 
@@ -222,7 +223,7 @@ class PhpAnnotationsReader extends AbstractQueryBuilder
                     // Add the FQSEN (Fully Qualified Structural Element Name) if we are on class level
                     foreach ($this->getAttributesMissingInRow($row) as $qpart) {
                         if (strcasecmp($qpart->getDataAddress(), 'FQSEN') === 0) {
-                            $row[$qpart->getAlias()] = $class->getName();
+                            $row[$qpart->getColumnKey()] = $class->getName();
                         }
                     }
                 }
@@ -235,7 +236,7 @@ class PhpAnnotationsReader extends AbstractQueryBuilder
      *
      * @param ReflectionClass $class            
      * @param ReflectionDocComment $comment            
-     * @param unknown $row            
+     * @param array $row            
      * @return string
      */
     protected function buildRowFromCommentTags(ReflectionClass $class, ReflectionDocComment $comment, $row)
@@ -246,14 +247,14 @@ class PhpAnnotationsReader extends AbstractQueryBuilder
             if (! $qpart->getDataAddress())
                 continue;
             // Do not overwrite already existent values (could happen when processing a parent class)
-            if (array_key_exists($qpart->getAlias(), $row))
+            if (array_key_exists($qpart->getColumnKey(), $row))
                 continue;
             
             // First look through the real tags for exact matches
             try {
                 foreach ($comment->getAnnotationsCollection()->getAnnotations() as $tag) {
                     if ($tag->getTagName() == $qpart->getDataAddress()) {
-                        $row[$qpart->getAlias()] = $tag->getDescription();
+                        $row[$qpart->getColumnKey()] = $tag->getDescription();
                         break;
                     }
                 }
@@ -287,7 +288,7 @@ class PhpAnnotationsReader extends AbstractQueryBuilder
             // Add the FQSEN (Fully Qualified Structural Element Name) if we are on method level
             foreach ($this->getAttributesMissingInRow($row) as $qpart) {
                 if (strcasecmp($qpart->getDataAddress(), 'fqsen') === 0) {
-                    $row[$qpart->getAlias()] = $class->getName() . '::' . $method->getName() . '()';
+                    $row[$qpart->getColumnKey()] = $class->getName() . '::' . $method->getName() . '()';
                 }
             }
         }
@@ -305,16 +306,16 @@ class PhpAnnotationsReader extends AbstractQueryBuilder
     protected function buildRowFromComment(ReflectionClass $class, ReflectionDocComment $comment, array $row)
     {
         foreach ($this->getAttributesMissingInRow($row) as $qpart) {
-            if (! array_key_exists($qpart->getAlias(), $row)) {
+            if (! array_key_exists($qpart->getColumnKey(), $row)) {
                 switch ($qpart->getDataAddress()) {
                     case 'desc':
-                        $row[$qpart->getAlias()] = $this->prepareCommentText($comment->getFullDescription());
+                        $row[$qpart->getColumnKey()] = $this->prepareCommentText($comment->getFullDescription());
                         break;
                     case 'desc-short':
-                        $row[$qpart->getAlias()] = $this->prepareCommentText($comment->getShortDescription());
+                        $row[$qpart->getColumnKey()] = $this->prepareCommentText($comment->getShortDescription());
                         break;
                     case 'desc-long':
-                        $row[$qpart->getAlias()] = $this->prepareCommentText($comment->getLongDescription());
+                        $row[$qpart->getColumnKey()] = $this->prepareCommentText($comment->getLongDescription());
                         break;
                 }
             }
@@ -347,7 +348,7 @@ class PhpAnnotationsReader extends AbstractQueryBuilder
             if (! $qpart->getDataAddress())
                 continue;
             // Do not overwrite already existent values (could happen when processing a parent class)
-            if (array_key_exists($qpart->getAlias(), $row))
+            if (array_key_exists($qpart->getColumnKey(), $row))
                 continue;
             // Otherwise add the query part to the resulting array
             $result[] = $qpart;
@@ -393,6 +394,17 @@ class PhpAnnotationsReader extends AbstractQueryBuilder
     {
         $this->last_query = $value;
         return $this;
+    }
+    
+    /**
+     * The PhpAnnotationsReader can only handle attributes of one object - no relations (JOINs) supported!
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder::canReadAttribute()
+     */
+    public function canReadAttribute(MetaAttributeInterface $attribute) : bool
+    {
+        return $attribute->getRelationPath()->isEmpty();
     }
 }
 ?>

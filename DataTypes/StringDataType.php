@@ -3,6 +3,8 @@ namespace exface\Core\DataTypes;
 
 use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
 use exface\Core\CommonLogic\DataTypes\AbstractDataType;
+use exface\Core\Exceptions\UnderflowException;
+use exface\Core\Exceptions\RangeException;
 
 /**
  * Basic data type for textual values.
@@ -224,6 +226,157 @@ class StringDataType extends AbstractDataType
         $this->lengthMax = $number;
         return $this;
     }
-
+    
+    /**
+     * Returns an array of ExFace-placeholders found in a string.
+     * E.g. will return ["name", "id"] for string "Object [#name#] has the id [#id#]"
+     *
+     * @param string $string
+     * @return array
+     */
+    public static function findPlaceholders($string)
+    {
+        $placeholders = array();
+        preg_match_all("/\[#([^\]\[#]+)#\]/", $string, $placeholders);
+        return is_array($placeholders[1]) ? $placeholders[1] : array();
+    }
+    
+    /**
+     * Looks for placeholders ([#...#]) in a string and replaces them with values from
+     * the given array, where the key matches the placeholder.
+     * 
+     * Examples:
+     * - replacePlaceholder('Hello [#world#][#dot#]', ['world'=>'WORLD', 'dot'=>'!']) -> "Hello WORLD!"
+     * - replacePlaceholder('Hello [#world#][#dot#]', ['world'=>'WORLD']) -> exception
+     * - replacePlaceholder('Hello [#world#][#dot#]', ['world'=>'WORLD'], false) -> "Hello WORLD"
+     * 
+     * @param string $string
+     * @param string[] $placeholders
+     * @param bool $strict
+     * 
+     * @throws RangeException if no value is found for a placeholder
+     * 
+     * @return string
+     */
+    public static function replacePlaceholders(string $string, array $placeholders, bool $strict = true) : string
+    {
+        $phs = static::findPlaceholders($string);
+        $search = [];
+        $replace = [];
+        foreach ($phs as $ph) {
+            if (! isset($placeholders[$ph])) {
+                if ($strict === true) {
+                    throw new RangeException('Missing value for "' . $ph . '"!');
+                } else {
+                    $replace[] = '';
+                }
+            }
+            $search[] = '[#' . $ph . '#]';
+            $replace[] = $placeholders[$ph];
+        }
+        return str_replace($search, $replace, $string);
+    }
+    
+    /**
+     * Returns the part of the given string ($haystack) preceeding the first occurrence of $needle.
+     * 
+     * Using the optional parameters you can make the search case sensitive and
+     * search for the last occurrence instead of the first one.
+     * 
+     * Returns $default if the $needle was not found.
+     * 
+     * @param string $haystack
+     * @param string $needle
+     * @param mixed $default
+     * @param bool $caseSensitive
+     * @param bool $useLastOccurance
+     * @return string|boolean
+     */
+    public static function substringBefore(string $haystack, string $needle, $default = false, bool $caseSensitive = false, bool $useLastOccurance = false)
+    {
+        $substr = '';
+        if ($caseSensitive === true) {
+            if ($useLastOccurance === true) {
+                $pos = strrpos($haystack, $needle);
+                if ($pos === false) {
+                    $substr = $default;
+                } else {
+                    $substr = substr($haystack, 0, $pos);
+                }
+            } else {
+                $substr = strstr($haystack, $needle, true);
+                if ($substr === false) {
+                    $substr = $default;
+                }
+            }
+        } else {
+            if ($useLastOccurance) {
+                $pos = strripos($haystack, $needle);
+                if ($pos === false) {
+                    $substr = $default;
+                } else {
+                    $substr = substr($haystack, 0, $pos);
+                }
+            } else {
+                $substr = stristr($haystack, $needle, true);
+                if ($substr === false) {
+                    $substr = $default;
+                }
+            }
+        }
+        return $substr;
+    }
+    
+    /**
+     * Returns the part of the given string ($haystack) following the first occurrence of $needle.
+     * 
+     * Using the optional parameters you can make the search case sensitive and
+     * search for the last occurrence instead of the first one.
+     * 
+     * @param string $haystack
+     * @param string $needle
+     * @param mixed $default
+     * @param bool $caseSensitive
+     * @param bool $useLastOccurance
+     * @return string|boolean
+     */
+    public static function substringAfter(string $haystack, string $needle, $default = false, bool $caseSensitive = false, bool $useLastOccurance = false)
+    {
+        $substr = '';
+        if ($caseSensitive === true) {
+            if ($useLastOccurance === true) {
+                $pos = strrpos($haystack, $needle);
+                if ($pos === false) {
+                    $substr = $default;
+                } else {
+                    $substr = substr($haystack, ($pos+strlen($needle)));
+                }
+            } else {
+                $substr = strstr($haystack, $needle);
+                if ($substr === false) {
+                    $substr = $default;
+                } else {
+                    $substr = substr($substr, strlen($needle));
+                }
+            }
+        } else {
+            if ($useLastOccurance) {
+                $pos = strripos($haystack, $needle);
+                if ($pos === false) {
+                    $substr = $default;
+                } else {
+                    $substr = substr($haystack, ($pos+strlen($needle)));
+                }
+            } else {
+                $substr = stristr($haystack, $needle);
+                if ($substr === false) {
+                    $substr = $default;
+                } else {
+                    $substr = substr($substr, strlen($needle));
+                }
+            }
+        }
+        return $substr;
+    }
 }
 ?>

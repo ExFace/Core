@@ -2,10 +2,11 @@
     "id": "0x57bfceca96ca11e79702028037ec0200",
     "alias_with_namespace": "exface.core.data-sources",
     "menu_parent_page_alias": "exface.core.metamodel",
-    "menu_index": "0",
+    "menu_index": "2",
     "menu_visible": true,
     "name": "Data Sources",
-    "short_description": "",
+    "description": "",
+    "intro": "",
     "replaces_page_alias": null,
     "contents": {
         "widget_type": "DataTable",
@@ -36,7 +37,7 @@
             },
             {
                 "attribute_alias": "BASE_OBJECT__LABEL",
-                "caption": "Basisobjekt"
+                "caption": "=TRANSLATE('exface.Core', 'PAGE.DATA_SOURCES.BASE_OBJECT')"
             },
             {
                 "attribute_alias": "READABLE_FLAG"
@@ -46,7 +47,7 @@
             },
             {
                 "attribute_alias": "CONNECTION__READONLY",
-                "caption": "Connection readonly"
+                "caption": "=TRANSLATE('exface.Core', 'PAGE.DATA_SOURCES.CONNECTION_READONLY')"
             },
             {
                 "attribute_alias": "APP__LABEL"
@@ -60,20 +61,21 @@
         ],
         "buttons": [
             {
-                "action_alias": "exface.Core.CreateObjectDialog"
+                "action_alias": "exface.Core.ShowObjectCreateDialog"
             },
             {
-                "action_alias": "exface.Core.DuplicateObjectDialog"
+                "action_alias": "exface.Core.ShowObjectCopyDialog"
             },
             {
-                "action_alias": "exface.Core.EditObjectDialog",
+                "action_alias": "exface.Core.ShowObjectEditDialog",
                 "bind_to_double_click": true
             },
             {
                 "action_alias": "exface.Core.DeleteObject"
             },
             {
-                "action_alias": "exface.Core.ShowModelBuilderDialog"
+                "action_alias": "exface.Core.ShowModelBuilderDialog",
+                "caption": "=TRANSLATE('exface.Core', 'ACTION.SHOWMODELBUILDERDIALOG.NAME')"
             }
         ]
     }

@@ -12,7 +12,7 @@ use exface\Core\Widgets\Html;
  */
 trait JqueryHtmlTrait {
 
-    public function generateHtml()
+    public function buildHtml()
     {
         $output = '';
         if ($this->getWidget()->getCss()) {
@@ -27,11 +27,11 @@ trait JqueryHtmlTrait {
             $style .= 'margin: 10px;';
         }
         
-        $output .= '<div id="' . $this->getId() . '" style="' . $style . '">' . $this->getWidget()->getHtml() . '</div>';
+        $output .= '<div id="' . $this->getId() . '" style="' . $style . '" class="' . $this->buildCssElementClass() . '">' . $this->getWidget()->getHtml() . '</div>';
         return $this->buildHtmlGridItemWrapper($output);
     }
     
-    public function generateJs()
+    public function buildJs()
     {
         return $this->getWidget()->getJavascript();
     }

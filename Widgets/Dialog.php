@@ -37,7 +37,6 @@ class Dialog extends Form implements iAmClosable, iHaveContextualHelp, iHaveHead
     protected function init()
     {
         parent::init();
-        $this->setLazyLoading(true);
         $this->getToolbarMain()->addButton($this->getCloseButton());
     }
 
@@ -117,7 +116,7 @@ class Dialog extends Form implements iAmClosable, iHaveContextualHelp, iHaveHead
      * It only gets created if this method is called. It is not added to the dialog, so it will not get listed by get_children(),
      * etc.
      *
-     * When lazy loading the contents of the dialog, it is important to let the template draw() all contained widgets
+     * When lazy loading the contents of the dialog, it is important to let the template render all contained widgets
      * at once (i.e. draw this container). If we draw each widget individually, the respective template elements will get
      * instantiated one after another, so those instatiated first, can't access the ones instantiated later on. Putting
      * everything in a container makes the template instatiate all elements before actually drawing them!
@@ -218,7 +217,7 @@ class Dialog extends Form implements iAmClosable, iHaveContextualHelp, iHaveHead
         $table->setLazyLoading(false);
         $table->setPaginate(false);
         $table->setNowrap(false);
-        // $table->setGroupRows(UxonObject::fromArray(array('group_by_column_id' => 'GROUP')));
+        // $table->setRowGrouper(UxonObject::fromArray(array('group_by_column_id' => 'GROUP')));
         
         // IMPORTANT: make sure the help table does not have a help button itself, because that would result in having
         // infinite children!

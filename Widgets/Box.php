@@ -2,8 +2,7 @@
 namespace exface\Core\Widgets;
 
 /**
- * A box is a well visible (typically bordered) form.
- * It is the stand-alone version of a card.
+ * A box is a well visible (typically bordered) form - often also called card.
  *
  * @author Andrej Kabachnik
  *        

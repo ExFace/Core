@@ -173,7 +173,7 @@ trait ExceptionTrait {
         // Context tab
         if ($debug_widget->findChildById('context_tab') === false){
             $context_dump = array();
-            foreach ($page->getWorkbench()->context()->getScopes() as $context_scope){
+            foreach ($page->getWorkbench()->getContext()->getScopes() as $context_scope){
                 $context_dump[$context_scope->getName()]['id'] = $context_scope->getScopeId();
                 foreach ($context_scope->getContextsLoaded() as $context){
                     $context_dump[$context_scope->getName()][$context->getAlias()] = $context->exportUxonObject();
@@ -303,7 +303,7 @@ trait ExceptionTrait {
     public function getSystemByPage(UiPageInterface $page)
     {
         if( $this->system == FALSE) {
-            $this->system = $page->getWorkbench()->getCMS()->getSiteUrl();
+            $this->system = $page->getWorkbench()->getCMS()->buildUrlToSiteRoot();
         }
         return $this->system;
     }

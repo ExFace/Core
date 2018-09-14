@@ -2,11 +2,11 @@
 namespace exface\Core\CommonLogic;
 
 use Symfony\Component\Filesystem\Filesystem;
-use exface\Core\Interfaces\ExfaceClassInterface;
+use exface\Core\Interfaces\WorkbenchDependantInterface;
 use Webmozart\PathUtil\Path;
 use exface\Core\Exceptions\Configuration\ConfigOptionNotFoundError;
 
-class Filemanager extends Filesystem implements ExfaceClassInterface
+class Filemanager extends Filesystem implements WorkbenchDependantInterface
 {
 
     const FOLDER_NAME_VENDOR = 'vendor';
@@ -269,7 +269,13 @@ class Filemanager extends Filesystem implements ExfaceClassInterface
         } else {
             $files = glob($absolutePath . '*');
         }
-        array_map('unlink', $files);
+        array_map(function($path) {
+            if (is_dir($path)) {
+                rmdir($path);
+            } else {
+                unlink($path);
+            }
+        }, $files);
 
         return;
     }
@@ -278,7 +284,7 @@ class Filemanager extends Filesystem implements ExfaceClassInterface
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\Interfaces\ExfaceClassInterface::getWorkbench()
+     * @see \exface\Core\Interfaces\WorkbenchDependantInterface::getWorkbench()
      */
     public function getWorkbench()
     {
@@ -339,18 +345,17 @@ class Filemanager extends Filesystem implements ExfaceClassInterface
     /**
      * Checks a path folder by folder to determine if they are present, constructs folders that aren't
      *
-     * @param
-     *            $path
+     * @param string $path
      * @return string
      */
-    public static function pathConstruct($path)
+    public static function pathConstruct(string $path)
     {
+        $path = self::pathNormalize($path, DIRECTORY_SEPARATOR);
         $paths = explode(DIRECTORY_SEPARATOR, $path);
         $sPathList = $paths[0];
         for ($i = 1; $i < count($paths); $i ++) {
             $sPathList .= DIRECTORY_SEPARATOR . $paths[$i];
-            $file_parts = pathinfo($sPathList);
-            if (file_exists($sPathList) === false && array_key_exists('extension', $file_parts) == false) {
+            if (file_exists($sPathList) === false) {
                 mkdir($sPathList, 0755);
             }
         }
@@ -382,6 +387,12 @@ class Filemanager extends Filesystem implements ExfaceClassInterface
             }
         }
         return TRUE;
+    }
+    
+    public function copyFile(string $source, string $destination)
+    {
+        copy($source, $destination);
+        return;
     }
 }
 ?>

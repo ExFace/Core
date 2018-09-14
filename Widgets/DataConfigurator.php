@@ -82,9 +82,9 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
      *
      * Relations and aggregations are fully supported by filters
      *
-     * Note, that ComboTable widgets will be automatically generated for related objects if the corresponding
+     * Note, that InputComboTable widgets will be automatically generated for related objects if the corresponding
      * filter is defined by the attribute, representing the relation: e.g. for a table of ORDER_POSITIONS,
-     * adding the filter ORDER (relation to the order) will give you a ComboTable, while the filter ORDER__NUMBER
+     * adding the filter ORDER (relation to the order) will give you a InputComboTable, while the filter ORDER__NUMBER
      * will yield a numeric input field, because it filter over a number, even thoug a related one.
      *
      * Advanced users can also instantiate a Filter widget manually (widget_type = Filter) gaining control
@@ -138,42 +138,66 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
     
     public function createFilterWidget($attribute_alias = null, UxonObject $uxon_object = null)
     {
-        if (is_null($attribute_alias)) {
+        if ($attribute_alias === null) {
             if ($uxon_object->hasProperty('attribute_alias')) {
                 $attribute_alias = $uxon_object->getProperty('attribute_alias');
             } elseif (($uxon_object->getProperty('input_widget') instanceof UxonObject) && $uxon_object->getProperty('input_widget')->hasProperty('attribute_alias')) {
                 $attribute_alias = $uxon_object->getProperty('input_widget')->getProperty('attribute_alias');
             }
         }
+        
         // a filter can only be applied, if the attribute alias is specified and the attribute exists
-        if (! $attribute_alias)
+        if ($attribute_alias === null || $attribute_alias === '') {
             throw new WidgetPropertyInvalidValueError($this, 'Cannot create a filter for an empty attribute alias in widget "' . $this->getId() . '"!', '6T91AR9');
-            try {
-                $attr = $this->getMetaObject()->getAttribute($attribute_alias);
-            } catch (MetaAttributeNotFoundError $e) {
-                throw new WidgetPropertyInvalidValueError($this, 'Cannot create a filter for attribute alias "' . $attribute_alias . '" in widget "' . $this->getId() . '": attribute not found for object "' . $this->getMetaObject()->getAliasWithNamespace() . '"!', '6T91AR9', $e);
-            }
-            // determine the widget for the filter
-            $uxon = $attr->getDefaultEditorUxon()->copy();
-            if ($uxon_object) {
-                $uxon = $uxon->extend($uxon_object);
-            }
-            // Set a special caption for filters on relations, which is derived from the relation itself
-            // IDEA this might be obsolete since it probably allways returns the attribute name anyway, but I'm not sure
-            if (! $uxon->hasProperty('caption') && $attr->isRelation()) {
-                $uxon->setProperty('caption', $this->getMetaObject()->getRelation($attribute_alias)->getName());
-            }
-            $page = $this->getPage();
-            if ($uxon->hasProperty('comparator')) {
-                $comparator = $uxon->getProperty('comparator');
-                $uxon->unsetProperty('comparator');
-            }
-            
-            $filter = $this->getPage()->createWidget('Filter', $this->getFilterTab());
-            $filter->setComparator($comparator);
-            $filter->setInputWidget(WidgetFactory::createFromUxon($page, $uxon, $filter));
-            
-            return $filter;
+        }
+        
+        try {
+            $attr = $this->getMetaObject()->getAttribute($attribute_alias);
+        } catch (MetaAttributeNotFoundError $e) {
+            throw new WidgetPropertyInvalidValueError($this, 'Cannot create a filter for attribute alias "' . $attribute_alias . '" in widget "' . $this->getId() . '": attribute not found for object "' . $this->getMetaObject()->getAliasWithNamespace() . '"!', '6T91AR9', $e);
+        }
+        
+        // determine the widget for the filter
+        $uxon = $attr->getDefaultEditorUxon()->copy();
+        if ($uxon_object) {
+            $uxon = $uxon->extend($uxon_object);
+        }
+        // Set a special caption for filters on relations, which is derived from the relation itself
+        // IDEA this might be obsolete since it probably allways returns the attribute name anyway, but I'm not sure
+        if (! $uxon->hasProperty('caption') && $attr->isRelation()) {
+            $uxon->setProperty('caption', $this->getMetaObject()->getRelation($attribute_alias)->getName());
+        }
+        $page = $this->getPage();
+        
+        // Set properties of the filter explicitly while passing everything else to it's input widget.
+        // TODO move this to the filter's importUxonObject() method.
+        if ($uxon->hasProperty('comparator')) {
+            $comparator = $uxon->getProperty('comparator');
+            $uxon->unsetProperty('comparator');
+        }
+        if ($uxon->hasProperty('apply_on_change')) {
+            $apply_on_change = $uxon->getProperty('apply_on_change');
+            $uxon->unsetProperty('apply_on_change');
+        } 
+        if ($uxon_object !== null && $uxon_object->hasProperty('required')) {
+            // A filter is only required, if a user explicitly marked it as required in the filter's UXON
+            $required = $uxon_object->getProperty('required');
+            $uxon->unsetProperty('required');
+        } 
+        
+        $filter = $this->getPage()->createWidget('Filter', $this->getFilterTab());
+        $filter->setComparator($comparator);
+        if (isset($apply_on_change)){
+            $filter->setApplyOnChange($apply_on_change);
+        }
+        $filter->setInputWidget(WidgetFactory::createFromUxon($page, $uxon, $filter));
+        
+        // Set the required option after instantiation to ensure the input widget gets it too.
+        if (isset($required)) {
+            $filter->setRequired($required);
+        }
+        
+        return $filter;
     }
     
     /**
@@ -359,7 +383,7 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
             $filter_object = $this->getMetaObject()->getAttribute($filter_widget->getAttributeAlias())->getObject();
             if ($object->is($filter_object)) {
                 $result[] = $filter_widget;
-            } elseif ($filter_widget->getAttribute()->isRelation() && $object->is($filter_widget->getAttribute()->getRelation()->getRelatedObject())) {
+            } elseif ($filter_widget->getAttribute()->isRelation() && $object->is($filter_widget->getAttribute()->getRelation()->getRightObject())) {
                 $result[] = $filter_widget;
             }
         }
@@ -369,7 +393,7 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
     /**
      * Creates and adds a filter based on the given relation
      *
-     * @param relation $relation
+     * @param MetaRelationInterface $relation
      * @return \exface\Core\Widgets\AbstractWidget
      */
     public function createFilterFromRelation(MetaRelationInterface $relation)
@@ -378,19 +402,8 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
         // Create a new hidden filter if there is no such filter already
         if (! $filter_widget) {
             $page = $this->getPage();
-            // FIXME This is a workaround for the known issues, that get_main_object_key_attribute() does not work for
-            // reverse relations. When the issue is fixed, this if needs to be rewritten.
-            if (! $relation->getMainObjectKeyAttribute() && $relation->isReverseRelation()) {
-                $filter_widget = WidgetFactory::createFromUxon($page, $relation->getRelatedObjectKeyAttribute()->getDefaultEditorUxon(), $this);
-                if ($filter_widget->getMetaObject()->hasAttribute($relation->getRelatedObjectKeyAlias())){
-                    $filter_widget->setAttributeAlias($relation->getRelatedObjectKeyAlias());
-                } else {
-                    throw new WidgetLogicError($this, 'Cannot automatically create filter for relation "' . $relation->toString() . '" in a "' . $this->getWidgetType() . '" widget based on ' . $this->getMetaObject()->getAliasWithNamespace() . '!');
-                }
-            } else {
-                $filter_widget = WidgetFactory::createFromUxon($page, $relation->getMainObjectKeyAttribute()->getDefaultEditorUxon(), $this);
-                $filter_widget->setAttributeAlias($relation->getForeignKeyAlias());
-            }
+            $filter_widget = WidgetFactory::createFromUxon($page, $relation->getLeftKeyAttribute()->getDefaultEditorUxon(), $this);
+            $filter_widget->setAttributeAlias($relation->getLeftKeyAttribute()->getAlias());
             $this->addFilter($filter_widget);
         }
         return $filter_widget;
@@ -399,7 +412,7 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
     protected function setLazyLoadingForFilter(Filter $filter_widget)
     {
         // Disable filters on Relations if lazy loading is disabled
-        if (! $this->getWidgetConfigured()->getLazyLoading() && $filter_widget->getAttribute() && $filter_widget->getAttribute()->isRelation() && $filter_widget->getInputWidget()->is('ComboTable')) {
+        if (! $this->getWidgetConfigured()->getLazyLoading() && $filter_widget->getAttribute() && $filter_widget->getAttribute()->isRelation() && $filter_widget->getInputWidget()->is('InputComboTable')) {
             $filter_widget->setDisabled(true);
         }
         return $filter_widget;

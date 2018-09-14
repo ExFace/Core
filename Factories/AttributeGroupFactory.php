@@ -5,7 +5,7 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\CommonLogic\Model\AttributeGroup;
 use exface\Core\Interfaces\Model\MetaAttributeGroupInterface;
 
-abstract class AttributeGroupFactory extends AbstractFactory
+abstract class AttributeGroupFactory extends AbstractStaticFactory
 {
 
     /**

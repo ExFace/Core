@@ -6,6 +6,13 @@ use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\CommonLogic\Filemanager;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\CommonLogic\Constants\Icons;
+use exface\Core\Interfaces\Tasks\TaskInterface;
+use exface\Core\Interfaces\DataSources\DataTransactionInterface;
+use exface\Core\Interfaces\Tasks\ResultInterface;
+use exface\Core\Factories\ResultFactory;
+use GuzzleHttp\Psr7\Uri;
+use exface\Core\Interfaces\Templates\TemplateInterface;
+use exface\Core\Templates\AbstractAjaxTemplate\AbstractAjaxTemplate;
 
 /**
  * This action exports the raw data received by a widget as a file for download.
@@ -36,34 +43,49 @@ class ExportData extends ReadData implements iExportData
         parent::init();
         $this->setIcon(Icons::DOWNLOAD);
     }
+    
     /**
      * 
      * {@inheritDoc}
      * @see \exface\Core\Actions\ReadData::perform()
      */
-    protected function perform(){
-        $dataSheet = $this->getInputDataSheet();
+    protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
+    {        
+        $dataSheet = $this->readData($task);
+        $url = $this->export($dataSheet, $task->getTemplate());
+        $uri = new Uri($url);
+        $message = 'Download ready. If not id does not start automatically, click <a href="' . $url . '">here</a>.';
+        $result = ResultFactory::createFileResult($task, $uri);
+        $result->setMessage($message);
+        return $result;
+    }
+    
+    protected function readData(TaskInterface $task) : DataSheetInterface
+    {
+        $dataSheet = $this->getInputDataSheet($task);
         // Make sure, the input data has all the columns required for the widget
         // we export from. Generally this will not be the case, because the
         // widget calling the action is a button and it normally does not know
         // which columns to export.
-        if ($this->getCalledByWidget() && $this->getCalledByWidget()->is('Button')){
-            $this->getCalledByWidget()->getInputWidget()->prepareDataSheetToRead($dataSheet);
+        if ($this->isDefinedInWidget()) {
+            $widget = $this->getWidgetDefinedIn();
+        } elseif ($task->isTriggeredOnPage()) {
+            $widget = $task->getWidgetTriggeredBy();
+        }
+        if (isset($widget) && $this->getWidgetDefinedIn()->is('Button')){
+            $this->getWidgetDefinedIn()->getInputWidget()->prepareDataSheetToRead($dataSheet);
         }
         
-        $this->setAffectedRows($dataSheet->removeRows()->dataRead());
-        $this->setResultDataSheet($dataSheet);
-        $url = $this->export($this->getResultDataSheet());
-        $this->setResult($url);
-        $this->setResultMessage('Download ready. If not id does not start automatically, click <a href="' . $url . '">here</a>.');
+        $dataSheet->removeRows()->dataRead();
+        return $dataSheet;
     }
 
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Actions\iExportData::getDownload()
+     * @see \exface\Core\Interfaces\Actions\iExportData::isDownloadable()
      */
-    public function getDownload()
+    public function isDownloadable()
     {
         return $this->download;
     }
@@ -71,9 +93,9 @@ class ExportData extends ReadData implements iExportData
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Actions\iExportData::setDownload()
+     * @see \exface\Core\Interfaces\Actions\iExportData::setDownloadable()
      */
-    public function setDownload($true_or_false)
+    public function setDownloadable($true_or_false) : iExportData
     {
         $this->download = BooleanDataType::cast($true_or_false);
         return $this;
@@ -97,22 +119,22 @@ class ExportData extends ReadData implements iExportData
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Actions\iExportData::setFilename()
      */
-    public function setFilename($filename)
+    public function setFilename($filename) : iExportData
     {
         $this->filename = $filename;
         return $this;
     }
     
-    protected function export(DataSheetInterface $dataSheet)
+    protected function export(DataSheetInterface $dataSheet, AbstractAjaxTemplate $template)
     {
-        $elem = $this->getApp()->getWorkbench()->ui()->getTemplate()->getElement($this->getCalledByWidget());
+        $elem = $template->getElement($this->getWidgetDefinedIn());
         $output = $elem->prepareData($dataSheet);
-        $contents = $this->getApp()->getWorkbench()->ui()->getTemplate()->encodeData($output, false);
-        If (is_null($this->getMimeType())){
-            // TODO get the mime type from the template somehow
-            $this->setMimeType('application/json');
+        $contents = $template->encodeData($output, false);
+        $result = $this->createDownload($contents);
+        if (! is_null($this->getMimeType())){
+            $result->setMimeType($this->getMimeType());
         }
-        return $this->createDownload($contents);
+        return $result;
     }
     
     /**
@@ -127,20 +149,12 @@ class ExportData extends ReadData implements iExportData
         
         file_put_contents($pathname, $contents);
         
-        /*header('Content-Description: File Transfer');
-         header('Content-Type: text/csv');
-         header('Content-Disposition: attachment; filename=data.csv');
-         header('Content-Transfer-Encoding: binary');
-         header('Expires: 0');
-         header('Cache-Control: must-revalidate');
-         header('Pragma: public');
-         header('Content-Length: ' . filesize($tmpName));*/
-        $url = $this->getWorkbench()->getCMS()->createLinkToFile($pathname);
+        $url = $this->getWorkbench()->getCMS()->buildUrlToFile($pathname);
         
         return ($url);
     }
     
-    public function getFileExtension(){
+    protected function getFileExtension(){
         switch ($this->getMimeType()){
             case 'application/json': return 'json';
             case 'text/xml': return 'xml';
@@ -166,15 +180,10 @@ class ExportData extends ReadData implements iExportData
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Actions\iExportData::setMimeType()
      */
-    public function setMimeType($mimeType)
+    public function setMimeType($mimeType) : iExportData
     {
         $this->mimeType = $mimeType;
         return $this;
-    }
- 
-    public function getResultOutput(){
-        return '';
-    }
-    
+    }    
 }
 ?>

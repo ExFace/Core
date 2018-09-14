@@ -56,7 +56,8 @@ class QueryPart
     }
 
     /**
-     * Returns an array of relations used in this query part.
+     * Returns an array of relations [alias_with_relation_path => Relation] used in this query part optionally filtered by type.
+     * 
      * If $relation_type is given, only returns relations of this type.
      *
      * @param string $relations_type            

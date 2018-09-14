@@ -33,7 +33,7 @@ use exface\Core\Interfaces\Exceptions\ExceptionInterface;
         
         // ...receding installers here...
         
-        $schema_installer = new SqlSchemaInstaller($this->getNameResolver());
+        $schema_installer = new SqlSchemaInstaller($this->getSelectorInstalling());
         $schema_installer->setDataConnection(...);
         $installer->addInstaller($schema_installer);
         
@@ -89,7 +89,7 @@ class SqlSchemaInstaller extends AbstractAppInstaller
      */
     public function uninstall()
     {
-        return 'Automatic uninstaller not implemented for' . $this->getNameResolver()->getAliasWithNamespace() . '!';
+        return 'Automatic uninstaller not implemented for' . $this->getSelectorInstalling()->getAliasWithNamespace() . '!';
     }
 
     /**
@@ -100,7 +100,7 @@ class SqlSchemaInstaller extends AbstractAppInstaller
      */
     public function backup($destination_absolute_path)
     {
-        return 'SQL Backup not implemented for installer "' . $this->getNameResolver()->getAliasWithNamespace() . '"!';
+        return 'SQL Backup not implemented for installer "' . $this->getSelectorInstalling()->getAliasWithNamespace() . '"!';
     }
 
     /**

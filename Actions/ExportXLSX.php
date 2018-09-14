@@ -77,7 +77,7 @@ class ExportXLSX extends ExportDataFile
         $dataTypeSheet->dataRead();
         
         /** @var DataTable $inputWidget */
-        $inputWidget = $this->getCalledByWidget()->getInputWidget();
+        $inputWidget = $this->getWidgetDefinedIn()->getInputWidget();
         $header = [];
         $output = [];
         foreach ($dataSheet->getColumns() as $col) {
@@ -224,7 +224,7 @@ class ExportXLSX extends ExportDataFile
         // Benutzername
         $this->getWriter()->writeSheetRow($this->getExcelInfoSheetName(), [
             $translator->translate('ACTION.EXPORTXLSX.USERNAME'),
-            $this->getWorkbench()->context()->getScopeUser()->getUsername()
+            $this->getWorkbench()->getContext()->getScopeUser()->getUsername()
         ]);
         
         // Zeitpunkt des Exports
@@ -245,7 +245,7 @@ class ExportXLSX extends ExportDataFile
         ]);
         // Filter mit Captions von der DataTable auslesen
         $dataTableFilters = [];
-        foreach ($this->getCalledByWidget()->getInputWidget()->getFilters() as $filter) {
+        foreach ($this->getWidgetDefinedIn()->getInputWidget()->getFilters() as $filter) {
             $dataTableFilters[$filter->getInputWidget()->getAttributeAlias()] = $filter->getInputWidget()->getCaption();
         }
         // Gesetzte Filter am DataSheet durchsuchen
@@ -271,7 +271,7 @@ class ExportXLSX extends ExportDataFile
                 // die UID geschrieben werden
                 if ($filterExpression->isMetaAttribute()) {
                     if (($metaAttribute = $dataSheet->getMetaObject()->getAttribute($filterExpression->toString())) && $metaAttribute->isRelation()) {
-                        $relatedObject = $metaAttribute->getRelation()->getRelatedObject();
+                        $relatedObject = $metaAttribute->getRelation()->getRightObject();
                         $filterValueRequestSheet = DataSheetFactory::createFromObject($relatedObject);
                         $filterValueRequestSheet->getColumns()->addFromAttribute($relatedObject->getUidAttribute());
                         $filterValueRequestSheet->getColumns()->addFromAttribute($relatedObject->getLabelAttribute());

@@ -4,6 +4,7 @@ namespace exface\Core\Formulas;
 use exface\Core\Behaviors\StateMachineBehavior;
 use exface\Core\CommonLogic\Model\Formula;
 use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\Factories\FormulaFactory;
 
 /**
  * Takes a numeric state value ($state) as input and tries to resolve the states name.
@@ -37,8 +38,8 @@ class StateMachineState extends Formula
         $showProgressBar = BooleanDataType::cast($showProgressBar);
         
         $workbench = $this->getWorkbench();
-        /** @var StateMachineBehavior $smb */
-        $smb = $workbench->model()->getObject($object)->getBehaviors()->getByAlias('exface.Core.Behaviors.StateMachineBehavior');
+        /** @var \exface\Core\CommonLogic\Model\Behaviors\StateMachineBehavior $smb */
+        $smb = $workbench->model()->getObject($object)->getBehaviors()->getByPrototypeClass(StateMachineBehavior::class)->getFirst();
         if (! $smb || is_null($state)) {
             // If no StateMachineBehavior or no state set -> simply return state string
             return strval($state);
@@ -53,7 +54,7 @@ class StateMachineState extends Formula
             $minProgess = min($statesKeys);
             $maxProgess = max($statesKeys);
             
-            $progressBar = new Progressbar($workbench);
+            $progressBar = FormulaFactory::createFromString($this->getWorkbench(), Progressbar::class);
             $colorMap = $smb->getProgressBarColorMap();
             if ($colorMap)
                 return $progressBar->run($state, $stateString, $minProgess, $maxProgess, $colorMap);

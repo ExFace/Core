@@ -6,6 +6,7 @@ use exface\Core\Factories\DataSheetFactory;
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Exceptions\InvalidArgumentException;
+use exface\Core\Interfaces\DataSources\ModelLoaderInterface;
 
 /**
  * Representation of an Exface user.
@@ -33,6 +34,10 @@ class User implements UserInterface
     private $email;
 
     private $anonymous = false;
+    
+    private $modelLoader = null;
+    
+    private $modelLoaded = false;
 
     /**
      * 
@@ -41,54 +46,22 @@ class User implements UserInterface
      * @param DataSheetInterface $dataSheet
      * @param boolean $anonymous
      */
-    public function __construct(Workbench $exface, $dataSheet = null, $anonymous = false)
+    public function __construct(Workbench $exface, string $username = null, ModelLoaderInterface $loader = null)
     {
         $this->exface = $exface;
-        
-        if ($dataSheet) {
-            $this->setDataSheet($dataSheet);
-            if ($uid = $dataSheet->getCellValue($dataSheet->getUidColumnName(), 0)) {
-                $this->uid = $uid;
-            }
+        $this->anonymous = ($username === null);
+        if ($username !== null) {
+            $this->username = $username;
         }
-        
-        $this->anonymous = $anonymous;
+        $this->modelLoader = $loader;
     }
-
-    /**
-     * Returns the DataSheet the User is created from.
-     * 
-     * @return \exface\Core\Interfaces\DataSheets\DataSheetInterface
-     */
-    private function getDataSheet()
+    
+    protected function loadData() : User
     {
-        return $this->dataSheet;
-    }
-
-    /**
-     * Saves the DataSheet the User is created from.
-     * 
-     * @param DataSheetInterface $dataSheet
-     * @throws InvalidArgumentException
-     * @return User
-     */
-    private function setDataSheet(DataSheetInterface $dataSheet)
-    {
-        if (! $dataSheet->getMetaObject()->isExactly('exface.Core.USER')) {
-            throw new InvalidArgumentException('DataSheet with "' . $dataSheet->getMetaObject()->getAliasWithNamespace() . '" passed. Expected "exface.Core.USER".');
+        if ($this->modelLoader !== null) {
+            $this->modelLoader->loadUserData($this);
+            $this->modelLoaded = true;
         }
-        if ($dataSheet->countRows() != 1) {
-            throw new InvalidArgumentException('DataSheet with ' . $dataSheet->countRows() . ' rows passed. Expected exactly one row.');
-        }
-        // Alle Filter werden entfernt (insbesondere ein moeglicher Filter nach dem Username. Das
-        // ist wichtig beim Loeschen. Das Objekt axenox.TestMan.TEST_LOG enthaelt naemlich eine
-        // Relation auf User, dadurch werden beim Loeschen auch Testlogs geloescht, welche der
-        // Nutzer erstellt hat (Cascading Delete). Die Tabelle test_log befindet sich aber in
-        // einer anderen Datenbank als exf_user, es kommt daher zu einem SQL-Error wenn versucht
-        // wird die Uid aus dem Username zu ermitteln.
-        $dataSheet->getFilters()->removeAll();
-        $this->dataSheet = $dataSheet;
-        
         return $this;
     }
 
@@ -99,7 +72,16 @@ class User implements UserInterface
      */
     public function getUid()
     {
+        if ($this->uid === null && $this->modelLoaded === false) {
+            $this->loadData();
+        }
         return $this->uid;
+    }
+    
+    public function setUid(string $value) : UserInterface
+    {
+        $this->uid = $value;
+        return $this;
     }
 
     /**
@@ -130,6 +112,9 @@ class User implements UserInterface
      */
     public function getFirstName()
     {
+        if ($this->firstname === null && $this->modelLoaded === false) {
+            $this->loadData();
+        }
         return $this->firstname;
     }
 
@@ -151,6 +136,9 @@ class User implements UserInterface
      */
     public function getLastName()
     {
+        if ($this->lastname === null && $this->modelLoaded === false) {
+            $this->loadData();
+        }
         return $this->lastname;
     }
 
@@ -172,9 +160,14 @@ class User implements UserInterface
      */
     public function getLocale()
     {
+        if ($this->locale === null && $this->modelLoaded === false) {
+            $this->loadData();
+        }
+        
         if (! $this->locale) {
             $this->locale = $this->getWorkbench()->getConfig()->getOption("LOCALE.DEFAULT");
         }
+        
         return $this->locale;
     }
 
@@ -196,6 +189,9 @@ class User implements UserInterface
      */
     public function getEmail()
     {
+        if ($this->email === null && $this->modelLoaded === false) {
+            $this->loadData();
+        }
         return $this->email;
     }
 
@@ -213,7 +209,7 @@ class User implements UserInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\ExfaceClassInterface::getWorkbench()
+     * @see \exface\Core\Interfaces\WorkbenchDependantInterface::getWorkbench()
      */
     public function getWorkbench()
     {
@@ -229,10 +225,13 @@ class User implements UserInterface
     {
         $userModel = $this->getWorkbench()->model()->getObject('exface.Core.USER');
         
-        if ($this->getDataSheet()) {
-            $userSheet = $this->getDataSheet();
-        } else {
-            $userSheet = DataSheetFactory::createFromObject($userModel);
+        $userSheet = DataSheetFactory::createFromObject($userModel);
+        if ($this->hasModel()) {
+            foreach ($userModel->getAttributes() as $attr) {
+                $userSheet->getColumns()->addFromAttribute($attr);
+            }
+            $userSheet->getFilters()->addConditionsFromString($userModel, 'USERNAME', $this->getUsername(), EXF_COMPARATOR_EQUALS);
+            $userSheet->dataRead();
         }
         
         if ($this->getUid()) {
@@ -272,6 +271,9 @@ class User implements UserInterface
      */
     public function isUserAdmin()
     {
+        if ($this->isUserAnonymous()) {
+            return false;
+        }
         return $this->getWorkbench()->getCMS()->isUserAdmin();
     }
 
@@ -283,5 +285,24 @@ class User implements UserInterface
     public function isUserAnonymous()
     {
         return $this->anonymous;
+    }
+    
+    public function hasModel() : bool
+    {
+        if ($this->modelLoader === null) {
+            return false;
+        }
+        
+        if ($this->modelLoaded === true) {
+            return true;
+        }
+        
+        try {
+            $this->loadData();
+        } catch (\exface\Core\Exceptions\UserNotFoundError $e) {
+            return false;
+        }
+        
+        return true;
     }
 }

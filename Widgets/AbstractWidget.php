@@ -8,7 +8,6 @@ use exface\Core\Interfaces\Widgets\iTriggerAction;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\CommonLogic\WidgetLink;
 use exface\Core\Interfaces\WidgetInterface;
-use exface\Core\CommonLogic\NameResolver;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Factories\WidgetDimensionFactory;
 use exface\Core\Interfaces\Model\UiPageInterface;
@@ -27,6 +26,8 @@ use exface\Core\Exceptions\Widgets\WidgetHasNoMetaObjectError;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\CommonLogic\Translation;
+use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
+use exface\Core\Factories\ExpressionFactory;
 
 /**
  * Basic ExFace widget
@@ -318,7 +319,7 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
      */
     function setCaption($caption)
     {
-        $this->caption = $caption;
+        $this->caption = $this->evaluatePropertyExpression($caption);
         return $this;
     }
     
@@ -428,7 +429,7 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
     {
         if (is_null($this->meta_object)) {
             if ($this->getObjectQualifiedAlias()) {
-                $obj = $this->getUi()->getWorkbench()->model()->getObject($this->getObjectQualifiedAlias());
+                $obj = $this->getWorkbench()->model()->getObject($this->getObjectQualifiedAlias());
             } elseif ($this->getParent()) {
                 $obj = $this->getParent()->getMetaObject();
             } else {
@@ -598,8 +599,7 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
     {
         $link = null;
         if ($this->getValueExpression() && $this->getValueExpression()->isReference()) {
-            $link = $this->getValueExpression()->getWidgetLink();
-            $link->setWidgetIdSpace($this->getIdSpace());
+            $link = $this->getValueExpression()->getWidgetLink($this);
         }
         return $link;
     }
@@ -619,7 +619,7 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
         if ($expression_or_string instanceof expression) {
             $this->value = $expression_or_string;
         } else {
-            $this->value = $this->getWorkbench()->model()->parseExpression($expression_or_string, $this->getMetaObject());
+            $this->value = ExpressionFactory::createFromString($this->getWorkbench(), $expression_or_string, $this->getMetaObject());
         }
         return $this;
     }
@@ -752,9 +752,9 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
     public function setObjectAlias($full_or_object_alias)
     {
         // If it's a fully qualified alias, use it directly
-        if ($ns = $this->getUi()->getWorkbench()->model()->getNamespaceFromQualifiedAlias($full_or_object_alias)) {
+        if ($ns = $this->getWorkbench()->model()->getNamespaceFromQualifiedAlias($full_or_object_alias)) {
             $this->object_qualified_alias = $full_or_object_alias;
-            $this->object_alias = $this->getUi()->getWorkbench()->model()->getObjectAliasFromQualifiedAlias($full_or_object_alias);
+            $this->object_alias = $this->getWorkbench()->model()->getObjectAliasFromQualifiedAlias($full_or_object_alias);
         }  // ... if the namespace is missing, get it from the app of the parent object
 else {
             if ($this->getParent()) {
@@ -765,7 +765,7 @@ else {
                 throw new WidgetConfigurationError($this, 'Cannot set object_alias property for widget "' . $this->getId() . '": neither a namespace is specified, nor is there a parent widget to take it from!', '6UOD4TW');
             }
             $this->object_alias = $full_or_object_alias;
-            $this->object_qualified_alias = $ns . NameResolver::NAMESPACE_SEPARATOR . $this->object_alias;
+            $this->object_qualified_alias = $ns . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER . $this->object_alias;
         }
         // IMPORTANT: unset the meta_object_id of this class, because it may already have been initialized previously and would act as a cache
         // for the meta object.
@@ -931,17 +931,6 @@ else {
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\Interfaces\WidgetInterface::getUi()
-     */
-    public function getUi()
-    {
-        return $this->getPage()->getWorkbench()->ui();
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\WidgetInterface::getHint()
      */
     public function getHint()
@@ -965,7 +954,7 @@ else {
      */
     public function setHint($value)
     {
-        $this->hint = $value;
+        $this->hint = $this->evaluatePropertyExpression($value);
         return $this;
     }
 
@@ -1161,22 +1150,7 @@ else {
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\Interfaces\WidgetInterface::createWidgetLink()
-     */
-    public function createWidgetLink()
-    {
-        $exface = $this->getWorkbench();
-        $link = new WidgetLink($exface);
-        $link->setWidgetId($this->getId());
-        $link->setPageAlias($this->getPage()->getAliasWithNamespace());
-        return $link;
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\ExfaceClassInterface::getWorkbench()
+     * @see \exface\Core\Interfaces\WorkbenchDependantInterface::getWorkbench()
      */
     public function getWorkbench()
     {
@@ -1213,6 +1187,30 @@ else {
     }
 
     /**
+     * Evaluates the formula in the passed $value and returns the result.
+     * 
+     * This can be used to translate certain attributes, e.g. the caption:
+     * =TRANSLATE('exface.Core', 'TRANSLATION.KEY', '%placeholder1%=>value1|%placeholder2%=>value2', '1')
+     * =TRANSLATE('exface.Core', 'ACTION.CREATEDATA.RESULT', '%number%=>Zwei', '2')
+     * =TRANSLATE('exface.Core', 'ACTION.CREATEDATA.NAME')
+     * 
+     * Only static formulas are evaluated, otherwise the passed $value is returned.
+     * 
+     * @param string $string
+     * @return string
+     */
+    protected function evaluatePropertyExpression(string $string) : string
+    {
+        if (Expression::detectFormula($string)) {
+            $expr = ExpressionFactory::createFromString($this->getWorkbench(), $string);
+            if ($expr->isStatic()) {
+                return $expr->evaluate();
+            }
+        }
+        return $string;
+    }
+
+    /**
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\WidgetInterface::getDoNotPrefill()
@@ -1246,12 +1244,14 @@ else {
      * Sets a condition to disable the widget.
      *
      * E.g.:
-     *  
+     * 
+     * ```json
      *  "disable_condition": {
      *      "widget_link": "consumer!CONSUMER_MAIL_PHONE",
      *      "comparator": "!=",
      *      "value": ""
      *  }
+     * ```
      * 
      * means the current widget is disabled when the column CONSUMER_MAIL_PHONE of
      * widget consumer is not empty. Can be usefully combined with a value-reference

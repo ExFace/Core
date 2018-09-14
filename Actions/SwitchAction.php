@@ -3,6 +3,9 @@ namespace exface\Core\Actions;
 
 use exface\Core\Exceptions\Actions\ActionInputMissingError;
 use exface\Core\Exceptions\Actions\ActionRuntimeError;
+use exface\Core\Interfaces\Tasks\ResultInterface;
+use exface\Core\Interfaces\DataSources\DataTransactionInterface;
+use exface\Core\Interfaces\Tasks\TaskInterface;
 
 /**
  * This action performs calls one of the actions specified in the switch_action_map property depending on
@@ -22,19 +25,25 @@ class SwitchAction extends ActionChain
 
     private $switch_action_map = null;
 
-    protected function perform()
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Actions\ActionChain::perform()
+     */
+    protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {
-        if (! $this->getInputDataSheet() || ! $this->getInputDataSheet()->getColumns()->getByExpression($this->getSwitchAttributeAlias())) {
+        $input = $this->getInputDataSheet($task);
+        if (! $input->getColumns()->getByExpression($this->getSwitchAttributeAlias())) {
             throw new ActionInputMissingError($this, 'Cannot perform SwitchAction: Missing column "' . $this->getSwitchAttributeAlias() . '" in input data!');
         }
         
-        $switch_value = $this->getInputDataSheet()->getColumns()->getByExpression($this->getSwitchAttributeAlias())->getCellValue(0);
+        $switch_value = $input->getColumns()->getByExpression($this->getSwitchAttributeAlias())->getCellValue(0);
         if ($action = $this->getActionsArray()[$this->getSwitchActionMap()->getProperty($switch_value)]) {
             $this->getActions()->removeAll()->add($action);
         } else {
             throw new ActionRuntimeError($this, 'No action found to switch to for value "' . $switch_value . '" of "' . $this->getSwitchAttributeAlias() . '"!');
         }
-        return parent::perform();
+        return parent::perform($task, $transaction);
     }
 
     protected function getActionsArray()
@@ -62,14 +71,5 @@ class SwitchAction extends ActionChain
     {
         $this->switch_action_map = $value;
         return $this;
-    }
-
-    public function implementsInterface($interface)
-    {
-        if ($this->isPerformed()) {
-            return $this->getActions()->getFirst()->implementsInterface($interface);
-        } else {
-            return parent::implementsInterface($interface);
-        }
     }
 }

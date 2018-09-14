@@ -10,6 +10,9 @@ use exface\Core\CommonLogic\AbstractAction;
 use exface\Core\Exceptions\Actions\ActionUndoFailedError;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\CommonLogic\Constants\Icons;
+use exface\Core\Interfaces\Tasks\TaskInterface;
+use exface\Core\Factories\ResultFactory;
+use exface\Core\Interfaces\Tasks\ResultInterface;
 
 class SaveData extends AbstractAction implements iModifyData, iCanBeUndone
 {
@@ -18,6 +21,11 @@ class SaveData extends AbstractAction implements iModifyData, iCanBeUndone
 
     private $undo_data_sheet = null;
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AbstractAction::init()
+     */
     function init()
     {
         $this->setIcon(Icons::CHECK);
@@ -25,45 +33,50 @@ class SaveData extends AbstractAction implements iModifyData, iCanBeUndone
         $this->setInputRowsMax(null);
     }
 
-    protected function perform()
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AbstractAction::perform()
+     */
+    protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {
-        $data_sheet = $this->getInputDataSheet();
-        $this->setAffectedRows($data_sheet->dataSave($this->getTransaction()));
-        $this->setResultDataSheet($data_sheet);
-        $this->setResult('');
-        $this->setResultMessage($this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.SAVEDATA.RESULT', array(
-            '%number%' => $this->getAffectedRows()
-        ), $this->getAffectedRows()));
-    }
-
-    protected function getAffectedRows()
-    {
-        return $this->affected_rows;
-    }
-
-    protected function setAffectedRows($value)
-    {
-        if ($value == 0) {
-            $this->setUndoable(false);
+        $data_sheet = $this->getInputDataSheet($task);
+        $affected_rows = $data_sheet->dataSave($transaction);
+        
+        $message = $this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.SAVEDATA.RESULT', ['%number%' => $affected_rows], $affected_rows);
+        $result = ResultFactory::createDataResult($task, $data_sheet, $message);
+        
+        if ($affected_rows > 0) {
+            $result->setDataModified(true);
         }
-        $this->affected_rows = $value;
+        
+        return $result;
     }
 
     /**
      *
      * @return DataSheetInterface
      */
-    public function getUndoDataSheet()
+    protected function getUndoDataSheet()
     {
         return $this->undo_data_sheet;
     }
 
-    public function setUndoDataSheet(DataSheetInterface $data_sheet)
+    /**
+     * 
+     * @param DataSheetInterface $data_sheet
+     */
+    protected function setUndoDataSheet(DataSheetInterface $data_sheet)
     {
         $this->undo_data_sheet = $data_sheet;
     }
 
-    public function getUndoDataSerializable()
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\iCanBeUndone::getUndoDataUxon()
+     */
+    public function getUndoDataUxon()
     {
         if ($this->getUndoDataSheet()) {
             return $this->getUndoDataSheet()->exportUxonObject();
@@ -72,13 +85,23 @@ class SaveData extends AbstractAction implements iModifyData, iCanBeUndone
         }
     }
 
-    public function setUndoData(UxonObject $uxon_object)
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\iCanBeUndone::setUndoData()
+     */
+    public function setUndoData(UxonObject $uxon_object) : iCanBeUndone
     {
         $exface = $this->getApp()->getWorkbench();
         $this->undo_data_sheet = DataSheetFactory::createFromUxon($exface, $uxon_object);
     }
 
-    public function undo(DataTransactionInterface $transaction = null)
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\iCanBeUndone::undo()
+     */
+    public function undo(DataTransactionInterface $transaction) : DataSheetInterface
     {
         throw new ActionUndoFailedError($this, 'Undo functionality not implemented yet for action "' . $this->getAlias() . '"!', '6T5DS00');
     }

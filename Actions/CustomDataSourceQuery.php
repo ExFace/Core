@@ -10,6 +10,11 @@ use exface\Core\Exceptions\Actions\ActionInputMissingError;
 use exface\Core\Exceptions\Actions\ActionInputInvalidObjectError;
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Interfaces\Tasks\TaskInterface;
+use exface\Core\Interfaces\DataSources\DataTransactionInterface;
+use exface\Core\Interfaces\Tasks\ResultInterface;
+use exface\Core\DataTypes\StringDataType;
+use exface\Core\Factories\ResultFactory;
 
 class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuery
 {
@@ -50,7 +55,7 @@ class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuer
     public function getDataConnection()
     {
         if (is_null($this->data_connection)) {
-            $this->setDataConnection($this->getCalledByWidget()->getMetaObject()->getDataConnection());
+            $this->setDataConnection($this->getWidgetDefinedIn()->getMetaObject()->getDataConnection());
         }
         return $this->data_connection;
     }
@@ -85,10 +90,15 @@ class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuer
         return $this;
     }
 
-    protected function perform()
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AbstractAction::perform()
+     */
+    protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {
         $counter = 0;
-        $data_sheet = $this->getInputDataSheet();
+        $data_sheet = $this->getInputDataSheet($task);
         // Check if the action is aplicable to the input object
         if ($this->getAplicableToObjectAlias()) {
             if (! $data_sheet->getMetaObject()->is($this->getAplicableToObjectAlias())) {
@@ -97,7 +107,6 @@ class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuer
         }
         
         // Start transaction
-        $transaction = $this->getTransaction();
         $transaction->addDataConnection($this->getDataConnection());
         
         // Build and perform all queries. Rollback if anything fails
@@ -105,7 +114,7 @@ class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuer
             foreach ($this->getQueries() as $query) {
                 // See if the query has any placeholders
                 $placeholders = array();
-                foreach ($this->getWorkbench()->utils()->findPlaceholdersInString($query) as $ph) {
+                foreach (StringDataType::findPlaceholders($query) as $ph) {
                     /* @var $col exface\Core\CommonLogic\DataSheets\DataColumn */
                     if (! $col = $data_sheet->getColumns()->get(DataColumn::sanitizeColumnName($ph))) {
                         throw new ActionInputMissingError($this, 'Cannot perform custom query in "' . $this->getAliasWithNamespace() . '": placeholder "' . $ph . '" not found in inupt data!', '6T5DNWE');
@@ -131,11 +140,13 @@ class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuer
             $data_sheet->addFilterFromColumnValues($data_sheet->getUidColumn());
         }
         $data_sheet->dataRead();
-        $this->setResultDataSheet($data_sheet);
-        $this->setResult('');
-        $this->setResultMessage($this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.CUSTOMDATAQUERY.RESULT', array(
+        
+        $result = ResultFactory::createDataResult($task, $data_sheet);
+        $result->setMessage($this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.CUSTOMDATAQUERY.RESULT', array(
             '%number%' => $counter
         ), $counter));
+        
+        return $result;
     }
 }
 ?>

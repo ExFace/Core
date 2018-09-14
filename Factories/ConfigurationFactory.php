@@ -5,7 +5,7 @@ use exface\Core\Interfaces\AppInterface;
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\Interfaces\ConfigurationInterface;
 
-class ConfigurationFactory extends AbstractFactory
+class ConfigurationFactory extends AbstractStaticFactory
 {
 
     /**

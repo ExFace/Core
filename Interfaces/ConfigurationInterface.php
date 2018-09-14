@@ -1,20 +1,27 @@
 <?php
 namespace exface\Core\Interfaces;
 
-use exface\Core\Interfaces\ExfaceClassInterface;
+use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\OutOfBoundsException;
 
-interface ConfigurationInterface extends ExfaceClassInterface, iCanBeConvertedToUxon
+interface ConfigurationInterface extends WorkbenchDependantInterface, iCanBeConvertedToUxon
 {
 
     /**
      * Returns a single configuration value specified by the given key
      *
      * @param string $key            
-     * @return multitype
+     * @return mixed
      */
     public function getOption($key);
+    
+    /**
+     * 
+     * @param string $regEx
+     * @return array
+     */
+    public function findOptions(string $regEx) : array;
 
     /**
      * Sets a single configuration value specified by the given key. If a scope

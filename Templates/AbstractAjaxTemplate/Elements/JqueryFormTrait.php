@@ -16,7 +16,7 @@ trait JqueryFormTrait {
     {
         $output = '';
         foreach ($this->getWidget()->getButtons() as $btn) {
-            $output .= $this->getTemplate()->generateHtml($btn);
+            $output .= $this->getTemplate()->buildHtml($btn);
         }
         
         return $output;
@@ -26,7 +26,7 @@ trait JqueryFormTrait {
     {
         $output = '';
         foreach ($this->getWidget()->getButtons() as $btn) {
-            $output .= $this->getTemplate()->generateJs($btn);
+            $output .= $this->getTemplate()->buildJs($btn);
         }
         
         return $output;

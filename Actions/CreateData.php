@@ -5,14 +5,24 @@ use exface\Core\Interfaces\Actions\iCreateData;
 use exface\Core\Exceptions\Actions\ActionUndoFailedError;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\Interfaces\Tasks\TaskInterface;
+use exface\Core\Factories\ResultFactory;
+use exface\Core\Interfaces\Tasks\ResultInterface;
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 
 class CreateData extends SaveData implements iCreateData
 {
     private $ingnore_related_objects_in_input_data = false;
 
-    protected function perform()
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Actions\SaveData::perform()
+     */
+    protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {
-        $data_sheet = $this->getInputDataSheet();
+        $data_sheet = $this->getInputDataSheet($task);
+        $affected_rows = 0;
         
         if ($this->getIgnoreRelatedObjectsInInputData()){
             $clean_sheet = $data_sheet->copy();
@@ -21,31 +31,42 @@ class CreateData extends SaveData implements iCreateData
                     $clean_sheet->getColumns()->remove($col);
                 }
             }
-            $result = $clean_sheet->dataCreate(true, $this->getTransaction());
+            $affected_rows += $clean_sheet->dataCreate(true, $transaction);
             $data_sheet->merge($clean_sheet);
         } else {
-            $result = $data_sheet->dataCreate(true, $this->getTransaction());
+            $affected_rows += $data_sheet->dataCreate(true, $transaction);
         }
         
-        $this->setAffectedRows($result);
         $this->setUndoDataSheet($data_sheet);
-        $this->setResultDataSheet($data_sheet);
-        $this->setResult('');
-        $this->setResultMessage($this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.CREATEDATA.RESULT', array(
-            '%number%' => $this->getAffectedRows()
-        ), $this->getAffectedRows()));
+        
+        $message = $this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.CREATEDATA.RESULT', ['%number%' => $affected_rows], $affected_rows);
+        $result = ResultFactory::createDataResult($task, $data_sheet, $message);
+        if ($affected_rows > 0) {
+            $result->setDataModified(true);
+        }
+        
+        return $result;
     }
 
-    public function undo(DataTransactionInterface $transaction = null)
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Actions\SaveData::undo()
+     */
+    public function undo(DataTransactionInterface $transaction) : DataSheetInterface
     {
         if (! $data_sheet = $this->getUndoDataSheet()) {
             throw new ActionUndoFailedError($this, 'Cannot undo action "' . $this->getAliasWithNamespace() . '": Failed to load history for this action!', '6T5DLGN');
         }
-        $data_sheet->dataDelete($transaction ? $transaction : $this->getTransaction());
+        $data_sheet->dataDelete($transaction);
         return $data_sheet;
     }
     
-    public function getIgnoreRelatedObjectsInInputData()
+    /**
+     * 
+     * @return bool
+     */
+    public function getIgnoreRelatedObjectsInInputData() : bool
     {
         return $this->ingnore_related_objects_in_input_data;
     }
@@ -62,7 +83,7 @@ class CreateData extends SaveData implements iCreateData
      * @uxon-property ignore_related_objects_in_input_data
      * @uxon-type boolean
      * 
-     * @param boolean $true_or_false
+     * @param bool $true_or_false
      * @return \exface\Core\Actions\CreateData
      */
     public function setIgnoreRelatedObjectsInInputData($true_or_false)

@@ -6,6 +6,11 @@ use exface\Core\CommonLogic\AbstractAction;
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Exceptions\Actions\ActionRuntimeError;
+use exface\Core\Interfaces\Tasks\TaskInterface;
+use exface\Core\Interfaces\DataSources\DataTransactionInterface;
+use exface\Core\Interfaces\Tasks\ResultInterface;
+use exface\Core\Factories\ResultFactory;
+use exface\Core\DataTypes\StringDataType;
 
 /**
  * This action opens a URL for a given object instance.
@@ -51,11 +56,16 @@ class GoToUrl extends AbstractAction implements iShowUrl
         return $this;
     }
 
-    protected function perform()
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AbstractAction::perform()
+     */
+    protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {
         $vars = array();
         $vals = array();
-        foreach ($this->getInputDataSheet()->getRow(0) as $var => $val) {
+        foreach ($this->getInputDataSheet($task)->getRow(0) as $var => $val) {
             $vars[] = '[#' . $var . '#]';
             $vals[] = urlencode($val);
         }
@@ -63,15 +73,16 @@ class GoToUrl extends AbstractAction implements iShowUrl
         $result = str_replace($vars, $vals, $this->getUrl());
         $result = filter_var($result, FILTER_SANITIZE_STRING);
         if (substr($result, 0, 4) !== 'http') {
-            $result = $this->getWorkbench()->getCMS()->createLinkToFile($result);
+            $result = $this->getWorkbench()->getCMS()->buildUrlToFile($result);
         }
+        
+        $result = ResultFactory::createUriResult($task, $result);
+        $result->setMessage($this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.GOTOURL.SUCCESS'));
         if ($this->getOpenInNewWindow()) {
-            $result .= (strrpos($result, "?") !== false ? "&" : "?") . "target=_blank";
+            $result->setOpenInNewWindow(true);
         }
-        $this->setResult($result);
-        $this->setResultMessage($this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.GOTOURL.SUCCESS'));
-        $this->setResultDataSheet($this->getInputDataSheet());
-        return $this;
+        
+        return $result;
     }
 
     public function getOpenInNewWindow()
@@ -99,7 +110,7 @@ class GoToUrl extends AbstractAction implements iShowUrl
     public function buildUrlFromDataSheet(DataSheetInterface $data_sheet, $row_nr = 0)
     {
         $url = $this->getUrl();
-        $placeholders = $this->getWorkbench()->utils()->findPlaceholdersInString($url);
+        $placeholders = StringDataType::findPlaceholders($url);
         foreach ($placeholders as $ph){
             if ($col = $data_sheet->getColumns()->getByExpression($ph)){
                 $url = str_replace('[#' . $ph . '#]', $col->getCellValue($row_nr), $url);

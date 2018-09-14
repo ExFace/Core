@@ -38,7 +38,7 @@ class OdbcSqlConnector extends AbstractSqlConnector
         }
         
         if (! $conn) {
-            throw new DataConnectionFailedError($this, 'Failed to create the database connection for "' . $this->getAliasWithNamespace() . '"!', '6T2TBVR', $conn_exception);
+            throw new DataConnectionFailedError($this, 'Failed to create the database connection for "' . $this->getAliasWithNamespace() . '"!' . ($conn_exception ? ' ' . $conn_exception->getMessage() : ''), '6T2TBVR', $conn_exception);
         }
         
         // Apply autocommit option

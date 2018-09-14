@@ -251,6 +251,11 @@ class InputSelect extends Input implements iSupportMultiSelect
             $options = $array;
         }
         
+        //Translate options
+        foreach ($options as $key => $value) {
+            $options[$key] = $this->evaluatePropertyExpression($value);
+        }
+        
         $this->selectable_options = $options;
         return $this;
     }
@@ -341,7 +346,7 @@ class InputSelect extends Input implements iSupportMultiSelect
         // and see if their related object is the same as the related object of the relation represented by the combo.
         foreach ($data_sheet->getColumns()->getAll() as $column) {
             if ($column->getAttribute() && $column->getAttribute()->isRelation()) {
-                if ($column->getAttribute()->getRelation()->getRelatedObject()->is($this->getAttribute()->getRelation()->getRelatedObject())) {
+                if ($column->getAttribute()->getRelation()->getRightObject()->is($this->getAttribute()->getRelation()->getRightObject())) {
                     // TODO what about texts?
                     $this->setOptionsFromPrefillColumns($column);
                     return;
@@ -360,12 +365,11 @@ class InputSelect extends Input implements iSupportMultiSelect
      * @return void
      */
     protected function doPrefillWithRelatedObject(DataSheetInterface $data_sheet, MetaRelationInterface $relation_from_options_to_prefill_object)
-    {
-        
+    { 
         // Now see if the prefill object can be used to filter values
         if (! $this->getUsePrefillValuesAsOptions() && $this->getUsePrefillToFilterOptions()) {
             // Use this relation as filter to query the data source for selectable options
-            if ($col = $data_sheet->getColumns()->getByExpression($relation_from_options_to_prefill_object->getRelatedObjectKeyAlias())) {
+            if ($col = $data_sheet->getColumns()->getByAttribute($relation_from_options_to_prefill_object->getRightKeyAttribute(true))) {
                 $this->getOptionsDataSheet()->addFilterInFromString($relation_from_options_to_prefill_object->getAlias(), $col->getValues(false));
             }
         }

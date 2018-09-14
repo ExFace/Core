@@ -1,9 +1,9 @@
 <?php
 namespace exface\Core\Interfaces\Events;
 
-use exface\Core\Interfaces\ExfaceClassInterface;
+use exface\Core\Interfaces\WorkbenchDependantInterface;
 
-interface EventInterface extends ExfaceClassInterface
+interface EventInterface extends WorkbenchDependantInterface
 {
 
     /**

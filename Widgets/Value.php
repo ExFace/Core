@@ -20,6 +20,7 @@ use exface\Core\DataTypes\NumberDataType;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Interfaces\Widgets\iShowDataColumn;
+use exface\Core\DataTypes\RelationTypeDataType;
 
 /**
  * The Value widget simply shows a raw (unformatted) value.
@@ -93,7 +94,7 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
         /*
          * if ($this->getValueExpression() && $this->getValueExpression()->isReference()){
          *  $ref_widget = $this->getValueExpression()->getWidgetLink()->getWidget();
-         *  if ($ref_widget instanceof ComboTable){
+         *  if ($ref_widget instanceof InputComboTable){
          *      $data_column = $ref_widget->getTable()->getColumn($this->getValueExpression()->getWidgetLink()->getColumnId());
          *      var_dump($data_column->getAttributeAlias());
          *  }
@@ -133,12 +134,13 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
                     }
                     // If the prefill object is not in the widget's relation path, try to find a relation from this widget's
                     // object to the data sheet object and vice versa
-                } elseif ($this->getAttribute()->isRelation() && $prefill_object->is($this->getAttribute()->getRelation()->getRelatedObject())) {
-                    // If this widget represents the direct relation attribute, the attribute to display would be the UID of the
-                    // of the related object (e.g. trying to fill the order positions attribute "ORDER" relative to the object
-                    // "ORDER" should result in the attribute UID of ORDER because it holds the same value)
-                        
-                    $data_sheet->getColumns()->addFromExpression($this->getAttribute()->getRelation()->getRelatedObjectKeyAlias());
+                    
+                } elseif ($this->getAttribute()->isRelation() && $prefill_object->is($this->getAttribute()->getRelation()->getRightObject())) {
+                    // If this widget represents the relation from the sheet object to the prefill object, the prefill value would be the 
+                    // right key of the relation (e.g. trying to prefill the order positions attribute "ORDER" relative to the object
+                    // "ORDER" should result in the attribute UID of ORDER because it is the right key and must have a value matching the 
+                    // left key). 
+                    $data_sheet->getColumns()->addFromAttribute($this->getAttribute()->getRelation()->getRightKeyAttribute(true));
                 } else {
                     // If the attribute is not a relation itself, we still can use it for prefills if we find a relation to access
                     // it from the $data_sheet's object. In order to do this, we need to find relations from the prefill object to
@@ -148,11 +150,10 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
                     // the prefill object to an object, this widget's object extends, can still be used in most cases, but a direct
                     // relation is safer. Not sure, if inherited relations will work if the extending object has a different data address...
                     
-                    
                     // Iterate over all forward relations
                     $inherited_rel = null;
                     $direct_rel = null;
-                    foreach ($prefill_object->findRelations($widget_object->getId(), MetaRelationInterface::RELATION_TYPE_FORWARD) as $rel) {
+                    foreach ($prefill_object->findRelations($widget_object->getId(), RelationTypeDataType::REGULAR) as $rel) {
                         if ($rel->isInherited() && ! $inherited_rel) {
                             // Remember the first inherited relation in case there will be no direct relations
                             $inherited_rel = $rel;
@@ -279,8 +280,8 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
     public function getCaption()
     {
         if (! parent::getCaption()) {
-            if ($attr = $this->getAttribute()) {
-                $this->setCaption($attr->getName());
+            if ($this->hasAttributeReference()) {
+                $this->setCaption($this->getAttribute()->getName());
             }
         }
         return parent::getCaption();
@@ -351,7 +352,7 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
         if ($data_type_or_string instanceof DataTypeInterface) {
             $this->data_type = $data_type_or_string;
         } elseif (is_string($data_type_or_string)) {
-            $this->data_type = DataTypeFactory::createFromAlias($this->getWorkbench(), $data_type_or_string);
+            $this->data_type = DataTypeFactory::createFromString($this->getWorkbench(), $data_type_or_string);
         } else {
             throw new WidgetConfigurationError($this, 'Cannot set custom data type for widget ' . $this->getWidgetType() . ': invalid value "' . gettype($data_type_or_string) . '" given - expecting an instantiated data type or a string selector!');
         }
@@ -366,7 +367,7 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
     public function exportUxonObject()
     {
         $uxon = parent::exportUxonObject();
-        if (! is_null($this->getAttributeAlias())) {
+        if ($this->hasAttributeReference()) {
             $uxon->setProperty('attribute_alias', $this->getAttributeAlias());
         }
         if (! is_null($this->empty_text)) {
@@ -419,7 +420,7 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
      */
     public function setEmptyText($value)
     {
-        $this->empty_text = $value;
+        $this->empty_text = $this->evaluatePropertyExpression($value);
         return $this;
     }
     
@@ -455,6 +456,20 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
     public function hasValue()
     {
         return is_null($this->getValue()) ? false : true;
+    }
+    
+    /**
+     * Returns TRUE if the widget represents a cell in a data widget.
+     * 
+     * This way, in-table editors and display widgets can be easily detected.
+     * 
+     * @see Data::setCellWidget()
+     * 
+     * @return bool
+     */
+    public function isInTable() : bool
+    {
+        return $this->getParent() instanceof DataColumn;
     }
 }
 ?>

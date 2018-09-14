@@ -12,7 +12,7 @@ class RequestIdProcessor extends AbstractColumnPositionProcessor
 
     protected function getContent()
     {
-        return $this->getWorkbench()->context()->getScopeRequest()->getScopeId();
+        return $this->getWorkbench()->getContext()->getScopeRequest()->getScopeId();
     }
 
     protected function getIndexColumns()

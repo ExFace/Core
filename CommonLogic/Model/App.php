@@ -5,33 +5,64 @@ use exface\Core\Interfaces\AppInterface;
 use exface\Core\Factories\ActionFactory;
 use exface\Core\Factories\ConfigurationFactory;
 use exface\Core\Interfaces\ConfigurationInterface;
+use exface\Core\Interfaces\Tasks\TaskInterface;
+use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Interfaces\Contexts\ContextManagerInterface;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\TranslationInterface;
 use exface\Core\Interfaces\InstallerInterface;
-use exface\Core\Exceptions\InvalidArgumentException;
-use exface\Core\Exceptions\Actions\ActionNotFoundError;
-use exface\Core\Interfaces\NameResolverInterface;
-use exface\Core\CommonLogic\NameResolver;
 use exface\Core\CommonLogic\Translation;
 use exface\Core\CommonLogic\AppInstallers\AppInstallerContainer;
-use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Exceptions\LogicException;
+use exface\Core\Interfaces\Selectors\AppSelectorInterface;
+use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
+use exface\Core\Interfaces\Widgets\iTriggerAction;
+use exface\Core\Interfaces\Selectors\SelectorInterface;
+use exface\Core\Interfaces\Selectors\PrototypeSelectorInterface;
+use exface\Core\Interfaces\Selectors\ActionSelectorInterface;
+use exface\Core\Interfaces\Actions\ActionInterface;
+use exface\Core\Exceptions\UnexpectedValueException;
+use exface\Core\Factories\SelectorFactory;
+use exface\Core\Exceptions\AppComponentNotFoundError;
+use exface\Core\Interfaces\Selectors\TemplateSelectorInterface;
+use exface\Core\Interfaces\Selectors\QueryBuilderSelectorInterface;
+use exface\Core\Interfaces\Selectors\BehaviorSelectorInterface;
+use exface\Core\Interfaces\CmsConnectorInterface;
+use exface\Core\Interfaces\Selectors\ContextSelectorInterface;
+use exface\Core\Interfaces\Selectors\DataConnectorSelectorInterface;
+use exface\Core\Interfaces\Selectors\DataTypeSelectorInterface;
+use exface\Core\Interfaces\Selectors\FormulaSelectorInterface;
+use exface\Core\Interfaces\Selectors\ModelLoaderSelectorInterface;
+use exface\Core\CommonLogic\Filemanager;
+use exface\Core\Interfaces\Selectors\FileSelectorInterface;
+use exface\Core\DataTypes\StringDataType;
+use exface\Core\Interfaces\Selectors\ClassSelectorInterface;
+use exface\Core\CommonLogic\Traits\AliasTrait;
+use exface\Core\CommonLogic\Selectors\DataTypeSelector;
+use exface\Core\Factories\DataTypeFactory;
 
 /**
  * This is the base implementation of the AppInterface aimed at providing an
- * app instance for apps defined in the meta model.
+ * generic app instance.
  * 
- * If an app requires extra features (i.e. custom installers), it should get
- * it's own app class (appfolder\appaliasApp.php), which extends this class and
- * overrides methods or introduces new ones.
+ * Apps defined in the meta model will be represented by this generc app. If an 
+ * app requires extra features (i.e. custom installers, another folder structure, etc.), 
+ * it should get it's own app class (appfolder\MyAppAliasApp.php).
+ * 
+ * If extending the generic app, it is recommmended to keep it's folder structure, which
+ * is well visible in the Core app. Changing folder names and path convetions, the
+ * get(), has() and/or getSelectorForComponent() methods must be overridden.
+ * 
+ * The generic app provides default configuration and translation implementation, which
+ * again, may be changed if neccessary.
  * 
  * @author Andrej Kabachnik
  *
  */
 class App implements AppInterface
 {
+    use AliasTrait;
     
     const CONFIG_FOLDER_IN_APP = 'Config';
     
@@ -43,7 +74,7 @@ class App implements AppInterface
     
     const TRANSLATIONS_FOLDER_IN_APP = 'Translations';
     
-    private $name_resolver = null;
+    private $selector = null;
     
     private $uid = null;
     
@@ -57,14 +88,16 @@ class App implements AppInterface
     
     private $translator = null;
     
+    private $selector_cache = [];
+    
     /**
      *
-     * @param NameResolverInterface $name_resolver
+     * @param AppSelectorInterface $selector
      * @deprecated use AppFactory instead!
      */
-    public function __construct(NameResolverInterface $name_resolver)
+    public function __construct(AppSelectorInterface $selector)
     {
-        $this->name_resolver = $name_resolver;
+        $this->selector = $selector;
         $this->init();
     }
     
@@ -82,40 +115,16 @@ class App implements AppInterface
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\Interfaces\AppInterface::getAction()
-     */
-    public function getAction($action_alias, WidgetInterface $called_by_widget = null, UxonObject $uxon_description = null)
-    {
-        if (! $action_alias) {
-            throw new ActionNotFoundError('Cannot find action with alias "' . $action_alias . '" in app "' . $this->getAliasWithNamespace() . '"!');
-        }
-        $action = ActionFactory::createFromString($this->getWorkbench(), $this->getAliasWithNamespace() . NameResolver::NAMESPACE_SEPARATOR . $action_alias, $called_by_widget);
-        if ($uxon_description instanceof UxonObject) {
-            $action->importUxonObject($uxon_description);
-        }
-        return $action;
-    }
-    
-    /**
-     *
-     * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\AliasInterface::getAliasWithNamespace()
      */
     public function getAliasWithNamespace()
     {
-        return $this->getNameResolver()->getAliasWithNamespace();
+        return $this->getSelector()->getAppAlias();
     }
     
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\AliasInterface::getAlias()
-     */
-    public function getAlias()
+    protected function getClassnameSuffixToStripFromAlias() : string
     {
-        return $this->getNameResolver()->getAlias();
+        return 'App';
     }
     
     /**
@@ -127,7 +136,7 @@ class App implements AppInterface
     public function getDirectory()
     {
         if (! $this->directory) {
-            $this->directory = str_replace(NameResolver::NAMESPACE_SEPARATOR, DIRECTORY_SEPARATOR, $this->getAliasWithNamespace());
+            $this->directory = str_replace(AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER, DIRECTORY_SEPARATOR, $this->getAliasWithNamespace());
         }
         return $this->directory;
     }
@@ -145,12 +154,7 @@ class App implements AppInterface
     
     public function getNamespace()
     {
-        return substr($this->getAliasWithNamespace(), 0, mb_strripos($this->getAliasWithNamespace(), NameResolver::NAMESPACE_SEPARATOR));
-    }
-    
-    public function getClassNamespace()
-    {
-        return str_replace(NameResolver::NAMESPACE_SEPARATOR, '\\', $this->getAliasWithNamespace());
+        return $this->selector->getVendorAlias();
     }
     
     /**
@@ -160,21 +164,18 @@ class App implements AppInterface
      */
     public function getVendor()
     {
-        if (is_null($this->vendor)) {
-            $this->vendor = explode(NameResolver::NAMESPACE_SEPARATOR, $this->getAliasWithNamespace())[0];
-        }
-        return $this->vendor;
+        return $this->getSelector()->getVendorAlias();
     }
     
     /**
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\Interfaces\ExfaceClassInterface::getWorkbench()
+     * @see \exface\Core\Interfaces\WorkbenchDependantInterface::getWorkbench()
      */
     public function getWorkbench()
     {
-        return $this->getNameResolver()->getWorkbench();
+        return $this->getSelector()->getWorkbench();
     }
     
     /**
@@ -226,7 +227,7 @@ class App implements AppInterface
         
         // Load the user config if the workbench is already fully started and thus the user is known
         if ($this->getWorkbench()->isStarted()) {
-            $config->loadConfigFile($this->getWorkbench()->context()->getScopeUser()->getUserDataFolderAbsolutePath() . DIRECTORY_SEPARATOR . static::CONFIG_FOLDER_IN_USER_DATA . DIRECTORY_SEPARATOR . $this->getConfigFileName(), AppInterface::CONFIG_SCOPE_USER);
+            $config->loadConfigFile($this->getWorkbench()->getContext()->getScopeUser()->getUserDataFolderAbsolutePath() . DIRECTORY_SEPARATOR . static::CONFIG_FOLDER_IN_USER_DATA . DIRECTORY_SEPARATOR . $this->getConfigFileName(), AppInterface::CONFIG_SCOPE_USER);
         }
         
         return $config;
@@ -291,17 +292,11 @@ class App implements AppInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\AppInterface::getNameResolver()
+     * @see \exface\Core\Interfaces\AppInterface::getSelector()
      */
-    public function getNameResolver()
+    public function getSelector()
     {
-        return $this->name_resolver;
-    }
-    
-    public function setNameResolver(NameResolver $value)
-    {
-        $this->name_resolver = $value;
-        return $this;
+        return $this->selector;
     }
     
     /**
@@ -341,7 +336,7 @@ class App implements AppInterface
         if (is_null($scope)) {
             $scope = $this->getContextDataDefaultScope();
         }
-        return $this->getWorkbench()->context()->getScope($scope)->getContext('Data');
+        return $this->getWorkbench()->getContext()->getScope($scope)->getContext('Data');
     }
     
     /**
@@ -381,7 +376,7 @@ class App implements AppInterface
     {
         if (is_null($this->translator)) {
             $translator = new Translation($this);
-            $translator->setLocale($this->getWorkbench()->context()->getScopeSession()->getSessionLocale());
+            $translator->setLocale($this->getWorkbench()->getContext()->getScopeSession()->getSessionLocale());
             $translator->setFallbackLocales(array(
                 'en_US'
             ));
@@ -438,32 +433,11 @@ class App implements AppInterface
     }
     
     /**
-     * By default a class is conscidered part of an app if it is in the namespace of the app.
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\AppInterface::containsClass()
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\AppInterface::getDefaultLanguageCode()
      */
-    public function containsClass($object_or_class_name)
-    {
-        if (is_object($object_or_class_name)) {
-            $class_name = get_class($object_or_class_name);
-        } elseif (is_string($object_or_class_name)) {
-            $class_name = $object_or_class_name;
-        } else {
-            throw new InvalidArgumentException('AppInterface::containsClass() expects the argument to be either an object or a string class name: "' . gettype($object_or_class_name) . '" given instead!');
-        }
-        
-        $app_namespace = $this->getNameResolver()->getClassNamespace();
-        $app_namespace = substr($app_namespace, 0, 1) == "\\" ? substr($app_namespace, 1) : $app_namespace;
-        $class_name = substr($class_name, 0, 1) == "\\" ? substr($class_name, 1) : $class_name;
-        if (substr($class_name, 0, strlen($app_namespace)) == $app_namespace) {
-            return true;
-        }
-        return false;
-    }
-    
-    public function getDefaultLanguageCode()
+    public function getDefaultLanguageCode() : string
     {
         return $this->getAppModelDataSheet()->getCellValue('DEFAULT_LANGUAGE_CODE', 0);
     }
@@ -478,6 +452,215 @@ class App implements AppInterface
         $ds->addFilterFromString('ALIAS', $this->getAliasWithNamespace(), EXF_COMPARATOR_EQUALS);
         $ds->dataRead();
         return $ds;
+    }
+    
+    public function handle(TaskInterface $task): ResultInterface
+    {
+        if ($task->isTriggeredByWidget()) {
+            $widget = $task->getWidgetTriggeredBy();
+            if (! $task->hasMetaObject()) {
+                $task->setMetaObject($widget->getMetaObject());
+            }
+            
+            // If the task tigger is a button or similar, the action might be defined in that
+            // trigger widget. However, we can only use this definition, if the task does not
+            // have an action explicitly defined or that action is exactly the same as the
+            // one of the trigger widget.
+            if ($widget instanceof iTriggerAction) {
+                if (! $task->hasAction()) {
+                    $action = $widget->getAction();
+                } elseif ($widget->hasAction()) {
+                    // At this point, we know, that both, task and widget, have actions - so we
+                    // need to compare them. In most cases, the task action will be defined via
+                    // alias, so we can simply compare the alias without instantiating the action.
+                    // Otherwise we need to instantiate it first to get the alias.
+                    if ($task->getActionSelector()->isAlias() && strcasecmp($task->getActionSelector()->toString(), $widget->getAction()->getAliasWithNamespace()) === 0) {
+                        $action = $widget->getAction();
+                    } else {
+                        $task_action = ActionFactory::create($task->getActionSelector(), ($widget ? $widget : null));
+                        if ($task_action->isExactly($widget->getAction())) {
+                            $action = $widget->getAction();
+                        }
+                    }
+                    
+                }
+            }
+        }
+        
+        if (! isset($action)) {
+            $action = ActionFactory::create($task->getActionSelector(), ($widget ? $widget : null));
+        }
+        
+        return $action->handle($task);
+    }
+    
+    protected function getPrototypeClass(PrototypeSelectorInterface $selector) : string
+    {
+        $string = $selector->toString();
+        switch (true) {
+            case $selector->isClassname():
+                return $string;
+            case $selector->isFilepath():
+                $string = Filemanager::pathNormalize($string, FileSelectorInterface::NORMALIZED_DIRECTORY_SEPARATOR);
+                $vendorFolder = Filemanager::pathNormalize($this->getWorkbench()->filemanager()->getPathToVendorFolder());
+                if (StringDataType::startsWith($string, $vendorFolder)) {
+                    $string = substr($string, strlen($vendorFolder));
+                }
+                $ext = '.' . FileSelectorInterface::PHP_FILE_EXTENSION;
+                $string = substr($string, 0, (-1*strlen($ext)));
+                $string = str_replace(FileSelectorInterface::NORMALIZED_DIRECTORY_SEPARATOR, ClassSelectorInterface::CLASS_NAMESPACE_SEPARATOR, $string);
+                return $string;
+            case ($selector instanceof AliasSelectorInterface) && $selector->isAlias():
+                $appAlias = $selector->getAppAlias();
+                $componentAlias = substr($string, (strlen($appAlias)+1));
+                $subfolder = $this->getPrototypeClasssSubfolder($selector);
+                $classSuffix = $this->getPrototypeClassSuffix($selector);
+                $string = $appAlias . ClassSelectorInterface::CLASS_NAMESPACE_SEPARATOR . $subfolder . ClassSelectorInterface::CLASS_NAMESPACE_SEPARATOR . $componentAlias . $classSuffix;
+                return str_replace(AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER, ClassSelectorInterface::CLASS_NAMESPACE_SEPARATOR, $string);
+        }
+    }
+    
+    protected function getPrototypeClassSuffix(PrototypeSelectorInterface $selector) : string
+    {
+        switch (true) {
+            case $selector instanceof DataTypeSelectorInterface:
+                return 'DataType';
+        }
+        return '';
+    }
+    
+    protected function getPrototypeClasssSubfolder(PrototypeSelectorInterface $selector) : string
+    {
+        switch (true) {
+            case $selector instanceof ActionSelectorInterface:
+                return 'Actions';
+            case $selector instanceof TemplateSelectorInterface:
+                return 'Templates';
+            case $selector instanceof BehaviorSelectorInterface:
+                return 'Behaviors';
+            case $selector instanceof CmsConnectorInterface:
+                return 'CmsConnectors';
+            case $selector instanceof ContextSelectorInterface:
+                return 'Contexts';
+            case $selector instanceof DataConnectorSelectorInterface:
+                return 'DataConnectors';
+            case $selector instanceof DataTypeSelectorInterface:
+                return 'DataTypes';
+            case $selector instanceof FormulaSelectorInterface:
+                return 'Formulas';
+            case $selector instanceof ModelLoaderSelectorInterface:
+                return 'ModelLoaders';
+            case $selector instanceof QueryBuilderSelectorInterface:
+                return 'QueryBuilders';
+        }
+        return '';
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\AppInterface::get()
+     */
+    public function get($selectorOrString, $selectorClass = null)
+    {
+        if (! array_key_exists((string) $selectorOrString, $this->selector_cache)) {
+            // has() will cache the class
+            if (! $this->has($selectorOrString)) {
+                $type = $selectorOrString instanceof SelectorInterface ? ucfirst($selectorOrString->getComponentType()) : '';
+                throw new AppComponentNotFoundError($type . ' "' . $selectorOrString . '" not found in app ' . $this->getAliasWithNamespace());
+            }
+        }
+        
+        if ($selectorOrString instanceof SelectorInterface) {
+            $selector = $selectorOrString;
+        } elseif ($selectorClass !== null) {
+            $selector = SelectorFactory::createFromString($this->getWorkbench(), $selectorOrString, $selectorClass);
+        } else {
+            throw new UnexpectedValueException('Cannot get component ' . $selectorOrString . ' from app ' . $this->getAliasWithNamespace() . ': invalid selector or missing type!');
+        }
+        
+        $cache = $this->selector_cache[$selector->toString()][get_class($selector)];
+        if ($cache !== null) {
+            $selector = $cache['selector'];
+            $class = $cache['class'];
+            if ($class !== null) {
+                return new $class($selector);
+            } else {
+                return $this->loadFromModel($selector);
+            }
+        }
+        
+        $type = $selectorOrString instanceof SelectorInterface ? ucfirst($selectorOrString->getComponentType()) : '';
+        throw new AppComponentNotFoundError($type . ' "' . $selectorOrString . '" not found in app ' . $this->getAliasWithNamespace());
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\AppInterface::has()
+     */
+    public function has($selectorOrString, $selectorClass = null)
+    {
+        if (array_key_exists((string) $selectorOrString, $this->selector_cache)) {
+            return true;
+        }
+        
+        if ($selectorOrString instanceof SelectorInterface) {
+            $selector = $selectorOrString;
+        } elseif ($selectorClass !== null) {
+            $selector = SelectorFactory::createFromString($this->getWorkbench(), $selectorOrString, $selectorClass);
+        } else {
+            throw new UnexpectedValueException('Cannot get component ' . $selectorOrString . ' from app ' . $this->getAliasWithNamespace() . ': invalid selector or missing type!');
+        }
+        
+        try {
+            $class = $this->getPrototypeClass($selector);
+            if (class_exists($class)){
+                $this->selector_cache[$selector->toString()][get_class($selector)] = ['selector' => $selector, 'class' => $class];
+                return true;
+            } else {
+                try {
+                    $this->loadFromModel($selector);
+                    $this->selector_cache[$selector->toString()][get_class($selector)] = ['selector' => $selector];
+                    return true;
+                } catch (\Throwable $e) {
+                    return false;
+                }
+            }
+        } catch(\Throwable $e) {
+            throw new LogicException('Cannot check if ' . $selector->getComponentType() . ' exists in app ' . $this->getAliasWithNamespace() . ': only prototype-selectors supported!', null, $e);
+        }
+        
+        return false;
+    }
+    
+    protected function loadFromModel(SelectorInterface $selector) 
+    {
+        if ($selector instanceof DataTypeSelectorInterface) {
+            return $this->getWorkbench()->model()->getModelLoader()->loadDataType($selector);
+        }
+        throw new AppComponentNotFoundError(ucfirst($selector->getComponentType()) . ' "' . $selector->toString() . '" not found in app ' . $this->getAliasWithNamespace());
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\AppInterface::getAction()
+     */
+    public function getAction(ActionSelectorInterface $selector, WidgetInterface $sourceWidget = null) : ActionInterface
+    {
+        $class = $this->getPrototypeClass($selector);
+        return new $class($this, $sourceWidget);
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\AliasInterface::getAlias()
+     */
+    public function getAlias()
+    {
+        return StringDataType::substringAfter($this->getAliasWithNamespace(), AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER);
     }
 }
 ?>

@@ -8,7 +8,7 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\DataSheets\DataSorter;
 use exface\Core\Exceptions\UnexpectedValueException;
 
-abstract class DataSorterFactory extends AbstractFactory
+abstract class DataSorterFactory extends AbstractStaticFactory
 {
 
     public static function createEmpty(Workbench $exface)
