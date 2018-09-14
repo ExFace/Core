@@ -6,8 +6,9 @@ use exface\Core\Interfaces\Contexts\ContextInterface;
 use exface\Core\Interfaces\Contexts\ContextScopeInterface;
 use exface\Core\Exceptions\Contexts\ContextRuntimeError;
 use exface\Core\Widgets\Container;
-use exface\Core\Interfaces\NameResolverInterface;
 use exface\Core\CommonLogic\Constants\Colors;
+use exface\Core\Interfaces\Selectors\ContextSelectorInterface;
+use exface\Core\CommonLogic\Traits\AliasTrait;
 
 /**
  * This is a basic implementation of common context methods intended to be used
@@ -18,8 +19,11 @@ use exface\Core\CommonLogic\Constants\Colors;
  */
 abstract class AbstractContext implements ContextInterface
 {
+    use AliasTrait;
 
-    private $name_resolver = null;
+    private $selector = null;
+    
+    private $workbench = null;
 
     private $scope = null;
 
@@ -37,40 +41,21 @@ abstract class AbstractContext implements ContextInterface
     
     /**
      * @deprecated use ContextFactory instead
-     * @param \exface\Core\CommonLogic\Workbench $exface
      */
-    public function __construct(NameResolverInterface $name_resolver)
+    public function __construct(ContextSelectorInterface $selector)
     {
-        $this->name_resolver = $name_resolver;
-    }
-    
-    /**
-     * 
-     * @return NameResolverInterface
-     */
-    public function getNameResolver()
-    {
-        return $this->name_resolver;
+        $this->selector = $selector;
+        $this->workbench = $selector->getWorkbench();
     }
     
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\AliasInterface::getNamespace()
+     * @see \exface\Core\Interfaces\Contexts\ContextInterface::getSelector()
      */
-    public function getNamespace()
+    public function getSelector() : ContextSelectorInterface
     {
-        return $this->getNameResolver()->getNamespace();
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\AliasInterface::getAliasWithNamespace()
-     */
-    public function getAliasWithNamespace()
-    {
-        return $this->getNameResolver()->getAliasWithNamespace();
+        return $this->selector;
     }
 
     /**
@@ -101,17 +86,17 @@ abstract class AbstractContext implements ContextInterface
      */
     public function getDefaultScope()
     {
-        return $this->getWorkbench()->context()->getScopeWindow();
+        return $this->getWorkbench()->getContext()->getScopeWindow();
     }
 
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\ExfaceClassInterface::getWorkbench()
+     * @see \exface\Core\Interfaces\WorkbenchDependantInterface::getWorkbench()
      */
     public function getWorkbench()
     {
-        return $this->getNameResolver()->getWorkbench();
+        return $this->workbench;
     }
 
     /**
@@ -131,7 +116,7 @@ abstract class AbstractContext implements ContextInterface
      */
     public function exportUxonObject()
     {
-        return $this->getWorkbench()->createUxonObject();
+        return new UxonObject();
     }
 
     /**
@@ -146,16 +131,6 @@ abstract class AbstractContext implements ContextInterface
     public function importUxonObject(UxonObject $uxon)
     {
         return $this;
-    }
-
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Contexts\ContextInterface::getAlias()
-     */
-    public function getAlias()
-    {
-        return $this->getNameResolver()->getAlias();
     }
     
     /**
@@ -298,7 +273,7 @@ abstract class AbstractContext implements ContextInterface
      * @see \exface\Core\Interfaces\Contexts\ContextInterface::getApp()
      */
     public function getApp(){
-        return $this->getWorkbench()->getApp($this->getNameResolver()->getAppAlias());
+        return $this->getWorkbench()->getApp($this->selector->getAppSelector());
     }
  
 }

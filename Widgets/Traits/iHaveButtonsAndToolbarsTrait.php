@@ -86,7 +86,7 @@ trait iHaveButtonsAndToolbarsTrait
      *  {
      *      "buttons": [
      *          {
-     *              "action_alias": "exface.Core.CreateObjectDialog"
+     *              "action_alias": "exface.Core.ShowObjectCreateDialog"
      *          },
      *          {
      *              "widget_type": "MenuButton",

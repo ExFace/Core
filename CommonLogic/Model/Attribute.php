@@ -56,9 +56,9 @@ class Attribute implements MetaAttributeInterface
 
     private $formula;
 
-    private $default_value;
+    private $default_value = null;
 
-    private $fixed_value;
+    private $fixed_value = null;
     
     private $value_list_delimiter = EXF_LIST_SEPARATOR;
 
@@ -180,7 +180,7 @@ class Attribute implements MetaAttributeInterface
     public function getDataType()
     {
         if (is_string($this->data_type)){
-            $this->data_type = DataTypeFactory::createFromUidOrAlias($this->getModel(), $this->data_type);
+            $this->data_type = DataTypeFactory::createFromString($this->getWorkbench(), $this->data_type);
             $this->data_type->importUxonObject($this->getCustomDataTypeUxon());
         }
         return $this->data_type;
@@ -228,9 +228,6 @@ class Attribute implements MetaAttributeInterface
      */
     public function isEditable()
     {
-        if ($this->getObject()->hasDataSource() && ! $this->getObject()->isWritable()) {
-            return false;
-        }
         return $this->editable;
     }
 
@@ -401,15 +398,6 @@ class Attribute implements MetaAttributeInterface
 
     /**
      * 
-     * @param MetaRelationPathInterface $path
-     */
-    public function setRelationPath(MetaRelationPathInterface $path)
-    {
-        $this->relation_path = $path;
-    }
-
-    /**
-     * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::getObject()
      */
@@ -485,9 +473,14 @@ class Attribute implements MetaAttributeInterface
      */
     public function setDefaultValue($value)
     {
-        if ($value) {
+        if (! is_null($value) && $value !== '') {
             $this->default_value = $value;
         }
+    }
+    
+    public function hasDefaultValue() : bool
+    {
+        return ! is_null($this->default_value);
     }
 
     /**
@@ -510,7 +503,38 @@ class Attribute implements MetaAttributeInterface
      */
     public function setFixedValue($value)
     {
-        $this->fixed_value = $value;
+        if (! is_null($value) && $value !== '') {
+            $this->fixed_value = $value;
+        }
+        return $this;
+    }
+    
+    public function hasFixedValue() : bool
+    {
+        return ! is_null($this->fixed_value);
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::getFallbackValue()
+     */
+    public function getFallbackValue()
+    {
+        if ($this->hasFixedValue()) {
+            return $this->getFallbackValue();
+        }
+        return $this->getDefaultValue();
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::hasFallbackValue()
+     */
+    public function hasFallbackValue() : bool
+    {
+        return $this->hasDefaultValue() || $this->hasFixedValue();
     }
 
     /**
@@ -533,7 +557,7 @@ class Attribute implements MetaAttributeInterface
         if ($value instanceof SortingDirectionsDataType){
             // everything is OK
         } elseif (SortingDirectionsDataType::isValidStaticValue(strtoupper($value))){
-            $value = new SortingDirectionsDataType($this->getWorkbench(), strtoupper($value));
+            $value = DataTypeFactory::createFromPrototype($this->getWorkbench(), SortingDirectionsDataType::class)->withValue(strtoupper($value));
         } else {
             throw new UnexpectedValueException('Invalid value "' . $value . '" for default sorting direction in attribute "' . $this->getName() . '": use ASC or DESC');
         }
@@ -720,13 +744,39 @@ class Attribute implements MetaAttributeInterface
     }
 
     /**
+     * Returns an copy of the attribute.
      * 
-     * {@inheritDoc}
+     * Copies of attributes with a relation path will get a copy of that path by default. Seting $ignoreRelationPath to TRUE
+     * will make the copy not have a relation path at all.
+     * 
      * @see \exface\Core\Interfaces\iCanBeCopied::copy()
+     * 
+     * @param bool $ignoreRelationPath
+     * 
+     * @return MetaAttributeInterface
      */
-    public function copy()
+    public function copy(bool $ignoreRelationPath = false)
     {
-        return $this->rebase($this->getRelationPath()->copy());
+        $copy = clone $this;
+        
+        // If the relation path is not specified or empty, just remove it. This leads to the creation
+        // of a new path object when $copy->getRelationPath() is called, thus making sure relation path objects
+        // are not shared between attributes and cannot get out of sync. The same happens if the caller
+        // chooses to ignore the relation path explicitly.
+        if ($ignoreRelationPath === true || $this->relation_path === null || $this->relation_path->isEmpty()) {
+            $copy->relation_path = null;
+        } else {
+            // If the relation path is not empty and should be kept, copy it too in order to still make
+            // sure, instances are not shared.
+            $copy->relation_path = $this->relation_path->copy();
+        }
+        
+        // Do not use getDefaultEditorUxon() here as it already performs some enrichment
+        if ($this->default_editor_uxon instanceof UxonObject){
+            $copy->setDefaultEditorUxon($this->default_editor_uxon->copy());
+        }
+        
+        return $copy;
     }
 
     /**
@@ -734,18 +784,13 @@ class Attribute implements MetaAttributeInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::rebase()
      */
-    public function rebase(MetaRelationPathInterface $path)
+    public function rebase(MetaRelationPathInterface $path) : MetaAttributeInterface
     {
-        $copy = clone $this;
-        
-        // Explicitly copy properties, that are objects themselves
-        $copy->setRelationPath($path);
-        
-        // Do not use getDefaultEditorUxon() here as it already performs some enrichment
-        if ($this->default_editor_uxon instanceof UxonObject){
-            $copy->setDefaultEditorUxon($this->default_editor_uxon->copy());
+        if ($path->getEndObject() !== $this->getObject()) {
+            throw new UnexpectedValueException('Cannot rebase attribute "' . $this->getAlias() . '" of object "' . $this->getObject()->getAliasWithNamespace() . '" relative to "' . $path->toString() . '": the relation path must point to the same object, but points to "' . $path->getEndObject()->getAliasWithNamespace() . '" instead!');
         }
-        
+        $copy = $this->copy(true);
+        $copy->relation_path = $path;
         return $copy;
     }
 
@@ -773,7 +818,7 @@ class Attribute implements MetaAttributeInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\ExfaceClassInterface::getWorkbench()
+     * @see \exface\Core\Interfaces\WorkbenchDependantInterface::getWorkbench()
      */
     public function getWorkbench()
     {
@@ -936,14 +981,20 @@ class Attribute implements MetaAttributeInterface
     public function getDefaultEditorUxon()
     {
         // If there is no default widget uxon defined, use the UXON from the data type
-        if (is_null($this->default_editor_uxon)) {
+        if ($this->default_editor_uxon === null) {
+            // Relations do not use the data type widget, but rather the special relation widget type from the config,
+            // which will be set set later on. Setting it here would not work if a default editor is specified, but
+            // no widget_type is set explicitly (why should a user do that if a decent type is selected by default?)
             if ($this->isRelation()) {
-                $this->default_editor_uxon = new UxonObject([
-                    "widget_type" => $this->getWorkbench()->getConfig()->getOption('TEMPLATES.DEFAULT_WIDGET_FOR_RELATIONS')
-                ]);
+                $this->default_editor_uxon = new UxonObject();
             } else {
                 $this->default_editor_uxon = $this->getDataType()->getDefaultEditorUxon()->copy();
             }
+        }
+        
+        // If the attribute is a relation and no widget type was specified explicitly, take it from the config!
+        if ($this->isRelation() && ! $this->default_editor_uxon->hasProperty('widget_type')) {
+            $this->default_editor_uxon->setProperty("widget_type", $this->getWorkbench()->getConfig()->getOption('TEMPLATES.DEFAULT_WIDGET_FOR_RELATIONS'));
         }
         
         $uxon = $this->default_editor_uxon->copy();
@@ -964,6 +1015,16 @@ class Attribute implements MetaAttributeInterface
     {
         $this->default_editor_uxon = $uxon;
         return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::isRelated()
+     */
+    public function isRelated() : bool
+    {
+        return $this->getRelationPath()->isEmpty() === false;
     }
 }
 ?>

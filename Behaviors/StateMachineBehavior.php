@@ -1,7 +1,7 @@
 <?php
 namespace exface\Core\Behaviors;
 
-use exface\Core\CommonLogic\AbstractBehavior;
+use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
 use exface\Core\Events\WidgetEvent;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
@@ -12,6 +12,11 @@ use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
 use exface\Core\Exceptions\UxonMapError;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\Interfaces\Model\BehaviorInterface;
+use exface\Core\CommonLogic\Model\Behaviors\StateMachineState;
+use exface\Core\Interfaces\Widgets\iHaveButtons;
+use exface\Core\Actions\SaveData;
+use exface\Core\Actions\DeleteObject;
 
 /**
  * A behavior that defines states and transitions between these states for an objects.
@@ -37,9 +42,9 @@ class StateMachineBehavior extends AbstractBehavior
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\CommonLogic\AbstractBehavior::register()
+     * @see \exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior::register()
      */
-    public function register()
+    public function register() : BehaviorInterface
     {
         $this->getWorkbench()->eventManager()->addListener($this->getObject()->getAliasWithNamespace() . '.Widget.Prefill.After', array(
             $this,
@@ -50,6 +55,7 @@ class StateMachineBehavior extends AbstractBehavior
             'checkForConflictsOnUpdate'
         ));
         $this->setRegistered(true);
+        return $this;
     }
 
     /**
@@ -292,7 +298,7 @@ class StateMachineBehavior extends AbstractBehavior
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\CommonLogic\AbstractBehavior::exportUxonObject()
+     * @see \exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior::exportUxonObject()
      */
     public function exportUxonObject()
     {
@@ -334,16 +340,40 @@ class StateMachineBehavior extends AbstractBehavior
             throw new BehaviorRuntimeError($this->getObject(), 'Cannot disable widget of uneditable attributes for state "' . $current_state . '": State not found in the the state machine behavior definition!', '6UMF9UL');
         }
         
-        if (($widget instanceof iShowSingleAttribute) && ($disabled_attributes = $this->getState($current_state)->getDisabledAttributesAliases()) && in_array($widget->getAttributeAlias(), $disabled_attributes)) {
-            // set_readonly() statt set_disabled(), dadurch werden die deaktivierten
-            // Widgets nicht gespeichert. Behebt einen Fehler, der dadurch ausgeloest
-            // wurde, dass ein deaktiviertes Widget durch einen Link geaendert wurde,
-            // und sich der Wert dadurch vom Wert in der DB unterschied ->
-            // StateMachineUpdateException
-            if (method_exists($widget, 'setReadonly')) {
-                $widget->setReadonly(true);
-            } else {
-                $widget->setDisabled(true);
+        $state = $this->getState($current_state);
+        
+        // Disable attribute editors if editing is disabled completely or for the specific attribute
+        if ($widget instanceof iShowSingleAttribute) {
+            $disabled_attributes = $state->getDisabledAttributesAliases(); 
+            if ($state->getDisableEditing() || in_array($widget->getAttributeAlias(), $disabled_attributes)) {
+                // set_readonly() statt set_disabled(), dadurch werden die deaktivierten
+                // Widgets nicht gespeichert. Behebt einen Fehler, der dadurch ausgeloest
+                // wurde, dass ein deaktiviertes Widget durch einen Link geaendert wurde,
+                // und sich der Wert dadurch vom Wert in der DB unterschied ->
+                // StateMachineUpdateException
+                if (method_exists($widget, 'setReadonly')) {
+                    $widget->setReadonly(true);
+                } else {
+                    $widget->setDisabled(true);
+                }
+            }
+        }
+        
+        // Disable buttons saving or deleting data if the respecitve operations are disabled in the current state.
+        if ($widget instanceof iHaveButtons) {
+            foreach ($widget->getButtons() as $btn) {
+                if (! $btn->getMetaObject()->is($this->getObject())) {
+                    continue;
+                }
+                
+                if ($btn->hasAction() && $btn->getAction()->getMetaObject()->is($this->getObject())) {
+                    if (($btn->getAction() instanceof SaveData) && $state->getDisableEditing()) {
+                        $btn->setDisabled(true);
+                    }
+                    if (($btn->getAction() instanceof DeleteObject) && $state->getDisableDelete()) {
+                        $btn->setDisabled(true);
+                    }
+                }
             }
         }
     }
@@ -417,9 +447,10 @@ class StateMachineBehavior extends AbstractBehavior
         foreach ($data_sheet->getRows() as $updated_row_nr => $updated_row) {
             $check_row_nr = $check_sheet->getUidColumn()->findRowByValue($data_sheet->getUidColumn()->getCellValue($updated_row_nr));
             $check_state_val = $check_column->getCellValue($check_row_nr);
-            $disabled_attributes = $this->getState($check_state_val)->getDisabledAttributesAliases();
+            $state = $this->getState($check_state_val);
+            $disabled_attributes = $state->getDisabledAttributesAliases();
             foreach ($updated_row as $attribute_alias => $updated_val) {
-                if (in_array($attribute_alias, $disabled_attributes)) {
+                if ($state->getDisableEditing() || in_array($attribute_alias, $disabled_attributes)) {
                     $check_val = $check_sheet->getCellValue($attribute_alias, $check_row_nr);
                     if ($updated_val != $check_val) {
                         $data_sheet->dataMarkInvalid();

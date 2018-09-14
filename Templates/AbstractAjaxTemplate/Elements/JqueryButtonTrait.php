@@ -7,6 +7,7 @@ use exface\Core\Widgets\Button;
 use exface\Core\Interfaces\Actions\iShowWidget;
 use exface\Core\Actions\GoToPage;
 use exface\Core\Actions\RefreshWidget;
+use exface\Core\DataTypes\StringDataType;
 
 trait JqueryButtonTrait {
 
@@ -14,7 +15,7 @@ trait JqueryButtonTrait {
     {
         $js = ($widget->getRefreshInput() && $input_element->buildJsRefresh() ? $input_element->buildJsRefresh(true) . ";" : "");
         if ($link = $widget->getRefreshWidgetLink()) {
-            if ($widget->getPage()->is($link->getPageAlias()) && $linked_element = $this->getTemplate()->getElement($link->getWidget())) {
+            if ($widget->getPage()->is($link->getTargetPageAlias()) && $linked_element = $this->getTemplate()->getElement($link->getTargetWidget())) {
                 $js .= "\n" . $linked_element->buildJsRefresh(true);
             }
         }
@@ -44,7 +45,7 @@ trait JqueryButtonTrait {
     protected function buildJsPlaceholderReplacer($js_var, $js_values_object, $string_with_placeholders, $js_sanitizer_function = null)
     {
         $output = '';
-        $placeholders = $this->getTemplate()->getWorkbench()->utils()->findPlaceholdersInString($string_with_placeholders);
+        $placeholders = StringDataType::findPlaceholders($string_with_placeholders);
         foreach ($placeholders as $ph) {
             $value = $js_values_object . "['" . $ph . "']";
             if ($js_sanitizer_function) {
@@ -146,6 +147,8 @@ trait JqueryButtonTrait {
     {
         $widget = $this->getWidget();
         
+        $headers = ! empty($this->getAjaxHeaders()) ? 'headers: ' . json_encode($this->getAjaxHeaders()) . ',' : '';
+        
         $output = $this->buildJsRequestDataCollector($action, $input_element);
         $output .= "
 						if (" . $input_element->buildJsValidator() . ") {
@@ -153,6 +156,7 @@ trait JqueryButtonTrait {
 							$.ajax({
 								type: 'POST',
 								url: '" . $this->getAjaxUrl() . "',
+                                {$headers} 
 								data: {	
 									action: '" . $widget->getActionAlias() . "',
 									resource: '" . $widget->getPage()->getAliasWithNamespace() . "',
@@ -161,12 +165,16 @@ trait JqueryButtonTrait {
 									data: requestData
 								},
 								success: function(data, textStatus, jqXHR) {
-									var response = {};
-									try {
-										response = $.parseJSON(data);
-									} catch (e) {
-										response.error = data;
-									}
+                                    if (typeof data === 'object') {
+                                        response = data;
+                                    } else {
+                                        var response = {};
+    									try {
+    										response = $.parseJSON(data);
+    									} catch (e) {
+    										response.error = data;
+    									}
+                                    }
 				                   	if (response.success){
 										" . $this->buildJsCloseDialog($widget, $input_element) . "
 										" . $this->buildJsInputRefresh($widget, $input_element) . "
@@ -175,7 +183,7 @@ trait JqueryButtonTrait {
 										if (response.success || response.undoURL){
 				                       		" . $this->buildJsShowMessageSuccess("response.success + (response.undoable ? ' <a href=\"" . $this->buildJsUndoUrl($action, $input_element) . "\" style=\"display:block; float:right;\">UNDO</a>' : '')") . "
 											if(response.redirect){
-												if (response.redirect.indexOf('target=_blank')!==0) {
+												if (response.redirect.indexOf('target=_blank') !== 0) {
 													window.open(response.redirect.replace('target=_blank',''), '_newtab');
 												}
 												else {
@@ -211,7 +219,6 @@ trait JqueryButtonTrait {
             if ($action->getPrefillWithPrefillData()){
                 $output = <<<JS
     				{$this->buildJsRequestDataCollector($action, $input_element)}
-    				{$input_element->buildJsBusyIconShow()}
     				var prefillRows = [];
     				if (requestData.rows && requestData.rows.length > 0 && requestData.rows[0]["{$widget->getMetaObject()->getUidAttributeAlias()}"]){
     					prefillRows.push({{$widget->getMetaObject()->getUidAttributeAlias()}: requestData.rows[0]["{$widget->getMetaObject()->getUidAttributeAlias()}"]});
@@ -221,19 +228,32 @@ JS;
             } 
             
             if ($action instanceof GoToPage){
-                $filters_cnt = 0;
                 /* @var $widgetLink \exface\Core\CommonLogic\WidgetLink */
+                $prefix = $this->getTemplate()->getUrlFilterPrefix();
                 foreach ($action->getTakeAlongFilters() as $attributeAlias => $widgetLink){
-                    $filters_param .= "&fltr" . str_pad($filters_cnt, 2, '0', STR_PAD_LEFT) . '_' . $attributeAlias . "='+" . $this->getTemplate()->getElement($widgetLink->getWidget())->buildJsValueGetter($widgetLink->getColumnId(), null) . "+'";
+                    $filters_param .= "&{$prefix}{$attributeAlias}='+{$this->getTemplate()->getElement($widgetLink->getTargetWidget())->buildJsValueGetter($widgetLink->getTargetColumnId(), null)}+'";
                 }
             }
             
             $output .= <<<JS
             {$input_element->buildJsBusyIconShow()}
-			window.location.href = '{$this->getTemplate()->createLinkInternal($action->getPageAlias())}?{$prefill_param}{$filters_param}';
+			{$this->buildJsNavigateToPage($action->getPageAlias(), $prefill_param . $filters_param, $input_element)}
 JS;
         }
         return $output;
+    }
+    
+    /**
+     * Generates the JS code to navigate to another UI page.
+     * 
+     * @param string $pageSelector
+     * @param string $urlParams
+     * 
+     * @return string
+     */
+    protected function buildJsNavigateToPage(string $pageSelector, string $urlParams = '', AbstractJqueryElement $input_element) : string
+    {
+        return "window.location.href = '{$this->getTemplate()->buildUrlToPage($pageSelector)}?{$urlParams}';";
     }
 
     protected function buildJsClickGoBack(ActionInterface $action, AbstractJqueryElement $input_element)

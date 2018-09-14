@@ -2,7 +2,7 @@
 namespace exface\Core\Events;
 
 use exface\Core\Interfaces\Actions\ActionInterface;
-use exface\Core\CommonLogic\NameResolver;
+use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 
 /**
  * Action sheet event names consist of the qualified alias of the app followed by "Action" and the respective event type:
@@ -36,6 +36,6 @@ class ActionEvent extends ExfaceEvent
      */
     public function getNamespace()
     {
-        return $this->getAction()->getAliasWithNamespace() . NameResolver::NAMESPACE_SEPARATOR . 'Action';
+        return $this->getAction()->getAliasWithNamespace() . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER . 'Action';
     }
 }

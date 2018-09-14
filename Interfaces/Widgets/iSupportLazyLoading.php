@@ -19,9 +19,10 @@ interface iSupportLazyLoading extends iTriggerAction
 
     /**
      * 
-     * @return boolean|null
+     * @param bool $default
+     * @return bool
      */
-    public function getLazyLoading();
+    public function getLazyLoading($default = true) : bool;
 
     /**
      * 

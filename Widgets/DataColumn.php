@@ -22,6 +22,9 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Interfaces\Widgets\iHaveValue;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\Interfaces\Widgets\iCanBeAligned;
+use exface\Core\Factories\DataTypeFactory;
+use exface\Core\CommonLogic\WidgetDimension;
+use exface\Core\Factories\WidgetDimensionFactory;
 
 /**
  * The DataColumn represents a column in Data-widgets a DataTable.
@@ -52,8 +55,8 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     private $sortable = true;
 
     private $footer = false;
-
-    private $fixed_width = false;
+    
+    private $widthMax = null;
 
     /**
      * 
@@ -164,17 +167,6 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
         return $this;
     }
 
-    public function getFixedWidth()
-    {
-        return $this->fixed_width;
-    }
-
-    public function setFixedWidth($value)
-    {
-        $this->fixed_width = $value;
-        return $this;
-    }
-
     /**
      * Returns the cell widget widget instance for this column
      *
@@ -269,7 +261,7 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
             $this->cellWidget = $cellWidget;
             $this->editable = true;
         } catch (\Throwable $e) {
-            throw new WidgetConfigurationError($this, 'Cannot set cell widget for ' . $this->getWidgetType() . ': see details below!', null, $e);
+            throw new WidgetConfigurationError($this, 'Cannot set cell widget for ' . $this->getWidgetType() . '. ' . $e->getMessage() . ' See details below.', null, $e);
         }
         return $this;
     }
@@ -496,7 +488,7 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
         if ($asc_or_desc instanceof SortingDirectionsDataType){
             // Everything OK. Just proceed
         } elseif (SortingDirectionsDataType::isValidValue(strtoupper($asc_or_desc))){
-            $asc_or_desc = new SortingDirectionsDataType($this->getWorkbench(), strtoupper($asc_or_desc));
+            $asc_or_desc = DataTypeFactory::createFromPrototype($this->getWorkbench(), SortingDirectionsDataType::class)->withValue(strtoupper($asc_or_desc));
         } else {
             throw new WidgetPropertyInvalidValueError($this, 'Invalid value "' . $asc_or_desc . '" for default sorting direction in data column: use ASC or DESC');
         }
@@ -530,6 +522,37 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     public function getDataWidget()
     {
         return $this->getParent()->getDataWidget();
+    }
+    
+    /**
+     * 
+     * @return WidgetDimension
+     */
+    public function getWidthMax() : WidgetDimension
+    {
+        if ($this->widthMax === null) {
+            $this->widthMax = WidgetDimensionFactory::createEmpty($this->getWorkbench());
+        }
+        return $this->widthMax;
+    }
+    
+    /**
+     * Sets the maximum width for a column.
+     * 
+     * This property takes the same values as "width" or "height", but unlike "width" it
+     * will allow the column to be smaller, but never wider, than the given value. "Width"
+     * on the other hand, will make the column have a fixed width.
+     * 
+     * @uxon-property width_max
+     * @uxon-type string
+     * 
+     * @param string|WidgetDimension $stringOrDimension
+     * @return DataColumn
+     */
+    public function setWidthMax($stringOrDimension) : DataColumn
+    {
+        $this->widthMax = WidgetDimensionFactory::createFromAnything($this->getWorkbench(), $stringOrDimension);
+        return $this;
     }
 }
 ?>

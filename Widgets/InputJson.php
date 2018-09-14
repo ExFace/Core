@@ -11,6 +11,7 @@ namespace exface\Core\Widgets;
  */
 class InputJson extends InputText
 {
+    
     /**
      * If not set explicitly, the width of a JSON editor will be "max".
      * 

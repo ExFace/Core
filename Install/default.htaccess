@@ -1,0 +1,13 @@
+AddDefaultCharset utf-8
+
+#Options +FollowSymlinks
+RewriteEngine On
+
+# For Friendly URLs
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^api/(.*)$ vendor/exface/Core/index.php [L,QSA]
+
+# Reduce server overhead by enabling output compression if supported.
+#php_flag zlib.output_compression On
+#php_value zlib.output_compression_level 5

@@ -3,10 +3,10 @@ namespace exface\Core\Interfaces\DataSources;
 
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\CommonLogic\Model\Model;
-use exface\Core\Interfaces\ExfaceClassInterface;
+use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\CommonLogic\UxonObject;
 
-interface DataSourceInterface extends ExfaceClassInterface
+interface DataSourceInterface extends WorkbenchDependantInterface
 {
 
     /**
@@ -113,5 +113,18 @@ interface DataSourceInterface extends ExfaceClassInterface
      * @return Model
      */
     public function getModel();
+    
+    /**
+     * 
+     * @param string $readableName
+     * @return DataSourceInterface
+     */
+    public function setName(string $readableName) : DataSourceInterface;
+    
+    /**
+     * 
+     * @return string
+     */
+    public function getName() : string;
 }
 ?>

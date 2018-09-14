@@ -2,11 +2,13 @@
 namespace exface\Core\CommonLogic\Model;
 
 use exface\Core\Factories\ExpressionFactory;
-use exface\Core\CommonLogic\NameResolver;
 use exface\Core\Interfaces\DataSources\ModelLoaderInterface;
 use exface\Core\Interfaces\Model\ModelInterface;
 use exface\Core\Exceptions\Model\MetaObjectNotFoundError;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
+use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
+use exface\Core\Interfaces\Selectors\MetaObjectSelectorInterface;
+use exface\Core\CommonLogic\Selectors\MetaObjectSelector;
 
 class Model implements ModelInterface
 {
@@ -89,19 +91,26 @@ class Model implements ModelInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\ModelInterface::getObject()
      */
-    public function getObject($id_or_alias)
+    public function getObject($selectorOrString)
     {
+        if ($selectorOrString instanceof MetaObjectSelectorInterface) {
+            $selector = $selectorOrString;
+        } else {
+            $selector = new MetaObjectSelector($this->getWorkbench(), $selectorOrString);
+        }
+        
         // If the given identifier looks like a UUID, try using it as object id. If this fails, try using it as alias anyway.
-        if (strpos($id_or_alias, '0x') === 0 && strlen($id_or_alias) == 34) {
+        if ($selector->isUid()) {
             try {
-                $object = $this->getObjectById($id_or_alias);
+                $object = $this->getObjectById($selector->toString());
             } catch (MetaObjectNotFoundError $e) {
                 $object = null;
             }
         }
         
         if (! $object) {
-            $object = $this->getObjectByAlias($this->getObjectAliasFromQualifiedAlias($id_or_alias), $this->getNamespaceFromQualifiedAlias($id_or_alias));
+            $alias = substr($selector->toString(), (strlen($selector->getAppAlias())+1));
+            $object = $this->getObjectByAlias($alias, $selector->getAppAlias());
         }
         
         return $object;
@@ -158,7 +167,7 @@ class Model implements ModelInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\ExfaceClassInterface::getWorkbench()
+     * @see \exface\Core\Interfaces\WorkbenchDependantInterface::getWorkbench()
      */
     public function getWorkbench()
     {
@@ -173,7 +182,7 @@ class Model implements ModelInterface
      */
     public function getObjectAliasFromQualifiedAlias($qualified_alias_with_app)
     {
-        if ($sep = strrpos($qualified_alias_with_app, NameResolver::NAMESPACE_SEPARATOR)) {
+        if ($sep = strrpos($qualified_alias_with_app, AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER)) {
             return substr($qualified_alias_with_app, $sep + 1);
         } else {
             return $qualified_alias_with_app;
@@ -188,7 +197,7 @@ class Model implements ModelInterface
      */
     public function getNamespaceFromQualifiedAlias($qualified_alias_with_app)
     {
-        return substr($qualified_alias_with_app, 0, strrpos($qualified_alias_with_app, NameResolver::NAMESPACE_SEPARATOR));
+        return substr($qualified_alias_with_app, 0, strrpos($qualified_alias_with_app, AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER));
     }
 
     /**

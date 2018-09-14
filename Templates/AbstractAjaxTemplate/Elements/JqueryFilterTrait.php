@@ -12,25 +12,16 @@ use exface\Core\Widgets\Filter;
  */
 trait JqueryFilterTrait {
 
-    public function buildJsConditionGetter()
+    public function buildJsConditionGetter($valueJs = null)
     {
         $widget = $this->getWidget();
-        return '{expression: "' . $widget->getAttributeAlias() . '", comparator: ' . $this->buildJsComparatorGetter() . ', value: ' . $this->buildJsValueGetter() . ', object_alias: "' . $widget->getMetaObject()->getAliasWithNamespace() . '"}';
+        $value = is_null($valueJs) ? $this->buildJsValueGetter() : $valueJs;
+        return '{expression: "' . $widget->getAttributeAlias() . '", comparator: ' . $this->buildJsComparatorGetter() . ', value: ' . $value . ', object_alias: "' . $widget->getMetaObject()->getAliasWithNamespace() . '"}';
     }
     
     public function buildJsComparatorGetter()
     {
         return '"' . $this->getWidget()->getComparator() . '"';
-    }
-
-    public function generateHtml()
-    {
-        return $this->getInputElement()->generateHtml();
-    }
-
-    public function generateJs()
-    {
-        return $this->getInputElement()->generateJs();
     }
 
     public function buildJsValueGetter()
@@ -62,6 +53,12 @@ trait JqueryFilterTrait {
     {
         return $this->getTemplate()->getElement($this->getWidget()->getInputWidget());
     }
+    
+    public function addOnChangeScript($string)
+    {
+        $this->getInputElement()->addOnChangeScript($string);
+        return $this;
+    }
 
     /**
      * Magic method to forward all calls to methods, not explicitly defined in the filter to ist value widget.
@@ -77,6 +74,26 @@ trait JqueryFilterTrait {
     public function __call($name, $arguments)
     {
         return call_user_method_array($name, $this->getInputElement(), $arguments);
+    }
+    
+    /**
+     * 
+     * {@inheritdoc}
+     * @see AbstractJqueryElement::buildJsValidator()
+     */
+    public function buildJsValidator()
+    {
+        return $this->getInputElement()->buildJsValidator();
+    }
+    
+    /**
+     *
+     * {@inheritdoc}
+     * @see AbstractJqueryElement::buildJsValidationError()
+     */
+    public function buildJsValidationError()
+    {
+        return $this->getInputElement()->buildJsValidationError();
     }
 }
 ?>

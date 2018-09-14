@@ -2,16 +2,29 @@
 namespace exface\Core\Interfaces\Model;
 
 use exface\Core\Interfaces\iCanBeCopied;
-use exface\Core\Interfaces\ExfaceClassInterface;
+use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 
 /**
- *
+ * A UXON expression can be used as a value for a non-static property and can be a number, a
+ * (quoted) string, a formula, an attribute alias or a widget link - this interface describes
+ * the value object for UXON expressions.
+ * 
+ * Every expression can be calculated into a single value. Based on calulations requirements,
+ * expressions are categorized in:
+ * - Static expressions can be calculated as-is, without any context like widgets or data)
+ * - Dynamic expressions need data or widget context to get calculated
+ * 
+ * The main purpose of the interface is to provide methods to find out, which type of expression
+ * it is, wether it is static, which data type the calculation results in, etc. 
+ * 
  * @author Andrej Kabachnik
  *
  */
-interface ExpressionInterface extends ExfaceClassInterface, iCanBeCopied
+interface ExpressionInterface extends WorkbenchDependantInterface, iCanBeCopied
 {
     /**
      * 
@@ -24,29 +37,42 @@ interface ExpressionInterface extends ExfaceClassInterface, iCanBeCopied
     /**
      * @return boolean
      */
-    public function isMetaAttribute();
+    public function isMetaAttribute() : bool;
     
     /**
      * @return boolean
      */
-    public function isFormula();
+    public function isFormula() : bool;
     
     /**
      * @return boolean
      */
-    public function isConstant();
+    public function isConstant() : bool;
+    
+    
+    public function isString() : bool;
+    
+    public function isNumber() : bool;
+    
+    /**
+     * Returns TRUE if the expression can be evaluated without a data context and FALSE otherwise: 
+     * i.e. the expression ist static if it does not depend on the contents of data sheets.
+     * 
+     * @return bool
+     */
+    public function isStatic() : bool;
     
     /**
      * Returns TRUE if the expression has no value (expression->toString() = NULL) and FALSE otherwise
      *
      * @return boolean
      */
-    public function isEmpty();
+    public function isEmpty() : bool;
     
     /**
      * @return boolean
      */
-    public function isReference();
+    public function isReference() : bool;
     
     /**
      * Evaluates the given expression based on a data sheet and the coordinates of a cell.
@@ -85,7 +111,12 @@ interface ExpressionInterface extends ExfaceClassInterface, iCanBeCopied
     
     public function getRawValue();
     
-    public function getDataType();
+    /**
+     * Returns the data type, that the calculation result of this expression will have.
+     * 
+     * @return DataTypeInterface
+     */
+    public function getDataType() : DataTypeInterface;
     
     public function setDataType($value);
     
@@ -100,7 +131,7 @@ interface ExpressionInterface extends ExfaceClassInterface, iCanBeCopied
      * E.g. "ORDER->POSITION->PRODUCT->ID" will become "PRODUCT->ID" after calling rebase(ORDER->POSITION) on it.
      *
      * @param string $relation_path_to_new_base_object
-     * @return ExpressionInterfaceInterface
+     * @return ExpressionInterface
      */
     public function rebase($relation_path_to_new_base_object);
     
@@ -114,6 +145,30 @@ interface ExpressionInterface extends ExfaceClassInterface, iCanBeCopied
     /**
      * @return WidgetLinkInterface
      */
-    public function getWidgetLink();
+    public function getWidgetLink(WidgetInterface $sourceWidget) : WidgetLinkInterface;
+    
+    /**
+     * Returns true if a string contains a formula, false otherwise.
+     *
+     * @param mixed $value
+     * @return boolean
+     */
+    public static function detectFormula($value) : bool;
+    
+    /**
+     * Returns true if a value is a quoted string (is enclosed in " or ') and false otherwise.
+     *
+     * @param mixed $value
+     * @return boolean
+     */
+    public static function detectQuotedString($value) : bool;
+    
+    /**
+     * Returns true if a value is a number (no quotes and strictly numeric) and false otherwise.
+     *
+     * @param mixed $value
+     * @return boolean
+     */
+    public static function detectNumber($value) : bool;
 }
 

@@ -3,6 +3,7 @@ namespace exface\Core\ModelBuilders;
 
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\CommonLogic\Workbench;
+use exface\Core\DataTypes\StringDataType;
 
 class MySqlModelBuilder extends AbstractSqlModelBuilder
 {
@@ -43,13 +44,13 @@ class MySqlModelBuilder extends AbstractSqlModelBuilder
     protected function guessDataType(Workbench $workbench, $data_type, $length = null, $number_scale = null)
     {
         $data_type = trim($data_type);
-        $details = array();
-        $type = substr($data_type, strpos($data_type, '('));
-        if (strpos($data_type, '(') !== false) {
-            $details = explode(',', substr($data_type, (strpos($data_type, '(')) + 1, (strlen($data_type) - strrpos($data_type, ')'))));
+        $details = [];
+        $type = StringDataType::substringBefore($data_type, '(', $data_type);
+        if ($type !== $data_type) {
+            $details = explode(',', substr($data_type, (strlen($type)+1), -1));
         }
         
-        return parent::guessDataType($type, $details[0], $details[1]);
+        return parent::guessDataType($workbench, $type, $details[0], $details[1]);
     }
 }
 ?>

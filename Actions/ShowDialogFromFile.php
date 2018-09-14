@@ -6,6 +6,9 @@ use exface\Core\Exceptions\Actions\ActionInputMissingError;
 use exface\Core\CommonLogic\Filemanager;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Interfaces\Tasks\TaskInterface;
+use exface\Core\Interfaces\DataSources\DataTransactionInterface;
+use exface\Core\Interfaces\Tasks\ResultInterface;
 
 /**
  * This creates and displays a widget from a JSON file containing some UXON description of the widget.
@@ -14,42 +17,40 @@ use exface\Core\CommonLogic\UxonObject;
  * UXON like this:
  *
  * {
- * "widget_type": "DebugMessage",
- * "object_alias": "exface.Core.ERROR",
- * "visibility": "normal",
- * "widgets": [
- * {
- * "id": "error_tab",
- * "widget_type": "Tab",
- * "object_alias": "exface.Core.ERROR",
- * "caption": "Error",
- * "visibility": "normal",
- * "widgets": [
- * {
- * "widget_type": "TextHeading",
- * "object_alias": "exface.Core.ERROR",
- * "value": "Error 6T91AR9: Invalid data filter widget configuration",
- * "visibility": "normal",
- * "heading_level": 2
- * },
- * {
- * "widget_type": "Text",
- * "object_alias": "exface.Core.ERROR",
- * "value": "Cannot create a filter for attribute alias \"NO\" in widget \"style\": attribute not found for object \"alexa.RMS.ARTICLE\"!",
- * "visibility": "normal"
- * },
- * {
- * "widget_type": "Text",
- * "object_alias": "exface.Core.ERROR",
- * "caption": "Description",
- * "hint": "[Text] ",
- * "visibility": "normal",
- * "attribute_alias": "DESCRIPTION"
- * }
- * ]
- * },
- * ... eventually more tabs ...
- * ]
+ *  "widget_type": "DebugMessage",
+ *  "object_alias": "exface.Core.ERROR",
+ *  "visibility": "normal",
+ *  "widgets": [
+ *      {
+ *          "id": "error_tab",
+ *          "widget_type": "Tab",
+ *          "object_alias": "exface.Core.ERROR",
+ *          "caption": "Error",
+ *          "visibility": "normal",
+ *          "widgets": [
+ *      {
+ *          "widget_type": "TextHeading",
+ *          "object_alias": "exface.Core.ERROR",
+ *          "value": "Error 6T91AR9: Invalid data filter widget configuration",
+ *          "visibility": "normal",
+ *          "heading_level": 2
+ *      },
+ *      {
+ *          "widget_type": "Text",
+ *          "object_alias": "exface.Core.ERROR",
+ *          "value": "Cannot create a filter for attribute alias \"NO\" in widget \"style\": attribute not found for object \"alexa.RMS.ARTICLE\"!",
+ *          "visibility": "normal"
+ *      },
+ *      {
+ *          "widget_type": "Text",
+ *          "object_alias": "exface.Core.ERROR",
+ *          "caption": "Description",
+ *          "hint": "[Text] ",
+ *          "visibility": "normal",
+ *          "attribute_alias": "DESCRIPTION"
+ *      },
+ *      ... eventually more tabs ...
+ *  ]
  * }
  *
  * @author Thomas Walter
@@ -61,6 +62,18 @@ class ShowDialogFromFile extends ShowDialog
     private $file_path_attribute_alias = null;
 
     private $file_extension = null;
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Actions\ShowWidget::init()
+     */
+    protected function init()
+    {
+        parent::init();
+        $this->setInputRowsMin(1);
+        $this->setInputRowsMax(1);
+    }
 
     /**
      *
@@ -82,9 +95,9 @@ class ShowDialogFromFile extends ShowDialog
         return $this;
     }
 
-    protected function perform()
+    protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {
-        if (! $idCol = $this->getInputDataSheet()->getColumns()->getByExpression($this->getFilePathAttributeAlias())) {
+        if (! $idCol = $this->getInputDataSheet($task)->getColumns()->getByExpression($this->getFilePathAttributeAlias())) {
             throw new ActionInputMissingError($this, 'Column "' . $this->getFilePathAttributeAlias() . '" not found in input data!');
         }
         $filename = $idCol->getCellValue(0);
@@ -104,7 +117,7 @@ class ShowDialogFromFile extends ShowDialog
             $completeFilename = $basePath . '/' . $filename . ($this->getFileExtension() ? '.' . ltrim($this->getFileExtension(), ".") : '');
             if (file_exists($completeFilename)) {
                 $json = file_get_contents($completeFilename);
-                $this->setWidget(WidgetFactory::createFromUxon($this->getDialogWidget()->getPage(), UxonObject::fromJson($json), $this->getDialogWidget()));
+                $this->getDialogWidget()->addWidget(WidgetFactory::createFromUxon($this->getDialogWidget()->getPage(), UxonObject::fromJson($json), $this->getDialogWidget()));
             } else {
                 throw new FileNotFoundError('File "' . $completeFilename . '" not found!');
             }
@@ -116,7 +129,7 @@ class ShowDialogFromFile extends ShowDialog
             $this->getWidget()->setCaption($completeFilename);
         }
         
-        parent::perform();
+        return parent::perform($task, $transaction);
     }
 
     /**

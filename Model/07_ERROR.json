@@ -811,14 +811,14 @@
         },
         {
             "CREATED_ON": "2016-12-28 15:45:05",
-            "MODIFIED_ON": "2016-12-28 15:45:05",
+            "MODIFIED_ON": "2018-06-18 07:21:36",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6cd148b0f8ed993cce4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
             "ERROR_CODE": "6T91HJK",
             "ERROR_TEXT": "Malformed relation path",
-            "DESCRIPTION": ""
+            "DESCRIPTION": "A relation path consists of relation\/attribute aliases concatenated via \"__\" (double underscore). Each relation alias may include a modifier enclosed in square brackets. In case of reverse relations (1-to-N), the alias will mostly include an aggregator function separated by a semicolon.\n\nExamples (based on an imaginary meta object COMPANY):\n\n- `Billing_ADDRESS__STREET` - the street name of the company's billing address\n- `ORDER[PAYEE]__ORDER_NO:COUNT` - number of orders, where the company is the payee\n- `EMPLOYEE__ID:COUNT` - number of employees of the compay (no modifier needed as there is only one relation from EMPLOYEE to COMPANY. `EMPLOYEE[COMPANY]__ID:COUNT` would work too, of course."
         },
         {
             "CREATED_ON": "2016-12-28 15:47:05",
@@ -1369,6 +1369,83 @@
             "ERROR_CODE": "6YI5RCU",
             "ERROR_TEXT": "Required widget property missing",
             "DESCRIPTION": ""
+        },
+        {
+            "CREATED_ON": "2018-02-14 21:47:58",
+            "MODIFIED_ON": "2018-02-14 21:47:58",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e811d0b514b5d698100205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "ERROR_CODE": "6Z5MAVK",
+            "ERROR_TEXT": "Invalid configuration for the DataRowGrouper",
+            "DESCRIPTION": ""
+        },
+        {
+            "CREATED_ON": "2018-03-12 12:48:09",
+            "MODIFIED_ON": "2018-03-12 12:48:09",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e825f39dc88a37afe20205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "ERROR_CODE": "6ZISUAJ",
+            "ERROR_TEXT": "Cannot delete dependent data",
+            "DESCRIPTION": "When trying to delete a business object, the system automatically looks for related data, that depends on it and attempts to remove it first. This error indicates, that this operation failed.\n\nRemoving dependent data is important as it would become meaningless garbage without the object it depends on: e.g. an order position cannot exist if the order was physically deleted.\n\nIf the related data cannot be removed automatically, you should try deleting it manually and retry the failed delete operation."
+        },
+        {
+            "CREATED_ON": "2018-03-12 13:07:22",
+            "MODIFIED_ON": "2018-03-12 13:07:22",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e825f64d3bb61dafe20205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "ERROR_CODE": "6ZIT36X",
+            "ERROR_TEXT": "No data source defined for object",
+            "DESCRIPTION": "This error occurs if an operation requiring a data source (e.g. reading or writing) was called on an object that does not have one. \n\nObjects without data sources are quite legitimate. For example, they can be used to model the input data for an action, which is not a direct replica of data source entry. However, these objects only exist in the runtime. If an attempt is made to persist such an object, this error will occur."
+        },
+        {
+            "CREATED_ON": "2018-06-12 13:28:30",
+            "MODIFIED_ON": "2018-06-13 07:33:59",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e86e447b80b01a9e9e0205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "ERROR_CODE": "70U52B4",
+            "ERROR_TEXT": "Error in metamodel: relations to objects without primary keys (UIDs) must have an explicit key attribute",
+            "DESCRIPTION": "This error occurs if a relation, that does not have a specific target key attribute, points to an object without a primary key (UID attribute).\n\nNormally you do not have to specify, which attribute of the related object is to be used as key. By default, the UID of that object is used. This, of course, does not work, if there is no UID attribute. So you should either specify, which attribute the relation is attached to or add a UID to the target object. "
+        },
+        {
+            "CREATED_ON": "2018-06-13 07:37:29",
+            "MODIFIED_ON": "2018-06-13 07:37:29",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e86edc9c5a731e9e9e0205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "ERROR_CODE": "70UJ2GV",
+            "ERROR_TEXT": "Error in metamodel: orphaned model components detected",
+            "DESCRIPTION": "This error indicates, that an instance of a model component references a non-existant entity: e.g. an attribute for an object, that does not exist. See specific error text for details."
+        },
+        {
+            "CREATED_ON": "2018-06-18 07:34:52",
+            "MODIFIED_ON": "2018-06-18 07:34:52",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e872ca11c4a1939e9e0205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "ERROR_CODE": "70X3MLA",
+            "ERROR_TEXT": "Ambiguous relation alias",
+            "DESCRIPTION": "This error occurs, when a relation within an alias expression is ambiguously defined: that is, multiple relations matching the alias were found. \n\nThis happens typically, when the relations modifier (the square-brackets-part) is omitted in reverse relations. Since the alias of the right object is used in relation paths for reverse relations, there can easily be multiple reverse relations with the same alias. \n\nConsider the following example with a meta object ORDER, which has two different relations to the object COMPANY: PAYEE and CONTRACTOR. The expression COMPANY__ORDER (all order of a company) is ambiguous, because it is unclear, which relation is meant, so the correct notation would be COMPANY__ORDER[PAYEE] or COMPANY__ORDER[CONTRACTOR]. \n\nThe part in square brackets is called *modifier* and is required for reverse relations, unless one of the following conditions applies:\n\n- There is only one relation from the right to the left object (e.g. if there would be only one relation from ORDER to COMPANY)\n- There are multiple relations, but only one of them is required for the right object (e.g. only PAYEE would be required for ORDER) - in this case, the required relations is used by default.\n\nIn any case, the full notation with the modifier is allways possible. The short one is just a convenience shortcut.\n\n"
+        },
+        {
+            "CREATED_ON": "2018-06-20 09:56:04",
+            "MODIFIED_ON": "2018-06-20 09:57:44",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e8747025cae8f7a1fb0205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "ERROR_CODE": "70Y6HAK",
+            "ERROR_TEXT": "Object not writeable!",
+            "DESCRIPTION": "Writing operations can be explicitly disabled in the metamodel by removing the property \"writable\" from \n\n- the object, \n- it's data source, or\n- a specific connection. \n\nIn this case, writing attempts will fail even before a transaction is started or the data is passed to the corresponding query builder!"
         }
     ],
     "totals_rows": [],

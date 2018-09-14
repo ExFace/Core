@@ -11,7 +11,7 @@ use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\Exceptions\LogicException;
 
-abstract class WidgetFactory extends AbstractFactory
+abstract class WidgetFactory extends AbstractStaticFactory
 {
 
     /**
@@ -59,8 +59,7 @@ abstract class WidgetFactory extends AbstractFactory
         
         // If the widget is supposed to be extended from another one, merge the uxon descriptions before doing anything else
         if ($uxon_object->hasProperty('extend_widget')) {
-            $exface = $page->getWorkbench();
-            $linked_object = WidgetLinkFactory::createFromAnything($exface, $uxon_object->getProperty('extend_widget'))->getWidgetUxon();
+            $linked_object = WidgetLinkFactory::createFromPage($page, $uxon_object->getProperty('extend_widget'))->getTargetWidgetUxon();
             // Remove the id from the new widget, because otherwise it would be identical to the id of the widget extended from
             $linked_object->unsetProperty('id');
             // Extend the linked object by the original one. Thus any properties of the original uxon will override those from the linked widget

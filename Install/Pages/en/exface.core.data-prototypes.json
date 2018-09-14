@@ -5,7 +5,8 @@
     "menu_index": "4",
     "menu_visible": true,
     "name": "Data Prototypes",
-    "short_description": "",
+    "description": "",
+    "intro": "",
     "replaces_page_alias": null,
     "contents": {
         "object_alias": "exface.core.DATA_PROTOTYPE",
@@ -34,7 +35,7 @@
         ],
         "buttons": [
             {
-                "action_alias": "exface.Core.ShowObjectDialog",
+                "action_alias": "exface.Core.ShowObjectInfoDialog",
                 "bind_to_double_click": true
             }
         ]

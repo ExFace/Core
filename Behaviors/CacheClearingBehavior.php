@@ -1,7 +1,8 @@
 <?php
 namespace exface\Core\Behaviors;
 
-use exface\Core\CommonLogic\AbstractBehavior;
+use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
+use exface\Core\Interfaces\Model\BehaviorInterface;
 
 /**
  * This behavior clears the workbench cache every time data of the object is
@@ -16,9 +17,9 @@ class CacheClearingBehavior extends AbstractBehavior
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\CommonLogic\AbstractBehavior::register()
+     * @see \exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior::register()
      */
-    public function register()
+    public function register() : BehaviorInterface
     {
         $clearCacheMethod = array(
             $this->getWorkbench(),
@@ -28,6 +29,7 @@ class CacheClearingBehavior extends AbstractBehavior
         $this->getWorkbench()->eventManager()->addListener($this->getObject()->getAliasWithNamespace() . '.DataSheet.CreateData.After', $clearCacheMethod);
         $this->getWorkbench()->eventManager()->addListener($this->getObject()->getAliasWithNamespace() . '.DataSheet.DeleteData.After', $clearCacheMethod);
         $this->setRegistered(true);
+        return $this;
     }
 
 }

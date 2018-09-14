@@ -56,6 +56,7 @@ class Input extends Value implements iTakeInput, iHaveDefaultValue
     public function setRequired($value)
     {
         $this->required = $value;
+        return $this;
     }
 
     /**
@@ -72,7 +73,7 @@ class Input extends Value implements iTakeInput, iHaveDefaultValue
         $disabled = parent::isDisabled();
         if (is_null($disabled)) {
             try {
-                if ($this->getMetaObject()->hasAttribute($this->getAttributeAlias()) && ! $this->getAttribute()->isEditable()) {
+                if ($this->hasAttributeReference() && ! $this->getAttribute()->isEditable()) {
                     $disabled = true;
                 } else {
                     $disabled = false;

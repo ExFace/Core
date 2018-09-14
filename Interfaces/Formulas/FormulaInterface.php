@@ -1,12 +1,13 @@
 <?php
 namespace exface\Core\Interfaces\Formulas;
 
-use exface\Core\Interfaces\ExfaceClassInterface;
+use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\Interfaces\DataSheets\DataColumnInterface;
+use exface\Core\Interfaces\Selectors\FormulaSelectorInterface;
 
-interface FormulaInterface extends ExfaceClassInterface
+interface FormulaInterface extends WorkbenchDependantInterface
 {
 
     /**
@@ -76,4 +77,18 @@ interface FormulaInterface extends ExfaceClassInterface
      * @return integer
      */
     public function getCurrentRowNumber();
+    
+    /**
+     * Returns TRUE if the formula can be evaluated without a data sheet (e.g. NOW()) and FALSE otherwise.
+     *
+     * @return bool
+     */
+    public function isStatic() : bool;
+    
+    /**
+     * 
+     * @return FormulaSelectorInterface
+     */
+    public function getSelector() : FormulaSelectorInterface;
+    
 }

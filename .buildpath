@@ -5,7 +5,10 @@
 	<buildpathentry external="true" kind="lib" path="C:/wamp/www/exface/exface/vendor/jmikola/wildcard-event-dispatcher/src/Jmikola/WildcardEventDispatcher"/>
 	<buildpathentry external="true" kind="lib" path="C:/wamp/www/exface/exface/vendor/webmozart/path-util/src"/>
 	<buildpathentry external="true" kind="lib" path="C:/wamp/www/exface/exface/vendor/psr/log"/>
+	<buildpathentry external="true" kind="lib" path="C:/wamp/www/exface/exface/vendor/psr/container/src"/>
 	<buildpathentry external="true" kind="lib" path="C:/wamp/www/exface/exface/vendor/psr/http-message/src"/>
+	<buildpathentry external="true" kind="lib" path="C:/wamp/www/exface/exface/vendor/psr/http-server-handler/src/"/>
+	<buildpathentry external="true" kind="lib" path="C:/wamp/www/exface/exface/vendor/psr/http-server-middleware/src/"/>
 	<buildpathentry external="true" kind="lib" path="C:/wamp/www/exface/exface/vendor/monolog/monolog/src"/>
 	<buildpathentry external="true" kind="lib" path="C:/wamp/www/exface/exface/vendor/femtopixel/monolog-csvhandler/src"/>
 	<buildpathentry external="true" kind="lib" path="C:/wamp/www/exface/exface/vendor/guzzlehttp/psr7/src"/>
@@ -13,5 +16,9 @@
 	<buildpathentry external="true" kind="lib" path="C:/wamp/www/exface/exface/vendor/symfony/finder"/>
 	<buildpathentry external="true" kind="lib" path="C:/wamp/www/exface/exface/vendor/wingu/reflection/src"/>
 	<buildpathentry external="true" kind="lib" path="C:/wamp/www/exface/exface/vendor/league/csv/src"/>
-	<buildpathentry external="true" kind="lib" path="C:/wamp/www/exface/exface/vendor/cebe/markdown"/><buildpathentry kind="con" path="org.eclipse.php.core.LANGUAGE"/>
+	<buildpathentry external="true" kind="lib" path="C:/wamp/www/exface/exface/vendor/cebe/markdown"/>
+	<buildpathentry external="true" kind="lib" path="C:/wamp/www/exface/exface/vendor/ramsey/uuid/src/"/>
+	<buildpathentry external="true" kind="lib" path="C:/wamp/www/exface/exface/vendor/kabachello/fileroute/"/>
+	<buildpathentry external="true" kind="lib" path="C:/wamp/www/exface/exface/vendor/guzzlehttp/guzzle/src"/>
+	<buildpathentry kind="con" path="org.eclipse.php.core.LANGUAGE"/>
 </buildpath>

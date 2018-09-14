@@ -3,22 +3,23 @@ namespace exface\Core\CommonLogic\Model;
 
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\ConditionFactory;
-use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\Exceptions\Model\ExpressionRebaseImpossibleError;
-use exface\Core\Interfaces\iCanBeCopied;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Model\ExpressionInterface;
+use exface\Core\Interfaces\Model\ConditionGroupInterface;
+use exface\Core\Interfaces\Model\ConditionInterface;
+use exface\Core\Interfaces\Model\ConditionalExpressionInterface;
 
 /**
- * A condition group contains one or more conditions and/or other (nested) condition groups combined by one logical operator,
- * e.g.
- * OR( AND( cond1 = val1, cond2 < val2 ), cond3 = val3 ).
+ * Default implementation of the ConditionGroupInterface
+ * 
+ * @see ConditionGroupInterface
  *
  * @author Andrej Kabachnik
  *        
  */
-class ConditionGroup implements iCanBeConvertedToUxon, iCanBeCopied
+class ConditionGroup implements ConditionGroupInterface
 {
 
     // Properties to be duplicated on copy()
@@ -31,19 +32,18 @@ class ConditionGroup implements iCanBeConvertedToUxon, iCanBeCopied
     // Properties NOT to be dublicated on copy()
     private $exface = NULL;
 
-    function __construct(\exface\Core\CommonLogic\Workbench $exface, $operator = EXF_LOGICAL_AND)
+    function __construct(\exface\Core\CommonLogic\Workbench $exface, string $operator = EXF_LOGICAL_AND)
     {
         $this->exface = $exface;
         $this->setOperator($operator);
     }
 
     /**
-     * Adds a condition to the group
-     *
-     * @param Condition $condition            
-     * @return \exface\Core\CommonLogic\Model\ConditionGroup
+     * 
+     * {@inheritdoc}
+     * @see ConditionGroupInterface::addCondition()
      */
-    public function addCondition(Condition $condition)
+    public function addCondition(ConditionInterface $condition) : ConditionGroupInterface
     {
         // TODO check, if the same condition already exists. There is no need to allow duplicate conditions in the same group!
         $this->conditions[] = $condition;
@@ -51,14 +51,11 @@ class ConditionGroup implements iCanBeConvertedToUxon, iCanBeCopied
     }
 
     /**
-     * Creates a new condition and adds it to this group
-     *
-     * @param expression $expression            
-     * @param string $value            
-     * @param string $comparator            
-     * @return \exface\Core\CommonLogic\Model\ConditionGroup
+     * 
+     * {@inheritdoc}
+     * @see ConditionGroupInterface::addConditionFromExpression()
      */
-    public function addConditionFromExpression(ExpressionInterface $expression, $value = NULL, $comparator = EXF_COMPARATOR_IS)
+    public function addConditionFromExpression(ExpressionInterface $expression, $value = NULL, string $comparator = EXF_COMPARATOR_IS) : ConditionGroupInterface
     {
         if (! is_null($value) && $value !== '') {
             $condition = ConditionFactory::createFromExpression($this->exface, $expression, $value, $comparator);
@@ -68,15 +65,11 @@ class ConditionGroup implements iCanBeConvertedToUxon, iCanBeCopied
     }
 
     /**
-     * Creates a new condition and adds it to this condition group.
-     * TODO Refactor to use ConditionFactory::createFromString() and process special prefixes and so on there
      *
-     * @param string $column_name            
-     * @param mixed $value            
-     * @param string $comparator            
-     * @return ConditionGroup
+     * {@inheritdoc}
+     * @see ConditionGroupInterface::addCondition()
      */
-    function addConditionsFromString(MetaObjectInterface $base_object, $expression_string, $value, $comparator = null)
+    public function addConditionsFromString(MetaObjectInterface $base_object, string $expression_string, $value, string $comparator = null) : ConditionGroupInterface
     {
         $value = trim($value);
                 
@@ -87,49 +80,43 @@ class ConditionGroup implements iCanBeConvertedToUxon, iCanBeCopied
         if (count($expression_strings) > 1) {
             $group = ConditionGroupFactory::createEmpty($this->exface, EXF_LOGICAL_OR);
             foreach ($expression_strings as $f) {
-                $group->addCondition(ConditionFactory::createFromString($base_object, $f, $value, $comparator));
+                $group->addCondition(ConditionFactory::createFromExpressionString($base_object, $f, $value, $comparator));
             }
             $this->addNestedGroup($group);
         } elseif (! is_null($value) && $value !== '') {
-            $this->addCondition(ConditionFactory::createFromString($base_object, $expression_string, $value, $comparator));
+            $this->addCondition(ConditionFactory::createFromExpressionString($base_object, $expression_string, $value, $comparator));
         }
         
         return $this;
     }
 
     /**
-     * Adds a subgroup to this group.
-     *
-     * @param ConditionGroup $group            
-     * @return \exface\Core\CommonLogic\Model\ConditionGroup
+     * 
+     * {@inheritdoc}
+     * @see ConditionGroupInterface::addNestedGroup()
      */
-    public function addNestedGroup(ConditionGroup $group)
+    public function addNestedGroup(ConditionGroupInterface $group) : ConditionGroupInterface
     {
         $this->nested_groups[] = $group;
         return $this;
     }
 
     /**
-     * Returns an array of conditions directly contained in this group (not in the subgroups!).
-     * Returns an empty array if the group does not have conditions.
      *
-     * @return Condition[]
+     * {@inheritdoc}
+     * @see ConditionGroupInterface::getConditions()
      */
-    public function getConditions()
+    public function getConditions() : array
     {
         return $this->conditions;
     }
 
     /**
-     * Returns a numeric flat array with all conditions within this condition group and it's nested subgroups.
      *
-     * NOTE: This array cannot be used to evaluate the condition group, as all information about operators in
-     * nested groups is lost, but this method can be usefull to search for conditions with certain properties
-     * (e.g. an attribute, a comparator, etc.)
-     *
-     * @return \exface\Core\CommonLogic\Model\Condition[]
+     * {@inheritdoc}
+     * @see ConditionGroupInterface::getConditionsRecursive()
      */
-    public function getConditionsRecursive()
+    public function getConditionsRecursive() : array
     {
         $result = $this->getConditions();
         foreach ($this->getNestedGroups() as $group) {
@@ -139,23 +126,21 @@ class ConditionGroup implements iCanBeConvertedToUxon, iCanBeCopied
     }
 
     /**
-     * Returns an array of condition groups directly contained in this group (not in the subgroups!).
-     * Returns an empty array if the group does not have subgroups.
-     *
-     * @return ConditionGroup[]
+     * 
+     * {@inheritdoc}
+     * @see ConditionGroupInterface::getNestedGroups()
      */
-    public function getNestedGroups()
+    public function getNestedGroups() : array
     {
         return $this->nested_groups;
     }
 
     /**
-     * Returns the logical operator of the group.
-     * Operators are defined by the EXF_LOGICAL_xxx constants.
      *
-     * @return string
+     * {@inheritdoc}
+     * @see ConditionGroupInterface::addCondition()
      */
-    public function getOperator()
+    public function getOperator() : string
     {
         return $this->operator;
     }
@@ -164,25 +149,24 @@ class ConditionGroup implements iCanBeConvertedToUxon, iCanBeCopied
      * Sets the logical operator of the group.
      * Operators are defined by the EXF_LOGICAL_xxx constants.
      *
-     * @param string $value            
+     * @param string $value
+     * @return ConditionGroupInterface            
      */
-    public function setOperator($value)
+    protected function setOperator(string $value) : ConditionGroupInterface
     {
         // TODO Check, if the group operator is one of the allowed logical operators
         if ($value) {
             $this->operator = $value;
         }
+        return $this;
     }
 
     /**
-     * Returns a condition group with the same conditions, but based on a related object specified by the given relation path.
-     *
-     * @see expression::rebase()
-     *
-     * @param string $relation_path_to_new_base_object            
-     * @return ConditionGroup
+     * 
+     * {@inheritdoc}
+     * @see ConditionGroupInterface::rebase()
      */
-    public function rebase($relation_path_to_new_base_object, $remove_conditions_not_matching_the_path = false)
+    public function rebase(string $relation_path_to_new_base_object, callable $filter_callback = null) : ConditionGroupInterface
     {
         // Do nothing, if the relation path is empty (nothing to rebase...)
         if (! $relation_path_to_new_base_object)
@@ -190,12 +174,17 @@ class ConditionGroup implements iCanBeConvertedToUxon, iCanBeCopied
         
         $result = ConditionGroupFactory::createEmpty($this->exface, $this->getOperator());
         foreach ($this->getConditions() as $condition) {
+            // Remove conditions not matching the filter
+            if (! is_null($filter_callback) && call_user_func($filter_callback, $condition, $relation_path_to_new_base_object) === false) {
+                continue;
+            }
             // Remove conditions not matching the path if required by user
+            /*
             if ($remove_conditions_not_matching_the_path && $condition->getExpression()->isMetaAttribute()) {
-                if (strpos($condition->getExpression()->toString(), $relation_path_to_new_base_object) !== 0) {
+                if (stripos($condition->getExpression()->toString(), $relation_path_to_new_base_object) !== 0) {
                     continue;
                 }
-            }
+            }*/
             
             // Rebase the expression behind the condition and create a new condition from it
             try {
@@ -215,12 +204,22 @@ class ConditionGroup implements iCanBeConvertedToUxon, iCanBeCopied
         return $result;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\WorkbenchDependantInterface::getWorkbench()
+     */
     public function getWorkbench()
     {
         return $this->exface;
     }
 
-    public function toString()
+    /**
+     *
+     * {@inheritdoc}
+     * @see ConditionalExpressionInterface::toString()
+     */
+    public function toString() : string
     {
         $result = '';
         foreach ($this->getConditions() as $cond) {
@@ -232,6 +231,11 @@ class ConditionGroup implements iCanBeConvertedToUxon, iCanBeCopied
         return $result;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::exportUxonObject()
+     */
     public function exportUxonObject()
     {
         $uxon = new UxonObject();
@@ -245,6 +249,11 @@ class ConditionGroup implements iCanBeConvertedToUxon, iCanBeCopied
         return $uxon;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::importUxonObject()
+     */
     public function importUxonObject(UxonObject $uxon)
     {
         $this->setOperator($uxon->getProperty('operator'));
@@ -260,12 +269,12 @@ class ConditionGroup implements iCanBeConvertedToUxon, iCanBeCopied
         }
     }
 
-    public function getModel()
-    {
-        return $this->getWorkbench()->model();
-    }
-
-    public function isEmpty()
+    /**
+     *
+     * {@inheritdoc}
+     * @see ConditionalExpressionInterface::isEmpty()
+     */
+    public function isEmpty() : bool
     {
         if (count($this->getConditions()) == 0 && count($this->getNestedGroups()) == 0) {
             return true;
@@ -275,12 +284,11 @@ class ConditionGroup implements iCanBeConvertedToUxon, iCanBeCopied
     }
 
     /**
-     * Removes a given condition from this condition group (not from the nested groups!)
-     *
-     * @param Condition $condition            
-     * @return Condition
+     * 
+     * {@inheritdoc}
+     * @see ConditionGroupInterface::removeCondition()
      */
-    public function removeCondition(Condition $condition)
+    public function removeCondition(ConditionInterface $condition) : ConditionGroupInterface
     {
         foreach ($this->getConditions() as $i => $cond) {
             if ($cond == $condition) {
@@ -291,11 +299,11 @@ class ConditionGroup implements iCanBeConvertedToUxon, iCanBeCopied
     }
 
     /**
-     * Removes all conditions and nested groups from this condition group thus resetting it completely
-     *
-     * @return ConditionGroup
+     * 
+     * {@inheritdoc}
+     * @see ConditionGroupInterface::removeAll()
      */
-    public function removeAll()
+    public function removeAll() : ConditionGroupInterface
     {
         $this->conditions = array();
         $this->nested_groups = array();
@@ -303,8 +311,9 @@ class ConditionGroup implements iCanBeConvertedToUxon, iCanBeCopied
     }
 
     /**
-     *
-     * @return ConditionGroup
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\iCanBeCopied::copy()
      */
     public function copy()
     {
@@ -314,14 +323,11 @@ class ConditionGroup implements iCanBeConvertedToUxon, iCanBeCopied
     }
 
     /**
-     * Returns the number of conditions in this group.
-     * If $recursive is TRUE, conditions in nested condition groups will be counted to,
-     * otherwise just the direct conditions of the group will be included.
-     *
-     * @param boolean $recursive            
-     * @return string
+     * 
+     * {@inheritdoc}
+     * @see ConditionGroupInterface::countConditions()
      */
-    public function countConditions($recursive = true)
+    public function countConditions(bool $recursive = true) : int
     {
         $result = count($this->getConditions());
         if ($recursive) {
@@ -333,14 +339,11 @@ class ConditionGroup implements iCanBeConvertedToUxon, iCanBeCopied
     }
 
     /**
-     * Returns the number of nested condition groups in this group.
-     * If $recursive is TRUE, condition groups within the nested groups
-     * will be counted to, otherwise just the direct subgroups of the group will be included.
-     *
-     * @param boolean $recursive            
-     * @return integer
+     * 
+     * {@inheritdoc}
+     * @see ConditionGroupInterface::countNestedGroups()
      */
-    public function countNestedGroups($recursive = true)
+    public function countNestedGroups(bool $recursive = true) : int
     {
         $result = count($this->getNestedGroups());
         if ($recursive) {
@@ -349,6 +352,16 @@ class ConditionGroup implements iCanBeConvertedToUxon, iCanBeCopied
             }
         }
         return $result;
+    }
+    
+    /**
+     * 
+     * {@inheritdoc}
+     * @see ConditionalExpressionInterface::toConditionGroup()
+     */
+    public function toConditionGroup(): ConditionGroupInterface
+    {
+        return $this;
     }
 }
 ?>

@@ -3,30 +3,25 @@ namespace exface\Core\Interfaces\DataTypes;
 
 use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
 use exface\Core\CommonLogic\Model\Model;
-use exface\Core\Interfaces\ExfaceClassInterface;
+use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\AliasInterface;
-use exface\Core\Interfaces\NameResolverInterface;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Interfaces\iCanBeCopied;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\CommonLogic\Workbench;
 use exface\Core\Exceptions\DataTypes\DataTypeValidationError;
 use exface\Core\DataTypes\SortingDirectionsDataType;
 use exface\Core\Interfaces\Model\MetaModelPrototypeInterface;
+use exface\Core\Interfaces\ValueObjectInterface;
+use exface\Core\Interfaces\Selectors\DataTypeSelectorInterface;
 
-interface DataTypeInterface extends ExfaceClassInterface, AliasInterface, iCanBeCopied, iCanBeConvertedToUxon, MetaModelPrototypeInterface
+/**
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
+interface DataTypeInterface extends WorkbenchDependantInterface, AliasInterface, iCanBeCopied, iCanBeConvertedToUxon, MetaModelPrototypeInterface, ValueObjectInterface
 {
-
-    /**
-     * 
-     * @param Workbench $workbench
-     * @param mixed $value
-     * @param NameResolverInterface $name_resolver
-     * @param UxonObject $configuration
-     */
-    public function __construct(Workbench $workbench, $value = null, NameResolverInterface $name_resolver = null, UxonObject $configuration = null);
-
     /**
      * @param string $string
      * @return DataTypeInterface
@@ -142,13 +137,6 @@ interface DataTypeInterface extends ExfaceClassInterface, AliasInterface, iCanBe
     public function getDefaultSortingDirection();
     
     /**
-     * Returns the name resolver for this data type.
-     * 
-     * @return NameResolverInterface
-     */
-    public function getNameResolver();
-    
-    /**
      * Returns the app, to which this data type belongs to.
      * 
      * NOTE: if the model of this data type belongs to another app, than its prototype, this method
@@ -195,5 +183,11 @@ interface DataTypeInterface extends ExfaceClassInterface, AliasInterface, iCanBe
      * @return UxonObject
      */
     public function getDefaultEditorUxon();
+    
+    /**
+     * 
+     * @return DataTypeSelectorInterface
+     */
+    public function getSelector() : DataTypeSelectorInterface;
 }
 ?>

@@ -96,14 +96,14 @@ class ContextBar extends Toolbar
                 continue;
             }
             
-            if ($uxon->getProperty('restrict_only_admins') && ! $this->getWorkbench()->context()->getScopeUser()->getUserCurrent()->isUserAdmin()){
+            if ($uxon->getProperty('restrict_only_admins') && ! $this->getWorkbench()->getContext()->getScopeUser()->getUserCurrent()->isUserAdmin()){
                 $this->getWorkbench()->getLogger()->info('Not adding context "' . $uxon->getProperty('context_scope') . ':' . $uxon->getProperty('context_alias') . '" to ContextBar: it is accessible for admins only!');
                 continue;
             } else {
                 $uxon->unsetProperty('restrict_only_admins');
             }
             
-            if ($uxon->getProperty('restrict_only_authenticated') && $this->getWorkbench()->context()->getScopeUser()->getUserCurrent()->isUserAnonymous()){
+            if ($uxon->getProperty('restrict_only_authenticated') && $this->getWorkbench()->getContext()->getScopeUser()->getUserCurrent()->isUserAnonymous()){
                 $this->getWorkbench()->getLogger()->info('Not adding context "' . $uxon->getProperty('context_scope') . ':' . $uxon->getProperty('context_alias') . '" to ContextBar: it is accessible for logged in users only!');
                 continue;
             } else {
@@ -111,7 +111,7 @@ class ContextBar extends Toolbar
             }
             
             try {
-                $context = $this->getWorkbench()->context()->getScope($uxon->getProperty('context_scope'))->getContext($uxon->getProperty('context_alias'));
+                $context = $this->getWorkbench()->getContext()->getScope($uxon->getProperty('context_scope'))->getContext($uxon->getProperty('context_alias'));
                 $uxon->unsetProperty('context_scope');
                 $uxon->unsetProperty('context_alias');
                 

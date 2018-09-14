@@ -31,7 +31,7 @@ class ActionAliasProcessor extends AbstractColumnPositionProcessor
         if (!$wb)
             return false;
 
-        $ctx = $wb->context();
+        $ctx = $wb->getContext();
         if (!$ctx)
             return false;
 

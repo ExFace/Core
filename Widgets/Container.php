@@ -11,6 +11,7 @@ use exface\Core\Interfaces\Widgets\iTakeInput;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Exceptions\Widgets\WidgetChildNotFoundError;
 use exface\Core\Exceptions\UnderflowException;
+use exface\Core\Interfaces\Widgets\iHaveChildren;
 
 /**
  * The Container is a basic widget, that contains other widgets - typically simple ones like inputs.
@@ -146,7 +147,7 @@ class Container extends AbstractWidget implements iContainOtherWidgets
      */
     public function getWidgets(callable $filter = null)
     {
-        if (!is_null($filter)){
+        if (! is_null($filter)){
             return array_filter($this->widgets, $filter);
         }
         return $this->widgets;
@@ -331,6 +332,25 @@ class Container extends AbstractWidget implements iContainOtherWidgets
         
         return $result;
     }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::findChildrenRecursive()
+     */
+    public function findChildrenRecursive(callable $filterCallback, $maxDepth = null) : array
+    {
+        $result = [];
+        foreach ($this->getChildren() as $child) {
+            if (call_user_func($filterCallback, $child) === true) {
+                $result[] = $child;
+            }
+            if (($maxDepth === null || $maxDepth > 0) && $child instanceof iHaveChildren) {
+                $result = array_merge($result, $child->findChildrenRecursive($filterCallback, ($maxDepth !== null ? $maxDepth-1 : null)));
+            }
+        }
+        return $result;
+    }
 
     /**
      *
@@ -364,9 +384,14 @@ class Container extends AbstractWidget implements iContainOtherWidgets
     public function exportUxonObject()
     {
         $uxon = parent::exportUxonObject();
+        
+        // Remove any widget definitions, that might come from the original uxon.
+        $uxon->setProperty('widgets', new UxonObject());
+        // Now add the exported uxons from the current container contents.
         foreach ($this->getWidgets() as $widget) {
             $uxon->appendToProperty('widgets', $widget->exportUxonObject());
         }
+        
         return $uxon;
     }
 }

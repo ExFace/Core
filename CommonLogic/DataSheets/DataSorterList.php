@@ -38,7 +38,7 @@ class DataSorterList extends EntityList implements DataSorterListInterface
      *
      * @see \exface\Core\CommonLogic\EntityList::importUxonObject()
      */
-    public function importUxonObject(UxonObject $uxon)
+    public function importUxonObject(UxonObject $uxon, $factory_class_name = null)
     {
         $data_sheet = $this->getParent();
         foreach ($uxon as $u) {

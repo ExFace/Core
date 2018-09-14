@@ -1,45 +1,47 @@
 <?php
 namespace exface\Core\Factories;
 
-use exface\Core\CommonLogic\Workbench;
 use exface\Core\CommonLogic\WidgetLink;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
+use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\Interfaces\Model\UiPageInterface;
 
 abstract class WidgetLinkFactory extends AbstractUxonFactory
 {
-
     /**
-     * Creates an empty widget link
-     *
-     * @param Workbench $exface            
+     * 
+     * @param WidgetInterface $sourceWidget
+     * @param UxonObject|string $stringOrUxon
      * @return WidgetLinkInterface
      */
-    public static function createEmpty(Workbench $exface)
+    public static function createFromWidget(WidgetInterface $sourceWidget, $stringOrUxon) : WidgetLinkInterface
     {
-        return new WidgetLink($exface);
+        return new WidgetLink($sourceWidget->getPage(), $sourceWidget, $stringOrUxon);
     }
-
+    
     /**
-     *
-     * @param Workbench $exface            
-     * @param string|UxonObject $string_or_object            
-     * @param string $id_space            
+     * 
+     * @param UiPageInterface $sourcePage
+     * @param UxonObject|string $stringOrUxon
      * @return WidgetLinkInterface
      */
-    public static function createFromAnything(Workbench $exface, $string_or_object, $id_space = null)
+    public static function createFromPage(UiPageInterface $sourcePage, $stringOrUxon) : WidgetLinkInterface
     {
-        if ($string_or_object instanceof WidgetLinkInterface) {
-            return $string_or_object;
-        }
-        
-        $ref = static::createEmpty($exface);
-        if (! is_null($id_space)) {
-            $ref->setWidgetIdSpace($id_space);
-        }
-        
-        $ref->parseLink($string_or_object);
-        return $ref;
+        return new WidgetLink($sourcePage, null, $stringOrUxon);
+    }
+    
+    /**
+     * 
+     * @param WidgetInterface $widget
+     * @return WidgetLinkInterface
+     */
+    public static function createForWidget(WidgetInterface $widget) : WidgetLinkInterface
+    {
+        $link = new WidgetLink($widget->getWorkbench());
+        $link->setWidgetId($widget->getId());
+        $link->setPageAlias($widget->getPage()->getAliasWithNamespace());
+        return $link;
     }
 }
 ?>

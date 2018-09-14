@@ -3,6 +3,7 @@ namespace exface\Core\Templates\AbstractAjaxTemplate\Elements;
 
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Widgets\Container;
+use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 
 /**
  *
@@ -13,29 +14,19 @@ use exface\Core\Widgets\Container;
  */
 trait JqueryContainerTrait {
 
-    public function generateHtml()
-    {
-        return $this->buildHtmlForChildren();
-    }
-
-    public function generateJs()
-    {
-        return $this->buildJsForChildren();
-    }
-
     public function buildHtmlForChildren()
     {
         foreach ($this->getWidget()->getChildren() as $subw) {
-            $output .= $this->getTemplate()->getElement($subw)->generateHtml() . "\n";
+            $output .= $this->getTemplate()->getElement($subw)->buildHtml() . "\n";
         }
-        ;
+        
         return $output;
     }
 
     public function buildJsForChildren()
     {
         foreach ($this->getWidget()->getChildren() as $subw) {
-            $output .= $this->getTemplate()->getElement($subw)->generateJs() . "\n";
+            $output .= $this->getTemplate()->getElement($subw)->buildJs() . "\n";
         }
         ;
         return $output;
@@ -44,7 +35,7 @@ trait JqueryContainerTrait {
     public function buildHtmlForWidgets()
     {
         foreach ($this->getWidget()->getWidgets() as $subw) {
-            $output .= $this->getTemplate()->getElement($subw)->generateHtml() . "\n";
+            $output .= $this->getTemplate()->getElement($subw)->buildHtml() . "\n";
         }
         ;
         return $output;
@@ -53,7 +44,7 @@ trait JqueryContainerTrait {
     public function buildJsForWidgets()
     {
         foreach ($this->getWidget()->getWidgets() as $subw) {
-            $output .= $this->getTemplate()->getElement($subw)->generateJs() . "\n";
+            $output .= $this->getTemplate()->getElement($subw)->buildJs() . "\n";
         }
         ;
         return $output;
@@ -86,7 +77,7 @@ trait JqueryContainerTrait {
             return '{}';
         }
     }
-
+    
     /**
      * Returns an inline JS snippet which validates the input elements of the container.
      * Returns true if all elements are valid, returns false if at least one element is
@@ -100,7 +91,7 @@ trait JqueryContainerTrait {
         
         $output = '
 				(function(){';
-        foreach ($widget->getInputWidgets() as $child) {
+        foreach ($this->getWidgetsToValidate() as $child) {
             $validator = $this->getTemplate()->getElement($child)->buildJsValidator();
             $output .= '
 					if(!' . $validator . ') { return false; }';
@@ -111,7 +102,7 @@ trait JqueryContainerTrait {
         
         return $output;
     }
-
+    
     /**
      * Returns a JavaScript snippet which handles the situation where not all input elements are
      * valid.
@@ -125,7 +116,7 @@ trait JqueryContainerTrait {
         
         $output = '
 				var invalidElements = [];';
-        foreach ($widget->getInputWidgets() as $child) {
+        foreach ($this->getWidgetsToValidate() as $child) {
             $validator = $this->getTemplate()->getElement($child)->buildJsValidator();
             if (! $alias = $child->getCaption()) {
                 $alias = method_exists($child, 'getAttributeAlias') ? $child->getAttributeAlias() : $child->getMetaObject()->getAliasWithNamespace();
@@ -137,6 +128,56 @@ trait JqueryContainerTrait {
 				' . $this->buildJsShowMessageError('"' . $this->translate('MESSAGE.FILL_REQUIRED_ATTRIBUTES') . '" + invalidElements.join(", ")');
         
         return $output;
+    }
+    
+    /**
+     * Returns all children of the widget represented by this element, that need validation
+     * 
+     * @return \exface\Core\Interfaces\WidgetInterface[]
+     */
+    protected function getWidgetsToValidate()
+    {
+        return $this->getWidget()->getInputWidgets();
+    }
+    
+    /**
+     * Builds a JS snippet wrapped in an IIFE, that fills values of elements in the container with
+     * data from the given JS data sheet. 
+     * 
+     * The input must be valid JS code representing or returning a JS data sheet.
+     * 
+     * For example, this code will extract data from a table and put it into a container:
+     * $container->buildJsDataSetter($table->buildJsDataGetter())
+     * 
+     * @param string $jsInput
+     * @return string
+     */
+    public function buildJsDataSetter(string $jsInput) : string
+    {
+        $setters = '';
+        foreach ($this->getWidget()->getWidgets() as $child) {
+            if (! ($child instanceof iShowSingleAttribute) || ! $child->hasAttributeReference()) {
+                continue;
+            }
+            $setters .= <<<JS
+            
+                if (row['{$child->getAttributeAlias()}']) {
+                    {$this->getTemplate()->getElement($child)->buildJsValueSetter('row["' . $child->getAttributeAlias() . '"]')};
+                }
+JS;
+        }
+        return <<<JS
+
+        function() {
+            var data = {$jsInput};
+            var row = data.rows[0];
+            if (! row || row.length === 0) {
+                return;
+            }
+            {$setters}
+        }()
+
+JS;
     }
 }
 ?>

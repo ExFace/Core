@@ -2,8 +2,9 @@
 namespace exface\Core\Interfaces\Model;
 
 use exface\Core\Interfaces\DataSources\ModelLoaderInterface;
-use exface\Core\Interfaces\ExfaceClassInterface;
+use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
+use exface\Core\Interfaces\Selectors\MetaObjectSelectorInterface;
 
 /**
  * The model class is the single point of contact for a workbench instance to the metamodel.
@@ -14,7 +15,7 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
  * @author aka
  *
  */
-interface ModelInterface extends ExfaceClassInterface
+interface ModelInterface extends WorkbenchDependantInterface
 {
 
     /**
@@ -47,10 +48,10 @@ interface ModelInterface extends ExfaceClassInterface
      * Since full aliases always contain a dot, an alias is always a string. Thus, all
      * numeric parameters are treated as ids.
      *
-     * @param int $id_or_alias
+     * @param MetaObjectSelectorInterface|string $selectorOrString
      * @return \exface\Core\Interfaces\Model\MetaObjectInterface
      */
-    public function getObject($id_or_alias);
+    public function getObject($selectorOrString);
 
     /**
      * TODO Move this method to the ExpressionFactory (need to replace all calls...)

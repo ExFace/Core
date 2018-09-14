@@ -5,6 +5,11 @@ use exface\Core\CommonLogic\Filemanager;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Exceptions\Actions\ActionExportDataError;
 use exface\Core\Exceptions\Actions\ActionConfigurationError;
+use exface\Core\Interfaces\Tasks\ResultInterface;
+use exface\Core\Interfaces\DataSources\DataTransactionInterface;
+use exface\Core\Interfaces\Tasks\TaskInterface;
+use GuzzleHttp\Psr7\Uri;
+use exface\Core\Factories\ResultFactory;
 
 /**
  * This action is the base class for a number of actions, which export raw data as a file
@@ -27,22 +32,16 @@ abstract class ExportDataFile extends ExportData
     private $requestTimelimit = 300;
 
     /**
-     * 
+     *
      * {@inheritDoc}
-     * @see \exface\Core\Actions\ExportData::perform()
+     * @see \exface\Core\CommonLogic\AbstractAction::perform()
      */
-    protected function perform()
+    protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {
+        $resultMessage = '';
+        
         // DataSheet vorbereiten
-        $dataSheetMaster = $this->getInputDataSheet();
-        // Make sure, the input data has all the columns required for the widget
-        // we export from. Generally this will not be the case, because the
-        // widget calling the action is a button and it normally does not know
-        // which columns to export.
-        if ($this->getCalledByWidget() && $this->getCalledByWidget()->is('Button')) {
-            $this->getCalledByWidget()->getInputWidget()->prepareDataSheetToRead($dataSheetMaster);
-        }
-        $dataSheetMaster->removeRows();
+        $dataSheetMaster = $this->readData($task);
         
         // Datei erzeugen und schreiben
         $columnNames = $this->writeHeader($dataSheetMaster);
@@ -55,11 +54,6 @@ abstract class ExportDataFile extends ExportData
                 $dataSheet->setRowsOnPage($rowsOnPage);
                 $dataSheet->setRowOffset($rowOffset);
                 $dataSheet->dataRead();
-                
-                // Das DataSheet kommt hier nur gestueckelt an, daher schwierig affectedRows
-                // und resultDataSheet zu setzen.
-                // $this->setAffectedRows($dataSheet->removeRows()->dataRead());
-                // $this->setResultDataSheet($dataSheet);
                 
                 $this->writeRows($dataSheet, $columnNames);
                 
@@ -78,9 +72,8 @@ abstract class ExportDataFile extends ExportData
         
         // Datei abschliessen und zum Download bereitstellen
         $this->writeFileResult($dataSheetMaster);
-        $url = $this->getWorkbench()->getCMS()->createLinkToFile($this->getPathname());
-        $this->setResult($url);
-        $this->setResultMessage($resultMessage ? $resultMessage : 'Download ready. If it does not start automatically, click <a href="' . $url . '">here</a>.');
+        $result = ResultFactory::createFileResult($task, $this->getPathname());
+        return $result;
     }
 
     /**
@@ -118,7 +111,7 @@ abstract class ExportDataFile extends ExportData
     abstract protected function getWriter();
 
     /**
-     * Returns the complete path to the file.
+     * Returns the absolute path to the file.
      *
      * @return string
      */

@@ -55,7 +55,7 @@ class UxonObject implements \IteratorAggregate
         if (is_array($array)){
             return static::fromArray($array);
         } else {
-            if ($uxon !== '' && ! is_null($uxon)) {
+            if ($uxon !== '' && $uxon !== null) {
                 throw new InvalidArgumentException('Cannot parse string "' . substr($uxon, 0, 50) . '" as UXON: ' . json_last_error_msg() . ' in JSON decoder!');
             }
             return new self();
@@ -111,7 +111,7 @@ class UxonObject implements \IteratorAggregate
      */
     public function hasProperty($name)
     {
-        return array_key_exists($name, $this->array);
+        return isset($this->array[$name]);
     }
 
     /**
@@ -189,7 +189,7 @@ class UxonObject implements \IteratorAggregate
      */
     public function appendToProperty($property_name, $scalar_or_uxon)
     {
-        if (! array_key_exists($property_name, $this->array)){
+        if (! isset($this->array[$property_name])) {
             $this->array[$property_name] = [];
         } elseif (is_scalar($this->array[$property_name])){
             throw new UxonParserError($this, 'Cannot append "' . $scalar_or_uxon . '" to UXON property "' . $property_name . '": the property is a of a scalar type!');
@@ -284,11 +284,6 @@ class UxonObject implements \IteratorAggregate
                 call_user_func(array(
                     $target_class_instance,
                     $setterCamelCased
-                ), $this->getProperty($var));
-            } elseif (method_exists($target_class_instance, 'set_' . $var)) {
-                call_user_func(array(
-                    $target_class_instance,
-                    'set_' . $var
                 ), $this->getProperty($var));
             } else {
                 throw new UxonMapError($this, 'No setter method found for UXON property "' . $var . '" in "' . get_class($target_class_instance) . '"!');

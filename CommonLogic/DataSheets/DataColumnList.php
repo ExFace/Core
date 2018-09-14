@@ -10,6 +10,7 @@ use exface\Core\CommonLogic\EntityList;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Model\ExpressionInterface;
+use exface\Core\Exceptions\DataSheets\DataSheetStructureError;
 
 /**
  *
@@ -45,9 +46,20 @@ class DataColumnList extends EntityList implements DataColumnListInterface
                 $column = $column_original->copy();
                 $column->setDataSheet($data_sheet);
             }
-            // Mark the data as outdated if new columns are added because the values for these columns should be fetched now
-            $column->setFresh(false);
+            
             $result = parent::add($column, (is_null($key) && $column->getName() ? $column->getName() : $key));
+            
+            // Mark the data as outdated if new columns are added because the values for these columns should be fetched now
+            // Actually we do not need to mark static columns not fresh - we could recalculate them right away without
+            // querying the data source.
+            if ($column->isStatic()) {
+                // If we are adding a static column, no data source refresh is actually needed - a recalculation is enough.
+                $column->setValuesByExpression($column->getExpressionObj(), true);
+            } else {
+                $column->setFresh(false);
+            }
+            
+            return $this;            
         }
         
         // If the original column had values, use them to overwrite the values in the newly added column
@@ -92,7 +104,7 @@ class DataColumnList extends EntityList implements DataColumnListInterface
                 if (! $this->get($col_name)) {
                     try {
                         $this->addFromExpression($col_name);
-                    } catch (\Exception $e) {
+                    } catch (\Throwable $e) {
                         // TODO How to distinguish between unwanted garbage and bad column names?
                     }
                 }
@@ -107,7 +119,7 @@ class DataColumnList extends EntityList implements DataColumnListInterface
      *
      * @see \exface\Core\Interfaces\DataSheets\DataColumnListInterface::addFromExpression()
      */
-    public function addFromExpression($expression_or_string, $name = '', $hidden = false)
+    public function addFromExpression($expression_or_string, $name = null, $hidden = false)
     {
         $data_sheet = $this->getDataSheet();
         $col = DataColumnFactory::createFromString($data_sheet, $expression_or_string, $name);
@@ -124,7 +136,40 @@ class DataColumnList extends EntityList implements DataColumnListInterface
      */
     public function addFromAttribute(MetaAttributeInterface $attribute)
     {
-        return $this->addFromExpression($attribute->getAliasWithRelationPath());
+        $sheetObject = $this->getDataSheet()->getMetaObject();
+        // Make sure, it is clear, how the attribute is related to the sheet object. Pay attention to
+        // the fact, that the attribute may have a relation path.
+        if ($sheetObject->is($attribute->getRelationPath()->getStartObject())) {
+            // If the relation path starts with the sheet object, just add the attribute as-is.
+            return $this->addFromExpression($attribute->getAliasWithRelationPath());
+        } elseif ($sheetObject->is($attribute->getObject())) {
+            // If the relation path starts with another object, but the attribute itself belongs 
+            // to the sheet object, we can still add it by cutting off the relation path.
+            return $this->addFromExpression($attribute->getAlias());
+        } else {
+            // If none of the above worked, it's an error!
+            throw new DataSheetStructureError($this->getDataSheet(), 'Cannot add attribute "' . $attribute->getAliasWithRelationPath() . '" to data sheet of "' . $sheetObject->getAliasWithNamespace() . '": no relation to the attribute could be found!');
+        }
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataColumnListInterface::addFromUidAttribute()
+     */
+    public function addFromUidAttribute() : DataColumnInterface
+    {
+        return $this->addFromAttribute($this->getDataSheet()->getMetaObject()->getUidAttribute());
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataColumnListInterface::addFromLabelAttribute()
+     */
+    public function addFromLabelAttribute() : DataColumnInterface
+    {
+        return $this->addFromAttribute($this->getDataSheet()->getMetaObject()->getLabelAttribute());
     }
 
     /**

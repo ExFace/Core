@@ -2,10 +2,13 @@
 namespace exface\Core\CommonLogic\Model;
 
 use exface\Core\Factories\DataTypeFactory;
-use exface\Core\Interfaces\ExfaceClassInterface;
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Formulas\FormulaInterface;
+use exface\Core\Interfaces\Model\ExpressionInterface;
+use exface\Core\Interfaces\Selectors\FormulaSelectorInterface;
+use exface\Core\Exceptions\InvalidArgumentException;
+use exface\Core\Exceptions\FormulaError;
 
 /**
  * Data functions are much like Excel functions.
@@ -30,6 +33,8 @@ abstract class Formula implements FormulaInterface
     private $data_type = NULL;
 
     private $exface = null;
+    
+    private $selector = null;
 
     private $current_column_name = null;
 
@@ -40,20 +45,31 @@ abstract class Formula implements FormulaInterface
      * @deprecated use FormulaFactory instead!
      * @param Workbench $workbench            
      */
-    public function __construct(Workbench $workbench)
+    public function __construct(FormulaSelectorInterface $selector)
     {
-        $this->exface = $workbench;
+        $this->exface = $selector->getWorkbench();
+        $this->selector = $selector;
     }
 
     /**
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\Interfaces\ExfaceClassInterface::getWorkbench()
+     * @see \exface\Core\Interfaces\WorkbenchDependantInterface::getWorkbench()
      */
     public function getWorkbench()
     {
         return $this->exface;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Formulas\FormulaInterface::getSelector()
+     */
+    public function getSelector() : FormulaSelectorInterface
+    {
+        return $this->selector;
     }
 
     /**
@@ -78,21 +94,39 @@ abstract class Formula implements FormulaInterface
      *
      * @see \exface\Core\Interfaces\Formulas\FormulaInterface::evaluate()
      */
-    public function evaluate(\exface\Core\Interfaces\DataSheets\DataSheetInterface $data_sheet, $column_name, $row_number)
+    public function evaluate(\exface\Core\Interfaces\DataSheets\DataSheetInterface $data_sheet = null, $column_name = null, $row_number = null)
     {
         $args = array();
-        foreach ($this->arguments as $expr) {
-            $args[] = $expr->evaluate($data_sheet, $column_name, $row_number);
+        
+        try {
+            if ($this->isStatic()) {
+                foreach ($this->arguments as $expr) {
+                    $args[] = $expr->evaluate();
+                }
+                
+            } else {
+                if (is_null($data_sheet) || is_null($column_name) || is_null($row_number)) {
+                    throw new InvalidArgumentException('In a non-static formula $data_sheet, $column_name and $row_number are mandatory arguments.');
+                }
+                
+                
+                foreach ($this->arguments as $expr) {
+                    $args[] = $expr->evaluate($data_sheet, $column_name, $row_number);
+                }
+                
+                
+                $this->setDataSheet($data_sheet);
+                $this->setCurrentColumnName($column_name);
+                $this->setCurrentRowNumber($row_number);
+            }
+            
+            return call_user_func_array(array(
+                $this,
+                'run'
+            ), $args);
+        } catch (\Throwable $e) {
+            throw new FormulaError('Cannot evaluate formula "' . $this->selector->toString() . '" on column "' . $column_name . '" for row ' . $row_number . '.', null, $e);
         }
-        
-        $this->setDataSheet($data_sheet);
-        $this->setCurrentColumnName($column_name);
-        $this->setCurrentRowNumber($row_number);
-        
-        return call_user_func_array(array(
-            $this,
-            'run'
-        ), $args);
     }
 
     public function getRelationPath()
@@ -118,6 +152,10 @@ abstract class Formula implements FormulaInterface
         return $this->required_attributes;
     }
 
+    /**
+     * 
+     * @return ExpressionInterface[]
+     */
     public function getArguments()
     {
         return $this->arguments;
@@ -220,6 +258,24 @@ abstract class Formula implements FormulaInterface
     {
         $this->current_row_number = $value;
         return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Formulas\FormulaInterface::isStatic()
+     */
+    public function isStatic() : bool
+    {
+        // A formula is static if it has no arguments or all arguments are static.
+        // In other words, it is static if it does not have non-static arguments.
+        foreach ($this->getArguments() as $expr) {
+            if (! $expr->isStatic()) {
+                return false;
+            }
+        }
+        
+        return true;
     }
 }
 ?>

@@ -43,11 +43,6 @@ trait ImportUxonObjectTrait {
                     $this,
                     $setterCamelCased
                 ), $val);
-            } elseif (method_exists($this, 'set_' . $var)) {
-                call_user_func(array(
-                    $this,
-                    'set_' . $var
-                ), $val);
             } else {
                 throw new UxonMapError($uxon, 'No setter method found for UXON property "' . $var . '" in "' . get_class($this) . '"!');
             }

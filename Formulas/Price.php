@@ -52,7 +52,7 @@ class Price extends \exface\Core\CommonLogic\Model\Formula
 
     public function getDataType()
     {
-        return new PriceDataType($this->getWorkbench());
+        return DataTypeFactory::createFromString($this->getWorkbench(), 'exface.Core.Price');
     }
 }
 ?>

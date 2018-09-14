@@ -23,9 +23,10 @@ class HexadecimalNumberDataType extends NumberDataType
         if (is_null($string) || $string === '') {
             return $string;
         } elseif (mb_strtoupper(substr($string, 0, 2)) === '0X') {
-            // TODO regex to check for allowed characters
-            
             // Hexadecimal numbers in '0x....'-Notation
+            /*if (ctype_xdigit(substr($string, 2)) === false) {
+                throw new DataTypeCastingError('Cannot convert "' . $string . '" to a hexadecimal number!');
+            }*/
             return $string;
         } else {
             throw new DataTypeCastingError('Cannot convert "' . $string . '" to a hexadecimal number!');

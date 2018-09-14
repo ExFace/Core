@@ -9,6 +9,7 @@ use exface\Core\Interfaces\Model\ExpressionInterface;
 
 abstract class ExpressionFactory
 {
+    private static $cache = [];
 
     /**
      * Parses a string expression into an ExFace expression object.
@@ -21,9 +22,21 @@ abstract class ExpressionFactory
      * @param MetaObjectInterface $object            
      * @return ExpressionInterface
      */
-    public static function createFromString(Workbench $exface, $string, $meta_object = null)
+    public static function createFromString(Workbench $exface, $string, $meta_object = null) : ExpressionInterface
     {
-        return new Expression($exface, $string, $meta_object);
+        // IDEA cache expressions within the workbench instead of a static cache?
+        
+        $objId = $meta_object === null ? 'null' : $meta_object->getId();
+        
+        if (! isset(self::$cache[$string]) || ! isset(self::$cache[$string][$objId])) {
+            $expr = new Expression($exface, $string, $meta_object);
+            self::$cache[$string][$objId] = $expr;
+        } else {
+            $expr = self::$cache[$string][$objId];
+        }
+        
+        return $expr;
+        //return new Expression($exface, $string, $meta_object);
     }
 
     /**
@@ -31,7 +44,7 @@ abstract class ExpressionFactory
      * @param MetaAttributeInterface $attribute            
      * @return ExpressionInterface
      */
-    public static function createFromAttribute(MetaAttributeInterface $attribute)
+    public static function createFromAttribute(MetaAttributeInterface $attribute) : ExpressionInterface
     {
         $exface = $attribute->getObject()->getWorkbench();
         return self::createFromString($exface, $attribute->getAliasWithRelationPath(), $attribute->getRelationPath()->getStartObject());

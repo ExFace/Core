@@ -5,6 +5,9 @@ use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
 use exface\Core\Exceptions\BadMethodCallException;
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\Exceptions\DataTypes\DataTypeConfigurationError;
+use exface\Core\Factories\SelectorFactory;
+use exface\Core\Interfaces\WorkbenchInterface;
+use exface\Core\Factories\DataTypeFactory;
 
 trait EnumStaticDataTypeTrait {
     
@@ -29,6 +32,28 @@ trait EnumStaticDataTypeTrait {
         }
         
         return static::$cache[$class];
+    }
+    
+    /**
+     * Returns the keys of the static values (the names of the constants) as an array.
+     * 
+     * @return array
+     */
+    public static function getKeysStatic()
+    {
+        return array_keys(static::getValuesStatic());
+    }
+    
+    /**
+     * Returns the key (constant name) matching the given value or FALSE if the value 
+     * does not match any key.
+     * 
+     * @param string $value
+     * @return string|false
+     */
+    public static function findKey($value)
+    {
+        return array_search($value, static::getValuesStatic());
     }
     
     /**
@@ -59,7 +84,8 @@ trait EnumStaticDataTypeTrait {
             if (! ($arguments[0] instanceof Workbench)) {
                 throw new BadMethodCallException("Argument 1 passed to " . get_called_class() . "::" . $name . "() must implement interface \exface\Core\CommonLogic\Workbench, " . gettype($arguments[0]) . " given!");
             }
-            return new static($arguments[0], $array[$name]);
+            $selector = SelectorFactory::createDataTypeSelector($arguments[0], static::class);
+            return new static($selector, $array[$name]);
         }
         
         throw new BadMethodCallException("No static method or enum constant '$name' in class " . get_called_class());
@@ -100,5 +126,16 @@ trait EnumStaticDataTypeTrait {
     public function setValues($uxon_or_array)
     {
         throw new DataTypeConfigurationError($this, 'Cannot override values in static enumeration data type ' . $this->getAliasWithNamespace() . '!', '6XGNBJB');
+    }   
+    
+    /**
+     * 
+     * @param WorkbenchInterface $workbench
+     * @param string $value
+     * @return \exface\Core\Interfaces\ValueObjectInterface
+     */
+    public static function fromValue(WorkbenchInterface $workbench, string $value)
+    {
+        return DataTypeFactory::createFromPrototype($workbench, __CLASS__)->withValue(strtoupper($value));
     }
 }

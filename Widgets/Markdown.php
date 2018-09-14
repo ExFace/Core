@@ -16,28 +16,48 @@ class Markdown extends Html
      */
     public function getMarkdown()
     {
-        return $this->getValue();
+        $md = $this->getValue();
+        return $md === null ? '' : $md;
     }
 
     /**
      * @param string $markdown
      * @return Markdown
      */
-    public function setMarkdown($string)
+    public function setMarkdown(string $string) : Markdown
     {
         return $this->setValue($string);
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Html::getHtml()
+     */
     public function getHtml(){
-        return self::convertMarkdownToHtml($this->getMarkdown());
+        return $this->rebaseRelativeLinks(self::convertMarkdownToHtml($this->getMarkdown()));
     }
 
-    public static function convertMarkdownToHtml($markdown)
+    /**
+     * 
+     * @param string $markdown
+     * @return string
+     */
+    public static function convertMarkdownToHtml(string $markdown) : string
     {
         $parser = new GithubMarkdown();
         return $parser->parse($markdown);
     }
     
-    
+    public function  getCss()
+    {
+        $css = <<<CSS
+
+img {max-width: 100%}
+
+CSS;
+        $css .= parent::getCss();
+        return $css;
+    }
 }
 ?>

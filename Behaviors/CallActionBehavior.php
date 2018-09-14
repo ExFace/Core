@@ -1,12 +1,13 @@
 <?php
 namespace exface\Core\Behaviors;
 
-use exface\Core\CommonLogic\AbstractBehavior;
+use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\ActionFactory;
 use exface\Core\Events\DataSheetEvent;
+use exface\Core\Factories\TaskFactory;
 
 /**
  * Attachable to DataSheetEvents, calls any action.
@@ -23,25 +24,28 @@ class CallActionBehavior extends AbstractBehavior
     private $objectEventAlias = null;
 
     private $action = null;
+    
+    private $actionConfig = null;
 
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\CommonLogic\AbstractBehavior::register()
+     * @see \exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior::register()
      */
-    public function register()
+    public function register() : BehaviorInterface
     {
         $this->getWorkbench()->eventManager()->addListener($this->getObject()->getAliasWithNamespace() . '.' . $this->getObjectEventAlias(), array(
             $this,
             'callAction'
         ));
         $this->setRegistered(true);
+        return $this;
     }
 
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\CommonLogic\AbstractBehavior::exportUxonObject()
+     * @see \exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior::exportUxonObject()
      */
     public function exportUxonObject()
     {
@@ -82,6 +86,9 @@ class CallActionBehavior extends AbstractBehavior
      */
     public function getAction()
     {
+        if (is_null($this->action)) {
+            $this->action = ActionFactory::createFromUxon($this->getWorkbench(), UxonObject::fromAnything($this->actionConfig));
+        }
         return $this->action;
     }
 
@@ -96,7 +103,7 @@ class CallActionBehavior extends AbstractBehavior
      */
     public function setAction($action)
     {
-        $this->action = ActionFactory::createFromUxon($this->getWorkbench(), UxonObject::fromAnything($action));
+        $this->actionConfig = $action;
         return $this;
     }
 
@@ -120,10 +127,10 @@ class CallActionBehavior extends AbstractBehavior
             return;
         }
         
-        if ($this->getAction()) {
-            $action = $this->getAction()->copy();
-            $action->setInputDataSheet($data_sheet);
-            $action->getResult();
+        if ($action = $this->getAction()) {
+            $task = TaskFactory::createFromDataSheet($data_sheet);
+            // FIXME #events-v2 pass the transaction to the action once it is available in the data sheet event
+            $action->handle($task);
         }
     }
 }

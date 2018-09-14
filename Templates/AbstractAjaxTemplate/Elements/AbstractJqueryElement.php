@@ -1,19 +1,19 @@
 <?php
 namespace exface\Core\Templates\AbstractAjaxTemplate\Elements;
 
-use exface\Core\Interfaces\TemplateInterface;
+use exface\Core\Interfaces\Templates\TemplateInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Templates\AbstractAjaxTemplate\AbstractAjaxTemplate;
 use exface\Core\Exceptions\Configuration\ConfigOptionNotFoundError;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
-use exface\Core\Interfaces\ExfaceClassInterface;
+use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\CommonLogic\Translation;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\Interfaces\Widgets\iLayoutWidgets;
 use exface\Core\Widgets\Container;
 
-abstract class AbstractJqueryElement implements ExfaceClassInterface
+abstract class AbstractJqueryElement implements WorkbenchDependantInterface
 {
 
     private $exf_widget = null;
@@ -45,6 +45,8 @@ abstract class AbstractJqueryElement implements ExfaceClassInterface
     private $element_type = null;
     
     private $element_class = '';
+    
+    private $element_style = '';
 
     private $number_of_columns = null;
 
@@ -77,12 +79,12 @@ abstract class AbstractJqueryElement implements ExfaceClassInterface
     /**
      * Returns the complete JS code needed for the element
      */
-    abstract public function generateJs();
+    abstract public function buildJs();
 
     /**
      * Returns the complete HTML code needed for the element
      */
-    abstract public function generateHtml();
+    abstract public function buildHtml();
 
     /**
      * Returns JavaScript headers, needed for the element as an array of lines.
@@ -97,12 +99,12 @@ abstract class AbstractJqueryElement implements ExfaceClassInterface
      *
      * @return string[]
      */
-    public function generateHeaders()
+    public function buildHtmlHeadTags()
     {
         $headers = array();
         if ($this->getWidget()->isContainer()) {
             foreach ($this->getWidget()->getChildren() as $child) {
-                $headers = array_merge($headers, $this->getTemplate()->getElement($child)->generateHeaders());
+                $headers = array_merge($headers, $this->getTemplate()->getElement($child)->buildHtmlHeadTags());
             }
         }
         return $headers;
@@ -168,7 +170,7 @@ abstract class AbstractJqueryElement implements ExfaceClassInterface
     /**
      * Returns a ready-to-use hint text, that will generally be included in float-overs for template elements
      *
-     * @param unknown $hint_text            
+     * @param string $hint_text            
      * @param string $remove_linebreaks            
      * @return string
      */
@@ -211,11 +213,21 @@ abstract class AbstractJqueryElement implements ExfaceClassInterface
      */
     public function getAjaxUrl()
     {
-        if (is_null($this->ajax_url)) {
-            $this->ajax_url = $this->getTemplate()->getConfig()->getOption('DEFAULT_AJAX_URL');
+        return $this->getTemplate()->getBaseUrl();
+    }
+    
+    /**
+     * 
+     * @return string[]
+     */
+    public function getAjaxHeaders() : array
+    {
+        $headers = [];
+        $subrequest_id = $this->getTemplate()->getWorkbench()->getContext()->getScopeRequest()->getSubrequestId();
+        if ($subrequest_id) {
+            $headers['Subrequest-ID'] = $subrequest_id;
         }
-        $subrequest_id = $this->getTemplate()->getWorkbench()->context()->getScopeRequest()->getSubrequestId();
-        return $this->ajax_url . ($subrequest_id ? '&exfrid=' . $subrequest_id : '');
+        return $headers;
     }
 
     /**
@@ -284,6 +296,29 @@ abstract class AbstractJqueryElement implements ExfaceClassInterface
         $this->element_class = str_replace($string, '', $this->element_class);
         return $this;
     }
+    
+    /**
+     * Returns css properties for this element: custom colors, styles, etc. - things that come into the style="...".
+     *
+     * @return string
+     */
+    public function buildCssElementStyle()
+    {
+        return $this->element_style;
+    }
+    
+    /**
+     *
+     * @param string $css_properties
+     * @return AbstractJqueryElement
+     */
+    public function addElementCssStyle($css_properties)
+    {
+        $this->element_style = ($this->element_style ? '; ' : '') . trim($css_properties, ";");
+        return $this;
+    }
+    
+    
 
     /**
      * Sets the element type
@@ -307,7 +342,7 @@ abstract class AbstractJqueryElement implements ExfaceClassInterface
     public function getId()
     {
         if (is_null($this->id)) {
-            $subrequest = $this->getTemplate()->getWorkbench()->context()->getScopeRequest()->getSubrequestId();
+            $subrequest = $this->getTemplate()->getWorkbench()->getContext()->getScopeRequest()->getSubrequestId();
             $this->id = $this->cleanId($this->getWidget()->getId()) . ($subrequest ? '_' . $subrequest : '');
         }
         return $this->id;
@@ -382,7 +417,7 @@ abstract class AbstractJqueryElement implements ExfaceClassInterface
      */
     public function buildJsValueSetterMethod($value)
     {
-        return 'val(' . $value . ')';
+        return 'val(' . $value . ').trigger("change")';
     }
 
     /**
@@ -472,7 +507,7 @@ abstract class AbstractJqueryElement implements ExfaceClassInterface
     /**
      * Returns the width of one relative width unit in pixels
      *
-     * @return \exface\Core\CommonLogic\multitype
+     * @return string
      */
     public function getWidthRelativeUnit()
     {
@@ -485,7 +520,7 @@ abstract class AbstractJqueryElement implements ExfaceClassInterface
     /**
      * Returns the minimum width of one relative width unit in pixels
      *
-     * @return \exface\Core\CommonLogic\multitype
+     * @return string
      */
     public function getWidthMinimum()
     {
@@ -498,7 +533,7 @@ abstract class AbstractJqueryElement implements ExfaceClassInterface
     /**
      * Returns the height of one relative height unit in pixels
      *
-     * @return \exface\Core\CommonLogic\multitype
+     * @return string
      */
     public function getHeightRelativeUnit()
     {
@@ -572,7 +607,9 @@ abstract class AbstractJqueryElement implements ExfaceClassInterface
     }
 
     /**
-     * Adds a JavaScript snippet to the script, that will get executed every time the value of this element changes
+     * Adds a JavaScript snippet to the script, that will get executed every time the value of this element changes.
+     * 
+     * NOTE: the event object is available via the javascript variable "event".
      *
      * @param string $string            
      * @return \exface\Core\Templates\AbstractAjaxTemplate\Elements\AbstractJqueryElement
@@ -710,7 +747,7 @@ abstract class AbstractJqueryElement implements ExfaceClassInterface
             return $this->getTemplate()->getConfig()->getOption('ICON_CLASSES.DEFAULT_CLASS_PREFIX') . $icon;
         }
     }
-
+    
     /**
      *
      * @return \exface\Core\CommonLogic\Workbench
@@ -763,23 +800,23 @@ abstract class AbstractJqueryElement implements ExfaceClassInterface
     }
 
     /**
-     * Returns an inline JS snippet which enables the widget.
+     * Returns an inline JS snippet which enables the widget (no tailing semicolon!).
      *
      * @return string
      */
     public function buildJsEnabler()
     {
-        return '$("#' . $this->getId() . '").prop("disabled", false)';
+        return '$("#' . $this->getId() . '").removeProp("disabled")';
     }
 
     /**
-     * Returns an inline JS snippet which disables the widget.
+     * Returns an inline JS snippet which disables the widget (no tailing semicolon!).
      *
      * @return string
      */
     public function buildJsDisabler()
     {
-        return '$("#' . $this->getId() . '").prop("disabled", true)';
+        return '$("#' . $this->getId() . '").prop("disabled", "disabled")';
     }
     
     /**
@@ -791,7 +828,7 @@ abstract class AbstractJqueryElement implements ExfaceClassInterface
      */
     public function getPageId()
     {
-        return $this->getWidget()->getPage()->getId();
+        return $this->getWidget()->getPage()->getAliasWithNamespace();
     }
     
     /**
@@ -806,6 +843,17 @@ abstract class AbstractJqueryElement implements ExfaceClassInterface
             return $widget->getCaption();
         }
         return '';
+    }
+    
+    /**
+     * 
+     * @return string
+     */
+    protected function getTooltip()
+    {
+        $widget = $this->getWidget();
+        $caption = $widget->getCaption();
+        return ($caption ? $caption . ': ' : '') . $widget->getHint();
     }
     
     /**

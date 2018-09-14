@@ -1,7 +1,7 @@
 <?php
 namespace exface\Core\CommonLogic;
 
-use exface\Core\Interfaces\ExfaceClassInterface;
+use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\ConfigurationInterface;
 use exface\Core\Exceptions\Configuration\ConfigOptionNotFoundError;
 use exface\Core\Exceptions\RuntimeException;
@@ -74,6 +74,23 @@ class Configuration implements ConfigurationInterface
     /**
      * 
      * {@inheritDoc}
+     * @see \exface\Core\Interfaces\ConfigurationInterface::findOptions()
+     */
+    public function findOptions(string $regEx) : array
+    {
+        $array = $this->config_uxon->toArray();
+        $result = [];
+        foreach($array as $key => $value) {
+            if (preg_match($regEx,$key)){
+                $result[$key] = $value;
+            }
+        }
+        return $result;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
      * @see \exface\Core\Interfaces\ConfigurationInterface::hasOption()
      */
     public function hasOption($key)
@@ -123,7 +140,7 @@ class Configuration implements ConfigurationInterface
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\Interfaces\ExfaceClassInterface::getWorkbench()
+     * @see \exface\Core\Interfaces\WorkbenchDependantInterface::getWorkbench()
      */
     public function getWorkbench()
     {

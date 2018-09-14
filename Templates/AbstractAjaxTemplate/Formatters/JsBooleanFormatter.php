@@ -34,7 +34,14 @@ class JsBooleanFormatter extends AbstractJsDataTypeFormatter
      */
     public function buildJsFormatter($jsInput)
     {
-        return "({$jsInput} === '0' || {$jsInput} === 'false' || ! {$jsInput} ? '{$this->getHtmlUnchecked()}' : '{$this->getHtmlChecked()}')";
+        return <<<JS
+function(){
+    var val = {$jsInput};
+    if (val === '0' || val === 0 || val === 'false' || val === false || val === '' || val === undefined) return '{$this->getHtmlUnchecked()}';
+    if (val === '1' || val === 1 || val === 'true' || val === true) return '{$this->getHtmlChecked()}';
+    return val;
+}()
+JS;
     }
     
     /**

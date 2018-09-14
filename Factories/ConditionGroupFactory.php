@@ -5,6 +5,7 @@ use exface\Core\CommonLogic\Workbench;
 use exface\Core\CommonLogic\Model\ConditionGroup;
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Interfaces\Model\ConditionGroupInterface;
 
 abstract class ConditionGroupFactory extends AbstractUxonFactory
 {
@@ -16,10 +17,13 @@ abstract class ConditionGroupFactory extends AbstractUxonFactory
      * @param string $group_operator            
      * @return ConditionGroup
      */
-    public static function createEmpty(Workbench $exface, $group_operator = null)
+    public static function createEmpty(Workbench $exface, $group_operator = null) : ConditionGroupInterface
     {
-        $group = new ConditionGroup($exface, $group_operator);
-        return $group;
+        if ($group_operator === null) {
+            return new ConditionGroup($exface);
+        } else {
+            return new ConditionGroup($exface, $group_operator);
+        }
     }
 
     /**
@@ -31,7 +35,7 @@ abstract class ConditionGroupFactory extends AbstractUxonFactory
      * @param array $array_notation            
      * @return ConditionGroup
      */
-    public static function createFromArray(Workbench $exface, array $array_notation)
+    public static function createFromArray(Workbench $exface, array $array_notation) : ConditionGroupInterface
     {
         $group = self::create($exface);
         // Short notation
@@ -63,7 +67,7 @@ abstract class ConditionGroupFactory extends AbstractUxonFactory
      * @throws UnexpectedValueException
      * @return ConditionGroup
      */
-    public static function createFromUxonOrArray(Workbench $exface, $uxon_or_array)
+    public static function createFromUxonOrArray(Workbench $exface, $uxon_or_array) : ConditionGroupInterface
     {
         if ($uxon_or_array instanceof UxonObject) {
             return self::createFromUxon($exface, $uxon_or_array);

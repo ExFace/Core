@@ -23,7 +23,7 @@ class InputCombo extends InputSelect implements iSupportLazyLoading
     // FIXME move default value to template config option WIDGET.INPUTCOMBO.MAX_SUGGESTION like PAGE_SIZE of tables
     private $max_suggestions = 20;
 
-    private $allow_new_values = true;
+    private $allow_new_values = false;
 
     private $autoselect_single_suggestion = true;
 
@@ -66,10 +66,9 @@ class InputCombo extends InputSelect implements iSupportLazyLoading
     }
 
     /**
-     * By default the InputCombo will also accept values not present in the autosuggest.
-     * Set to FALSE to prevent this
+     * Set to TRUE to allow values not present in the autosuggest - FALSE by default.
      *
-     * @uxon-property allow new values
+     * @uxon-property allow_new_values
      * @uxon-type boolean
      *
      * @param boolean $value            

@@ -141,7 +141,7 @@ class DataContext extends AbstractContext
      */
     public function getDefaultScope()
     {
-        return $this->getWorkbench()->context()->getScopeWindow();
+        return $this->getWorkbench()->getContext()->getScopeWindow();
     }
 
     /**
@@ -180,13 +180,13 @@ class DataContext extends AbstractContext
      */
     public function exportUxonObject()
     {
-        $uxon = $this->getWorkbench()->createUxonObject();
+        $uxon = new UxonObject();
         foreach ($this->getNamespacesActive() as $namespace) {
             if (count($this->getVariablesFromNamespace($namespace)) === 0) {
                 continue;
             }
             
-            $namespace_uxon = $this->getWorkbench()->createUxonObject();
+            $namespace_uxon = new UxonObject();
             foreach ($this->getVariablesFromNamespace($namespace) as $var => $value) {
                 $namespace_uxon = $this->exportUxonForVariable($namespace_uxon, $var, $value);
             }
@@ -201,7 +201,7 @@ class DataContext extends AbstractContext
         if ($variable_value instanceof UxonObject || (! is_object($variable_value) && ! is_array($variable_value))) {
             $uxon_container->setProperty($variable_name, $variable_value);
         } elseif (is_array($variable_value)) {
-            $uxon_container->setProperty($variable_name, $this->getWorkbench()->createUxonObject());
+            $uxon_container->setProperty($variable_name, new UxonObject());
             foreach ($variable_value as $var => $value) {
                 $this->exportUxonForVariable($uxon_container->getProperty($variable_name), $var, $value);
             }

@@ -2,6 +2,11 @@
 namespace exface\Core\Actions;
 
 use exface\Core\Factories\WidgetFactory;
+use exface\Core\Interfaces\Tasks\TaskInterface;
+use exface\Core\Interfaces\DataSources\DataTransactionInterface;
+use exface\Core\Interfaces\Tasks\ResultInterface;
+use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\Factories\UiPageFactory;
 
 /**
  * The autosuggest action is similar to the general ReadData, but it does not affect the current window filter context because the user
@@ -18,19 +23,34 @@ use exface\Core\Factories\WidgetFactory;
 class Autosuggest extends ReadData
 {
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AbstractAction::init()
+     */
     protected function init()
     {
         $this->setUpdateFilterContext(false);
     }
 
-    protected function perform()
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Actions\ReadData::perform()
+     */
+    protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {
         // IDEA Include recently used objects in the autosuggest results. But where can we get those object from?
         // Another window context? The filter context?
-        return parent::perform();
+        return parent::perform($task, $transaction);
     }
 
-    public function getCalledByWidget()
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AbstractAction::getWidgetDefinedIn()
+     */
+    public function getWidgetDefinedIn() : WidgetInterface
     {
         // This IF makes sure, the autosuggest works even if the calling widget is not specified.
         // TODO This is a potential security issue as an attacker could get access to some data (UIDs and LABELs)
@@ -39,15 +59,16 @@ class Autosuggest extends ReadData
         // rewritten.
         // IDEA Once there is some kind of default table widget for meta object, we could use it here instead of
         // simply outputting the UID and LABEL
-        if (! parent::getCalledByWidget() && $this->getWorkbench()->ui()->getPageCurrent()) {
+        if (! parent::isDefinedInWidget()) {
+            $page = UiPageFactory::createEmpty($this->getWorkbench());
             /* @var $reading_widget \exface\Core\Widgets\DataTable */
-            $reading_widget = WidgetFactory::create($this->getWorkbench()->ui()->getPageCurrent(), 'DataTable');
+            $reading_widget = WidgetFactory::create($page, 'DataTable');
             $reading_widget->setMetaObject($this->getMetaObject());
             $reading_widget->addColumn($reading_widget->createColumnFromAttribute($this->getMetaObject()->getLabelAttribute()));
-            $this->setCalledByWidget($reading_widget);
-            $this->setInputDataSheet($reading_widget->prepareDataSheetToRead($this->getInputDataSheet()));
+            $this->setWidgetDefinedIn($reading_widget);
+            $this->setInputDataPreset($reading_widget->prepareDataSheetToRead($this->getInputDataPreset()));
         }
-        return parent::getCalledByWidget();
+        return parent::getWidgetDefinedIn();
     }
 }
 ?>

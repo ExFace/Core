@@ -1,7 +1,7 @@
 <?php
 namespace exface\Core\Interfaces;
 
-interface iCanBeCopied extends ExfaceClassInterface
+interface iCanBeCopied extends WorkbenchDependantInterface
 {
 
     /**

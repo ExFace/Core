@@ -22,6 +22,7 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
  * Example of a counter tile that will show the number of order in "pending" state
  * and will navigate to a detail page when clicked.
  * 
+ * ```
  * {
  *  "widget_type": "Tile",
  *  "object_alias": "my.App.ORDER",
@@ -35,6 +36,7 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
  *      "page_alias": "my.App.orders-for-approval",
  *  }
  * }
+ * ```
  * 
  * Example of a similar tile, but linked to a data widget. The DisplayTotal 
  * widget used for the tile is linked with the main widget of the target page 
@@ -43,6 +45,7 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
  * widget the tile will show when clicked - regardless of the exact filters,
  * aggregations or other configuration of that widget.
  *  
+ * ```
  * {
  *  "widget_type": "Tile",
  *  "object_alias": "my.App.ORDER",
@@ -59,9 +62,11 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
  *      "page_alias": "my.App.orders-for-approval",
  *  }
  * }
+ * ```
  * 
  * Example of a navigation tile with preset filters and not display widget:
  * 
+ * ```
  * {
  *  "widget_type": "Tile",
  *  "object_alias": "my.App.DELIVERY",
@@ -92,6 +97,7 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
  *      }
  *  }
  * }
+ * ```
  *  
  * Tiles degrade to regular buttons if used in menus or toolbars unless the corresponding widget
  * supports tiles explicitly. In this case, display widgets will simply be ignored.
@@ -152,7 +158,7 @@ class Tile extends Button
      */
     public function setSubtitle($text)
     {
-        $this->subtitle = $text;
+        $this->subtitle = $this->evaluatePropertyExpression($text);
         return $this;
     }
 

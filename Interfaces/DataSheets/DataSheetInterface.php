@@ -2,18 +2,16 @@
 namespace exface\Core\Interfaces\DataSheets;
 
 use exface\Core\CommonLogic\Model\ConditionGroup;
-use exface\Core\CommonLogic\Model\Condition;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
-use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\Core\Interfaces\DataSheets\DataColumnInterface;
-use exface\Core\Interfaces\ExfaceClassInterface;
+use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\iCanBeCopied;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
-use exface\Core\CommonLogic\DataSheets\DataColumn;
 use exface\Core\Exceptions\DataSheets\DataSheetColumnNotFoundError;
+use exface\Core\CommonLogic\DataSheets\DataSheetList;
+use exface\Core\Interfaces\Model\ConditionalExpressionInterface;
 
-interface DataSheetInterface extends ExfaceClassInterface, iCanBeCopied, iCanBeConvertedToUxon
+interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, iCanBeConvertedToUxon
 {
 
     /**
@@ -49,14 +47,10 @@ interface DataSheetInterface extends ExfaceClassInterface, iCanBeCopied, iCanBeC
      * IDEA improve performance by checking, which data sheet has less rows and iterating through that one instead of alwasy the left one.
      * This would be especially effective if there is nothing to join...
      *
-     * @param
-     *            \exface\Core\Interfaces\DataSheets\DataSheetInterface data_sheet
-     * @param
-     *            string left_key_column
-     * @param
-     *            string right_key_column
-     * @param
-     *            string column_prefix
+     * @param DataSheetInterface data_sheet
+     * @param string left_key_column
+     * @param string right_key_column
+     * @param string column_prefix
      * @return \exface\Core\Interfaces\DataSheets\DataSheetInterface
      */
     public function joinLeft(\exface\Core\Interfaces\DataSheets\DataSheetInterface $data_sheet, $left_key_column = null, $right_key_column = null, $relation_path = '');
@@ -90,12 +84,9 @@ interface DataSheetInterface extends ExfaceClassInterface, iCanBeCopied, iCanBeC
      * via $totals_values in the same manner. This is usefull when applying data functions to columns.
      * NOTE: if the data sheet does not contain a column with the given name, it will be added automatically.
      *
-     * @param
-     *            string column_name
-     * @param
-     *            mixed|array column_values
-     * @param
-     *            mixed|array totals_values
+     * @param string column_name
+     * @param mixed|array column_values
+     * @param mixed|array totals_values
      * @return DataSheetInterface
      */
     public function setColumnValues($column_name, $column_values, $totals_values = null);
@@ -110,10 +101,8 @@ interface DataSheetInterface extends ExfaceClassInterface, iCanBeCopied, iCanBeC
      * Populates the data sheet with actual data from the respecitve data sources.
      * Returns the number of rows created in the sheet.
      *
-     * @param
-     *            integer offset
-     * @param
-     *            integer limit
+     * @param integer offset
+     * @param integer limit
      * @return integer
      */
     public function dataRead($limit = null, $offset = null);
@@ -197,7 +186,7 @@ interface DataSheetInterface extends ExfaceClassInterface, iCanBeCopied, iCanBeC
     /**
      * Returns an array of data sorters
      *
-     * @return DataSorterListInterface
+     * @return DataSorterListInterface|DataSorterInterface[]
      */
     public function getSorters();
 
@@ -256,7 +245,7 @@ interface DataSheetInterface extends ExfaceClassInterface, iCanBeCopied, iCanBeC
     /**
      * Returns an array of DataColumns
      *
-     * @return DataColumnListInterface|DataColumn[]
+     * @return DataColumnInterface[]|DataColumnListInterface
      */
     public function getColumns();
 
@@ -268,11 +257,16 @@ interface DataSheetInterface extends ExfaceClassInterface, iCanBeCopied, iCanBeC
     public function getUidColumn();
     
     /**
-     * Returns TRUE if the sheet has a UID column and FALSE otherwise.
+     * Returns TRUE if the sheet has a UID column optionally checking for non-empty values and FALSE otherwise.
+     * 
+     * hasUidColumn() will return TRUE even if the column is empty, while hasUidColumn(true) will only return TRUE
+     * if the column has at least one non-empty value.
+     * 
+     * @param bool $checkValues
      * 
      * @return boolean
      */
-    public function hasUidColumn();
+    public function hasUidColumn(bool $checkValues = false) : bool;
 
     /**
      *
@@ -282,7 +276,7 @@ interface DataSheetInterface extends ExfaceClassInterface, iCanBeCopied, iCanBeC
 
     /**
      *
-     * @return DataAggregationListInterface
+     * @return DataAggregationListInterface|DataAggregationInterface[]
      */
     public function getAggregations();
 
@@ -326,7 +320,7 @@ interface DataSheetInterface extends ExfaceClassInterface, iCanBeCopied, iCanBeC
      * Removes all rows with the given value in the UID column
      *
      * @param string $instance_uid
-     *            return DataSheetInterface
+     * @return DataSheetInterface
      */
     public function removeRowsByUid($uid);
 
@@ -344,14 +338,14 @@ interface DataSheetInterface extends ExfaceClassInterface, iCanBeCopied, iCanBeC
      *
      * @return boolean
      */
-    public function isEmpty();
+    public function isEmpty() : bool;
 
     /**
      * Returns TRUE if the data in the sheet is up to date and FALSE otherwise (= if the data needs to be loaded)
      *
      * @return boolean
      */
-    public function isFresh();
+    public function isFresh() : bool;
 
     /**
      * Returns true if the data sheet will load all available data when performing data_read().
@@ -361,22 +355,28 @@ interface DataSheetInterface extends ExfaceClassInterface, iCanBeCopied, iCanBeC
      *
      * @return boolean
      */
-    public function isUnfiltered();
+    public function isUnfiltered() : bool;
 
     /**
-     * Returns TRUE if the data sheet has neither content nor filters (and thus will not contain any meaningfull data if read)
-     * and FALSE otherwise.
+     * Returns TRUE if the data sheet has neither content nor filters - and thus will not contain any meaningfull data if read.
      *
      * @return boolean
      */
-    public function isBlank();
+    public function isBlank() : bool;
 
     /**
      * Returns TRUE if the data sheet has no sorters and FALSE otherwise.
      *
      * @return boolean
      */
-    public function isUnsorted();
+    public function isUnsorted() : bool;
+    
+    /**
+     * Returns TRUE if the sheet includes all data (is not paged) and FALSE otherwise.
+     * 
+     * @return bool
+     */
+    public function isUnpaged() : bool;
 
     public function getRowsOnPage();
 
@@ -448,6 +448,21 @@ interface DataSheetInterface extends ExfaceClassInterface, iCanBeCopied, iCanBeC
      * @return boolean
      */
     public function hasColumTotals();
+    
+    /**
+     * 
+     * @param ConditionalExpressionInterface $condition
+     * @return DataSheetInterface
+     */
+    public function extract(ConditionalExpressionInterface $condition) : DataSheetInterface;
+    
+    /**
+     * Sorts the current rows according to the given sorter list.
+     * 
+     * @param DataSorterListInterface $sorters
+     * @return DataSheetInterface
+     */
+    public function sort(DataSorterListInterface $sorters) : DataSheetInterface;
 }
 
 ?>

@@ -11,6 +11,10 @@ use exface\Core\Interfaces\Actions\iRunTemplateScript;
 use exface\Core\Interfaces\ActionListInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
+use exface\Core\Interfaces\Tasks\TaskInterface;
+use exface\Core\Interfaces\DataSources\DataTransactionInterface;
+use exface\Core\Interfaces\Tasks\ResultInterface;
+use exface\Core\CommonLogic\Tasks\ResultData;
 
 /**
  * This action chains other actions together and performs them one after another.
@@ -57,52 +61,47 @@ class ActionChain extends AbstractAction
 
     private $use_single_transaction = true;
 
-    private $output = '';
-
     protected function init()
     {
         parent::init();
         $this->actions = new ActionList($this->getWorkbench(), $this);
     }
 
-    protected function perform()
+    protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {
         if ($this->getActions()->isEmpty()) {
             throw new ActionConfigurationError($this, 'An action chain must contain at least one action!', '6U5TRGK');
         }
         
-        $result = null;
-        $output = '';
-        $data = $this->getInputDataSheet();
+        $data = $this->getInputDataSheet($task);
+        $data_modified = false;
+        $t = clone $task;
         foreach ($this->getActions() as $action) {
             // Prepare the action
-            // All actions obviously run in the same template
-            $action->setTemplateAlias($this->getTemplateAlias());
-            // They are all called by the widget, that called the chain
-            if ($this->getCalledByWidget()) {
-                $action->setCalledByWidget($this->getCalledByWidget());
+            // All actions are all called by the widget, that called the chain
+            if ($this->isDefinedInWidget()) {
+                $action->setWidgetDefinedIn($this->getWidgetDefinedIn());
             }
             // If the chain should run in a single transaction, this transaction must be set for every action to run in
-            if ($this->getUseSingleTransaction()) {
-                $action->setTransaction($this->getTransaction());
-            }
+            $ts = $this->getUseSingleTransaction() ? $transaction : $this->getWorkbench()->data()->startTransaction();
             // Every action gets the data resulting from the previous action as input data
-            $action->setInputDataSheet($data);
+            $t->setInputData($data);
             
             // Perform
-            $data = $action->getResultDataSheet();
-            $output = $action->getResultOutput();
-            $result = $action->getResult();
-            $this->addResultMessage($action->getResultMessage() . "\n");
-            if ($action->isDataModified()) {
-                $this->setDataModified(true);
+            $result = $action->handle($t, $ts);
+            $message .= $result->getMessage() . "\n";
+            if ($result->isDataModified()) {
+                $data_modified = true;
+            }
+            if ($result instanceof ResultData) {
+                $data = $result->getData();
             }
         }
-        if ($data) {
-            $this->setResultDataSheet($data);
-        }
-        $this->setResult($result);
-        $this->output = $output;
+        
+        $result->setDataModified($data_modified);
+        $result->setMessage($message);
+        
+        return $result;
     }
 
     /**
@@ -161,11 +160,6 @@ class ActionChain extends AbstractAction
         return $this;
     }
 
-    public function getResultOutput()
-    {
-        return $this->output;
-    }
-
     public function getInputRowsMin()
     {
         return $this->getActions()->getFirst()->getInputRowsMin();
@@ -176,7 +170,7 @@ class ActionChain extends AbstractAction
         return $this->getActions()->getFirst()->getInputRowsMax();
     }
 
-    public function isUndoable()
+    public function isUndoable() : bool
     {
         return false;
     }

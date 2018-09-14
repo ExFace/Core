@@ -2,10 +2,14 @@
     "id": "0xf8310d4bba2c11e7895fe4b318306b9a",
     "alias_with_namespace": "exface.core.administration",
     "menu_parent_page_alias": "index",
-    "menu_index": "14",
+    "menu_index": "0",
     "menu_visible": true,
     "name": "Administration",
-    "short_description": "",
+    "description": "",
+    "intro": "",
     "replaces_page_alias": null,
-    "contents": ""
+    "contents": {
+        "widget_type": "NavTiles",
+        "object_alias": "exface.Core.PAGE"
+    }
 }

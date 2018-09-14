@@ -2,6 +2,7 @@
 namespace exface\Core\Widgets;
 
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
+use exface\Core\Interfaces\Widgets\iHaveColor;
 
 /**
  * The ChartSeries represents a single series in a chart (e.g.
@@ -17,7 +18,7 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
  * @author Andrej Kabachnik
  *        
  */
-class ChartSeries extends AbstractWidget
+class ChartSeries extends AbstractWidget implements iHaveColor
 {
 
     const CHART_TYPE_LINE = 'line';
@@ -35,6 +36,8 @@ class ChartSeries extends AbstractWidget
     private $series_number = null;
 
     private $data_column_id = null;
+    
+    private $color = null;
 
     private $axis_x_number = null;
 
@@ -239,5 +242,43 @@ class ChartSeries extends AbstractWidget
         $this->series_number = $value;
         return $this;
     }
+    
+    /**
+     * Returns the color of this series or NULL if no color explicitly defined.
+     * 
+     * {@inheritdoc}
+     * @see iHaveColor::getColor()
+     */
+    public function getColor()
+    {
+        if (is_null($this->color)) {
+            $dataWidget = $this->getDataColumn()->getCellWidget();
+            if ($dataWidget instanceof iHaveColor) {
+                $this->color = $dataWidget->getColor();
+            }
+        }
+        return $this->color;
+    }
+
+    /**
+     * Sets a specific color for the series - if not set, templates will use their own color scheme.
+     * 
+     * HTML color names are supported by default. Additionally any color selector supported by
+     * the current template can be used. Most HTML templates will support css colors.
+     * 
+     * @link https://www.w3schools.com/colors/colors_groups.asp
+     * 
+     * @uxon-property color
+     * @uxon-type string
+     * 
+     * {@inheritdoc}
+     * @see iHaveColor::setColor()
+     */
+    public function setColor($color)
+    {
+        $this->color = $color;
+        return $this;
+    }
+
 }
 ?>

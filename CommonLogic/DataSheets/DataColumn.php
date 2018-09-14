@@ -108,7 +108,7 @@ class DataColumn implements DataColumnInterface
      *
      * {@inheritdoc}
      *
-     * @see \exface\Core\Interfaces\ExfaceClassInterface::getWorkbench()
+     * @see \exface\Core\Interfaces\WorkbenchDependantInterface::getWorkbench()
      */
     public function getWorkbench()
     {
@@ -255,7 +255,7 @@ class DataColumn implements DataColumnInterface
                 $this->data_type = $data_type_or_string;
             } else {
                 $exface = $this->getWorkbench();
-                $this->data_type = DataTypeFactory::createFromAlias($exface, $data_type_or_string);
+                $this->data_type = DataTypeFactory::createFromString($exface, $data_type_or_string);
             }
         }
         return $this;
@@ -400,6 +400,10 @@ class DataColumn implements DataColumnInterface
             if ($this->getAttribute()->getDataType() !== $this->getDataType()) {
                 $uxon->setProperty('data_type', $this->getDataType()->getAliasWithNamespace());
             }
+            
+            if ($this->getAttribute()->getFormula() !== $this->getFormula()) {
+                $uxon->setProperty('formula', $this->getFormula()->toString());
+            }
         } else {
             // If it's not an attribute, export everything
             $uxon->setProperty('expression', $this->getExpressionObj()->toString());
@@ -418,7 +422,7 @@ class DataColumn implements DataColumnInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::isAttribute()
      */
-    public function isAttribute()
+    public function isAttribute() : bool
     {
         return $this->getAttributeAlias() ? true : false;
     }
@@ -428,7 +432,7 @@ class DataColumn implements DataColumnInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::isFormula()
      */
-    public function isFormula()
+    public function isFormula() : bool
     {
         return is_null($this->formula) || $this->formula === '' ? false : true; 
     }
@@ -438,9 +442,14 @@ class DataColumn implements DataColumnInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::isCalculated()
      */
-    public function isCalculated()
+    public function isCalculated() : bool
     {
-        return $this->isFormula();
+        return $this->isFormula() || $this->getExpressionObj()->isConstant();
+    }
+    
+    public function isStatic() : bool
+    {
+        return $this->getExpressionObj()->isStatic();
     }
 
     /**
@@ -452,7 +461,9 @@ class DataColumn implements DataColumnInterface
     public function importUxonObject(UxonObject $uxon)
     {
         $this->setHidden($uxon->getProperty('hidden'));
-        $this->setDataType($uxon->getProperty('data_type'));
+        if ($uxon->hasProperty('data_type')) {
+            $this->setDataType($uxon->getProperty('data_type'));
+        }
         $this->setFormula($uxon->getProperty('formula'));
         $this->setAttributeAlias($uxon->getProperty('attribute_alias'));
         if ($uxon->hasProperty('totals')) {

@@ -6,6 +6,7 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\ActionFactory;
 use exface\Core\Exceptions\Contexts\ContextLoadError;
 use exface\Core\CommonLogic\Contexts\AbstractContext;
+use exface\Core\Interfaces\Tasks\ResultInterface;
 
 class ActionContext extends AbstractContext
 {
@@ -45,7 +46,7 @@ class ActionContext extends AbstractContext
      * @param ActionInterface $action            
      * @return \exface\Core\Contexts\ActionContext
      */
-    public function addAction(ActionInterface $action)
+    public function addAction(ActionInterface $action, ResultInterface $result)
     {
         $this->current_actions[] = $action;
         return $this;
@@ -102,7 +103,7 @@ class ActionContext extends AbstractContext
      */
     public function getDefaultScope()
     {
-        return $this->getWorkbench()->context()->getScopeSession();
+        return $this->getWorkbench()->getContext()->getScopeSession();
     }
 
     /**
@@ -124,7 +125,7 @@ class ActionContext extends AbstractContext
             $action_uxon = new UxonObject();
             $action_uxon->setProperty('action', $action->exportUxonObject());
             if ($action->isUndoable()) {
-                $action_uxon->setProperty('undo_data', $action->getUndoDataSerializable());
+                $action_uxon->setProperty('undo_data', $action->getUndoDataUxon());
             }
             $array[] = $action_uxon;
         }

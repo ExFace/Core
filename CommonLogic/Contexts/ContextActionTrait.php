@@ -3,6 +3,8 @@ namespace exface\Core\CommonLogic\Contexts;
 
 use exface\Core\Interfaces\Contexts\ContextScopeInterface;
 use exface\Core\Exceptions\Actions\ActionInputTypeError;
+use exface\Core\Interfaces\Tasks\TaskInterface;
+use exface\Core\Interfaces\Contexts\ContextInterface;
 
 /**
  * This trait contains typical methods for actions working with contexts.
@@ -27,7 +29,7 @@ trait ContextActionTrait
      * 
      * @return string
      */
-    public function getContextAlias()
+    public function getContextAlias(TaskInterface $task = null) : string
     {
         return $this->context_alias;
     }
@@ -52,7 +54,7 @@ trait ContextActionTrait
      * 
      * @return ContextScopeInterface
      */
-    public function getContextScope()
+    public function getContextScope(TaskInterface $task = null) : ContextScopeInterface
     {
         return $this->context_scope;
     }
@@ -69,7 +71,7 @@ trait ContextActionTrait
     public function setContextScope($scope_or_string_name)
     {
         if (is_string($scope_or_string_name)){
-            $this->context_scope = $this->getWorkbench()->context()->getScope($scope_or_string_name);
+            $this->context_scope = $this->getWorkbench()->getContext()->getScope($scope_or_string_name);
         } elseif ($scope_or_string_name instanceof ContextScopeInterface){
             $this->context_scope = $scope_or_string_name;
         } else {
@@ -83,8 +85,8 @@ trait ContextActionTrait
      *
      * @return AbstractContext
      */
-    public function getContext()
+    public function getContext(TaskInterface $task = null) : ContextInterface
     {
-        return $this->getContextScope()->getContext($this->getContextAlias());
+        return $this->getContextScope($task)->getContext($this->getContextAlias($task));
     }
 }

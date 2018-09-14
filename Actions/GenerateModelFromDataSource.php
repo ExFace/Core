@@ -3,11 +3,11 @@ namespace exface\Core\Actions;
 
 use exface\Core\CommonLogic\AbstractAction;
 use exface\Core\Exceptions\Actions\ActionInputInvalidObjectError;
-use exface\Core\Interfaces\DataSources\SqlDataConnectorInterface;
-use exface\Core\Exceptions\Actions\ActionInputTypeError;
 use exface\Core\CommonLogic\Constants\Icons;
-use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\Core\Exceptions\Actions\ActionInputMissingError;
+use exface\Core\Interfaces\Tasks\TaskInterface;
+use exface\Core\Interfaces\DataSources\DataTransactionInterface;
+use exface\Core\Interfaces\Tasks\ResultInterface;
+use exface\Core\Factories\ResultFactory;
 
 /**
  * This action runs one or more selected test steps
@@ -25,16 +25,17 @@ class GenerateModelFromDataSource extends AbstractAction
         $this->setInputRowsMax(null);
     }
 
-    protected function perform()
+    protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {
-        $input_data = $this->getInputDataSheet();
+        $input_data = $this->getInputDataSheet($task);
         
         if (! $input_data->getMetaObject()->is('exface.Core.MODEL_BUILDER_INPUT')) {
-            throw new ActionInputInvalidObjectError($this, 'Action "' . $this->getAlias() . '" exprects exface.Core.MODEL_BUILDER_INPUT as input, "' . $this->getInputDataSheet()->getMetaObject()->getAliasWithNamespace() . '" given instead!');
+            throw new ActionInputInvalidObjectError($this, 'Action "' . $this->getAlias() . '" exprects exface.Core.MODEL_BUILDER_INPUT as input, "' . $input_data->getMetaObject()->getAliasWithNamespace() . '" given instead!');
         }
         
         $obj_col = $input_data->getColumns()->getByExpression('OBJECT');
         $data_src_col = $input_data->getColumns()->getByExpression('DATA_SOURCE');
+        $message = '';
         $created = 0;
         $skipped = 0;
         if ($obj_col && ! $obj_col->isEmpty(true)) {
@@ -48,7 +49,7 @@ class GenerateModelFromDataSource extends AbstractAction
                 $skipped += $created_ds->countRowsAll() - $created_ds->countRows();
             }
             
-            $this->addResultMessage('Created ' . $created . ' attributes, ' . $skipped . ' skipped as duplicates.');
+            $message .= 'Created ' . $created . ' attributes, ' . $skipped . ' skipped as duplicates.';
             
         } elseif ($data_src_col && ! $data_src_col->isEmpty()) {
             
@@ -62,12 +63,10 @@ class GenerateModelFromDataSource extends AbstractAction
                 $skipped += $created_ds->countRowsAll() - $created_ds->countRows();
             }
             
-            $this->addResultMessage('Created ' . $created . ' objects, ' . $skipped . ' skipped as duplicates.');
+            $message .= 'Created ' . $created . ' objects, ' . $skipped . ' skipped as duplicates.';
         }
         
-        $this->setResult('');
-        
-        return;
+        return ResultFactory::createMessageResult($task, $message);
     }
 }
 ?>

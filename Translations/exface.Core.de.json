@@ -3,7 +3,10 @@
 
 	"ACTION.CREATEDATA.RESULT": "%number% Objekt erstellt.|%number% Objekte erstellt.",
 	"ACTION.CREATEDATA.NAME": "Speichern",
-	"ACTION.CREATEOBJECTDIALOG.NAME": "Neu",
+	"ACTION.COPYDATA.NAME": "Daten duplizieren",
+	"ACTION.COPYDATA.RESULT": "%number% Objekt kopiert|%number% Objekte kopiert",
+	"ACTION.COPYDATA.RESULT_DEPENDENCIES": " inkl. %number% abhängiges Objekt| inkl. %number% Abhängigkeiten",
+	"ACTION.SHOWOBJECTCREATEDIALOG.NAME": "Neu",
     
     "ACTION.CONTEXTAPI.RESULT": "'%operation_name%' erfolgreich!",
 	
@@ -12,11 +15,12 @@
 	"ACTION.DELETEOBJECT.RESULT": "%number% Objekt gelöscht.|%number% Objekte gelöscht.",
 	"ACTION.DELETEOBJECT.NAME": "Löschen",
 
-	"ACTION.DUPLICATEOBJECTDIALOG.NAME": "Duplizieren",
+	"ACTION.SHOWOBJECTCOPYDIALOG.NAME": "Duplizieren",
 
-	"ACTION.EDITOBJECTDIALOG.SAVE_BUTTON": "Speichern",
-	"ACTION.EDITOBJECTDIALOG.NAME": "Bearbeiten",
-	"ACTION.EDITOBJECTDIALOG.NO_EDITABLE_ATTRIBUTES": "Keine editierbaren Attribute gefunden!",
+	"ACTION.SHOWOBJECTEDITDIALOG.SAVE_BUTTON": "Speichern",
+	"ACTION.SHOWOBJECTEDITDIALOG.NAME": "Bearbeiten",
+	"ACTION.SHOWOBJECTEDITDIALOG.NO_EDITABLE_ATTRIBUTES": "Keine editierbaren Attribute gefunden!",
+	"ACTION.SHOWOBJECTEDITDIALOG.DATA_SOURCE_NOT_WRITABLE": "Kein Schreibzugriff auf Datenquelle erlaubt!",
 
 	"ACTION.EXPORTCSV.NAME": "CSV exportieren",
 	"ACTION.EXPORTDATA.NAME": "Exportieren",
@@ -39,10 +43,10 @@
 	"ACTION.GOTOURL.SUCCESS": "Sie werden weitergeleitet...",
 	"ACTION.GOTOPAGE.NAME": "Anzeigen",
 
-	"ACTION.MASSEDITDIALOG.NAME": "Massenbearbeitung",
-	"ACTION.MASSEDITDIALOG.EDITING_BY_FILTER": "Bearbeitung aller Objekte, die folgenden Filtern entsprechen: %filters%",
-	"ACTION.MASSEDITDIALOG.EDITING_ALL": "Bearbeitung aller Objekte",
-	"ACTION.MASSEDITDIALOG.EDITING_SELECTED": "Bearbeitung für %number% Objekt|Bearbeitung für %number% Objekte",
+	"ACTION.SHOWMASSEDITDIALOG.NAME": "Massenbearbeitung",
+	"ACTION.SHOWMASSEDITDIALOG.EDITING_BY_FILTER": "Bearbeitung aller Objekte, die folgenden Filtern entsprechen: %filters%",
+	"ACTION.SHOWMASSEDITDIALOG.EDITING_ALL": "Bearbeitung aller Objekte",
+	"ACTION.SHOWMASSEDITDIALOG.EDITING_SELECTED": "Bearbeitung für %number% Objekt|Bearbeitung für %number% Objekte",
 
 	"ACTION.OBJECTBASKET": "Objektkorb",
     "ACTION.OBJECTBASKETADD.NAME": "In den Objektkorb",
@@ -70,8 +74,10 @@
 	"ACTION.SHOWLOOKUPDIALOG.SAVE_BUTTON": "Übernehmen",
 
 	"ACTION.SHOWHELPDIALOG.NAME": "Hilfe",
+	
+	"ACTION.SHOWMODELBUILDERDIALOG.NAME": "Modell generieren",
 
-	"ACTION.SHOWOBJECTDIALOG.NAME": "Info",
+	"ACTION.SHOWOBJECTINFODIALOG.NAME": "Info",
 
 	"ACTION.UNDOACTION.NAME": "Undo",
 	"ACTION.UNDOACTION.RESULT": "%number% Aktion wurde rückgängig gemacht.|%number% Aktionen wurden rückgängig gemacht.",
@@ -95,9 +101,7 @@
     "CONTEXT.OBJECTBASKET.SHOW_DETAILS_DIALOG": "Inhalt anzeigen",
     "CONTEXT.OBJECTBASKET.REMOVE": "Entfernen",
     "CONTEXT.OBJECTBASKET.REMOVE_ALL": "Alle entfernen",
-    
-	"GLOBAL.ACTIONS": "Aktionen",
-    
+	
     "GLOBAL.AGGREGATOR_FUNCTIONS.SUM": "Summe",
 	"GLOBAL.AGGREGATOR_FUNCTIONS.AVG": "Durchschnitt",
 	"GLOBAL.AGGREGATOR_FUNCTIONS.MIN": "Minimum",
@@ -108,6 +112,20 @@
 	"GLOBAL.AGGREGATOR_FUNCTIONS.COUNT_DISTINCT": "Anzahl unterschiedlicher Werte",
 	"GLOBAL.AGGREGATOR_FUNCTIONS.COUNT_IF": "Anzahl mit Filter",
 	
+	"GLOBAL.MODEL.ACTIONS": "Aktionen",
+    "GLOBAL.MODEL.ATTRIBUTES": "Attribute",
+    "GLOBAL.MODEL.BEHAVIORS": "Behaviors",
+    "GLOBAL.MODEL.CONNECTIONS": "Verbindungen",
+    "GLOBAL.MODEL.DATA_SOURCES": "Datenquellen",
+    "GLOBAL.MODEL.MODEL": "Modell",
+    "GLOBAL.MODEL.OBJECTS": "Objekte",
+    "GLOBAL.MODEL.RELATIONS": "Relationen",
+    "GLOBAL.MODEL.RELATION_TYPE.REGULAR": "Forwärts",
+    "GLOBAL.MODEL.RELATION_TYPE.REVERSE": "Rückwärts",
+    "GLOBAL.MODEL.RELATION_TYPE.ONE_TO_ONE": "Eins-zu-eins",
+    "GLOBAL.MODEL.UID": "UID",
+    "GLOBAL.MODEL.LABEL": "Label",
+    
 	"GLOBAL.SORTING_DIRECTIONS.ASC": "Aufsteigend",
 	"GLOBAL.SORTING_DIRECTIONS.DESC": "Absteigend",
 	
@@ -126,6 +144,21 @@
     "LOCALIZATION.PRICE.PRECISION_MAX": 2,
     "LOCALIZATION.PRICE.PRECISION_MIN": 2,
     
+    "PAGE.APPS.REPAIR": "Reparieren",
+    "PAGE.OBJECTS.APP_ALIAS": "App Alias",
+    "PAGE.OBJECT_EDITOR.RELATION_TO": "Verknüpft mit",
+    "PAGE.OBJECT_EDITOR.DEFAULT_EDITOR": "Standard-Editor",
+    "PAGE.OBJECT_EDITOR.DATA_ADDRESS": "Datenadresse",
+    "PAGE.OBJECT_EDITOR.DATA_SOURCE_BASE_OBJECT": "Basisobjekt der Datenquelle",
+    "PAGE.DATA_SOURCES.BASE_OBJECT": "Basisobjekt",
+    "PAGE.DATA_SOURCES.CONNECTION_READONLY": "Verbindung nur lesend",
+    "PAGE.DATA_SOURCE_EDITOR.DEFAULTS": "Standard-Konfiguration",
+    "PAGE.DATA_SOURCE_EDITOR.CUSTOM_CONFIG": "Abweichende Einstellungen",
+    "PAGE.USERS.CREDENTIALS": "Zugangsdaten",
+    "PAGE.DOCS.READ": "Lesen",
+    "PAGE.ATTRIBUTES.DISPLAY_ORDER": "Anzeige-Pos.",
+    "PAGE.TABS.GENERAL": "Allgemein",
+    
 	"WIDGET.SELECT_ALL": "Alle",
 	"WIDGET.SELECT_YES": "Ja",
 	"WIDGET.SELECT_NO": "Nein",
@@ -137,7 +170,7 @@
 	"WIDGET.DATA.NO_DATA_FOUND": "Keine Daten gefunden, die zu aktuellen Filtern passen!",
 	"WIDGET.DATA.HELP.FILTERS": "Filter",
 	"WIDGET.DATA.HELP.COLUMNS": "Spalten",
-	"WIDGET.DATA.NOT_LOADED": "Aus Performancegründen wurden keine Daten geladen. Bitte zuerst die Filter setzen, dann auf Suchen/Neu Laden drücken!",
+	"WIDGET.DATA.NOT_LOADED": "Bitte Pflicht-Filter setzen und anschließend die Suche ausführen!",
 	
     "WIDGET.DATACONFIGURATOR.FILTER_TAB_CAPTION": "Filter",
     "WIDGET.DATACONFIGURATOR.SORTER_TAB_CAPTION": "Sortierung",
@@ -159,6 +192,7 @@
 	"ERROR.STACKTRACE_CAPTION": "Stacktrace",
 	"ERROR.REQUEST_CAPTION": "Request",
 	"ERROR.CONTEXT_CAPTION": "Context",
+	"ERROR.OBJECT_CAPTION": "Objekt \"%name%\"",
 	"ERROR.SUPPORT_HINT": "Bitte geben Sie bei Anfragen an den <a href=\"mailto:%support_mail%?subject=%system_name%:%20%error_id%\">Support</a> stets die LOG-Nummer an: \"%error_id%\"!",
 	"WARNING.CAPTION": "Warnung"
 }

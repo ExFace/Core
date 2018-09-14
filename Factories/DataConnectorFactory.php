@@ -1,50 +1,41 @@
 <?php
 namespace exface\Core\Factories;
 
-use exface\Core\CommonLogic\NameResolver;
-use exface\Core\CommonLogic\AbstractDataConnector;
-use exface\Core\Interfaces\NameResolverInterface;
-use exface\Core\Exceptions\DataSources\DataConnectionNotFoundError;
-use exface\Core\CommonLogic\Workbench;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Interfaces\Selectors\DataConnectorSelectorInterface;
+use exface\Core\Interfaces\DataSources\DataConnectionInterface;
+use exface\Core\Interfaces\WorkbenchInterface;
 
-abstract class DataConnectorFactory extends AbstractNameResolverFactory
+abstract class DataConnectorFactory extends AbstractSelectableComponentFactory
 {
 
     /**
-     * Creates a data connector from the given name resolver and an optional config array
-     *
-     * @param NameResolverInterface $name_resolver            
-     * @param UxonObject $config            
-     * @return AbstractDataConnector
+     * Creates a data connector from the given selector and an optional config array
+     * 
+     * @param DataConnectorSelectorInterface $selector
+     * @param UxonObject $config
+     * @return DataConnectionInterface
      */
-    public static function create(NameResolverInterface $name_resolver, UxonObject $config = null)
+    public static function create(DataConnectorSelectorInterface $selector, UxonObject $config = null) : DataConnectionInterface
     {
-        $class = $name_resolver->getClassNameWithNamespace();
-        $exface = $name_resolver->getWorkbench();
-        if (! $name_resolver->classExists()) {
-            throw new DataConnectionNotFoundError('Data connection "' . $name_resolver->getAlias() . '" not found in namespace "' . $name_resolver->getNamespace() . '"!');
+        $instance = static::createFromSelector($selector);
+        if ($config !== null) {
+            $instance->importUxonObject($config);
         }
-        $instance = new $class($exface, $config);
-        $instance->setNameResolver($name_resolver);
         return $instance;
     }
 
     /**
-     * Creates a data connector from the given identifier
-     * - file path relative to the ExFace installation directory
-     * - ExFace alias with namespace
-     * - class name
-     *
-     * @param Workbench $exface            
-     * @param string $path_or_qualified_alias            
-     * @param UxonObject $config            
-     * @return AbstractDataConnector
+     * 
+     * @param WorkbenchInterface $workbench
+     * @param string $selectorString
+     * @param UxonObject $config
+     * @return \exface\Core\Interfaces\DataSources\DataConnectionInterface
      */
-    public static function createFromAlias(Workbench $exface, $path_or_qualified_alias, UxonObject $config = null)
+    public static function createFromAlias(WorkbenchInterface $workbench, string $selectorString, UxonObject $config = null) : DataConnectionInterface
     {
-        $name_resolver = $exface->createNameResolver($path_or_qualified_alias, NameResolver::OBJECT_TYPE_DATA_CONNECTOR);
-        return static::create($name_resolver, $config);
+        $selector = SelectorFactory::createDataConnectorSelector($workbench, $selectorString);
+        return static::create($selector, $config);
     }
 }
 ?>

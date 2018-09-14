@@ -46,7 +46,7 @@ class DataAggregation implements iCanBeConvertedToUxon
 
     public function exportUxonObject()
     {
-        $uxon = $this->getDataSheet()->getWorkbench()->createUxonObject();
+        $uxon = new UxonObject();
         $uxon->setProperty('attribute_alias', $this->getAttributeAlias());
         return $uxon;
     }
@@ -57,7 +57,9 @@ class DataAggregation implements iCanBeConvertedToUxon
     }
 
     /**
-     * PRODUCT->SIZE:CONCAT(',') --> CONCAT(',')
+     * Returns the aggregator part of an alias expression: PRODUCT__SIZE:CONCAT(',') --> CONCAT(',').
+     * 
+     * Returns FALSE if no aggregator found.
      *
      * @param string $attribute_alias            
      * @return AggregatorInterface|boolean
@@ -72,7 +74,15 @@ class DataAggregation implements iCanBeConvertedToUxon
         }
     }
     
-    public static function stripAggregator($attribute_alias)
+    /**
+     * Returns the alias expression without it's aggregator: PRODUCT__SIZE:CONCAT(',') --> PRODUCT__SIZE.
+     * 
+     * Returns the alias expression unchanged if no aggregator found
+     * 
+     * @param string $attribute_alias
+     * @return string
+     */
+    public static function stripAggregator(string $attribute_alias) : string
     {
         $aggregator_pos = strpos($attribute_alias, self::AGGREGATION_SEPARATOR);
         if ($aggregator_pos !== false){
@@ -80,6 +90,18 @@ class DataAggregation implements iCanBeConvertedToUxon
         } else {
             return $attribute_alias;
         }
+    }
+    
+    /**
+     * Returns the passed alias expression with the given aggregator appended to it.
+     * 
+     * @param string $attribute_alias
+     * @param AggregatorInterface $aggregator
+     * @return string
+     */
+    public static function addAggregatorToAlias(string $attribute_alias, AggregatorInterface $aggregator) : string
+    {
+        return $attribute_alias . self::AGGREGATION_SEPARATOR . $aggregator->__toString();
     }
 
     /**

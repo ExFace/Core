@@ -1,7 +1,7 @@
 <?php
 namespace exface\Core\Interfaces;
 
-interface InstallerInterface extends ExfaceClassInterface
+interface InstallerInterface extends WorkbenchDependantInterface
 {
 
     /**

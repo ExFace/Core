@@ -19,7 +19,7 @@ trait JqueryDisplayTrait {
      * 
      * @return string
      */
-    public function generateJs()
+    public function buildJs()
     {
         if ($this->hasFormatter()) {
             return $this->buildJsValueSetter($this->buildJsValueGetter()) . ';';
@@ -115,8 +115,8 @@ trait JqueryDisplayTrait {
         return 'auto';
     }
     
-    public function generateHeaders()
+    public function buildHtmlHeadTags()
     {
-        return array_merge(parent::generateHeaders(), $this->getFormatter()->buildHtmlBodyIncludes(), $this->getFormatter()->buildHtmlHeadIncludes());
+        return array_merge(parent::buildHtmlHeadTags(), $this->getFormatter()->buildHtmlBodyIncludes(), $this->getFormatter()->buildHtmlHeadIncludes());
     }
 }

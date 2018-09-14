@@ -2,10 +2,13 @@
 namespace exface\Core\Actions;
 
 use exface\Core\Factories\WidgetFactory;
-use exface\Core\Factories\UiPageFactory;
 use exface\Core\CommonLogic\Contexts\ContextActionTrait;
-use exface\Core\Widgets\AbstractWidget;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Interfaces\Model\UiPageInterface;
+use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\Interfaces\Tasks\ResultInterface;
+use exface\Core\Interfaces\DataSources\DataTransactionInterface;
+use exface\Core\Interfaces\Tasks\TaskInterface;
 
 /**
  * Displays a popup-table with all instances of a meta object in the object basket.
@@ -20,12 +23,33 @@ class ObjectBasketShowDialog extends ShowDialog
 {
     use ContextActionTrait; 
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Actions\ShowWidget::init()
+     */
     protected function init()
     {
         parent::init();
         $this->setInputRowsMax(1);
         $this->setInputRowsMin(1);
         $this->setContextAlias('exface.Core.ObjectBasketContext');
+        // Never use the context for prefill because the ObjectBasket can be called on any page,
+        // so the context does not really have anything to do with the ObjectBasket
+        $this->setPrefillWithFilterContext(false);
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Actions\ShowWidget::perform()
+     */
+    protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
+    {
+        if ($task->hasParameter(ContextApi::TASK_PARAMETER_CONTEXT_SCOPE)) {
+            $this->setContextScope($task->getParameter(ContextApi::TASK_PARAMETER_CONTEXT_SCOPE));
+        }
+        return parent::perform($task, $transaction);
     }
 
     /**
@@ -35,15 +59,10 @@ class ObjectBasketShowDialog extends ShowDialog
      * {@inheritDoc}
      * @see \exface\Core\Actions\ShowDialog::createDialogWidget()
      */
-    protected function createDialogWidget(AbstractWidget $contained_widget = null)
+    protected function createDialogWidget(UiPageInterface $page, WidgetInterface $contained_widget = null)
     {
-        try {
-            $page = $this->getCalledOnUiPage();
-        } catch (\Throwable $e) {
-            $page = UiPageFactory::createEmpty($this->getWorkbench()->ui());
-        }
         /* @var $dialog \exface\Core\Widgets\Dialog */
-        $dialog = WidgetFactory::create($page, 'Dialog', $this->getCalledByWidget());
+        $dialog = WidgetFactory::create($page, 'Dialog', $this->getWidgetDefinedIn());
         $dialog->setCaption($this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.OBJECTBASKET'));
         $dialog->setLazyLoading(false);
         
@@ -76,14 +95,14 @@ class ObjectBasketShowDialog extends ShowDialog
         
         // Add info button
         $info_button = $dialog->createButton();
-        $info_button->setActionAlias('exface.Core.ShowObjectDialog');
+        $info_button->setActionAlias('exface.Core.ShowObjectInfoDialog');
         $info_button->setInputWidget($table);
         $dialog->addButton($info_button);
         
         // Add actions menu
         /* @var $menu \exface\Core\Widgets\MenuButton */
         $menu = $dialog->createButton(UxonObject::fromArray(['widget_type' => 'MenuButton']));
-        $menu->setCaption($this->getWorkbench()->getCoreApp()->getTranslator()->translate('GLOBAL.ACTIONS'));
+        $menu->setCaption($this->getWorkbench()->getCoreApp()->getTranslator()->translate('GLOBAL.MODEL.ACTIONS'));
         $menu->setVisibility(EXF_WIDGET_VISIBILITY_PROMOTED);
         $menu->setInputWidget($table);
         foreach ($this->getMetaObject()->getActions()->getUsedInObjectBasket() as $a) {

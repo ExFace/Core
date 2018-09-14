@@ -57,7 +57,7 @@ interface DataColumnListInterface extends EntityListInterface
      * @param string $hidden            
      * @return DataColumnInterface
      */
-    public function addFromExpression($expression_or_string, $name = '', $hidden = false);
+    public function addFromExpression($expression_or_string, $name = null, $hidden = false);
 
     /**
      * Adds a new column with the given attribute and returns it
@@ -66,6 +66,18 @@ interface DataColumnListInterface extends EntityListInterface
      * @return DataColumnInterface
      */
     public function addFromAttribute(MetaAttributeInterface $attribute);
+    
+    /**
+     * 
+     * @return DataColumnInterface
+     */
+    public function addFromUidAttribute() : DataColumnInterface;
+    
+    /**
+     * 
+     * @return DataColumnInterface
+     */
+    public function addFromLabelAttribute() : DataColumnInterface;
 
     /**
      * Removes the given entity from the list

@@ -29,6 +29,20 @@ interface BehaviorListInterface extends iCanBeConvertedToUxon, \IteratorAggregat
      * @return BehaviorInterface[]
      */
     public function getAll();
+    
+    /**
+     * 
+     * @param string $aliasWithNamespace
+     * @return BehaviorListInterface
+     */
+    public function getByAlias(string $aliasWithNamespace) : BehaviorListInterface;
+    
+    /**
+     * 
+     * @param string $className
+     * @return BehaviorListInterface
+     */
+    public function getByPrototypeClass(string $className) : BehaviorListInterface;
 
     /**
      *

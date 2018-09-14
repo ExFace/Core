@@ -6,6 +6,9 @@ use exface\Core\CommonLogic\AbstractDataConnector;
 use exface\Core\CommonLogic\Filemanager;
 use exface\Core\CommonLogic\DataQueries\FileFinderDataQuery;
 use Symfony\Component\Finder\SplFileInfo;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
+use exface\Core\DataTypes\TimestampDataType;
+use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
 
 /**
  *
@@ -56,6 +59,7 @@ class FileFinderBuilder extends AbstractQueryBuilder
                     default: // TODO
                 }
             } else {
+                $this->addAttribute($qpart->getExpression()->toString());
                 $qpart->setApplyAfterReading(true);
                 $query->setFullScanRequired(true);
             }
@@ -121,6 +125,18 @@ class FileFinderBuilder extends AbstractQueryBuilder
     }
 
     /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder::create()
+     */
+    public function create(AbstractDataConnector $data_connection = null)
+    {
+        $fileArray = $this->getValue('PATHNAME_ABSOLUTE')->getValues();
+        $contentArray = $this->getValue('CONTENTS')->getValues();
+        return $this->write($fileArray, $contentArray);
+    }
+
+    /**
      *
      * {@inheritdoc}
      *
@@ -169,6 +185,67 @@ class FileFinderBuilder extends AbstractQueryBuilder
         return $this->getResultTotalRows();
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder::update()
+     */
+    public function update(AbstractDataConnector $data_connection = null)
+    {
+        $updatedFileNr = 0;
+        
+        $query = $this->buildQuery();
+        if ($files = $data_connection->query($query)->getFinder()) {
+            $fileArray = iterator_to_array($files, false);
+            $contentArray = $this->getValue('CONTENTS')->getValues();
+            $updatedFileNr = $this->write($fileArray, $contentArray);
+        }
+        
+        return $updatedFileNr;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder::delete()
+     */
+    public function delete(AbstractDataConnector $data_connection = null)
+    {
+        $deletedFileNr = 0;
+        
+        $query = $this->buildQuery();
+        if ($files = $data_connection->query($query)->getFinder()) {
+            foreach ($files as $file) {
+                unlink($file);
+                $deletedFileNr ++;
+            }
+        }
+        
+        return $deletedFileNr;
+    }
+
+    /**
+     * 
+     * @param string[] $fileArray
+     * @param string[] $contentArray
+     * @throws BehaviorRuntimeError
+     * @return number
+     */
+    private function write($fileArray, $contentArray)
+    {
+        $writtenFileNr = 0;
+        if (count($fileArray) !== count($contentArray)) {
+            throw new BehaviorRuntimeError($this->getMainObject(), 'The number of passed files doen\'t match the number of passed file contents.');
+        }
+        
+        for ($i = 0; $i < count($fileArray); $i ++) {
+            file_put_contents($fileArray[$i], $this->getValue('CONTENTS')->getDataType()->parse($contentArray[$i]));
+            $writtenFileNr ++;
+        }
+        
+        return $writtenFileNr;
+    }
+
     protected function buildResultRow(SplFileInfo $file, FileFinderDataQuery $query)
     {
         $row = array();
@@ -187,7 +264,7 @@ class FileFinderBuilder extends AbstractQueryBuilder
                         // TODO
                     }
                 } elseif (substr($field, 0, 7) === 'subpath') {
-                    list($start_pos, $end_pos) = explode(',', trim(substr($field, 7), '()'));
+                    // list($start_pos, $end_pos) = explode(',', trim(substr($field, 7), '()'));
                     // TODO
                 } else {
                     $method_name = 'get' . ucfirst($field);
@@ -198,7 +275,7 @@ class FileFinderBuilder extends AbstractQueryBuilder
                         ));
                     }
                 }
-                $row[$qpart->getAlias()] = $value;
+                $row[$qpart->getColumnKey()] = $value;
             }
         }
         
@@ -215,10 +292,22 @@ class FileFinderBuilder extends AbstractQueryBuilder
             'name' => $file->getExtension() ? str_replace('.' . $file->getExtension(), '', $file->getFilename()) : $file->getFilename(),
             'path_relative' => $base_path ? str_replace($base_path, '', $path) : $path,
             'pathname_absolute' => $file->getRealPath(),
-            'pathname_relative' => $base_path ? str_replace($base_path, '', $pathname) : $pathname
+            'pathname_relative' => $base_path ? str_replace($base_path, '', $pathname) : $pathname,
+            'mtime' => TimestampDataType::cast('@' . $file->getMTime())
         );
         
         return $file_data;
+    }
+    
+    /**
+     * The FileFinderBuilder can only handle attributes of one object - no relations (JOINs) supported!
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder::canReadAttribute()
+     */
+    public function canReadAttribute(MetaAttributeInterface $attribute) : bool
+    {
+        return $attribute->getRelationPath()->isEmpty();
     }
 }
 ?>

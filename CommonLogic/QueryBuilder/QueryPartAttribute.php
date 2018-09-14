@@ -5,6 +5,9 @@ use exface\Core\Exceptions\QueryBuilderException;
 use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\CommonLogic\DataSheets\DataAggregation;
 use exface\Core\Interfaces\Model\AggregatorInterface;
+use exface\Core\Interfaces\DataTypes\DataTypeInterface;
+use exface\Core\Factories\ExpressionFactory;
+use exface\Core\CommonLogic\DataSheets\DataColumn;
 
 class QueryPartAttribute extends QueryPart
 {
@@ -35,28 +38,15 @@ class QueryPartAttribute extends QueryPart
     public function getUsedRelations($relation_type = null)
     {
         $rels = array();
-        // first check the cache
+        
         if (is_array($this->used_relations)) {
             $rels = $this->used_relations;
-        } else {
-            // fetch relations
-            // first make sure, the attribute has a relation path (otherwise we do not need to to anything
-            if ($this->getAttribute()->getRelationPath()->toString()) {
-                // split the path in case it contains multiple relations
-                $rel_aliases = RelationPath::relationPathParse($this->getAttribute()->getRelationPath()->toString());
-                // if it is one relation only, use it
-                if (! $rel_aliases && $this->getAttribute()->getRelationPath()->toString())
-                    $rel_aliases[] = $this->getAttribute()->getRelationPath()->toString();
-                // iterate through the found relations
-                if ($rel_aliases) {
-                    $last_alias = '';
-                    foreach ($rel_aliases as $alias) {
-                        $rels[$last_alias . $alias] = $this->getQuery()->getMainObject()->getRelation($last_alias . $alias);
-                        $last_alias .= $alias . RelationPath::getRelationSeparator();
-                    }
-                }
+        } else {            
+            $last_alias = '';
+            foreach ($this->getAttribute()->getRelationPath()->getRelations() as $rel) {
+                $rels[$last_alias . $rel->getAlias()] = $rel;
+                $last_alias .= $rel->getAlias() . RelationPath::getRelationSeparator();
             }
-            // cache the result
             $this->used_relations = $rels;
         }
         
@@ -119,7 +109,7 @@ class QueryPartAttribute extends QueryPart
      */
     public function getDataType()
     {
-        return $this->getAttribute()->getDataType();
+        return $this->getExpression()->getDataType();
     }
 
     public function getMetaModel()
@@ -134,9 +124,15 @@ class QueryPartAttribute extends QueryPart
      */
     public function getExpression()
     {
-        return $this->getWorkbench()->model()->parseExpression($this->getAlias(), $this->getQuery()->getMainObject());
+        return ExpressionFactory::createFromString($this->getWorkbench(), $this->getAlias(), $this->getQuery()->getMainObject());
     }
 
+    /**
+     * 
+     * @param AbstractQueryBuilder $new_query
+     * @param string $relation_path_to_new_base_object
+     * @return \exface\Core\CommonLogic\QueryBuilder\QueryPartAttribute
+     */
     public function rebase(AbstractQueryBuilder $new_query, $relation_path_to_new_base_object)
     {
         $qpart = clone $this;
@@ -146,6 +142,16 @@ class QueryPartAttribute extends QueryPart
         $qpart->setAttribute($new_expression->getAttribute());
         $qpart->setAlias($new_expression->toString());
         return $qpart;
+    }
+    
+    /**
+     * Returns the key of the column in the query results, that this query part would produce.
+     * 
+     * @return string
+     */
+    public function getColumnKey() : string
+    {
+        return DataColumn::sanitizeColumnName($this->getAlias());
     }
 }
 ?>
