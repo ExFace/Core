@@ -471,15 +471,31 @@ class App implements AppInterface
                     $action = $widget->getAction();
                 } elseif ($widget->hasAction()) {
                     // At this point, we know, that both, task and widget, have actions - so we
-                    // need to compare them. In most cases, the task action will be defined via
-                    // alias, so we can simply compare the alias without instantiating the action.
-                    // Otherwise we need to instantiate it first to get the alias.
+                    // need to compare them.
                     if ($task->getActionSelector()->isAlias() && strcasecmp($task->getActionSelector()->toString(), $widget->getAction()->getAliasWithNamespace()) === 0) {
+                        //In most cases, the task action will be defined via
+                        // alias, so we can simply compare the alias without instantiating the action.
                         $action = $widget->getAction();
                     } else {
+                        // Otherwise we need to instantiate it first to get the alias.
                         $task_action = ActionFactory::create($task->getActionSelector(), ($widget ? $widget : null));
-                        if ($task_action->isExactly($widget->getAction())) {
+                        $widget_action = $widget->getAction();
+                        if ($task_action->isExactly($widget_action)) {
+                            // If the task tells us to perform the action of the widget, use the description in the
+                            // widget, because it is more detailed.
                             $action = $widget->getAction();
+                        } else {
+                            // If the task is about another action (e.g. ReadPrefill on a button, that does ShowDialog),
+                            // Take the task action and inherit action settings related to the input data from the widget.
+                            $action = $task_action;
+                            if ($widget_action->hasInputDataPreset() === true) {
+                                $action->setInputDataPreset($widget->getAction()->getInputDataPreset());
+                            }
+                            if ($widget_action->hasInputMappers() === true) {
+                                foreach ($widget_action->getInputMappers() as $mapper) {
+                                    $action->addInputMapper($mapper);
+                                }
+                            }
                         }
                     }
                     
