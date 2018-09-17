@@ -15,6 +15,8 @@ use exface\Core\Widgets\Traits\iCanBeAlignedTrait;
 use exface\Core\Interfaces\Widgets\iUseInputWidget;
 use exface\Core\Widgets\Traits\iUseInputWidgetTrait;
 use exface\Core\Interfaces\Widgets\iDefineAction;
+use exface\Core\Interfaces\Actions\iShowWidget;
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 
 /**
  * A Button is the primary widget for triggering actions.
@@ -396,6 +398,36 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iDefin
     public function getHint()
     {
         return parent::getHint() ? parent::getHint() : $this->getCaption();
+    }
+    
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Widgets\AbstractWidget::prepareDataSheetToRead()
+     */
+    public function prepareDataSheetToRead(DataSheetInterface $data_sheet = null)
+    {
+        if ($this->getAction() instanceof iShowWidget) {
+            $data_sheet = $this->getAction()->getWidget()->prepareDataSheetToRead($data_sheet);
+        }
+        
+        return $data_sheet;
+    }
+    
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \exface\Core\Widgets\AbstractWidget::prepareDataSheetToRead()
+     */
+    public function prepareDataSheetToPrefill(DataSheetInterface $data_sheet = null)
+    {
+        if ($this->getAction() instanceof iShowWidget) {
+            $data_sheet = $this->getAction()->getWidget()->prepareDataSheetToPrefill($data_sheet);
+        }
+        
+        return $data_sheet;
     }
 }
 ?>

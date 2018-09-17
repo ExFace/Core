@@ -770,6 +770,16 @@ abstract class AbstractAction implements ActionInterface
     }
     
     /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::hasInputMappers()
+     */
+    public function hasInputMappers() : bool
+    {
+        return ! empty($this->getInputMappers());
+    }
+    
+    /**
      * Defines transformation rules for input datasheets if they are not based on the object of the action.
      * 
      * Input mappers can be used to perform an action on an object, that it was

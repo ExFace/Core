@@ -39,11 +39,7 @@ class Tab extends Panel
      */
     public function prepareDataSheetToRead(DataSheetInterface $data_sheet = null)
     {
-        $data_sheet = parent::prepareDataSheetToRead($data_sheet);
-        
-        $data_sheet->getColumns()->addFromExpression($this->getBadgeAttributeAlias());
-        
-        return $data_sheet;
+        return $this->prepareDataSheetToX(parent::prepareDataSheetToRead($data_sheet));
     }
 
     /**
@@ -54,12 +50,14 @@ class Tab extends Panel
      */
     public function prepareDataSheetToPrefill(DataSheetInterface $data_sheet = null)
     {
-        $data_sheet = parent::prepareDataSheetToPrefill($data_sheet);
-        
+        return $this->prepareDataSheetToX(parent::prepareDataSheetToPrefill($data_sheet));
+    }
+    
+    protected function prepareDataSheetToX(DataSheetInterface $data_sheet) : DataSheetInterface
+    {
         if ($this->getBadgeAttributeAlias()) {
             $data_sheet->getColumns()->addFromExpression($this->getBadgeAttributeAlias());
         }
-        
         return $data_sheet;
     }
 

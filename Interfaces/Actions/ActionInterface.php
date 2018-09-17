@@ -186,6 +186,13 @@ interface ActionInterface extends WorkbenchDependantInterface, AliasInterface, i
     public function getInputMappers();
     
     /**
+     * Returns TRUE if there is at least one input mapper defined for this action and FALSE otherwise.
+     * 
+     * @return bool
+     */
+    public function hasInputMappers() : bool;
+    
+    /**
      *
      * @param UxonObject $uxon
      * @return ActionInterface
