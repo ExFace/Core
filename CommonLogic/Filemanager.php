@@ -33,6 +33,8 @@ class Filemanager extends Filesystem implements WorkbenchDependantInterface
 
     private $path_to_config_folder = null;
 
+    private $path_to_translations_folder = null;
+
     private $path_to_user_data_folder = null;
 
     private $path_to_backup_folder = null;
