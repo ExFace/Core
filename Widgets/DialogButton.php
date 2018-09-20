@@ -2,6 +2,7 @@
 namespace exface\Core\Widgets;
 
 use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 
 /**
  * A special type of button to use in dialogs.
@@ -95,6 +96,32 @@ class DialogButton extends Button
         $uxon->setProperty('close_dialog_after_action_succeeds', $this->getCloseDialogAfterActionSucceeds());
         $uxon->setProperty('close_dialog_after_action_fails', $this->getCloseDialogAfterActionFails());
         return $uxon;
+    }
+    
+    /**
+     * Returns the Dialog, this button belongs to.
+     * 
+     * In constrast to getInputWidget(), this method allways returns the containing dialog - even 
+     * if the button has a custom input widget.
+     * 
+     * @throws WidgetConfigurationError
+     * @return Dialog
+     */
+    public function getDialog() : Dialog
+    {
+        $input = $this->getInputWidget();
+        if ($input instanceof Dialog) {
+            return $input;
+        } else {
+            $parent = $this->getParent();
+            while (! ($parent instanceof Dialog)) {
+                if (! $parent->hasParent()) {
+                    throw new WidgetConfigurationError($this, 'Widget DialogButton can only be placed inside a Dialog widget!');
+                }
+                $parent = $parent->getParent();
+            }
+            return $parent;
+        }
     }
 }
 ?>
