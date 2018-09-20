@@ -1,5 +1,6 @@
 <?php
 use exface\Core\Formulas\Date;
+use exface\Core\CommonLogic\Selectors\FormulaSelector;
 
 class DateTest extends \Codeception\Test\Unit
 {
@@ -13,7 +14,7 @@ class DateTest extends \Codeception\Test\Unit
     protected function _before()
     {
         global $exface;
-        $this->date = new Date($exface);
+        $this->date = new Date(new FormulaSelector($exface, 'exface.Core.Date'));
     }
 
     protected function _after()

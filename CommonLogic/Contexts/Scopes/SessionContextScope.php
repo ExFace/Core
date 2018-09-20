@@ -219,12 +219,10 @@ class SessionContextScope extends AbstractContextScope
      */
     protected function sessionIsOpen()
     {
-        if (php_sapi_name() !== 'cli') {
-            if (version_compare(phpversion(), '5.4.0', '>=')) {
-                return session_status() === PHP_SESSION_ACTIVE ? TRUE : FALSE;
-            } else {
-                return session_id() === '' ? FALSE : TRUE;
-            }
+        if (version_compare(phpversion(), '5.4.0', '>=')) {
+            return session_status() === PHP_SESSION_ACTIVE ? TRUE : FALSE;
+        } else {
+            return session_id() === '' ? FALSE : TRUE;
         }
         return FALSE;
     }
@@ -236,7 +234,11 @@ class SessionContextScope extends AbstractContextScope
      */
     protected function getSessionContextData()
     {
-        return $_SESSION['exface']['contexts'];
+        if (isset($_SESSION['exface']) && isset($_SESSION['exface']['contexts'])) {
+            return $_SESSION['exface']['contexts'];
+        } else {
+            return null;
+        }
     }
 
     /**
@@ -259,7 +261,12 @@ class SessionContextScope extends AbstractContextScope
      */
     protected function getSessionData(string $key)
     {
-        return $_SESSION['exface'][$key];
+        
+        if (isset($_SESSION['exface']) && isset($_SESSION['exface'][$key])) {
+            return $_SESSION['exface'][$key];
+        } else {
+            return null;
+        }
     }
     
     /**
