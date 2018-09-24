@@ -40,14 +40,21 @@ class DataColumnList extends EntityList implements DataColumnListInterface
         }
         
         $data_sheet = $this->getDataSheet();
-        if (! $this->get($column->getName())) {
+        $existingColumn = $this->get($column->getName());
+        if (! $existingColumn || $existingColumn->getExpressionObj()->toString() !== $column->getExpressionObj()->toString()) {
             if ($column->getDataSheet() !== $data_sheet) {
                 $column_original = $column;
                 $column = $column_original->copy();
                 $column->setDataSheet($data_sheet);
+                
+                // If the original column had values, use them to overwrite the values in the newly added column
+                if ($overwrite_values && $column_original->isFresh()) {
+                    $data_sheet->setColumnValues($column->getName(), $column->getValues());
+                }
             }
             
-            $result = parent::add($column, (is_null($key) && $column->getName() ? $column->getName() : $key));
+            $result = parent::add($column, ($key === null && $column->getName() ? $column->getName() : $key));
+            unset($existingColumn);
             
             // Mark the data as outdated if new columns are added because the values for these columns should be fetched now
             // Actually we do not need to mark static columns not fresh - we could recalculate them right away without
@@ -60,12 +67,6 @@ class DataColumnList extends EntityList implements DataColumnListInterface
             }
             
             return $this;            
-        }
-        
-        // If the original column had values, use them to overwrite the values in the newly added column
-        // IDEA When is this used??? It seems, it can only happen when addin a foreign column? Shouldn't it then be moved to the IF above?
-        if ($overwrite_values && $column_original && $column_original->isFresh()) {
-            $data_sheet->setColumnValues($column->getName(), $column->getValues());
         }
         
         return $result;
