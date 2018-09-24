@@ -37,8 +37,8 @@ class ReadPrefill extends ReadData
             }
         }
         
-        if ($task->isTriggeredByWidget()) {
-            $data_sheet = $task->getWidgetTriggeredBy()->prepareDataSheetToRead($data_sheet);
+        if ($targetWidget = $this->getTargetWidget($task)) {
+            $data_sheet = $targetWidget->prepareDataSheetToRead($data_sheet);
         }
         $affected_rows = $data_sheet->dataRead();
         
