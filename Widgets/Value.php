@@ -186,7 +186,7 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
      *
      * @see \exface\Core\Widgets\AbstractWidget::prepareDataSheetToPrefill()
      */
-    public function prepareDataSheetToPrefill(DataSheetInterface $data_sheet = null)
+    public function prepareDataSheetToPrefill(DataSheetInterface $data_sheet = null) : DataSheetInterface
     {
         // Do not request any prefill data, if the value is already set explicitly (e.g. a fixed value)
         if (! $this->isPrefillable()) {

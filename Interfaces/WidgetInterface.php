@@ -51,6 +51,13 @@ interface WidgetInterface extends WorkbenchDependantInterface, iCanBeCopied
      * @return boolean
      */
     public function isPrefillable();
+    
+    /**
+     * Returns TRUE if the widget was prefilled and FALSE otherwise.
+     * 
+     * @return bool
+     */
+    public function isPrefilled() : bool;
 
     /**
      * Adds attributes, filters, etc.
@@ -68,7 +75,7 @@ interface WidgetInterface extends WorkbenchDependantInterface, iCanBeCopied
      * @param DataSheet $data_sheet            
      * @return DataSheetInterface
      */
-    public function prepareDataSheetToPrefill(DataSheetInterface $data_sheet = null);
+    public function prepareDataSheetToPrefill(DataSheetInterface $data_sheet = null) : DataSheetInterface;
 
     /**
      * Sets the widget caption/title

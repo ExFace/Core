@@ -149,7 +149,7 @@ class Diagram extends Container implements iSupportLazyLoading
         ));
     }
 
-    public function prepareDataSheetToPrefill(DataSheetInterface $data_sheet = null)
+    public function prepareDataSheetToPrefill(DataSheetInterface $data_sheet = null) : DataSheetInterface
     {
         $data_sheet = parent::prepareDataSheetToPrefill($data_sheet);
         if ($data_sheet->getMetaObject()->is($this->getMetaObject())) {
