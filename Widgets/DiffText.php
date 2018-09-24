@@ -114,7 +114,7 @@ class DiffText extends AbstractWidget
      *
      * @see \exface\Core\Widgets\AbstractWidget::prepareDataSheetToPrefill()
      */
-    public function prepareDataSheetToPrefill(DataSheetInterface $data_sheet = null)
+    public function prepareDataSheetToPrefill(DataSheetInterface $data_sheet = null) : DataSheetInterface
     {
         // Do not request any prefill data, if the values are already set explicitly (e.g. a fixed value)
         if ($this->getLeftValue() && $this->getRightValue()) {

@@ -269,7 +269,7 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
      *              
      * @see \exface\Core\Widgets\AbstractWidget::prepareDataSheetToRead()
      */
-    public function prepareDataSheetToPrefill(DataSheetInterface $data_sheet = null)
+    public function prepareDataSheetToPrefill(DataSheetInterface $data_sheet = null) : DataSheetInterface
     {
         $data_sheet = parent::prepareDataSheetToPrefill($data_sheet);
         if ($data_sheet->getMetaObject()->isExactly($this->getMetaObject())) {

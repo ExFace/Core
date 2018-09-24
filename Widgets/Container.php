@@ -65,7 +65,7 @@ class Container extends AbstractWidget implements iContainOtherWidgets
      *
      * @see \exface\Core\Widgets\AbstractWidget::prepareDataSheetToRead()
      */
-    public function prepareDataSheetToPrefill(DataSheetInterface $data_sheet = null)
+    public function prepareDataSheetToPrefill(DataSheetInterface $data_sheet = null) : DataSheetInterface
     {
         $data_sheet = parent::prepareDataSheetToPrefill($data_sheet);
         

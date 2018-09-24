@@ -268,7 +268,7 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
      *
      * @see \exface\Core\Interfaces\WidgetInterface::prepareDataSheetToPrefill()
      */
-    public function prepareDataSheetToPrefill(DataSheetInterface $data_sheet = null)
+    public function prepareDataSheetToPrefill(DataSheetInterface $data_sheet = null) : DataSheetInterface
     {
         if (is_null($data_sheet)) {
             $data_sheet = $this->createDataSheet();
@@ -284,6 +284,16 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
     public function isPrefillable()
     {
         return ! $this->getDoNotPrefill();
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\WidgetInterface::isPrefilled()
+     */
+    public function isPrefilled() : bool
+    {
+        return $this->prefill_data !== null;
     }
 
     protected function createDataSheet()

@@ -48,7 +48,7 @@ class Tab extends Panel
      *
      * @see \exface\Core\Widgets\AbstractWidget::prepareDataSheetToPrefill()
      */
-    public function prepareDataSheetToPrefill(DataSheetInterface $data_sheet = null)
+    public function prepareDataSheetToPrefill(DataSheetInterface $data_sheet = null) : DataSheetInterface
     {
         return $this->prepareDataSheetToX(parent::prepareDataSheetToPrefill($data_sheet));
     }

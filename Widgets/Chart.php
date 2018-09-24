@@ -498,7 +498,7 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
      *
      * @see \exface\Core\Widgets\Abstract\exface\Core\Widget\:prepare_data_sheet_to_prefill()
      */
-    public function prepareDataSheetToPrefill(DataSheetInterface $data_sheet = null)
+    public function prepareDataSheetToPrefill(DataSheetInterface $data_sheet = null) : DataSheetInterface
     {
         return $this->getData()->prepareDataSheetToPrefill($data_sheet);
     }
