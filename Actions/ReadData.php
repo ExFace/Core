@@ -9,6 +9,7 @@ use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Exceptions\Actions\ActionCallingWidgetNotSpecifiedError;
 use exface\Core\Factories\ResultFactory;
+use exface\Core\Interfaces\WidgetInterface;
 
 /**
  * 
@@ -21,6 +22,8 @@ class ReadData extends AbstractAction implements iReadData
     private $affected_rows = 0;
 
     private $update_filter_context = true;
+    
+    private $targetWidgetId = null;
 
     /**
      * 
@@ -35,8 +38,8 @@ class ReadData extends AbstractAction implements iReadData
         
         $data_sheet = $this->getInputDataSheet($task);
         $data_sheet->removeRows();
-        if ($task->isTriggeredByWidget()) {
-            $data_sheet = $task->getWidgetTriggeredBy()->prepareDataSheetToRead($data_sheet);
+        if ($targetWidget = $this->getTargetWidget($task)) {
+            $data_sheet = $targetWidget->prepareDataSheetToRead($data_sheet);
         }
         $affected_rows = $data_sheet->dataRead();
         
@@ -97,6 +100,46 @@ class ReadData extends AbstractAction implements iReadData
     {
         $this->update_filter_context = $value;
         return $this;
+    }
+    
+    /**
+     * The id of the widget to read the data for.
+     * 
+     * If not set, the widget, that triggered the task will be used.
+     * 
+     * Setting a custom target widget allows to create buttons, that load/refresh data 
+     * in a specific widget.
+     * 
+     * @uxon-property target_widget_id
+     * @uxon-type string
+     * 
+     * @param string $value
+     * @return ReadData
+     */
+    public function setTargetWidgetId(string $value) : ReadData
+    {
+        $this->targetWidgetId = $value;
+        return $this;
+    }
+    
+    /**
+     * Returns the widget for which the data is to be read
+     * 
+     * @param TaskInterface $task
+     * 
+     * @return WidgetInterface|NULL
+     */
+    public function getTargetWidget(TaskInterface $task) : ?WidgetInterface
+    {
+        if ($this->targetWidgetId !== null) {
+            return $task->getPageTriggeredOn()->getWidget($this->targetWidgetId);
+        }
+        
+        if ($task->isTriggeredByWidget()) {
+            return $task->getWidgetTriggeredBy();
+        }
+        
+        return null;
     }
 }
 ?>
