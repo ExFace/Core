@@ -469,8 +469,8 @@ JS;
         }
         
         // configure pagination
-        if ($widget->getPaginate()) {
-            $paging_options = ', pageLength: ' . (!is_null($widget->getPaginatePageSize()) ? $widget->getPaginatePageSize() : $this->getTemplate()->getConfig()->getOption('WIDGET.DATATABLE.PAGE_SIZE'));
+        if ($widget->isPaged()) {
+            $paging_options = ', pageLength: ' . $widget->getPaginator()->getPageSize($this->getTemplate()->getConfig()->getOption('WIDGET.DATATABLE.PAGE_SIZE'));
         } else {
             $paging_options = ', paging: false';
         }

@@ -54,6 +54,8 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
     private $paginate = true;
 
     private $paginate_page_size = null;
+    
+    private $paginator = null;
 
     private $aggregate_by_attribute_alias = null;
 
@@ -239,8 +241,8 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
         }
         
         // Pagination
-        if ($this->getPaginatePageSize()){
-            $data_sheet->setRowsOnPage($this->getPaginatePageSize());
+        if ($this->getPaginator()->getPageSize()) {
+            $data_sheet->setRowsOnPage($this->getPaginator()->getPageSize());
         }
         
         // Filters and sorters only if lazy loading is disabled!
@@ -803,10 +805,69 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
         return $children;
     }
 
-    public function getPaginate()
+    /**
+     * 
+     * @return bool
+     */
+    public function isPaged() : bool
     {
         return $this->paginate;
     }
+    
+    public function getPaginator() : DataPaginator
+    {
+        if ($this->paginator === null) {
+            $this->paginator = WidgetFactory::create($this->getPage(), 'DataPaginator', $this);
+        }
+        return $this->paginator;
+    }
+    
+    /**
+     * Overrides pagination behavior by defining a custom paginator widget.
+     * 
+     * If a paginator is defined, the property `paginate` will automatically be set to `true`.
+     * 
+     * Example:
+     * 
+     * ```
+     * {
+     *  "widget_type": "DataTable",
+     *  "paginator": {
+     *      "page_size": 40,
+     *      "page_sizes": [20, 40, 100, 200]
+     *  }
+     * }
+     * 
+     * ```
+     * 
+     * @uxon-property paginator
+     * @uxon-type \exface\Core\Widgets\DataPaginator
+     * 
+     * @param UxonObject $uxon
+     * @return Data
+     */
+    public function setPaginator(UxonObject $uxon) : Data
+    {
+        $this->paginator = WidgetFactory::createFromUxon($this->getPage(), $uxon, $this, 'DataPaginator');
+        return $this;
+    }
+    
+    /**
+     * @deprecated use getPaginator()->setPageSize() instead!
+     * 
+     * Sets the number of rows to show on one page (only if pagination is enabled).
+     * If not set, the template's default value will be used.
+     *
+     * @param integer $value
+     * @return \exface\Core\Widgets\Data
+     */
+    public function setPaginatePageSize($value)
+    {
+        $this->getPaginator()->setPageSize($value);
+        return $this;
+    }
+    
+    
 
     /**
      * Set to FALSE to disable pagination
@@ -1163,33 +1224,6 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
         return $this;
     }
 
-    /**
-     * Returns the number of rows to load for a page when pagination is enabled.
-     * Defaults to NULL - in this case, the template must decide, how many rows to load.
-     *
-     * @return integer
-     */
-    public function getPaginatePageSize()
-    {
-        return $this->paginate_page_size;
-    }
-
-    /**
-     * Sets the number of rows to show on one page (only if pagination is enabled).
-     * If not set, the template's default value will be used.
-     *
-     * @uxon-property paginate_page_size
-     * @uxon-type number
-     *
-     * @param integer $value            
-     * @return \exface\Core\Widgets\Data
-     */
-    public function setPaginatePageSize($value)
-    {
-        $this->paginate_page_size = $value;
-        return $this;
-    }
-
     public function getHelpButton()
     {
         if (is_null($this->help_button)) {
@@ -1310,8 +1344,10 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
     {
         $uxon = parent::exportUxonObject();
         
-        $uxon->setProperty('paginate', $this->getPaginate());
-        $uxon->setProperty('paginate_page_size', $this->getPaginatePageSize());
+        if ($this->isPaged() === true) {
+            $uxon->setProperty('paginate', $this->isPaged());
+            $uxon->setProperty('paginator', $this->getPaginator()->exportUxonObject());
+        }
         $uxon->setProperty('aggregate_by_attribute_alias', $this->getAggregateByAttributeAlias());
         $uxon->setProperty('lazy_loading', $this->getLazyLoading());
         $uxon->setProperty('lazy_loading_action', $this->getLazyLoadingActionAlias());
