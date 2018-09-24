@@ -371,14 +371,13 @@ class InputComboTable extends InputCombo implements iHaveChildren
         // set it here. In most templates, setting merely the value of the combo well make the template load the
         // corresponding text by itself (e.g. via lazy loading), so it is not a real problem.
         if ($this->getAttribute()->isRelation()) {
-            $text_column_name = RelationPath::relationPathAdd($this->getRelation()->getAlias(), $this->getTextColumn()->getAttributeAlias());
+            $text_column_expr = RelationPath::relationPathAdd($this->getRelation()->getAlias(), $this->getTextColumn()->getAttributeAlias());
         } elseif ($this->getMetaObject()->isExactly($this->getTable()->getMetaObject())) {
-            $text_column_name = $this->getTextColumn()->getDataColumnName();
-        } else {
-            unset($text_column_name);
+            $text_column_expr = $this->getTextColumn()->getExpression()->toString();
         }
-        if ($text_column_name) {
-            $this->setValueText($data_sheet->getCellValue($text_column_name, 0));
+        
+        if ($text_column_expr) {
+            $this->setValueText($data_sheet->getColumns()->getByExpression($text_column_expr)->getCellValue(0));
         }
         return;
     }
@@ -479,19 +478,18 @@ class InputComboTable extends InputCombo implements iHaveChildren
             // set it here. In most templates, setting merely the value of the combo will make the template load the
             // corresponding text by itself (e.g. via lazy loading), so it is not a real problem.
             if ($this->getAttribute() && $this->getAttribute()->isRelation()) {
-                $text_column_name = RelationPath::relationPathAdd($this->getRelation()->getAlias(), $this->getTextColumn()->getAttributeAlias());
+                $text_column_expr = RelationPath::relationPathAdd($this->getRelation()->getAlias(), $this->getTextColumn()->getAttributeAlias());
             } elseif ($this->getMetaObject()->isExactly($this->getTable()->getMetaObject())) {
-                $text_column_name = $this->getTextColumn()->getDataColumnName();
-            } else {
-                unset($text_column_name);
-            }
-            if ($text_column_name) {
-                $data_sheet->getColumns()->addFromExpression($text_column_name);
+                $text_column_expr = $this->getTextColumn()->getExpression()->toString();
+            } 
+            
+            if ($text_column_expr) {
+                $data_sheet->getColumns()->addFromExpression($text_column_expr);
             }
         } elseif ($this->getRelation() && $this->getRelation()->getRightObject()->is($data_sheet->getMetaObject())) {
             $data_sheet->getColumns()->addFromAttribute($this->getRelation()->getRightKeyAttribute());
             foreach ($this->getTable()->getColumns() as $col) {
-                $data_sheet->getColumns()->addFromExpression($col->getAttributeAlias(), $col->getDataColumnName());
+                $data_sheet->getColumns()->addFromExpression($col->getExpression(), $col->getDataColumnName());
             }
         } else {
             // TODO what if the prefill object is not the one at the end of the current relation?
@@ -516,8 +514,8 @@ class InputComboTable extends InputCombo implements iHaveChildren
 
     public function getMaxSuggestions()
     {
-        if (is_null(parent::getMaxSuggestions()) && $this->getTable()) {
-            $this->setMaxSuggestions($this->getTable()->getPaginatePageSize());
+        if (parent::getMaxSuggestions() === null && $this->getTable() && $this->getTable()->getPaginator()->getPageSize() !== null) {
+            $this->setMaxSuggestions($this->getTable()->getPaginator()->getPageSize());
         }
         return parent::getMaxSuggestions();
     }
