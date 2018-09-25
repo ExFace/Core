@@ -3,7 +3,6 @@ namespace exface\Core\Behaviors;
 
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
-use exface\Core\Events\DataSheetEvent;
 use exface\Core\Interfaces\Actions\iUndoActions;
 use exface\Core\CommonLogic\DataSheets\DataColumn;
 use exface\Core\Exceptions\Behaviors\ConcurrentWriteError;
@@ -11,6 +10,7 @@ use exface\Core\Exceptions\Behaviors\ConcurrentWritesCannotBePreventedWarning;
 use exface\Core\Exceptions\DataSheets\DataSheetColumnNotFoundError;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\Events\DataSheet\OnBeforeUpdateDataEvent;
 
 class TimeStampingBehavior extends AbstractBehavior
 {
@@ -27,10 +27,7 @@ class TimeStampingBehavior extends AbstractBehavior
     {
         $this->getUpdatedOnAttribute()->setSystem(true)->setDefaultAggregateFunction('MAX');
         if ($this->getCheckForConflictsOnUpdate()) {
-            $this->getWorkbench()->eventManager()->addListener($this->getObject()->getAliasWithNamespace() . '.DataSheet.UpdateData.Before', array(
-                $this,
-                'checkForConflictsOnUpdate'
-            ));
+            $this->getWorkbench()->eventManager()->addListener(OnBeforeUpdateDataEvent::getEventName(), [$this, 'checkForConflictsOnUpdate']);
         }
         $this->setRegistered(true);
         return $this;
@@ -102,7 +99,7 @@ class TimeStampingBehavior extends AbstractBehavior
         return $uxon;
     }
 
-    public function checkForConflictsOnUpdate(DataSheetEvent $event)
+    public function checkForConflictsOnUpdate(OnBeforeUpdateDataEvent $event)
     {
         if ($this->isDisabled())
             return;

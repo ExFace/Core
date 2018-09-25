@@ -15,7 +15,6 @@ use exface\Core\Factories\DataSheetSubsheetFactory;
 use exface\Core\Factories\DataColumnTotalsFactory;
 use exface\Core\Interfaces\DataSheets\DataSorterListInterface;
 use exface\Core\Interfaces\DataSheets\DataColumnInterface;
-use exface\Core\Factories\EventFactory;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Exceptions\DataSheets\DataSheetJoinError;
@@ -28,18 +27,27 @@ use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\Exceptions\DataSheets\DataSheetReadError;
 use exface\Core\Exceptions\DataSheets\DataSheetMissingRequiredValueError;
 use exface\Core\Interfaces\Exceptions\ExceptionInterface;
-use exface\Core\Interfaces\Model\MetaRelationInterface;
 use exface\Core\Exceptions\DataSheets\DataSheetDeleteError;
 use exface\Core\Exceptions\Model\MetaObjectHasNoDataSourceError;
-use exface\Core\CommonLogic\Model\Condition;
 use exface\Core\CommonLogic\QueryBuilder\RowDataArrayFilter;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Interfaces\Model\ConditionalExpressionInterface;
 use exface\Core\CommonLogic\QueryBuilder\RowDataArraySorter;
 use exface\Core\Exceptions\DataSheets\DataSheetStructureError;
 use exface\Core\DataTypes\RelationTypeDataType;
-use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\Interfaces\QueryBuilderInterface;
+use exface\Core\Events\DataSheet\OnBeforeValidateDataEvent;
+use exface\Core\Events\DataSheet\OnValidateDataEvent;
+use exface\Core\Events\DataSheet\OnBeforeReadDataEvent;
+use exface\Core\Events\DataSheet\OnReadDataEvent;
+use exface\Core\Events\DataSheet\OnBeforeUpdateDataEvent;
+use exface\Core\Events\DataSheet\OnUpdateDataEvent;
+use exface\Core\Events\DataSheet\OnBeforeCreateDataEvent;
+use exface\Core\Events\DataSheet\OnCreateDataEvent;
+use exface\Core\Events\DataSheet\OnBeforeDeleteDataEvent;
+use exface\Core\Events\DataSheet\OnDeleteDataEvent;
+use exface\Core\Events\DataSheet\OnBeforeReplaceDataEvent;
+use exface\Core\Events\DataSheet\OnReplaceDataEvent;
 
 /**
  * Internal data respresentation object in exface.
@@ -50,13 +58,6 @@ use exface\Core\Interfaces\QueryBuilderInterface;
  * 3 | value | value | value | /
  * 4 | total | total | total | \
  * 5 | total | total | total | / total rows: each one is an array(column=>value)
- *
- * The data sheet dispatches the following events prefixed by the main objects alias (@see DataSheetEvent):
- * - UpdateData (.Before/.After)
- * - ReplaceData (.Before/.After)
- * - CreateData (.Before/.After)
- * - DeleteData (.Before/.After)
- * - ValidateData (.Before/.After)
  *
  * @author Andrej Kabachnik
  *        
@@ -451,9 +452,9 @@ class DataSheet implements DataSheetInterface
      *
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::dataRead()
      */
-    public function dataRead($limit = null, $offset = null)
+    public function dataRead(int $limit = null, int $offset = null) : int
     {
-        $this->getWorkbench()->eventManager()->dispatch(EventFactory::createDataSheetEvent($this, 'ReadData.Before'));
+        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeReadDataEvent($this));
         
         $thisObject = $this->getMetaObject();
         
@@ -586,11 +587,11 @@ class DataSheet implements DataSheetInterface
             $this->sort($postprocessorSorters);
         }
         
-        $this->getWorkbench()->eventManager()->dispatch(EventFactory::createDataSheetEvent($this, 'ReadData.After'));
+        $this->getWorkbench()->eventManager()->dispatch(new onReadDataEvent($this));
         return $result;
     }
 
-    public function countRows()
+    public function countRows() : int
     {
         return count($this->rows);
     }
@@ -612,7 +613,7 @@ class DataSheet implements DataSheetInterface
      *
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::dataUpdate()
      */
-    public function dataUpdate($create_if_uid_not_found = false, DataTransactionInterface $transaction = null)
+    public function dataUpdate(bool $create_if_uid_not_found = false, DataTransactionInterface $transaction = null) : int
     {
         if ($this->getMetaObject()->isWritable() === false) {
             throw new DataSheetWriteError($this, 'Cannot update data for object ' . $this->getMetaObject()->getAliasWithNamespace() . ': object is not writeable!', '70Y6HAK');
@@ -657,7 +658,7 @@ class DataSheet implements DataSheetInterface
         }
         
         // Now the actual updating starts
-        $this->getWorkbench()->eventManager()->dispatch(EventFactory::createDataSheetEvent($this, 'UpdateData.Before'));
+        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeUpdateDataEvent($this, $transaction));
         
         // Add columns with fixed values to the data sheet
         $processed_relations = array();
@@ -774,7 +775,7 @@ class DataSheet implements DataSheetInterface
             $transaction->commit();
         }
         
-        $this->getWorkbench()->eventManager()->dispatch(EventFactory::createDataSheetEvent($this, 'UpdateData.After'));
+        $this->getWorkbench()->eventManager()->dispatch(new OnUpdateDataEvent($this, $transaction));
         
         return $counter;
     }
@@ -785,7 +786,7 @@ class DataSheet implements DataSheetInterface
      *
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::dataReplaceByFilters()
      */
-    public function dataReplaceByFilters(DataTransactionInterface $transaction = null, $delete_redundant_rows = true, $update_by_uid_ignoring_filters = true)
+    public function dataReplaceByFilters(DataTransactionInterface $transaction = null, bool $delete_redundant_rows = true, bool $update_by_uid_ignoring_filters = true) : int
     {
         // Start a new transaction, if not given
         if (! $transaction) {
@@ -795,7 +796,7 @@ class DataSheet implements DataSheetInterface
             $commit = false;
         }
         
-        $this->getWorkbench()->eventManager()->dispatch(EventFactory::createDataSheetEvent($this, 'ReplaceData.Before'));
+        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeReplaceDataEvent($this, $transaction));
         
         $counter = 0;
         if ($delete_redundant_rows) {
@@ -837,7 +838,7 @@ class DataSheet implements DataSheetInterface
             $transaction->commit();
         }
         
-        $this->getWorkbench()->eventManager()->dispatch(EventFactory::createDataSheetEvent($this, 'ReplaceData.After'));
+        $this->getWorkbench()->eventManager()->dispatch(new OnReplaceDataEvent($this, $transaction));
         
         return $counter;
     }
@@ -845,10 +846,9 @@ class DataSheet implements DataSheetInterface
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::dataCreate()
      */
-    public function dataCreate($update_if_uid_found = true, DataTransactionInterface $transaction = null)
+    public function dataCreate(bool $update_if_uid_found = true, DataTransactionInterface $transaction = null) : int
     {
         if ($this->getMetaObject()->isWritable() === false) {
             throw new DataSheetWriteError($this, 'Cannot create data for object ' . $this->getMetaObject()->getAliasWithNamespace() . ': object is not writeable!', '70Y6HAK');
@@ -862,7 +862,7 @@ class DataSheet implements DataSheetInterface
             $commit = false;
         }
         
-        $this->getWorkbench()->eventManager()->dispatch(EventFactory::createDataSheetEvent($this, 'CreateData.Before'));
+        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeCreateDataEvent($this, $transaction));
         // Create a query
         $query = QueryBuilderFactory::createFromString($this->exface, $this->getMetaObject()->getQueryBuilder());
         $query->setMainObject($this->getMetaObject());
@@ -962,7 +962,7 @@ class DataSheet implements DataSheetInterface
         // Save the new UIDs in the data sheet
         $this->setColumnValues($this->getMetaObject()->getUidAttributeAlias(), $new_uids);
         
-        $this->getWorkbench()->eventManager()->dispatch(EventFactory::createDataSheetEvent($this, 'CreateData.After'));
+        $this->getWorkbench()->eventManager()->dispatch(new OnCreateDataEvent($this, $transaction));
         
         return count($new_uids);
     }
@@ -971,10 +971,9 @@ class DataSheet implements DataSheetInterface
      * TODO Ask the user before a cascading delete!
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::dataDelete()
      */
-    public function dataDelete(DataTransactionInterface $transaction = null)
+    public function dataDelete(DataTransactionInterface $transaction = null) : int
     {
         if ($this->getMetaObject()->isWritable() === false) {
             throw new DataSheetWriteError($this, 'Cannot delete data for object ' . $this->getMetaObject()->getAliasWithNamespace() . ': object is not writeable!', '70Y6HAK');
@@ -988,7 +987,7 @@ class DataSheet implements DataSheetInterface
             $commit = false;
         }
         
-        $this->getWorkbench()->eventManager()->dispatch(EventFactory::createDataSheetEvent($this, 'DeleteData.Before'));
+        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeDeleteDataEvent($this, $transaction));
         
         $affected_rows = 0;
         // create new query for the main object
@@ -1043,7 +1042,7 @@ class DataSheet implements DataSheetInterface
             $transaction->commit();
         }
         
-        $this->getWorkbench()->eventManager()->dispatch(EventFactory::createDataSheetEvent($this, 'DeleteData.After'));
+        $this->getWorkbench()->eventManager()->dispatch(new OnDeleteDataEvent($this, $transaction));
         
         return $affected_rows;
     }
@@ -1773,14 +1772,14 @@ class DataSheet implements DataSheetInterface
      *
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::dataValidate()
      */
-    public function dataValidate()
+    public function dataValidate() : bool
     {
-        $this->getWorkbench()->eventManager()->dispatch(EventFactory::createDataSheetEvent($this, 'ValidateData.Before'));
+        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeValidateDataEvent($this));
         if ($this->invalid_data_flag !== true) {
             // TODO Add data type validation here
             $this->invalid_data_flag = false;
         }
-        $this->getWorkbench()->eventManager()->dispatch(EventFactory::createDataSheetEvent($this, 'ValidateData.After'));
+        $this->getWorkbench()->eventManager()->dispatch(new OnValidateDataEvent($this));
         return $this->invalid_data_flag;
     }
 

@@ -37,8 +37,8 @@ interface WidgetInterface extends WorkbenchDependantInterface, iCanBeCopied
     /**
      * Prefills the widget with values of a data sheet
      *
-     * @triggers \exface\Core\Events\WidgetEvent [object_alias].Widget.Prefill.Before
-     * @triggers \exface\Core\Events\WidgetEvent [object_alias].Widget.Prefill.After
+     * @triggers \exface\Core\Events\Widget\OnBeforePrefillEvent
+     * @triggers \exface\Core\Events\Widget\OnPrefillEvent
      *
      * @param \exface\Core\Interfaces\DataSheets\DataSheetInterface $data_sheet            
      * @return void

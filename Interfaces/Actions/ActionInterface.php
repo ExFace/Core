@@ -14,7 +14,6 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\DataSheets\DataSheetMapperInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
-use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Interfaces\TaskHandlerInterface;
 use exface\Core\Exceptions\Widgets\WidgetNotFoundError;
@@ -48,6 +47,11 @@ interface ActionInterface extends WorkbenchDependantInterface, AliasInterface, i
     /**
      * 
      * @param TaskInterface $task
+     * @param DataTransactionInterface $transaction
+     * 
+     * @triggers \exface\Core\Events\Action\OnBeforeHandleTaskEvent
+     * @triggers \exface\Core\Events\Action\OnHandleTaskEvent
+     * 
      * @return ResultInterface
      */
     public function handle(TaskInterface $task, DataTransactionInterface $transaction = null) : ResultInterface;
@@ -377,5 +381,3 @@ interface ActionInterface extends WorkbenchDependantInterface, AliasInterface, i
      */
     public function setResultMessageText($value);
 }
-
-?>

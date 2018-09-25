@@ -2,10 +2,13 @@
 namespace exface\Core\CommonLogic;
 
 use Symfony\Component\Stopwatch\Stopwatch;
-use exface\Core\Events\ActionEvent;
-use exface\Core\Events\DataConnectionEvent;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
+use exface\Core\Events\Action\OnBeforeHandleTaskEvent;
+use exface\Core\Events\Action\OnHandleTaskEvent;
+use exface\Core\Events\DataConnection\OnBeforeQueryEvent;
+use exface\Core\Events\DataConnection\OnQueryEvent;
+use exface\Core\Interfaces\Events\ActionEventInterface;
 
 class Profiler implements WorkbenchDependantInterface
 {
@@ -24,12 +27,12 @@ class Profiler implements WorkbenchDependantInterface
         $this->registerListeners();
     }
 
-    public function startAction(ActionEvent $event)
+    public function startAction(ActionEventInterface $event)
     {
         $this->stopwatch->start($event->getAction()->getId());
     }
 
-    public function stopAction(ActionEvent $event)
+    public function stopAction(ActionEventInterface $event)
     {
         try {
             //$this->getWorkbench()->getLogger()->debug('Action ' . $event->getAction()->getAliasWithNamespace() . ' performed.', array());
@@ -39,19 +42,19 @@ class Profiler implements WorkbenchDependantInterface
         }
     }
 
-    public function startDataQuery(DataConnectionEvent $event)
+    public function startDataQuery(OnBeforeQueryEvent $event)
     {
         $category = new UxonObject();
-        $query_string = $event->getCurrentQuery()->exportString();
+        $query_string = $event->getQuery()->exportString();
         $category->setProperty('query', $query_string);
         $this->stopwatch->start($query_string, $category->toJson());
     }
 
-    public function stopDataQuery(DataConnectionEvent $event)
+    public function stopDataQuery(OnQueryEvent $event)
     {
         try {
-            $query = $event->getCurrentQuery();
-            $message = $event->getDataConnection()->getAlias() . ': ' . substr(str_replace(array("\r", "\n", "\t", "  "), '', $query->toString(false)), 0, 50);
+            $query = $event->getQuery();
+            $message = $event->getConnection()->getAlias() . ': ' . substr(str_replace(array("\r", "\n", "\t", "  "), '', $query->toString(false)), 0, 50);
             $this->getWorkbench()->getLogger()->debug($message, array(), $query);
             $this->stopwatch->stop($query->exportString());
         } catch (\Throwable $e){
@@ -81,21 +84,21 @@ class Profiler implements WorkbenchDependantInterface
         $event_manager = $this->getWorkbench()->eventManager();
         
         // Actions
-        $event_manager->addListener('#.Action.Perform.Before', array(
+        $event_manager->addListener(OnBeforeHandleTaskEvent::getEventName(), array(
             $this,
             'startAction'
         ));
-        $event_manager->addListener('#.Action.Perform.After', array(
+        $event_manager->addListener(OnHandleTaskEvent::getEventName(), array(
             $this,
             'stopAction'
         ));
         
         // Data Queries
-        $event_manager->addListener('#.DataConnection.Query.Before', array(
+        $event_manager->addListener(OnBeforeQueryEvent::getEventName(), array(
             $this,
             'startDataQuery'
         ));
-        $event_manager->addListener('#.DataConnection.Query.After', array(
+        $event_manager->addListener(OnQueryEvent::getEventName(), array(
             $this,
             'stopDataQuery'
         ));

@@ -8,7 +8,6 @@ use exface\Core\Factories\WidgetFactory;
 use exface\Core\Exceptions\Widgets\WidgetIdConflictError;
 use exface\Core\Interfaces\Widgets\iHaveChildren;
 use exface\Core\DataTypes\StringDataType;
-use exface\Core\Factories\EventFactory;
 use exface\Core\Exceptions\Widgets\WidgetNotFoundError;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\InvalidArgumentException;
@@ -24,6 +23,7 @@ use exface\Core\Interfaces\Selectors\UiPageSelectorInterface;
 use exface\Core\Factories\SelectorFactory;
 use exface\Core\Interfaces\CmsConnectorInterface;
 use exface\Core\Interfaces\Selectors\AppSelectorInterface;
+use exface\Core\Events\Widget\OnRemoveEvent;
 
 /**
  * This is the default implementation of the UiPageInterface.
@@ -501,7 +501,7 @@ class UiPage implements UiPageInterface
      *
      * @see \exface\Core\Interfaces\Model\UiPageInterface::removeWidget()
      */
-    public function removeWidget(WidgetInterface $widget, $remove_children_too = true)
+    public function removeWidget(WidgetInterface $widget, bool $remove_children_too = true) : UiPageInterface
     {
         if ($remove_children_too) {
             foreach ($this->widgets as $cached_widget) {
@@ -512,20 +512,21 @@ class UiPage implements UiPageInterface
         }
         $result = $this->removeWidgetById($widget->getId());
         
-        $this->getWorkbench()->eventManager()->dispatch(EventFactory::createWidgetEvent($widget, 'Remove.After'));
+        $this->getWorkbench()->eventManager()->dispatch(new OnRemoveEvent($widget));
         
         return $result;
     }
-
+    
     /**
      * 
-     * @return \exface\Core\CommonLogic\Model\UiPage
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::removeAllWidgets()
      */
-    public function removeAllWidgets()
+    public function removeAllWidgets() : UiPageInterface
     {
         foreach ($this->widgets as $cached_widget) {
             $this->removeWidgetById($cached_widget->getId());
-            $this->getWorkbench()->eventManager()->dispatch(EventFactory::createWidgetEvent($cached_widget, 'Remove.After'));
+            $this->getWorkbench()->eventManager()->dispatch(new OnRemoveEvent($cached_widget));
         }
         $this->widgets = [];
         $this->widget_root = null;

@@ -15,6 +15,9 @@ interface DataConnectionInterface extends WorkbenchDependantInterface, AliasInte
     /**
      * Connects to the data source using the configuration array passed to the constructor of the connector
      *
+     * @triggers \exface\Core\Events\DataConnection\OnBeforeConnectEvent
+     * @triggers \exface\Core\Events\DataConnection\OnConnectEvent
+     * 
      * @return void
      */
     public function connect();
@@ -22,6 +25,9 @@ interface DataConnectionInterface extends WorkbenchDependantInterface, AliasInte
     /**
      * Closes the connection to the data source
      *
+     * @triggers \exface\Core\Events\DataConnection\OnBeforeDisconnectEvent
+     * @triggers \exface\Core\Events\DataConnection\OnDisconnectEvent
+     * 
      * @return void
      */
     public function disconnect();
@@ -33,10 +39,14 @@ interface DataConnectionInterface extends WorkbenchDependantInterface, AliasInte
      * on the specific implementation - it must be readable by compatible query builders but apart from that it can be
      * anything.
      *
-     * @param DataQueryInterface $query_string            
+     * @param DataQueryInterface $query
+     * 
+     * @triggers \exface\Core\Events\DataConnection\OnBeforeQueryEvent
+     * @triggers \exface\Core\Events\DataConnection\OnQueryEvent         
+     * 
      * @return DataQueryInterface
      */
-    public function query(DataQueryInterface $query);
+    public function query(DataQueryInterface $query) : DataQueryInterface;
 
     /**
      * Starts a new transaction in the data source.
