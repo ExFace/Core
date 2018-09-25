@@ -1,15 +1,15 @@
 {
-    "id": "0xc6088850d80a11e7bc3700a0c6000012",
-    "alias_with_namespace": "exface.core.model-builders",
+    "id": "0x31ea203cc0b911e8ae0a0205857feb80",
+    "alias_with_namespace": "exface.core.events",
     "menu_parent_page_alias": "exface.core.documentation",
-    "menu_index": "6",
+    "menu_index": "4",
     "menu_visible": true,
-    "name": "Model Builders",
+    "name": "Events",
     "description": "",
     "intro": "",
     "replaces_page_alias": null,
     "contents": {
-        "object_alias": "exface.core.MODEL_BUILDER",
+        "object_alias": "exface.core.EVENT",
         "widget_type": "DataTable",
         "filters": [
             {
@@ -25,12 +25,6 @@
             },
             {
                 "attribute_alias": "PATHNAME_RELATIVE"
-            },
-            {
-                "attribute_alias": "PATHNAME_ABSOLUTE"
-            },
-            {
-                "attribute_alias": "SIZE"
             }
         ],
         "buttons": [
