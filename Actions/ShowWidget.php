@@ -189,7 +189,7 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
     protected function prefillWidget(TaskInterface $task, WidgetInterface $widget) : WidgetInterface
     {
         // Start with the prefill data already stored in the widget
-        if ($widget->getPrefillData()) {
+        if ($widget->isPrefilled()) {
             $data_sheet = $widget->getPrefillData();
         }
         
