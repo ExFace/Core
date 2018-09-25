@@ -6,7 +6,6 @@ use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Templates\AbstractAjaxTemplate\Elements\AbstractJqueryElement;
 use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;
 use exface\Core\Interfaces\Model\UiPageInterface;
-use exface\Core\Events\WidgetEvent;
 use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\DataTypes\NumberDataType;
@@ -39,6 +38,7 @@ use exface\Core\Templates\AbstractHttpTemplate\Middleware\PrefixedFilterUrlParam
 use exface\Core\Factories\ResultFactory;
 use exface\Core\Templates\AbstractHttpTemplate\Middleware\ContextBarApi;
 use exface\Core\DataTypes\StringDataType;
+use exface\Core\Events\Widget\OnRemoveEvent;
 
 /**
  * 
@@ -76,7 +76,7 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
     protected function init()
     {
         parent::init();
-        $this->getWorkbench()->eventManager()->addListener('#.Widget.Remove.After', function (WidgetEvent $event) {
+        $this->getWorkbench()->eventManager()->addListener(OnRemoveEvent::getEventName(), function (OnRemoveEvent $event) {
             $this->removeElement($event->getWidget());
         });
     }

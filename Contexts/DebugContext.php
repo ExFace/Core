@@ -11,7 +11,6 @@ use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\CommonLogic\Log\Handlers\LogfileHandler;
 use exface\Core\CommonLogic\Log\Handlers\DebugMessageFileHandler;
-use exface\Core\Events\ActionEvent;
 use exface\Core\Actions\ShowContextPopup;
 use exface\Core\Actions\ContextApi;
 use exface\Core\CommonLogic\Log\Handlers\BufferingHandler;
@@ -19,6 +18,7 @@ use exface\Core\Exceptions\Contexts\ContextAccessDeniedError;
 use exface\Core\CommonLogic\Profiler;
 use exface\Core\Interfaces\Contexts\ContextInterface;
 use exface\Core\Interfaces\Selectors\ContextSelectorInterface;
+use exface\Core\Events\Action\OnBeforeHandleTaskEvent;
 
 /**
  * This context offers usefull debugging tools right in the GUI.
@@ -97,7 +97,7 @@ class DebugContext extends AbstractContext
             $workbench->getLogger()->appendHandler($handler);
         }
         
-        $workbench->eventManager()->addListener('#.Action.Perform.Before', array(
+        $workbench->eventManager()->addListener(OnBeforeHandleTaskEvent::getEventName(), array(
             $this,
             'skipSystemActionsEventHanlder'
         ));
@@ -105,7 +105,7 @@ class DebugContext extends AbstractContext
         return $this;
     }
     
-    public function skipSystemActionsEventHanlder(ActionEvent $e)
+    public function skipSystemActionsEventHanlder(OnBeforeHandleTaskEvent $e)
     {
         $action = $e->getAction();
         if ((($action instanceof ShowContextPopup) && $action->getContext() === $this)

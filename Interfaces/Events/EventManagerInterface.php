@@ -17,44 +17,44 @@ interface EventManagerInterface extends WorkbenchDependantInterface
      * Registers a listener for the given event name.
      * The listener can be any PHP-callable.
      *
-     * @param string $event_name            
+     * @param string $eventName            
      * @param callable $listener_callable            
      * @param int $priority            
-     * @return EventDispatcher
+     * @return EventManagerInterface
      */
-    public function addListener($event_name, $listener_callable, $priority = null);
+    public function addListener($eventName, $listener_callable, $priority = null) : EventManagerInterface;
 
     /**
      * Dispatches an event
      *
-     * @param string $event_name            
+     * @param string $eventName            
      * @param EventInterface $event            
-     * @return \exface\Core\EventDispatcher
+     * @return EventManagerInterface
      */
-    public function dispatch(EventInterface $event);
+    public function dispatch(EventInterface $event) : EventManagerInterface;
 
     /**
      * Detaches the given listener from the specified event name
      *
-     * @param string $event_name            
+     * @param string $eventName            
      * @param callable $listener            
-     * @return \exface\Core\EventDispatcher
+     * @return EventManagerInterface
      */
-    public function removeListener($event_name, $listener);
+    public function removeListener($eventName, $listener) : EventManagerInterface;
 
     /**
      * Returns an array of listeners registered for the specified event
      *
-     * @param string $event_name            
+     * @param string $eventName            
      * @return callable[]
      */
-    public function getListeners($event_name);
+    public function getListeners($eventName) : array;
 
     /**
      * Returns TRUE if there are listeners registered for the given event name or FALSE otherwise.
      *
-     * @param string $event_name            
+     * @param string $eventName            
      */
-    public function hasListeners($event_name);
+    public function hasListeners($eventName) : bool;
 }
 ?>

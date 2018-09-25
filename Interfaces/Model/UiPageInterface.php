@@ -86,10 +86,23 @@ interface UiPageInterface extends WorkbenchDependantInterface, AliasInterface, i
      * Note, that if the widget has a parent and that parent still is on this page, the widget
      * will merely be removed from cache, but will still be accessible through page::getWidget().
      *
-     * @param WidgetInterface $widget            
+     * @param WidgetInterface $widget 
+     * @param bool $remove_children_too
+     * 
+     * @triggers \exface\Core\Events\Widget\OnRemoveEvent
+     * 
      * @return UiPageInterface
      */
-    public function removeWidget(WidgetInterface $widget, $remove_children_too = true);
+    public function removeWidget(WidgetInterface $widget, bool $remove_children_too = true) : UiPageInterface;
+    
+    /**
+     * Removes all widgets from the page.
+     * 
+     * @triggers \exface\Core\Events\Widget\OnRemoveEvent for each widget
+     * 
+     * @return UiPageInterface
+     */
+    public function removeAllWidgets() : UiPageInterface;
 
     /**
      *

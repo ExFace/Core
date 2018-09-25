@@ -17,7 +17,6 @@ use exface\Core\Exceptions\Widgets\WidgetIdConflictError;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Exceptions\Widgets\WidgetPropertyUnknownError;
-use exface\Core\Factories\EventFactory;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
@@ -28,6 +27,8 @@ use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\CommonLogic\Translation;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 use exface\Core\Factories\ExpressionFactory;
+use exface\Core\Events\Widget\OnBeforePrefillEvent;
+use exface\Core\Events\Widget\OnPrefillEvent;
 
 /**
  * Basic ExFace widget
@@ -227,10 +228,10 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
         if ($this->getDoNotPrefill()) {
             return;
         }
-        $this->getWorkbench()->eventManager()->dispatch(EventFactory::createWidgetEvent($this, 'Prefill.Before'));
+        $this->getWorkbench()->eventManager()->dispatch(new OnBeforePrefillEvent($this, $data_sheet));
         $this->setPrefillData($data_sheet);
         $this->doPrefill($data_sheet);
-        $this->getWorkbench()->eventManager()->dispatch(EventFactory::createWidgetEvent($this, 'Prefill.After'));
+        $this->getWorkbench()->eventManager()->dispatch(new OnPrefillEvent($this, $data_sheet));
         return;
     }
     

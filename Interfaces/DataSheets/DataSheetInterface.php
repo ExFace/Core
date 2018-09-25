@@ -101,13 +101,17 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * Populates the data sheet with actual data from the respecitve data sources.
      * Returns the number of rows created in the sheet.
      *
-     * @param integer offset
-     * @param integer limit
+     * @param int offset
+     * @param int limit
+     * 
+     * @triggers \exface\Core\Events\DataSheet\OnBeforeReadDataEvent
+     * @triggers \exface\Core\Events\DataSheet\OnReadDataEvent
+     * 
      * @return integer
      */
-    public function dataRead($limit = null, $offset = null);
+    public function dataRead(int $limit = null, int $offset = null) : int;
 
-    public function countRows();
+    public function countRows() : int;
 
     /**
      * Saves the values in this data sheet to the appropriate data sources.
@@ -126,12 +130,16 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * is currently not present in the data source.
      *
      * If no transaction is given, a new transaction will be created an committed at the end of this method
+     * 
+     * @param bool $create_if_uid_not_found            
+     * @param DataTransactionInterface $transaction  
+     *           
+     * @triggers \exface\Core\Events\DataSheet\OnBeforeUpdateDataEvent
+     * @triggers \exface\Core\Events\DataSheet\OnUpdateDataEvent
      *
-     * @param boolean $create_if_uid_not_found            
-     * @param DataTransactionInterface $transaction            
-     * @return integer
+     * @return int
      */
-    public function dataUpdate($create_if_uid_not_found = false, DataTransactionInterface $transaction = null);
+    public function dataUpdate(bool $create_if_uid_not_found = false, DataTransactionInterface $transaction = null) : int;
 
     /**
      * Replaces all rows matching current filters with data contained in this data sheet returning the number of rows changed in the data source.
@@ -147,10 +155,15 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * If no transaction is given, a new transaction will be created an committed at the end of this method
      *
      * @param DataTransactionInterface $transaction            
-     * @param boolean $delete_missing_rows            
-     * @return number
+     * @param bool $delete_redundant_rows
+     * @param bool $update_by_uid_ignoring_filters
+     *             
+     * @triggers \exface\Core\Events\DataSheet\OnBeforeReplaceDataEvent
+     * @triggers \exface\Core\Events\DataSheet\OnReplaceDataEvent
+     * 
+     * @return int
      */
-    public function dataReplaceByFilters(DataTransactionInterface $transaction = null, $delete_redundant_rows = true, $update_by_uid_ignoring_filters = true);
+    public function dataReplaceByFilters(DataTransactionInterface $transaction = null, bool $delete_redundant_rows = true, bool $update_by_uid_ignoring_filters = true) : int;
 
     /**
      * Saves all values of the data sheets creating new data in the corresponding data sources.
@@ -160,11 +173,15 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      *
      * If no transaction is given, a new transaction will be created an committed at the end of this method
      *
-     * @param boolean $update_if_uid_found            
-     * @param DataTransactionInterface $transaction            
-     * @return array
+     * @param bool $update_if_uid_found            
+     * @param DataTransactionInterface $transaction  
+     *           
+     * @triggers \exface\Core\Events\DataSheet\OnBeforeCreateDataEvent
+     * @triggers \exface\Core\Events\DataSheet\OnCreateDataEvent
+     * 
+     * @return int
      */
-    public function dataCreate($update_if_uid_found = true, DataTransactionInterface $transaction = null);
+    public function dataCreate(bool $update_if_uid_found = true, DataTransactionInterface $transaction = null) : int;
 
     /**
      * Deletes all object loaded in the data sheet from the appropriate data sources.
@@ -172,10 +189,14 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      *
      * If no transaction is given, a new transaction will be created an committed at the end of this method
      *
-     * @param DataTransactionInterface $transaction            
-     * @return number
+     * @param DataTransactionInterface $transaction   
+     *          
+     * @triggers \exface\Core\Events\DataSheet\OnBeforeDeleteDataEvent
+     * @triggers \exface\Core\Events\DataSheet\OnDeleteDataEvent
+     * 
+     * @return int
      */
-    public function dataDelete(DataTransactionInterface $transaction = null);
+    public function dataDelete(DataTransactionInterface $transaction = null) : int;
 
     /**
      *
@@ -431,13 +452,16 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * easily added by creating object behaviours listening to validation events. If they detect invalid data,
      * they would only need to call data_mark_invalid() and the sheet will fail validation in any case.
      *
-     * @return boolean
+     * @triggers \exface\Core\Events\DataSheet\OnBeforeValidateDataEvent
+     * @triggers \exface\Core\Events\DataSheet\OnValidateDataEvent
+     * 
+     * @return bool
      */
-    public function dataValidate();
+    public function dataValidate() : bool;
 
     /**
      * Marks the data in this sheet as invalid causing the validation to fail in any case
-     *
+     * 
      * @return DataSheetInterface
      */
     public function dataMarkInvalid();

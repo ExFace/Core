@@ -6,14 +6,27 @@ use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\ActionFactory;
-use exface\Core\Events\DataSheetEvent;
 use exface\Core\Factories\TaskFactory;
+use exface\Core\Interfaces\Events\DataSheetEventInterface;
+use exface\Core\Interfaces\Events\DataTransactionEventInterface;
 
 /**
- * Attachable to DataSheetEvents, calls any action.
+ * Attachable to DataSheetEvents (exface.Core.DataSheet.*), calls any action.
  * 
  * For this behavior to work, it has to be attached to an object in the metamodel. The event-
  * alias and the action have to be configured in the behavior configuration.
+ * 
+ * Example:
+ * 
+ * ```
+ * {
+ *  "event_alias": "exface.Core.DataSheet.OnUpdate",
+ *  "action": {
+ *      "alias": "..."
+ *  }
+ * }
+ * 
+ * ```
  * 
  * @author SFL
  *
@@ -34,10 +47,8 @@ class CallActionBehavior extends AbstractBehavior
      */
     public function register() : BehaviorInterface
     {
-        $this->getWorkbench()->eventManager()->addListener($this->getObject()->getAliasWithNamespace() . '.' . $this->getObjectEventAlias(), array(
-            $this,
-            'callAction'
-        ));
+        $handler = [$this, 'callAction'];
+        $this->getWorkbench()->eventManager()->addListener($this->getEventAlias(), $handler);
         $this->setRegistered(true);
         return $this;
     }
@@ -50,7 +61,7 @@ class CallActionBehavior extends AbstractBehavior
     public function exportUxonObject()
     {
         $uxon = parent::exportUxonObject();
-        $uxon->setProperty('object_event_alias', $this->getObjectEventAlias());
+        $uxon->setProperty('event_alias', $this->getEventAlias());
         $uxon->setProperty('action', $this->getAction()->exportUxonObject());
         return $uxon;
     }
@@ -59,24 +70,24 @@ class CallActionBehavior extends AbstractBehavior
      * 
      * @return string
      */
-    public function getObjectEventAlias()
+    public function getEventAlias() : string
     {
-        return $this->object_event_alias;
+        return $this->event_alias;
     }
 
     /**
      * Sets the event alias upon which the configured action is executed
      * (e.g. 'DataSheet.CreateData.After').
      * 
-     * @uxon-property object_event_alias
+     * @uxon-property event_alias
      * @uxon-type string
      * 
-     * @param string $objectEventAlias
-     * @return BehaviorInterface
+     * @param string $aliasWithNamespace
+     * @return CallActionBehavior
      */
-    public function setObjectEventAlias($objectEventAlias)
+    public function setEventAlias(string $aliasWithNamespace) : CallActionBehavior
     {
-        $this->object_event_alias = $objectEventAlias;
+        $this->event_alias = $aliasWithNamespace;
         return $this;
     }
 
@@ -86,7 +97,7 @@ class CallActionBehavior extends AbstractBehavior
      */
     public function getAction()
     {
-        if (is_null($this->action)) {
+        if ($this->action === null) {
             $this->action = ActionFactory::createFromUxon($this->getWorkbench(), UxonObject::fromAnything($this->actionConfig));
         }
         return $this->action;
@@ -111,9 +122,9 @@ class CallActionBehavior extends AbstractBehavior
      * The method which is called when the configured event is fired, which executes the
      * configured action. 
      * 
-     * @param DataSheetEvent $event
+     * @param DataSheetEventInterface $event
      */
-    public function callAction(DataSheetEvent $event)
+    public function callAction(DataSheetEventInterface $event)
     {
         if ($this->isDisabled()) {
             return;
@@ -123,14 +134,17 @@ class CallActionBehavior extends AbstractBehavior
         
         // Do not do anything, if the base object of the widget is not the object with the behavior and is not
         // extended from it.
-        if (! $data_sheet->getMetaObject()->is($this->getObject())) {
+        if (! $event->getDataSheet()->getMetaObject()->is($this->getObject())) {
             return;
         }
         
         if ($action = $this->getAction()) {
             $task = TaskFactory::createFromDataSheet($data_sheet);
-            // FIXME #events-v2 pass the transaction to the action once it is available in the data sheet event
-            $action->handle($task);
+            if ($event instanceof DataTransactionEventInterface) {
+                $action->handle($task, $event->getTransaction());
+            } else {
+                $action->handle($task);
+            }
         }
     }
 }

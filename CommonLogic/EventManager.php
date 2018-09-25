@@ -5,6 +5,7 @@ use Jmikola\WildcardEventDispatcher\WildcardEventDispatcher;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use exface\Core\Interfaces\Events\EventManagerInterface;
 use exface\Core\Interfaces\Events\EventInterface;
+use exface\Core\Interfaces\WorkbenchInterface;
 
 /**
  * The event manager takes care of events in ExFace: registering listeners, dispatching events, etc.
@@ -20,73 +21,70 @@ class EventManager implements EventManagerInterface
 
     private $dispatcher = null;
 
-    function __construct(\exface\Core\CommonLogic\Workbench $exface)
+    function __construct(WorkbenchInterface $exface)
     {
         $this->exface = $exface;
         $this->dispatcher = new WildcardEventDispatcher(new EventDispatcher());
     }
 
     /**
-     * Registers a listener for the given event name.
-     * The listener can be any PHP-callable.
-     *
-     * @param string $event_name            
-     * @param callable $listener_callable            
-     * @param int $priority            
-     * @return EventDispatcher
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Events\EventManagerInterface::addListener()
      */
-    public function addListener($event_name, $listener_callable, $priority = null)
+    public function addListener($eventName, $listener_callable, $priority = null) : EventManagerInterface
     {
-        $this->dispatcher->addListener($event_name, $listener_callable, $priority);
+        $this->dispatcher->addListener($eventName, $listener_callable, $priority);
         return $this;
     }
 
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\Events\EventManagerInterface::dispatch()
      */
-    public function dispatch(EventInterface $event)
+    public function dispatch(EventInterface $event) : EventManagerInterface
     {
-        $this->dispatcher->dispatch($event->getNameWithNamespace(), $event);
+        $this->dispatcher->dispatch($event::getEventName(), $event);
         return $this;
     }
 
     /**
-     * Detaches the given listener from the specified event name
-     *
-     * @param string $event_name            
-     * @param callable $listener            
-     * @return \exface\Core\EventDispatcher
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Events\EventManagerInterface::removeListener()
      */
-    public function removeListener($event_name, $listener)
+    public function removeListener($eventName, $listener) : EventManagerInterface
     {
-        $this->dispatcher->removeListener($event_name, $listener);
+        $this->dispatcher->removeListener($eventName, $listener);
         return $this;
     }
 
     /**
-     * Returns an array of listeners registered for the specified event
-     *
-     * @param string $event_name            
-     * @return callable[]
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Events\EventManagerInterface::getListeners()
      */
-    public function getListeners($event_name)
+    public function getListeners($eventName) : array
     {
-        return $this->dispatcher->getListeners($event_name);
+        return $this->dispatcher->getListeners($eventName);
     }
 
     /**
-     * Returns TRUE if there are listeners registered for the given event name or FALSE otherwise.
-     *
-     * @param string $event_name            
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Events\EventManagerInterface::hasListeners()
      */
-    public function hasListeners($event_name)
+    public function hasListeners($eventName) : bool
     {
-        return $this->dispatcher->hasListeners($event_name);
+        return $this->dispatcher->hasListeners($eventName);
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\WorkbenchDependantInterface::getWorkbench()
+     */
     public function getWorkbench()
     {
         return $this->exface;

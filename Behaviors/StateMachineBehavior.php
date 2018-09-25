@@ -2,10 +2,8 @@
 namespace exface\Core\Behaviors;
 
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
-use exface\Core\Events\WidgetEvent;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
-use exface\Core\Events\DataSheetEvent;
 use exface\Core\Exceptions\Behaviors\StateMachineUpdateException;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
@@ -17,6 +15,8 @@ use exface\Core\CommonLogic\Model\Behaviors\StateMachineState;
 use exface\Core\Interfaces\Widgets\iHaveButtons;
 use exface\Core\Actions\SaveData;
 use exface\Core\Actions\DeleteObject;
+use exface\Core\Events\Widget\OnPrefillEvent;
+use exface\Core\Events\DataSheet\OnBeforeUpdateDataEvent;
 
 /**
  * A behavior that defines states and transitions between these states for an objects.
@@ -46,14 +46,8 @@ class StateMachineBehavior extends AbstractBehavior
      */
     public function register() : BehaviorInterface
     {
-        $this->getWorkbench()->eventManager()->addListener($this->getObject()->getAliasWithNamespace() . '.Widget.Prefill.After', array(
-            $this,
-            'setWidgetStates'
-        ));
-        $this->getWorkbench()->eventManager()->addListener($this->getObject()->getAliasWithNamespace() . '.DataSheet.UpdateData.Before', array(
-            $this,
-            'checkForConflictsOnUpdate'
-        ));
+        $this->getWorkbench()->eventManager()->addListener(OnPrefillEvent::getEventName(), [$this, 'setWidgetStates']);
+        $this->getWorkbench()->eventManager()->addListener(OnBeforeUpdateDataEvent::getEventName(), [$this, 'checkForConflictsOnUpdate']);
         $this->setRegistered(true);
         return $this;
     }
@@ -315,9 +309,9 @@ class StateMachineBehavior extends AbstractBehavior
      * It is checked if this widget belongs to a dis-
      * abled attribute. If so the widget gets also disabled.
      *
-     * @param WidgetEvent $event            
+     * @param OnPrefillEvent $event            
      */
-    public function setWidgetStates(WidgetEvent $event)
+    public function setWidgetStates(OnPrefillEvent $event)
     {
         if ($this->isDisabled())
             return;
@@ -325,6 +319,10 @@ class StateMachineBehavior extends AbstractBehavior
             return;
         
         $widget = $event->getWidget();
+        
+        if (! $widget->getMetaObject()->is($this->getObject())) {
+            return;
+        }
         
         // Do not do anything, if the base object of the widget is not the object with the behavior and is not
         // extended from it.
@@ -384,10 +382,10 @@ class StateMachineBehavior extends AbstractBehavior
      * is allowed. It is also checked if attributes, which are disabled at the current
      * state are changed. If a disallowed behavior is detected an error is thrown.
      *
-     * @param DataSheetEvent $event            
+     * @param OnBeforeUpdateDataEvent $event            
      * @throws StateMachineUpdateException
      */
-    public function checkForConflictsOnUpdate(DataSheetEvent $event)
+    public function checkForConflictsOnUpdate(OnBeforeUpdateDataEvent $event)
     {
         if ($this->isDisabled())
             return;
@@ -395,6 +393,10 @@ class StateMachineBehavior extends AbstractBehavior
             return;
         
         $data_sheet = $event->getDataSheet();
+        
+        if (! $data_sheet->getMetaObject()->is($this->getObject())) {
+            return;
+        }
         
         // Do not do anything, if the base object of the widget is not the object with the behavior and is not
         // extended from it.

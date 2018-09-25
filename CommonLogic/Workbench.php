@@ -9,7 +9,6 @@ use exface\Core\Factories\DataConnectorFactory;
 use exface\Core\Factories\CmsConnectorFactory;
 use exface\Core\Factories\AppFactory;
 use exface\Core\Factories\ModelLoaderFactory;
-use exface\Core\Factories\EventFactory;
 use exface\Core\Interfaces\Events\EventManagerInterface;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Interfaces\ConfigurationInterface;
@@ -30,6 +29,8 @@ use exface\Core\CommonLogic\Selectors\CmsConnectorSelector;
 use exface\Core\CommonLogic\Selectors\ModelLoaderSelector;
 use exface\Core\Exceptions\AppComponentNotFoundError;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
+use exface\Core\Events\Workbench\OnStartEvent;
+use exface\Core\Events\Workbench\OnStopEvent;
 
 class Workbench implements WorkbenchInterface
 {
@@ -105,7 +106,7 @@ class Workbench implements WorkbenchInterface
 
         // start the event dispatcher
         $this->event_manager = new EventManager($this);
-        $this->event_manager->dispatch(EventFactory::createBasicEvent($this, 'Start'));
+        $this->event_manager->dispatch(new OnStartEvent($this));
         
         // load the CMS connector
         $this->cms = CmsConnectorFactory::create(new CmsConnectorSelector($this, $this->getConfig()->getOption('CMS_CONNECTOR')));
@@ -272,7 +273,7 @@ class Workbench implements WorkbenchInterface
         if ($this->isStarted()) {
             $this->getContext()->saveContexts();
             $this->data()->disconnectAll();
-            $this->eventManager()->dispatch(EventFactory::createBasicEvent($this, 'Stop'));
+            $this->eventManager()->dispatch(new OnStopEvent($this));
         }
     }
 

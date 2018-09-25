@@ -6,7 +6,6 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Actions\iCanBeUndone;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Factories\ActionFactory;
-use exface\Core\Factories\EventFactory;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Factories\WidgetLinkFactory;
@@ -28,6 +27,8 @@ use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Interfaces\Actions\iModifyData;
 use exface\Core\Interfaces\Selectors\ActionSelectorInterface;
 use exface\Core\Factories\SelectorFactory;
+use exface\Core\Events\Action\OnBeforeHandleTaskEvent;
+use exface\Core\Events\Action\OnHandleTaskEvent;
 
 /**
  * The abstract action is a generic implementation of the ActionInterface, that simplifies 
@@ -35,9 +36,6 @@ use exface\Core\Factories\SelectorFactory;
  * 
  * To implement a specific action one atually only needs to implement the abstract perform() 
  * method. All core actions are made like this.
- *
- * The abstract action dispatches the following events prefixed by the actions alias (@see ActionEvent):
- * - Perform (.Before/.After)
  *
  * @author Andrej Kabachnik
  *        
@@ -272,17 +270,17 @@ abstract class AbstractAction implements ActionInterface
      */
     public final function handle(TaskInterface $task, DataTransactionInterface $transaction = null) : ResultInterface
     {
-        $this->dispatchEvent('Perform.Before');
-        
         // Start a new transaction if none passed
         if (is_null($transaction)) {
             $transaction = $this->getWorkbench()->data()->startTransaction();
         }
         
+        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeHandleTaskEvent($this, $task, $transaction));
+        
         // Call the action's logic
         $result = $this->perform($task, $transaction);
         
-        $this->dispatchEvent('Perform.After');
+        $this->getWorkbench()->eventManager()->dispatch(new OnHandleTaskEvent($this, $result, $transaction));
         
         // Register the action in the action context of the window. Since it is passed by reference, we can
         // safely do it here, befor perform(). On the other hand, this gives all kinds of action event handlers
@@ -574,18 +572,6 @@ abstract class AbstractAction implements ActionInterface
         }
         
         return $uxon;
-    }
-
-    /**
-     * 
-     * @param string $event_name
-     * @return ActionInterface
-     */
-    protected function dispatchEvent($event_name)
-    {
-        /* @var $event \exface\Core\Events\ActionEvent */
-        $this->getApp()->getWorkbench()->eventManager()->dispatch(EventFactory::createActionEvent($this, $event_name));
-        return $this;
     }
 
     /**
