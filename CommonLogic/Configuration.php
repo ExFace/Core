@@ -151,7 +151,7 @@ class Configuration implements ConfigurationInterface
         if ($filename && file_exists($filename)) {
             $config = new self($this->getWorkbench());
             $config->loadConfigFile($filename);
-            file_put_contents($filename, $config->exportUxonObject()->unsetProperty($key)->toJson(true));
+            file_put_contents($filename, $config->exportUxonObject()->unsetProperty(mb_strtoupper($key))->toJson(true));
             $this->reloadFiles();
         }
         
