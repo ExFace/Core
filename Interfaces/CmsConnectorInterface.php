@@ -270,13 +270,13 @@ interface CmsConnectorInterface extends WorkbenchDependantInterface
      * 
      * @return string
      */
-    public function setServiceWorker(string $jsCode, string $imports = '', string $scope = '') : string;
+    public function setServiceWorker(string $jsCode, string $imports = '') : string;
     
     /**
      * 
      * @param string $scope
      * @return string
      */
-    public function buildUrlToServiceWorker(string $scope = '') : string;
+    public function buildUrlToServiceWorker() : string;
 }
 ?>
