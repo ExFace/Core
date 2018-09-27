@@ -20,10 +20,52 @@ class ServiceWorkerInstaller extends AbstractAppInstaller
 {
     private $serviceWorkerBuilder = null;
     
+    private $disabled = false;
+    
     public function __construct(SelectorInterface $selectorToInstall, ServiceWorkerBuilder $builder)
     {
         parent::__construct($selectorToInstall);
         $this->serviceWorkerBuilder = $builder;
+    }
+    
+    /**
+     * 
+     * @param SelectorInterface $selectorToInstall
+     * @param ConfigurationInterface $config
+     * @param CmsConnectorInterface $cms
+     * 
+     * @return ServiceWorkerInstaller
+     */
+    public static function fromConfig(SelectorInterface $selectorToInstall, ConfigurationInterface $config, CmsConnectorInterface $cms) : ServiceWorkerInstaller
+    {
+        $builder = new ServiceWorkerBuilder();
+        
+        foreach ($config->getOption('INSTALLER.SERVICEWORKER.ROUTES') as $id => $uxon) {
+            $builder->addRouteToCache(
+                $id,
+                $uxon->getProperty('matcher'),
+                $uxon->getProperty('strategy'),
+                $uxon->getProperty('method'),
+                $uxon->getProperty('description'),
+                $uxon->getProperty('cacheName'),
+                $uxon->getProperty('maxEntries'),
+                $uxon->getProperty('maxAgeSeconds')
+                );
+        }
+        
+        if ($config->hasOption('INSTALLER.SERVICEWORKER.IMPORTS')) {
+            foreach ($config->getOption('INSTALLER.SERVICEWORKER.IMPORTS') as $path) {
+                $builder->addImport($cms->buildUrlToInclude($path));
+            }
+        }
+        
+        $installer = new self($selectorToInstall, $builder);
+        
+        if ($config->hasOption('INSTALLER.SERVICEWORKER.DISABLED')) {
+            $installer->setDisabled($config->getOption('INSTALLER.SERVICEWORKER.DISABLED'));
+        }
+        
+        return $installer;
     }
     
     /**
@@ -33,12 +75,11 @@ class ServiceWorkerInstaller extends AbstractAppInstaller
      */
     public function install($source_absolute_path)
     {
-        if (! $builder = $this->getServiceWorkerBuilder()) {
-            throw new InstallerRuntimeError($this, 'Cannot create a ServiceWorker file: no builder class specified!');
+        if ($this->isDisabled()) {
+            $config = $this->uninstallConfig($this->getApp());
+        } else {
+            $config = $this->installConfig($this->getApp(), $this->getServiceWorkerBuilder());
         }
-        
-        $config = $this->updateConfig($this->getApp(), $builder);
-        
         return $this->buildServiceWorker($config, $this->getWorkbench()->getCMS());
     }
     
@@ -58,10 +99,10 @@ class ServiceWorkerInstaller extends AbstractAppInstaller
         
         try {
             $path = $cms->setServiceWorker($builder->buildJsLogic(), $builder->buildJsImports());
-            $result = 'Generated ServiceWorker "' . $path . '".';
+            $result = 'Generated ServiceWorker "' . $path . '"';
         } catch (\Throwable $e) {
             $this->getWorkbench()->getLogger()->logException($e);
-            $result = 'Failed to generate ServiceWorker "' . $path . '": ' . $e->getMessage() . '.';
+            $result = 'Failed to generate ServiceWorker "' . $path . '": ' . $e->getMessage();
         }
         
         return $result;
@@ -86,10 +127,8 @@ class ServiceWorkerInstaller extends AbstractAppInstaller
      */
     public function uninstall()
     {
-        $config = $this->getConfig();
-        $config->unsetOption($this->getApp()->getAliasWithNamespace(), $this->getConfigScope());
-        
-        return 'ServiceWorker configuration removed.';
+        $this->uninstallConfig($this->getApp());        
+        return 'ServiceWorker configuration removed';
     }
 
     /**
@@ -120,7 +159,7 @@ class ServiceWorkerInstaller extends AbstractAppInstaller
         return $config;
     }
     
-    protected function updateConfig(AppInterface $app, ServiceWorkerBuilder $swBuilder) : ConfigurationInterface
+    protected function installConfig(AppInterface $app, ServiceWorkerBuilder $swBuilder) : ConfigurationInterface
     {
         $config = $this->getConfig();
         $config->setOption($app->getAliasWithNamespace(), $swBuilder->buildJsLogic(), $this->getConfigScope());
@@ -136,9 +175,27 @@ class ServiceWorkerInstaller extends AbstractAppInstaller
         return $config;
     }
     
+    protected function uninstallConfig(AppInterface $app) : ConfigurationInterface
+    {
+        $config = $this->getConfig();
+        $config->unsetOption($app->getAliasWithNamespace(), $this->getConfigScope());
+        return $config;
+    }
+    
     protected function getConfigScope() : string
     {
         return AppInterface::CONFIG_SCOPE_SYSTEM;   
+    }
+    
+    protected function isDisabled() : bool
+    {
+        return $this->disabled;
+    }
+    
+    public function setDisabled(bool $trueOrFalse) : ServiceWorkerInstaller
+    {
+        $this->disabled = $trueOrFalse;
+        return $this;
     }
 }
 ?>
