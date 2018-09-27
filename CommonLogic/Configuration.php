@@ -1,10 +1,8 @@
 <?php
 namespace exface\Core\CommonLogic;
 
-use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\ConfigurationInterface;
 use exface\Core\Exceptions\Configuration\ConfigOptionNotFoundError;
-use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Exceptions\OutOfBoundsException;
 
 class Configuration implements ConfigurationInterface
@@ -59,7 +57,7 @@ class Configuration implements ConfigurationInterface
      *
      * @see \exface\Core\Interfaces\ConfigurationInterface::getOption()
      */
-    public function getOption($key)
+    public function getOption(string $key)
     {
         if (! $this->getConfigUxon()->hasProperty($key)) {
             if ($key_found = $this->getConfigUxon()->findPropertyKey($key, false)) {
@@ -93,7 +91,7 @@ class Configuration implements ConfigurationInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\ConfigurationInterface::hasOption()
      */
-    public function hasOption($key)
+    public function hasOption(string $key) : bool
     {
         try {
             $this->getOption($key);
@@ -105,7 +103,12 @@ class Configuration implements ConfigurationInterface
 
     protected function getConfigFilePath($scope)
     {
-        return $this->config_files[$scope];
+        foreach ($this->config_files as $f) {
+            if ($f['scope'] === $scope) {
+                return $f['path'];
+            }
+        }
+        return null;
     }
 
     /**
@@ -114,11 +117,11 @@ class Configuration implements ConfigurationInterface
      *
      * @see \exface\Core\Interfaces\ConfigurationInterface::setOption()
      */
-    public function setOption($key, $value_or_object_or_string, $configScope = null)
+    public function setOption(string $key, $value_or_object_or_string, string $configScope = null) : ConfigurationInterface
     {
         $this->getConfigUxon()->setProperty(mb_strtoupper($key), $value_or_object_or_string);
         
-        if (! is_null($configScope)) {
+        if ($configScope !== null) {
             if (! $filename = $this->getConfigFilePath($configScope)) {
                 throw new OutOfBoundsException('No configuration path found for config scope "' . $configScope . '"!');
             }
@@ -131,6 +134,25 @@ class Configuration implements ConfigurationInterface
             $config->setOption($key, $value_or_object_or_string);
             // Save the file or create one if there was no installation specific config before
             file_put_contents($filename, $config->exportUxonObject()->toJson(true));
+        }
+        
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\ConfigurationInterface::unsetOption()
+     */
+    public function unsetOption(string $key, string $configScope) : ConfigurationInterface
+    {
+        $filename = $this->getConfigFilePath($configScope);
+        
+        if ($filename && file_exists($filename)) {
+            $config = new self($this->getWorkbench());
+            $config->loadConfigFile($filename);
+            file_put_contents($filename, $config->exportUxonObject()->unsetProperty($key)->toJson(true));
+            $this->reloadFiles();
         }
         
         return $this;
@@ -153,14 +175,31 @@ class Configuration implements ConfigurationInterface
      *
      * @see \exface\Core\Interfaces\ConfigurationInterface::loadConfigFile()
      */
-    public function loadConfigFile($absolute_path, $config_scope_key = null)
+    public function loadConfigFile(string $absolute_path, string $config_scope_key = null) : ConfigurationInterface
     {
-        if (! is_null($config_scope_key)) {
-            $this->config_files[$config_scope_key] = $absolute_path;
-        }
+        $this->config_files[] = [
+            'scope' => $config_scope_key,
+            'path' => $absolute_path
+        ];
         
+        $this->readFile($absolute_path);
+        
+        return $this;
+    }
+    
+    protected function readFile(string $absolute_path)
+    {
         if (file_exists($absolute_path) && $uxon = UxonObject::fromJson(file_get_contents($absolute_path))) {
             $this->loadConfigUxon($uxon);
+        }
+        return;
+    }
+    
+    public function reloadFiles() : ConfigurationInterface
+    {
+        $this->setConfigUxon(new UxonObject());
+        foreach ($this->config_files as $f) {
+            $this->readFile($f['path']);
         }
         return $this;
     }
@@ -171,7 +210,7 @@ class Configuration implements ConfigurationInterface
      *
      * @see \exface\Core\Interfaces\ConfigurationInterface::loadConfigUxon()
      */
-    public function loadConfigUxon(UxonObject $uxon)
+    public function loadConfigUxon(UxonObject $uxon) : ConfigurationInterface
     {
         $this->setConfigUxon($this->getConfigUxon()->extend($uxon));
         return $this;
