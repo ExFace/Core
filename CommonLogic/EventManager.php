@@ -1,7 +1,6 @@
 <?php
 namespace exface\Core\CommonLogic;
 
-use Jmikola\WildcardEventDispatcher\WildcardEventDispatcher;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use exface\Core\Interfaces\Events\EventManagerInterface;
 use exface\Core\Interfaces\Events\EventInterface;
@@ -24,7 +23,7 @@ class EventManager implements EventManagerInterface
     function __construct(WorkbenchInterface $exface)
     {
         $this->exface = $exface;
-        $this->dispatcher = new WildcardEventDispatcher(new EventDispatcher());
+        $this->dispatcher = new EventDispatcher();
     }
 
     /**
