@@ -15,7 +15,7 @@ use exface\Core\Factories\TemplateFactory;
 
 /**
  * This PSR-15 middleware will look for a template responsible for the given request
- * based on the routing configuration in the key TEMPLATE.ROUTES of System.config.json.
+ * based on the routing configuration in the key TEMPLATES.ROUTES of System.config.json.
  * 
  * If one of the template URL patterns matches the URI of the request, the middleware
  * will pass the request to the template handler. If not, the request will be passed
@@ -55,7 +55,7 @@ class TemplateResolverMiddleware implements MiddlewareInterface
         }
         
         if (! ($template instanceof RequestHandlerInterface)) {
-            throw new TemplateIncompatibleError('Template "' . $template->getAliasWithNamespace() . '" is cannot be used as a standard HTTP request handler - please check system configuration option TEMPLATE.ROUTES!');
+            throw new TemplateIncompatibleError('Template "' . $template->getAliasWithNamespace() . '" is cannot be used as a standard HTTP request handler - please check system configuration option TEMPLATES.ROUTES!');
         }
         
         return $template->handle($request);
@@ -70,11 +70,11 @@ class TemplateResolverMiddleware implements MiddlewareInterface
     protected function getTemplateForUri(UriInterface $uri) : HttpTemplateInterface
     {
         $url = $uri->getPath() . '?' . $uri->getQuery();
-        foreach ($this->workbench->getConfig()->getOption('TEMPLATE.ROUTES') as $pattern => $templateAlias) {
+        foreach ($this->workbench->getConfig()->getOption('TEMPLATES.ROUTES') as $pattern => $templateAlias) {
             if (preg_match($pattern, $url) === 1) {
                 return TemplateFactory::createFromString($templateAlias, $this->workbench);
             }
         }
-        throw new TemplateRoutingError('No route can be found for URL "' . $url . '" - please check system configuration option TEMPLATE.ROUTES!');
+        throw new TemplateRoutingError('No route can be found for URL "' . $url . '" - please check system configuration option TEMPLATES.ROUTES!');
     }
 }

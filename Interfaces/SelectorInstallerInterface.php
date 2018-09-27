@@ -11,13 +11,6 @@ use exface\Core\Interfaces\Selectors\SelectorInterface;
  */
 interface SelectorInstallerInterface extends InstallerInterface
 {
-
-    /**
-     *
-     * @param SelectorInterface $selector            
-     */
-    public function __construct(SelectorInterface $selector);
-
     /**
      * Returns the selector of the element to install
      *

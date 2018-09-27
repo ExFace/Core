@@ -24,5 +24,7 @@
     
     "LOCALE.DEFAULT": "en_US",
     
-    "TEMPLATE.ROUTES": {}
+    "TEMPLATES.ROUTES": {},
+    
+    "TEMPLATES.ABSTRACTPWATEMPLATE.WORKBOX_VENDOR_PATH": "npm-asset/workbox-sw/build/workbox-sw.js"
 }
