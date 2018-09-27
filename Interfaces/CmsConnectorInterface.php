@@ -263,24 +263,20 @@ interface CmsConnectorInterface extends WorkbenchDependantInterface
     public function getFavIcons() : array;
     
     /**
-     * Makes the given content accessible via the specified URL relative to site root.
+     * Replaces the ServiceWorker of the specified scope with the given code
      * 
-     * Using this method, you can make the CMS publish javascript, css files directly. This
-     * is especially important if you want to bypass the programatic routing (set $noRedirects = true).
+     * @param string $jsCode
+     * @param string $scope
      * 
-     * @param string $relativeUrl
-     * @param string $content
-     * @param bool $noRedirects
-     * @return CmsConnectorInterface
+     * @return string
      */
-    public function createResource(string $relativeUrl, string $content, bool $noRedirects = false) : CmsConnectorInterface;
+    public function setServiceWorker(string $jsCode, string $imports = '', string $scope = '') : string;
     
     /**
-     * Tells the CMS to remove a resource previously registered via createResource().
      * 
-     * @param string $relativeUrl
-     * @return CmsConnectorInterface
+     * @param string $scope
+     * @return string
      */
-    public function deleteResource(string $relativeUrl) : CmsConnectorInterface;
+    public function buildUrlToServiceWorker(string $scope = '') : string;
 }
 ?>

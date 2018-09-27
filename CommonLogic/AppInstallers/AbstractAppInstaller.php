@@ -16,8 +16,9 @@ abstract class AbstractAppInstaller extends AbstractSelectorInstaller implements
     private $install_folder_name = 'Install';
 
     /**
-     *
-     * @return \exface\Core\Interfaces\AppInterface
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\AppInstallerInterface::getApp()
      */
     public function getApp()
     {

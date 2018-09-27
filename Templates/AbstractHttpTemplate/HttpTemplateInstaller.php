@@ -8,7 +8,7 @@ use exface\Core\Exceptions\Installers\InstallerRuntimeError;
 
 /**
  * This installer registeres routes for it's HTTP template in the system's
- * template routing configuration (System.config.json > TEMPLATE.ROUTES).
+ * template routing configuration (System.config.json > TEMPLATES.ROUTES).
  * 
  * @author Andrej Kabachnik
  *        
@@ -26,12 +26,12 @@ class HttpTemplateInstaller extends AbstractAppInstaller
     {
         try {
             $config = $this->getWorkbench()->getConfig();
-            $routes = $config->getOption('TEMPLATE.ROUTES');
+            $routes = $config->getOption('TEMPLATES.ROUTES');
             $before = $routes->toJson();
             foreach ($this->getTemplate()->getUrlRoutePatterns() as $pattern) {
                 $routes->setProperty($pattern, $this->getTemplate()->getAliasWithNamespace());
             }      
-            $config->setOption('TEMPLATE.ROUTES', $routes, App::CONFIG_SCOPE_SYSTEM);
+            $config->setOption('TEMPLATES.ROUTES', $routes, App::CONFIG_SCOPE_SYSTEM);
         } catch (\Throwable $e) {
             throw new InstallerRuntimeError($this, 'Failed to setup HTTP template routing!', null, $e);
         }
@@ -64,11 +64,11 @@ class HttpTemplateInstaller extends AbstractAppInstaller
     {
         try {
             $config = $this->getWorkbench()->getConfig();
-            $routes = $config->getOption('TEMPLATE.ROUTES');
+            $routes = $config->getOption('TEMPLATES.ROUTES');
             foreach ($this->getTemplate()->getUrlRoutePatterns() as $pattern) {
                 $routes->unsetProperty($pattern);
             }
-            $config->setOption('TEMPLATE.ROUTES', $routes, App::CONFIG_SCOPE_SYSTEM);
+            $config->setOption('TEMPLATES.ROUTES', $routes, App::CONFIG_SCOPE_SYSTEM);
         } catch (\Throwable $e) {
             throw new InstallerRuntimeError($this, 'Failed to uninstall HTTP template routes!', null, $e);
         }
