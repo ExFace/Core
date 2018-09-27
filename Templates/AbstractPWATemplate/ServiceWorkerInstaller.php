@@ -20,8 +20,6 @@ class ServiceWorkerInstaller extends AbstractAppInstaller
 {
     private $serviceWorkerBuilder = null;
     
-    private $serviceWorkerScope = '';
-    
     public function __construct(SelectorInterface $selectorToInstall, ServiceWorkerBuilder $builder)
     {
         parent::__construct($selectorToInstall);
@@ -112,26 +110,6 @@ class ServiceWorkerInstaller extends AbstractAppInstaller
     protected function getServiceWorkerBuilder() : ?ServiceWorkerBuilder
     {
         return $this->serviceWorkerBuilder;
-    }
-    
-    /**
-     *
-     * @return string
-     */
-    protected function getServiceWorkerScope() : string
-    {
-        return $this->serviceWorkerScope;
-    }
-    
-    /**
-     * 
-     * @param string $value
-     * @return ServiceWorkerInstaller
-     */
-    public function setServiceWorkerScope(string $value) : ServiceWorkerInstaller
-    {
-        $this->serviceWorkerScope = $value;
-        return $this;
     }
     
     protected function getConfig() : ConfigurationInterface
