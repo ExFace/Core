@@ -2,7 +2,15 @@
 namespace exface\Core\ModelBuilders;
 
 use exface\Core\Interfaces\Model\MetaObjectInterface;
+use exface\Core\DataConnectors\OracleSqlConnector;
 
+/**
+ * 
+ * @method OracleSqlConnector getDataConnection()
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
 class OracleSqlModelBuilder extends AbstractSqlModelBuilder
 {
 
@@ -11,7 +19,7 @@ class OracleSqlModelBuilder extends AbstractSqlModelBuilder
      * {@inheritDoc}
      * @see \exface\Core\ModelBuilders\AbstractSqlModelBuilder::getAttributeDataFromTableColumns()
      */
-    public function getAttributeDataFromTableColumns(MetaObjectInterface $meta_object, $table_name)
+    public function getAttributeDataFromTableColumns(MetaObjectInterface $meta_object, string $table_name) : array
     {
         $columns_sql = "
 					SELECT
@@ -40,6 +48,27 @@ class OracleSqlModelBuilder extends AbstractSqlModelBuilder
                 'REQUIREDFLAG' => ($col['NULLABLE'] == 'N' ? 1 : 0),
                 'SHORT_DESCRIPTION' => ($col['COMMENTS'] ? $col['COMMENTS'] : '')
             );
+        }
+        return $rows;
+    }
+    
+    
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\ModelBuilders\AbstractSqlModelBuilder::findTables()
+     */
+    protected function findObjectTables(string $mask = null) : array
+    {
+        if ($mask) {
+            $filter = "AND table_name LIKE '{$mask}'";
+        }
+        
+        $sql = "SELECT table_name AS LABEL, table_name AS DATA_ADDRESS, table_name AS ALIAS FROM all_tables WHERE OWNER='{$this->getDataConnection()->getUser()}' {$filter}";
+        $rows = $this->getDataConnection()->runSql($sql)->getResultArray();
+        foreach ($rows as $nr => $row) {
+            $rows[$nr]['LABEL'] = $this->generateLabel($row['LABEL']);
         }
         return $rows;
     }

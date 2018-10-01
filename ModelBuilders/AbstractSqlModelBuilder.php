@@ -17,6 +17,11 @@ use exface\Core\DataTypes\DateDataType;
 use exface\Core\DataTypes\TextDataType;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\Factories\DataTypeFactory;
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\Exceptions\InvalidArgumentException;
+use exface\Core\Interfaces\DataSources\DataTransactionInterface;
+use exface\Core\Interfaces\DataSources\DataConnectionInterface;
+use exface\Core\DataConnectors\AbstractSqlConnector;
 
 abstract class AbstractSqlModelBuilder extends AbstractModelBuilder implements ModelBuilderInterface
 {
@@ -28,26 +33,128 @@ abstract class AbstractSqlModelBuilder extends AbstractModelBuilder implements M
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\ModelBuilders\AbstractModelBuilder::generateAttributesForObject()
      */
-    public function generateAttributesForObject(MetaObjectInterface $meta_object)
+    public function generateAttributesForObject(MetaObjectInterface $meta_object) : DataSheetInterface
+    {
+        $transaction = $meta_object->getWorkbench()->data()->startTransaction();
+        
+        $newAttributes = $this->generateAttributes($meta_object, $transaction);
+        $this->generateRelations($meta_object, $newAttributes, $transaction);
+        
+        $transaction->commit();
+        
+        return $newAttributes;
+    }
+    
+    /**
+     * Returns an attribute data sheet with attributes created from data addresses currently not in the model.
+     * 
+     * @param MetaObjectInterface $meta_object
+     * @return DataSheetInterface
+     */
+    protected function generateAttributes(MetaObjectInterface $meta_object, DataTransactionInterface $transaction = null) : DataSheetInterface
     {
         $result_data_sheet = DataSheetFactory::createFromObjectIdOrAlias($meta_object->getWorkbench(), 'exface.Core.ATTRIBUTE');
         
         $imported_rows = $this->getAttributeDataFromTableColumns($meta_object, $meta_object->getDataAddress());
         foreach ($imported_rows as $row) {
-            if (count($meta_object->findAttributesByDataAddress($row['DATA_ADDRESS'])) === 0) {
+            if (empty($meta_object->findAttributesByDataAddress($row['DATA_ADDRESS']))) {
                 $result_data_sheet->addRow($row);
             }
         }
         $result_data_sheet->setCounterRowsAll(count($imported_rows));
         
         if (! $result_data_sheet->isEmpty()) {
-            $result_data_sheet->dataCreate();
+            $result_data_sheet->dataCreate(false, $transaction);
         }
         
         return $result_data_sheet;
     }
     
-    protected abstract function getAttributeDataFromTableColumns(MetaObjectInterface $meta_object, $table_name);
+    /**
+     * Returns an array of data rows - each being an array with attribute aliases for keys.
+     * 
+     * @param MetaObjectInterface $meta_object
+     * @param string $table_name
+     * 
+     * @return array[]
+     */
+    protected abstract function getAttributeDataFromTableColumns(MetaObjectInterface $meta_object, string $table_name) : array;
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\ModelBuilders\AbstractModelBuilder::generateObjectsForDataSource()
+     */
+    public function generateObjectsForDataSource(AppInterface $app, DataSourceInterface $source, string $data_address_mask = null) : DataSheetInterface
+    {
+        $existing_objects = DataSheetFactory::createFromObjectIdOrAlias($app->getWorkbench(), 'exface.Core.OBJECT');
+        $existing_objects->getColumns()->addFromExpression('DATA_ADDRESS');
+        $existing_objects->addFilterFromString('APP', $app->getUid(), EXF_COMPARATOR_EQUALS);
+        $existing_objects->dataRead();
+        
+        $newObjectsSheet = DataSheetFactory::createFromObjectIdOrAlias($app->getWorkbench(), 'exface.Core.OBJECT');
+        
+        $transaction = $app->getWorkbench()->data()->startTransaction();
+        
+        $imported_rows = $this->getObjectData($app, $source, $data_address_mask)->getRows();
+        foreach ($imported_rows as $row) {
+            if ($existing_objects->getColumns()->getByExpression('DATA_ADDRESS')->findRowByValue($row['DATA_ADDRESS']) === false) {
+                $newObjectsSheet->addRow($row);
+            }
+        }
+        $newObjectsSheet->setCounterRowsAll(count($imported_rows));
+        
+        if (! $newObjectsSheet->isEmpty()) {
+            $newObjects = [];
+            $newObjectsSheet->dataCreate(false, $transaction);
+            // Generate attributes for each object
+            foreach ($newObjectsSheet->getRows() as $row) {
+                $object = $app->getWorkbench()->model()->getObjectByAlias($row['ALIAS'], $app->getAliasWithNamespace());
+                $attributes = $this->generateAttributes($object, $transaction);
+                $newObjects[] = [$object, $attributes];
+            }
+            // After all attributes are there, generate relations. It must be done after all new objects have
+            // attributes as relations need attribute UIDs on both sides!
+            foreach($newObjects as $data) {
+                list($object, $attributes) = $data;
+                $this->generateRelations($object, $attributes, $transaction);
+            }
+        }
+        
+        $transaction->commit();
+        
+        return $newObjectsSheet;
+    }
+    
+    /**
+     * 
+     * @param AppInterface $app
+     * @param DataSourceInterface $source
+     * @param string $data_address_mask
+     * @return DataSheetInterface
+     */
+    protected function getObjectData(AppInterface $app, DataSourceInterface $source, string $data_address_mask = null) : DataSheetInterface
+    {
+        $sheet = DataSheetFactory::createFromObjectIdOrAlias($app->getWorkbench(), 'exface.Core.OBJECT');
+        $ds_uid = $source->getId();
+        $app_uid = $app->getUid();
+        foreach ($this->findObjectTables($data_address_mask) as $row) {
+            $row = array_merge([
+                'DATA_SOURCE' => $ds_uid,
+                'APP' => $app_uid
+            ], $row);
+            $sheet->addRow($row);
+        }
+        return $sheet;
+    }
+    
+    /**
+     * 
+     * @param SqlDataConnectorInterface $connection
+     * @param string $data_address_mask
+     * @return array
+     */
+    abstract protected function findObjectTables(string $data_address_mask = null) : array;
     
     /**
      * 
@@ -95,7 +202,7 @@ abstract class AbstractSqlModelBuilder extends AbstractModelBuilder implements M
         } else {
             $column_name = trim($column_name);
             $column_name = str_replace('_', ' ', $column_name);
-            $column_name = strtolower($column_name);
+            $column_name = mb_strtolower($column_name);
             $column_name = ucfirst($column_name);
         }
         return $column_name;
@@ -133,6 +240,81 @@ abstract class AbstractSqlModelBuilder extends AbstractModelBuilder implements M
         } else {
             return $parts[0];
         }
+    }
+    
+    /**
+     * Erstellt eine Relation, wenn die Datenadresse mit _OID endet und der Wert davor exakt der Adresse
+     * eine Metaobjekts aus derselben datenquelle entspricht.
+     *
+     * @param MetaObjectInterface $object
+     * @param array $row
+     * @return array
+     */
+    protected function generateRelations(MetaObjectInterface $object, DataSheetInterface $attributeSheet, DataTransactionInterface $transaction = null) : DataSheetInterface
+    {
+        if (! $attributeSheet->getMetaObject()->is('exface.Core.ATTRIBUTE')) {
+            throw new InvalidArgumentException('Invalid data sheet passed to relation finder: expected "exface.Core.ATTRIBUTE", received "' . $attributeSheet->getMetaObject()->getAliasWithNamespace() . '"!');
+        }
+        
+        $found_relations = false;
+        foreach ($attributeSheet->getRows() as $row) {
+            $address = $row['DATA_ADDRESS'];
+            $relation = $this->findRelation($object->getDataAddress(), $address, $object->getDataConnection());
+            if (! empty($relation)) {
+                $relatedTable = $relation['table'];
+                $ds = DataSheetFactory::createFromObjectIdOrAlias($object->getWorkbench(), 'exface.Core.OBJECT');
+                $ds->getColumns()->addFromUidAttribute();
+                $ds->getColumns()->addFromLabelAttribute();
+                $ds->addFilterFromString('DATA_ADDRESS', $relatedTable, EXF_COMPARATOR_EQUALS);
+                $ds->addFilterFromString('DATA_SOURCE', $object->getDataSourceId(), EXF_COMPARATOR_EQUALS);
+                $ds->dataRead();
+                if ($ds->countRows() === 1) {
+                    $row['RELATED_OBJ'] = $ds->getUidColumn()->getValues()[0];
+                    $row['ALIAS'] = $relation['alias'];
+                    if ($row['LABEL'] === $this->generateLabel($address)) {
+                        $row['LABEL'] = $ds->getColumns()->getByAttribute($ds->getMetaObject()->getLabelAttribute())->getValues()[0];
+                    }
+                    $attributeSheet->addRow($row, true);
+                    $found_relations = true;
+                }
+            }
+        }
+        
+        if ($found_relations === true) {
+            $attributeSheet->dataUpdate(false, $transaction);    
+        }
+        
+        return $attributeSheet;
+    }
+    
+    /**
+     * 
+     * @param string $table
+     * @param string $column
+     * @param SqlDataConnectorInterface $connector
+     * @return array
+     */
+    protected function findRelation(string $table, string $column, SqlDataConnectorInterface $connector) : array
+    {
+        if (! ($connector instanceof AbstractSqlConnector)) {
+            return [];
+        }
+        
+        $pattern = $connector->getRelationMatcher();
+        
+        if (! $pattern) {
+            return [];
+        }
+        
+        $matches = [];
+        if (preg_match_all($pattern, $column, $matches)) {
+            return [
+                'table' => $matches['table'][0],
+                'key' => $matches['key'][0],
+                'alias' => $matches['alias'][0],
+            ];
+        }
+        return [];
     }
 }
 ?>

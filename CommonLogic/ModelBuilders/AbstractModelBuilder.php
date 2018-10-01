@@ -10,6 +10,7 @@ use exface\Core\Interfaces\DataSources\DataSourceInterface;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 
 abstract class AbstractModelBuilder implements ModelBuilderInterface
 {
@@ -26,7 +27,7 @@ abstract class AbstractModelBuilder implements ModelBuilderInterface
      *
      * @see \exface\Core\Interfaces\DataSources\ModelBuilderInterface::getDataConnection()
      */
-    public function getDataConnection()
+    public function getDataConnection() : DataConnectionInterface
     {
         return $this->data_connector;
     }
@@ -36,7 +37,7 @@ abstract class AbstractModelBuilder implements ModelBuilderInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSources\ModelBuilderInterface::generateObjectsForDataSource()
      */
-    public function generateObjectsForDataSource(AppInterface $app, DataSourceInterface $source, $data_address_mask = null)
+    public function generateObjectsForDataSource(AppInterface $app, DataSourceInterface $source, string $data_address_mask = null) : DataSheetInterface
     {
         throw new NotImplementedError('Creating models for all entities of a data source not yet implemented!');
     }
@@ -46,7 +47,7 @@ abstract class AbstractModelBuilder implements ModelBuilderInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSources\ModelBuilderInterface::generateAttributesForObject()
      */
-    public function generateAttributesForObject(MetaObjectInterface $object)
+    public function generateAttributesForObject(MetaObjectInterface $object) : DataSheetInterface
     {
         throw new NotImplementedError('Creating models for explicitly specified object not yet implemented!');
     }
