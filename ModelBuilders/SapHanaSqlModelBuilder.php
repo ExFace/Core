@@ -2,6 +2,7 @@
 namespace exface\Core\ModelBuilders;
 
 use exface\Core\Interfaces\Model\MetaObjectInterface;
+use exface\Core\Exceptions\NotImplementedError;
 
 class SapHanaSqlModelBuilder extends AbstractSqlModelBuilder
 {
@@ -11,7 +12,7 @@ class SapHanaSqlModelBuilder extends AbstractSqlModelBuilder
      * {@inheritDoc}
      * @see \exface\Core\ModelBuilders\AbstractSqlModelBuilder::getAttributeDataFromTableColumns()
      */
-    public function getAttributeDataFromTableColumns(MetaObjectInterface $meta_object, $table_name)
+    public function getAttributeDataFromTableColumns(MetaObjectInterface $meta_object, string $table_name) : array
     {
         $columns_sql = "SELECT * FROM TABLE_COLUMNS WHERE SCHEMA_NAME = '" . static::getSchemaFromAlias($table_name) . "' AND TABLE_NAME = '" . static::getTableNameFromAlias($table_name) . "' ORDER BY POSITION";
         
@@ -30,6 +31,16 @@ class SapHanaSqlModelBuilder extends AbstractSqlModelBuilder
             );
         }
         return $rows;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\ModelBuilders\AbstractSqlModelBuilder::findTables()
+     */
+    protected function findObjectTables(string $mask = null) : array
+    {
+        throw new NotImplementedError('Generating meta objects from DB schema not yet available: create objects manually and then import attributes.');
     }
 }
 ?>

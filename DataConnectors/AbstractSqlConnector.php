@@ -6,7 +6,6 @@ use exface\Core\Interfaces\DataSources\SqlDataConnectorInterface;
 use exface\Core\CommonLogic\DataQueries\SqlDataQuery;
 use exface\Core\Interfaces\DataSources\DataQueryInterface;
 use exface\Core\DataTypes\BooleanDataType;
-use exface\Core\Exceptions\NotImplementedError;
 
 /**
  *
@@ -33,6 +32,8 @@ abstract class AbstractSqlConnector extends AbstractDataConnector implements Sql
     private $port = null;
 
     private $character_set = null;
+    
+    private $relationMatcher = null;
 
     /**
      *
@@ -227,5 +228,26 @@ abstract class AbstractSqlConnector extends AbstractDataConnector implements Sql
         $uxon->setProperty('autocommit', $this->getAutocommit());
         return $uxon;
     }
+    
+    /**
+     *
+     * @return string
+     */
+    public function getRelationMatcher() : string
+    {
+        return $this->relationMatcher;
+    }
+    
+    /**
+     * 
+     * @param string $value
+     * @return AbstractSqlConnector
+     */
+    public function setRelationMatcher(string $value) : AbstractSqlConnector
+    {
+        $this->relationMatcher = $value;
+        return $this;
+    }
+    
 }
 ?>

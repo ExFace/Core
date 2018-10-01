@@ -8,8 +8,6 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 interface ModelBuilderInterface
 {
 
-    public function __construct(DataConnectionInterface $data_connector);
-
     /**
      * Generates attributes for the given meta object based on its data source.
      * 
@@ -21,7 +19,7 @@ interface ModelBuilderInterface
      * @return DataSheetInterface
      *
      */
-    public function generateAttributesForObject(MetaObjectInterface $meta_object);
+    public function generateAttributesForObject(MetaObjectInterface $meta_object) : DataSheetInterface;
     
     /**
      * Generates meta objects for the specified app from all data addresses existing 
@@ -39,17 +37,18 @@ interface ModelBuilderInterface
      * @param AppInterface $app
      * @param DataSourceInterface $source
      * @param string $data_address_mask
+     * 
      * @return DataSheetInterface
      *
      */
-    public function generateObjectsForDataSource(AppInterface $app, DataSourceInterface $source, $data_address_mask = null);
+    public function generateObjectsForDataSource(AppInterface $app, DataSourceInterface $source, string $data_address_mask = null) : DataSheetInterface;
     
 
     /**
      *
-     * @return SqlDataConnectorInterface
+     * @return DataConnectionInterface
      */
-    public function getDataConnection();
+    public function getDataConnection() : DataConnectionInterface;
 }
 
 ?>

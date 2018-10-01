@@ -13,6 +13,7 @@ use exface\Core\DataTypes\AggregatorFunctionsDataType;
 use exface\Core\Interfaces\Model\AggregatorInterface;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\DataTypes\RelationTypeDataType;
+use exface\Core\Interfaces\DataSources\SqlDataConnectorInterface;
 
 /**
  * A query builder for Oracle SQL.

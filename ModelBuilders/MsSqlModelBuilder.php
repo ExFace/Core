@@ -2,6 +2,7 @@
 namespace exface\Core\ModelBuilders;
 
 use exface\Core\Interfaces\Model\MetaObjectInterface;
+use exface\Core\Exceptions\NotImplementedError;
 
 class MSSqlModelBuilder extends AbstractSqlModelBuilder
 {
@@ -11,7 +12,7 @@ class MSSqlModelBuilder extends AbstractSqlModelBuilder
      * {@inheritDoc}
      * @see \exface\Core\ModelBuilders\AbstractSqlModelBuilder::getAttributeDataFromTableColumns()
      */
-    public function getAttributeDataFromTableColumns(MetaObjectInterface $meta_object, $table_name)
+    public function getAttributeDataFromTableColumns(MetaObjectInterface $meta_object, string $table_name) : array
     {
         $table_name_parts = explode('.', $table_name);
         if (count($table_name_parts) == 2) {
@@ -39,6 +40,16 @@ class MSSqlModelBuilder extends AbstractSqlModelBuilder
             );
         }
         return $rows;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\ModelBuilders\AbstractSqlModelBuilder::findTables()
+     */
+    protected function findObjectTables(string $mask = null) : array
+    {
+        throw new NotImplementedError('Generating meta objects from DB schema not yet available: create objects manually and then import attributes.');
     }
 }
 ?>
