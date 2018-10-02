@@ -19,7 +19,7 @@ class OracleSqlModelBuilder extends AbstractSqlModelBuilder
      * {@inheritDoc}
      * @see \exface\Core\ModelBuilders\AbstractSqlModelBuilder::getAttributeDataFromTableColumns()
      */
-    public function getAttributeDataFromTableColumns(MetaObjectInterface $meta_object, string $table_name) : array
+    protected function getAttributeDataFromTableColumns(MetaObjectInterface $meta_object, string $table_name) : array
     {
         $columns_sql = "
 					SELECT
