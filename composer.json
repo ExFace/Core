@@ -1,61 +1,62 @@
 {
-	"name" : "exface/Core",
-	"description" : "Business web application plattform",
-	"type" : "project",
-	"license" : "GPL-3.0+",
-	"authors" : [{
-			"name" : "Andrej Kabachnik",
-			"email" : "kabachnik@gmail.com",
-			"role" : "Creator"
-		}
-	],
-	"support" : {
-		"issues" : "https://github.com/exface/core/issues"
-	},
-	"require" : {
-		"php" : "^7.1",
-		"symfony/FileSystem" : "^3.1||^4.0",
-		"symfony/Event-Dispatcher" : "^3.1||^4.0",
-		"symfony/translation" : "^3.1||^4.0",
-		"symfony/config" : "^3.1||^4.0",
-		"symfony/debug" : "^3.3||^4.0",
-		"symfony/var-dumper" : "^3.2||^4.0",
-		"symfony/finder" : "~3.1.7||^4.0",
-		"symfony/StopWatch" : "^3.1.2||^4.0",
-		"webmozart/path-util" : "^2.3",
-		"monolog/monolog" : "^1.22.1",
-		"femtopixel/monolog-csvhandler" : "~0.1",
-		"psr/http-message" : "^1.0.1",
-		"psr/http-server-handler" : "^1.0",
-		"psr/http-server-middleware" : "^1.0",
-		"psr/container" : "^1.0",
-		"guzzlehttp/psr7" : "^1.4.2",
-		"mk-j/PHP_XLSXWriter" : "^0.32",
-		"wingu/reflection" : "~1.0.5",
-		"league/csv" : "^8.0",
-		"jdorn/sql-formatter" : "~1.2.17",
-		"cebe/markdown" : "^1.1.2",
-		"kabachello/fileroute" : "~0.2",
-		"guzzlehttp/guzzle" : "^6.2.2",
-		"npm-asset/workbox-sw" : "^3.0.0",
-		"npm-asset/dexie" : "^2.0.4"
-	},
-	"extra" : {
-		"app" : {
-			"app_uid" : "0x31000000000000000000000000000000",
-			"app_alias" : "exface.Core",
-			"model_md5" : "55c03284acf7e2eff6d3da1ee520eee2",
-			"model_timestamp" : "2018-06-20 09:57:44"
-		}
-	},
-	"autoload" : {
-		"psr-4" : {
-			"exface\\Core\\" : ""
-		},
-		"exclude-from-classmap" : [
-			"/Config/",
-			"/Translations/",
-			"/Model/"
-		]
-	}
+    "name": "exface/Core",
+    "description": "Business web application plattform",
+    "type": "project",
+    "license": "GPL-3.0+",
+    "authors": [
+        {
+            "name": "Andrej Kabachnik",
+            "email": "kabachnik@gmail.com",
+            "role": "Creator"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/exface/core/issues"
+    },
+    "require": {
+        "php": "^7.1",
+        "symfony/FileSystem": "^3.1||^4.0",
+        "symfony/Event-Dispatcher": "^3.1||^4.0",
+        "symfony/translation": "^3.1||^4.0",
+        "symfony/config": "^3.1||^4.0",
+        "symfony/debug": "^3.3||^4.0",
+        "symfony/var-dumper": "^3.2||^4.0",
+        "symfony/finder": "~3.1.7||^4.0",
+        "symfony/StopWatch": "^3.1.2||^4.0",
+        "webmozart/path-util": "^2.3",
+        "monolog/monolog": "^1.22.1",
+        "femtopixel/monolog-csvhandler": "~0.1",
+        "psr/http-message": "^1.0.1",
+        "psr/http-server-handler": "^1.0",
+        "psr/http-server-middleware": "^1.0",
+        "psr/container": "^1.0",
+        "guzzlehttp/psr7": "^1.4.2",
+        "mk-j/PHP_XLSXWriter": "^0.32",
+        "wingu/reflection": "~1.0.5",
+        "league/csv": "^8.0",
+        "jdorn/sql-formatter": "~1.2.17",
+        "cebe/markdown": "^1.1.2",
+        "kabachello/fileroute": "~0.2",
+        "guzzlehttp/guzzle": "^6.2.2",
+        "npm-asset/workbox-sw": "^3.0.0",
+        "npm-asset/dexie": "^2.0.4"
+    },
+    "extra": {
+        "app": {
+            "app_uid": "0x31000000000000000000000000000000",
+            "app_alias": "exface.Core",
+            "model_md5": "55c03284acf7e2eff6d3da1ee520eee2",
+            "model_timestamp": "2018-06-20 09:57:44"
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "exface\\Core\\": ""
+        },
+        "exclude-from-classmap": [
+            "/Config/",
+            "/Translations/",
+            "/Model/"
+        ]
+    }
 }
