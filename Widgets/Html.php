@@ -4,6 +4,8 @@ namespace exface\Core\Widgets;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Templates\HttpFileServerTemplate;
+use exface\Core\Factories\DataPointerFactory;
+use exface\Core\Events\Widget\OnPrefillChangePropertyEvent;
 /**
  * The HTML widget simply shows some HTML.
  * 
@@ -226,8 +228,11 @@ class Html extends Display
     {
         if ($baseAlias = $this->getBaseUrlAttributeAlias()) {
             if ($dataSheet->getMetaObject()->is($this->getMetaObject())) {
-                $column = $dataSheet->getColumns()->getByExpression($baseAlias);
-                $this->setBaseUrl($column->getValues(false)[0]);
+                if ($column = $dataSheet->getColumns()->getByExpression($baseAlias)) {
+                    $pointer = DataPointerFactory::createFromColumn($column, 0);
+                    $this->setBaseUrl($pointer->getValue());
+                    $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'base_url', $pointer));
+                }
             } else {
                 // TODO
             }

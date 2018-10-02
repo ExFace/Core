@@ -5,6 +5,8 @@ use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
+use exface\Core\Events\Widget\OnPrefillChangePropertyEvent;
+use exface\Core\Factories\DataPointerFactory;
 
 /**
  * A dialog header is a special widget used to display a summary of a dialog - typically the object currently loaded.
@@ -134,9 +136,12 @@ class DialogHeader extends Form
                 $cnt = count(array_unique($col->getValues()));
                 if ($cnt > 1) {
                     $this->setCaption($cnt . 'x ' . $this->getMetaObject()->getName());
+                    $pointer = DataPointerFactory::createFromColumn($col);
                 } else {
                     $this->setCaption($col->getCellValue(0));
+                    $pointer = DataPointerFactory::createFromColumn($col, 0);
                 }
+                $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'caption', $pointer));
             }
         }
         

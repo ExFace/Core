@@ -35,10 +35,23 @@ interface WidgetInterface extends WorkbenchDependantInterface, iCanBeCopied
     public function exportUxonObject();
 
     /**
-     * Prefills the widget with values of a data sheet
+     * Prefills the widget with values of a data sheet.
+     * 
+     * Each widget has it's own prefill logic: simple value widgets will just look for
+     * a suitable cell value in the data sheet, key-value widgets will try to get
+     * both, while complex data widgets may use filters, rows, UIDs, etc.
+     * 
+     * The prefill process produces three types of events: `OnBeforePrefill` and
+     * `OnPrefill` will be fired for every widget, the prefill data is passed to - before 
+     * and after processing it - regardless of whether it affetcs a widget or not.
+     * `OnPrefillChangeProperty`, on the other hand, will be fired only if the prefill
+     * actually affects the widget and will be triggered for every widget property
+     * that is changed. This event let's you examine the results of the prefill
+     * in detail as it contains old and new values of the affected properties.
      *
      * @triggers \exface\Core\Events\Widget\OnBeforePrefillEvent
      * @triggers \exface\Core\Events\Widget\OnPrefillEvent
+     * @triggers \exface\Core\Events\Widget\OnPrefillChangePropertyEvent
      *
      * @param \exface\Core\Interfaces\DataSheets\DataSheetInterface $data_sheet            
      * @return void

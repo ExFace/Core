@@ -40,6 +40,8 @@ class Container extends AbstractWidget implements iContainOtherWidgets
         foreach ($this->getChildren() as $widget) {
             $widget->prefill($data_sheet);
         }
+        
+        return;
     }
 
     /**

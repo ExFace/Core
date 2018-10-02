@@ -29,6 +29,7 @@ use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Events\Widget\OnBeforePrefillEvent;
 use exface\Core\Events\Widget\OnPrefillEvent;
+use exface\Core\Interfaces\Events\EventInterface;
 
 /**
  * Basic ExFace widget
@@ -242,6 +243,9 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
      * will not do anything at all.
      * 
      * @param DataSheetInterface $data_sheet
+     * 
+     * @triggers exface\Core\Events\Widget\OnPrefillChangePropertyEvent
+     * 
      * @return void
      */
     protected function doPrefill(DataSheetInterface $data_sheet)
@@ -1321,6 +1325,18 @@ else {
     public function copy()
     {
         return WidgetFactory::createFromUxon($this->getPage(), $this->exportUxonObject());
+    }
+    
+    /**
+     * This is a shortcut to calling $this->getWorkbench()->eventManager()->dispatch()
+     * 
+     * @param EventInterface $event
+     * @return AbstractWidget
+     */
+    protected function dispatchEvent(EventInterface $event) : AbstractWidget
+    {
+        $this->getWorkbench()->eventManager()->dispatch($event);
+        return $this;
     }
 }
 ?>

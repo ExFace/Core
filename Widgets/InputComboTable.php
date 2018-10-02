@@ -10,6 +10,9 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\Widgets\WidgetLogicError;
 use exface\Core\CommonLogic\Model\Condition;
 use exface\Core\Factories\WidgetFactory;
+use exface\Core\Factories\DataPointerFactory;
+use exface\Core\Events\Widget\OnPrefillChangePropertyEvent;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 
 /**
  * A InputComboTable is similar to InputCombo, but it uses a DataTable to show the autosuggest values.
@@ -364,7 +367,11 @@ class InputComboTable extends InputCombo implements iHaveChildren
         
         // If the prefill data is based on the same object, as the widget and has a column matching
         // this widgets attribute_alias, simply look for all the required attributes in the prefill data.
-        $this->setValue($data_sheet->getCellValue($this->getAttributeAlias(), 0));
+        if ($col = $data_sheet->getColumns()->getByExpression($this->getAttributeAlias())) {
+            $valuePointer = DataPointerFactory::createFromColumn($col, 0);
+            $this->setValue($valuePointer->getValue());
+            $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'value', $valuePointer));
+        }
         
         // Be carefull with the value text. If the combo stands for a relation, it can be retrieved from the prefill data,
         // but if the text comes from an unrelated object, it cannot be part of the prefill data and thus we can not
@@ -377,7 +384,9 @@ class InputComboTable extends InputCombo implements iHaveChildren
         }
         
         if ($text_column_expr && $col = $data_sheet->getColumns()->getByExpression($text_column_expr)) {
-            $this->setValueText($col->getCellValue(0));
+            $textPointer = DataPointerFactory::createFromColumn($col, 0);
+            $this->setValueText($textPointer->getValue());
+            $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'value_text', $textPointer));
         }
         return;
     }
@@ -392,10 +401,14 @@ class InputComboTable extends InputCombo implements iHaveChildren
         // If the sheet is based upon the object, that is being selected by this Combo, we can use the prefill sheet
         // values directly
         if ($col = $data_sheet->getColumns()->getByAttribute($this->getValueAttribute())) {
-            $this->setValue($col->getCellValue(0));
+            $pointer = DataPointerFactory::createFromColumn($col, 0);
+            $this->setValue($pointer->getValue());
+            $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'value', $pointer));
         }
         if ($col = $data_sheet->getColumns()->getByAttribute($this->getTextAttribute())) {
-            $this->setValueText($col->getCellValue(0));
+            $pointer = DataPointerFactory::createFromColumn($col, 0);
+            $this->setValueText($pointer->getValue());
+            $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'value_text', $pointer));
         }
         return;
     }
@@ -418,6 +431,7 @@ class InputComboTable extends InputCombo implements iHaveChildren
             if ($column->getAttribute() && $column->getAttribute()->isRelation()) {
                 if ($column->getAttribute()->getRelation()->getRightObject()->is($this->getRelation()->getRightObject())) {
                     $this->setValuesFromArray($column->getValues(false));
+                    $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'values', DataPointerFactory::createFromColumn($column)));
                     return;
                 }
             }

@@ -3,6 +3,7 @@ namespace exface\Core\Events\Widget;
 
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\Interfaces\Events\DataSheetEventInterface;
 
 /**
  * Event fired before a widget is prefilled.
@@ -12,7 +13,7 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
  * @author Andrej Kabachnik
  *        
  */
-class OnBeforePrefillEvent extends AbstractWidgetEvent
+class OnBeforePrefillEvent extends AbstractWidgetEvent implements DataSheetEventInterface
 {
     private $prefillSheet = null;
     
@@ -26,7 +27,13 @@ class OnBeforePrefillEvent extends AbstractWidgetEvent
      * 
      * @return DataSheetInterface
      */
-    public function getPrefillSheet() : DataSheetInterface
+    public function getPrefillData() : DataSheetInterface
+    {
+        return $this->prefillSheet;
+    }
+    
+    
+    public function getDataSheet() : DataSheetInterface
     {
         return $this->prefillSheet;
     }
