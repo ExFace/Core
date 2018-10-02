@@ -43,9 +43,6 @@
                 "attribute_alias": "READONLY"
             },
             {
-                "attribute_alias": "CONFIG"
-            },
-            {
                 "attribute_alias": "CREATED_BY_USER__LABEL"
             }
         ],

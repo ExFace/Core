@@ -9,9 +9,9 @@
     "intro": "Hier k\u00f6nnen Meta-Attribute gepflegt werden.",
     "replaces_page_alias": null,
     "contents": {
-        "id": "attributes",
         "widget_type": "DataTable",
         "object_alias": "exface.Core.ATTRIBUTE",
+        "multi_select": true,
         "filters": [
             {
                 "attribute_alias": "OBJECT"
