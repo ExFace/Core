@@ -45,7 +45,7 @@ class MSSqlModelBuilder extends AbstractSqlModelBuilder
     /**
      *
      * {@inheritDoc}
-     * @see \exface\Core\ModelBuilders\AbstractSqlModelBuilder::findTables()
+     * @see \exface\Core\ModelBuilders\AbstractSqlModelBuilder::findObjectTables()
      */
     protected function findObjectTables(string $mask = null) : array
     {
