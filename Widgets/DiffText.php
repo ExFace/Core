@@ -3,6 +3,8 @@ namespace exface\Core\Widgets;
 
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Exceptions\NotImplementedError;
+use exface\Core\Factories\DataPointerFactory;
+use exface\Core\Events\Widget\OnPrefillChangePropertyEvent;
 
 /**
  * The DiffText widget compares two texts - an original and a new one - an shows a report highlighting the changes.
@@ -68,16 +70,34 @@ class DiffText extends AbstractWidget
         return $this;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\AbstractWidget::doPrefill($data_sheet)
+     */
     protected function doPrefill(DataSheetInterface $data_sheet)
     {
+        // Do not do anything, if the value is already set explicitly (e.g. a fixed value)
+        if (! $this->isPrefillable()) {
+            return;
+        }
+        
         // Do not do anything, if the values are already set explicitly (e.g. a fixed value)
         if ($this->getLeftValue() && $this->getRightValue()) {
             return;
         }
         
         if ($this->getMetaObject()->isExactly($data_sheet->getMetaObject())) {
-            $this->setLeftValue($data_sheet->getCellValue($this->getLeftAttributeAlias(), 0));
-            $this->setRightValue($data_sheet->getCellValue($this->getRightAttributeAlias(), 0));
+            if ($col = $data_sheet->getColumns()->getByExpression($this->getLeftAttributeAlias())) {
+                $pointer = DataPointerFactory::createFromColumn($col, 0);
+                $this->setLeftValue($pointer->getValue());
+                $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'left_value', $pointer));
+            }
+            if ($col = $data_sheet->getColumns()->getByExpression($this->getRightAttributeAlias())) {
+                $pointer = DataPointerFactory::createFromColumn($col, 0);
+                $this->setRightValue($pointer->getValue());
+                $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'right_value', $pointer));
+            }
         } else {
             throw new NotImplementedError('Prefilling DiffText with data sheets from related objects not implemented!');
         }

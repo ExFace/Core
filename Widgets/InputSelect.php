@@ -16,6 +16,8 @@ use exface\Core\Interfaces\DataSheets\DataColumnInterface;
 use exface\Core\Interfaces\Model\MetaRelationInterface;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
+use exface\Core\Factories\DataPointerFactory;
+use exface\Core\Events\Widget\OnPrefillChangePropertyEvent;
 
 /**
  * A dropdown menu to select from.
@@ -348,7 +350,9 @@ class InputSelect extends Input implements iSupportMultiSelect
             if ($column->getAttribute() && $column->getAttribute()->isRelation()) {
                 if ($column->getAttribute()->getRelation()->getRightObject()->is($this->getAttribute()->getRelation()->getRightObject())) {
                     // TODO what about texts?
+                    $pointer = DataPointerFactory::createFromColumn($column);
                     $this->setOptionsFromPrefillColumns($column);
+                    $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'selectable_options', $pointer));
                     return;
                 }
             }
@@ -370,9 +374,15 @@ class InputSelect extends Input implements iSupportMultiSelect
         if (! $this->getUsePrefillValuesAsOptions() && $this->getUsePrefillToFilterOptions()) {
             // Use this relation as filter to query the data source for selectable options
             if ($col = $data_sheet->getColumns()->getByAttribute($relation_from_options_to_prefill_object->getRightKeyAttribute(true))) {
+                $pointer = DataPointerFactory::createFromColumn($col);
                 $this->getOptionsDataSheet()->addFilterInFromString($relation_from_options_to_prefill_object->getAlias(), $col->getValues(false));
+                // TODO there is actually no filters property for InputSelect. Perhaps it is a good idea to
+                // transfer it to InputSelect from InputCombo - since we can even prefill it here?
+                $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'filters', $pointer));
             }
         }
+        
+        return;
     }
 
     protected function doPrefill(DataSheetInterface $data_sheet)
@@ -429,7 +439,12 @@ class InputSelect extends Input implements iSupportMultiSelect
         }
         
         $this->setSelectableOptions($values, $texts);
+        // FIXME #OnPrefillChangeProperty fire event with a range pointer
         $this->setValuesFromArray($values);
+        $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'values', DataPointerFactory::createFromColumn($value_column)));
+        if ($text_column) {
+            $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'value_texts', DataPointerFactory::createFromColumn($text_column)));
+        }
         return $this;
     }
 

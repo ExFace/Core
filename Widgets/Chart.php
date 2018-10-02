@@ -476,10 +476,11 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
     }
 
     /**
-     *
-     * {@inheritdoc} A Chart can be prefilled just like all the other data widgets, but only if it has it's own data. If the data is fetched from
-     *               a linked widget, the prefill does not make sense and will be ignored. But the linked widget will surely be prefilled, so the
-     *               the chart will get the correct data anyway.
+     * A Chart can be prefilled just like all the other data widgets, but only if it has it's own data. If the data is fetched from
+     * a linked widget, the prefill does not make sense and will be ignored. But the linked widget will surely be prefilled, so the
+     * the chart will get the correct data anyway.
+     * 
+     * {@inheritdoc}
      *              
      * @see \exface\Core\Widgets\Data::prefill()
      */

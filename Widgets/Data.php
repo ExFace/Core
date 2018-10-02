@@ -665,86 +665,103 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
     protected function doPrefill(\exface\Core\Interfaces\DataSheets\DataSheetInterface $data_sheet)
     {
         if ($data_sheet->getMetaObject()->isExactly($this->getMetaObject())) {
-            // If the prefill data is based on the same object as the widget, inherit the filter conditions from the prefill
-            foreach ($data_sheet->getFilters()->getConditions() as $condition) {
-                // For each filter condition look for filters over the same attribute.
-                // Skip conditions not based on attributes.
-                if (! $condition->getExpression()->isMetaAttribute()) {
-                    continue;
-                }
-                $attr = $condition->getExpression()->getAttribute();
-                $attribute_filters = $this->getConfiguratorWidget()->findFiltersByAttribute($attr);
-                // If no filters are there, create one
-                if (count($attribute_filters) == 0) {
-                    $filter = $this->createFilterWidget($condition->getExpression()->getAttribute()->getAliasWithRelationPath());
-                    $this->addFilter($filter);
-                    $filter->setValue($condition->getValue());
-                    // Disable the filter because if the user changes it, the
-                    // prefill will not be consistent anymore (some prefilled
-                    // widgets may have different prefill-filters than others)
+            return $this->doPrefillWithDataObject($data_sheet);
+        } else {
+            return $this->doPrefillWithRelatedObject($data_sheet);
+        }
+    }
+    
+    protected function doPrefillWithDataObject(DataSheetInterface $data_sheet)
+    {
+        // TODO #OnPrefillChangePropertyEvent
+        // What data pointer do we pass to the event??? Perhaps we need different pointer types:
+        // DataPointerColumn, DataPointerFilter, DataPointerRange, etc.?
+        
+        // If the prefill data is based on the same object as the widget, inherit the filter conditions from the prefill
+        foreach ($data_sheet->getFilters()->getConditions() as $condition) {
+            // For each filter condition look for filters over the same attribute.
+            // Skip conditions not based on attributes.
+            if (! $condition->getExpression()->isMetaAttribute()) {
+                continue;
+            }
+            $attr = $condition->getExpression()->getAttribute();
+            $attribute_filters = $this->getConfiguratorWidget()->findFiltersByAttribute($attr);
+            // If no filters are there, create one
+            if (count($attribute_filters) == 0) {
+                $filter = $this->createFilterWidget($condition->getExpression()->getAttribute()->getAliasWithRelationPath());
+                $this->addFilter($filter);
+                $filter->setValue($condition->getValue());
+                // Disable the filter because if the user changes it, the
+                // prefill will not be consistent anymore (some prefilled
+                // widgets may have different prefill-filters than others)
                     $filter->setDisabled(true);
-                } else {
-                    // If matching filters were found, prefill them
-                    $prefilled = false;
-                    foreach ($attribute_filters as $filter) {
-                        if ($filter->getComparator() == $condition->getComparator()) {
-                            if ($filter->isPrefillable()) {
-                                $filter->setValue($condition->getValue());
-                            }
-                            $prefilled = true;
-                        }
-                    }
-                    if ($prefilled == false) {
-                        $filter = $attribute_filters[0];
+            } else {
+                // If matching filters were found, prefill them
+                $prefilled = false;
+                foreach ($attribute_filters as $filter) {
+                    if ($filter->getComparator() == $condition->getComparator()) {
                         if ($filter->isPrefillable()) {
                             $filter->setValue($condition->getValue());
                         }
+                        $prefilled = true;
+                    }
+                }
+                if ($prefilled == false) {
+                    $filter = $attribute_filters[0];
+                    if ($filter->isPrefillable()) {
+                        $filter->setValue($condition->getValue());
                     }
                 }
             }
-            // If the data should not be loaded layzily, and the prefill has data, use it as value
-            if (! $this->getLazyLoading() && ! $data_sheet->isEmpty()) {
-                $this->setValuesDataSheet($data_sheet);
+        }
+        // If the data should not be loaded layzily, and the prefill has data, use it as value
+        if (! $this->getLazyLoading() && ! $data_sheet->isEmpty()) {
+            $this->setValuesDataSheet($data_sheet);
+        }
+        return;
+    }
+    
+    protected function doPrefillWithRelatedObject(DataSheetInterface $data_sheet)
+    {
+        // if the prefill contains data for another object, than this data set contains, see if we try to find a relation to
+        // the prefill-object. If so, show only data related to the prefill (= add the prefill object as a filter)
+        
+        // First look if the user already specified a filter with the object we are looking for
+        foreach ($this->getConfiguratorWidget()->findFiltersByObject($data_sheet->getMetaObject()) as $fltr) {
+            $fltr->prefill($data_sheet);
+        }
+        
+        // Otherwise, try to find a suitable relation via generic relation searcher
+        // TODO currently this only works for direct relations, not for chained ones.
+        if (! $fltr && $rel = $this->getMetaObject()->findRelation($data_sheet->getMetaObject())) {
+            // If anything goes wrong, log away the error but continue, as
+            // the prefills are not critical in general.
+            try {
+                $filter_widget = $this->getConfiguratorWidget()->createFilterFromRelation($rel);
+                $filter_widget->prefill($data_sheet);
+            } catch (\Throwable $e) {
+                $this->getWorkbench()->getLogger()->logException($e);
             }
-        } else {
-            // if the prefill contains data for another object, than this data set contains, see if we try to find a relation to
-            // the prefill-object. If so, show only data related to the prefill (= add the prefill object as a filter)
-            
-            // First look if the user already specified a filter with the object we are looking for
-            foreach ($this->getConfiguratorWidget()->findFiltersByObject($data_sheet->getMetaObject()) as $fltr) {
-                $fltr->prefill($data_sheet);
-            }
-            
-            // Otherwise, try to find a suitable relation via generic relation searcher
-            // TODO currently this only works for direct relations, not for chained ones.
-            if (! $fltr && $rel = $this->getMetaObject()->findRelation($data_sheet->getMetaObject())) {
-                // If anything goes wrong, log away the error but continue, as
-                // the prefills are not critical in general.
-                try {
-                    $filter_widget = $this->getConfiguratorWidget()->createFilterFromRelation($rel);
-                    $filter_widget->prefill($data_sheet);
-                } catch (\Throwable $e) {
-                    $this->getWorkbench()->getLogger()->logException($e);
-                }
-            }
-            
-            // Apart from trying to prefill a filter, we should also look if we can reuse filters from the given prefill sheet.
-            // This is the case, if this data widget has a filter over exactly the same attribute, as the prefill sheet.
-            if (! $data_sheet->getFilters()->isEmpty()) {
-                foreach ($data_sheet->getFilters()->getConditions() as $condition) {
-                    // Skip conditions without attributes or with broken expressions (we do not want errors from the prefill logic!)
-                    if (! $condition->getExpression()->isMetaAttribute() || ! $condition->getExpression()->getAttribute())
-                        continue;
+        }
+        
+        // Apart from trying to prefill a filter, we should also look if we can reuse filters from the given prefill sheet.
+        // This is the case, if this data widget has a filter over exactly the same attribute, as the prefill sheet.
+        if (! $data_sheet->getFilters()->isEmpty()) {
+            foreach ($data_sheet->getFilters()->getConditions() as $condition) {
+                // Skip conditions without attributes or with broken expressions (we do not want errors from the prefill logic!)
+                if (! $condition->getExpression()->isMetaAttribute() || ! $condition->getExpression()->getAttribute())
+                    continue;
                     // See if there are filters in this widget, that work on the very same attribute
                     foreach ($this->getConfiguratorWidget()->findFiltersByObject($condition->getExpression()->getAttribute()->getObject()) as $fltr) {
                         if ($fltr->getAttribute()->getObject()->is($condition->getExpression()->getAttribute()->getObject()) && $fltr->getAttribute()->getAlias() == $condition->getExpression()->getAttribute()->getAlias() && ! $fltr->getValue()) {
                             $fltr->setComparator($condition->getComparator());
                             $fltr->setValue($condition->getValue());
+                            // TODO #OnPrefillChangePropertyEvent - same problem as in doPrefillWithDataObject()
                         }
                     }
-                }
             }
         }
+        return;
     }
 
     /**

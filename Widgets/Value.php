@@ -21,6 +21,8 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Interfaces\Widgets\iShowDataColumn;
 use exface\Core\DataTypes\RelationTypeDataType;
+use exface\Core\Factories\DataPointerFactory;
+use exface\Core\Events\Widget\OnPrefillChangePropertyEvent;
 
 /**
  * The Value widget simply shows a raw (unformatted) value.
@@ -224,13 +226,17 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
         $prefill_columns = $this->prepareDataSheetToPrefill(DataSheetFactory::createFromObject($data_sheet->getMetaObject()))->getColumns();
         if ($col = $prefill_columns->getFirst()) {
             if (count($data_sheet->getColumnValues($col->getName(false))) > 1 && $this->getAggregator()) {
+                // TODO #OnPrefillChangeProperty
+                $valuePointer = DataPointerFactory::createFromColumn($col);
                 $value = \exface\Core\CommonLogic\DataSheets\DataColumn::aggregateValues($data_sheet->getColumnValues($col->getName(false)), $this->getAggregator());
             } else {
-                $value = $data_sheet->getCellValue($col->getName(), 0);
+                $valuePointer = DataPointerFactory::createFromColumn($col, 0);
+                $value = $valuePointer->getValue();
             }
             // Ignore empty values because otherwise live-references would get overwritten even without a meaningfull prefill value
-            if (! is_null($value) && $value != '') {
+            if ($value !== null && $value != '') {
                 $this->setValue($value);
+                $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'value', $valuePointer));
             }
         }
         return;

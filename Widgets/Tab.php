@@ -4,6 +4,8 @@ namespace exface\Core\Widgets;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Exceptions\NotImplementedError;
 use exface\Core\Interfaces\Widgets\iHaveIcon;
+use exface\Core\Factories\DataPointerFactory;
+use exface\Core\Events\Widget\OnPrefillChangePropertyEvent;
 
 /**
  * A Tab is a special panel to be used within the tabs widget
@@ -77,7 +79,11 @@ class Tab extends Panel
         parent::doPrefill($data_sheet);
         if ($this->getBadgeAttributeAlias()) {
             if ($this->getMetaObject()->isExactly($data_sheet->getMetaObject())) {
-                $this->setBadgeValue($data_sheet->getCellValue($this->getBadgeAttributeAlias(), 0));
+                if ($col = $data_sheet->getColumns()->getByExpression($this->getBadgeAttributeAlias())) {
+                    $pointer = DataPointerFactory::createFromColumn($col, 0);
+                    $this->setBadgeValue($pointer->getValue());
+                    $this->dispatchEvent(new OnPrefillChangePropertyEvent($this, 'badge_value', $pointer));
+                }
             } else {
                 throw new NotImplementedError('Prefilling Tab badges with data sheets from related objects not implemented!');
             }

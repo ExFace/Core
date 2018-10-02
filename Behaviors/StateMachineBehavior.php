@@ -320,14 +320,11 @@ class StateMachineBehavior extends AbstractBehavior
         
         $widget = $event->getWidget();
         
+        // Do not do anything, if the base object of the widget is not the object with the behavior and is not
+        // extended from it.
         if (! $widget->getMetaObject()->is($this->getObject())) {
             return;
         }
-        
-        // Do not do anything, if the base object of the widget is not the object with the behavior and is not
-        // extended from it.
-        if (! $widget->getMetaObject()->is($this->getObject()))
-            return;
         
         if (! ($prefill_data = $widget->getPrefillData()) || ! ($prefill_data->getUidColumn()) || ! ($state_column = $prefill_data->getColumnValues($this->getStateAttributeAlias())) || ! ($current_state = $state_column[0])) {
             $current_state = $this->getDefaultStateId();
