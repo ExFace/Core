@@ -376,8 +376,8 @@ class InputComboTable extends InputCombo implements iHaveChildren
             $text_column_expr = $this->getTextColumn()->getExpression()->toString();
         }
         
-        if ($text_column_expr) {
-            $this->setValueText($data_sheet->getColumns()->getByExpression($text_column_expr)->getCellValue(0));
+        if ($text_column_expr && $col = $data_sheet->getColumns()->getByExpression($text_column_expr)) {
+            $this->setValueText($col->getCellValue(0));
         }
         return;
     }
