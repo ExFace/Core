@@ -224,11 +224,11 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
         // Since an Input only needs one value, we take the first one from the returned array, fetch it from the data sheet
         // and set it as the value of our input.
         $prefill_columns = $this->prepareDataSheetToPrefill(DataSheetFactory::createFromObject($data_sheet->getMetaObject()))->getColumns();
-        if ($col = $prefill_columns->getFirst()) {
-            if (count($data_sheet->getColumnValues($col->getName(false))) > 1 && $this->getAggregator()) {
+        if (! $prefill_columns->isEmpty() && $col = $data_sheet->getColumns()->getByExpression($prefill_columns->getFirst()->getExpressionObj())) {
+            if (count($col->getValues(false)) > 1 && $this->getAggregator()) {
                 // TODO #OnPrefillChangeProperty
                 $valuePointer = DataPointerFactory::createFromColumn($col);
-                $value = \exface\Core\CommonLogic\DataSheets\DataColumn::aggregateValues($data_sheet->getColumnValues($col->getName(false)), $this->getAggregator());
+                $value = \exface\Core\CommonLogic\DataSheets\DataColumn::aggregateValues($col->getValues(false), $this->getAggregator());
             } else {
                 $valuePointer = DataPointerFactory::createFromColumn($col, 0);
                 $value = $valuePointer->getValue();
