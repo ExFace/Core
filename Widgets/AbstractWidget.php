@@ -6,7 +6,6 @@ use exface\Core\Interfaces\Widgets\iHaveChildren;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Widgets\iTriggerAction;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
-use exface\Core\CommonLogic\WidgetLink;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Factories\WidgetDimensionFactory;
@@ -30,6 +29,7 @@ use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Events\Widget\OnBeforePrefillEvent;
 use exface\Core\Events\Widget\OnPrefillEvent;
 use exface\Core\Interfaces\Events\EventInterface;
+use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 
 /**
  * Basic ExFace widget
@@ -240,7 +240,10 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
      * Prefills the widget using values from the given data sheet.
      * 
      * Override this method for custom prefill logic of a widget. By default it
-     * will not do anything at all.
+     * will not do anything at all. 
+     * 
+     * IMPORTANT: don't forget to dispatch a `OnPrefillChangePropertyEvent` every
+     * time you change a widget from your prefill logic!
      * 
      * @param DataSheetInterface $data_sheet
      * 
@@ -608,7 +611,7 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
 
     /**
      *
-     * @return NULL|\exface\Core\Interfaces\Widgets\WidgetLinkInterface
+     * @return WidgetLinkInterface|NULL
      */
     public function getValueWidgetLink()
     {
