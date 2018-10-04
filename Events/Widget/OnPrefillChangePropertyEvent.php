@@ -40,6 +40,7 @@ class OnPrefillChangePropertyEvent extends AbstractWidgetEvent implements DataSh
     {
         parent::__construct($widget);
         $this->pointer = $valuePointer;
+        $this->propertyName = $uxonPropertyName;
     }
     
     /**
