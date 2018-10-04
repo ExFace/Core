@@ -29,6 +29,7 @@ use exface\Core\Interfaces\Selectors\ActionSelectorInterface;
 use exface\Core\Factories\SelectorFactory;
 use exface\Core\Events\Action\OnBeforeHandleTaskEvent;
 use exface\Core\Events\Action\OnHandleTaskEvent;
+use exface\Core\Interfaces\WorkbenchInterface;
 
 /**
  * The abstract action is a generic implementation of the ActionInterface, that simplifies 
@@ -918,6 +919,16 @@ abstract class AbstractAction implements ActionInterface
     public function isDefinedInWidget(): bool
     {
         return is_null($this->widget_defined_in) ? false : true;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::getSelector()
+     */
+    public function getSelector() : ActionSelectorInterface
+    {
+        return new ActionSelector($this->getWorkbench(), $this->getAliasWithNamespace());
     }
 }
 ?>
