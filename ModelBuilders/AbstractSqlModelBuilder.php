@@ -197,7 +197,7 @@ abstract class AbstractSqlModelBuilder extends AbstractModelBuilder implements M
      */
     public function generateLabel($column_name, $description = null)
     {
-        if (! is_null($description) && strlen($description) < 50) {
+        if ($description !== null && $description !== '' && strlen($description) < 50) {
             $column_name = $description;
         } else {
             $column_name = trim($column_name);
