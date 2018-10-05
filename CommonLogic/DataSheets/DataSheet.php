@@ -1018,7 +1018,15 @@ class DataSheet implements DataSheetInterface
             }
             // If the there can be data, but there are no rows, read the data
             try {
-                if ($ds->dataRead()) {
+                if ($ds->dataRead() > 0) {
+                    // If the sheet has a filled UID column, better replace all filters
+                    // by a simple IN-filter over UIDs. This simplifies the logic in most
+                    // query builders a lot! No all data sources can delete filtering over
+                    // relations, but most will be able to delete by UID.
+                    if ($ds->hasUidColumn(true)) {
+                        $ds->getFilters()->removeAll();
+                        $ds->addFilterFromColumnValues($ds->getUidColumn());
+                    }
                     $ds->dataDelete($transaction);
                 }
             } catch (MetaObjectHasNoDataSourceError $e) {
