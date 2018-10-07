@@ -241,4 +241,65 @@ interface MetaRelationInterface extends WorkbenchDependantInterface
      * @return string
      */
     public function toString() : string;
+    
+    /**
+     * Returns TRUE if the left object is subject for a cascading delete on the right object and FALSE otherwise.
+     * 
+     * @return bool
+     */
+    public function isLeftObjectToBeDeletedWithRightObject() : bool;
+    
+    /**
+     * Set to TRUE to delete the left object automatically when the right object is deleted.
+     * 
+     * @param bool $value
+     * @return MetaRelationInterface
+     */
+    public function setLeftObjectToBeDeletedWithRightObject(bool $value) : MetaRelationInterface;
+    
+    /**
+     * Returns TRUE if the left object is subject for a deep copy on the right object and FALSE otherwise.
+     * 
+     * @return bool
+     */
+    public function isLeftObjectToBeCopiedWithRightObject();
+    
+    /**
+     * Set to TRUE to copy the left object automatically when the right object is copied.
+     * 
+     * @param bool $value
+     * @return MetaRelationInterface
+     */
+    public function setLeftObjectToBeCopiedWithRightObject(bool $value) : MetaRelationInterface;
+    
+    /**
+     * Returns TRUE if the right object is subject for a cascading delete on the left object and FALSE otherwise.
+     *
+     * @return bool
+     */
+    public function isRightObjectToBeDeletedWithLeftObject() : bool;
+    
+    /**
+     * Set to TRUE to delete the right object automatically when the left object is deleted.
+     *
+     * @param bool $value
+     * @return MetaRelationInterface
+     */
+    public function setRightObjectToBeDeletedWithLeftObject(bool $value) : MetaRelationInterface;
+    
+    /**
+     * Returns TRUE if the right object is subject for a deep copy on the left object and FALSE otherwise.
+     *
+     * @return bool
+     */
+    public function isRightObjectToBeCopiedWithLeftObject();
+    
+    /**
+     * Set to TRUE to copy the right object automatically when the left object is copied.
+     *
+     * @param bool $value
+     * @return MetaRelationInterface
+     */
+    public function setRightObjectToBeCopiedWithLeftObject(bool $value) : MetaRelationInterface;
+   
 }

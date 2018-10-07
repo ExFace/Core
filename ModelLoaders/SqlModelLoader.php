@@ -292,7 +292,14 @@ class SqlModelLoader implements ModelLoaderInterface
                         $leftKeyAttr, // left key in the main object
                         $row['object_oid'], // right object UID
                         $row['oid'] // right object key attribute id
-                        );
+                    );
+                    
+                    if ($row['delete_with_related_object'] == 1) {
+                        $rel->setRightObjectToBeDeletedWithLeftObject(true);
+                    }
+                    if ($row['copy_with_related_object'] == 1) {
+                        $rel->setRightObjectToBeCopiedWithLeftObject(true);
+                    }
                 } elseif ($attr) {
                     // At this point, we know, it is a direct relation. This can only happen if the object has a corresponding direct
                     // attribute. This is why the elseif($attr) is there.
@@ -307,7 +314,14 @@ class SqlModelLoader implements ModelLoaderInterface
                         $attr, // left key attribute
                         $row['related_object_oid'], // right object UID
                         $row['related_object_special_key_attribute_oid'] // related object key attribute (UID will be used if not set)
-                        );
+                    );
+                    
+                    if ($row['delete_with_related_object'] == 1) {
+                        $rel->setLeftObjectToBeDeletedWithRightObject(true);
+                    }
+                    if ($row['copy_with_related_object'] == 1) {
+                        $rel->setLeftObjectToBeCopiedWithRightObject(true);
+                    }
                 }
                 
                 if ($rel) {

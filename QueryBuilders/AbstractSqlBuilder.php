@@ -18,7 +18,6 @@ use exface\Core\CommonLogic\DataSheets\DataAggregation;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\DataTypes\DateDataType;
-use exface\Core\DataTypes\RelationDataType;
 use exface\Core\Interfaces\Model\AggregatorInterface;
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
 use exface\Core\CommonLogic\Model\Aggregator;
@@ -590,7 +589,11 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         if ($data_type instanceof StringDataType) {
             $value = "'" . $this->escapeString($value) . "'";
         } elseif ($data_type instanceof BooleanDataType) {
-            $value = $value ? 1 : 0;
+            if ($value === '' || $value === null) {
+                $value = 'NULL';
+            } else {
+                $value = $value ? 1 : 0;
+            }
         } elseif ($data_type instanceof NumberDataType) {
             $value = ($value == '' ? 'NULL' : $value);
         } elseif ($data_type instanceof DateDataType) {
@@ -598,17 +601,6 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 $value = 'NULL';
             } else {
                 $value = "'" . $this->escapeString($value) . "'";
-            }
-        } elseif ($data_type instanceof RelationDataType) {
-            if ($value == '') {
-                $value = 'NULL';
-            } else {
-                try {
-                    $parsed_value = NumberDataType::cast($value);
-                } catch (DataTypeCastingError $e){
-                    $parsed_value = "'" . $this->escapeString($value) . "'";
-                }
-                $value = $parsed_value;
             }
         } else {
             $value = "'" . $this->escapeString($value) . "'";

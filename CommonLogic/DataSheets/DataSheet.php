@@ -1065,8 +1065,8 @@ class DataSheet implements DataSheetInterface
     {
         $subsheets = array();
         // Check if there are dependent objects, that require cascading deletes
-        // This is the case, if the deleted object has reverse relations (1-to-many), where the relation is a mandatory
-        // attribute of the related object (that is, if the related object cannot exist without the one we are deleting)
+        // This is the case, if the deleted object has reverse relations (1-to-many), where the relation is marked
+        // with the "Delete with related object" flag.
         /* @var $rel \exface\Core\Interfaces\Model\MetaRelationInterface */
         foreach ($this->getMetaObject()->getRelations(RelationTypeDataType::REVERSE) as $rel) {
             // Skip objects, that are not writable
@@ -1075,10 +1075,7 @@ class DataSheet implements DataSheetInterface
             }
             
             // See if the relation is mandatory for the right (= related) object
-            if (! $rel->getRightKeyAttribute()->isRequired()) {
-                // FIXME Show a warning here! Need to be able to show warning along with success messages!
-                // throw new DataSheetWriteError($this, 'Cascading deletion via optional relations not yet implemented: no instances were deleted for relation "' . $rel->getAlias() . '" to object "' . $rel->getRightObject()->getAliasWithNamespace() . '"!');
-            } else {
+            if ($rel->isRightObjectToBeDeletedWithLeftObject()) {
                 $ds = DataSheetFactory::createFromObject($rel->getRightObject());
                 // Use all filters of the original query in the cascading queries
                 $ds->setFilters($this->getFilters()->rebase($rel->getAliasWithModifier()));

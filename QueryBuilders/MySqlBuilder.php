@@ -253,6 +253,23 @@ class MySqlBuilder extends AbstractSqlBuilder
         if (count($this->getFilters()->getUsedRelations()) > 0) {
             throw new QueryBuilderException('Filters over attributes of related objects are not supported in DELETE queries!');
         }
+        /* This was an unfinished attempt to overcome the filtering problem at least for filters like RELATION__UID.
+         * didn't have time to test it thoroughly. May come back later.
+        foreach ($this->getFilters()->getFilters() as $qpart) {
+            $rels = $qpart->getUsedRelations();
+            switch (count($rels)) {
+                case 0: continue;
+                case 1:
+                    $rel = reset($rels);
+                    if ($rel->isForwardRelation() && $this->getMainObject()->isExactly($rel->getLeftObject())) {
+                        $this->getFilters()->removeFilter($qpart);
+                        $this->addFilterFromString($rel->getLeftKeyAttribute()->getAlias(), $qpart->getCompareValue(), $qpart->getComparator());
+                        break;
+                    }
+                default:
+                    throw new QueryBuilderException('Filters over attributes of related objects are not supported in DELETE queries!');
+            }
+        }*/
         $where = $this->buildSqlWhere($this->getFilters());
         $where = $where ? "\n WHERE " . $where : '';
         if (! $where)
