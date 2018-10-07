@@ -233,7 +233,7 @@ abstract class AbstractSqlConnector extends AbstractDataConnector implements Sql
      *
      * @return string
      */
-    public function getRelationMatcher() : string
+    public function getRelationMatcher() : ?string
     {
         return $this->relationMatcher;
     }

@@ -36,6 +36,14 @@ class Relation implements MetaRelationInterface
     private $type = null;
 
     private $inherited_from_object_id = null;
+    
+    private $leftObjectToBeDeletedWithRightObject = false;
+    
+    private $leftObjectToBeCopiedWithRightObject = false;
+    
+    private $rightObjectToBeDeletedWithLeftObject = false;
+    
+    private $rightObjectToBeCopiedWithLeftObject = false;
 
     // Properties NOT to be dublicated on copy()
     private $exface = null;
@@ -370,7 +378,7 @@ class Relation implements MetaRelationInterface
      * 
      * @return bool
      */
-    public function requiresModifier() : bool
+    protected function requiresModifier() : bool
     {
         if ($this->isForwardRelation()) {
             return true;
@@ -385,6 +393,88 @@ class Relation implements MetaRelationInterface
         }
         
         return false;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::isLeftObjectToBeDeletedWithRightObject()
+     */
+    public function isLeftObjectToBeDeletedWithRightObject() : bool
+    {
+        return $this->leftObjectToBeDeletedWithRightObject;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::setLeftObjectToBeDeletedWithRightObject()
+     */
+    public function setLeftObjectToBeDeletedWithRightObject(bool $value) : MetaRelationInterface
+    {
+        $this->leftObjectToBeDeletedWithRightObject = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function isLeftObjectToBeCopiedWithRightObject() : bool
+    {
+        return $this->leftObjectToBeCopiedWithRightObject;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::isLeftObjectToBeCopiedWithRightObject()
+     */
+    public function setLeftObjectToBeCopiedWithRightObject(bool $value) : MetaRelationInterface
+    {
+        $this->leftObjectToBeCopiedWithRightObject = $value;
+        return $this;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::isRightObjectToBeDeletedWithLeftObject()
+     */
+    public function isRightObjectToBeDeletedWithLeftObject() : bool
+    {
+        return $this->rightObjectToBeDeletedWithLeftObject;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::setRightObjectToBeDeletedWithLeftObject()
+     */
+    public function setRightObjectToBeDeletedWithLeftObject(bool $value) : MetaRelationInterface
+    {
+        $this->rightObjectToBeDeletedWithLeftObject = $value;
+        return $this;
+    }
+    
+    /**
+     *
+     * @return bool
+     */
+    public function isRightObjectToBeCopiedWithLeftObject() : bool
+    {
+        return $this->rightObjectToBeCopiedWithLeftObject;
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::isRightObjectToBeCopiedWithLeftObject()
+     */
+    public function setRightObjectToBeCopiedWithLeftObject(bool $value) : MetaRelationInterface
+    {
+        $this->rightObjectToBeCopiedWithLeftObject = $value;
+        return $this;
     }
 }
 ?>
