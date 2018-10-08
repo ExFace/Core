@@ -47,18 +47,20 @@ class Form extends Panel implements iHaveButtons, iHaveToolbars
     {
         // If the button has an action, that is supposed to modify data, we need to make sure, that the panel
         // contains alls system attributes of the base object, because they may be needed by the business logic
-        if ($button->getAction() && $button->getAction()->getMetaObject()->is($this->getMetaObject()) && $button->getAction()->implementsInterface('iModifyData')) {
-            /* @var $attr \exface\Core\Interfaces\Model\MetaAttributeInterface */
-            foreach ($this->getMetaObject()->getAttributes()->getSystem() as $attr) {
-                if (count($this->findChildrenByAttribute($attr)) === 0) {
-                    $widget = $this->getPage()->createWidget('InputHidden', $this);
-                    $widget->setAttributeAlias($attr->getAlias());
-                    if ($attr->isUidForObject()) {
-                        $widget->setAggregator(AggregatorFunctionsDataType::LIST_ALL($this->getWorkbench()));
-                    } else {
-                        $widget->setAggregator($attr->getDefaultAggregateFunction());
+        if ($action = $button->getAction()) {
+            if ($action->getMetaObject()->is($this->getMetaObject()) && ($action->implementsInterface('iModifyData') || $action->implementsInterface('iModifyContext'))) {
+                /* @var $attr \exface\Core\Interfaces\Model\MetaAttributeInterface */
+                foreach ($this->getMetaObject()->getAttributes()->getSystem() as $attr) {
+                    if (count($this->findChildrenByAttribute($attr)) === 0) {
+                        $widget = $this->getPage()->createWidget('InputHidden', $this);
+                        $widget->setAttributeAlias($attr->getAlias());
+                        if ($attr->isUidForObject()) {
+                            $widget->setAggregator(AggregatorFunctionsDataType::LIST_ALL($this->getWorkbench()));
+                        } else {
+                            $widget->setAggregator($attr->getDefaultAggregateFunction());
+                        }
+                        $this->addWidget($widget);
                     }
-                    $this->addWidget($widget);
                 }
             }
         }
