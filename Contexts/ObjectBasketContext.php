@@ -237,10 +237,11 @@ class ObjectBasketContext extends AbstractContext
             $btn->setActionAlias('exface.Core.ObjectBasketShowDialog');
             $btn->setCaption($data_sheet->countRows() . 'x ' . $data_sheet->getMetaObject()->getName());
             
-            $btn->getAction()->setMetaObject($data_sheet->getMetaObject());
-            
-            $btn->getAction()->setContextScope($this->getScope()->getName());
-            $btn->getAction()->setContextAlias($this->getAliasWithNamespace());
+            $btn->getAction()
+                ->setMetaObject($data_sheet->getMetaObject())
+                ->setContextScope($this->getScope()->getName())
+                ->setContextAlias($this->getAliasWithNamespace())
+                ->setPrefillWithInputData(false);
             $menu->addButton($btn);
         }
         
