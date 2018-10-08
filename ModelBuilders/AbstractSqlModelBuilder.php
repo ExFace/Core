@@ -6,23 +6,60 @@ use exface\Core\Interfaces\DataSources\SqlDataConnectorInterface;
 use exface\Core\Interfaces\DataSources\ModelBuilderInterface;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\AppInterface;
-use exface\Core\Exceptions\NotImplementedError;
 use exface\Core\Interfaces\DataSources\DataSourceInterface;
 use exface\Core\CommonLogic\ModelBuilders\AbstractModelBuilder;
-use exface\Core\DataTypes\StringDataType;
-use exface\Core\DataTypes\NumberDataType;
 use exface\Core\CommonLogic\Workbench;
-use exface\Core\DataTypes\TimestampDataType;
-use exface\Core\DataTypes\DateDataType;
-use exface\Core\DataTypes\TextDataType;
-use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
-use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 use exface\Core\DataConnectors\AbstractSqlConnector;
 
+/**
+ * This is the base for all SQL model builders in the core.
+ * 
+ * This model builder will generate meta objects (from tables and views), attributes
+ * (from columns) and relations (from foreign keys).
+ * 
+ * In data-source-mode (no existing object specified), a new meta object will be created 
+ * for each table or view, that matches the data address mask and is not yet used in a the
+ * data address of another object. The data address mask may contain any valid SQL LIKE
+ * expression (e.g. `my_prefix%` to match all tables beginning with "my_prefix"). If it
+ * is empty, objects will be created for all tables in the database or scheme defined
+ * in the data connection.
+ * 
+ * Similarly, new attributes will be created for every table column, that does not match
+ * the data address of an existing attribute of the same object exactly. The column name
+ * is then used as data address. This means, a column is never imported a second
+ * time automatically. However, if the data address of the attribute is subsequently
+ * changed manually (e.g. into an SQL statement instead of a simple column name), the
+ * next import will create a new attribute for the table column.
+ * 
+ * Relations can be automatically created using a regular expression on column names. The
+ * regular expression mask must be defined in the custom data connection property 
+ * `relation_matcher` and must contain the following named character groups:
+ * 
+ * - `table` - the name of the target table, the foreign key points to,
+ * - `key` - the key column in the target table,
+ * - `alias` - the alias to be used for the relation in the metamodel.
+ * 
+ * A column is concidered a relation (foreign key) if all three values are found. This works 
+ * well if foreign keys contain the target table and key in their name, which is quite typical: 
+ * e.g. `product_id` for a foreign key, pointing to the `id` column of the `product` table - 
+ * the corresponding matcher would be `/(?<alias>(?<table>.*))_(?<key>id)/i`. Concrete
+ * SqlModelBuilder implementations for specific databases may include other methods of
+ * foreign key detection (e.g. constraints) - please refer to the documentation of the
+ * respective model builder.
+ * 
+ * A relation property `DELETE_WITH_RELATED_OBJECT` is set automatically if the foreign key
+ * column is required (not nullable). The property `COPY_WITH_RELATED_OBJECT` is never set.
+ * 
+ * Comments on tables and columns are automatically imported as short descriptions of the
+ * resulting model entities.
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
 abstract class AbstractSqlModelBuilder extends AbstractModelBuilder implements ModelBuilderInterface
 {
 

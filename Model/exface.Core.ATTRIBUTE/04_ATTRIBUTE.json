@@ -1323,7 +1323,7 @@
         },
         {
             "CREATED_ON": "2018-10-05 15:32:50",
-            "MODIFIED_ON": "2018-10-05 15:57:42",
+            "MODIFIED_ON": "2018-10-07 15:25:42",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e8c8b3df169e528fb50205857feb80",
@@ -1354,7 +1354,7 @@
             "SORTERPOS": null,
             "SORTERDIR": "",
             "RELATED_OBJ_ATTR": "",
-            "SHORT_DESCRIPTION": "If checked, this attribute's object will be copied too if the related object is copied. Use this, if this object should never be shared between copies of the related object!",
+            "SHORT_DESCRIPTION": "If checked, this attribute's object will always be copied together with the related object. Use this, if this object should never be shared between copies of the related object!",
             "DATA_ADDRESS_PROPS": "{}",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
