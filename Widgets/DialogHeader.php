@@ -7,6 +7,8 @@ use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Events\Widget\OnPrefillChangePropertyEvent;
 use exface\Core\Factories\DataPointerFactory;
+use exface\Core\Factories\WidgetFactory;
+use exface\Core\CommonLogic\UxonObject;
 
 /**
  * A dialog header is a special widget used to display a summary of a dialog - typically the object currently loaded.
@@ -19,6 +21,8 @@ class DialogHeader extends Form
     private $autogenerate = null;
     
     private $title_attribute_alias = null;
+    
+    private $title_widget = null;
     
     /**
      * @return boolean
@@ -109,7 +113,7 @@ class DialogHeader extends Form
     public function prepareDataSheetToPrefill(DataSheetInterface $dataSheet = null) : DataSheetInterface
     {
         $sheet = parent::prepareDataSheetToPrefill($dataSheet);
-        if (! $this->isTitleBoundToAttribute()) {
+        if ($dataSheet->getMetaObject()->is($this->getMetaObject()) && $this->isTitleBoundToAttribute()) {
             $sheet->getColumns()->addFromAttribute($this->getTitleAttribute());
         }
         return $sheet;
@@ -123,7 +127,7 @@ class DialogHeader extends Form
     public function prepareDataSheetToRead(DataSheetInterface $dataSheet = null) : DataSheetInterface
     {
         $sheet = parent::prepareDataSheetToRead($dataSheet);
-        if (! $this->isTitleBoundToAttribute()) {
+        if ($dataSheet->getMetaObject()->is($this->getMetaObject()) && $this->isTitleBoundToAttribute()) {
             $sheet->getColumns()->addFromAttribute($this->getTitleAttribute());
         }
         return $sheet;
