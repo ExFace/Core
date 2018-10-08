@@ -25,9 +25,15 @@ class Display extends Value implements iDisplayValue
 {
     /**
      * 
-     * @var boolean
+     * @var bool
      */
     private $disableFormatting = false;
+    
+    /**
+     * 
+     * @var bool
+     */
+    private $hideIfEmpty = false;
     
     /**
      * 
@@ -51,6 +57,30 @@ class Display extends Value implements iDisplayValue
     public function setDisableFormatting($true_or_false)
     {
         $this->disableFormatting = BooleanDataType::cast($true_or_false);
+        return $this;
+    }
+    
+    /**
+     *
+     * @return bool
+     */
+    public function getHideIfEmpty() : bool
+    {
+        return $this->hideIfEmpty;
+    }
+    
+    /**
+     * Set to TRUE to hide the entire widget if there is no value set.
+     *
+     * @uxon-property hide_if_empty
+     * @uxon-type boolean
+     *
+     * @param bool $value
+     * @return Value
+     */
+    public function setHideIfEmpty($trueOrFalse) : Value
+    {
+        $this->hideIfEmpty = BooleanDataType::cast($trueOrFalse);
         return $this;
     }
 }

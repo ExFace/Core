@@ -1269,6 +1269,7 @@ else {
      *      "comparator": "!=",
      *      "value": ""
      *  }
+     *  
      * ```
      * 
      * means the current widget is disabled when the column CONSUMER_MAIL_PHONE of

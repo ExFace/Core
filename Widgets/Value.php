@@ -8,16 +8,12 @@ use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\Factories\DataSheetFactory;
-use exface\Core\Interfaces\Model\MetaRelationInterface;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\CommonLogic\Model\Aggregator;
 use exface\Core\Interfaces\Model\AggregatorInterface;
 use exface\Core\Interfaces\Widgets\iSupportAggregators;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\CommonLogic\DataSheets\DataAggregation;
-use exface\Core\DataTypes\AggregatorFunctionsDataType;
-use exface\Core\DataTypes\NumberDataType;
-use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Interfaces\Widgets\iShowDataColumn;
 use exface\Core\DataTypes\RelationTypeDataType;
@@ -476,6 +472,6 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
     public function isInTable() : bool
     {
         return $this->getParent() instanceof DataColumn;
-    }
+    }    
 }
 ?>
