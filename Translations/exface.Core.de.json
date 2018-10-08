@@ -1,4 +1,4 @@
-{
+sho{
 	"ACTION.AUTOSUGGEST.NAME": "Autosuggest",
 
 	"ACTION.CREATEDATA.RESULT": "%number% Objekt erstellt.|%number% Objekte erstellt.",
@@ -77,7 +77,7 @@
 	
 	"ACTION.SHOWMODELBUILDERDIALOG.NAME": "Modell generieren",
 
-	"ACTION.SHOWOBJECTINFODIALOG.NAME": "Info",
+	"ACTION.SHOWOBJECTINFODIALOG.NAME": "Details",
 
 	"ACTION.UNDOACTION.NAME": "Undo",
 	"ACTION.UNDOACTION.RESULT": "%number% Aktion wurde rückgängig gemacht.|%number% Aktionen wurden rückgängig gemacht.",
