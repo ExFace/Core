@@ -52,6 +52,8 @@ class ShowObjectCopyDialog extends ShowObjectEditDialog
      */
     protected function prefillWidget(TaskInterface $task, WidgetInterface $widget) : WidgetInterface
     {
+        // If it is a deep copy, we need to make sure, widget eventually displaying related objects are 
+        // prefilled just like they are in ShowObjectEditDialog.
         if ($this->isDeepCopy()) {
             return parent::prefillWidget($task, $widget);
         }
@@ -76,7 +78,7 @@ class ShowObjectCopyDialog extends ShowObjectEditDialog
      *
      * @return string[]
      */
-    public function getCopyRelatedObjects() : array
+    protected function getCopyRelationAliases() : array
     {
         return $this->copyRelatedObjects;
     }
@@ -102,7 +104,7 @@ class ShowObjectCopyDialog extends ShowObjectEditDialog
      */
     protected function isDeepCopy() : bool
     {
-       return ! empty($this->getCopyRelatedObjects()); 
+       return ! empty($this->getCopyRelationAliases()); 
     }
     
     /**
@@ -128,7 +130,7 @@ class ShowObjectCopyDialog extends ShowObjectEditDialog
     {
         $uxon = parent::getSaveActionUxon();
         if ($this->isDeepCopy() && $uxon->hasProperty('copy_related_objects') === false) {
-            $uxon->setProperty('copy_related_objects', $this->getCopyRelatedObjects());
+            $uxon->setProperty('copy_related_objects', $this->getCopyRelationAliases());
         }
         return $uxon;
     }
