@@ -77,7 +77,7 @@
 	
 	"ACTION.SHOWMODELBUILDERDIALOG.NAME": "Model Builder",
 	
-	"ACTION.SHOWOBJECTINFODIALOG.NAME": "Information",
+	"ACTION.SHOWOBJECTINFODIALOG.NAME": "Details",
 	
 	"ACTION.UNDOACTION.NAME": "Undo",
 	"ACTION.UNDOACTION.RESULT": "Successfully undone %number% action.|Successfully undone %number% actions.",
