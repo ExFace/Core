@@ -11,6 +11,7 @@ use exface\Core\CommonLogic\Contexts\AbstractContext;
 use exface\Core\Widgets\Container;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\CommonLogic\Constants\Icons;
+use exface\Core\Exceptions\Model\MetaObjectNotFoundError;
 
 /**
  * The ObjectBasketContext provides a unified interface to store links to selected instances of meta objects in any context scope.
@@ -72,7 +73,14 @@ class ObjectBasketContext extends AbstractContext
     {
         foreach ($this->favorites as $object_id => $data){
             if (! ($data instanceof DataSheetInterface)){
-                $this->favorites[strtolower($object_id)] = DataSheetFactory::createFromUxon($this->getWorkbench(), $data);
+                $object_id = mb_strtolower($object_id);
+                try {
+                    $objectSheet = DataSheetFactory::createFromUxon($this->getWorkbench(), $data);
+                    $this->favorites[$object_id] = $objectSheet;
+                } catch (MetaObjectNotFoundError $e) {
+                    $this->getWorkbench()->getLogger()->error(new ContextRuntimeError($this, 'Cannot find object saved in context: ' . $e->getMessage(), null, $e));
+                    unset($this->favorites[$object_id]);
+                }
             }
         }
         return $this->favorites;
