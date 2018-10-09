@@ -233,6 +233,10 @@ class Tile extends Button implements iHaveColor
     }
 
     /**
+     * Changes the color of the tile to any HTML color value (or other template-specific value)
+     * 
+     * @uxon-property color
+     * @uxon-type string 
      * 
      * @param string $color
      * @return \exface\Core\Widgets\Tile
