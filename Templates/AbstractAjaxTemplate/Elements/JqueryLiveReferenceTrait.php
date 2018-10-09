@@ -1,10 +1,19 @@
 <?php
 namespace exface\Core\Templates\AbstractAjaxTemplate\Elements;
 
-use exface\Core\Factories\WidgetLinkFactory;
 use exface\Core\Interfaces\Widgets\iHaveValue;
 
 /**
+ * This trait makes it easy to implement live references in jQuery based widgets.
+ * 
+ * Just call $this->registerLiveReferenceAtLinkedElement() in the init() method of
+ * element, that represents the widget, where the live reference is defined. This
+ * will add an onChange-script to the referenced element, which sets the value
+ * of our element via it's buildJsValueSetter(). 
+ * 
+ * Note, that the target element's implementation must support onChange-scripts.
+ * If it does not, the live reference will not work! The implementation of the
+ * onChange listener is not part of this trait!
  * 
  * @method iHaveValue getWidget()
  * 
