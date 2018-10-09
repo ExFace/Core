@@ -117,6 +117,8 @@ class NavTiles extends WidgetGrid
             throw new WidgetConfigurationError($this, 'Invalid page selector "' . $rootPageSelector->toString() . '" in widget ' . $this->getWidgetType() . '"!');
         }
         
+        $ds->addFilterFromString('MENU_VISIBLE', 1, '==');
+        
         $ds->dataRead();
         return $ds;
     }
