@@ -6,6 +6,7 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Exceptions\Widgets\WidgetChildNotFoundError;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
+use exface\Core\Interfaces\Widgets\iHaveColor;
 
 /**
  * A Tile is basically a big fancy button, that can display additional information (KPIs, etc.).
@@ -105,11 +106,13 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
  * @author Andrej Kabachnik
  *        
  */
-class Tile extends Button
+class Tile extends Button implements iHaveColor
 {
     private $subtitle = null;
     
     private $displayWidget = null;
+    
+    private $color = null;
     
     /**
      * Returns the title of the tile or NULL if no title was set.
@@ -218,6 +221,27 @@ class Tile extends Button
             return false;
         }
         return true;
-    }    
+    }
+    
+    /**
+     * 
+     * @return string
+     */
+    public function getColor()
+    {
+        return $this->color;
+    }
+
+    /**
+     * 
+     * @param string $color
+     * @return \exface\Core\Widgets\Tile
+     */
+    public function setColor($color)
+    {
+        $this->color = $color;
+        return $this;
+    }
+    
 }
 ?>
