@@ -186,5 +186,17 @@ interface AppInterface extends WorkbenchDependantInterface, AliasInterface, Task
      * @return string
      */
     public function getDefaultLanguageCode() : string;
+    
+    /**
+     * Returns the translator used by this app for the current session locale 
+     * or the given locale if specified.
+     * 
+     * Each app is free to use any translation implementation as long 
+     * as it implements to the TranslationInterface.
+     * 
+     * @param string $locale
+     * @return TranslationInterface
+     */
+    public function getTranslator(string $locale = null) : TranslationInterface;
 }
 ?>
