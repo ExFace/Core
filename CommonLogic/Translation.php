@@ -6,62 +6,60 @@ use Symfony\Component\Translation\TranslatorInterface;
 use Symfony\Component\Translation\Loader\JsonFileLoader;
 use exface\Core\Interfaces\TranslationInterface;
 
+/**
+ * This is the default implementation of the TranslationInterface.
+ * 
+ * It is basically a wrapper for the Symfony Translation Component.
+ * The JSON loade is used to read files passed via addDictionaryFromFile().
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
 class Translation implements TranslationInterface
 {
-
     private $locale = null;
 
     private $translator = null;
-
-    public function getLocale()
+    
+    /**
+     * 
+     * @param string $locale
+     * @param array $fallbackLocales
+     */
+    public function __construct(string $locale, array $fallbackLocales = [])
     {
-        return $this->translator->getLocale();
+        $this->translator = new Translator($locale);
+        $this->translator->addLoader('json', new JsonFileLoader());
+        $this->translator->setFallbackLocales($fallbackLocales);
     }
 
-    public function setLocale($string)
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\TranslationInterface::getLocale()
+     */
+    public function getLocale() : string
     {
-        $this->translator = new Translator($string);
-        $this->translator->addLoader('json', new JsonFileLoader());
-        return $this;
+        return $this->translator->getLocale();
     }
 
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\TranslationInterface::getFallbackLocales()
      */
-    public function getFallbackLocales()
+    public function getFallbackLocales() : array
     {
         return $this->translator->getFallbackLocales();
     }
 
     /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\TranslationInterface::setFallbackLocale()
+     * 
+     * @param string $absolute_path
+     * @param string $locale
+     * @return Translation
      */
-    public function setFallbackLocale($string)
-    {
-        $locales = $this->translator->getFallbackLocales();
-        $this->translator->setFallbackLocales(array_unshift($locales, $string));
-        return $this;
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\TranslationInterface::setFallbackLocales()
-     */
-    public function setFallbackLocales(array $locale_strings)
-    {
-        $this->translator->setFallbackLocales($locale_strings);
-        return $this;
-    }
-
-    public function addDictionaryFromFile($absolute_path, $locale)
+    public function addDictionaryFromFile(string $absolute_path, string $locale) : Translation
     {
         if (file_exists($absolute_path)) {
             $this->translator->addResource('json', $absolute_path, $locale);
@@ -75,7 +73,7 @@ class Translation implements TranslationInterface
      *
      * @see \exface\Core\Interfaces\TranslationInterface::translate()
      */
-    public function translate($message_id, array $placeholder_values = null, $plural_number = null)
+    public function translate(string $message_id, array $placeholder_values = null, $plural_number = null) : string
     {
         if (is_null($plural_number)) {
             return $this->getTranslator()->trans($message_id, is_null($placeholder_values) ? array() : $placeholder_values);
@@ -88,7 +86,7 @@ class Translation implements TranslationInterface
      *
      * @return TranslatorInterface
      */
-    protected function getTranslator()
+    protected function getTranslator() : TranslatorInterface
     {
         return $this->translator;
     }
@@ -99,10 +97,23 @@ class Translation implements TranslationInterface
      *
      * @see \exface\Core\Interfaces\TranslationInterface::hasTranslation()
      */
-    public function hasTranslation($message_id)
+    public function hasTranslation($message_id) : bool
     {
         return $this->translate($message_id) === $message_id ? false : true;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\TranslationInterface::getDictionary()
+     */
+    public function getDictionary() : array
+    {
+        $dict = [];
+        $cat = $this->translator->getCatalogue($this->translator->getLocale());
+        foreach ($cat->all() as $msgs) {
+            $dict = array_merge($dict, $msgs);
+        }
+        return $dict;
+    }
 }
-
-?>

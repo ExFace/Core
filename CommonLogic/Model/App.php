@@ -372,24 +372,43 @@ class App implements AppInterface
         return $this->getContextData($scope)->unsetVariableForApp($this, $variable_name);
     }
     
-    public function getTranslator()
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\AppInterface::getTranslator()
+     */
+    public function getTranslator(string $locale = null) : TranslationInterface
     {
-        if (is_null($this->translator)) {
-            $translator = new Translation($this);
-            $translator->setLocale($this->getWorkbench()->getContext()->getScopeSession()->getSessionLocale());
-            $translator->setFallbackLocales(array(
-                'en_US'
-            ));
-            $this->translator = $this->loadTranslationFiles($translator);
+        if ($locale !== null) {
+            return $this->createTranslation($locale);
         }
+        
+        if ($this->translator === null) {
+            $this->translator = $this->createTranslation($this->getWorkbench()->getContext()->getScopeSession()->getSessionLocale()); 
+        }
+        
         return $this->translator;
     }
     
-    protected function loadTranslationFiles(TranslationInterface $translator)
+    /**
+     * 
+     * @param string $locale
+     * @return TranslationInterface
+     */
+    protected function createTranslation(string $locale) : TranslationInterface
     {
-        $locales = array_unique(array_merge(array(
-            $translator->getLocale()
-        ), $translator->getFallbackLocales()));
+        $fallbackLocales = [
+            'en_US'
+        ];
+        
+        $locales = array_unique(
+            array_merge(
+                [$locale],
+                $fallbackLocales
+            )
+        );
+        
+        $translator = new Translation($locale, $fallbackLocales);
         
         foreach ($locales as $locale) {
             $locale_suffixes = array();
@@ -407,10 +426,14 @@ class App implements AppInterface
             }
         }
         
+        
         return $translator;
     }
     
-    protected function getTranslationsFolder()
+    /**
+     * @return string
+     */
+    protected function getTranslationsFolder() : string
     {
         return $this->getWorkbench()->filemanager()->getPathToVendorFolder() . DIRECTORY_SEPARATOR . $this->getDirectory() . DIRECTORY_SEPARATOR . static::TRANSLATIONS_FOLDER_IN_APP;
     }
