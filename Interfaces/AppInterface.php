@@ -185,7 +185,14 @@ interface AppInterface extends WorkbenchDependantInterface, AliasInterface, Task
      * 
      * @return string
      */
-    public function getDefaultLanguageCode() : string;
+    public function getLanguageDefault() : string;
+    
+    /**
+     * Return an array with ISO 639-1 codes for all languages, this app has translations for.
+     * 
+     * @return string[]
+     */
+    public function getLanguages() : array;
     
     /**
      * Returns the translator used by this app for the current session locale 
