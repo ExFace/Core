@@ -458,11 +458,26 @@ class App implements AppInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\AppInterface::getDefaultLanguageCode()
+     * @see \exface\Core\Interfaces\AppInterface::getLanguageDefault()
      */
-    public function getDefaultLanguageCode() : string
+    public function getLanguageDefault() : string
     {
         return $this->getAppModelDataSheet()->getCellValue('DEFAULT_LANGUAGE_CODE', 0);
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\AppInterface::getLanguages()
+     */
+    public function getLanguages() : array
+    {
+        $langs = [];
+        foreach (glob($this->getTranslationsFolder() . "*.json") as $path) {
+            $filename = pathinfo($path, PATHINFO_FILENAME);
+            $langs[] = StringDataType::substringAfter($filename, '.', false, false, true);
+        }
+        return $langs;
     }
     
     protected function getAppModelDataSheet()
