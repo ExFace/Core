@@ -177,12 +177,6 @@ const swTools = {
 				options = {};
 			}
 			
-			if (! options.cacheErrorHandler) {
-				options.cacheErrorHandler = function(response) {
-					console.log('swTools error: ' + response.status);
-				}
-			}
-			
 			return ({url, event, params}) => {
 			    // Try to get the response from the network
 				return Promise.resolve(
@@ -193,10 +187,7 @@ const swTools = {
 						return response;
 				    })
 					.catch(function() {
-						return swTools.cache.match(event.request.clone()).then(function(response){
-							options.cacheErrorHandler(response);
-							return response;
-						});
+						return swTools.cache.match(event.request.clone());
 					})
 				);
 			}
