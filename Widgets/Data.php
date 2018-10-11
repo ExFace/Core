@@ -28,6 +28,7 @@ use exface\Core\Interfaces\Widgets\iHaveFooter;
 use exface\Core\Widgets\Traits\iSupportLazyLoadingTrait;
 use exface\Core\Exceptions\Widgets\WidgetPropertyNotSetError;
 use exface\Core\Interfaces\Widgets\iShowData;
+use exface\Core\Interfaces\Widgets\iCanPreloadData;
 
 /**
  * Data is the base for all widgets displaying tabular data.
@@ -42,7 +43,21 @@ use exface\Core\Interfaces\Widgets\iShowData;
  * @author Andrej Kabachnik
  *        
  */
-class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColumns, iHaveColumnGroups, iHaveToolbars, iHaveButtons, iHaveFilters, iSupportLazyLoading, iHaveContextualHelp, iHaveConfigurator, iShowData
+class Data 
+    extends AbstractWidget 
+    implements 
+        iHaveHeader, 
+        iHaveFooter, 
+        iHaveColumns, 
+        iHaveColumnGroups, 
+        iHaveToolbars, 
+        iHaveButtons, 
+        iHaveFilters, 
+        iSupportLazyLoading, 
+        iHaveContextualHelp, 
+        iHaveConfigurator, 
+        iShowData,
+        iCanPreloadData
 {
     use iHaveButtonsAndToolbarsTrait;
     use iSupportLazyLoadingTrait {
@@ -101,6 +116,8 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
     private $autoload_data = true;
     
     private $autoload_disabled_hint = null;
+    
+    private $preloader = null;
 
     protected function init()
     {
@@ -1546,4 +1563,36 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
     {
         return 'DataColumn';
     }
+    
+    
+    public function setPreloadData($uxonOrString): iCanPreloadData
+    {
+        if ($uxonOrString instanceof UxonObject) {
+            $this->getPreloader()->importUxonObject($uxonOrString);
+        } elseif (BooleanDataType::cast($uxonOrString) === true) {
+            $this->getPreloader()->setPreloadAll();
+        } else {
+            throw new WidgetPropertyInvalidValueError($this, 'Invalid value "' . gettype($uxonOrString) . '" received for property preload_data of widget ' . $this->getWidgetType() . ': expecting boolean or UXON!');
+        }
+        return $this;
+    }
+
+    public function isPreloadDataEnabled(): bool
+    {
+        return $this->getPreloader()->isEnabled();
+    }
+
+    public function prepareDataSheetToPreload(DataSheetInterface $dataSheet): DataSheetInterface
+    {
+       return $this->getPreloader()->prepareDataSheetToPreload($dataSheet);
+    }
+
+    public function getPreloader(): DataPreloader
+    {
+        if ($this->preloader === null) {
+            $this->preloader = new DataPreloader($this);
+        }
+        return $this->preloader;
+    }
+
 }

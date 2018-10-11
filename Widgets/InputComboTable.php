@@ -13,6 +13,7 @@ use exface\Core\Factories\WidgetFactory;
 use exface\Core\Factories\DataPointerFactory;
 use exface\Core\Events\Widget\OnPrefillChangePropertyEvent;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
+use exface\Core\Interfaces\Widgets\iCanPreloadData;
 
 /**
  * A InputComboTable is similar to InputCombo, but it uses a DataTable to show the autosuggest values.
@@ -88,7 +89,7 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
  * @author Andrej Kabachnik
  *        
  */
-class InputComboTable extends InputCombo implements iHaveChildren
+class InputComboTable extends InputCombo implements iHaveChildren, iCanPreloadData
 {
 
     private $text_column_id = null;
@@ -643,5 +644,47 @@ class InputComboTable extends InputCombo implements iHaveChildren
         // TODO add properties specific to this widget here
         return $uxon;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iCanPreloadData::setPreloadData()
+     */
+    public function setPreloadData($uxonOrString): iCanPreloadData
+    {
+        $this->getTable()->setPreloadData($uxonOrString);
+        return $this;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iCanPreloadData::isPreloadDataEnabled()
+     */
+    public function isPreloadDataEnabled(): bool
+    {
+        return $this->getTable()->isPreloadDataEnabled();
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iCanPreloadData::prepareDataSheetToPreload()
+     */
+    public function prepareDataSheetToPreload(DataSheetInterface $dataSheet): DataSheetInterface
+    {
+        return $this->getPreloader()->prepareDataSheetToPreload($dataSheet);
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iCanPreloadData::getPreloader()
+     */
+    public function getPreloader(): DataPreloader
+    {
+        return $this->getTable()->getPreloader();
+    }
+
 }
 ?>
