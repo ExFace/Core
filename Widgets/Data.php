@@ -29,6 +29,9 @@ use exface\Core\Widgets\Traits\iSupportLazyLoadingTrait;
 use exface\Core\Exceptions\Widgets\WidgetPropertyNotSetError;
 use exface\Core\Interfaces\Widgets\iShowData;
 use exface\Core\Interfaces\Widgets\iCanPreloadData;
+use exface\Core\Widgets\Traits\iCanPreloadDataTrait;
+use exface\Core\Interfaces\Actions\iShowDialog;
+use exface\Core\Interfaces\Actions\iShowWidget;
 
 /**
  * Data is the base for all widgets displaying tabular data.
@@ -59,7 +62,10 @@ class Data
         iShowData,
         iCanPreloadData
 {
-    use iHaveButtonsAndToolbarsTrait;
+    use iHaveButtonsAndToolbarsTrait {
+        prepareDataSheetToPreload as prepareDataSheetToPreloadViaTrait;
+    }
+    use iCanPreloadDataTrait;
     use iSupportLazyLoadingTrait {
         setLazyLoading as setLazyLoadingViaTrait;
         getLazyLoadingActionAlias as getLazyLoadingActionAliasViaTrait;
@@ -116,8 +122,6 @@ class Data
     private $autoload_data = true;
     
     private $autoload_disabled_hint = null;
-    
-    private $preloader = null;
 
     protected function init()
     {
@@ -1564,35 +1568,26 @@ class Data
         return 'DataColumn';
     }
     
-    
-    public function setPreloadData($uxonOrString): iCanPreloadData
+    public function prepareDataSheetToPreload(DataSheetInterface $dataSheet) : DataSheetInterface
     {
-        if ($uxonOrString instanceof UxonObject) {
-            $this->getPreloader()->importUxonObject($uxonOrString);
-        } elseif (BooleanDataType::cast($uxonOrString) === true) {
-            $this->getPreloader()->setPreloadAll();
-        } else {
-            throw new WidgetPropertyInvalidValueError($this, 'Invalid value "' . gettype($uxonOrString) . '" received for property preload_data of widget ' . $this->getWidgetType() . ': expecting boolean or UXON!');
+        $dataSheet = $this->prepareDataSheetToPreloadViaTrait($dataSheet);
+        foreach ($this->getButtons() as $btn) {
+            if (! $btn->hasAction()) {
+                continue;
+            }
+            if (! $btn->getAction() instanceof iShowWidget) {
+                continue;
+            }
+            if ($btn->getAction()->getPrefillWithInputData() === false) {
+                continue;
+            }
+            
+            $widget = $btn->getAction()->getWidget();
+            if (($widget instanceof iCanPreloadData) && $widget->getMetaObject()->is($this->getMetaObject()) && $widget->isPreloadDataEnabled()) {
+                $dataSheet = $widget->prepareDataSheetToPreload($dataSheet);
+            }
         }
-        return $this;
+        
+        return $dataSheet;
     }
-
-    public function isPreloadDataEnabled(): bool
-    {
-        return $this->getPreloader()->isEnabled();
-    }
-
-    public function prepareDataSheetToPreload(DataSheetInterface $dataSheet): DataSheetInterface
-    {
-       return $this->getPreloader()->prepareDataSheetToPreload($dataSheet);
-    }
-
-    public function getPreloader(): DataPreloader
-    {
-        if ($this->preloader === null) {
-            $this->preloader = new DataPreloader($this);
-        }
-        return $this->preloader;
-    }
-
 }

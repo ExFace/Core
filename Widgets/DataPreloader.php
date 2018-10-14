@@ -1,12 +1,11 @@
 <?php
 namespace exface\Core\Widgets;
 
-use exface\Core\Interfaces\Widgets\iShowData;
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\Interfaces\WidgetInterface;
 
 class DataPreloader implements iCanBeConvertedToUxon
 {    
@@ -18,12 +17,12 @@ class DataPreloader implements iCanBeConvertedToUxon
     
     private $preloadAll = false;
     
-    public function __construct(iShowData $widget)
+    public function __construct(WidgetInterface $widget)
     {
         $this->widget = $widget;
     }
     
-    public function getWidget() : iShowData
+    public function getWidget() : WidgetInterface
     {
         return $this->widget;
     }
