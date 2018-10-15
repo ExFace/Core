@@ -14,6 +14,7 @@ use exface\Core\Factories\DataPointerFactory;
 use exface\Core\Events\Widget\OnPrefillChangePropertyEvent;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Widgets\iCanPreloadData;
+use exface\Core\Factories\QueryBuilderFactory;
 
 /**
  * A InputComboTable is similar to InputCombo, but it uses a DataTable to show the autosuggest values.
@@ -494,6 +495,18 @@ class InputComboTable extends InputCombo implements iHaveChildren, iCanPreloadDa
             // corresponding text by itself (e.g. via lazy loading), so it is not a real problem.
             if ($this->getAttribute() && $this->getAttribute()->isRelation()) {
                 $text_column_expr = RelationPath::relationPathAdd($this->getRelation()->getAlias(), $this->getTextColumn()->getAttributeAlias());
+                // When the text for a combo comes from another data source, reading it in advance
+                // might have a serious performance impact. Since addint the text column to the prefill
+                // is generally optional (see above), it is a good idea to check, if the text column
+                // can be read with the same query, as the rest of the prefill da and, if not, exclude
+                // it from the prefill.
+                $sheetObj = $data_sheet->getMetaObject();
+                if ($sheetObj->hasAttribute($text_column_expr)) {
+                    $sheetQuery = QueryBuilderFactory::createForObject($sheetObj);
+                    if (! $sheetQuery->canRead($text_column_expr)) {
+                        unset($text_column_expr);
+                    }
+                }
             } elseif ($this->getMetaObject()->isExactly($this->getTable()->getMetaObject())) {
                 $text_column_expr = $this->getTextColumn()->getExpression()->toString();
             } 

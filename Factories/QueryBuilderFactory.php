@@ -6,6 +6,7 @@ use exface\Core\Interfaces\Selectors\QueryBuilderSelectorInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Interfaces\QueryBuilderInterface;
 use exface\Core\CommonLogic\Selectors\QueryBuilderSelector;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 
 abstract class QueryBuilderFactory extends AbstractSelectableComponentFactory
 {
@@ -36,5 +37,17 @@ abstract class QueryBuilderFactory extends AbstractSelectableComponentFactory
         $selector = new QueryBuilderSelector($workbench, $selectorString);
         return static::create($selector);
     }
-}
+    
+    /**
+     * 
+     * @param MetaObjectInterface $object
+     * @return QueryBuilderInterface
+     */
+    public static function createForObject(MetaObjectInterface $object) : QueryBuilderInterface
+    {
+        $qb = static::createFromString($object->getWorkbench(), $object->getQueryBuilder());
+        $qb->setMainObject($object);
+        return $qb;
+    }
+} 
 ?>
