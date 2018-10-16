@@ -74,13 +74,14 @@ trait JqueryDataConfiguratorTrait
     {
         // Use keyup() instead of keypress() because the latter did not work with jEasyUI combos.
         return <<<JS
-
-        $('#{$this->getId()}').find('input').keyup(function (ev) {
-            var keycode = (ev.keyCode ? ev.keyCode : ev.which);
-            if (keycode == '13') {
-                {$this->getTemplate()->getElement($this->getWidget()->getWidgetConfigured())->buildJsRefresh()};
-            }
-        })
+        setTimeout(function(){
+            $('#{$this->getId()}').find('input').keyup(function (ev) {
+                var keycode = (ev.keyCode ? ev.keyCode : ev.which);
+                if (keycode == '13') {
+                    {$this->getTemplate()->getElement($this->getWidget()->getWidgetConfigured())->buildJsRefresh()};
+                }
+            })
+        }, 10)
 
 JS;
     }
