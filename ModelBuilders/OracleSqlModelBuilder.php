@@ -64,8 +64,9 @@ class OracleSqlModelBuilder extends AbstractSqlModelBuilder
         if ($mask) {
             $filter = "AND table_name LIKE '{$mask}'";
         }
+        $owner = mb_strtolower($this->getDataConnection()->getUser());
         
-        $sql = "SELECT table_name AS LABEL, table_name AS DATA_ADDRESS, table_name AS ALIAS FROM all_tables WHERE OWNER='{$this->getDataConnection()->getUser()}' {$filter}";
+        $sql = "SELECT table_name AS LABEL, table_name AS DATA_ADDRESS, table_name AS ALIAS FROM all_tables WHERE LOWER(OWNER)='{$owner}' {$filter}";
         $rows = $this->getDataConnection()->runSql($sql)->getResultArray();
         foreach ($rows as $nr => $row) {
             $rows[$nr]['LABEL'] = $this->generateLabel($row['LABEL']);
