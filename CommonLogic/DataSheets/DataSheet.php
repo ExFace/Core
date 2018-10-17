@@ -468,8 +468,7 @@ class DataSheet implements DataSheetInterface
             $offset = $this->getRowOffset();
         
         // create new query for the main object
-        $query = QueryBuilderFactory::createFromString($this->exface, $thisObject->getQueryBuilder());
-        $query->setMainObject($thisObject);
+        $query = QueryBuilderFactory::createForObject($thisObject);
         
         foreach ($this->getColumns() as $col) {
             $this->getDataForColumn($col, $query);
@@ -687,8 +686,7 @@ class DataSheet implements DataSheetInterface
         }
         
         // Create a query
-        $query = QueryBuilderFactory::createFromString($this->exface, $this->getMetaObject()->getQueryBuilder());
-        $query->setMainObject($this->getMetaObject());
+        $query = QueryBuilderFactory::createForObject($this->getMetaObject());
         // Add filters to the query
         $query->setFiltersConditionGroup($this->getFilters());
         
@@ -864,8 +862,7 @@ class DataSheet implements DataSheetInterface
         
         $this->getWorkbench()->eventManager()->dispatch(new OnBeforeCreateDataEvent($this, $transaction));
         // Create a query
-        $query = QueryBuilderFactory::createFromString($this->exface, $this->getMetaObject()->getQueryBuilder());
-        $query->setMainObject($this->getMetaObject());
+        $query = QueryBuilderFactory::createForObject($this->getMetaObject());
         
         // Add values for columns based on attributes with defaults or fixed values
         foreach ($this->getMetaObject()->getAttributes()->getAll() as $attr) {
@@ -991,8 +988,7 @@ class DataSheet implements DataSheetInterface
         
         $affected_rows = 0;
         // create new query for the main object
-        $query = QueryBuilderFactory::createFromString($this->exface, $this->getMetaObject()->getQueryBuilder());
-        $query->setMainObject($this->getMetaObject());
+        $query = QueryBuilderFactory::createForObject($this->getMetaObject());
         
         if ($this->isUnfiltered()) {
             throw new DataSheetWriteError($this, 'Cannot delete all instances of "' . $this->getMetaObject()->getAliasWithNamespace() . '": forbidden operation!', '6T5VCA6');

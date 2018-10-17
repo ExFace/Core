@@ -5,8 +5,7 @@ use exface\Core\Interfaces\Widgets\iCanBeAligned;
 use exface\Core\Widgets\Traits\iCanBeAlignedTrait;
 use exface\Core\Widgets\Traits\iCanUseProxyTemplateTrait;
 use exface\Core\Interfaces\Widgets\iCanUseProxyTemplate;
-use exface\Core\Factories\TemplateFactory;
-use exface\Core\Templates\ProxyTemplate;
+use exface\Core\Interfaces\Widgets\iShowImage;
 
 /**
  * The image widget shows the image specified by the URL in the value of an attribute.
@@ -20,16 +19,13 @@ use exface\Core\Templates\ProxyTemplate;
  * @author Andrej Kabachnik
  *        
  */
-class Image extends Display implements iCanBeAligned, iCanUseProxyTemplate
+class Image extends Display implements iShowImage, iCanBeAligned, iCanUseProxyTemplate
 {
     use iCanBeAlignedTrait;
     use iCanUseProxyTemplateTrait;
     
-    /**
-     * 
-     * @return string|NULL
-     */
-    public function getUri()
+    
+    public function getUri() : ?string
     {
         return $this->getValue();
     }
@@ -43,12 +39,8 @@ class Image extends Display implements iCanBeAligned, iCanUseProxyTemplate
         return $uri;
     }
 
-    /**
-     * 
-     * @param string $value
-     * @return \exface\Core\Widgets\Image
-     */
-    public function setUri($value)
+    
+    public function setUri(string $value) : iShowImage
     {
         return $this->setValue($value);
     }
