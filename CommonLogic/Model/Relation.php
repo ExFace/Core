@@ -127,9 +127,6 @@ class Relation implements MetaRelationInterface
         if ($this->name === null) {
             if ($this->isReverseRelation()) {
                 $this->name = $this->getRightObject()->getName();
-                if ($this->requiresModifier()) {
-                    $this->name .= ' (' . $this->getRightKeyAttribute()->getAlias() . ')';
-                }
             } else {
                 $this->name = $this->getLeftKeyAttribute()->getName();
             }
