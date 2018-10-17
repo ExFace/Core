@@ -188,7 +188,7 @@ class AttributeList extends EntityList implements MetaAttributeListInterface
         $object = $this->getMetaObject();
         $defs = AttributeListFactory::createForObject($object);
         foreach ($this->getAll() as $attr) {
-            if ($attr->getDefaultDisplayOrder()) {
+            if ($attr->getDefaultDisplayOrder() > 0) {
                 if ($attr->isRelation()) {
                     $rel_path = $attr->getAlias();
                     $rel_obj = $object->getRelatedObject($rel_path);
@@ -204,7 +204,7 @@ class AttributeList extends EntityList implements MetaAttributeListInterface
         }
         
         // Use the label attribute if there are no defaults defined
-        if (empty($defs) && $label_attribute = $object->getLabelAttribute()) {
+        if ($defs->isEmpty() && $label_attribute = $object->getLabelAttribute()) {
             $defs->add($label_attribute);
         }
         
