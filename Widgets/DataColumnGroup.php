@@ -8,6 +8,7 @@ use exface\Core\Exceptions\Widgets\WidgetHasNoUidColumnError;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Widgets\iHaveColumns;
+use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 
 /**
  * The DataColumnGroup is a group of columns in a data widget from one side and at the same time a full featured data widget on the other.
@@ -113,21 +114,37 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
 
     /**
      * Returns the id of the column holding the UID of each row.
-     * By default it is the column with the UID attribute of
-     * the meta object displayed in by the data widget, but this can be changed in the UXON description if required.
+     * 
+     * If no UID column is explicitly defined, the system attempts to pick one automatically:
+     * - For non-aggregated data, it is the column with the UID of the displayed object
+     * - For data aggregated over a single attribute, this attribute is used
+     * - For data aggregated over multiple attributes, no UID column can be picked automatically.
      *
      * @return string
      */
     function getUidColumnId()
     {
         // If there is no UID column defined yet, try to generate one automatically
-        if (is_null($this->uid_column_id)) {
+        if ($this->uid_column_id === null) {
             try {
+                // See if there already is a column for the UID attribute of the meta object and, if not, try to create one
                 if (! $col = $this->getColumnByAttributeAlias($this->getMetaObject()->getUidAttribute()->getAliasWithRelationPath())) {
-                    $col = $this->createColumnFromAttribute($this->getMetaObject()->getUidAttribute(), null, true);
-                    $this->addColumn($col);
+                    $table = $this->getDataWidget();
+                    // We can use the UID attribute of the object only if we are not aggregating - otherwise each row would
+                    // obviously stand for multiple row UIDs (that's the idea of aggregation :)
+                    if (! $table->hasAggregations()) {
+                        $col = $this->createColumnFromAttribute($this->getMetaObject()->getUidAttribute(), null, true);
+                        $this->addColumn($col);
+                    } else {
+                        if (count($table->getAggregations()) === 1) {
+                            $col = $this->getColumnByAttributeAlias($table->getAggregations()[0]);
+                        }
+                    }
                 }
-                $this->uid_column_id = $col->getId();
+                
+                if ($col) {
+                    $this->uid_column_id = $col->getId();
+                }
             } catch (MetaObjectHasNoUidAttributeError $e) {
                 // Do nothing. Depending on what the user wants to do with the column group, it might work without
                 // a UID column. If not, an error will be generated elsewhere.
@@ -151,6 +168,9 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
      */
     public function setUidColumnId($value)
     {
+        if ($this->uid_column_id !== null) {
+            throw new WidgetConfigurationError($this, 'Cannot set change the UID column for an existing ' . $this->getWidgetType());
+        }
         $this->uid_column_id = $value;
         return $this;
     }
@@ -209,7 +229,7 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
      * Returns the data column matching the given id.
      *
      * @param string $column_id            
-     * @return \exface\Core\Widgets\DataColumn|boolean
+     * @return \exface\Core\Widgets\DataColumn|NULL
      */
     public function getColumn($column_id, $use_data_column_names_as_fallback = true)
     {
@@ -221,27 +241,37 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
         if ($use_data_column_names_as_fallback) {
             return $this->getColumnByDataColumnName($column_id);
         }
-        return false;
+        return null;
     }
 
-    function getColumnByAttributeAlias($alias_with_relation_path)
+    /**
+     * 
+     * @param string $alias_with_relation_path
+     * @return \exface\Core\Widgets\DataColumn|NULL
+     */
+    public function getColumnByAttributeAlias($alias_with_relation_path)
     {
         foreach ($this->getColumns() as $col) {
             if ($col->getAttributeAlias() === $alias_with_relation_path) {
                 return $col;
             }
         }
-        return false;
+        return null;
     }
 
-    function getColumnByDataColumnName($data_sheet_column_name)
+    /**
+     * 
+     * @param string $data_sheet_column_name
+     * @return \exface\Core\Widgets\DataColumn|NULL
+     */
+    public function getColumnByDataColumnName($data_sheet_column_name)
     {
         foreach ($this->getColumns() as $col) {
             if ($col->getDataColumnName() === $data_sheet_column_name) {
                 return $col;
             }
         }
-        return false;
+        return null;
     }
 
     /**
@@ -259,9 +289,9 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
                 foreach ($this->getMetaObject()->getAttributeGroup($c->getProperty('attribute_group_alias'))->getAttributes() as $attr) {
                     $this->addColumn($this->createColumnFromAttribute($attr));
                 }
-                continue;
+            } else {
+                $this->addColumn($this->createColumnFromUxon($c));
             }
-            $this->addColumn($this->createColumnFromUxon($c));
         }
         return $this;
     }

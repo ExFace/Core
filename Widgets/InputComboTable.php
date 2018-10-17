@@ -13,6 +13,8 @@ use exface\Core\Factories\WidgetFactory;
 use exface\Core\Factories\DataPointerFactory;
 use exface\Core\Events\Widget\OnPrefillChangePropertyEvent;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
+use exface\Core\Interfaces\Widgets\iCanPreloadData;
+use exface\Core\Factories\QueryBuilderFactory;
 
 /**
  * A InputComboTable is similar to InputCombo, but it uses a DataTable to show the autosuggest values.
@@ -88,7 +90,7 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
  * @author Andrej Kabachnik
  *        
  */
-class InputComboTable extends InputCombo implements iHaveChildren
+class InputComboTable extends InputCombo implements iHaveChildren, iCanPreloadData
 {
 
     private $text_column_id = null;
@@ -493,6 +495,18 @@ class InputComboTable extends InputCombo implements iHaveChildren
             // corresponding text by itself (e.g. via lazy loading), so it is not a real problem.
             if ($this->getAttribute() && $this->getAttribute()->isRelation()) {
                 $text_column_expr = RelationPath::relationPathAdd($this->getRelation()->getAlias(), $this->getTextColumn()->getAttributeAlias());
+                // When the text for a combo comes from another data source, reading it in advance
+                // might have a serious performance impact. Since addint the text column to the prefill
+                // is generally optional (see above), it is a good idea to check, if the text column
+                // can be read with the same query, as the rest of the prefill da and, if not, exclude
+                // it from the prefill.
+                $sheetObj = $data_sheet->getMetaObject();
+                if ($sheetObj->hasAttribute($text_column_expr)) {
+                    $sheetQuery = QueryBuilderFactory::createForObject($sheetObj);
+                    if (! $sheetQuery->canRead($text_column_expr)) {
+                        unset($text_column_expr);
+                    }
+                }
             } elseif ($this->getMetaObject()->isExactly($this->getTable()->getMetaObject())) {
                 $text_column_expr = $this->getTextColumn()->getExpression()->toString();
             } 
@@ -643,5 +657,47 @@ class InputComboTable extends InputCombo implements iHaveChildren
         // TODO add properties specific to this widget here
         return $uxon;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iCanPreloadData::setPreloadData()
+     */
+    public function setPreloadData($uxonOrString): iCanPreloadData
+    {
+        $this->getTable()->setPreloadData($uxonOrString);
+        return $this;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iCanPreloadData::isPreloadDataEnabled()
+     */
+    public function isPreloadDataEnabled(): bool
+    {
+        return $this->getTable()->isPreloadDataEnabled();
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iCanPreloadData::prepareDataSheetToPreload()
+     */
+    public function prepareDataSheetToPreload(DataSheetInterface $dataSheet): DataSheetInterface
+    {
+        return $this->getPreloader()->prepareDataSheetToPreload($dataSheet);
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iCanPreloadData::getPreloader()
+     */
+    public function getPreloader(): DataPreloader
+    {
+        return $this->getTable()->getPreloader();
+    }
+
 }
 ?>

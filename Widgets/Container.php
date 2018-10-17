@@ -12,6 +12,8 @@ use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Exceptions\Widgets\WidgetChildNotFoundError;
 use exface\Core\Exceptions\UnderflowException;
 use exface\Core\Interfaces\Widgets\iHaveChildren;
+use exface\Core\Interfaces\Widgets\iCanPreloadData;
+use exface\Core\Widgets\Traits\iCanPreloadDataTrait;
 
 /**
  * The Container is a basic widget, that contains other widgets - typically simple ones like inputs.
@@ -25,9 +27,10 @@ use exface\Core\Interfaces\Widgets\iHaveChildren;
  * @author Andrej Kabachnik
  *        
  */
-class Container extends AbstractWidget implements iContainOtherWidgets
+class Container extends AbstractWidget implements iContainOtherWidgets, iCanPreloadData
 {
-
+    use iCanPreloadDataTrait;
+    
     private $widgets = array();
 
     /**

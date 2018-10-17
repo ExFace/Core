@@ -28,6 +28,10 @@ use exface\Core\Interfaces\Widgets\iHaveFooter;
 use exface\Core\Widgets\Traits\iSupportLazyLoadingTrait;
 use exface\Core\Exceptions\Widgets\WidgetPropertyNotSetError;
 use exface\Core\Interfaces\Widgets\iShowData;
+use exface\Core\Interfaces\Widgets\iCanPreloadData;
+use exface\Core\Widgets\Traits\iCanPreloadDataTrait;
+use exface\Core\Interfaces\Actions\iShowDialog;
+use exface\Core\Interfaces\Actions\iShowWidget;
 
 /**
  * Data is the base for all widgets displaying tabular data.
@@ -42,9 +46,26 @@ use exface\Core\Interfaces\Widgets\iShowData;
  * @author Andrej Kabachnik
  *        
  */
-class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColumns, iHaveColumnGroups, iHaveToolbars, iHaveButtons, iHaveFilters, iSupportLazyLoading, iHaveContextualHelp, iHaveConfigurator, iShowData
+class Data 
+    extends AbstractWidget 
+    implements 
+        iHaveHeader, 
+        iHaveFooter, 
+        iHaveColumns, 
+        iHaveColumnGroups, 
+        iHaveToolbars, 
+        iHaveButtons, 
+        iHaveFilters, 
+        iSupportLazyLoading, 
+        iHaveContextualHelp, 
+        iHaveConfigurator, 
+        iShowData,
+        iCanPreloadData
 {
-    use iHaveButtonsAndToolbarsTrait;
+    use iHaveButtonsAndToolbarsTrait {
+        prepareDataSheetToPreload as prepareDataSheetToPreloadViaTrait;
+    }
+    use iCanPreloadDataTrait;
     use iSupportLazyLoadingTrait {
         setLazyLoading as setLazyLoadingViaTrait;
         getLazyLoadingActionAlias as getLazyLoadingActionAliasViaTrait;
@@ -386,6 +407,11 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
         return $this;
     }
 
+    /**
+     * 
+     * @param string $column_id
+     * @return \exface\Core\Widgets\DataColumn|NULL
+     */
     function getColumn($column_id)
     {
         foreach ($this->getColumns() as $col) {
@@ -393,14 +419,14 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
                 return $col;
             }
         }
-        return false;
+        return null;
     }
 
     /**
      * Returns the first column with a matching attribute alias.
      *
      * @param string $alias_with_relation_path            
-     * @return \exface\Core\Widgets\DataColumn|boolean
+     * @return \exface\Core\Widgets\DataColumn|NULL
      */
     public function getColumnByAttributeAlias($alias_with_relation_path)
     {
@@ -409,13 +435,13 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
                 return $col;
             }
         }
-        return false;
+        return null;
     }
 
     /**
      *
      * @param string $data_sheet_column_name            
-     * @return \exface\Core\Widgets\DataColumn|boolean
+     * @return \exface\Core\Widgets\DataColumn|NULL
      */
     public function getColumnByDataColumnName($data_sheet_column_name)
     {
@@ -424,7 +450,7 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
                 return $col;
             }
         }
-        return false;
+        return null;
     }
 
     /**
@@ -1545,5 +1571,28 @@ class Data extends AbstractWidget implements iHaveHeader, iHaveFooter, iHaveColu
     public function getColumnDefaultWidgetType() : string
     {
         return 'DataColumn';
+    }
+    
+    public function prepareDataSheetToPreload(DataSheetInterface $dataSheet) : DataSheetInterface
+    {
+        $dataSheet = $this->prepareDataSheetToPreloadViaTrait($dataSheet);
+        foreach ($this->getButtons() as $btn) {
+            if (! $btn->hasAction()) {
+                continue;
+            }
+            if (! $btn->getAction() instanceof iShowWidget) {
+                continue;
+            }
+            if ($btn->getAction()->getPrefillWithInputData() === false) {
+                continue;
+            }
+            
+            $widget = $btn->getAction()->getWidget();
+            if (($widget instanceof iCanPreloadData) && $widget->getMetaObject()->is($this->getMetaObject()) && $widget->isPreloadDataEnabled()) {
+                $dataSheet = $widget->prepareDataSheetToPreload($dataSheet);
+            }
+        }
+        
+        return $dataSheet;
     }
 }

@@ -273,12 +273,16 @@ class ExportXLSX extends ExportDataFile
                     if (($metaAttribute = $dataSheet->getMetaObject()->getAttribute($filterExpression->toString())) && $metaAttribute->isRelation()) {
                         $relatedObject = $metaAttribute->getRelation()->getRightObject();
                         $filterValueRequestSheet = DataSheetFactory::createFromObject($relatedObject);
-                        $filterValueRequestSheet->getColumns()->addFromAttribute($relatedObject->getUidAttribute());
-                        $filterValueRequestSheet->getColumns()->addFromAttribute($relatedObject->getLabelAttribute());
+                        $uidColName = $filterValueRequestSheet->getColumns()->addFromAttribute($relatedObject->getUidAttribute())->getName();
+                        if ($relatedObject->hasLabelAttribute()) {
+                            $labelColName = $filterValueRequestSheet->getColumns()->addFromAttribute($relatedObject->getLabelAttribute())->getName();
+                        } else {
+                            $labelColName = $uidColName;
+                        }
                         $filterValueRequestSheet->getFilters()->addCondition(ConditionFactory::createFromExpression($this->getWorkbench(), ExpressionFactory::createFromAttribute($relatedObject->getUidAttribute()), $filterValue, $condition->getComparator()));
                         $filterValueRequestSheet->dataRead();
                         
-                        if ($requestValue = implode(', ', $filterValueRequestSheet->getColumnValues($relatedObject->getLabelAttribute()->getAliasWithRelationPath()))) {
+                        if ($requestValue = implode(', ', $filterValueRequestSheet->getColumnValues($labelColName))) {
                             $filterValue = $requestValue;
                         }
                     }
