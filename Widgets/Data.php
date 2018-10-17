@@ -407,6 +407,11 @@ class Data
         return $this;
     }
 
+    /**
+     * 
+     * @param string $column_id
+     * @return \exface\Core\Widgets\DataColumn|NULL
+     */
     function getColumn($column_id)
     {
         foreach ($this->getColumns() as $col) {
@@ -414,14 +419,14 @@ class Data
                 return $col;
             }
         }
-        return false;
+        return null;
     }
 
     /**
      * Returns the first column with a matching attribute alias.
      *
      * @param string $alias_with_relation_path            
-     * @return \exface\Core\Widgets\DataColumn|boolean
+     * @return \exface\Core\Widgets\DataColumn|NULL
      */
     public function getColumnByAttributeAlias($alias_with_relation_path)
     {
@@ -430,13 +435,13 @@ class Data
                 return $col;
             }
         }
-        return false;
+        return null;
     }
 
     /**
      *
      * @param string $data_sheet_column_name            
-     * @return \exface\Core\Widgets\DataColumn|boolean
+     * @return \exface\Core\Widgets\DataColumn|NULL
      */
     public function getColumnByDataColumnName($data_sheet_column_name)
     {
@@ -445,7 +450,7 @@ class Data
                 return $col;
             }
         }
-        return false;
+        return null;
     }
 
     /**
