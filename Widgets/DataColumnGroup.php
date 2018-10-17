@@ -259,9 +259,9 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
                 foreach ($this->getMetaObject()->getAttributeGroup($c->getProperty('attribute_group_alias'))->getAttributes() as $attr) {
                     $this->addColumn($this->createColumnFromAttribute($attr));
                 }
-                continue;
+            } else {
+                $this->addColumn($this->createColumnFromUxon($c));
             }
-            $this->addColumn($this->createColumnFromUxon($c));
         }
         return $this;
     }
