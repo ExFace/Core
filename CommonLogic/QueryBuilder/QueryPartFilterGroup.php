@@ -92,12 +92,21 @@ class QueryPartFilterGroup extends QueryPart implements iCanBeCopied
     }
 
     /**
-     *
+     * Returns all FilterQueryParts in this group, optionally filtering them with the given filter function.
+     * 
+     * The $filter must implement the following interface `function(QueryPartFilter $filter) : bool`;
+     * 
      * @return QueryPartFilter[]
      */
-    public function getFilters()
+    public function getFilters(callable $filter = null)
     {
-        return $this->filters;
+        $filters = $this->filters;
+        
+        if ($filter !== null) {
+            $filters = array_filter($filters, $filter);
+        }
+        
+        return $filters;
     }
 
     /**
@@ -288,6 +297,28 @@ class QueryPartFilterGroup extends QueryPart implements iCanBeCopied
     public function isEmpty() : bool
     {
         return ! ($this->hasFilters() || $this->hasNestedGroups());
+    }
+    
+    /**
+     * Makes all QueryPartFilters in this group and nested groups be applied 
+     * in-memory after the actuay reading.
+     * 
+     * The optional $filter callback is passed on to getFilters() for every 
+     * group being processed.
+     * 
+     * @param boolean $value
+     * @return QueryPartFilterGroup
+     */
+    public function setApplyAfterReading($value, callable $filter = null) : QueryPartFilterGroup
+    {
+        foreach ($this->getFilters($filter) as $filter) {
+            $filter->setApplyAfterReading(true);
+        }
+        
+        foreach ($this->getNestedGroups() as $group) {
+            $group->setApplyAfterReading(true, $filter);
+        }
+        return $this;
     }
 }
 ?>
