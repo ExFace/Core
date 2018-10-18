@@ -154,6 +154,8 @@
     "PAGE.DATA_SOURCES.CONNECTION_READONLY": "Verbindung nur lesend",
     "PAGE.DATA_SOURCE_EDITOR.DEFAULTS": "Standard-Konfiguration",
     "PAGE.DATA_SOURCE_EDITOR.CUSTOM_CONFIG": "Abweichende Einstellungen",
+    "PAGE.DATA_SOURCE_EDITOR.CURRENT_CONFIG": "Aktuelle Einstellungen",
+    "PAGE.DATA_SOURCE_EDITOR.COPY_CONNECTION": "Akt. Verbindung kopieren",
     "PAGE.USERS.CREDENTIALS": "Zugangsdaten",
     "PAGE.DOCS.READ": "Lesen",
     "PAGE.ATTRIBUTES.DISPLAY_ORDER": "Anzeige-Pos.",
