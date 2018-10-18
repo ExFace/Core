@@ -155,6 +155,8 @@
     "PAGE.DATA_SOURCES.CONNECTION_READONLY": "Connection readonly",
     "PAGE.DATA_SOURCE_EDITOR.DEFAULTS": "Defaults",
     "PAGE.DATA_SOURCE_EDITOR.CUSTOM_CONFIG": "Custom Configuration",
+    "PAGE.DATA_SOURCE_EDITOR.CURRENT_CONFIG": "Current Configuration",
+    "PAGE.DATA_SOURCE_EDITOR.COPY_CONNECTION": "Copy current connection",
     "PAGE.USERS.CREDENTIALS": "Credentials",
     "PAGE.DOCS.READ": "Read",
     "PAGE.ATTRIBUTES.DISPLAY_ORDER": "Disp. Pos.",
