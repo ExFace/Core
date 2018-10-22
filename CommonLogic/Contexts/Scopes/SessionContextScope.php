@@ -192,6 +192,17 @@ class SessionContextScope extends AbstractContextScope
             }
         } else {
             $this->setSessionId(session_id());
+            // Check, which user data is saved in the session context scope. If it is not
+            // the same user, than the current one (= the one, that is logged on in the
+            // CMS), than clear all context data. This is important, because, when the
+            // user loggs out, the session is not changed - it's just an internal state
+            // change.
+            $currentUser = $this->getContextManager()->getScopeUser()->getUserCurrent();
+            $sessionUser = $this->getSessionData('user');
+            if ($sessionUser !== $currentUser->getUsername()) {
+                $this->clearSessionData();
+                $this->setSessionData('user', $currentUser->getUsername());
+            }
         }
         return $this;
     }
@@ -271,6 +282,12 @@ class SessionContextScope extends AbstractContextScope
     protected function setSessionData(string $key, $data) : SessionContextScope
     {
         $_SESSION['exface'][$key] = $data;
+        return $this;
+    }
+    
+    protected function clearSessionData() : SessionContextScope
+    {
+        unset($_SESSION['exface']);
         return $this;
     }
 
