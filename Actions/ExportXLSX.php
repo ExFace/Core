@@ -4,10 +4,19 @@ namespace exface\Core\Actions;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\Exceptions\Actions\ActionExportDataError;
-use exface\Core\Widgets\DataTable;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Factories\ConditionFactory;
 use exface\Core\Factories\ExpressionFactory;
+use exface\Core\DataTypes\NumberDataType;
+use exface\Core\Interfaces\DataTypes\DataTypeInterface;
+use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\DataTypes\DateDataType;
+use exface\Core\DataTypes\TimestampDataType;
+use exface\Core\DataTypes\HexadecimalNumberDataType;
+use exface\Core\DataTypes\IntegerDataType;
+use exface\Core\CommonLogic\Utils\XLSXWriter;
+use exface\Core\DataTypes\PriceDataType;
+use exface\Core\DataTypes\StringDataType;
 
 /**
  * Exports data to an xlsx file.
@@ -17,32 +26,9 @@ use exface\Core\Factories\ExpressionFactory;
  */
 class ExportXLSX extends ExportDataFile
 {
-
-    // Der Name der Sheets in der Excel-Datei
-    private $excelDataSheetName = 'Sheet1';
-
-    private $excelInfoSheetName = 'Sheet2';
-
-    // Bildet alexa UI-Datentypen auf Excel-Datentypen ab
-    private $typeMap = [
-        'Boolean' => 'integer',
-        'FlagTreeFolder' => 'string',
-        'Html' => 'string',
-        'ImageUrl' => 'string',
-        'Integer' => 'integer',
-        'Json' => 'string',
-        'Number' => '', // Komma wird automatisch angezeigt oder ausgeblendet
-        'Price' => 'price',
-        'PropertySet' => 'string',
-        'Relation' => 'string',
-        'RelationHierarchy' => 'string',
-        'String' => 'string',
-        'Text' => 'string',
-        'Url' => 'string',
-        'Uxon' => 'string'
-        // Date und Timestamp werden in init() aus den Uebersetzungsdateien
-        // hinzugefuegt
-    ];
+    const DATA_TYPE_STRING = 'string';
+    
+    private $dataTypeMap = [];
 
     private $rowNumberWritten = 0;
 
@@ -55,9 +41,6 @@ class ExportXLSX extends ExportDataFile
     {
         parent::init();
         $this->setIcon(Icons::FILE_EXCEL_O);
-        
-        $this->typeMap['Date'] = $this->getWorkbench()->getCoreApp()->getTranslator()->translate('LOCALIZATION.DATE.DATE_FORMAT_EXCEL');
-        $this->typeMap['Timestamp'] = $this->getWorkbench()->getCoreApp()->getTranslator()->translate('LOCALIZATION.DATE.DATETIME_FORMAT_EXCEL');
     }
 
     /**
@@ -78,48 +61,50 @@ class ExportXLSX extends ExportDataFile
         
         /** @var DataTable $inputWidget */
         $inputWidget = $this->getWidgetDefinedIn()->getInputWidget();
-        $header = [];
+        $headerTypes = [];
+        $columnOptions = [];
         $output = [];
         foreach ($dataSheet->getColumns() as $col) {
-            if (! $col->getHidden()) {
-                // Name der Spalte
-                if ($this->getWriteReadableHeader()) {
-                    if (($dataTableCol = $inputWidget->getColumnByAttributeAlias($col->getAttributeAlias())) || ($dataTableCol = $inputWidget->getColumnByDataColumnName($col->getName()))) {
-                        $colName = $dataTableCol->getCaption();
-                    } elseif ($colAttribute = $col->getAttribute()) {
-                        $colName = $colAttribute->getName();
-                    } else {
-                        $colName = '';
-                    }
+            $colOptions = [];
+            // Name der Spalte
+            if ($this->getWriteReadableHeader()) {
+                if (($dataTableCol = $inputWidget->getColumnByAttributeAlias($col->getAttributeAlias())) || ($dataTableCol = $inputWidget->getColumnByDataColumnName($col->getName()))) {
+                    $colName = $dataTableCol->getCaption();
+                } elseif ($colAttribute = $col->getAttribute()) {
+                    $colName = $colAttribute->getName();
                 } else {
-                    $colName = $col->getName();
+                    $colName = '';
                 }
-                // Der Name muss einzigartig sein, sonst werden zu wenige Headerspalten
-                // geschrieben.
-                while (array_key_exists($colName, $header)) {
-                    $colName = $colName . ' ';
-                }
-                
-                // Datentyp der Spalte
-                switch ($col->getDataType()->getName()) {
-                    case 'Number':
-                        if (substr($dataTypeSheet->getCellValue($col->getName(), 0), 0, 2) == '0x') {
-                            // Hexadezimale Zahlen werden als String ausgegeben.
-                            $colDataType = $this->typeMap['String'];
-                        } else {
-                            $colDataType = $this->typeMap[$col->getDataType()->getName()];
-                        }
-                        break;
-                    default:
-                        $colDataType = $this->typeMap[$col->getDataType()->getName()];
-                }
-                
-                $header[$colName] = $colDataType;
-                $output[] = $col->getName();
+            } else {
+                $colName = $col->getName();
             }
+            // Der Name muss einzigartig sein, sonst werden zu wenige Headerspalten
+            // geschrieben.
+            while (array_key_exists($colName, $headerTypes)) {
+                $colName = $colName . ' ';
+            }
+            
+            // Datentyp der Spalte
+            $headerTypes[$colName] = $this->getExcelDataType($col->getDataType());
+            
+            // Width
+            if ($col->getDataType() instanceof TimestampDataType) {
+                $colOptions['width'] = '19';
+            } elseif ($col->getDataType() instanceof StringDataType) {
+                $colOptions['width'] = '25';
+            }
+            
+            // Visibility
+            if ($col->getHidden() === true) {
+                $colOptions['hidden'] = true;
+            }
+            
+            $columnOptions[] = $colOptions;
+            
+            $output[] = $col->getName();
         }
         
-        $this->getWriter()->writeSheetHeader($this->getExcelDataSheetName(), $header);
+        $this->getWriter()->writeSheetHeader($this->getExcelDataSheetName(), $headerTypes, ['font-style' => 'bold', 'auto_filter' => true], $columnOptions);
         return $output;
     }
 
@@ -165,11 +150,14 @@ class ExportXLSX extends ExportDataFile
      * 
      * {@inheritDoc}
      * @see \exface\Core\Actions\ExportDataFile::getWriter()
+     * 
+     * @return \XLSXWriter
      */
     protected function getWriter()
     {
-        if (is_null($this->writer)) {
-            $this->writer = new \XLSXWriter();
+        if ($this->writer === null) {
+            //$this->writer = new \XLSXWriter();
+            $this->writer = new XLSXWriter();
         }
         return $this->writer;
     }
@@ -191,7 +179,7 @@ class ExportXLSX extends ExportDataFile
      */
     protected function getExcelDataSheetName()
     {
-        return $this->excelDataSheetName;
+        return $this->getApp()->getTranslator()->translate('ACTION.EXPORTXLSX.SHEET_DATA');
     }
 
     /**
@@ -201,7 +189,7 @@ class ExportXLSX extends ExportDataFile
      */
     protected function getExcelInfoSheetName()
     {
-        return $this->excelInfoSheetName;
+        return $this->getApp()->getTranslator()->translate('ACTION.EXPORTXLSX.SHEET_LEGEND');
     }
 
     /**
@@ -216,10 +204,10 @@ class ExportXLSX extends ExportDataFile
         // Datentypen festlegen. Da in jeder Spalte verschiedene Datentypen vor-
         // kommem koennen werden alle verwendeten Spalten auf String gesetzt.
         $this->getWriter()->writeSheetHeader($this->getExcelInfoSheetName(), [
-            $this->typeMap['String'],
-            $this->typeMap['String'],
-            $this->typeMap['String']
-        ], true);
+            $this->getExcelDataTypeDefault(),
+            $this->getExcelDataTypeDefault(),
+            $this->getExcelDataTypeDefault()
+        ], ['suppress_row' => true], [['width' => '40'], ['width' => '40']]);
         
         // Benutzername
         $this->getWriter()->writeSheetRow($this->getExcelInfoSheetName(), [
@@ -297,5 +285,79 @@ class ExportXLSX extends ExportDataFile
             }
         }
     }
+    
+    /**
+     * 
+     * @param DataTypeInterface $dataType
+     * @return string
+     */
+    protected function getExcelDataType(DataTypeInterface $dataType) : string
+    {
+        $customType = $this->dataTypeMap[$dataType->getAliasWithNamespace()];
+        if ($customType !== null) {
+            return $customType;
+        }
+        
+        switch (true) {
+            case ($dataType instanceof BooleanDataType): 
+                return 'integer';
+            case ($dataType instanceof TimestampDataType);
+                return $this->getWorkbench()->getCoreApp()->getTranslator()->translate('LOCALIZATION.DATE.DATETIME_FORMAT_EXCEL');
+            case ($dataType instanceof DateDataType):
+                return $this->getWorkbench()->getCoreApp()->getTranslator()->translate('LOCALIZATION.DATE.DATE_FORMAT_EXCEL');
+            case ($dataType instanceof HexadecimalNumberDataType):
+                return 'string';
+            case ($dataType instanceof PriceDataType):
+                return 'price';
+            case ($dataType instanceof IntegerDataType):
+                return 'integer';
+            case ($dataType instanceof NumberDataType):
+                return '';
+            default:
+                return 'string';
+        }
+    }
+    
+    /**
+     *
+     * @return string[]
+     */
+    protected function getDataTypeMap() : array
+    {
+        return $this->dataTypeMap;
+    }
+    
+    /**
+     * Maps a UXON data type alias (incl. namespace) to an Excel cell format.
+     * 
+     * You can use any Excel cell type notation or the following simple types:
+     * 
+     * | simple formats | format code |
+     * | ---------- | ---- |
+     * | string   | @ |
+     * | integer  | 0 |
+     * | date     | YYYY-MM-DD |
+     * | datetime | YYYY-MM-DD HH:MM:SS |
+     * | price    | #,##0.00 |
+     * | dollar   | [$$-1009]#,##0.00;[RED]-[$$-1009]#,##0.00 |
+     * | euro     | #,##0.00 [$€-407];[RED]-#,##0.00 [$€-407] |
+     * 
+     * @uxon-property data_type_map
+     * @uxon-type array
+     * 
+     * @param array $value
+     * @return ExportXLSX
+     */
+    public function setDataTypeMap(array $value) : ExportXLSX
+    {
+        $this->dataTypeMap = $value;
+        return $this;
+    }
+    
+    protected function getExcelDataTypeDefault() : string
+    {
+        return static::DATA_TYPE_STRING;
+    }
+    
 }
 ?>
