@@ -31,6 +31,8 @@
 	"ACTION.EXPORTXLSX.TIMESTAMP": "Zeitpunkt des Exports",
 	"ACTION.EXPORTXLSX.OBJECT": "Exportiertes Objekt",
 	"ACTION.EXPORTXLSX.FILTER": "Verwendete Filter",
+	"ACTION.EXPORTXLSX.SHEET_DATA": "Daten",
+	"ACTION.EXPORTXLSX.SHEET_LEGEND": "Legende",
 
 	"ACTION.FAVORITESADD.NAME": "In die Favoriten",
     "ACTION.FAVORITESADD.RESULT": "%number% Objekt zu Favoriten hinzugefügt.|%number% Objekte zu Favoriten hinzugefügt.",
