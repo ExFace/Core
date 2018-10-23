@@ -9,6 +9,9 @@ use Symfony\Component\Finder\SplFileInfo;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\DataTypes\TimestampDataType;
 use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
+use exface\Core\CommonLogic\QueryBuilder\QueryPartFilterGroup;
+use exface\Core\CommonLogic\QueryBuilder\QueryPartFilter;
+use exface\Core\CommonLogic\QueryBuilder\QueryPartAttribute;
 
 /**
  *
@@ -32,38 +35,8 @@ class FileFinderBuilder extends AbstractQueryBuilder
     {
         $query = new FileFinderDataQuery();
         
-        // Look for filters, that can be processed by the connector itself
-        foreach ($this->getFilters()->getFilters() as $qpart) {
-            if ($qpart->getAttribute()->getId() == $this->getMainObject()->getUidAttribute()->getId()) {
-                switch ($qpart->getComparator()) {
-                    case EXF_COMPARATOR_IS:
-                    case EXF_COMPARATOR_EQUALS:
-                        $path_pattern = Filemanager::pathNormalize($qpart->getCompareValue());
-                        break;
-                    case EXF_COMPARATOR_IN:
-                        $values = explode($qpart->getValueListDelimiter(), $qpart->getCompareValue());
-                        if (count($values) === 1) {
-                            $path_pattern = Filemanager::pathNormalize($values[0]);
-                            break;
-                        }
-                    // No "break;" here to fallback to default if none of the ifs above worked
-                    default:
-                        $qpart->setApplyAfterReading(true);
-                        $query->setFullScanRequired(true);
-                }
-            } elseif ($qpart->getAttribute()->getId() == $this->getMainObject()->getLabelAttribute()->getId()) {
-                switch ($qpart->getComparator()) {
-                    case EXF_COMPARATOR_IS:
-                        $filename = '/.*' . preg_quote($qpart->getCompareValue()) . './i';
-                        break;
-                    default: // TODO
-                }
-            } else {
-                $this->addAttribute($qpart->getExpression()->toString());
-                $qpart->setApplyAfterReading(true);
-                $query->setFullScanRequired(true);
-            }
-        }
+        $path_pattern = $this->buildPathPatternFromFilterGroup($this->getFilters(), $query);
+        $filename = $this->buildFilenameFromFilterGroup($this->getFilters(), $query);
         
         // Setup query
         $path_pattern = $path_pattern ? $path_pattern : $this->getMainObject()->getDataAddress();
@@ -89,6 +62,102 @@ class FileFinderBuilder extends AbstractQueryBuilder
         $query->addFolder($path_relative);
         
         return $query;
+    }
+    
+    protected function isFilename(QueryPartAttribute $qpart) : bool
+    {
+        $addr = mb_strtolower($qpart->getDataAddress());
+        if ($addr === 'name' || $addr === 'filename') {
+            return true;
+        }
+        return false;
+    }
+    
+    protected function buildFilenameFromFilterGroup(QueryPartFilterGroup $qpart, FileFinderDataQuery $query) : ?string
+    {
+        $values = [];
+        $filtersApplied = [];
+        $filename = null;
+        foreach ($qpart->getFilters() as $filter) {
+            if ($this->isFilename($filter)) {
+                switch ($filter->getComparator()) {
+                    case EXF_COMPARATOR_EQUALS:
+                    case EXF_COMPARATOR_IS:
+                        $mask = preg_quote($filter->getCompareValue()) . (mb_strtolower($filter->getDataAddress()) === 'filename' ? '\\.' : '');
+                        if ($filter->getComparator() === EXF_COMPARATOR_EQUALS) {
+                            $mask = '^' . $mask . '$';
+                        }
+                        $values[] = $mask;
+                        $filtersApplied[] = $filter;
+                        break;
+                    default: // Do nothing - the filters will be applied by the query builder after reading files
+                }
+            }
+        }
+        
+        $values = array_unique($values);
+        
+        if (! empty($values)) {
+            switch ($qpart->getOperator()) {
+                case EXF_LOGICAL_OR:
+                    $filename = '/(' . implode('|', $values) . ')/i';
+                    break;
+                case EXF_LOGICAL_AND: 
+                    if (count($values) === 1) {
+                        $filename = '/' . $values[0] . '/i';
+                        break;
+                    } 
+                default:
+                    foreach ($filtersApplied as $filter) {
+                        $filter->setApplyAfterReading(true);
+                        $query->setFullScanRequired(true);
+                    }
+            }
+        }
+        
+        foreach ($qpart->getNestedGroups() as $group) {
+            if ($filename === null) {
+                $filename = $this->buildFilenameFromFilterGroup($group, $query);
+            } else {
+                $group->setApplyAfterReading(true, function(QueryPartFilter $filter) {
+                    return $this->isFilename($filter);
+                });
+                $query->setFullScanRequired(true);
+            }
+        }
+        
+        return $filename;
+    }
+    
+    protected function buildPathPatternFromFilterGroup(QueryPartFilterGroup $qpart, FileFinderDataQuery $query) : ?string
+    {
+        // Look for filters, that can be processed by the connector itself
+        foreach ($this->getFilters()->getFilters() as $qpart) {
+            if ($qpart->getAttribute()->is($this->getMainObject()->getUidAttribute())) {
+                switch ($qpart->getComparator()) {
+                    case EXF_COMPARATOR_IS:
+                    case EXF_COMPARATOR_EQUALS:
+                        $path_pattern = Filemanager::pathNormalize($qpart->getCompareValue());
+                        break;
+                    case EXF_COMPARATOR_IN:
+                        $values = explode($qpart->getValueListDelimiter(), $qpart->getCompareValue());
+                        if (count($values) === 1) {
+                            $path_pattern = Filemanager::pathNormalize($values[0]);
+                            break;
+                        }
+                        // No "break;" here to fallback to default if none of the ifs above worked
+                    default:
+                        $qpart->setApplyAfterReading(true);
+                        $query->setFullScanRequired(true);
+                }
+            } else {
+                $this->addAttribute($qpart->getExpression()->toString());
+                $qpart->setApplyAfterReading(true);
+                $query->setFullScanRequired(true);
+            }
+        }
+        
+        return $path_pattern;
     }
 
     function getResultRows()
