@@ -109,7 +109,7 @@ class ExportData extends ReadData implements iExportData
     public function getFilename()
     {
         if (is_null($this->filename)){
-            return 'export_' . date('Y-d-m_his', time());
+            return 'export_' . date('Y-m-d_his', time());
         }
         return $this->filename;
     }

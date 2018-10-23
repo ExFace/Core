@@ -31,6 +31,8 @@
 	"ACTION.EXPORTXLSX.TIMESTAMP": "Zeitpunkt des Exports",
 	"ACTION.EXPORTXLSX.OBJECT": "Exportiertes Objekt",
 	"ACTION.EXPORTXLSX.FILTER": "Verwendete Filter",
+	"ACTION.EXPORTXLSX.SHEET_DATA": "Daten",
+	"ACTION.EXPORTXLSX.SHEET_LEGEND": "Legende",
 
 	"ACTION.FAVORITESADD.NAME": "In die Favoriten",
     "ACTION.FAVORITESADD.RESULT": "%number% Objekt zu Favoriten hinzugefügt.|%number% Objekte zu Favoriten hinzugefügt.",
@@ -154,6 +156,8 @@
     "PAGE.DATA_SOURCES.CONNECTION_READONLY": "Verbindung nur lesend",
     "PAGE.DATA_SOURCE_EDITOR.DEFAULTS": "Standard-Konfiguration",
     "PAGE.DATA_SOURCE_EDITOR.CUSTOM_CONFIG": "Abweichende Einstellungen",
+    "PAGE.DATA_SOURCE_EDITOR.CURRENT_CONFIG": "Aktuelle Einstellungen",
+    "PAGE.DATA_SOURCE_EDITOR.COPY_CONNECTION": "Akt. Verbindung kopieren",
     "PAGE.USERS.CREDENTIALS": "Zugangsdaten",
     "PAGE.DOCS.READ": "Lesen",
     "PAGE.ATTRIBUTES.DISPLAY_ORDER": "Anzeige-Pos.",

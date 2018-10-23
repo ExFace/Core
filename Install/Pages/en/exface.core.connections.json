@@ -16,6 +16,9 @@
                 "attribute_alias": "LABEL"
             },
             {
+                "attribute_alias": "DATASRC[CONNECTION]"
+            },
+            {
                 "attribute_alias": "CONFIG",
                 "widget_type": "Input"
             },

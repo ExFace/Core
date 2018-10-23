@@ -31,6 +31,8 @@
 	"ACTION.EXPORTXLSX.TIMESTAMP": "Date and time of export",
 	"ACTION.EXPORTXLSX.OBJECT": "Exported object",
 	"ACTION.EXPORTXLSX.FILTER": "Used filters",
+	"ACTION.EXPORTXLSX.SHEET_DATA": "Data",
+	"ACTION.EXPORTXLSX.SHEET_LEGEND": "Legend",
 
 	"ACTION.FAVORITESADD.NAME": "Add to favorites",
     "ACTION.FAVORITESADD.RESULT": "%number% objects added to favorites.",
@@ -155,6 +157,8 @@
     "PAGE.DATA_SOURCES.CONNECTION_READONLY": "Connection readonly",
     "PAGE.DATA_SOURCE_EDITOR.DEFAULTS": "Defaults",
     "PAGE.DATA_SOURCE_EDITOR.CUSTOM_CONFIG": "Custom Configuration",
+    "PAGE.DATA_SOURCE_EDITOR.CURRENT_CONFIG": "Current Configuration",
+    "PAGE.DATA_SOURCE_EDITOR.COPY_CONNECTION": "Copy current connection",
     "PAGE.USERS.CREDENTIALS": "Credentials",
     "PAGE.DOCS.READ": "Read",
     "PAGE.ATTRIBUTES.DISPLAY_ORDER": "Disp. Pos.",
