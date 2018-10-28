@@ -17,6 +17,7 @@ use exface\Core\DataTypes\IntegerDataType;
 use exface\Core\CommonLogic\Utils\XLSXWriter;
 use exface\Core\DataTypes\PriceDataType;
 use exface\Core\DataTypes\StringDataType;
+use exface\Core\Interfaces\Widgets\iShowData;
 
 /**
  * Exports data to an xlsx file.
@@ -48,40 +49,28 @@ class ExportXLSX extends ExportDataFile
      * {@inheritDoc}
      * @see \exface\Core\Actions\ExportDataFile::writeHeader()
      */
-    protected function writeHeader(DataSheetInterface $dataSheet)
+    protected function writeHeader(iShowData $dataWidget)
     {
-        // Den ersten Datensatz einlesen. Z.B. UIDs haben Datentyp Number sind aber
-        // hexadezimale Zahlen des Formats 0x0123456789abcde..., womit Excel nicht
-        // klar kommt. Sie werden daher als String gespeichert. Die einzige
-        // Moeglichkeit sie von anderen Zahlen zu unterscheiden besteht darin den
-        // Inhalt der Spalte zu untersuchen.
-        $dataTypeSheet = $dataSheet->copy();
-        $dataTypeSheet->setRowsOnPage(1);
-        $dataTypeSheet->dataRead();
-        
-        /** @var DataTable $inputWidget */
-        $inputWidget = $this->getWidgetDefinedIn()->getInputWidget();
         $headerTypes = [];
         $columnOptions = [];
         $output = [];
-        foreach ($dataSheet->getColumns() as $col) {
+        $indexes = [];
+        foreach ($dataWidget->getColumns() as $col) {
             $colOptions = [];
             // Name der Spalte
             if ($this->getWriteReadableHeader()) {
-                if (($dataTableCol = $inputWidget->getColumnByAttributeAlias($col->getAttributeAlias())) || ($dataTableCol = $inputWidget->getColumnByDataColumnName($col->getName()))) {
-                    $colName = $dataTableCol->getCaption();
-                } elseif ($colAttribute = $col->getAttribute()) {
-                    $colName = $colAttribute->getName();
-                } else {
-                    $colName = '';
-                }
+                $colName = $col->getCaption();
             } else {
-                $colName = $col->getName();
+                $colName = $col->getAttributeAlias();
             }
+            $colId = $col->getDataColumnName();
+            
             // Der Name muss einzigartig sein, sonst werden zu wenige Headerspalten
             // geschrieben.
-            while (array_key_exists($colName, $headerTypes)) {
-                $colName = $colName . ' ';
+            $idx = $indexes[$colId] ?? 0;
+            $indexes[$colId] = $idx + 1;
+            if ($idx > 1) {
+                $colName = $idx;
             }
             
             // Datentyp der Spalte
@@ -95,13 +84,13 @@ class ExportXLSX extends ExportDataFile
             }
             
             // Visibility
-            if ($col->getHidden() === true) {
+            if ($col->isHidden() === true) {
                 $colOptions['hidden'] = true;
             }
             
             $columnOptions[] = $colOptions;
             
-            $output[] = $col->getName();
+            $output[] = $colId;
         }
         
         $this->getWriter()->writeSheetHeader($this->getExcelDataSheetName(), $headerTypes, ['font-style' => 'bold', 'auto_filter' => true], $columnOptions);

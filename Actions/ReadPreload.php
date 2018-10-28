@@ -30,7 +30,7 @@ class ReadPreload extends ReadData
         
         $data_sheet = $this->getInputDataSheet($task);
         
-        if ($targetWidget = $this->getTargetWidget($task)) {
+        if ($targetWidget = $this->getWidgetToReadFor($task)) {
             if ($targetWidget instanceof iCanPreloadData) {
                 $data_sheet = $targetWidget->prepareDataSheetToPreload($data_sheet);
             } else {

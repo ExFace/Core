@@ -53,7 +53,7 @@ class ReadPrefill extends ReadData
             }
         }
         
-        if ($targetWidget = $this->getTargetWidget($task)) {
+        if ($targetWidget = $this->getWidgetToReadFor($task)) {
             $data_sheet = $targetWidget->prepareDataSheetToPrefill($data_sheet);
         }
         
@@ -74,14 +74,20 @@ class ReadPrefill extends ReadData
      * to it's action's widget.
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Actions\ReadData::getTargetWidget()
+     * @see \exface\Core\Actions\ReadData::getWidgetToReadFor()
      */
-    public function getTargetWidget(TaskInterface $task) : ?WidgetInterface
+    public function getWidgetToReadFor(TaskInterface $task) : ?WidgetInterface
     {
-        $targetWidget = parent::getTargetWidget($task);
-        if (($targetWidget instanceof iTriggerAction) && $targetWidget->getAction() instanceof iShowWidget) {
-            $targetWidget = $targetWidget->getAction()->getWidget();
+        if ($task->isTriggeredByWidget()) {
+            $trigger = $task->getWidgetTriggeredBy();
+        } else {
+            $trigger = $this->getWidgetDefinedIn();
         }
-        return $targetWidget;
+        
+        if (($trigger instanceof iTriggerAction) && $trigger->getAction() instanceof iShowWidget) {
+            return $trigger->getAction()->getWidget();
+        }
+        
+        return parent::getWidgetToReadFor($task);
     }
 }
