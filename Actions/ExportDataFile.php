@@ -10,6 +10,8 @@ use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use GuzzleHttp\Psr7\Uri;
 use exface\Core\Factories\ResultFactory;
+use exface\Core\Interfaces\Widgets\iShowData;
+use exface\Core\Factories\WidgetFactory;
 
 /**
  * This action is the base class for a number of actions, which export raw data as a file
@@ -38,15 +40,29 @@ abstract class ExportDataFile extends ExportData
      */
     protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {
-        $resultMessage = '';
-        
         // DataSheet vorbereiten
         $dataSheetMaster = $this->readData($task);
         
+        $widget = $this->getWidgetToReadFor($task);
+        /* @var $widget \exface\Core\Interfaces\Widgets\iShowData */
+        if (! ($widget instanceof iShowData)) {
+            $page = $task->getPageTriggeredOn();
+            $widget = WidgetFactory::create($page, 'Data');
+            foreach ($dataSheetMaster->getColumns() as $col) {
+                if ($col->getHidden()) {
+                    continue;
+                }
+                $colWidget = WidgetFactory::create($page, 'DataColumn', $widget);
+                $colWidget->setAttributeAlias($col->getAttributeAlias());
+                $widget->addColumn($colWidget);
+            }
+        }
+        
         // Datei erzeugen und schreiben
-        $columnNames = $this->writeHeader($dataSheetMaster);
+        $columnNames = $this->writeHeader($widget);
         $rowsOnPage = $this->getRequestRowNumber();
         $rowOffset = 0;
+        $errorMessage = null;
         try {
             set_time_limit($this->getRequestTimelimit());
             do {
@@ -64,7 +80,7 @@ abstract class ExportDataFile extends ExportData
                 set_time_limit($this->getRequestTimelimit());
             } while (count($dataSheet->getRows()) == $rowsOnPage);
         } catch (ActionExportDataError $aede) {
-            $resultMessage = $aede->getMessage();
+            $errorMessage = $aede->getMessage();
         }
         
         // Speicher frei machen
@@ -73,6 +89,11 @@ abstract class ExportDataFile extends ExportData
         // Datei abschliessen und zum Download bereitstellen
         $this->writeFileResult($dataSheetMaster);
         $result = ResultFactory::createFileResult($task, $this->getPathname());
+        
+        if ($errorMessage !== null) {
+            $result->setMessage($errorMessage);
+        }
+        
         return $result;
     }
 
@@ -82,10 +103,10 @@ abstract class ExportDataFile extends ExportData
      *
      * The column name array is returned.
      *
-     * @param DataSheetInterface $dataSheet
+     * @param iShowData $dataWidget
      * @return string[]
      */
-    abstract protected function writeHeader(DataSheetInterface $dataSheet);
+    abstract protected function writeHeader(iShowData $dataWidget);
 
     /**
      * Generates rows from the passed DataSheet and writes them to the file.
