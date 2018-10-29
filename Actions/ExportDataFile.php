@@ -41,7 +41,7 @@ abstract class ExportDataFile extends ExportData
     protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {
         // DataSheet vorbereiten
-        $dataSheetMaster = $this->readData($task);
+        $dataSheetMaster = $this->getDataSheetToRead($task);
         
         $widget = $this->getWidgetToReadFor($task);
         /* @var $widget \exface\Core\Interfaces\Widgets\iShowData */

@@ -51,7 +51,7 @@ class ExportData extends ReadData implements iExportData
      */
     protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {        
-        $dataSheet = $this->readData($task);
+        $dataSheet = $this->getDataSheetToRead($task)->dataRead();
         $url = $this->export($dataSheet, $task->getTemplate());
         $uri = new Uri($url);
         $message = 'Download ready. If not id does not start automatically, click <a href="' . $url . '">here</a>.';
@@ -60,7 +60,7 @@ class ExportData extends ReadData implements iExportData
         return $result;
     }
     
-    protected function readData(TaskInterface $task) : DataSheetInterface
+    protected function getDataSheetToRead(TaskInterface $task) : DataSheetInterface
     {
         $dataSheet = $this->getInputDataSheet($task);
         // Make sure, the input data has all the columns required for the widget
@@ -72,7 +72,7 @@ class ExportData extends ReadData implements iExportData
             $widget->prepareDataSheetToRead($dataSheet);
         }
         
-        $dataSheet->removeRows()->dataRead();
+        $dataSheet->removeRows();
         return $dataSheet;
     }
 
