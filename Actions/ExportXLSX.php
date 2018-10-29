@@ -104,24 +104,21 @@ class ExportXLSX extends ExportDataFile
      */
     protected function writeRows(DataSheetInterface $dataSheet, array $headerKeys)
     {
+        $rowCnt = $this->rowNumberWritten;
         foreach ($dataSheet->getRows() as $row) {
-            $rowKeys = array_keys($row);
             $outRow = [];
             foreach ($headerKeys as $key) {
-                if (! (array_search($key, $rowKeys) === false)) {
-                    $outRow[] = $row[$key];
-                } else {
-                    $outRow[] = null;
-                }
+                $outRow[$key] = $row[$key];
             }
-            if ($this->rowNumberWritten >= $this->getWriter()::EXCEL_2007_MAX_ROW) {
+            if ($rowCnt >= $this->getWriter()::EXCEL_2007_MAX_ROW) {
                 throw new ActionExportDataError($this, $this->getWorkbench()->getCoreApp()->getTranslator()->translate('ACTION.EXPORTDATA.ROWOVERFLOW', array(
                     '%number%' => $this->getWriter()::EXCEL_2007_MAX_ROW
                 )));
             }
             $this->getWriter()->writeSheetRow($this->getExcelDataSheetName(), $outRow);
-            $this->rowNumberWritten ++;
+            $rowCnt++;
         }
+        $this->rowNumberWritten = $rowCnt;
     }
 
     /**

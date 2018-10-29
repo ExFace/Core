@@ -83,14 +83,9 @@ class ExportCSV extends ExportDataFile
     protected function writeRows(DataSheetInterface $dataSheet, array $headerKeys)
     {
         foreach ($dataSheet->getRows() as $row) {
-            $rowKeys = array_keys($row);
             $outRow = [];
             foreach ($headerKeys as $key) {
-                if (! (array_search($key, $rowKeys) === false)) {
-                    $outRow[] = $row[$key];
-                } else {
-                    $outRow[] = null;
-                }
+                $outRow[$key] = $row[$key];
             }
             $this->getWriter()->insertOne($outRow);
         }
