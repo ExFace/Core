@@ -8,6 +8,6 @@ namespace exface\Core\Interfaces\Actions;
  * @author Andrej Kabachnik
  *        
  */
-interface iAccessDataSources
+interface iAccessDataSources extends ActionInterface
 {
 }
