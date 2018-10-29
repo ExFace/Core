@@ -10,6 +10,7 @@ use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Exceptions\Actions\ActionCallingWidgetNotSpecifiedError;
 use exface\Core\Factories\ResultFactory;
 use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\Interfaces\Widgets\iUseInputWidget;
 
 /**
  * 
@@ -23,7 +24,7 @@ class ReadData extends AbstractAction implements iReadData
 
     private $update_filter_context = true;
     
-    private $targetWidgetId = null;
+    private $widgetToReadFor = null;
 
     /**
      * 
@@ -38,8 +39,8 @@ class ReadData extends AbstractAction implements iReadData
         
         $data_sheet = $this->getInputDataSheet($task);
         $data_sheet->removeRows();
-        if ($targetWidget = $this->getTargetWidget($task)) {
-            $data_sheet = $targetWidget->prepareDataSheetToRead($data_sheet);
+        if ($dataWidget = $this->getWidgetToReadFor($task)) {
+            $data_sheet = $dataWidget->prepareDataSheetToRead($data_sheet);
         }
         $affected_rows = $data_sheet->dataRead();
         
@@ -105,38 +106,48 @@ class ReadData extends AbstractAction implements iReadData
     /**
      * The id of the widget to read the data for.
      * 
-     * If not set, the widget, that triggered the task will be used.
+     * If not set, the input widget, of the trigger of the task will be used.
      * 
      * Setting a custom target widget allows to create buttons, that load/refresh data 
      * in a specific widget.
      * 
-     * @uxon-property target_widget_id
+     * @uxon-property widget_id_to_read_for
      * @uxon-type string
      * 
      * @param string $value
      * @return ReadData
      */
-    public function setTargetWidgetId(string $value) : ReadData
+    public function setWidgetIdToReadFor(string $value) : ReadData
     {
-        $this->targetWidgetId = $value;
+        $this->widgetToReadFor = $value;
         return $this;
     }
     
     /**
-     * Returns the widget for which the data is to be read
+     * Returns the widget for which the data is to be read.
      * 
      * @param TaskInterface $task
      * 
      * @return WidgetInterface|NULL
      */
-    public function getTargetWidget(TaskInterface $task) : ?WidgetInterface
+    public function getWidgetToReadFor(TaskInterface $task) : ?WidgetInterface
     {
-        if ($this->targetWidgetId !== null) {
-            return $task->getPageTriggeredOn()->getWidget($this->targetWidgetId);
+        if ($this->widgetToReadFor !== null) {
+            return $task->getPageTriggeredOn()->getWidget($this->widgetToReadFor);
         }
         
         if ($task->isTriggeredByWidget()) {
-            return $task->getWidgetTriggeredBy();
+            $trigger = $task->getWidgetTriggeredBy();
+        } elseif ($this->isDefinedInWidget()) {
+            $trigger = $this->getWidgetDefinedIn();
+        }
+        
+        if ($trigger !== null) {
+            if ($trigger instanceof iUseInputWidget) {
+                return $trigger->getInputWidget();
+            } else {
+                return $trigger;
+            }
         }
         
         return null;
