@@ -51,7 +51,7 @@ class ExportData extends ReadData implements iExportData
      */
     protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {        
-        $dataSheet = $this->readData($task);
+        $dataSheet = $this->getDataSheetToRead($task)->dataRead();
         $url = $this->export($dataSheet, $task->getTemplate());
         $uri = new Uri($url);
         $message = 'Download ready. If not id does not start automatically, click <a href="' . $url . '">here</a>.';
@@ -60,23 +60,19 @@ class ExportData extends ReadData implements iExportData
         return $result;
     }
     
-    protected function readData(TaskInterface $task) : DataSheetInterface
+    protected function getDataSheetToRead(TaskInterface $task) : DataSheetInterface
     {
         $dataSheet = $this->getInputDataSheet($task);
         // Make sure, the input data has all the columns required for the widget
         // we export from. Generally this will not be the case, because the
         // widget calling the action is a button and it normally does not know
         // which columns to export.
-        if ($this->isDefinedInWidget()) {
-            $widget = $this->getWidgetDefinedIn();
-        } elseif ($task->isTriggeredOnPage()) {
-            $widget = $task->getWidgetTriggeredBy();
-        }
-        if (isset($widget) && $this->getWidgetDefinedIn()->is('Button')){
-            $this->getWidgetDefinedIn()->getInputWidget()->prepareDataSheetToRead($dataSheet);
+        $widget = $this->getWidgetToReadFor($task);
+        if ($widget){
+            $widget->prepareDataSheetToRead($dataSheet);
         }
         
-        $dataSheet->removeRows()->dataRead();
+        $dataSheet->removeRows();
         return $dataSheet;
     }
 

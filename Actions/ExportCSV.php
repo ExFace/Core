@@ -6,6 +6,7 @@ use League\Csv\Writer;
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\Widgets\DataTable;
 use League\Csv\Reader;
+use exface\Core\Interfaces\Widgets\iShowData;
 
 /**
  * Exports data to a csv file.
@@ -42,34 +43,32 @@ class ExportCSV extends ExportDataFile
      * {@inheritDoc}
      * @see \exface\Core\Actions\ExportDataFile::writeHeader()
      */
-    protected function writeHeader(DataSheetInterface $dataSheet)
+    protected function writeHeader(iShowData $dataWidget)
     {
-        /** @var DataTable $inputWidget */
-        $inputWidget = $this->getWidgetDefinedIn()->getInputWidget();
         $header = [];
         $output = [];
-        foreach ($dataSheet->getColumns() as $col) {
-            if (! $col->getHidden()) {
+        $indexes = [];
+        foreach ($dataWidget->getColumns() as $col) {
+            if (! $col->isHidden()) {
                 // Name der Spalte
                 if ($this->getWriteReadableHeader()) {
-                    if (($dataTableCol = $inputWidget->getColumnByAttributeAlias($col->getAttributeAlias())) || ($dataTableCol = $inputWidget->getColumnByDataColumnName($col->getName()))) {
-                        $colName = $dataTableCol->getCaption();
-                    } elseif ($colAttribute = $col->getAttribute()) {
-                        $colName = $colAttribute->getName();
-                    } else {
-                        $colName = '';
-                    }
+                    $colName = $col->getCaption();
                 } else {
-                    $colName = $col->getName();
+                    $colName = $col->getAttributeAlias();
                 }
+                $colId = $col->getDataColumnName();
+                
                 // Der Name muss einzigartig sein, sonst werden zu wenige Headerspalten
                 // geschrieben.
-                while (array_key_exists($colName, $header)) {
-                    $colName = $colName . ' ';
+                $idx = $indexes[$colId] ?? 0;
+                $indexes[$colId] = $idx + 1;
+                if ($idx > 1) {
+                    $colName = $idx;
                 }
                 
+                
                 $header[] = $colName;
-                $output[] = $col->getName();
+                $output[] = $colId;
             }
         }
         $this->getWriter()->insertOne($header);
@@ -84,14 +83,9 @@ class ExportCSV extends ExportDataFile
     protected function writeRows(DataSheetInterface $dataSheet, array $headerKeys)
     {
         foreach ($dataSheet->getRows() as $row) {
-            $rowKeys = array_keys($row);
             $outRow = [];
             foreach ($headerKeys as $key) {
-                if (! (array_search($key, $rowKeys) === false)) {
-                    $outRow[] = $row[$key];
-                } else {
-                    $outRow[] = null;
-                }
+                $outRow[$key] = $row[$key];
             }
             $this->getWriter()->insertOne($outRow);
         }
