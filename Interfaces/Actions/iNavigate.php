@@ -1,6 +1,6 @@
 <?php
 namespace exface\Core\Interfaces\Actions;
 
-interface iNavigate
+interface iNavigate extends ActionInterface
 {
 }

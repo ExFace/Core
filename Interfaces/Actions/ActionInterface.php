@@ -268,7 +268,7 @@ interface ActionInterface extends WorkbenchDependantInterface, AliasInterface, i
     /**
      *
      * @param string $qualified_alias            
-     * @return ActionInputInterface
+     * @return ActionInterface
      */
     public function setObjectAlias($qualified_alias);
 
