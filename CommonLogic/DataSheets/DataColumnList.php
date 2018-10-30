@@ -102,7 +102,7 @@ class DataColumnList extends EntityList implements DataColumnListInterface
                 }
             } else {
                 $col_name = $relation_path ? RelationPath::relationPathAdd($relation_path, $col) : $col;
-                if (! $this->get($col_name)) {
+                if ($this->get($col_name) === null) {
                     try {
                         $this->addFromExpression($col_name);
                     } catch (\Throwable $e) {

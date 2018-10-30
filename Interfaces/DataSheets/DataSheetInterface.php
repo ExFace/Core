@@ -26,7 +26,7 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * @param boolean $merge_uid_dublicates            
      * @return DataSheetInterface
      */
-    public function addRows(array $rows, $merge_uid_dublicates = false);
+    public function addRows(array $rows, bool $merge_uid_dublicates = false, bool $auto_add_columns = true) : DataSheetInterface;
 
     /**
      * Adds a new row to the data sheet.
@@ -38,7 +38,7 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * @param boolean $merge_uid_dublicates            
      * @return \exface\Core\Interfaces\DataSheets\DataSheetInterface
      */
-    public function addRow(array $row, $merge_uid_dublicates = false);
+    public function addRow(array $row, bool $merge_uid_dublicates = false, bool $auto_add_columns = true) : DataSheetInterface;
 
     /**
      * Makes this data sheet LEFT JOIN the other data sheet ON $this.$left_key_column = $data_sheet.right_key_column

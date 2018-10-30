@@ -113,10 +113,10 @@ class DataSheet implements DataSheetInterface
      *
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::addRows($rows)
      */
-    public function addRows(array $rows, $merge_uid_dublicates = false)
+    public function addRows(array $rows, bool $merge_uid_dublicates = false, bool $auto_add_columns = true) : DataSheetInterface
     {
         foreach ($rows as $row) {
-            $this->addRow((array) $row, $merge_uid_dublicates);
+            $this->addRow($row, $merge_uid_dublicates, $auto_add_columns);
         }
         return $this;
     }
@@ -127,7 +127,7 @@ class DataSheet implements DataSheetInterface
      *
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::addRow()
      */
-    public function addRow(array $row, $merge_uid_dublicates = false)
+    public function addRow(array $row, bool $merge_uid_dublicates = false, bool $auto_add_columns = true) : DataSheetInterface
     {
         if (! empty($row)) {
             if ($merge_uid_dublicates && $this->getUidColumn() && $uid = $row[$this->getUidColumn()->getName()]) {
@@ -141,7 +141,9 @@ class DataSheet implements DataSheetInterface
                 $this->rows[] = $row;
             }
             // ensure, that all columns used in the rows are present in the data sheet
-            $this->getColumns()->addMultiple(array_keys((array) $row));
+            if ($auto_add_columns === true) {
+                $this->getColumns()->addMultiple(array_keys((array) $row));
+            }
             $this->setFresh(true);
         }
         return $this;
