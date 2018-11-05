@@ -43,7 +43,7 @@ class ExportCSV extends ExportDataFile
      * {@inheritDoc}
      * @see \exface\Core\Actions\ExportDataFile::writeHeader()
      */
-    protected function writeHeader(iShowData $dataWidget)
+    protected function writeHeader(iShowData $dataWidget) : array
     {
         $header = [];
         $output = [];
@@ -51,7 +51,7 @@ class ExportCSV extends ExportDataFile
         foreach ($dataWidget->getColumns() as $col) {
             if (! $col->isHidden()) {
                 // Name der Spalte
-                if ($this->getWriteReadableHeader()) {
+                if ($this->getUseAttributeAliasAsHeader()) {
                     $colName = $col->getCaption();
                 } else {
                     $colName = $col->getAttributeAlias();

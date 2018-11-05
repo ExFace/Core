@@ -31,7 +31,7 @@ class ExportJson extends ExportDataFile
      * {@inheritDoc}
      * @see \exface\Core\Actions\ExportDataFile::writeHeader()
      */
-    protected function writeHeader(DataSheetInterface $dataSheet)
+    protected function writeHeader(DataSheetInterface $dataSheet) : array
     {
         $header = [];
         foreach ($dataSheet->getColumns() as $col) {

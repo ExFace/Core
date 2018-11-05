@@ -49,7 +49,7 @@ class ExportXLSX extends ExportDataFile
      * {@inheritDoc}
      * @see \exface\Core\Actions\ExportDataFile::writeHeader()
      */
-    protected function writeHeader(iShowData $dataWidget)
+    protected function writeHeader(iShowData $dataWidget) : array
     {
         $headerTypes = [];
         $columnOptions = [];
@@ -58,7 +58,7 @@ class ExportXLSX extends ExportDataFile
         foreach ($dataWidget->getColumns() as $col) {
             $colOptions = [];
             // Name der Spalte
-            if ($this->getWriteReadableHeader()) {
+            if ($this->getUseAttributeAliasAsHeader()) {
                 $colName = $col->getCaption();
             } else {
                 $colName = $col->getAttributeAlias();
