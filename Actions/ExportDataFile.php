@@ -4,14 +4,13 @@ namespace exface\Core\Actions;
 use exface\Core\CommonLogic\Filemanager;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Exceptions\Actions\ActionExportDataError;
-use exface\Core\Exceptions\Actions\ActionConfigurationError;
 use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
-use GuzzleHttp\Psr7\Uri;
 use exface\Core\Factories\ResultFactory;
 use exface\Core\Interfaces\Widgets\iShowData;
 use exface\Core\Factories\WidgetFactory;
+use exface\Core\DataTypes\BooleanDataType;
 
 /**
  * This action is the base class for a number of actions, which export raw data as a file
@@ -27,11 +26,11 @@ abstract class ExportDataFile extends ExportData
 
     private $writer = null;
 
-    private $writeReadableHeader = true;
+    private $useAttributeAliasAsHeader = false;
 
-    private $requestRowNumber = 30000;
+    private $limitRowsPerRequest = 10000;
 
-    private $requestTimelimit = 300;
+    private $limitTimePerRequest = 300;
 
     /**
      *
@@ -60,11 +59,11 @@ abstract class ExportDataFile extends ExportData
         
         // Datei erzeugen und schreiben
         $columnNames = $this->writeHeader($widget);
-        $rowsOnPage = $this->getRequestRowNumber();
+        $rowsOnPage = $this->getLimitRowsPerRequest();
         $rowOffset = 0;
         $errorMessage = null;
         try {
-            set_time_limit($this->getRequestTimelimit());
+            set_time_limit($this->getLimitTimePerRequest());
             do {
                 $dataSheet = $dataSheetMaster->copy();
                 $dataSheet->setRowsOnPage($rowsOnPage);
@@ -77,10 +76,11 @@ abstract class ExportDataFile extends ExportData
                 // Das Zeitlimit wird bei jedem Schleifendurchlauf neu gesetzt, so dass es immer
                 // nur fuer einen Durchlauf gilt. Sonst kommt es bei groesseren Abfragen schnell
                 // zu einem fatal error: maximum execution time exceeded.
-                set_time_limit($this->getRequestTimelimit());
+                set_time_limit($this->getLimitTimePerRequest());
             } while (count($dataSheet->getRows()) == $rowsOnPage);
         } catch (ActionExportDataError $aede) {
             $errorMessage = $aede->getMessage();
+            throw $aede;
         }
         
         // Speicher frei machen
@@ -106,7 +106,7 @@ abstract class ExportDataFile extends ExportData
      * @param iShowData $dataWidget
      * @return string[]
      */
-    abstract protected function writeHeader(iShowData $dataWidget);
+    abstract protected function writeHeader(iShowData $dataWidget) : array;
 
     /**
      * Generates rows from the passed DataSheet and writes them to the file.
@@ -116,11 +116,15 @@ abstract class ExportDataFile extends ExportData
      *
      * @param DataSheetInterface $dataSheet
      * @param string[] $columnNames
+     * @return void
      */
     abstract protected function writeRows(DataSheetInterface $dataSheet, array $columnNames);
 
     /**
      * Writes the terminated file to the harddrive.
+     * 
+     * @param DataSheetInterface $dataSheet
+     * @return void
      */
     abstract protected function writeFileResult(DataSheetInterface $dataSheet);
 
@@ -136,7 +140,7 @@ abstract class ExportDataFile extends ExportData
      *
      * @return string
      */
-    public function getPathname()
+    public function getPathname() : string
     {
         if (is_null($this->pathname)) {
             $filemanager = $this->getWorkbench()->filemanager();
@@ -151,46 +155,40 @@ abstract class ExportDataFile extends ExportData
     /**
      * Returns the number of rows per request.
      *
-     * @return integer
+     * @return int
      */
-    public function getRequestRowNumber()
+    public function getLimitRowsPerRequest() : int
     {
-        return $this->requestRowNumber;
+        return $this->limitRowsPerRequest;
     }
 
     /**
-     * Sets the number of rows per request (default 30000).
+     * Sets the number of rows per request (default 10000).
      *
      * If in total more rows are requested, several subsequent requests are started to fetch
      * all rows. If a fatal error: "allowed memory size exhausted" occurs during a
      * xlsx-export it is advisable to reduce this number.
      *
-     * @uxon-property request_row_number
+     * @uxon-property limit_rows_per_request
      * @uxon-type integer
      *
-     * @param integer|string $value
+     * @param integer $number
      * @return \exface\Core\Actions\ExportXLSX
      */
-    public function setRequestRowNumber($value)
+    public function setLimitRowsPerRequest(int $number) : ExportDataFile
     {
-        if (is_int($value)) {
-            $this->requestRowNumber = $value;
-        } else if (is_string($value)) {
-            $this->requestRowNumber = intval($value);
-        } else {
-            throw new ActionConfigurationError($this, 'Can not set request_row_number for "' . $this->getAliasWithNamespace() . '": the argument passed to setRequestRowNumber() is neither an integer nor a string!');
-        }
+        $this->limitRowsPerRequest = intval($number);
         return $this;
     }
 
     /**
-     * Returns the time limit per request.
+     * Returns the time limit per request in microseconds.
      *
      * @return integer
      */
-    public function getRequestTimelimit()
+    public function getLimitTimePerRequest() : int
     {
-        return $this->requestTimelimit;
+        return $this->limitTimePerRequest;
     }
 
     /**
@@ -201,21 +199,15 @@ abstract class ExportDataFile extends ExportData
      * "maximum execution time exceeded" occurs during a xlsx-export it is possible to
      * increase this number to try if the request finishes in a longer time.
      *
-     * @uxon-property request_timelimit
+     * @uxon-property limit_time_per_request
      * @uxon-type integer
      *
-     * @param integer|string $value
+     * @param integer $microseconds
      * @return \exface\Core\Actions\ExportXLSX
      */
-    public function setRequestTimelimit($value)
+    public function setLimitTimePerRequest(int $microseconds) : ExportDataFile
     {
-        if (is_int($value)) {
-            $this->requestTimelimit = $value;
-        } else if (is_string($value)) {
-            $this->requestTimelimit = intval($value);
-        } else {
-            throw new ActionConfigurationError($this, 'Can not set request_timelimit for "' . $this->getAliasWithNamespace() . '": the argument passed to setRequestTimelimit() is neither an integer nor a string!');
-        }
+        $this->limitTimePerRequest = $microseconds;
         return $this;
     }
 
@@ -225,37 +217,23 @@ abstract class ExportDataFile extends ExportData
      * 
      * @return boolean
      */
-    public function getWriteReadableHeader()
+    public function getUseAttributeAliasAsHeader() : bool
     {
-        return $this->writeReadableHeader;
+        return $this->useAttributeAliasAsHeader;
     }
 
     /**
-     * Determines if the header of the output file contains human readable text or
-     * column names (default true -> human readable text).
+     * Set to TRUE to use attribute aliases as column headers in the exported data instead of captions.
      * 
      * @uxon-property write_readable_header
      * @uxon-type boolean
      * 
-     * @param boolean|string $value
-     * @throws ActionConfigurationError
+     * @param bool $value
      * @return \exface\Core\Actions\ExportDataFile
      */
-    public function setWriteReadableHeader($value)
+    public function setUseAttributeAliasAsHeader(bool $value) : ExportDataFile
     {
-        if (is_bool($value)) {
-            $this->writeReadableHeader = $value;
-        } else if (is_string($value)) {
-            if (strcasecmp('true', $value) == 0) {
-                $this->writeReadableHeader = true;
-            } else if (strcasecmp('false', $value) == 0) {
-                $this->writeReadableHeader = false;
-            } else {
-                $this->writeReadableHeader = boolval($value);
-            }
-        } else {
-            throw new ActionConfigurationError($this, 'Can not set write_readable_header for "' . $this->getAliasWithNamespace() . '": the argument passed to setWriteReadableHeader() is neither a boolean nor a string!');
-        }
+        $this->useAttributeAliasAsHeader = BooleanDataType::cast($value);
         return $this;
     }
 }
