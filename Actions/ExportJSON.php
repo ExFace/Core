@@ -20,7 +20,7 @@ use exface\Core\Interfaces\Widgets\iShowData;
  * `use_attribute_alias_as_header` = TRUE.
  * 
  * As all export actions do, this action will read all data matching the current filters (no pagination), eventually
- * splitting it into multiple requests. You can use `limit_request_rows` and `limit_request_time` to control this.
+ * splitting it into multiple requests. You can use `limit_rows_per_request` and `limit_time_per_request` to control this.
  * 
  * @author Andrej Kabachnik
  *
