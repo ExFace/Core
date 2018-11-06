@@ -156,7 +156,7 @@ class ExportJSON extends ReadData implements iExportData
      */
     public function getMimeType() : ?string
     {
-        if ($this->mimeType === null && $this::class === ExportJSON::class) {
+        if ($this->mimeType === null && get_class($this) === ExportJSON::class) {
             return 'application/json';
         }
         return $this->mimeType;
