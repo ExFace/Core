@@ -250,7 +250,7 @@ class CopyData extends SaveData implements iCreateData
                 $aliases[] = $rel->getAlias(); 
             }
         }
-        return $aliases;
+        return array_unique($aliases);
     }
     
     /**
