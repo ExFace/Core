@@ -19,7 +19,7 @@ use exface\Core\CommonLogic\UxonObject;
 class ProgressBar extends Display implements iCanBeAligned
 {
     use iCanBeAlignedTrait {
-        getAlign as getAlignDefault;
+        getAlign as getAlignViaTrait;
     }
     private $min = 0;
     
@@ -27,7 +27,7 @@ class ProgressBar extends Display implements iCanBeAligned
     
     private $colorMap = null;
     
-    private $textMap = [];
+    private $textMap = null;
     
     /**
      *
@@ -87,6 +87,15 @@ class ProgressBar extends Display implements iCanBeAligned
     }
     
     /**
+     * 
+     * @return bool
+     */
+    public function hasColorMap() : bool
+    {
+        return $this->colorMap !== null;
+    }
+    
+    /**
      * Specify a custom color scale for the progress bar.
      * 
      * The color map must be an object with values as keys and CSS color codes as values.
@@ -122,7 +131,16 @@ class ProgressBar extends Display implements iCanBeAligned
      */
     public function getTextMap() : array
     {
-        return $this->textMap;
+        return $this->textMap ?? [];
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function hasTextMap() : bool
+    {
+        return $this->textMap !== null;
     }
     
     /**
@@ -215,6 +233,26 @@ class ProgressBar extends Display implements iCanBeAligned
         ];
         
         return $invert === false ? $map : array_reverse($map);
+    }
+    
+    /**
+     * The text over the progress bar gets opposite alignment automatically if the value is a number
+     * and there is no text_map (which would make it become text).
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iCanBeAligned::getAlign()
+     */
+    public function getAlign()
+    {
+        if ($this->isAlignSet() === true) {
+            return $this->getAlignViaTrait();
+        }
+        
+        if ($this->hasTextMap() === false && ($this->getValueDataType() instanceof NumberDataType)) {
+            return EXF_ALIGN_OPPOSITE;
+        }
+        
+        return EXF_ALIGN_DEFAULT;
     }
 }
 ?>
