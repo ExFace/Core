@@ -14,12 +14,16 @@ use exface\Core\DataTypes\NumberDataType;
  * The color map will paint the progress bar in different colors depending on the value. The following example (assuming min=0 and max=99)
  * would make values between 0 and 30 green, then upto 79 yellow, value 80 would be red and all the following values gill be grey. Colors
  * can be defined in any format compatible with the CSS color attribute.
- * [
- * 30: "#0a0",
- * 79: "yellow",
- * 80: "red",
- * 99: "grey"
- * ]
+ * 
+ * ```
+ *  [
+ *      30: "#0a0",
+ *      79: "yellow",
+ *      80: "red",
+ *      99: "grey"
+ *  ]
+ *  
+ * ```
  *
  * @author Andrej Kabachnik
  *        

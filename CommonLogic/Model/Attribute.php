@@ -76,6 +76,9 @@ class Attribute implements MetaAttributeInterface
     
     /** @var UxonObject|null */
     private $default_editor_uxon = null;
+    
+    /** @var UxonObject|null */
+    private $default_display_uxon = null;
 
     /** @var UxonObject|null */
     private $custom_data_type_uxon = null;
@@ -1016,6 +1019,42 @@ class Attribute implements MetaAttributeInterface
         $this->default_editor_uxon = $uxon;
         return $this;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::getDefaultDisplayUxon()
+     */
+    public function getDefaultDisplayUxon() : UxonObject
+    {
+        // If there is no default widget uxon defined, use the UXON from the data type
+        if ($this->default_display_uxon === null) {
+            $this->default_display_uxon = new UxonObject(['widget_type' => 'Display']);
+        }
+        
+        $uxon = $this->default_display_uxon->copy();
+        
+        // Set the attribute alias AFTER copying the UXON because the UXON object may
+        // be inherited from or by other attributes and we do not want to modify it 
+        // directly
+        if (! $uxon->hasProperty('attribute_alias')) {
+            $uxon->setProperty('attribute_alias', $this->getAliasWithRelationPath());
+        }
+        
+        return $uxon;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setDefaultDisplayUxon()
+     */
+    public function setDefaultDisplayUxon(UxonObject $value) : MetaAttributeInterface
+    {
+        $this->default_display_uxon = $value;
+        return $this;
+    }
+    
     
     /**
      * 
