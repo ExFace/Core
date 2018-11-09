@@ -80,9 +80,15 @@ function() {
     
     html = html
         .replace(/exfph-val/g, val)
-        .replace(/exfph-text/g, textMap[val])
         .replace("exfph-progress", ((numVal / {$widget->getMax()} - {$widget->getMin()}) * 100))
         .replace("exfph-color", color);
+
+    if (textMap.length > 0) {
+        html = html.replace(/exfph-text/g, textMap[val]);
+    } else {
+        var text = {$this->buildJsValueFormatter('val')};
+        html = html.replace(/exfph-text/g, text);
+    }
     
     return html;
 }()
