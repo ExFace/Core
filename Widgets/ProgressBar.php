@@ -25,7 +25,7 @@ class ProgressBar extends Display implements iCanBeAligned
     
     private $max = 100;
     
-    private $colorMap = [];
+    private $colorMap = null;
     
     private $textMap = [];
     
