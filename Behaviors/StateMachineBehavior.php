@@ -68,7 +68,9 @@ class StateMachineBehavior extends AbstractBehavior
     
     private $hideStateIds = false;
     
-    private $showStateAsProgressBar = true;
+    private $showStateAsProgressBar = null;
+    
+    private $hasNumericIds = true;
     
     /**
      *
@@ -168,7 +170,7 @@ class StateMachineBehavior extends AbstractBehavior
                 }
                 $texts[$id] = $state->getName(! $this->getHideStateIds());
                 if ($state->getColor() !== null) {
-                    $colorMap[$state->getStateId()] = $state->getColor();
+                    $colorMap[$id] = $state->getColor();
                 }
             }
             
@@ -360,6 +362,9 @@ class StateMachineBehavior extends AbstractBehavior
             $this->uxon_states = $value;
             $this->states = [];
             foreach ($value as $state => $uxon_smstate) {
+                if (is_numeric($state) === false) {
+                    $this->hasNumericIds = false;
+                }
                 $smstate = new StateMachineState();
                 $smstate->setStateId($state);
                 if ($uxon_smstate) {
@@ -378,6 +383,16 @@ class StateMachineBehavior extends AbstractBehavior
         }
         
         return $this;
+    }
+    
+    /**
+     * Returns TRUE if all state ids are numeric and FALSE otherwise. 
+     * 
+     * @return bool
+     */
+    protected function hasNumeriIds() : bool
+    {
+        return $this->hasNumericIds;
     }
 
     /**
@@ -702,12 +717,16 @@ class StateMachineBehavior extends AbstractBehavior
     }  
     
     /**
-     *
+     * Returns TRUE if the state should be shown as a progress bar.
+     * 
+     * If not set explicitly via UXON or setShowStateAsProgressBar(), a progress bar will be
+     * automatically enabled if all state ids are numeric.
+     * 
      * @return bool
      */
     public function getShowStateAsProgressBar() : bool
     {
-        return $this->showStateAsProgressBar;
+        return $this->showStateAsProgressBar ?? $this->hasNumericIds();
     }
     
     /**

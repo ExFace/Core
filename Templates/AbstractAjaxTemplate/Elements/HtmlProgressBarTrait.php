@@ -56,7 +56,15 @@ HTML;
     public function buildJsValueDecorator($value_js)
     {
         $widget = $this->getWidget();
-        $colorMapJs = json_encode($widget->getColorMap());
+        
+        // The color map is presented as an array of arrays in JS because an object does not
+        // retain the order of keys, which is crucial in this case.
+        $colorMapJs = '';
+        foreach ($widget->getColorMap() as $val => $color) {
+            $colorMapJs .= '[' . $val . ',  "' . $color . '"],';
+        }
+        $colorMapJs = rtrim($colorMapJs, ",");
+        
         $textMapJs = json_encode($widget->getTextMap());
         $tpl = json_encode($this->buildHtmlProgressBar('exfph-val', 'exfph-text', 'exfph-progress', 'exfph-color'));
         return <<<JS
@@ -65,15 +73,17 @@ function() {
     
     if (val === undefined || val === '') return '';
 
-    var colorMap = {$colorMapJs};
+    var colorMap = [ {$colorMapJs} ];
     var textMap = {$textMapJs};
     var html = {$tpl};
     var numVal = parseFloat(val);    
-    var color = 'transparent';    
+    var color = 'transparent';
 
-    for (var t in colorMap) {
-        if (numVal <= t) {
-            color = colorMap[t];
+    var c = [];
+    for (var i in colorMap) {
+        c = colorMap[i];
+        if (numVal <= c[0]) {
+            color = c[1];
             break;
         }
     }
