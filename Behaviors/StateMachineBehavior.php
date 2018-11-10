@@ -726,7 +726,7 @@ class StateMachineBehavior extends AbstractBehavior
      */
     public function getShowStateAsProgressBar() : bool
     {
-        return $this->showStateAsProgressBar ?? $this->hasNumericIds();
+        return $this->showStateAsProgressBar ?? $this->hasNumeriIds();
     }
     
     /**
