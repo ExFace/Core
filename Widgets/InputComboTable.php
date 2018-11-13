@@ -142,6 +142,7 @@ class InputComboTable extends InputCombo implements iHaveChildren, iCanPreloadDa
         /* @var $table \exface\Core\Widgets\DataTable */
         $table = $this->getPage()->createWidget('DataTable', $this);
         $table->setMetaObject($this->getTableObject());
+        $table->setHideHelpButton(true);
         $table->setUidColumnId($this->getValueColumnId());
         $table->setHeaderSortMultiple(false);
         $table->getToolbarMain()->setIncludeNoExtraActions(true);
