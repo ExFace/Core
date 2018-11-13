@@ -18,7 +18,7 @@ use exface\Core\Exceptions\Contexts\ContextAccessDeniedError;
 use exface\Core\CommonLogic\Profiler;
 use exface\Core\Interfaces\Contexts\ContextInterface;
 use exface\Core\Interfaces\Selectors\ContextSelectorInterface;
-use exface\Core\Events\Action\OnBeforeHandleTaskEvent;
+use exface\Core\Events\Action\OnBeforeActionPerformedEvent;
 
 /**
  * This context offers usefull debugging tools right in the GUI.
@@ -97,7 +97,7 @@ class DebugContext extends AbstractContext
             $workbench->getLogger()->appendHandler($handler);
         }
         
-        $workbench->eventManager()->addListener(OnBeforeHandleTaskEvent::getEventName(), array(
+        $workbench->eventManager()->addListener(OnBeforeActionPerformedEvent::getEventName(), array(
             $this,
             'skipSystemActionsEventHanlder'
         ));
@@ -105,7 +105,7 @@ class DebugContext extends AbstractContext
         return $this;
     }
     
-    public function skipSystemActionsEventHanlder(OnBeforeHandleTaskEvent $e)
+    public function skipSystemActionsEventHanlder(OnBeforeActionPerformedEvent $e)
     {
         $action = $e->getAction();
         if ((($action instanceof ShowContextPopup) && $action->getContext() === $this)

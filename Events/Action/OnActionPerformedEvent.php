@@ -4,32 +4,34 @@ namespace exface\Core\Events\Action;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
+use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Interfaces\Events\TaskEventInterface;
+use exface\Core\Interfaces\Events\ResultEventInterface;
 
 /**
- * Event fired before an action is performed.
- *
- * @event exface.Core.Action.OnBeforeHandleTask
+ * Event fired after an action is performed but before the transaction is autocommitted.
+ * 
+ * @event exface.Core.Action.OnActionPerformed
  *
  * @author Andrej Kabachnik
  *        
  */
-class OnBeforeHandleTaskEvent extends AbstractActionEvent implements TaskEventInterface
+class OnActionPerformedEvent extends AbstractActionEvent implements TaskEventInterface, ResultEventInterface
 {
-    private $task = null;
+    private $result = null;
     
     private $transaction = null;
     
     /**
      * 
      * @param ActionInterface $action
-     * @param TaskInterface $task
+     * @param ResultInterface $result
      * @param DataTransactionInterface $transaction
      */
-    public function __construct(ActionInterface $action, TaskInterface $task, DataTransactionInterface $transaction)
+    public function __construct(ActionInterface $action, ResultInterface $result, DataTransactionInterface $transaction)
     {
         parent::__construct($action);
-        $this->task = $task;
+        $this->result = $result;
         $this->transaction = $transaction;
     }
 
@@ -40,7 +42,17 @@ class OnBeforeHandleTaskEvent extends AbstractActionEvent implements TaskEventIn
      */
     public function getTask() : TaskInterface
     {
-        return $this->task;
+        return $this->result->getTask();
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Events\ResultEventInterface::getResult()
+     */
+    public function getResult() : ResultInterface
+    {
+        return $this->result;
     }
     
     /**
