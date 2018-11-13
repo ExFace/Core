@@ -386,16 +386,17 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
     /**
      *
      * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\WidgetInterface::getChildrenRecursive()
+     * @see \exface\Core\Interfaces\Widgets\iHaveChildren::getChildrenRecursive()
      */
-    public function getChildrenRecursive()
+    public function getChildrenRecursive() : \Iterator
     {
-        $children = $this->getChildren();
-        foreach ($children as $child) {
-            $children = array_merge($children, $child->getChildrenRecursive());
+        // Use a generator here because widgets with lot's of children (e.g. large editor dialogs)
+        // will need to instantiate ALL their children first if we use an array. This is useless,
+        // since in many cases getChildrenRecursive is used to look for some widgets in shallow
+        // recursion levels
+        foreach ($this->getChildren() as $child) {
+            yield $child;
         }
-        return $children;
     }
 
     /**
