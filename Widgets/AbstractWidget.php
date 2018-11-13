@@ -393,9 +393,16 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
         // Use a generator here because widgets with lot's of children (e.g. large editor dialogs)
         // will need to instantiate ALL their children first if we use an array. This is useless,
         // since in many cases getChildrenRecursive is used to look for some widgets in shallow
-        // recursion levels
+        // recursion levels.
+        // For the same reason first yield the direct children an than yield children's children
+        // - this makes the method return children by levels and not by recursion path.
         foreach ($this->getChildren() as $child) {
             yield $child;
+        }
+        
+        foreach ($this->getChildren() as $child) {
+            yield from $child->getChildrenRecursive();
+            continue;
         }
     }
 
