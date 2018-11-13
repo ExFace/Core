@@ -4,7 +4,6 @@ namespace exface\Core\Behaviors;
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Interfaces\Events\DataSheetEventInterface;
-use exface\Core\Interfaces\Widgets\iShowMessageList;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\Widgets\MessageList;
@@ -12,6 +11,7 @@ use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Events\Model\OnMetaObjectModelValidatedEvent;
 use exface\Core\Events\Model\OnMetaAttributeModelValidatedEvent;
 use exface\Core\Events\Action\OnActionPerformedEvent;
+use exface\Core\Interfaces\Widgets\iHaveValue;
 
 /**
  * This behavior validates the model when an editor is opened for the object, it is attached to.
@@ -68,7 +68,7 @@ class ModelValidatingBehavior extends AbstractBehavior
         if ($action->getMetaObject()->is('exface.Core.OBJECT')) {
             $widget = $action->getWidget();
             foreach ($widget->getChildrenRecursive() as $child) {
-                if ($child instanceof iShowSingleAttribute) {
+                if (($child instanceof iShowSingleAttribute) && ($child instanceof iHaveValue)) {
                     $attrAlias = $child->getAttributeAlias();
                     if (($attrAlias === 'UID' || $attrAlias === 'ALIAS')) {
                         if ($child->hasValue() === false) {
@@ -93,7 +93,7 @@ class ModelValidatingBehavior extends AbstractBehavior
             $foundObject = false;
             $foundAttribute = false;
             foreach ($widget->getChildrenRecursive() as $child) {
-                if ($child instanceof iShowSingleAttribute) {
+                if (($child instanceof iShowSingleAttribute) && ($child instanceof iHaveValue)) {
                     $attrAlias = $child->getAttributeAlias();
                     if (($attrAlias === 'OBJECT')) {
                         if ($child->hasValue() === false) {
