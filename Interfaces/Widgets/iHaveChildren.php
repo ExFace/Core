@@ -14,10 +14,10 @@ interface iHaveChildren extends WidgetInterface
     public function getChildren();
 
     /**
-     * Returns all children of the current widget including with their children, childrens children, etc.
-     * as a flat array of widgets
+     * Returns an iterator over all children of the current widget including with their children, 
+     * childrens children, etc. as a flat array of widgets
      *
      * @return WidgetInterface[]
      */
-    public function getChildrenRecursive();
+    public function getChildrenRecursive() : \Iterator;
 }
