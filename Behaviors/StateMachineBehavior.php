@@ -124,6 +124,10 @@ class StateMachineBehavior extends AbstractBehavior
         }
         
         $this->getWorkbench()->eventManager()->addListener(OnMetaAttributeModelValidatedEvent::getEventName(), function(OnMetaAttributeModelValidatedEvent $event) use ($enumType, $configUxon) {
+            if ($event->getAttribute()->isExactly($this->getStateAttribute()) === false) {
+                return;
+            }
+            
             $widget = $event->getMessageList()->getParent();
             $foundTypeSelector = false;
             $foundTypeConfig = false;
@@ -164,6 +168,10 @@ class StateMachineBehavior extends AbstractBehavior
         $this->getStateAttribute()->setDefaultEditorUxon($uxon);
         
         $this->getWorkbench()->eventManager()->addListener(OnMetaAttributeModelValidatedEvent::getEventName(), function(OnMetaAttributeModelValidatedEvent $event) use ($uxon) {
+            if ($event->getAttribute()->isExactly($this->getStateAttribute()) === false) {
+                return;
+            }
+            
             $widget = $event->getMessageList()->getParent();
             foreach ($widget->getChildrenRecursive() as $child) {
                 if (($child instanceof iShowSingleAttribute) && $child->getAttributeAlias() === 'DEFAULT_EDITOR_UXON') {
