@@ -402,6 +402,7 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
         
         foreach ($this->getChildren() as $child) {
             yield from $child->getChildrenRecursive();
+            // Excplicitly continue - otherwise the foreach will break after the first yield from
             continue;
         }
     }
