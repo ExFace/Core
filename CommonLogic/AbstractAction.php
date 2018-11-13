@@ -27,8 +27,8 @@ use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Interfaces\Actions\iModifyData;
 use exface\Core\Interfaces\Selectors\ActionSelectorInterface;
 use exface\Core\Factories\SelectorFactory;
-use exface\Core\Events\Action\OnBeforeHandleTaskEvent;
-use exface\Core\Events\Action\OnHandleTaskEvent;
+use exface\Core\Events\Action\OnBeforeActionPerformedEvent;
+use exface\Core\Events\Action\OnActionPerformedEvent;
 use exface\Core\Interfaces\WorkbenchInterface;
 
 /**
@@ -276,12 +276,12 @@ abstract class AbstractAction implements ActionInterface
             $transaction = $this->getWorkbench()->data()->startTransaction();
         }
         
-        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeHandleTaskEvent($this, $task, $transaction));
+        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeActionPerformedEvent($this, $task, $transaction));
         
         // Call the action's logic
         $result = $this->perform($task, $transaction);
         
-        $this->getWorkbench()->eventManager()->dispatch(new OnHandleTaskEvent($this, $result, $transaction));
+        $this->getWorkbench()->eventManager()->dispatch(new OnActionPerformedEvent($this, $result, $transaction));
         
         // Register the action in the action context of the window. Since it is passed by reference, we can
         // safely do it here, befor perform(). On the other hand, this gives all kinds of action event handlers
