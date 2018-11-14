@@ -259,9 +259,17 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      */
     public function getTotalsRows();
 
-    public function countRowsAll();
-
-    public function countRowsLoaded($include_totals = false);
+    /**
+     * Returns the total number of rows available in the data source matching 
+     * these sheet's filters and aggregations or NULL if not available.
+     * 
+     * Will return NULL if the information is not available from the data source 
+     * or the data source was not read (e.g. the sheet was populated
+     * programmatically)!
+     * 
+     * @return int|NULL
+     */
+    public function countRowsAll() : ?int;
 
     /**
      * Returns an array of DataColumns

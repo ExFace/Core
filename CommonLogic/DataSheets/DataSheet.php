@@ -76,7 +76,7 @@ class DataSheet implements DataSheetInterface
 
     private $sorters = array();
 
-    private $total_row_count = 0;
+    private $total_row_count = null;
 
     private $subsheets = array();
 
@@ -140,6 +140,7 @@ class DataSheet implements DataSheetInterface
             } else {
                 $this->rows[] = $row;
             }
+            
             // ensure, that all columns used in the rows are present in the data sheet
             if ($auto_add_columns === true) {
                 $this->getColumns()->addMultiple(array_keys((array) $row));
@@ -293,7 +294,7 @@ class DataSheet implements DataSheetInterface
      */
     public function getCellValue($column_name, $row_number)
     {
-        $data_row_cnt = $this->countRowsLoaded();
+        $data_row_cnt = $this->countRows();
         if ($row_number >= $data_row_cnt) {
             return $this->totals_rows[$row_number - $data_row_cnt][$column_name];
         }
@@ -314,7 +315,7 @@ class DataSheet implements DataSheetInterface
         }
         
         // Detect, if the cell belongs to a total row
-        $data_row_cnt = $this->countRowsLoaded();
+        $data_row_cnt = $this->countRows();
         if ($row_number >= $data_row_cnt && $row_number < $this->countRowsLoaded(true)) {
             $this->totals_rows[$row_number - $data_row_cnt][$column_name] = $value;
         }
@@ -1259,15 +1260,14 @@ class DataSheet implements DataSheetInterface
         return $this->totals_rows;
     }
 
-    function countRowsAll()
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::countRowsAll()
+     */
+    public function countRowsAll() : ?int
     {
         return $this->total_row_count;
-    }
-
-    function countRowsLoaded($include_totals = false)
-    {
-        $cnt = count($this->rows) + ($include_totals ? count($this->totals_rows) : 0);
-        return $cnt;
     }
 
     /**
