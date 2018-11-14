@@ -44,20 +44,25 @@ class ReadPrefill extends ReadData
         $data_sheet = $this->getInputDataSheet($task);
         
         if ($data_sheet->isEmpty()) {
-            return $data_sheet;
+            return ResultFactory::createDataResult($task, $data_sheet);
         } else {
             if ($data_sheet->hasUidColumn(true)) {
                 $data_sheet->addFilterFromColumnValues($data_sheet->getUidColumn());
-            } else {
-                return $data_sheet->removeRows();
-            }
+            } /*elseif ($data_sheet->getFilters()->isEmpty() === false) {
+                return ResultFactory::createDataResult($task, $data_sheet->removeRows());
+            }*/
         }
         
+        // Let widgets modify the data sheet if neccessary
         if ($targetWidget = $this->getWidgetToReadFor($task)) {
             $data_sheet = $targetWidget->prepareDataSheetToPrefill($data_sheet);
         }
         
-        $affected_rows = $data_sheet->dataRead();
+        // Reed data if it is not fresh
+        if ($data_sheet->isFresh() === false) {
+            $affected_rows = $data_sheet->dataRead();
+        }
+        
         $result = ResultFactory::createDataResult($task, $data_sheet);
         $result->setMessage($affected_rows . ' entries read');
         
