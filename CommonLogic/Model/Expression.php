@@ -310,7 +310,7 @@ class Expression implements ExpressionInterface
             
             if (is_null($row_number)) {
                 $result = array();
-                $rows_and_totals_count = $data_sheet->countRowsLoaded() + count($data_sheet->getTotalsRows());
+                $rows_and_totals_count = $data_sheet->countRows() + count($data_sheet->getTotalsRows());
                 for ($r = 0; $r < $rows_and_totals_count; $r ++) {
                     $result[] = $this->evaluate($data_sheet, $column_name, $r);
                 }
