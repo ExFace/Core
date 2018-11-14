@@ -28,10 +28,10 @@ trait HtmlMessageTrait {
     {
         switch ($this->getWidget()->getType()) {
             case EXF_MESSAGE_TYPE_ERROR:
-                $output = '<i class="fa fa-exclamation" aria-hidden="true" style="color: red;"></i>';
+                $output = '<i class="fa fa-exclamation" aria-hidden="true"></i>';
                 break;
             case EXF_MESSAGE_TYPE_WARNING:
-                $output = '<i class="fa fa-exclamation-triangle" aria-hidden="true" style="color: yellow;"></i>';
+                $output = '<i class="fa fa-exclamation-triangle" aria-hidden="true"></i>';
                 break;
             case EXF_MESSAGE_TYPE_INFO:
                 $output = '<i class="fa fa-info-circle" aria-hidden="true"></i>';
