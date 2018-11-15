@@ -88,14 +88,23 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
 
     const AXIS_Y = 'y';
 
-    public function getChildren()
+    public function getChildren() : \Iterator
     {
-        $children = array();
         if (! $this->getDataWidgetLink()) {
-            $children[] = $this->getData();
+            yield $this->getData();
         }
-        $children = array_merge($children, $this->getAxes(), $this->getSeries(), $this->getToolbars());
-        return $children;
+        
+        foreach ($this->getAxes() as $axis) {
+            yield $axis;
+        }
+        
+        foreach ($this->getSeries() as $series) {
+            yield $series;
+        }
+        
+        foreach ($this->getToolbars() as $toolbar) {
+            yield $toolbar;
+        }
     }
 
     /**

@@ -55,9 +55,11 @@ class ContextBar extends Toolbar
      * {@inheritDoc}
      * @see \exface\Core\Widgets\Container::getChildren()
      */
-    public function getChildren()
+    public function getChildren() : \Iterator
     {
-        return $this->getButtons();
+        foreach ($this->getButtons() as $btn) {
+            yield $btn;
+        }
     }
     
     /**

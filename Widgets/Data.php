@@ -843,18 +843,26 @@ class Data
         return $this->getConfiguratorWidget()->hasFilters();
     }
 
-    public function getChildren()
+    public function getChildren() : \Iterator
     {
-        $children = array_merge([$this->getConfiguratorWidget()], $this->getToolbars(), $this->getColumns());
+        yield $this->getConfiguratorWidget();
+        
+        foreach ($this->getToolbars() as $tb) {
+            yield $tb;
+        }
+        
+        // IDEA yield column groups? They are actually the direct children...
+        foreach ($this->getColumns() as $col) {
+            yield $col;
+        }
         
         // Add the help button, so pages will be able to find it when dealing with the ShowHelpDialog action.
         // IMPORTANT: Add the help button to the children only if it is not hidden. This is needed to hide the button in
         // help widgets themselves, because otherwise they would produce their own help widgets, with - in turn - even
         // more help widgets, resulting in an infinite loop.
         if (! $this->getHideHelpButton()) {
-            $children[] = $this->getHelpButton();
+            yield $this->getHelpButton();
         }
-        return $children;
     }
 
     /**

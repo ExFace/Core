@@ -298,12 +298,14 @@ class Dialog extends Form implements iAmClosable, iHaveContextualHelp, iHaveHead
      * {@inheritDoc}
      * @see \exface\Core\Widgets\Form::getChildren()
      */
-    public function getChildren()
+    public function getChildren() : \Iterator
     {
-        $children = parent::getChildren();
+        foreach(parent::getChildren() as $child) {
+            yield $child;
+        }
         
         if (! $this->getHideHeader() && $this->hasHeader()) {
-            $children[] = $this->getHeader();
+            yield $this->getHeader();
         }
         
         // Add the help button, so pages will be able to find it when dealing with the ShowHelpDialog action.
@@ -311,9 +313,8 @@ class Dialog extends Form implements iAmClosable, iHaveContextualHelp, iHaveHead
         // help widgets themselves, because otherwise they would produce their own help widgets, with - in turn - even
         // more help widgets, resulting in an infinite loop.
         if (! $this->getHideHelpButton()) {
-            $children[] = $this->getHelpButton();
+            yield $this->getHelpButton();
         }
-        return $children;
     }
     
     /**

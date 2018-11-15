@@ -360,9 +360,14 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
         return $this;
     }
 
-    public function getChildren()
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\AbstractWidget::getChildren()
+     */
+    public function getChildren() : \Iterator
     {
-        return [$this->getCellWidget()];
+        yield $this->getCellWidget();
     }
 
     /**

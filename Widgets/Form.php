@@ -32,9 +32,15 @@ class Form extends Panel implements iHaveButtons, iHaveToolbars, iShowMessageLis
      *
      * @see \exface\Core\Widgets\Container::getChildren()
      */
-    public function getChildren()
+    public function getChildren() : \Iterator
     {
-        return array_merge(parent::getChildren(), $this->getToolbars());
+        foreach (parent::getChildren() as $child) {
+            yield $child;
+        }
+        
+        foreach ($this->getToolbars() as $tb) {
+            yield $tb;
+        }
     }
     
     public function getToolbarWidgetType(){

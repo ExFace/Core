@@ -11,7 +11,6 @@ use exface\Core\Interfaces\Widgets\iTakeInput;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Exceptions\Widgets\WidgetChildNotFoundError;
 use exface\Core\Exceptions\UnderflowException;
-use exface\Core\Interfaces\Widgets\iHaveChildren;
 use exface\Core\Interfaces\Widgets\iCanPreloadData;
 use exface\Core\Widgets\Traits\iCanPreloadDataTrait;
 
@@ -122,9 +121,11 @@ class Container extends AbstractWidget implements iContainOtherWidgets, iCanPrel
      *
      * @see \exface\Core\Widgets\AbstractWidget::getChildren()
      */
-    public function getChildren()
+    public function getChildren() : \Iterator
     {
-        return $this->getWidgets();
+        foreach ($this->getWidgets() as $child) {
+            yield $child;
+        }
     }
 
     /**
@@ -348,7 +349,7 @@ class Container extends AbstractWidget implements iContainOtherWidgets, iCanPrel
             if (call_user_func($filterCallback, $child) === true) {
                 $result[] = $child;
             }
-            if (($maxDepth === null || $maxDepth > 0) && $child instanceof iHaveChildren) {
+            if (($maxDepth === null || $maxDepth > 0) && $child->hasChildren()) {
                 $result = array_merge($result, $child->findChildrenRecursive($filterCallback, ($maxDepth !== null ? $maxDepth-1 : null)));
             }
         }
