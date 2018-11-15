@@ -293,22 +293,31 @@ class Data
     public function prepareDataSheetToPrefill(DataSheetInterface $data_sheet = null) : DataSheetInterface
     {
         $data_sheet = parent::prepareDataSheetToPrefill($data_sheet);
-        if ($data_sheet->getMetaObject()->isExactly($this->getMetaObject())) {
-            // If trying to prefill with an instance of the same object, we actually just need the uid column in the resulting prefill
-            // data sheet. It will probably be there anyway, but we still add it here (just in case).
-            $data_sheet->getColumns()->addFromExpression($this->getMetaObject()->getUidAttributeAlias());
+        $prefillObject = $data_sheet->getMetaObject();
+        $thisObject = $this->getMetaObject();
+        if ($prefillObject->isExactly($thisObject)) {
+            if ($thisObject->hasUidAttribute()) {
+                // If trying to prefill with an instance of the same object and that object has a UID, we actually just need the 
+                // uid column in the resulting prefill sheet to be able to refresh it's data. It will probably be there anyway, 
+                // but we still add it here (just in case).
+                $data_sheet->getColumns()->addFromExpression($thisObject->getUidAttributeAlias());
+            } else {
+                // TODO If it's the same object, but it does not have a UID, I don't really know, what's best.
+                // Currently, the sheet will just be returned as is.
+                return $data_sheet;
+            }
         } else {
             // If trying to prefill with a different object, we need to find a relation to that object somehow.
             // First we check for filters based on the prefill object. If filters exists, we can be sure, that those
             // are the ones to be prefilled.
-            $relevant_filters = $this->getConfiguratorWidget()->findFiltersByObject($data_sheet->getMetaObject());
+            $relevant_filters = $this->getConfiguratorWidget()->findFiltersByObject($prefillObject);
             $uid_filters_found = false;
             // If there are filters over UIDs of the prefill object, just get data for these filters for the prefill,
             // because it does not make sense to fetch prefill data for UID-filters and attribute filters at the same
             // time. If data for the other filters will be found in the prefill sheet when actually doing the prefilling,
             // it should, of course, be applied too, but we do not tell ExFace to always fetch this data.
             foreach ($relevant_filters as $fltr) {
-                if ($fltr->getAttribute()->isRelation() && $fltr->getAttribute()->getRelation()->getRightObject()->isExactly($data_sheet->getMetaObject())) {
+                if ($fltr->getAttribute()->isRelation() && $fltr->getAttribute()->getRelation()->getRightObject()->isExactly($prefillObject)) {
                     $data_sheet = $fltr->prepareDataSheetToPrefill($data_sheet);
                     $uid_filters_found = true;
                 }
@@ -325,7 +334,7 @@ class Data
                 // TODO currently this only works for direct relations, not for chained ones.
                 // FIXME check, if a filter on the current relation is there already, and add it only in this case
                 /* @var $rel \exface\Core\CommonLogic\Model\relation */
-                if ($rel = $this->getMetaObject()->findRelation($data_sheet->getMetaObject())) {
+                if ($rel = $thisObject->findRelation($prefillObject)) {
                     $fltr = $this->getConfiguratorWidget()->createFilterFromRelation($rel);
                     $data_sheet = $fltr->prepareDataSheetToPrefill($data_sheet);
                 }
