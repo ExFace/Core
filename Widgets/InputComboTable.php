@@ -1,7 +1,6 @@
 <?php
 namespace exface\Core\Widgets;
 
-use exface\Core\Interfaces\Widgets\iHaveChildren;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
@@ -41,6 +40,7 @@ use exface\Core\Factories\QueryBuilderFactory;
  * the product id does not belong to the default display attributes of the variant, we need to add it to the respective combo
  * manually: just add it next to the ~DEFAULT_DISPLAY attribute group.
  *
+ * ```
  *  {
  *      "widget_type": "Form",
  *      "object_alias": "MY.APP.ORDER_POSITION",
@@ -69,6 +69,8 @@ use exface\Core\Factories\QueryBuilderFactory;
  *          ]
  *      }
  *  }
+ *  
+ * ```
  *
  * You can add as many widgets in this chain of live references, as you wish. This way, interactive selectors can be built
  * for very complex hierarchies. If you do not want the lower hierarchy levels to be selectable before the higher levels
@@ -90,7 +92,7 @@ use exface\Core\Factories\QueryBuilderFactory;
  * @author Andrej Kabachnik
  *        
  */
-class InputComboTable extends InputCombo implements iHaveChildren, iCanPreloadData
+class InputComboTable extends InputCombo implements iCanPreloadData
 {
 
     private $text_column_id = null;
@@ -534,11 +536,9 @@ class InputComboTable extends InputCombo implements iHaveChildren, iCanPreloadDa
      *
      * @see \exface\Core\Widgets\AbstractWidget::getChildren()
      */
-    public function getChildren()
+    public function getChildren() : \Iterator
     {
-        return array(
-            $this->getTable()
-        );
+        yield $this->getTable();
     }
 
     public function getMaxSuggestions()

@@ -112,11 +112,9 @@ class Filter extends Container implements iCanBeRequired, iShowSingleAttribute
      *
      * @see \exface\Core\Widgets\Container::getChildren()
      */
-    public function getChildren()
+    public function getChildren() : \Iterator
     {
-        return array(
-            $this->getInputWidget()
-        );
+        yield $this->getInputWidget();
     }
 
     /**

@@ -331,10 +331,11 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
      *
      * @see \exface\Core\Widgets\AbstractWidget::getChildren()
      */
-    public function getChildren()
+    public function getChildren() : \Iterator
     {
-        $children = $this->getColumns();
-        return $children;
+        foreach ($this->getColumns() as $child) {
+            yield $child;
+        }
     }
 
     /**

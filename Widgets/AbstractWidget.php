@@ -2,7 +2,6 @@
 namespace exface\Core\Widgets;
 
 use exface\Core\CommonLogic\Model\Expression;
-use exface\Core\Interfaces\Widgets\iHaveChildren;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Widgets\iTriggerAction;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
@@ -37,7 +36,7 @@ use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
  * @author Andrej Kabachnik
  *        
  */
-abstract class AbstractWidget implements WidgetInterface, iHaveChildren
+abstract class AbstractWidget implements WidgetInterface
 {
     use ImportUxonObjectTrait {
 		importUxonObject as importUxonObjectDefault;
@@ -358,17 +357,14 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
     }
 
     /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\WidgetInterface::isContainer()
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\WidgetInterface::hasChildren()
      */
-    function isContainer()
+    function hasChildren() : bool
     {
-        if ($this instanceof iHaveChildren) {
+        foreach ($this->getChildren() as $child) {
             return true;
-        } else {
-            return false;
         }
     }
 
@@ -378,15 +374,15 @@ abstract class AbstractWidget implements WidgetInterface, iHaveChildren
      *
      * @see \exface\Core\Interfaces\WidgetInterface::getChildren()
      */
-    public function getChildren()
+    public function getChildren() : \Iterator
     {
-        return array();
+        return new \EmptyIterator();
     }
 
     /**
-     *
-     * {@inheritdoc}
-     * @see \exface\Core\Interfaces\Widgets\iHaveChildren::getChildrenRecursive()
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\WidgetInterface::getChildrenRecursive()
      */
     public function getChildrenRecursive() : \Iterator
     {

@@ -133,15 +133,16 @@ abstract class WidgetFactory extends AbstractStaticFactory
 
     protected static function searchForChildWidget(WidgetInterface $haystack, $widget_id)
     {
-        if ($haystack->getId() == $widget_id)
+        if ($haystack->getId() == $widget_id) {
             return $haystack;
-        if ($haystack->isContainer()) {
-            foreach ($haystack->getChildren() as $child) {
-                if ($found = self::searchForChildWidget($child, $widget_id)) {
-                    return $found;
-                }
+        }
+        
+        foreach ($haystack->getChildren() as $child) {
+            if ($found = self::searchForChildWidget($child, $widget_id)) {
+                return $found;
             }
         }
+        
         // throw new uiWidgetNotFoundException('Cannot find widget "' . $widget_id . '" in container "' . $haystack->getId() . '"!');
         return false;
     }

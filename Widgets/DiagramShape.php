@@ -164,11 +164,12 @@ class DiagramShape extends Form implements iUseData, iHaveBorders
         return $this;
     }
 
-    public function getChildren()
+    public function getChildren() : \Iterator
     {
-        return array_merge(parent::getChildren(), array(
-            $this->getData()
-        ));
+        foreach (parent::getChildren() as $child) {
+            yield $child;
+        }
+        yield $this->getData();
     }
 
     /**

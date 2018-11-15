@@ -3,8 +3,9 @@ namespace exface\Core\Interfaces\Widgets;
 
 use exface\Core\Widgets\Filter;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Interfaces\WidgetInterface;
 
-interface iHaveFilters extends iHaveChildren
+interface iHaveFilters extends WidgetInterface
 {
 
     public function addFilter(\exface\Core\Widgets\AbstractWidget $filter_widget);

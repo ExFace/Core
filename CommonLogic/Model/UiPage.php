@@ -6,7 +6,6 @@ use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Templates\TemplateInterface;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Exceptions\Widgets\WidgetIdConflictError;
-use exface\Core\Interfaces\Widgets\iHaveChildren;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\Widgets\WidgetNotFoundError;
 use exface\Core\CommonLogic\UxonObject;
@@ -336,59 +335,57 @@ class UiPage implements UiPageInterface
             $id_is_path = true;
         }
         
-        if ($parent instanceof iHaveChildren) {
-            foreach ($parent->getChildren() as $child) {
-                $child_id = $child->getId();
-                if ($child_id == $id_with_namespace) {
-                    return $child;
-                } else {
-                    if (! $use_id_path || ! $id_is_path || StringDataType::startsWith($id_with_namespace, $child_id . self::WIDGET_ID_SEPARATOR)) {
-                        // If we are looking for a non-path id or the path includes the id of the child, look within the child
-                        try {
-                            // Note, the child may deside itself, whe
-                            return $this->getWidgetFromIdSpace($id, $id_space, $child);
-                        } catch (WidgetNotFoundError $e) {
-                            // Catching the error means, we did not find the widget in this branch.
-                            
-                            if ($id_is_path) {
-                                // If we had a path-match, this probably means, that the widget was moved (see example 4 in
-                                // the method-docblock). In this case, the path in it's id does not match the real path anymore.
-                                // However, since this mostly happens when widgets get moved around within their parent, we
-                                // try a deep search within the child, that matched the id-path, first. This will help in
-                                // example 4 too, as the widget was just moved one level up the tree.
-                                try {
-                                    // Setting the parameter $use_id_path to false makes the children search among their
-                                    // children even if those don't match the path. In example 4 we would get to this line
-                                    // after searching the child DT_TB_BG_BT2 of widget DT_TB_BG. DT_TB_BG_BT2 itself
-                                    // seems to match the path, but none of it's direct children do. Now we tell the
-                                    // DT_TB_BG_BT2 to treat the id as a non-path. This will make it pass the search
-                                    // to every child of DT_TB_BG_BT2. These will search regularly though, so stargin
-                                    // from DT_TB_BG_BT2_DT the path-idea will work again.
-                                    return $this->getWidgetFromIdSpace($id, $id_space, $child, false);
-                                } catch (WidgetNotFoundError $ed) {
-                                    // If the deep-search fails too, we know, the widget was moved somewehere else (example 5)
-                                    // or the really does not exist. In this case, we stop looking through children (no other
-                                    // children will match the path anyway).
-                                    break;
-                                }
-                            } else {
-                                // For non-path ids just continue with the next child as we do not know, where the id might be.
-                                continue;
+        foreach ($parent->getChildren() as $child) {
+            $child_id = $child->getId();
+            if ($child_id == $id_with_namespace) {
+                return $child;
+            } else {
+                if (! $use_id_path || ! $id_is_path || StringDataType::startsWith($id_with_namespace, $child_id . self::WIDGET_ID_SEPARATOR)) {
+                    // If we are looking for a non-path id or the path includes the id of the child, look within the child
+                    try {
+                        // Note, the child may deside itself, whe
+                        return $this->getWidgetFromIdSpace($id, $id_space, $child);
+                    } catch (WidgetNotFoundError $e) {
+                        // Catching the error means, we did not find the widget in this branch.
+                        
+                        if ($id_is_path) {
+                            // If we had a path-match, this probably means, that the widget was moved (see example 4 in
+                            // the method-docblock). In this case, the path in it's id does not match the real path anymore.
+                            // However, since this mostly happens when widgets get moved around within their parent, we
+                            // try a deep search within the child, that matched the id-path, first. This will help in
+                            // example 4 too, as the widget was just moved one level up the tree.
+                            try {
+                                // Setting the parameter $use_id_path to false makes the children search among their
+                                // children even if those don't match the path. In example 4 we would get to this line
+                                // after searching the child DT_TB_BG_BT2 of widget DT_TB_BG. DT_TB_BG_BT2 itself
+                                // seems to match the path, but none of it's direct children do. Now we tell the
+                                // DT_TB_BG_BT2 to treat the id as a non-path. This will make it pass the search
+                                // to every child of DT_TB_BG_BT2. These will search regularly though, so stargin
+                                // from DT_TB_BG_BT2_DT the path-idea will work again.
+                                return $this->getWidgetFromIdSpace($id, $id_space, $child, false);
+                            } catch (WidgetNotFoundError $ed) {
+                                // If the deep-search fails too, we know, the widget was moved somewehere else (example 5)
+                                // or the really does not exist. In this case, we stop looking through children (no other
+                                // children will match the path anyway).
+                                break;
                             }
+                        } else {
+                            // For non-path ids just continue with the next child as we do not know, where the id might be.
+                            continue;
                         }
-                    } elseif ($id_is_path) {
-                        // If the id is a path, but did not include the child id, continue with the next child
-                        continue;
                     }
+                } elseif ($id_is_path) {
+                    // If the id is a path, but did not include the child id, continue with the next child
+                    continue;
                 }
             }
-            
-            // At this point, we know, the widget was not found by the regular search methods.
-            // There are two possibilities left:
-            // 1) The id seemed to be a path and worked upto the current parent widget
-            // 2) The id is not a path
-            // TODO We still need some kind of fallback for example 5 here!
         }
+            
+        // At this point, we know, the widget was not found by the regular search methods.
+        // There are two possibilities left:
+        // 1) The id seemed to be a path and worked upto the current parent widget
+        // 2) The id is not a path
+        // TODO We still need some kind of fallback for example 5 here!
         
         throw new WidgetNotFoundError('Widget "' . $id . '" not found in id space "' . $id_space . '" within parent "' . $parent->getId() . '" on page "' . $this->getAliasWithNamespace() . '"!');
         

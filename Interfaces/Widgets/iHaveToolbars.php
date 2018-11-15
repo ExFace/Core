@@ -1,11 +1,11 @@
 <?php
 namespace exface\Core\Interfaces\Widgets;
 
-use exface\Core\Interfaces\Widgets\iHaveChildren;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Widgets\Toolbar;
+use exface\Core\Interfaces\WidgetInterface;
 
-interface iHaveToolbars extends iHaveChildren
+interface iHaveToolbars extends WidgetInterface
 {
     /**
      * @return Toolbar[]

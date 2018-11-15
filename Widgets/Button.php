@@ -4,7 +4,6 @@ namespace exface\Core\Widgets;
 use exface\Core\Interfaces\Widgets\iHaveIcon;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\Widgets\iTriggerAction;
-use exface\Core\Interfaces\Widgets\iHaveChildren;
 use exface\Core\Factories\ActionFactory;
 use exface\Core\Factories\WidgetLinkFactory;
 use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
@@ -24,7 +23,7 @@ use exface\Core\Interfaces\Widgets\iDefineAction;
  * @author Andrej Kabachnik
  *        
  */
-class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iDefineAction, iUseInputWidget, iHaveChildren, iCanBeAligned
+class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iDefineAction, iUseInputWidget, iCanBeAligned
 {
     use iCanBeAlignedTrait;
     
@@ -315,14 +314,12 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iDefin
      *
      * @see \exface\Core\Widgets\AbstractWidget::getChildren()
      */
-    public function getChildren()
+    public function getChildren() : \Iterator
     {
-        $children = array();
         $action = $this->getAction();
         if ($action && $action->implementsInterface('iShowWidget') && $action->isWidgetDefined()) {
-            $children[] = $this->getAction()->getWidget();
+            yield $this->getAction()->getWidget();
         }
-        return $children;
     }
 
     /**

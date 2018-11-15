@@ -1,12 +1,12 @@
 <?php
 namespace exface\Core\Interfaces\Widgets;
 
-use exface\Core\Interfaces\Widgets\iHaveChildren;
 use exface\Core\Widgets\ButtonGroup;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\Widgets\WidgetChildNotFoundError;
+use exface\Core\Interfaces\WidgetInterface;
 
-interface iContainButtonGroups extends iHaveChildren
+interface iContainButtonGroups extends WidgetInterface
 {
     /**
      * 

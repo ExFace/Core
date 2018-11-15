@@ -4,6 +4,7 @@ namespace exface\Core\Interfaces\Widgets;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Widgets\Menu;
+use exface\Core\Interfaces\WidgetInterface;
 
 /**
  * This interface must be implemented by widgets that have a menu: e.g.
@@ -12,7 +13,7 @@ use exface\Core\Widgets\Menu;
  * @author Andrej Kabachnik
  *        
  */
-interface iHaveMenu extends iHaveChildren
+interface iHaveMenu extends WidgetInterface
 {
 
     /**
