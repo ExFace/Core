@@ -51,7 +51,7 @@ class UxonObject implements \IteratorAggregate
      */
     public static function fromJson($uxon)
     {
-        $array = json_decode($uxon, true);
+        $array = json_decode(trim($uxon), true);
         if (is_array($array)){
             return static::fromArray($array);
         } else {
