@@ -76,7 +76,7 @@ interface WidgetInterface extends WorkbenchDependantInterface, iCanBeCopied
      * Adds attributes, filters, etc.
      * to a given data sheet, so that it can be used to fill the widget with data
      *
-     * @param DataSheet $data_sheet            
+     * @param DataSheetInterface $data_sheet            
      * @return DataSheetInterface
      */
     public function prepareDataSheetToRead(DataSheetInterface $data_sheet = null);
@@ -85,7 +85,7 @@ interface WidgetInterface extends WorkbenchDependantInterface, iCanBeCopied
      * Adds attributes, filters, etc.
      * to a given data sheet, so that it can be used to prefill the widget
      *
-     * @param DataSheet $data_sheet            
+     * @param DataSheetInterface $data_sheet            
      * @return DataSheetInterface
      */
     public function prepareDataSheetToPrefill(DataSheetInterface $data_sheet = null) : DataSheetInterface;
@@ -171,7 +171,7 @@ interface WidgetInterface extends WorkbenchDependantInterface, iCanBeCopied
 
     /**
      *
-     * @param unknown $value            
+     * @param WidgetInterface $value            
      * @return WidgetInterface
      */
     public function setHideCaption($value);
