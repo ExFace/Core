@@ -263,7 +263,7 @@ class Data
         
         // Pagination
         if ($this->getPaginator()->getPageSize()) {
-            $data_sheet->setRowsOnPage($this->getPaginator()->getPageSize());
+            $data_sheet->setRowsLimit($this->getPaginator()->getPageSize());
         }
         
         // Filters and sorters only if lazy loading is disabled!
