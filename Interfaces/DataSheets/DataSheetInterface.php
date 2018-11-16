@@ -110,8 +110,51 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * @return integer
      */
     public function dataRead(int $limit = null, int $offset = null) : int;
+    
+    /**
+     * 
+     * @return int
+     */
+    public function dataCount() : int;
 
+    /**
+     * 
+     * @return int
+     */
     public function countRows() : int;
+    
+    /**
+     * Returns the total number of rows available in the data source matching
+     * these sheet's filters and aggregations or NULL if not available.
+     *
+     * Will return NULL if the information is not available from the data source
+     * or the data source was not read (e.g. the sheet was populated
+     * programmatically)!
+     *
+     * @return int|NULL
+     */
+    public function countRowsInDataSource() : ?int;
+    
+    /**
+     * Explicitly sets the counter for rows matching this sheet's filters, etc. available in the data source.
+     * 
+     * This method is usefull for custom-built data sheets or programmatic data sources.
+     * 
+     * @param int $count
+     * @return DataSheetInterface
+     */
+    public function setCounterForRowsInDataSource(int $count) : DataSheetInterface;
+    
+    /**
+     * Set to TRUE to disable counting all rows matching the filters of this sheet available in the data source.
+     * 
+     * Disabling this counter can greaty improve performance, but has negative effects on pagination - 
+     * the total amount of pages cannot be determined anymore.
+     * 
+     * @param bool $trueOrFalse
+     * @return DataSheetInterface
+     */
+    public function setAutocount(bool $trueOrFalse) : DataSheetInterface;
 
     /**
      * Saves the values in this data sheet to the appropriate data sources.
@@ -218,8 +261,6 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      */
     public function hasSorters();
 
-    public function setCounterRowsAll($count);
-
     /**
      * Returns multiple rows of the data sheet as an array of associative array (e.g.
      * [rownum => [col1 => val1, col2 => val2, ...] ])
@@ -258,18 +299,6 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * @return array [ column_id => total value ]
      */
     public function getTotalsRows();
-
-    /**
-     * Returns the total number of rows available in the data source matching 
-     * these sheet's filters and aggregations or NULL if not available.
-     * 
-     * Will return NULL if the information is not available from the data source 
-     * or the data source was not read (e.g. the sheet was populated
-     * programmatically)!
-     * 
-     * @return int|NULL
-     */
-    public function countRowsAll() : ?int;
 
     /**
      * Returns an array of DataColumns

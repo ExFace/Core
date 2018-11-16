@@ -12,6 +12,9 @@ use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartFilterGroup;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartFilter;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartAttribute;
+use exface\Core\Interfaces\DataSources\DataConnectionInterface;
+use exface\Core\Interfaces\DataSources\DataQueryResultDataInterface;
+use exface\Core\CommonLogic\DataQueries\DataQueryResultData;
 
 /**
  *
@@ -20,13 +23,6 @@ use exface\Core\CommonLogic\QueryBuilder\QueryPartAttribute;
  */
 class FileFinderBuilder extends AbstractQueryBuilder
 {
-
-    private $result_rows = array();
-
-    private $result_totals = array();
-
-    private $result_total_rows = 0;
-
     /**
      *
      * @return FileFinderDataQuery
@@ -160,58 +156,24 @@ class FileFinderBuilder extends AbstractQueryBuilder
         return $path_pattern;
     }
 
-    function getResultRows()
-    {
-        return $this->result_rows;
-    }
-
-    function getResultTotals()
-    {
-        return $this->result_totals;
-    }
-
-    function getResultTotalRows()
-    {
-        return $this->result_total_rows;
-    }
-
-    function setResultRows(array $array)
-    {
-        $this->result_rows = $array;
-        return $this;
-    }
-
-    function setResultTotals(array $array)
-    {
-        $this->result_totals = $array;
-        return $this;
-    }
-
-    function setResultTotalRows($value)
-    {
-        $this->result_total_rows = $value;
-        return $this;
-    }
-
     /**
      * 
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder::create()
      */
-    public function create(AbstractDataConnector $data_connection = null)
+    public function create(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
     {
         $fileArray = $this->getValue('PATHNAME_ABSOLUTE')->getValues();
         $contentArray = $this->getValue('CONTENTS')->getValues();
-        return $this->write($fileArray, $contentArray);
+        return new DataQueryResultData([], $this->write($fileArray, $contentArray));
     }
 
     /**
-     *
-     * {@inheritdoc}
-     *
+     * 
+     * {@inheritDoc}
      * @see \exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder::read()
      */
-    public function read(AbstractDataConnector $data_connection = null)
+    public function read(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
     {
         $result_rows = array();
         $pagination_applied = false;
@@ -223,7 +185,7 @@ class FileFinderBuilder extends AbstractQueryBuilder
         $query = $this->buildQuery();
         if ($files = $data_connection->query($query)->getFinder()) {
             $rownr = - 1;
-            $this->setResultTotalRows(count($files));
+            $totalCount = count($files);
             foreach ($files as $file) {
                 // If no full scan is required, apply pagination right away, so we do not even need to reed the files not being shown
                 if (! $query->getFullScanRequired()) {
@@ -246,12 +208,23 @@ class FileFinderBuilder extends AbstractQueryBuilder
             }
         }
         
-        if (! $this->getResultTotalRows()) {
-            $this->setResultTotalRows(count($result_rows));
+        if (! $totalCount) {
+            $totalCount = count($result_rows);
         }
         
-        $this->setResultRows($result_rows);
-        return $this->getResultTotalRows();
+        $rowCount = count($result_rows);
+        
+        return new DataQueryResultData($result_rows, $rowCount, ($totalCount > $rowCount + $this->getOffset()), $totalCount);
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder::count()
+     */
+    public function count(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
+    {
+        return $this->read($data_connection);
     }
 
     /**
@@ -259,7 +232,7 @@ class FileFinderBuilder extends AbstractQueryBuilder
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder::update()
      */
-    public function update(AbstractDataConnector $data_connection = null)
+    public function update(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
     {
         $updatedFileNr = 0;
         
@@ -270,7 +243,7 @@ class FileFinderBuilder extends AbstractQueryBuilder
             $updatedFileNr = $this->write($fileArray, $contentArray);
         }
         
-        return $updatedFileNr;
+        return new DataQueryResultData([], $updatedFileNr);
     }
 
     /**
@@ -278,7 +251,7 @@ class FileFinderBuilder extends AbstractQueryBuilder
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder::delete()
      */
-    public function delete(AbstractDataConnector $data_connection = null)
+    public function delete(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
     {
         $deletedFileNr = 0;
         
@@ -290,7 +263,7 @@ class FileFinderBuilder extends AbstractQueryBuilder
             }
         }
         
-        return $deletedFileNr;
+        return new DataQueryResultData([], $deletedFileNr);
     }
 
     /**

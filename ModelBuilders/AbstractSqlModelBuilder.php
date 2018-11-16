@@ -98,7 +98,7 @@ abstract class AbstractSqlModelBuilder extends AbstractModelBuilder implements M
                 $result_data_sheet->addRow($row);
             }
         }
-        $result_data_sheet->setCounterRowsAll(count($imported_rows));
+        $result_data_sheet->setCounterForRowsInDataSource(count($imported_rows));
         
         if (! $result_data_sheet->isEmpty()) {
             $result_data_sheet->dataCreate(false, $transaction);
@@ -139,7 +139,7 @@ abstract class AbstractSqlModelBuilder extends AbstractModelBuilder implements M
                 $newObjectsSheet->addRow($row);
             }
         }
-        $newObjectsSheet->setCounterRowsAll(count($imported_rows));
+        $newObjectsSheet->setCounterForRowsInDataSource(count($imported_rows));
         
         if (! $newObjectsSheet->isEmpty()) {
             $newObjects = [];
