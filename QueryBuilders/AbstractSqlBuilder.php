@@ -73,12 +73,12 @@ use exface\Core\Interfaces\DataSources\DataConnectionInterface;
  * 
  * ### On attribute level
  * 
- * - **SQL_DATA_TYPE** - tells the query builder what data type the column has.
+ * - `SQL_DATA_TYPE` - tells the query builder what data type the column has.
  * This is only needed for complex types that require conversion: e.g. binary,
  * LOB, etc. Refer to the description of the specific query builder for concrete
  * usage instructions.
  * 
- * - **SQL_SELECT** - custom SQL SELECT statement. It replaces the entire select
+ * - `SQL_SELECT` - custom SQL SELECT statement. It replaces the entire select
  * generator and will be used as-is except for replacing placeholders. The
  * placeholder [#~alias#] is supported as well as placeholders for other attributes. 
  * This is usefull to write wrappers for columns (e.g. "NVL([#~value#].MY_COLUMN, 0)". 
@@ -88,13 +88,13 @@ use exface\Core\Interfaces\DataSources\DataConnectionInterface;
  * are used, of course). Note, that since this is a complete replacement, the
  * table to select from must be specified manually or via [#~alias#] placeholder.
  * 
- * - **SQL_SELECT_DATA_ADDRESS** - replaces the data address for SELECT queries.
+ * - `SQL_SELECT_DATA_ADDRESS` - replaces the data address for SELECT queries.
  * In contrast to SQL_SELECT, this property will be processed by the generator
  * just like a data address would be (including all placeholders). In particular,
  * the table alias will be generated automatically, while in SQL_SELECT it
  * must be defined by the user.
  * 
- * - **SQL_INSERT** - custom SQL INSERT statement used instead of the generator.
+ * - `SQL_INSERT` - custom SQL INSERT statement used instead of the generator.
  * The placeholders [#~alias#] and [#~value#] are supported in addition to 
  * attribute placeholders. This is usefull to write wrappers for values 
  * (e.g. "to_clob('[#~value#]')" to save a string value to an Oracle CLOB column) 
@@ -102,7 +102,7 @@ use exface\Core\Interfaces\DataSources\DataConnectionInterface;
  * with a UUID). If you need to use a generator only if no value is given explicitly, 
  * use something like this: IF([#~value#]!='', [#~value#], UUID()).
  * 
- * - **SQL_UPDATE** - custom SQL for UPDATE statement. It replaces the generator
+ * - `SQL_UPDATE` - custom SQL for UPDATE statement. It replaces the generator
  * completely and must include the data address and the value. In contrast to
  * this, using SQL_UPDATE_DATA_ADDRESS will only replace the data address, while
  * the value will be generated automatically. SQL_UPDATE supports the placeholders
@@ -113,11 +113,11 @@ use exface\Core\Interfaces\DataSources\DataConnectionInterface;
  * with the current date). If you need to use a generator only if no value is given 
  * explicitly, use something like this: IF([#~value#]!='', [#~value#], UUID()).
  * 
- * - **SQL_UPDATE_DATA_ADDRESS** - replaces the data address for UPDATE queries.
+ * - `SQL_UPDATE_DATA_ADDRESS` - replaces the data address for UPDATE queries.
  * In contrast to SQL_UPDATE, the value will be added automatically via generator.
  * SQL_UPDATE_DATA_ADDRESS supports the placeholder [#~alias#] only!
  * 
- * - **SQL_WHERE_DATA_ADDRESS** - replaces the data address in the WHERE clause.
+ * - `SQL_WHERE_DATA_ADDRESS` - replaces the data address in the WHERE clause.
  * The comparator and the value will added automatically be the generator. 
  * Supports the [#~alias#] placeholder in addition to placeholders for other
  * attributes. This is usefull to write wrappers to be used in filters: e.g.
