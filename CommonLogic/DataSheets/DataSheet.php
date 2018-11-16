@@ -1224,7 +1224,7 @@ class DataSheet implements DataSheetInterface
      */
     public function setAutoCount(bool $trueOrFalse) : DataSheetInterface
     {
-        $this->disableRowCount = $trueOrFalse;
+        $this->autocount = $trueOrFalse;
         return $this;
     }
     
