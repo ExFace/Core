@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\Widgets;
 
+use exface\Core\DataTypes\BooleanDataType;
+
 /**
  * Shows a pagination-control (e.g. toolbar), displaying the the current position, number of pages, navigation controls, etc.
  * 
@@ -12,6 +14,18 @@ namespace exface\Core\Widgets;
  *      "page_size": 40,
  *      "page_sizes": [20, 40, 100, 200]
  *  }
+ *  
+ * ```
+ * 
+ * For large data sets, disabling the total row counter on the paginator may improve performance significantly.
+ * However, in this case, there will be no way to determine, how many pages or rows there are in total - the user
+ * will only be able to navigate to the next page, if there is one.
+ * 
+ * ```
+ *  {
+ *      "use_total_row_counter": false
+ *  }
+ *  
  * ```
  *
  * @author Andrej Kabachnik
@@ -24,6 +38,8 @@ class DataPaginator extends AbstractWidget
     private $pageSize = null;
     
     private $pageSizes = [];
+    
+    private $useTotalCount = true;
     
     public function getDataWidget() : Data
     {
@@ -95,6 +111,34 @@ class DataPaginator extends AbstractWidget
             $uxon->setProperty('page_sizes', $this->getPageSizes());
         }
         return $uxon;
+    }
+    
+    /**
+     *
+     * @return bool
+     */
+    public function getUseTotalRowCounter() : bool
+    {
+        return $this->useTotalCount;
+    }
+    
+    /**
+     * Set to FALSE to improve performance by disabling the total row counter.
+     * 
+     * The downside of this option is that the paginator will not know, how many
+     * pages there are in total, so the user will only be able to navigate to
+     * the next or any of the previous pages - not to the last page.
+     * 
+     * @uxon-property use_total_row_conuter
+     * @uxon-type boolean
+     * 
+     * @param bool|string $value
+     * @return DataPaginator
+     */
+    public function setUseTotalRowCounter($value) : DataPaginator
+    {
+        $this->useTotalCount = BooleanDataType::cast($value);
+        return $this;
     }
     
 }

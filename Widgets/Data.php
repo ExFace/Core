@@ -265,6 +265,9 @@ class Data
         if ($this->getPaginator()->getPageSize()) {
             $data_sheet->setRowsLimit($this->getPaginator()->getPageSize());
         }
+        if ($this->getPaginator()->getUseTotalRowCounter() === false) {
+            $data_sheet->setAutoCount(false);
+        }
         
         // Filters and sorters only if lazy loading is disabled!
         if (! $this->getLazyLoading()) {
