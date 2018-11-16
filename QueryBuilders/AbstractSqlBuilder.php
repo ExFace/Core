@@ -6,7 +6,6 @@ use exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartFilterGroup;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartAttribute;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartFilter;
-use exface\Core\CommonLogic\AbstractDataConnector;
 use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
 use exface\Core\DataTypes\NumberDataType;
@@ -27,6 +26,9 @@ use exface\Core\Factories\QueryBuilderFactory;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\DataTypes\RelationTypeDataType;
 use exface\Core\CommonLogic\DataSheets\DataColumn;
+use exface\Core\CommonLogic\DataQueries\DataQueryResultData;
+use exface\Core\Interfaces\DataSources\DataQueryResultDataInterface;
+use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 
 /**
  * A query builder for generic SQL syntax.
@@ -168,18 +170,6 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
 
     protected $short_alias_index = 0;
 
-    /**
-     * [ [column_name => column_value] ]
-     */
-    protected $result_rows = array();
-
-    /**
-     * [ [column_name => column_value] ] having multiple rows if multiple totals for a single column needed
-     */
-    protected $result_totals = array();
-
-    protected $result_total_count = 0;
-
     private $binary_columns = array();
 
     private $query_id = null;
@@ -199,12 +189,9 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     abstract function buildSqlQuerySelect();
 
     abstract function buildSqlQueryTotals();
-
-    public function read(AbstractDataConnector $data_connection = null)
+    
+    public function read(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
     {
-        if (! $data_connection)
-            $data_connection = $this->getMainObject()->getDataConnection();
-        
         $query = $this->buildSqlQuerySelect();
         $q = new SqlDataQuery();
         $q->setSql($query);
@@ -225,36 +212,37 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                     unset($rows[$nr][$short_alias]);
                 }
             }
-            
-            $this->result_rows = $rows;
         }
         
         // then do the totals query if needed
-        $totals_query = $this->buildSqlQueryTotals();
-        if ($totals = $data_connection->runSql($totals_query)->getResultArray()) {
-            // the total number of rows is treated differently, than the other totals.
-            $this->result_total_count = $totals[0]['EXFCNT'];
-            // now save the custom totals.
-            foreach ($this->totals as $qpart) {
-                $this->result_totals[$qpart->getRow()][$qpart->getColumnKey()] = $totals[0][$this->getShortAlias($qpart->getColumnKey())];
+        $result_totals = [];
+        if ($this->hasTotals() === true) {
+            $result_total_count = null;
+            $totals_query = $this->buildSqlQueryTotals();
+            if ($totals = $data_connection->runSql($totals_query)->getResultArray()) {
+                // the total number of rows is treated differently, than the other totals.
+                $result_total_count = $totals[0]['EXFCNT'];
+                // now save the custom totals.
+                foreach ($this->getTotals() as $qpart) {
+                    $result_totals[$qpart->getRow()][$qpart->getColumnKey()] = $totals[0][$this->getShortAlias($qpart->getColumnKey())];
+                }
             }
         }
-        return count($this->result_rows);
-    }
-
-    function getResultRows()
-    {
-        return $this->result_rows;
-    }
-
-    function getResultTotals()
-    {
-        return $this->result_totals;
-    }
-
-    function getResultTotalRows()
-    {
-        return $this->result_total_count;
+        
+        $rowCount = count($rows);
+        $hasMoreRows = ($this->getLimit() > 0 && $rowCount > $this->getLimit());
+        if ($hasMoreRows === true) {
+            $affectedCounter = $this->getLimit();
+            array_pop($rows);
+        } else {
+            $affectedCounter = $rowCount;
+        }
+        
+        if ($result_total_count === null && $hasMoreRows === false) {
+            $result_total_count = $rowCount + $this->getOffset();
+        }
+        
+        return new DataQueryResultData($rows, $affectedCounter, $hasMoreRows, $result_total_count, $result_totals);
     }
 
     /**
@@ -286,14 +274,11 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      *
      * @param AbstractSqlConnector $data_connection            
      */
-    function create(AbstractDataConnector $data_connection = null)
+    public function create(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
     {
         /* @var $data_connection \exface\Core\DataConnectors\AbstractSqlConnector */
-        if (! $data_connection)
-            $data_connection = $this->getMainObject()->getDataConnection();
         if (! $this->isWritable())
-            return 0;
-        $insert_ids = array();
+            return new DataQueryResultData([], 0);
         
         $values = array();
         $columns = array();
@@ -356,6 +341,9 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             }
         }
         
+        $insertedIds = [];
+        $uidAlias = $this->getMainObject()->getUidAttribute()->getAlias();
+        $insertedCounter = 0;
         foreach ($values as $nr => $row) {
             $sql = 'INSERT INTO ' . $this->getMainObject()->getDataAddress() . ' (' . implode(', ', $columns) . ') VALUES (' . implode(',', $row) . ')';
             $query = $data_connection->runSql($sql);
@@ -371,9 +359,10 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 $last_id = $query->getLastInsertId();
             }
             
-            // TODO How to get multipla inserted ids???
-            if ($query->countAffectedRows()) {
-                $insert_ids[] = $last_id;
+            // TODO How to get multiple inserted ids???
+            if ($cnt = $query->countAffectedRows()) {
+                $insertedCounter += $cnt;
+                $insertedIds[] = [$uidAlias => $last_id];
             }
         }
         
@@ -406,7 +395,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             $insert_ids[] = $last_id;
         }*/
         
-        return $insert_ids;
+        return new DataQueryResultData($insertedIds, $insertedCounter);
     }
 
     /**
@@ -426,12 +415,10 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      *
      * @see \exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder::update()
      */
-    function update(AbstractDataConnector $data_connection = null)
+    function update(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
     {
-        if (! $data_connection)
-            $data_connection = $this->main_object->getDataConnection();
         if (! $this->isWritable())
-            return 0;
+            return new DataQueryResultData([], 0);
         
         // Filters -> WHERE
         // Since UPDATE queries generally do not support joins, tell the build_sql_where() method not to rely on joins in the main query
@@ -535,7 +522,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             $subquery->update($data_connection);
         }
         
-        return $affected_rows;
+        return new DataQueryResultData([], $affected_rows);
     }
 
     /**
@@ -624,7 +611,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      *
      * @see \exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder::delete()
      */
-    function delete(AbstractDataConnector $data_connection = null)
+    function delete(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
     {
         // filters -> WHERE
         // Relations (joins) are not supported in delete clauses, so check for them first!
@@ -640,8 +627,21 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         $sql = 'DELETE FROM ' . $this->buildSqlFrom() . $where;
         $query = $data_connection->runSql($sql);
         
-        return $query->countAffectedRows();
+        return new DataQueryResultData([], $query->countAffectedRows());
     }
+    
+    public function count(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
+    {
+        $result = $data_connection->runSql($this->buildSqlQueryCount());
+        $cnt = $result->getResultArray()[0]['EXFCNT'];
+        return new DataQueryResultData([], $cnt, true, $cnt);
+    }
+    
+    protected function buildSqlQueryCount() : string
+    {
+        return $this->buildSqlQueryTotals();
+    }
+    
     /**
      * Creats a SELECT statement for an attribute (qpart).
      * The parameters override certain parts of the statement: $aggregator( $select_from.$select_column AS $select_as ).
