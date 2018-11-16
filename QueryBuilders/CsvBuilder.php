@@ -149,8 +149,8 @@ class CsvBuilder extends FileContentsBuilder
      */
     public function count(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
     {
-        // row count
-        $rowCount = $this->getRowCount($this->buildQuery()->getPathAbsolute(), $this->getDelimiter(), $this->getEnclosure());
+        $query = $data_connection->query($this->buildQuery());
+        $rowCount = $this->getRowCount($query->getPathAbsolute(), $this->getDelimiter(), $this->getEnclosure());
         if ($this->hasHeaderRow()) {
             $rowCount = max(0, $rowCount - 1);
         }
