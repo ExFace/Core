@@ -91,6 +91,8 @@ class DataSheet implements DataSheetInterface
     private $uid_column_name = null;
 
     private $invalid_data_flag = false;
+    
+    private $is_fresh = true;
 
     // properties NOT to be copied on copy()
     private $exface;
@@ -1218,12 +1220,21 @@ class DataSheet implements DataSheetInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::setAutocount()
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::setAutoCount()
      */
-    public function setAutocount(bool $trueOrFalse) : DataSheetInterface
+    public function setAutoCount(bool $trueOrFalse) : DataSheetInterface
     {
         $this->disableRowCount = $trueOrFalse;
         return $this;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function getAutoCount() : bool
+    {
+        return $this->autocount;
     }
 
     /**
@@ -1654,14 +1665,26 @@ class DataSheet implements DataSheetInterface
         return $this->getRowsLimit() === null ? true : false;
     }
 
-    protected function setFresh($value) : DataSheetInterface
+    /**
+     * Explicitly marks the sheet as fresh (TRUE) or not (FALSE).
+     * 
+     * @param bool $value
+     * @return DataSheetInterface
+     */
+    protected function setFresh(bool $value) : DataSheetInterface
     {
         foreach ($this->getColumns() as $col) {
             $col->setFresh($value);
         }
+        $this->is_fresh = $value;
         return $this;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::isFresh()
+     */
     public function isFresh() : bool
     {
         foreach ($this->getColumns() as $col) {
@@ -1669,7 +1692,7 @@ class DataSheet implements DataSheetInterface
                 return false;
             }
         }
-        return true;
+        return $this->is_fresh;
     }
 
     public function getRowsLimit()

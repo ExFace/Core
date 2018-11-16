@@ -107,12 +107,19 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * @triggers \exface\Core\Events\DataSheet\OnBeforeReadDataEvent
      * @triggers \exface\Core\Events\DataSheet\OnReadDataEvent
      * 
-     * @return integer
+     * @return int
      */
     public function dataRead(int $limit = null, int $offset = null) : int;
     
     /**
+     * Performs a count operation on the data source to get fresh information about
+     * how many rows would match the filters and aggregations of this data sheet.
      * 
+     * Avoid calling dataCount() explicitly!!! Some data sources like large SQL tables 
+     * or OLAP cubes in general have very poor counting performance. Instead use
+     * countRowsInDataSource() and let the syste decide if a count operation is
+     * really required!
+     *  
      * @return int
      */
     public function dataCount() : int;
@@ -130,6 +137,12 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * Will return NULL if the information is not available from the data source
      * or the data source was not read (e.g. the sheet was populated
      * programmatically)!
+     * 
+     * If you expect poor performance for count operations in the data source
+     * (e.g. for OLAP sources), you can explicitly pervent this method 
+     * from performing them by setting setAutoCount(false) for this sheet.
+     * 
+     * @see setAutoCount()
      *
      * @return int|NULL
      */
@@ -146,15 +159,42 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
     public function setCounterForRowsInDataSource(int $count) : DataSheetInterface;
     
     /**
-     * Set to TRUE to disable counting all rows matching the filters of this sheet available in the data source.
+     * Set to TRUE if you do not want the sheet to counting all rows matching it's filters in the 
+     * data source when countRowsInDataSource() is called.
      * 
-     * Disabling this counter can greaty improve performance, but has negative effects on pagination - 
-     * the total amount of pages cannot be determined anymore.
+     * Some data sources automatically count available rows with every paged read operation, but
+     * most do wait for count() to be called explicitly to improve reading performance. By
+     * default, a data sheet will perform a count() automatically when countRowsInDataSource()
+     * is called. If you suspect poor performance of a count (e.g. for OLAP sources), 
+     * you can block this behavior by setAutoCount(false). In this case countRowsInDataSource() 
+     * will return null.
+     * 
+     * Disabling this counter can significatly improve performance, but has negative effects on 
+     * pagination - the total amount of pages cannot be determined anymore.
+     * 
+     * Note: This setting will not have any effect on data sources, that count rows with every 
+     * read operation. 
+     * 
+     * Note: Even if autocount is disabled, you can still force the sheet to count rows in the
+     * data source with dataCount()
+     * 
+     * @see countRowsInDataSource()
+     * @see dataCount()
      * 
      * @param bool $trueOrFalse
      * @return DataSheetInterface
      */
-    public function setAutocount(bool $trueOrFalse) : DataSheetInterface;
+    public function setAutoCount(bool $trueOrFalse) : DataSheetInterface;
+    
+    /**
+     * Returns TRUE if the sheet will automatically perform a count() on it's data source when
+     * countRowsInDataSource() is called and FALSE otherwise.
+     * 
+     * @see setAutoCount() for more details.
+     * 
+     * @return bool
+     */
+    public function getAutoCount() : bool;
 
     /**
      * Saves the values in this data sheet to the appropriate data sources.

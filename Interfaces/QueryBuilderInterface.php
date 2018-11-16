@@ -6,7 +6,13 @@ use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 use exface\Core\Interfaces\DataSources\DataQueryResultDataInterface;
 
 /**
- * Common interface for query builders.
+ * Query builders build data source specific queries for the base operations
+ * create, read, update, delete and count and perform them on the respective
+ * connections.
+ * 
+ * For the outside world query builders are factories for instances of
+ * DataQueryResultDataInterface, that contain the results of a query
+ * on any data source in a universal format.
  * 
  * @author Andrej Kabachnik
  *
