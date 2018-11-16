@@ -148,6 +148,7 @@ class InputComboTable extends InputCombo implements iCanPreloadData
         $table->setUidColumnId($this->getValueColumnId());
         $table->setHeaderSortMultiple(false);
         $table->getToolbarMain()->setIncludeNoExtraActions(true);
+        $table->getPaginator()->setUseTotalRowCounter(false);
         $this->data_table = $table;
         
         // Now see if the user had already defined a table in UXON
