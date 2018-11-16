@@ -444,6 +444,14 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * @return boolean
      */
     public function isFresh() : bool;
+    
+    /**
+     * Explicitly marks the sheet as fresh (TRUE) or not (FALSE).
+     * 
+     * @param bool $value
+     * @return DataSheetInterface
+     */
+    public function setFresh(bool $value) : DataSheetInterface;
 
     /**
      * Returns true if the data sheet will load all available data when performing data_read().

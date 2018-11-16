@@ -82,7 +82,7 @@ class DataSheet implements DataSheetInterface
 
     private $subsheets = array();
 
-    private $aggregation_columns = array();
+    private $aggregation_columns = null;
 
     private $rows_on_page = null;
 
@@ -1309,6 +1309,9 @@ class DataSheet implements DataSheetInterface
      */
     public function countRowsInDataSource() : ?int
     {
+        // FIXME need to check if the sheet is fresh at this point. On the other hand,
+        // the sheet must get marked not fresh if filters change as they have direct
+        // effect on the number of rows available in the data source.
         if ($this->total_row_count === null && $this->autocount === true) {
             $this->dataCount();
         }
@@ -1666,12 +1669,11 @@ class DataSheet implements DataSheetInterface
     }
 
     /**
-     * Explicitly marks the sheet as fresh (TRUE) or not (FALSE).
      * 
-     * @param bool $value
-     * @return DataSheetInterface
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::setFresh()
      */
-    protected function setFresh(bool $value) : DataSheetInterface
+    public function setFresh(bool $value) : DataSheetInterface
     {
         foreach ($this->getColumns() as $col) {
             $col->setFresh($value);
