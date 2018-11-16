@@ -468,9 +468,9 @@ class DataSheet implements DataSheetInterface
         $this->removeRows();
         
         if (is_null($limit))
-            $limit = $this->getRowsOnPage();
+            $limit = $this->getRowsLimit();
         if (is_null($offset))
-            $offset = $this->getRowOffset();
+            $offset = $this->getRowsOffset();
         
         $query = $this->initReadQueryBuilder($thisObject);
         
@@ -1479,8 +1479,8 @@ class DataSheet implements DataSheetInterface
         
         $uxon->setProperty('totals_rows', $this->getTotalsRows());
         $uxon->setProperty('filters', $this->getFilters()->exportUxonObject());
-        $uxon->setProperty('rows_on_page', $this->getRowsOnPage());
-        $uxon->setProperty('row_offset', $this->getRowOffset());
+        $uxon->setProperty('rows_limit', $this->getRowsLimit());
+        $uxon->setProperty('rows_offset', $this->getRowsOffset());
         
         foreach ($this->getSorters() as $sorter) {
             $uxon->appendToProperty('sorters', $sorter->exportUxonObject());
@@ -1540,12 +1540,18 @@ class DataSheet implements DataSheetInterface
             $this->setFilters(ConditionGroupFactory::createFromUxon($this->exface, $uxon->getProperty('filters')));
         }
         
-        if ($uxon->hasProperty('rows_on_page')) {
-            $this->setRowsOnPage($uxon->getProperty('rows_on_page'));
+        if ($uxon->hasProperty('rows_limit')) {
+            $this->setRowsLimit($uxon->getProperty('rows_limit'));
+        } elseif ($uxon->hasProperty('rows_on_page')) {
+            // Still support old property name rows_on_page
+            $this->setRowsLimit($uxon->getProperty('rows_on_page'));
         }
         
-        if ($uxon->hasProperty('row_offset')) {
-            $this->setRowOffset($uxon->getProperty('row_offset'));
+        if ($uxon->hasProperty('rows_offset')) {
+            $this->setRowsOffset($uxon->getProperty('rows_offset'));
+        } elseif ($uxon->hasProperty('row_offset')) {
+            // Still support old property name row_offset
+            $this->setRowsOffset($uxon->getProperty('row_offset'));
         }
         
         if ($uxon->hasProperty('sorters')) {
@@ -1645,7 +1651,7 @@ class DataSheet implements DataSheetInterface
     
     public function isUnpaged() : bool
     {
-        return $this->getRowsOnPage() === null ? true : false;
+        return $this->getRowsLimit() === null ? true : false;
     }
 
     protected function setFresh($value) : DataSheetInterface
@@ -1666,23 +1672,23 @@ class DataSheet implements DataSheetInterface
         return true;
     }
 
-    public function getRowsOnPage()
+    public function getRowsLimit()
     {
         return $this->rows_on_page;
     }
 
-    public function setRowsOnPage($value)
+    public function setRowsLimit($value)
     {
         $this->rows_on_page = $value;
         return $this;
     }
 
-    public function getRowOffset()
+    public function getRowsOffset()
     {
         return $this->row_offset;
     }
 
-    public function setRowOffset($value)
+    public function setRowsOffset($value)
     {
         $this->row_offset = $value;
         return $this;

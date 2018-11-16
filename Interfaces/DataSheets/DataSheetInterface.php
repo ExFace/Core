@@ -436,13 +436,13 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      */
     public function isUnpaged() : bool;
 
-    public function getRowsOnPage();
+    public function getRowsLimit();
 
-    public function setRowsOnPage($value);
+    public function setRowsLimit($value);
 
-    public function getRowOffset();
+    public function getRowsOffset();
 
-    public function setRowOffset($value);
+    public function setRowsOffset($value);
 
     /**
      * Merges the current data sheet with another one.

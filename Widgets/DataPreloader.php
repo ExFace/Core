@@ -128,8 +128,8 @@ class DataPreloader implements iCanBeConvertedToUxon
     public function prepareDataSheetToPreload(DataSheetInterface $dataSheet) : DataSheetInterface
     {
         $ds = $this->getWidget()->prepareDataSheetToRead($dataSheet);
-        $ds->setRowOffset(0);
-        $ds->setRowsOnPage(null);
+        $ds->setRowsOffset(0);
+        $ds->setRowsLimit(null);
         return $ds;
     }
     

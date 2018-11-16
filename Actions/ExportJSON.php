@@ -211,8 +211,8 @@ class ExportJSON extends ReadData implements iExportData
         set_time_limit($this->getLimitTimePerRequest());
         do {
             $dataSheet = $dataSheetMaster->copy();
-            $dataSheet->setRowsOnPage($rowsOnPage);
-            $dataSheet->setRowOffset($rowOffset);
+            $dataSheet->setRowsLimit($rowsOnPage);
+            $dataSheet->setRowsOffset($rowOffset);
             $dataSheet->dataRead();
             
             $this->writeRows($dataSheet, $columnNames);
