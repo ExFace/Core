@@ -9,6 +9,16 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 
 class DataAggregationList extends EntityList implements DataAggregationListInterface
 {
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\EntityList::add()
+     */
+    public function add($entity, $key = null)
+    {
+        $this->getDataSheet()->setFresh(false);
+        return parent::add($entity, $key);
+    }
 
     /**
      *
