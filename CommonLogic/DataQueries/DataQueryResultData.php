@@ -30,12 +30,12 @@ class DataQueryResultData implements DataQueryResultDataInterface
         return $this->hasMoreRows;
     }
     
-    public function getAggregationRows() : array
+    public function getTotalsRows() : array
     {
         return $this->aggregationRows;
     }
     
-    public function getTotalRowCounter() : ?int
+    public function getAllRowsCounter() : ?int
     {
         return $this->totalRowCount;
     }
@@ -50,7 +50,7 @@ class DataQueryResultData implements DataQueryResultDataInterface
         return empty($this->rows) === false;
     }
     
-    public function getAffectedRowCounter() : ?int
+    public function getAffectedRowsCounter() : ?int
     {
         return $this->affectedRowCount;
     }
