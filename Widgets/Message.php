@@ -52,7 +52,7 @@ class Message extends Text
     public function exportUxonObject()
     {
         $uxon = parent::exportUxonObject();
-        $uxon->setProperty('type', $this->getType());
+        $uxon->setProperty('type', $this->getType()->__toString());
         return $uxon;
     }
 }
