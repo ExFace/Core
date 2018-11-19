@@ -73,7 +73,7 @@
     "rows": [
         {
             "CREATED_ON": "2016-12-16 11:48:53",
-            "MODIFIED_ON": "2018-11-19 07:59:36",
+            "MODIFIED_ON": "2018-11-19 12:25:52",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6c3859abc5faea3e40205857feb80",
@@ -85,7 +85,7 @@
             "SHORT_DESCRIPTION": "",
             "PARENT_OBJECT": "",
             "DATA_ADDRESS_PROPS": "{}",
-            "DEFAULT_EDITOR_UXON": "",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Form\",\"widgets\":[{\"attribute_alias\":\"APP\"},{\"attribute_alias\":\"CODE\"},{\"attribute_alias\":\"TITLE\",\"width\":\"max\"},{\"attribute_alias\":\"HINT\",\"width\":\"max\"},{\"attribute_alias\":\"DESCRIPTION\"},{\"attribute_alias\":\"TYPE\"},{\"attribute_alias\":\"DOCS\"}]}",
             "LABEL": "Message",
             "ALIAS": "MESSAGE",
             "DATA_ADDRESS": "exf_message"
