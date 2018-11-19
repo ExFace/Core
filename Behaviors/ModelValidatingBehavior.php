@@ -131,8 +131,10 @@ class ModelValidatingBehavior extends AbstractBehavior
     
     protected function validateObject(MetaObjectInterface $object, MessageList $messageList)
     {
+        $this->validateObjectAttributes($object, $messageList);
         $this->validateObjectUid($object, $messageList);
         $this->validateObjectLabel($object, $messageList);
+        $this->validateObjectDataSource($object, $messageList);
         return;
     }
     
@@ -153,6 +155,24 @@ class ModelValidatingBehavior extends AbstractBehavior
     {
         if ($object->hasLabelAttribute() === false) {
             $messageList->addMessageByCode('734GDAX', 'Object has no LABEL attribute!');
+        }
+    }
+    
+    protected function validateObjectDataSource(MetaObjectInterface $object, MessageList $messageList)
+    {
+        if (($object->getDataAddress() === null ||  $object->getDataAddress() === '' || $object->hasDataSource() === false) && $object->isReadable()) {
+            $messageList->addMessageByCode('734GUW2', 'Object without a data source cannot be readable!');
+        }
+    }
+    
+    protected function validateObjectAttributes(MetaObjectInterface $object, MessageList $messageList)
+    {
+        if ($object->getAttributes()->isEmpty()) {
+            $messageList->addMessageByCode('734GWLL', 'Object has no attributes!');
+        }
+        
+        if ($object->isReadable() === false && $object->getAttributes()->getReadable()) {
+            $messageList->addMessageByCode('734GZDR', 'Object is not readabl, but has readable attributes!');
         }
     }
     
