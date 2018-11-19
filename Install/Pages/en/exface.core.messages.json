@@ -24,6 +24,9 @@
         ],
         "columns": [
             {
+                "attribute_alias": "TYPE"
+            },
+            {
                 "attribute_alias": "APP__ALIAS"
             },
             {
