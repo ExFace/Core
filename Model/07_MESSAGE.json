@@ -1870,6 +1870,48 @@
             "HINT": "It cannot be used with core actions, in dropdown-filters, etc.",
             "TYPE": "WARNING",
             "DOCS": ""
+        },
+        {
+            "CREATED_ON": "2018-11-19 14:33:07",
+            "MODIFIED_ON": "2018-11-19 14:35:54",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e8ec0808d0d3d287f10205857feb81",
+            "APP": "0x31000000000000000000000000000000",
+            "CODE": "734GUW2",
+            "TITLE": "An object without a data source cannot be readable!",
+            "DESCRIPTION": "",
+            "HINT": "This object is marked as readable, but has no data source or an empty data address.",
+            "TYPE": "WARNING",
+            "DOCS": ""
+        },
+        {
+            "CREATED_ON": "2018-11-19 14:36:48",
+            "MODIFIED_ON": "2018-11-19 14:35:54",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e8ec088ccec25687f10205857feb81",
+            "APP": "0x31000000000000000000000000000000",
+            "CODE": "734GWLL",
+            "TITLE": "Object has no attributes!",
+            "DESCRIPTION": "",
+            "HINT": "Neither this object nor objects it inerits from have any attributes.",
+            "TYPE": "WARNING",
+            "DOCS": ""
+        },
+        {
+            "CREATED_ON": "2018-11-19 14:42:49",
+            "MODIFIED_ON": "2018-11-19 14:35:54",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e8ec0963b6a82587f10205857feb81",
+            "APP": "0x31000000000000000000000000000000",
+            "CODE": "734GZDR",
+            "TITLE": "Object is not readable, but has readable attributes",
+            "DESCRIPTION": "",
+            "HINT": "It will not be possible to read any of these attributes.",
+            "TYPE": "WARNING",
+            "DOCS": ""
         }
     ],
     "totals_rows": [],
