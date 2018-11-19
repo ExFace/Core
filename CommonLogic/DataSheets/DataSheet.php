@@ -1783,6 +1783,12 @@ class DataSheet implements DataSheetInterface
                 $copy->getColumns()->get($key)->setIgnoreFixedValues($col->getIgnoreFixedValues());
             }
         }
+        
+        $copy->setAutoCount($this->getAutoCount());
+        if ($this->countRowsInDataSource() !== null) {
+            $copy->setCounterForRowsInDataSource($this->countRowsInDataSource());
+        }
+        
         return $copy;
     }
 
