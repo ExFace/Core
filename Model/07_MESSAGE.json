@@ -1842,6 +1842,34 @@
             "HINT": "",
             "TYPE": "ERROR",
             "DOCS": ""
+        },
+        {
+            "CREATED_ON": "2018-11-19 13:55:08",
+            "MODIFIED_ON": "2018-11-19 13:55:08",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e8ec02ba4d555b87f10205857feb81",
+            "APP": "0x31000000000000000000000000000000",
+            "CODE": "734GDAX",
+            "TITLE": "Object has no LABEL attribute",
+            "DESCRIPTION": "",
+            "HINT": "The UID will be used to display the object by default: e.g. in drop-downs, etc.",
+            "TYPE": "INFO",
+            "DOCS": ""
+        },
+        {
+            "CREATED_ON": "2018-11-19 14:24:12",
+            "MODIFIED_ON": "2018-11-19 14:24:40",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e8ec06ca2e75e887f10205857feb81",
+            "APP": "0x31000000000000000000000000000000",
+            "CODE": "734GQRL",
+            "TITLE": "Object has no UID attribute",
+            "DESCRIPTION": "",
+            "HINT": "It cannot be used with core actions, in dropdown-filters, etc.",
+            "TYPE": "WARNING",
+            "DOCS": ""
         }
     ],
     "totals_rows": [],

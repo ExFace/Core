@@ -133,11 +133,6 @@
 	"GLOBAL.SORTING_DIRECTIONS.ASC": "Aufsteigend",
 	"GLOBAL.SORTING_DIRECTIONS.DESC": "Absteigend",
 	
-	"HELP.MODEL.HINT_OBJECT_HAS_NO_LABEL": "Dieses Objekt hat kein Label-Attribut.",
-	"HELP.MODEL.HINT_OBJECT_HAS_NO_LABEL_DESC": "Als Standard-Anzeige (z.B. in Dropdowns) wird die UID verwendet.",
-	"HELP.MODEL.HINT_OBJECT_HAS_NO_UID": "Dieses Objekt hat kein UID-Attribut.",
-	"HELP.MODEL.HINT_OBJECT_HAS_NO_UID_DESC": "Es kann nicht mit Standard-Editoren oder in Dropdown-Filtern verwendet werden!",
-	
 	"INSTALLER.SQLSCHEMA.SUCCESS": "%counter% SQL-Schema-Update wurde installiert|%counter% SQL-Schema-Updates wurden installiert",
     "INSTALLER.SQLSCHEMA.FAILED": "SQL-Schema-Update Nr. %first_failed_id% fehlerhaft: %error_text%|%counter% SQL-Schema-Updates wurden abgebrochen angefangen mit Update Nr. %first_failed_id%: %error_text%", 
     
