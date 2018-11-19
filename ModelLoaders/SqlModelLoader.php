@@ -687,9 +687,9 @@ class SqlModelLoader implements ModelLoaderInterface
 					dt.*,
 					' . $this->buildSqlUuidSelector('dt.oid') . ' as oid,
                     a.app_alias,
-                    ve.error_code as validation_error_code,
-                    ve.error_text as validation_error_text
-				FROM exf_data_type dt LEFT JOIN exf_error ve ON dt.validation_error_oid = ve.oid LEFT JOIN exf_app a ON a.oid = dt.app_oid
+                    ve.code as validation_error_code,
+                    ve.title as validation_error_text
+				FROM exf_data_type dt LEFT JOIN exf_message ve ON dt.validation_error_oid = ve.oid LEFT JOIN exf_app a ON a.oid = dt.app_oid
 				WHERE ' . $where);
         foreach ($query->getResultArray() as $dt) {
             $this->data_types_by_uid[$dt['oid']] = $dt;

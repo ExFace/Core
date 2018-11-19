@@ -66,6 +66,14 @@
             "attribute_alias": "DELETE_WITH_RELATED_OBJECT"
         },
         {
+            "name": "DEFAULT_DISPLAY_UXON",
+            "attribute_alias": "DEFAULT_DISPLAY_UXON"
+        },
+        {
+            "name": "COMMENTS",
+            "attribute_alias": "COMMENTS"
+        },
+        {
             "name": "LABEL",
             "attribute_alias": "LABEL"
         },
@@ -168,6 +176,8 @@
             "DEFAULT_EDITOR_UXON": "{}",
             "COPY_WITH_RELATED_OBJECT": null,
             "DELETE_WITH_RELATED_OBJECT": null,
+            "DEFAULT_DISPLAY_UXON": "",
+            "COMMENTS": "",
             "LABEL": "Description",
             "ALIAS": "FULL_DESCRIPTION",
             "DATATYPE": "0x31310000000000000000000000000000",
@@ -207,6 +217,8 @@
             "DEFAULT_EDITOR_UXON": "{}",
             "COPY_WITH_RELATED_OBJECT": null,
             "DELETE_WITH_RELATED_OBJECT": null,
+            "DEFAULT_DISPLAY_UXON": "",
+            "COMMENTS": "",
             "LABEL": "Title",
             "ALIAS": "TITLE",
             "DATATYPE": "0x30000000000000000000000000000000",
@@ -246,6 +258,8 @@
             "DEFAULT_EDITOR_UXON": "{}",
             "COPY_WITH_RELATED_OBJECT": null,
             "DELETE_WITH_RELATED_OBJECT": null,
+            "DEFAULT_DISPLAY_UXON": "",
+            "COMMENTS": "",
             "LABEL": "Description",
             "ALIAS": "DESCRIPTION",
             "DATATYPE": "0x31310000000000000000000000000000",
@@ -285,6 +299,8 @@
             "DEFAULT_EDITOR_UXON": "{}",
             "COPY_WITH_RELATED_OBJECT": null,
             "DELETE_WITH_RELATED_OBJECT": null,
+            "DEFAULT_DISPLAY_UXON": "",
+            "COMMENTS": "",
             "LABEL": "PHP Class",
             "ALIAS": "CLASS",
             "DATATYPE": "0x30000000000000000000000000000000",
@@ -324,6 +340,8 @@
             "DEFAULT_EDITOR_UXON": "{}",
             "COPY_WITH_RELATED_OBJECT": null,
             "DELETE_WITH_RELATED_OBJECT": null,
+            "DEFAULT_DISPLAY_UXON": "",
+            "COMMENTS": "",
             "LABEL": "Filename",
             "ALIAS": "FILENAME",
             "DATATYPE": "0x30000000000000000000000000000000",
@@ -363,6 +381,8 @@
             "DEFAULT_EDITOR_UXON": "{}",
             "COPY_WITH_RELATED_OBJECT": null,
             "DELETE_WITH_RELATED_OBJECT": "0",
+            "DEFAULT_DISPLAY_UXON": "",
+            "COMMENTS": "",
             "LABEL": "File",
             "ALIAS": "FILE",
             "DATATYPE": "0x11e7b93f315ab6ca84cce4b318306b9a",
@@ -402,6 +422,8 @@
             "DEFAULT_EDITOR_UXON": "{}",
             "COPY_WITH_RELATED_OBJECT": null,
             "DELETE_WITH_RELATED_OBJECT": null,
+            "DEFAULT_DISPLAY_UXON": "",
+            "COMMENTS": "",
             "LABEL": "UID",
             "ALIAS": "UID",
             "DATATYPE": "0x30000000000000000000000000000000",
@@ -441,6 +463,8 @@
             "DEFAULT_EDITOR_UXON": "{}",
             "COPY_WITH_RELATED_OBJECT": null,
             "DELETE_WITH_RELATED_OBJECT": null,
+            "DEFAULT_DISPLAY_UXON": "",
+            "COMMENTS": "",
             "LABEL": "Structural element name",
             "ALIAS": "FQSEN",
             "DATATYPE": "0x30000000000000000000000000000000",
@@ -480,6 +504,8 @@
             "DEFAULT_EDITOR_UXON": "{}",
             "COPY_WITH_RELATED_OBJECT": null,
             "DELETE_WITH_RELATED_OBJECT": null,
+            "DEFAULT_DISPLAY_UXON": "",
+            "COMMENTS": "",
             "LABEL": "PHP Class Name",
             "ALIAS": "CLASSNAME",
             "DATATYPE": "0x30000000000000000000000000000000",
@@ -515,8 +541,8 @@
             }
         ]
     },
-    "rows_on_page": null,
-    "row_offset": 0,
+    "rows_limit": null,
+    "rows_offset": 0,
     "sorters": [
         {
             "attribute_alias": "CREATED_ON",
