@@ -503,8 +503,8 @@ class DataSheet implements DataSheetInterface
         }
         
         $this->addRows($result->getResultRows());
-        $this->totals_rows = $result->getAggregationRows();
-        $this->total_row_count = $result->getTotalRowCounter();
+        $this->totals_rows = $result->getTotalsRows();
+        $this->total_row_count = $result->getAllRowsCounter();
         
         // load data for subsheets if needed
         if ($this->countRows()) {
@@ -555,7 +555,7 @@ class DataSheet implements DataSheetInterface
         }
         
         $this->getWorkbench()->eventManager()->dispatch(new onReadDataEvent($this));
-        return $result->getAffectedRowCounter();
+        return $result->getAffectedRowsCounter();
     }
     
     protected function initReadQueryBuilder(MetaObjectInterface $object) : QueryBuilderInterface
@@ -777,7 +777,7 @@ class DataSheet implements DataSheetInterface
         $transaction->addDataConnection($connection);
         try {
             $result = $query->update($connection);
-            $counter += $result->getAffectedRowCounter();
+            $counter += $result->getAffectedRowsCounter();
         } catch (\Throwable $e) {
             $transaction->rollback();
             $commit = false;
@@ -1057,7 +1057,7 @@ class DataSheet implements DataSheetInterface
         $transaction->addDataConnection($connection);
         try {
             $result = $query->delete($connection);
-            $affected_rows += $result->getAffectedRowCounter();
+            $affected_rows += $result->getAffectedRowsCounter();
         } catch (\Throwable $e) {
             $transaction->rollback();
             throw new DataSheetWriteError($this, 'Data source error. ' . $e->getMessage(), ($e instanceof ExceptionInterface ? $e->getAlias() : null), $e);
@@ -1873,8 +1873,8 @@ class DataSheet implements DataSheetInterface
             throw new DataSheetReadError($this, $e->getMessage(), ($e instanceof ExceptionInterface ? $e->getAlias() : null), $e);
         }
         
-        $this->setCounterForRowsInDataSource($result->getTotalRowCounter());
-        return $result->getTotalRowCounter();
+        $this->setCounterForRowsInDataSource($result->getAllRowsCounter());
+        return $result->getAllRowsCounter();
     }
 
     /**
