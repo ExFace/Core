@@ -12,6 +12,7 @@ use exface\Core\Events\Model\OnMetaObjectModelValidatedEvent;
 use exface\Core\Events\Model\OnMetaAttributeModelValidatedEvent;
 use exface\Core\Events\Action\OnActionPerformedEvent;
 use exface\Core\Interfaces\Widgets\iHaveValue;
+use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 
 /**
  * This behavior validates the model when an editor is opened for the object, it is attached to.
@@ -79,7 +80,8 @@ class ModelValidatingBehavior extends AbstractBehavior
                             $this->validateObject($object, $widget->getMessageList());
                             $this->getWorkbench()->eventManager()->dispatch(new OnMetaObjectModelValidatedEvent($object, $widget->getMessageList()));
                         } catch (\Throwable $e) {
-                            $widget->getMessageList()->addError($e->getMessage());
+                            $code = ($e instanceof ExceptionInterface) ? ': error ' . $e->getCode() : '';
+                            $widget->getMessageList()->addError($e->getMessage(), 'Failed loading meta object' . $code . '!');
                             $this->getWorkbench()->getLogger()->logException($e);
                         }
                         break;
@@ -143,14 +145,14 @@ class ModelValidatingBehavior extends AbstractBehavior
     protected function validateObjectUid(MetaObjectInterface $object, MessageList $messageList)
     {
         if ($object->hasUidAttribute() === false) {
-            $messageList->addWarning($this->translate('HELP.MODEL.HINT_OBJECT_HAS_NO_UID_DESC'), $this->translate('HELP.MODEL.HINT_OBJECT_HAS_NO_UID'));
+            $messageList->addMessageByCode('734GQRL', 'Object as no UID attribute!');
         }
     }
     
     protected function validateObjectLabel(MetaObjectInterface $object, MessageList $messageList)
     {
         if ($object->hasLabelAttribute() === false) {
-            $messageList->addInfo($this->translate('HELP.MODEL.HINT_OBJECT_HAS_NO_LABEL_DESC'), $this->translate('HELP.MODEL.HINT_OBJECT_HAS_NO_LABEL'));
+            $messageList->addMessageByCode('734GDAX', 'Object has no LABEL attribute!');
         }
     }
     
