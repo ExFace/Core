@@ -1,5 +1,5 @@
 {
-    "object_alias": "exface.Core.OBJECT_ACTION",
+    "object_alias": "exface.Core.OBJECT_BEHAVIORS",
     "columns": [
         {
             "name": "CREATED_ON",
@@ -22,53 +22,43 @@
             "attribute_alias": "UID"
         },
         {
-            "name": "OBJECT",
-            "attribute_alias": "OBJECT"
-        },
-        {
-            "name": "ACTION_PROTOTYPE",
-            "attribute_alias": "ACTION_PROTOTYPE"
-        },
-        {
-            "name": "ALIAS",
-            "attribute_alias": "ALIAS"
-        },
-        {
-            "name": "NAME",
-            "attribute_alias": "NAME"
-        },
-        {
-            "name": "SHORT_DESCRIPTION",
-            "attribute_alias": "SHORT_DESCRIPTION"
+            "name": "BEHAVIOR",
+            "attribute_alias": "BEHAVIOR"
         },
         {
             "name": "CONFIG_UXON",
             "attribute_alias": "CONFIG_UXON"
         },
         {
+            "name": "OBJECT",
+            "attribute_alias": "OBJECT"
+        },
+        {
             "name": "APP",
             "attribute_alias": "APP"
         },
         {
-            "name": "USE_IN_OBJECT_BASKET_FLAG",
-            "attribute_alias": "USE_IN_OBJECT_BASKET_FLAG"
+            "name": "NAME",
+            "attribute_alias": "NAME"
+        },
+        {
+            "name": "DESCRIPTION",
+            "attribute_alias": "DESCRIPTION"
         }
     ],
     "rows": [
         {
-            "CREATED_ON": "2017-10-18 10:22:26",
-            "MODIFIED_ON": "2017-10-18 10:26:55",
-            "CREATED_BY_USER": "",
-            "MODIFIED_BY_USER": "",
-            "UID": "0x11e7b3dd794eaa45a9d40242ac110004",
-            "OBJECT": "0x11e73172ba930d0a9cea0242ac110004",
-            "ACTION_PROTOTYPE": "exface\/Core\/Actions\/ShowDialogFromFile.php",
-            "ALIAS": "ShowLogDetailsDialog",
-            "NAME": "Show log details",
-            "SHORT_DESCRIPTION": "",
-            "CONFIG_UXON": "{\"file_path_attribute_alias\":\"id\",\"file_extension\":\"json\",\"folder_path\":\"logs\/details\",\"do_not_prefill\":true}",
+            "CREATED_ON": "2018-11-11 20:51:01",
+            "MODIFIED_ON": "2018-11-11 20:54:09",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e8e5f37769e67cbed30205857feb80",
+            "BEHAVIOR": "exface\/Core\/Behaviors\/ModelValidatingBehavior.php",
+            "CONFIG_UXON": "{}",
+            "OBJECT": "0x31350000000000000000000000000000",
             "APP": "0x31000000000000000000000000000000",
-            "USE_IN_OBJECT_BASKET_FLAG": "0"
+            "NAME": "Model validation",
+            "DESCRIPTION": "This behavior makes sure, every meta object is instantiated and validated every time any editor for it's model is opened. This behavior also fires the onModelValidated event, which allows other behaviors to append their own checks or modifications for metamodel editors."
         }
     ],
     "totals_rows": [],
@@ -79,7 +69,7 @@
                 "expression": "APP",
                 "comparator": "=",
                 "value": "0x31000000000000000000000000000000",
-                "object_alias": "exface.Core.OBJECT_ACTION"
+                "object_alias": "exface.Core.OBJECT_BEHAVIORS"
             }
         ]
     },

@@ -18,32 +18,32 @@ use exface\Core\Interfaces\Tasks\ResultInterface;
  *
  * {
  *  "widget_type": "DebugMessage",
- *  "object_alias": "exface.Core.ERROR",
+ *  "object_alias": "exface.Core.MESSAGE",
  *  "visibility": "normal",
  *  "widgets": [
  *      {
  *          "id": "error_tab",
  *          "widget_type": "Tab",
- *          "object_alias": "exface.Core.ERROR",
+ *          "object_alias": "exface.Core.MESSAGE",
  *          "caption": "Error",
  *          "visibility": "normal",
  *          "widgets": [
  *      {
  *          "widget_type": "TextHeading",
- *          "object_alias": "exface.Core.ERROR",
+ *          "object_alias": "exface.Core.MESSAGE",
  *          "value": "Error 6T91AR9: Invalid data filter widget configuration",
  *          "visibility": "normal",
  *          "heading_level": 2
  *      },
  *      {
  *          "widget_type": "Text",
- *          "object_alias": "exface.Core.ERROR",
+ *          "object_alias": "exface.Core.MESSAGE",
  *          "value": "Cannot create a filter for attribute alias \"NO\" in widget \"style\": attribute not found for object \"alexa.RMS.ARTICLE\"!",
  *          "visibility": "normal"
  *      },
  *      {
  *          "widget_type": "Text",
- *          "object_alias": "exface.Core.ERROR",
+ *          "object_alias": "exface.Core.MESSAGE",
  *          "caption": "Description",
  *          "hint": "[Text] ",
  *          "visibility": "normal",
