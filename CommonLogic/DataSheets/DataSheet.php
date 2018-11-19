@@ -962,8 +962,9 @@ class DataSheet implements DataSheetInterface
         try {
             $result = $query->create($connection);
             $new_uids = [];
+            $uidKey = $this->hasUidColumn() ? $this->getUidColumn()->getName() : DataColumn::sanitizeColumnName($this->getMetaObject()->getUidAttributeAlias());
             foreach ($result->getResultRows() as $row) {
-                $new_uids = $row[$this->getUidColumn()->getName()];
+                $new_uids[] = $row[$uidKey];
             }
         } catch (\Throwable $e) {
             $transaction->rollback();
@@ -1785,7 +1786,7 @@ class DataSheet implements DataSheetInterface
         }
         
         $copy->setAutoCount($this->getAutoCount());
-        if ($this->countRowsInDataSource() !== null) {
+        if ($this->total_row_count !== null) {
             $copy->setCounterForRowsInDataSource($this->countRowsInDataSource());
         }
         
