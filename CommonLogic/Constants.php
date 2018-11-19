@@ -92,18 +92,6 @@ const EXF_ALIGN_RIGHT = 'right';
 const EXF_ALIGN_CENTER = 'center';
 
 /*
- * Message types
- */
-
-const EXF_MESSAGE_TYPE_INFO = 'info';
-
-const EXF_MESSAGE_TYPE_WARNING = 'warning';
-
-const EXF_MESSAGE_TYPE_ERROR = 'error';
-
-const EXF_MESSAGE_TYPE_SUCCESS = 'success';
-
-/*
  * Mouse action types
  */ 
 
