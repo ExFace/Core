@@ -2,6 +2,7 @@
 namespace exface\Core\Templates\AbstractAjaxTemplate\Elements;
 
 use exface\Core\Widgets\Message;
+use exface\Core\DataTypes\MessageTypeDataType;
 
 /**
  * Generates a pure-HTML list of messages in a <div> container.
@@ -26,40 +27,31 @@ trait HtmlMessageTrait {
     
     protected function buildHtmMessagelIcon() : string
     {
-        switch ($this->getWidget()->getType()) {
-            case EXF_MESSAGE_TYPE_ERROR:
+        switch ($this->getWidget()->getType()->__toString()) {
+            case MessageTypeDataType::ERROR:
                 $output = '<i class="fa fa-exclamation" aria-hidden="true"></i>';
                 break;
-            case EXF_MESSAGE_TYPE_WARNING:
+            case MessageTypeDataType::WARNING:
                 $output = '<i class="fa fa-exclamation-triangle" aria-hidden="true"></i>';
                 break;
-            case EXF_MESSAGE_TYPE_INFO:
+            case MessageTypeDataType::INFO:
                 $output = '<i class="fa fa-info-circle" aria-hidden="true"></i>';
                 break;
-            case EXF_MESSAGE_TYPE_SUCCESS:
+            case MessageTypeDataType::SUCCESS:
                 $output = '<i class="fa fa-check-circle" aria-hidden="true"></i>';
                 break;
+            case MessageTypeDataType::HINT:
+                $output = '<i class="fa fa-lightbulb-o" aria-hidden="true"></i>';
+                break;
+            default:
+                $output = '';
         }
         return $output;
     }
     
     protected function buildCssMessageTypeClass() : string
     {
-        switch ($this->getWidget()->getType()) {
-            case EXF_MESSAGE_TYPE_ERROR:
-                $output = 'error';
-                break;
-            case EXF_MESSAGE_TYPE_WARNING:
-                $output = 'warning';
-                break;
-            case EXF_MESSAGE_TYPE_INFO:
-                $output = 'info';
-                break;
-            case EXF_MESSAGE_TYPE_SUCCESS:
-                $output = 'success';
-                break;
-        }
-        return $output;
+        return mb_strtolower($this->getWidget()->getType()->__toString());
     }
 }
 ?>

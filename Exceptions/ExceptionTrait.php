@@ -138,7 +138,6 @@ trait ExceptionTrait {
             
             /** @var Message $support_hint */
             $support_hint = WidgetFactory::create($page, 'Message', $error_tab);
-            $support_hint->setType(EXF_MESSAGE_TYPE_INFO);
 
             $support_hint->setText($debug_widget->getWorkbench()->getCoreApp()->getTranslator()->translate('ERROR.SUPPORT_HINT', ['%error_id%' => 'LOG-'.$this->getId(), '%system_name%' => $this->getSystemByPage($page), '%support_mail%' => $this->getSupportMailByPage($page)]));
             $error_tab->addWidget($support_hint);

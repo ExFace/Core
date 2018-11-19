@@ -3,6 +3,7 @@ namespace exface\Core\Widgets;
 
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\DataTypes\MessageTypeDataType;
 
 /**
  * Lists messages within other widgets (e.g. Forms).
@@ -43,7 +44,7 @@ class MessageList extends Container
      */
     public function addInfo(string $text, string $title = null) : MessageList
     {
-        return $this->addMessageFromString(EXF_MESSAGE_TYPE_INFO, $text, $title);
+        return $this->addMessageFromString(MessageTypeDataType::INFO($this->getWorkbench()), $text, $title);
     }
     
     /**
@@ -56,7 +57,7 @@ class MessageList extends Container
      */
     public function addError(string $text, string $title = null) : MessageList
     {
-        return $this->addMessageFromString(EXF_MESSAGE_TYPE_ERROR, $text, $title);
+        return $this->addMessageFromString(MessageTypeDataType::ERROR($this->getWorkbench()), $text, $title);
     }
     
     /**
@@ -69,7 +70,7 @@ class MessageList extends Container
      */
     public function addWarning(string $text, string $title = null) : MessageList
     {
-        return $this->addMessageFromString(EXF_MESSAGE_TYPE_WARNING, $text, $title);
+        return $this->addMessageFromString(MessageTypeDataType::WARNING($this->getWorkbench()), $text, $title);
     }
     
     /**
@@ -82,7 +83,20 @@ class MessageList extends Container
      */
     public function addSuccess(string $text, string $title = null) : MessageList
     {
-        return $this->addMessageFromString(EXF_MESSAGE_TYPE_SUCCESS, $text, $title);
+        return $this->addMessageFromString(MessageTypeDataType::SUCCESS($this->getWorkbench()), $text, $title);
+    }
+    
+    /**
+     * Creates a hint message and appends it to the list.
+     * 
+     * @param string $text
+     * @param string $title
+     * 
+     * @return MessageList
+     */
+    public function addHint(string $text, string $title = null) : MessageList
+    {
+        return $this->addMessageFromString(MessageTypeDataType::HINT($this->getWorkbench()), $text, $title);
     }
     
     /**
@@ -94,11 +108,11 @@ class MessageList extends Container
      * 
      * @return MessageList
      */
-    protected function addMessageFromString(string $type, string $text, string $title = null) : MessageList
+    protected function addMessageFromString(MessageTypeDataType $type, string $text, string $title = null) : MessageList
     {
         $message = WidgetFactory::createFromUxon($this->getPage(), new UxonObject([
             'widget_type' => 'Message',
-            'type' => $type,
+            'type' => $type->__toString(),
             'text' => $text
         ]), $this);
         if ($title !== null) {
