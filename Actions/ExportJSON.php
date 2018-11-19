@@ -186,6 +186,7 @@ class ExportJSON extends ReadData implements iExportData
     {
         // DataSheet vorbereiten
         $dataSheetMaster = $this->getDataSheetToRead($task);
+        $dataSheetMaster->setAutoCount(false);
         
         $widget = $this->getWidgetToReadFor($task);
         /* @var $widget \exface\Core\Interfaces\Widgets\iShowData */
@@ -222,7 +223,7 @@ class ExportJSON extends ReadData implements iExportData
             // nur fuer einen Durchlauf gilt. Sonst kommt es bei groesseren Abfragen schnell
             // zu einem fatal error: maximum execution time exceeded.
             set_time_limit($this->getLimitTimePerRequest());
-        } while (count($dataSheet->getRows()) === $rowsOnPage);
+        } while ($dataSheet->countRows() === $rowsOnPage);
         
         // Speicher frei machen
         $dataSheet = null;
