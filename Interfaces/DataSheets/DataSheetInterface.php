@@ -478,11 +478,11 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
     public function isUnsorted() : bool;
     
     /**
-     * Returns TRUE if the sheet includes all data (is not paged) and FALSE otherwise.
+     * Returns TRUE if the sheet includes only part of the data in the data source and FALSE otherwise.
      * 
      * @return bool
      */
-    public function isUnpaged() : bool;
+    public function isPaged() : bool;
 
     public function getRowsLimit();
 
