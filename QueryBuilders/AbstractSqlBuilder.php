@@ -965,7 +965,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 // the core query again, after pagination, so possible back references within the custom select can
                 // still be resolved.
                 $right_table_alias = $this->getShortAlias($this->getMainObject()->getAlias() . $this->getQueryId());
-                $joins[$right_table_alias] = "\n LEFT JOIN " . str_replace('[#~alias#]', $right_table_alias, $this->getMainObject()->getDataAddress()) . ' ' . $right_table_alias . ' ON ' . $left_table_alias . '.' . $this->getMainObject()->getUidAttributeAlias() . ' = ' . $right_table_alias . '.' . $this->getMainObject()->getUidAttributeAlias();
+                $joins[$right_table_alias] = "\n JOIN " . str_replace('[#~alias#]', $right_table_alias, $this->getMainObject()->getDataAddress()) . ' ' . $right_table_alias . ' ON ' . $left_table_alias . '.' . $this->getMainObject()->getUidAttributeAlias() . ' = ' . $right_table_alias . '.' . $this->getMainObject()->getUidAttributeAlias();
             } else {
                 // In most cases we will build joins for attributes of related objects.
                 $left_table_alias = $this->getShortAlias(($left_table_alias ? $left_table_alias : $this->getMainObject()->getAlias()) . $this->getQueryId());
@@ -993,6 +993,11 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     
     protected function buildSqlJoinType(MetaRelationInterface $relation)
     {
+        /* FIXME use inner joins for required relations? Supposed to be faster, but it would result in different
+         * behavior depending on relation settings... Need to test a bit more!
+        if ($relation->isForwardRelation() === true && $relation->getLeftKeyAttribute()->isRequired() === true) {
+            return 'INNER';
+        }*/
         return 'LEFT';
     }
 
