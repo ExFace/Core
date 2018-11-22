@@ -11,7 +11,7 @@
 	],
 	"support" : {
 		"source" : "https://github.com/exface/core",
-		"docs" : "https://github.com/exface/core/Docs",
+		"docs" : "https://github.com/exface/core/blob/master/Docs",
 		"issues" : "https://github.com/exface/core/issues"
 	},
 	"require" : {
