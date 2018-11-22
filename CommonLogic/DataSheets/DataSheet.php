@@ -98,6 +98,8 @@ class DataSheet implements DataSheetInterface
     private $exface;
 
     private $meta_object;
+    
+    private $dataSourceHasMoreRows = true;
 
     public function __construct(\exface\Core\Interfaces\Model\MetaObjectInterface $meta_object)
     {
@@ -320,7 +322,8 @@ class DataSheet implements DataSheetInterface
         
         // Detect, if the cell belongs to a total row
         $data_row_cnt = $this->countRows();
-        if ($row_number >= $data_row_cnt && $row_number < $this->countRowsLoaded(true)) {
+        $total_row_cnt = count($this->getTotalsRows());
+        if ($row_number >= $data_row_cnt && $row_number < ($data_row_cnt + $total_row_cnt)) {
             $this->totals_rows[$row_number - $data_row_cnt][$column_name] = $value;
         }
         
@@ -505,6 +508,7 @@ class DataSheet implements DataSheetInterface
         $this->addRows($result->getResultRows());
         $this->totals_rows = $result->getTotalsRows();
         $this->total_row_count = $result->getAllRowsCounter();
+        $this->dataSourceHasMoreRows = $result->hasMoreRows();
         
         // load data for subsheets if needed
         if ($this->countRows()) {
@@ -548,7 +552,7 @@ class DataSheet implements DataSheetInterface
         }
         
         if (! $postprocessorSorters->isEmpty()) {
-            if ($this->countRowsInDataSource() > $this->countRowsLoaded(false)) {
+            if ($this->isPaged() === true) {
                 throw new DataSheetReadError($this, 'Cannot sort by columns from different data sources when using pagination: either increase page length or filter data to fit on one page!');
             }
             $this->sort($postprocessorSorters);
@@ -1664,9 +1668,9 @@ class DataSheet implements DataSheetInterface
         return $this->getSorters()->isEmpty() ? true : false;
     }
     
-    public function isUnpaged() : bool
+    public function isPaged() : bool
     {
-        return $this->getRowsLimit() === null ? true : false;
+        return $this->getRowsLimit() > 0 && $this->dataSourceHasMoreRows === true;
     }
 
     /**
