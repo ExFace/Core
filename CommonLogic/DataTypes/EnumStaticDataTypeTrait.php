@@ -94,6 +94,11 @@ trait EnumStaticDataTypeTrait {
     
     public static function cast($value)
     {
+        if (static::isEmptyValue($value) === true) {
+            // Let the parent data type (e.g. string or number) handle empty values
+            return parent::cast($value);
+        }
+        
         $value = parent::cast($value);
         
         if (! static::isValidStaticValue($value)){
