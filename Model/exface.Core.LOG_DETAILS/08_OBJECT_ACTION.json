@@ -52,6 +52,10 @@
         {
             "name": "USE_IN_OBJECT_BASKET_FLAG",
             "attribute_alias": "USE_IN_OBJECT_BASKET_FLAG"
+        },
+        {
+            "name": "DOCS",
+            "attribute_alias": "DOCS"
         }
     ],
     "rows": [
@@ -68,7 +72,8 @@
             "SHORT_DESCRIPTION": "",
             "CONFIG_UXON": "{\"file_path_attribute_alias\":\"id\",\"file_extension\":\"json\",\"folder_path\":\"logs\/details\",\"do_not_prefill\":true}",
             "APP": "0x31000000000000000000000000000000",
-            "USE_IN_OBJECT_BASKET_FLAG": "0"
+            "USE_IN_OBJECT_BASKET_FLAG": "0",
+            "DOCS": ""
         }
     ],
     "totals_rows": [],

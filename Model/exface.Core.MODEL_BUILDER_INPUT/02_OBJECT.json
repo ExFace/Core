@@ -34,6 +34,10 @@
             "attribute_alias": "COMMENTS"
         },
         {
+            "name": "DOCS",
+            "attribute_alias": "DOCS"
+        },
+        {
             "name": "DATA_SOURCE",
             "attribute_alias": "DATA_SOURCE"
         },
@@ -79,12 +83,13 @@
             "UID": "0x11e7d420b3ff7730a3da0205857feb80",
             "READABLE_FLAG": "0",
             "WRITABLE_FLAG": "0",
-            "COMMENTS": "",
+            "COMMENTS": null,
+            "DOCS": null,
             "DATA_SOURCE": "",
             "APP": "0x31000000000000000000000000000000",
-            "SHORT_DESCRIPTION": "",
+            "SHORT_DESCRIPTION": null,
             "PARENT_OBJECT": "",
-            "DATA_ADDRESS_PROPS": "{}",
+            "DATA_ADDRESS_PROPS": null,
             "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Tabs\",\"tabs\":[{\"caption\":\"General\",\"widgets\":[{\"attribute_alias\":\"APP\"},{\"attribute_alias\":\"ALIAS\"},{\"attribute_alias\":\"LABEL\"},{\"attribute_alias\":\"PARENT_OBJECT\"},{\"attribute_alias\":\"DATA_SOURCE\",\"id\":\"data_source_selector\",\"widget_type\":\"InputComboTable\",\"table\":{\"columns\":[{\"attribute_group_alias\":\"~DEFAULT_DISPLAY\"},{\"attribute_alias\":\"READABLE_FLAG\"},{\"attribute_alias\":\"WRITABLE_FLAG\"}]}},{\"attribute_alias\":\"READABLE_FLAG\"},{\"attribute_alias\":\"DATA_ADDRESS_PROPS\"},{\"attribute_alias\":\"WRITABLE_FLAG\"},{\"attribute_alias\":\"DATA_ADDRESS\",\"width\":\"max\"},{\"attribute_alias\":\"SHORT_DESCRIPTION\",\"width\":\"max\",\"height\":5}]},{\"caption\":\"Default Editor\",\"widgets\":[{\"attribute_alias\":\"DEFAULT_EDITOR_UXON\",\"widget_type\":\"InputJson\",\"hide_caption\":true,\"width\":\"2\",\"height\":15}]},{\"caption\":\"Attributes\",\"widgets\":[{\"widget_type\":\"DataTable\",\"object_alias\":\"exface.Core.ATTRIBUTE\",\"filters\":[{\"attribute_alias\":\"LABEL\"},{\"attribute_alias\":\"OBJECT\",\"widget_type\":\"InputHidden\"},{\"attribute_alias\":\"DATA_ADDRESS\",\"widget_type\":\"Input\"},{\"attribute_alias\":\"ALIAS\"}],\"columns\":[{\"attribute_alias\":\"LABEL\"},{\"attribute_alias\":\"ALIAS\"},{\"attribute_alias\":\"DISPLAYORDER\",\"caption\":\"Disp. Pos.\"},{\"attribute_alias\":\"DATA_ADDRESS\"},{\"attribute_alias\":\"DATATYPE__LABEL\"},{\"attribute_alias\":\"REQUIREDFLAG\"},{\"attribute_alias\":\"EDITABLEFLAG\"},{\"attribute_alias\":\"HIDDENFLAG\"},{\"attribute_alias\":\"RELATED_OBJ__LABEL\",\"caption\":\"Relation to\"},{\"attribute_alias\":\"UIDFLAG\",\"caption\":\"UID\"},{\"attribute_alias\":\"LABELFLAG\",\"caption\":\"Label\"},{\"attribute_alias\":\"SHORT_DESCRIPTION\"}],\"buttons\":[{\"action_alias\":\"exface.Core.ShowObjectCreateDialog\"},{\"action_alias\":\"exface.Core.ShowObjectEditDialog\",\"bind_to_double_click\":true},{\"action_alias\":\"exface.Core.ShowObjectCopyDialog\"},{\"action_alias\":\"exface.Core.DeleteObject\"}]}]},{\"caption\":\"Behaviors\",\"widgets\":[{\"object_alias\":\"exface.Core.OBJECT_BEHAVIORS\",\"widget_type\":\"DataTable\",\"filters\":[{\"attribute_alias\":\"OBJECT\",\"widget_type\":\"InputHidden\"}],\"columns\":[{\"attribute_group_alias\":\"~VISIBLE\"}],\"buttons\":[{\"action_alias\":\"exface.Core.ShowObjectCreateDialog\"},{\"action_alias\":\"exface.Core.ShowObjectEditDialog\",\"bind_to_double_click\":true},{\"action_alias\":\"exface.Core.ShowObjectCopyDialog\"},{\"action_alias\":\"exface.Core.DeleteObject\"}]}]},{\"caption\":\"Actions\",\"widgets\":[{\"object_alias\":\"exface.Core.OBJECT_ACTION\",\"widget_type\":\"DataTable\",\"filters\":[{\"attribute_alias\":\"OBJECT\",\"widget_type\":\"InputHidden\"}],\"columns\":[{\"attribute_group_alias\":\"~VISIBLE\"}],\"buttons\":[{\"action_alias\":\"exface.Core.ShowObjectCreateDialog\"},{\"action_alias\":\"exface.Core.ShowObjectEditDialog\",\"bind_to_double_click\":true},{\"action_alias\":\"exface.Core.ShowObjectCopyDialog\"},{\"action_alias\":\"exface.Core.DeleteObject\"}]}]}]}",
             "LABEL": "Model Builder Input",
             "ALIAS": "MODEL_BUILDER_INPUT",

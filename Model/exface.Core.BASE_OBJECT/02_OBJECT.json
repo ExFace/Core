@@ -34,6 +34,10 @@
             "attribute_alias": "COMMENTS"
         },
         {
+            "name": "DOCS",
+            "attribute_alias": "DOCS"
+        },
+        {
             "name": "DATA_SOURCE",
             "attribute_alias": "DATA_SOURCE"
         },
@@ -79,12 +83,13 @@
             "UID": "0x32370000000000000000000000000000",
             "READABLE_FLAG": "1",
             "WRITABLE_FLAG": "1",
-            "COMMENTS": "",
+            "COMMENTS": null,
+            "DOCS": null,
             "DATA_SOURCE": "0x32000000000000000000000000000000",
             "APP": "0x31000000000000000000000000000000",
-            "SHORT_DESCRIPTION": "",
+            "SHORT_DESCRIPTION": null,
             "PARENT_OBJECT": "",
-            "DATA_ADDRESS_PROPS": "{}",
+            "DATA_ADDRESS_PROPS": null,
             "DEFAULT_EDITOR_UXON": "",
             "LABEL": "Metamodel Base Object",
             "ALIAS": "BASE_OBJECT",
