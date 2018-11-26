@@ -29,6 +29,7 @@ use exface\Core\CommonLogic\DataSheets\DataColumn;
 use exface\Core\CommonLogic\DataQueries\DataQueryResultData;
 use exface\Core\Interfaces\DataSources\DataQueryResultDataInterface;
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
+use exface\Core\DataTypes\JsonDataType;
 
 /**
  * A query builder for generic SQL syntax.
@@ -575,16 +576,21 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         $value = $data_type::cast($value);
         if ($data_type instanceof StringDataType) {
             $value = $value === null ? 'NULL' : "'" . $this->escapeString($value) . "'";
+            // JSON values are strings too, but their columns should be null even if the value is an
+            // empty object or empty array (otherwise the cells would never be null)
+            if (($data_type instanceof JsonDataType) && $data_type::isEmptyValue($value) === true) {
+                $value = 'NULL';
+            }
         } elseif ($data_type instanceof BooleanDataType) {
-            if (BooleanDataType::isEmptyValue($value) === true) {
+            if ($data_type::isEmptyValue($value) === true) {
                 $value = 'NULL';
             } else {
                 $value = $value ? 1 : 0;
             }
         } elseif ($data_type instanceof NumberDataType) {
-            $value = (NumberDataType::isEmptyValue($value) === true ? 'NULL' : $value);
+            $value = $data_type::isEmptyValue($value) === true ? 'NULL' : $value;
         } elseif ($data_type instanceof DateDataType) {
-            $value = DateDataType::isEmptyValue($value) === true ? 'NULL' : "'" . $this->escapeString($value) . "'";
+            $value = $data_type::isEmptyValue($value) === true ? 'NULL' : "'" . $this->escapeString($value) . "'";
         } else {
             $value = "'" . $this->escapeString($value) . "'";
         }

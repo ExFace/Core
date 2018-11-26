@@ -67,7 +67,7 @@ class JsonDataType extends TextDataType
     
     public static function isEmptyValue($string) : bool
     {
-        return parent::isEmptyValue($string) || $string === '{}';
+        return parent::isEmptyValue($string) === true || $string === '{}' || $string === '[]';
     }
 
     /**
