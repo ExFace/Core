@@ -134,12 +134,6 @@ class SqlModelLoader implements ModelLoaderInterface
             $object->setDataSourceId($row['data_source_oid']);
             $object->setAppId($row['app_oid']);
             $object->setNamespace($row['app_alias']);
-            if (! is_null($row['readable_flag'])){
-                $object->setReadable($row['readable_flag']);
-            }
-            if (! is_null($row['writable_flag'])){
-                $object->setWritable($row['writable_flag']);
-            }
             if ($row['has_behaviors']) {
                 $load_behaviors = true;
             }
@@ -156,6 +150,12 @@ class SqlModelLoader implements ModelLoaderInterface
             // Overwrite inherited properties
             if (is_null($object->getDataAddress()) || $object->getDataAddress() == '' || (! is_null($row['data_address']) && ! $row['data_address'] == '')) {
                 $object->setDataAddress($row['data_address']);
+            }
+            if (! is_null($row['readable_flag'])){
+                $object->setReadable($row['readable_flag']);
+            }
+            if (! is_null($row['writable_flag'])){
+                $object->setWritable($row['writable_flag']);
             }
             if (! $object->getShortDescription()) {
                 $object->setShortDescription($row['short_description']);
