@@ -198,7 +198,7 @@
             "DATA_ADDRESS_PROPS": "{\"SQL_DATA_TYPE\":\"binary\"}",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": "{}"
+            "CUSTOM_DATA_TYPE": null
         },
         {
             "CREATED_ON": "2018-06-13 14:24:56",
@@ -239,7 +239,7 @@
             "DATA_ADDRESS_PROPS": "{\"SQL_DATA_TYPE\":\"binary\"}",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": "{}"
+            "CUSTOM_DATA_TYPE": null
         },
         {
             "CREATED_ON": "2018-06-13 14:25:22",
@@ -280,7 +280,7 @@
             "DATA_ADDRESS_PROPS": "{\"SQL_DATA_TYPE\":\"binary\"}",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": "{}"
+            "CUSTOM_DATA_TYPE": null
         },
         {
             "CREATED_ON": "2018-06-13 14:26:15",
@@ -321,7 +321,7 @@
             "DATA_ADDRESS_PROPS": "{\"SQL_DATA_TYPE\":\"binary\"}",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": "{}"
+            "CUSTOM_DATA_TYPE": null
         },
         {
             "CREATED_ON": "2018-06-13 14:38:11",
@@ -444,7 +444,7 @@
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": "{}"
+            "CUSTOM_DATA_TYPE": null
         },
         {
             "CREATED_ON": "2018-06-14 08:51:40",
@@ -485,7 +485,7 @@
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": "{}"
+            "CUSTOM_DATA_TYPE": null
         },
         {
             "CREATED_ON": "2018-06-14 08:52:06",
@@ -526,7 +526,7 @@
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": "{}"
+            "CUSTOM_DATA_TYPE": null
         },
         {
             "CREATED_ON": "2018-06-14 08:52:29",
@@ -567,7 +567,7 @@
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": "{}"
+            "CUSTOM_DATA_TYPE": null
         },
         {
             "CREATED_ON": "2018-06-14 08:52:50",
@@ -608,7 +608,7 @@
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": "{}"
+            "CUSTOM_DATA_TYPE": null
         },
         {
             "CREATED_ON": "2018-06-18 04:31:03",
@@ -649,7 +649,7 @@
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": "{}"
+            "CUSTOM_DATA_TYPE": null
         }
     ],
     "totals_rows": [],

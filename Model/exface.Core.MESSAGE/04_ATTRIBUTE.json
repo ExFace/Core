@@ -198,7 +198,7 @@
             "DATA_ADDRESS_PROPS": "{\"SQL_DATA_TYPE\":\"binary\"}",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": "{}"
+            "CUSTOM_DATA_TYPE": null
         },
         {
             "CREATED_ON": "2016-12-16 11:52:46",
@@ -239,7 +239,7 @@
             "DATA_ADDRESS_PROPS": "{\"SQL_INSERT\":\"IF([#~value#]!='', [#~value#], CONV(ROUND(UNIX_TIMESTAMP(CURTIME(4)) * 10),10,36))\"}",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": "{}"
+            "CUSTOM_DATA_TYPE": null
         },
         {
             "CREATED_ON": "2016-12-16 11:52:46",
@@ -280,7 +280,7 @@
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": "{}"
+            "CUSTOM_DATA_TYPE": null
         },
         {
             "CREATED_ON": "2017-02-17 15:20:37",
@@ -321,7 +321,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": "{}"
+            "CUSTOM_DATA_TYPE": null
         },
         {
             "CREATED_ON": "2017-10-16 05:16:06",
@@ -362,7 +362,7 @@
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": "{}"
+            "CUSTOM_DATA_TYPE": null
         },
         {
             "CREATED_ON": "2018-11-19 08:31:21",
@@ -403,7 +403,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": "{}"
+            "CUSTOM_DATA_TYPE": null
         },
         {
             "CREATED_ON": "2018-11-19 08:31:21",
@@ -444,7 +444,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": "{}"
+            "CUSTOM_DATA_TYPE": null
         },
         {
             "CREATED_ON": "2018-11-19 08:31:21",
@@ -485,7 +485,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": "{}"
+            "CUSTOM_DATA_TYPE": null
         },
         {
             "CREATED_ON": "2018-11-19 08:36:46",
@@ -526,7 +526,7 @@
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": "{}"
+            "CUSTOM_DATA_TYPE": null
         },
         {
             "CREATED_ON": "2018-11-19 08:36:46",
@@ -567,7 +567,7 @@
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "'ERROR'",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": "{}"
+            "CUSTOM_DATA_TYPE": null
         },
         {
             "CREATED_ON": "2018-11-19 08:36:46",
@@ -608,7 +608,7 @@
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": "{}"
+            "CUSTOM_DATA_TYPE": null
         }
     ],
     "totals_rows": [],

@@ -198,7 +198,7 @@
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": "{}"
+            "CUSTOM_DATA_TYPE": null
         },
         {
             "CREATED_ON": "2017-04-28 10:11:48",
@@ -239,7 +239,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": "{}"
+            "CUSTOM_DATA_TYPE": null
         },
         {
             "CREATED_ON": "2017-05-05 11:08:23",
@@ -280,7 +280,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": "{}"
+            "CUSTOM_DATA_TYPE": null
         },
         {
             "CREATED_ON": "2017-05-05 11:08:48",
@@ -321,7 +321,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": "{}"
+            "CUSTOM_DATA_TYPE": null
         },
         {
             "CREATED_ON": "2017-05-05 11:09:06",
@@ -362,7 +362,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": "{}"
+            "CUSTOM_DATA_TYPE": null
         },
         {
             "CREATED_ON": "2017-05-05 11:09:26",
@@ -403,7 +403,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": "{}"
+            "CUSTOM_DATA_TYPE": null
         },
         {
             "CREATED_ON": "2017-05-05 11:09:53",
@@ -444,7 +444,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": "{}"
+            "CUSTOM_DATA_TYPE": null
         },
         {
             "CREATED_ON": "2017-05-10 15:07:24",
@@ -485,7 +485,7 @@
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": "{}"
+            "CUSTOM_DATA_TYPE": null
         },
         {
             "CREATED_ON": "2017-05-31 13:42:06",
@@ -526,7 +526,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": "{}"
+            "CUSTOM_DATA_TYPE": null
         },
         {
             "CREATED_ON": "2017-05-31 14:25:39",
@@ -567,7 +567,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": "{}"
+            "CUSTOM_DATA_TYPE": null
         },
         {
             "CREATED_ON": "2017-06-06 15:07:01",
@@ -608,7 +608,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": "{}"
+            "CUSTOM_DATA_TYPE": null
         }
     ],
     "totals_rows": [],

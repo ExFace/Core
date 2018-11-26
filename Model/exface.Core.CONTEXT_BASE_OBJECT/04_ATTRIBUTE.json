@@ -198,7 +198,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": "{}"
+            "CUSTOM_DATA_TYPE": null
         },
         {
             "CREATED_ON": "2017-06-29 15:30:47",
@@ -239,7 +239,7 @@
             "DATA_ADDRESS_PROPS": "",
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": "{}"
+            "CUSTOM_DATA_TYPE": null
         }
     ],
     "totals_rows": [],
