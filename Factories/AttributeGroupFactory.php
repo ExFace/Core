@@ -57,8 +57,8 @@ abstract class AttributeGroupFactory extends AbstractStaticFactory
                 }
                 break;
             case MetaAttributeGroupInterface::READABLE:
-                foreach ($object->getReadable() as $attr) {
-                    if ($attr->isEditable()) {
+                foreach ($object->getAttributes() as $attr) {
+                    if ($attr->isReadable()) {
                         $group->add($attr);
                     }
                 }
