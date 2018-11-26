@@ -1,6 +1,6 @@
 # The app as a dependency container
 
-As described in the [metamodel section](../understanding_the_metamodel/app.md), an app contains everything needed for a meaningfull application to run on the plattform. So, from the point of view of a developer, it is nothing else than an installable package with it's own dependency container allowing code from outside to access it's functionality in a standardized way.
+As described in the [metamodel section](../understanding_the_metamodel/App_metamodel.md), an app contains everything needed for a meaningfull application to run on the plattform. So, from the point of view of a developer, it is nothing else than an installable package with it's own dependency container allowing code from outside to access it's functionality in a standardized way.
 
 ## Structure of an app
 
