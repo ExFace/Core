@@ -172,7 +172,7 @@ class ModelValidatingBehavior extends AbstractBehavior
         }
         
         if ($object->isReadable() === false && $object->getAttributes()->getReadable()) {
-            $messageList->addMessageByCode('734GZDR', 'Object is not readabl, but has readable attributes!');
+            $messageList->addMessageByCode('734GZDR', 'Object is not readable, but has readable attributes!');
         }
     }
     
