@@ -40,10 +40,11 @@ class NumberDataType extends AbstractDataType
      */
     public static function cast($string)
     {
-        if (is_numeric($string)) {
+        if (is_numeric($string) === true) {
             // Decimal numbers
             return $string;
-        } elseif ($string === '' || is_null($string)) {
+        } elseif (static::isEmptyValue($string) === true) {
+            // Return NULL for casting empty values as an empty string '' actually is not a number!
             return null;
         } elseif (mb_strtoupper(substr($string, 0, 2)) === '0X') {
             // Hexadecimal numbers in '0x....'-Notation

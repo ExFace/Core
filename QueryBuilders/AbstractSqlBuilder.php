@@ -574,21 +574,17 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     {
         $value = $data_type::cast($value);
         if ($data_type instanceof StringDataType) {
-            $value = "'" . $this->escapeString($value) . "'";
+            $value = $value === null ? 'NULL' : "'" . $this->escapeString($value) . "'";
         } elseif ($data_type instanceof BooleanDataType) {
-            if ($value === '' || $value === null) {
+            if (BooleanDataType::isEmptyValue($value) === true) {
                 $value = 'NULL';
             } else {
                 $value = $value ? 1 : 0;
             }
         } elseif ($data_type instanceof NumberDataType) {
-            $value = ($value == '' ? 'NULL' : $value);
+            $value = (NumberDataType::isEmptyValue($value) === true ? 'NULL' : $value);
         } elseif ($data_type instanceof DateDataType) {
-            if (! $value) {
-                $value = 'NULL';
-            } else {
-                $value = "'" . $this->escapeString($value) . "'";
-            }
+            $value = DateDataType::isEmptyValue($value) === true ? 'NULL' : "'" . $this->escapeString($value) . "'";
         } else {
             $value = "'" . $this->escapeString($value) . "'";
         }

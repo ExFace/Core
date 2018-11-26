@@ -7,10 +7,14 @@ use exface\Core\CommonLogic\DataTypes\AbstractDataType;
 
 class DateDataType extends AbstractDataType
 {
-
     public static function cast($string)
     {
         $string = trim($string);
+        
+        // Return NULL for casting empty values as an empty string '' actually is not a date!
+        if (static::isEmptyValue($string) === true) {
+            return null;
+        }
         
         if ($relative = static::parseRelativeDate($string)){
             return $relative;
