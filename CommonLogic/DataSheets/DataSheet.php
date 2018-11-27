@@ -48,6 +48,7 @@ use exface\Core\Events\DataSheet\OnBeforeDeleteDataEvent;
 use exface\Core\Events\DataSheet\OnDeleteDataEvent;
 use exface\Core\Events\DataSheet\OnBeforeReplaceDataEvent;
 use exface\Core\Events\DataSheet\OnReplaceDataEvent;
+use exface\Core\Factories\RelationPathFactory;
 
 /**
  * Internal data respresentation object in exface.
@@ -169,7 +170,7 @@ class DataSheet implements DataSheetInterface
         foreach ($data_sheet->getColumns() as $col) {
             $right_cols[] = $col->copy();
         }
-        $this->getColumns()->addMultiple($right_cols, $relation_path);
+        $this->getColumns()->addMultiple($right_cols, RelationPathFactory::createFromString($this->getMetaObject(), $relation_path));
         // Now process the data and join rows
         if (! is_null($left_key_column) && ! is_null($right_key_column)) {
             foreach ($this->rows as $left_row_nr => $row) {
@@ -439,9 +440,8 @@ class DataSheet implements DataSheetInterface
                 throw new DataSheetReadError($this, 'QueryBuilder "' . get_class($query) . '" cannot read attribute "' . $attribute->getAliasWithRelationPath() . '" of object "' . $attribute->getObject()->getAliasWithNamespace() .'"!');
             }
             
-            if ($attribute->getFormatter()) {
-                $col->setFormatter($attribute->getFormatter());
-                $col->getFormatter()->setRelationPath($attribute->getRelationPath()->toString());
+            if ($attribute->hasCalculation()) {
+                $col->setFormatter($attribute->getCalculationExpression());
                 if ($aggregator = DataAggregation::getAggregatorFromAlias($this->getWorkbench(), $col->getExpressionObj()->toString())) {
                     $col->getFormatter()->mapAttribute(str_replace(':' . $aggregator->exportString(), '', $col->getExpressionObj()->toString()), $col->getExpressionObj()->toString());
                 }

@@ -111,16 +111,25 @@ interface MetaAttributeInterface extends WorkbenchDependantInterface, iCanBeCopi
     public function setEditable($value);
     
     /**
-     *
-     * @return string
+     * Returns the formatter expression as a string
+     * 
+     * @return ExpressionInterface|NULL
      */
-    public function getFormatter();
+    public function getCalculationExpression() : ?ExpressionInterface;
     
     /**
      *
-     * @param string $value
+     * @param string $expression
+     * @return MetaAttributeInterface
      */
-    public function setFormatter($value);
+    public function setCalculation(string $expression) : MetaAttributeInterface;
+    
+    /**
+     * Returns TURE if this attribute has a calculation expression to be applied on data source values.
+     * 
+     * @return bool
+     */
+    public function hasCalculation() : bool;
     
     public function isHidden();
     

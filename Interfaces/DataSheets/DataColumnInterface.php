@@ -76,7 +76,7 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
 
     /**
      *
-     * @param ExpressionInterface $expression            
+     * @param ExpressionInterface|string $expression            
      */
     public function setFormatter($expression);
 
