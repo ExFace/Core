@@ -1485,31 +1485,35 @@ class DataSheet implements DataSheetInterface
      */
     public function exportUxonObject()
     {
-        $uxon = new UxonObject();
-        $uxon->setProperty('object_alias', $this->getMetaObject()->getAliasWithNamespace());
+        $arr = [];
+        $arr['object_alias'] = $this->getMetaObject()->getAliasWithNamespace();
         
+        $cols = [];
         foreach ($this->getColumns() as $col) {
-            $uxon->appendToProperty('columns', $col->exportUxonObject());
+            $cols[] = $col->exportUxonObject();
+        }
+        if (empty($cols) === false) {
+            $arr['columns'] = $cols;
         }
         
-        if (! $this->isEmpty()) {
-            $uxon->setProperty('rows', $this->getRows());
+        if ($this->isEmpty() === false) {
+            $arr['rows'] = $this->getRows();
         }
         
-        $uxon->setProperty('totals_rows', $this->getTotalsRows());
-        $uxon->setProperty('filters', $this->getFilters()->exportUxonObject());
-        $uxon->setProperty('rows_limit', $this->getRowsLimit());
-        $uxon->setProperty('rows_offset', $this->getRowsOffset());
+        $arr['totals_rows'] = $this->getTotalsRows();
+        $arr['filters'] = $this->getFilters()->exportUxonObject();
+        $arr['rows_limit'] = $this->getRowsLimit();
+        $arr['rows_offset'] = $this->getRowsOffset();
         
         foreach ($this->getSorters() as $sorter) {
-            $uxon->appendToProperty('sorters', $sorter->exportUxonObject());
+            $arr['sorters'][] = $sorter->exportUxonObject();
         }
         
         foreach ($this->getAggregations() as $aggr) {
-            $uxon->appendToProperty('aggregators', $aggr->exportUxonObject());
+            $arr['aggregators'][] = $aggr->exportUxonObject();
         }
         
-        return $uxon;
+        return new UxonObject($arr);
     }
 
     public function importUxonObject(UxonObject $uxon)
