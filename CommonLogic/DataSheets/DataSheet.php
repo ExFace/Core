@@ -1490,7 +1490,7 @@ class DataSheet implements DataSheetInterface
         
         $cols = [];
         foreach ($this->getColumns() as $col) {
-            $cols[] = $col->exportUxonObject();
+            $cols[] = $col->exportUxonObject()->toArray();
         }
         if (empty($cols) === false) {
             $arr['columns'] = $cols;
@@ -1501,16 +1501,16 @@ class DataSheet implements DataSheetInterface
         }
         
         $arr['totals_rows'] = $this->getTotalsRows();
-        $arr['filters'] = $this->getFilters()->exportUxonObject();
+        $arr['filters'] = $this->getFilters()->exportUxonObject()->toArray();
         $arr['rows_limit'] = $this->getRowsLimit();
         $arr['rows_offset'] = $this->getRowsOffset();
         
         foreach ($this->getSorters() as $sorter) {
-            $arr['sorters'][] = $sorter->exportUxonObject();
+            $arr['sorters'][] = $sorter->exportUxonObject()->toArray();
         }
         
         foreach ($this->getAggregations() as $aggr) {
-            $arr['aggregators'][] = $aggr->exportUxonObject();
+            $arr['aggregators'][] = $aggr->exportUxonObject()->toArray();
         }
         
         return new UxonObject($arr);

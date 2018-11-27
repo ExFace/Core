@@ -389,7 +389,7 @@ class DataColumn implements DataColumnInterface
         }
         
         if ($this->hasTotals()) {
-            $arr['totals'] = $this->getTotals()->exportUxonObject();
+            $arr['totals'] = $this->getTotals()->exportUxonObject()->toArray();
         }
         
         if ($this->isAttribute()) {
