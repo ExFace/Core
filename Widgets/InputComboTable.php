@@ -312,10 +312,11 @@ class InputComboTable extends InputCombo implements iCanPreloadData
      */
     public function getTextColumn()
     {
-        if (! $this->getTable()->getColumn($this->getTextColumnId())) {
+        $col = $this->getTable()->getColumn($this->getTextColumnId());
+        if (! $col) {
             throw new WidgetLogicError($this, 'No text data column found for ' . $this->getWidgetType() . ' with attribute_alias "' . $this->getAttributeAlias() . '"!');
         }
-        return $this->getTable()->getColumn($this->getTextColumnId());
+        return $col;
     }
 
     public function getValueColumnId()
@@ -385,6 +386,12 @@ class InputComboTable extends InputCombo implements iCanPreloadData
         // corresponding text by itself (e.g. via lazy loading), so it is not a real problem.
         if ($this->getAttribute()->isRelation()) {
             $text_column_expr = RelationPath::relationPathAdd($this->getRelation()->getAlias(), $this->getTextColumn()->getAttributeAlias());
+            // If the column we would need is not there and it's the label column (which is very probable), it might just be named differently
+            // Many DataSheets include relation__LABEL columns but may not inlcude a column with the alias of the label attribute. It's worth
+            // trying this trick to prevent additional queries to the data source just to find the text for the combo value!
+            if (! $data_sheet->getColumns()->getByExpression($text_column_expr) && $this->getTextColumn()->getAttribute()->isLabelForObject() === true) {
+                $text_column_expr = RelationPath::relationPathAdd($this->getRelation()->getAlias(), $this->getWorkbench()->getConfig()->getOption('METAMODEL.OBJECT_LABEL_ALIAS'));
+            }
         } elseif ($this->getMetaObject()->isExactly($this->getTable()->getMetaObject())) {
             $text_column_expr = $this->getTextColumn()->getExpression()->toString();
         }
