@@ -61,10 +61,10 @@ abstract class AbstractModelBuilder implements ModelBuilderInterface
     {
         if (is_null($this->data_types)) {
             $this->data_types = DataSheetFactory::createFromObject($this->getDataConnection()->getWorkbench()->model()->getObject('exface.Core.DATATYPE'));
-            $this->data_types->getColumns()->addMultiple(array(
+            $this->data_types->getColumns()->addMultiple([
                 $this->data_types->getMetaObject()->getUidAttributeAlias(),
                 'ALIAS'
-            ));
+            ]);
             $this->data_types->dataRead(0, 0);
         }
         

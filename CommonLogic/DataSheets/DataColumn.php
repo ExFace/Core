@@ -66,7 +66,7 @@ class DataColumn implements DataColumnInterface
      */
     public function getExpressionObj()
     {
-        if (is_null($this->expression) || $this->expression->isEmpty()) {
+        if ($this->expression === null || $this->expression->isEmpty()) {
             if ($this->attribute_alias) {
                 $exface = $this->getWorkbench();
                 $this->expression = ExpressionFactory::createFromString($exface, $this->getAttributeAlias(), $this->getMetaObject());
@@ -88,7 +88,7 @@ class DataColumn implements DataColumnInterface
      */
     public function setExpression($expression_or_string)
     {
-        if (! ($expression_or_string instanceof ExpressionInterface)) {
+        if (($expression_or_string instanceof ExpressionInterface) === false) {
             $exface = $this->getWorkbench();
             $expression = ExpressionFactory::createFromString($exface, $expression_or_string, $this->getMetaObject());
         } else {
@@ -210,7 +210,6 @@ class DataColumn implements DataColumnInterface
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::setFormatter()
      */
     public function setFormatter($expression)
@@ -219,6 +218,7 @@ class DataColumn implements DataColumnInterface
             $expression = $this->getWorkbench()->model()->parseExpression($expression);
         }
         $this->formatter = $expression;
+        return $this;
     }
 
     /**

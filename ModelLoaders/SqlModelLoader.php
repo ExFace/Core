@@ -353,9 +353,12 @@ class SqlModelLoader implements ModelLoaderInterface
         $attr->setName($row['attribute_name']);
         $attr->setDataAddress($row['data']);
         $attr->setDataAddressProperties(UxonObject::fromJson($row['data_properties']));
-        $attr->setFormatter($row['attribute_formatter']);
         $attr->setRelationFlag($row['related_object_oid'] ? true : false);
         $attr->setDataType($row['data_type_oid']);
+        
+        if ($calcExpr = $row['attribute_formatter']) {
+            $attr->setCalculation($calcExpr);
+        }
         
         $default_editor = $row['default_editor_uxon'];
         if ($default_editor && $default_editor !== '{}'){

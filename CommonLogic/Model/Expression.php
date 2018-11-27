@@ -20,6 +20,7 @@ use exface\Core\DataTypes\StringDataType;
 use exface\Core\DataTypes\NumberDataType;
 use exface\Core\Exceptions\LogicException;
 use exface\Core\Interfaces\Exceptions\MetaRelationResolverExceptionInterface;
+use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 
 /**
  * 
@@ -142,10 +143,7 @@ class Expression implements ExpressionInterface
      */
     public function isMetaAttribute() : bool
     {
-        if ($this->type === self::TYPE_ATTRIBUTE)
-            return true;
-        else
-            return false;
+        return $this->type === self::TYPE_ATTRIBUTE;
     }
 
     /**
@@ -369,10 +367,10 @@ class Expression implements ExpressionInterface
      * {@inheritdoc}
      * @see \exface\Core\Interfaces\Model\ExpressionInterface::setRelationPath()
      */
-    public function setRelationPath($relation_path)
+    protected function setRelationPath($relation_path)
     {
         // remove old relation path
-        if ($this->relation_path) {
+        if ($this->relation_path !== '') {
             $path_length = strlen($this->relation_path . RelationPath::RELATION_SEPARATOR);
             foreach ($this->getRequiredAttributes() as $key => $a) {
                 $this->attributes[$key] = substr($a, $path_length);
@@ -381,16 +379,31 @@ class Expression implements ExpressionInterface
         
         // set new relation path
         $this->relation_path = $relation_path;
-        if ($relation_path) {
+        if ($relation_path !== '' && $relation_path !== null) {
             foreach ($this->getRequiredAttributes() as $key => $a) {
-                $this->attributes[$key] = $relation_path . RelationPath::RELATION_SEPARATOR . $a;
+                $this->attributes[$key] = RelationPath::relationPathAdd($relation_path, $a);
             }
         }
         
-        if ($this->isFormula())
+        if ($this->isFormula() === true) {
             $this->getFormula()->setRelationPath($relation_path);
-        if ($this->attribute_alias)
-            $this->attribute_alias = $relation_path . RelationPath::RELATION_SEPARATOR . $this->attribute_alias;
+        }
+        if ($this->attribute_alias) {
+            $this->attribute_alias = RelationPath::relationPathAdd($relation_path, $this->attribute_alias);
+            $this->originalString = RelationPath::relationPathAdd($relation_path, $this->originalString);
+        }
+        
+        return $this;
+    }
+    
+    /**
+     * 
+     * @param string $relation_path
+     * @return ExpressionInterface
+     */
+    public function withRelationPath(MetaRelationPathInterface $path) : ExpressionInterface
+    {
+        return $this->copy()->setMetaObject($path->getStartObject())->setRelationPath($path->toString());
     }
 
     /**
@@ -492,9 +505,10 @@ class Expression implements ExpressionInterface
      * {@inheritdoc}
      * @see \exface\Core\Interfaces\Model\ExpressionInterface::setMetaObject()
      */
-    public function setMetaObject(MetaObjectInterface $object)
+    public function setMetaObject(MetaObjectInterface $object) : ExpressionInterface
     {
         $this->meta_object = $object;
+        return $this;
     }
     
     /**
@@ -505,7 +519,7 @@ class Expression implements ExpressionInterface
     {
         if ($this->isFormula()) {
             // TODO Implement rebasing formulas. It should be possible via recursion.
-            return $this;
+            return $this->copy();
         } elseif ($this->isMetaAttribute()) {
             try {
                 $rel = $this->getMetaObject()->getRelation($relation_path_to_new_base_object);
@@ -549,7 +563,7 @@ class Expression implements ExpressionInterface
             return $this->getWorkbench()->model()->parseExpression($new_expression_string, $rel->getRightObject());
         } else {
             // In all other cases (i.e. for constants), just leave the expression as it is. It does not depend on any meta model!
-            return $this;
+            return $this->copy();
         }
     }
 

@@ -12,6 +12,8 @@ use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\DataTypes\SortingDirectionsDataType;
+use exface\Core\Interfaces\Model\ExpressionInterface;
+use exface\Core\Factories\ExpressionFactory;
 
 /**
  * 
@@ -36,7 +38,7 @@ class Attribute implements MetaAttributeInterface
 
     private $data_type;
 
-    private $formatter;
+    private $calculationString = null;
     
     private $readable = true;
     
@@ -247,11 +249,18 @@ class Attribute implements MetaAttributeInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::getFormatter()
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::getCalculationExpression()
      */
-    public function getFormatter()
+    public function getCalculationExpression() : ?ExpressionInterface
     {
-        return $this->formatter;
+        $expr = null;
+        if ($this->calculationString !== null) {
+            $expr = ExpressionFactory::createForObject($this->getObject(), $this->calculationString);
+            if ($this->getRelationPath()->isEmpty() === false) {
+                $expr = $expr->withRelationPath($this->getRelationPath());
+            }
+        }
+        return $expr;
     }
 
     /**
@@ -259,9 +268,15 @@ class Attribute implements MetaAttributeInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setFormatter()
      */
-    public function setFormatter($value)
+    public function setCalculation(string $expressionString) : MetaAttributeInterface
     {
-        $this->formatter = $value;
+        $this->calculationString = $expressionString;
+        return $this;
+    }
+    
+    public function hasCalculation() : bool
+    {
+        return $this->calculationString !== null;
     }
 
     /**
