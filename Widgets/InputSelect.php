@@ -566,8 +566,8 @@ class InputSelect extends Input implements iSupportMultiSelect
             if ($this->getOptionsObject()->isExactly($this->getMetaObject()) && ! ($this->getAttribute() && ($this->getAttribute()->isRelation() || $this->getAttribute()->isUidForObject()))) {
                 $this->text_attribute_alias = $this->getAttributeAlias();
             } else {
-                if ($this->getOptionsObject()->getLabelAttribute()) {
-                    $this->text_attribute_alias = $this->getOptionsObject()->getLabelAttributeAlias();
+                if ($this->getOptionsObject()->hasLabelAttribute()) {
+                    $this->text_attribute_alias = $this->getOptionsObject()->getLabelAttribute()->getAlias();
                 } else {
                     $this->text_attribute_alias = $this->getOptionsObject()->getUidAttributeAlias();
                 }
