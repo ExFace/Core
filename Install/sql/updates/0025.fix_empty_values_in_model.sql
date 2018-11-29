@@ -3,6 +3,8 @@ ALTER TABLE `exf_attribute`
 	
 ALTER TABLE `exf_message`
 	CHANGE COLUMN `title` `title` VARCHAR(250) NOT NULL AFTER `code`;
+	
+UPDATE exf_data_type SET prototype = 'exface\/Core\/DataTypes\/JsonDataType.php' WHERE oid = 0x31300000000000000000000000000000;
 
 UPDATE exf_attribute set default_editor_uxon = null where default_editor_uxon = '{}';
 UPDATE exf_attribute set default_display_uxon = null where default_display_uxon = '{}';
