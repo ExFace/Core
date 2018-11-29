@@ -157,7 +157,7 @@ class MessageList extends Container
             $ds->dataRead();
             
             foreach ($ds->getRows() as $row) {
-                $this->addMessageFromString(MessageTypeDataType::fromValue($this->getWorkbench(), $row['TYPE']), $row['DESCRIPTION'], $row['TITLE'] . ' (' . $row['CODE'] . ')', $row['HINT']);
+                $this->addMessageFromString(MessageTypeDataType::fromValue($this->getWorkbench(), $row['TYPE']), ($row['DESCRIPTION'] ?? ''), $row['TITLE'] . ' (' . $row['CODE'] . ')', $row['HINT']);
                 unset($this->messageCodesToLoad[$row['CODE']]);
             }
             
