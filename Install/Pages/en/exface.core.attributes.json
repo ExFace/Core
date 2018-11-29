@@ -21,6 +21,7 @@
             },
             {
                 "attribute_alias": "DATA_ADDRESS",
+                "widget_type": "Input",
                 "height": 1
             },
             {
