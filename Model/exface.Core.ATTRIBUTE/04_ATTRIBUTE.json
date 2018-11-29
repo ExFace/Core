@@ -195,7 +195,7 @@
             "SORTERDIR": "",
             "RELATED_OBJ_ATTR": "",
             "SHORT_DESCRIPTION": "The attribute name will be used as default caption for most widgets: table columns, fillters, inputs, etc.",
-            "DATA_ADDRESS_PROPS": "",
+            "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
             "CUSTOM_DATA_TYPE": null
@@ -236,7 +236,7 @@
             "SORTERDIR": "",
             "RELATED_OBJ_ATTR": "",
             "SHORT_DESCRIPTION": "The alias is used to identify the attribute in UXON. Alias are case sensitive and may contain letters, digits and underscores.",
-            "DATA_ADDRESS_PROPS": "",
+            "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
             "CUSTOM_DATA_TYPE": null
@@ -318,7 +318,7 @@
             "SORTERDIR": "",
             "RELATED_OBJ_ATTR": "",
             "SHORT_DESCRIPTION": "This address tells the data source of the object where to find this attribute: e.g. the SELECT statement for SQL  sources, the JSON-path for JSON sources, etc.",
-            "DATA_ADDRESS_PROPS": "",
+            "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
             "CUSTOM_DATA_TYPE": null
@@ -400,7 +400,7 @@
             "SORTERDIR": "",
             "RELATED_OBJ_ATTR": "",
             "SHORT_DESCRIPTION": "A formula to format the attribute's value: e.g. =PRICE(VALUE)",
-            "DATA_ADDRESS_PROPS": "",
+            "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
             "CUSTOM_DATA_TYPE": null
@@ -482,7 +482,7 @@
             "SORTERDIR": "",
             "RELATED_OBJ_ATTR": "",
             "SHORT_DESCRIPTION": "If set, the attribute will be used as label for the object: in all kinds of selecting widgets, in messages, etc.",
-            "DATA_ADDRESS_PROPS": "",
+            "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
             "CUSTOM_DATA_TYPE": null
@@ -523,7 +523,7 @@
             "SORTERDIR": "",
             "RELATED_OBJ_ATTR": "",
             "SHORT_DESCRIPTION": "If set, this attribute will be used to identify the instances of the object. Typically this is some kind of primary key. There may only be one UID-attribute per object. ",
-            "DATA_ADDRESS_PROPS": "",
+            "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
             "CUSTOM_DATA_TYPE": null
@@ -564,7 +564,7 @@
             "SORTERDIR": "",
             "RELATED_OBJ_ATTR": "",
             "SHORT_DESCRIPTION": "If set, the attribute will not be displayed in automatically generated widgets",
-            "DATA_ADDRESS_PROPS": "",
+            "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
             "CUSTOM_DATA_TYPE": null
@@ -605,7 +605,7 @@
             "SORTERDIR": "",
             "RELATED_OBJ_ATTR": "",
             "SHORT_DESCRIPTION": "If set, the value of this attribute in it's data source will be editable.",
-            "DATA_ADDRESS_PROPS": "",
+            "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
             "CUSTOM_DATA_TYPE": null
@@ -646,7 +646,7 @@
             "SORTERDIR": "",
             "RELATED_OBJ_ATTR": "",
             "SHORT_DESCRIPTION": "If set, the attribute must be assigned a value when creating the object it belongs to.",
-            "DATA_ADDRESS_PROPS": "",
+            "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
             "CUSTOM_DATA_TYPE": null
@@ -769,7 +769,7 @@
             "SORTERDIR": "",
             "RELATED_OBJ_ATTR": "",
             "SHORT_DESCRIPTION": "Which way to sort this attribute by default. If not set, the default sorting direction of the data type will be used.",
-            "DATA_ADDRESS_PROPS": "",
+            "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
             "CUSTOM_DATA_TYPE": null
@@ -851,7 +851,7 @@
             "SORTERDIR": "",
             "RELATED_OBJ_ATTR": "",
             "SHORT_DESCRIPTION": "The description is used for hint texts like this one.",
-            "DATA_ADDRESS_PROPS": "",
+            "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
             "CUSTOM_DATA_TYPE": null
@@ -892,7 +892,7 @@
             "SORTERDIR": "",
             "RELATED_OBJ_ATTR": "",
             "SHORT_DESCRIPTION": "Custom configuration for the data source of this attribute",
-            "DATA_ADDRESS_PROPS": "",
+            "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
             "CUSTOM_DATA_TYPE": null
@@ -933,7 +933,7 @@
             "SORTERDIR": "",
             "RELATED_OBJ_ATTR": "",
             "SHORT_DESCRIPTION": "This expression will be used when no other value is given (e.g. inputs will be prefilled with this value). You can use attribute aliases, formulas or explicit values (the latter enclosed in quotes!) ",
-            "DATA_ADDRESS_PROPS": "",
+            "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
             "CUSTOM_DATA_TYPE": null
@@ -974,7 +974,7 @@
             "SORTERDIR": "",
             "RELATED_OBJ_ATTR": "",
             "SHORT_DESCRIPTION": "This expression will allways be evaluated, when the object is saved - eventually overwriting user input. This is handy for attributes like last_update_time, where a fixed value =NOW() will automatically set the attribute to the time of saving.",
-            "DATA_ADDRESS_PROPS": "",
+            "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
             "CUSTOM_DATA_TYPE": null
@@ -1015,7 +1015,7 @@
             "SORTERDIR": "",
             "RELATED_OBJ_ATTR": "",
             "SHORT_DESCRIPTION": null,
-            "DATA_ADDRESS_PROPS": "",
+            "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
             "CUSTOM_DATA_TYPE": null
@@ -1056,7 +1056,7 @@
             "SORTERDIR": "",
             "RELATED_OBJ_ATTR": "",
             "SHORT_DESCRIPTION": null,
-            "DATA_ADDRESS_PROPS": "",
+            "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "'1'",
             "FIXED_VALUE": "",
             "CUSTOM_DATA_TYPE": null
@@ -1097,7 +1097,7 @@
             "SORTERDIR": "",
             "RELATED_OBJ_ATTR": "",
             "SHORT_DESCRIPTION": null,
-            "DATA_ADDRESS_PROPS": "",
+            "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "'1'",
             "FIXED_VALUE": "",
             "CUSTOM_DATA_TYPE": null
@@ -1138,7 +1138,7 @@
             "SORTERDIR": "",
             "RELATED_OBJ_ATTR": "",
             "SHORT_DESCRIPTION": null,
-            "DATA_ADDRESS_PROPS": "",
+            "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "'1'",
             "FIXED_VALUE": "",
             "CUSTOM_DATA_TYPE": null
@@ -1179,7 +1179,7 @@
             "SORTERDIR": "",
             "RELATED_OBJ_ATTR": "",
             "SHORT_DESCRIPTION": null,
-            "DATA_ADDRESS_PROPS": "",
+            "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
             "CUSTOM_DATA_TYPE": null
@@ -1220,7 +1220,7 @@
             "SORTERDIR": "",
             "RELATED_OBJ_ATTR": "",
             "SHORT_DESCRIPTION": "Used to separate values of this attribute in concatenaded strings. Change it to a character, that is unlikely to be a regular part of the value if your values will contain commas.",
-            "DATA_ADDRESS_PROPS": "",
+            "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "','",
             "FIXED_VALUE": "",
             "CUSTOM_DATA_TYPE": null
@@ -1261,7 +1261,7 @@
             "SORTERDIR": "",
             "RELATED_OBJ_ATTR": "",
             "SHORT_DESCRIPTION": "If disabled, the attribute will be ignored when reading the object from the data source. It can still be used for filtering, sorting or even writing. A typical example are parameter-attributes of objects based on SQL procedures or similar. They may n",
-            "DATA_ADDRESS_PROPS": "",
+            "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "'1'",
             "FIXED_VALUE": "",
             "CUSTOM_DATA_TYPE": null
@@ -1302,7 +1302,7 @@
             "SORTERDIR": "",
             "RELATED_OBJ_ATTR": "",
             "SHORT_DESCRIPTION": "If disabled, the attribute will be ignored in write-operations even if it is editable: e.g. a calculated attribute or one used for calculation.",
-            "DATA_ADDRESS_PROPS": "",
+            "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "'1'",
             "FIXED_VALUE": "",
             "CUSTOM_DATA_TYPE": null
@@ -1343,7 +1343,7 @@
             "SORTERDIR": "",
             "RELATED_OBJ_ATTR": "",
             "SHORT_DESCRIPTION": null,
-            "DATA_ADDRESS_PROPS": "",
+            "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
             "CUSTOM_DATA_TYPE": null

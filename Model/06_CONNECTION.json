@@ -60,7 +60,7 @@
             "APP": "0x31000000000000000000000000000000",
             "LABEL": "System Folders",
             "CONNECTOR": "exface\/Core\/DataConnectors\/FileFinderConnector.php",
-            "CONFIG": "{}",
+            "CONFIG": null,
             "READONLY": "0",
             "ALIAS": "SYSTEM_FOLDERS",
             "FILTER_CONTEXT": ""
@@ -88,7 +88,7 @@
             "APP": "0x31000000000000000000000000000000",
             "LABEL": "PHP Annotations",
             "CONNECTOR": "exface\/Core\/DataConnectors\/PhpAnnotationsConnector.php",
-            "CONFIG": "{}",
+            "CONFIG": null,
             "READONLY": "1",
             "ALIAS": "PHP_ANNOTATIONS",
             "FILTER_CONTEXT": ""
@@ -102,7 +102,7 @@
             "APP": "0x31000000000000000000000000000000",
             "LABEL": "Local file",
             "CONNECTOR": "exface\/Core\/DataConnectors\/FileContentsConnector.php",
-            "CONFIG": "{}",
+            "CONFIG": null,
             "READONLY": "0",
             "ALIAS": "LOCAL_FILE",
             "FILTER_CONTEXT": ""
@@ -116,7 +116,7 @@
             "APP": "0x31000000000000000000000000000000",
             "LABEL": "No Connection (Transparent)",
             "CONNECTOR": "exface\/Core\/DataConnectors\/TransparentConnector.php",
-            "CONFIG": "{}",
+            "CONFIG": null,
             "READONLY": "0",
             "ALIAS": "TRANSPARENT_CONNECTION",
             "FILTER_CONTEXT": ""
