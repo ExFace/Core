@@ -90,7 +90,7 @@
             "SHORT_DESCRIPTION": "",
             "PARENT_OBJECT": "",
             "DATA_ADDRESS_PROPS": null,
-            "DEFAULT_EDITOR_UXON": "",
+            "DEFAULT_EDITOR_UXON": null,
             "LABEL": "Contextual Help Element",
             "ALIAS": "USER_HELP_ELEMENT",
             "DATA_ADDRESS": ""
