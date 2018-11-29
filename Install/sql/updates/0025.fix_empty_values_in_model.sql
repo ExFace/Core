@@ -5,6 +5,7 @@ ALTER TABLE `exf_message`
 	CHANGE COLUMN `title` `title` VARCHAR(250) NOT NULL AFTER `code`;
 
 UPDATE exf_attribute set default_editor_uxon = null where default_editor_uxon = '{}';
+UPDATE exf_object set default_editor_uxon = null where default_editor_uxon = '';
 UPDATE exf_attribute set default_display_uxon = null where default_display_uxon = '{}';
 UPDATE exf_attribute set custom_data_type_uxon = null where custom_data_type_uxon = '{}';
 UPDATE exf_attribute set data_properties = null where data_properties = '{}';
