@@ -236,7 +236,7 @@
             "SORTERDIR": "",
             "RELATED_OBJ_ATTR": "",
             "SHORT_DESCRIPTION": "Set of connector options that will override the default connector config if this user is logged on",
-            "DATA_ADDRESS_PROPS": "",
+            "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
             "CUSTOM_DATA_TYPE": null
@@ -276,8 +276,8 @@
             "SORTERPOS": null,
             "SORTERDIR": "",
             "RELATED_OBJ_ATTR": "",
-            "SHORT_DESCRIPTION": null,
-            "DATA_ADDRESS_PROPS": "",
+            "SHORT_DESCRIPTION": "",
+            "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
             "CUSTOM_DATA_TYPE": null
