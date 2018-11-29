@@ -41,23 +41,28 @@ class GoToPage extends ShowWidget
      * of the widget with the id "my_date" on the current page, use the
      * following configuration:
      *
-     *  {
-     *      "widget_type": "InputDate",
-     *      "id": "my_date"
-     *  },
-     *  ...,
-     *  {
-     *      ...
-     *      "buttons": [
-     *          {
-     *              "action": {
-     *                  "alias": "GoToPage",
-     *                  "take_along_filters":
-     *                      {"ORDER__ORDER_DATE": "my_date"}
+     * ```
+     * {
+     *  "filters": [
+     *      {
+     *          "widget_type": "InputDate",
+     *          "id": "my_date"
+     *      }
+     *  ],
+     *  
+     *  "buttons": [
+     *      {
+     *          "action": {
+     *              "alias": "GoToPage",
+     *              "take_along_filters": {
+     *                  "ORDER__ORDER_DATE": "my_date"
      *              }
      *          }
-     *      ]
-     *  }
+     *      }
+     *  ]
+     * }
+     *  
+     * ```
      *
      * @uxon-property take_along_filters
      * @uxon-type WidgetLink[]
