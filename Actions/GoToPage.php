@@ -36,9 +36,9 @@ class GoToPage extends ShowWidget
      * Specifies filters on the target page that should be filled with values from widgets on the current page.
      *
      * This option accepts an object with attribute aliases for keys and
-     * widget links for values. Thus, if you need to pass a filter over
-     * ORDER__ORDER_DATE to a page showing ORDER_POSITION and use the value
-     * of the widget with the id "my_date" on the current page, use the
+     * widget links for values. Thus, if you need to pass a filter over 
+     * `ORDER__ORDER_DATE` to a page showing ORDER_POSITION and use the value 
+     * of the widget with the id "my_date" on the current page, use the 
      * following configuration:
      *
      * ```
