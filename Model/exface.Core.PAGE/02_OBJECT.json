@@ -90,7 +90,7 @@
             "SHORT_DESCRIPTION": "",
             "PARENT_OBJECT": "",
             "DATA_ADDRESS_PROPS": null,
-            "DEFAULT_EDITOR_UXON": "",
+            "DEFAULT_EDITOR_UXON": null,
             "LABEL": "Page",
             "ALIAS": "PAGE",
             "DATA_ADDRESS": "modx_site_content"

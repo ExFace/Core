@@ -90,7 +90,7 @@
             "SHORT_DESCRIPTION": "",
             "PARENT_OBJECT": "0x11e6be0ad5666af88ddee4b318306b9a",
             "DATA_ADDRESS_PROPS": null,
-            "DEFAULT_EDITOR_UXON": "",
+            "DEFAULT_EDITOR_UXON": null,
             "LABEL": "Event",
             "ALIAS": "EVENT",
             "DATA_ADDRESS": "*\/*\/Events\/*.php"
