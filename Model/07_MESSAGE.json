@@ -38,24 +38,16 @@
             "attribute_alias": "DESCRIPTION"
         },
         {
-            "name": "hint",
-            "attribute_alias": "hint"
-        },
-        {
-            "name": "type",
-            "attribute_alias": "type"
-        },
-        {
-            "name": "docs_path",
-            "attribute_alias": "docs_path"
-        },
-        {
             "name": "HINT",
             "attribute_alias": "HINT"
         },
         {
             "name": "TYPE",
             "attribute_alias": "TYPE"
+        },
+        {
+            "name": "docs_path",
+            "attribute_alias": "docs_path"
         },
         {
             "name": "DOCS",
@@ -73,11 +65,9 @@
             "CODE": "6T2T2JM",
             "TITLE": "Cannot start transaction",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -90,11 +80,9 @@
             "CODE": "6T2T2O9",
             "TITLE": "Cannot commit transaction",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -107,11 +95,9 @@
             "CODE": "6T2T2S1",
             "TITLE": "Cannot rollback transaction",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -124,11 +110,9 @@
             "CODE": "6T2T2UI",
             "TITLE": "SQL query failed",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -141,11 +125,9 @@
             "CODE": "6T2TBVR",
             "TITLE": "Cannot connect to ODBC database",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -158,11 +140,9 @@
             "CODE": "6T2TCAJ",
             "TITLE": "Cannot get last insert id from database",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -175,11 +155,9 @@
             "CODE": "6T2TCL6",
             "TITLE": "Cannot  count rows affected by query",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -192,11 +170,9 @@
             "CODE": "6T4F41P",
             "TITLE": "Invalid data connector configuration option",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -209,11 +185,9 @@
             "CODE": "6T4R8UM",
             "TITLE": "Multiple user credentials found for data connection",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -226,11 +200,9 @@
             "CODE": "6T4R97R",
             "TITLE": "Data connection not found in model",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -243,11 +215,9 @@
             "CODE": "6T5DI5E",
             "TITLE": "Action property cannot be set",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -260,11 +230,9 @@
             "CODE": "6T5DJPP",
             "TITLE": "Cannot find object for action",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -277,11 +245,9 @@
             "CODE": "6T5DLGN",
             "TITLE": "Cannot undo action: action not found in history",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -294,11 +260,9 @@
             "CODE": "6T5DMUS",
             "TITLE": "Action not aplicable to input object",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -311,11 +275,9 @@
             "CODE": "6T5DNWE",
             "TITLE": "Cannot find placeholder value in input data of action",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -328,11 +290,9 @@
             "CODE": "6T5DOSV",
             "TITLE": "Not allowed to read data without knowing which widget called the read action",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -345,11 +305,9 @@
             "CODE": "6T5DS00",
             "TITLE": "Undo-functionality not implemented for action",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -362,11 +320,9 @@
             "CODE": "6T5DT14",
             "TITLE": "Action cannot be undone in principle",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -379,11 +335,9 @@
             "CODE": "6T5DUT1",
             "TITLE": "Unexpected type of action output",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -396,11 +350,9 @@
             "CODE": "6T5DXWP",
             "TITLE": "App not found",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -413,11 +365,9 @@
             "CODE": "6T5DZN2",
             "TITLE": "Configuration key not found",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -430,11 +380,9 @@
             "CODE": "6T5E14B",
             "TITLE": "Context scope not found",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -447,11 +395,9 @@
             "CODE": "6T5E24E",
             "TITLE": "Context class not found",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -464,11 +410,9 @@
             "CODE": "6T5E3ID",
             "TITLE": "Context data cannot be saved",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -481,11 +425,9 @@
             "CODE": "6T5E400",
             "TITLE": "Cannot load context",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -498,11 +440,9 @@
             "CODE": "6T5E5VY",
             "TITLE": "Object basket context requested for non-existant meta object",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -515,11 +455,9 @@
             "CODE": "6T5E849",
             "TITLE": "Cannot find right key column for a left join",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -532,11 +470,9 @@
             "CODE": "6T5E8GM",
             "TITLE": "Cannot merge non-empty data sheets for different objects",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -549,11 +485,9 @@
             "CODE": "6T5E8Q6",
             "TITLE": "Cannot merge data sheets without UID columns",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -566,11 +500,9 @@
             "CODE": "6T5U304",
             "TITLE": "Unsupported data connector for SQL reverse engineering. Currently supported are MySQL, Oracle SQL and Microsoft SQL",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -583,11 +515,9 @@
             "CODE": "6T5UUOI",
             "TITLE": "Cannot diff columns by UID if one of the data sheets does not have a UID-column or that column is empty",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -600,11 +530,9 @@
             "CODE": "6T5UW0E",
             "TITLE": "Invalid formula in data sheet column",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -617,11 +545,9 @@
             "CODE": "6T5UX3Q",
             "TITLE": "Cannot fill column with default values",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -634,11 +560,9 @@
             "CODE": "6T5UXLD",
             "TITLE": "Unknown aggregator function",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -651,11 +575,9 @@
             "CODE": "6T5V0GU",
             "TITLE": "Cannot join data sheets if one of the key columns is not specified",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -668,11 +590,9 @@
             "CODE": "6T5V1DR",
             "TITLE": "Importing rows from another sheet is only possible if both sheets are based on the same object",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -685,11 +605,9 @@
             "CODE": "6T5V1XX",
             "TITLE": "Cannot import rows from another sheet if sheets have different amounts of rows",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -702,11 +620,9 @@
             "CODE": "6T5V2Q8",
             "TITLE": "UID column not found",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -719,11 +635,9 @@
             "CODE": "6T5V36I",
             "TITLE": "Joining subsheets via reverse relations the explicitly specified foreign keys, not implemented yet!",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -736,11 +650,9 @@
             "CODE": "6T5V4HW",
             "TITLE": "Updating attributes from reverse relations is not possible",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -753,11 +665,9 @@
             "CODE": "6T5V4TS",
             "TITLE": "Cannot delete redundant rows while replacing data if no filter are defined!",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -770,11 +680,9 @@
             "CODE": "6T5V5EB",
             "TITLE": "Cannot delete redundant rows if no UID column is present in the data sheet",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -787,11 +695,9 @@
             "CODE": "6T5V6WE",
             "TITLE": "Data sheet column not found",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -804,11 +710,9 @@
             "CODE": "6T5V9KS",
             "TITLE": "Invalid sort direction. Only ASC and DESC are allowed!",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -821,11 +725,9 @@
             "CODE": "6T5VBHF",
             "TITLE": "Creating rows from an update statement without a UID-column not supported yet!",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -838,11 +740,9 @@
             "CODE": "6T5VCA6",
             "TITLE": "Cannot delete all instances. Forbidden operation!",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -855,11 +755,9 @@
             "CODE": "6T5VG46",
             "TITLE": "Connection to data source failed",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -872,11 +770,9 @@
             "CODE": "6T5VIIA",
             "TITLE": "Cannot commit a transaction, that has already been rolled back!",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -889,11 +785,9 @@
             "CODE": "6T5VIT8",
             "TITLE": "Cannot roll back a transaction, that has already been committed!",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -906,11 +800,9 @@
             "CODE": "6T5VJD3",
             "TITLE": "Transaction rollback failed",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -923,11 +815,9 @@
             "CODE": "6T5VJPV",
             "TITLE": "Transaction commit failed",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -940,11 +830,9 @@
             "CODE": "6T5VK2M",
             "TITLE": "Transaction could not be started",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -957,11 +845,9 @@
             "CODE": "6T5W75J",
             "TITLE": "Invalid query type passed to data connector",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -974,11 +860,9 @@
             "CODE": "6T5WBNB",
             "TITLE": "Illegal filter value",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -991,11 +875,9 @@
             "CODE": "6T6HSAO",
             "TITLE": "Action not specified in request",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1008,11 +890,9 @@
             "CODE": "6T6HSL4",
             "TITLE": "Cannot perform quick search on object",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1025,11 +905,9 @@
             "CODE": "6T6HZLF",
             "TITLE": "Data modified by another user",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1042,11 +920,9 @@
             "CODE": "6T6I04D",
             "TITLE": "Cannot check for concurrent writes on mass updates via filters",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1059,11 +935,9 @@
             "CODE": "6T6I51G",
             "TITLE": "Widget id conflict",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1076,11 +950,9 @@
             "CODE": "6T90UH3",
             "TITLE": "Invalid widget visibility setting",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1093,11 +965,9 @@
             "CODE": "6T90UV9",
             "TITLE": "Invalid or missing chart widget configuration",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1110,11 +980,9 @@
             "CODE": "6T90WFX",
             "TITLE": "Missing data configuration for data-visualization widget",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1127,11 +995,9 @@
             "CODE": "6T910B6",
             "TITLE": "Invalid or missing diagram widget configuration",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1144,11 +1010,9 @@
             "CODE": "6T911YV",
             "TITLE": "Tabs widget: Invalid position for tab ribbon",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1161,11 +1025,9 @@
             "CODE": "6T9137Y",
             "TITLE": "Widget has no meta object",
             "DESCRIPTION": "Every widget showing data must have a reference to it's main meta object. This reference can either be set directly in the widget's UXON description via the \"object_alias\" property or will be inherited automatically from the widget's parent.\n\nGenerally it is a good idea to always specify an object_alias for the root widget of every page - even if it is a container with widgets based on other objects. It is no problem to specify a different object for a child widget!",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1178,11 +1040,9 @@
             "CODE": "6T919D5",
             "TITLE": "Invalid or missing button action configuration",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1195,11 +1055,9 @@
             "CODE": "6T91AR9",
             "TITLE": "Invalid data filter widget configuration",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1212,11 +1070,9 @@
             "CODE": "6T91BRG",
             "TITLE": "Invalid tree widget configuration",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1229,11 +1085,9 @@
             "CODE": "6T91E4Q",
             "TITLE": "Widget not found",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1246,11 +1100,9 @@
             "CODE": "6T91H2S",
             "TITLE": "Invalid widget configuration for action",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1263,11 +1115,9 @@
             "CODE": "6T91HJK",
             "TITLE": "Malformed relation path",
             "DESCRIPTION": "A relation path consists of relation\/attribute aliases concatenated via \"__\" (double underscore). Each relation alias may include a modifier enclosed in square brackets. In case of reverse relations (1-to-N), the alias will mostly include an aggregator function separated by a semicolon.\n\nExamples (based on an imaginary meta object COMPANY):\n\n- `Billing_ADDRESS__STREET` - the street name of the company's billing address\n- `ORDER[PAYEE]__ORDER_NO:COUNT` - number of orders, where the company is the payee\n- `EMPLOYEE__ID:COUNT` - number of employees of the compay (no modifier needed as there is only one relation from EMPLOYEE to COMPANY. `EMPLOYEE[COMPANY]__ID:COUNT` would work too, of course.",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1280,11 +1130,9 @@
             "CODE": "6T91IGZ",
             "TITLE": "Malformed widget link",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1297,11 +1145,9 @@
             "CODE": "6T91QQ8",
             "TITLE": "Invalid ComboTable widget configuration",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1314,11 +1160,9 @@
             "CODE": "6T91RQ5",
             "TITLE": "Invalid column configuration for data widget",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1331,11 +1175,9 @@
             "CODE": "6T91S9G",
             "TITLE": "Invalid configuration of InputSelect widget",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1348,11 +1190,9 @@
             "CODE": "6TA2Y6A",
             "TITLE": "Invalid chart axis configuration",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1365,11 +1205,9 @@
             "CODE": "6TBX1V2",
             "TITLE": "Cannot rebase expression",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1382,11 +1220,9 @@
             "CODE": "6TG2ZFI",
             "TITLE": "Invalid configuration for StateMachineBehavior",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1399,11 +1235,9 @@
             "CODE": "6TMQR5N",
             "TITLE": "Cannot add instance to object basket",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1416,11 +1250,9 @@
             "CODE": "6TV1LBR",
             "TITLE": "Invalid text\/value configuration for ComboTable widget",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1433,11 +1265,9 @@
             "CODE": "6U5TRGK",
             "TITLE": "Invalid chained action configuration",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1450,11 +1280,9 @@
             "CODE": "6UMF9UL",
             "TITLE": "Illegal state in StateMachineBehavior",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1467,11 +1295,9 @@
             "CODE": "6UMTC14",
             "TITLE": "Invalid configuration of the StateInputSelect widget",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1484,11 +1310,9 @@
             "CODE": "6UNT6D5",
             "TITLE": "Invalid button widget type",
             "DESCRIPTION": "This error indicates, that a non-button was added to the buttons property of a widget. You may overwrite the widget type of each individual button, to make it a special type of button (e.g. a MenuButton), but it still must be a button: you can't use an input widget or so.",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1501,11 +1325,9 @@
             "CODE": "6UNTXJE",
             "TITLE": "Unknown widget property",
             "DESCRIPTION": "This error indicates, that a property was used in the description of the widget, which is not known for the selected widget type. Please refer to the widget reference in Administration > Core > Widgets.",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1518,11 +1340,9 @@
             "CODE": "6UOD4TW",
             "TITLE": "Cannot automatically determine the current object namespace",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1535,11 +1355,9 @@
             "CODE": "6UQBUVZ",
             "TITLE": "Invalid configuration for column totals in a data sheet",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1552,11 +1370,9 @@
             "CODE": "6UQBX9K",
             "TITLE": "Invalid configuration for sorters in a data sheet",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1569,11 +1385,9 @@
             "CODE": "6UX6TNT",
             "TITLE": "Missing UID attribute for meta object",
             "DESCRIPTION": "This error indicates, that a meta object does not have a UID attribute, but the current runtime requires it. Please mark one of the attributes as object UID.\n\nIn general, an object does not neccessarily need a UID attribute. However, certain actions or query builders require it for their logic to function correctly.",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1586,11 +1400,9 @@
             "CODE": "6UX6KAQ",
             "TITLE": "Missing UID column in data-widget",
             "DESCRIPTION": "This error occurs if a data widget (DataTable, DataMatrix, Chart, etc.) has no UID column, but it is required for the current configuration (e.g. for button actions). \n\nTo solve the problem, either add a UID attribute to the main object of the widget or specify a custom uid_column_id in the UXON configuration.",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1603,11 +1415,9 @@
             "CODE": "6V5FGYF",
             "TITLE": "No value or  attribute found for a select widget",
             "DESCRIPTION": "This error indicates, that the attributes are neither specified, nor could they be guessed.\n\nSelect widgets like InputSelect or InputCombo require a value attribute and a text attribute to be rendered. The system will try to determine suitable attributes automatically if the respective properties (value_attribute_alias, text_attribute_alias) are not set. \n\nPlease refer to the widget documentation for detailed information on how the attributes are determined.",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1620,11 +1430,9 @@
             "CODE": "6V5FK1J",
             "TITLE": "Missing values for placeholders in the file path",
             "DESCRIPTION": "This error indicates, that a required file path contains one or more placeholders, that could not be resolved from the current set of filters.",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1637,11 +1445,9 @@
             "CODE": "6V6EAL3",
             "TITLE": "Data connection not found",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1654,11 +1460,9 @@
             "CODE": "6V9XDV4",
             "TITLE": "Cannot render contextual help",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1671,11 +1475,9 @@
             "CODE": "6VCYA0J",
             "TITLE": "Invalid meta model configuration for an object",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1688,11 +1490,9 @@
             "CODE": "6VCYEUC",
             "TITLE": "Internal widget error",
             "DESCRIPTION": "This indicates a programmatic error in the internal logic of a widget. Please contact the support!",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1705,11 +1505,9 @@
             "CODE": "6VCYFND",
             "TITLE": "Internal error",
             "DESCRIPTION": "This indicates a programmatic error in the internal logic. Please contact the support!",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1722,11 +1520,9 @@
             "CODE": "6VG359M",
             "TITLE": "Meta object not found",
             "DESCRIPTION": "This error occurs when an object is requested from the meta model, but cannot be found. The error text mostly shows, which object id or alias was requested.\n\nIf the object was requested by alias, make sure, it's a fully qualified prefixed by the app alias (e.g. exface.Core.MyObject instead of simply MyObject).",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1739,11 +1535,9 @@
             "CODE": "6VG35OA",
             "TITLE": "Meta attribute not found",
             "DESCRIPTION": "This error occurs when an attribute is requested from the meta model, but cannot be found. The error text mostly shows, which attribute alias was requested.",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1756,11 +1550,9 @@
             "CODE": "6VYMG0N",
             "TITLE": "Access denied for requested context",
             "DESCRIPTION": "This error indicates, that the current user cannot access the specified context. Many contexts require specific user rights. \n\nInaccessible contexts are automatically hidden from the context bar. ",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1773,11 +1565,9 @@
             "CODE": "6VYOEGI",
             "TITLE": "Invalid value for a widget property in UXON",
             "DESCRIPTION": "This error indicates, that an illegal value was assigned to a widget property in it's UXON description. See the error subtitle for details. \n\nIf you are editing your Screens right know, you can see the UXON-code of the faulty widget in the respective tabs.",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1790,11 +1580,9 @@
             "CODE": "6VYOFZJ",
             "TITLE": "Unknown widget property specified",
             "DESCRIPTION": "This error indicates, that an illegal or misspelled widget property name was used in the UXON description: see the subtitle for details.\n\nThe most common cause for these errors are typos in the UXON configuration. If you are editing your Screens right know, you can see the UXON-code of the faulty widget in the respective tabs.",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1807,11 +1595,9 @@
             "CODE": "6W1SD52",
             "TITLE": "Invalid comparator used!",
             "DESCRIPTION": "The following expressions are supported as comparators:\n- '[' - in\n- '![' - not in\n- '=' - is (default)\n- '!=' - is not\n- '==' - equals\n- '!==' - equals not\n- '<' - less\n- '<=' - less or equals\n- '>' - greater\n- '>=' - greater or equals",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1824,11 +1610,9 @@
             "CODE": "6W25AB1",
             "TITLE": "Invalid date format",
             "DESCRIPTION": "The following date input formats are supported:\n- 31.12.2017.\n- 2017-12-31.\n- 2017 (2017-01-01 will be assumed).\n- 12.2017 or 12-2017 (2017-12-01 will be assumed).\n- 15.02 or 15-02 (2017-02-15 will be assumed).\n- +1d, +2w, +3m, +4y for adding days, weeks, months or years to the current date.\n- -4d, -3w, -2m, -1y for subtracting days, weeks, months or years from the current date.",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1841,11 +1625,9 @@
             "CODE": "6W5WLSA",
             "TITLE": "Invalid widget alignment value",
             "DESCRIPTION": "The \"align\" property of an alignable widget takes the following values:\n\n- left\n- right\n- center\n- default (the default alignment for the widget type in the current template)\n- opposite (the inverse to the default alignment: e.g. \"right\" if the default is \"left\")",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1858,11 +1640,9 @@
             "CODE": "6WNC22Z",
             "TITLE": "UI page not found",
             "DESCRIPTION": "This error means, that a referenced page cannot be found.\n\nThis mostly happens due to misspelled page references in widget links or references to pages that were not installed or deleted on the current installation. \n\nIf this error happens when editing a page, make sure all pages, you specified widget links to, really exist in the CMS!",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1875,11 +1655,9 @@
             "CODE": "6WXNHMN",
             "TITLE": "Invalid argument in aggregator COUNT_IF",
             "DESCRIPTION": "This error means, that the condition passed as argument to the COUNT_IF aggregator is invalid. \n\nThis aggregator counts values of the attribute it is applied to, that match the specified condition. The condition MUST contain a comparator and a value separated by a space. \n\nValid examples:\n\n- Count products with a price of 10 or more: PRODUCTS__PRICE:COUNT(>= 10)\n- Count completed tasks: TASKS__COMPLETED_FLAG(= 1) ",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1892,11 +1670,9 @@
             "CODE": "6XALZHW",
             "TITLE": "Invalid numeric data type configuration",
             "DESCRIPTION": "Numeric data types (based on the NumberDataType prototype) take the following configuration values:\n\n- min - minimum valid value (must be less or equal, than max)\n- max - maximum valid value (must be greater or equal than min)\n- precision_min - minimum number of decimal places (must be less or equal, than precision_max)\n- precision_max - maximum number of decimal places (must be greater or equal, than presision_min)\n- precision - fixed precision (the same as setting the same value for precision_min and precision_max)",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1909,11 +1685,9 @@
             "CODE": "6XDP7LI",
             "TITLE": "Model entity aliases cannot start with '_', '=', or '~'!",
             "DESCRIPTION": "Aliases of meta model entities can contain any characters, but may not start with and underscore \"_\", equals-sign \"=\", or tilde \"~\".",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1926,11 +1700,9 @@
             "CODE": "6XGN2H6",
             "TITLE": "Not a valid value",
             "DESCRIPTION": "The given value does not match any of the valid values defined in an enumeration data type.",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1943,11 +1715,9 @@
             "CODE": "6XGN4ES",
             "TITLE": "Invalid configuration for enumeration data type",
             "DESCRIPTION": "The list of valid values of dynamic enumeration data types can be configured in the model of the data type or a specific attribute:\n\n{\n  ...\n  \"values\": {\n    \"VALUE1\": \"Label 1\",\n    \"VALUE2\": \"Label 2\"\n  }\n}",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1960,11 +1730,9 @@
             "CODE": "6XGNBJB",
             "TITLE": "Cannot override values in static enumeration data types",
             "DESCRIPTION": "Valid values for wtatic enumeration data types are defined in the source code. They cannot be overridden in the model of the data type. \n\nThis behavior is intended because static enumerations can be used in both, the source code and in the meta model. This means, that their values must be supported by the source code. For example, data sorters will support sorting directions ASC and DESC defined in the exface.Core.SortingDirectionsDataType - it does not make sense to change or extend them as the sorters will not know, what to do with the new values.",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1977,11 +1745,9 @@
             "CODE": "6XHA8KR",
             "TITLE": "This UI page is not part of any app.",
             "DESCRIPTION": "This error occurs if an app is requested from a UiPage which is not part of any app.",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1994,11 +1760,9 @@
             "CODE": "6XQM0HG",
             "TITLE": "The UID of this UI page isn't unique.",
             "DESCRIPTION": "This error occurs if several UI pages have the same UID.\n\nThis problem has to be solved by direct manipulation of the page UID template variables in the database (modx_site_tmplvar_contentvalues).",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -2011,11 +1775,9 @@
             "CODE": "6XQM0SZ",
             "TITLE": "This UI page has no UID.",
             "DESCRIPTION": "This error occurs an UI page has no UID.\n\nThis problem might be solved by recreation of the page or by direct manipulation of the page UID template variable in the database (modx_site_tmplvar_contentvalues).",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -2028,11 +1790,9 @@
             "CODE": "6XX8HAD",
             "TITLE": "Error creating Ui page.",
             "DESCRIPTION": "This error occurs when a problem creating a Ui page occurs.\n",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -2045,11 +1805,9 @@
             "CODE": "6XX8HFA",
             "TITLE": "Error updating Ui page.",
             "DESCRIPTION": "This error occurs when a problem updating a Ui page occurs.\n",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -2062,11 +1820,9 @@
             "CODE": "6Y0U6GM",
             "TITLE": "Model builder not available for selected data connector",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -2079,11 +1835,9 @@
             "CODE": "6YD44MC",
             "TITLE": "Invalid configuration for Tree widget",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -2096,11 +1850,9 @@
             "CODE": "6YD4HAF",
             "TITLE": "Invalid tree widget configuration",
             "DESCRIPTION": "The configuration for the tree structure within a widget based on a hierarchy is missing or invalid. Widgets like DataTree or ComboTree contain a Tree widget internally, that defines the hierarchy structure. When creating on of those widgets, the \"tree\" property must contain a valid tree definition.\n\nPlease refer to the description of the Tree widget for more information.",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -2113,11 +1865,9 @@
             "CODE": "6YI5RCU",
             "TITLE": "Required widget property missing",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -2130,11 +1880,9 @@
             "CODE": "6Z5MAVK",
             "TITLE": "Invalid configuration for the DataRowGrouper",
             "DESCRIPTION": "",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -2147,11 +1895,9 @@
             "CODE": "6ZISUAJ",
             "TITLE": "Cannot delete dependent data",
             "DESCRIPTION": "When trying to delete a business object, the system automatically looks for related data, that depends on it and attempts to remove it first. This error indicates, that this operation failed.\n\nRemoving dependent data is important as it would become meaningless garbage without the object it depends on: e.g. an order position cannot exist if the order was physically deleted.\n\nIf the related data cannot be removed automatically, you should try deleting it manually and retry the failed delete operation.",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -2164,11 +1910,9 @@
             "CODE": "6ZIT36X",
             "TITLE": "No data source defined for object",
             "DESCRIPTION": "This error occurs if an operation requiring a data source (e.g. reading or writing) was called on an object that does not have one. \n\nObjects without data sources are quite legitimate. For example, they can be used to model the input data for an action, which is not a direct replica of data source entry. However, these objects only exist in the runtime. If an attempt is made to persist such an object, this error will occur.",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -2181,11 +1925,9 @@
             "CODE": "70U52B4",
             "TITLE": "Error in metamodel: relations to objects without primary keys (UIDs) must have an explicit key attribute",
             "DESCRIPTION": "This error occurs if a relation, that does not have a specific target key attribute, points to an object without a primary key (UID attribute).\n\nNormally you do not have to specify, which attribute of the related object is to be used as key. By default, the UID of that object is used. This, of course, does not work, if there is no UID attribute. So you should either specify, which attribute the relation is attached to or add a UID to the target object. ",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -2198,11 +1940,9 @@
             "CODE": "70UJ2GV",
             "TITLE": "Error in metamodel: orphaned model components detected",
             "DESCRIPTION": "This error indicates, that an instance of a model component references a non-existant entity: e.g. an attribute for an object, that does not exist. See specific error text for details.",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -2215,11 +1955,9 @@
             "CODE": "70X3MLA",
             "TITLE": "Ambiguous relation alias",
             "DESCRIPTION": "This error occurs, when a relation within an alias expression is ambiguously defined: that is, multiple relations matching the alias were found. \n\nThis happens typically, when the relations modifier (the square-brackets-part) is omitted in reverse relations. Since the alias of the right object is used in relation paths for reverse relations, there can easily be multiple reverse relations with the same alias. \n\nConsider the following example with a meta object ORDER, which has two different relations to the object COMPANY: PAYEE and CONTRACTOR. The expression COMPANY__ORDER (all order of a company) is ambiguous, because it is unclear, which relation is meant, so the correct notation would be COMPANY__ORDER[PAYEE] or COMPANY__ORDER[CONTRACTOR]. \n\nThe part in square brackets is called *modifier* and is required for reverse relations, unless one of the following conditions applies:\n\n- There is only one relation from the right to the left object (e.g. if there would be only one relation from ORDER to COMPANY)\n- There are multiple relations, but only one of them is required for the right object (e.g. only PAYEE would be required for ORDER) - in this case, the required relations is used by default.\n\nIn any case, the full notation with the modifier is allways possible. The short one is just a convenience shortcut.\n\n",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -2232,11 +1970,9 @@
             "CODE": "70Y6HAK",
             "TITLE": "Object not writeable!",
             "DESCRIPTION": "Writing operations can be explicitly disabled in the metamodel by removing the property \"writable\" from \n\n- the object, \n- it's data source, or\n- a specific connection. \n\nIn this case, writing attempts will fail even before a transaction is started or the data is passed to the corresponding query builder!",
-            "hint": "",
-            "type": "ERROR",
-            "docs_path": "",
             "HINT": "",
             "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -2249,11 +1985,9 @@
             "CODE": "734GDAX",
             "TITLE": "Object has no LABEL attribute",
             "DESCRIPTION": "",
-            "hint": "The UID will be used to display the object by default: e.g. in drop-downs, etc.",
-            "type": "INFO",
-            "docs_path": "",
             "HINT": "The UID will be used to display the object by default: e.g. in drop-downs, etc.",
             "TYPE": "INFO",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -2266,11 +2000,9 @@
             "CODE": "734GQRL",
             "TITLE": "Object has no UID attribute",
             "DESCRIPTION": "",
-            "hint": "It cannot be used with core actions, in dropdown-filters, etc.",
-            "type": "WARNING",
-            "docs_path": "",
             "HINT": "It cannot be used with core actions, in dropdown-filters, etc.",
             "TYPE": "WARNING",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -2283,11 +2015,9 @@
             "CODE": "734GUW2",
             "TITLE": "An object without a data source cannot be readable!",
             "DESCRIPTION": "",
-            "hint": "This object is marked as readable, but has no data source or an empty data address.",
-            "type": "WARNING",
-            "docs_path": "",
             "HINT": "This object is marked as readable, but has no data source or an empty data address.",
             "TYPE": "WARNING",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -2300,11 +2030,9 @@
             "CODE": "734GWLL",
             "TITLE": "Object has no attributes!",
             "DESCRIPTION": "",
-            "hint": "Neither this object nor objects it inerits from have any attributes.",
-            "type": "WARNING",
-            "docs_path": "",
             "HINT": "Neither this object nor objects it inerits from have any attributes.",
             "TYPE": "WARNING",
+            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -2317,11 +2045,24 @@
             "CODE": "734GZDR",
             "TITLE": "Object is not readable, but has readable attributes",
             "DESCRIPTION": "",
-            "hint": "It will not be possible to read any of these attributes.",
-            "type": "WARNING",
-            "docs_path": "",
             "HINT": "It will not be possible to read any of these attributes.",
             "TYPE": "WARNING",
+            "docs_path": "",
+            "DOCS": ""
+        },
+        {
+            "CREATED_ON": "2018-11-30 16:50:36",
+            "MODIFIED_ON": "2018-11-30 16:50:36",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e8f4c007e6583b8de10205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "CODE": "73A6BVD",
+            "TITLE": "Object has multiple LABEL-attributes!",
+            "DESCRIPTION": "",
+            "HINT": "Make sure, only one attribute is marked as object label! Until then, the first one will be used.",
+            "TYPE": "ERROR",
+            "docs_path": "",
             "DOCS": ""
         }
     ],
