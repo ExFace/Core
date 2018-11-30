@@ -128,7 +128,7 @@ class Filter extends Container implements iTakeInput, iShowSingleAttribute
 
     /**
      *
-     * @return unknown
+     * @return string|NULL
      */
     public function getAttributeAlias()
     {
@@ -245,8 +245,14 @@ class Filter extends Container implements iTakeInput, iShowSingleAttribute
     }
 
     /**
+     * Set to TRUE to make the filter mandatory (no search will be possible if it is not set!).
      * 
-     * {@inheritDoc}
+     * By default all filters are optional - regardless of the required-setting of the
+     * underlying input widget.
+     * 
+     * @uxon-property required
+     * @uxon-type boolean
+     * 
      * @see \exface\Core\Interfaces\Widgets\iCanBeRequired::setRequired()
      */
     public function setRequired($value)
@@ -398,23 +404,65 @@ class Filter extends Container implements iTakeInput, iShowSingleAttribute
         $this->apply_on_change = BooleanDataType::cast($true_or_false);
         return $this;
     }
-    
+
+    /**
+     *
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\Widgets\iTakeInput::isDisplayOnly()
+     */
     public function isDisplayOnly()
     {
         return $this->getInputWidget()->isDisplayOnly();
     }
 
+    /**
+     *
+     * Set to TRUE to make the widget inactive and ignored by actions - FALSE by default.
+     * 
+     * The following states of input widgets are available:
+     * - display_only = true - active (user can interact with the widget), but not considered as input for actions
+     * - disabled = true - inactive (user cannot interact with the widget), but considered as input for action
+     * - readonly = true - inactive and not considered as action input (same as display_only + disabled)
+     * 
+     * If a widget is readonly, will also get display-only and disabled automatically.
+     * 
+     * @uxon-property readonly
+     * @uxon-type boolean
+     * 
+     * @see \exface\Core\Interfaces\Widgets\iTakeInput::setReadonly()
+     */
     public function setReadonly($true_or_false)
     {
         $this->getInputWidget()->setReadonly($true_or_false);
         return $this;
     }
 
+    /**
+     *
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\Widgets\iTakeInput::isReadonly()
+     */
     public function isReadonly()
     {
         return $this->getInputWidget()->isReadonly();
     }
 
+    /**
+     *
+     * Makes the widget display-only if set to TRUE (= interactive, but being ignored by most actions) - FALSE by default.
+     * 
+     * The following states of input widgets are available:
+     * - display_only = true - active (user can interact with the widget), but not considered as input for actions
+     * - disabled = true - inactive (user cannot interact with the widget), but considered as input for action
+     * - readonly = true - inactive and not considered as action input (same as display_only + disabled)
+     * 
+     * If a widget is readonly, will also get display-only and disabled automatically.
+     * 
+     * @uxon-property display_only
+     * @uxon-type boolean
+     * 
+     * @see \exface\Core\Interfaces\Widgets\iTakeInput::setDisplayOnly()
+     */
     public function setDisplayOnly($true_or_false)
     {
         $this->getInputWidget()->setDisplayOnly($true_or_false);

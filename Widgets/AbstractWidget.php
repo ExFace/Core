@@ -664,10 +664,8 @@ abstract class AbstractWidget implements WidgetInterface
      *
      * @uxon-property disabled
      * @uxon-type boolean
-     *
-     *
+     * 
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\WidgetInterface::setDisabled()
      */
     public function setDisabled($value)
