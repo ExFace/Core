@@ -7,7 +7,15 @@ use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 use exface\Core\DataTypes\BooleanDataType;
 
 /**
- * Navigates to the given page optionally taking along a set of definable filters.
+ * Navigates to the given page taking the selected input object as filter and an optional set of additional filters.
+ * 
+ * By default, this action tries to keep the current context by prefilling the target page with the
+ * object from the input data. In contrast to the regular behavior of `prefill_with_input_data` for
+ * `ShowWidget*` actions (e.g. `ShowObject*`, etc.), this action will only use the UID from the input
+ * data - not the other columns. This is done to avoid unexpected filter values coming from additional
+ * columns of the input data (we don't want to set filters just because we can!).
+ * 
+ * If you need more filter presets, use `take_along_filters` to configure them explicitly!
  * 
  * @author Andrej Kabachnik
  *        
@@ -16,8 +24,6 @@ class GoToPage extends ShowWidget
 {
 
     private $takeAlongFilters = array();
-    
-    private $prefillWithUidOnly = true;
 
     private $open_in_new_window = false;
     
@@ -111,4 +117,3 @@ class GoToPage extends ShowWidget
         return $this;
     }
 }
-?>
