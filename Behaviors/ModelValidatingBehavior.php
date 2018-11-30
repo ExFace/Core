@@ -155,6 +155,17 @@ class ModelValidatingBehavior extends AbstractBehavior
     {
         if ($object->hasLabelAttribute() === false) {
             $messageList->addMessageByCode('734GDAX', 'Object has no LABEL attribute!');
+        } else {
+            $labels = [];
+            foreach ($object->getAttributes() as $attr) {
+                if ($attr->isLabelForObject()) {
+                    $labels[] = $attr;
+                }
+            }
+            
+            if (count($labels) > 1) {
+                $messageList->addMessageByCode('73A6BVD', 'Object has multiple LABEL attributes!');
+            }
         }
     }
     
