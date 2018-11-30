@@ -11,6 +11,7 @@ use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Factories\ResultFactory;
 use exface\Core\DataTypes\StringDataType;
+use exface\Core\DataTypes\BooleanDataType;
 
 /**
  * This action opens a URL for a given object instance.
@@ -29,9 +30,6 @@ class GoToUrl extends AbstractAction implements iShowUrl
     private $open_in_new_window = false;
 
     /**
-     * @uxon urlencode_placeholders Makes all placeholders get encoded and thus URL-safe if set to TRUE.
-     * Use FALSE if placeholders are ment to use as-is (e.g. the URL itself is a placeholder)
-     *
      * @var boolean
      */
     private $urlencode_placeholders = true;
@@ -45,11 +43,24 @@ class GoToUrl extends AbstractAction implements iShowUrl
         return $this;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\iShowUrl::getUrl()
+     */
     public function getUrl()
     {
         return $this->url;
     }
 
+    /**
+     * Defines the URL to navigate to.
+     * 
+     * @uxon-property url
+     * @uxon-type string
+     * 
+     * @see \exface\Core\Interfaces\Actions\iShowUrl::setUrl()
+     */
     public function setUrl($value)
     {
         $this->url = $value;
@@ -85,25 +96,54 @@ class GoToUrl extends AbstractAction implements iShowUrl
         return $result;
     }
 
-    public function getOpenInNewWindow()
+    /**
+     * 
+     * @return bool
+     */
+    public function getOpenInNewWindow() : bool
     {
         return $this->open_in_new_window;
     }
 
-    public function setOpenInNewWindow($value)
+    /**
+     * Set to TRUE to make the page open in a new browser window or tab (depending on the browser).
+     * 
+     * @uxon-property open_in_new_window
+     * @uxon-type bool
+     * 
+     * @param bool|string $value
+     * @return \exface\Core\Actions\GoToUrl
+     */
+    public function setOpenInNewWindow($value) : GoToUrl
     {
-        $this->open_in_new_window = $value;
+        $this->open_in_new_window = BooleanDataType::cast($value);
         return $this;
     }
 
-    public function getUrlencodePlaceholders()
+    /**
+     * 
+     * @return bool
+     */
+    public function getUrlencodePlaceholders() : bool
     {
         return $this->urlencode_placeholders;
     }
 
+    /**
+     * 
+     * Makes all placeholders get encoded and thus URL-safe if set to TRUE (default).
+     * 
+     * Use FALSE if placeholders are ment to use as-is (e.g. the URL itself is a placeholder)
+     * 
+     * @uxon-property urlencode_placeholders
+     * @uxon-type boolean
+     * 
+     * @param bool|string $value
+     * @return \exface\Core\Actions\GoToUrl
+     */
     public function setUrlencodePlaceholders($value)
     {
-        $this->urlencode_placeholders = $value;
+        $this->urlencode_placeholders = BooleanDataType::cast($value);
         return $this;
     }
     
