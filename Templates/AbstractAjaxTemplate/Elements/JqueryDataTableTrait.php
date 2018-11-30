@@ -32,6 +32,9 @@ trait JqueryDataTableTrait {
 				var filters = {operator: "AND", conditions: []}
 			';
         foreach ($widget->getFilters() as $filter) {
+            if ($filter->isDisplayOnly()) {
+                continue;
+            }
             $filter_element = $this->getTemplate()->getElement($filter);
             $detail_filters_js .= '
 				if (' . $filter_element->buildJsValueGetter() . '){
