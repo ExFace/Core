@@ -10,6 +10,7 @@ use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Widgets\iHaveColumns;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 
+
 /**
  * The DataColumnGroup is a group of columns in a data widget from one side and at the same time a full featured data widget on the other.
  * This duality makes it possible to define custom filters and even aggregators for each column group. If not done so, it will just be
@@ -307,18 +308,6 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
         // Create the column
         $column = WidgetFactory::createFromUxon($this->getPage(), $uxon, $this, $this->getColumnDefaultWidgetType());
         
-        // Set the caption to the attribute name or the relation name, if the attribute is the label of a related object.
-        // This preset caption will get overwritten by one specified in UXON once the UXON object is overloaded
-        if (! $uxon->hasProperty('caption') && $this->getMetaObject()->hasAttribute($uxon->getProperty('attribute_alias'))) {
-            $attr = $this->getMetaObject()->getAttribute($uxon->getProperty('attribute_alias'));
-            if ($attr->isLabelForObject() && $attr->getRelationPath()->toString()) {
-                $caption = $this->getMetaObject()->getRelation($attr->getRelationPath()->toString())->getName();
-            } else {
-                $caption = $attr->getName();
-            }
-            $column->setCaption($caption);
-        }
-        
         // Import the UXON object eventually overriding the above presets
         $column->importUxonObject($uxon);
         
@@ -406,4 +395,3 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
         return $this->getDataWidget()->getColumnDefaultWidgetType();
     }
 }
-?>

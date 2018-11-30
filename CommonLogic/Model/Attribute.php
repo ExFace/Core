@@ -713,11 +713,7 @@ class Attribute implements MetaAttributeInterface
      */
     public function isLabelForObject()
     {
-        if ($this->getAlias() == $this->getObject()->getLabelAttributeAlias()) {
-            return true;
-        } else {
-            return false;
-        }
+        return $this->getAlias() === $this->getObject()->getLabelAttributeAlias();
     }
 
     /**
@@ -727,11 +723,7 @@ class Attribute implements MetaAttributeInterface
      */
     public function isUidForObject()
     {
-        if ($this->getObject()->getUidAttributeAlias() === $this->getAlias()) {
-            return true;
-        } else {
-            return false;
-        }
+        return $this->getObject()->getUidAttributeAlias() === $this->getAlias();
     }
 
     /**
