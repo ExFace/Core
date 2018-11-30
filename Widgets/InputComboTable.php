@@ -126,7 +126,7 @@ class InputComboTable extends InputCombo implements iCanPreloadData
     public function getTable()
     {
         // If the data table was not specified explicitly, attempt to create one from the attirbute_alias
-        if (is_null($this->data_table)) {
+        if ($this->data_table === null) {
             $this->initTable();
         }
         return $this->data_table;
@@ -149,17 +149,14 @@ class InputComboTable extends InputCombo implements iCanPreloadData
         $table->setHeaderSortMultiple(false);
         $table->getToolbarMain()->setIncludeNoExtraActions(true);
         $table->getPaginator()->setUseTotalRowCounter(false);
-        $this->data_table = $table;
         
         // Now see if the user had already defined a table in UXON
         /* @var $table_uxon \exface\Core\CommonLogic\UxonObject */
         $table_uxon = $this->getTableUxon();
         if (! $table_uxon->isEmpty()) {
             // Do not allow custom widget types
-            if ($table_uxon->getProperty('widget_type')) {
-                $table_uxon->unsetProperty('widget_type');
-            }
-            $this->data_table->importUxonObject($table_uxon);
+            $table_uxon->unsetProperty('widget_type');
+            $table->importUxonObject($table_uxon);
         }
         
         // Add default attributes
@@ -171,6 +168,8 @@ class InputComboTable extends InputCombo implements iCanPreloadData
         $table->setMultiSelect($this->getMultiSelect());
         $table->setLazyLoading($this->getLazyLoading());
         $table->setLazyLoadingActionAlias($this->getLazyLoadingActionAlias());
+        
+        $this->data_table = $table;
         
         // Ensure, that special columns needed for the InputComboTable are present. This must be done after $this->data_table is
         // set, because the method may use autogeneration of the text column, which needs to know about the DataTable
