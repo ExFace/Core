@@ -15,6 +15,9 @@ trait JqueryFilterTrait {
     public function buildJsConditionGetter($valueJs = null)
     {
         $widget = $this->getWidget();
+        if ($widget->isDisplayOnly() === true) {
+            return '';
+        }
         $value = is_null($valueJs) ? $this->buildJsValueGetter() : $valueJs;
         return '{expression: "' . $widget->getAttributeAlias() . '", comparator: ' . $this->buildJsComparatorGetter() . ', value: ' . $value . ', object_alias: "' . $widget->getMetaObject()->getAliasWithNamespace() . '"}';
     }
