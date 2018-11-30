@@ -4,6 +4,7 @@ namespace exface\Core\Actions;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\WidgetLinkFactory;
 use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
+use exface\Core\DataTypes\BooleanDataType;
 
 /**
  * Navigates to the given page optionally taking along a set of definable filters.
@@ -15,12 +16,15 @@ class GoToPage extends ShowWidget
 {
 
     private $takeAlongFilters = array();
+    
+    private $prefillWithUidOnly = true;
 
+    private $open_in_new_window = false;
+    
     protected function init()
     {
         parent::init();
         $this->setPrefillWithInputData(true);
-        $this->setInputRowsMin(1);
     }
 
     /**
@@ -80,6 +84,30 @@ class GoToPage extends ShowWidget
         }
         
         $this->takeAlongFilters = $array;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function getOpenInNewWindow() : bool
+    {
+        return $this->open_in_new_window;
+    }
+    
+    /**
+     * Set to TRUE to make the page open in a new browser window or tab (depending on the browser).
+     * 
+     * @uxon-property open_in_new_window
+     * @uxon-type bool
+     * 
+     * @param bool|string $value
+     * @return \exface\Core\Actions\GoToPage
+     */
+    public function setOpenInNewWindow($value) : GoToPage
+    {
+        $this->open_in_new_window = BooleanDataType::cast($value);
         return $this;
     }
 }
