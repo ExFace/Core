@@ -25,7 +25,7 @@ use exface\Core\DataTypes\BooleanDataType;
  * @author Andrej Kabachnik
  *        
  */
-class Filter extends Container implements iCanBeRequired, iShowSingleAttribute
+class Filter extends Container implements iTakeInput, iShowSingleAttribute
 {
 
     private $widget = null;
@@ -234,14 +234,21 @@ class Filter extends Container implements iCanBeRequired, iShowSingleAttribute
         return $this;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iCanBeRequired::isRequired()
+     */
     public function isRequired()
     {
-        if (is_null($this->required)) {
-            return false;
-        }
-        return $this->required;
+        return $this->required ?? false;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iCanBeRequired::setRequired()
+     */
     public function setRequired($value)
     {
         $value = BooleanDataType::cast($value);
@@ -252,6 +259,11 @@ class Filter extends Container implements iCanBeRequired, iShowSingleAttribute
         return $this;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Container::setDisabled()
+     */
     public function setDisabled($value)
     {
         if ($this->getInputWidget()) {
@@ -386,5 +398,27 @@ class Filter extends Container implements iCanBeRequired, iShowSingleAttribute
         $this->apply_on_change = BooleanDataType::cast($true_or_false);
         return $this;
     }
+    
+    public function isDisplayOnly()
+    {
+        return $this->getInputWidget()->isDisplayOnly();
+    }
+
+    public function setReadonly($true_or_false)
+    {
+        $this->getInputWidget()->setReadonly($true_or_false);
+        return $this;
+    }
+
+    public function isReadonly()
+    {
+        return $this->getInputWidget()->isReadonly();
+    }
+
+    public function setDisplayOnly($true_or_false)
+    {
+        $this->getInputWidget()->setDisplayOnly($true_or_false);
+        return $this;
+    }
+
 }
-?>

@@ -66,6 +66,9 @@ trait JqueryDataConfiguratorTrait
                 $filters[] = $this->getTemplate()->getElement($filter)->buildJsConditionGetter($filter_value);
             }
         }
+        // Remove empty values
+        $filters = array_filter($filters);
+        
         $filter_group = ! empty($filters) ? '{operator: "AND", conditions: [' . implode(', ', $filters) . ']}' : '';
         return "{oId: '" . $widget->getMetaObject()->getId() . "'" . ($filter_group !== '' ? ", filters: " . $filter_group : "") . "}";
     }
