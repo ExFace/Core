@@ -1222,8 +1222,10 @@ class Data
     }
 
     /**
-     * Set to TRUE to make the table editable or add a column with an editor.
-     * FALSE by default.
+     * Set to TRUE to make the table editable.
+     * 
+     * This setting will be set automatically if an editable column group is
+     * added.
      *
      * @uxon-property editable
      * @uxon-type boolean
