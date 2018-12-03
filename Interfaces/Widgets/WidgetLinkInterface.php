@@ -21,7 +21,7 @@ interface WidgetLinkInterface extends WorkbenchDependantInterface, iCanBeConvert
      * 
      * @return string
      */
-    public function getTargetPageAlias() : string;
+    public function getTargetPageAlias() : ?string;
 
     /**
      * Returns the target-page of the link.
