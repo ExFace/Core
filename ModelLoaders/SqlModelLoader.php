@@ -364,7 +364,7 @@ class SqlModelLoader implements ModelLoaderInterface
         if ($default_editor && $default_editor !== '{}'){
             $attr->setDefaultEditorUxon(UxonObject::fromJson($default_editor));
         }
-        $default_display = $row['default_editor_uxon'];
+        $default_display = $row['default_display_uxon'];
         if ($default_display && $default_display !== '{}'){
             $attr->setDefaultDisplayUxon(UxonObject::fromJson($default_display));
         }
