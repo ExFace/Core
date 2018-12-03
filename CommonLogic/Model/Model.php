@@ -57,7 +57,7 @@ class Model implements ModelInterface
         $this->cacheObject($obj);
         return $obj;
     }
-
+    
     /**
      * 
      * {@inheritDoc}
@@ -162,6 +162,13 @@ class Model implements ModelInterface
             $this->setDefaultNamespace($obj->getNamespace());
         }
         return true;
+    }
+    
+    public function clearCache() : ModelInterface
+    {
+        $this->loaded_objects = [];
+        $this->object_library = [];
+        return $this;
     }
 
     /**
