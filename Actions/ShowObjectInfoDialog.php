@@ -11,6 +11,7 @@ use exface\Core\Interfaces\Widgets\iCanBeDisabled;
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
+use exface\Core\DataTypes\MessageTypeDataType;
 
 /**
  * This action will show a dialog displaying the default editor of a meta object in read-only mode.
@@ -79,8 +80,8 @@ class ShowObjectInfoDialog extends ShowDialog
         }
         
         if ($objectWritable === false){
-            $editors[] = WidgetFactory::create($parent_widget->getPage(), 'Message', $parent_widget)
-            ->setType(EXF_MESSAGE_TYPE_WARNING)
+            $editors[] = WidgetFactory::createFromUxon($parent_widget->getPage(), 'Message', $parent_widget)
+            ->setType(MessageTypeDataType::WARNING)
             ->setWidth('100%')
             ->setText($this->getApp()->getTranslator()->translate('ACTION.SHOWOBJECTEDITDIALOG.DATA_SOURCE_NOT_WRITABLE'));
         }
@@ -115,7 +116,7 @@ class ShowObjectInfoDialog extends ShowDialog
         
         if (count($editors) == 0){
             $editors[] = WidgetFactory::create($parent_widget->getPage(), 'Message', $parent_widget)
-            ->setType(EXF_MESSAGE_TYPE_WARNING)
+            ->setType(MessageTypeDataType::WARNING)
             ->setText($this->getApp()->getTranslator()->translate('ACTION.SHOWOBJECTEDITDIALOG.NO_EDITABLE_ATTRIBUTES'));
         }
         

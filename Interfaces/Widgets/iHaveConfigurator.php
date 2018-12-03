@@ -16,24 +16,31 @@ use exface\Core\Widgets\WidgetConfigurator;
 interface iHaveConfigurator extends WidgetInterface
 {
     /**
-     * Sets the configurator widget
      * 
-     * @param UxonObject|iConfigureWidgets $widget
+     * @param UxonObject $uxon
      * @return iHaveConfigurator
      */
-    public function setConfiguratorWidget($widget_or_uxon_object);
+    public function setConfigurator(UxonObject $uxon) : iHaveConfigurator;
+
+    /**
+     * Sets the configurator widget
+     * 
+     * @param iConfigureWidgets $widget
+     * @return iHaveConfigurator
+     */
+    public function setConfiguratorWidget(iConfigureWidgets $widget) : iHaveConfigurator;
     
     /**
      * Returns the configurator of this widget
      * 
      * @return iConfigureWidgets
      */
-    public function getConfiguratorWidget();
+    public function getConfiguratorWidget() : iConfigureWidgets;
     
     /**
      * Returns the default widget type for configurators of this widget.
      * 
      * @return string
      */
-    public function getConfiguratorWidgetType();
+    public function getConfiguratorWidgetType() : string;
 }

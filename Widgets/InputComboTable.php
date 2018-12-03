@@ -1,7 +1,6 @@
 <?php
 namespace exface\Core\Widgets;
 
-use exface\Core\Interfaces\Widgets\iHaveChildren;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
@@ -41,6 +40,7 @@ use exface\Core\Factories\QueryBuilderFactory;
  * the product id does not belong to the default display attributes of the variant, we need to add it to the respective combo
  * manually: just add it next to the ~DEFAULT_DISPLAY attribute group.
  *
+ * ```
  *  {
  *      "widget_type": "Form",
  *      "object_alias": "MY.APP.ORDER_POSITION",
@@ -69,6 +69,8 @@ use exface\Core\Factories\QueryBuilderFactory;
  *          ]
  *      }
  *  }
+ *  
+ * ```
  *
  * You can add as many widgets in this chain of live references, as you wish. This way, interactive selectors can be built
  * for very complex hierarchies. If you do not want the lower hierarchy levels to be selectable before the higher levels
@@ -90,7 +92,7 @@ use exface\Core\Factories\QueryBuilderFactory;
  * @author Andrej Kabachnik
  *        
  */
-class InputComboTable extends InputCombo implements iHaveChildren, iCanPreloadData
+class InputComboTable extends InputCombo implements iCanPreloadData
 {
 
     private $text_column_id = null;
@@ -124,7 +126,7 @@ class InputComboTable extends InputCombo implements iHaveChildren, iCanPreloadDa
     public function getTable()
     {
         // If the data table was not specified explicitly, attempt to create one from the attirbute_alias
-        if (is_null($this->data_table)) {
+        if ($this->data_table === null) {
             $this->initTable();
         }
         return $this->data_table;
@@ -142,20 +144,19 @@ class InputComboTable extends InputCombo implements iHaveChildren, iCanPreloadDa
         /* @var $table \exface\Core\Widgets\DataTable */
         $table = $this->getPage()->createWidget('DataTable', $this);
         $table->setMetaObject($this->getTableObject());
+        $table->setHideHelpButton(true);
         $table->setUidColumnId($this->getValueColumnId());
         $table->setHeaderSortMultiple(false);
         $table->getToolbarMain()->setIncludeNoExtraActions(true);
-        $this->data_table = $table;
+        $table->getPaginator()->setUseTotalRowCounter(false);
         
         // Now see if the user had already defined a table in UXON
         /* @var $table_uxon \exface\Core\CommonLogic\UxonObject */
         $table_uxon = $this->getTableUxon();
         if (! $table_uxon->isEmpty()) {
             // Do not allow custom widget types
-            if ($table_uxon->getProperty('widget_type')) {
-                $table_uxon->unsetProperty('widget_type');
-            }
-            $this->data_table->importUxonObject($table_uxon);
+            $table_uxon->unsetProperty('widget_type');
+            $table->importUxonObject($table_uxon);
         }
         
         // Add default attributes
@@ -167,6 +168,8 @@ class InputComboTable extends InputCombo implements iHaveChildren, iCanPreloadDa
         $table->setMultiSelect($this->getMultiSelect());
         $table->setLazyLoading($this->getLazyLoading());
         $table->setLazyLoadingActionAlias($this->getLazyLoadingActionAlias());
+        
+        $this->data_table = $table;
         
         // Ensure, that special columns needed for the InputComboTable are present. This must be done after $this->data_table is
         // set, because the method may use autogeneration of the text column, which needs to know about the DataTable
@@ -308,10 +311,11 @@ class InputComboTable extends InputCombo implements iHaveChildren, iCanPreloadDa
      */
     public function getTextColumn()
     {
-        if (! $this->getTable()->getColumn($this->getTextColumnId())) {
+        $col = $this->getTable()->getColumn($this->getTextColumnId());
+        if (! $col) {
             throw new WidgetLogicError($this, 'No text data column found for ' . $this->getWidgetType() . ' with attribute_alias "' . $this->getAttributeAlias() . '"!');
         }
-        return $this->getTable()->getColumn($this->getTextColumnId());
+        return $col;
     }
 
     public function getValueColumnId()
@@ -381,6 +385,12 @@ class InputComboTable extends InputCombo implements iHaveChildren, iCanPreloadDa
         // corresponding text by itself (e.g. via lazy loading), so it is not a real problem.
         if ($this->getAttribute()->isRelation()) {
             $text_column_expr = RelationPath::relationPathAdd($this->getRelation()->getAlias(), $this->getTextColumn()->getAttributeAlias());
+            // If the column we would need is not there and it's the label column (which is very probable), it might just be named differently
+            // Many DataSheets include relation__LABEL columns but may not inlcude a column with the alias of the label attribute. It's worth
+            // trying this trick to prevent additional queries to the data source just to find the text for the combo value!
+            if (! $data_sheet->getColumns()->getByExpression($text_column_expr) && $this->getTextColumn()->getAttribute()->isLabelForObject() === true) {
+                $text_column_expr = RelationPath::relationPathAdd($this->getRelation()->getAlias(), $this->getWorkbench()->getConfig()->getOption('METAMODEL.OBJECT_LABEL_ALIAS'));
+            }
         } elseif ($this->getMetaObject()->isExactly($this->getTable()->getMetaObject())) {
             $text_column_expr = $this->getTextColumn()->getExpression()->toString();
         }
@@ -533,11 +543,9 @@ class InputComboTable extends InputCombo implements iHaveChildren, iCanPreloadDa
      *
      * @see \exface\Core\Widgets\AbstractWidget::getChildren()
      */
-    public function getChildren()
+    public function getChildren() : \Iterator
     {
-        return array(
-            $this->getTable()
-        );
+        yield $this->getTable();
     }
 
     public function getMaxSuggestions()

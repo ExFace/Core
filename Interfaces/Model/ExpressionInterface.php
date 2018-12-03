@@ -95,10 +95,12 @@ interface ExpressionInterface extends WorkbenchDependantInterface, iCanBeCopied
     public function getRelationPath();
     
     /**
+     * Returns a copy of the expression with the relation path replaced by the given one.
      * 
-     * @param string $relation_path
+     * @param MetaRelationPathInterface $path
+     * @return ExpressionInterface
      */
-    public function setRelationPath($relation_path);
+    public function withRelationPath(MetaRelationPathInterface $path) : ExpressionInterface;
     
     /**
      * Returns the expression as string.
@@ -124,10 +126,10 @@ interface ExpressionInterface extends WorkbenchDependantInterface, iCanBeCopied
     
     public function getMetaObject();
     
-    public function setMetaObject(MetaObjectInterface $object);
+    public function setMetaObject(MetaObjectInterface $object) : ExpressionInterface;
     
     /**
-     * Returns the same expression, but relative to another base object.
+     * Returns a copy of the expression relative to another base object.
      * E.g. "ORDER->POSITION->PRODUCT->ID" will become "PRODUCT->ID" after calling rebase(ORDER->POSITION) on it.
      *
      * @param string $relation_path_to_new_base_object

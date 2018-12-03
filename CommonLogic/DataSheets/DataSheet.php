@@ -48,6 +48,7 @@ use exface\Core\Events\DataSheet\OnBeforeDeleteDataEvent;
 use exface\Core\Events\DataSheet\OnDeleteDataEvent;
 use exface\Core\Events\DataSheet\OnBeforeReplaceDataEvent;
 use exface\Core\Events\DataSheet\OnReplaceDataEvent;
+use exface\Core\Factories\RelationPathFactory;
 
 /**
  * Internal data respresentation object in exface.
@@ -76,11 +77,13 @@ class DataSheet implements DataSheetInterface
 
     private $sorters = array();
 
-    private $total_row_count = 0;
+    private $total_row_count = null;
+    
+    private $autocount = true;
 
     private $subsheets = array();
 
-    private $aggregation_columns = array();
+    private $aggregation_columns = null;
 
     private $rows_on_page = null;
 
@@ -89,11 +92,15 @@ class DataSheet implements DataSheetInterface
     private $uid_column_name = null;
 
     private $invalid_data_flag = false;
+    
+    private $is_fresh = true;
 
     // properties NOT to be copied on copy()
     private $exface;
 
     private $meta_object;
+    
+    private $dataSourceHasMoreRows = true;
 
     public function __construct(\exface\Core\Interfaces\Model\MetaObjectInterface $meta_object)
     {
@@ -113,10 +120,10 @@ class DataSheet implements DataSheetInterface
      *
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::addRows($rows)
      */
-    public function addRows(array $rows, $merge_uid_dublicates = false)
+    public function addRows(array $rows, bool $merge_uid_dublicates = false, bool $auto_add_columns = true) : DataSheetInterface
     {
         foreach ($rows as $row) {
-            $this->addRow((array) $row, $merge_uid_dublicates);
+            $this->addRow($row, $merge_uid_dublicates, $auto_add_columns);
         }
         return $this;
     }
@@ -127,7 +134,7 @@ class DataSheet implements DataSheetInterface
      *
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::addRow()
      */
-    public function addRow(array $row, $merge_uid_dublicates = false)
+    public function addRow(array $row, bool $merge_uid_dublicates = false, bool $auto_add_columns = true) : DataSheetInterface
     {
         if (! empty($row)) {
             if ($merge_uid_dublicates && $this->getUidColumn() && $uid = $row[$this->getUidColumn()->getName()]) {
@@ -140,8 +147,11 @@ class DataSheet implements DataSheetInterface
             } else {
                 $this->rows[] = $row;
             }
+            
             // ensure, that all columns used in the rows are present in the data sheet
-            $this->getColumns()->addMultiple(array_keys((array) $row));
+            if ($auto_add_columns === true) {
+                $this->getColumns()->addMultiple(array_keys((array) $row));
+            }
             $this->setFresh(true);
         }
         return $this;
@@ -160,7 +170,7 @@ class DataSheet implements DataSheetInterface
         foreach ($data_sheet->getColumns() as $col) {
             $right_cols[] = $col->copy();
         }
-        $this->getColumns()->addMultiple($right_cols, $relation_path);
+        $this->getColumns()->addMultiple($right_cols, RelationPathFactory::createFromString($this->getMetaObject(), $relation_path));
         // Now process the data and join rows
         if (! is_null($left_key_column) && ! is_null($right_key_column)) {
             foreach ($this->rows as $left_row_nr => $row) {
@@ -291,7 +301,7 @@ class DataSheet implements DataSheetInterface
      */
     public function getCellValue($column_name, $row_number)
     {
-        $data_row_cnt = $this->countRowsLoaded();
+        $data_row_cnt = $this->countRows();
         if ($row_number >= $data_row_cnt) {
             return $this->totals_rows[$row_number - $data_row_cnt][$column_name];
         }
@@ -312,8 +322,9 @@ class DataSheet implements DataSheetInterface
         }
         
         // Detect, if the cell belongs to a total row
-        $data_row_cnt = $this->countRowsLoaded();
-        if ($row_number >= $data_row_cnt && $row_number < $this->countRowsLoaded(true)) {
+        $data_row_cnt = $this->countRows();
+        $total_row_cnt = count($this->getTotalsRows());
+        if ($row_number >= $data_row_cnt && $row_number < ($data_row_cnt + $total_row_cnt)) {
             $this->totals_rows[$row_number - $data_row_cnt][$column_name] = $value;
         }
         
@@ -429,9 +440,8 @@ class DataSheet implements DataSheetInterface
                 throw new DataSheetReadError($this, 'QueryBuilder "' . get_class($query) . '" cannot read attribute "' . $attribute->getAliasWithRelationPath() . '" of object "' . $attribute->getObject()->getAliasWithNamespace() .'"!');
             }
             
-            if ($attribute->getFormatter()) {
-                $col->setFormatter($attribute->getFormatter());
-                $col->getFormatter()->setRelationPath($attribute->getRelationPath()->toString());
+            if ($attribute->hasCalculation()) {
+                $col->setFormatter($attribute->getCalculationExpression());
                 if ($aggregator = DataAggregation::getAggregatorFromAlias($this->getWorkbench(), $col->getExpressionObj()->toString())) {
                     $col->getFormatter()->mapAttribute(str_replace(':' . $aggregator->exportString(), '', $col->getExpressionObj()->toString()), $col->getExpressionObj()->toString());
                 }
@@ -463,50 +473,11 @@ class DataSheet implements DataSheetInterface
         $this->removeRows();
         
         if (is_null($limit))
-            $limit = $this->getRowsOnPage();
+            $limit = $this->getRowsLimit();
         if (is_null($offset))
-            $offset = $this->getRowOffset();
+            $offset = $this->getRowsOffset();
         
-        // create new query for the main object
-        $query = QueryBuilderFactory::createForObject($thisObject);
-        
-        foreach ($this->getColumns() as $col) {
-            $this->getDataForColumn($col, $query);
-            foreach ($col->getTotals()->getAll() as $row => $total) {
-                $query->addTotal($col->getAttributeAlias(), $total->getAggregator(), $row);
-            }
-        }
-        
-        // Ensure, the columns with system attributes are always in the select
-        // FIXME With growing numbers of behaviors and system attributes, this becomes a pain, as more and more possibly
-        // aggregated columns are added automatically - even if the sheet is only meant for reading. Maybe we should let
-        // the code creating the sheet add the system columns. The behaviors will prduce errors if this does not happen anyway.
-        foreach ($thisObject->getAttributes()->getSystem()->getAll() as $attr) {
-            if (! $this->getColumns()->getByAttribute($attr)) {
-                // Check if the system attribute has a default aggregator if the data sheet is being aggregated
-                if ($this->hasAggregations() && $attr->getDefaultAggregateFunction()) {
-                    $col = $this->getColumns()->addFromExpression($attr->getAlias() . DataAggregation::AGGREGATION_SEPARATOR . $attr->getDefaultAggregateFunction());
-                } else {
-                    $col = $this->getColumns()->addFromAttribute($attr);
-                }
-                $this->getDataForColumn($col, $query);
-            }
-        }
-        
-        // Set explicitly defined filters
-        $query->setFiltersConditionGroup($this->getFilters());
-        // Add filters from the contexts
-        foreach ($this->exface->getContext()->getScopeApplication()->getFilterContext()->getConditions($thisObject) as $cond) {
-            $query->addFilterCondition($cond);
-        }
-        
-        // set aggregations
-        foreach ($this->getAggregations() as $aggr) {
-            if (! $query->canReadAttribute($thisObject->getAttribute($aggr->getAttributeAlias()))) {
-                throw new DataSheetReadError($this, 'Cannot apply aggregation "' . $aggr->getAttributeAlias() . '": Aggregations over attributes in other data sources, than the man sheet object are currently not supported!');
-            }
-            $query->addAggregation($aggr->getAttributeAlias());
-        }
+        $query = $this->initReadQueryBuilder($thisObject);
         
         // set sorting
         $sorters = $this->hasSorters() ? $this->getSorters() : $thisObject->getDefaultSorters();
@@ -534,9 +505,10 @@ class DataSheet implements DataSheetInterface
             throw new DataSheetReadError($this, $e->getMessage(), ($e instanceof ExceptionInterface ? $e->getAlias() : null), $e);
         }
         
-        $this->addRows($query->getResultRows());
-        $this->totals_rows = $query->getResultTotals();
-        $this->total_row_count = $query->getResultTotalRows();
+        $this->addRows($result->getResultRows());
+        $this->totals_rows = $result->getTotalsRows();
+        $this->total_row_count = $result->getAllRowsCounter();
+        $this->dataSourceHasMoreRows = $result->hasMoreRows();
         
         // load data for subsheets if needed
         if ($this->countRows()) {
@@ -580,14 +552,60 @@ class DataSheet implements DataSheetInterface
         }
         
         if (! $postprocessorSorters->isEmpty()) {
-            if ($this->countRowsAll() > $this->countRowsLoaded(false)) {
+            if ($this->isPaged() === true) {
                 throw new DataSheetReadError($this, 'Cannot sort by columns from different data sources when using pagination: either increase page length or filter data to fit on one page!');
             }
             $this->sort($postprocessorSorters);
         }
         
         $this->getWorkbench()->eventManager()->dispatch(new onReadDataEvent($this));
-        return $result;
+        return $result->getAffectedRowsCounter();
+    }
+    
+    protected function initReadQueryBuilder(MetaObjectInterface $object) : QueryBuilderInterface
+    {
+        // create new query for the main object
+        $query = QueryBuilderFactory::createForObject($object);
+        
+        foreach ($this->getColumns() as $col) {
+            $this->getDataForColumn($col, $query);
+            foreach ($col->getTotals()->getAll() as $row => $total) {
+                $query->addTotal($col->getAttributeAlias(), $total->getAggregator(), $row);
+            }
+        }
+        
+        // Ensure, the columns with system attributes are always in the select
+        // FIXME With growing numbers of behaviors and system attributes, this becomes a pain, as more and more possibly
+        // aggregated columns are added automatically - even if the sheet is only meant for reading. Maybe we should let
+        // the code creating the sheet add the system columns. The behaviors will prduce errors if this does not happen anyway.
+        foreach ($object->getAttributes()->getSystem()->getAll() as $attr) {
+            if (! $this->getColumns()->getByAttribute($attr)) {
+                // Check if the system attribute has a default aggregator if the data sheet is being aggregated
+                if ($this->hasAggregations() && $attr->getDefaultAggregateFunction()) {
+                    $col = $this->getColumns()->addFromExpression($attr->getAlias() . DataAggregation::AGGREGATION_SEPARATOR . $attr->getDefaultAggregateFunction());
+                } else {
+                    $col = $this->getColumns()->addFromAttribute($attr);
+                }
+                $this->getDataForColumn($col, $query);
+            }
+        }
+        
+        // Set explicitly defined filters
+        $query->setFiltersConditionGroup($this->getFilters());
+        // Add filters from the contexts
+        foreach ($this->exface->getContext()->getScopeApplication()->getFilterContext()->getConditions($object) as $cond) {
+            $query->addFilterCondition($cond);
+        }
+        
+        // set aggregations
+        foreach ($this->getAggregations() as $aggr) {
+            if (! $query->canReadAttribute($object->getAttribute($aggr->getAttributeAlias()))) {
+                throw new DataSheetReadError($this, 'Cannot apply aggregation "' . $aggr->getAttributeAlias() . '": Aggregations over attributes in other data sources, than the man sheet object are currently not supported!');
+            }
+            $query->addAggregation($aggr->getAttributeAlias());
+        }
+        
+        return $query;
     }
 
     public function countRows() : int
@@ -762,7 +780,8 @@ class DataSheet implements DataSheetInterface
         $connection = $this->getMetaObject()->getDataConnection();
         $transaction->addDataConnection($connection);
         try {
-            $counter += $query->update($connection);
+            $result = $query->update($connection);
+            $counter += $result->getAffectedRowsCounter();
         } catch (\Throwable $e) {
             $transaction->rollback();
             $commit = false;
@@ -945,7 +964,12 @@ class DataSheet implements DataSheetInterface
         $connection = $this->getMetaObject()->getDataConnection();
         $transaction->addDataConnection($connection);
         try {
-            $new_uids = $query->create($connection);
+            $result = $query->create($connection);
+            $new_uids = [];
+            $uidKey = $this->hasUidColumn() ? $this->getUidColumn()->getName() : DataColumn::sanitizeColumnName($this->getMetaObject()->getUidAttributeAlias());
+            foreach ($result->getResultRows() as $row) {
+                $new_uids[] = $row[$uidKey];
+            }
         } catch (\Throwable $e) {
             $transaction->rollback();
             $commit = false;
@@ -1036,7 +1060,8 @@ class DataSheet implements DataSheetInterface
         $connection = $this->getMetaObject()->getDataConnection();
         $transaction->addDataConnection($connection);
         try {
-            $affected_rows += $query->delete($connection);
+            $result = $query->delete($connection);
+            $affected_rows += $result->getAffectedRowsCounter();
         } catch (\Throwable $e) {
             $transaction->rollback();
             throw new DataSheetWriteError($this, 'Data source error. ' . $e->getMessage(), ($e instanceof ExceptionInterface ? $e->getAlias() : null), $e);
@@ -1186,10 +1211,35 @@ class DataSheet implements DataSheetInterface
         }
     }
 
-    public function setCounterRowsAll($count)
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::setCounterForRowsInDataSource()
+     */
+    public function setCounterForRowsInDataSource(int $count) : DataSheetInterface
     {
-        $this->total_row_count = intval($count);
+        $this->total_row_count = $count;
         return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::setAutoCount()
+     */
+    public function setAutoCount(bool $trueOrFalse) : DataSheetInterface
+    {
+        $this->autocount = $trueOrFalse;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function getAutoCount() : bool
+    {
+        return $this->autocount;
     }
 
     /**
@@ -1204,7 +1254,7 @@ class DataSheet implements DataSheetInterface
     function getRows($how_many = 0, $offset = 0)
     {
         $return = array();
-        if ($how_many || $offset) {
+        if ($how_many > 0 || $offset > 0) {
             foreach ($this->rows as $nr => $row) {
                 if ($nr >= $offset && $how_many < count($return)) {
                     $return[$nr] = $row;
@@ -1257,15 +1307,20 @@ class DataSheet implements DataSheetInterface
         return $this->totals_rows;
     }
 
-    function countRowsAll()
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::countRowsInDataSource()
+     */
+    public function countRowsInDataSource() : ?int
     {
+        // FIXME need to check if the sheet is fresh at this point. On the other hand,
+        // the sheet must get marked not fresh if filters change as they have direct
+        // effect on the number of rows available in the data source.
+        if ($this->total_row_count === null && $this->autocount === true) {
+            $this->dataCount();
+        }
         return $this->total_row_count;
-    }
-
-    function countRowsLoaded($include_totals = false)
-    {
-        $cnt = count($this->rows) + ($include_totals ? count($this->totals_rows) : 0);
-        return $cnt;
     }
 
     /**
@@ -1430,31 +1485,35 @@ class DataSheet implements DataSheetInterface
      */
     public function exportUxonObject()
     {
-        $uxon = new UxonObject();
-        $uxon->setProperty('object_alias', $this->getMetaObject()->getAliasWithNamespace());
+        $arr = [];
+        $arr['object_alias'] = $this->getMetaObject()->getAliasWithNamespace();
         
+        $cols = [];
         foreach ($this->getColumns() as $col) {
-            $uxon->appendToProperty('columns', $col->exportUxonObject());
+            $cols[] = $col->exportUxonObject()->toArray();
+        }
+        if (empty($cols) === false) {
+            $arr['columns'] = $cols;
         }
         
-        if (! $this->isEmpty()) {
-            $uxon->setProperty('rows', $this->getRows());
+        if ($this->isEmpty() === false) {
+            $arr['rows'] = $this->getRows();
         }
         
-        $uxon->setProperty('totals_rows', $this->getTotalsRows());
-        $uxon->setProperty('filters', $this->getFilters()->exportUxonObject());
-        $uxon->setProperty('rows_on_page', $this->getRowsOnPage());
-        $uxon->setProperty('row_offset', $this->getRowOffset());
+        $arr['totals_rows'] = $this->getTotalsRows();
+        $arr['filters'] = $this->getFilters()->exportUxonObject()->toArray();
+        $arr['rows_limit'] = $this->getRowsLimit();
+        $arr['rows_offset'] = $this->getRowsOffset();
         
         foreach ($this->getSorters() as $sorter) {
-            $uxon->appendToProperty('sorters', $sorter->exportUxonObject());
+            $arr['sorters'][] = $sorter->exportUxonObject()->toArray();
         }
         
         foreach ($this->getAggregations() as $aggr) {
-            $uxon->appendToProperty('aggregators', $aggr->exportUxonObject());
+            $arr['aggregators'][] = $aggr->exportUxonObject()->toArray();
         }
         
-        return $uxon;
+        return new UxonObject($arr);
     }
 
     public function importUxonObject(UxonObject $uxon)
@@ -1504,12 +1563,18 @@ class DataSheet implements DataSheetInterface
             $this->setFilters(ConditionGroupFactory::createFromUxon($this->exface, $uxon->getProperty('filters')));
         }
         
-        if ($uxon->hasProperty('rows_on_page')) {
-            $this->setRowsOnPage($uxon->getProperty('rows_on_page'));
+        if ($uxon->hasProperty('rows_limit')) {
+            $this->setRowsLimit($uxon->getProperty('rows_limit'));
+        } elseif ($uxon->hasProperty('rows_on_page')) {
+            // Still support old property name rows_on_page
+            $this->setRowsLimit($uxon->getProperty('rows_on_page'));
         }
         
-        if ($uxon->hasProperty('row_offset')) {
-            $this->setRowOffset($uxon->getProperty('row_offset'));
+        if ($uxon->hasProperty('rows_offset')) {
+            $this->setRowsOffset($uxon->getProperty('rows_offset'));
+        } elseif ($uxon->hasProperty('row_offset')) {
+            // Still support old property name row_offset
+            $this->setRowsOffset($uxon->getProperty('row_offset'));
         }
         
         if ($uxon->hasProperty('sorters')) {
@@ -1607,19 +1672,30 @@ class DataSheet implements DataSheetInterface
         return $this->getSorters()->isEmpty() ? true : false;
     }
     
-    public function isUnpaged() : bool
+    public function isPaged() : bool
     {
-        return $this->getRowsOnPage() === null ? true : false;
+        return $this->getRowsLimit() > 0 && $this->dataSourceHasMoreRows === true;
     }
 
-    protected function setFresh($value) : DataSheetInterface
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::setFresh()
+     */
+    public function setFresh(bool $value) : DataSheetInterface
     {
         foreach ($this->getColumns() as $col) {
             $col->setFresh($value);
         }
+        $this->is_fresh = $value;
         return $this;
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::isFresh()
+     */
     public function isFresh() : bool
     {
         foreach ($this->getColumns() as $col) {
@@ -1627,26 +1703,26 @@ class DataSheet implements DataSheetInterface
                 return false;
             }
         }
-        return true;
+        return $this->is_fresh;
     }
 
-    public function getRowsOnPage()
+    public function getRowsLimit()
     {
         return $this->rows_on_page;
     }
 
-    public function setRowsOnPage($value)
+    public function setRowsLimit($value)
     {
         $this->rows_on_page = $value;
         return $this;
     }
 
-    public function getRowOffset()
+    public function getRowsOffset()
     {
         return $this->row_offset;
     }
 
-    public function setRowOffset($value)
+    public function setRowsOffset($value)
     {
         $this->row_offset = $value;
         return $this;
@@ -1716,6 +1792,12 @@ class DataSheet implements DataSheetInterface
                 $copy->getColumns()->get($key)->setIgnoreFixedValues($col->getIgnoreFixedValues());
             }
         }
+        
+        $copy->setAutoCount($this->getAutoCount());
+        if ($this->total_row_count !== null) {
+            $copy->setCounterForRowsInDataSource($this->countRowsInDataSource());
+        }
+        
         return $copy;
     }
 
@@ -1782,6 +1864,25 @@ class DataSheet implements DataSheetInterface
         }
         $this->getWorkbench()->eventManager()->dispatch(new OnValidateDataEvent($this));
         return $this->invalid_data_flag;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::dataCount()
+     */
+    public function dataCount() : int
+    {
+        $query = $this->initReadQueryBuilder($this->getMetaObject());
+        
+        try {
+            $result = $query->count($this->getMetaObject()->getDataConnection());
+        } catch (\Throwable $e) {
+            throw new DataSheetReadError($this, $e->getMessage(), ($e instanceof ExceptionInterface ? $e->getAlias() : null), $e);
+        }
+        
+        $this->setCounterForRowsInDataSource($result->getAllRowsCounter());
+        return $result->getAllRowsCounter();
     }
 
     /**

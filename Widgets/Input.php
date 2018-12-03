@@ -43,7 +43,7 @@ class Input extends Value implements iTakeInput, iHaveDefaultValue
      */
     public function isRequired()
     {
-        if (is_null($this->required)) {
+        if ($this->required === null) {
             if ($this->getAttribute()) {
                 return $this->getAttribute()->isRequired();
             } else {
@@ -53,6 +53,17 @@ class Input extends Value implements iTakeInput, iHaveDefaultValue
         return $this->required;
     }
 
+    /**
+     * Marks the widget as mandatory input (TRUE) or optional (FALSE).
+     * 
+     * If not set, the widget will automatically become required if it allows input for
+     * a required attribute of the metamodel. Use this property to override this behavior.
+     * 
+     * @uxon-property required
+     * @uxon-type boolean
+     * 
+     * @see \exface\Core\Interfaces\Widgets\iCanBeRequired::setRequired()
+     */
     public function setRequired($value)
     {
         $this->required = $value;
@@ -97,6 +108,9 @@ class Input extends Value implements iTakeInput, iHaveDefaultValue
      * 
      * If a widget is readonly, will also get display-only and disabled automatically.
      * 
+     * @uxon-property disabled
+     * @uxon-type boolean
+     * 
      * {@inheritDoc}
      * @see \exface\Core\Widgets\AbstractWidget::setDisabled()
      */
@@ -125,7 +139,9 @@ class Input extends Value implements iTakeInput, iHaveDefaultValue
      * 
      * If a widget is readonly, will also get display-only and disabled automatically.
      * 
-     * {@inheritdoc}
+     * @uxon-property readonly
+     * @uxon-type boolean
+     * 
      * @see \exface\Core\Interfaces\Widgets\iTakeInput::setReadonly()
      */
     public function setReadonly($value)
@@ -180,8 +196,14 @@ class Input extends Value implements iTakeInput, iHaveDefaultValue
     }
 
     /**
-     *
-     * {@inheritdoc}
+     * Set to TRUE to not use the default value from the metamodel.
+     * 
+     * By default, an input showing an attribute will use default and fixed values from
+     * the attribtue's metamodel. You can explicitly remove the widget's default value
+     * by setting `ignore_default_value = TRUE`.
+     * 
+     * @uxon-property ignore_default_value
+     * @uxon-type boolean
      *
      * @see \exface\Core\Interfaces\Widgets\iHaveValue::setIgnoreDefaultValue()
      */

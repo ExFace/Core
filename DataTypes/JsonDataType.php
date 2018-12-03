@@ -52,15 +52,22 @@ class JsonDataType extends TextDataType
      */
     public static function cast($string)
     {
+        $string = trim($string);
+        
         if ($string === '') {
             return '{}';
         }
         
-        if (is_null($string)) {
+        if ($string === null) {
             return null;
         }
         
         return $string;
+    }
+    
+    public static function isEmptyValue($string) : bool
+    {
+        return parent::isEmptyValue($string) === true || $string === '{}' || $string === '[]';
     }
 
     /**

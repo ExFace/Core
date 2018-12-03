@@ -97,12 +97,12 @@ class StateMenuButton extends MenuButton
      *
      * @see \exface\Core\Widgets\MenuButton::getChildren()
      */
-    public function getChildren()
+    public function getChildren() : \Iterator
     {
         if (! $this->smb_buttons_set) {
             $this->getButtons();
         }
-        return parent::getChildren();
+        yield from parent::getChildren();
     }
 
     /**

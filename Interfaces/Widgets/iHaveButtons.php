@@ -2,12 +2,12 @@
 namespace exface\Core\Interfaces\Widgets;
 
 use exface\Core\Widgets\Button;
-use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\Exceptions\Widgets\WidgetChildNotFoundError;
+use exface\Core\Interfaces\WidgetInterface;
 
-interface iHaveButtons extends iHaveChildren
+interface iHaveButtons extends WidgetInterface
 {
     /**
      * Instantiates a button with the correct type for this widget optionally 

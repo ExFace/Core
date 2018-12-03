@@ -6,6 +6,7 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\iCanBeCopied;
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\DataTypes\SortingDirectionsDataType;
+use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 
 interface MetaAttributeInterface extends WorkbenchDependantInterface, iCanBeCopied
 {
@@ -110,16 +111,25 @@ interface MetaAttributeInterface extends WorkbenchDependantInterface, iCanBeCopi
     public function setEditable($value);
     
     /**
-     *
-     * @return unknown
+     * Returns the formatter expression as a string
+     * 
+     * @return ExpressionInterface|NULL
      */
-    public function getFormatter();
+    public function getCalculationExpression() : ?ExpressionInterface;
     
     /**
      *
-     * @param unknown $value
+     * @param string $expression
+     * @return MetaAttributeInterface
      */
-    public function setFormatter($value);
+    public function setCalculation(string $expression) : MetaAttributeInterface;
+    
+    /**
+     * Returns TURE if this attribute has a calculation expression to be applied on data source values.
+     * 
+     * @return bool
+     */
+    public function hasCalculation() : bool;
     
     public function isHidden();
     
@@ -478,10 +488,7 @@ interface MetaAttributeInterface extends WorkbenchDependantInterface, iCanBeCopi
      * the UXONs will not be merged in order to avoid attributes incompatible with the specified
      * widget type.
      *
-     * Note: The returned UXON is a copy. Changes on it will not affect the result of the next method call. 
-     * If you need to change the default UXON use 
-     * MetaAttributeInterface::setDefaultEditorUxon(MetaAttributeInterface::getDefaultEditorUxon()) 
-     * or similar.
+     * Note: The returned UXON is a copy. Changes on it will not affect the result of the next method call.
      *
      * @return UxonObject
      */
@@ -492,6 +499,25 @@ interface MetaAttributeInterface extends WorkbenchDependantInterface, iCanBeCopi
      * @param UxonObject $uxon_object
      */
     public function setDefaultEditorUxon(UxonObject $uxon_object);
+    
+    /**
+     * Returns a copy of the UXON object for the default display widget for this attribute.
+     * 
+     * The default display widget is used whenever the attribute needs to be shows without
+     * being editable: e.g. as a cell widget in a DataTable, etc.
+     * 
+     * Note: The returned UXON is a copy. Changes on it will not affect the result of the next method call. 
+     * 
+     * @return UxonObject
+     */
+    public function getDefaultDisplayUxon() : UxonObject;
+    
+    /**
+     *
+     * @param UxonObject $value
+     * @return MetaAttributeInterface
+     */
+    public function setDefaultDisplayUxon(UxonObject $value) : MetaAttributeInterface;
     
     /**
      * Returns TRUE if the attribute belongs to a related object an FALSE otherwise.

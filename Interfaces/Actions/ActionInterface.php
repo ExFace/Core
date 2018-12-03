@@ -50,8 +50,8 @@ interface ActionInterface extends WorkbenchDependantInterface, AliasInterface, i
      * @param TaskInterface $task
      * @param DataTransactionInterface $transaction
      * 
-     * @triggers \exface\Core\Events\Action\OnBeforeHandleTaskEvent
-     * @triggers \exface\Core\Events\Action\OnHandleTaskEvent
+     * @triggers \exface\Core\Events\Action\OnBeforeActionPerformedEvent
+     * @triggers \exface\Core\Events\Action\OnActionPerformedEvent
      * 
      * @return ResultInterface
      */
@@ -268,7 +268,7 @@ interface ActionInterface extends WorkbenchDependantInterface, AliasInterface, i
     /**
      *
      * @param string $qualified_alias            
-     * @return ActionInputInterface
+     * @return ActionInterface
      */
     public function setObjectAlias($qualified_alias);
 

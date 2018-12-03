@@ -114,11 +114,12 @@ class MenuButton extends Button implements iHaveMenu, iHaveButtons
      *
      * @see \exface\Core\Widgets\AbstractWidget::getChildren()
      */
-    public function getChildren()
+    public function getChildren() : \Iterator
     {
-        return array_merge(parent::getChildren(), array(
-            $this->getMenu()
-        ));
+        foreach (parent::getChildren() as $child) {
+            yield $child;
+        }
+        yield $this->getMenu();
     }
 
     /**

@@ -200,9 +200,9 @@ class StateMachineState
      *
      * @return string
      */
-    public function getName()
+    public function getName($prependId = false)
     {
-        return $this->name;
+        return ($prependId === true ? $this->getStateId() . ' ' : '') . $this->name;
     }
 
     /**
@@ -268,9 +268,9 @@ class StateMachineState
     
     /**
      * 
-     * @return string
+     * @return string|null
      */
-    public function getColor()
+    public function getColor() : ?string
     {
         return $this->color;
     }

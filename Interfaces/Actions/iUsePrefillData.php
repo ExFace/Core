@@ -5,7 +5,7 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 
-interface iUsePrefillData
+interface iUsePrefillData extends ActionInterface
 {
 
     /**

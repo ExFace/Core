@@ -37,6 +37,8 @@ class ObjectBasketShowDialog extends ShowDialog
         // Never use the context for prefill because the ObjectBasket can be called on any page,
         // so the context does not really have anything to do with the ObjectBasket
         $this->setPrefillWithFilterContext(false);
+        $this->setPrefillWithInputData(false);
+        $this->setPrefillWithPrefillData(false);
     }
     
     /**

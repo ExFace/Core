@@ -1,22 +1,22 @@
 {
     "id": "0xdd41b032949e11e798a5028037ec0200",
-    "alias_with_namespace": "exface.core.error-codes",
+    "alias_with_namespace": "exface.core.messages",
     "menu_parent_page_alias": "exface.core.metamodel",
     "menu_index": "5",
     "menu_visible": true,
-    "name": "Error codes",
+    "name": "Messages",
     "description": "",
     "intro": "",
     "replaces_page_alias": null,
     "contents": {
         "widget_type": "DataTable",
-        "object_alias": "exface.Core.ERROR",
+        "object_alias": "exface.Core.MESSAGE",
         "filters": [
             {
-                "attribute_alias": "ERROR_CODE"
+                "attribute_alias": "CODE"
             },
             {
-                "attribute_alias": "ERROR_TEXT"
+                "attribute_alias": "TITLE"
             },
             {
                 "attribute_alias": "APP"
@@ -24,13 +24,16 @@
         ],
         "columns": [
             {
+                "attribute_alias": "TYPE"
+            },
+            {
                 "attribute_alias": "APP__ALIAS"
             },
             {
-                "attribute_alias": "ERROR_CODE"
+                "attribute_alias": "CODE"
             },
             {
-                "attribute_alias": "ERROR_TEXT"
+                "attribute_alias": "TITLE"
             }
         ],
         "sorters": [

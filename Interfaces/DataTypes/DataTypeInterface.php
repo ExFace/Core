@@ -66,13 +66,30 @@ interface DataTypeInterface extends WorkbenchDependantInterface, AliasInterface,
      * 
      * E.g. DateDataType::cast('21.9.1984') = 1984-09-21.
      * 
-     * @see DataTypeInterface::parse($string) for a similar method for instantiated types.
+     * Note, that cast() does not normalize empty values: for most data types NULL and '' (empty
+     * string) are concidered empty values, but they are both valid from the point of view of
+     * cast() - so `cast(null) === null` and `cast('') === ''`. This is done intentially because
+     * an empty string and NULL are actually different values an sometimes need to be treated
+     * differently in data sources.
+     * 
+     * @see DataTypeInterface::parse($string) for a similar, but more restrictive method for 
+     * instantiated types.
+     * @see DataTypeInterface::isEmptyValue($string) for a type-specific check for empty values.
      *
-     * @param string $string            
+     * @param mixed $string    
+     * @param mixed $emptyValue        
      * @throws DataTypeCastingError
      * @return string
      */
     public static function cast($string);
+    
+    /**
+     * Returns true if the given value is empty (i.e. cast() will return NULL) and FALSE otherwise
+     * 
+     * @param mixed $string
+     * @return bool
+     */
+    public static function isEmptyValue($string) : bool;
     
     /**
      * Returns a normalized representation of the given string mathing all the rules defined in the
@@ -85,7 +102,7 @@ interface DataTypeInterface extends WorkbenchDependantInterface, AliasInterface,
      * because the natural number model not only casts anything to a number, but also rounds it to
      * the a whole number.
      *
-     * @param string $string
+     * @param mixed $string
      * @throws DataTypeValidationError
      * @return string
      */

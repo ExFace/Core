@@ -20,23 +20,54 @@ use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\Widgets\iShowData;
 
 /**
- * Exports data to an xlsx file.
+ * Exports data to an Excel file (XLSX).
  * 
+ * The file will contain two sheets: 
+ * 
+ * - The first sheet contains data
+ * - The second sheet contains context information like username, export time, filters used, etc.
+ * 
+ * The data will have captions as headers (alternatively attribute aliases if `use_attribute_alias_as_header` = TRUE).
+ * By default, filtering will be enabled for all columns and the first row (headers) will be frozen. These features
+ * are controlled by the properties `enable_column_filters` and `freeze_header_row` respectively.
+ * 
+ * If the exported data uses custom data types, they can be mapped to Excel format expressions manually
+ * using `data_type_map`.
+ * 
+ * Here is an example of the configuration for a machine-friendly export (no filters, no frozen rows, aliases as headers):
+ * 
+ * ```
+ * {
+ *  "alias": "exface.Core.ExportXLSX",
+ *  "use_attiribute_alias_as_header": true,
+ *  "enable_column_filters": false,
+ *  "freeze_header_row": false
+ * }
+ * 
+ * ```
+ * 
+ * As all export actions do, this action will read all data matching the current filters (no pagination), eventually
+ * splitting it into multiple requests. You can use `limit_rows_per_request` and `limit_time_per_request` to control this.
+ *  
  * @author SFL
  *
  */
-class ExportXLSX extends ExportDataFile
+class ExportXLSX extends ExportJSON
 {
     const DATA_TYPE_STRING = 'string';
     
     private $dataTypeMap = [];
 
     private $rowNumberWritten = 0;
+    
+    private $enableColumnFilters = true;
+    
+    private $freezeHeaderRow = true;
 
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Actions\ExportData::init()
+     * @see \exface\Core\Actions\ExportJSON::init()
      */
     protected function init()
     {
@@ -47,9 +78,9 @@ class ExportXLSX extends ExportDataFile
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Actions\ExportDataFile::writeHeader()
+     * @see \exface\Core\Actions\ExportJSON::writeHeader()
      */
-    protected function writeHeader(iShowData $dataWidget)
+    protected function writeHeader(iShowData $dataWidget) : array
     {
         $headerTypes = [];
         $columnOptions = [];
@@ -58,7 +89,7 @@ class ExportXLSX extends ExportDataFile
         foreach ($dataWidget->getColumns() as $col) {
             $colOptions = [];
             // Name der Spalte
-            if ($this->getWriteReadableHeader()) {
+            if ($this->getUseAttributeAliasAsHeader() === false) {
                 $colName = $col->getCaption();
             } else {
                 $colName = $col->getAttributeAlias();
@@ -93,14 +124,23 @@ class ExportXLSX extends ExportDataFile
             $output[] = $colId;
         }
         
-        $this->getWriter()->writeSheetHeader($this->getExcelDataSheetName(), $headerTypes, ['font-style' => 'bold', 'auto_filter' => true], $columnOptions);
+        $options =  [
+            'font-style' => 'bold',
+            'auto_filter' => $this->getEnableColumnFilters()
+        ];
+        
+        if ($this->getFreezeHeaderRow() === true) {
+            $options['freeze_rows'] = 1;
+        }
+        
+        $this->getWriter()->writeSheetHeader($this->getExcelDataSheetName(), $headerTypes, $options, $columnOptions);
         return $output;
     }
 
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Actions\ExportDataFile::writeRows()
+     * @see \exface\Core\Actions\ExportJSON::writeRows()
      */
     protected function writeRows(DataSheetInterface $dataSheet, array $headerKeys)
     {
@@ -124,25 +164,24 @@ class ExportXLSX extends ExportDataFile
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Actions\ExportDataFile::writeFileResult()
+     * @see \exface\Core\Actions\ExportJSON::writeFileResult()
      */
     protected function writeFileResult(DataSheetInterface $dataSheet)
     {
         $this->writeInfoExcelSheet($dataSheet);
-        $this->getWriter()->writeToFile($this->getPathname());
+        $this->getWriter()->writeToFile($this->getFilePathAbsolute());
     }
 
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Actions\ExportDataFile::getWriter()
+     * @see \exface\Core\Actions\ExportJSON::getWriter()
      * 
      * @return \XLSXWriter
      */
     protected function getWriter()
     {
         if ($this->writer === null) {
-            //$this->writer = new \XLSXWriter();
             $this->writer = new XLSXWriter();
         }
         return $this->writer;
@@ -151,9 +190,9 @@ class ExportXLSX extends ExportDataFile
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Actions\ExportData::getMimeType()
+     * @see \exface\Core\Actions\ExportJSON::getMimeType()
      */
-    public function getMimeType()
+    public function getMimeType() : ?string
     {
         return 'application/vnd.openxmlformats-officedocument. spreadsheetml.sheet';
     }
@@ -318,15 +357,15 @@ class ExportXLSX extends ExportDataFile
      * 
      * You can use any Excel cell type notation or the following simple types:
      * 
-     * | simple formats | format code |
-     * | ---------- | ---- |
-     * | string   | @ |
-     * | integer  | 0 |
-     * | date     | YYYY-MM-DD |
-     * | datetime | YYYY-MM-DD HH:MM:SS |
-     * | price    | #,##0.00 |
-     * | dollar   | [$$-1009]#,##0.00;[RED]-[$$-1009]#,##0.00 |
-     * | euro     | #,##0.00 [$€-407];[RED]-#,##0.00 [$€-407] |
+     * | simple formats | format code                               |
+     * | -------------- | ----------------------------------------- |
+     * | string         | @                                         |
+     * | integer        | 0                                         |
+     * | date           | YYYY-MM-DD                                |
+     * | datetime       | YYYY-MM-DD HH:MM:SS                       |
+     * | price          | #,##0.00                                  |
+     * | dollar         | [$$-1009]#,##0.00;[RED]-[$$-1009]#,##0.00 |
+     * | euro           | #,##0.00 [$€-407];[RED]-#,##0.00 [$€-407] |
      * 
      * @uxon-property data_type_map
      * @uxon-type array
@@ -345,5 +384,52 @@ class ExportXLSX extends ExportDataFile
         return static::DATA_TYPE_STRING;
     }
     
+    /**
+     *
+     * @return bool
+     */
+    public function getEnableColumnFilters() : bool
+    {
+        return $this->enableColumnFilters;
+    }
+    
+    /**
+     * Set to FALSE to disable autofiltering (filter icon) on columns
+     * 
+     * @uxon-property enable_column_filters
+     * @uxon-type boolean 
+     * 
+     * @param bool $value
+     * @return ExportXLSX
+     */
+    public function setEnableColumnFilters($value) : ExportXLSX
+    {
+        $this->enableColumnFilters = BooleanDataType::cast($value);
+        return $this;
+    }
+    
+    /**
+     *
+     * @return bool
+     */
+    public function getFreezeHeaderRow() : bool
+    {
+        return $this->freezeHeaderRow;
+    }
+    
+    /**
+     * Set to FALSE in order not to freeze the first row (header row)
+     * 
+     * @uxon-property freeze_header_row
+     * @uxon-type boolean
+     * 
+     * @param bool $value
+     * @return ExportXLSX
+     */
+    public function setFreezeHeaderRow($value) : ExportXLSX
+    {
+        $this->freezeHeaderRow = BooleanDataType::cast($value);
+        return $this;
+    }
 }
 ?>

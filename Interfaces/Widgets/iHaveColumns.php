@@ -3,8 +3,9 @@ namespace exface\Core\Interfaces\Widgets;
 
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Widgets\DataColumn;
+use exface\Core\Interfaces\WidgetInterface;
 
-interface iHaveColumns extends iHaveChildren
+interface iHaveColumns extends WidgetInterface
 {
 
     /**

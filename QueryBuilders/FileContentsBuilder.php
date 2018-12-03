@@ -7,6 +7,9 @@ use exface\Core\CommonLogic\DataQueries\FileContentsDataQuery;
 use exface\Core\Exceptions\QueryBuilderException;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
+use exface\Core\Interfaces\DataSources\DataConnectionInterface;
+use exface\Core\Interfaces\DataSources\DataQueryResultDataInterface;
+use exface\Core\CommonLogic\DataQueries\DataQueryResultData;
 
 /**
  * A query builder to the raw contents of a file.
@@ -18,13 +21,6 @@ use exface\Core\Interfaces\Model\MetaAttributeInterface;
  */
 class FileContentsBuilder extends AbstractQueryBuilder
 {
-
-    private $result_rows = array();
-
-    private $result_totals = array();
-
-    private $result_total_rows = 0;
-
     /**
      *
      * @return FileContentsDataQuery
@@ -34,39 +30,6 @@ class FileContentsBuilder extends AbstractQueryBuilder
         $query = new FileContentsDataQuery();
         $query->setPathRelative($this->replacePlaceholdersInPath($this->getMainObject()->getDataAddress()));
         return $query;
-    }
-
-    public function getResultRows()
-    {
-        return $this->result_rows;
-    }
-
-    public function getResultTotals()
-    {
-        return $this->result_totals;
-    }
-
-    public function getResultTotalRows()
-    {
-        return $this->result_total_rows;
-    }
-
-    public function setResultRows(array $array)
-    {
-        $this->result_rows = $array;
-        return $this;
-    }
-
-    public function setResultTotals(array $array)
-    {
-        $this->result_totals = $array;
-        return $this;
-    }
-
-    public function setResultTotalRows($value)
-    {
-        $this->result_total_rows = $value;
-        return $this;
     }
 
     protected function getFileProperty(FileContentsDataQuery $query, $data_address)
@@ -84,12 +47,11 @@ class FileContentsBuilder extends AbstractQueryBuilder
     }
 
     /**
-     *
-     * {@inheritdoc}
-     *
+     * 
+     * {@inheritDoc}
      * @see \exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder::read()
      */
-    public function read(AbstractDataConnector $data_connection = null)
+    public function read(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
     {
         $result_rows = array();
         $query = $this->buildQuery();
@@ -105,14 +67,24 @@ class FileContentsBuilder extends AbstractQueryBuilder
             }
         }
         
-        $this->setResultTotalRows(count($result_rows));
+        $resultTotalRows = count($result_rows);
         
         $this->applyFilters($result_rows);
         $this->applySorting($result_rows);
         $this->applyPagination($result_rows);
         
-        $this->setResultRows($result_rows);
-        return $this->getResultTotalRows();
+        $cnt = count($result_rows);
+        return new DataQueryResultData($result_rows, $cnt, ($resultTotalRows > $cnt+$this->getOffset()), $resultTotalRows);
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder::count()
+     */
+    public function count(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
+    {
+        return $this->read($data_connection);
     }
 
     /**

@@ -1,5 +1,5 @@
 {
-    "object_alias": "exface.Core.ERROR",
+    "object_alias": "exface.Core.MESSAGE",
     "columns": [
         {
             "name": "CREATED_ON",
@@ -26,16 +26,28 @@
             "attribute_alias": "APP"
         },
         {
-            "name": "ERROR_CODE",
-            "attribute_alias": "ERROR_CODE"
+            "name": "CODE",
+            "attribute_alias": "CODE"
         },
         {
-            "name": "ERROR_TEXT",
-            "attribute_alias": "ERROR_TEXT"
+            "name": "TITLE",
+            "attribute_alias": "TITLE"
         },
         {
             "name": "DESCRIPTION",
             "attribute_alias": "DESCRIPTION"
+        },
+        {
+            "name": "HINT",
+            "attribute_alias": "HINT"
+        },
+        {
+            "name": "TYPE",
+            "attribute_alias": "TYPE"
+        },
+        {
+            "name": "DOCS",
+            "attribute_alias": "DOCS"
         }
     ],
     "rows": [
@@ -46,9 +58,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6c38ec343165da3e40205857feb80",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6T2T2JM",
-            "ERROR_TEXT": "Cannot start transaction",
-            "DESCRIPTION": ""
+            "CODE": "6T2T2JM",
+            "TITLE": "Cannot start transaction",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2016-12-16 12:54:44",
@@ -57,9 +72,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6c38ecd3cfdeba3e40205857feb80",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6T2T2O9",
-            "ERROR_TEXT": "Cannot commit transaction",
-            "DESCRIPTION": ""
+            "CODE": "6T2T2O9",
+            "TITLE": "Cannot commit transaction",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2016-12-16 12:54:57",
@@ -68,9 +86,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6c38ed55674b7a3e40205857feb80",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6T2T2S1",
-            "ERROR_TEXT": "Cannot rollback transaction",
-            "DESCRIPTION": ""
+            "CODE": "6T2T2S1",
+            "TITLE": "Cannot rollback transaction",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2016-12-16 12:55:06",
@@ -79,9 +100,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6c38edaae4efea3e40205857feb80",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6T2T2UI",
-            "ERROR_TEXT": "SQL query failed",
-            "DESCRIPTION": ""
+            "CODE": "6T2T2UI",
+            "TITLE": "SQL query failed",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2016-12-16 13:14:37",
@@ -90,9 +114,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6c391948a0da6a3e40205857feb80",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6T2TBVR",
-            "ERROR_TEXT": "Cannot connect to ODBC database",
-            "DESCRIPTION": ""
+            "CODE": "6T2TBVR",
+            "TITLE": "Cannot connect to ODBC database",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2016-12-16 13:15:30",
@@ -101,9 +128,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6c391b43b6deda3e40205857feb80",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6T2TCAJ",
-            "ERROR_TEXT": "Cannot get last insert id from database",
-            "DESCRIPTION": ""
+            "CODE": "6T2TCAJ",
+            "TITLE": "Cannot get last insert id from database",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2016-12-16 13:16:09",
@@ -112,9 +142,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6c391cb140e35a3e40205857feb80",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6T2TCL6",
-            "ERROR_TEXT": "Cannot  count rows affected by query",
-            "DESCRIPTION": ""
+            "CODE": "6T2TCL6",
+            "TITLE": "Cannot  count rows affected by query",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2016-12-19 16:07:46",
@@ -123,9 +156,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6c6053da2b468a3e40205857feb80",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6T4F41P",
-            "ERROR_TEXT": "Invalid data connector configuration option",
-            "DESCRIPTION": ""
+            "CODE": "6T4F41P",
+            "TITLE": "Invalid data connector configuration option",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2016-12-20 07:51:16",
@@ -134,9 +170,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6c68909e0a6caa3e40205857feb80",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6T4R8UM",
-            "ERROR_TEXT": "Multiple user credentials found for data connection",
-            "DESCRIPTION": ""
+            "CODE": "6T4R8UM",
+            "TITLE": "Multiple user credentials found for data connection",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2016-12-20 07:52:03",
@@ -145,9 +184,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6c68926058b57a3e40205857feb80",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6T4R97R",
-            "ERROR_TEXT": "Data connection not found in model",
-            "DESCRIPTION": ""
+            "CODE": "6T4R97R",
+            "TITLE": "Data connection not found in model",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2016-12-21 12:42:04",
@@ -156,9 +198,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6c77ae088bcaa93cce4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6T5DI5E",
-            "ERROR_TEXT": "Action property cannot be set",
-            "DESCRIPTION": ""
+            "CODE": "6T5DI5E",
+            "TITLE": "Action property cannot be set",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2016-12-21 12:45:27",
@@ -167,9 +212,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6c77b5955b05493cce4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6T5DJPP",
-            "ERROR_TEXT": "Cannot find object for action",
-            "DESCRIPTION": ""
+            "CODE": "6T5DJPP",
+            "TITLE": "Cannot find object for action",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2016-12-21 12:49:14",
@@ -178,9 +226,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6c77be06ea15193cce4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6T5DLGN",
-            "ERROR_TEXT": "Cannot undo action: action not found in history",
-            "DESCRIPTION": ""
+            "CODE": "6T5DLGN",
+            "TITLE": "Cannot undo action: action not found in history",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2016-12-21 12:52:14",
@@ -189,9 +240,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6c77c4c02765b93cce4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6T5DMUS",
-            "ERROR_TEXT": "Action not aplicable to input object",
-            "DESCRIPTION": ""
+            "CODE": "6T5DMUS",
+            "TITLE": "Action not aplicable to input object",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2016-12-21 12:54:30",
@@ -200,9 +254,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6c77c9ca8b36c93cce4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6T5DNWE",
-            "ERROR_TEXT": "Cannot find placeholder value in input data of action",
-            "DESCRIPTION": ""
+            "CODE": "6T5DNWE",
+            "TITLE": "Cannot find placeholder value in input data of action",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2016-12-21 12:56:27",
@@ -211,9 +268,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6c77ce25de1db93cce4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6T5DOSV",
-            "ERROR_TEXT": "Not allowed to read data without knowing which widget called the read action",
-            "DESCRIPTION": ""
+            "CODE": "6T5DOSV",
+            "TITLE": "Not allowed to read data without knowing which widget called the read action",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2016-12-21 13:03:21",
@@ -222,9 +282,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6c77dd96f335393cce4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6T5DS00",
-            "ERROR_TEXT": "Undo-functionality not implemented for action",
-            "DESCRIPTION": ""
+            "CODE": "6T5DS00",
+            "TITLE": "Undo-functionality not implemented for action",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2016-12-21 13:05:35",
@@ -233,9 +296,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6c77e290672f993cce4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6T5DT14",
-            "ERROR_TEXT": "Action cannot be undone in principle",
-            "DESCRIPTION": ""
+            "CODE": "6T5DT14",
+            "TITLE": "Action cannot be undone in principle",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2016-12-21 13:09:25",
@@ -244,9 +310,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6c77eb233ec4493cce4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6T5DUT1",
-            "ERROR_TEXT": "Unexpected type of action output",
-            "DESCRIPTION": ""
+            "CODE": "6T5DUT1",
+            "TITLE": "Unexpected type of action output",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2016-12-21 13:16:07",
@@ -255,9 +324,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6c77fa1c8835693cce4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6T5DXWP",
-            "ERROR_TEXT": "App not found",
-            "DESCRIPTION": ""
+            "CODE": "6T5DXWP",
+            "TITLE": "App not found",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2016-12-21 13:19:51",
@@ -266,9 +338,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6c7802797680793cce4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6T5DZN2",
-            "ERROR_TEXT": "Configuration key not found",
-            "DESCRIPTION": ""
+            "CODE": "6T5DZN2",
+            "TITLE": "Configuration key not found",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2016-12-21 13:23:03",
@@ -277,9 +352,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6c78099d90acf93cce4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6T5E14B",
-            "ERROR_TEXT": "Context scope not found",
-            "DESCRIPTION": ""
+            "CODE": "6T5E14B",
+            "TITLE": "Context scope not found",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2016-12-21 13:25:13",
@@ -288,9 +366,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6c780e740c95693cce4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6T5E24E",
-            "ERROR_TEXT": "Context class not found",
-            "DESCRIPTION": ""
+            "CODE": "6T5E24E",
+            "TITLE": "Context class not found",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2016-12-21 13:28:13",
@@ -299,9 +380,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6c781527bacaa93cce4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6T5E3ID",
-            "ERROR_TEXT": "Context data cannot be saved",
-            "DESCRIPTION": ""
+            "CODE": "6T5E3ID",
+            "TITLE": "Context data cannot be saved",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2016-12-21 13:29:16",
@@ -310,9 +394,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6c78178554a3393cce4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6T5E400",
-            "ERROR_TEXT": "Cannot load context",
-            "DESCRIPTION": ""
+            "CODE": "6T5E400",
+            "TITLE": "Cannot load context",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2016-12-21 13:33:21",
@@ -321,9 +408,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6c7820a1e867793cce4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6T5E5VY",
-            "ERROR_TEXT": "Object basket context requested for non-existant meta object",
-            "DESCRIPTION": ""
+            "CODE": "6T5E5VY",
+            "TITLE": "Object basket context requested for non-existant meta object",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2016-12-21 13:38:10",
@@ -332,9 +422,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6c782b66e208f93cce4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6T5E849",
-            "ERROR_TEXT": "Cannot find right key column for a left join",
-            "DESCRIPTION": ""
+            "CODE": "6T5E849",
+            "TITLE": "Cannot find right key column for a left join",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2016-12-21 13:38:54",
@@ -343,9 +436,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6c782d0ef24ce93cce4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6T5E8GM",
-            "ERROR_TEXT": "Cannot merge non-empty data sheets for different objects",
-            "DESCRIPTION": ""
+            "CODE": "6T5E8GM",
+            "TITLE": "Cannot merge non-empty data sheets for different objects",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2016-12-21 13:39:29",
@@ -354,9 +450,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6c782e56e3a4293cce4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6T5E8Q6",
-            "ERROR_TEXT": "Cannot merge data sheets without UID columns",
-            "DESCRIPTION": ""
+            "CODE": "6T5E8Q6",
+            "TITLE": "Cannot merge data sheets without UID columns",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2016-12-22 10:11:17",
@@ -365,9 +464,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6c82ef88a49ab93cce4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6T5U304",
-            "ERROR_TEXT": "Unsupported data connector for SQL reverse engineering. Currently supported are MySQL, Oracle SQL and Microsoft SQL",
-            "DESCRIPTION": ""
+            "CODE": "6T5U304",
+            "TITLE": "Unsupported data connector for SQL reverse engineering. Currently supported are MySQL, Oracle SQL and Microsoft SQL",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2016-12-22 11:11:04",
@@ -376,9 +478,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6c83752708cba93cce4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6T5UUOI",
-            "ERROR_TEXT": "Cannot diff columns by UID if one of the data sheets does not have a UID-column or that column is empty",
-            "DESCRIPTION": ""
+            "CODE": "6T5UUOI",
+            "TITLE": "Cannot diff columns by UID if one of the data sheets does not have a UID-column or that column is empty",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2016-12-22 11:13:56",
@@ -387,9 +492,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6c837b92aeef693cce4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6T5UW0E",
-            "ERROR_TEXT": "Invalid formula in data sheet column",
-            "DESCRIPTION": ""
+            "CODE": "6T5UW0E",
+            "TITLE": "Invalid formula in data sheet column",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2016-12-22 11:16:18",
@@ -398,9 +506,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6c8380d90f18893cce4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6T5UX3Q",
-            "ERROR_TEXT": "Cannot fill column with default values",
-            "DESCRIPTION": ""
+            "CODE": "6T5UX3Q",
+            "TITLE": "Cannot fill column with default values",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2016-12-22 11:17:21",
@@ -409,9 +520,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6c8383366e32893cce4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6T5UXLD",
-            "ERROR_TEXT": "Unknown aggregator function",
-            "DESCRIPTION": ""
+            "CODE": "6T5UXLD",
+            "TITLE": "Unknown aggregator function",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2016-12-22 11:23:34",
@@ -420,9 +534,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6c839117537a393cce4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6T5V0GU",
-            "ERROR_TEXT": "Cannot join data sheets if one of the key columns is not specified",
-            "DESCRIPTION": ""
+            "CODE": "6T5V0GU",
+            "TITLE": "Cannot join data sheets if one of the key columns is not specified",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2016-12-22 11:25:32",
@@ -431,9 +548,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6c8395814905993cce4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6T5V1DR",
-            "ERROR_TEXT": "Importing rows from another sheet is only possible if both sheets are based on the same object",
-            "DESCRIPTION": ""
+            "CODE": "6T5V1DR",
+            "TITLE": "Importing rows from another sheet is only possible if both sheets are based on the same object",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2016-12-22 11:26:45",
@@ -442,9 +562,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6c8398355152693cce4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6T5V1XX",
-            "ERROR_TEXT": "Cannot import rows from another sheet if sheets have different amounts of rows",
-            "DESCRIPTION": ""
+            "CODE": "6T5V1XX",
+            "TITLE": "Cannot import rows from another sheet if sheets have different amounts of rows",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2016-12-22 11:28:27",
@@ -453,9 +576,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6c839c0118a5293cce4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6T5V2Q8",
-            "ERROR_TEXT": "UID column not found",
-            "DESCRIPTION": ""
+            "CODE": "6T5V2Q8",
+            "TITLE": "UID column not found",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2016-12-22 11:29:25",
@@ -464,9 +590,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6c839e2faf7ff93cce4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6T5V36I",
-            "ERROR_TEXT": "Joining subsheets via reverse relations the explicitly specified foreign keys, not implemented yet!",
-            "DESCRIPTION": ""
+            "CODE": "6T5V36I",
+            "TITLE": "Joining subsheets via reverse relations the explicitly specified foreign keys, not implemented yet!",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2016-12-22 11:32:16",
@@ -475,9 +604,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6c83a48b322bc93cce4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6T5V4HW",
-            "ERROR_TEXT": "Updating attributes from reverse relations is not possible",
-            "DESCRIPTION": ""
+            "CODE": "6T5V4HW",
+            "TITLE": "Updating attributes from reverse relations is not possible",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2016-12-22 11:32:59",
@@ -486,9 +618,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6c83a6230179493cce4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6T5V4TS",
-            "ERROR_TEXT": "Cannot delete redundant rows while replacing data if no filter are defined!",
-            "DESCRIPTION": ""
+            "CODE": "6T5V4TS",
+            "TITLE": "Cannot delete redundant rows while replacing data if no filter are defined!",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2016-12-22 11:34:13",
@@ -497,9 +632,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6c83a8e3f9d2693cce4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6T5V5EB",
-            "ERROR_TEXT": "Cannot delete redundant rows if no UID column is present in the data sheet",
-            "DESCRIPTION": ""
+            "CODE": "6T5V5EB",
+            "TITLE": "Cannot delete redundant rows if no UID column is present in the data sheet",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2016-12-22 11:37:27",
@@ -508,9 +646,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6c83b024242a393cce4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6T5V6WE",
-            "ERROR_TEXT": "Data sheet column not found",
-            "DESCRIPTION": ""
+            "CODE": "6T5V6WE",
+            "TITLE": "Data sheet column not found",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2016-12-22 11:43:14",
@@ -519,9 +660,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6c83bd11e215e93cce4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6T5V9KS",
-            "ERROR_TEXT": "Invalid sort direction. Only ASC and DESC are allowed!",
-            "DESCRIPTION": ""
+            "CODE": "6T5V9KS",
+            "TITLE": "Invalid sort direction. Only ASC and DESC are allowed!",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2016-12-22 11:47:21",
@@ -530,9 +674,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6c83c645bd41893cce4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6T5VBHF",
-            "ERROR_TEXT": "Creating rows from an update statement without a UID-column not supported yet!",
-            "DESCRIPTION": ""
+            "CODE": "6T5VBHF",
+            "TITLE": "Creating rows from an update statement without a UID-column not supported yet!",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2016-12-22 11:49:05",
@@ -541,9 +688,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6c83ca213212f93cce4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6T5VCA6",
-            "ERROR_TEXT": "Cannot delete all instances. Forbidden operation!",
-            "DESCRIPTION": ""
+            "CODE": "6T5VCA6",
+            "TITLE": "Cannot delete all instances. Forbidden operation!",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2016-12-22 11:57:22",
@@ -552,9 +702,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6c83dca1ff52c93cce4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6T5VG46",
-            "ERROR_TEXT": "Connection to data source failed",
-            "DESCRIPTION": ""
+            "CODE": "6T5VG46",
+            "TITLE": "Connection to data source failed",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2016-12-22 12:02:32",
@@ -563,9 +716,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6c83e82eaa4e693cce4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6T5VIIA",
-            "ERROR_TEXT": "Cannot commit a transaction, that has already been rolled back!",
-            "DESCRIPTION": ""
+            "CODE": "6T5VIIA",
+            "TITLE": "Cannot commit a transaction, that has already been rolled back!",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2016-12-22 12:03:11",
@@ -574,9 +730,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6c83e9a630e6c93cce4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6T5VIT8",
-            "ERROR_TEXT": "Cannot roll back a transaction, that has already been committed!",
-            "DESCRIPTION": ""
+            "CODE": "6T5VIT8",
+            "TITLE": "Cannot roll back a transaction, that has already been committed!",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2016-12-22 12:04:23",
@@ -585,9 +744,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6c83ec4f897fc93cce4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6T5VJD3",
-            "ERROR_TEXT": "Transaction rollback failed",
-            "DESCRIPTION": ""
+            "CODE": "6T5VJD3",
+            "TITLE": "Transaction rollback failed",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2016-12-22 12:05:09",
@@ -596,9 +758,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6c83ee06d787a93cce4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6T5VJPV",
-            "ERROR_TEXT": "Transaction commit failed",
-            "DESCRIPTION": ""
+            "CODE": "6T5VJPV",
+            "TITLE": "Transaction commit failed",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2016-12-22 12:05:55",
@@ -607,9 +772,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6c83efbc803ad93cce4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6T5VK2M",
-            "ERROR_TEXT": "Transaction could not be started",
-            "DESCRIPTION": ""
+            "CODE": "6T5VK2M",
+            "TITLE": "Transaction could not be started",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2016-12-22 12:55:46",
@@ -618,9 +786,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6c845f2a1590c93cce4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6T5W75J",
-            "ERROR_TEXT": "Invalid query type passed to data connector",
-            "DESCRIPTION": ""
+            "CODE": "6T5W75J",
+            "TITLE": "Invalid query type passed to data connector",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2016-12-22 13:05:28",
@@ -629,9 +800,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6c8474db7a10293cce4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6T5WBNB",
-            "ERROR_TEXT": "Illegal filter value",
-            "DESCRIPTION": ""
+            "CODE": "6T5WBNB",
+            "TITLE": "Illegal filter value",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2016-12-23 16:54:23",
@@ -640,9 +814,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6c9307083c1cd93cce4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6T6HSAO",
-            "ERROR_TEXT": "Action not specified in request",
-            "DESCRIPTION": ""
+            "CODE": "6T6HSAO",
+            "TITLE": "Action not specified in request",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2016-12-23 16:55:01",
@@ -651,9 +828,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6c93086f3f2bf93cce4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6T6HSL4",
-            "ERROR_TEXT": "Cannot perform quick search on object",
-            "DESCRIPTION": ""
+            "CODE": "6T6HSL4",
+            "TITLE": "Cannot perform quick search on object",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2016-12-23 17:10:09",
@@ -662,9 +842,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6c932a45138e393cce4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6T6HZLF",
-            "ERROR_TEXT": "Data modified by another user",
-            "DESCRIPTION": ""
+            "CODE": "6T6HZLF",
+            "TITLE": "Data modified by another user",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2016-12-23 17:11:18",
@@ -673,9 +856,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6c932ccf5d68493cce4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6T6I04D",
-            "ERROR_TEXT": "Cannot check for concurrent writes on mass updates via filters",
-            "DESCRIPTION": ""
+            "CODE": "6T6I04D",
+            "TITLE": "Cannot check for concurrent writes on mass updates via filters",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2016-12-23 17:21:55",
@@ -684,9 +870,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6c93448eb233d93cce4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6T6I51G",
-            "ERROR_TEXT": "Widget id conflict",
-            "DESCRIPTION": ""
+            "CODE": "6T6I51G",
+            "TITLE": "Widget id conflict",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2016-12-28 14:55:15",
@@ -695,9 +884,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6cd0d94c70d7593cce4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6T90UH3",
-            "ERROR_TEXT": "Invalid widget visibility setting",
-            "DESCRIPTION": ""
+            "CODE": "6T90UH3",
+            "TITLE": "Invalid widget visibility setting",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2016-12-28 14:56:06",
@@ -706,9 +898,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6cd0db33a582893cce4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6T90UV9",
-            "ERROR_TEXT": "Invalid or missing chart widget configuration",
-            "DESCRIPTION": ""
+            "CODE": "6T90UV9",
+            "TITLE": "Invalid or missing chart widget configuration",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2016-12-28 14:59:30",
@@ -717,9 +912,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6cd0e2cff623b93cce4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6T90WFX",
-            "ERROR_TEXT": "Missing data configuration for data-visualization widget",
-            "DESCRIPTION": ""
+            "CODE": "6T90WFX",
+            "TITLE": "Missing data configuration for data-visualization widget",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2016-12-28 15:07:52",
@@ -728,9 +926,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6cd0f57e7db0a93cce4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6T910B6",
-            "ERROR_TEXT": "Invalid or missing diagram widget configuration",
-            "DESCRIPTION": ""
+            "CODE": "6T910B6",
+            "TITLE": "Invalid or missing diagram widget configuration",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2016-12-28 15:11:27",
@@ -739,9 +940,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6cd0fd800f5c793cce4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6T911YV",
-            "ERROR_TEXT": "Tabs widget: Invalid position for tab ribbon",
-            "DESCRIPTION": ""
+            "CODE": "6T911YV",
+            "TITLE": "Tabs widget: Invalid position for tab ribbon",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2016-12-28 15:14:09",
@@ -750,9 +954,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6cd1038b4abab93cce4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6T9137Y",
-            "ERROR_TEXT": "Widget has no meta object",
-            "DESCRIPTION": "Every widget showing data must have a reference to it's main meta object. This reference can either be set directly in the widget's UXON description via the \"object_alias\" property or will be inherited automatically from the widget's parent.\n\nGenerally it is a good idea to always specify an object_alias for the root widget of every page - even if it is a container with widgets based on other objects. It is no problem to specify a different object for a child widget!"
+            "CODE": "6T9137Y",
+            "TITLE": "Widget has no meta object",
+            "DESCRIPTION": "Every widget showing data must have a reference to it's main meta object. This reference can either be set directly in the widget's UXON description via the \"object_alias\" property or will be inherited automatically from the widget's parent.\n\nGenerally it is a good idea to always specify an object_alias for the root widget of every page - even if it is a container with widgets based on other objects. It is no problem to specify a different object for a child widget!",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2016-12-28 15:27:25",
@@ -761,9 +968,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6cd12136397f193cce4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6T919D5",
-            "ERROR_TEXT": "Invalid or missing button action configuration",
-            "DESCRIPTION": ""
+            "CODE": "6T919D5",
+            "TITLE": "Invalid or missing button action configuration",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2016-12-28 15:30:26",
@@ -772,9 +982,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6cd127ee7961493cce4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6T91AR9",
-            "ERROR_TEXT": "Invalid data filter widget configuration",
-            "DESCRIPTION": ""
+            "CODE": "6T91AR9",
+            "TITLE": "Invalid data filter widget configuration",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2016-12-28 15:32:36",
@@ -783,9 +996,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6cd12cc8539b293cce4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6T91BRG",
-            "ERROR_TEXT": "Invalid tree widget configuration",
-            "DESCRIPTION": ""
+            "CODE": "6T91BRG",
+            "TITLE": "Invalid tree widget configuration",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2016-12-28 15:37:43",
@@ -794,9 +1010,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6cd13838330b993cce4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6T91E4Q",
-            "ERROR_TEXT": "Widget not found",
-            "DESCRIPTION": ""
+            "CODE": "6T91E4Q",
+            "TITLE": "Widget not found",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2016-12-28 15:44:05",
@@ -805,9 +1024,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6cd146714f99193cce4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6T91H2S",
-            "ERROR_TEXT": "Invalid widget configuration for action",
-            "DESCRIPTION": ""
+            "CODE": "6T91H2S",
+            "TITLE": "Invalid widget configuration for action",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2016-12-28 15:45:05",
@@ -816,9 +1038,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6cd148b0f8ed993cce4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6T91HJK",
-            "ERROR_TEXT": "Malformed relation path",
-            "DESCRIPTION": "A relation path consists of relation\/attribute aliases concatenated via \"__\" (double underscore). Each relation alias may include a modifier enclosed in square brackets. In case of reverse relations (1-to-N), the alias will mostly include an aggregator function separated by a semicolon.\n\nExamples (based on an imaginary meta object COMPANY):\n\n- `Billing_ADDRESS__STREET` - the street name of the company's billing address\n- `ORDER[PAYEE]__ORDER_NO:COUNT` - number of orders, where the company is the payee\n- `EMPLOYEE__ID:COUNT` - number of employees of the compay (no modifier needed as there is only one relation from EMPLOYEE to COMPANY. `EMPLOYEE[COMPANY]__ID:COUNT` would work too, of course."
+            "CODE": "6T91HJK",
+            "TITLE": "Malformed relation path",
+            "DESCRIPTION": "A relation path consists of relation\/attribute aliases concatenated via \"__\" (double underscore). Each relation alias may include a modifier enclosed in square brackets. In case of reverse relations (1-to-N), the alias will mostly include an aggregator function separated by a semicolon.\n\nExamples (based on an imaginary meta object COMPANY):\n\n- `Billing_ADDRESS__STREET` - the street name of the company's billing address\n- `ORDER[PAYEE]__ORDER_NO:COUNT` - number of orders, where the company is the payee\n- `EMPLOYEE__ID:COUNT` - number of employees of the compay (no modifier needed as there is only one relation from EMPLOYEE to COMPANY. `EMPLOYEE[COMPANY]__ID:COUNT` would work too, of course.",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2016-12-28 15:47:05",
@@ -827,9 +1052,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6cd14d2c6d2f093cce4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6T91IGZ",
-            "ERROR_TEXT": "Malformed widget link",
-            "DESCRIPTION": ""
+            "CODE": "6T91IGZ",
+            "TITLE": "Malformed widget link",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2016-12-28 16:04:56",
@@ -838,9 +1066,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6cd175097b45193cce4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6T91QQ8",
-            "ERROR_TEXT": "Invalid ComboTable widget configuration",
-            "DESCRIPTION": ""
+            "CODE": "6T91QQ8",
+            "TITLE": "Invalid ComboTable widget configuration",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2016-12-28 16:07:05",
@@ -849,9 +1080,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6cd179da5365593cce4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6T91RQ5",
-            "ERROR_TEXT": "Invalid column configuration for data widget",
-            "DESCRIPTION": ""
+            "CODE": "6T91RQ5",
+            "TITLE": "Invalid column configuration for data widget",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2016-12-28 16:08:14",
@@ -860,9 +1094,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6cd17c711ed0993cce4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6T91S9G",
-            "ERROR_TEXT": "Invalid configuration of InputSelect widget",
-            "DESCRIPTION": ""
+            "CODE": "6T91S9G",
+            "TITLE": "Invalid configuration of InputSelect widget",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2016-12-30 16:18:08",
@@ -871,9 +1108,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6ceab77637e5d93cce4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6TA2Y6A",
-            "ERROR_TEXT": "Invalid chart axis configuration",
-            "DESCRIPTION": ""
+            "CODE": "6TA2Y6A",
+            "TITLE": "Invalid chart axis configuration",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2017-01-03 05:58:15",
@@ -882,9 +1122,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6d17982a350ca93cce4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6TBX1V2",
-            "ERROR_TEXT": "Cannot rebase expression",
-            "DESCRIPTION": ""
+            "CODE": "6TBX1V2",
+            "TITLE": "Cannot rebase expression",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2017-01-11 08:17:00",
@@ -893,9 +1136,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6d7d65414e0b4804b0205857feb80",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6TG2ZFI",
-            "ERROR_TEXT": "Invalid configuration for StateMachineBehavior",
-            "DESCRIPTION": ""
+            "CODE": "6TG2ZFI",
+            "TITLE": "Invalid configuration for StateMachineBehavior",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2017-01-24 07:01:32",
@@ -904,9 +1150,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6e202edf6f2a7a3d9e4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6TMQR5N",
-            "ERROR_TEXT": "Cannot add instance to object basket",
-            "DESCRIPTION": ""
+            "CODE": "6TMQR5N",
+            "TITLE": "Cannot add instance to object basket",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2017-02-09 10:19:11",
@@ -915,9 +1164,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6eeb13274804a8b7ee4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6TV1LBR",
-            "ERROR_TEXT": "Invalid text\/value configuration for ComboTable widget",
-            "DESCRIPTION": ""
+            "CODE": "6TV1LBR",
+            "TITLE": "Invalid text\/value configuration for ComboTable widget",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2017-03-02 09:23:18",
@@ -926,9 +1178,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6ff299ec59ab48bfae4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6U5TRGK",
-            "ERROR_TEXT": "Invalid chained action configuration",
-            "DESCRIPTION": ""
+            "CODE": "6U5TRGK",
+            "TITLE": "Invalid chained action configuration",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2017-04-03 15:45:45",
@@ -937,9 +1192,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e718846c01369abeb2e4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6UMF9UL",
-            "ERROR_TEXT": "Illegal state in StateMachineBehavior",
-            "DESCRIPTION": ""
+            "CODE": "6UMF9UL",
+            "TITLE": "Illegal state in StateMachineBehavior",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2017-04-04 09:59:06",
@@ -948,9 +1206,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e7191d54763fc4be75e4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6UMTC14",
-            "ERROR_TEXT": "Invalid configuration of the StateInputSelect widget",
-            "DESCRIPTION": ""
+            "CODE": "6UMTC14",
+            "TITLE": "Invalid configuration of the StateInputSelect widget",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2017-04-06 08:26:13",
@@ -959,9 +1220,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e71aa2a57442b2be75e4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6UNT6D5",
-            "ERROR_TEXT": "Invalid button widget type",
-            "DESCRIPTION": "This error indicates, that a non-button was added to the buttons property of a widget. You may overwrite the widget type of each individual button, to make it a special type of button (e.g. a MenuButton), but it still must be a button: you can't use an input widget or so."
+            "CODE": "6UNT6D5",
+            "TITLE": "Invalid button widget type",
+            "DESCRIPTION": "This error indicates, that a non-button was added to the buttons property of a widget. You may overwrite the widget type of each individual button, to make it a special type of button (e.g. a MenuButton), but it still must be a button: you can't use an input widget or so.",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2017-04-06 09:24:55",
@@ -970,9 +1234,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e71aaad8435cb9be75e4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6UNTXJE",
-            "ERROR_TEXT": "Unknown widget property",
-            "DESCRIPTION": "This error indicates, that a property was used in the description of the widget, which is not known for the selected widget type. Please refer to the widget reference in Administration > Core > Widgets."
+            "CODE": "6UNTXJE",
+            "TITLE": "Unknown widget property",
+            "DESCRIPTION": "This error indicates, that a property was used in the description of the widget, which is not known for the selected widget type. Please refer to the widget reference in Administration > Core > Widgets.",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2017-04-07 10:18:06",
@@ -981,9 +1248,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e71b7b6d461362be75e4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6UOD4TW",
-            "ERROR_TEXT": "Cannot automatically determine the current object namespace",
-            "DESCRIPTION": ""
+            "CODE": "6UOD4TW",
+            "TITLE": "Cannot automatically determine the current object namespace",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2017-04-11 05:57:35",
@@ -992,9 +1262,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e71e7ba0dcd1e6be75e4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6UQBUVZ",
-            "ERROR_TEXT": "Invalid configuration for column totals in a data sheet",
-            "DESCRIPTION": ""
+            "CODE": "6UQBUVZ",
+            "TITLE": "Invalid configuration for column totals in a data sheet",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2017-04-11 06:02:43",
@@ -1003,9 +1276,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e71e7c587d1cc6be75e4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6UQBX9K",
-            "ERROR_TEXT": "Invalid configuration for sorters in a data sheet",
-            "DESCRIPTION": ""
+            "CODE": "6UQBX9K",
+            "TITLE": "Invalid configuration for sorters in a data sheet",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2017-04-27 07:25:15",
@@ -1014,9 +1290,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e72b1a9933156bbaa5e4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6UX6TNT",
-            "ERROR_TEXT": "Missing UID attribute for meta object",
-            "DESCRIPTION": "This error indicates, that a meta object does not have a UID attribute, but the current runtime requires it. Please mark one of the attributes as object UID.\n\nIn general, an object does not neccessarily need a UID attribute. However, certain actions or query builders require it for their logic to function correctly."
+            "CODE": "6UX6TNT",
+            "TITLE": "Missing UID attribute for meta object",
+            "DESCRIPTION": "This error indicates, that a meta object does not have a UID attribute, but the current runtime requires it. Please mark one of the attributes as object UID.\n\nIn general, an object does not neccessarily need a UID attribute. However, certain actions or query builders require it for their logic to function correctly.",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2017-04-27 07:32:21",
@@ -1025,9 +1304,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e72b1b96e12cd2baa5e4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6UX6KAQ",
-            "ERROR_TEXT": "Missing UID column in data-widget",
-            "DESCRIPTION": "This error occurs if a data widget (DataTable, DataMatrix, Chart, etc.) has no UID column, but it is required for the current configuration (e.g. for button actions). \n\nTo solve the problem, either add a UID attribute to the main object of the widget or specify a custom uid_column_id in the UXON configuration."
+            "CODE": "6UX6KAQ",
+            "TITLE": "Missing UID column in data-widget",
+            "DESCRIPTION": "This error occurs if a data widget (DataTable, DataMatrix, Chart, etc.) has no UID column, but it is required for the current configuration (e.g. for button actions). \n\nTo solve the problem, either add a UID attribute to the main object of the widget or specify a custom uid_column_id in the UXON configuration.",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2017-05-10 14:28:56",
@@ -1036,9 +1318,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e7358cd95b24cbba83e4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6V5FGYF",
-            "ERROR_TEXT": "No value or  attribute found for a select widget",
-            "DESCRIPTION": "This error indicates, that the attributes are neither specified, nor could they be guessed.\n\nSelect widgets like InputSelect or InputCombo require a value attribute and a text attribute to be rendered. The system will try to determine suitable attributes automatically if the respective properties (value_attribute_alias, text_attribute_alias) are not set. \n\nPlease refer to the widget documentation for detailed information on how the attributes are determined."
+            "CODE": "6V5FGYF",
+            "TITLE": "No value or  attribute found for a select widget",
+            "DESCRIPTION": "This error indicates, that the attributes are neither specified, nor could they be guessed.\n\nSelect widgets like InputSelect or InputCombo require a value attribute and a text attribute to be rendered. The system will try to determine suitable attributes automatically if the respective properties (value_attribute_alias, text_attribute_alias) are not set. \n\nPlease refer to the widget documentation for detailed information on how the attributes are determined.",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2017-05-10 14:35:36",
@@ -1047,9 +1332,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e7358dc7c794afba83e4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6V5FK1J",
-            "ERROR_TEXT": "Missing values for placeholders in the file path",
-            "DESCRIPTION": "This error indicates, that a required file path contains one or more placeholders, that could not be resolved from the current set of filters."
+            "CODE": "6V5FK1J",
+            "TITLE": "Missing values for placeholders in the file path",
+            "DESCRIPTION": "This error indicates, that a required file path contains one or more placeholders, that could not be resolved from the current set of filters.",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2017-05-12 11:36:47",
@@ -1058,9 +1346,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e7370744671e4d83200205857feb80",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6V6EAL3",
-            "ERROR_TEXT": "Data connection not found",
-            "DESCRIPTION": ""
+            "CODE": "6V6EAL3",
+            "TITLE": "Data connection not found",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2017-05-19 08:19:23",
@@ -1069,9 +1360,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e73c6bd29ca5e38820e4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6V9XDV4",
-            "ERROR_TEXT": "Cannot render contextual help",
-            "DESCRIPTION": ""
+            "CODE": "6V9XDV4",
+            "TITLE": "Cannot render contextual help",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2017-05-25 05:26:54",
@@ -1080,9 +1374,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e7410a9b1574a58820e4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6VCYA0J",
-            "ERROR_TEXT": "Invalid meta model configuration for an object",
-            "DESCRIPTION": ""
+            "CODE": "6VCYA0J",
+            "TITLE": "Invalid meta model configuration for an object",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2017-05-25 05:37:20",
@@ -1091,9 +1388,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e7410c0ff9546d8820e4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6VCYEUC",
-            "ERROR_TEXT": "Internal widget error",
-            "DESCRIPTION": "This indicates a programmatic error in the internal logic of a widget. Please contact the support!"
+            "CODE": "6VCYEUC",
+            "TITLE": "Internal widget error",
+            "DESCRIPTION": "This indicates a programmatic error in the internal logic of a widget. Please contact the support!",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2017-05-25 05:39:04",
@@ -1102,9 +1402,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e7410c4e3ccf298820e4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6VCYFND",
-            "ERROR_TEXT": "Internal error",
-            "DESCRIPTION": "This indicates a programmatic error in the internal logic. Please contact the support!"
+            "CODE": "6VCYFND",
+            "TITLE": "Internal error",
+            "DESCRIPTION": "This indicates a programmatic error in the internal logic. Please contact the support!",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2017-05-31 07:43:32",
@@ -1113,9 +1416,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e745d49074a8d18820e4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6VG359M",
-            "ERROR_TEXT": "Meta object not found",
-            "DESCRIPTION": "This error occurs when an object is requested from the meta model, but cannot be found. The error text mostly shows, which object id or alias was requested.\n\nIf the object was requested by alias, make sure, it's a fully qualified prefixed by the app alias (e.g. exface.Core.MyObject instead of simply MyObject)."
+            "CODE": "6VG359M",
+            "TITLE": "Meta object not found",
+            "DESCRIPTION": "This error occurs when an object is requested from the meta model, but cannot be found. The error text mostly shows, which object id or alias was requested.\n\nIf the object was requested by alias, make sure, it's a fully qualified prefixed by the app alias (e.g. exface.Core.MyObject instead of simply MyObject).",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2017-05-31 07:44:24",
@@ -1124,9 +1430,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e745d4afef4b488820e4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6VG35OA",
-            "ERROR_TEXT": "Meta attribute not found",
-            "DESCRIPTION": "This error occurs when an attribute is requested from the meta model, but cannot be found. The error text mostly shows, which attribute alias was requested."
+            "CODE": "6VG35OA",
+            "TITLE": "Meta attribute not found",
+            "DESCRIPTION": "This error occurs when an attribute is requested from the meta model, but cannot be found. The error text mostly shows, which attribute alias was requested.",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2017-07-06 08:32:40",
@@ -1135,9 +1444,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e76225a9029e5e8298e4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6VYMG0N",
-            "ERROR_TEXT": "Access denied for requested context",
-            "DESCRIPTION": "This error indicates, that the current user cannot access the specified context. Many contexts require specific user rights. \n\nInaccessible contexts are automatically hidden from the context bar. "
+            "CODE": "6VYMG0N",
+            "TITLE": "Access denied for requested context",
+            "DESCRIPTION": "This error indicates, that the current user cannot access the specified context. Many contexts require specific user rights. \n\nInaccessible contexts are automatically hidden from the context bar. ",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2017-07-06 11:04:49",
@@ -1146,9 +1458,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e7623ae9f942578298e4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6VYOEGI",
-            "ERROR_TEXT": "Invalid value for a widget property in UXON",
-            "DESCRIPTION": "This error indicates, that an illegal value was assigned to a widget property in it's UXON description. See the error subtitle for details. \n\nIf you are editing your Screens right know, you can see the UXON-code of the faulty widget in the respective tabs."
+            "CODE": "6VYOEGI",
+            "TITLE": "Invalid value for a widget property in UXON",
+            "DESCRIPTION": "This error indicates, that an illegal value was assigned to a widget property in it's UXON description. See the error subtitle for details. \n\nIf you are editing your Screens right know, you can see the UXON-code of the faulty widget in the respective tabs.",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2017-07-06 11:08:07",
@@ -1157,9 +1472,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e7623b600691ee8298e4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6VYOFZJ",
-            "ERROR_TEXT": "Unknown widget property specified",
-            "DESCRIPTION": "This error indicates, that an illegal or misspelled widget property name was used in the UXON description: see the subtitle for details.\n\nThe most common cause for these errors are typos in the UXON configuration. If you are editing your Screens right know, you can see the UXON-code of the faulty widget in the respective tabs."
+            "CODE": "6VYOFZJ",
+            "TITLE": "Unknown widget property specified",
+            "DESCRIPTION": "This error indicates, that an illegal or misspelled widget property name was used in the UXON description: see the subtitle for details.\n\nThe most common cause for these errors are typos in the UXON configuration. If you are editing your Screens right know, you can see the UXON-code of the faulty widget in the respective tabs.",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2017-07-12 12:11:06",
@@ -1168,9 +1486,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e766fb1a6aea498298e4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6W1SD52",
-            "ERROR_TEXT": "Invalid comparator used!",
-            "DESCRIPTION": "The following expressions are supported as comparators:\n- '[' - in\n- '![' - not in\n- '=' - is (default)\n- '!=' - is not\n- '==' - equals\n- '!==' - equals not\n- '<' - less\n- '<=' - less or equals\n- '>' - greater\n- '>=' - greater or equals"
+            "CODE": "6W1SD52",
+            "TITLE": "Invalid comparator used!",
+            "DESCRIPTION": "The following expressions are supported as comparators:\n- '[' - in\n- '![' - not in\n- '=' - is (default)\n- '!=' - is not\n- '==' - equals\n- '!==' - equals not\n- '<' - less\n- '<=' - less or equals\n- '>' - greater\n- '>=' - greater or equals",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2017-07-13 00:00:00",
@@ -1179,9 +1500,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e7678774b5dafc8298e4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6W25AB1",
-            "ERROR_TEXT": "Invalid date format",
-            "DESCRIPTION": "The following date input formats are supported:\n- 31.12.2017.\n- 2017-12-31.\n- 2017 (2017-01-01 will be assumed).\n- 12.2017 or 12-2017 (2017-12-01 will be assumed).\n- 15.02 or 15-02 (2017-02-15 will be assumed).\n- +1d, +2w, +3m, +4y for adding days, weeks, months or years to the current date.\n- -4d, -3w, -2m, -1y for subtracting days, weeks, months or years from the current date."
+            "CODE": "6W25AB1",
+            "TITLE": "Invalid date format",
+            "DESCRIPTION": "The following date input formats are supported:\n- 31.12.2017.\n- 2017-12-31.\n- 2017 (2017-01-01 will be assumed).\n- 12.2017 or 12-2017 (2017-12-01 will be assumed).\n- 15.02 or 15-02 (2017-02-15 will be assumed).\n- +1d, +2w, +3m, +4y for adding days, weeks, months or years to the current date.\n- -4d, -3w, -2m, -1y for subtracting days, weeks, months or years from the current date.",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2017-07-20 00:00:00",
@@ -1190,9 +1514,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e76d457dfdb5019f320205857feb80",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6W5WLSA",
-            "ERROR_TEXT": "Invalid widget alignment value",
-            "DESCRIPTION": "The \"align\" property of an alignable widget takes the following values:\n\n- left\n- right\n- center\n- default (the default alignment for the widget type in the current template)\n- opposite (the inverse to the default alignment: e.g. \"right\" if the default is \"left\")"
+            "CODE": "6W5WLSA",
+            "TITLE": "Invalid widget alignment value",
+            "DESCRIPTION": "The \"align\" property of an alignable widget takes the following values:\n\n- left\n- right\n- center\n- default (the default alignment for the widget type in the current template)\n- opposite (the inverse to the default alignment: e.g. \"right\" if the default is \"left\")",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2017-08-23 09:28:58",
@@ -1201,9 +1528,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e787e57c67827cbb5fe4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6WNC22Z",
-            "ERROR_TEXT": "UI page not found",
-            "DESCRIPTION": "This error means, that a referenced page cannot be found.\n\nThis mostly happens due to misspelled page references in widget links or references to pages that were not installed or deleted on the current installation. \n\nIf this error happens when editing a page, make sure all pages, you specified widget links to, really exist in the CMS!"
+            "CODE": "6WNC22Z",
+            "TITLE": "UI page not found",
+            "DESCRIPTION": "This error means, that a referenced page cannot be found.\n\nThis mostly happens due to misspelled page references in widget links or references to pages that were not installed or deleted on the current installation. \n\nIf this error happens when editing a page, make sure all pages, you specified widget links to, really exist in the CMS!",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2017-09-12 10:51:31",
@@ -1212,9 +1542,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e797a84016c686b6e3e4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6WXNHMN",
-            "ERROR_TEXT": "Invalid argument in aggregator COUNT_IF",
-            "DESCRIPTION": "This error means, that the condition passed as argument to the COUNT_IF aggregator is invalid. \n\nThis aggregator counts values of the attribute it is applied to, that match the specified condition. The condition MUST contain a comparator and a value separated by a space. \n\nValid examples:\n\n- Count products with a price of 10 or more: PRODUCTS__PRICE:COUNT(>= 10)\n- Count completed tasks: TASKS__COMPLETED_FLAG(= 1) "
+            "CODE": "6WXNHMN",
+            "TITLE": "Invalid argument in aggregator COUNT_IF",
+            "DESCRIPTION": "This error means, that the condition passed as argument to the COUNT_IF aggregator is invalid. \n\nThis aggregator counts values of the attribute it is applied to, that match the specified condition. The condition MUST contain a comparator and a value separated by a space. \n\nValid examples:\n\n- Count products with a price of 10 or more: PRODUCTS__PRICE:COUNT(>= 10)\n- Count completed tasks: TASKS__COMPLETED_FLAG(= 1) ",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2017-10-07 15:26:16",
@@ -1223,9 +1556,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e7ab73d9bbbbf28a670205857feb80",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6XALZHW",
-            "ERROR_TEXT": "Invalid numeric data type configuration",
-            "DESCRIPTION": "Numeric data types (based on the NumberDataType prototype) take the following configuration values:\n\n- min - minimum valid value (must be less or equal, than max)\n- max - maximum valid value (must be greater or equal than min)\n- precision_min - minimum number of decimal places (must be less or equal, than precision_max)\n- precision_max - maximum number of decimal places (must be greater or equal, than presision_min)\n- precision - fixed precision (the same as setting the same value for precision_min and precision_max)"
+            "CODE": "6XALZHW",
+            "TITLE": "Invalid numeric data type configuration",
+            "DESCRIPTION": "Numeric data types (based on the NumberDataType prototype) take the following configuration values:\n\n- min - minimum valid value (must be less or equal, than max)\n- max - maximum valid value (must be greater or equal than min)\n- precision_min - minimum number of decimal places (must be less or equal, than precision_max)\n- precision_max - maximum number of decimal places (must be greater or equal, than presision_min)\n- precision - fixed precision (the same as setting the same value for precision_min and precision_max)",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2017-10-13 15:35:07",
@@ -1234,9 +1570,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e7b02c1305514998350205857feb80",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6XDP7LI",
-            "ERROR_TEXT": "Model entity aliases cannot start with '_', '=', or '~'!",
-            "DESCRIPTION": "Aliases of meta model entities can contain any characters, but may not start with and underscore \"_\", equals-sign \"=\", or tilde \"~\"."
+            "CODE": "6XDP7LI",
+            "TITLE": "Model entity aliases cannot start with '_', '=', or '~'!",
+            "DESCRIPTION": "Aliases of meta model entities can contain any characters, but may not start with and underscore \"_\", equals-sign \"=\", or tilde \"~\".",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2017-10-19 08:46:37",
@@ -1245,9 +1584,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e7b4aa02265dd3b111e4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6XGN2H6",
-            "ERROR_TEXT": "Not a valid value",
-            "DESCRIPTION": "The given value does not match any of the valid values defined in an enumeration data type."
+            "CODE": "6XGN2H6",
+            "TITLE": "Not a valid value",
+            "DESCRIPTION": "The given value does not match any of the valid values defined in an enumeration data type.",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2017-10-19 08:50:48",
@@ -1256,9 +1598,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e7b4aa97863b6ab111e4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6XGN4ES",
-            "ERROR_TEXT": "Invalid configuration for enumeration data type",
-            "DESCRIPTION": "The list of valid values of dynamic enumeration data types can be configured in the model of the data type or a specific attribute:\n\n{\n  ...\n  \"values\": {\n    \"VALUE1\": \"Label 1\",\n    \"VALUE2\": \"Label 2\"\n  }\n}"
+            "CODE": "6XGN4ES",
+            "TITLE": "Invalid configuration for enumeration data type",
+            "DESCRIPTION": "The list of valid values of dynamic enumeration data types can be configured in the model of the data type or a specific attribute:\n\n{\n  ...\n  \"values\": {\n    \"VALUE1\": \"Label 1\",\n    \"VALUE2\": \"Label 2\"\n  }\n}",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2017-10-19 09:06:11",
@@ -1267,9 +1612,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e7b4acbdeba7bcb111e4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6XGNBJB",
-            "ERROR_TEXT": "Cannot override values in static enumeration data types",
-            "DESCRIPTION": "Valid values for wtatic enumeration data types are defined in the source code. They cannot be overridden in the model of the data type. \n\nThis behavior is intended because static enumerations can be used in both, the source code and in the meta model. This means, that their values must be supported by the source code. For example, data sorters will support sorting directions ASC and DESC defined in the exface.Core.SortingDirectionsDataType - it does not make sense to change or extend them as the sorters will not know, what to do with the new values."
+            "CODE": "6XGNBJB",
+            "TITLE": "Cannot override values in static enumeration data types",
+            "DESCRIPTION": "Valid values for wtatic enumeration data types are defined in the source code. They cannot be overridden in the model of the data type. \n\nThis behavior is intended because static enumerations can be used in both, the source code and in the meta model. This means, that their values must be supported by the source code. For example, data sorters will support sorting directions ASC and DESC defined in the exface.Core.SortingDirectionsDataType - it does not make sense to change or extend them as the sorters will not know, what to do with the new values.",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2017-10-20 14:48:17",
@@ -1278,9 +1626,12 @@
             "MODIFIED_BY_USER": "0x11e7add6fab63cc6997b74e5434dc47d",
             "UID": "0x11e7b5a5b48fc122b65674e5434dc47d",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6XHA8KR",
-            "ERROR_TEXT": "This UI page is not part of any app.",
-            "DESCRIPTION": "This error occurs if an app is requested from a UiPage which is not part of any app."
+            "CODE": "6XHA8KR",
+            "TITLE": "This UI page is not part of any app.",
+            "DESCRIPTION": "This error occurs if an app is requested from a UiPage which is not part of any app.",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2017-11-07 17:58:09",
@@ -1289,9 +1640,12 @@
             "MODIFIED_BY_USER": "0x11e7add6fab63cc6997b74e5434dc47d",
             "UID": "0x11e7c3e536a78e8c886474e5434dc47d",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6XQM0HG",
-            "ERROR_TEXT": "The UID of this UI page isn't unique.",
-            "DESCRIPTION": "This error occurs if several UI pages have the same UID.\n\nThis problem has to be solved by direct manipulation of the page UID template variables in the database (modx_site_tmplvar_contentvalues)."
+            "CODE": "6XQM0HG",
+            "TITLE": "The UID of this UI page isn't unique.",
+            "DESCRIPTION": "This error occurs if several UI pages have the same UID.\n\nThis problem has to be solved by direct manipulation of the page UID template variables in the database (modx_site_tmplvar_contentvalues).",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2017-11-07 17:58:51",
@@ -1300,9 +1654,12 @@
             "MODIFIED_BY_USER": "0x11e7add6fab63cc6997b74e5434dc47d",
             "UID": "0x11e7c3e54f6d6e6b886474e5434dc47d",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6XQM0SZ",
-            "ERROR_TEXT": "This UI page has no UID.",
-            "DESCRIPTION": "This error occurs an UI page has no UID.\n\nThis problem might be solved by recreation of the page or by direct manipulation of the page UID template variable in the database (modx_site_tmplvar_contentvalues)."
+            "CODE": "6XQM0SZ",
+            "TITLE": "This UI page has no UID.",
+            "DESCRIPTION": "This error occurs an UI page has no UID.\n\nThis problem might be solved by recreation of the page or by direct manipulation of the page UID template variable in the database (modx_site_tmplvar_contentvalues).",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2017-11-20 15:01:20",
@@ -1311,9 +1668,12 @@
             "MODIFIED_BY_USER": "0x11e7add6fab63cc6997b74e5434dc47d",
             "UID": "0x11e7ce03ad1ae7e6ad9174e5434dc47d",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6XX8HAD",
-            "ERROR_TEXT": "Error creating Ui page.",
-            "DESCRIPTION": "This error occurs when a problem creating a Ui page occurs.\n"
+            "CODE": "6XX8HAD",
+            "TITLE": "Error creating Ui page.",
+            "DESCRIPTION": "This error occurs when a problem creating a Ui page occurs.\n",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2017-11-20 15:01:38",
@@ -1322,9 +1682,12 @@
             "MODIFIED_BY_USER": "0x11e7add6fab63cc6997b74e5434dc47d",
             "UID": "0x11e7ce03b79e6318ad9174e5434dc47d",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6XX8HFA",
-            "ERROR_TEXT": "Error updating Ui page.",
-            "DESCRIPTION": "This error occurs when a problem updating a Ui page occurs.\n"
+            "CODE": "6XX8HFA",
+            "TITLE": "Error updating Ui page.",
+            "DESCRIPTION": "This error occurs when a problem updating a Ui page occurs.\n",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2017-11-27 15:06:45",
@@ -1333,9 +1696,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e7d3846e10a285a3da0205857feb80",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6Y0U6GM",
-            "ERROR_TEXT": "Model builder not available for selected data connector",
-            "DESCRIPTION": ""
+            "CODE": "6Y0U6GM",
+            "TITLE": "Model builder not available for selected data connector",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2017-12-21 11:52:42",
@@ -1344,9 +1710,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e7e64572b340df88460205857feb80",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6YD44MC",
-            "ERROR_TEXT": "Invalid configuration for Tree widget",
-            "DESCRIPTION": ""
+            "CODE": "6YD44MC",
+            "TITLE": "Invalid configuration for Tree widget",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2017-12-21 12:20:03",
@@ -1355,9 +1724,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e7e64944b1046888460205857feb80",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6YD4HAF",
-            "ERROR_TEXT": "Invalid tree widget configuration",
-            "DESCRIPTION": "The configuration for the tree structure within a widget based on a hierarchy is missing or invalid. Widgets like DataTree or ComboTree contain a Tree widget internally, that defines the hierarchy structure. When creating on of those widgets, the \"tree\" property must contain a valid tree definition.\n\nPlease refer to the description of the Tree widget for more information."
+            "CODE": "6YD4HAF",
+            "TITLE": "Invalid tree widget configuration",
+            "DESCRIPTION": "The configuration for the tree structure within a widget based on a hierarchy is missing or invalid. Widgets like DataTree or ComboTree contain a Tree widget internally, that defines the hierarchy structure. When creating on of those widgets, the \"tree\" property must contain a valid tree definition.\n\nPlease refer to the description of the Tree widget for more information.",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2017-12-31 07:16:22",
@@ -1366,9 +1738,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e7edfa7d764564ad81e4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6YI5RCU",
-            "ERROR_TEXT": "Required widget property missing",
-            "DESCRIPTION": ""
+            "CODE": "6YI5RCU",
+            "TITLE": "Required widget property missing",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2018-02-14 21:47:58",
@@ -1377,9 +1752,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e811d0b514b5d698100205857feb80",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6Z5MAVK",
-            "ERROR_TEXT": "Invalid configuration for the DataRowGrouper",
-            "DESCRIPTION": ""
+            "CODE": "6Z5MAVK",
+            "TITLE": "Invalid configuration for the DataRowGrouper",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2018-03-12 12:48:09",
@@ -1388,9 +1766,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e825f39dc88a37afe20205857feb80",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6ZISUAJ",
-            "ERROR_TEXT": "Cannot delete dependent data",
-            "DESCRIPTION": "When trying to delete a business object, the system automatically looks for related data, that depends on it and attempts to remove it first. This error indicates, that this operation failed.\n\nRemoving dependent data is important as it would become meaningless garbage without the object it depends on: e.g. an order position cannot exist if the order was physically deleted.\n\nIf the related data cannot be removed automatically, you should try deleting it manually and retry the failed delete operation."
+            "CODE": "6ZISUAJ",
+            "TITLE": "Cannot delete dependent data",
+            "DESCRIPTION": "When trying to delete a business object, the system automatically looks for related data, that depends on it and attempts to remove it first. This error indicates, that this operation failed.\n\nRemoving dependent data is important as it would become meaningless garbage without the object it depends on: e.g. an order position cannot exist if the order was physically deleted.\n\nIf the related data cannot be removed automatically, you should try deleting it manually and retry the failed delete operation.",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2018-03-12 13:07:22",
@@ -1399,9 +1780,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e825f64d3bb61dafe20205857feb80",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "6ZIT36X",
-            "ERROR_TEXT": "No data source defined for object",
-            "DESCRIPTION": "This error occurs if an operation requiring a data source (e.g. reading or writing) was called on an object that does not have one. \n\nObjects without data sources are quite legitimate. For example, they can be used to model the input data for an action, which is not a direct replica of data source entry. However, these objects only exist in the runtime. If an attempt is made to persist such an object, this error will occur."
+            "CODE": "6ZIT36X",
+            "TITLE": "No data source defined for object",
+            "DESCRIPTION": "This error occurs if an operation requiring a data source (e.g. reading or writing) was called on an object that does not have one. \n\nObjects without data sources are quite legitimate. For example, they can be used to model the input data for an action, which is not a direct replica of data source entry. However, these objects only exist in the runtime. If an attempt is made to persist such an object, this error will occur.",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2018-06-12 13:28:30",
@@ -1410,9 +1794,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e86e447b80b01a9e9e0205857feb80",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "70U52B4",
-            "ERROR_TEXT": "Error in metamodel: relations to objects without primary keys (UIDs) must have an explicit key attribute",
-            "DESCRIPTION": "This error occurs if a relation, that does not have a specific target key attribute, points to an object without a primary key (UID attribute).\n\nNormally you do not have to specify, which attribute of the related object is to be used as key. By default, the UID of that object is used. This, of course, does not work, if there is no UID attribute. So you should either specify, which attribute the relation is attached to or add a UID to the target object. "
+            "CODE": "70U52B4",
+            "TITLE": "Error in metamodel: relations to objects without primary keys (UIDs) must have an explicit key attribute",
+            "DESCRIPTION": "This error occurs if a relation, that does not have a specific target key attribute, points to an object without a primary key (UID attribute).\n\nNormally you do not have to specify, which attribute of the related object is to be used as key. By default, the UID of that object is used. This, of course, does not work, if there is no UID attribute. So you should either specify, which attribute the relation is attached to or add a UID to the target object. ",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2018-06-13 07:37:29",
@@ -1421,9 +1808,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e86edc9c5a731e9e9e0205857feb80",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "70UJ2GV",
-            "ERROR_TEXT": "Error in metamodel: orphaned model components detected",
-            "DESCRIPTION": "This error indicates, that an instance of a model component references a non-existant entity: e.g. an attribute for an object, that does not exist. See specific error text for details."
+            "CODE": "70UJ2GV",
+            "TITLE": "Error in metamodel: orphaned model components detected",
+            "DESCRIPTION": "This error indicates, that an instance of a model component references a non-existant entity: e.g. an attribute for an object, that does not exist. See specific error text for details.",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2018-06-18 07:34:52",
@@ -1432,9 +1822,12 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e872ca11c4a1939e9e0205857feb80",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "70X3MLA",
-            "ERROR_TEXT": "Ambiguous relation alias",
-            "DESCRIPTION": "This error occurs, when a relation within an alias expression is ambiguously defined: that is, multiple relations matching the alias were found. \n\nThis happens typically, when the relations modifier (the square-brackets-part) is omitted in reverse relations. Since the alias of the right object is used in relation paths for reverse relations, there can easily be multiple reverse relations with the same alias. \n\nConsider the following example with a meta object ORDER, which has two different relations to the object COMPANY: PAYEE and CONTRACTOR. The expression COMPANY__ORDER (all order of a company) is ambiguous, because it is unclear, which relation is meant, so the correct notation would be COMPANY__ORDER[PAYEE] or COMPANY__ORDER[CONTRACTOR]. \n\nThe part in square brackets is called *modifier* and is required for reverse relations, unless one of the following conditions applies:\n\n- There is only one relation from the right to the left object (e.g. if there would be only one relation from ORDER to COMPANY)\n- There are multiple relations, but only one of them is required for the right object (e.g. only PAYEE would be required for ORDER) - in this case, the required relations is used by default.\n\nIn any case, the full notation with the modifier is allways possible. The short one is just a convenience shortcut.\n\n"
+            "CODE": "70X3MLA",
+            "TITLE": "Ambiguous relation alias",
+            "DESCRIPTION": "This error occurs, when a relation within an alias expression is ambiguously defined: that is, multiple relations matching the alias were found. \n\nThis happens typically, when the relations modifier (the square-brackets-part) is omitted in reverse relations. Since the alias of the right object is used in relation paths for reverse relations, there can easily be multiple reverse relations with the same alias. \n\nConsider the following example with a meta object ORDER, which has two different relations to the object COMPANY: PAYEE and CONTRACTOR. The expression COMPANY__ORDER (all order of a company) is ambiguous, because it is unclear, which relation is meant, so the correct notation would be COMPANY__ORDER[PAYEE] or COMPANY__ORDER[CONTRACTOR]. \n\nThe part in square brackets is called *modifier* and is required for reverse relations, unless one of the following conditions applies:\n\n- There is only one relation from the right to the left object (e.g. if there would be only one relation from ORDER to COMPANY)\n- There are multiple relations, but only one of them is required for the right object (e.g. only PAYEE would be required for ORDER) - in this case, the required relations is used by default.\n\nIn any case, the full notation with the modifier is allways possible. The short one is just a convenience shortcut.\n\n",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         },
         {
             "CREATED_ON": "2018-06-20 09:56:04",
@@ -1443,9 +1836,96 @@
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e8747025cae8f7a1fb0205857feb80",
             "APP": "0x31000000000000000000000000000000",
-            "ERROR_CODE": "70Y6HAK",
-            "ERROR_TEXT": "Object not writeable!",
-            "DESCRIPTION": "Writing operations can be explicitly disabled in the metamodel by removing the property \"writable\" from \n\n- the object, \n- it's data source, or\n- a specific connection. \n\nIn this case, writing attempts will fail even before a transaction is started or the data is passed to the corresponding query builder!"
+            "CODE": "70Y6HAK",
+            "TITLE": "Object not writeable!",
+            "DESCRIPTION": "Writing operations can be explicitly disabled in the metamodel by removing the property \"writable\" from \n\n- the object, \n- it's data source, or\n- a specific connection. \n\nIn this case, writing attempts will fail even before a transaction is started or the data is passed to the corresponding query builder!",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
+        },
+        {
+            "CREATED_ON": "2018-11-19 13:55:08",
+            "MODIFIED_ON": "2018-11-19 13:55:08",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e8ec02ba4d555b87f10205857feb81",
+            "APP": "0x31000000000000000000000000000000",
+            "CODE": "734GDAX",
+            "TITLE": "Object has no LABEL attribute",
+            "DESCRIPTION": "",
+            "HINT": "The UID will be used to display the object by default: e.g. in drop-downs, etc.",
+            "TYPE": "INFO",
+            "DOCS": ""
+        },
+        {
+            "CREATED_ON": "2018-11-19 14:24:12",
+            "MODIFIED_ON": "2018-11-19 14:24:40",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e8ec06ca2e75e887f10205857feb81",
+            "APP": "0x31000000000000000000000000000000",
+            "CODE": "734GQRL",
+            "TITLE": "Object has no UID attribute",
+            "DESCRIPTION": "",
+            "HINT": "It cannot be used with core actions, in dropdown-filters, etc.",
+            "TYPE": "WARNING",
+            "DOCS": ""
+        },
+        {
+            "CREATED_ON": "2018-11-19 14:33:07",
+            "MODIFIED_ON": "2018-11-19 14:35:54",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e8ec0808d0d3d287f10205857feb81",
+            "APP": "0x31000000000000000000000000000000",
+            "CODE": "734GUW2",
+            "TITLE": "An object without a data source cannot be readable!",
+            "DESCRIPTION": "",
+            "HINT": "This object is marked as readable, but has no data source or an empty data address.",
+            "TYPE": "WARNING",
+            "DOCS": ""
+        },
+        {
+            "CREATED_ON": "2018-11-19 14:36:48",
+            "MODIFIED_ON": "2018-11-19 14:35:54",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e8ec088ccec25687f10205857feb81",
+            "APP": "0x31000000000000000000000000000000",
+            "CODE": "734GWLL",
+            "TITLE": "Object has no attributes!",
+            "DESCRIPTION": "",
+            "HINT": "Neither this object nor objects it inerits from have any attributes.",
+            "TYPE": "WARNING",
+            "DOCS": ""
+        },
+        {
+            "CREATED_ON": "2018-11-19 14:42:49",
+            "MODIFIED_ON": "2018-11-19 14:35:54",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e8ec0963b6a82587f10205857feb81",
+            "APP": "0x31000000000000000000000000000000",
+            "CODE": "734GZDR",
+            "TITLE": "Object is not readable, but has readable attributes",
+            "DESCRIPTION": "",
+            "HINT": "It will not be possible to read any of these attributes.",
+            "TYPE": "WARNING",
+            "DOCS": ""
+        },
+        {
+            "CREATED_ON": "2018-11-30 16:50:36",
+            "MODIFIED_ON": "2018-11-30 16:50:36",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e8f4c007e6583b8de10205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "CODE": "73A6BVD",
+            "TITLE": "Object has multiple LABEL-attributes!",
+            "DESCRIPTION": "",
+            "HINT": "Make sure, only one attribute is marked as object label! Until then, the first one will be used.",
+            "TYPE": "ERROR",
+            "DOCS": ""
         }
     ],
     "totals_rows": [],
@@ -1456,12 +1936,12 @@
                 "expression": "APP",
                 "comparator": "=",
                 "value": "0x31000000000000000000000000000000",
-                "object_alias": "exface.Core.ERROR"
+                "object_alias": "exface.Core.MESSAGE"
             }
         ]
     },
-    "rows_on_page": null,
-    "row_offset": 0,
+    "rows_limit": null,
+    "rows_offset": 0,
     "sorters": [
         {
             "attribute_alias": "CREATED_ON",

@@ -11,6 +11,9 @@ use exface\Core\Exceptions\QueryBuilderException;
 use Wingu\OctopusCore\Reflection\ReflectionDocComment;
 use exface\Core\Exceptions\DataSources\DataQueryFailedError;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
+use exface\Core\Interfaces\DataSources\DataConnectionInterface;
+use exface\Core\Interfaces\DataSources\DataQueryResultDataInterface;
+use exface\Core\CommonLogic\DataQueries\DataQueryResultData;
 
 /**
  * A query builder to read annotations for PHP classes, their methods and properties.
@@ -32,12 +35,6 @@ class PhpAnnotationsReader extends AbstractQueryBuilder
     const ANNOTATION_LEVEL_CLASS = 'class';
 
     const ANNOTATION_LEVEL_PROPERTY = 'property';
-
-    private $result_rows = array();
-
-    private $result_totals = array();
-
-    private $result_total_rows = 0;
 
     private $last_query = null;
 
@@ -82,51 +79,17 @@ class PhpAnnotationsReader extends AbstractQueryBuilder
         return $query;
     }
 
-    function getResultRows()
-    {
-        return $this->result_rows;
-    }
-
-    function getResultTotals()
-    {
-        return $this->result_totals;
-    }
-
-    function getResultTotalRows()
-    {
-        return $this->result_total_rows;
-    }
-
-    function setResultRows(array $array)
-    {
-        $this->result_rows = $array;
-        return $this;
-    }
-
-    function setResultTotals(array $array)
-    {
-        $this->result_totals = $array;
-        return $this;
-    }
-
-    function setResultTotalRows($value)
-    {
-        $this->result_total_rows = $value;
-        return $this;
-    }
-
     protected function getAnnotationLevel()
     {
         return $this->getMainObject()->getDataAddressProperty('annotation_level');
     }
 
     /**
-     *
-     * {@inheritdoc}
-     *
+     * 
+     * {@inheritDoc}
      * @see \exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder::read()
      */
-    public function read(AbstractDataConnector $data_connection = null)
+    public function read(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
     {
         $result_rows = array();
         $annotation_level = $this->getAnnotationLevel();
@@ -166,17 +129,17 @@ class PhpAnnotationsReader extends AbstractQueryBuilder
             }
             
             $result_rows = $this->applyFilters($result_rows);
-            $this->result_total_rows = count($result_rows);
+            $resultTotalRowCounter = count($result_rows);
             $result_rows = $this->applySorting($result_rows);
             $result_rows = $this->applyPagination($result_rows);
         }
         
-        if (! $this->getResultTotalRows()) {
-            $this->setResultTotalRows(count($result_rows));
+        $rowCnt = count($result_rows);
+        if (! $resultTotalRowCounter) {
+            $resultTotalRowCounter = $rowCnt;
         }
         
-        $this->setResultRows($result_rows);
-        return $this->getResultTotalRows();
+        return new DataQueryResultData($result_rows, $rowCnt, ($resultTotalRowCounter > $rowCnt + $this->getOffset()), $resultTotalRowCounter);
     }
 
     /**

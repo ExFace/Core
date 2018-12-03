@@ -11,6 +11,7 @@ use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\Exceptions\DataSheets\DataSheetStructureError;
+use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 
 /**
  *
@@ -39,21 +40,26 @@ class DataColumnList extends EntityList implements DataColumnListInterface
             throw new InvalidArgumentException('Cannot add column to data sheet: only DataColumns can be added to the column list of a datasheet, "' . get_class($column) . '" given instead!');
         }
         
+        $key = $key === null && $column->getName() ? $column->getName() : $key;
         $data_sheet = $this->getDataSheet();
-        $existingColumn = $this->get($column->getName());
+        $existingColumn = $this->get($key);
         if (! $existingColumn || $existingColumn->getExpressionObj()->toString() !== $column->getExpressionObj()->toString()) {
             if ($column->getDataSheet() !== $data_sheet) {
                 $column_original = $column;
                 $column = $column_original->copy();
                 $column->setDataSheet($data_sheet);
                 
+                // Add the column BEFORE copying values, as the latter will auto-add the column to the sheet
+                $result = parent::add($column, $key);
+                
                 // If the original column had values, use them to overwrite the values in the newly added column
                 if ($overwrite_values && $column_original->isFresh()) {
                     $data_sheet->setColumnValues($column->getName(), $column->getValues());
                 }
+            } else {
+                $result = parent::add($column, $key);
             }
             
-            $result = parent::add($column, ($key === null && $column->getName() ? $column->getName() : $key));
             unset($existingColumn);
             
             // Mark the data as outdated if new columns are added because the values for these columns should be fetched now
@@ -77,32 +83,46 @@ class DataColumnList extends EntityList implements DataColumnListInterface
      * The array can contain DataColumns, expressions or a mixture of those
      *
      * @param array $columns            
-     * @param string $relation_path            
+     * @param string $relPathString            
      * @return DataColumnListInterface
      */
-    public function addMultiple(array $columns, $relation_path = '')
+    public function addMultiple(array $columns, MetaRelationPathInterface $relationPath = null) : DataColumnListInterface
     {
+        $relPathString = $relationPath === null ? '' : $relationPath->toString();
         foreach ($columns as $col) {
             if ($col instanceof DataColumn) {
-                $col_name = $relation_path ? RelationPath::relationPathAdd($relation_path, $col->getName()) : $col->getName();
+                $col_name = $relPathString ? RelationPath::relationPathAdd($relPathString, $col->getName()) : $col->getName();
+                // If there is no such column alread, add it
                 if (! $this->get($col_name)) {
-                    // Change the column name so it does not overwrite any existing columns
-                    $col->setName($col_name);
-                    // Add the column (this will change the column's data sheet, etc.)
-                    $this->add($col);
-                    // Modify the column's expression and overwrite the old one. Overwriting explicitly is important because
-                    // it will also update the attribute alias, etc.
-                    // FIXME perhaps it would be nicer to use the expression::rebase() here, but the relation path seems to
-                    // be in the wrong direction here
-                    $col->setExpression($col->getExpressionObj()->setRelationPath($relation_path));
-                    // Update the formatter
-                    if ($col->getFormatter()) {
-                        $col->getFormatter()->setRelationPath($relation_path);
+                    // If a relation path is given, need to copy the column and modify it's expressions
+                    if ($relPathString !== '') {
+                        $colCopy = $col->copy();
+                        $colCopy->setName($col_name);
+                        // Modify the column's expression and overwrite the old one. Overwriting explicitly is important because
+                        // it will also update the attribute alias, etc.
+                        // FIXME perhaps it would be nicer to use the expression::rebase() here, but the relation path seems to
+                        // be in the wrong direction here
+                        $colCopy->setExpression($col->getExpressionObj()->withRelationPath($relationPath));
+                        // Update the formatter
+                        if ($col->getFormatter()) {
+                            $colCopy->setFormatter($col->getFormatter()->withRelationPath($relationPath));
+                        }
+                        // Add the column, but do not transfer values.
+                        // This won't be possible anyway, as $colCopy currently still may belong to another sheet and we changed
+                        // it's name, so even if the original $col had values, they won't be associated with the modified $colCopy!
+                        $this->add($colCopy, $col_name, false);
+                        // Now take care of the values!
+                        /*if($col->isFresh()) {
+                            $this->getDataSheet()->setColumnValues($colCopy->getName(), $col->getValues());
+                        }*/
+                    } else {
+                        // If no relation path modification required, just add the column
+                        $this->add($col);
                     }
                 }
             } else {
-                $col_name = $relation_path ? RelationPath::relationPathAdd($relation_path, $col) : $col;
-                if (! $this->get($col_name)) {
+                $col_name = $relPathString ? RelationPath::relationPathAdd($relPathString, $col) : $col;
+                if ($this->get($col_name) === null) {
                     try {
                         $this->addFromExpression($col_name);
                     } catch (\Throwable $e) {

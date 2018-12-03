@@ -30,6 +30,14 @@
             "attribute_alias": "WRITABLE_FLAG"
         },
         {
+            "name": "COMMENTS",
+            "attribute_alias": "COMMENTS"
+        },
+        {
+            "name": "DOCS",
+            "attribute_alias": "DOCS"
+        },
+        {
             "name": "DATA_SOURCE",
             "attribute_alias": "DATA_SOURCE"
         },
@@ -69,18 +77,20 @@
     "rows": [
         {
             "CREATED_ON": "2007-01-01 00:00:00",
-            "MODIFIED_ON": "2018-10-18 12:37:49",
+            "MODIFIED_ON": "2018-11-19 11:50:49",
             "CREATED_BY_USER": "",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x32340000000000000000000000000000",
             "READABLE_FLAG": "1",
             "WRITABLE_FLAG": "1",
+            "COMMENTS": "",
+            "DOCS": "",
             "DATA_SOURCE": "0x32000000000000000000000000000000",
             "APP": "0x31000000000000000000000000000000",
-            "SHORT_DESCRIPTION": "Each system ExFace is connected to is a data source. The meta model describes objects from one or more data sources, but each object is always located in a single source. A data source can have different connections: e.g. for a test-DB, a prod-DB, et",
+            "SHORT_DESCRIPTION": "This is the logical definition of data source. It includes some meta information and the QueryBuilder type. The specific location (e.g. DB server, etc.) is stored in it's connection. ",
             "PARENT_OBJECT": "",
-            "DATA_ADDRESS_PROPS": "{}",
-            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Dialog\",\"widgets\":[{\"widget_type\":\"WidgetGroup\",\"widgets\":[{\"attribute_alias\":\"LABEL\"},{\"attribute_alias\":\"APP\"},{\"attribute_alias\":\"ALIAS\"},{\"attribute_alias\":\"BASE_OBJECT\"},{\"attribute_alias\":\"READABLE_FLAG\"},{\"attribute_alias\":\"WRITABLE_FLAG\"}]},{\"widget_type\":\"WidgetGroup\",\"caption\":\"=TRANSLATE('exface.Core', 'PAGE.DATA_SOURCE_EDITOR.DEFAULTS')\",\"widgets\":[{\"attribute_alias\":\"DEFAULT_CONNECTION\"},{\"attribute_alias\":\"DEFAULT_QUERY_BUILDER\"}]},{\"widget_type\":\"WidgetGroup\",\"caption\":\"=TRANSLATE('exface.Core', 'PAGE.DATA_SOURCE_EDITOR.CUSTOM_CONFIG')\",\"widgets\":[{\"attribute_alias\":\"CUSTOM_CONNECTION\"},{\"attribute_alias\":\"CUSTOM_QUERY_BUILDER\"}]},{\"widget_type\":\"WidgetGroup\",\"caption\":\"=TRANSLATE('exface.Core', 'PAGE.DATA_SOURCE_EDITOR.CURRENT_CONFIG')\",\"widgets\":[{\"attribute_alias\":\"CONNECTION\",\"id\":\"current_connection\"},{\"attribute_alias\":\"QUERYBUILDER\"}]}],\"buttons\":[{\"caption\":\"=TRANSLATE('exface.Core', 'PAGE.DATA_SOURCE_EDITOR.COPY_CONNECTION')\",\"close_dialog\":false,\"disable_condition\":{\"widget_link\":\"current_connection!UID\",\"comparator\":\"==\",\"value\":\"\"},\"action\":{\"alias\":\"exface.Core.ShowObjectCopyDialog\",\"object_alias\":\"exface.Core.CONNECTION\",\"input_mapper\":{\"column_to_column_mappings\":[{\"from\":\"CONNECTION\",\"to\":\"UID\"}]}}}]}",
+            "DATA_ADDRESS_PROPS": null,
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Dialog\",\"widgets\":[{\"widget_type\":\"WidgetGroup\",\"widgets\":[{\"attribute_alias\":\"LABEL\"},{\"attribute_alias\":\"APP\"},{\"attribute_alias\":\"ALIAS\"},{\"attribute_alias\":\"BASE_OBJECT\"},{\"attribute_alias\":\"READABLE_FLAG\"},{\"attribute_alias\":\"WRITABLE_FLAG\"}]},{\"widget_type\":\"WidgetGroup\",\"caption\":\"=TRANSLATE('exface.Core', 'PAGE.DATA_SOURCE_EDITOR.DEFAULTS')\",\"widgets\":[{\"attribute_alias\":\"DEFAULT_CONNECTION\"},{\"attribute_alias\":\"DEFAULT_QUERY_BUILDER\"}]},{\"widget_type\":\"WidgetGroup\",\"caption\":\"=TRANSLATE('exface.Core', 'PAGE.DATA_SOURCE_EDITOR.CUSTOM_CONFIG')\",\"widgets\":[{\"attribute_alias\":\"CUSTOM_CONNECTION\"},{\"attribute_alias\":\"CUSTOM_QUERY_BUILDER\"}]},{\"widget_type\":\"WidgetGroup\",\"caption\":\"=TRANSLATE('exface.Core', 'PAGE.DATA_SOURCE_EDITOR.CURRENT_CONFIG')\",\"widgets\":[{\"attribute_alias\":\"CONNECTION\",\"id\":\"current_connection\"},{\"attribute_alias\":\"QUERYBUILDER\"}]}],\"buttons\":[{\"caption\":\"=TRANSLATE('exface.Core', 'PAGE.DATA_SOURCE_EDITOR.EDIT_CONNECTION')\",\"close_dialog\":false,\"disable_condition\":{\"widget_link\":\"current_connection!UID\",\"comparator\":\"==\",\"value\":\"\"},\"action\":{\"alias\":\"exface.Core.ShowObjectEditDialog\",\"object_alias\":\"exface.Core.CONNECTION\",\"input_mapper\":{\"column_to_column_mappings\":[{\"from\":\"CONNECTION\",\"to\":\"UID\"}]}}},{\"caption\":\"=TRANSLATE('exface.Core', 'PAGE.DATA_SOURCE_EDITOR.COPY_CONNECTION')\",\"close_dialog\":false,\"disable_condition\":{\"widget_link\":\"current_connection!UID\",\"comparator\":\"==\",\"value\":\"\"},\"action\":{\"alias\":\"exface.Core.ShowObjectCopyDialog\",\"object_alias\":\"exface.Core.CONNECTION\",\"input_mapper\":{\"column_to_column_mappings\":[{\"from\":\"CONNECTION\",\"to\":\"UID\"}]}}}]}",
             "LABEL": "Data Source",
             "ALIAS": "DATASRC",
             "DATA_ADDRESS": "exf_data_source"
@@ -98,8 +108,8 @@
             }
         ]
     },
-    "rows_on_page": null,
-    "row_offset": 0,
+    "rows_limit": null,
+    "rows_offset": 0,
     "sorters": [
         {
             "attribute_alias": "CREATED_ON",

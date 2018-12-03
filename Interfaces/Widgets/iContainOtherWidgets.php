@@ -1,7 +1,6 @@
 <?php
 namespace exface\Core\Interfaces\Widgets;
 
-use exface\Core\Interfaces\Widgets\iHaveChildren;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Widgets\AbstractWidget;
@@ -9,7 +8,7 @@ use exface\Core\Exceptions\Widgets\WidgetChildNotFoundError;
 use exface\Core\Exceptions\UnderflowException;
 use exface\Core\CommonLogic\UxonObject;
 
-interface iContainOtherWidgets extends iHaveChildren
+interface iContainOtherWidgets extends WidgetInterface
 {
 
     /**

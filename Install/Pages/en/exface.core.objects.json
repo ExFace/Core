@@ -37,7 +37,9 @@
             },
             {
                 "attribute_alias": "DEFAULT_EDITOR_UXON",
-                "widget_type": "Input"
+                "widget_type": "Input",
+                "width": 1,
+                "height": 1
             }
         ],
         "columns": [

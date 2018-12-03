@@ -3,7 +3,7 @@ namespace exface\Core\Interfaces\Actions;
 
 use exface\Core\Interfaces\Templates\TemplateInterface;
 
-interface iRunTemplateScript
+interface iRunTemplateScript extends ActionInterface
 {
 
     /**

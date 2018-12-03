@@ -30,6 +30,14 @@
             "attribute_alias": "WRITABLE_FLAG"
         },
         {
+            "name": "COMMENTS",
+            "attribute_alias": "COMMENTS"
+        },
+        {
+            "name": "DOCS",
+            "attribute_alias": "DOCS"
+        },
+        {
             "name": "DATA_SOURCE",
             "attribute_alias": "DATA_SOURCE"
         },
@@ -69,19 +77,21 @@
     "rows": [
         {
             "CREATED_ON": "2016-12-02 17:04:30",
-            "MODIFIED_ON": "2016-12-09 14:18:23",
+            "MODIFIED_ON": "2018-11-29 08:52:44",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6b8b162faa64ca587e4b318306b9a",
             "READABLE_FLAG": "1",
             "WRITABLE_FLAG": "1",
+            "COMMENTS": "",
+            "DOCS": "",
             "DATA_SOURCE": "0x11e6afd8d2fa47e78943e4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
             "SHORT_DESCRIPTION": "",
             "PARENT_OBJECT": "0x11e6be0ad5666af88ddee4b318306b9a",
-            "DATA_ADDRESS_PROPS": "{}",
-            "DEFAULT_EDITOR_UXON": "{}",
-            "LABEL": "Action",
+            "DATA_ADDRESS_PROPS": null,
+            "DEFAULT_EDITOR_UXON": null,
+            "LABEL": "Action Prototype",
             "ALIAS": "ACTION",
             "DATA_ADDRESS": "*\/*\/Actions\/*.php"
         }
@@ -98,8 +108,8 @@
             }
         ]
     },
-    "rows_on_page": null,
-    "row_offset": 0,
+    "rows_limit": null,
+    "rows_offset": 0,
     "sorters": [
         {
             "attribute_alias": "CREATED_ON",

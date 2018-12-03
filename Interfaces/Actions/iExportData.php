@@ -14,7 +14,7 @@ interface iExportData extends iReadData
      * 
      * @return boolean
      */
-    public function isDownloadable();
+    public function isDownloadable() : bool;
     
     /**
      * 
@@ -26,24 +26,24 @@ interface iExportData extends iReadData
     /**
      * @return string
      */
-    public function getFilename();
+    public function getFilename() : string;
     
     /**
      * @param string $filename
      * @return iExportData
      */
-    public function setFilename($filename) : iExportData;
+    public function setFilename(string $filename) : iExportData;
     
     /**
      * 
-     * @return string
+     * @return string|NULL
      */
-    public function getMimeType();
+    public function getMimeType() : ?string;
     
     /**
      * 
      * @param string $mimeType
      * @return iExportData
      */
-    public function setMimeType($mimeType) : iExportData;
+    public function setMimeType(string $mimeType) : iExportData;
 }

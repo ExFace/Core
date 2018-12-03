@@ -2,7 +2,7 @@
     "id": "0x078d42f06f1611e8bb520205857feb80",
     "alias_with_namespace": "exface.core.relations",
     "menu_parent_page_alias": "exface.core.objects",
-    "menu_index": "3",
+    "menu_index": "0",
     "menu_visible": true,
     "name": "Relations",
     "description": "Browse relations for a selected meta object",

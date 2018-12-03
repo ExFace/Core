@@ -4,8 +4,8 @@ namespace exface\Core\CommonLogic;
 use Symfony\Component\Stopwatch\Stopwatch;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
-use exface\Core\Events\Action\OnBeforeHandleTaskEvent;
-use exface\Core\Events\Action\OnHandleTaskEvent;
+use exface\Core\Events\Action\OnBeforeActionPerformedEvent;
+use exface\Core\Events\Action\OnActionPerformedEvent;
 use exface\Core\Events\DataConnection\OnBeforeQueryEvent;
 use exface\Core\Events\DataConnection\OnQueryEvent;
 use exface\Core\Interfaces\Events\ActionEventInterface;
@@ -84,11 +84,11 @@ class Profiler implements WorkbenchDependantInterface
         $event_manager = $this->getWorkbench()->eventManager();
         
         // Actions
-        $event_manager->addListener(OnBeforeHandleTaskEvent::getEventName(), array(
+        $event_manager->addListener(OnBeforeActionPerformedEvent::getEventName(), array(
             $this,
             'startAction'
         ));
-        $event_manager->addListener(OnHandleTaskEvent::getEventName(), array(
+        $event_manager->addListener(OnActionPerformedEvent::getEventName(), array(
             $this,
             'stopAction'
         ));

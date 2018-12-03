@@ -27,8 +27,8 @@ use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Interfaces\Actions\iModifyData;
 use exface\Core\Interfaces\Selectors\ActionSelectorInterface;
 use exface\Core\Factories\SelectorFactory;
-use exface\Core\Events\Action\OnBeforeHandleTaskEvent;
-use exface\Core\Events\Action\OnHandleTaskEvent;
+use exface\Core\Events\Action\OnBeforeActionPerformedEvent;
+use exface\Core\Events\Action\OnActionPerformedEvent;
 use exface\Core\Interfaces\WorkbenchInterface;
 
 /**
@@ -276,12 +276,12 @@ abstract class AbstractAction implements ActionInterface
             $transaction = $this->getWorkbench()->data()->startTransaction();
         }
         
-        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeHandleTaskEvent($this, $task, $transaction));
+        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeActionPerformedEvent($this, $task, $transaction));
         
         // Call the action's logic
         $result = $this->perform($task, $transaction);
         
-        $this->getWorkbench()->eventManager()->dispatch(new OnHandleTaskEvent($this, $result, $transaction));
+        $this->getWorkbench()->eventManager()->dispatch(new OnActionPerformedEvent($this, $result, $transaction));
         
         // Register the action in the action context of the window. Since it is passed by reference, we can
         // safely do it here, befor perform(). On the other hand, this gives all kinds of action event handlers
@@ -772,9 +772,14 @@ abstract class AbstractAction implements ActionInterface
      * Input mappers can be used to perform an action on an object, that it was
      * not explicitly made for - even if the objects are not related in any way.
      * 
-     * You can define as many mappers as you like - each containing rules to
-     * map data of its form-object to its to-object. These rules basically
-     * define simple mappings from one expression to another.
+     * You can define as many mappers as you like - each containing mappings (rules) 
+     * to map data of its form-object to its to-object. These rules basically
+     * define simple mappings from one expression to another. Each mapper can
+     * have as many mappings as you need. You can even have mappings of different 
+     * types:
+     * 
+     * - `column_to_column_mappings` - see example below
+     * - `column_to_filter_mappings` - see example in property `input_mapper`
      * 
      * For example, if you want to have an action, that will create a support
      * ticket for a selected purchase order, you will probably use a the
@@ -782,6 +787,7 @@ abstract class AbstractAction implements ActionInterface
      * Now, you can use input mappers to prefill it with data from the (totally
      * unrelated) purchase order object:
      * 
+     * ```
      * {
      *  "input_mappers": [
      *      {
@@ -799,6 +805,8 @@ abstract class AbstractAction implements ActionInterface
      *      }
      *  ]
      * }
+     * 
+     * ```
      * 
      * In this example we map the label-attribute of the purchase order to the
      * title of the ticket. This will probably prefill our title field with
@@ -832,12 +840,31 @@ abstract class AbstractAction implements ActionInterface
     /**
      * Defines transformation rules for input data coming from the calling widget of this action.
      * 
-     * This is a shortcut to specifying input_mappers, where an array needs to be created and
-     * every mapper must have a from_object_alias defined. In contrast to input_mappers, you
-     * can only define one mapper here and it will be automatically applied to data with
-     * the meta object of the input widget of this action.
+     * This is a shortcut to specifying `input_mappers`, where an array needs to be created and
+     * every mapper must have a `from_object_alias` defined. In contrast to `input_mappers`, you
+     * can only define one mapper here and it will be automatically used to map from the meta 
+     * object of the input widget to the object of this action.
      * 
-     * See description of the input_mappers property for more details. 
+     * Here is an example to use values from the selected data rows as filter values in the
+     * for the input data of the action (rows and input data being the same object). This type
+     * of mapping can be used for drill-downs in hierarchical structures, where the selected
+     * row is used as parent-filter in the next hierarchy level.
+     * 
+     * ```
+     * {
+     *  "input_mapper": {
+     *      "column_to_filter_mappings": [
+     *          {
+     *              "from": "id",
+     *              "to": "parent_id"
+     *          }
+     *      ]
+     *  }
+     * }
+     * 
+     * ```
+     * 
+     * See description of the `input_mappers` property for more details. 
      * 
      * @uxon-property input_mapper
      * @uxon-type \exface\Core\CommonLogic\DataSheet\DataSheetMapper
