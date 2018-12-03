@@ -41,6 +41,7 @@ use exface\Core\Interfaces\Selectors\ClassSelectorInterface;
 use exface\Core\CommonLogic\Traits\AliasTrait;
 use exface\Core\CommonLogic\Selectors\DataTypeSelector;
 use exface\Core\Factories\DataTypeFactory;
+use exface\Core\Exceptions\DataSheets\DataSheetReadError;
 
 /**
  * This is the base implementation of the AppInterface aimed at providing an
@@ -462,7 +463,14 @@ class App implements AppInterface
      */
     public function getLanguageDefault() : string
     {
-        return $this->getAppModelDataSheet()->getCellValue('DEFAULT_LANGUAGE_CODE', 0);
+        try { 
+            return $this->getAppModelDataSheet()->getCellValue('DEFAULT_LANGUAGE_CODE', 0);
+        } catch (DataSheetReadError $e) {
+            // Catch read errors in case, the app does not yet exist in the model (this may happen
+            // on rare occasions, when apps are just being installed)
+            $this->getWorkbench()->getLogger()->logException($e);
+            return $this->getWorkbench()->getConfig()->getOption('LOCALE.DEFAULT');
+        }
     }
     
     /**
@@ -484,9 +492,10 @@ class App implements AppInterface
     {
         $app_object = $this->getWorkbench()->model()->getObject('exface.Core.App');
         $ds = DataSheetFactory::createFromObject($app_object);
-        foreach ($app_object->getAttributes()->getAll() as $attr) {
-            $ds->getColumns()->addFromAttribute($attr);
-        }
+        $cols = $ds->getColumns();
+        $cols->addFromExpression('UID');
+        $cols->addFromExpression('DEFAULT_LANGUAGE_CODE');
+        $cols->addFromExpression('NAME');
         $ds->addFilterFromString('ALIAS', $this->getAliasWithNamespace(), EXF_COMPARATOR_EQUALS);
         $ds->dataRead();
         return $ds;

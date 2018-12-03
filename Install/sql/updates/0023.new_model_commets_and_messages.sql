@@ -15,3 +15,4 @@ ALTER TABLE `exf_message`
 	CHANGE `error_text` `title` VARCHAR(250) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL;
 
 UPDATE `exf_object` SET object_alias = 'MESSAGE', data_address = 'exf_message' WHERE oid = 0x11e6c3859abc5faea3e40205857feb80;
+UPDATE `exf_attribute` SET attribute_alias = 'CODE', data = 'code' WHERE oid = 0x11e6c6a02e5cc611a3e40205857feb80;
