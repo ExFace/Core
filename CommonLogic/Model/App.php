@@ -493,9 +493,9 @@ class App implements AppInterface
         $app_object = $this->getWorkbench()->model()->getObject('exface.Core.App');
         $ds = DataSheetFactory::createFromObject($app_object);
         $cols = $ds->getColumns();
-        $cols->addFromAttribute('UID');
-        $cols->addFromAttribute('DEFAULT_LANGUAGE_CODE');
-        $cols->addFromAttribute('NAME');
+        $cols->addFromExpression('UID');
+        $cols->addFromExpression('DEFAULT_LANGUAGE_CODE');
+        $cols->addFromExpression('NAME');
         $ds->addFilterFromString('ALIAS', $this->getAliasWithNamespace(), EXF_COMPARATOR_EQUALS);
         $ds->dataRead();
         return $ds;
