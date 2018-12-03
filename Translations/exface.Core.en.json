@@ -191,7 +191,7 @@
 	"WIDGET.DATA.NO_DATA_FOUND": "No data could be found for the current set of filters!",
 	"WIDGET.DATA.HELP.FILTERS": "Filters",
 	"WIDGET.DATA.HELP.COLUMNS": "Columns",
-	"WIDGET.DATA.NOT_LOADED": "Please fill the required filters and press the search-button!",
+	"WIDGET.DATA.NOT_LOADED": "Please set your filters before performing a search!",
 	
 	"WIDGET.DATACONFIGURATOR.FILTER_TAB_CAPTION": "Filters",
 	"WIDGET.DATACONFIGURATOR.SORTER_TAB_CAPTION": "Sorting",

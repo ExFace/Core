@@ -190,7 +190,7 @@
 	"WIDGET.DATA.NO_DATA_FOUND": "Keine Daten gefunden, die zu aktuellen Filtern passen!",
 	"WIDGET.DATA.HELP.FILTERS": "Filter",
 	"WIDGET.DATA.HELP.COLUMNS": "Spalten",
-	"WIDGET.DATA.NOT_LOADED": "Bitte Pflicht-Filter setzen und anschließend die Suche ausführen!",
+	"WIDGET.DATA.NOT_LOADED": "Bitte zuerst Filter setzen und dann die Suche ausführen!",
 	
     "WIDGET.DATACONFIGURATOR.FILTER_TAB_CAPTION": "Filter",
     "WIDGET.DATACONFIGURATOR.SORTER_TAB_CAPTION": "Sortierung",
