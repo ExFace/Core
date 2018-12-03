@@ -13,6 +13,8 @@ use exface\Core\Interfaces\Selectors\QueryBuilderSelectorInterface;
 use exface\Core\Interfaces\QueryBuilderInterface;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\CommonLogic\DataSheets\DataColumn;
+use exface\Core\Interfaces\DataSources\DataConnectionInterface;
+use exface\Core\Interfaces\DataSources\DataQueryResultDataInterface;
 
 abstract class AbstractQueryBuilder implements QueryBuilderInterface
 {
@@ -39,6 +41,8 @@ abstract class AbstractQueryBuilder implements QueryBuilderInterface
     
     private $workbench = null;
     
+    private $countAllRows = true;
+    
     public function __construct(QueryBuilderSelectorInterface $selector)
     {
         $this->selector = $selector;
@@ -56,49 +60,51 @@ abstract class AbstractQueryBuilder implements QueryBuilderInterface
     }
 
     /**
-     * Performs a create query.
-     * Returns the number of successfully created rows.
-     *
-     * @param string $data_connection            
-     * @return int
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\QueryBuilderInterface::create()
      */
-    function create(AbstractDataConnector $data_connection = null)
+    function create(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
     {
         throw new QueryBuilderException('Create method not implemented in "' . get_class($this) . '"!');
     }
 
     /**
-     * Performs a read query.
-     * Returns the number of read rows.
-     *
-     * @param string $data_connection            
-     * @return int
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\QueryBuilderInterface::read()
      */
-    function read(AbstractDataConnector $data_connection = null)
+    function read(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
     {
         throw new QueryBuilderException('Read method not implemented in "' . get_class($this) . '"!');
     }
 
     /**
-     * Performs an update query.
-     * Returns the number of successfully updated rows.
-     *
-     * @param string $data_connection            
-     * @return int
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\QueryBuilderInterface::update()
      */
-    function update(AbstractDataConnector $data_connection = null)
+    function update(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
     {
         throw new QueryBuilderException('Update method not implemented in "' . get_class($this) . '"!');
     }
 
     /**
-     * Performs a delete query.
-     * Returns the number of deleted rows.
-     *
-     * @param string $data_connection            
-     * @return int
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\QueryBuilderInterface::delete()
      */
-    function delete(AbstractDataConnector $data_connection = null)
+    function delete(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
+    {
+        throw new QueryBuilderException('Delete method not implemented in "' . get_class($this) . '"!');
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\QueryBuilderInterface::count()
+     */
+    function count(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
     {
         throw new QueryBuilderException('Delete method not implemented in "' . get_class($this) . '"!');
     }
@@ -182,6 +188,11 @@ abstract class AbstractQueryBuilder implements QueryBuilderInterface
         $qpart->setRow($place_in_row);
         $this->totals[] = $qpart;
         return $qpart;
+    }
+    
+    protected function hasTotals() : bool
+    {
+        return empty($this->totals) === false;
     }
 
     protected function getTotals()
@@ -485,30 +496,6 @@ abstract class AbstractQueryBuilder implements QueryBuilderInterface
     {
         return $this->values;
     }
-
-    /**
-     * Returns an array of rows fetched.
-     * Each row is an associative array in turn
-     * with attribute_aliases for keys.
-     *
-     * @return array
-     */
-    abstract function getResultRows();
-
-    /**
-     * Returns an array with totals: array[column][function]=[value]
-     * Multiple agregating functions can be used on each column.
-     *
-     * @return array
-     */
-    abstract function getResultTotals();
-
-    /**
-     * Returns the total number of rows found, regardless of the pagination
-     *
-     * @return int
-     */
-    abstract function getResultTotalRows();
 
     public function getWorkbench()
     {

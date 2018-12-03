@@ -66,7 +66,7 @@ class DataColumn implements DataColumnInterface
      */
     public function getExpressionObj()
     {
-        if (is_null($this->expression) || $this->expression->isEmpty()) {
+        if ($this->expression === null || $this->expression->isEmpty()) {
             if ($this->attribute_alias) {
                 $exface = $this->getWorkbench();
                 $this->expression = ExpressionFactory::createFromString($exface, $this->getAttributeAlias(), $this->getMetaObject());
@@ -88,7 +88,7 @@ class DataColumn implements DataColumnInterface
      */
     public function setExpression($expression_or_string)
     {
-        if (! ($expression_or_string instanceof ExpressionInterface)) {
+        if (($expression_or_string instanceof ExpressionInterface) === false) {
             $exface = $this->getWorkbench();
             $expression = ExpressionFactory::createFromString($exface, $expression_or_string, $this->getMetaObject());
         } else {
@@ -210,7 +210,6 @@ class DataColumn implements DataColumnInterface
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::setFormatter()
      */
     public function setFormatter($expression)
@@ -219,6 +218,7 @@ class DataColumn implements DataColumnInterface
             $expression = $this->getWorkbench()->model()->parseExpression($expression);
         }
         $this->formatter = $expression;
+        return $this;
     }
 
     /**
@@ -379,42 +379,42 @@ class DataColumn implements DataColumnInterface
      */
     public function exportUxonObject()
     {
-        $uxon = new UxonObject();
+        $arr = [];
         
         // Allways export some basic properties of the column first
-        $uxon->setProperty('name', $this->getName());
+        $arr['name'] = $this->getName();
         
         if ($this->getHidden()) {
-            $uxon->setProperty('hidden', $this->getHidden());
+            $arr['hidden'] = $this->getHidden();
         }
         
         if ($this->hasTotals()) {
-            $uxon->setProperty('totals', $this->getTotals()->exportUxonObject());
+            $arr['totals'] = $this->getTotals()->exportUxonObject()->toArray();
         }
         
         if ($this->isAttribute()) {
             // If it contains an attribute, it will be enough to export it's alias and every thing
             // else only if it differs from attribute data
-            $uxon->setProperty('attribute_alias', $this->attribute_alias);
+            $arr['attribute_alias'] = $this->attribute_alias;
             
             if ($this->getAttribute()->getDataType() !== $this->getDataType()) {
-                $uxon->setProperty('data_type', $this->getDataType()->getAliasWithNamespace());
+                $arr['data_type'] = $this->getDataType()->getAliasWithNamespace();
             }
             
             if ($this->getAttribute()->getFormula() !== $this->getFormula()) {
-                $uxon->setProperty('formula', $this->getFormula()->toString());
+                $arr['formula'] = $this->getFormula()->toString();
             }
         } else {
             // If it's not an attribute, export everything
-            $uxon->setProperty('expression', $this->getExpressionObj()->toString());
-            $uxon->setProperty('data_type', $this->getDataType()->getAliasWithNamespace());
+            $arr['expression'] = $this->getExpressionObj()->toString();
+            $arr['data_type'] = $this->getDataType()->getAliasWithNamespace();
         
             if ($this->formula) {
-                $uxon->setProperty('formula', $this->getFormula()->toString());
+                $arr['formula'] = $this->getFormula()->toString();
             }
         }
         
-        return $uxon;
+        return new UxonObject($arr);
     }
     
     /**

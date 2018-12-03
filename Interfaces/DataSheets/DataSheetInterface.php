@@ -26,7 +26,7 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * @param boolean $merge_uid_dublicates            
      * @return DataSheetInterface
      */
-    public function addRows(array $rows, $merge_uid_dublicates = false);
+    public function addRows(array $rows, bool $merge_uid_dublicates = false, bool $auto_add_columns = true) : DataSheetInterface;
 
     /**
      * Adds a new row to the data sheet.
@@ -38,7 +38,7 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * @param boolean $merge_uid_dublicates            
      * @return \exface\Core\Interfaces\DataSheets\DataSheetInterface
      */
-    public function addRow(array $row, $merge_uid_dublicates = false);
+    public function addRow(array $row, bool $merge_uid_dublicates = false, bool $auto_add_columns = true) : DataSheetInterface;
 
     /**
      * Makes this data sheet LEFT JOIN the other data sheet ON $this.$left_key_column = $data_sheet.right_key_column
@@ -107,11 +107,94 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * @triggers \exface\Core\Events\DataSheet\OnBeforeReadDataEvent
      * @triggers \exface\Core\Events\DataSheet\OnReadDataEvent
      * 
-     * @return integer
+     * @return int
      */
     public function dataRead(int $limit = null, int $offset = null) : int;
+    
+    /**
+     * Performs a count operation on the data source to get fresh information about
+     * how many rows would match the filters and aggregations of this data sheet.
+     * 
+     * Avoid calling dataCount() explicitly!!! Some data sources like large SQL tables 
+     * or OLAP cubes in general have very poor counting performance. Instead use
+     * countRowsInDataSource() and let the syste decide if a count operation is
+     * really required!
+     *  
+     * @return int
+     */
+    public function dataCount() : int;
 
+    /**
+     * 
+     * @return int
+     */
     public function countRows() : int;
+    
+    /**
+     * Returns the total number of rows available in the data source matching
+     * these sheet's filters and aggregations or NULL if not available.
+     *
+     * Will return NULL if the information is not available from the data source
+     * or the data source was not read (e.g. the sheet was populated
+     * programmatically)!
+     * 
+     * If you expect poor performance for count operations in the data source
+     * (e.g. for OLAP sources), you can explicitly pervent this method 
+     * from performing them by setting setAutoCount(false) for this sheet.
+     * 
+     * @see setAutoCount()
+     *
+     * @return int|NULL
+     */
+    public function countRowsInDataSource() : ?int;
+    
+    /**
+     * Explicitly sets the counter for rows matching this sheet's filters, etc. available in the data source.
+     * 
+     * This method is usefull for custom-built data sheets or programmatic data sources.
+     * 
+     * @param int $count
+     * @return DataSheetInterface
+     */
+    public function setCounterForRowsInDataSource(int $count) : DataSheetInterface;
+    
+    /**
+     * Set to TRUE if you do not want the sheet to counting all rows matching it's filters in the 
+     * data source when countRowsInDataSource() is called.
+     * 
+     * Some data sources automatically count available rows with every paged read operation, but
+     * most do wait for count() to be called explicitly to improve reading performance. By
+     * default, a data sheet will perform a count() automatically when countRowsInDataSource()
+     * is called. If you suspect poor performance of a count (e.g. for OLAP sources), 
+     * you can block this behavior by setAutoCount(false). In this case countRowsInDataSource() 
+     * will return null.
+     * 
+     * Disabling this counter can significatly improve performance, but has negative effects on 
+     * pagination - the total amount of pages cannot be determined anymore.
+     * 
+     * Note: This setting will not have any effect on data sources, that count rows with every 
+     * read operation. 
+     * 
+     * Note: Even if autocount is disabled, you can still force the sheet to count rows in the
+     * data source with dataCount()
+     * 
+     * @see countRowsInDataSource()
+     * @see dataCount()
+     * 
+     * @param bool $trueOrFalse
+     * @return DataSheetInterface
+     */
+    public function setAutoCount(bool $trueOrFalse) : DataSheetInterface;
+    
+    /**
+     * Returns TRUE if the sheet will automatically perform a count() on it's data source when
+     * countRowsInDataSource() is called and FALSE otherwise.
+     * 
+     * @see setAutoCount() for more details.
+     * 
+     * @return bool
+     */
+    public function getAutoCount() : bool;
 
     /**
      * Saves the values in this data sheet to the appropriate data sources.
@@ -218,8 +301,6 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      */
     public function hasSorters();
 
-    public function setCounterRowsAll($count);
-
     /**
      * Returns multiple rows of the data sheet as an array of associative array (e.g.
      * [rownum => [col1 => val1, col2 => val2, ...] ])
@@ -258,10 +339,6 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * @return array [ column_id => total value ]
      */
     public function getTotalsRows();
-
-    public function countRowsAll();
-
-    public function countRowsLoaded($include_totals = false);
 
     /**
      * Returns an array of DataColumns
@@ -367,6 +444,14 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * @return boolean
      */
     public function isFresh() : bool;
+    
+    /**
+     * Explicitly marks the sheet as fresh (TRUE) or not (FALSE).
+     * 
+     * @param bool $value
+     * @return DataSheetInterface
+     */
+    public function setFresh(bool $value) : DataSheetInterface;
 
     /**
      * Returns true if the data sheet will load all available data when performing data_read().
@@ -393,19 +478,19 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
     public function isUnsorted() : bool;
     
     /**
-     * Returns TRUE if the sheet includes all data (is not paged) and FALSE otherwise.
+     * Returns TRUE if the sheet includes only part of the data in the data source and FALSE otherwise.
      * 
      * @return bool
      */
-    public function isUnpaged() : bool;
+    public function isPaged() : bool;
 
-    public function getRowsOnPage();
+    public function getRowsLimit();
 
-    public function setRowsOnPage($value);
+    public function setRowsLimit($value);
 
-    public function getRowOffset();
+    public function getRowsOffset();
 
-    public function setRowOffset($value);
+    public function setRowsOffset($value);
 
     /**
      * Merges the current data sheet with another one.

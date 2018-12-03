@@ -16,6 +16,7 @@ use exface\Core\Widgets\Traits\iHaveButtonsAndToolbarsTrait;
 use exface\Core\Interfaces\Widgets\iHaveToolbars;
 use exface\Core\Interfaces\Widgets\iHaveConfigurator;
 use exface\Core\Widgets\Traits\iSupportLazyLoadingTrait;
+use exface\Core\Interfaces\Widgets\iConfigureWidgets;
 
 /**
  * A Chart widget draws a chart with upto two axis and any number of series.
@@ -88,14 +89,23 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
 
     const AXIS_Y = 'y';
 
-    public function getChildren()
+    public function getChildren() : \Iterator
     {
-        $children = array();
         if (! $this->getDataWidgetLink()) {
-            $children[] = $this->getData();
+            yield $this->getData();
         }
-        $children = array_merge($children, $this->getAxes(), $this->getSeries(), $this->getToolbars());
-        return $children;
+        
+        foreach ($this->getAxes() as $axis) {
+            yield $axis;
+        }
+        
+        foreach ($this->getSeries() as $series) {
+            yield $series;
+        }
+        
+        foreach ($this->getToolbars() as $toolbar) {
+            yield $toolbar;
+        }
     }
 
     /**
@@ -602,25 +612,33 @@ class Chart extends AbstractWidget implements iUseData, iHaveToolbars, iHaveButt
     /**
      * 
      */
-    public function getConfiguratorWidget()
+    public function getConfiguratorWidget() : iConfigureWidgets
     {
         return $this->getData()->getConfiguratorWidget();
+    }
+    
+    public function setConfigurator(UxonObject $uxon) : iHaveConfigurator
+    {
+        $this->getData()->setConfigurator($uxon);
+        
+        return $this;
     }
     
     /**
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\iHaveConfigurator::setConfiguratorWidget()
      */
-    public function setConfiguratorWidget($widget_or_uxon_object)
+    public function setConfiguratorWidget(iConfigureWidgets $widget) : iHaveConfigurator
     {
-        return $this->getData()->setConfiguratorWidget($widget_or_uxon_object);
+        $this->getData()->setConfiguratorWidget($widget);
+        return $this;
     }
     
     /**
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\iHaveConfigurator::getConfiguratorWidgetType()
      */
-    public function getConfiguratorWidgetType()
+    public function getConfiguratorWidgetType() : string
     {
         return 'ChartConfigurator';
     }

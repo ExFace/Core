@@ -1,11 +1,12 @@
 <?php
 namespace exface\Core\QueryBuilders;
 
-use exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder;
-use exface\Core\CommonLogic\AbstractDataConnector;
-use exface\Core\CommonLogic\DataQueries\FileContentsDataQuery;
 use League\Csv\Reader;
 use SplFileObject;
+use exface\Core\Interfaces\DataSources\DataConnectionInterface;
+use exface\Core\Interfaces\DataSources\DataQueryResultDataInterface;
+use exface\Core\CommonLogic\DataQueries\DataQueryResultData;
+use exface\Core\DataTypes\BooleanDataType;
 
 /**
  * A query builder to read CSV files.
@@ -20,20 +21,14 @@ use SplFileObject;
  */
 class CsvBuilder extends FileContentsBuilder
 {
-
     /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder::read()
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\QueryBuilders\FileContentsBuilder::read()
      */
-    public function read(AbstractDataConnector $data_connection = null)
+    public function read(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
     {
-        $query = $this->buildQuery();
-        if (is_null($data_connection)) {
-            $data_connection = $this->getMainObject()->getDataConnection();
-        }
-        
+        $query = $this->buildQuery();        
         $data_connection->query($query);
         
         $static_values = array();
@@ -47,9 +42,9 @@ class CsvBuilder extends FileContentsBuilder
         }
         
         // configuration
-        $delimiter = $this->getMainObject()->getDataAddressProperty('DELIMITER') ? $this->getMainObject()->getDataAddressProperty('DELIMITER') : ',';
-        $enclosure = $this->getMainObject()->getDataAddressProperty('ENCLOSURE') ? $this->getMainObject()->getDataAddressProperty('ENCLOSURE') : "'";
-        $hasHeaderRow = $this->getMainObject()->getDataAddressProperty('HAS_HEADER_ROW') ? $this->getMainObject()->getDataAddressProperty('HAS_HEADER_ROW') : 0;
+        $delimiter = $this->getDelimiter();
+        $enclosure = $this->getEnclosure();
+        $hasHeaderRow = $this->hasHeaderRow();
         
         // prepare filters
         foreach ($this->getFilters()->getFilters() as $qpart) {
@@ -84,9 +79,9 @@ class CsvBuilder extends FileContentsBuilder
         });
         
         // pagination
-        $offset = $hasHeaderRow ? $this->getOffset() + 1 : $this->getOffset();
+        $offset = $hasHeaderRow === true ? $this->getOffset() + 1 : $this->getOffset();
         $filtered->setOffset($offset);
-        $filtered->setLimit($this->getLimit());
+        $filtered->setLimit($this->getLimit()+1);
         
         // sorting
         $filtered->addSortBy(function ($row1, $row2) {
@@ -104,13 +99,6 @@ class CsvBuilder extends FileContentsBuilder
         $result_rows = $filtered->fetchAssoc($assocKeys);
         $result_rows = iterator_to_array($result_rows);
         
-        // row count
-        $rowCount = $this->getRowCount($query->getPathAbsolute(), $delimiter, $enclosure);
-        if ($hasHeaderRow)
-            $rowCount = max(0, $rowCount - 1);
-        
-        $this->setResultTotalRows($rowCount);
-        
         // add static values
         foreach ($static_values as $alias => $val) {
             foreach (array_keys($result_rows) as $row_nr) {
@@ -118,10 +106,58 @@ class CsvBuilder extends FileContentsBuilder
             }
         }
         
-        $this->setResultRows($result_rows);
-        return $this->getResultTotalRows();
+        $rowCnt = count($result_rows);
+        if ($this->getLimit() > 0 && $rowCnt === $this->getLimit() + 1) {
+            $affectedRowCount = $this->getLimit();
+            $hasMoreRows = true;
+            array_pop($result_rows);
+        } else {
+            $affectedRowCount = $rowCnt;
+            $hasMoreRows = false;
+        }
+        
+        return new DataQueryResultData($result_rows, $affectedRowCount, $hasMoreRows);
+    }
+    
+    /**
+     * 
+     * @return string
+     */
+    protected function getDelimiter() : string
+    {
+        return $this->getMainObject()->getDataAddressProperty('DELIMITER') ? $this->getMainObject()->getDataAddressProperty('DELIMITER') : ',';
+    }
+    
+    /**
+     * 
+     * @return string
+     */
+    protected function getEnclosure() : string
+    {
+        return $this->getMainObject()->getDataAddressProperty('ENCLOSURE') ? $this->getMainObject()->getDataAddressProperty('ENCLOSURE') : "'";
+    }
+    
+    protected function hasHeaderRow() : bool
+    {
+        return BooleanDataType::cast($this->getMainObject()->getDataAddressProperty('HAS_HEADER_ROW') ? $this->getMainObject()->getDataAddressProperty('HAS_HEADER_ROW') : 0);
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\QueryBuilders\FileContentsBuilder::count()
+     */
+    public function count(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
+    {
+        $query = $data_connection->query($this->buildQuery());
+        $rowCount = $this->getRowCount($query->getPathAbsolute(), $this->getDelimiter(), $this->getEnclosure());
+        if ($this->hasHeaderRow()) {
+            $rowCount = max(0, $rowCount - 1);
+        }
+        
+        return new DataQueryResultData([], $rowCount, false, $rowCount);
+    }
+    
     protected function getAssocKeys($colCount, $field_map)
     {
         $keys = array_flip($field_map);

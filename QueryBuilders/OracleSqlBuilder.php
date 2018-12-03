@@ -14,6 +14,9 @@ use exface\Core\Interfaces\Model\AggregatorInterface;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\DataTypes\RelationTypeDataType;
 use exface\Core\Interfaces\DataSources\SqlDataConnectorInterface;
+use exface\Core\Interfaces\DataSources\DataConnectionInterface;
+use exface\Core\CommonLogic\DataQueries\DataQueryResultData;
+use exface\Core\Interfaces\DataSources\DataQueryResultDataInterface;
 
 /**
  * A query builder for Oracle SQL.
@@ -77,7 +80,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
         $group_by = '';
         $order_by = '';
         
-        if ($this->getLimit()) {
+        if ($this->getLimit() > 0) {
             // if the query is limited (pagination), run a core query for the filtering and pagination
             // and perform as many joins as possible afterwords only for the result of the core query
             
@@ -230,12 +233,13 @@ class OracleSqlBuilder extends AbstractSqlBuilder
             $core_query = "
 								SELECT " . $distinct . $core_select . " FROM " . $core_from . $core_join . $where . $group_by . $having . $order_by;
             
+            // Increase limit by one to check if there are more rows (see AbstractSqlBuilder::read())
             $query = "\n SELECT " . $distinct . $enrichment_select . " FROM
 				(SELECT *
 					FROM
 						(SELECT exftbl.*, ROWNUM EXFRN
 							FROM (" . $core_query . ") exftbl
-		         			WHERE ROWNUM <= " . ($this->getLimit() + $this->getOffset()) . "
+		         			WHERE ROWNUM <= " . ($this->getLimit()+ 1 + $this->getOffset()) . "
 						)
          			WHERE EXFRN > " . $this->getOffset() . "
          		) exfcoreq " . $enrichment_join . $enrichment_order_by;
@@ -479,13 +483,10 @@ class OracleSqlBuilder extends AbstractSqlBuilder
      *
      * @see \exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder::create()
      */
-    function create(AbstractDataConnector $data_connection = null)
+    function create(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
     {
-        if (! $data_connection)
-            $data_connection = $this->main_object->getDataConnection();
         if (! $this->isWritable())
-            return 0;
-        $insert_ids = array();
+            return new DataQueryResultData([], 0);
         
         $values = array();
         $columns = array();
@@ -550,6 +551,9 @@ class OracleSqlBuilder extends AbstractSqlBuilder
             }
         }
         
+        $insertedCounter = 0;
+        $insertedIds = [];
+        $uidAlias = $this->getMainObject()->getUidAttribute()->getAlias();
         if (count($values) > 1) {
             foreach ($values as $nr => $vals) {
                 $sql = 'INSERT INTO ' . $this->getMainObject()->getDataAddress() . ' (' . implode(', ', $columns) . ') VALUES (' . $vals . ')' . "\n";
@@ -567,8 +571,9 @@ class OracleSqlBuilder extends AbstractSqlBuilder
                 
                 $affected_rows = $query->countAffectedRows();
                 // TODO How to get multipla inserted ids???
-                if ($affected_rows) {
-                    $insert_ids[] = $last_id;
+                if ($affected_rows > 0) {
+                    $insertedCounter += $affected_rows;
+                    $insertedIds[] = [$uidAlias => $last_id];
                 }
             }
         } else {
@@ -587,11 +592,12 @@ class OracleSqlBuilder extends AbstractSqlBuilder
             $affected_rows = $query->countAffectedRows();
             // TODO How to get multipla inserted ids???
             if ($affected_rows) {
-                $insert_ids[] = $last_id;
+                $insertedCounter += $affected_rows;
+                $insertedIds[] = [$uidAlias => $last_id];
             }
         }
         
-        return $insert_ids;
+        return new DataQueryResultData($insertedIds, $insertedCounter);
     }
     
     protected function escapeColumnName(string $name) : string

@@ -8,6 +8,9 @@ use exface\Core\DataTypes\DateDataType;
 use exface\Core\CommonLogic\Model\Aggregator;
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
+use exface\Core\Interfaces\DataSources\DataConnectionInterface;
+use exface\Core\CommonLogic\DataQueries\DataQueryResultData;
+use exface\Core\Interfaces\DataSources\DataQueryResultDataInterface;
 
 /**
  * A query builder for MySQL.
@@ -148,8 +151,9 @@ class MySqlBuilder extends AbstractSqlBuilder
         
         $distinct = $this->getSelectDistinct() ? 'DISTINCT ' : '';
         
-        if ($this->getLimit()) {
-            $limit = ' LIMIT ' . $this->getLimit() . ' OFFSET ' . $this->getOffset();
+        if ($this->getLimit() > 0) {
+            // Increase limit by one to check if there are more rows (see AbstractSqlBuilder::read())
+            $limit = ' LIMIT ' . ($this->getLimit()+1) . ' OFFSET ' . $this->getOffset();
         }
         
         if (($group_by && $where) || $this->getSelectDistinct()) {
@@ -246,7 +250,7 @@ class MySqlBuilder extends AbstractSqlBuilder
      *
      * @see AbstractSqlBuilder::delete()
      */
-    function delete(AbstractDataConnector $data_connection = null)
+    function delete(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
     {
         // filters -> WHERE
         // Relations (joins) are not supported in delete clauses, so check for them first!
@@ -277,7 +281,7 @@ class MySqlBuilder extends AbstractSqlBuilder
         
         $sql = 'DELETE FROM ' . $this->getMainObject()->getDataAddress() . str_replace($this->getMainObject()->getAlias() . '.', '', $where);
         $query = $data_connection->runSql($sql);
-        return $query->countAffectedRows();
+        return new DataQueryResultData([], $query->countAffectedRows());
     }
 }
 ?>

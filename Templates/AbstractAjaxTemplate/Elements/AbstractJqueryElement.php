@@ -102,10 +102,8 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface
     public function buildHtmlHeadTags()
     {
         $headers = array();
-        if ($this->getWidget()->isContainer()) {
-            foreach ($this->getWidget()->getChildren() as $child) {
-                $headers = array_merge($headers, $this->getTemplate()->getElement($child)->buildHtmlHeadTags());
-            }
+        foreach ($this->getWidget()->getChildren() as $child) {
+            $headers = array_merge($headers, $this->getTemplate()->getElement($child)->buildHtmlHeadTags());
         }
         return $headers;
     }

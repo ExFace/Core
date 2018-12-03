@@ -13,7 +13,7 @@ abstract class RelationPathFactory extends AbstractStaticFactory
      * @param string $data_type_alias            
      * @return MetaRelationPathInterface
      */
-    public static function createForObject(MetaObjectInterface $start_object)
+    public static function createForObject(MetaObjectInterface $start_object) : MetaRelationPathInterface
     {
         return new RelationPath($start_object);
     }
@@ -24,10 +24,13 @@ abstract class RelationPathFactory extends AbstractStaticFactory
      * @param string $relation_path_string            
      * @return MetaRelationPathInterface
      */
-    public static function createFromString(MetaObjectInterface $start_object, $relation_path_string)
+    public static function createFromString(MetaObjectInterface $start_object, string $relation_path_string) : MetaRelationPathInterface
     {
         $result = self::createForObject($start_object);
-        return $result->appendRelationsFromStringPath($relation_path_string);
+        if ($relation_path_string !== '') {
+            $result->appendRelationsFromStringPath($relation_path_string);
+        }
+        return $result;
     }
 }
 ?>

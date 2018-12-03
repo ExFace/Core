@@ -134,12 +134,6 @@ class SqlModelLoader implements ModelLoaderInterface
             $object->setDataSourceId($row['data_source_oid']);
             $object->setAppId($row['app_oid']);
             $object->setNamespace($row['app_alias']);
-            if (! is_null($row['readable_flag'])){
-                $object->setReadable($row['readable_flag']);
-            }
-            if (! is_null($row['writable_flag'])){
-                $object->setWritable($row['writable_flag']);
-            }
             if ($row['has_behaviors']) {
                 $load_behaviors = true;
             }
@@ -156,6 +150,12 @@ class SqlModelLoader implements ModelLoaderInterface
             // Overwrite inherited properties
             if (is_null($object->getDataAddress()) || $object->getDataAddress() == '' || (! is_null($row['data_address']) && ! $row['data_address'] == '')) {
                 $object->setDataAddress($row['data_address']);
+            }
+            if (! is_null($row['readable_flag'])){
+                $object->setReadable($row['readable_flag']);
+            }
+            if (! is_null($row['writable_flag'])){
+                $object->setWritable($row['writable_flag']);
             }
             if (! $object->getShortDescription()) {
                 $object->setShortDescription($row['short_description']);
@@ -353,13 +353,20 @@ class SqlModelLoader implements ModelLoaderInterface
         $attr->setName($row['attribute_name']);
         $attr->setDataAddress($row['data']);
         $attr->setDataAddressProperties(UxonObject::fromJson($row['data_properties']));
-        $attr->setFormatter($row['attribute_formatter']);
         $attr->setRelationFlag($row['related_object_oid'] ? true : false);
         $attr->setDataType($row['data_type_oid']);
+        
+        if ($calcExpr = $row['attribute_formatter']) {
+            $attr->setCalculation($calcExpr);
+        }
         
         $default_editor = $row['default_editor_uxon'];
         if ($default_editor && $default_editor !== '{}'){
             $attr->setDefaultEditorUxon(UxonObject::fromJson($default_editor));
+        }
+        $default_display = $row['default_display_uxon'];
+        if ($default_display && $default_display !== '{}'){
+            $attr->setDefaultDisplayUxon(UxonObject::fromJson($default_display));
         }
         $custom_type = $row['custom_data_type_uxon'];
         if ($custom_type && $custom_type !== '{}') {
@@ -687,9 +694,9 @@ class SqlModelLoader implements ModelLoaderInterface
 					dt.*,
 					' . $this->buildSqlUuidSelector('dt.oid') . ' as oid,
                     a.app_alias,
-                    ve.error_code as validation_error_code,
-                    ve.error_text as validation_error_text
-				FROM exf_data_type dt LEFT JOIN exf_error ve ON dt.validation_error_oid = ve.oid LEFT JOIN exf_app a ON a.oid = dt.app_oid
+                    ve.code as validation_error_code,
+                    ve.title as validation_error_text
+				FROM exf_data_type dt LEFT JOIN exf_message ve ON dt.validation_error_oid = ve.oid LEFT JOIN exf_app a ON a.oid = dt.app_oid
 				WHERE ' . $where);
         foreach ($query->getResultArray() as $dt) {
             $this->data_types_by_uid[$dt['oid']] = $dt;

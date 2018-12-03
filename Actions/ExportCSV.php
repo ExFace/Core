@@ -4,17 +4,27 @@ namespace exface\Core\Actions;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use League\Csv\Writer;
 use exface\Core\CommonLogic\Constants\Icons;
-use exface\Core\Widgets\DataTable;
 use League\Csv\Reader;
 use exface\Core\Interfaces\Widgets\iShowData;
 
 /**
  * Exports data to a csv file.
+ * 
+ * The format of the CSV can be customized via the following properties:
+ * 
+ * - `delimiter_char` - `,` by default
+ * - `enclosure_char` - `"` by default
+ * - `escape_char` - `\` by default
+ * - `newline_sequence` - `\n` by default
+ * - `bom_sequence` - empty by default
+ * 
+ * As all export actions do, this action will read all data matching the current filters (no pagination), eventually
+ * splitting it into multiple requests. You can use `limit_rows_per_request` and `limit_time_per_request` to control this.
  *
  * @author SFL
  *
  */
-class ExportCSV extends ExportDataFile
+class ExportCSV extends ExportJSON
 {
 
     private $delimiterChar = ',';
@@ -30,7 +40,7 @@ class ExportCSV extends ExportDataFile
     /**
      *
      * {@inheritDoc}
-     * @see \exface\Core\Actions\ExportData::init()
+     * @see \exface\Core\Actions\ExportJSON::init()
      */
     protected function init()
     {
@@ -41,9 +51,9 @@ class ExportCSV extends ExportDataFile
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Actions\ExportDataFile::writeHeader()
+     * @see \exface\Core\Actions\ExportJSON::writeHeader()
      */
-    protected function writeHeader(iShowData $dataWidget)
+    protected function writeHeader(iShowData $dataWidget) : array
     {
         $header = [];
         $output = [];
@@ -51,7 +61,7 @@ class ExportCSV extends ExportDataFile
         foreach ($dataWidget->getColumns() as $col) {
             if (! $col->isHidden()) {
                 // Name der Spalte
-                if ($this->getWriteReadableHeader()) {
+                if ($this->getUseAttributeAliasAsHeader() === false) {
                     $colName = $col->getCaption();
                 } else {
                     $colName = $col->getAttributeAlias();
@@ -78,7 +88,7 @@ class ExportCSV extends ExportDataFile
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Actions\ExportDataFile::writeRows()
+     * @see \exface\Core\Actions\ExportJSON::writeRows()
      */
     protected function writeRows(DataSheetInterface $dataSheet, array $headerKeys)
     {
@@ -94,7 +104,7 @@ class ExportCSV extends ExportDataFile
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Actions\ExportDataFile::writeFileResult()
+     * @see \exface\Core\Actions\ExportJSON::writeFileResult()
      */
     protected function writeFileResult(DataSheetInterface $dataSheet)
     {}
@@ -102,12 +112,12 @@ class ExportCSV extends ExportDataFile
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Actions\ExportDataFile::getWriter()
+     * @see \exface\Core\Actions\ExportJSON::getWriter()
      */
     protected function getWriter()
     {
         if (is_null($this->writer)) {
-            $this->writer = Writer::createFromPath($this->getPathname(), 'x+');
+            $this->writer = Writer::createFromPath($this->getFilePathAbsolute(), 'x+');
             $this->writer->setDelimiter($this->delimiterChar);
             $this->writer->setEnclosure($this->enclosureChar);
             $this->writer->setEscape($this->escapeChar);
@@ -120,9 +130,9 @@ class ExportCSV extends ExportDataFile
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Actions\ExportData::getMimeType()
+     * @see \exface\Core\Actions\ExportJSON::getMimeType()
      */
-    public function getMimeType()
+    public function getMimeType() : ?string
     {
         return 'text/csv';
     }

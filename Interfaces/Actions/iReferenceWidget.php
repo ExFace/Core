@@ -4,7 +4,7 @@ namespace exface\Core\Interfaces\Actions;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Model\UiPageInterface;
 
-interface iReferenceWidget
+interface iReferenceWidget extends ActionInterface
 {
 
     /**

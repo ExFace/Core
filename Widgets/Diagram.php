@@ -142,11 +142,13 @@ class Diagram extends Container implements iSupportLazyLoading
      *
      * @see \exface\Core\Widgets\Container::getChildren()
      */
-    public function getChildren()
+    public function getChildren() : \Iterator
     {
-        return array_merge(parent::getChildren(), array(
-            $this->getDiagramObjectSelectorWidget()
-        ));
+        foreach (parent::getChildren() as $child) {
+            yield $child;
+        }
+        
+        yield $this->getDiagramObjectSelectorWidget();
     }
 
     public function prepareDataSheetToPrefill(DataSheetInterface $data_sheet = null) : DataSheetInterface

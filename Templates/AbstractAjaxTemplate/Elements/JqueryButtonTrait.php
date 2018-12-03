@@ -233,11 +233,17 @@ JS;
                 foreach ($action->getTakeAlongFilters() as $attributeAlias => $widgetLink){
                     $filters_param .= "&{$prefix}{$attributeAlias}='+{$this->getTemplate()->getElement($widgetLink->getTargetWidget())->buildJsValueGetter($widgetLink->getTargetColumnId(), null)}+'";
                 }
+                $newWindow = $action->getOpenInNewWindow();
+            } else {
+                $newWindow = false;
             }
             
             $output .= <<<JS
+
             {$input_element->buildJsBusyIconShow()}
-			{$this->buildJsNavigateToPage($action->getPageAlias(), $prefill_param . $filters_param, $input_element)}
+			{$this->buildJsNavigateToPage($action->getPageAlias(), $prefill_param . $filters_param, $input_element, $newWindow)}
+            {$input_element->buildJsBusyIconHide()}
+
 JS;
         }
         return $output;
@@ -251,9 +257,13 @@ JS;
      * 
      * @return string
      */
-    protected function buildJsNavigateToPage(string $pageSelector, string $urlParams = '', AbstractJqueryElement $input_element) : string
+    protected function buildJsNavigateToPage(string $pageSelector, string $urlParams = '', AbstractJqueryElement $input_element, bool $newWindow = false) : string
     {
-        return "window.location.href = '{$this->getTemplate()->buildUrlToPage($pageSelector)}?{$urlParams}';";
+        $url = "{$this->getTemplate()->buildUrlToPage($pageSelector)}?{$urlParams}";
+        if ($newWindow === true) {
+            return "window.open('{$url}');";
+        }
+        return "window.location.href = '{$url}';";
     }
 
     protected function buildJsClickGoBack(ActionInterface $action, AbstractJqueryElement $input_element)

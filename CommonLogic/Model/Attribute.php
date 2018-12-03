@@ -12,6 +12,8 @@ use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\DataTypes\SortingDirectionsDataType;
+use exface\Core\Interfaces\Model\ExpressionInterface;
+use exface\Core\Factories\ExpressionFactory;
 
 /**
  * 
@@ -36,7 +38,7 @@ class Attribute implements MetaAttributeInterface
 
     private $data_type;
 
-    private $formatter;
+    private $calculationString = null;
     
     private $readable = true;
     
@@ -76,6 +78,9 @@ class Attribute implements MetaAttributeInterface
     
     /** @var UxonObject|null */
     private $default_editor_uxon = null;
+    
+    /** @var UxonObject|null */
+    private $default_display_uxon = null;
 
     /** @var UxonObject|null */
     private $custom_data_type_uxon = null;
@@ -244,11 +249,18 @@ class Attribute implements MetaAttributeInterface
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::getFormatter()
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::getCalculationExpression()
      */
-    public function getFormatter()
+    public function getCalculationExpression() : ?ExpressionInterface
     {
-        return $this->formatter;
+        $expr = null;
+        if ($this->calculationString !== null) {
+            $expr = ExpressionFactory::createForObject($this->getObject(), $this->calculationString);
+            if ($this->getRelationPath()->isEmpty() === false) {
+                $expr = $expr->withRelationPath($this->getRelationPath());
+            }
+        }
+        return $expr;
     }
 
     /**
@@ -256,9 +268,15 @@ class Attribute implements MetaAttributeInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setFormatter()
      */
-    public function setFormatter($value)
+    public function setCalculation(string $expressionString) : MetaAttributeInterface
     {
-        $this->formatter = $value;
+        $this->calculationString = $expressionString;
+        return $this;
+    }
+    
+    public function hasCalculation() : bool
+    {
+        return $this->calculationString !== null;
     }
 
     /**
@@ -695,11 +713,7 @@ class Attribute implements MetaAttributeInterface
      */
     public function isLabelForObject()
     {
-        if ($this->getAlias() == $this->getObject()->getLabelAttributeAlias()) {
-            return true;
-        } else {
-            return false;
-        }
+        return $this->getAlias() === $this->getObject()->getLabelAttributeAlias();
     }
 
     /**
@@ -709,11 +723,7 @@ class Attribute implements MetaAttributeInterface
      */
     public function isUidForObject()
     {
-        if ($this->getObject()->getUidAttributeAlias() === $this->getAlias()) {
-            return true;
-        } else {
-            return false;
-        }
+        return $this->getObject()->getUidAttributeAlias() === $this->getAlias();
     }
 
     /**
@@ -994,7 +1004,11 @@ class Attribute implements MetaAttributeInterface
         
         // If the attribute is a relation and no widget type was specified explicitly, take it from the config!
         if ($this->isRelation() && ! $this->default_editor_uxon->hasProperty('widget_type')) {
-            $this->default_editor_uxon->setProperty("widget_type", $this->getWorkbench()->getConfig()->getOption('TEMPLATES.DEFAULT_WIDGET_FOR_RELATIONS'));
+            $relationWidgetType = $this->getWorkbench()->getConfig()->getOption('TEMPLATES.DEFAULT_WIDGET_FOR_RELATIONS');
+            $this->default_editor_uxon->setProperty("widget_type", $relationWidgetType);
+            if ($relationWidgetType === 'InputComboTable' && $this->getRelation()->getRightKeyAttribute()->isUidForObject() === false) {
+                $this->default_editor_uxon->setProperty("value_attribute_alias", $this->getRelation()->getRightKeyAttribute()->getAliasWithRelationPath());
+            }
         }
         
         $uxon = $this->default_editor_uxon->copy();
@@ -1016,6 +1030,42 @@ class Attribute implements MetaAttributeInterface
         $this->default_editor_uxon = $uxon;
         return $this;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::getDefaultDisplayUxon()
+     */
+    public function getDefaultDisplayUxon() : UxonObject
+    {
+        // If there is no default widget uxon defined, use the UXON from the data type
+        if ($this->default_display_uxon === null) {
+            $this->default_display_uxon = new UxonObject(['widget_type' => 'Display']);
+        }
+        
+        $uxon = $this->default_display_uxon->copy();
+        
+        // Set the attribute alias AFTER copying the UXON because the UXON object may
+        // be inherited from or by other attributes and we do not want to modify it 
+        // directly
+        if (! $uxon->hasProperty('attribute_alias')) {
+            $uxon->setProperty('attribute_alias', $this->getAliasWithRelationPath());
+        }
+        
+        return $uxon;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaAttributeInterface::setDefaultDisplayUxon()
+     */
+    public function setDefaultDisplayUxon(UxonObject $value) : MetaAttributeInterface
+    {
+        $this->default_display_uxon = $value;
+        return $this;
+    }
+    
     
     /**
      * 

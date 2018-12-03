@@ -3,6 +3,8 @@ namespace exface\Core\Widgets;
 
 use exface\Core\Interfaces\Widgets\iConfigureWidgets;
 use exface\Core\Interfaces\Widgets\iHaveConfigurator;
+use exface\Core\Interfaces\Widgets\iAmCollapsible;
+use exface\Core\Widgets\Traits\iAmCollapsibleTrait;
 
 /**
  * The configurator is a special widget, that controls the behavior of another widget.
@@ -23,6 +25,10 @@ use exface\Core\Interfaces\Widgets\iHaveConfigurator;
  * rest of the configurator rendered as regular tabs. There are lots of
  * possibilities!
  * 
+ * Configurators are collapsible. Since the mostly take up significant space,
+ * you may want to force a configurator to collapse (e.g. in a detail-table),
+ * to free up some space for the main widget.
+ * 
  * This is a basic - empty - configurator. It is the base for real configurators
  * like:
  * 
@@ -33,8 +39,10 @@ use exface\Core\Interfaces\Widgets\iHaveConfigurator;
  * @author Andrej Kabachnik
  *        
  */
-class WidgetConfigurator extends Tabs implements iConfigureWidgets
+class WidgetConfigurator extends Tabs implements iConfigureWidgets, iAmCollapsible
 {
+    use iAmCollapsibleTrait;
+    
     private $widget = null;
     
     /**
@@ -44,10 +52,12 @@ class WidgetConfigurator extends Tabs implements iConfigureWidgets
      */
     public function getWidgetConfigured()
     {
-        if (is_null($this->widget)){
+        if ($this->widget === null){
             // TODO search recursively for a parent with iHaveConfigurator
             return $this->getParent();
-        }
+        } 
+        
+        return $this->widget;
     }
     
     /**

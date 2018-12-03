@@ -2,6 +2,7 @@
 namespace exface\Core\Widgets;
 
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
+use exface\Core\DataTypes\MessageTypeDataType;
 
 /**
  * A message is a special type of text widget, which is meant to communicate some information to the user.
@@ -17,18 +18,26 @@ class Message extends Text
 
     private $type = NULL;
 
-    public function getType()
+    public function getType() : MessageTypeDataType
     {
-        if (! $this->type) {
-            $this->type = EXF_MESSAGE_TYPE_INFO;
+        if ($this->type === null) {
+            $this->type = MessageTypeDataType::INFO($this->getWorkbench());
         }
         return $this->type;
     }
 
+    /**
+     * 
+     * @param MessageTypeDataType|string $value
+     * @throws WidgetPropertyInvalidValueError
+     * @return \exface\Core\Widgets\Message
+     */
     public function setType($value)
     {
-        if ($value == EXF_MESSAGE_TYPE_INFO || $value == EXF_MESSAGE_TYPE_WARNING || $value == EXF_MESSAGE_TYPE_ERROR || $value == EXF_MESSAGE_TYPE_SUCCESS) {
+        if ($value instanceof MessageTypeDataType) {
             $this->type = $value;
+        } elseif (is_string($value)) {
+            $this->type = MessageTypeDataType::fromValue($this->getWorkbench(), $value);
         } else {
             throw new WidgetPropertyInvalidValueError($this, 'Unknown message type "' . $value . '"!');
         }
@@ -43,7 +52,7 @@ class Message extends Text
     public function exportUxonObject()
     {
         $uxon = parent::exportUxonObject();
-        $uxon->setProperty('type', $this->getType());
+        $uxon->setProperty('type', $this->getType()->__toString());
         return $uxon;
     }
 }

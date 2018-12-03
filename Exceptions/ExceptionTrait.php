@@ -92,7 +92,7 @@ trait ExceptionTrait {
         // Create a new error message
         /* @var $tabs \exface\Core\Widgets\ErrorMessage */
         $debug_widget = WidgetFactory::create($page, 'ErrorMessage');
-        $debug_widget->setMetaObject($page->getWorkbench()->model()->getObject('exface.Core.ERROR'));
+        $debug_widget->setMetaObject($page->getWorkbench()->model()->getObject('exface.Core.MESSAGE'));
         
         $debug_widget = $this->createDebugWidget($debug_widget);
         
@@ -121,7 +121,7 @@ trait ExceptionTrait {
                 $error_ds = $this->getErrorData($page->getWorkbench(), $this->getAlias());
                 $error_heading = WidgetFactory::create($page, 'TextHeading', $error_tab)
                     ->setHeadingLevel(2)
-                    ->setValue($debug_widget->getWorkbench()->getCoreApp()->getTranslator()->translate('ERROR.CAPTION') . ' ' . $this->getAlias() . ': ' . $error_ds->getCellValue('ERROR_TEXT', 0));
+                    ->setValue($debug_widget->getWorkbench()->getCoreApp()->getTranslator()->translate('ERROR.CAPTION') . ' ' . $this->getAlias() . ': ' . $error_ds->getCellValue('TITLE', 0));
                 $error_tab->addWidget($error_heading);
                 $error_text = WidgetFactory::create($page, 'Text', $error_tab)
                     ->setValue($this->getMessage());
@@ -138,7 +138,6 @@ trait ExceptionTrait {
             
             /** @var Message $support_hint */
             $support_hint = WidgetFactory::create($page, 'Message', $error_tab);
-            $support_hint->setType(EXF_MESSAGE_TYPE_INFO);
 
             $support_hint->setText($debug_widget->getWorkbench()->getCoreApp()->getTranslator()->translate('ERROR.SUPPORT_HINT', ['%error_id%' => 'LOG-'.$this->getId(), '%system_name%' => $this->getSystemByPage($page), '%support_mail%' => $this->getSupportMailByPage($page)]));
             $error_tab->addWidget($support_hint);
@@ -201,11 +200,11 @@ trait ExceptionTrait {
 
     protected function getErrorData(Workbench $exface, $error_code)
     {
-        $ds = DataSheetFactory::createFromObjectIdOrAlias($exface, 'exface.Core.ERROR');
-        $ds->getColumns()->addFromExpression('ERROR_TEXT');
+        $ds = DataSheetFactory::createFromObjectIdOrAlias($exface, 'exface.Core.MESSAGE');
+        $ds->getColumns()->addFromExpression('TITLE');
         $ds->getColumns()->addFromExpression('DESCRIPTION');
         if ($error_code) {
-            $ds->addFilterFromString('ERROR_CODE', $error_code);
+            $ds->addFilterFromString('CODE', $error_code);
             $ds->dataRead();
         }
         return $ds;

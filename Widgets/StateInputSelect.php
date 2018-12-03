@@ -96,7 +96,7 @@ class StateInputSelect extends InputSelect
                 continue;
             }
             
-            $appliedOptions[$stateNum] = $stateNum . ' ' . $optionValue;
+            $appliedOptions[$stateNum] = $optionValue;
         }
         return $appliedOptions;
     }

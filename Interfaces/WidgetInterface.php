@@ -76,7 +76,7 @@ interface WidgetInterface extends WorkbenchDependantInterface, iCanBeCopied
      * Adds attributes, filters, etc.
      * to a given data sheet, so that it can be used to fill the widget with data
      *
-     * @param DataSheet $data_sheet            
+     * @param DataSheetInterface $data_sheet            
      * @return DataSheetInterface
      */
     public function prepareDataSheetToRead(DataSheetInterface $data_sheet = null);
@@ -85,7 +85,7 @@ interface WidgetInterface extends WorkbenchDependantInterface, iCanBeCopied
      * Adds attributes, filters, etc.
      * to a given data sheet, so that it can be used to prefill the widget
      *
-     * @param DataSheet $data_sheet            
+     * @param DataSheetInterface $data_sheet            
      * @return DataSheetInterface
      */
     public function prepareDataSheetToPrefill(DataSheetInterface $data_sheet = null) : DataSheetInterface;
@@ -157,13 +157,6 @@ interface WidgetInterface extends WorkbenchDependantInterface, iCanBeCopied
     public function setIdSpace($value);
 
     /**
-     * Returns true if current widget is a container, false otherwise
-     *
-     * @return boolean
-     */
-    public function isContainer();
-
-    /**
      *
      * @return string
      */
@@ -178,7 +171,7 @@ interface WidgetInterface extends WorkbenchDependantInterface, iCanBeCopied
 
     /**
      *
-     * @param unknown $value            
+     * @param WidgetInterface $value            
      * @return WidgetInterface
      */
     public function setHideCaption($value);
@@ -381,7 +374,7 @@ interface WidgetInterface extends WorkbenchDependantInterface, iCanBeCopied
 
     /**
      * Checks if the widget implements the given interface (e.g.
-     * "iHaveChildren"), etc.
+     * "iHaveButtons"), etc.
      *
      * @param string $interface_name            
      */
@@ -469,5 +462,27 @@ interface WidgetInterface extends WorkbenchDependantInterface, iCanBeCopied
      * @return WidgetInterface
      */
     public function setDoNotPrefill($true_or_false);
+    
+    /**
+     * Returns an iterator over all direct children of the current widget.
+     *
+     * @return WidgetInterface[]
+     */
+    public function getChildren() : \Iterator;
+    
+    /**
+     * Returns an iterator over all children of the current widget including with their children,
+     * childrens children, etc. as a flat array of widgets
+     *
+     * @return WidgetInterface[]
+     */
+    public function getChildrenRecursive() : \Iterator;
+    
+    /**
+     * Returns true if current widget has at least one child and FALSE otherwise.
+     *
+     * @return bool
+     */
+    public function hasChildren() : bool;
 }
 ?>

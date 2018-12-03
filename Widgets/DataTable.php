@@ -158,13 +158,24 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
         $this->setRowDetailsContainer($container);
     }
 
-    public function getChildren()
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Data::getChildren()
+     */
+    public function getChildren() : \Iterator
     {
-        $children = parent::getChildren();
-        if ($this->hasRowDetails()) {
-            $children[] = $this->getRowDetailsContainer();
+        foreach (parent::getChildren() as $child) {
+            yield $child;
         }
-        return $children;
+        
+        if ($this->hasRowDetails()) {
+            yield $this->getRowDetailsContainer();
+        }
+        
+        if ($this->hasRowGroups()) {
+            yield $this->getRowGrouper();
+        }
     }
 
     public function getRowDetailsContainer()
@@ -569,7 +580,7 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
      * {@inheritDoc}
      * @see \exface\Core\Widgets\Data::getConfiguratorWidgetType()
      */
-    public function getConfiguratorWidgetType()
+    public function getConfiguratorWidgetType() : string
     {
         return 'DataTableConfigurator';
     }

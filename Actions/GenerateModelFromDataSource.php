@@ -46,7 +46,7 @@ class GenerateModelFromDataSource extends AbstractAction
                 
                 $created_ds = $model_builder->generateAttributesForObject($this->getWorkbench()->model()->getObject($row['OBJECT']));
                 $created += $created_ds->countRows();
-                $skipped += $created_ds->countRowsAll() - $created_ds->countRows();
+                $skipped += $created_ds->countRowsInDataSource() - $created_ds->countRows();
             }
             
             $message .= 'Created ' . $created . ' attributes, ' . $skipped . ' skipped as duplicates.';
@@ -60,7 +60,7 @@ class GenerateModelFromDataSource extends AbstractAction
                 
                 $created_ds = $model_builder->generateObjectsForDataSource($app, $data_source, $row['OBJECT_DATA_ADDRESS_MASK']);
                 $created += $created_ds->countRows();
-                $skipped += $created_ds->countRowsAll() - $created_ds->countRows();
+                $skipped += $created_ds->countRowsInDataSource() - $created_ds->countRows();
             }
             
             $message .= 'Created ' . $created . ' objects, ' . $skipped . ' skipped as duplicates.';

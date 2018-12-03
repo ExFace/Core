@@ -49,5 +49,17 @@ abstract class ExpressionFactory
         $exface = $attribute->getObject()->getWorkbench();
         return self::createFromString($exface, $attribute->getAliasWithRelationPath(), $attribute->getRelationPath()->getStartObject());
     }
+    
+    /**
+     * Resolves an expression string relative to the given object and returns the resulting expression.
+     * 
+     * @param MetaObjectInterface $object
+     * @param string $expression
+     * @return ExpressionInterface
+     */
+    public static function createForObject(MetaObjectInterface $object, string $expression) : ExpressionInterface
+    {
+        return static::createFromString($object->getWorkbench(), $expression, $object);
+    }
 }
 ?>

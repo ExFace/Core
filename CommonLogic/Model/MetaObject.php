@@ -473,10 +473,10 @@ class MetaObject implements MetaObjectInterface
         $this->setDataAddressProperties($parent->getDataAddressProperties());
         // The inheriting object will only be readable/writable if it is marked as such itself
         // and the parent is readable or writable respectively.
-        if ($this->isReadable() && ! $parent->isReadable()){
+        if ($this->isReadable() === true && $parent->isReadable() === false){
             $this->setReadable(false);
         }
-        if ($this->isWritable() && ! $parent->isWritable()){
+        if ($this->isWritable() === true && $parent->isWritable() === false){
             $this->setWritable(false);
         }
         
@@ -1195,10 +1195,10 @@ class MetaObject implements MetaObjectInterface
      */
     public function isReadable()
     {
-        if (! $this->hasDataSource()) {
+        if ($this->hasDataSource() === false) {
             return false;
         }        
-        if ($this->readable && ! $this->getDataSource()->isReadable()){
+        if ($this->readable === true && $this->getDataSource()->isReadable() === false){
             return false;
         }
         return $this->readable;

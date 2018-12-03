@@ -73,7 +73,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
         $group_by = $group_by ? ' GROUP BY ' . substr($group_by, 2) : '';
         
         // If there is a limit in the query, ensure there is an ORDER BY even if no sorters given.
-        if (sizeof($this->getSorters()) < 1 && $this->getLimit()) {
+        if (sizeof($this->getSorters()) < 1 && $this->getLimit() > 0) {
             // If no order is specified, sort sort over the UID of the meta object
             if ($this->getMainObject()->hasUidAttribute()) {
                 $order_by .= ', ' . ($group_by ? 'EXFCOREQ.' : '') . $this->getMainObject()->getUidAttribute()->getDataAddress() . ' DESC';
@@ -161,8 +161,9 @@ elseif (! $group_by || $qpart->getAggregator() || $this->getAggregation($qpart->
         
         $distinct = $this->getSelectDistinct() ? 'DISTINCT ' : '';
         
-        if ($this->getLimit()) {
-            $limit = ' OFFSET ' . $this->getOffset() . ' ROWS FETCH NEXT ' . $this->getLimit() . ' ROWS ONLY';
+        if ($this->getLimit() > 0) {
+            // Increase limit by one to check if there are more rows (see AbstractSqlBuilder::read())
+            $limit = ' OFFSET ' . $this->getOffset() . ' ROWS FETCH NEXT ' . ($this->getLimit()+1) . ' ROWS ONLY';
         }
         
         if (($group_by && ($where || $has_attributes_with_reverse_relations)) || $this->getSelectDistinct()) {

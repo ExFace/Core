@@ -17,9 +17,35 @@ use exface\Core\Actions\SaveData;
 use exface\Core\Actions\DeleteObject;
 use exface\Core\Events\Widget\OnPrefillEvent;
 use exface\Core\Events\DataSheet\OnBeforeUpdateDataEvent;
+use exface\Core\DataTypes\NumberDataType;
+use exface\Core\DataTypes\StringEnumDataType;
+use exface\Core\DataTypes\NumberEnumDataType;
+use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
+use exface\Core\Widgets\ProgressBar;
+use exface\Core\Events\Model\OnMetaAttributeModelValidatedEvent;
 
 /**
- * A behavior that defines states and transitions between these states for an objects.
+ * Makes it possible to model states of an object and transitions between them.
+ * 
+ * An object with this behavior automatically acts as a state machine. One of the attributes
+ * is specified as the current state. All possible states are defined within the behavior's
+ * configuration as well as all allowed transitions and state-specific actions. You can also
+ * make certain attributes disabled in selected states.
+ * 
+ * The behavior makes sure the state of the object cannot be changed if there is no transition
+ * allowed between the old and the new state.
+ * 
+ * There are also special widgets, that help organize state management:
+ * 
+ * - The `StateInputSelect` produces an InputSelect with all states, that can be reached from the
+ * current state of the object
+ * - The `StateMenuButton` automatically generates a menu with all state-specific actions
+ * 
+ * By default, this behavior will override the data type and the default widgets of the state
+ * attribute according to the state machine configuration: Editor widgets will automatically
+ * be defined as `StateInputSelect`, while display-widgets will be displayed as a progress bar
+ * for numeric states. These features are controlled by the behavior properties `override_attribute_data_type`,
+ * `override_attribute_display_widget`, `override_attribute_editor_widget` and `show_state_as_progress_bar`.
  *
  * @author SFL
  */
@@ -33,11 +59,19 @@ class StateMachineBehavior extends AbstractBehavior
     private $uxon_states = null;
 
     private $states = null;
-
-    private $progress_bar_color_map = null;
     
-    private $use_percentual_color_map = null;
-
+    private $overrideAttributeEditorWidget = true;
+    
+    private $overrideAttributeDisplayWidget = true;
+    
+    private $overrideAttributeDataType = true;
+    
+    private $hideStateIds = false;
+    
+    private $showStateAsProgressBar = null;
+    
+    private $hasNumericIds = true;
+    
     /**
      *
      * {@inheritdoc}
@@ -48,7 +82,157 @@ class StateMachineBehavior extends AbstractBehavior
     {
         $this->getWorkbench()->eventManager()->addListener(OnPrefillEvent::getEventName(), [$this, 'setWidgetStates']);
         $this->getWorkbench()->eventManager()->addListener(OnBeforeUpdateDataEvent::getEventName(), [$this, 'checkForConflictsOnUpdate']);
+        
+        if ($this->getOverrideAttributeDataType() === true) {
+            $this->overrideAttributeDataType();
+        }
+        
+        if ($this->getOverrideAttributeEditorWidget() === true) {
+            $this->overrideAttributeEditorWidget();
+        }
+        
+        if ($this->getOverrideAttributeDisplayWidget() === true) {
+            $this->overrideAttributeDisplayWidget();
+        }
+        
         $this->setRegistered(true);
+        return $this;
+    }
+    
+    protected function overrideAttributeDataType() : StateMachineBehavior
+    {
+        $attr = $this->getStateAttribute();
+        $type = $attr->getDataType();
+        
+        $enumVals = [];
+        foreach ($this->getStates() as $state) {
+            $enumVals[$state->getStateId()] = $state->getName(! $this->getHideStateIds());
+        }
+        $configUxon = new UxonObject(['values' => $enumVals]);
+        
+        $attr->setCustomDataTypeUxon($configUxon);
+        
+        if (! ($type instanceof EnumDataTypeInterface)) {
+            if ($type instanceof NumberDataType) {
+                $enumType = NumberEnumDataType::class;
+                $enumType = '0x11e7c39621725c1e8001e4b318306b9a';
+            } else {
+                $enumType = StringEnumDataType::class;
+                $enumType = '0x11e7c3960c3586c38001e4b318306b9a';
+            }
+            $attr->setDataType($enumType);
+        }
+        
+        $this->getWorkbench()->eventManager()->addListener(OnMetaAttributeModelValidatedEvent::getEventName(), function(OnMetaAttributeModelValidatedEvent $event) use ($enumType, $configUxon) {
+            if ($event->getAttribute()->isExactly($this->getStateAttribute()) === false) {
+                return;
+            }
+            
+            $widget = $event->getMessageList()->getParent();
+            $foundTypeSelector = false;
+            $foundTypeConfig = false;
+            foreach ($widget->getChildrenRecursive() as $child) {
+                if (($child instanceof iShowSingleAttribute) && $child->getAttributeAlias() === 'DATATYPE') {
+                    if ($enumType !== null) {
+                        // Change the value only if the saved type does not fit (= the custom $enumType is set)
+                        $child->setValue($enumType);
+                        $child->setValueText('');
+                    }
+                    $child->setDisabled(true);
+                    $child->setHint($child->getHint() . $this->translate('BEHAVIOR.ALL.PROPERTY_HINT_AUTOGENERATED_BY', ['%behavior%' => $this->getAlias()]));
+                    $foundTypeSelector = true;
+                }
+                
+                if (($child instanceof iShowSingleAttribute) && $child->getAttributeAlias() === 'CUSTOM_DATA_TYPE') {
+                    $child->setValue($configUxon->toJson());
+                    $child->setDisabled(true);
+                    $child->setHint($child->getHint() . $this->translate('BEHAVIOR.ALL.PROPERTY_HINT_AUTOGENERATED_BY', ['%behavior%' => $this->getAlias()]));
+                    $foundTypeConfig = true;
+                }
+                
+                if ($foundTypeConfig === true && $foundTypeSelector === true) {
+                    break;
+                }
+            }
+        });
+        
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return StateMachineBehavior
+     */
+    protected function overrideAttributeEditorWidget() : StateMachineBehavior
+    {
+        $uxon = new UxonObject([
+            'widget_type' => 'StateInputSelect'
+        ]);
+        $this->getStateAttribute()->setDefaultEditorUxon($uxon);
+        
+        $this->getWorkbench()->eventManager()->addListener(OnMetaAttributeModelValidatedEvent::getEventName(), function(OnMetaAttributeModelValidatedEvent $event) use ($uxon) {
+            if ($event->getAttribute()->isExactly($this->getStateAttribute()) === false) {
+                return;
+            }
+            
+            $widget = $event->getMessageList()->getParent();
+            foreach ($widget->getChildrenRecursive() as $child) {
+                if (($child instanceof iShowSingleAttribute) && $child->getAttributeAlias() === 'DEFAULT_EDITOR_UXON') {
+                    $child->setValue($uxon->toJson());
+                    $child->setDisabled(true);
+                    $child->setHint($child->getHint() . $this->translate('BEHAVIOR.ALL.PROPERTY_HINT_AUTOGENERATED_BY', ['%behavior%' => $this->getAlias()]));
+                    break;
+                }
+            }
+        });
+        
+        return $this;
+    }
+    
+    /**
+     * 
+     * @return StateMachineBehavior
+     */
+    protected function overrideAttributeDisplayWidget() : StateMachineBehavior
+    {
+        if ($this->getShowStateAsProgressBar() === true) {
+            $min = 0;
+            $max = 0;
+            $texts = [];
+            $colorMap = [];
+            
+            foreach ($this->getStates() as $state) {
+                $id = $state->getStateId();
+                if ($id < $min) {
+                    $min = $id;
+                }
+                if ($id > $max) {
+                    $max = $id;
+                }
+                $texts[$id] = $state->getName(! $this->getHideStateIds());
+                if ($state->getColor() !== null) {
+                    $colorMap[$id] = $state->getColor();
+                }
+            }
+            
+            if (count($colorMap) < count($texts)) {
+                $missingKeys = array_diff(array_keys($texts), array_keys($colorMap));
+                foreach ($missingKeys as $key) {
+                    $colorMap[$key] = $this->getDefaultColor($key, $min, $max);
+                }
+            }
+            
+            $uxon = new UxonObject([
+                'widget_type' => 'ProgressBar',
+                'align' => EXF_ALIGN_DEFAULT,
+                'min' => $min,
+                'max' => $max,
+                'textMap' => new UxonObject($texts),
+                'colorMap' => new UxonObject($colorMap)
+            ]);
+        }
+        
+        $this->getStateAttribute()->setDefaultDisplayUxon($uxon);
         return $this;
     }
 
@@ -219,6 +403,9 @@ class StateMachineBehavior extends AbstractBehavior
             $this->uxon_states = $value;
             $this->states = [];
             foreach ($value as $state => $uxon_smstate) {
+                if (is_numeric($state) === false) {
+                    $this->hasNumericIds = false;
+                }
                 $smstate = new StateMachineState();
                 $smstate->setStateId($state);
                 if ($uxon_smstate) {
@@ -237,6 +424,16 @@ class StateMachineBehavior extends AbstractBehavior
         }
         
         return $this;
+    }
+    
+    /**
+     * Returns TRUE if all state ids are numeric and FALSE otherwise. 
+     * 
+     * @return bool
+     */
+    protected function hasNumeriIds() : bool
+    {
+        return $this->hasNumericIds;
     }
 
     /**
@@ -300,6 +497,10 @@ class StateMachineBehavior extends AbstractBehavior
         $uxon->setProperty('state_attribute_alias', $this->getStateAttributeAlias());
         $uxon->setProperty('default_state', $this->getDefaultStateId());
         $uxon->setProperty('states', $this->getStates());
+        $uxon->setProperty('override_attribute_data_type', $this->getOverrideAttributeDataType());
+        $uxon->setProperty('override_attribute_display_widget', $this->getOverrideAttributeDisplayWidget());
+        $uxon->setProperty('override_attribute_editor_widget', $this->getOverrideAttributeEditorWidget());
+        $uxon->setProperty('show_state_as_progress_bar', $this->getShowStateAsProgressBar());
         return $uxon;
     }
 
@@ -459,118 +660,152 @@ class StateMachineBehavior extends AbstractBehavior
             }
         }
     }
-
+    
     /**
-     * Sets color map for use in for instance ProgressBar formula.
      *
-     * @param array $progress_bar_color_map            
+     * @return bool
      */
-    public function setProgressBarColorMap($progress_bar_color_map)
+    public function getOverrideAttributeDisplayWidget() : bool
     {
-        $uxonColorMap = UxonObject::fromAnything($progress_bar_color_map);
-        if ($uxonColorMap instanceof UxonObject) {
-            if (is_array($uxonColorMap)) {
-                $this->progress_bar_color_map = $uxonColorMap->toArray();
-            } else {
-                $colorMap = array();
-                foreach ($uxonColorMap as $progressBarValue => $color) {
-                    $colorMap[$progressBarValue] = $color;
-                }
-                $this->progress_bar_color_map = $colorMap;
-            }
-        } else {
-            throw new BehaviorConfigurationError($this->getObject(), 'Can not set progress_bar_color_map for "' . $this->getObject()->getAliasWithNamespace() . '": the argument passed to set_progress_bar_color_map() is neither an UxonObject nor an array!', '6TG2ZFI');
-        }
-    }
-
-    /**
-     * Returns color map for use in for instance ProgressBar formula.
-     * 
-     * Example (default percentual color map):
-     *  [
-     *      10: "#FFEF9C",
-     *      20: "#EEEA99",
-     *      30: "#DDE595",
-     *      40: "#CBDF91",
-     *      50: "#BADA8E",
-     *      60: "#A9D48A",
-     *      70: "#97CF86",
-     *      80: "#86C983",
-     *      90: "#75C47F",
-     *      100: "#63BE7B"
-     *  ]
-     * 
-     * @uxon-property progress_bar_color_map
-     * @uxon-type array
-     *
-     * @return array
-     */
-    public function getProgressBarColorMap()
-    {
-        if (is_null($this->progress_bar_color_map)){
-            if ($this->getUsePercentualColorMap()){
-                $this->progress_bar_color_map = $this->getProgressBarColorMapPercentual();
-            }
-            foreach ($this->getStates() as $state){
-                if ($color = $state->getColor()){
-                    $this->progress_bar_color_map[$state->getStateId()] = $color;
-                }
-            }
-        }
-        return $this->progress_bar_color_map;
+        return $this->overrideAttributeDisplayWidget;
     }
     
     /**
-     * Set to TRUE to use the default color map for percentual progress bars.
+     * The state attribute will get a preconfigured default display widget - e.g. ProgressBar - if TRUE (default).
      * 
-     * If not set, the system will try to pick a suitable color map based
-     * on the state id values.
-     * 
-     * @uxon-property use_percentual_color_map
+     * @uxon-property override_attribute_display_widget
      * @uxon-type boolean
      * 
-     * @param boolean $true_or_false
-     * @return \exface\Core\Behaviors\StateMachineBehavior
+     * @param bool|string $value
+     * @return StateMachineBehavior
      */
-    public function setUsePercentualColorMap($true_or_false)
+    public function setOverrideAttributeDisplayWidget($value) : StateMachineBehavior
     {
-        $this->use_percentual_color_map = BooleanDataType::cast($true_or_false);
+        $this->overrideAttributeDisplayWidget = BooleanDataType::cast($value);
         return $this;
     }
     
     /**
-     * Returns TRUE if the default percentual color map should be used for progress bars
-     * based on the states of this state machine.
-     * 
-     * @return boolean
+     *
+     * @return bool
      */
-    public function getUsePercentualColorMap()
+    public function getOverrideAttributeEditorWidget() : bool
     {
-        if (is_null($this->use_percentual_color_map)){
-            $state_ids = array_keys($this->getStates());
-            if (count(array_filter($state_ids, 'is_string')) === 0){
-                if (min($state_ids) <= 10 && min($state_ids) >= 0 && max($state_ids) >= 90 && max($state_ids) <= 100){
-                    return true;
-                }
-            }
-            return false;
-        }
-        return $this->use_percentual_color_map;
+        return $this->overrideAttributeEditorWidget;
     }
     
-    protected function getProgressBarColorMapPercentual(){
-        return array(
-            10 => "#FFEF9C",
-            20 => "#EEEA99",
-            30 => "#DDE595",
-            40 => "#CBDF91",
-            50 => "#BADA8E",
-            60 => "#A9D48A",
-            70 => "#97CF86",
-            80 => "#86C983",
-            90 => "#75C47F",
-            100 => "#63BE7B");
+    /**
+     *  The state attribute will get the StateInputSelect as default editor widget if set to TRUE (default).
+     * 
+     * @uxon-property override_attribute_editor_widget
+     * @uxon-type boolean
+     * 
+     * @param bool|string $value
+     * @return StateMachineBehavior
+     */
+    public function setOverrideAttributeEditorWidget($value) : StateMachineBehavior
+    {
+        $this->overrideAttributeEditorWidget = BooleanDataType::cast($value);
+        return $this;
+    }
+    
+    /**
+     *
+     * @return bool
+     */
+    public function getOverrideAttributeDataType() : bool
+    {
+        return $this->overrideAttributeDataType;
+    }
+    
+    /**
+     * The state attribute will get an autogenerated enumeration data type if TRUE (default).
+     * 
+     * @uxon-property override_attribute_data_type
+     * @uxon-type boolean
+     *
+     * @param bool|string $value
+     * @return StateMachineBehavior
+     */
+    public function setOverrideAttributeDataType($value) : StateMachineBehavior
+    {
+        $this->overrideAttributeDataType = BooleanDataType::cast($value);
+        return $this;
+    }
+    
+    /**
+     *
+     * @return bool
+     */
+    public function getHideStateIds() : bool
+    {
+        return $this->hideStateIds;
+    }
+    
+    /**
+     * Set to TRUE to only show state names in auto-generated widgets - by default ids will be shown too.
+     * 
+     * @uxon-property hide_state_ids
+     * @uxon-type boolean
+     * 
+     * @param bool|string $value
+     * @return StateMachineBehavior
+     */
+    public function setHideStateIds($value) : StateMachineBehavior
+    {
+        $this->hideStateIds = BooleanDataType::cast($value);
+        return $this;
+    }  
+    
+    /**
+     * Returns TRUE if the state should be shown as a progress bar.
+     * 
+     * If not set explicitly via UXON or setShowStateAsProgressBar(), a progress bar will be
+     * automatically enabled if all state ids are numeric.
+     * 
+     * @return bool
+     */
+    public function getShowStateAsProgressBar() : bool
+    {
+        return $this->showStateAsProgressBar ?? $this->hasNumeriIds();
+    }
+    
+    /**
+     * If TRUE (default), the state attribute will automatically get the ProgressBar as default display widget.
+     * 
+     * @uxon-property show_state_as_progress_bar
+     * @uxon-type boolean
+     * 
+     * @param bool|string $value
+     * @return StateMachineBehavior
+     */
+    public function setShowStateAsProgressBar($value) : StateMachineBehavior
+    {
+        $this->showStateAsProgressBar = BooleanDataType::cast($value);
+        return $this;
+    }
+    
+    /**
+     * Returns the default color code for a state (e.g. if it has no color set explicitly)
+     * 
+     * @param string|number $state
+     * @param float $min
+     * @param float $max
+     * 
+     * @return string
+     */
+    protected function getDefaultColor($state, float $min, float $max) : string
+    {
+        if (! is_numeric($state)) {
+            return '';
+        }
+        
+        $colorMap = ProgressBar::getColorMapDefault($min, $max);
+        return ProgressBar::findColor($state, $colorMap);
+    }    
+    
+    protected function translate(string $messageId, array $placeholderValues = null, float $pluralNumber = null) : string
+    {
+        return $this->getWorkbench()->getCoreApp()->getTranslator()->translate($messageId, $placeholderValues, $pluralNumber);
     }
 }
-
-?>

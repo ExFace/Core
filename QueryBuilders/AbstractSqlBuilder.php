@@ -6,7 +6,6 @@ use exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartFilterGroup;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartAttribute;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartFilter;
-use exface\Core\CommonLogic\AbstractDataConnector;
 use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
 use exface\Core\DataTypes\NumberDataType;
@@ -27,6 +26,10 @@ use exface\Core\Factories\QueryBuilderFactory;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\DataTypes\RelationTypeDataType;
 use exface\Core\CommonLogic\DataSheets\DataColumn;
+use exface\Core\CommonLogic\DataQueries\DataQueryResultData;
+use exface\Core\Interfaces\DataSources\DataQueryResultDataInterface;
+use exface\Core\Interfaces\DataSources\DataConnectionInterface;
+use exface\Core\DataTypes\JsonDataType;
 
 /**
  * A query builder for generic SQL syntax.
@@ -71,12 +74,12 @@ use exface\Core\CommonLogic\DataSheets\DataColumn;
  * 
  * ### On attribute level
  * 
- * - **SQL_DATA_TYPE** - tells the query builder what data type the column has.
+ * - `SQL_DATA_TYPE` - tells the query builder what data type the column has.
  * This is only needed for complex types that require conversion: e.g. binary,
  * LOB, etc. Refer to the description of the specific query builder for concrete
  * usage instructions.
  * 
- * - **SQL_SELECT** - custom SQL SELECT statement. It replaces the entire select
+ * - `SQL_SELECT` - custom SQL SELECT statement. It replaces the entire select
  * generator and will be used as-is except for replacing placeholders. The
  * placeholder [#~alias#] is supported as well as placeholders for other attributes. 
  * This is usefull to write wrappers for columns (e.g. "NVL([#~value#].MY_COLUMN, 0)". 
@@ -86,13 +89,13 @@ use exface\Core\CommonLogic\DataSheets\DataColumn;
  * are used, of course). Note, that since this is a complete replacement, the
  * table to select from must be specified manually or via [#~alias#] placeholder.
  * 
- * - **SQL_SELECT_DATA_ADDRESS** - replaces the data address for SELECT queries.
+ * - `SQL_SELECT_DATA_ADDRESS` - replaces the data address for SELECT queries.
  * In contrast to SQL_SELECT, this property will be processed by the generator
  * just like a data address would be (including all placeholders). In particular,
  * the table alias will be generated automatically, while in SQL_SELECT it
  * must be defined by the user.
  * 
- * - **SQL_INSERT** - custom SQL INSERT statement used instead of the generator.
+ * - `SQL_INSERT` - custom SQL INSERT statement used instead of the generator.
  * The placeholders [#~alias#] and [#~value#] are supported in addition to 
  * attribute placeholders. This is usefull to write wrappers for values 
  * (e.g. "to_clob('[#~value#]')" to save a string value to an Oracle CLOB column) 
@@ -100,7 +103,7 @@ use exface\Core\CommonLogic\DataSheets\DataColumn;
  * with a UUID). If you need to use a generator only if no value is given explicitly, 
  * use something like this: IF([#~value#]!='', [#~value#], UUID()).
  * 
- * - **SQL_UPDATE** - custom SQL for UPDATE statement. It replaces the generator
+ * - `SQL_UPDATE` - custom SQL for UPDATE statement. It replaces the generator
  * completely and must include the data address and the value. In contrast to
  * this, using SQL_UPDATE_DATA_ADDRESS will only replace the data address, while
  * the value will be generated automatically. SQL_UPDATE supports the placeholders
@@ -111,11 +114,11 @@ use exface\Core\CommonLogic\DataSheets\DataColumn;
  * with the current date). If you need to use a generator only if no value is given 
  * explicitly, use something like this: IF([#~value#]!='', [#~value#], UUID()).
  * 
- * - **SQL_UPDATE_DATA_ADDRESS** - replaces the data address for UPDATE queries.
+ * - `SQL_UPDATE_DATA_ADDRESS` - replaces the data address for UPDATE queries.
  * In contrast to SQL_UPDATE, the value will be added automatically via generator.
  * SQL_UPDATE_DATA_ADDRESS supports the placeholder [#~alias#] only!
  * 
- * - **SQL_WHERE_DATA_ADDRESS** - replaces the data address in the WHERE clause.
+ * - `SQL_WHERE_DATA_ADDRESS` - replaces the data address in the WHERE clause.
  * The comparator and the value will added automatically be the generator. 
  * Supports the [#~alias#] placeholder in addition to placeholders for other
  * attributes. This is usefull to write wrappers to be used in filters: e.g.
@@ -168,18 +171,6 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
 
     protected $short_alias_index = 0;
 
-    /**
-     * [ [column_name => column_value] ]
-     */
-    protected $result_rows = array();
-
-    /**
-     * [ [column_name => column_value] ] having multiple rows if multiple totals for a single column needed
-     */
-    protected $result_totals = array();
-
-    protected $result_total_count = 0;
-
     private $binary_columns = array();
 
     private $query_id = null;
@@ -199,12 +190,9 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     abstract function buildSqlQuerySelect();
 
     abstract function buildSqlQueryTotals();
-
-    public function read(AbstractDataConnector $data_connection = null)
+    
+    public function read(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
     {
-        if (! $data_connection)
-            $data_connection = $this->getMainObject()->getDataConnection();
-        
         $query = $this->buildSqlQuerySelect();
         $q = new SqlDataQuery();
         $q->setSql($query);
@@ -225,36 +213,37 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                     unset($rows[$nr][$short_alias]);
                 }
             }
-            
-            $this->result_rows = $rows;
         }
         
         // then do the totals query if needed
-        $totals_query = $this->buildSqlQueryTotals();
-        if ($totals = $data_connection->runSql($totals_query)->getResultArray()) {
-            // the total number of rows is treated differently, than the other totals.
-            $this->result_total_count = $totals[0]['EXFCNT'];
-            // now save the custom totals.
-            foreach ($this->totals as $qpart) {
-                $this->result_totals[$qpart->getRow()][$qpart->getColumnKey()] = $totals[0][$this->getShortAlias($qpart->getColumnKey())];
+        $result_totals = [];
+        if ($this->hasTotals() === true) {
+            $result_total_count = null;
+            $totals_query = $this->buildSqlQueryTotals();
+            if ($totals = $data_connection->runSql($totals_query)->getResultArray()) {
+                // the total number of rows is treated differently, than the other totals.
+                $result_total_count = $totals[0]['EXFCNT'];
+                // now save the custom totals.
+                foreach ($this->getTotals() as $qpart) {
+                    $result_totals[$qpart->getRow()][$qpart->getColumnKey()] = $totals[0][$this->getShortAlias($qpart->getColumnKey())];
+                }
             }
         }
-        return count($this->result_rows);
-    }
-
-    function getResultRows()
-    {
-        return $this->result_rows;
-    }
-
-    function getResultTotals()
-    {
-        return $this->result_totals;
-    }
-
-    function getResultTotalRows()
-    {
-        return $this->result_total_count;
+        
+        $rowCount = count($rows);
+        $hasMoreRows = ($this->getLimit() > 0 && $rowCount > $this->getLimit());
+        if ($hasMoreRows === true) {
+            $affectedCounter = $this->getLimit();
+            array_pop($rows);
+        } else {
+            $affectedCounter = $rowCount;
+        }
+        
+        if ($result_total_count === null && $hasMoreRows === false) {
+            $result_total_count = $rowCount + $this->getOffset();
+        }
+        
+        return new DataQueryResultData($rows, $affectedCounter, $hasMoreRows, $result_total_count, $result_totals);
     }
 
     /**
@@ -286,14 +275,11 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      *
      * @param AbstractSqlConnector $data_connection            
      */
-    function create(AbstractDataConnector $data_connection = null)
+    public function create(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
     {
         /* @var $data_connection \exface\Core\DataConnectors\AbstractSqlConnector */
-        if (! $data_connection)
-            $data_connection = $this->getMainObject()->getDataConnection();
         if (! $this->isWritable())
-            return 0;
-        $insert_ids = array();
+            return new DataQueryResultData([], 0);
         
         $values = array();
         $columns = array();
@@ -356,6 +342,9 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             }
         }
         
+        $insertedIds = [];
+        $uidAlias = $this->getMainObject()->getUidAttribute()->getAlias();
+        $insertedCounter = 0;
         foreach ($values as $nr => $row) {
             $sql = 'INSERT INTO ' . $this->getMainObject()->getDataAddress() . ' (' . implode(', ', $columns) . ') VALUES (' . implode(',', $row) . ')';
             $query = $data_connection->runSql($sql);
@@ -371,9 +360,10 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 $last_id = $query->getLastInsertId();
             }
             
-            // TODO How to get multipla inserted ids???
-            if ($query->countAffectedRows()) {
-                $insert_ids[] = $last_id;
+            // TODO How to get multiple inserted ids???
+            if ($cnt = $query->countAffectedRows()) {
+                $insertedCounter += $cnt;
+                $insertedIds[] = [$uidAlias => $last_id];
             }
         }
         
@@ -406,7 +396,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             $insert_ids[] = $last_id;
         }*/
         
-        return $insert_ids;
+        return new DataQueryResultData($insertedIds, $insertedCounter);
     }
 
     /**
@@ -426,12 +416,10 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      *
      * @see \exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder::update()
      */
-    function update(AbstractDataConnector $data_connection = null)
+    function update(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
     {
-        if (! $data_connection)
-            $data_connection = $this->main_object->getDataConnection();
         if (! $this->isWritable())
-            return 0;
+            return new DataQueryResultData([], 0);
         
         // Filters -> WHERE
         // Since UPDATE queries generally do not support joins, tell the build_sql_where() method not to rely on joins in the main query
@@ -535,7 +523,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             $subquery->update($data_connection);
         }
         
-        return $affected_rows;
+        return new DataQueryResultData([], $affected_rows);
     }
 
     /**
@@ -587,21 +575,23 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     {
         $value = $data_type::cast($value);
         if ($data_type instanceof StringDataType) {
-            $value = "'" . $this->escapeString($value) . "'";
+            // JSON values are strings too, but their columns should be null even if the value is an
+            // empty object or empty array (otherwise the cells would never be null)
+            if (($data_type instanceof JsonDataType) && $data_type::isEmptyValue($value) === true) {
+                $value = 'NULL';
+            } else {
+                $value = $value === null ? 'NULL' : "'" . $this->escapeString($value) . "'";
+            }            
         } elseif ($data_type instanceof BooleanDataType) {
-            if ($value === '' || $value === null) {
+            if ($data_type::isEmptyValue($value) === true) {
                 $value = 'NULL';
             } else {
                 $value = $value ? 1 : 0;
             }
         } elseif ($data_type instanceof NumberDataType) {
-            $value = ($value == '' ? 'NULL' : $value);
+            $value = $data_type::isEmptyValue($value) === true ? 'NULL' : $value;
         } elseif ($data_type instanceof DateDataType) {
-            if (! $value) {
-                $value = 'NULL';
-            } else {
-                $value = "'" . $this->escapeString($value) . "'";
-            }
+            $value = $data_type::isEmptyValue($value) === true ? 'NULL' : "'" . $this->escapeString($value) . "'";
         } else {
             $value = "'" . $this->escapeString($value) . "'";
         }
@@ -624,7 +614,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      *
      * @see \exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder::delete()
      */
-    function delete(AbstractDataConnector $data_connection = null)
+    function delete(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
     {
         // filters -> WHERE
         // Relations (joins) are not supported in delete clauses, so check for them first!
@@ -640,8 +630,21 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         $sql = 'DELETE FROM ' . $this->buildSqlFrom() . $where;
         $query = $data_connection->runSql($sql);
         
-        return $query->countAffectedRows();
+        return new DataQueryResultData([], $query->countAffectedRows());
     }
+    
+    public function count(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
+    {
+        $result = $data_connection->runSql($this->buildSqlQueryCount());
+        $cnt = $result->getResultArray()[0]['EXFCNT'];
+        return new DataQueryResultData([], $cnt, true, $cnt);
+    }
+    
+    protected function buildSqlQueryCount() : string
+    {
+        return $this->buildSqlQueryTotals();
+    }
+    
     /**
      * Creats a SELECT statement for an attribute (qpart).
      * The parameters override certain parts of the statement: $aggregator( $select_from.$select_column AS $select_as ).
@@ -965,7 +968,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 // the core query again, after pagination, so possible back references within the custom select can
                 // still be resolved.
                 $right_table_alias = $this->getShortAlias($this->getMainObject()->getAlias() . $this->getQueryId());
-                $joins[$right_table_alias] = "\n LEFT JOIN " . str_replace('[#~alias#]', $right_table_alias, $this->getMainObject()->getDataAddress()) . ' ' . $right_table_alias . ' ON ' . $left_table_alias . '.' . $this->getMainObject()->getUidAttributeAlias() . ' = ' . $right_table_alias . '.' . $this->getMainObject()->getUidAttributeAlias();
+                $joins[$right_table_alias] = "\n JOIN " . str_replace('[#~alias#]', $right_table_alias, $this->getMainObject()->getDataAddress()) . ' ' . $right_table_alias . ' ON ' . $left_table_alias . '.' . $this->getMainObject()->getUidAttributeAlias() . ' = ' . $right_table_alias . '.' . $this->getMainObject()->getUidAttributeAlias();
             } else {
                 // In most cases we will build joins for attributes of related objects.
                 $left_table_alias = $this->getShortAlias(($left_table_alias ? $left_table_alias : $this->getMainObject()->getAlias()) . $this->getQueryId());
@@ -993,6 +996,11 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     
     protected function buildSqlJoinType(MetaRelationInterface $relation)
     {
+        /* FIXME use inner joins for required relations? Supposed to be faster, but it would result in different
+         * behavior depending on relation settings... Need to test a bit more!
+        if ($relation->isForwardRelation() === true && $relation->getLeftKeyAttribute()->isRequired() === true) {
+            return 'INNER';
+        }*/
         return 'LEFT';
     }
 

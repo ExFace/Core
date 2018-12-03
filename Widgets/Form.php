@@ -5,6 +5,8 @@ use exface\Core\Interfaces\Widgets\iHaveButtons;
 use exface\Core\Widgets\Traits\iHaveButtonsAndToolbarsTrait;
 use exface\Core\Interfaces\Widgets\iHaveToolbars;
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
+use exface\Core\Interfaces\Widgets\iShowMessageList;
+use exface\Core\Factories\WidgetFactory;
 
 /**
  * A Form is a Panel with buttons.
@@ -18,9 +20,11 @@ use exface\Core\DataTypes\AggregatorFunctionsDataType;
  * @author Andrej Kabachnik
  *        
  */
-class Form extends Panel implements iHaveButtons, iHaveToolbars
+class Form extends Panel implements iHaveButtons, iHaveToolbars, iShowMessageList
 {
     use iHaveButtonsAndToolbarsTrait;
+    
+    private $messageList = null;
 
     /**
      *
@@ -28,9 +32,15 @@ class Form extends Panel implements iHaveButtons, iHaveToolbars
      *
      * @see \exface\Core\Widgets\Container::getChildren()
      */
-    public function getChildren()
+    public function getChildren() : \Iterator
     {
-        return array_merge(parent::getChildren(), $this->getToolbars());
+        foreach (parent::getChildren() as $child) {
+            yield $child;
+        }
+        
+        foreach ($this->getToolbars() as $tb) {
+            yield $tb;
+        }
     }
     
     public function getToolbarWidgetType(){
@@ -65,6 +75,33 @@ class Form extends Panel implements iHaveButtons, iHaveToolbars
             }
         }
         return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iShowMessageList::getMessageList()
+     */
+    public function getMessageList() : MessageList
+    {
+        if ($this->messageList === null) {
+            $this->messageList = WidgetFactory::create($this->getPage(), 'MessageList', $this);
+        }
+        return $this->messageList;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iShowMessageList::hasMessages()
+     */
+    public function hasMessages() : bool
+    {
+        if ($this->messageList !== null && $this->getMessageList()->isEmpty() === false) {
+            return true;
+        } 
+        
+        return false;
     }
 }
 ?>

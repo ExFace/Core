@@ -66,6 +66,14 @@
             "attribute_alias": "DELETE_WITH_RELATED_OBJECT"
         },
         {
+            "name": "DEFAULT_DISPLAY_UXON",
+            "attribute_alias": "DEFAULT_DISPLAY_UXON"
+        },
+        {
+            "name": "COMMENTS",
+            "attribute_alias": "COMMENTS"
+        },
+        {
             "name": "LABEL",
             "attribute_alias": "LABEL"
         },
@@ -165,9 +173,11 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": "{}",
+            "DEFAULT_EDITOR_UXON": null,
             "COPY_WITH_RELATED_OBJECT": null,
             "DELETE_WITH_RELATED_OBJECT": null,
+            "DEFAULT_DISPLAY_UXON": null,
+            "COMMENTS": "",
             "LABEL": "Alias",
             "ALIAS": "ALIAS",
             "DATATYPE": "0x30000000000000000000000000000000",
@@ -185,10 +195,10 @@
             "SORTERDIR": "",
             "RELATED_OBJ_ATTR": "",
             "SHORT_DESCRIPTION": "Unique alias of the app: e.g. \"exface.Core\"",
-            "DATA_ADDRESS_PROPS": "",
+            "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": "{}"
+            "CUSTOM_DATA_TYPE": null
         },
         {
             "CREATED_ON": "2007-01-01 00:00:00",
@@ -204,9 +214,11 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": "{}",
+            "DEFAULT_EDITOR_UXON": null,
             "COPY_WITH_RELATED_OBJECT": null,
             "DELETE_WITH_RELATED_OBJECT": null,
+            "DEFAULT_DISPLAY_UXON": null,
+            "COMMENTS": "",
             "LABEL": "App",
             "ALIAS": "NAME",
             "DATATYPE": "0x30000000000000000000000000000000",
@@ -224,10 +236,10 @@
             "SORTERDIR": "",
             "RELATED_OBJ_ATTR": "",
             "SHORT_DESCRIPTION": "Name of the app",
-            "DATA_ADDRESS_PROPS": "",
+            "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": "{}"
+            "CUSTOM_DATA_TYPE": null
         },
         {
             "CREATED_ON": "2016-07-21 10:33:13",
@@ -243,9 +255,11 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": "{}",
+            "DEFAULT_EDITOR_UXON": null,
             "COPY_WITH_RELATED_OBJECT": null,
             "DELETE_WITH_RELATED_OBJECT": "0",
+            "DEFAULT_DISPLAY_UXON": null,
+            "COMMENTS": "",
             "LABEL": "Package",
             "ALIAS": "PACKAGE",
             "DATATYPE": "0x30000000000000000000000000000000",
@@ -263,10 +277,10 @@
             "SORTERDIR": "",
             "RELATED_OBJ_ATTR": "",
             "SHORT_DESCRIPTION": "Reference to the installed package",
-            "DATA_ADDRESS_PROPS": "{}",
+            "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": "{}"
+            "CUSTOM_DATA_TYPE": null
         },
         {
             "CREATED_ON": "2017-11-01 12:42:54",
@@ -282,9 +296,11 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": "{}",
+            "DEFAULT_EDITOR_UXON": null,
             "COPY_WITH_RELATED_OBJECT": null,
             "DELETE_WITH_RELATED_OBJECT": null,
+            "DEFAULT_DISPLAY_UXON": null,
+            "COMMENTS": "",
             "LABEL": "Default Language",
             "ALIAS": "DEFAULT_LANGUAGE_CODE",
             "DATATYPE": "0x11e7bf02824f925f9c0f0205857feb80",
@@ -302,14 +318,14 @@
             "SORTERDIR": "",
             "RELATED_OBJ_ATTR": "",
             "SHORT_DESCRIPTION": "Default language used in the metamodel and the pages of this app",
-            "DATA_ADDRESS_PROPS": "{}",
+            "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "'en'",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": "{}"
+            "CUSTOM_DATA_TYPE": null
         },
         {
             "CREATED_ON": "2018-02-14 22:16:23",
-            "MODIFIED_ON": "2018-02-22 14:23:27",
+            "MODIFIED_ON": "2018-11-19 08:23:47",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e811d4ad7a9fac98100205857feb80",
@@ -321,13 +337,15 @@
             "READABLEFLAG": "1",
             "WRITABLEFLAG": "0",
             "SYSTEMFLAG": "0",
-            "DEFAULT_EDITOR_UXON": "{}",
-            "COPY_WITH_RELATED_OBJECT": null,
-            "DELETE_WITH_RELATED_OBJECT": null,
+            "DEFAULT_EDITOR_UXON": null,
+            "COPY_WITH_RELATED_OBJECT": "0",
+            "DELETE_WITH_RELATED_OBJECT": "0",
+            "DEFAULT_DISPLAY_UXON": null,
+            "COMMENTS": "",
             "LABEL": "Last model modification",
             "ALIAS": "MODEL_MODIFIED_ON",
             "DATATYPE": "0x33000000000000000000000000000000",
-            "DATA_ADDRESS": "GREATEST(\n\t[#~alias#].modified_on, \n    IFNULL((SELECT GREATEST(IFNULL(MAX([#~alias#]_o.modified_on), 1970-01-01), IFNULL(MAX([#~alias#]_at.modified_on), 1970-01-01)) FROM exf_attribute [#~alias#]_at LEFT JOIN exf_object [#~alias#]_o ON [#~alias#]_o.oid = [#~alias#]_at.object_oid WHERE [#~alias#]_o.oid = [#~alias#].oid), 1970-01-01),\n   \t\/*IFNULL((SELECT MAX([#~alias#]_dt.modified_on) FROM exf_data_source [#~alias#]_dt WHERE [#~alias#]_dt.app_oid = [#~alias#].oid), 1970-01-01), -- ignore data sources because of possible custom connections and query builders *\/\n    IFNULL((SELECT MAX([#~alias#]_ob.modified_on) FROM exf_object_behaviors [#~alias#]_ob WHERE [#~alias#]_ob.behavior_app_oid = [#~alias#].oid), 1970-01-01),\n    IFNULL((SELECT MAX([#~alias#]_dc.modified_on) FROM exf_data_connection [#~alias#]_dc WHERE [#~alias#]_dc.app_oid = [#~alias#].oid), 1970-01-01),\n    IFNULL((SELECT MAX([#~alias#]_er.modified_on) FROM exf_error [#~alias#]_er WHERE [#~alias#]_er.app_oid = [#~alias#].oid), 1970-01-01),\n    IFNULL((SELECT MAX([#~alias#]_oa.modified_on) FROM exf_object_action [#~alias#]_oa WHERE [#~alias#]_oa.action_app_oid = [#~alias#].oid), 1970-01-01)\n)",
+            "DATA_ADDRESS": "GREATEST(\n\t[#~alias#].modified_on, \n    IFNULL((SELECT GREATEST(IFNULL(MAX([#~alias#]_o.modified_on), 1970-01-01), IFNULL(MAX([#~alias#]_at.modified_on), 1970-01-01)) FROM exf_attribute [#~alias#]_at LEFT JOIN exf_object [#~alias#]_o ON [#~alias#]_o.oid = [#~alias#]_at.object_oid WHERE [#~alias#]_o.oid = [#~alias#].oid), 1970-01-01),\n   \t\/*IFNULL((SELECT MAX([#~alias#]_dt.modified_on) FROM exf_data_source [#~alias#]_dt WHERE [#~alias#]_dt.app_oid = [#~alias#].oid), 1970-01-01), -- ignore data sources because of possible custom connections and query builders *\/\n    IFNULL((SELECT MAX([#~alias#]_ob.modified_on) FROM exf_object_behaviors [#~alias#]_ob WHERE [#~alias#]_ob.behavior_app_oid = [#~alias#].oid), 1970-01-01),\n    IFNULL((SELECT MAX([#~alias#]_dc.modified_on) FROM exf_data_connection [#~alias#]_dc WHERE [#~alias#]_dc.app_oid = [#~alias#].oid), 1970-01-01),\n    IFNULL((SELECT MAX([#~alias#]_er.modified_on) FROM exf_message [#~alias#]_er WHERE [#~alias#]_er.app_oid = [#~alias#].oid), 1970-01-01),\n    IFNULL((SELECT MAX([#~alias#]_oa.modified_on) FROM exf_object_action [#~alias#]_oa WHERE [#~alias#]_oa.action_app_oid = [#~alias#].oid), 1970-01-01)\n)",
             "OBJECT": "0x35370000000000000000000000000000",
             "FORMATTER": "",
             "DISPLAYORDER": null,
@@ -341,10 +359,10 @@
             "SORTERDIR": "",
             "RELATED_OBJ_ATTR": "",
             "SHORT_DESCRIPTION": "Time of last modification of the app's metamodel on this system",
-            "DATA_ADDRESS_PROPS": "{}",
+            "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "'en'",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": "{}"
+            "CUSTOM_DATA_TYPE": null
         }
     ],
     "totals_rows": [],
@@ -359,8 +377,8 @@
             }
         ]
     },
-    "rows_on_page": null,
-    "row_offset": 0,
+    "rows_limit": null,
+    "rows_offset": 0,
     "sorters": [
         {
             "attribute_alias": "CREATED_ON",
