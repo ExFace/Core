@@ -375,9 +375,6 @@ class Workbench implements WorkbenchInterface
         // Clear CMS cache
         $this->getCMS()->clearCmsCache();
         
-        // Clear model cache
-        $this->model()->clearCache();
-        
         // TODO clear other caches
         
         // Clear main cache folder. Mute errors since this is method is often called in background
