@@ -1459,12 +1459,24 @@ class Data
      * @see \exface\Core\Interfaces\Widgets\iHaveConfigurator::getConfiguratorWidget()
      * @return DataConfigurator
      */
-    public function getConfiguratorWidget()
+    public function getConfiguratorWidget() : iConfigureWidgets
     {
-        if (is_null($this->configurator)){
+        if ($this->configurator === null) {
             $this->configurator = WidgetFactory::create($this->getPage(), $this->getConfiguratorWidgetType(), $this);
         }
         return $this->configurator;
+    }
+    
+    public function setConfigurator(UxonObject $uxon) : iHaveConfigurator
+    {
+        if ($this->configurator === null) {
+            $this->configurator = WidgetFactory::createFromUxon($this->getPage(), $uxon, $this, $this->getConfiguratorWidgetType());
+            $this->configurator->setWidgetConfigured($this);
+        } else {
+            $this->configurator->importUxonObject($uxon);
+        }
+        
+        return $this;
     }
     
     /**
@@ -1472,17 +1484,10 @@ class Data
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\iHaveConfigurator::setConfiguratorWidget()
      */
-    public function setConfiguratorWidget($widget_or_uxon_object)
+    public function setConfiguratorWidget(iConfigureWidgets $widget) : iHaveConfigurator
     {
-        if ($widget_or_uxon_object instanceof iConfigureWidgets){
-            $this->configurator = $widget_or_uxon_object->setWidgetConfigured($this);
-        } elseif ($widget_or_uxon_object instanceof UxonObject){
-            if (! $widget_or_uxon_object->hasProperty('widget_type')){
-                $widget_or_uxon_object->setProperty('widget_type', $this->getConfiguratorWidgetType());
-            }
-            $this->configurator = WidgetFactory::createFromUxon($this->getPage(), $widget_or_uxon_object, $this);
-            $this->configurator->setWidgetConfigured($this);
-        }
+        $this->configurator = $widget->setWidgetConfigured($this);
+        return $this;
     }
     
     /**
@@ -1490,7 +1495,8 @@ class Data
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\iHaveConfigurator::getConfiguratorWidgetType()
      */
-    public function getConfiguratorWidgetType(){
+    public function getConfiguratorWidgetType() : string
+    {
         return 'DataConfigurator';
     } 
     
