@@ -158,7 +158,7 @@ class WidgetLink implements WidgetLinkInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\WidgetLinkInterface::getTargetPageAlias()
      */
-    public function getTargetPageAlias() : string
+    public function getTargetPageAlias() : ?string
     {
         return $this->targetPageAlias;
     }
