@@ -118,19 +118,25 @@ trait ExceptionTrait {
             $error_tab->setCaption($debug_widget->getWorkbench()->getCoreApp()->getTranslator()->translate('ERROR.CAPTION'));
             $error_tab->setNumberOfColumns(1);
             if ($this->getAlias()) {
-                $error_ds = $this->getErrorData($page->getWorkbench(), $this->getAlias());
-                $error_heading = WidgetFactory::create($page, 'TextHeading', $error_tab)
-                    ->setHeadingLevel(2)
-                    ->setValue($debug_widget->getWorkbench()->getCoreApp()->getTranslator()->translate('ERROR.CAPTION') . ' ' . $this->getAlias() . ': ' . $error_ds->getCellValue('TITLE', 0));
-                $error_tab->addWidget($error_heading);
-                $error_text = WidgetFactory::create($page, 'Text', $error_tab)
-                    ->setValue($this->getMessage());
-                $error_tab->addWidget($error_text);
-                $error_descr = WidgetFactory::create($page, 'Markdown', $error_tab)
-                    ->setAttributeAlias('DESCRIPTION')
-                    ->setHideCaption(true);
-                $error_tab->addWidget($error_descr);
-                $error_tab->prefill($error_ds);
+                try {
+                    $error_ds = $this->getErrorData($page->getWorkbench(), $this->getAlias());
+                    $error_heading = WidgetFactory::create($page, 'TextHeading', $error_tab)
+                        ->setHeadingLevel(2)
+                        ->setValue($debug_widget->getWorkbench()->getCoreApp()->getTranslator()->translate('ERROR.CAPTION') . ' ' . $this->getAlias() . ': ' . $error_ds->getCellValue('TITLE', 0));
+                    $error_tab->addWidget($error_heading);
+                    $error_text = WidgetFactory::create($page, 'Text', $error_tab)
+                        ->setValue($this->getMessage());
+                    $error_tab->addWidget($error_text);
+                    $error_descr = WidgetFactory::create($page, 'Markdown', $error_tab)
+                        ->setAttributeAlias('DESCRIPTION')
+                        ->setHideCaption(true);
+                    $error_tab->addWidget($error_descr);
+                    $error_tab->prefill($error_ds);
+                } catch (\Throwable $e) {
+                    $debug_widget->getWorkbench()->getLogger()->logException(new RuntimeException('Cannot fetch message with code "' . $this->getAlias() . '" - falling back to simplified error display!', null, $e));
+                    $error_heading = WidgetFactory::create($page, 'TextHeading', $error_tab)->setHeadingLevel(2)->setValue($this->getMessage());
+                    $error_tab->addWidget($error_heading);
+                }
             } else {
                 $error_heading = WidgetFactory::create($page, 'TextHeading', $error_tab)->setHeadingLevel(2)->setValue($this->getMessage());
                 $error_tab->addWidget($error_heading);
