@@ -46,10 +46,6 @@
             "attribute_alias": "TYPE"
         },
         {
-            "name": "docs_path",
-            "attribute_alias": "docs_path"
-        },
-        {
             "name": "DOCS",
             "attribute_alias": "DOCS"
         }
@@ -67,7 +63,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -82,7 +77,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -97,7 +91,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -112,7 +105,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -127,7 +119,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -142,7 +133,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -157,7 +147,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -172,7 +161,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -187,7 +175,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -202,7 +189,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -217,7 +203,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -232,7 +217,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -247,7 +231,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -262,7 +245,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -277,7 +259,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -292,7 +273,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -307,7 +287,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -322,7 +301,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -337,7 +315,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -352,7 +329,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -367,7 +343,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -382,7 +357,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -397,7 +371,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -412,7 +385,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -427,7 +399,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -442,7 +413,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -457,7 +427,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -472,7 +441,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -487,7 +455,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -502,7 +469,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -517,7 +483,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -532,7 +497,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -547,7 +511,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -562,7 +525,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -577,7 +539,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -592,7 +553,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -607,7 +567,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -622,7 +581,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -637,7 +595,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -652,7 +609,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -667,7 +623,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -682,7 +637,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -697,7 +651,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -712,7 +665,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -727,7 +679,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -742,7 +693,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -757,7 +707,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -772,7 +721,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -787,7 +735,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -802,7 +749,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -817,7 +763,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -832,7 +777,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -847,7 +791,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -862,7 +805,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -877,7 +819,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -892,7 +833,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -907,7 +847,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -922,7 +861,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -937,7 +875,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -952,7 +889,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -967,7 +903,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -982,7 +917,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -997,7 +931,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1012,7 +945,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1027,7 +959,6 @@
             "DESCRIPTION": "Every widget showing data must have a reference to it's main meta object. This reference can either be set directly in the widget's UXON description via the \"object_alias\" property or will be inherited automatically from the widget's parent.\n\nGenerally it is a good idea to always specify an object_alias for the root widget of every page - even if it is a container with widgets based on other objects. It is no problem to specify a different object for a child widget!",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1042,7 +973,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1057,7 +987,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1072,7 +1001,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1087,7 +1015,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1102,7 +1029,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1117,7 +1043,6 @@
             "DESCRIPTION": "A relation path consists of relation\/attribute aliases concatenated via \"__\" (double underscore). Each relation alias may include a modifier enclosed in square brackets. In case of reverse relations (1-to-N), the alias will mostly include an aggregator function separated by a semicolon.\n\nExamples (based on an imaginary meta object COMPANY):\n\n- `Billing_ADDRESS__STREET` - the street name of the company's billing address\n- `ORDER[PAYEE]__ORDER_NO:COUNT` - number of orders, where the company is the payee\n- `EMPLOYEE__ID:COUNT` - number of employees of the compay (no modifier needed as there is only one relation from EMPLOYEE to COMPANY. `EMPLOYEE[COMPANY]__ID:COUNT` would work too, of course.",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1132,7 +1057,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1147,7 +1071,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1162,7 +1085,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1177,7 +1099,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1192,7 +1113,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1207,7 +1127,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1222,7 +1141,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1237,7 +1155,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1252,7 +1169,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1267,7 +1183,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1282,7 +1197,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1297,7 +1211,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1312,7 +1225,6 @@
             "DESCRIPTION": "This error indicates, that a non-button was added to the buttons property of a widget. You may overwrite the widget type of each individual button, to make it a special type of button (e.g. a MenuButton), but it still must be a button: you can't use an input widget or so.",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1327,7 +1239,6 @@
             "DESCRIPTION": "This error indicates, that a property was used in the description of the widget, which is not known for the selected widget type. Please refer to the widget reference in Administration > Core > Widgets.",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1342,7 +1253,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1357,7 +1267,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1372,7 +1281,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1387,7 +1295,6 @@
             "DESCRIPTION": "This error indicates, that a meta object does not have a UID attribute, but the current runtime requires it. Please mark one of the attributes as object UID.\n\nIn general, an object does not neccessarily need a UID attribute. However, certain actions or query builders require it for their logic to function correctly.",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1402,7 +1309,6 @@
             "DESCRIPTION": "This error occurs if a data widget (DataTable, DataMatrix, Chart, etc.) has no UID column, but it is required for the current configuration (e.g. for button actions). \n\nTo solve the problem, either add a UID attribute to the main object of the widget or specify a custom uid_column_id in the UXON configuration.",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1417,7 +1323,6 @@
             "DESCRIPTION": "This error indicates, that the attributes are neither specified, nor could they be guessed.\n\nSelect widgets like InputSelect or InputCombo require a value attribute and a text attribute to be rendered. The system will try to determine suitable attributes automatically if the respective properties (value_attribute_alias, text_attribute_alias) are not set. \n\nPlease refer to the widget documentation for detailed information on how the attributes are determined.",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1432,7 +1337,6 @@
             "DESCRIPTION": "This error indicates, that a required file path contains one or more placeholders, that could not be resolved from the current set of filters.",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1447,7 +1351,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1462,7 +1365,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1477,7 +1379,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1492,7 +1393,6 @@
             "DESCRIPTION": "This indicates a programmatic error in the internal logic of a widget. Please contact the support!",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1507,7 +1407,6 @@
             "DESCRIPTION": "This indicates a programmatic error in the internal logic. Please contact the support!",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1522,7 +1421,6 @@
             "DESCRIPTION": "This error occurs when an object is requested from the meta model, but cannot be found. The error text mostly shows, which object id or alias was requested.\n\nIf the object was requested by alias, make sure, it's a fully qualified prefixed by the app alias (e.g. exface.Core.MyObject instead of simply MyObject).",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1537,7 +1435,6 @@
             "DESCRIPTION": "This error occurs when an attribute is requested from the meta model, but cannot be found. The error text mostly shows, which attribute alias was requested.",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1552,7 +1449,6 @@
             "DESCRIPTION": "This error indicates, that the current user cannot access the specified context. Many contexts require specific user rights. \n\nInaccessible contexts are automatically hidden from the context bar. ",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1567,7 +1463,6 @@
             "DESCRIPTION": "This error indicates, that an illegal value was assigned to a widget property in it's UXON description. See the error subtitle for details. \n\nIf you are editing your Screens right know, you can see the UXON-code of the faulty widget in the respective tabs.",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1582,7 +1477,6 @@
             "DESCRIPTION": "This error indicates, that an illegal or misspelled widget property name was used in the UXON description: see the subtitle for details.\n\nThe most common cause for these errors are typos in the UXON configuration. If you are editing your Screens right know, you can see the UXON-code of the faulty widget in the respective tabs.",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1597,7 +1491,6 @@
             "DESCRIPTION": "The following expressions are supported as comparators:\n- '[' - in\n- '![' - not in\n- '=' - is (default)\n- '!=' - is not\n- '==' - equals\n- '!==' - equals not\n- '<' - less\n- '<=' - less or equals\n- '>' - greater\n- '>=' - greater or equals",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1612,7 +1505,6 @@
             "DESCRIPTION": "The following date input formats are supported:\n- 31.12.2017.\n- 2017-12-31.\n- 2017 (2017-01-01 will be assumed).\n- 12.2017 or 12-2017 (2017-12-01 will be assumed).\n- 15.02 or 15-02 (2017-02-15 will be assumed).\n- +1d, +2w, +3m, +4y for adding days, weeks, months or years to the current date.\n- -4d, -3w, -2m, -1y for subtracting days, weeks, months or years from the current date.",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1627,7 +1519,6 @@
             "DESCRIPTION": "The \"align\" property of an alignable widget takes the following values:\n\n- left\n- right\n- center\n- default (the default alignment for the widget type in the current template)\n- opposite (the inverse to the default alignment: e.g. \"right\" if the default is \"left\")",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1642,7 +1533,6 @@
             "DESCRIPTION": "This error means, that a referenced page cannot be found.\n\nThis mostly happens due to misspelled page references in widget links or references to pages that were not installed or deleted on the current installation. \n\nIf this error happens when editing a page, make sure all pages, you specified widget links to, really exist in the CMS!",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1657,7 +1547,6 @@
             "DESCRIPTION": "This error means, that the condition passed as argument to the COUNT_IF aggregator is invalid. \n\nThis aggregator counts values of the attribute it is applied to, that match the specified condition. The condition MUST contain a comparator and a value separated by a space. \n\nValid examples:\n\n- Count products with a price of 10 or more: PRODUCTS__PRICE:COUNT(>= 10)\n- Count completed tasks: TASKS__COMPLETED_FLAG(= 1) ",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1672,7 +1561,6 @@
             "DESCRIPTION": "Numeric data types (based on the NumberDataType prototype) take the following configuration values:\n\n- min - minimum valid value (must be less or equal, than max)\n- max - maximum valid value (must be greater or equal than min)\n- precision_min - minimum number of decimal places (must be less or equal, than precision_max)\n- precision_max - maximum number of decimal places (must be greater or equal, than presision_min)\n- precision - fixed precision (the same as setting the same value for precision_min and precision_max)",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1687,7 +1575,6 @@
             "DESCRIPTION": "Aliases of meta model entities can contain any characters, but may not start with and underscore \"_\", equals-sign \"=\", or tilde \"~\".",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1702,7 +1589,6 @@
             "DESCRIPTION": "The given value does not match any of the valid values defined in an enumeration data type.",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1717,7 +1603,6 @@
             "DESCRIPTION": "The list of valid values of dynamic enumeration data types can be configured in the model of the data type or a specific attribute:\n\n{\n  ...\n  \"values\": {\n    \"VALUE1\": \"Label 1\",\n    \"VALUE2\": \"Label 2\"\n  }\n}",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1732,7 +1617,6 @@
             "DESCRIPTION": "Valid values for wtatic enumeration data types are defined in the source code. They cannot be overridden in the model of the data type. \n\nThis behavior is intended because static enumerations can be used in both, the source code and in the meta model. This means, that their values must be supported by the source code. For example, data sorters will support sorting directions ASC and DESC defined in the exface.Core.SortingDirectionsDataType - it does not make sense to change or extend them as the sorters will not know, what to do with the new values.",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1747,7 +1631,6 @@
             "DESCRIPTION": "This error occurs if an app is requested from a UiPage which is not part of any app.",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1762,7 +1645,6 @@
             "DESCRIPTION": "This error occurs if several UI pages have the same UID.\n\nThis problem has to be solved by direct manipulation of the page UID template variables in the database (modx_site_tmplvar_contentvalues).",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1777,7 +1659,6 @@
             "DESCRIPTION": "This error occurs an UI page has no UID.\n\nThis problem might be solved by recreation of the page or by direct manipulation of the page UID template variable in the database (modx_site_tmplvar_contentvalues).",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1792,7 +1673,6 @@
             "DESCRIPTION": "This error occurs when a problem creating a Ui page occurs.\n",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1807,7 +1687,6 @@
             "DESCRIPTION": "This error occurs when a problem updating a Ui page occurs.\n",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1822,7 +1701,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1837,7 +1715,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1852,7 +1729,6 @@
             "DESCRIPTION": "The configuration for the tree structure within a widget based on a hierarchy is missing or invalid. Widgets like DataTree or ComboTree contain a Tree widget internally, that defines the hierarchy structure. When creating on of those widgets, the \"tree\" property must contain a valid tree definition.\n\nPlease refer to the description of the Tree widget for more information.",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1867,7 +1743,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1882,7 +1757,6 @@
             "DESCRIPTION": "",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1897,7 +1771,6 @@
             "DESCRIPTION": "When trying to delete a business object, the system automatically looks for related data, that depends on it and attempts to remove it first. This error indicates, that this operation failed.\n\nRemoving dependent data is important as it would become meaningless garbage without the object it depends on: e.g. an order position cannot exist if the order was physically deleted.\n\nIf the related data cannot be removed automatically, you should try deleting it manually and retry the failed delete operation.",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1912,7 +1785,6 @@
             "DESCRIPTION": "This error occurs if an operation requiring a data source (e.g. reading or writing) was called on an object that does not have one. \n\nObjects without data sources are quite legitimate. For example, they can be used to model the input data for an action, which is not a direct replica of data source entry. However, these objects only exist in the runtime. If an attempt is made to persist such an object, this error will occur.",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1927,7 +1799,6 @@
             "DESCRIPTION": "This error occurs if a relation, that does not have a specific target key attribute, points to an object without a primary key (UID attribute).\n\nNormally you do not have to specify, which attribute of the related object is to be used as key. By default, the UID of that object is used. This, of course, does not work, if there is no UID attribute. So you should either specify, which attribute the relation is attached to or add a UID to the target object. ",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1942,7 +1813,6 @@
             "DESCRIPTION": "This error indicates, that an instance of a model component references a non-existant entity: e.g. an attribute for an object, that does not exist. See specific error text for details.",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1957,7 +1827,6 @@
             "DESCRIPTION": "This error occurs, when a relation within an alias expression is ambiguously defined: that is, multiple relations matching the alias were found. \n\nThis happens typically, when the relations modifier (the square-brackets-part) is omitted in reverse relations. Since the alias of the right object is used in relation paths for reverse relations, there can easily be multiple reverse relations with the same alias. \n\nConsider the following example with a meta object ORDER, which has two different relations to the object COMPANY: PAYEE and CONTRACTOR. The expression COMPANY__ORDER (all order of a company) is ambiguous, because it is unclear, which relation is meant, so the correct notation would be COMPANY__ORDER[PAYEE] or COMPANY__ORDER[CONTRACTOR]. \n\nThe part in square brackets is called *modifier* and is required for reverse relations, unless one of the following conditions applies:\n\n- There is only one relation from the right to the left object (e.g. if there would be only one relation from ORDER to COMPANY)\n- There are multiple relations, but only one of them is required for the right object (e.g. only PAYEE would be required for ORDER) - in this case, the required relations is used by default.\n\nIn any case, the full notation with the modifier is allways possible. The short one is just a convenience shortcut.\n\n",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1972,7 +1841,6 @@
             "DESCRIPTION": "Writing operations can be explicitly disabled in the metamodel by removing the property \"writable\" from \n\n- the object, \n- it's data source, or\n- a specific connection. \n\nIn this case, writing attempts will fail even before a transaction is started or the data is passed to the corresponding query builder!",
             "HINT": "",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -1987,7 +1855,6 @@
             "DESCRIPTION": "",
             "HINT": "The UID will be used to display the object by default: e.g. in drop-downs, etc.",
             "TYPE": "INFO",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -2002,7 +1869,6 @@
             "DESCRIPTION": "",
             "HINT": "It cannot be used with core actions, in dropdown-filters, etc.",
             "TYPE": "WARNING",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -2017,7 +1883,6 @@
             "DESCRIPTION": "",
             "HINT": "This object is marked as readable, but has no data source or an empty data address.",
             "TYPE": "WARNING",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -2032,7 +1897,6 @@
             "DESCRIPTION": "",
             "HINT": "Neither this object nor objects it inerits from have any attributes.",
             "TYPE": "WARNING",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -2047,7 +1911,6 @@
             "DESCRIPTION": "",
             "HINT": "It will not be possible to read any of these attributes.",
             "TYPE": "WARNING",
-            "docs_path": "",
             "DOCS": ""
         },
         {
@@ -2062,7 +1925,6 @@
             "DESCRIPTION": "",
             "HINT": "Make sure, only one attribute is marked as object label! Until then, the first one will be used.",
             "TYPE": "ERROR",
-            "docs_path": "",
             "DOCS": ""
         }
     ],
