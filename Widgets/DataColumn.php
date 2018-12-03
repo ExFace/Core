@@ -177,10 +177,11 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     public function getCellWidget()
     {
         if ($this->cellWidget === null) {
-            if ($this->editable === true) {
-                // TODO
-            } elseif ($this->getAttributeAlias()) {
-                $this->cellWidget = WidgetFactory::createFromUxon($this->getPage(), $this->getAttribute()->getDefaultDisplayUxon(), $this, 'Display');
+            $attr = $this->getAttribute();
+            if ($this->isEditable() === true && $attr) {
+                $this->cellWidget = WidgetFactory::createFromUxon($this->getPage(), $attr->getDefaultEditorUxon(), $this, 'Input');
+            } elseif ($attr) {
+                $this->cellWidget = WidgetFactory::createFromUxon($this->getPage(), $attr->getDefaultDisplayUxon(), $this, 'Display');
             } else {
                 $this->cellWidget = WidgetFactory::create($this->getPage(), 'Display', $this);
             }
@@ -212,14 +213,16 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
      */
     public function isEditable()
     {
-        if (is_null($this->editable)) {
-            return $this->getCellWidget() instanceof iTakeInput ? true : false;
-        } 
-        return $this->editable;
+        return $this->editable ?? $this->getDataColumnGroup()->isEditable();
     }
     
     /**
+     * Makes this column editable if set to TRUE.
      * 
+     * In particular, this will make the default editor of an attribute be used
+     * as cell widget (instead of the default display widget).
+     * 
+     * If not set explicitly, the setting from the column group will be inherited.
      * 
      * @uxon-property editable
      * @uxon-type boolean
@@ -230,6 +233,9 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     public function setEditable($true_or_false)
     {
         $this->editable = BooleanDataType::cast($true_or_false);
+        if ($this->editable === true) {
+            $this->getDataColumnGroup()->setEditable(true);
+        }
         return $this;
     }
 
@@ -242,12 +248,15 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
      * to the meta object.
      *
      * Example:
+     * ```
      * {
      *  "attribute_alias": "MY_ATTRIBUTE",
      *  "cell_widget": {
      *      "widget_type": "InputNumber"
      *  }
      * }
+     * 
+     * ```
      *
      * @uxon-property cell_widget
      * @uxon-type \exface\Core\Widgets\AbstractWidget
@@ -257,13 +266,13 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
      */
     public function setCellWidget(UxonObject $uxon_object)
     {
-        // TODO Fetch the default cell widget from data type. Probably need a editable attribute for the DataColumn,
-        // wich would be the easiest way to set it editable and the cell widget would be optional then.
         try {
             $cellWidget = WidgetFactory::createFromUxon($this->getPage(), UxonObject::fromAnything($uxon_object), $this);
             $cellWidget->setAttributeAlias($this->getAttributeAlias());
             $this->cellWidget = $cellWidget;
-            $this->editable = true;
+            if ($cellWidget instanceof iTakeInput) {
+                $this->setEditable(true);
+            }
         } catch (\Throwable $e) {
             throw new WidgetConfigurationError($this, 'Cannot set cell widget for ' . $this->getWidgetType() . '. ' . $e->getMessage() . ' See details below.', null, $e);
         }
