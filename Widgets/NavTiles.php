@@ -10,12 +10,15 @@ use exface\Core\Factories\WidgetFactory;
 use exface\Core\CommonLogic\UxonObject;
 
 /**
- * A Tile is basically a big fancy button, that can display additional information (KPIs, etc.).
+ * NavTiles show a navigational tile menu starting from a given parent page.
+ * 
+ * This a simple shortcut to create tile menus - much quicker, than building
+ * them manually via separate tiles.
  *
  * @author Andrej Kabachnik
  *        
  */
-class NavTiles extends WidgetGrid
+class NavTiles extends Tiles
 {
     private $rootPageSelector = null;
     
@@ -44,16 +47,6 @@ class NavTiles extends WidgetGrid
             return $this->getPage()->getSelector();
         }
         return $this->rootPageSelector;
-    }
-    
-    /**
-     * 
-     * @param callable $filter
-     * @return Tile[]
-     */
-    public function getTiles(callable $filter = null) : array
-    {
-        return $this->getWidgets($filter);
     }
     
     /**
