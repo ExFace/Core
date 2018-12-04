@@ -4,7 +4,9 @@ namespace exface\Core\Widgets;
 use exface\Core\Interfaces\Widgets\iHaveColor;
 
 /**
- * The Icon widget is a Display with an icon beside it.
+ * The Icon widget is a standard Display widget with an icon beside it.
+ * 
+ * @see Display
  *
  * @author Andrej Kabachnik
  *        
