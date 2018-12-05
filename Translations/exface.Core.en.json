@@ -134,9 +134,10 @@
 	"GLOBAL.SORTING_DIRECTIONS.ASC": "Ascending",
 	"GLOBAL.SORTING_DIRECTIONS.DESC": "Descending",
 	
-	"INSTALLER.SQLSCHEMA.SUCCESS": "%counter% SQL-schema-update installed|%counter% SQL-schema-updates installed",
-    "INSTALLER.SQLSCHEMA.FAILED": "SQL-schema-update %first_failed_id% failed: %error_text%|%counter% SQL-schema-updates failed starting with update %first_failed_id%: %error_text%",
-	
+	"INSTALLER.SQLSCHEMA.SUCCESS": "%counter% SQL schema update installed|%counter% SQL schema updates installed",
+    "INSTALLER.SQLSCHEMA.FAILED": "SQL schema update %first_failed_id% failed: %error_text%|%counter% SQL schema updates failed starting with update %first_failed_id%: %error_text%",
+	"INSTALLER.SQLSCHEMA.NO_UPDATES": "No SQL-schema updates found.",
+    
 	"LOCALIZATION.DATE.DATE_FORMAT": "d.m.Y",
     "LOCALIZATION.DATE.DATE_FORMAT_JS": "dd.MM.yyyy",
     "LOCALIZATION.DATE.DATE_FORMAT_EXCEL": "DD.MM.YYYY",
