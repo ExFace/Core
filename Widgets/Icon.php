@@ -15,28 +15,57 @@ class Icon extends Display implements iHaveColor
 {
     private $icon = null;
     
-    private $size = null;
+    private $iconSize = null;
+    
+    private $iconPosition = EXF_ALIGN_LEFT;
 
     private $color = null;
     
     /**
      * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Widgets\iShowText::getSize()
+     * @return string|NULL
      */
-    public function getSize()
+    public function getIconSize() : ?string
     {
-        return $this->size;
+        return $this->iconSize;
     }
     
     /**
+     * Sets the size of the icon (SMALL, NORMAL, BIG)
      * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Widgets\iShowText::setSize()
+     * @uxon-property icon_size
+     * @uxon-type [small|normal|big]
+     * 
+     * @param string $value
+     * @return \exface\Core\Widgets\Icon
      */
-    public function setSize($value)
+    public function setIconSize($value) : Icon
     {
-        $this->size = $value;
+        $this->iconSize = $value;
+        return $this;
+    }
+    
+    /**
+     *
+     * @return string
+     */
+    public function getIconPosition() : string
+    {
+        return $this->iconPosition;
+    }
+    
+    /**
+     * Sets the position of the icon relativ to the caption/value (LEFT, RIGHT, CENTER).
+     * 
+     * @uxon-property icon_position
+     * @uxon-type [left|right|center]
+     * 
+     * @param string $value
+     * @return Icon
+     */
+    public function setIconPosition(string $value) : Icon
+    {
+        $this->iconPosition = $value;
         return $this;
     }
     
@@ -49,8 +78,11 @@ class Icon extends Display implements iHaveColor
     public function exportUxonObject()
     {
         $uxon = parent::exportUxonObject();
-        if (! is_null($this->size)) {
-            $uxon->setProperty('size', $this->size);
+        if (! is_null($this->iconSize)) {
+            $uxon->setProperty('icon_size', $this->iconSize);
+        }
+        if (! is_null($this->iconAlignment)) {
+            $uxon->setProperty('icon_alignment', $this->iconAlignment);
         }
         if (! is_null($this->icon)) {
             $uxon->setProperty('icon', $this->icon);
