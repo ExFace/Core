@@ -135,6 +135,7 @@
 	
 	"INSTALLER.SQLSCHEMA.SUCCESS": "%counter% SQL-Schema-Update wurde installiert|%counter% SQL-Schema-Updates wurden installiert",
     "INSTALLER.SQLSCHEMA.FAILED": "SQL-Schema-Update Nr. %first_failed_id% fehlerhaft: %error_text%|%counter% SQL-Schema-Updates wurden abgebrochen angefangen mit Update Nr. %first_failed_id%: %error_text%", 
+    "INSTALLER.SQLSCHEMA.NO_UPDATES": "Keine SQL-Schema-Updates gefunden.",
     
     "LOCALIZATION.DATE.DATE_FORMAT": "d.m.Y",
     "LOCALIZATION.DATE.DATE_FORMAT_JS": "dd.MM.yyyy",
