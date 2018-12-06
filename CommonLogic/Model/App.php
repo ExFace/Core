@@ -691,7 +691,7 @@ class App implements AppInterface
                 }
             }
         } catch(\Throwable $e) {
-            throw new LogicException('Cannot check if ' . $selector->getComponentType() . ' exists in app ' . $this->getAliasWithNamespace() . ': only prototype-selectors supported!', null, $e);
+            throw new LogicException('Cannot check if ' . $selector->getComponentType() . ' exists in app ' . $this->getAliasWithNamespace() . ': cannot load prototype class!', null, $e);
         }
         
         return false;
