@@ -8,21 +8,32 @@ use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
+use exface\Core\Factories\ConditionFactory;
+use exface\Core\Factories\ConditionGroupFactory;
 
 /**
  * NavTiles show a navigational tile menu starting from a given parent page.
  * 
  * This a simple shortcut to create tile menus - much quicker, than building
  * them manually via separate tiles.
+ * 
+ * @method Tiles[] getWidgets()
+ * @method Tiles getWidgetFirst()
+ * @method Tiles getWidget() 
  *
  * @author Andrej Kabachnik
  *        
  */
-class NavTiles extends Tiles
+class NavTiles extends WidgetGrid
 {
     private $rootPageSelector = null;
     
     private $tilesBuilt = false;
+    
+    private $depth = 2;
+    
+    private $parentTileIds = [];
     
     /**
      * 
@@ -57,41 +68,75 @@ class NavTiles extends Tiles
     public function getWidgets(callable $filter = null)
     {
         if ($this->tilesBuilt === false) {
+            $pageSheet = $this->getMenuDataSheet($this->getRootPageSelector());
+            $this->createTileGroup($pageSheet, $this->getWorkbench()->getCMS()->getPage($this->getRootPageSelector())->getName(), $this->getDepth());
+            
             $this->tilesBuilt = true;
-            foreach ($this->getMenuDataSheet($this->getRootPageSelector())->getRows() as $row) {
-                /* @var $tile \exface\Core\Widgets\Tile */
-                $tile = WidgetFactory::create($this->getPage(), 'Tile', $this);
-                $tile->setTitle($row['NAME']);
-                $tile->setSubtitle($row['DESCRIPTION']);
-                $tile->setWidth('0.5');
-                $tile->setHint($row['NAME'] . ":\n" . $row['DESCRIPTION']);
-                $tile->setAction(new UxonObject([
-                    'alias' => 'exface.Core.GoToPage', 
-                    'page_alias' => $row['ALIAS']
-                    
-                ]));
-                $this->addWidget($tile);
-            }
+            
         }
         return parent::getWidgets();
     }
     
+    protected function createTileGroup(DataSheetInterface $pageSheet, string $caption, int $depth, Tile $upperLevelTile = null) : Tiles
+    {
+        $tiles = WidgetFactory::create($this->getPage(), 'Tiles', $this);
+        $tiles->setCaption($caption);
+        $this->addWidget($tiles);
+        
+        foreach ($pageSheet->getRows() as $row) {
+            $tile = $this->createTileFromPageDataRow($row, $tiles);
+            $tiles->addWidget($tile);
+            if ($upperLevelTile !== null) {
+                $this->parentTileIds[$tile->getId()] = $upperLevelTile->getId();
+            }
+            if ($depth > 1) {
+                $parentPageSelector = new UiPageSelector($this->getWorkbench(), $row['CMS_ID']);
+                $childrenSheet = $this->getMenuDataSheet($parentPageSelector);
+                if ($childrenSheet->isEmpty() === false) {
+                    $this->createTileGroup($childrenSheet, $row['NAME'], ($depth-1), $tile);
+                }
+            }
+        }
+        
+        return $tiles;
+    }
+    
+    protected function createTilesForParent(UiPageSelectorInterface $parentPageSelector, iContainOtherWidgets $container) : Tiles
+    {
+        $pageSheet = $this->getMenuDataSheet($parentPageSelector);
+        
+        foreach ($pageSheet->getRows() as $row) {
+            $tile = $this->createTileFromPageDataRow($row, $container);
+            $container->addWidget($tile);
+        }
+        return $container;
+    }
+    
+    protected function createTileFromPageDataRow(array $row, iContainOtherWidgets $container) : Tile
+    {
+        /* @var $tile \exface\Core\Widgets\Tile */
+        $tile = WidgetFactory::create($container->getPage(), 'Tile', $container);
+        $tile->setTitle($row['NAME']);
+        $tile->setSubtitle($row['DESCRIPTION']);
+        $tile->setWidth('0.5');
+        $tile->setHint($row['NAME'] . ":\n" . $row['DESCRIPTION']);
+        $tile->setAction(new UxonObject([
+            'alias' => 'exface.Core.GoToPage',
+            'page_alias' => $row['ALIAS']
+            
+        ]));
+        return $tile;
+    }
+    
     /**
      * 
-     * @param UiPageSelectorInterface $rootPageSelector
+     * @param UiPageSelectorInterface $parentPageSelector
      * @param int $depth
      * @throws WidgetConfigurationError
      * @return DataSheetInterface
      */
-    protected function getMenuDataSheet(UiPageSelectorInterface $rootPageSelector, int $depth = 1) : DataSheetInterface
+    protected function getMenuDataSheet(UiPageSelectorInterface $parentPageSelector) : DataSheetInterface
     {
-        if ($depth > 1) {
-            throw new WidgetConfigurationError($this, 'Nav widgets with a depth of more than 1 menu level currently not possible!');
-        }
-        if ($depth < 1) {
-            throw new WidgetConfigurationError($this, 'Invalid menu depth value "' . $depth . '" for widget ' . $this->getWidgetType() . ': use only positive integers!');
-        }
-        
         $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.PAGE');
         $cols = $ds->getColumns();
         $cols->addFromExpression('NAME');
@@ -100,20 +145,63 @@ class NavTiles extends Tiles
         
         $ds->getSorters()->addFromString('MENU_POSITION');
         
-        if ($rootPageSelector->isAlias()) {
-            $ds->addFilterFromString('MENU_PARENT__ALIAS', $rootPageSelector->toString(), '==');
-        } elseif ($rootPageSelector->isUid()) {
-            $ds->addFilterFromString('MENU_PARENT__UID', $rootPageSelector->toString(), '==');
-        } elseif ($rootPageSelector->isCmsId()) {
-            $ds->addFilterFromString('MENU_PARENT', $rootPageSelector->toString(), '==');
+        if ($parentPageSelector->isAlias()) {
+            $parentAlias = 'MENU_PARENT__ALIAS';
+        } elseif ($parentPageSelector->isUid()) {
+            $parentAlias = 'MENU_PARENT__UID';
+        } elseif ($parentPageSelector->isCmsId()) {
+            $parentAlias = 'MENU_PARENT';
         } else {
-            throw new WidgetConfigurationError($this, 'Invalid page selector "' . $rootPageSelector->toString() . '" in widget ' . $this->getWidgetType() . '"!');
+            throw new WidgetConfigurationError($this, 'Invalid page selector "' . $parentPageSelector->toString() . '" in widget ' . $this->getWidgetType() . '"!');
         }
         
+        $ds->addFilterFromString($parentAlias, $parentPageSelector->toString(), '==');
         $ds->addFilterFromString('MENU_VISIBLE', 1, '==');
         
         $ds->dataRead();
         return $ds;
     }
+    
+    /**
+     *
+     * @return int
+     */
+    public function getDepth() : int
+    {
+        return $this->depth;
+    }
+    
+    /**
+     * 
+     * @param int $value
+     * @return NavTiles
+     */
+    public function setDepth(int $value) : NavTiles
+    {
+        $this->depth = $value;
+        return $this;
+    }
+    
+    /**
+     * 
+     * @param callable $filter
+     * @return Tile[]
+     */
+    public function getTiles(callable $filter = null) : array
+    {
+        $tiles = [];
+        foreach ($this->getWidgets($filter) as $w) {
+            if ($w instanceof WidgetGroup) {
+                $tiles = array_merge($tiles, $w->getWidgets($filter));
+            } else {
+                $tiles[] = $w;
+            }
+        }
+        return $tiles;
+    }
+    
+    public function getUpperLevelTile(Tile $tile) : ?Tile
+    {
+        return $this->parentTileIds[$tile->getId()];
+    }
 }
-?>
