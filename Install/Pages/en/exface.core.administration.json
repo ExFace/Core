@@ -10,6 +10,7 @@
     "replaces_page_alias": null,
     "contents": {
         "widget_type": "NavTiles",
-        "object_alias": "exface.Core.PAGE"
+        "object_alias": "exface.Core.PAGE",
+        "depth": 2
     }
 }
