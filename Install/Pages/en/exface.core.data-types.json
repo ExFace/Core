@@ -5,7 +5,7 @@
     "menu_index": "4",
     "menu_visible": true,
     "name": "Data Types",
-    "description": "",
+    "description": "Manage metamodel data types",
     "intro": "",
     "replaces_page_alias": null,
     "contents": {

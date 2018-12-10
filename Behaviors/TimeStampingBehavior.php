@@ -21,8 +21,6 @@ class TimeStampingBehavior extends AbstractBehavior
 
     private $check_for_conflicts_on_update = true;
 
-    private $disabled = false;
-
     public function register() : BehaviorInterface
     {
         $this->getUpdatedOnAttribute()->setSystem(true)->setDefaultAggregateFunction('MAX');

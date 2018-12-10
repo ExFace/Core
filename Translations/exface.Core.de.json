@@ -135,6 +135,7 @@
 	
 	"INSTALLER.SQLSCHEMA.SUCCESS": "%counter% SQL-Schema-Update wurde installiert|%counter% SQL-Schema-Updates wurden installiert",
     "INSTALLER.SQLSCHEMA.FAILED": "SQL-Schema-Update Nr. %first_failed_id% fehlerhaft: %error_text%|%counter% SQL-Schema-Updates wurden abgebrochen angefangen mit Update Nr. %first_failed_id%: %error_text%", 
+    "INSTALLER.SQLSCHEMA.NO_UPDATES": "Keine SQL-Schema-Updates gefunden.",
     
     "LOCALIZATION.DATE.DATE_FORMAT": "d.m.Y",
     "LOCALIZATION.DATE.DATE_FORMAT_JS": "dd.MM.yyyy",
@@ -190,7 +191,7 @@
 	"WIDGET.DATA.NO_DATA_FOUND": "Keine Daten gefunden, die zu aktuellen Filtern passen!",
 	"WIDGET.DATA.HELP.FILTERS": "Filter",
 	"WIDGET.DATA.HELP.COLUMNS": "Spalten",
-	"WIDGET.DATA.NOT_LOADED": "Bitte Pflicht-Filter setzen und anschließend die Suche ausführen!",
+	"WIDGET.DATA.NOT_LOADED": "Bitte zuerst Filter setzen und dann die Suche ausführen!",
 	
     "WIDGET.DATACONFIGURATOR.FILTER_TAB_CAPTION": "Filter",
     "WIDGET.DATACONFIGURATOR.SORTER_TAB_CAPTION": "Sortierung",

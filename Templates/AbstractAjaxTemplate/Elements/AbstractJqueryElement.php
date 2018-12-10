@@ -834,11 +834,12 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface
      * 
      * @return string
      */
-    protected function getCaption()
+    protected function getCaption() : string
     {
         $widget = $this->getWidget();
-        if ($widget->getCaption() && ! $widget->getHideCaption()){
-            return $widget->getCaption();
+        $wCap = $widget->getCaption();
+        if ($wCap !== null && $wCap !== '' && ! $widget->getHideCaption()){
+            return $wCap;
         }
         return '';
     }

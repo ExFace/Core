@@ -580,7 +580,7 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
      * {@inheritDoc}
      * @see \exface\Core\Widgets\Data::getConfiguratorWidgetType()
      */
-    public function getConfiguratorWidgetType()
+    public function getConfiguratorWidgetType() : string
     {
         return 'DataTableConfigurator';
     }

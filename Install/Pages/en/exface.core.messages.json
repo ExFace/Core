@@ -5,7 +5,7 @@
     "menu_index": "5",
     "menu_visible": true,
     "name": "Messages",
-    "description": "",
+    "description": "Manage and create message codes",
     "intro": "",
     "replaces_page_alias": null,
     "contents": {
