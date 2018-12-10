@@ -207,13 +207,30 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     }
 
     /**
-     * Returns TRUE if the column is editable and FALSE otherwise
+     * Returns TRUE if the column is editable and FALSE otherwise.
+     * 
+     * A DataColumn is concidered editable if it is either made editable explicitly
+     * (`editable: true`) or belongs to an editable DataColumnGroup and represents
+     * an editable attribute or is not bound to an attribute at all.
      *
      * @return boolean
      */
     public function isEditable()
     {
-        return $this->editable ?? $this->getDataColumnGroup()->isEditable();
+        if ($this->editable !== null) {
+            return $this->editable;
+        }
+        
+        $groupIsEditable = $this->getDataColumnGroup()->isEditable();
+        if ($groupIsEditable === true) {
+            if ($this->hasAttributeReference()) {
+                return $this->getAttribute()->isEditable();
+            } else {
+                return true;
+            }
+        }
+        
+        return false;
     }
     
     /**
@@ -222,7 +239,10 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
      * In particular, this will make the default editor of an attribute be used
      * as cell widget (instead of the default display widget).
      * 
-     * If not set explicitly, the setting from the column group will be inherited.
+     * If not set explicitly, the editable state of the column group will be inherited.
+     * 
+     * Explicitly definig an active editor as the cell widget will also set the
+     * column editable automatically.
      * 
      * @uxon-property editable
      * @uxon-type boolean
@@ -240,14 +260,39 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     }
 
     /**
-     * Defines an cell widget widget for the column making each row in it editable.
+     * Defines the widget to be used in each cell of this column.
      *
-     * The cell widget is a UXON widget description object. Any input widget (Input, Combo, etc.)
-     * can be used. An cell widget can even be placed on non-attribute columns. This is very
-     * usefull if the action, that will receive the data, expects some input not related
-     * to the meta object.
+     * Any value-widget can be used in a column cell (e.g. an Input or a Display).
+     * Setting an active input-widget will automatically make the column `editable`.
+     * Using a display-widget will, in-turn make it non-editable.
      *
-     * Example:
+     * Example for a standard display widget with an specific data type:
+     * 
+     * ```
+     * {
+     *  "attribute_alias": "MY_ATTRIBUTE",
+     *  "cell_widget": {
+     *      "widget_type": "Display",
+     *      "value_data_type": "exface.Core.Date"
+     *  }
+     * }
+     * 
+     * ```
+     * 
+     * Example for a custom display widget:
+     * 
+     * ```
+     * {
+     *  "attribute_alias": "MY_ATTRIBUTE",
+     *  "cell_widget": {
+     *      "widget_type": "ProgressBar"
+     *  }
+     * }
+     * 
+     * ```
+     *
+     * Example for an editor:
+     * 
      * ```
      * {
      *  "attribute_alias": "MY_ATTRIBUTE",
@@ -259,7 +304,7 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
      * ```
      *
      * @uxon-property cell_widget
-     * @uxon-type \exface\Core\Widgets\AbstractWidget
+     * @uxon-type \exface\Core\Widgets\Value
      *
      * @param UxonObject $uxon_object            
      * @return DataColumn
@@ -271,7 +316,9 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
             $cellWidget->setAttributeAlias($this->getAttributeAlias());
             $this->cellWidget = $cellWidget;
             if ($cellWidget instanceof iTakeInput) {
-                $this->setEditable(true);
+                $this->setEditable($cellWidget->isReadonly() === false);
+            } elseif ($cellWidget instanceof Display) {
+                $this->setEditable(false);
             }
         } catch (\Throwable $e) {
             throw new WidgetConfigurationError($this, 'Cannot set cell widget for ' . $this->getWidgetType() . '. ' . $e->getMessage() . ' See details below.', null, $e);
