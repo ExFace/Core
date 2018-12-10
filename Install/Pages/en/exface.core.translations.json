@@ -5,7 +5,7 @@
     "menu_index": "7",
     "menu_visible": true,
     "name": "Translations",
-    "description": "",
+    "description": "View translations, search for i18n-keys",
     "intro": "",
     "replaces_page_alias": null,
     "contents": {

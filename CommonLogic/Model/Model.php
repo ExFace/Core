@@ -51,13 +51,24 @@ class Model implements ModelInterface
         return $obj;
     }
     
+    /**
+     * Returns a copy of the given object freshly read from the meta model.
+     * 
+     * NOTE: since this method creates a new instance of the object, all behaviors are instatiated as well,
+     * eventually registering their events a second time. This may lead to unexpected behavior: e.g. if
+     * you disabled/changed a behavior for an object, but this object is being refreshed, it will register 
+     * a new behavior, which will not be affected by the changes on the old one.
+     * 
+     * @param MetaObjectInterface $object
+     * @return \exface\Core\Interfaces\Model\MetaObjectInterface
+     */
     public function reloadObject(MetaObjectInterface $object)
     {
         $obj = $this->getModelLoader()->loadObjectById($this, $object->getId());
         $this->cacheObject($obj);
         return $obj;
     }
-
+    
     /**
      * 
      * {@inheritDoc}

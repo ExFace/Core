@@ -417,7 +417,7 @@
         },
         {
             "CREATED_ON": "2017-11-07 08:32:43",
-            "MODIFIED_ON": "2018-05-04 06:33:12",
+            "MODIFIED_ON": "2018-12-03 10:59:16",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e7c39621725c1e8001e4b318306b9a",
@@ -427,7 +427,7 @@
             "CONFIG_UXON": null,
             "VALIDATION_ERROR": "",
             "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"InputSelect\"}",
-            "ALIAS": "GenericStringEnum",
+            "ALIAS": "GenericNumberEnum",
             "SHORT_DESCRIPTION": "Allows to define a list of valid numeric values directly in the model (without creating a custom data type). This is handy if a data type is only used for a single attribute -  you can create a custom configuration for this generic type and don't nee"
         },
         {
