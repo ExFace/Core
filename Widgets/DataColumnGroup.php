@@ -31,7 +31,7 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
 
     private $uid_column_id = null;
     
-    private $editable = false;
+    private $editable = null;
 
     /**
      * 
