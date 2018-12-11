@@ -4,16 +4,18 @@ namespace exface\Core\Widgets;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Widgets\iFillEntireContainer;
 use exface\Core\Interfaces\Widgets\iSupportMultiSelect;
-use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Widgets\iHaveContextMenu;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\Exceptions\Widgets\WidgetLogicError;
+use exface\Core\Interfaces\Widgets\iTakeInput;
 
 /**
  * Renders data as a table with filters, columns, and toolbars.
- *
+ * 
+ * ## Regular tables
+ * 
  * Example showing attributes from the metamodel:
  * 
  * ```json
@@ -67,6 +69,7 @@ use exface\Core\Exceptions\Widgets\WidgetLogicError;
  *  }
  * 
  * ```
+ * 
  * ## Editable tables
  *  
  * Columns of the DataTable can also be made editable. Changes can be saved either by adding
@@ -87,7 +90,7 @@ use exface\Core\Exceptions\Widgets\WidgetLogicError;
  * @author Andrej Kabachnik
  *        
  */
-class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelect, iHaveContextMenu
+class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelect, iHaveContextMenu, iTakeInput
 {
 
     private $show_filter_row = false;
@@ -115,6 +118,12 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
     private $header_sort_multiple = false;
 
     private $context_menu = null;
+    
+    private $required = false;
+    
+    private $readOnly = false;
+    
+    private $displayOnly = false;
 
     function hasRowDetails()
     {
@@ -149,6 +158,7 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
      *          }
      *      ]
      * }
+     * 
      * ```
      *
      * @uxon-property row_details
@@ -289,7 +299,7 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
      */
     public function setContextMenuEnabled($value)
     {
-        $this->context_menu_enabled = \exface\Core\DataTypes\BooleanDataType::cast($value);
+        $this->context_menu_enabled = BooleanDataType::cast($value);
         return $this;
     }
 
@@ -311,7 +321,7 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
      */
     public function setShowFilterRow($value)
     {
-        $this->show_filter_row = \exface\Core\DataTypes\BooleanDataType::cast($value);
+        $this->show_filter_row = BooleanDataType::cast($value);
         return $this;
     }
 
@@ -331,7 +341,7 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
      */
     public function setHeaderSortMultiple($value)
     {
-        $this->header_sort_multiple = \exface\Core\DataTypes\BooleanDataType::cast($value);
+        $this->header_sort_multiple = BooleanDataType::cast($value);
         return $this;
     }
 
@@ -391,7 +401,7 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
      */
     public function setNowrap($value)
     {
-        $this->nowrap = \exface\Core\DataTypes\BooleanDataType::cast($value);
+        $this->nowrap = BooleanDataType::cast($value);
         return $this;
     }
 
@@ -411,7 +421,7 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
      */
     public function setStriped($value)
     {
-        $this->striped = \exface\Core\DataTypes\BooleanDataType::cast($value);
+        $this->striped = BooleanDataType::cast($value);
         return $this;
     }
 
@@ -436,7 +446,7 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
      */
     public function setAutoRowHeight($value)
     {
-        $this->auto_row_height = \exface\Core\DataTypes\BooleanDataType::cast($value);
+        $this->auto_row_height = BooleanDataType::cast($value);
         return $this;
     }
 
@@ -615,5 +625,111 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
     public function hasValue()
     {
         return is_null($this->getValue()) ? false : true;
+    }
+    
+    /**
+     * Set to TRUE to force the user to fill all required fields of at least one row.
+     * 
+     * @uxon-property required
+     * @uxon-type boolean
+     * 
+     * @see \exface\Core\Interfaces\Widgets\iCanBeRequired::setRequired()
+     */
+    public function setRequired($value)
+    {
+        $this->required = BooleanDataType::cast($value);
+        return $this;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iCanBeRequired::isRequired()
+     */
+    public function isRequired()
+    {
+        return $this->required;
+    }
+
+    /**
+     * If set to TRUE, the table remains fully interactive, but it's data will be ignored by actions.
+     * 
+     * @uxon-property display_only
+     * @uxon-type boolean
+     * 
+     * @see \exface\Core\Interfaces\Widgets\iTakeInput::setDisplayOnly()
+     */
+    public function setDisplayOnly($true_or_false)
+    {
+        $this->displayOnly = BooleanDataType::cast($true_or_false);
+        return $this;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iTakeInput::isDisplayOnly()
+     */
+    public function isDisplayOnly()
+    {
+        if ($this->isReadonly() === true) {
+            return true;
+        }
+        return $this->displayOnly;
+    }
+
+    /**
+     * In a DataTable readonly is the opposite of editable, so there is no point in an
+     * extra uxon-property here.
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iTakeInput::setReadonly()
+     */
+    public function setReadonly($true_or_false)
+    {
+        $this->setEditable(! BooleanDataType::cast($true_or_false));
+        return $this;
+    }
+
+    /**
+     * A DataTable is readonly as long as it is not editable.
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iTakeInput::isReadonly()
+     */
+    public function isReadonly()
+    {
+        return $this->isEditable() === false;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Data::exportUxonObject()
+     */
+    public function exportUxonObject()
+    {
+        $uxon = parent::exportUxonObject();
+        
+        $uxon->setProperty('display_only', $this->isDisplayOnly());
+        $uxon->setProperty('required', $this->isRequired());
+        $uxon->setProperty('multi_select', $this->getMultiSelect());
+        $uxon->setProperty('multi_select_all_selected', $this->getMultiSelectAllSelected());
+        $uxon->setProperty('nowrap', $this->getNowrap());
+        $uxon->setProperty('striped', $this->getStriped());
+        $uxon->setProperty('show_row_numbers', $this->getShowRowNumbers());
+        $uxon->setProperty('auto_row_height', $this->getAutoRowHeight());
+        $uxon->setProperty('header_sort_multiple', $this->getHeaderSortMultiple());
+        
+        if ($this->hasRowGroups() === true) {
+            $uxon->setProperty('row_grouper', $this->getRowGrouper()->exportUxonObject());
+        }
+        
+        if ($this->hasRowDetails() === true) {
+            $uxon->setProperty('row_details_action', $this->getRowDetailsAction());
+            $uxon->setProperty('row_details', $this->getRowDetailsContainer()->exportUxonObject());
+        }
+        
+        return $uxon;
     }
 }
