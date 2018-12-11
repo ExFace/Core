@@ -84,7 +84,7 @@ class Input extends Value implements iTakeInput, iHaveDefaultValue
         $disabled = parent::isDisabled();
         if (is_null($disabled)) {
             try {
-                if ($this->hasAttributeReference() && ! $this->getAttribute()->isEditable()) {
+                if ($this->isBoundToAttribute() && ! $this->getAttribute()->isEditable()) {
                     $disabled = true;
                 } else {
                     $disabled = false;

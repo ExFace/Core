@@ -220,7 +220,7 @@ JS;
             $formatter_js = $cellTpl->buildJsValueDecorator('data');
         } elseif ($cellWidget instanceof Input) {
             // FIXME how to place the data into the cell editor? Maybe use the data setter?
-            $cellData = $col->hasAttributeReference() ? 'data' : "''";
+            $cellData = $col->isBoundToAttribute() ? 'data' : "''";
             $cellHtml = $cellTpl->buildHtml();
             $cellHtml = preg_replace('/id="[^"]*"/', '', $cellHtml);
             $cellHtml = preg_replace('/name="[^"]*"/', '', $cellHtml);
@@ -231,11 +231,11 @@ JS;
         // In datatables with remote source sorting is allways performed remotely, so
         // it cannot be done for columns without attribute binding (the server cannot
         // sort those)
-        $sortable = $col->hasAttributeReference() ? ($col->getSortable() ? 'true' : 'false') : 'false';
+        $sortable = $col->isBoundToAttribute() ? ($col->getSortable() ? 'true' : 'false') : 'false';
         
         $output = '{
 							name: "' . $col->getAttributeAlias() . '"
-                            , data: ' . ($col->hasAttributeReference() ? '"' . $col->getDataColumnName() . '"' : 'null') . '
+                            , data: ' . ($col->isBoundToAttribute() ? '"' . $col->getDataColumnName() . '"' : 'null') . '
                             ' . ($col->isHidden() || $col->getVisibility() === EXF_WIDGET_VISIBILITY_OPTIONAL ? ', visible: false' : '') . '
                             ' . ($col->getWidth()->isTemplateSpecific() ? ', width: "' . $col->getWidth()->getValue() . '"': '') . '
                             , className: "' . $this->buildCssColumnClass($col) . '"' . '
