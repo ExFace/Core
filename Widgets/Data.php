@@ -30,7 +30,6 @@ use exface\Core\Exceptions\Widgets\WidgetPropertyNotSetError;
 use exface\Core\Interfaces\Widgets\iShowData;
 use exface\Core\Interfaces\Widgets\iCanPreloadData;
 use exface\Core\Widgets\Traits\iCanPreloadDataTrait;
-use exface\Core\Interfaces\Actions\iShowDialog;
 use exface\Core\Interfaces\Actions\iShowWidget;
 
 /**
@@ -1212,7 +1211,7 @@ class Data
     }
 
     /**
-     * Returns true, if the data table contains at least one editable column
+     * Returns TRUE, if the data widget contains at least one editable column or column group.
      *
      * @return boolean
      */
@@ -1222,10 +1221,12 @@ class Data
     }
 
     /**
-     * Set to TRUE to make the table editable.
+     * Set to TRUE to make the column cells editable.
      * 
-     * This setting will be set automatically if an editable column group is
-     * added.
+     * This makes all columns editable, that are bound to an editable model
+     * attribute or have no model binding at all. Editable column cells will 
+     * automatically use the default editor widget from the bound model attribute 
+     * as `cell_widget`.
      *
      * @uxon-property editable
      * @uxon-type boolean

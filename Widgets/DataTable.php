@@ -67,10 +67,22 @@ use exface\Core\Exceptions\Widgets\WidgetLogicError;
  *  }
  * 
  * ```
- * ## Editable columns
+ * ## Editable tables
  *  
- * Columns of the DataTable can also be made editable by configuring an input widget in the 
- * `editor` property of the column. 
+ * Columns of the DataTable can also be made editable. Changes can be saved either by adding
+ * `SaveData`-actions to the `buttons` of the table or by using the table within a `Form` widget.
+ * 
+ * There are multiple ways to make a table editable:
+ * 
+ * - Set the table property `editable: true`. This will automatically render editors for all
+ * columns, that are bound to an editable model attribute.
+ * - Set the property `editable: true` for a specific `DataColunGroup` (if column groups are used).
+ * This will automatically render editors for all columns of the group, that are bound to an editable 
+ * model attribute.
+ * - Set the property `editable: true` for a specific `DataColumn`. This will force the column to
+ * use the default editor for the attribute as cell widget - similar to what `ShowObjectXXXDialog`
+ * action will do.
+ * - Set the `cell_widget` for a column to an active Input widget.
  *
  * @author Andrej Kabachnik
  *        
@@ -604,6 +616,4 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
     {
         return is_null($this->getValue()) ? false : true;
     }
-
 }
-?>
