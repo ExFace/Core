@@ -15,9 +15,9 @@ interface iTakeInput extends iCanBeRequired, iCanBeDisabled
     /**
      * Returns TRUE if the widget is read only (= just showing something, but being ignored by most actions) and FALSE otherwise.
      *
-     * @return boolean
+     * @return bool
      */
-    public function isReadonly();
+    public function isReadonly() : bool;
 
     /**
      * Makes the widget readonly when set to TRUE.
@@ -26,23 +26,23 @@ interface iTakeInput extends iCanBeRequired, iCanBeDisabled
      * diabled widget ist still passed to actions, read-only widgets are completely ignored when gathering data for 
      * action's input or prefills - similarly to widgets with display_only = true, but without any user interaction.
      *
-     * @param boolean $true_or_false            
+     * @param bool|string $true_or_false            
      * @return WidgetInterface
      */
-    public function setReadonly($true_or_false);
+    public function setReadonly($true_or_false) : iTakeInput;
 
     /**
      * Returns TRUE if the widget is display-only (= interactive, but being ignored by actions) and FALSE otherwise.
      *
-     * @return boolean
+     * @return bool
      */
-    public function isDisplayOnly();
+    public function isDisplayOnly() : bool;
 
     /**
      * Makes the widget display-only if set to TRUE.
      *
-     * @param boolean $true_or_false            
+     * @param bool|string $true_or_false            
      * @return iTakeInput
      */
-    public function setDisplayOnly($true_or_false);
+    public function setDisplayOnly($true_or_false) : iTakeInput;
 }

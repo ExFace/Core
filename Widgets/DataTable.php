@@ -659,7 +659,7 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
      * 
      * @see \exface\Core\Interfaces\Widgets\iTakeInput::setDisplayOnly()
      */
-    public function setDisplayOnly($true_or_false)
+    public function setDisplayOnly($true_or_false) : iTakeInput
     {
         $this->displayOnly = BooleanDataType::cast($true_or_false);
         return $this;
@@ -670,7 +670,7 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\iTakeInput::isDisplayOnly()
      */
-    public function isDisplayOnly()
+    public function isDisplayOnly() : bool
     {
         if ($this->isReadonly() === true) {
             return true;
@@ -685,7 +685,7 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\iTakeInput::setReadonly()
      */
-    public function setReadonly($true_or_false)
+    public function setReadonly($true_or_false) : iTakeInput
     {
         $this->setEditable(! BooleanDataType::cast($true_or_false));
         return $this;
@@ -697,7 +697,7 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\iTakeInput::isReadonly()
      */
-    public function isReadonly()
+    public function isReadonly() : bool
     {
         return $this->isEditable() === false;
     }
