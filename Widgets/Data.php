@@ -473,7 +473,7 @@ class Data
     {
         $result = array();
         foreach ($this->getColumns() as $col) {
-            if ($col->hasAttributeReference() && $col->getAttribute()->isSystem()) {
+            if ($col->isBoundToAttribute() && $col->getAttribute()->isSystem()) {
                 $result[] = $col;
             }
         }

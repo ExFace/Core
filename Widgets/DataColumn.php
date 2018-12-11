@@ -223,7 +223,7 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
         
         $groupIsEditable = $this->getDataColumnGroup()->isEditable();
         if ($groupIsEditable === true) {
-            if ($this->hasAttributeReference()) {
+            if ($this->isBoundToAttribute()) {
                 return $this->getAttribute()->isEditable();
             } else {
                 return true;
@@ -604,7 +604,7 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
      *
      * @return boolean
      */
-    public function hasAttributeReference()
+    public function isBoundToAttribute()
     {
         return $this->getAttributeAlias() ? true : false;
     }

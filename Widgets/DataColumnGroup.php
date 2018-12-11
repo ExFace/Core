@@ -47,7 +47,7 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
             // If an attribute of a related object should be editable, we need it's system attributes as columns -
             // that is, at least a column with the UID of the related object, but maybe also some columns needed for
             // the behaviors of the related object
-            if ($column->hasAttributeReference() && $rel_path = $column->getAttribute()->getRelationPath()->toString()) {
+            if ($column->isBoundToAttribute() && $rel_path = $column->getAttribute()->getRelationPath()->toString()) {
                 $rel = $this->getMetaObject()->getRelation($rel_path);
                 if ($rel->isForwardRelation()) {
                     $this->getParent()->addColumnsForSystemAttributes($rel_path);

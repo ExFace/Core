@@ -321,11 +321,11 @@ class Filter extends Container implements iTakeInput, iShowSingleAttribute
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Widgets\iShowSingleAttribute::hasAttributeReference()
+     * @see \exface\Core\Interfaces\Widgets\iShowSingleAttribute::isBoundToAttribute()
      */
-    public function hasAttributeReference()
+    public function isBoundToAttribute()
     {
-        return $this->getInputWidget()->hasAttributeReference();
+        return $this->getInputWidget()->isBoundToAttribute();
     }
 
     /**
