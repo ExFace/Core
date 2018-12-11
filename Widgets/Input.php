@@ -66,7 +66,7 @@ class Input extends Value implements iTakeInput, iHaveDefaultValue
      */
     public function setRequired($value)
     {
-        $this->required = $value;
+        $this->required = BooleanDataType::cast($value);
         return $this;
     }
 
