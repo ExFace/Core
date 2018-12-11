@@ -168,6 +168,8 @@
     "PAGE.OBJECT_EDITOR.DEFAULT_EDITOR": "Standard-Editor",
     "PAGE.OBJECT_EDITOR.DATA_ADDRESS": "Datenadresse",
     "PAGE.OBJECT_EDITOR.DATA_SOURCE_BASE_OBJECT": "Basisobjekt der Datenquelle",
+    "PAGE.OBJECT_EDITOR.QUICK_EDIT_ATTRIBUTES": "Quick-Edit",
+    "PAGE.OBJECT_EDITOR.QUICK_EDIT_ATTRIBUTES_HINT": "Tabellarischer Editor für alle Attribute gleichzeitig",
     "PAGE.DATA_SOURCES.BASE_OBJECT": "Basisobjekt",
     "PAGE.DATA_SOURCES.CONNECTION_READONLY": "Verbindung nur lesend",
     "PAGE.DATA_SOURCE_EDITOR.DEFAULTS": "Standard-Konfiguration",
