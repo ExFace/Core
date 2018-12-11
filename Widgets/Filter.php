@@ -410,7 +410,7 @@ class Filter extends Container implements iTakeInput, iShowSingleAttribute
      * {@inheritdoc}
      * @see \exface\Core\Interfaces\Widgets\iTakeInput::isDisplayOnly()
      */
-    public function isDisplayOnly()
+    public function isDisplayOnly() : bool
     {
         return $this->getInputWidget()->isDisplayOnly();
     }
@@ -431,7 +431,7 @@ class Filter extends Container implements iTakeInput, iShowSingleAttribute
      * 
      * @see \exface\Core\Interfaces\Widgets\iTakeInput::setReadonly()
      */
-    public function setReadonly($true_or_false)
+    public function setReadonly($true_or_false) : iTakeInput
     {
         $this->getInputWidget()->setReadonly($true_or_false);
         return $this;
@@ -442,7 +442,7 @@ class Filter extends Container implements iTakeInput, iShowSingleAttribute
      * {@inheritdoc}
      * @see \exface\Core\Interfaces\Widgets\iTakeInput::isReadonly()
      */
-    public function isReadonly()
+    public function isReadonly() : bool
     {
         return $this->getInputWidget()->isReadonly();
     }
@@ -463,7 +463,7 @@ class Filter extends Container implements iTakeInput, iShowSingleAttribute
      * 
      * @see \exface\Core\Interfaces\Widgets\iTakeInput::setDisplayOnly()
      */
-    public function setDisplayOnly($true_or_false)
+    public function setDisplayOnly($true_or_false) : iTakeInput
     {
         $this->getInputWidget()->setDisplayOnly($true_or_false);
         return $this;

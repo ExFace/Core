@@ -124,7 +124,7 @@ class Input extends Value implements iTakeInput, iHaveDefaultValue
      * {@inheritdoc}
      * @see \exface\Core\Interfaces\Widgets\iTakeInput::isReadonly()
      */
-    public function isReadonly()
+    public function isReadonly() : bool
     {
         return $this->readonly;
     }
@@ -144,7 +144,7 @@ class Input extends Value implements iTakeInput, iHaveDefaultValue
      * 
      * @see \exface\Core\Interfaces\Widgets\iTakeInput::setReadonly()
      */
-    public function setReadonly($value)
+    public function setReadonly($value) : iTakeInput
     {
         $this->readonly = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;
@@ -235,7 +235,7 @@ class Input extends Value implements iTakeInput, iHaveDefaultValue
      * {@inheritdoc}
      * @see \exface\Core\Interfaces\Widgets\iTakeInput::isDisplayOnly()
      */
-    public function isDisplayOnly()
+    public function isDisplayOnly() : bool
     {
         if ($this->isReadonly()) {
             return true;
@@ -258,7 +258,7 @@ class Input extends Value implements iTakeInput, iHaveDefaultValue
      * 
      * @see \exface\Core\Interfaces\Widgets\iTakeInput::setDisplayOnly()
      */
-    public function setDisplayOnly($value)
+    public function setDisplayOnly($value) : iTakeInput
     {
         $this->display_only = BooleanDataType::cast($value);
         return $this;
