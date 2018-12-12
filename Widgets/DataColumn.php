@@ -177,11 +177,13 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     public function getCellWidget()
     {
         if ($this->cellWidget === null) {
-            $attr = $this->getAttribute();
-            if ($this->isEditable() === true && $attr) {
-                $this->cellWidget = WidgetFactory::createFromUxon($this->getPage(), $attr->getDefaultEditorUxon(), $this, 'Input');
-            } elseif ($attr) {
-                $this->cellWidget = WidgetFactory::createFromUxon($this->getPage(), $attr->getDefaultDisplayUxon(), $this, 'Display');
+            if ($this->isBoundToAttribute() === true) {
+                $attr = $this->getAttribute();
+                if ($this->isEditable() === true) {
+                    $this->cellWidget = WidgetFactory::createFromUxon($this->getPage(), $attr->getDefaultEditorUxon(), $this, 'Input');
+                } else {
+                    $this->cellWidget = WidgetFactory::createFromUxon($this->getPage(), $attr->getDefaultDisplayUxon(), $this, 'Display');
+                } 
             } else {
                 $this->cellWidget = WidgetFactory::create($this->getPage(), 'Display', $this);
             }
@@ -606,7 +608,7 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
      */
     public function isBoundToAttribute()
     {
-        return $this->getAttributeAlias() ? true : false;
+        return $this->getAttributeAlias() !== null && $this->getAttributeAlias() !== '' ? true : false;
     }
     
     /**
