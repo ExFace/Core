@@ -161,7 +161,7 @@
     "PAGE.ATTRIBUTE_EDITOR.DEFAULTS": "Standard-Werte",
     "PAGE.ATTRIBUTE_EDITOR.OPTIONS": "Einstellungen",
     "PAGE.ATTRIBUTE_EDITOR.DESCRIPTION": "Beschreibung (für Hilfetexte)",
-    "PAGE.ATTRIBUTE_EDITOR.COMMENTS": "Kommentare (intern, für Modell-Designer)",
+    "PAGE.ATTRIBUTE_EDITOR.COMMENTS": "Kommentare (intern, nur für App-Designer)",
     "PAGE.ATTRIBUTE_EDITOR.CUSTOMIZING": "Customizing",
     "PAGE.OBJECTS.APP_ALIAS": "App Alias",
     "PAGE.OBJECT_EDITOR.RELATION_TO": "Verknüpft mit",
