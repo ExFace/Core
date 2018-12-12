@@ -78,6 +78,15 @@ interface DataColumnListInterface extends EntityListInterface
      * @return DataColumnInterface
      */
     public function addFromLabelAttribute() : DataColumnInterface;
+    
+    /**
+     * Adds columns for every system attribute of the meta object.
+     * 
+     * This shortcut method is very convenient if you want to read a sheet intended for an update.
+     * 
+     * @return DataColumnListInterface
+     */
+    public function addFromSystemAttributes() : DataColumnListInterface;
 
     /**
      * Removes the given entity from the list

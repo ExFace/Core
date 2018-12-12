@@ -228,6 +228,7 @@ class DataSheet implements DataSheetInterface
                 continue;
             }
             if ($other_col = $other_sheet->getColumn($this_col->getName())) {
+                // TODO probably need to copy values to rows with matching UIDs instead of relying on identical sorting here
                 if (count($this_col->getValues(false)) > 0 && count($this_col->getValues(false)) !== count($other_col->getValues(false))) {
                     throw new DataSheetImportRowError('Cannot replace rows of column "' . $this_col->getName() . '": source and target columns have different amount of rows!', '6T5V1XX');
                 }
