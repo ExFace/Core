@@ -162,7 +162,7 @@
     "PAGE.ATTRIBUTE_EDITOR.DEFAULTS": "Defaults",
     "PAGE.ATTRIBUTE_EDITOR.OPTIONS": "Options",
     "PAGE.ATTRIBUTE_EDITOR.DESCRIPTION": "Description (for contextual help)",
-    "PAGE.ATTRIBUTE_EDITOR.COMMENTS": "Comments (internal - for app designers)",
+    "PAGE.ATTRIBUTE_EDITOR.COMMENTS": "Comments (internal - for app designers only!)",
     "PAGE.ATTRIBUTE_EDITOR.CUSTOMIZING": "Customizing",
     "PAGE.OBJECTS.APP_ALIAS": "App alias",
     "PAGE.OBJECT_EDITOR.RELATION_TO": "Relation to",
