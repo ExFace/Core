@@ -63,6 +63,7 @@
         "buttons": [
             {
                 "caption": "Open left object",
+                "refresh_input": false,
                 "action": {
                     "alias": "exface.Core.ShowObjectEditDialog",
                     "object_alias": "exface.Core.OBJECT",
@@ -78,6 +79,7 @@
             },
             {
                 "caption": "Open right object",
+                "refresh_input": false,
                 "action": {
                     "alias": "exface.Core.ShowObjectEditDialog",
                     "object_alias": "exface.Core.OBJECT",
