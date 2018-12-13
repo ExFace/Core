@@ -194,6 +194,11 @@ class CopyData extends SaveData implements iCreateData
                 $relSheet->addFilterFromString($relRev->getLeftKeyAttribute()->getAlias(), $oldLeftKeyValue, EXF_COMPARATOR_EQUALS);
                 $relSheet->dataRead();
                 
+                // If there is nothing to be copied, skip to the next relation.
+                if ($relSheet->isEmpty() === true) {
+                    continue;
+                }
+                
                 // Once the data is read, remove all filters to make sure, there are no links with the original
                 // instances
                 $relSheet->getFilters()->removeAll();

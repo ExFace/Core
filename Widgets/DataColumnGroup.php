@@ -9,6 +9,7 @@ use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Widgets\iHaveColumns;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
+use exface\Core\DataTypes\BooleanDataType;
 
 
 /**
@@ -29,6 +30,8 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
     private $columns = array();
 
     private $uid_column_id = null;
+    
+    private $editable = null;
 
     /**
      * 
@@ -44,7 +47,7 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
             // If an attribute of a related object should be editable, we need it's system attributes as columns -
             // that is, at least a column with the UID of the related object, but maybe also some columns needed for
             // the behaviors of the related object
-            if ($column->hasAttributeReference() && $rel_path = $column->getAttribute()->getRelationPath()->toString()) {
+            if ($column->isBoundToAttribute() && $rel_path = $column->getAttribute()->getRelationPath()->toString()) {
                 $rel = $this->getMetaObject()->getRelation($rel_path);
                 if ($rel->isForwardRelation()) {
                     $this->getParent()->addColumnsForSystemAttributes($rel_path);
@@ -393,5 +396,34 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
     public function getColumnDefaultWidgetType() : string
     {
         return $this->getDataWidget()->getColumnDefaultWidgetType();
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function isEditable() : bool
+    {
+        return $this->editable ?? $this->getDataWidget()->isEditable();
+    }
+    
+    /**
+     * Marks all columns of this group editable (TRUE) or non-editable (FALSE).
+     * 
+     * If not set explicitly, the setting of the data widget will be inherited.
+     * 
+     * @uxon-property editable
+     * @uxon-type boolean
+     * 
+     * @param bool|string $trueOrFalse
+     * @return DataColumn
+     */
+    public function setEditable($trueOrFalse) : DataColumnGroup
+    {
+        $this->editable = BooleanDataType::cast($trueOrFalse);
+        if ($this->editable === true) {
+            $this->getDataWidget()->setEditable(true);
+        }
+        return $this;
     }
 }

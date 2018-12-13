@@ -282,7 +282,7 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
     public function getCaption()
     {
         if (! parent::getCaption()) {
-            if ($this->hasAttributeReference()) {
+            if ($this->isBoundToAttribute()) {
                 $this->setCaption($this->getAttribute()->getName());
             }
         }
@@ -294,7 +294,7 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
      * 
      * @return boolean
      */
-    public function hasAttributeReference()
+    public function isBoundToAttribute()
     {
         return $this->getAttributeAlias() ? true : false;
     }
@@ -336,7 +336,7 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
     {
         if (is_null($this->data_type)) {
             $expr = $this->getValueExpression();
-            if (! $expr || $expr->isEmpty() || ($expr->isConstant() && $this->hasAttributeReference())) {
+            if (! $expr || $expr->isEmpty() || ($expr->isConstant() && $this->isBoundToAttribute())) {
                 $expr = ExpressionFactory::createFromString($this->getWorkbench(), $this->getAttributeAlias(), $this->getMetaObject());
             }
             $this->data_type = $expr->getDataType();
@@ -369,7 +369,7 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
     public function exportUxonObject()
     {
         $uxon = parent::exportUxonObject();
-        if ($this->hasAttributeReference()) {
+        if ($this->isBoundToAttribute()) {
             $uxon->setProperty('attribute_alias', $this->getAttributeAlias());
         }
         if (! is_null($this->empty_text)) {

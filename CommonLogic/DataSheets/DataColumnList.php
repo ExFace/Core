@@ -285,5 +285,13 @@ class DataColumnList extends EntityList implements DataColumnListInterface
         }
         return $result;
     }
+    
+    public function addFromSystemAttributes() : DataColumnListInterface
+    {
+        foreach ($this->getDataSheet()->getMetaObject()->getAttributes()->getSystem() as $sys) {
+            $this->addFromAttribute($sys);
+        }
+        return $this;
+    }
 }
 ?>

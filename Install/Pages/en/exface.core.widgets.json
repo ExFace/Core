@@ -5,7 +5,7 @@
     "menu_index": "1",
     "menu_visible": true,
     "name": "Widgets",
-    "description": "",
+    "description": "Browse available widgets and their properties",
     "intro": "",
     "replaces_page_alias": null,
     "contents": {

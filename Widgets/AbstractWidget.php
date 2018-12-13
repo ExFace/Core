@@ -956,7 +956,7 @@ else {
      */
     public function getHint()
     {
-        if (! $this->hint && ($this instanceof iShowSingleAttribute) && $this->hasAttributeReference() && $this->getAttribute()) {
+        if (! $this->hint && ($this instanceof iShowSingleAttribute) && $this->isBoundToAttribute() && $this->getAttribute()) {
             $this->setHint($this->getAttribute()->getHint());
         }
         return $this->hint;

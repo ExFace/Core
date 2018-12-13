@@ -177,10 +177,13 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     public function getCellWidget()
     {
         if ($this->cellWidget === null) {
-            if ($this->editable === true) {
-                // TODO
-            } elseif ($this->getAttributeAlias()) {
-                $this->cellWidget = WidgetFactory::createFromUxon($this->getPage(), $this->getAttribute()->getDefaultDisplayUxon(), $this, 'Display');
+            if ($this->isBoundToAttribute() === true) {
+                $attr = $this->getAttribute();
+                if ($this->isEditable() === true) {
+                    $this->cellWidget = WidgetFactory::createFromUxon($this->getPage(), $attr->getDefaultEditorUxon(), $this, 'Input');
+                } else {
+                    $this->cellWidget = WidgetFactory::createFromUxon($this->getPage(), $attr->getDefaultDisplayUxon(), $this, 'Display');
+                } 
             } else {
                 $this->cellWidget = WidgetFactory::create($this->getPage(), 'Display', $this);
             }
@@ -206,20 +209,42 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     }
 
     /**
-     * Returns TRUE if the column is editable and FALSE otherwise
+     * Returns TRUE if the column is editable and FALSE otherwise.
+     * 
+     * A DataColumn is concidered editable if it is either made editable explicitly
+     * (`editable: true`) or belongs to an editable DataColumnGroup and represents
+     * an editable attribute or is not bound to an attribute at all.
      *
      * @return boolean
      */
     public function isEditable()
     {
-        if (is_null($this->editable)) {
-            return $this->getCellWidget() instanceof iTakeInput ? true : false;
-        } 
-        return $this->editable;
+        if ($this->editable !== null) {
+            return $this->editable;
+        }
+        
+        $groupIsEditable = $this->getDataColumnGroup()->isEditable();
+        if ($groupIsEditable === true) {
+            if ($this->isBoundToAttribute()) {
+                return $this->getAttribute()->isEditable();
+            } else {
+                return true;
+            }
+        }
+        
+        return false;
     }
     
     /**
+     * Makes this column editable if set to TRUE.
      * 
+     * In particular, this will make the default editor of an attribute be used
+     * as cell widget (instead of the default display widget).
+     * 
+     * If not set explicitly, the editable state of the column group will be inherited.
+     * 
+     * Explicitly definig an active editor as the cell widget will also set the
+     * column editable automatically.
      * 
      * @uxon-property editable
      * @uxon-type boolean
@@ -230,40 +255,73 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     public function setEditable($true_or_false)
     {
         $this->editable = BooleanDataType::cast($true_or_false);
+        if ($this->editable === true) {
+            $this->getDataColumnGroup()->setEditable(true);
+        }
         return $this;
     }
 
     /**
-     * Defines an cell widget widget for the column making each row in it editable.
+     * Defines the widget to be used in each cell of this column.
      *
-     * The cell widget is a UXON widget description object. Any input widget (Input, Combo, etc.)
-     * can be used. An cell widget can even be placed on non-attribute columns. This is very
-     * usefull if the action, that will receive the data, expects some input not related
-     * to the meta object.
+     * Any value-widget can be used in a column cell (e.g. an Input or a Display).
+     * Setting an active input-widget will automatically make the column `editable`.
+     * Using a display-widget will, in-turn make it non-editable.
      *
-     * Example:
+     * Example for a standard display widget with an specific data type:
+     * 
+     * ```
+     * {
+     *  "attribute_alias": "MY_ATTRIBUTE",
+     *  "cell_widget": {
+     *      "widget_type": "Display",
+     *      "value_data_type": "exface.Core.Date"
+     *  }
+     * }
+     * 
+     * ```
+     * 
+     * Example for a custom display widget:
+     * 
+     * ```
+     * {
+     *  "attribute_alias": "MY_ATTRIBUTE",
+     *  "cell_widget": {
+     *      "widget_type": "ProgressBar"
+     *  }
+     * }
+     * 
+     * ```
+     *
+     * Example for an editor:
+     * 
+     * ```
      * {
      *  "attribute_alias": "MY_ATTRIBUTE",
      *  "cell_widget": {
      *      "widget_type": "InputNumber"
      *  }
      * }
+     * 
+     * ```
      *
      * @uxon-property cell_widget
-     * @uxon-type \exface\Core\Widgets\AbstractWidget
+     * @uxon-type \exface\Core\Widgets\Value
      *
      * @param UxonObject $uxon_object            
      * @return DataColumn
      */
     public function setCellWidget(UxonObject $uxon_object)
     {
-        // TODO Fetch the default cell widget from data type. Probably need a editable attribute for the DataColumn,
-        // wich would be the easiest way to set it editable and the cell widget would be optional then.
         try {
             $cellWidget = WidgetFactory::createFromUxon($this->getPage(), UxonObject::fromAnything($uxon_object), $this);
             $cellWidget->setAttributeAlias($this->getAttributeAlias());
             $this->cellWidget = $cellWidget;
-            $this->editable = true;
+            if ($cellWidget instanceof iTakeInput) {
+                $this->setEditable($cellWidget->isReadonly() === false);
+            } elseif ($cellWidget instanceof Display) {
+                $this->setEditable(false);
+            }
         } catch (\Throwable $e) {
             throw new WidgetConfigurationError($this, 'Cannot set cell widget for ' . $this->getWidgetType() . '. ' . $e->getMessage() . ' See details below.', null, $e);
         }
@@ -548,9 +606,9 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
      *
      * @return boolean
      */
-    public function hasAttributeReference()
+    public function isBoundToAttribute()
     {
-        return $this->getAttributeAlias() ? true : false;
+        return $this->getAttributeAlias() !== null && $this->getAttributeAlias() !== '' ? true : false;
     }
     
     /**

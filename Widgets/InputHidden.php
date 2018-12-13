@@ -23,7 +23,7 @@ class InputHidden extends Input
     public function isRequired()
     {
         $required = parent::isRequired();
-        if ($required && ($this->hasAttributeReference() && $this->getAttribute()->hasFallbackValue())) {
+        if ($required && ($this->isBoundToAttribute() && $this->getAttribute()->hasFallbackValue())) {
             return false;
         }
         return $required;

@@ -5,7 +5,7 @@
     "menu_index": "7",
     "menu_visible": true,
     "name": "Query Builders",
-    "description": "",
+    "description": "Browse available query builders and their documentation",
     "intro": "",
     "replaces_page_alias": null,
     "contents": {
