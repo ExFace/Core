@@ -156,7 +156,7 @@ trait JqueryContainerTrait {
     {
         $setters = '';
         foreach ($this->getWidget()->getWidgets() as $child) {
-            if (! ($child instanceof iShowSingleAttribute) || ! $child->hasAttributeReference()) {
+            if (! ($child instanceof iShowSingleAttribute) || ! $child->isBoundToAttribute()) {
                 continue;
             }
             $setters .= <<<JS

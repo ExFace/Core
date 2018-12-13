@@ -233,6 +233,9 @@ class SqlSchemaInstaller extends AbstractAppInstaller
     {
         $updates_folder = $this->getSqlFolderAbsolutePath($source_absolute_path) . DIRECTORY_SEPARATOR . $this->getSqlUpdatesFolderName();
         
+        if (is_dir($updates_folder) === false) {
+            return $this->getInstallerApp()->getTranslator()->translate('INSTALLER.SQLSCHEMA.NO_UPDATES');
+        }
         try {
             $id_installed = $this->getApp()->getConfig()->getOption($this->getLastUpdateIdConfigOption());
         } catch (ConfigOptionNotFoundError $e){

@@ -28,7 +28,7 @@ class DataCarousel extends SplitHorizontal
     {
         $details = $this->getDetailsWidget();
         foreach ($details->getChildrenRecursive() as $child) {
-            if ($child instanceof iShowSingleAttribute && $child->hasAttributeReference()) {
+            if ($child instanceof iShowSingleAttribute && $child->isBoundToAttribute()) {
                 $this->dataWidget->addColumn($this->dataWidget->createColumnFromAttribute($child->getAttribute(), null, true));
             }
         }

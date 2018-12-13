@@ -5,7 +5,7 @@
     "menu_index": "0",
     "menu_visible": true,
     "name": "Relations",
-    "description": "Browse relations for a selected meta object",
+    "description": "Browse relations, build relaton paths",
     "intro": "Select a meta object and browse it's relation tree",
     "replaces_page_alias": null,
     "contents": {

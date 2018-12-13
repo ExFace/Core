@@ -5,7 +5,7 @@
     "menu_index": "1",
     "menu_visible": true,
     "name": "Connections",
-    "description": "",
+    "description": "Manage data connections on this system",
     "intro": "",
     "replaces_page_alias": null,
     "contents": {

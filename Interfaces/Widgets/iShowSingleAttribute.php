@@ -11,7 +11,7 @@ use exface\Core\Interfaces\WidgetInterface;
  * of data widgets.
  * 
  * The reference is optional: the widget may show an attribute, but may also show something
- * else (typically using a formula). Use the hasAttributeReference() to determine, wether
+ * else (typically using a formula). Use the isBoundToAttribute() to determine, wether
  * an attribute is used.
  * 
  * @author Andrej Kabachnik
@@ -39,5 +39,5 @@ interface iShowSingleAttribute extends WidgetInterface
      * 
      * @return boolean
      */
-    public function hasAttributeReference();
+    public function isBoundToAttribute();
 }
