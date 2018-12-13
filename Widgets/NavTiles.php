@@ -153,7 +153,8 @@ class NavTiles extends WidgetGrid
         $tile->setTitle($row['NAME']);
         $tile->setSubtitle($row['DESCRIPTION']);
         $tile->setWidth('0.5');
-        $tile->setHint($row['NAME'] . ":\n" . $row['DESCRIPTION']);
+        $hint = $row['INTRO'] ? $row['INTRO'] : $row['DESCRIPTION'];
+        $tile->setHint($row['NAME'] . ($hint ? ":\n" . $hint : ''));
         $tile->setAction(new UxonObject([
             'alias' => 'exface.Core.GoToPage',
             'page_alias' => $row['ALIAS']
@@ -171,11 +172,7 @@ class NavTiles extends WidgetGrid
     protected function getMenuDataSheet(UiPageSelectorInterface $parentPageSelector) : DataSheetInterface
     {
         $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.PAGE');
-        $cols = $ds->getColumns();
-        $cols->addFromExpression('NAME');
-        $cols->addFromExpression('DESCRIPTION');
-        $cols->addFromExpression('ALIAS');
-        
+        $ds->getColumns()->addMultiple(['NAME', 'DESCRIPTION', 'INTRO', 'ALIAS']);
         $ds->getSorters()->addFromString('MENU_POSITION');
         
         if ($parentPageSelector->isAlias()) {
