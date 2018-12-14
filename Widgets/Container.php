@@ -152,7 +152,7 @@ class Container extends AbstractWidget implements iContainOtherWidgets, iCanPrel
     public function getWidgets(callable $filter = null)
     {
         if (! is_null($filter)){
-            return array_filter($this->widgets, $filter);
+            return array_values(array_filter($this->widgets, $filter));
         }
         return $this->widgets;
     }
@@ -311,7 +311,7 @@ class Container extends AbstractWidget implements iContainOtherWidgets, iCanPrel
     {
         $count = 0;
         foreach ($this->getWidgets() as $widget) {
-            if (! $widget->isHidden()) {
+            if ($widget->isHidden() === false) {
                 $count ++;
             }
         }
