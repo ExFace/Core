@@ -565,6 +565,10 @@ class DataSheet implements DataSheetInterface
     
     protected function initReadQueryBuilder(MetaObjectInterface $object) : QueryBuilderInterface
     {
+        if ($object->isReadable() === false) {
+            throw new DataSheetReadError($this, 'Cannot read data for object ' . $object->getAliasWithNamespace() . ': object is marked as not readable in model!', '73H79S1');
+        }
+        
         // create new query for the main object
         $query = QueryBuilderFactory::createForObject($object);
         
@@ -1318,7 +1322,7 @@ class DataSheet implements DataSheetInterface
         // FIXME need to check if the sheet is fresh at this point. On the other hand,
         // the sheet must get marked not fresh if filters change as they have direct
         // effect on the number of rows available in the data source.
-        if ($this->total_row_count === null && $this->autocount === true) {
+        if ($this->total_row_count === null && $this->autocount === true && $this->getMetaObject()->isReadable() === true) {
             $this->dataCount();
         }
         return $this->total_row_count;
