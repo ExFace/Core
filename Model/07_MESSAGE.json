@@ -1926,6 +1926,20 @@
             "HINT": "Make sure, only one attribute is marked as object label! Until then, the first one will be used.",
             "TYPE": "ERROR",
             "DOCS": ""
+        },
+        {
+            "CREATED_ON": "2018-12-14 08:39:21",
+            "MODIFIED_ON": "2018-12-14 08:39:21",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e8ff7bbbd8aefa9add0205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "CODE": "73H79S1",
+            "TITLE": "Attempting to read data for a non-readable object",
+            "DESCRIPTION": "",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         }
     ],
     "totals_rows": [],
