@@ -1940,6 +1940,20 @@
             "HINT": "",
             "TYPE": "ERROR",
             "DOCS": ""
+        },
+        {
+            "CREATED_ON": "2018-12-16 21:26:11",
+            "MODIFIED_ON": "2018-12-17 09:19:16",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e90179229498ba9add0205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "CODE": "73II64M",
+            "TITLE": "Object already exists!",
+            "DESCRIPTION": "This error means, that at least one of the object, you tried to create already exists in the data source and cannot be created a second time. This is typically caused by unique constraints of different types: e.g.\n\n- trying to create multiple object with the same unique name or id\n- trying to assign a child object to it's parent multiple times (e.g. the same user role to a signle user)  \n\nTo solve the ussue, simply search for the existing object and use it instead of creating a new one.",
+            "HINT": "Use existing objects instead of creating new ones.",
+            "TYPE": "ERROR",
+            "DOCS": ""
         }
     ],
     "totals_rows": [],
