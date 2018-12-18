@@ -19,6 +19,7 @@ use exface\Core\Interfaces\Tasks\ResultUriInterface;
 use exface\Core\CommonLogic\Tasks\ResultUri;
 use GuzzleHttp\Psr7\Uri;
 use exface\Core\CommonLogic\Tasks\ResultEmpty;
+use exface\Core\CommonLogic\Tasks\ResultJSON;
 
 /**
  * Creates all kinds of task results. 
@@ -78,6 +79,25 @@ class ResultFactory extends AbstractStaticFactory
     public static function createTextContentResult(TaskInterface $task, string $content) : ResultTextContentInterface
     {
         return (new ResultTextContent($task))->setContent($content);
+    }
+    
+    /**
+     * 
+     * @param TaskInterface $task
+     * @param array|\stdClass|string $objectOrArrayOrString
+     * @return ResultJSON
+     */
+    public static function createJSONResult(TaskInterface $task, $objectOrArrayOrString) : ResultJSON
+    {
+        $result = new ResultJSON($task);
+        
+        if (is_string($objectOrArrayOrString)) {
+            $result->setContent($objectOrArrayOrString);
+        } else {
+            $result->setContentJSON($objectOrArrayOrString);
+        }
+        
+        return $result;
     }
     
     /**
