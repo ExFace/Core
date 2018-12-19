@@ -51,6 +51,9 @@ class Filter extends Container implements iTakeInput, iShowSingleAttribute
 
     /**
      * Sets the widget used to interact with the filter (typically some kind of input widget)
+     * 
+     * @uxon-property input_widget
+     * @uxon-type \exface\Core\Widgets\Input
      *
      * @param iTakeInput|UxonObject $widget_or_uxon_object            
      * @return \exface\Core\Widgets\Filter

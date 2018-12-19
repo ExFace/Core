@@ -516,7 +516,7 @@ class Data
      * ]
      *
      * @uxon-property columns
-     * @uxon-type DataColumn[]|DataColumnGroup[] *
+     * @uxon-type \exface\Core\Widgets\DataColumn[]|\exface\Core\Widgets\DataColumnGroup[]
      *
      * @see \exface\Core\Interfaces\Widgets\iHaveColumns::setColumns()
      */

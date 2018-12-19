@@ -147,7 +147,7 @@ abstract class WidgetFactory extends AbstractStaticFactory
         return false;
     }
 
-    protected static function getWidgetClassFromType($widget_type)
+    public static function getWidgetClassFromType($widget_type)
     {
         return '\\exface\\Core\\Widgets\\' . ucfirst($widget_type);
     }
