@@ -6,6 +6,10 @@ use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\CommonLogic\Model\RelationPath;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
+use exface\Core\Exceptions\Model\MetaObjectNotFoundError;
+use exface\Core\DataTypes\RelationDataType;
+use exface\Core\DataTypes\RelationTypeDataType;
 
 class UxonSchema implements WorkbenchDependantInterface
 {    
@@ -125,8 +129,12 @@ class UxonSchema implements WorkbenchDependantInterface
                 $options = $this->getObjectAliases($search);
                 break;
             case 'attribute_alias':
-                $objectAlias = $this->getPropertyValueRecursive($uxon, $path, 'object_alias');
-                $options = $this->getAttributeAliases($objectAlias, $search);
+                try {
+                    $object = $this->getMetaObject($uxon, $path);
+                    $options = $this->getAttributeAliases($object, $search);
+                } catch (MetaObjectNotFoundError $e) {
+                    $options = [];
+                }
                 break;
             default:
                 $entityClass = $this->getEntityClass($uxon, $path);
@@ -136,10 +144,21 @@ class UxonSchema implements WorkbenchDependantInterface
                     case $this->isPropertyTypeEnum($firstType) === true:
                         $options = explode(',', trim($firstType, "[]"));
                         break;
+                    case strcasecmp($firstType, 'boolean') === 0:
+                        $options = ['true', 'false'];
                 }  
         }
         
         return $options;
+    }
+    
+    public function getMetaObject(UxonObject $uxon, array $path, MetaObjectInterface $rootObject = null) : MetaObjectInterface
+    {
+        $objectAlias = $this->getPropertyValueRecursive($uxon, $path, 'object_alias', ($rootObject !== null ? $rootObject->getAliasWithNamespace() : ''));
+        if ($objectAlias === '' && $rootObject !== null) {
+            return $rootObject;
+        }
+        return $this->getWorkbench()->model()->getObject($objectAlias);
     }
     
     protected function getObjectAliases(string $search = null) : array
@@ -158,23 +177,21 @@ class UxonSchema implements WorkbenchDependantInterface
         }
         $ds->dataRead();
         
-        $options = [];
+        $values = [];
         foreach ($ds->getRows() as $row) {
-            $options[] = $row['APP__ALIAS'] . '.' . $row['ALIAS'];
+            $values[] = $row['APP__ALIAS'] . '.' . $row['ALIAS'];
         }
-        return $options;
+        
+        sort($values);
+        
+        return $values;
     }
     
-    protected function getAttributeAliases(string $objectAlias, string $search = null) : array
+    protected function getAttributeAliases(MetaObjectInterface $object, string $search = null) : array
     {
-        if ($objectAlias === '') {
-            return [];
-        }
-        
-        $object = $this->getWorkbench()->model()->getObject($objectAlias);
-        
         $rels = RelationPath::relationPathParse($search);
         $search = array_pop($rels);
+        $relPath = null;
         if (! empty($rels)) {
             $relPath = implode(RelationPath::RELATION_SEPARATOR, $rels);
             $object = $object->getRelatedObject($relPath);
@@ -184,6 +201,12 @@ class UxonSchema implements WorkbenchDependantInterface
         foreach ($object->getAttributes() as $attr) {
             $values[] = ($relPath ? $relPath . RelationPath::RELATION_SEPARATOR : '') . $attr->getAlias();
         }
+        // Reverse relations are not attributes, so we need to add them here manually
+        foreach ($object->getRelations(RelationTypeDataType::REVERSE) as $rel) {
+            $values[] = ($relPath ? $relPath . RelationPath::RELATION_SEPARATOR : '') . $rel->getAliasWithModifier();
+        }
+        
+        sort($values);
         
         return $values;
     }
