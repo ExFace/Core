@@ -39,6 +39,26 @@ class UxonSchema implements WorkbenchDependantInterface
         return $rootEntityClass;
     }
     
+    public function getPropertyValueRecursive(UxonObject $uxon, array $path, string $propertyName, string $rootValue = '')
+    {
+        $value = $rootValue; 
+        $prop = array_shift($path);
+        
+        if (is_numeric($prop) === false) {
+            foreach ($uxon as $key => $val) {
+                if (strcasecmp($key, $propertyName) === 0) {
+                    $value = $val;
+                }
+            }
+            
+            if (count($path) > 1) {
+                return $this->getPropertyValueRecursive($uxon->getProperty($prop), $path, $propertyName, $value);
+            }
+        }
+        
+        return $value;
+    }
+    
     public function getProperties(string $entityClass) : array
     {
         if ($col = $this->getPropertiesSheet($entityClass)->getColumns()->get('PROPERTY')) {
