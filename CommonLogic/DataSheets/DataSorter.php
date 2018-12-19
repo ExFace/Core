@@ -35,6 +35,15 @@ class DataSorter implements iCanBeConvertedToUxon, WorkbenchDependantInterface
         return $this->attribute_alias;
     }
 
+    /**
+     * 
+     * @uxon-property attribute_alias
+     * @uxon-type string
+     * 
+     * @param string $value
+     * @throws DataSheetStructureError
+     * @return \exface\Core\CommonLogic\DataSheets\DataSorter
+     */
     public function setAttributeAlias($value)
     {
         if ($this->getDataSheet() && ! $this->getDataSheet()->getMetaObject()->hasAttribute($value)) {
@@ -49,6 +58,15 @@ class DataSorter implements iCanBeConvertedToUxon, WorkbenchDependantInterface
         return $this->direction;
     }
 
+    /**
+     * 
+     * @uxon-property direction
+     * @uxon-type [asc,desc]
+     * 
+     * @param string $value
+     * @throws UnexpectedValueException
+     * @return \exface\Core\CommonLogic\DataSheets\DataSorter
+     */
     public function setDirection($value)
     {
         if (strtoupper($value) == $this::DIRECTION_ASC) {

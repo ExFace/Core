@@ -1031,7 +1031,7 @@ else {
      * Sets the visibility of the widget: normal, hidden, optional, promoted.
      *
      * @uxon-property visibility
-     * @uxon-type string
+     * @uxon-type [normal,promoted,optional,hidden]
      *
      * {@inheritdoc}
      *

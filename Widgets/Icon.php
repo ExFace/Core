@@ -34,7 +34,7 @@ class Icon extends Display implements iHaveColor
      * Sets the size of the icon (SMALL, NORMAL, BIG)
      * 
      * @uxon-property icon_size
-     * @uxon-type [small|normal|big]
+     * @uxon-type [small,normal,big]
      * 
      * @param string $value
      * @return \exface\Core\Widgets\Icon
@@ -58,7 +58,7 @@ class Icon extends Display implements iHaveColor
      * Sets the position of the icon relativ to the caption/value (LEFT, RIGHT, CENTER).
      * 
      * @uxon-property icon_position
-     * @uxon-type [left|right|center]
+     * @uxon-type [left,right,center]
      * 
      * @param string $value
      * @return Icon
