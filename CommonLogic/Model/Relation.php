@@ -378,7 +378,7 @@ class Relation implements MetaRelationInterface
      */
     protected function requiresModifier() : bool
     {
-        if ($this->isForwardRelation()) {
+        if ($this->isForwardRelation() === true) {
             return false;
         }
         
