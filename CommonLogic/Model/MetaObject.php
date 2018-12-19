@@ -131,11 +131,8 @@ class MetaObject implements MetaObjectInterface
         $result = array();
         foreach ($this->relations as $set) {
             foreach ($set as $rel) {
-                if ($type === null || $type->__toString() === RelationTypeDataType::REVERSE || $type->equals($rel->getType())) {
-                    $alias = $rel->getAlias();
-                    if ($rel->getAliasModifier() !== '') {
-                        $alias .= '[' . $rel->getAliasModifier() . ']';
-                    }
+                if ($type === null || $type->equals($rel->getType())) {
+                    $alias = $rel->getAliasWithModifier();
                     $result[$alias] = $rel;
                 }
             }
