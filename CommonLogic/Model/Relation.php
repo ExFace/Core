@@ -8,6 +8,7 @@ use exface\Core\DataTypes\RelationTypeDataType;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Model\ModelInterface;
+use exface\Core\Exceptions\Model\MetaRelationAliasAmbiguousError;
 
 class Relation implements MetaRelationInterface
 {
@@ -378,15 +379,15 @@ class Relation implements MetaRelationInterface
     protected function requiresModifier() : bool
     {
         if ($this->isForwardRelation()) {
-            return true;
+            return false;
         }
         
         try {
-            if ($this->getLeftObject()->getRelation($this->getAlias()) === $this) {
+            if ($this->getLeftObject()->getRelation($this->getAlias()) !== $this) {
                 return true;
             }
-        } catch (\exface\Core\Exceptions\Model\MetaRelationNotFoundError $e) {
-            return false;
+        } catch (MetaRelationAliasAmbiguousError $e) {
+            return true;
         }
         
         return false;
