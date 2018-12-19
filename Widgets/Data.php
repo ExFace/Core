@@ -959,6 +959,8 @@ class Data
      * Defines sorters for the data via array of sorter objects.
      *
      * Example:
+     * 
+     * ´´´
      *  {
      *      "sorters": [
      *          {
@@ -970,9 +972,11 @@ class Data
      *          }
      *      ]
      *  }
+     *  
+     * ´´´
      *
      * @uxon-property sorters
-     * @uxon-type Object[]
+     * @uxon-type \exface\Core\CommonLogic\DataSheets\DataSorter[]
      *
      * TODO use special sorter widgets here instead of plain uxon objects
      * 

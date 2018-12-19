@@ -9,10 +9,6 @@ use exface\Core\Factories\ResultFactory;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\UxonWidgetSchema;
 use exface\Core\CommonLogic\UxonSchema;
-use exface\Core\Factories\DataSheetFactory;
-use exface\Core\CommonLogic\Model\MetaObject;
-use exface\Core\Factories\RelationPathFactory;
-use exface\Core\CommonLogic\Model\RelationPath;
 
 class UxonAutosuggest extends AbstractAction
 {
@@ -54,64 +50,6 @@ class UxonAutosuggest extends AbstractAction
     
     protected function suggestPropertyValues(UxonSchema $schema, UxonObject $uxon, array $path, string $valueText) : array
     {
-        $options = [];
-        $entityClass = $schema->getEntityClass($uxon, $path);
-        $prop = end($path);
-        
-        switch (mb_strtolower($prop)) {
-            case 'object_alias':
-                $options = $this->getObjectAliases($valueText);
-                break;
-            case 'attribute_alias': 
-                $objectAlias = $schema->getPropertyValueRecursive($uxon, $path, 'object_alias');
-                $options = $this->getAttributeAliases($objectAlias, $valueText);
-                break;
-        }
-        
-        return $options;
-    }
-    
-    protected function getObjectAliases(string $search) : array
-    {
-        $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.OBJECT');
-        $ds->getColumns()->addMultiple(['ALIAS', 'APP__ALIAS']);
-        $parts = explode('.', $search);
-        if (count($parts) === 1) {
-            return [];
-        } else {
-            $alias = $parts[2];
-            $ds->addFilterFromString('APP__ALIAS', $parts[0] . '.' . $parts[1]);
-        }
-        $ds->addFilterFromString('ALIAS', $alias);
-        $ds->dataRead();
-        
-        $options = [];
-        foreach ($ds->getRows() as $row) {
-            $options[] = $row['APP__ALIAS'] . '.' . $row['ALIAS'];
-        }
-        return $options;
-    }
-    
-    protected function getAttributeAliases(string $objectAlias, string $search) : array
-    {
-        if ($objectAlias === '') {
-            return [];
-        }
-        
-        $object = $this->getWorkbench()->model()->getObject($objectAlias);
-        
-        $rels = RelationPath::relationPathParse($search);
-        $search = array_pop($rels);
-        if (! empty($rels)) {
-            $relPath = implode(RelationPath::RELATION_SEPARATOR, $rels);
-            $object = $object->getRelatedObject($relPath);
-        }
-        
-        $options = [];
-        foreach ($object->getAttributes() as $attr) {
-            $options[] = ($relPath ? $relPath . RelationPath::RELATION_SEPARATOR : '') . $attr->getAlias();
-        }
-        
-        return $options;
+        return $schema->getValidValues($uxon, $path, $valueText);
     }
 }

@@ -5,6 +5,7 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
+use exface\Core\CommonLogic\Model\RelationPath;
 
 class UxonSchema implements WorkbenchDependantInterface
 {    
@@ -112,5 +113,83 @@ class UxonSchema implements WorkbenchDependantInterface
     public function getWorkbench()
     {
         return $this->workbench;
+    }
+    
+    public function getValidValues(UxonObject $uxon, array $path, string $search = null) : array
+    {
+        $options = [];
+        $prop = end($path);
+        
+        switch (mb_strtolower($prop)) {
+            case 'object_alias':
+                $options = $this->getObjectAliases($search);
+                break;
+            case 'attribute_alias':
+                $objectAlias = $this->getPropertyValueRecursive($uxon, $path, 'object_alias');
+                $options = $this->getAttributeAliases($objectAlias, $search);
+                break;
+            default:
+                $entityClass = $this->getEntityClass($uxon, $path);
+                $propertyTypes = $this->getPropertyTypes($entityClass, $prop);
+                $firstType = $propertyTypes[0];
+                switch (true) {
+                    case $this->isPropertyTypeEnum($firstType) === true:
+                        $options = explode(',', trim($firstType, "[]"));
+                        break;
+                }  
+        }
+        
+        return $options;
+    }
+    
+    protected function getObjectAliases(string $search = null) : array
+    {
+        $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.OBJECT');
+        $ds->getColumns()->addMultiple(['ALIAS', 'APP__ALIAS']);
+        if ($search !== null) {
+            $parts = explode('.', $search);
+            if (count($parts) === 1) {
+                return [];
+            } else {
+                $alias = $parts[2];
+                $ds->addFilterFromString('APP__ALIAS', $parts[0] . '.' . $parts[1]);
+            }
+            $ds->addFilterFromString('ALIAS', $alias);
+        }
+        $ds->dataRead();
+        
+        $options = [];
+        foreach ($ds->getRows() as $row) {
+            $options[] = $row['APP__ALIAS'] . '.' . $row['ALIAS'];
+        }
+        return $options;
+    }
+    
+    protected function getAttributeAliases(string $objectAlias, string $search = null) : array
+    {
+        if ($objectAlias === '') {
+            return [];
+        }
+        
+        $object = $this->getWorkbench()->model()->getObject($objectAlias);
+        
+        $rels = RelationPath::relationPathParse($search);
+        $search = array_pop($rels);
+        if (! empty($rels)) {
+            $relPath = implode(RelationPath::RELATION_SEPARATOR, $rels);
+            $object = $object->getRelatedObject($relPath);
+        }
+        
+        $values = [];
+        foreach ($object->getAttributes() as $attr) {
+            $values[] = ($relPath ? $relPath . RelationPath::RELATION_SEPARATOR : '') . $attr->getAlias();
+        }
+        
+        return $values;
+    }
+    
+    protected function isPropertyTypeEnum(string $type) : bool
+    {
+        return substr($type, 0, 1) === '[' && substr($type, -1) === ']';
     }
 }
