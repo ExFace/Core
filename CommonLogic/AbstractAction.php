@@ -132,6 +132,15 @@ abstract class AbstractAction implements ActionInterface
         return $this->alias;
     }
 
+    /**
+     * The qualified alias of the action to be called (e.g. exface.Core.ShowDialog).
+     * 
+     * @uxon-property alias
+     * @uxon-type metamodel:action
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::setAlias()
+     */
     public function setAlias($value)
     {
         $this->alias = $value;
@@ -475,7 +484,7 @@ abstract class AbstractAction implements ActionInterface
      * will be used automatically.
      *
      * @uxon-property object_alias
-     * @uxon-type string
+     * @uxon-type metamodel:object
      *
      * {@inheritdoc}
      * @see \exface\Core\Interfaces\Actions\ActionInterface::setObjectAlias()

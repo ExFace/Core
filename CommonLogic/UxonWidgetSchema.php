@@ -25,7 +25,10 @@ class UxonWidgetSchema extends UxonSchema
         
         foreach ($uxon as $key => $value) {
             if (strcasecmp($key, 'widget_type') === 0) {
-                $name = $this->getEntityClassFromWidgetType($value);
+                $w = $this->getEntityClassFromWidgetType($value);
+                if ($this->validateEntityClass($w) === true) {
+                    $name = $w;
+                }
             }
         }
         
@@ -44,32 +47,5 @@ class UxonWidgetSchema extends UxonSchema
     protected function getEntityClassFromWidgetType(string $widgetType) : string
     {
         return WidgetFactory::getWidgetClassFromType($widgetType);
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\CommonLogic\UxonSchema::getValidValues()
-     */
-    public function getValidValues(UxonObject $uxon, array $path, string $search = null) : array
-    {
-        $prop = mb_strtolower(end($path));
-        if ($prop === 'widget_type') {
-            return $this->getWidgetTypes();
-        }
-        
-        return parent::getValidValues($uxon, $path, $search);
-    }
-    
-    /**
-     * 
-     * @return string[]
-     */
-    protected function getWidgetTypes() : array
-    {
-        $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.WIDGET');
-        $ds->getColumns()->addFromExpression('NAME');
-        $ds->dataRead();
-        return $ds->getColumns()->get('NAME')->getValues(false);
     }
 }

@@ -38,7 +38,7 @@ class DataSorter implements iCanBeConvertedToUxon, WorkbenchDependantInterface
     /**
      * 
      * @uxon-property attribute_alias
-     * @uxon-type string
+     * @uxon-type metamodel:attribute
      * 
      * @param string $value
      * @throws DataSheetStructureError

@@ -65,7 +65,7 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
      * Makes the widget show the value of the attribute specified by this alias relative to the widget's meta object.
      * 
      * @uxon-property attribute_alias
-     * @uxon-type string
+     * @uxon-type metamodel:attribute
      * 
      * @param string $value
      * @return \exface\Core\Widgets\Value

@@ -103,7 +103,7 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
      * DataColumn - presumabely "expression")
      *
      * @uxon-property attribute_alias
-     * @uxon-type string
+     * @uxon-type metamodel:attribute
      *
      * @param string $value            
      */
