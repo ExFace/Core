@@ -8,20 +8,41 @@ use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Exceptions\Model\MetaObjectNotFoundError;
-use exface\Core\DataTypes\RelationDataType;
 use exface\Core\DataTypes\RelationTypeDataType;
 
+/**
+ * This class provides varios tools to analyse and validate a generic UXON object.
+ * 
+ * There are dedicated schema-classes for some UXON schemas:
+ * 
+ * @see UxonWidgetSchema
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
 class UxonSchema implements WorkbenchDependantInterface
 {    
     private $entityPropCache = [];
     
     private $workbench;
     
+    /**
+     * 
+     * @param WorkbenchInterface $workbench
+     */
     public function __construct(WorkbenchInterface $workbench)
     {
         $this->workbench = $workbench;
     }
     
+    /**
+     * Returns the entity class for a given path.
+     * 
+     * @param UxonObject $uxon
+     * @param array $path
+     * @param string $rootEntityClass
+     * @return string
+     */
     public function getEntityClass(UxonObject $uxon, array $path, string $rootEntityClass) : string
     {
         if (count($path) > 1) {
@@ -44,6 +65,18 @@ class UxonSchema implements WorkbenchDependantInterface
         return $rootEntityClass;
     }
     
+    /**
+     * Returns the value of an inheritable property from the point of view of the end of the given path.
+     * 
+     * This is usefull for common properties like `object_alias`, that get inherited from the parent 
+     * entity automatically, but can be specified explicitly by the user.
+     * 
+     * @param UxonObject $uxon
+     * @param array $path
+     * @param string $propertyName
+     * @param string $rootValue
+     * @return mixed
+     */
     public function getPropertyValueRecursive(UxonObject $uxon, array $path, string $propertyName, string $rootValue = '')
     {
         $value = $rootValue; 
@@ -64,6 +97,12 @@ class UxonSchema implements WorkbenchDependantInterface
         return $value;
     }
     
+    /**
+     * Returns an array with names of all properties of a given entity class.
+     * 
+     * @param string $entityClass
+     * @return string[]
+     */
     public function getProperties(string $entityClass) : array
     {
         if ($col = $this->getPropertiesSheet($entityClass)->getColumns()->get('PROPERTY')) {
@@ -73,6 +112,11 @@ class UxonSchema implements WorkbenchDependantInterface
         return [];
     }
     
+    /**
+     * 
+     * @param string $entityClass
+     * @return DataSheetInterface
+     */
     protected function getPropertiesSheet(string $entityClass) : DataSheetInterface
     {
         if ($cache = $this->entityPropCache[$entityClass]) {
@@ -92,13 +136,29 @@ class UxonSchema implements WorkbenchDependantInterface
         
         return $ds;
     }
-    
+
+    /**
+     * 
+     * @param string $entityClass
+     * @return string
+     */
     protected function getFilenameForEntity(string $entityClass) : string
     {
         $path = str_replace('\\', '/', $entityClass);
         return ltrim($path, "/") . '.php';
     }
     
+    /**
+     * Returns an array of UXON types valid for the given entity class property.
+     * 
+     * The result is an array, because a property may accept multiple types
+     * (separated by a pipe (|) in the UXON annotations). The array elements
+     * have the same order, as the types in the annotation.
+     * 
+     * @param string $entityClass
+     * @param string $property
+     * @return string[]
+     */
     public function getPropertyTypes(string $entityClass, string $property) : array
     {
         foreach ($this->getPropertiesSheet($entityClass)->getRows() as $row) {
@@ -113,18 +173,28 @@ class UxonSchema implements WorkbenchDependantInterface
     
     /**
      * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\WorkbenchDependantInterface::getWorkbench()
      */
     public function getWorkbench()
     {
         return $this->workbench;
     }
     
+    /**
+     * Returns an array of valid values for properties with fixe values (or an empty array for non-enum properties).
+     * 
+     * @param UxonObject $uxon
+     * @param array $path
+     * @param string $search
+     * @return string[]
+     */
     public function getValidValues(UxonObject $uxon, array $path, string $search = null) : array
     {
         $options = [];
-        $prop = end($path);
+        $prop = mb_strtolower(end($path));
         
-        switch (mb_strtolower($prop)) {
+        switch ($prop) {
             case 'object_alias':
                 $options = $this->getObjectAliases($search);
                 break;
@@ -152,6 +222,14 @@ class UxonSchema implements WorkbenchDependantInterface
         return $options;
     }
     
+    /**
+     * Returns the meta object for the entity at the end of the path.
+     * 
+     * @param UxonObject $uxon
+     * @param array $path
+     * @param MetaObjectInterface $rootObject
+     * @return MetaObjectInterface
+     */
     public function getMetaObject(UxonObject $uxon, array $path, MetaObjectInterface $rootObject = null) : MetaObjectInterface
     {
         $objectAlias = $this->getPropertyValueRecursive($uxon, $path, 'object_alias', ($rootObject !== null ? $rootObject->getAliasWithNamespace() : ''));
@@ -161,6 +239,11 @@ class UxonSchema implements WorkbenchDependantInterface
         return $this->getWorkbench()->model()->getObject($objectAlias);
     }
     
+    /**
+     * 
+     * @param string $search
+     * @return string[]
+     */
     protected function getObjectAliases(string $search = null) : array
     {
         $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.OBJECT');
@@ -187,6 +270,12 @@ class UxonSchema implements WorkbenchDependantInterface
         return $values;
     }
     
+    /**
+     * 
+     * @param MetaObjectInterface $object
+     * @param string $search
+     * @return string[]
+     */
     protected function getAttributeAliases(MetaObjectInterface $object, string $search = null) : array
     {
         $rels = RelationPath::relationPathParse($search);
@@ -211,6 +300,11 @@ class UxonSchema implements WorkbenchDependantInterface
         return $values;
     }
     
+    /**
+     * 
+     * @param string $type
+     * @return bool
+     */
     protected function isPropertyTypeEnum(string $type) : bool
     {
         return substr($type, 0, 1) === '[' && substr($type, -1) === ']';
