@@ -128,7 +128,7 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iDefin
      * This property does the same as {widget_type: Button, action: {alias: SOME_ALIAS} }
      *
      * @uxon-property action_alias
-     * @uxon-type string
+     * @uxon-type metamodel:action
      *
      * @param string $value
      * @return Button            

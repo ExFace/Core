@@ -313,7 +313,7 @@ abstract class AbstractWidget implements WidgetInterface
      * Set to the name of the widget, to instantiate it (e.g. "DataTable").
      *
      * @uxon-property widget_type
-     * @uxon-type string
+     * @uxon-type metamodel:widget
      *
      * @param string $value            
      */
@@ -764,7 +764,7 @@ abstract class AbstractWidget implements WidgetInterface
      * Use qualified aliases (with namespace)!
      *
      * @uxon-property object_alias
-     * @uxon-type string
+     * @uxon-type metamodel:object
      *
      * {@inheritdoc}
      *

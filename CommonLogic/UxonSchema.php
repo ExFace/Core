@@ -9,6 +9,7 @@ use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Exceptions\Model\MetaObjectNotFoundError;
 use exface\Core\DataTypes\RelationTypeDataType;
+use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 
 /**
  * This class provides varios tools to analyse and validate a generic UXON object.
@@ -194,30 +195,34 @@ class UxonSchema implements WorkbenchDependantInterface
         $options = [];
         $prop = mb_strtolower(end($path));
         
-        switch ($prop) {
-            case 'object_alias':
-                $options = $this->getObjectAliases($search);
+        $entityClass = $this->getEntityClass($uxon, $path);
+        $propertyTypes = $this->getPropertyTypes($entityClass, $prop);
+        $firstType = trim($propertyTypes[0]);
+        switch (true) {
+            case $this->isPropertyTypeEnum($firstType) === true:
+                $options = explode(',', trim($firstType, "[]"));
                 break;
-            case 'attribute_alias':
+            case strcasecmp($firstType, 'metamodel:widget') === 0:
+                $options = $this->getMetamodelWidgetTypes();
+                break;
+            case strcasecmp($firstType, 'metamodel:object') === 0:
+                $options = $this->getMetamodelObjectAliases($search);
+                break;
+            case strcasecmp($firstType, 'metamodel:action') === 0:
+                $options = $this->getMetamodelActionAliases($search);
+                break;
+            case strcasecmp($firstType, 'metamodel:attribute') === 0:
                 try {
                     $object = $this->getMetaObject($uxon, $path);
-                    $options = $this->getAttributeAliases($object, $search);
+                    $options = $this->getMetamodelAttributeAliases($object, $search);
                 } catch (MetaObjectNotFoundError $e) {
                     $options = [];
                 }
                 break;
-            default:
-                $entityClass = $this->getEntityClass($uxon, $path);
-                $propertyTypes = $this->getPropertyTypes($entityClass, $prop);
-                $firstType = $propertyTypes[0];
-                switch (true) {
-                    case $this->isPropertyTypeEnum($firstType) === true:
-                        $options = explode(',', trim($firstType, "[]"));
-                        break;
-                    case strcasecmp($firstType, 'boolean') === 0:
-                        $options = ['true', 'false'];
-                }  
-        }
+            case strcasecmp($firstType, 'boolean') === 0:
+                $options = ['true', 'false'];
+                break;
+        } 
         
         return $options;
     }
@@ -244,7 +249,7 @@ class UxonSchema implements WorkbenchDependantInterface
      * @param string $search
      * @return string[]
      */
-    protected function getObjectAliases(string $search = null) : array
+    protected function getMetamodelObjectAliases(string $search = null) : array
     {
         $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.OBJECT');
         $ds->getColumns()->addMultiple(['ALIAS', 'APP__ALIAS']);
@@ -276,7 +281,7 @@ class UxonSchema implements WorkbenchDependantInterface
      * @param string $search
      * @return string[]
      */
-    protected function getAttributeAliases(MetaObjectInterface $object, string $search = null) : array
+    protected function getMetamodelAttributeAliases(MetaObjectInterface $object, string $search = null) : array
     {
         $rels = RelationPath::relationPathParse($search);
         $search = array_pop($rels);
@@ -288,16 +293,61 @@ class UxonSchema implements WorkbenchDependantInterface
         
         $values = [];
         foreach ($object->getAttributes() as $attr) {
-            $values[] = ($relPath ? $relPath . RelationPath::RELATION_SEPARATOR : '') . $attr->getAlias();
+            $alias = ($relPath ? $relPath . RelationPath::RELATION_SEPARATOR : '') . $attr->getAlias();
+            $values[] = $alias;
+            if ($attr->isRelation() === true) {
+                $values[] = $alias . RelationPath::RELATION_SEPARATOR;
+            }
         }
         // Reverse relations are not attributes, so we need to add them here manually
         foreach ($object->getRelations(RelationTypeDataType::REVERSE) as $rel) {
-            $values[] = ($relPath ? $relPath . RelationPath::RELATION_SEPARATOR : '') . $rel->getAliasWithModifier();
+            $values[] = ($relPath ? $relPath . RelationPath::RELATION_SEPARATOR : '') . $rel->getAliasWithModifier() . RelationPath::RELATION_SEPARATOR;
         }
         
         sort($values);
         
         return $values;
+    }
+    
+    /**
+     *
+     * @return string[]
+     */
+    protected function getMetamodelWidgetTypes() : array
+    {
+        $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.WIDGET');
+        $ds->getColumns()->addFromExpression('NAME');
+        $ds->dataRead();
+        return $ds->getColumns()->get('NAME')->getValues(false);
+    }
+    
+    /**
+     *
+     * @return string[]
+     */
+    protected function getMetamodelActionAliases() : array
+    {
+        $options = [];
+        $dot = AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER;
+        
+        // Prototypes
+        $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.ACTION');
+        $ds->getColumns()->addMultiple(['NAME', 'PATH_RELATIVE']);
+        $ds->dataRead();
+        foreach ($ds->getRows() as $row) {
+            $namespace = str_replace(['/Actions', '/'], ['', $dot], $row['PATH_RELATIVE']);
+            $options[] = $namespace . $dot . $row['NAME'];
+        }
+        
+        // Action models
+        $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.OBJECT_ACTION');
+        $ds->getColumns()->addMultiple(['ALIAS', 'APP_ALIAS']);
+        $ds->dataRead();
+        foreach ($ds->getRows() as $row) {
+            $options[] = $row['APP_ALIAS'] . $dot . $row['ALIAS'];
+        }
+        
+        return $options;
     }
     
     /**
@@ -308,5 +358,18 @@ class UxonSchema implements WorkbenchDependantInterface
     protected function isPropertyTypeEnum(string $type) : bool
     {
         return substr($type, 0, 1) === '[' && substr($type, -1) === ']';
+    }
+    
+    protected function validateEntityClass(string $entityClass) : bool
+    {
+        try {
+            if ($this->getPropertiesSheet($entityClass)->isEmpty() === true) {
+                return false;
+            }
+        } catch (\Throwable $e) {
+            return false;
+        }
+        
+        return true;
     }
 }
