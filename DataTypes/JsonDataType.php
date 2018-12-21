@@ -7,6 +7,8 @@ class JsonDataType extends TextDataType
 {
 
     private $prettify = false;
+    
+    private $schema = null;
 
     /**
      * Returns true if the JSON should be formatted in human-readable form, false otherwise.
@@ -117,5 +119,29 @@ class JsonDataType extends TextDataType
         }
         return json_encode($json, $params);
     }
+    
+    /**
+     *
+     * @return string
+     */
+    public function getSchema() : ?string
+    {
+        return $this->schema;
+    }
+    
+    /**
+     * 
+     * @uxon-property schema
+     * @uxon-type string
+     * 
+     * @param string $value
+     * @return JsonDataType
+     */
+    public function setSchema(string $value) : JsonDataType
+    {
+        $this->schema = $value;
+        return $this;
+    }
+    
 }
 ?>
