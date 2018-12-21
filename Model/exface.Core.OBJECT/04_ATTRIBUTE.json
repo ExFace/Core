@@ -366,7 +366,7 @@
         },
         {
             "CREATED_ON": "2007-01-01 00:00:00",
-            "MODIFIED_ON": "2018-11-29 08:48:44",
+            "MODIFIED_ON": "2018-12-21 11:52:27",
             "CREATED_BY_USER": "",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x35313000000000000000000000000000",
@@ -385,7 +385,7 @@
             "COMMENTS": "",
             "LABEL": "Default Editor",
             "ALIAS": "DEFAULT_EDITOR_UXON",
-            "DATATYPE": "0x31330000000000000000000000000000",
+            "DATATYPE": "0x11e905162eeb6334b04c0205857feb80",
             "DATA_ADDRESS": "default_editor_uxon",
             "OBJECT": "0x31350000000000000000000000000000",
             "FORMATTER": "",
