@@ -161,7 +161,7 @@
     "rows": [
         {
             "CREATED_ON": "2007-01-01 00:00:00",
-            "MODIFIED_ON": "2017-06-05 05:57:58",
+            "MODIFIED_ON": "2018-12-23 11:43:56",
             "CREATED_BY_USER": "",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x32303400000000000000000000000000",
@@ -174,11 +174,11 @@
             "WRITABLEFLAG": "1",
             "SYSTEMFLAG": "0",
             "DEFAULT_EDITOR_UXON": null,
-            "COPY_WITH_RELATED_OBJECT": null,
-            "DELETE_WITH_RELATED_OBJECT": null,
+            "COPY_WITH_RELATED_OBJECT": "0",
+            "DELETE_WITH_RELATED_OBJECT": "0",
             "DEFAULT_DISPLAY_UXON": null,
             "COMMENTS": "",
-            "LABEL": "Alias",
+            "LABEL": "App Alias",
             "ALIAS": "ALIAS",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "app_alias",
