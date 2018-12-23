@@ -9,11 +9,16 @@ use exface\Core\Factories\ResultFactory;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\UxonWidgetSchema;
 use exface\Core\CommonLogic\UxonSchema;
+use exface\Core\CommonLogic\UxonDatatypeSchema;
+use exface\Core\CommonLogic\UxonActionSchema;
+use exface\Core\CommonLogic\UxonBehaviorSchema;
 
 class UxonAutosuggest extends AbstractAction
 {
     const SCHEMA_WIDGET = 'widget';
-    const SCHEMA_ACTION = 'widget';
+    const SCHEMA_ACTION = 'action';
+    const SCHEMA_BEHAVIOR = 'behavior';
+    const SCHEMA_DATATYPE = 'datatype';
     
     const TYPE_FIELD = 'field';
     const TYPE_VALUE = 'value';
@@ -31,12 +36,22 @@ class UxonAutosuggest extends AbstractAction
         switch (mb_strtolower($schema)) {
             case self::SCHEMA_WIDGET: 
                 $schema = new UxonWidgetSchema($this->getWorkbench());
-                if (strcasecmp($type, self::TYPE_FIELD) === 0) {
-                    $options = $this->suggestPropertyNames($schema, $uxon, $path);
-                } else {
-                    $options = $this->suggestPropertyValues($schema, $uxon, $path, $currentText);
-                }
                 break;
+            case self::SCHEMA_ACTION:
+                $schema = new UxonActionSchema($this->getWorkbench());
+                break;
+            case self::SCHEMA_DATATYPE:
+                $schema = new UxonDatatypeSchema($this->getWorkbench());
+                break;
+            case self::SCHEMA_BEHAVIOR:
+                $schema = new UxonBehaviorSchema($this->getWorkbench());
+                break;
+        }
+        
+        if (strcasecmp($type, self::TYPE_FIELD) === 0) {
+            $options = $this->suggestPropertyNames($schema, $uxon, $path);
+        } else {
+            $options = $this->suggestPropertyValues($schema, $uxon, $path, $currentText);
         }
         
         return ResultFactory::createJSONResult($task, $options);
