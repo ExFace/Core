@@ -77,7 +77,7 @@
     "rows": [
         {
             "CREATED_ON": "2017-01-24 09:32:09",
-            "MODIFIED_ON": "2017-06-05 06:08:27",
+            "MODIFIED_ON": "2018-12-23 11:49:44",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6e217f7f91457a3d9e4b318306b9a",
@@ -90,7 +90,7 @@
             "SHORT_DESCRIPTION": "Actions aplicable to a meta object",
             "PARENT_OBJECT": "",
             "DATA_ADDRESS_PROPS": null,
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Dialog\",\"widgets\":[{\"attribute_alias\":\"OBJECT\"},{\"attribute_alias\":\"ACTION_PROTOTYPE\"},{\"attribute_alias\":\"APP\"},{\"attribute_alias\":\"ALIAS\"},{\"attribute_alias\":\"NAME\"},{\"attribute_alias\":\"SHORT_DESCRIPTION\"},{\"attribute_alias\":\"DOCS\"},{\"attribute_alias\":\"CONFIG_UXON\",\"width\":2,\"height\":15},{\"attribute_alias\":\"USE_IN_OBJECT_BASKET_FLAG\"}]}",
             "LABEL": "Object Action",
             "ALIAS": "OBJECT_ACTION",
             "DATA_ADDRESS": "exf_object_action"
