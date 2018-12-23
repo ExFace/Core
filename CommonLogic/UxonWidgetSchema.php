@@ -2,7 +2,6 @@
 namespace exface\Core\CommonLogic;
 
 use exface\Core\Factories\WidgetFactory;
-use exface\Core\Factories\DataSheetFactory;
 
 /**
  * UXON-schema class for widgets.

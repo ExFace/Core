@@ -89,10 +89,10 @@ class UxonSchema implements WorkbenchDependantInterface
                     $value = $val;
                 }
             }
-            
-            if (count($path) > 1) {
-                return $this->getPropertyValueRecursive($uxon->getProperty($prop), $path, $propertyName, $value);
-            }
+        }
+        
+        if (count($path) > 1) {
+            return $this->getPropertyValueRecursive($uxon->getProperty($prop), $path, $propertyName, $value);
         }
         
         return $value;
