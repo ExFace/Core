@@ -52,6 +52,18 @@
                 "widget_type": "Input",
                 "height": 1,
                 "width": 1
+            },
+            {
+                "attribute_alias": "DEFAULT_DISPLAY_UXON",
+                "widget_type": "Input",
+                "height": 1,
+                "width": 1
+            },
+            {
+                "attribute_alias": "CUSTOM_DATA_TYPE",
+                "widget_type": "Input",
+                "height": 1,
+                "width": 1
             }
         ],
         "columns": [
