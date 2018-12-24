@@ -362,14 +362,6 @@ class UxonSchema implements WorkbenchDependantInterface
     
     protected function validateEntityClass(string $entityClass) : bool
     {
-        try {
-            if ($this->getPropertiesSheet($entityClass)->isEmpty() === true) {
-                return false;
-            }
-        } catch (\Throwable $e) {
-            return false;
-        }
-        
-        return true;
+        return class_exists($entityClass);
     }
 }
