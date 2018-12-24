@@ -29,6 +29,9 @@ trait JsonEditorTrait
             var {$this->getId()}_JSONeditor = new JSONEditor(
                 document.getElementById("{$this->getId()}"), 
                 {
+                    onError: function (err) {
+    				    {$this->buildJsShowMessageError('err.toString()')};
+    				},
 				    {$this->buildJsEditorOptions()}
 			    },
                 {$this->getWidget()->getValue()}
