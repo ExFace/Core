@@ -274,6 +274,7 @@ class Workbench implements WorkbenchInterface
             $this->getContext()->saveContexts();
             $this->data()->disconnectAll();
             $this->eventManager()->dispatch(new OnStopEvent($this));
+            $this->started = false;
         }
     }
 
