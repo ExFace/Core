@@ -37,6 +37,7 @@ use exface\Core\Interfaces\Widgets\iHaveColor;
  *      "page_alias": "my.App.orders-for-approval",
  *  }
  * }
+ * 
  * ```
  * 
  * Example of a similar tile, but linked to a data widget. The DisplayTotal 
@@ -63,6 +64,7 @@ use exface\Core\Interfaces\Widgets\iHaveColor;
  *      "page_alias": "my.App.orders-for-approval",
  *  }
  * }
+ * 
  * ```
  * 
  * Example of a navigation tile with preset filters and not display widget:
@@ -98,6 +100,7 @@ use exface\Core\Interfaces\Widgets\iHaveColor;
  *      }
  *  }
  * }
+ * 
  * ```
  *  
  * Tiles degrade to regular buttons if used in menus or toolbars unless the corresponding widget
@@ -236,7 +239,7 @@ class Tile extends Button implements iHaveColor
      * Changes the color of the tile to any HTML color value (or other template-specific value)
      * 
      * @uxon-property color
-     * @uxon-type string 
+     * @uxon-type color|string
      * 
      * @param string $color
      * @return \exface\Core\Widgets\Tile

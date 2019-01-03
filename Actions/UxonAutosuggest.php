@@ -32,6 +32,8 @@ class UxonAutosuggest extends AbstractAction
         $type = $task->getParameter('input');
         $uxon = UxonObject::fromJson($task->getParameter('uxon'));
         $schema = $task->getParameter('schema');
+        $rootEntityClass = $task->getParameter('rootEntity');
+        $rootObject = $task->getParameter('rootObject');
         
         switch (mb_strtolower($schema)) {
             case self::SCHEMA_WIDGET: 
@@ -49,21 +51,25 @@ class UxonAutosuggest extends AbstractAction
         }
         
         if (strcasecmp($type, self::TYPE_FIELD) === 0) {
-            $options = $this->suggestPropertyNames($schema, $uxon, $path);
+            $options = $this->suggestPropertyNames($schema, $uxon, $path, $rootEntityClass);
         } else {
-            $options = $this->suggestPropertyValues($schema, $uxon, $path, $currentText);
+            $options = $this->suggestPropertyValues($schema, $uxon, $path, $currentText, $rootEntityClass, $rootObject);
         }
         
         return ResultFactory::createJSONResult($task, $options);
     }
     
-    protected function suggestPropertyNames(UxonSchema $schema, UxonObject $uxon, array $path) : array
+    protected function suggestPropertyNames(UxonSchema $schema, UxonObject $uxon, array $path, string $rootEntityClass = null) : array
     {
-        $entityClass = $schema->getEntityClass($uxon, $path);
+        if ($rootEntityClass === null) {
+            $entityClass = $schema->getEntityClass($uxon, $path);
+        } else {
+            $entityClass = $schema->getEntityClass($uxon, $path, $rootEntityClass);
+        }
         return $schema->getProperties($entityClass);
     }
     
-    protected function suggestPropertyValues(UxonSchema $schema, UxonObject $uxon, array $path, string $valueText) : array
+    protected function suggestPropertyValues(UxonSchema $schema, UxonObject $uxon, array $path, string $valueText, string $rootEntityClass = null, string $rootObject = null) : array
     {
         return $schema->getValidValues($uxon, $path, $valueText);
     }

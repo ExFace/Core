@@ -43,16 +43,37 @@ class SplitVertical extends Container
         return $this->getWidgets();
     }
 
-    public function setPanels($widget_or_uxon_array)
+    /**
+     * Sets an array of SplitPanel widgets.
+     * 
+     * Adding widgets to a Split will automatically produce SplitPanels for each widget, 
+     * unless it already is one. This way, a short an understandable notation of splits 
+     * is possible: simply add any type of widget to the panels or widgets array and see 
+     * them be displayed in the split.
+     * 
+     * @uxon-property widgets
+     * @uxon-type \exface\Core\Widgets\SplitPanel[]|\exface\Core\Widgets\AbstractWidget[]
+     * @uxon-template [{"widgets": [{"widget_type": ""}]}]
+     *
+     * @param UxonObject|SplitPanel|AbstractWidget $widget_or_uxon_array
+     * @return \exface\Core\Widgets\SplitVertical
+     */
+    public function setPanels($widget_or_uxon_array) : SplitVertical
     {
         return $this->setWidgets($widget_or_uxon_array);
     }
 
     /**
-     * Adding widgets to a Split will automatically produce SplitPanels for each widget, unless it already is one.
-     * This
-     * way, a short an understandable notation of splits is possible: simply add any type of widget to the panels or widgets
-     * array and see them be displayed in the split.
+     * Specifies the widgets to be used as split panels - same as the panels property.
+     * 
+     * Adding widgets to a Split will automatically produce SplitPanels for each widget, 
+     * unless it already is one. This way, a short an understandable notation of splits 
+     * is possible: simply add any type of widget to the panels or widgets array and see 
+     * them be displayed in the split.
+     * 
+     * @uxon-property widgets
+     * @uxon-type \exface\Core\Widgets\SplitPanel[]|\exface\Core\Widgets\AbstractWidget[]
+     * @uxon-template [{"widgets": [{"widget_type": ""}]}]
      *
      * @see \exface\Core\Widgets\Container::setWidgets()
      */

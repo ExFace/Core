@@ -289,7 +289,8 @@ class Toolbar extends Container implements iHaveButtons, iContainButtonGroups, i
      * "menu".
      * 
      * @uxon-property position
-     * @uxon-type string
+     * @uxon-type [default,bottom,top,menu]
+     * @uxon-default default
      * 
      * @param string $position
      * @return \exface\Core\Widgets\Toolbar

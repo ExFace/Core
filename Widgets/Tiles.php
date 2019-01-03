@@ -21,6 +21,18 @@ class Tiles extends WidgetGrid
         return $this->getWidgets($filter);
     }
     
+    /**
+     * A list (array) of tiles to be displayed.
+     * 
+     * This is an (better understandable) alias for the `widgets` property - it has the
+     * same effect.
+     * 
+     * @uxon-property tiles
+     * @uxon-type \exface\Core\Widgets\Tile[]
+     * 
+     * @param UxonObject $uxon
+     * @return Tiles
+     */
     public function setTiles(UxonObject $uxon) : Tiles
     {
         return $this->setWidgets($uxon);
