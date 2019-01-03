@@ -345,8 +345,11 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
     }
     
     /**
+     * Changes the data type of the value to one of the 
      *
-     * {@inheritDoc}
+     * @uxon-property value_data_type
+     * @uxon-type \exface\Core\DataTypes\StringDataType
+     * 
      * @see \exface\Core\Interfaces\Widgets\iHaveValue::setDataType()
      */
     public function setValueDataType($data_type_or_string)
@@ -416,7 +419,7 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
      * The default placeholder is defined by the core translation of WIDGET.TEXT.EMPTY_TEXT.
      *
      * @uxon-property empty_text
-     * @uxon-type boolean
+     * @uxon-type string
      *
      * @see \exface\Core\Interfaces\Widgets\iHaveValue::setEmptyText()
      */

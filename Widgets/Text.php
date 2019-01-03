@@ -6,7 +6,7 @@ use exface\Core\Widgets\Traits\iCanBeAlignedTrait;
 use exface\Core\Interfaces\Widgets\iHaveColor;
 
 /**
- * The text widget simply shows text with an optional title created from the caption of the widget
+ * The text widget simply shows text with an optional title (created from the caption of the widget).
  *
  * @author Andrej Kabachnik
  *        
@@ -28,6 +28,17 @@ class Text extends Display implements iShowText, iHaveColor
         return $this->getValue();
     }
 
+    /**
+     * Sets the text to be shown explicitly.
+     * 
+     * This property has the same effect as setting `value`. It also supports formulas.
+     * 
+     * @uxon-property text
+     * @uxon-type string
+     * 
+     * @param string $value
+     * @return \exface\Core\Widgets\Text
+     */
     public function setText($value)
     {
         $this->setValue($this->evaluatePropertyExpression($value));
@@ -45,8 +56,12 @@ class Text extends Display implements iShowText, iHaveColor
     }
     
     /**
+     * Sets the style of the text: normal, big, small.
      * 
-     * {@inheritDoc}
+     * @uxon-property style
+     * @uxon-type [normal,big,small]
+     * @uxon-default normal
+     * 
      * @see \exface\Core\Interfaces\Widgets\iShowText::setSize()
      */
     public function setSize($value)
@@ -66,8 +81,12 @@ class Text extends Display implements iShowText, iHaveColor
     }
     
     /**
+     * Sets the style of the text: normal, bold, underline, strikethrough, italic.
      * 
-     * {@inheritDoc}
+     * @uxon-property style
+     * @uxon-type [normal,bold,underline,strikethrough,italic]
+     * @uxon-default normal
+     * 
      * @see \exface\Core\Interfaces\Widgets\iShowText::setStyle()
      */
     public function setStyle($value)
@@ -117,7 +136,7 @@ class Text extends Display implements iShowText, iHaveColor
      * @link https://www.w3schools.com/colors/colors_groups.asp
      *
      * @uxon-property color
-     * @uxon-type string
+     * @uxon-type color|string
      *
      * {@inheritdoc}
      * @see iHaveColor::setColor()

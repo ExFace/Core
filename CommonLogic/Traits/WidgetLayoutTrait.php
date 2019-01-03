@@ -1,8 +1,6 @@
 <?php
 namespace exface\Core\CommonLogic\Traits;
 
-use exface\Core\DataTypes\BooleanDataType;
-
 /**
  * Trait for widgets that implemenent the interface iLayoutWidgets.
  *
@@ -15,10 +13,6 @@ use exface\Core\DataTypes\BooleanDataType;
 trait WidgetLayoutTrait {
 
     private $number_of_columns = null;
-
-    private $column_stack_on_smartphones = null;
-
-    private $column_stack_on_tablets = null;
 
     /**
      *
@@ -40,52 +34,6 @@ trait WidgetLayoutTrait {
     public function setNumberOfColumns($value)
     {
         $this->number_of_columns = intval($value);
-        return $this;
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Widgets\iLayoutWidgets::getStackColumnsOnTabletsSmartphones()
-     */
-    public function getStackColumnsOnTabletsSmartphones()
-    {
-        return $this->column_stack_on_smartphones;
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Widgets\iLayoutWidgets::setStackColumnsOnTabletsSmartphones()
-     */
-    public function setStackColumnsOnTabletsSmartphones($value)
-    {
-        $this->column_stack_on_smartphones = BooleanDataType::cast($value);
-        return $this;
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Widgets\iLayoutWidgets::getStackColumnsOnTabletsTablets()
-     */
-    public function getStackColumnsOnTabletsTablets()
-    {
-        return $this->column_stack_on_tablets;
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Widgets\iLayoutWidgets::setStackColumnsOnTabletsTablets()
-     */
-    public function setStackColumnsOnTabletsTablets($value)
-    {
-        $this->column_stack_on_tablets = BooleanDataType::cast($value);
         return $this;
     }
 }

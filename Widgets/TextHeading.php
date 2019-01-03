@@ -3,6 +3,7 @@ namespace exface\Core\Widgets;
 
 /**
  * The TextHeading widget can be used for headings.
+ * 
  * In most HTML-based templates it will get mapped to <h1></h1> or similar.
  *
  * @author Andrej Kabachnik
@@ -23,7 +24,12 @@ class TextHeading extends Text
     }
 
     /**
+     * Sets the level of the heading (e.g. 1 for top-level heading, 2 for subheading, etc.)
      *
+     * @uxon-property heading_level
+     * @uxon-type integer
+     * @uxon-default 1
+     * 
      * @param integer $value            
      * @return \exface\Core\Widgets\TextHeading
      */

@@ -53,12 +53,18 @@ class Tabs extends Container implements iFillEntireContainer
     }
     
     /**
-     * Adds an array of widgets as tabs.
+     * Defines an array of widgets as tabs.
+     * 
+     * Adding widgets to Tabs will automatically produce Tab widgets for each added widget, 
+     * unless it already is a tab or another widget based on it. This way, a short an understandable 
+     * notation of tabs is possible: simply add any type of widget to the tabs array and see 
+     * them be displayed in tabs.
      * 
      * @uxon-property tabs
-     * @uxon-type \exface\Core\Widgets\Tab[]
+     * @uxon-type \exface\Core\Widgets\Tab[]|\exface\Core\Widgets\AbstractWidget[]
+     * @uxon-template [{"caption": "", "widgets": [{"widget_type": ""}]}]
      * 
-     * @param UxonObject|Tab|Container $widget_or_uxon_array
+     * @param UxonObject|Tab $widget_or_uxon_array
      * @return Tabs
      */
     public function setTabs($widget_or_uxon_array)
@@ -105,8 +111,12 @@ class Tabs extends Container implements iFillEntireContainer
     }
     
     /**
+     * Explicitly sets the position of the tabs-strip (by default, the template decides, where to place it).
      * 
-     * @param unknown $value
+     * @uxon-property tab_position
+     * @uxon-type [top,bottom,left,right]
+     * 
+     * @param string $value
      * @throws WidgetPropertyInvalidValueError
      * @return \exface\Core\Widgets\Tabs
      */
@@ -123,22 +133,38 @@ class Tabs extends Container implements iFillEntireContainer
      *
      * @return number
      */
-    public function getActiveTab()
+    public function getActiveTab() : int
     {
         return $this->active_tab;
     }
 
-    public function setActiveTab($value)
+    /**
+     * Makes the tab with the given index active instead of the first one.
+     * 
+     * @uxon-property active_tab
+     * @uxon-type integer
+     * @uxon-default 0
+     * 
+     * @param int $value
+     * @return Tabs
+     */
+    public function setActiveTab(int $value) : Tabs
     {
         $this->active_tab = $value;
         return $this;
     }
 
     /**
-     * Adding widgets to Tabs will automatically produce Tab widgets for each added widget, unless it already is a tab.
-     * This
-     * way, a short an understandable notation of tabs is possible: simply add any type of widget to the tabs array and
-     * see them be displayed in tabs.
+     * Defines widets (tabs) to be displayed - same as tabs property.
+     * 
+     * Adding widgets to Tabs will automatically produce Tab widgets for each added widget, 
+     * unless it already is a tab or another widget based on it. This way, a short an understandable 
+     * notation of tabs is possible: simply add any type of widget to the tabs array and see 
+     * them be displayed in tabs.
+     * 
+     * @uxon-property widgets
+     * @uxon-type \exface\Core\Widgets\Tab[]|\exface\Core\Widgets\AbstractWidget[]
+     * @uxon-template [{"caption": "", "widgets": [{"widget_type": ""}]}]
      *
      * @see \exface\Core\Widgets\Container::setWidgets()
      */
@@ -282,6 +308,11 @@ class Tabs extends Container implements iFillEntireContainer
     }
     
     /**
+     * Set to TRUE to make the tab ribbon show icons only (no captions).
+     * 
+     * @uxon-property hide_tabs_captions
+     * @uxon-type boolean
+     * @uxon-default false 
      * 
      * @param boolean $true_or_false
      * @return \exface\Core\Widgets\Tabs

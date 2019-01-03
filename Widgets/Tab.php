@@ -3,7 +3,6 @@ namespace exface\Core\Widgets;
 
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Exceptions\NotImplementedError;
-use exface\Core\Interfaces\Widgets\iHaveIcon;
 use exface\Core\Factories\DataPointerFactory;
 use exface\Core\Events\Widget\OnPrefillChangePropertyEvent;
 
@@ -17,17 +16,28 @@ use exface\Core\Events\Widget\OnPrefillChangePropertyEvent;
  */
 class Tab extends Panel
 {
-
     private $badge_attribute_alias;
 
     private $badge_value;
     
-    public function getBadgeAttributeAlias()
+    public function getBadgeAttributeAlias() : ?string
     {
         return $this->badge_attribute_alias;
     }
 
-    public function setBadgeAttributeAlias($value)
+    /**
+     * Adds a badge to the tab caption showing the value of this attribute (typically a counter or so).
+     * 
+     * Alternatively to binding the badge to an attribute, you can explicitly set it's value via
+     * `badge_value`.
+     * 
+     * @uxon-property badget_attribute_alias
+     * @uxon-type metamodel:attribute
+     * 
+     * @param string $value
+     * @return \exface\Core\Widgets\Tab
+     */
+    public function setBadgeAttributeAlias(string $value) : Tab
     {
         $this->badge_attribute_alias = $value;
         return $this;
@@ -63,12 +73,24 @@ class Tab extends Panel
         return $data_sheet;
     }
 
-    public function getBadgeValue()
+    public function getBadgeValue() : ?string
     {
         return $this->badge_value;
     }
 
-    public function setBadgeValue($value)
+    /**
+     * Adds a badge to the tab's caption showing a fixed value.
+     * 
+     * Alternatively to setting a fixed badge value, you can also specify a `badge_attribute_alias`
+     * to bind the badget value to the model - e.g. some counter, sum, etc.
+     * 
+     * @uxon-property badge_value
+     * @uxon-type string
+     * 
+     * @param string $value
+     * @return \exface\Core\Widgets\Tab
+     */
+    public function setBadgeValue(string $value) : Tab
     {
         $this->badge_value = $value;
         return $this;
