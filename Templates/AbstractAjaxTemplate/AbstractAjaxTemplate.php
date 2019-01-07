@@ -39,6 +39,7 @@ use exface\Core\Factories\ResultFactory;
 use exface\Core\Templates\AbstractHttpTemplate\Middleware\ContextBarApi;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Events\Widget\OnRemoveEvent;
+use exface\Core\Interfaces\Tasks\ResultTextContentInterface;
 
 /**
  * 
@@ -434,7 +435,11 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
                 $json = [
                     "redirect" => $uri->__toString()
                 ];
-                break;                
+                break;  
+            case $result instanceof ResultTextContentInterface:
+                $headers['Content-type'] = $result->getMimeType();
+                $body = $result->getContent();
+                break;
             default:
                 $json['success'] = $result->getMessage();
                 if ($result->isUndoable()) {

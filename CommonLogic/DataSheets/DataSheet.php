@@ -797,6 +797,12 @@ class DataSheet implements DataSheetInterface
             $transaction->commit();
         }
         
+        if ($result->getAllRowsCounter() !== null) {
+            $this->setCounterForRowsInDataSource($result->getAllRowsCounter());
+        } elseif ($result->hasMoreRows() === false) {
+            $this->setCounterForRowsInDataSource($this->countRows());
+        }
+        
         $this->getWorkbench()->eventManager()->dispatch(new OnUpdateDataEvent($this, $transaction));
         
         return $counter;
@@ -820,7 +826,8 @@ class DataSheet implements DataSheetInterface
         
         $this->getWorkbench()->eventManager()->dispatch(new OnBeforeReplaceDataEvent($this, $transaction));
         
-        $counter = 0;
+        $deleteCnt = 0;
+        $updateCnt = 0;
         if ($delete_redundant_rows) {
             if ($this->getFilters()->isEmpty()) {
                 throw new DataSheetWriteError($this, 'Cannot delete redundant rows while replacing data if no filter are defined! This would delete ALL data for the object "' . $this->getMetaObject()->getAliasWithNamespace() . '"!', '6T5V4TS');
@@ -837,7 +844,7 @@ class DataSheet implements DataSheetInterface
                     $delete_col = $uid_column->copy();
                     $delete_ds->getColumns()->add($delete_col);
                     $delete_ds->getUidColumn()->removeRows()->setValues(array_values($redundant_rows));
-                    $counter += $delete_ds->dataDelete($transaction);
+                    $deleteCnt += $delete_ds->dataDelete($transaction);
                 }
             } else {
                 throw new DataSheetWriteError($this, 'Cannot delete redundant rows while replacing data for "' . $this->getMetaObject()->getAliasWithNamespace() . '" if no UID column is present in the data sheet', '6T5V5EB');
@@ -854,7 +861,7 @@ class DataSheet implements DataSheetInterface
             $update_ds = $this;
         }
         
-        $counter += $update_ds->dataUpdate(true, $transaction);
+        $updateCnt = $update_ds->dataUpdate(true, $transaction);
         
         if ($commit && ! $transaction->isRolledBack()) {
             $transaction->commit();
@@ -862,7 +869,7 @@ class DataSheet implements DataSheetInterface
         
         $this->getWorkbench()->eventManager()->dispatch(new OnReplaceDataEvent($this, $transaction));
         
-        return $counter;
+        return $deleteCnt+$updateCnt;
     }
 
     /**
@@ -985,12 +992,18 @@ class DataSheet implements DataSheetInterface
             $transaction->commit();
         }
         
+        if ($result->getAllRowsCounter() !== null) {
+            $this->setCounterForRowsInDataSource($result->getAllRowsCounter());
+        } elseif ($result->hasMoreRows() === false) {
+            $this->setCounterForRowsInDataSource($this->countRows());
+        }
+        
         // Save the new UIDs in the data sheet
         $this->setColumnValues($this->getMetaObject()->getUidAttributeAlias(), $new_uids);
         
         $this->getWorkbench()->eventManager()->dispatch(new OnCreateDataEvent($this, $transaction));
         
-        return count($new_uids);
+        return $result->getAffectedRowsCounter();
     }
 
     /**
@@ -1074,6 +1087,12 @@ class DataSheet implements DataSheetInterface
         
         if ($commit && ! $transaction->isRolledBack()) {
             $transaction->commit();
+        }
+        
+        if ($result->getAllRowsCounter() !== null) {
+            $this->setCounterForRowsInDataSource($result->getAllRowsCounter());
+        } elseif ($result->hasMoreRows() === false) {
+            $this->setCounterForRowsInDataSource(0);
         }
         
         $this->getWorkbench()->eventManager()->dispatch(new OnDeleteDataEvent($this, $transaction));

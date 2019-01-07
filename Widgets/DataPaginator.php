@@ -23,7 +23,7 @@ use exface\Core\DataTypes\BooleanDataType;
  * 
  * ```
  *  {
- *      "use_total_row_counter": false
+ *      "count_all_rows": false
  *  }
  *  
  * ```
@@ -117,7 +117,7 @@ class DataPaginator extends AbstractWidget
      *
      * @return bool
      */
-    public function getUseTotalRowCounter() : bool
+    public function getCountAllRows() : bool
     {
         return $this->useTotalCount;
     }
@@ -129,17 +129,15 @@ class DataPaginator extends AbstractWidget
      * pages there are in total, so the user will only be able to navigate to
      * the next or any of the previous pages - not to the last page.
      * 
-     * @uxon-property use_total_row_conuter
+     * @uxon-property count_all_rows
      * @uxon-type boolean
      * 
      * @param bool|string $value
      * @return DataPaginator
      */
-    public function setUseTotalRowCounter($value) : DataPaginator
+    public function setCountAllRows($value) : DataPaginator
     {
         $this->useTotalCount = BooleanDataType::cast($value);
         return $this;
-    }
-    
+    }   
 }
-?>

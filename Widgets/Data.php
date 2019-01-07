@@ -264,7 +264,7 @@ class Data
         if ($this->getPaginator()->getPageSize()) {
             $data_sheet->setRowsLimit($this->getPaginator()->getPageSize());
         }
-        if ($this->getPaginator()->getUseTotalRowCounter() === false) {
+        if ($this->getPaginator()->getCountAllRows() === false) {
             $data_sheet->setAutoCount(false);
         }
         
