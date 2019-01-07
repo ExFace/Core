@@ -63,11 +63,7 @@ class Workbench implements WorkbenchInterface
     private $request_params = null;
 
     public function __construct()
-    {
-        if (substr(phpversion(), 0, 1) == 5) {
-            require_once 'Php5Compatibility.php';
-        }
-        
+    {        
         // If the config overrides the installation path, use the config value, otherwise go one level up from the vendor folder.
         if ($this->getConfig()->hasOption('FOLDERS.INSTALLATION_PATH_ABSOLUTE') && $installation_path = $this->getConfig()->getOption("FOLDERS.INSTALLATION_PATH_ABSOLUTE")) {
             $this->setInstallationPath($installation_path);
