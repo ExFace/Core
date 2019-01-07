@@ -40,9 +40,11 @@ class MenuButton extends Button implements iHaveMenu, iHaveButtons
     }
 
     /**
-     *
-     * {@inheritdoc}
-     *
+     * Custom widget definition for the menu behind the button.
+     * 
+     * @uxon-property menu
+     * @uxon-type \exface\Core\Widgets\Menu
+     * 
      * @see \exface\Core\Interfaces\Widgets\iHaveMenu::setMenu()
      */
     public function setMenu($menu_widget_or_uxon_or_array)
@@ -63,8 +65,8 @@ class MenuButton extends Button implements iHaveMenu, iHaveButtons
     }
 
     /**
-     * {@inheritdoc}
-     *
+     * 
+     * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\iHaveButtons::getButtons()
      */
     public function getButtons(callable $filter_callback = null)
@@ -73,13 +75,11 @@ class MenuButton extends Button implements iHaveMenu, iHaveButtons
     }
 
     /**
-     * Defines the buttons in the menu via array of button definitions.
-     *
+     * Array of menu items (button-widgets) to be displayed in the menu.
+     * 
      * @uxon-property buttons
-     * @uxon-type Button[]
-     *
-     * {@inheritdoc}
-     *
+     * @uxon-type \exface\Core\Widgets\Button[]
+     * 
      * @see \exface\Core\Interfaces\Widgets\iHaveButtons::setButtons()
      */
     public function setButtons($buttons_array)
