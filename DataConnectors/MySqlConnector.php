@@ -104,9 +104,17 @@ class MySqlConnector extends AbstractSqlConnector
             $result = mysqli_query($this->getCurrentConnection(), $query->getSql());
             $query->setResultResource($result);
         } catch (\mysqli_sql_exception $e) {
-            throw new DataQueryFailedError($query, "SQL query failed! " . $e->getMessage(), '6T2T2UI', $e);
+            throw new DataQueryFailedError($query, $e->getMessage() . ' - SQL error code ' . $e->getCode(), $this->getErrorCode($e), $e);
         }
         return $query;
+    }
+    
+    protected function getErrorCode(\Exception $sqlException) : string
+    {
+        switch ($sqlException->getCode()) {
+            case 1062: return '73II64M';
+            default: return '6T2T2UI';
+        }
     }
 
     protected function getLastError()

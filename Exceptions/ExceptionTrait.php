@@ -13,6 +13,7 @@ use exface\Core\Factories\DataSheetFactory;
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\Widgets\Message;
+use exface\Core\DataTypes\MessageTypeDataType;
 
 /**
  * This trait enables an exception to output more usefull specific debug information.
@@ -127,6 +128,12 @@ trait ExceptionTrait {
                     $error_text = WidgetFactory::create($page, 'Text', $error_tab)
                         ->setValue($this->getMessage());
                     $error_tab->addWidget($error_text);
+                    if ($hint = $error_ds->getCellValue('HINT', 0)) {
+                        $error_hint = WidgetFactory::create($page, 'Message', $error_tab)
+                        ->setText($hint)
+                        ->setType(MessageTypeDataType::HINT);
+                        $error_tab->addWidget($error_hint);
+                    }
                     $error_descr = WidgetFactory::create($page, 'Markdown', $error_tab)
                         ->setAttributeAlias('DESCRIPTION')
                         ->setHideCaption(true);
@@ -207,8 +214,7 @@ trait ExceptionTrait {
     protected function getErrorData(Workbench $exface, $error_code)
     {
         $ds = DataSheetFactory::createFromObjectIdOrAlias($exface, 'exface.Core.MESSAGE');
-        $ds->getColumns()->addFromExpression('TITLE');
-        $ds->getColumns()->addFromExpression('DESCRIPTION');
+        $ds->getColumns()->addMultiple(['TITLE', 'HINT', 'DESCRIPTION']);
         if ($error_code) {
             $ds->addFilterFromString('CODE', $error_code);
             $ds->dataRead();
