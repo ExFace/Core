@@ -57,7 +57,7 @@ class NavTiles extends WidgetGrid
      * If not set explicitly, the current page will be used as root.
      * 
      * @uxon-property root_page_alias
-     * @uxon-type string
+     * @uxon-type metamodel:page
      * 
      * @param string $pageSelector
      * @return NavTiles
@@ -209,6 +209,7 @@ class NavTiles extends WidgetGrid
      * 
      * @uxon-property depth
      * @uxon-type integer
+     * @uxon-default 2
      * 
      * @param int $value
      * @return NavTiles
