@@ -180,4 +180,21 @@ JS;
     {
         return 'true';
     }
+    
+    protected function buildJsUxonRootEntity() : string
+    {
+        $widget = $this->getWidget();
+        if ($widget instanceof InputUxon) {
+            $expr = $widget->getRootEntity();
+            if ($expr !== null) {
+                if ($expr->isString() === true) {
+                    return '"' . $expr->toString() . '"';
+                } elseif ($expr->isReference() === true) {
+                        
+                    
+                }
+            }
+        }
+        return '';
+    }
 }
