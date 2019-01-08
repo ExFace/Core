@@ -57,7 +57,7 @@ JS;
                       		    var pathBase = path.length <= 1 ? '' : JSON.stringify(path.slice(-1));
                       		    if (editor._autosuggestPending === true) {
                                     if (editor._autosuggestLastResult && editor._autosuggestLastPath == pathBase) {
-                                        resolve(editor._autosuggestLastResult);
+                                        resolve(editor._autosuggestLastResult.values);
                                     } else {
                                         reject();
                                     }
@@ -121,9 +121,55 @@ JS;
     		body: formData, // body data type must match "Content-Type" header
     	})
     	.then(response => response.json())
-    	.then(json => {resolve(json); return json;})
+    	.then(json => {resolve(json.values); return json;})
     	.catch(response => {reject();});
     }
+
+    function {$this->buildJsFunctionPrefix()}_getNodeFromTarget(target) {
+	   while (target) {
+    	    if (target.node) {
+    	       return target.node;
+    	    }
+    	    target = target.parentNode;
+       }
+    
+	   return undefined;
+    }
+  
+    function {$this->buildJsFunctionPrefix()}_focusFirstChildValue(node) {
+    	var child;
+    	for (var i in node.childs) {
+    		child = node.childs[i];
+    		if (child.type === 'string' || child.type === 'auto') {
+    			child.focus('value');
+    			return;
+    		} else {
+    			{$this->buildJsFunctionPrefix()}_focusFirstChildValue(child);
+    		}
+    	}
+    	return;
+    }
+
+    $(function() {
+    	$(document).on('blur', '#{$this->getId()} div.jsoneditor-field[contenteditable="true"]', function() {
+            var editor = {$this->getId()}_JSONeditor;
+    		var node = {$this->buildJsFunctionPrefix()}_getNodeFromTarget(this);
+    		if (node.getValue() !== '') {
+    			return;
+    		}
+    		var path = node.getPath();
+    		var prop = path[path.length-1];
+    		if (editor._autosuggestLastResult && editor._autosuggestLastResult.templates) {
+    			var tpl = editor._autosuggestLastResult.templates[prop];
+    			if (tpl) {
+    				var val = JSON.parse(tpl);
+    				node.setValue(val, (Array.isArray(val) ? 'array' : 'object'));
+    				node.expand(true);
+    				{$this->buildJsFunctionPrefix()}_focusFirstChildValue(node);
+    			}
+    		} 
+    	});
+    });
 
 JS;
     }
