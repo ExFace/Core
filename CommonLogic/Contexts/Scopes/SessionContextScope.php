@@ -90,6 +90,14 @@ class SessionContextScope extends AbstractContextScope
      */
     public function saveContexts()
     {
+        // Do not do anything if no context were loaded (in this case, nothing could change!)
+        // In particular, this prevens unneeded session operatinos, which may have negative
+        // performance impact and can even produce PHP warnings if headers were sent already
+        // (e.g. by the CMS).
+        if (empty($this->getContextsLoaded()) === true) {
+            return $this;
+        }
+        
         // var_dump($_SESSION);
         $this->sessionOpen();
         

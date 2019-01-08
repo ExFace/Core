@@ -176,7 +176,7 @@ class Workbench implements WorkbenchInterface
      */
     public function getContext()
     {
-        if (is_null($this->context)){
+        if ($this->context === null){
             throw new RuntimeException('Workbench not started: missing context manager! Did you forget Workbench->start()?');
         }
         return $this->context;
