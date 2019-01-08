@@ -517,6 +517,7 @@ class Data
      *
      * @uxon-property columns
      * @uxon-type \exface\Core\Widgets\DataColumn[]|\exface\Core\Widgets\DataColumnGroup[]
+     * @uxon-template [{"attribute_alias": ""}]
      *
      * @see \exface\Core\Interfaces\Widgets\iHaveColumns::setColumns()
      */
@@ -904,6 +905,7 @@ class Data
      * 
      * @uxon-property paginator
      * @uxon-type \exface\Core\Widgets\DataPaginator
+     * @uxon-template {"count_all_rows": "true"}
      * 
      * @param UxonObject $uxon
      * @return Data
@@ -929,13 +931,12 @@ class Data
         return $this;
     }
     
-    
-
     /**
      * Set to FALSE to disable pagination
      *
      * @uxon-property paginate
      * @uxon-type boolean
+     * @uxon-default true
      *
      * @param boolean $value            
      */
@@ -977,6 +978,7 @@ class Data
      *
      * @uxon-property sorters
      * @uxon-type \exface\Core\CommonLogic\DataSheets\DataSorter[]
+     * @uxon-template [{"attribute_alias": "", "direction": "asc"}]
      *
      * TODO use special sorter widgets here instead of plain uxon objects
      * 

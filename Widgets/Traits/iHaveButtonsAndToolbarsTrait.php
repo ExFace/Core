@@ -83,6 +83,8 @@ trait iHaveButtonsAndToolbarsTrait
      * added to the first button group left or right in the main toolbar.
      * 
      * Example:
+     * 
+     * ```
      *  {
      *      "buttons": [
      *          {
@@ -99,9 +101,12 @@ trait iHaveButtonsAndToolbarsTrait
      *          }
      *      ]
      *  }
+     *  
+     * ```
      * 
      * @uxon-property buttons
      * @uxon-type \exface\Core\Widgets\Button[]
+     * @uxon-template [{"action_alias": ""}]
      * 
      * @see \exface\Core\Interfaces\Widgets\iHaveButtons::setButtons()
      */
