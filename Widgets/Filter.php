@@ -139,7 +139,13 @@ class Filter extends Container implements iTakeInput, iShowSingleAttribute
     }
 
     /**
-     *
+     * The alias of the attribute to filter over.
+     * 
+     * This property will be automatically inherited by the input widget.
+     * 
+     * @uxon-property attribute_alias
+     * @uxon-type metamodel:attribute
+     * 
      * @return \exface\Core\Widgets\Filter
      */
     public function setAttributeAlias($value)
@@ -176,9 +182,11 @@ class Filter extends Container implements iTakeInput, iShowSingleAttribute
     }
 
     /**
-     *
-     * {@inheritdoc}
-     *
+     * Initial value for the filter.
+     * 
+     * @uxon-property value
+     * @uxon-type metamodel:expression
+     * 
      * @see \exface\Core\Widgets\AbstractWidget::setValue()
      */
     public function setValue($value)
@@ -224,6 +232,17 @@ class Filter extends Container implements iTakeInput, iShowSingleAttribute
         return $this->comparator;
     }
 
+    /**
+     * The comparison operator for the filter.
+     * 
+     * @uxon-property comparator
+     * @uxon-type metamodel:comparator
+     * @uxon-default =
+     * 
+     * @param string $value
+     * @throws WidgetPropertyInvalidValueError
+     * @return \exface\Core\Widgets\Filter
+     */
     public function setComparator($value)
     {
         if (! $value){
@@ -255,6 +274,7 @@ class Filter extends Container implements iTakeInput, iShowSingleAttribute
      * 
      * @uxon-property required
      * @uxon-type boolean
+     * @uxon-default false
      * 
      * @see \exface\Core\Interfaces\Widgets\iCanBeRequired::setRequired()
      */
@@ -269,8 +289,12 @@ class Filter extends Container implements iTakeInput, iShowSingleAttribute
     }
 
     /**
+     * Set to TRUE to disable the filter (still visible, but inactive).
      * 
-     * {@inheritDoc}
+     * @uxon-property disabled
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
      * @see \exface\Core\Widgets\Container::setDisabled()
      */
     public function setDisabled($value)
@@ -311,8 +335,11 @@ class Filter extends Container implements iTakeInput, iShowSingleAttribute
     }
     
     /**
+     * This text will be displayed if the filter is empty.
      * 
-     * {@inheritDoc}
+     * @uxon-property empty_text
+     * @uxon-type string
+     * 
      * @see \exface\Core\Interfaces\Widgets\iHaveValue::setEmptyText()
      */
     public function setEmptyText($value)
@@ -352,9 +379,13 @@ class Filter extends Container implements iTakeInput, iShowSingleAttribute
     }
     
     /**
+     * Set to TRUE to not prefill the widget with any action data.
      * 
-     * {@inheritDoc}
-     * @see \exface\Core\Widgets\AbstractWidget::setDoNotPrefill()
+     * @uxon-property do_not_prefill
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @see AbstractWidget::setDoNotPrefill()
      */
     public function setDoNotPrefill($value)
     {
@@ -398,6 +429,7 @@ class Filter extends Container implements iTakeInput, iShowSingleAttribute
      * 
      * @uxon-property apply_on_change
      * @uxon-type boolean
+     * @uxon-default false
      * 
      * @param boolean $true_or_false
      * @return Filter
@@ -431,6 +463,7 @@ class Filter extends Container implements iTakeInput, iShowSingleAttribute
      * 
      * @uxon-property readonly
      * @uxon-type boolean
+     * @uxon-default false
      * 
      * @see \exface\Core\Interfaces\Widgets\iTakeInput::setReadonly()
      */
@@ -463,6 +496,7 @@ class Filter extends Container implements iTakeInput, iShowSingleAttribute
      * 
      * @uxon-property display_only
      * @uxon-type boolean
+     * @uxon-default false
      * 
      * @see \exface\Core\Interfaces\Widgets\iTakeInput::setDisplayOnly()
      */
