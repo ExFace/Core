@@ -211,6 +211,9 @@ class UxonSchema implements WorkbenchDependantInterface
             case strcasecmp($firstType, 'metamodel:action') === 0:
                 $options = $this->getMetamodelActionAliases($search);
                 break;
+            case strcasecmp($firstType, 'metamodel:page') === 0:
+                $options = $this->getMetamodelPageAliases($search);
+                break;
             case strcasecmp($firstType, 'metamodel:attribute') === 0:
                 try {
                     $object = $this->getMetaObject($uxon, $path);
@@ -348,6 +351,18 @@ class UxonSchema implements WorkbenchDependantInterface
         }
         
         return $options;
+    }
+    
+    /**
+     * 
+     * @return string[]
+     */
+    protected function getMetamodelPageAliases() : array
+    {
+        $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.PAGE');
+        $ds->getColumns()->addFromExpression('ALIAS');
+        $ds->dataRead();
+        return $ds->getColumns()->get('ALIAS')->getValues(false);
     }
     
     /**

@@ -19,15 +19,6 @@ class Markdown extends Html
         $md = $this->getValue();
         return $md === null ? '' : $md;
     }
-
-    /**
-     * @param string $markdown
-     * @return Markdown
-     */
-    public function setMarkdown(string $string) : Markdown
-    {
-        return $this->setValue($string);
-    }
     
     /**
      * 
@@ -49,7 +40,12 @@ class Markdown extends Html
         return $parser->parse($markdown);
     }
     
-    public function  getCss()
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Html::getCss()
+     */
+    public function getCss()
     {
         $css = <<<CSS
 
@@ -60,4 +56,3 @@ CSS;
         return $css;
     }
 }
-?>

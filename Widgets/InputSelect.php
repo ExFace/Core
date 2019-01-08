@@ -32,6 +32,8 @@ use exface\Core\Events\Widget\OnPrefillChangePropertyEvent;
  * represented by the InputSelect itself.
  *
  * Example 1 (manually defined options):
+ * 
+ * ```
  *  {
  *      "object_alias": "MY.APP.CUSTOMER",
  *      "widget_type": "InputSelect",
@@ -42,8 +44,12 @@ use exface\Core\Events\Widget\OnPrefillChangePropertyEvent;
  *          "C": "C-Customer"
  *      ]
  *  }
+ *  
+ * ```
  *
  * Example 2 (attributes of another object as options):
+ * 
+ * ```
  *  {
  *      "object_alias": "MY.APP.CUSTOMER",
  *      "widget_type": "InputSelect",
@@ -52,6 +58,8 @@ use exface\Core\Events\Widget\OnPrefillChangePropertyEvent;
  *      "value_attribute_alias": "ID",
  *      "text_attribute_alias": "CLASSIFICATION_NAME"
  *  }
+ *  
+ * ```
  *
  * By turning "use_prefill_to_filter_options" on or off, the prefill 
  * behavior can be customized. By default, the values from the prefill 
@@ -131,12 +139,10 @@ class InputSelect extends Input implements iSupportMultiSelect
 
     /**
      * Set to TRUE to allow multiple items to be selected.
-     * FALSE by default.
      *
      * @uxon-property multi_select
      * @uxon-type boolean
-     *
-     * {@inheritdoc}
+     * @uxon-default false
      *
      * @see \exface\Core\Interfaces\Widgets\iSupportMultiSelect::setMultiSelect()
      */
@@ -211,14 +217,15 @@ class InputSelect extends Input implements iSupportMultiSelect
     }
 
     /**
-     * Sets the possible options of the select widget via assotiative array or object: {"value1": "text1", "value2": "text2"].
+     * Sets the options, that can be selected: {"value1": "text1", "value2": "text2"].
      *
      * @uxon-property selectable_options
-     * @uxon-type Object
+     * @uxon-type object
      *
-     * When adding options programmatically, separate arrays with equal length can be used: one for values and one for the text labels.
+     * When adding options programmatically an assotiative array can be used or separate arrays 
+     * with equal length: one for values and one for the text labels.
      *
-     * @param array|UxonObject $array_or_object            
+     * @param string[]|UxonObject $array_or_object            
      * @param array $options_texts_array            
      * @throws WidgetPropertyInvalidValueError
      * @return InputSelect
@@ -471,9 +478,7 @@ class InputSelect extends Input implements iSupportMultiSelect
             if (! array_key_exists($this->getValue(), $this->getSelectableOptions())) {
                 return explode($this->getMultiSelectValueDelimiter(), $this->getValue());
             } else {
-                return array(
-                    $this->getValue()
-                );
+                return [$this->getValue()];
             }
         } else {
             return array();
@@ -500,7 +505,6 @@ class InputSelect extends Input implements iSupportMultiSelect
     /**
      *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\Widgets\iHaveValues::setValuesFromArray()
      */
     public function setValuesFromArray(array $values)
@@ -527,6 +531,7 @@ class InputSelect extends Input implements iSupportMultiSelect
      * If not set, the system will try to determine one automatically.
      *
      * If the text_attribute_alias was not set explicitly (e.g. via UXON), it will be determined as follows:
+     * 
      * - If an option object was specified explicitly, it's label will be used (or it's UID if no label is defined)
      * - If the widget represents a relation, the related object's label will be used
      * - If the widget represents the UID of it's object, than the label of this object will be used
@@ -534,7 +539,7 @@ class InputSelect extends Input implements iSupportMultiSelect
      * will be used for values as well as for the displayed text.
      *
      * @uxon-property text_attribute_alias
-     * @uxon-type string
+     * @uxon-type metamodel:attribute
      *
      * @param string $value            
      * @return \exface\Core\Widgets\InputCombo
@@ -617,11 +622,15 @@ class InputSelect extends Input implements iSupportMultiSelect
     }
 
     /**
-     * Defines the meta object, which will be used to fetch the selectable options.
-     * By default it is the object of the widget itself.
+     * The meta object, which value_attribute_alias and text_attribute_alias belong to.
+     * 
+     * By default, it is the object of the widget itself. A different object can be used
+     * though, to make the widget get it's options from anywhere in the model. This is
+     * usefull if there is no explicit relation between the widget's object an the value
+     * data.
      *
      * @uxon-property options_object_alias
-     * @uxon-type string
+     * @uxon-type metamodel:object
      *
      * @param string $value            
      * @return \exface\Core\Widgets\InputSelect
@@ -649,17 +658,22 @@ class InputSelect extends Input implements iSupportMultiSelect
         return $this->value_attribute_alias;
     }
 
+    /**
+     * 
+     * @return \exface\Core\Interfaces\Model\MetaAttributeInterface
+     */
     public function getValueAttribute()
     {
         return $this->getOptionsObject()->getAttribute($this->getValueAttributeAlias());
     }
 
     /**
-     * Defines the alias of the attribute of the options object to be used as the internal value of the select.
-     * If not set, the UID will be used.
+     * The alias of the attribute of the options object to be used as the internal value of the select.
+     * 
+     * If not set, the UID attribute will be used.
      *
      * @uxon-property value_attribute_alias
-     * @uxon-type string
+     * @uxon-type metamodel:attribute
      *
      * @param string $value            
      * @return InputSelect
@@ -670,17 +684,21 @@ class InputSelect extends Input implements iSupportMultiSelect
         return $this;
     }
 
-    public function getUsePrefillToFilterOptions()
+    /**
+     * 
+     * @return bool
+     */
+    public function getUsePrefillToFilterOptions() : bool
     {
         return $this->use_prefill_to_filter_options;
     }
 
     /**
-     * By default, the widget will try to only show options applicable to the prefill data.
-     * Set to FALSE to always show all options.
+     * By default, the widget will try to only show options applicable to the prefill data - set to FALSE to always show all options.
      *
      * @uxon-property use_prefill_to_filter_options
-     * @uxon-type string
+     * @uxon-type boolean
+     * @uxon-default true
      *
      * @param boolean $value            
      * @return \exface\Core\Widgets\InputSelect
@@ -691,7 +709,11 @@ class InputSelect extends Input implements iSupportMultiSelect
         return $this;
     }
 
-    public function getUsePrefillValuesAsOptions()
+    /**
+     * 
+     * @return bool
+     */
+    public function getUsePrefillValuesAsOptions() : bool
     {
         return $this->use_prefill_values_as_options;
     }
@@ -699,8 +721,9 @@ class InputSelect extends Input implements iSupportMultiSelect
     /**
      * Makes the select only contain values from the prefill (if there are any) and no other options.
      *
-     * @uxon-property use_prefill_to_filter_options
-     * @uxon-type string
+     * @uxon-property use_prefill_values_as_options
+     * @uxon-type boolean
+     * @uxon-default false
      *
      * @param boolean $value            
      * @return \exface\Core\Widgets\InputSelect
@@ -719,6 +742,12 @@ class InputSelect extends Input implements iSupportMultiSelect
         return $this->options_data_sheet;
     }
 
+    /**
+     * 
+     * @param DataSheetInterface $data_sheet
+     * @throws WidgetPropertyInvalidValueError
+     * @return \exface\Core\Widgets\InputSelect
+     */
     public function setOptionsDataSheet(DataSheetInterface $data_sheet)
     {
         if (! $this->getOptionsObject()->isExactly($data_sheet->getMetaObject())) {
@@ -734,18 +763,22 @@ class InputSelect extends Input implements iSupportMultiSelect
      * For example, if we have a select for values of attributes of a meta object, but we only wish to show
      * values of active instances (assuming our object has the attribute "ACTIVE"), we would need the following
      * select:
+     * 
+     * ```
      * {
-     * "options_object_alias": "my.app.myobject",
-     * "value_attribute_alias": "VALUE",
-     * "text_attribute_alias": "NAME",
-     * "filters":
-     * [
-     * {"attribute_alias": "ACTIVE", "value": "1", "comparator": "="}
-     * ]
+     *  "options_object_alias": "my.app.myobject",
+     *  "value_attribute_alias": "VALUE",
+     *  "text_attribute_alias": "NAME",
+     *  "filters": [
+     *      {"attribute_alias": "ACTIVE", "value": "1", "comparator": "="}
+     *  ]
      * }
+     * 
+     * ```
      *
      * @uxon-property filters
-     * @uxon-type \exface\Core\CommonLogic\Model\Condition
+     * @uxon-type \exface\Core\CommonLogic\Model\Condition[]
+     * @uxon-template [{"attribute_alias": "", "value": "", "comparator": "="}]
      *
      * @param Condition[]|UxonObject $conditions_or_uxon_objects            
      * @return \exface\Core\Widgets\InputSelect
@@ -773,6 +806,8 @@ class InputSelect extends Input implements iSupportMultiSelect
      *
      * For example, if we have a select for sizes of a product and we only wish to show sort the ascendingly,
      * we would need the following config:
+     * 
+     * ```
      *  {
      *      "options_object_alias": "my.app.product",
      *      "value_attribute_alias": "SIZE_ID",
@@ -781,9 +816,12 @@ class InputSelect extends Input implements iSupportMultiSelect
      *          {"attribute_alias": "SIZE_TEXT", "direction": "ASC"}
      *      ]
      *  }
+     *  
+     * ```
      *
      * @uxon-property sorters
-     * @uxon-type \exface\Core\CommonLogic\DataSheets\DataSorter
+     * @uxon-type \exface\Core\CommonLogic\DataSheets\DataSorter[]
+     * @uxon-template [{"attribute_alias": "", "direction": "asc"}]
      *
      * @param DataSorter[]|UxonObject $data_sorters_or_uxon_object            
      * @return \exface\Core\Widgets\InputSelect
@@ -890,10 +928,14 @@ class InputSelect extends Input implements iSupportMultiSelect
     }
 
     /**
-     * Sets the current value of the select.
-     * If the given value is a delimited list and multi-select is disabled, the first item of the list will be used.
+     * Sets the currently selected internal value (and the corresponding value text, if available).
+     * 
+     * If multi-select is enabled, a delimited list can be passed as value (using the delimiter,
+     * specified in `multi_select_value_delimiter`). If multi-select is off, but a delimited value
+     * list is passed, the first value in the list will be used.
      *
-     * {@inheritdoc}
+     * @uxon-property value
+     * @uxon-type metamodel:expression
      *
      * @see \exface\Core\Widgets\AbstractWidget::setValue()
      */

@@ -16,4 +16,3 @@ namespace exface\Core\Widgets;
 class Menu extends Toolbar
 {
 }
-?>
