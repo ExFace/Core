@@ -44,6 +44,7 @@ class MenuButton extends Button implements iHaveMenu, iHaveButtons
      * 
      * @uxon-property menu
      * @uxon-type \exface\Core\Widgets\Menu
+     * @uxon-template {"widget_type": "Menu", "buttons": [{"action_alias": ""}]}
      * 
      * @see \exface\Core\Interfaces\Widgets\iHaveMenu::setMenu()
      */
@@ -79,6 +80,7 @@ class MenuButton extends Button implements iHaveMenu, iHaveButtons
      * 
      * @uxon-property buttons
      * @uxon-type \exface\Core\Widgets\Button[]
+     * @uxon-template [{"action_alias": ""}]
      * 
      * @see \exface\Core\Interfaces\Widgets\iHaveButtons::setButtons()
      */
