@@ -114,6 +114,22 @@ class UxonSchema implements WorkbenchDependantInterface
         return [];
     }
     
+    public function getPropertiesTemplates(string $entityClass) : array
+    {
+        $tpls = [];
+        $ds = $this->getPropertiesSheet($entityClass);
+        if ($col = $ds->getColumns()->get('TEMPLATE')) {
+            $propertyCol = $ds->getColumns()->get('PROPERTY');
+            foreach ($col->getValues() as $r => $tpl) {
+                if ($tpl !== null) {
+                    $tpls[$propertyCol->getCellValue($r)] = $tpl;
+                }
+            }
+        }
+        
+        return $tpls;
+    }
+    
     /**
      * 
      * @param string $entityClass
@@ -127,7 +143,7 @@ class UxonSchema implements WorkbenchDependantInterface
         
         $filepathRelative = $this->getFilenameForEntity($entityClass);
         $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.UXON_PROPERTY_ANNOTATION');
-        $ds->getColumns()->addMultiple(['PROPERTY', 'TYPE']);
+        $ds->getColumns()->addMultiple(['PROPERTY', 'TYPE', 'TEMPLATE', 'DEFAULT']);
         $ds->addFilterFromString('FILE', $filepathRelative);
         try {
             $ds->dataRead();
