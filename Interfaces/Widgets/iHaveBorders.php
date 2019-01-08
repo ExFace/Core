@@ -6,7 +6,16 @@ use exface\Core\Interfaces\WidgetInterface;
 interface iHaveBorders extends WidgetInterface
 {
 
-    public function getShowBorder();
+    /**
+     * 
+     * @return bool
+     */
+    public function getShowBorder() : bool;
 
-    public function setShowBorder($value);
+    /**
+     * 
+     * @param bool $value
+     * @return iHaveBorders
+     */
+    public function setShowBorder(bool $value) : iHaveBorders;
 }

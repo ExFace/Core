@@ -142,12 +142,12 @@ class DiagramShape extends Form implements iUseData, iHaveBorders
         return $this;
     }
 
-    public function getShowBorder()
+    public function getShowBorder() : bool
     {
         return $this->show_border;
     }
 
-    public function setShowBorder($value)
+    public function setShowBorder(bool $value) : iHaveBorders
     {
         $this->show_border = $value;
         return $this;
