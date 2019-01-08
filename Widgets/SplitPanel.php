@@ -53,7 +53,7 @@ class SplitPanel extends Panel implements iAmResizable, iHaveBorders
      * 
      * @see \exface\Core\Interfaces\Widgets\iHaveBorders::setShowBorder()
      */
-    public function setShowBorder(bool $value) : SplitPanel
+    public function setShowBorder(bool $value) : iHaveBorders
     {
         $this->show_border = $value;
     }
