@@ -85,7 +85,8 @@ class DataPaginator extends AbstractWidget
      * Set to an empty array to enforce the preset page size!
      * 
      * @uxon-property page_sizes
-     * @uxon-type array
+     * @uxon-type integer[]
+     * @uxon-template [""]
      * 
      * @param int[] $value
      * @return DataPaginator
