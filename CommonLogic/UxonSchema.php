@@ -10,6 +10,7 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Exceptions\Model\MetaObjectNotFoundError;
 use exface\Core\DataTypes\RelationTypeDataType;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
+use exface\Core\DataTypes\ComparatorDataType;
 
 /**
  * This class provides varios tools to analyse and validate a generic UXON object.
@@ -214,6 +215,9 @@ class UxonSchema implements WorkbenchDependantInterface
             case strcasecmp($firstType, 'metamodel:page') === 0:
                 $options = $this->getMetamodelPageAliases($search);
                 break;
+            case strcasecmp($firstType, 'metamodel:comparator') === 0:
+                $options = $this->getMetamodelComparators($search);
+                break;
             case strcasecmp($firstType, 'metamodel:attribute') === 0:
                 try {
                     $object = $this->getMetaObject($uxon, $path);
@@ -295,11 +299,13 @@ class UxonSchema implements WorkbenchDependantInterface
         }
         
         $values = [];
+        $value_relations = [];
         foreach ($object->getAttributes() as $attr) {
             $alias = ($relPath ? $relPath . RelationPath::RELATION_SEPARATOR : '') . $attr->getAlias();
             $values[] = $alias;
             if ($attr->isRelation() === true) {
-                $values[] = $alias . RelationPath::RELATION_SEPARATOR;
+                // Remember forward-relations to append them later (after alphabetical sorting)
+                $value_relations[] = $alias . RelationPath::RELATION_SEPARATOR;
             }
         }
         // Reverse relations are not attributes, so we need to add them here manually
@@ -307,7 +313,19 @@ class UxonSchema implements WorkbenchDependantInterface
             $values[] = ($relPath ? $relPath . RelationPath::RELATION_SEPARATOR : '') . $rel->getAliasWithModifier() . RelationPath::RELATION_SEPARATOR;
         }
         
+        // Sort attributes and reverse relations alphabetically.
         sort($values);
+        
+        // Now insert forward relations _before_ the corresponding attribute: relation attributes rarely
+        // get used directly, but rather as parts of a relation path.
+        foreach ($value_relations as $val) {
+            $idx = array_search(rtrim($val, RelationPath::RELATION_SEPARATOR), $values);
+            if ($idx !== false) {
+                array_splice($values, $idx, 0, [$val]);
+            } else {
+                $values[] = $val;
+            }
+        }
         
         return $values;
     }
@@ -363,6 +381,15 @@ class UxonSchema implements WorkbenchDependantInterface
         $ds->getColumns()->addFromExpression('ALIAS');
         $ds->dataRead();
         return $ds->getColumns()->get('ALIAS')->getValues(false);
+    }
+    
+    /**
+     * 
+     * @return string[]
+     */
+    protected function getMetamodelComparators() : array
+    {
+        return array_values(ComparatorDataType::getValuesStatic());
     }
     
     /**

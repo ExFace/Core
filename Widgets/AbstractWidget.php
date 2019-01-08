@@ -1242,8 +1242,12 @@ else {
     }
 
     /**
+     * Set to TRUE to not prefill the widget with any action data.
      * 
-     * {@inheritDoc}
+     * @uxon-property do_not_prefill
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
      * @see \exface\Core\Interfaces\WidgetInterface::setDoNotPrefill()
      */
     public function setDoNotPrefill($value)
