@@ -19,5 +19,5 @@ interface iAmResizable extends WidgetInterface
      * @param boolean $value            
      * @return boolean
      */
-    public function setResizable($value) : iAmResizable;
+    public function setResizable(bool $value) : iAmResizable;
 }
