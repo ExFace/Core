@@ -75,7 +75,8 @@ class GoToPage extends ShowWidget
      * ```
      *
      * @uxon-property take_along_filters
-     * @uxon-type WidgetLink[]
+     * @uxon-type object[]
+     * @uxon-template [{"": ""}]
      *
      * @param UxonObject $takeAlongFilters
      * @return ShowWidget
@@ -107,6 +108,7 @@ class GoToPage extends ShowWidget
      * 
      * @uxon-property open_in_new_window
      * @uxon-type bool
+     * @uxon-default false
      * 
      * @param bool|string $value
      * @return \exface\Core\Actions\GoToPage
