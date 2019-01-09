@@ -11,6 +11,10 @@ use exface\Core\Exceptions\Model\MetaObjectNotFoundError;
 use exface\Core\DataTypes\RelationTypeDataType;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 use exface\Core\DataTypes\ComparatorDataType;
+use exface\Core\Interfaces\Actions\ActionInterface;
+use exface\Core\Interfaces\DataTypes\DataTypeInterface;
+use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\Interfaces\Model\BehaviorInterface;
 
 /**
  * This class provides varios tools to analyse and validate a generic UXON object.
@@ -48,14 +52,19 @@ class UxonSchema implements WorkbenchDependantInterface
 {    
     private $entityPropCache = [];
     
+    private $schemaCache = [];
+    
+    private $parentSchema = null;
+    
     private $workbench;
     
     /**
      * 
      * @param WorkbenchInterface $workbench
      */
-    public function __construct(WorkbenchInterface $workbench)
+    public function __construct(WorkbenchInterface $workbench, UxonSchema $parentSchema = null)
     {
+        $this->parentSchema = $parentSchema;
         $this->workbench = $workbench;
     }
     
@@ -75,15 +84,18 @@ class UxonSchema implements WorkbenchDependantInterface
             if (is_numeric($prop) === false) {
                 $propType = $this->getPropertyTypes($rootEntityClass, $prop)[0];
                 if (substr($propType, 0, 1) === '\\') {
-                    $expectedEntityName = $propType;
-                    $expectedEntityName = str_replace('[]', '', $expectedEntityName);
+                    $class = $propType;
+                    $class = str_replace('[]', '', $class);
                 } else {
-                    $expectedEntityName = $rootEntityClass;
+                    $class = $rootEntityClass;
                 }
             } else {
-                $expectedEntityName = $rootEntityClass;
+                $class = $rootEntityClass;
             }
-            return $this->getEntityClass($uxon->getProperty($prop), $path, $expectedEntityName);
+            
+            $schema = $class === $rootEntityClass ? $this : $this->getSchemaForClass($class);
+            
+            return $schema->getEntityClass($uxon->getProperty($prop), $path, $class);
         }
         
         return $rootEntityClass;
@@ -440,8 +452,66 @@ class UxonSchema implements WorkbenchDependantInterface
         return substr($type, 0, 1) === '[' && substr($type, -1) === ']';
     }
     
+    /**
+     * 
+     * @param string $entityClass
+     * @return bool
+     */
     protected function validateEntityClass(string $entityClass) : bool
     {
         return class_exists($entityClass);
+    }
+    
+    /**
+     * Returns the schema instance matching the given entity class: e.g. widget schema for widgets, etc.
+     * 
+     * @param string $entityClass
+     * @return UxonSchema
+     */
+    protected function getSchemaForClass(string $entityClass) : UxonSchema
+    {
+        if (is_subclass_of($entityClass, WidgetInterface::class)) {
+            $class = UxonWidgetSchema::class;
+        } elseif (is_subclass_of($entityClass, ActionInterface::class)) {
+            $class = UxonActionSchema::class;
+        } elseif (is_subclass_of($entityClass, DataTypeInterface::class)) {
+            $class = UxonDatatypeSchema::class;
+        } elseif (is_subclass_of($entityClass, BehaviorInterface::class)) {
+            $class = UxonBehaviorSchema::class;
+        }
+        
+        if ($class === null || is_subclass_of($this, $class)) {
+            return $this;
+        }
+        
+        $cache = $this->schemaCache[$class];
+        if ($cache !== null) {
+            return $cache;
+        } else {
+            $schema = new $class($this->getWorkbench(), $this);
+            $this->schemaCache[$class] = $schema;
+        }
+        
+        return $schema;
+    }
+    
+    /**
+     * Returns TRUE if this schema was instantiated as part of another one (it's parent schema)
+     * 
+     * @return bool
+     */
+    public function hasParentSchema() : bool
+    {
+        return $this->parentSchema !== null;
+    }
+    
+    /**
+     * Returns the parent schema (if exists).
+     * 
+     * @return UxonSchema
+     */
+    public function getParentSchema() : UxonSchema
+    {
+        return $this->parentSchema;
     }
 }
