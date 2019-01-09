@@ -256,7 +256,8 @@ class Container extends AbstractWidget implements iContainOtherWidgets, iCanPrel
      * Widgets will be displayed in the order of definition. By default all widgets will inherit the container's meta object.
      *
      * @uxon-property widgets
-     * @uxon-type \exface\Core\Widgets\AbstractWidget
+     * @uxon-type \exface\Core\Widgets\AbstractWidget[]
+     * @uxon-template [{"": ""}]
      *
      * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::setWidgets()
      */
