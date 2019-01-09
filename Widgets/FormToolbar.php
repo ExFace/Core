@@ -2,6 +2,7 @@
 namespace exface\Core\Widgets;
 
 /**
+ * Special toolbar for Form widgets (by default every toolbar in a Form is a FormToolbar).
  * 
  * @method Form getInputWidget()
  * 
@@ -33,7 +34,11 @@ class FormToolbar extends Toolbar
     }
     
     /**
-     * {@inheritDoc}
+     * Array of button widgets to be placed in the toolbar.
+     * 
+     * @uxon-property buttons
+     * @uxon-type \exface\Core\Widgets\Button[]
+     * @uxon-template [{"action_alias": ""}]
      * 
      * Since buttons are not neccessarily added using FormToolbar::addButton(), but can be
      * added to enclosed button groups directly, the check for required widgets in the form

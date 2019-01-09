@@ -100,7 +100,7 @@ class DataRowGrouper extends AbstractWidget
      * attributes from the meta model, specifying the attribute_alias is simpler.
      * 
      * @uxon-property group_by_column_id
-     * @uxon-type string
+     * @uxon-type uxon:.columns..id
      * 
      * @param string $value
      * @return \exface\Core\Widgets\DataRowGrouper
@@ -202,6 +202,7 @@ class DataRowGrouper extends AbstractWidget
      * 
      * @uxon-property show_counter
      * @uxon-type boolean
+     * @uxon-default false
      * 
      * @param boolean $true_or_false
      * @return \exface\Core\Widgets\DataRowGrouper
@@ -231,7 +232,7 @@ class DataRowGrouper extends AbstractWidget
      * instead of creating a new one.
      * 
      * @uxon-property group_by_attribute_alias
-     * @uxon-type string
+     * @uxon-type metamodel:attribute
      * 
      * @param string $alias
      * @return \exface\Core\Widgets\DataRowGrouper
@@ -247,7 +248,7 @@ class DataRowGrouper extends AbstractWidget
     }
     
     /**
-     * Since the DataRowGrouper basically represents the group header, now width can be set, as it is allways
+     * Since the DataRowGrouper basically represents the group header, no width can be set, as it is allways
      * as wide as the data table.
      * 
      * @see \exface\Core\Widgets\AbstractWidget::setWidth()

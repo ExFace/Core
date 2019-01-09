@@ -7,17 +7,19 @@ use exface\Core\Factories\DataPointerFactory;
 use exface\Core\Events\Widget\OnPrefillChangePropertyEvent;
 
 /**
- * The DiffText widget compares two texts - an original and a new one - an shows a report highlighting the changes.
- * This widget
- * is especially usefull since all objects in ExFace can be converted to a UXON text representation, which can be compared using
- * this widget.
- *
+ * The DiffText widget compares two texts and shows a report highlighting the changes.
+ * 
+ * The texts can either be static or bound to attributes in the meta model via 
+ * `left_attribute_alias` and `right_attribute_alias`. 
+ * 
+ * Although the texts are called "left" and "right", their actual positioning 
+ * depends on the template.
+ * 
  * @author Andrej Kabachnik
  *        
  */
 class DiffText extends AbstractWidget
 {
-
     private $left_attribute_alias = NULL;
 
     private $left_value = NULL;
@@ -52,7 +54,16 @@ class DiffText extends AbstractWidget
     {
         return $this->left_attribute_alias;
     }
-
+    
+    /**
+     * The alias of the attribute, which shall be the source of the left text
+     *
+     * @uxon-property left_attribute_alias
+     * @uxon-type metamodel:attribute
+     *
+     * @param string $value
+     * @return \exface\Core\Widgets\DiffText
+     */
     public function setLeftAttributeAlias($value)
     {
         $this->left_attribute_alias = $value;
@@ -64,6 +75,15 @@ class DiffText extends AbstractWidget
         return $this->right_attribute_alias;
     }
 
+    /**
+     * The alias of the attribute, which shall be the source of the right text
+     * 
+     * @uxon-property right_attribute_alias
+     * @uxon-type metamodel:attribute
+     * 
+     * @param string $value
+     * @return \exface\Core\Widgets\DiffText
+     */
     public function setRightAttributeAlias($value)
     {
         $this->right_attribute_alias = $value;

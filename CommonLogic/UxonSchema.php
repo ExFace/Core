@@ -26,6 +26,8 @@ use exface\Core\Interfaces\Model\BehaviorInterface;
  * - integer
  * - date
  * - datetime
+ * - object
+ * - array
  * - icon
  * - color
  * - uri

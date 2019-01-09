@@ -50,6 +50,7 @@ class Display extends Value implements iDisplayValue
      *
      * @uxon-property disable_formatting
      * @uxon-type boolean
+     * @uxon-default false
      *
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\iDisplayValue::setDisableFormatting()
@@ -74,6 +75,7 @@ class Display extends Value implements iDisplayValue
      *
      * @uxon-property hide_if_empty
      * @uxon-type boolean
+     * @uxon-default false
      *
      * @param bool $value
      * @return Value

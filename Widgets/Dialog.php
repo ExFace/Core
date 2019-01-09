@@ -74,12 +74,18 @@ class Dialog extends Form implements iAmClosable, iHaveContextualHelp, iHaveHead
 
     /**
      * If set to TRUE, the automatically generated close button will not be shown in this dialog
+     * 
+     * @uxon-property hide_close_button
+     * @uxon-type boolean
+     * @uxon-default false
      *
-     * @param boolean $value            
+     * @param boolean $value 
+     * @return Dialog           
      */
     public function setHideCloseButton($value)
     {
         $this->hide_close_button = $value;
+        return $this;
     }
 
     /**
@@ -137,6 +143,16 @@ class Dialog extends Form implements iAmClosable, iHaveContextualHelp, iHaveHead
         return $this->maximizable;
     }
 
+    /**
+     * Set to FALSE to prevent maximization of the dialog.
+     * 
+     * @uxon-property maximizable
+     * @uxon-type boolean
+     * @uxon-default true
+     * 
+     * @param boolean|string $value
+     * @return \exface\Core\Widgets\Dialog
+     */
     public function setMaximizable($value)
     {
         $this->maximizable = BooleanDataType::cast($value);
@@ -148,6 +164,17 @@ class Dialog extends Form implements iAmClosable, iHaveContextualHelp, iHaveHead
         return $this->maximized;
     }
 
+    /**
+     * Makes the dialog open maximized (TRUE) or regular (FALSE).
+     * 
+     * The default behavior depends on the template.
+     * 
+     * @uxon-property maximized
+     * @uxon-type boolean
+     * 
+     * @param boolean|string $value
+     * @return \exface\Core\Widgets\Dialog
+     */
     public function setMaximized($value)
     {
         $this->maximized = BooleanDataType::cast($value);
@@ -278,10 +305,10 @@ class Dialog extends Form implements iAmClosable, iHaveContextualHelp, iHaveHead
 
     /**
      * Set to TRUE to remove the contextual help button.
-     * Default: FALSE.
      *
      * @uxon-property hide_help_button
      * @uxon-type boolean
+     * @uxon-default false
      *
      * {@inheritdoc}
      *
@@ -318,6 +345,11 @@ class Dialog extends Form implements iAmClosable, iHaveContextualHelp, iHaveHead
     }
     
     /**
+     * Defines the DialogHeader widget.
+     * 
+     * @uxon-property header
+     * @uxon-type \exface\Core\Widgets\DialogHeader
+     * @uxon-template {"widgets": [{"": ""}]}
      * 
      * @param UxonObject|DialogHeader $uxon_or_widget
      * @throws WidgetConfigurationError
@@ -350,6 +382,16 @@ class Dialog extends Form implements iAmClosable, iHaveContextualHelp, iHaveHead
         return $this->hide_header;
     }
     
+    /**
+     * Forces the dialog header to hide (TRUE) or show (FALSE)
+     * 
+     * By default, the template decides, if the header should be shown or not.
+     * 
+     * @uxon-property hide_header
+     * @uxon-type boolean
+     * 
+     * @see \exface\Core\Interfaces\Widgets\iHaveHeader::setHideHeader()
+     */
     public function setHideHeader($boolean)
     {
         $this->hide_header = BooleanDataType::cast($boolean);
