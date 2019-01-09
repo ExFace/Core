@@ -140,14 +140,13 @@ JS;
     	var child;
     	for (var i in node.childs) {
     		child = node.childs[i];
-    		if (child.type === 'string' || child.type === 'auto') {
+    		if (child.type === 'string' || child.type === 'auto' && child.getField()) {
     			child.focus('value');
     			return;
     		} else {
     			{$this->buildJsFunctionPrefix()}_focusFirstChildValue(child);
     		}
     	}
-    	return;
     }
 
     $(function() {
