@@ -17,7 +17,6 @@ use exface\Core\Events\Widget\OnPrefillChangePropertyEvent;
  */
 class Html extends Display
 {
-
     private $css = null;
 
     private $javascript = null;
@@ -142,6 +141,7 @@ class Html extends Display
      * 
      * @uxon-property margins
      * @uxon-type boolean
+     * @uxon-default
      * 
      * @param boolean $margins
      */
@@ -180,7 +180,7 @@ class Html extends Display
      * Sets a static base URL: all relative links will be resolved relative to this URL.
      * 
      * @uxon-property base_url
-     * @uxon-type string
+     * @uxon-type uri
      * 
      * @param string $url
      * @return Html
@@ -213,7 +213,7 @@ class Html extends Display
      * Sets a dynamic base URL to be fetched from prefill data.
      * 
      * @uxon-property base_url
-     * @uxon-type string
+     * @uxon-type metamodel:attribute
      * 
      * @param string $string
      * @return Html

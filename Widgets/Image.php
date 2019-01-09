@@ -24,12 +24,16 @@ class Image extends Display implements iShowImage, iCanBeAligned, iCanUseProxyTe
     use iCanBeAlignedTrait;
     use iCanUseProxyTemplateTrait;
     
-    
     public function getUri() : ?string
     {
         return $this->getValue();
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\AbstractWidget::getValue()
+     */
     public function getValue()
     {
         $uri = parent::getValue();
@@ -39,7 +43,16 @@ class Image extends Display implements iShowImage, iCanBeAligned, iCanUseProxyTe
         return $uri;
     }
 
-    
+    /**
+     * A fixed image URI to be displayed.
+     * 
+     * Alternatively you can also use the `value` property - the result is the same.
+     * 
+     * @uxon-property uri
+     * @uxon-type uri
+     * 
+     * @see \exface\Core\Interfaces\Widgets\iShowImage::setUri()
+     */
     public function setUri(string $value) : iShowImage
     {
         return $this->setValue($value);

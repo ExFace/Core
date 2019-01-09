@@ -4,7 +4,7 @@ namespace exface\Core\Widgets;
 use exface\Core\DataTypes\JsonDataType;
 
 /**
- * This is a special text input widget for JSON editing.
+ * A special text input widget for JSON editing.
  * 
  * Templates may have a WYSIWYG editor for JSON or should fall back to a regular
  * text input.
@@ -46,7 +46,7 @@ class InputJson extends InputText
     }
     
     /**
-     * Sets the JSON schema for the content of the widget.
+     * URI for the JSON schema to be used for validation in the widget.
      * 
      * @uxon-property schema
      * @uxon-type string

@@ -4,6 +4,12 @@ namespace exface\Core\Widgets;
 use exface\Core\DataTypes\NumberDataType;
 use exface\Core\DataTypes\IntegerDataType;
 
+/**
+ * An input for decimal numbers with configurable formatting, precision, min/max values, etc.
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
 class InputNumber extends Input
 {
 

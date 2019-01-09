@@ -15,9 +15,31 @@ use exface\Core\DataTypes\ComparatorDataType;
 /**
  * This class provides varios tools to analyse and validate a generic UXON object.
  * 
+ * The generic UXON object supports the following value types:
+ * 
+ * - string
+ * - number
+ * - integer
+ * - date
+ * - datetime
+ * - icon
+ * - color
+ * - uri
+ * - metamodel:expression
+ * - metamodel:object
+ * - metamodel:attribute
+ * - metamodel:action
+ * - metamodel:page
+ * - metamodel:comparator
+ * - uxon:path - where path is a JSONpath relative to the current field
+ * - [enum,values] - enumeration of commma-separated values (in square brackets)
+ * 
  * There are dedicated schema-classes for some UXON schemas:
  * 
  * @see UxonWidgetSchema
+ * @see UxonActionSchema
+ * @see UxonDatatypeSchema
+ * @see UxonBehaviorSchema
  * 
  * @author Andrej Kabachnik
  *

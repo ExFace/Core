@@ -1,6 +1,12 @@
 <?php
 namespace exface\Core\Widgets;
 
+/**
+ * An invisible input field - a simpler and mostly faster alternative to an input with visibility=hidden.
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
 class InputHidden extends Input
 {
     protected function init()
@@ -29,4 +35,3 @@ class InputHidden extends Input
         return $required;
     }
 }
-?>
