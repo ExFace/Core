@@ -5,29 +5,20 @@ use exface\Core\Interfaces\Widgets\iTakeInput;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\Interfaces\Widgets\iHaveDefaultValue;
 use exface\Core\DataTypes\BooleanDataType;
-use exface\Core\DataTypes\NumberDataType;
-use exface\Core\Interfaces\Widgets\iCanBeAligned;
 
+/**
+ * A generic input field: single line accepting any set of characters.
+ * 
+ * @author Andrej Kabachnik
+ *
+ */
 class Input extends Value implements iTakeInput, iHaveDefaultValue
 {
-
     private $required = null;
-
-    private $validator = null;
 
     private $readonly = false;
 
     private $display_only = false;
-
-    public function getValidator()
-    {
-        return $this->validator;
-    }
-
-    public function setValidator($value)
-    {
-        $this->validator = $value;
-    }
 
     /**
      * Input widgets are considered as required if they are explicitly marked as such or if the represent a meta attribute,
@@ -61,6 +52,7 @@ class Input extends Value implements iTakeInput, iHaveDefaultValue
      * 
      * @uxon-property required
      * @uxon-type boolean
+     * @uxon-default false
      * 
      * @see \exface\Core\Interfaces\Widgets\iCanBeRequired::setRequired()
      */
@@ -110,6 +102,7 @@ class Input extends Value implements iTakeInput, iHaveDefaultValue
      * 
      * @uxon-property disabled
      * @uxon-type boolean
+     * @uxon-default false
      * 
      * {@inheritDoc}
      * @see \exface\Core\Widgets\AbstractWidget::setDisabled()
@@ -133,6 +126,7 @@ class Input extends Value implements iTakeInput, iHaveDefaultValue
      * Set to TRUE to make the widget inactive and ignored by actions - FALSE by default.
      * 
      * The following states of input widgets are available:
+     * 
      * - display_only = true - active (user can interact with the widget), but not considered as input for actions
      * - disabled = true - inactive (user cannot interact with the widget), but considered as input for action
      * - readonly = true - inactive and not considered as action input (same as display_only + disabled)
@@ -141,6 +135,7 @@ class Input extends Value implements iTakeInput, iHaveDefaultValue
      * 
      * @uxon-property readonly
      * @uxon-type boolean
+     * @uxon-default false
      * 
      * @see \exface\Core\Interfaces\Widgets\iTakeInput::setReadonly()
      */
@@ -204,6 +199,7 @@ class Input extends Value implements iTakeInput, iHaveDefaultValue
      * 
      * @uxon-property ignore_default_value
      * @uxon-type boolean
+     * @uxon-default false
      *
      * @see \exface\Core\Interfaces\Widgets\iHaveValue::setIgnoreDefaultValue()
      */
@@ -247,6 +243,7 @@ class Input extends Value implements iTakeInput, iHaveDefaultValue
      * Makes the widget display-only if set to TRUE (= interactive, but being ignored by most actions) - FALSE by default.
      * 
      * The following states of input widgets are available:
+     * 
      * - display_only = true - active (user can interact with the widget), but not considered as input for actions
      * - disabled = true - inactive (user cannot interact with the widget), but considered as input for action
      * - readonly = true - inactive and not considered as action input (same as display_only + disabled)
@@ -255,6 +252,7 @@ class Input extends Value implements iTakeInput, iHaveDefaultValue
      * 
      * @uxon-property display_only
      * @uxon-type boolean
+     * @uxon-default false
      * 
      * @see \exface\Core\Interfaces\Widgets\iTakeInput::setDisplayOnly()
      */

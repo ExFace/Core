@@ -93,6 +93,10 @@ class Condition implements ConditionInterface
     }
 
     /**
+     * The left side of the condition.
+     * 
+     * @uxon-property attribute_alias
+     * @uxon-type metamodel:attribute
      * 
      * @param ExpressionInterface $expression
      * @return ConditionInterface
@@ -114,6 +118,10 @@ class Condition implements ConditionInterface
     }
 
     /**
+     * The right side of the condition.
+     * 
+     * @uxon-property value
+     * @uxon-type metamodel:expression
      * 
      * @param string $value
      * @throws RangeException
@@ -134,9 +142,9 @@ class Condition implements ConditionInterface
     }
 
     /**
-     *
-     * {@inheritdoc}
-     * @see ConditionInterface::getComparator()
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\ConditionInterface::getComparator()
      */
     public function getComparator() : string
     {
@@ -224,6 +232,11 @@ class Condition implements ConditionInterface
     }
 
     /**
+     * The comparison operator used in this condition
+     * 
+     * @uxon-property comparator
+     * @uxon-type metamodel:comparator
+     * @uxon-default =
      * 
      * @param string $value
      * @throws UnexpectedValueException
@@ -278,8 +291,8 @@ class Condition implements ConditionInterface
 
     /**
      * 
-     * {@inheritdoc}
-     * @see ConditionInterface::getAttributeAlias()
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\ConditionInterface::getAttributeAlias()
      */
     public function getAttributeAlias()
     {

@@ -23,6 +23,15 @@ class ImageCarousel extends DataCards implements iCanUseProxyTemplate
         return $this->image_url_column_id;
     }
 
+    /**
+     * The id of the column holding image URLs
+     * 
+     * @uxon-property image_url_column_id
+     * @uxon-type uxon:.columns..id
+     * 
+     * @param string $value
+     * @return \exface\Core\Widgets\ImageCarousel
+     */
     public function setImageUrlColumnId($value)
     {
         $this->image_url_column_id = $value;
@@ -34,6 +43,15 @@ class ImageCarousel extends DataCards implements iCanUseProxyTemplate
         return $this->image_title_column_id;
     }
 
+    /**
+     * The id of the column holding image titles
+     * 
+     * @uxon-property image_title_column_id
+     * @uxon-type uxon:.columns..id
+     * 
+     * @param string $value
+     * @return \exface\Core\Widgets\ImageCarousel
+     */
     public function setImageTitleColumnId($value)
     {
         $this->image_title_column_id = $value;

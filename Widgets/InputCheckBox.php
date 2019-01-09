@@ -10,7 +10,11 @@ namespace exface\Core\Widgets;
 class InputCheckBox extends Input
 {
 
-    public function transformIntoSelect()
+    /**
+     * 
+     * @return InputSelect
+     */
+    public function transformIntoSelect() : InputSelect
     {
         $parent = $this->getParent();
         $select = $this->getPage()->createWidget('InputSelect', $parent);

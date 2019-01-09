@@ -35,6 +35,7 @@ class Icon extends Display implements iHaveColor
      * 
      * @uxon-property icon_size
      * @uxon-type [small,normal,big]
+     * @uxon-default normal
      * 
      * @param string $value
      * @return \exface\Core\Widgets\Icon
@@ -56,6 +57,8 @@ class Icon extends Display implements iHaveColor
     
     /**
      * Sets the position of the icon relativ to the caption/value (LEFT, RIGHT, CENTER).
+     * 
+     * The default setting depends on the template used.
      * 
      * @uxon-property icon_position
      * @uxon-type [left,right,center]
@@ -113,7 +116,7 @@ class Icon extends Display implements iHaveColor
      * @link https://www.w3schools.com/colors/colors_groups.asp
      *
      * @uxon-property color
-     * @uxon-type string
+     * @uxon-type color|string
      *
      * {@inheritdoc}
      * @see iHaveColor::setColor()
@@ -137,7 +140,7 @@ class Icon extends Display implements iHaveColor
      * Sets the name of the icon to be displayed - any name supported by the template is OK.
      * 
      * @uxon-property icon
-     * @uxon-type string
+     * @uxon-type icon|string
      * 
      * @param string $value
      * @return Icon
