@@ -1,6 +1,9 @@
 <?php
 namespace exface\Core\CommonLogic;
 
+use exface\Core\Factories\SelectorFactory;
+use exface\Core\Factories\ActionFactory;
+
 /**
  * UXON-schema class for actions.
  * 
@@ -22,7 +25,7 @@ class UxonActionSchema extends UxonSchema
         
         foreach ($uxon as $key => $value) {
             if (strcasecmp($key, 'alias') === 0) {
-                $w = $this->getEntityClassFromWidgetType($value);
+                $w = $this->getEntityClassFromSelector($value);
                 if ($this->validateEntityClass($w) === true) {
                     $name = $w;
                 }
@@ -34,5 +37,22 @@ class UxonActionSchema extends UxonSchema
         }
         
         return $name;
+    }
+    
+    /**
+     * Returns the entity class for a given action selector (e.g. alias).
+     *
+     * @param string $selectorString
+     * @return string
+     */
+    protected function getEntityClassFromSelector(string $selectorString) : string
+    {
+        try {
+            $selector = SelectorFactory::createActionSelector($this->getWorkbench(), $selectorString);
+            $action = ActionFactory::create($selector);
+        } catch (\Throwable $e) {
+            return '\exface\Core\CommonLogic\AbstractAction';
+        }
+        return get_class($action);
     }
 }
