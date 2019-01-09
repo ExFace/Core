@@ -154,6 +154,7 @@ class DataRowGrouper extends AbstractWidget
      * 
      * @uxon-property expand_all_groups
      * @uxon-type boolean
+     * @uxon-default true
      * 
      * @param boolean $true_or_false
      * @return \exface\Core\Widgets\DataRowGrouper
@@ -178,6 +179,7 @@ class DataRowGrouper extends AbstractWidget
      *
      * @uxon-property expand_all_groups
      * @uxon-type boolean
+     * @uxon-default false
      *
      * @param boolean $true_or_false
      * @return \exface\Core\Widgets\DataRowGrouper
