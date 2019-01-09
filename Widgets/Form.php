@@ -10,6 +10,7 @@ use exface\Core\Factories\WidgetFactory;
 
 /**
  * A Form is a Panel with buttons.
+ * 
  * Forms and their derivatives provide input data for actions.
  *
  * While having similar purpose as HTML forms, ExFace forms are not the same! They can be nested, they may include tabs,

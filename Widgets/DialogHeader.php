@@ -33,6 +33,7 @@ class DialogHeader extends Form
     }
 
     /**
+     * 
      * @param boolean $autogenerate
      * @return DialogHeader
      */
@@ -80,6 +81,10 @@ class DialogHeader extends Form
     }
     
     /**
+     * The attribute to show as dialog title.
+     * 
+     * @uxon-property title_attribute_alias
+     * @uxon-type metamodel:attribute
      * 
      * @param string $alias
      * @return \exface\Core\Widgets\DialogHeader

@@ -81,6 +81,7 @@ class DataToolbar extends Toolbar
      * 
      * @uxon-property include_no_extra_actions
      * @uxon-value boolean
+     * @uxon-default false
      * 
      * @param boolean $disable_autoinclude_actions
      * @return DataToolbar
@@ -145,8 +146,6 @@ class DataToolbar extends Toolbar
     
     /**
      * Set to TRUE to automatically include a button group with actions available in the object basket.
-     * 
-     * Defaults to FALSE.
      * 
      * @uxon-property include_object_basket_actions
      * @uxon-type boolean

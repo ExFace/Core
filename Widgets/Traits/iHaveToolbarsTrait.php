@@ -47,7 +47,8 @@ trait iHaveToolbarsTrait {
      * DataTable widget will typically have a top and a bottom toolbar. 
      * 
      * @uxon-property toolbars
-     * @uxon-type \exface\Core\Widgets\Toolbar
+     * @uxon-type \exface\Core\Widgets\Toolbar[]
+     * @uxon-template [{"buttons": [{"action_alias": ""}] }]
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\iHaveToolbars::setToolbars()

@@ -2,6 +2,7 @@
 namespace exface\Core\Widgets;
 
 /**
+ * A special toolbar widget for Dialogs (by default all toolbars in a dialog are DialogToolbars).
  * 
  * @method Dialog getInputWidget()
  * 

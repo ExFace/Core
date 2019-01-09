@@ -93,7 +93,7 @@ use exface\Core\Interfaces\Widgets\iTakeInput;
 class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelect, iHaveContextMenu, iTakeInput
 {
 
-    private $show_filter_row = false;
+    private $show_filter_row = null;
 
     private $show_row_numbers = false;
 
@@ -295,6 +295,7 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
      *
      * @uxon-property context_menu_enabled
      * @uxon-type boolean
+     * @uxon-default true
      *
      * @param boolean $value            
      * @return DataTable
@@ -337,6 +338,7 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
      *
      * @uxon-property header_sort_multiple
      * @uxon-type boolean
+     * @uxon-default false
      *
      * @param boolean $value            
      * @return DataTable
@@ -360,6 +362,16 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
         return $this->row_details_action;
     }
 
+    /**
+     * The action to render the row details.
+     * 
+     * @uxon-property row_details_action
+     * @uxon-type metamodel:action
+     * @uxon-default exface.Core.ShowWidget
+     * 
+     * @param string $value
+     * @return \exface\Core\Widgets\DataTable
+     */
     public function setRowDetailsAction($value)
     {
         $this->row_details_action = $value;
@@ -376,6 +388,7 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
      *
      * @uxon-property show_row_numbers
      * @uxon-type boolean
+     * @uxon-default false
      *
      * @param boolean $value            
      * @return DataTable
@@ -392,11 +405,11 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
     }
 
     /**
-     * Set to TRUE to disable text wrapping in all columns.
-     * Each column will have only one line then.
+     * Set to FALSE to enable text wrapping in all columns.
      *
      * @uxon-property nowrap
      * @uxon-type boolean
+     * @uxon-default true
      *
      * @param boolean $value            
      * @return \exface\Core\Widgets\DataTable
@@ -417,6 +430,7 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
      *
      * @uxon-property striped
      * @uxon-type boolean
+     * @uxon-default true
      *
      * @param boolean $value            
      * @return \exface\Core\Widgets\DataTable
@@ -442,6 +456,7 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
      *
      * @uxon-property auto_row_height
      * @uxon-type boolean
+     * @uxon-default true
      *
      * @param boolean $value            
      * @return \exface\Core\Widgets\DataTable
@@ -462,6 +477,7 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
      *
      * @uxon-property multi_select
      * @uxon-type boolean
+     * @uxon-default false
      *
      * @see \exface\Core\Interfaces\Widgets\iSupportMultiSelect::setMultiSelect()
      */
@@ -544,6 +560,7 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
      *
      * @uxon-property multi_select_all_selected
      * @uxon-type boolean
+     * @uxon-default false
      *
      * @param boolean $true_or_false            
      * @return DataTable
@@ -634,6 +651,7 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
      * 
      * @uxon-property required
      * @uxon-type boolean
+     * @uxon-default false
      * 
      * @see \exface\Core\Interfaces\Widgets\iCanBeRequired::setRequired()
      */
@@ -658,6 +676,7 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
      * 
      * @uxon-property display_only
      * @uxon-type boolean
+     * @uxon-default false
      * 
      * @see \exface\Core\Interfaces\Widgets\iTakeInput::setDisplayOnly()
      */

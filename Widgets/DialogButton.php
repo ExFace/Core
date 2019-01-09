@@ -6,11 +6,12 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 
 /**
  * A special type of button to use in dialogs.
- * Additionally to the normal button functionality
- * this button can explicitly control the dialog it belongs to. Thus, the user can decide whether
- * the dialog is to be closed after the button's action is performed or not.
+ * 
+ * Additionally to the normal button functionality this button can explicitly control 
+ * the dialog it belongs to. Thus, the user can decide whether the dialog is to be closed 
+ * after the button's action is performed or not.
  *
- * @author PATRIOT
+ * @author Andrej Kabachnik
  *        
  */
 class DialogButton extends Button
@@ -34,6 +35,7 @@ class DialogButton extends Button
      * 
      * @uxon-property close_dialog_after_action_succeeds
      * @uxon-type boolean 
+     * @uxon-default true
      * 
      * @param bool|int|string $value
      * @return DialogButton
@@ -58,8 +60,9 @@ class DialogButton extends Button
      * 
      * @uxon-property close_dialog_after_action_fails
      * @uxon-type boolean 
+     * @uxon-default false
      * 
-     * @param bool|int|string $value
+     * @param bool|string $value
      * @return DialogButton
      */
     public function setCloseDialogAfterActionFails($value) : DialogButton
@@ -74,7 +77,7 @@ class DialogButton extends Button
      * @uxon-property close_dialog_after_action_succeeds
      * @uxon-type boolean
      *
-     * @param bool|int|string $value
+     * @param bool|string $value
      * @return DialogButton
      */
     public function setCloseDialog($value) : DialogButton
