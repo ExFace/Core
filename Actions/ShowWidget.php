@@ -151,9 +151,17 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
     }
 
     /**
+     * Defines the widget to be shown.
+     * 
+     * By default, the widget is based on the object of the action. Use the
+     * `object_alias` widget property to specify another object - in this
+     * case the workbench will try to find relations between this object and
+     * the input data in order to use the latter. Alternatively you can use 
+     * an `input_mapper` to specify, how input data is used.
      * 
      * @uxon-property widget
      * @uxon-type \exface\Core\Widgets\Container
+     * @uxon-template {"widget_type": ""}
      * 
      * {@inheritdoc}
      * @see \exface\Core\Interfaces\Actions\iShowWidget::setWidget()
@@ -383,7 +391,7 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
      * page will be used.
      * 
      * @uxon-property widget_id
-     * @uxon-type string
+     * @uxon-type uxon:$..id
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Actions\iReferenceWidget::setWidgetId()
@@ -409,6 +417,7 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
      * 
      * @uxon-property prefill_with_filter_context
      * @uxon-type boolean
+     * @uxon-default true
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Actions\iShowWidget::setPrefillWithFilterContext()
@@ -434,6 +443,7 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
      * 
      * @uxon-property prefill_with_input_data
      * @uxon-type boolean
+     * @uxon-default true
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Actions\iShowWidget::setPrefillWithInputData()
@@ -489,6 +499,9 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
      * and will attempt to specify the id, they see first. Since most CMS show
      * their internal ids, that typically are not UUIDs, we just allow both ids
      * here.
+     * 
+     * @uxon-property page_alias
+     * @uxon-type metamodel:page
      * 
      * @param string $value
      * @return iReferenceWidget
@@ -581,6 +594,7 @@ class ShowWidget extends AbstractAction implements iShowWidget, iReferenceWidget
      * 
      * @uxon-property prefill_with_prefill_data
      * @uxon-type boolean
+     * @uxon-default true
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Actions\iUsePrefillData::setPrefillWithPrefillData()
