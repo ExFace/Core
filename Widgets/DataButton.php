@@ -16,6 +16,8 @@ class DataButton extends Button
 {
 
     private $bind_to_mouse_action = null;
+    
+    private $bind_to_single_result = false;
 
     /**
      * Returns the mouse action, this button is bound to (one of the EXF_MOUSE_ACTION_*** constants) or NULL if the button
@@ -113,5 +115,29 @@ class DataButton extends Button
         $uxon->setProperty('bind_to_mouse_action', $this->getBindToMouseAction());
         return $uxon;
     }
+    
+    /**
+     *
+     * @return bool
+     */
+    public function isBoundToSingleResult() : bool
+    {
+        return $this->bind_to_single_result;
+    }
+    
+    /**
+     * Automatically performs the button's action if the input data widget loads a single result.
+     * 
+     * @uxon-property bind_to_single_result
+     * @uxon-type boolean
+     * @uxon-default false 
+     * 
+     * @param bool $value
+     * @return DataButton
+     */
+    public function setBindToSingleResult(bool $value) : DataButton
+    {
+        $this->bind_to_single_result = $value;
+        return $this;
+    }
 }
-?>
