@@ -51,9 +51,9 @@ class SplitVertical extends Container
      * is possible: simply add any type of widget to the panels or widgets array and see 
      * them be displayed in the split.
      * 
-     * @uxon-property widgets
+     * @uxon-property panels
      * @uxon-type \exface\Core\Widgets\SplitPanel[]|\exface\Core\Widgets\AbstractWidget[]
-     * @uxon-template [{"widgets": [{"widget_type": ""}]}]
+     * @uxon-template [{"caption": "", "widgets": [{"": ""}]}]
      *
      * @param UxonObject|SplitPanel|AbstractWidget $widget_or_uxon_array
      * @return \exface\Core\Widgets\SplitVertical
@@ -73,7 +73,7 @@ class SplitVertical extends Container
      * 
      * @uxon-property widgets
      * @uxon-type \exface\Core\Widgets\SplitPanel[]|\exface\Core\Widgets\AbstractWidget[]
-     * @uxon-template [{"widgets": [{"widget_type": ""}]}]
+     * @uxon-template [{"widgets": [{"": ""}]}]
      *
      * @see \exface\Core\Widgets\Container::setWidgets()
      */
