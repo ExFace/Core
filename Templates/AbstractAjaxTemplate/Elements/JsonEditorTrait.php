@@ -137,16 +137,20 @@ JS;
     }
   
     function {$this->buildJsFunctionPrefix()}_focusFirstChildValue(node) {
-    	var child;
+    	var child, found;
     	for (var i in node.childs) {
     		child = node.childs[i];
-    		if (child.type === 'string' || child.type === 'auto' && child.getField()) {
-    			child.focus('value');
-    			return;
+    		if (child.type === 'string' || child.type === 'auto') {
+    			child.focus(child.getField() ? 'value' : 'field');
+                return child;
     		} else {
-    			{$this->buildJsFunctionPrefix()}_focusFirstChildValue(child);
+    			found = {$this->buildJsFunctionPrefix()}_focusFirstChildValue(child);
+                if (found) {
+                    return found;
+                }
     		}
     	}
+    	return false;
     }
 
     $(function() {
