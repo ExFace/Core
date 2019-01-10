@@ -38,7 +38,7 @@ use exface\Core\Interfaces\Actions\iShowWidget;
  * Many widgets like Chart, InputComboTable, etc. contain internal Data sub-widgets, that define the data set used
  * by these widgets. Datas are much like tables: you can define columns, sorters, filters, pagination rules, etc.
  * 
- * @method DataButton[] getButtons()
+ * @method DataButton[] getButtons(callable $filter_callback = null)
  * @method DataToolbar[] getToolbars()
  * @method DataToolbar getToolbarMain()
  *
@@ -63,6 +63,7 @@ class Data
 {
     use iHaveButtonsAndToolbarsTrait {
         prepareDataSheetToPreload as prepareDataSheetToPreloadViaTrait;
+        setButtons as setButtonsViaTrait;
     }
     use iCanPreloadDataTrait;
     use iSupportLazyLoadingTrait {
@@ -1629,5 +1630,21 @@ class Data
         }
         
         return $dataSheet;
+    }
+    
+    /**
+     * An array of buttons to be placed in the main toolbar of the widget.
+     * 
+     * @uxon-property buttons
+     * @uxon-type \exface\Core\Widgets\DataButton[]
+     * @uxon-template [{"action_alias": ""}]
+     * 
+     * @see \exface\Core\Interfaces\Widgets\iHaveButtons::setButtons()
+     */
+    public function setButtons($buttons)
+    {
+        // This method is just here for it's annotations: otherwise the uxon-type would
+        // be Button[] instead of DataButton[]
+        return $this->setButtonsViaTrait($buttons);
     }
 }
