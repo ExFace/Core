@@ -2,7 +2,6 @@
 namespace exface\Core\QueryBuilders;
 
 use exface\Core\Exceptions\QueryBuilderException;
-use exface\Core\CommonLogic\AbstractDataConnector;
 use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\DataTypes\DateDataType;
 use exface\Core\CommonLogic\Model\Aggregator;
@@ -131,7 +130,7 @@ class MySqlBuilder extends AbstractSqlBuilder
             }
         }
         $select = implode(', ', array_unique($selects));
-        $enrichment_select = 'EXFCOREQ.*' . ($enrichment_select ? ', ' . substr($enrichment_select, 2) : '');
+        $enrichment_select = 'EXFCOREQ' . $this->getAliasDelim() . '*' . ($enrichment_select ? ', ' . substr($enrichment_select, 2) : '');
         // FROM
         $from = $this->buildSqlFrom();
         // JOINs
@@ -279,7 +278,7 @@ class MySqlBuilder extends AbstractSqlBuilder
         if (! $where)
             throw new QueryBuilderException('Cannot perform update on all objects "' . $this->main_object->getAlias() . '"! Forbidden operation!');
         
-        $sql = 'DELETE FROM ' . $this->getMainObject()->getDataAddress() . str_replace($this->getMainObject()->getAlias() . '.', '', $where);
+        $sql = 'DELETE FROM ' . $this->getMainObject()->getDataAddress() . str_replace($this->getMainObject()->getAlias() . $this->getAliasDelim(), '', $where);
         $query = $data_connection->runSql($sql);
         return new DataQueryResultData([], $query->countAffectedRows());
     }

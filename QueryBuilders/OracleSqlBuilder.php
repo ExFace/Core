@@ -298,7 +298,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
                 }
             }
             $select = substr($select, 2);
-            $enrichment_select = 'EXFCOREQ.*' . ($enrichment_select ? ', ' . substr($enrichment_select, 2) : '');
+            $enrichment_select = 'EXFCOREQ' . $this->getAliasDelim() . '*' . ($enrichment_select ? ', ' . substr($enrichment_select, 2) : '');
             // FROM
             $from = $this->buildSqlFrom();
             // JOINs
@@ -393,7 +393,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
     protected function buildSqlOrderBy(\exface\Core\CommonLogic\QueryBuilder\QueryPartSorter $qpart, $select_from = null)
     {
         if ($qpart->getDataAddressProperty("ORDER_BY")) {
-            $output = ($select_from ? $select_from : $this->getShortAlias($qpart->getAttribute()->getRelationPath()->toString())) . '.' . $qpart->getDataAddressProperty("ORDER_BY");
+            $output = ($select_from ? $select_from : $this->getShortAlias($qpart->getAttribute()->getRelationPath()->toString())) . $this->getAliasDelim() . $qpart->getDataAddressProperty("ORDER_BY");
         } else {
             $output = '"' . $this->getShortAlias($qpart->getColumnKey()) . '"';
             
@@ -540,7 +540,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
             } else {
                 $columns[] = $this->getMainObject()->getUidAttribute()->getDataAddress();
                 foreach ($values as $nr => $row) {
-                    $values[$nr][$this->getMainObject()->getUidAttribute()->getDataAddress()] = $this->getPrimaryKeySequence() . '.NEXTVAL';
+                    $values[$nr][$this->getMainObject()->getUidAttribute()->getDataAddress()] = $this->getPrimaryKeySequence() . $this->getAliasDelim() . 'NEXTVAL';
                 }
             }
         }
