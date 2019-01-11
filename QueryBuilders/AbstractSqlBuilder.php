@@ -454,7 +454,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             if ($qpart->getDataAddressProperty('SQL_UPDATE_DATA_ADDRESS')){
                 $column = str_replace('[#~alias#]', $table_alias, $qpart->getDataAddressProperty('SQL_UPDATE_DATA_ADDRESS'));
             } else {
-                $column = $table_alias . '.' . $attr->getDataAddress();
+                $column = $table_alias . $this->getAliasDelim() . $attr->getDataAddress();
             }
             
             $custom_update_sql = $qpart->getDataAddressProperty('SQL_UPDATE');
@@ -501,7 +501,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                     }
                 }
                 // See comment about CASE-based updates a few lines above
-                // $updates_by_filter[] = $this->getShortAlias($this->getMainObject()->getAlias()) . '.' . $attr->getDataAddress() . " = CASE " . $this->getMainObject()->getUidAttribute()->getDataAddress() . " \n" . implode($cases) . " END";
+                // $updates_by_filter[] = $this->getShortAlias($this->getMainObject()->getAlias()) . $this->getAliasDelim() . $attr->getDataAddress() . " = CASE " . $this->getMainObject()->getUidAttribute()->getDataAddress() . " \n" . implode($cases) . " END";
             }
         }
         
@@ -736,7 +736,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             // otherwise create a regular select
             if ($select_column) {
                 // if the column to select is explicitly defined, just select it
-                $output = $select_from . '.' . $select_column;
+                $output = $select_from . $this->getAliasDelim() . $select_column;
             } elseif ($this->checkForSqlStatement($attribute->getDataAddress())) {
                 // see if the attribute is a statement. If so, just replace placeholders
                 $output = $this->replacePlaceholdersInSqlAddress($attribute->getDataAddress(), $qpart->getAttribute()->getRelationPath(), ['~alias' => $select_from], $select_from);
@@ -748,7 +748,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 if (! $data_address = $attribute->getDataAddressProperty('SQL_SELECT_DATA_ADDRESS')){
                     $data_address = $attribute->getDataAddress();
                 }
-                $output = $select_from . '.' . $data_address;
+                $output = $select_from . $this->getAliasDelim() . $data_address;
             }
         }
         
@@ -849,7 +849,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             }
             // The filter needs to be an EQ, since we want a to compare by "=" to whatever we define without any quotes
             // Putting the value in brackets makes sure it is treated as an SQL expression and not a normal value
-            $relq->addFilterWithCustomSql($rev_rel->getRightKeyAttribute()->getAlias(), '(' . $select_from . '.' . $junction . ')', EXF_COMPARATOR_EQUALS);
+            $relq->addFilterWithCustomSql($rev_rel->getRightKeyAttribute()->getAlias(), '(' . $select_from . $this->getAliasDelim() . $junction . ')', EXF_COMPARATOR_EQUALS);
         }
         
         $output = '(' . $relq->buildSqlQuerySelect() . ')';
@@ -968,7 +968,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 // the core query again, after pagination, so possible back references within the custom select can
                 // still be resolved.
                 $right_table_alias = $this->getShortAlias($this->getMainObject()->getAlias() . $this->getQueryId());
-                $joins[$right_table_alias] = "\n JOIN " . str_replace('[#~alias#]', $right_table_alias, $this->getMainObject()->getDataAddress()) . ' ' . $right_table_alias . ' ON ' . $left_table_alias . '.' . $this->getMainObject()->getUidAttributeAlias() . ' = ' . $right_table_alias . '.' . $this->getMainObject()->getUidAttributeAlias();
+                $joins[$right_table_alias] = "\n JOIN " . str_replace('[#~alias#]', $right_table_alias, $this->getMainObject()->getDataAddress()) . ' ' . $right_table_alias . ' ON ' . $left_table_alias . $this->getAliasDelim() . $this->getMainObject()->getUidAttributeAlias() . ' = ' . $right_table_alias . $this->getAliasDelim() . $this->getMainObject()->getUidAttributeAlias();
             } else {
                 // In most cases we will build joins for attributes of related objects.
                 $left_table_alias = $this->getShortAlias(($left_table_alias ? $left_table_alias : $this->getMainObject()->getAlias()) . $this->getQueryId());
@@ -1010,7 +1010,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         if ($this->checkForSqlStatement($join_side)) {
             $join_side = str_replace('[#~alias#]', $table_alias, $join_side);
         } else {
-            $join_side = $table_alias . '.' . $join_side;
+            $join_side = $table_alias . $this->getAliasDelim() . $join_side;
         }
         return $join_side;
     }
@@ -1217,7 +1217,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 if ($this->checkForSqlStatement($attr->getDataAddress())) {
                     $subj = $this->replacePlaceholdersInSqlAddress($select, $qpart->getAttribute()->getRelationPath(), ['~alias' => $table_alias], $table_alias);
                 } else {
-                    $subj = $table_alias . '.' . $select;
+                    $subj = $table_alias . $this->getAliasDelim() . $select;
                 }
             }
             // Do the actual comparing
@@ -1465,7 +1465,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                     $prefix_rel_qpart = new QueryPartSelect($prefix_rel_str, $this, DataColumn::sanitizeColumnName($prefix_rel_str));
                     $junction = $this->buildSqlSelect($prefix_rel_qpart, null, null, '');
                 } else {
-                    $junction = $this->getShortAlias($this->getMainObject()->getAlias() . $this->getQueryId()) . '.' . $this->getMainObject()->getUidAttribute()->getDataAddress();
+                    $junction = $this->getShortAlias($this->getMainObject()->getAlias() . $this->getQueryId()) . $this->getAliasDelim() . $this->getMainObject()->getUidAttribute()->getDataAddress();
                 }
             } else {
                 // If we are dealing with a regular relation, build a subquery to select primary keys from joined tables and match them to the foreign key of the main table
@@ -1494,7 +1494,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     protected function buildSqlOrderBy(\exface\Core\CommonLogic\QueryBuilder\QueryPartSorter $qpart)
     {        
         if ($qpart->getDataAddressProperty("ORDER_BY")) {
-            $output = $this->getShortAlias($this->getMainObject()->getAlias()) . '.' . $qpart->getDataAddressProperty("ORDER_BY");
+            $output = $this->getShortAlias($this->getMainObject()->getAlias()) . $this->getAliasDelim() . $qpart->getDataAddressProperty("ORDER_BY");
         } else {
             $output = $this->getShortAlias($qpart->getColumnKey());
         }
@@ -1524,7 +1524,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             if (is_null($select_from)) {
                 $select_from = $qpart->getAttribute()->getRelationPath()->toString() ? $qpart->getAttribute()->getRelationPath()->toString() : $this->getMainObject()->getAlias();
             }
-            $output = ($select_from ? $this->getShortAlias($select_from . $this->getQueryId()) . '.' : '') . $qpart->getAttribute()->getDataAddress();
+            $output = ($select_from ? $this->getShortAlias($select_from . $this->getQueryId()) . $this->getAliasDelim() : '') . $qpart->getAttribute()->getDataAddress();
         }
         return $output;
     }
@@ -1714,6 +1714,19 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         // TODO Check if all objects along the relation path also belong to the data source
         // TODO Instead of checking the data source, check if it points to the same data base
         return $attribute->getObject()->getDataSourceId() === $this->getMainObject()->getDataSourceId();
+    }
+    
+    /**
+     * Returns the alias delimiter (e.g. the dot in MYTABLE.FIELD).
+     * 
+     * While it defaults to a dot '.' for most SQL dialects, you can change this easily by overriding
+     * this method.
+     * 
+     * @return string
+     */
+    protected function getAliasDelim() : string
+    {
+        return '.';
     }
 }
 ?>
