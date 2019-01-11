@@ -208,9 +208,11 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             // TODO filter away the EXFRN column!
             foreach ($this->short_aliases as $short_alias) {
                 $full_alias = $this->getFullAlias($short_alias);
-                foreach ($rows as $nr => $row) {
-                    $rows[$nr][$full_alias] = $row[$short_alias];
-                    unset($rows[$nr][$short_alias]);
+                if ($full_alias !== $short_alias) {
+                    foreach ($rows as $nr => $row) {
+                        $rows[$nr][$full_alias] = $row[$short_alias];
+                        unset($rows[$nr][$short_alias]);
+                    }
                 }
             }
         }
@@ -761,7 +763,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         }
         
         if ($select_as) {
-            $output = "\n" . $output . ' AS "' . $select_as . '"';
+            $output = "\n" . $output . $this->buildSqlAsForSelects($select_as);
         }
         return $comment . $output;
     }
@@ -930,12 +932,36 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     protected function buildSqlFrom()
     {
         // Replace static placeholders
-        $from = str_replace('[#~alias#]', $this->getMainObject()->getAlias(), $this->getMainObject()->getDataAddress()) . ' ' . $this->getShortAlias($this->getMainObject()->getAlias() . $this->getQueryId());
+        $alias = $this->getMainObject()->getAlias();
+        $table = str_replace('[#~alias#]', $alias, $this->getMainObject()->getDataAddress());
+        $from = $table . $this->buildSqlAsForTables($this->getShortAlias($alias . $this->getQueryId()));
         
         // Replace dynamic palceholder
         $from = $this->replacePlaceholdersByFilterValues($from);
         
         return $from;
+    }
+    
+    /**
+     * Returns an SQL snippet to give a table an alias: e.g. ' MYTABLE' or ' AS "MYTABLE"'.
+     * 
+     * @param string $alias
+     * @return string
+     */
+    protected function buildSqlAsForTables(string $alias) : string
+    {
+        return ' ' . $alias;
+    }
+    
+    /**
+     * Returns an SQL snippet to give a SELECT column an alias: e.g. ' MYCOL' or ' AS "MYCOL"'.
+     *
+     * @param string $alias
+     * @return string
+     */
+    protected function buildSqlAsForSelects(string $alias) : string
+    {
+        return ' AS "' . $alias . '"';
     }
 
     /**
@@ -968,7 +994,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 // the core query again, after pagination, so possible back references within the custom select can
                 // still be resolved.
                 $right_table_alias = $this->getShortAlias($this->getMainObject()->getAlias() . $this->getQueryId());
-                $joins[$right_table_alias] = "\n JOIN " . str_replace('[#~alias#]', $right_table_alias, $this->getMainObject()->getDataAddress()) . ' ' . $right_table_alias . ' ON ' . $left_table_alias . $this->getAliasDelim() . $this->getMainObject()->getUidAttributeAlias() . ' = ' . $right_table_alias . $this->getAliasDelim() . $this->getMainObject()->getUidAttributeAlias();
+                $joins[$right_table_alias] = "\n JOIN " . str_replace('[#~alias#]', $right_table_alias, $this->getMainObject()->getDataAddress()) . $this->buildSqlAsForTables($right_table_alias) . ' ON ' . $left_table_alias . $this->getAliasDelim() . $this->getMainObject()->getUidAttributeAlias() . ' = ' . $right_table_alias . $this->getAliasDelim() . $this->getMainObject()->getUidAttributeAlias();
             } else {
                 // In most cases we will build joins for attributes of related objects.
                 $left_table_alias = $this->getShortAlias(($left_table_alias ? $left_table_alias : $this->getMainObject()->getAlias()) . $this->getQueryId());
@@ -979,7 +1005,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                         // generate the join sql
                         $left_join_on = $this->buildSqlJoinSide($rel->getLeftKeyAttribute()->getDataAddress(), $left_table_alias);
                         $right_join_on = $this->buildSqlJoinSide($rel->getRightKeyAttribute()->getDataAddress(), $right_table_alias);
-                        $joins[$right_table_alias] = "\n " . $this->buildSqlJoinType($rel) . ' JOIN ' . str_replace('[#~alias#]', $right_table_alias, $right_obj->getDataAddress()) . ' ' . $right_table_alias . ' ON ' . $left_join_on . ' = ' . $right_join_on;
+                        $joins[$right_table_alias] = "\n " . $this->buildSqlJoinType($rel) . ' JOIN ' . str_replace('[#~alias#]', $right_table_alias, $right_obj->getDataAddress()) . $this->buildSqlAsForTables($right_table_alias) . ' ON ' . $left_join_on . ' = ' . $right_join_on;
                         // continue with the related object
                         $left_table_alias = $right_table_alias;
                     } elseif ($rel->getType() == '11') {
