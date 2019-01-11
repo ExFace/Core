@@ -76,7 +76,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
         if (sizeof($this->getSorters()) < 1 && $this->getLimit() > 0) {
             // If no order is specified, sort sort over the UID of the meta object
             if ($this->getMainObject()->hasUidAttribute()) {
-                $order_by .= ', ' . ($group_by ? 'EXFCOREQ.' : '') . $this->getMainObject()->getUidAttribute()->getDataAddress() . ' DESC';
+                $order_by .= ', ' . ($group_by ? 'EXFCOREQ' . $this->getAliasDelim() : '') . $this->getMainObject()->getUidAttribute()->getDataAddress() . ' DESC';
             } // If the object has no UID, sort over the first column in the query, which is not an SQL statement itself
 else {
                 foreach ($this->getAttributes() as $qpart) {
@@ -140,7 +140,7 @@ elseif (! $group_by || $qpart->getAggregator() || $this->getAggregation($qpart->
         if ($group_by && $has_attributes_with_reverse_relations) {
             $enrichment_select = substr($enrichment_select, 2);
         } else {
-            $enrichment_select = 'EXFCOREQ.*' . ($enrichment_select ? ', ' . substr($enrichment_select, 2) : '');
+            $enrichment_select = 'EXFCOREQ' . $this->getAliasDelim() . '*' . ($enrichment_select ? ', ' . substr($enrichment_select, 2) : '');
         }
         
         // FROM
