@@ -659,6 +659,8 @@ class Data
      * for all columns.
      *
      * Example:
+     * 
+     * ```
      *  {
      *      "object_alias": "ORDER_POSITION"
      *      "filters": [
@@ -678,9 +680,12 @@ class Data
      *          }
      *      ]
      *  }
+     * 
+     * ```
      *
      * @uxon-property filters
      * @uxon-type \exface\Core\Widgets\Filter[]
+     * @uxon-template [{"attribute_alias": ""}]
      *
      * @param UxonObject $uxon_objects
      * @return Data
