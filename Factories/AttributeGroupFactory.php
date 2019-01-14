@@ -21,9 +21,22 @@ abstract class AttributeGroupFactory extends AbstractStaticFactory
         $group->setAlias($alias);
         switch ($alias) {
             case MetaAttributeGroupInterface::ALL:
+                // The ~ALL should list visible hidden attributes at the very end
+                $hidden_attrs = [];
                 foreach ($object->getAttributes() as $attr) {
-                    $group->add($attr);
+                    if ($attr->isHidden() === false) {
+                        $group->add($attr);
+                    } else {
+                        $hidden_attrs[] = $attr;
+                    }
                 }
+                
+                if (empty($hidden_attrs) === false) {
+                    foreach ($hidden_attrs as $attr) {
+                        $group->add($attr);
+                    }
+                }
+                
                 break;
             case MetaAttributeGroupInterface::VISIBLE:
                 foreach ($object->getAttributes() as $attr) {
