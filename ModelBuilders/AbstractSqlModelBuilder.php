@@ -14,6 +14,14 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\DataConnectors\AbstractSqlConnector;
+use exface\Core\DataTypes\IntegerDataType;
+use exface\Core\DataTypes\NumberDataType;
+use exface\Core\DataTypes\TimestampDataType;
+use exface\Core\DataTypes\DateDataType;
+use exface\Core\DataTypes\StringDataType;
+use exface\Core\DataTypes\TextDataType;
+use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\DataTypes\HexadecimalNumberDataType;
 
 /**
  * This is the base for all SQL model builders in the core.
@@ -64,7 +72,7 @@ abstract class AbstractSqlModelBuilder extends AbstractModelBuilder implements M
 {
 
     private $data_connector = null;
-
+    
     /**
      * 
      * {@inheritDoc}
@@ -72,6 +80,8 @@ abstract class AbstractSqlModelBuilder extends AbstractModelBuilder implements M
      */
     public function generateAttributesForObject(MetaObjectInterface $meta_object) : DataSheetInterface
     {
+        $this->setModelLanguage($meta_object->getApp()->getLanguageDefault());
+        
         $transaction = $meta_object->getWorkbench()->data()->startTransaction();
         
         $newAttributes = $this->generateAttributes($meta_object, $transaction);
@@ -124,6 +134,8 @@ abstract class AbstractSqlModelBuilder extends AbstractModelBuilder implements M
      */
     public function generateObjectsForDataSource(AppInterface $app, DataSourceInterface $source, string $data_address_mask = null) : DataSheetInterface
     {
+        $this->setModelLanguage($app->getLanguageDefault());
+        
         $existing_objects = DataSheetFactory::createFromObjectIdOrAlias($app->getWorkbench(), 'exface.Core.OBJECT');
         $existing_objects->getColumns()->addFromExpression('DATA_ADDRESS');
         $existing_objects->addFilterFromString('APP', $app->getUid(), EXF_COMPARATOR_EQUALS);
@@ -201,27 +213,43 @@ abstract class AbstractSqlModelBuilder extends AbstractModelBuilder implements M
     protected function guessDataType(Workbench $workbench, $sql_data_type, $length = null, $scale = null)
     {
         switch (strtoupper($sql_data_type)) {
-            case 'NUMBER':
             case 'BIGINT':
             case 'INT':
             case 'INTEGER':
+                if ($length === 1) {
+                    $data_type = DataTypeFactory::createFromSelector($workbench, BooleanDataType::class);
+                } else {
+                    $data_type = DataTypeFactory::createFromString($workbench, IntegerDataType::class);
+                }
+                break;
+            case 'NUMBER':
             case 'DECIMAL':
             case 'FLOAT':
-                $data_type = DataTypeFactory::createFromString($workbench, 'exface.Core.Number');
+                if ($scale === 0) {
+                    $data_type = DataTypeFactory::createFromString($workbench, IntegerDataType::class);
+                } else {
+                    $data_type = DataTypeFactory::createFromString($workbench, NumberDataType::class);
+                    if ($scale !== null) {
+                        $data_type->setPrecision($scale);
+                    }
+                }
                 break;
             case 'TIMESTAMP':
             case 'DATETIME':
-                $data_type = DataTypeFactory::createFromString($workbench, 'exface.Core.Timestamp');
+                $data_type = DataTypeFactory::createFromString($workbench, TimestampDataType::class);
                 break;
             case 'DATE':
-                $data_type = DataTypeFactory::createFromString($workbench, 'exface.Core.Date');
+                $data_type = DataTypeFactory::createFromString($workbench, DateDataType::class);
                 break;
             case 'TEXT':
             case 'LONGTEXT':
-                $data_type = DataTypeFactory::createFromString($workbench, 'exface.Core.Text');
+                $data_type = DataTypeFactory::createFromString($workbench, TextDataType::class);
+                break;
+            case 'BINARY':
+                $data_type = DataTypeFactory::createFromString($workbench, HexadecimalNumberDataType::class);
                 break;
             default:
-                $data_type = DataTypeFactory::createFromString($workbench, 'exface.Core.String');
+                $data_type = DataTypeFactory::createFromString($workbench, StringDataType::class);
         }
         return $data_type;
     }
@@ -241,6 +269,10 @@ abstract class AbstractSqlModelBuilder extends AbstractModelBuilder implements M
             $column_name = str_replace('_', ' ', $column_name);
             $column_name = mb_strtolower($column_name);
             $column_name = ucfirst($column_name);
+            $lang = mb_strtolower($this->getModelLanguage());
+            if ($lang === 'de') {
+                $column_name = str_replace(['Ae', 'Oe', 'Ue', 'ae', 'oe', 'ue'], ['Ä', 'Ö', 'Ü', 'ä', 'ö', 'ü'], $column_name);
+            }
         }
         return $column_name;
     }
@@ -379,4 +411,3 @@ abstract class AbstractSqlModelBuilder extends AbstractModelBuilder implements M
         return [];
     }
 }
-?>

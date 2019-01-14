@@ -32,7 +32,7 @@ class MySqlModelBuilder extends AbstractSqlModelBuilder
         $rows = array();
         foreach ($columns_array as $col) {
             $rows[] = array(
-                'LABEL' => $this->generateLabel($col['Field']),
+                'LABEL' => $this->generateLabel($col['Field'], $col['Comment']),
                 'ALIAS' => $col['Field'],
                 'DATATYPE' => $this->getDataTypeId($this->guessDataType($meta_object->getWorkbench(), $col['Type'])),
                 'DATA_ADDRESS' => $col['Field'],
@@ -53,9 +53,15 @@ class MySqlModelBuilder extends AbstractSqlModelBuilder
     {
         $data_type = trim($data_type);
         $details = [];
-        $type = StringDataType::substringBefore($data_type, '(', $data_type);
+        $type = trim(StringDataType::substringBefore($data_type, '(', $data_type));
         if ($type !== $data_type) {
             $details = explode(',', substr($data_type, (strlen($type)+1), -1));
+        }
+        
+        switch (mb_strtoupper($type)) {
+            case 'TINYINT':
+                $type = 'INT';
+                break;
         }
         
         return parent::guessDataType($workbench, $type, $details[0], $details[1]);

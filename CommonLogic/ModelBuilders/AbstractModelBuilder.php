@@ -16,6 +16,8 @@ abstract class AbstractModelBuilder implements ModelBuilderInterface
 {
     private $data_types = null;
     
+    private $modelBuilder = 'en';
+    
     public function __construct(DataConnectionInterface $data_connector)
     {
         $this->data_connector = $data_connector;
@@ -60,15 +62,37 @@ abstract class AbstractModelBuilder implements ModelBuilderInterface
     protected function getDataTypeId(DataTypeInterface $type)
     {
         if (is_null($this->data_types)) {
-            $this->data_types = DataSheetFactory::createFromObject($this->getDataConnection()->getWorkbench()->model()->getObject('exface.Core.DATATYPE'));
+            $this->data_types = DataSheetFactory::createFromObjectIdOrAlias($type->getWorkbench(), 'exface.Core.DATATYPE');
             $this->data_types->getColumns()->addMultiple([
                 $this->data_types->getMetaObject()->getUidAttributeAlias(),
                 'ALIAS'
             ]);
-            $this->data_types->dataRead(0, 0);
+            $this->data_types->dataRead();
         }
         
         return $this->data_types->getUidColumn()->getCellValue($this->data_types->getColumns()->get('ALIAS')->findRowByValue($type->getAlias()));
+    }
+    
+    
+    
+    /**
+     *
+     * @return string
+     */
+    protected function getModelLanguage() : string
+    {
+        return $this->modelLanguage;
+    }
+    
+    /**
+     *
+     * @param string $value
+     * @return AbstractModelBuilder
+     */
+    protected function setModelLanguage(string $value) : AbstractModelBuilder
+    {
+        $this->modelLanguage = $value;
+        return $this;
     }
     
     /**
