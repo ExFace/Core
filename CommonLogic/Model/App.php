@@ -42,6 +42,7 @@ use exface\Core\CommonLogic\Traits\AliasTrait;
 use exface\Core\CommonLogic\Selectors\DataTypeSelector;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Exceptions\DataSheets\DataSheetReadError;
+use exface\Core\Contexts\DataContext;
 
 /**
  * This is the base implementation of the AppInterface aimed at providing an
@@ -337,7 +338,7 @@ class App implements AppInterface
         if (is_null($scope)) {
             $scope = $this->getContextDataDefaultScope();
         }
-        return $this->getWorkbench()->getContext()->getScope($scope)->getContext('Data');
+        return $this->getWorkbench()->getContext()->getScope($scope)->getContext(DataContext::class);
     }
     
     /**
