@@ -120,7 +120,7 @@ class ModelValidatingBehavior extends AbstractBehavior
                         }
                     }
                     
-                    if ($foundAttribute === true && $foundObject === true) {
+                    if ($foundAttribute === true && $foundObject === true && $attribute !== null) {
                         $this->getWorkbench()->eventManager()->dispatch(new OnMetaAttributeModelValidatedEvent($attribute, $widget->getMessageList()));
                         break;
                     }
