@@ -19,21 +19,9 @@ use exface\Core\CommonLogic\DataQueries\DataQueryResultData;
 use exface\Core\Interfaces\DataSources\DataQueryResultDataInterface;
 
 /**
- * A query builder for Oracle SQL.
- *
- * ## Data source options
+ * A query builder for Oracle SQL. 
  * 
- * The following options are available in addition to the ones of the
- * AbstractSqlBuilder
- * 
- * ### On object level
- *  
- * - **SQL_SELECT_WHERE** - custom where statement automatically appended to 
- * direct selects for this object (not if the object's table is joined!). 
- * Usefull for generic tables, where different meta objects are stored and 
- * distinguished by specific keys in a special column. The value of 
- * SQL_SELECT_WHERE should contain the [#~alias#] placeholder: e.g. 
- * [#~alias#].mycolumn = 'myvalue'.
+ * See `AbstractSqlBuilder` for available data address options!
  * 
  * @see AbstractSqlBuilder
  *
