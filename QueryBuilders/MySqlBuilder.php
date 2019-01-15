@@ -14,14 +14,9 @@ use exface\Core\Interfaces\DataSources\DataQueryResultDataInterface;
 /**
  * A query builder for MySQL.
  *
- * ## Data source options
+ * See `AbstractSqlBuilder` for available data address options!
  * 
- * ### On object level
- * 
- * - **SQL_SELECT_WHERE** - custom where statement automatically appended to direct selects for this object (not if the object's table
- * is joined!). Usefull for generic tables, where different meta objects are stored and distinguished by specific keys in a
- * special column. The value of SQL_SELECT_WHERE should contain the [#~alias#] placeholder: e.g. [#~alias#].mycolumn = 'myvalue'.
- *
+ * @see AbstractSqlBuilder
  *
  * @author Andrej Kabachnik
  *        
@@ -70,6 +65,7 @@ class MySqlBuilder extends AbstractSqlBuilder
         if ($custom_where = $this->getMainObject()->getDataAddressProperty('SQL_SELECT_WHERE')) {
             $where = $this->appendCustomWhere($where, $custom_where);
         }
+        
         $where = $where ? "\n WHERE " . $where : '';
         $having = $having ? "\n HAVING " . $having : '';
         

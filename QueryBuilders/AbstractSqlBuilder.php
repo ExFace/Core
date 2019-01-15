@@ -72,6 +72,15 @@ use exface\Core\DataTypes\JsonDataType;
  * 
  * ## Data source options
  * 
+ * ### On object level
+ *  
+ * - `SQL_SELECT_WHERE` - custom where statement automatically appended to 
+ * direct selects for this object (not if the object's table is joined!). 
+ * Usefull for generic tables, where different meta objects are stored and 
+ * distinguished by specific keys in a special column. The value of 
+ * `SQL_SELECT_WHERE` should contain the `[#~alias#]` placeholder: e.g. 
+ * `[#~alias#].mycolumn = 'myvalue'`.
+ * 
  * ### On attribute level
  * 
  * - `SQL_DATA_TYPE` - tells the query builder what data type the column has.
@@ -1048,6 +1057,9 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                             $left_join_on = $this->buildSqlJoinSide($rel->getLeftKeyAttribute()->getDataAddress(), $left_table_alias);
                             $right_join_on = $this->buildSqlJoinSide($rel->getRightKeyAttribute()->getDataAddress(), $right_table_alias);
                             $join .=  $left_join_on . ' = ' . $right_join_on;
+                            if ($customSelectWhere = $right_obj->getDataAddressProperty('SQL_SELECT_WHERE')) {
+                                $join .= ' AND ' . StringDataType::replacePlaceholders($customSelectWhere, ['~alias' => $right_table_alias]);
+                            }
                         }
                         $joins[$right_table_alias] = $join;
                         // continue with the related object
@@ -1785,7 +1797,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 // TODO it would be really cool to support relations in placeholders, but how to add corresponding
                 // joins? An attempt was made in feature/sql-placeholders-with-relation, but without ultimate success.
                 // Alternatively we could add the query parts to the query and restart it's generation...
-                if (! $relation_path->getEndObject()->getAttribute($ph)->getRelationPath()->isEmpty()){
+                if ($relation_path !== null && ! $relation_path->getEndObject()->getAttribute($ph)->getRelationPath()->isEmpty()){
                     throw new QueryBuilderException('Cannot use placeholder [#' . $ph . '#] in data address "' . $original_data_address . '": placeholders for related attributes currently not supported in SQL query builders unless all required attributes are explicitly selected in the query too.');
                 }
             }
