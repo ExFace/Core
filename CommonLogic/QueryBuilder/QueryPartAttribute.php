@@ -15,6 +15,8 @@ class QueryPartAttribute extends QueryPart
     private $aggregator;
 
     private $used_relations = null;
+    
+    private $dataAddressProperties = [];
 
     function __construct($alias, AbstractQueryBuilder $query)
     {
@@ -80,14 +82,36 @@ class QueryPartAttribute extends QueryPart
         $this->aggregator = $value;
     }
 
-    public function getDataAddressProperty($property_key)
+    /**
+     * Returns the value of the given data address property.
+     * 
+     * If the property was not explicitly overridden for this
+     * query part, the value will be retrieved from the underlying
+     * attribute.
+     * 
+     * @param string $property_key
+     * @return mixed
+     */
+    public function getDataAddressProperty(string $property_key)
     {
+        $ucKey = mb_strtoupper($property_key);
+        if (array_key_exists($ucKey, $this->dataAddressProperties)) {
+            return $this->dataAddressProperties[$ucKey];
+        }
         return $this->getAttribute()->getDataAddressProperty($property_key);
     }
 
-    public function setDataAddressProperty($property_key, $value)
+    /**
+     * Overrides a data address property for this query part (not affecting the underlying attribute).
+     * 
+     * @param string $property_key
+     * @param mixed $value
+     * @return QueryPartAttribute
+     */
+    public function setDataAddressProperty(string $property_key, $value) : QueryPartAttribute
     {
-        return $this->getAttribute()->setDataAddressProperty($property_key, $value);
+        $this->dataAddressProperties[mb_strtoupper($property_key)] = $value;
+        return $this;
     }
 
     /**
