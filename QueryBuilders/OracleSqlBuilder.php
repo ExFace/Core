@@ -392,8 +392,8 @@ class OracleSqlBuilder extends AbstractSqlBuilder
      */
     protected function buildSqlOrderBy(\exface\Core\CommonLogic\QueryBuilder\QueryPartSorter $qpart, $select_from = null)
     {
-        if ($qpart->getDataAddressProperty("ORDER_BY")) {
-            $output = ($select_from ? $select_from : $this->getShortAlias($qpart->getAttribute()->getRelationPath()->toString())) . $this->getAliasDelim() . $qpart->getDataAddressProperty("ORDER_BY");
+        if ($qpart->getDataAddressProperty("SQL_ORDER_BY")) {
+            $output = ($select_from ? $select_from : $this->getShortAlias($qpart->getAttribute()->getRelationPath()->toString())) . $this->getAliasDelim() . $qpart->getDataAddressProperty("SQL_ORDER_BY");
         } else {
             $output = '"' . $this->getShortAlias($qpart->getColumnKey()) . '"';
             
