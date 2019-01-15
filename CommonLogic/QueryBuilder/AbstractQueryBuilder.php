@@ -214,20 +214,6 @@ abstract class AbstractQueryBuilder implements QueryBuilderInterface
         $condition = ConditionFactory::createFromExpression($exface, $this->getWorkbench()->model()->parseExpression($attribute_alias, $this->getMainObject()), $value, $comparator);
         return $this->addFilterCondition($condition);
     }
-    
-    /**
-     * 
-     * @param string $attribute_alias
-     * @param string $sql
-     * @param string $comparator
-     * @return \exface\Core\CommonLogic\QueryBuilder\QueryPartFilter
-     */
-    protected function addFilterWithCustomSql($attribute_alias, $sql, $comparator = EXF_COMPARATOR_IS)
-    {
-        $qpart = $this->addFilterFromString($attribute_alias, $sql, $comparator);
-        $qpart->setValueIsDataAddress(true);
-        return $qpart;
-    }
 
     /**
      * Replaces all filters of the query by the given condition group.
