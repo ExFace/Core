@@ -16,5 +16,18 @@ use exface\Core\Interfaces\Widgets\iLayoutWidgets;
 class WidgetGrid extends Container implements iLayoutWidgets
 {
     use WidgetLayoutTrait;
+    
+    /**
+     * Array of widgets to be placed in the group: mostly Value widgets, but any other kind is OK too.
+     *
+     * @uxon-property widgets
+     * @uxon-type \exface\Core\Widgets\Value[]|\exface\Core\Widgets\AbstractWidget[]
+     * @uxon-template [{"attribute_alias": ""}]
+     *
+     * @see \exface\Core\Widgets\Container::setWidgets()
+     */
+    public function setWidgets($widget_or_uxon_array)
+    {
+        return parent::setWidgets($widget_or_uxon_array);
+    }
 }
-?>

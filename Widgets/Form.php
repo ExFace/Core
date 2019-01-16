@@ -112,5 +112,18 @@ class Form extends Panel implements iHaveButtons, iHaveToolbars, iShowMessageLis
         
         return false;
     }
+    
+    /**
+     * Array of widgets to be placed in the form (inputs or any other kind of widget).
+     * 
+     * @uxon-property widgets
+     * @uxon-type \exface\Core\Widgets\Input[]|\exface\Core\Widgets\AbstractWidget[]
+     * @uxon-template [{"attribute_alias": ""}]
+     * 
+     * @see \exface\Core\Widgets\Container::setWidgets()
+     */
+    public function setWidgets($widget_or_uxon_array)
+    {
+        return parent::setWidgets($widget_or_uxon_array);
+    }
 }
-?>
