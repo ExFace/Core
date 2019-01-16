@@ -10,37 +10,41 @@ namespace exface\Core\Widgets;
  *
  * The following example will create a color/size matrix with product stock levels out of a table listing
  * the current stock level for each color-size-combination individually:
- * {
- * "widget_type": "DataMatrix",
- * "object_alias": "PRODUCT_COLOR_SIZE",
- * "hide_toolbars": true,
- * "caption": "Stock matrix",
- * "columns": [
- * {
- * "attribute_alias": "COLOR__LABEL"
- * },
- * {
- * "attribute_alias": "SIZE",
- * "id": "SIZE"
- * },
- * {
- * "attribute_alias": "STOCKS__AVAILABLE:SUM",
- * "id": "STOCK_AVAILABLE"
- * }
- * ],
- * "label_column_id": "SIZE",
- * "data_column_id": "STOCK_AVAILABLE",
- * "sorters": [
- * {
- * "attribute_alias": "COLOR__LABEL",
- * "direction": "ASC"
- * },
- * {
- * "attribute_alias": "SIZING_LENGTH",
- * "direction": "ASC"
- * }
- * ]
- * }
+ * 
+ * ```
+ *  {
+ *      "widget_type": "DataMatrix",
+ *      "object_alias": "PRODUCT_COLOR_SIZE",
+ *      "hide_toolbars": true,
+ *      "caption": "Stock matrix",
+ *      "columns": [
+ *          {
+ *              "attribute_alias": "COLOR__LABEL"
+ *          },
+ *          {
+ *              "attribute_alias": "SIZE",
+ *              "id": "SIZE"
+ *          },
+ *          {
+ *              "attribute_alias": "STOCKS__AVAILABLE:SUM",
+ *              "id": "STOCK_AVAILABLE"
+ *          }
+ *      ],
+ *      "label_column_id": "SIZE",
+ *      "data_column_id": "STOCK_AVAILABLE",
+ *      "sorters": [
+ *          {
+ *              "attribute_alias": "COLOR__LABEL",
+ *              "direction": "ASC"
+ *          },
+ *          {
+ *              "attribute_alias": "SIZING_LENGTH",
+ *              "direction": "ASC"
+ *          }
+ *      ]
+ *  }
+ *  
+ *  ```
  *
  * @author Andrej Kabachnik
  *        
