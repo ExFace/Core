@@ -212,7 +212,10 @@ class SqlModelLoader implements ModelLoaderInterface
                             $label_attribute['object_label_flag'] = 0;
                             // If label and UID are one attribute, make sure the special LABEL attribute will not be treated as a second UID!
                             $label_attribute['object_uid_flag'] = '0';
+                            // Auto-generated LABELs cannot be part of the default display
                             unset($label_attribute['default_display_order']);
+                            // Auto-generated LABELs cannot be realtions
+                            unset($label_attribute['related_object_oid']);
                             $res[] = $label_attribute;
                             $l ++;
                         }
