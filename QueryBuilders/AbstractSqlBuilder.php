@@ -1562,7 +1562,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 // the JOIN would use this custom ON statement). Here we build the custom ON statement and use it as a WHERE clause in
                 // the subselect.
                 if ($customJoinOn = $start_rel->getRightKeyAttribute()->getDataAddressProperty('SQL_JOIN_ON')) {
-                    $customJoinOn = StringDataType::replacePlaceholders($customJoinOn, ['~left_alias' => $this->getMainTableAlias(), '~right_alias' => $relq->getMainTableAlias()]);
+                    $customJoinOn = StringDataType::replacePlaceholders($customJoinOn, ['~left_alias' => $relq->getMainTableAlias(), '~right_alias' => $this->getMainTableAlias()]);
                     $joinFilterQpart = $relq->addFilterFromString($start_rel->getRightKeyAttribute()->getAlias(), $qpart->getCompareValue(), $qpart->getComparator());
                     $joinFilterQpart->setDataAddressProperty('SQL_WHERE', $customJoinOn);
                     $sql = ' EXISTS (' . $relq->buildSqlQuerySelect() . ')';
