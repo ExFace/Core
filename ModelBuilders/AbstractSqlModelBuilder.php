@@ -220,8 +220,8 @@ abstract class AbstractSqlModelBuilder extends AbstractModelBuilder implements M
             case 'BIGINT':
             case 'INT':
             case 'INTEGER':
-                if ($length === 1) {
-                    $data_type = DataTypeFactory::createFromSelector($workbench, BooleanDataType::class);
+                if ($length == 1) {
+                    $data_type = DataTypeFactory::createFromString($workbench, BooleanDataType::class);
                 } else {
                     $data_type = DataTypeFactory::createFromString($workbench, IntegerDataType::class);
                 }
@@ -229,7 +229,7 @@ abstract class AbstractSqlModelBuilder extends AbstractModelBuilder implements M
             case 'NUMBER':
             case 'DECIMAL':
             case 'FLOAT':
-                if ($scale === 0) {
+                if (is_numeric($scale) === true && $scale == 0) {
                     $data_type = DataTypeFactory::createFromString($workbench, IntegerDataType::class);
                 } else {
                     $data_type = DataTypeFactory::createFromString($workbench, NumberDataType::class);
