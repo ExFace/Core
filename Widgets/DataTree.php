@@ -155,7 +155,7 @@ class DataTree extends DataTable
      * Sets the alias of the attribute, that should be used as a filter when loading the children of a node. 
      * 
      * @uxon-property tree_folder_filter_attribute_alias
-     * @uxon-type string
+     * @uxon-type metamodel:attribute
      *
      * @param string $alias
      * @return DataTree

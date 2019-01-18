@@ -429,7 +429,7 @@ abstract class AbstractWidget implements WidgetInterface
      * Set to TRUE to hide the caption of the widget.
      * FALSE by default.
      *
-     * @uxon-property hide caption
+     * @uxon-property hide_caption
      * @uxon-type boolean
      *
      * {@inheritdoc}
