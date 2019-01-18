@@ -724,8 +724,8 @@ class DataSheet implements DataSheetInterface
             if (! $column->getExpressionObj()->isMetaAttribute()) {
                 // Skip columns, that do not represent a meta attribute
                 continue;
-            } elseif (! $column->getAttribute()->isWritable()) {
-                // Skip read-only attributes
+            } elseif ($column->getAttribute()->isWritable() === false && ($this->hasUidColumn() && $column === $this->getUidColumn()) === false) {
+                // Skip read-only attributes unless it is the UID column (which will be used as a filter later on)
                 continue;
             } elseif (! $column->getAttribute()) {
                 // Skip columns, that reference non existing attributes
