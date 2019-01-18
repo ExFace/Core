@@ -3,6 +3,8 @@ namespace exface\Core\DataTypes;
 
 class UrlDataType extends StringDataType
 {
+    private $baseUrl = null;
+    
     /**
      * Advanced version of urlencode() that prevents parameter names to be altered by PHP.
      * 
@@ -15,5 +17,32 @@ class UrlDataType extends StringDataType
     {
         return str_replace('.', '%2E', urlencode($string));
     }
+    
+    /**
+     *
+     * @return string
+     */
+    public function getBaseUrl() : ?string
+    {
+        return $this->baseUrl;
+    }
+    
+    /**
+     * Adds a base to every URL.
+     * 
+     * Use this if your data only includes the last part of the URL. You can prefix
+     * it then with an absolute or relative base. This will not change the value,
+     * but will tell widgets and other components to use this base automatically.
+     * 
+     * @uxon-property base_url
+     * @uxon-type url
+     * 
+     * @param string $value
+     * @return UrlDataType
+     */
+    public function setBaseUrl(string $value) : UrlDataType
+    {
+        $this->baseUrl = $value;
+        return $this;
+    }
 }
-?>
