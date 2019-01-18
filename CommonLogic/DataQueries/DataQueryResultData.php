@@ -37,6 +37,9 @@ class DataQueryResultData implements DataQueryResultDataInterface
     
     public function getAllRowsCounter() : ?int
     {
+        if ($this->totalRowCount === null && $this->hasMoreRows() === false) {
+            return $this->countResultRows();
+        }
         return $this->totalRowCount;
     }
     
