@@ -116,6 +116,7 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
      *  
      * @uxon-property filters
      * @uxon-type exface\Core\Widgets\Filter[]
+     * @uxon-template [{"attribute_alias": ""}]
      *
      * @param UxonObject[] $uxon_objects
      * @return DataConfigurator
