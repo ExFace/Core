@@ -6,6 +6,7 @@ use exface\Core\Widgets\Traits\iCanBeAlignedTrait;
 use exface\Core\Widgets\Traits\iCanUseProxyTemplateTrait;
 use exface\Core\Interfaces\Widgets\iCanUseProxyTemplate;
 use exface\Core\Interfaces\Widgets\iShowImage;
+use exface\Core\DataTypes\UrlDataType;
 
 /**
  * The image widget shows the image specified by the URL in the value of an attribute.
@@ -24,6 +25,8 @@ class Image extends Display implements iShowImage, iCanBeAligned, iCanUseProxyTe
     use iCanBeAlignedTrait;
     use iCanUseProxyTemplateTrait;
     
+    private $baseUrl = null;
+    
     public function getUri() : ?string
     {
         return $this->getValue();
@@ -37,9 +40,15 @@ class Image extends Display implements iShowImage, iCanBeAligned, iCanUseProxyTe
     public function getValue()
     {
         $uri = parent::getValue();
+        
+        if ($base = $this->getBaseUrl()) {
+            $uri = rtrim($base, "/") . '/' . ltrim($uri, "/");
+        }
+        
         if ($uri !== null && $this->getUseProxy()) {
             return $this->buildProxyUrl($uri);
         }
+        
         return $uri;
     }
 
@@ -57,5 +66,35 @@ class Image extends Display implements iShowImage, iCanBeAligned, iCanUseProxyTe
     {
         return $this->setValue($value);
     }
+    
+    /**
+     *
+     * @return string
+     */
+    public function getBaseUrl() : ?string
+    {
+        if ($this->baseUrl === null && $this->getValueDataType() instanceof UrlDataType) {
+            $this->baseUrl = $this->getValueDataType()->getBaseUrl();
+        }
+        return $this->baseUrl;
+    }
+    
+    /**
+     * Adds a base to every URL.
+     *
+     * Use this if your data only includes the last part of the URL. You can prefix
+     * it then with an absolute or relative base. This will not change the value,
+     * but will tell widgets and other components to use this base automatically.
+     *
+     * @uxon-property base_url
+     * @uxon-type url
+     *
+     * @param string $value
+     * @return UrlDataType
+     */
+    public function setBaseUrl(string $value) : UrlDataType
+    {
+        $this->baseUrl = $value;
+        return $this;
+    }
 }
-?>

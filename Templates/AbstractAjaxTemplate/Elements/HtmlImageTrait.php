@@ -67,6 +67,10 @@ trait HtmlImageTrait
      */
     public function buildJsValueDecorator($value_js)
     {
+        if ($base = $this->getWidget()->getBaseUrl()) {
+            $value_js = "'{$base}'+" . $value_js;
+        }
+        
         if ($this->getWidget()->getUseProxy()) {
             return <<<JS
 function() {
