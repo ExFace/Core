@@ -261,9 +261,11 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
     /**
      * Applies default and fixed values defined in the meta model to this column.
      *
+     * @param bool $leaveNoEmptyValues
+     * @throws \RuntimeException if $leaveNoEmptyValues == true AND a value could not be filled
      * @return DataColumnInterface
      */
-    public function setValuesFromDefaults();
+    public function setValuesFromDefaults(bool $leaveNoEmptyValues = true) : DataColumnInterface;
 
     /**
      *
@@ -277,7 +279,7 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
      *
      * @return boolean
      */
-    public function getIgnoreFixedValues();
+    public function getIgnoreFixedValues() : bool;
 
     /**
      * Prevents setting fixed values based on expressions in the meta model for this column if set to TRUE
@@ -285,7 +287,7 @@ interface DataColumnInterface extends iCanBeConvertedToUxon, iCanBeCopied
      * @param boolean $value            
      * @return \exface\Core\Interfaces\DataSheets\DataColumnInterface
      */
-    public function setIgnoreFixedValues($value);
+    public function setIgnoreFixedValues(bool $value) : DataColumnInterface;
 
     /**
      * Removes all rows from this column, thus making it empty

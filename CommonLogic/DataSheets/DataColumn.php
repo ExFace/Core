@@ -18,6 +18,7 @@ use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\Interfaces\Model\AggregatorInterface;
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
 use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
 
 class DataColumn implements DataColumnInterface
 {
@@ -693,21 +694,33 @@ class DataColumn implements DataColumnInterface
      *
      * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::setValuesFromDefaults()
      */
-    public function setValuesFromDefaults()
+    public function setValuesFromDefaults(bool $leaveNoEmptyValues = true) : DataColumnInterface
     {
         $attr = $this->getAttribute();
-        // If there is already a column for the required attribute, check, if it has values for all rows
+        $fixedEx = $attr->getFixedValue();
+        $defaultEx = $attr->getDefaultValue();
+        $sheet = $this->getDataSheet();
+        
+        if ($fixedEx && $this->getIgnoreFixedValues() === false) {
+            // Fixed values MUST be calculated unless this feature is explicitly disabled for the column
+            foreach ($this->getValues(false) as $row_id => $val) {
+                $this->setValue($row_id, $fixedEx->evaluate($sheet, $this->getName(), $row_id));
+            }
+        }
+        
+        // After fixed values were calculated (which theoretically could also lead to empty values!), we
+        // will proceed with calculating default values for empty cells
         foreach ($this->getValues(false) as $row_id => $val) {
-            if (is_null($val) || $val === '') {
-                if ($attr->getFixedValue()) {
-                    $this->setValue($row_id, $attr->getFixedValue()->evaluate($this->getDataSheet(), $this->getName(), $row_id));
-                } elseif ($attr->getDefaultValue()) {
-                    $this->setValue($row_id, $attr->getDefaultValue()->evaluate($this->getDataSheet(), $this->getName(), $row_id));
-                } else {
-                    throw new DataSheetRuntimeError($this->getDataSheet(), 'Cannot fill column with default values ' . $this->getMetaObject()->getName() . ': attribute ' . $attr->getName() . ' not set in row ' . $row_id . '!', '6T5UX3Q');
+            if ($val === null || $val === '') {
+                if ($attr->getDefaultValue()) {
+                    $this->setValue($row_id, $defaultEx->evaluate($sheet, $this->getName(), $row_id));
+                } elseif ($leaveNoEmptyValues === true) {
+                    // If a value is still empty and we do not want it to be so - throw an error!
+                    throw new DataSheetRuntimeError($sheet, 'Cannot fill column with default values ' . $this->getMetaObject()->getName() . ': attribute ' . $attr->getName() . ' not set in row ' . $row_id . '!', '6T5UX3Q');
                 }
             }
         }
+        
         return $this;
     }
 
@@ -728,7 +741,7 @@ class DataColumn implements DataColumnInterface
      *
      * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::getIgnoreFixedValues()
      */
-    public function getIgnoreFixedValues()
+    public function getIgnoreFixedValues() : bool
     {
         return $this->ignore_fixed_values;
     }
@@ -739,7 +752,7 @@ class DataColumn implements DataColumnInterface
      *
      * @see \exface\Core\Interfaces\DataSheets\DataColumnInterface::setIgnoreFixedValues()
      */
-    public function setIgnoreFixedValues($value)
+    public function setIgnoreFixedValues(bool $value) : DataColumnInterface
     {
         $this->ignore_fixed_values = $value;
         return $this;
