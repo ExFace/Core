@@ -195,9 +195,24 @@ class TimeStampingBehavior extends AbstractBehavior
             }
         }
         
-        if (count($conflict_rows) > 0) {
+        if (empty($conflict_rows) === false) {
             $data_sheet->dataMarkInvalid();
-            throw new ConcurrentWriteError($data_sheet, 'Cannot update data in data sheet with "' . $data_sheet->getMetaObject()->getAliasWithNamespace() . '": row(s) ' . implode(',', $conflict_rows) . ' changed by another user!');
+            $reason = '';
+            if ($labelCol = $data_sheet->getColumns()->getByAttribute($data_sheet->getMetaObject()->getLabelAttribute())) {
+                foreach ($conflict_rows as $rowNr) {
+                    $reason .= ($reason !== '' ? ', ' : '') . '"' . $labelCol->getCellValue($rowNr) . '"';
+                }
+                $reason = 'object' . (count($conflict_rows) === 1 ? '' : 's') . ' ' . $reason; 
+            } elseif ($data_sheet->hasUidColumn() === true) {
+                foreach ($conflict_rows as $rowNr) {
+                    $reason .= ($reason !== '' ? ', ' : '') . '"' . $data_sheet->getUidColumn()->getCellValue($rowNr) . '"';
+                }
+                $reason = 'object' . (count($conflict_rows) === 1 ? '' : 's') . '  with id ' . $reason;
+            } else {
+                $reason = count($conflict_rows) === 1 ? 'the object' : count($conflict_rows) . ' objects'; 
+            }
+            $reason .= ' changed by another user!';
+            throw new ConcurrentWriteError($data_sheet, 'Cannot update ' . $data_sheet->getMetaObject()->getName() . ' (' . $data_sheet->getMetaObject()->getAliasWithNamespace() . '): ' . $reason);
         }
     }
     
