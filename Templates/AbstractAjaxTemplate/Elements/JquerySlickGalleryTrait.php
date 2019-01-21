@@ -156,56 +156,7 @@ JS;
      * 
      * @return string
      */
-    public function buildJsDataSource() : string
-    {
-        $widget = $this->getWidget();
-        
-        if (($urlType = $widget->getImageUrlColumn()->getDataType()) && $urlType instanceof UrlDataType) {
-            $base = $urlType->getBaseUrl();
-        }
-        
-        return <<<JS
-
-    if ($('#{$this->getId()}').data('_loading')) return;
-	{$this->buildJsBusyIconShow()}
-	$('#{$this->getId()}').data('_loading', 1);
-	var data = {};
-    data.action = '{$widget->getLazyLoadingActionAlias()}';
-	data.resource = "{$widget->getPage()->getAliasWithNamespace()}";
-	data.element = "{$widget->getId()}";
-	data.object = "{$widget->getMetaObject()->getId()}";
-	data.data = {$this->getTemplate()->getElement($widget->getConfiguratorWidget())->buildJsDataGetter()};
-    
-	$.ajax({
-       url: "{$this->getAjaxUrl()}",
-       data: data,
-       method: 'POST',
-       success: function(json){
-			try {
-				var data = json.rows;
-                var carousel = $('#{$this->getId()}');
-                var src = '';
-                var title = '';
-				for (var i in data) {
-                    src = '{$base}' + data[i]['{$widget->getImageUrlColumn()->getDataColumnName()}'];
-                    title = data[i]['{$widget->getImageTitleColumn()->getDataColumnName()}'];
-                    carousel.slick('slickAdd', '<div class="imagecarousel-item"><img src="' + src + '" title="' + title + '" alt="' + title + '" /></div>');
-                }
-		        //{$this->buildJsBusyIconHide()}
-		        $('#{$this->getId()}').data('_loading', 0);
-			} catch (err) {
-                console.error(err);
-				//{$this->buildJsBusyIconHide()}
-			}
-		},
-		error: function(jqXHR, textStatus,errorThrown){
-		   {$this->buildJsBusyIconHide()}
-		   {$this->buildJsShowError('jqXHR.responseText', 'jqXHR.status + " " + jqXHR.statusText')}
-		}
-	});
-
-JS;
-    }
+    abstract function buildJsDataSource() : string;
 		   
     /**
      * Makes a slick carousel have a default height of 6

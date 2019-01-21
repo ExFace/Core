@@ -21,6 +21,8 @@ use exface\Core\DataTypes\ImageUrlDataType;
  * Each image is a separate data item (comparable to a table row or a list item), so
  * it can be selected and passed to actions as input data. 
  * 
+ * Templates may also provide additional image-specific functionality like uploading.
+ * 
  * The following simple exmple will produce a default gallery (the template will choose
  * it's orientation):
  * 
@@ -42,6 +44,48 @@ use exface\Core\DataTypes\ImageUrlDataType;
  * this additional information may be displayed in overlays or descriptions of some kind.
  * While this functionality is optional, the additional information however must be
  * passed to actions, performed on the meta object behind each image.
+ * 
+ * Here is an example with custom filters, columns and buttons. Note, that you need to
+ * explicitly let the widget show a header, if you want your filters to be visible from
+ * the start.
+ * 
+ * ```
+ * {
+ *  "widget_type": "DataImageGallery",
+ *  "object_alias": "my.App.product_images",
+ *  "image_url_attribute_alias": "uri",
+ *  "image_title_attribute_alias": "description",
+ *  "hide_header": false,
+ *  "filters": [
+ *      {
+ *          "attribute_alias": "product__category"
+ *      }
+ *  ],
+ *  "columns": [
+ *      {
+ *          "attribute_alias": "product"
+ *      }
+ *  ],
+ *  "buttons": [
+ *      {
+ *          "action_alias": "my.App.setPriceForProduct"
+ *      }
+ *  ]
+ * }
+ * 
+ * ```
+ * 
+ * ## Similar widgets and alternatives
+ * 
+ * There is another handy image widget called `ImageCarousel`: it adds a details-widget
+ * (by default a large image) to the gallery, which is being displayed once a user
+ * selects an image. Instead of a larger image, any other widget - even a `Form` can
+ * be used to display details of a gallery image. Similarly to `DataImageGallery` simplifying, 
+ * image handling in `Data` widgets, the `ImageCarousel` makes it easy to use galleries within
+ * `DataCarousel` widgets. 
+ * 
+ * If you prefer a waterfall-like (or pinterest-like) gallery, try using `DataCards` with the
+ * image as your only visible widget within a card.
  * 
  * @author Andrej Kabachnik
  *
@@ -66,6 +110,8 @@ class DataImageGallery extends Data implements iCanUseProxyTemplate
     protected function init()
     {
         parent::init();
+        // Galleries have no headers or footer by default, but they can be
+        // explicitly enabled by the user.
         $this->setHideHeader(true);
         $this->setHideFooter(true);
     }
