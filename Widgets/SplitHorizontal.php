@@ -15,7 +15,7 @@ class SplitHorizontal extends SplitVertical
 {
     // TODO add stacking options
     
-    public function getOrientation($default = null): string
+    protected function getOrientation(): string
     {
         return split::ORIENTATION_HORIZONTAL;
     }
