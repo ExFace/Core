@@ -74,7 +74,7 @@ class DialogButton extends Button
     /**
      * Makes the button close (TRUE) or leave open (FALSE) the dialog after it had been pressed - regardless of the result.
      *
-     * @uxon-property close_dialog_after_action_succeeds
+     * @uxon-property close_dialog
      * @uxon-type boolean
      *
      * @param bool|string $value

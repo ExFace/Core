@@ -238,7 +238,7 @@ abstract class AbstractAction implements ActionInterface
      * By default all icons from font awsome (http://fontawesome.io/icons/) are supported.
      *
      * @uxon-property icon
-     * @uxon-type string
+     * @uxon-type icon
      *
      * {@inheritdoc}
      * @see \exface\Core\Interfaces\Actions\ActionInterface::setIcon()
@@ -834,6 +834,7 @@ abstract class AbstractAction implements ActionInterface
      * 
      * @uxon-property input_mappers
      * @uxon-type \exface\Core\CommonLogic\DataSheet\DataSheetMapper[]
+     * @uxon-template [{"from_object_alias": "", "column_to_column_mappings": [{"from": "", "to": ""}]}]
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Actions\ActionInterface::setInputMappers()
@@ -876,7 +877,8 @@ abstract class AbstractAction implements ActionInterface
      * See description of the `input_mappers` property for more details. 
      * 
      * @uxon-property input_mapper
-     * @uxon-type \exface\Core\CommonLogic\DataSheet\DataSheetMapper
+     * @uxon-type \exface\Core\CommonLogic\DataSheets\DataSheetMapper
+     * @uxon-template {"column_to_column_mappings": [{"from": "", "to": ""}]}
      * 
      * @see setInputMappers()
      * @see \exface\Core\Interfaces\Actions\ActionInterface::setInputMapper()

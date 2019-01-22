@@ -76,13 +76,6 @@ interface DataSheetMapperInterface extends iCanBeConvertedToUxon, WorkbenchDepen
      * @param UxonObject
      * @return DataSheetMapperInterface
      */
-    public function setColumnMappings(UxonObject $uxon);
-    
-    /**
-     *
-     * @param UxonObject
-     * @return DataSheetMapperInterface
-     */
     public function setColumnToColumnMappings(UxonObject $uxon);
     
     /**

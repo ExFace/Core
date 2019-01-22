@@ -639,7 +639,7 @@ class InputComboTable extends InputCombo implements iCanPreloadData
      *
      * @uxon-property filters
      * @uxon-type \exface\Core\CommonLogic\Model\Condition[]
-     * @uxon-templates [{"attribute_alias": "", "value": "", "comparator": "="}]
+     * @uxon-template [{"attribute_alias": "", "value": "", "comparator": "="}]
      *
      * @param Condition[]|UxonObject $conditions_or_uxon_objects            
      * @return \exface\Core\Widgets\InputSelect

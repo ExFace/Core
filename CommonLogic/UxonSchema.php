@@ -15,6 +15,7 @@ use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Model\BehaviorInterface;
+use exface\Core\Factories\ExpressionFactory;
 
 /**
  * This class provides varios tools to analyse and validate a generic UXON object.
@@ -34,9 +35,11 @@ use exface\Core\Interfaces\Model\BehaviorInterface;
  * - metamodel:expression
  * - metamodel:object
  * - metamodel:attribute
+ * - metamodel:relation
  * - metamodel:action
  * - metamodel:page
  * - metamodel:comparator
+ * - metamodel:connection
  * - uxon:path - where path is a JSONpath relative to the current field
  * - [enum,values] - enumeration of commma-separated values (in square brackets)
  * 
@@ -255,6 +258,9 @@ class UxonSchema implements WorkbenchDependantInterface
             case $this->isPropertyTypeEnum($firstType) === true:
                 $options = explode(',', trim($firstType, "[]"));
                 break;
+            case strcasecmp($firstType, 'boolean') === 0:
+                $options = ['true', 'false'];
+                break;
             case strcasecmp($firstType, 'metamodel:widget') === 0:
                 $options = $this->getMetamodelWidgetTypes();
                 break;
@@ -278,9 +284,25 @@ class UxonSchema implements WorkbenchDependantInterface
                     $options = [];
                 }
                 break;
-            case strcasecmp($firstType, 'boolean') === 0:
-                $options = ['true', 'false'];
+            case strcasecmp($firstType, 'metamodel:expression') === 0:
+                try {
+                    $object = $this->getMetaObject($uxon, $path);
+                    $ex = ExpressionFactory::createFromString($this->getWorkbench(), $search, $object);
+                    if ($ex->isFormula() === true) {
+                        // TODO
+                    } elseif ($ex->isReference() === true) {
+                        // TODO
+                    } elseif ($ex->isNumber()) {
+                        // Do nothing - a number is simply a number
+                    } else {
+                        // If the expression is neither of the above, try to interpret it as an attribute
+                        $options = $this->getMetamodelAttributeAliases($object, $search);
+                    }
+                } catch (MetaObjectNotFoundError $e) {
+                    $options = [];
+                }
                 break;
+            
         } 
         
         return $options;

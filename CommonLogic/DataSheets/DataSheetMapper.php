@@ -140,8 +140,14 @@ class DataSheetMapper implements DataSheetMapperInterface {
     }
     
     /**
+     * The object to apply the mapping to (= the input of the mapping).
      * 
-     * {@inheritDoc}
+     * The mapping will only be applied to input data of this object or it's
+     * derivatives!
+     * 
+     * @uxon-property from_object_alias
+     * @uxon-type metamodel:object
+     * 
      * @see \exface\Core\Interfaces\DataSheets\DataSheetMapperInterface::setFromObjectAlias()
      */
     public function setFromObjectAlias($alias_with_namespace)
@@ -195,22 +201,20 @@ class DataSheetMapper implements DataSheetMapperInterface {
     }
 
     /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\DataSheets\DataSheetMapperInterface::setColumnMappings()
+     * @deprecated Obsolet! Use setColumnToColumnMappings()
      */
     public function setColumnMappings(UxonObject $uxon)
     {
-        foreach ($uxon as $instance){
-            $map = $this->createColumnToColumnMapping($instance);            
-            $this->addColumnToColumnMapping($map);
-        }
-        return $this;
+        return $this->setColumnToColumnMappings($uxon);
     }
     
     /**
-     *
-     * {@inheritDoc}
+     * Maps column expressions of the from-sheet to new columns of the to-sheet.
+     * 
+     * @uxon-property column_to_column_mappings
+     * @uxon-type \exface\Core\CommonLogic\DataSheets\DataColumnMapping[]
+     * @uxon-template [{"from": "", "to": ""}]
+     * 
      * @see \exface\Core\Interfaces\DataSheets\DataSheetMapperInterface::setColumnToColumnMappings()
      */
     public function setColumnToColumnMappings(UxonObject $uxon)
@@ -223,8 +227,12 @@ class DataSheetMapper implements DataSheetMapperInterface {
     }
     
     /**
-     *
-     * {@inheritDoc}
+     * Creates filters from the values of a column
+     * 
+     * @uxon-property column_to_column_mappings
+     * @uxon-type \exface\Core\CommonLogic\DataSheets\DataColumnToFilterMapping[]
+     * @uxon-template [{"from": "", "to": "", "comparator": "["}]
+     * 
      * @see \exface\Core\Interfaces\DataSheets\DataSheetMapperInterface::setColumnToFilterMappings()
      */
     public function setColumnToFilterMappings(UxonObject $uxon)
@@ -305,8 +313,12 @@ class DataSheetMapper implements DataSheetMapperInterface {
     }
 
     /**
+     * Map anything using provided expressions: columns, filters, sorters, aggregators, etc.
      * 
-     * {@inheritDoc}
+     * @uxon-property expression_mappings
+     * @uxon-type \exface\Core\CommonLogic\DataSheets\DataColumnMapping[]
+     * @uxon-template [{"from": "", "to": ""}]
+     * 
      * @see \exface\Core\Interfaces\DataSheets\DataSheetMapperInterface::setExpressionMappings()
      */
     public function setExpressionMappings(UxonObject $uxonObjects)

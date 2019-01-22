@@ -185,7 +185,8 @@ class ShowDialog extends ShowWidget implements iShowDialog
      *  ]
      *  
      * @uxon-property dialog_buttons
-     * @uxon-type \exface\Core\Widgets\Button[]
+     * @uxon-type \exface\Core\Widgets\DialogButton[]
+     * @uxon-template [{"action_alias": ""}]
      *
      * @param UxonObject $uxon            
      * @return \exface\Core\Actions\ShowDialog
