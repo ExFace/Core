@@ -197,9 +197,27 @@ class DataImageGallery extends Data implements iCanUseProxyTemplate
      *
      * @return ?string
      */
-    public function getOrientation() : ?string
+    protected function getOrientation() : ?string
     {
         return $this->orientation;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function isVertical() : bool
+    {
+        return $this->getOrientation() === self::ORIENTATION_VERTICAL;
+    }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function isHorizontal() : bool
+    {
+        return $this->getOrientation() === self::ORIENTATION_HORIZONTAL;
     }
     
     /**

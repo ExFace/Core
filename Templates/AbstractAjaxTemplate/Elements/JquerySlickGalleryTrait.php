@@ -116,7 +116,7 @@ JS;
         
     protected function buildJsSlickOrientationOptions() : string
     {
-        if ($this->getWidget()->getOrientation() === $this->getWidget()::ORIENTATION_VERTICAL) {
+        if ($this->getWidget()->isVertical() === true) {
             $verticalOptions = 'vertical: true,';
         }
         return <<<JS
