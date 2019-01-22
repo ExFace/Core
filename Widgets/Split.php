@@ -126,9 +126,12 @@ class Split extends Container
      *
      * @return string
      */
-    public function getOrientation($default = null) : ?string
+    protected function getOrientation() : string
     {
-        return $this->orientation ?? $default;
+        if ($this->orientation === null) {
+            return self::ORIENTATION_HORIZONTAL;
+        }
+        return $this->orientation;
     }
     
     /**
@@ -136,7 +139,7 @@ class Split extends Container
      * 
      * @uxon-property orientation
      * @uxon-type [vertical,horizontal]
-     * @uxon-default vertical
+     * @uxon-default horizontal
      * 
      * @param string $value
      * @return Split
@@ -153,4 +156,13 @@ class Split extends Container
         return $this;
     }
     
+    public function isVertial() : bool
+    {
+        return $this->getOrientation() === self::ORIENTATION_VERTICAL;
+    }
+    
+    public function isSideBySide() : bool
+    {
+        return $this->getOrientation() === self::ORIENTATION_HORIZONTAL;
+    }
 }

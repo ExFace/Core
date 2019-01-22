@@ -16,7 +16,7 @@ namespace exface\Core\Widgets;
 class SplitVertical extends Split
 {
     
-    public function getOrientation($default = null): ?string
+    protected function getOrientation(): string
     {
         return split::ORIENTATION_VERTICAL;
     }
