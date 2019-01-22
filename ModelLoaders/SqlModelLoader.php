@@ -654,7 +654,7 @@ class SqlModelLoader implements ModelLoaderInterface
     public function loadDataType(DataTypeSelectorInterface $selector) : DataTypeInterface
     {
         $cache = $this->getDataTypeCache($selector);
-        if (empty($cache)){
+        if (empty($cache) === true){
             $this->cacheDataType($selector);
             $cache = $this->getDataTypeCache($selector);
         }

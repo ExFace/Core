@@ -184,8 +184,8 @@ class Attribute implements MetaAttributeInterface
      */
     public function getDataType()
     {
-        if (is_string($this->data_type)){
-            $this->data_type = DataTypeFactory::createFromString($this->getWorkbench(), $this->data_type);
+        if (is_string($this->data_type) === true){
+            $this->data_type = DataTypeFactory::createFromString($this->getWorkbench(), $this->data_type)->copy();
             $this->data_type->importUxonObject($this->getCustomDataTypeUxon());
         }
         return $this->data_type;
