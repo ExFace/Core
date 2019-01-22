@@ -5,6 +5,7 @@ use exface\Core\Interfaces\Widgets\iCanUseProxyTemplate;
 use exface\Core\Widgets\Traits\iCanUseProxyTemplateTrait;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\DataTypes\ImageUrlDataType;
+use exface\Core\CommonLogic\UxonObject;
 
 /**
  * Shows a scrollable gallery of images as a horizontal or vertical strip.
@@ -188,6 +189,12 @@ class DataImageGallery extends Data implements iCanUseProxyTemplate
     {
         $this->image_title_attribute_alias = $value;
         $col = $this->createColumnFromAttribute($this->getMetaObject()->getAttribute($value), null, true);
+        // Make the column show images. This ensures backward compatibility to other data widget (e.g. DataTable),
+        // so templates, that do not have a gallery implementation, can simply fall back to a table and it
+        // would automatically show the images.
+        $col->setCellWidget(new UxonObject([
+            "widget_type" => "Image"
+        ]));
         $this->addColumn($col);
         $this->image_title_column = $col;
         return $this;
