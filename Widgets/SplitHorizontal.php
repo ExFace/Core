@@ -2,13 +2,11 @@
 namespace exface\Core\Widgets;
 
 /**
- * A Split consists of multiple panels aligned vertically or horizontally.
- * Using splits groups of
- * widgets can be positioned next to each other instead of one-after-another. The borders between
- * panels within a split can be dragged, thus resizing parts of the split.
- *
- * The horizontal split has the additional feature of optionally being transformed to a vertical
- * split on small screens (stacking).
+ * A horizontal split displays it's panels side-by-side.
+ * 
+ * For panels with `resizable` set to true, the user can change the width by dragging the panel's border.
+ * 
+ * This widget is the same as a generic `Split` with `orientation` set to `horizontal`.
  *
  * @author Andrej Kabachnik
  *        
@@ -16,4 +14,22 @@ namespace exface\Core\Widgets;
 class SplitHorizontal extends SplitVertical
 {
     // TODO add stacking options
+    
+    public function getOrientation($default = null): string
+    {
+        return split::ORIENTATION_HORIZONTAL;
+    }
+    
+    /**
+     * Setting orientation for a horizontal split does not make sense - it is allways horizontal!
+     *
+     * No UXON annotations here!
+     *
+     * @param string $value
+     * @return SplitVertical
+     */
+    public function setOrientation(string $value) : Split
+    {
+        return $this;
+    }
 }
