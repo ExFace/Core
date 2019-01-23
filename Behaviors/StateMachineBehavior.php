@@ -23,6 +23,7 @@ use exface\Core\DataTypes\NumberEnumDataType;
 use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
 use exface\Core\Widgets\ProgressBar;
 use exface\Core\Events\Model\OnMetaAttributeModelValidatedEvent;
+use exface\Core\Interfaces\Widgets\iTakeInput;
 
 /**
  * Makes it possible to model states of an object and transitions between them.
@@ -540,14 +541,13 @@ class StateMachineBehavior extends AbstractBehavior
         
         // Disable attribute editors if editing is disabled completely or for the specific attribute
         if ($widget instanceof iShowSingleAttribute) {
-            $disabled_attributes = $state->getDisabledAttributesAliases(); 
-            if ($state->getDisableEditing() || in_array($widget->getAttributeAlias(), $disabled_attributes)) {
+            if ($widget->isBoundToAttribute() && $state->isAttributeDisabled($widget->getAttribute()) === true) {
                 // set_readonly() statt set_disabled(), dadurch werden die deaktivierten
                 // Widgets nicht gespeichert. Behebt einen Fehler, der dadurch ausgeloest
                 // wurde, dass ein deaktiviertes Widget durch einen Link geaendert wurde,
                 // und sich der Wert dadurch vom Wert in der DB unterschied ->
                 // StateMachineUpdateException
-                if (method_exists($widget, 'setReadonly')) {
+                if ($widget instanceof iTakeInput) {
                     $widget->setReadonly(true);
                 } else {
                     $widget->setDisabled(true);
@@ -563,10 +563,7 @@ class StateMachineBehavior extends AbstractBehavior
                 }
                 
                 if ($btn->hasAction() && $btn->getAction()->getMetaObject()->is($this->getObject())) {
-                    if (($btn->getAction() instanceof SaveData) && $state->getDisableEditing()) {
-                        $btn->setDisabled(true);
-                    }
-                    if (($btn->getAction() instanceof DeleteObject) && $state->getDisableDelete()) {
+                    if ($state->isActionDisabled($btn->getAction()) === true) {
                         $btn->setDisabled(true);
                     }
                 }
@@ -609,36 +606,44 @@ class StateMachineBehavior extends AbstractBehavior
         $check_sheet->addFilterFromColumnValues($data_sheet->getUidColumn());
         $check_sheet->dataRead();
         $check_column = $check_sheet->getColumns()->getByAttribute($this->getStateAttribute());
-        $check_nr = count($check_column->getValues());
+        $check_cnt = count($check_column->getValues());
         
         // Check if the state column is present in the sheet, if so get the old value and check
         // if the transition is allowed, throw an error if not
         if ($updated_column = $data_sheet->getColumns()->getByAttribute($this->getStateAttribute())) {
-            $update_nr = count($updated_column->getValues());
+            $update_cnt = count($updated_column->getValues());
+            $error = false;
             
-            if ($check_nr == $update_nr) {
+            if ($check_cnt == $update_cnt) {
                 // beim Bearbeiten eines einzelnen Objektes ueber einfaches Bearbeiten, Massenupdate in Tabelle, Massenupdate
                 // ueber Knopf $check_nr == 1, $update_nr == 1
                 // beim Bearbeiten mehrerer Objekte ueber Massenupdate in Tabelle $check_nr == $update_nr > 1
                 foreach ($updated_column->getValues() as $row_nr => $updated_val) {
                     $check_val = $check_column->getCellValue($check_sheet->getUidColumn()->findRowByValue($data_sheet->getUidColumn()->getCellValue($row_nr)));
-                    $allowed_transitions = $this->getState($check_val)->getTransitions();
-                    if (! in_array($updated_val, $allowed_transitions)) {
-                        $data_sheet->dataMarkInvalid();
-                        throw new StateMachineUpdateException($data_sheet, 'Cannot update data in data sheet with "' . $data_sheet->getMetaObject()->getAliasWithNamespace() . '": state transition from ' . $check_val . ' to ' . $updated_val . ' is not allowed!', '6VC040N');
+                    $from_state = $this->getState($check_val);
+                    $to_state = $this->getState($updated_val);
+                    if ($from_state->isTransitionAllowed($to_state) === false) {
+                        $error = true;
+                        break;
                     }
                 }
-            } else if ($check_nr > 1 && $update_nr == 1) {
+            } else if ($check_cnt > 1 && $update_cnt == 1) {
                 // beim Bearbeiten mehrerer Objekte ueber Massenupdate ueber Knopf, Massenupdate ueber Knopf mit Filtern
                 // $check_nr > 1, $update_nr == 1
                 $updated_val = $updated_column->getValues()[0];
+                $from_state = $this->getState($check_val);
+                $to_state =$this->getState($updated_val);
                 foreach ($check_column->getValues() as $row_nr => $check_val) {
-                    $allowed_transitions = $this->getState($check_val)->getTransitions();
-                    if (! in_array($updated_val, $allowed_transitions)) {
-                        $data_sheet->dataMarkInvalid();
-                        throw new StateMachineUpdateException($data_sheet, 'Cannot update data in data sheet with "' . $data_sheet->getMetaObject()->getAliasWithNamespace() . '": state transition from ' . $check_val . ' to ' . $updated_val . ' is not allowed!', '6VC040N');
+                    if ($from_state->isTransitionAllowed($to_state) === false) {
+                        $error = true;    
+                        break;
                     }
                 }
+            }
+            
+            if ($error === true) {
+                $data_sheet->dataMarkInvalid();
+                throw new StateMachineUpdateException($data_sheet, 'Cannot update data in data sheet with "' . $data_sheet->getMetaObject()->getAliasWithNamespace() . '": state transition from ' . $from_state->getName() . ' (' . $check_val . ') to ' . $to_state->getName() . ' (' . $updated_val . ') is not allowed!', '6VC040N');
             }
         }
         
@@ -647,14 +652,14 @@ class StateMachineBehavior extends AbstractBehavior
         foreach ($data_sheet->getRows() as $updated_row_nr => $updated_row) {
             $check_row_nr = $check_sheet->getUidColumn()->findRowByValue($data_sheet->getUidColumn()->getCellValue($updated_row_nr));
             $check_state_val = $check_column->getCellValue($check_row_nr);
-            $state = $this->getState($check_state_val);
-            $disabled_attributes = $state->getDisabledAttributesAliases();
-            foreach ($updated_row as $attribute_alias => $updated_val) {
-                if ($state->getDisableEditing() || in_array($attribute_alias, $disabled_attributes)) {
-                    $check_val = $check_sheet->getCellValue($attribute_alias, $check_row_nr);
+            $state = $this->getState($check_state_val);            
+            foreach ($updated_row as $colum_name => $updated_val) {
+                $col = $data_sheet->getColumns()->get($colum_name);
+                if ($col->isAttribute() === true && $state->isAttributeDisabled($col->getAttribute()) === true) {
+                    $check_val = $col->getCellValue($check_row_nr);
                     if ($updated_val != $check_val) {
                         $data_sheet->dataMarkInvalid();
-                        throw new StateMachineUpdateException($data_sheet, 'Cannot update data in data sheet with "' . $data_sheet->getMetaObject()->getAliasWithNamespace() . '": attribute ' . $attribute_alias . ' is disabled in the current state (' . $check_state_val . ')!', '6VC07QH');
+                        throw new StateMachineUpdateException($data_sheet, 'Cannot update data in data sheet with "' . $data_sheet->getMetaObject()->getAliasWithNamespace() . '": attribute ' . $attr->getName() . ' (' . $attr->getAliasWithNamespace() . ') is disabled in the current state "' . $state->getName() . '"!', '6VC07QH');
                     }
                 }
             }

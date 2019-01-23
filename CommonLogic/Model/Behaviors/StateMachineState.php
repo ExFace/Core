@@ -5,6 +5,10 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\TranslationInterface;
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
+use exface\Core\Interfaces\Actions\ActionInterface;
+use exface\Core\Interfaces\Actions\iModifyData;
+use exface\Core\Interfaces\Actions\iCreateData;
 
 /**
  * Defines a state for the StateMachineBehavior.
@@ -24,7 +28,7 @@ class StateMachineState
     
     private $disable_delete = false;
 
-    private $transitions = [];
+    private $transitions = null;
 
     private $name = null;
 
@@ -131,6 +135,16 @@ class StateMachineState
     {
         return $this->disabled_attributes_aliases;
     }
+    
+    /**
+     * Returns TRUE if transitions were defined for this state and FALSE otherwise.
+     * 
+     * @return bool
+     */
+    protected function hasTransitionRestrictions() : bool
+    {
+        return $this->transitions !== null;
+    }
 
     /**
      * Returns the allowed transitions for the state.
@@ -139,7 +153,7 @@ class StateMachineState
      */
     public function getTransitions()
     {
-        return $this->transitions;
+        return $this->transitions ?? [];
     }
 
     /**
@@ -325,5 +339,38 @@ class StateMachineState
         return $this;
     }
 
+    /**
+     * Returns TRUE if a transition from this state to the given one is possible.
+     * 
+     * @param StateMachineState $toState
+     * @return bool
+     */
+    public function isTransitionAllowed(StateMachineState $toState) : bool
+    {
+        return $this->hasTransitionRestrictions() === false || in_array($toState->getStateId(), $this->getTransitions()) === true;
+    }
+    
+    /**
+     * Returns TRUE if the editing of the given attribute is not blocked by this state and FALSE otherwise.
+     * 
+     * @param MetaAttributeInterface $attribute
+     * @return bool
+     */
+    public function isAttributeDisabled(MetaAttributeInterface $attribute) : bool
+    {
+        return $this->getDisableEditing() === true || in_array($attribute->getAliasWithRelationPath(), $this->getDisabledAttributesAliases()) === true;
+    }
+
+    /**
+     * Returns TRUE if the given action is forbidden in this state.
+     * 
+     * This is the case if the action modifies or deletes data and the state has `disable_editing` = true.
+     * 
+     * @param ActionInterface $action
+     * @return bool
+     */
+    public function isActionDisabled(ActionInterface $action) : bool
+    {
+        return $this->getDisableEditing() === true && ($action instanceof iModifyData) && ! ($action instanceof iCreateData);
+    }
 }
-?>
