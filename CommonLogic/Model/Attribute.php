@@ -478,7 +478,7 @@ class Attribute implements MetaAttributeInterface
      */
     public function getDefaultValue()
     {
-        if ($this->default_value && ! ($this->default_value instanceof expression)) {
+        if ($this->hasDefaultValue() === true && ! ($this->default_value instanceof expression)) {
             $this->default_value = $this->getModel()->parseExpression($this->default_value, $this->getObject());
         }
         return $this->default_value;
@@ -508,7 +508,7 @@ class Attribute implements MetaAttributeInterface
      */
     public function getFixedValue()
     {
-        if ($this->fixed_value && ! ($this->fixed_value instanceof expression)) {
+        if ($this->hasFixedValue() === true && ! ($this->fixed_value instanceof expression)) {
             $this->fixed_value = $this->getModel()->parseExpression($this->fixed_value, $this->getObject());
         }
         return $this->fixed_value;
