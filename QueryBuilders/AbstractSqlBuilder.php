@@ -38,7 +38,7 @@ use exface\Core\DataTypes\JsonDataType;
  * 
  * The data address of an object stored in an SQL database can be a table name,
  * or any SQL usable within the FROM clause. Placeholders for filters can
- * be used as usual (e.g. [#my_attribute_alias#] for the value of a filter on
+ * be used as usual (e.g. `[#my_attribute_alias#]` for the value of a filter on
  * the attribute my_attribute_alias of the current object - making it a
  * mandatory filter).
  * 
@@ -58,7 +58,7 @@ use exface\Core\DataTypes\JsonDataType;
  * generated SQL.
  * 
  * On attribute level any other attribute alias can be used as placeholder
- * additionally to [#~alias#]. Thus, attribute addresses can be reused. This
+ * additionally to `[#~alias#]`. Thus, attribute addresses can be reused. This
  * is handy if an attribute builds upon other attributes. E.g. a precentage
  * would be an attribute being calculated from two other attributes. This can
  * easily be done via attribute placeholders in it's data address: 
@@ -90,7 +90,7 @@ use exface\Core\DataTypes\JsonDataType;
  * 
  * - `SQL_SELECT` - custom SQL SELECT statement. It replaces the entire select
  * generator and will be used as-is except for replacing placeholders. The
- * placeholder [#~alias#] is supported as well as placeholders for other attributes. 
+ * placeholder `[#~alias#]` is supported as well as placeholders for other attributes. 
  * This is usefull to write wrappers for columns (e.g. `NVL([#~value#].MY_COLUMN, 0)`. 
  * If the wrapper is placed here, the data address would remain writable, while 
  * replacing the column name with a custom SQL statement in the data address itself, 
