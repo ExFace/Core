@@ -1,9 +1,9 @@
 # Data addresses in SQL models
 
-## SQL-Tables as objects
+## SQL-tables and views as objects
 
 TODO
 
-## SQL-Views as objects
+## Custom SELECTs as objects
 
 TODO
