@@ -67,18 +67,4 @@ trait JqueryDataTableTrait {
     {
         return $this->editors;
     }
-    
-    protected function getQuickSearchPlaceholder($include_title = true)
-    {
-        $quick_search_fields = $this->getWidget()->getMetaObject()->getLabelAttribute() ? $this->getWidget()->getMetaObject()->getLabelAttribute()->getName() : '';
-        foreach ($this->getWidget()->getConfiguratorWidget()->getQuickSearchFilters() as $qfltr) {
-            $quick_search_fields .= ($quick_search_fields ? ', ' : '') . $qfltr->getCaption();
-        }
-        if ($include_title && $quick_search_fields) {
-            $quick_search_fields = ': ' . $quick_search_fields;
-        }
-        
-        return ($include_title ? 'Quick search' : '') . $quick_search_fields;
-    }
 }
-?>
