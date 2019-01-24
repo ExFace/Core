@@ -31,6 +31,7 @@ use exface\Core\Interfaces\Widgets\iShowData;
 use exface\Core\Interfaces\Widgets\iCanPreloadData;
 use exface\Core\Widgets\Traits\iCanPreloadDataTrait;
 use exface\Core\Interfaces\Actions\iShowWidget;
+use exface\Core\Interfaces\Widgets\iTakeInput;
 
 /**
  * Data is the base for all widgets displaying tabular data.
@@ -122,6 +123,10 @@ class Data
     private $autoload_data = true;
     
     private $autoload_disabled_hint = null;
+    
+    private $quickSearchWidget = null;
+    
+    private $quickSearchEnabled = null;
 
     protected function init()
     {
@@ -1651,5 +1656,70 @@ class Data
         // This method is just here for it's annotations: otherwise the uxon-type would
         // be Button[] instead of DataButton[]
         return $this->setButtonsViaTrait($buttons);
+    }
+    
+    public function getQuickSearchPlaceholder()
+    {
+        $quick_search_fields = $this->getMetaObject()->getLabelAttribute() ? $this->getMetaObject()->getLabelAttribute()->getName() : '';
+        foreach ($this->getConfiguratorWidget()->getQuickSearchFilters() as $qfltr) {
+            $quick_search_fields .= ($quick_search_fields ? ', ' : '') . $qfltr->getCaption();
+        }
+        
+        return $quick_search_fields;
+    }
+    
+    /**
+     *
+     * @return bool
+     */
+    public function getQuickSearchEnabled() : bool
+    {
+        return $this->quickSearchEnabled;
+    }
+    
+    /**
+     * Set to TRUE/FALSE to enable or disable quick search functionality.
+     * 
+     * By default, the templates are free to decide, if quick search should be used
+     * for specific data widgets.
+     * 
+     * @uxon-property quick_search_enabled
+     * @uxon-type boolean
+     * 
+     * @param bool $value
+     * @return Data
+     */
+    public function setQuickSearchEnabled(bool $value) : Data
+    {
+        $this->quickSearchEnabled = $value;
+        return $this;
+    }
+    
+    /**
+     *
+     * @return Input
+     */
+    public function getQuickSearchWidget() : Input
+    {
+        if ($this->quickSearchWidget === null) {
+            $this->quickSearchWidget = WidgetFactory::create($this->getPage(), 'Input', $this);
+        }
+        return $this->quickSearchWidget;
+    }
+    
+    /**
+     * Configure the quick-search widget (e.g. to add autosuggest, etc.).
+     * 
+     * @uxon-property quick_search_widget
+     * @uxon-type \exface\Core\Widgets\Input
+     * @uxon-tempalte {"widget_type": ""} 
+     * 
+     * @param UxonObject $value
+     * @return Data
+     */
+    public function setQuickSearchWidget(UxonObject $uxon) : Data
+    {
+        $this->quickSearchWidget = WidgetFactory::createFromUxon($this->getPage(), $uxon, $this, 'Input');
+        return $this;
     }
 }
