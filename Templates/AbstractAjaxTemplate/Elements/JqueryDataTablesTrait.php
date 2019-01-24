@@ -382,7 +382,7 @@ JS;
 				    $result = <<<JS
 			"ajax": function (data, callback, settings) {
 				callback(
-						{$this->getTemplate()->encodeData($this->prepareData($data))}
+						{$this->getTemplate()->encodeData($this->getTemplate()->buildResponseData($data, $widget))}
 						);
 				}
 JS;

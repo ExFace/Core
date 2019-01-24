@@ -40,6 +40,7 @@ use exface\Core\Templates\AbstractHttpTemplate\Middleware\ContextBarApi;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Events\Widget\OnRemoveEvent;
 use exface\Core\Interfaces\Tasks\ResultTextContentInterface;
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 
 /**
  * 
@@ -397,8 +398,7 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
         
         switch (true) {
             case $result instanceof ResultDataInterface:
-                $elem = $this->getElement($result->getTask()->getWidgetTriggeredBy());
-                $json = $elem->prepareData($result->getData());
+                $json = $this->buildResponseData($result->getData(), $result->getTask()->getWidgetTriggeredBy());
                 $json["success"] = $result->getMessage();
                 $headers = array_merge($headers, $this->buildHeadersAccessControl());
                 break;
@@ -467,6 +467,14 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
         
         return new Response($status_code, $headers, $body);
     }
+    
+    /**
+     * Returns a serializable version of the given data sheet.
+     * 
+     * @param DataSheetInterface $data_sheet
+     * @param WidgetInterface $widget
+     */
+    abstract public function buildResponseData(DataSheetInterface $data_sheet, WidgetInterface $widget = null);
     
     /**
      *
