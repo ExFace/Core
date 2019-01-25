@@ -35,6 +35,7 @@ use exface\Core\Factories\ExpressionFactory;
  * - metamodel:expression
  * - metamodel:object
  * - metamodel:attribute
+ * - metamodel:attribute_group
  * - metamodel:relation
  * - metamodel:action
  * - metamodel:page
@@ -436,10 +437,10 @@ class UxonSchema implements WorkbenchDependantInterface
         
         // Action models
         $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.OBJECT_ACTION');
-        $ds->getColumns()->addMultiple(['ALIAS', 'APP_ALIAS']);
+        $ds->getColumns()->addMultiple(['ALIAS', 'APP__ALIAS']);
         $ds->dataRead();
         foreach ($ds->getRows() as $row) {
-            $options[] = $row['APP_ALIAS'] . $dot . $row['ALIAS'];
+            $options[] = $row['APP__ALIAS'] . $dot . $row['ALIAS'];
         }
         
         return $options;
