@@ -10,6 +10,7 @@ use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\Exceptions\Widgets\WidgetLogicError;
 use exface\Core\Interfaces\Widgets\iTakeInput;
+use exface\Core\Interfaces\WidgetInterface;
 
 /**
  * Renders data as a table with filters, columns, and toolbars.
@@ -706,7 +707,7 @@ class DataTable extends Data implements iFillEntireContainer, iSupportMultiSelec
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\iTakeInput::setReadonly()
      */
-    public function setReadonly($true_or_false) : iTakeInput
+    public function setReadonly($true_or_false) : WidgetInterface
     {
         $this->setEditable(! BooleanDataType::cast($true_or_false));
         return $this;

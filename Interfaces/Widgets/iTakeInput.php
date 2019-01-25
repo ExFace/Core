@@ -29,7 +29,7 @@ interface iTakeInput extends iCanBeRequired, iCanBeDisabled
      * @param bool|string $true_or_false            
      * @return WidgetInterface
      */
-    public function setReadonly($true_or_false) : iTakeInput;
+    public function setReadonly($true_or_false) : WidgetInterface;
 
     /**
      * Returns TRUE if the widget is display-only (= interactive, but being ignored by actions) and FALSE otherwise.

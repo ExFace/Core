@@ -5,6 +5,7 @@ use exface\Core\Interfaces\Widgets\iTakeInput;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 use exface\Core\Interfaces\Widgets\iHaveDefaultValue;
 use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\Interfaces\WidgetInterface;
 
 /**
  * A generic input field: single line accepting any set of characters.
@@ -139,7 +140,7 @@ class Input extends Value implements iTakeInput, iHaveDefaultValue
      * 
      * @see \exface\Core\Interfaces\Widgets\iTakeInput::setReadonly()
      */
-    public function setReadonly($value) : iTakeInput
+    public function setReadonly($value) : WidgetInterface
     {
         $this->readonly = \exface\Core\DataTypes\BooleanDataType::cast($value);
         return $this;

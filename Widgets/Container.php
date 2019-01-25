@@ -31,6 +31,8 @@ class Container extends AbstractWidget implements iContainOtherWidgets, iCanPrel
     use iCanPreloadDataTrait;
     
     private $widgets = array();
+    
+    private $readonly = null;
 
     /**
      * 
@@ -263,12 +265,13 @@ class Container extends AbstractWidget implements iContainOtherWidgets, iCanPrel
      */
     public function setWidgets($widget_or_uxon_array)
     {
+        $readonly = $this->isReadonly();
         foreach ($widget_or_uxon_array as $w) {
             if ($w instanceof WidgetInterface) {
                 $this->addWidget($w);
             } else {
                 $page = $this->getPage();
-                $widget = WidgetFactory::createFromUxon($page, $w, $this);
+                $widget = WidgetFactory::createFromUxon($page, $w, $this, null, $readonly);
                 $this->addWidget($widget);
             }
         }
@@ -398,6 +401,52 @@ class Container extends AbstractWidget implements iContainOtherWidgets, iCanPrel
         }
         
         return $uxon;
+    }
+    
+    /**
+     * Controls if the default widget for attributes in sub-widgets is an editor (FALSE) or a display (TRUE).
+     * 
+     * Many container widgets will have sub-widgets with only the `attribute_alias` defined: in
+     * this case, the most appropriate widget for the attribute will be used automatically -
+     * in general, the system will use either the default editor or the default display widget
+     * of the attribute. By setting the `readonly` property on a container, you can influence this
+     * decision and force the use of editors (setting `readonly` to `true`) or display widget (`false`).
+     * 
+     * This property only affects the type of widget chosen for attribute-based widgets without
+     * an explicitly specified `widget_type`. This means, if you have a readonly `Panel`, you can
+     * still add widgets of type `Input` and they will be rendered as regular inputs. This is
+     * particularly usefull to create non-editable overviews with a view `InputHiddens` holding the
+     * desired input data for actions.
+     * 
+     * If not set explicitly, this property will be inherited from parent containers or assumed
+     * `false` if no parent containers exist.
+     * 
+     * @uxon-property readonly
+     * @uxon-type boolean
+     * 
+     * @return bool
+     */
+    public function isReadonly() : bool
+    {
+        if ($this->readonly === null) {
+            if ($this->hasParent() === true && $this->getParent() instanceof Container) {
+                return $this->getParent()->isReadonly();
+            } else {
+                return false;
+            }
+        }
+        return $this->readonly;
+    }
+    
+    /**
+     * 
+     * @param bool $value
+     * @return Container
+     */
+    public function setReadonly($value) : WidgetInterface
+    {
+        $this->readonly = $value;
+        return $this;
     }
 }
 ?>

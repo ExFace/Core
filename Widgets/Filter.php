@@ -12,6 +12,7 @@ use exface\Core\CommonLogic\Model\Condition;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\Interfaces\WidgetInterface;
 
 /**
  * A filter is a wrapper widget, which typically consist of one or more input widgets.
@@ -467,7 +468,7 @@ class Filter extends Container implements iTakeInput, iShowSingleAttribute
      * 
      * @see \exface\Core\Interfaces\Widgets\iTakeInput::setReadonly()
      */
-    public function setReadonly($true_or_false) : iTakeInput
+    public function setReadonly($true_or_false) : WidgetInterface
     {
         $this->getInputWidget()->setReadonly($true_or_false);
         return $this;
