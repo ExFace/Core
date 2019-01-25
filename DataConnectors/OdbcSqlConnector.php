@@ -165,7 +165,9 @@ class OdbcSqlConnector extends AbstractSqlConnector
 
     public function freeResult(SqlDataQuery $query)
     {
-        odbc_free_result($query->getResultResource());
+        if (is_resource($query->getResultResource())) {
+            odbc_free_result($query->getResultResource());
+        }
     }
 
     /**

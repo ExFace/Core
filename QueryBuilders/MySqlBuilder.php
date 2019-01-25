@@ -276,7 +276,11 @@ class MySqlBuilder extends AbstractSqlBuilder
         
         $sql = 'DELETE FROM ' . $this->getMainObject()->getDataAddress() . str_replace($this->getMainObject()->getAlias() . $this->getAliasDelim(), '', $where);
         $query = $data_connection->runSql($sql);
-        return new DataQueryResultData([], $query->countAffectedRows());
+        $cnt = $query->countAffectedRows();
+        
+        $query->freeResult();
+        
+        return new DataQueryResultData([], $cnt);
     }
 }
 ?>

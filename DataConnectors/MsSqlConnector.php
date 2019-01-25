@@ -171,7 +171,9 @@ class MsSqlConnector extends AbstractSqlConnector
 
     public function freeResult(SqlDataQuery $query)
     {
-        sqlsrv_free_stmt($query->getResultResource());
+        if (is_resource($query->getResultResource())) {
+            sqlsrv_free_stmt($query->getResultResource());
+        }
     }
 
     public function getUID()

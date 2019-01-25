@@ -239,7 +239,9 @@ class OracleSqlConnector extends AbstractSqlConnector
 
     public function freeResult(SqlDataQuery $query)
     {
-        oci_free_statement($query->getResultResource());
+        if (is_resource($query->getResultResource())) {
+            oci_free_statement($query->getResultResource());
+        }
     }
 
     /**

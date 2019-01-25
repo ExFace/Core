@@ -228,9 +228,9 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         $query = $this->buildSqlQuerySelect();
         $q = new SqlDataQuery();
         $q->setSql($query);
-        // throw new DataQueryFailedError($q, 'xx');
+        $qr = $data_connection->query($q);
         // first do the main query
-        if ($rows = $data_connection->runSql($query)->getResultArray()) {
+        if ($rows = $qr->getResultArray()) {
             foreach ($this->getBinaryColumns() as $full_alias) {
                 $short_alias = $this->getShortAlias($full_alias);
                 foreach ($rows as $nr => $row) {
@@ -248,13 +248,15 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 }
             }
         }
+        $qr->freeResult();
         
         // then do the totals query if needed
         $result_totals = [];
         if ($this->hasTotals() === true) {
             $result_total_count = null;
             $totals_query = $this->buildSqlQueryTotals();
-            if ($totals = $data_connection->runSql($totals_query)->getResultArray()) {
+            $qrt = $data_connection->runSql($totals_query);
+            if ($totals = $qrt->getResultArray()) {
                 // the total number of rows is treated differently, than the other totals.
                 $result_total_count = $totals[0]['EXFCNT'];
                 // now save the custom totals.
@@ -262,6 +264,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                     $result_totals[$qpart->getRow()][$qpart->getColumnKey()] = $totals[0][$this->getShortAlias($qpart->getColumnKey())];
                 }
             }
+            $qrt->freeResult();
         }
         
         $rowCount = count($rows);
@@ -399,6 +402,8 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 $insertedCounter += $cnt;
                 $insertedIds[] = [$uidAlias => $last_id];
             }
+            
+            $query->freeResult();
         }
         
         // IDEA do bulk inserts instead of separate queries. The problem is:
@@ -544,12 +549,14 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             $sql = 'UPDATE ' . $this->buildSqlFrom() . ' SET ' . implode(', ', $row) . ' WHERE ' . $this->getMainObject()->getUidAttribute()->getDataAddress() . '=' . $uid;
             $query = $data_connection->runSql($sql);
             $affected_rows += $query->countAffectedRows();
+            $query->freeResult();
         }
         
         if (count($updates_by_filter) > 0) {
             $sql = 'UPDATE ' . $this->buildSqlFrom() . ' SET ' . implode(', ', $updates_by_filter) . $where;
             $query = $data_connection->runSql($sql);
             $affected_rows = $query->countAffectedRows();
+            $query->freeResult();
         }
         
         // Execute Subqueries
@@ -671,6 +678,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     {
         $result = $data_connection->runSql($this->buildSqlQueryCount());
         $cnt = $result->getResultArray()[0]['EXFCNT'];
+        $result->freeResult();
         return new DataQueryResultData([], $cnt, true, $cnt);
     }
     

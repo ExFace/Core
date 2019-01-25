@@ -102,7 +102,9 @@ class MySqlConnector extends AbstractSqlConnector
     {
         try {
             $result = mysqli_query($this->getCurrentConnection(), $query->getSql());
-            $query->setResultResource($result);
+            if ($result instanceof \mysqli_result) {
+                $query->setResultResource($result);
+            }
         } catch (\mysqli_sql_exception $e) {
             throw new DataQueryFailedError($query, $e->getMessage() . ' - SQL error code ' . $e->getCode(), $this->getErrorCode($e), $e);
         }
@@ -208,7 +210,9 @@ class MySqlConnector extends AbstractSqlConnector
 
     public function freeResult(SqlDataQuery $query)
     {
-        mysqli_free_result($query->getResultResource());
+        if ($query->getResultResource() instanceof \mysqli_result) {
+            mysqli_free_result($query->getResultResource());
+        }
     }
 
     public function getDbase()
