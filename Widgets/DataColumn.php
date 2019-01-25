@@ -155,10 +155,10 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
 
     /**
      * Makes the column display summary information in the footer.
-     * The value can be SUM, AVG, MIN, MAX, LIST and LIST_DISTINCT.
+     * The value can be SUM, AVG, MIN, MAX, COUNT, COUNT_DISTINCT, LIST and LIST_DISTINCT.
      *
      * @uxon-property footer
-     * @uxon-type string
+     * @uxon-type [SUM,AVG,MIN,MAX,COUNT,COUNT_DISTINCT,LIST,LIST_DISTINCT]
      *
      * @param string $value            
      * @return DataColumn
