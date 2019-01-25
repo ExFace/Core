@@ -54,7 +54,7 @@ abstract class WidgetFactory extends AbstractStaticFactory
      * 
      * @return WidgetInterface
      */
-    public static function createFromUxon(UiPageInterface $page, UxonObject $uxon_object, WidgetInterface $parent_widget = null, $fallback_widget_type = null)
+    public static function createFromUxon(UiPageInterface $page, UxonObject $uxon_object, WidgetInterface $parent_widget = null, $fallback_widget_type = null, bool $readonly = false)
     {
         
         // If the widget is supposed to be extended from another one, merge the uxon descriptions before doing anything else
@@ -96,7 +96,11 @@ abstract class WidgetFactory extends AbstractStaticFactory
                     } catch (MetaAttributeNotFoundError $e) {
                         throw new UxonParserError($uxon_object, 'Cannot create an editor widget for attribute "' . $uxon_object->getProperty('attribute_alias') . '" of object "' . $obj->getAlias() . '". Attribute not found!', null, $e);
                     }
-                    $uxon_object = $attr->getDefaultEditorUxon()->extend($uxon_object);
+                    if ($readonly === false) {
+                        $uxon_object = $attr->getDefaultEditorUxon()->extend($uxon_object);
+                    } else {
+                        $uxon_object = $attr->getDefaultDisplayUxon()->extend($uxon_object);
+                    }
                     $widget_type = $uxon_object->getProperty('widget_type');
                 }
             }
