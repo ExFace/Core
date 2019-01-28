@@ -406,17 +406,21 @@ class Container extends AbstractWidget implements iContainOtherWidgets, iCanPrel
     /**
      * Controls if the default widget for attributes in sub-widgets is an editor (FALSE) or a display (TRUE).
      * 
-     * Many container widgets will have sub-widgets with only the `attribute_alias` defined: in
-     * this case, the most appropriate widget for the attribute will be used automatically -
-     * in general, the system will use either the default editor or the default display widget
-     * of the attribute. By setting the `readonly` property on a container, you can influence this
-     * decision and force the use of editors (setting `readonly` to `true`) or display widget (`false`).
+     * This property is similar to the `readonly` propery of input widgets, but affects an entire
+     * container. If set to `true`, the widgets of the container will become `readonly` by default 
+     * (inactive and ignored by actions). 
      * 
-     * This property only affects the type of widget chosen for attribute-based widgets without
-     * an explicitly specified `widget_type`. This means, if you have a readonly `Panel`, you can
-     * still add widgets of type `Input` and they will be rendered as regular inputs. This is
-     * particularly usefull to create non-editable overviews with a view `InputHiddens` holding the
-     * desired input data for actions.
+     * You can override this behavior for each widget individually by giving it an explicit `widget_type`.
+     * This means, if you have a readonly `Panel`, you can still add widgets of type `Input` and they will 
+     * be rendered as regular inputs. This is particularly usefull to create readonly overviews with a 
+     * view `InputHiddens` holding the desired input data for actions.
+     * 
+     * Technically, this property  affects the type of widget chosen for attribute-based widgets without
+     * an explicitly specified `widget_type`. Many container widgets will have sub-widgets with only the 
+     * `attribute_alias` defined: in this case, the most appropriate widget for the attribute will be used 
+     * automatically - in general, the system will use either the default editor or the default display widget
+     * of the attribute. By setting the `readonly` property on a container, you can influence this
+     * decision and force the use of editors (setting `readonly` to `true`) or display widget (`false`). 
      * 
      * If not set explicitly, this property will be inherited from parent containers or assumed
      * `false` if no parent containers exist.
