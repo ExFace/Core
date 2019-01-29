@@ -151,13 +151,25 @@ class MySqlBuilder extends AbstractSqlBuilder
             $limit = ' LIMIT ' . ($this->getLimit()+1) . ' OFFSET ' . $this->getOffset();
         }
         
-        if (($group_by && $where) || $this->getSelectDistinct()) {
+        if ($this->isEnrichmentAllowed() && (($group_by && $where) || $this->getSelectDistinct())) {
             $query = "\n SELECT " . $distinct . $enrichment_select . " FROM (SELECT " . $select . " FROM " . $from . $join . $where . $group_by . $having . $order_by . ") EXFCOREQ " . $enrichment_join . $order_by . $limit;
         } else {
             $query = "\n SELECT " . $distinct . $select . " FROM " . $from . $join . $where . $group_by . $order_by . $having . $limit;
         }
         
         return $query;
+    }
+    
+    /**
+     * Returns TRUE if this query can use core/enrichment separation and FALSE otherwise.
+     * 
+     * Override this method to control enrichment in special constellations.
+     * 
+     * @return bool
+     */
+    protected function isEnrichmentAllowed() : bool
+    {
+        return true;
     }
 
     public function buildSqlQueryTotals()
