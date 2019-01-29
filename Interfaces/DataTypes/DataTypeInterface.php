@@ -76,9 +76,10 @@ interface DataTypeInterface extends WorkbenchDependantInterface, AliasInterface,
      * instantiated types.
      * @see DataTypeInterface::isEmptyValue($string) for a type-specific check for empty values.
      *
-     * @param mixed $string    
-     * @param mixed $emptyValue        
+     * @param mixed $string
+     *        
      * @throws DataTypeCastingError
+     * 
      * @return string
      */
     public static function cast($string);
@@ -103,7 +104,9 @@ interface DataTypeInterface extends WorkbenchDependantInterface, AliasInterface,
      * the a whole number.
      *
      * @param mixed $string
+     * 
      * @throws DataTypeValidationError
+     * 
      * @return string
      */
     public function parse($string);

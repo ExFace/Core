@@ -13,6 +13,7 @@ use exface\Core\Interfaces\ValueObjectInterface;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 use exface\Core\CommonLogic\Traits\AliasTrait;
 use exface\Core\Factories\DataTypeFactory;
+use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 
 abstract class AbstractDataType implements DataTypeInterface
 {
@@ -146,7 +147,27 @@ abstract class AbstractDataType implements DataTypeInterface
      */
     public function parse($string)
     {
-        return static::cast($string);
+        try {
+            return static::cast($string);
+        } catch (\Throwable $e) {
+            throw $this->createValidationError($e->getMessage(), null, $e);
+        }
+    }
+    
+    /**
+     * Creates a validation exception with using the validation error configuration
+     * in the data type's model (if provided).
+     * 
+     * @param string $message
+     * @param string $code
+     * @param \Throwable $previous
+     * 
+     * @return \exface\Core\Exceptions\DataTypes\DataTypeValidationError
+     */
+    protected function createValidationError(string $message, string $code = null, \Throwable $previous = null) : DataTypeValidationError
+    {
+        $code = $this->getValidationErrorCode() ? $this->getValidationErrorCode() : $code;
+        return new DataTypeValidationError($this, $message, $code, $previous);
     }
 
     /**

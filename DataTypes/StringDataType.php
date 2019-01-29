@@ -5,6 +5,7 @@ use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
 use exface\Core\CommonLogic\DataTypes\AbstractDataType;
 use exface\Core\Exceptions\UnderflowException;
 use exface\Core\Exceptions\RangeException;
+use exface\Core\Exceptions\DataTypes\DataTypeValidationError;
 
 /**
  * Basic data type for textual values.
@@ -148,7 +149,7 @@ class StringDataType extends AbstractDataType
         // validate length
         $length = mb_strlen($value);
         if ($this->getLengtMin() > 0 && $length < $this->getLengtMin()){
-            throw new DataTypeCastingError('The lenght of the string "' . $value . '" (' . $length . ') is less, than the minimum length required for data type ' . $this->getAliasWithNamespace() . ' (' . $this->getLengtMin() . ')!');
+            throw $this->createValidationError('The lenght of the string "' . $value . '" (' . $length . ') is less, than the minimum length required for data type ' . $this->getAliasWithNamespace() . ' (' . $this->getLengtMin() . ')!');
         }
         if ($this->getLengthMax() && $length > $this->getLengthMax()){
             $value = substr($value, 0, $this->getLengthMax());
@@ -163,7 +164,7 @@ class StringDataType extends AbstractDataType
             }
             
             if (! $match){
-                throw new DataTypeCastingError('Value "' . $value . '" does not match the regular expression mask "' . $this->getValidatorRegex() . '" of data type ' . $this->getAliasWithNamespace() . '!');
+                throw $this->createValidationError('Value "' . $value . '" does not match the regular expression mask "' . $this->getValidatorRegex() . '" of data type ' . $this->getAliasWithNamespace() . '!');
             }
         }
         
