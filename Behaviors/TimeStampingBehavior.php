@@ -11,6 +11,7 @@ use exface\Core\Exceptions\DataSheets\DataSheetColumnNotFoundError;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Events\DataSheet\OnBeforeUpdateDataEvent;
+use exface\Core\DataTypes\AggregatorFunctionsDataType;
 
 class TimeStampingBehavior extends AbstractBehavior
 {
@@ -172,7 +173,7 @@ class TimeStampingBehavior extends AbstractBehavior
                 // beim Bearbeiten mehrerer Objekte ueber Massenupdate ueber Knopf, mehrerer Objekte ueber Knopf mit Filtern
                 // $check_nr > 1, $update_nr == 1
                 $updated_val = $updated_column->getValues()[0];
-                $check_val = DataColumn::aggregateValues($check_column->getValues(), $check_column->getAttribute()->getDefaultAggregateFunction());
+                $check_val = DataColumn::aggregateValues($check_column->getValues(), AggregatorFunctionsDataType::fromValue($this->getWorkbench(), $check_column->getAttribute()->getDefaultAggregateFunction()));
                 
                 try {
                     if (empty($data_sheet->getUidColumn()->getValues()[0])) {
@@ -224,7 +225,9 @@ class TimeStampingBehavior extends AbstractBehavior
     protected function readCurrentData(DataSheetInterface $originalSheet) : DataSheetInterface
     {
         $check_sheet = $originalSheet->copy()->removeRows();
-        if ($originalSheet->hasUidColumn(true) === true) {
+        // Only read current data if there are UIDs or filters in the original sheet!
+        // Otherwise it would read ALL data which is useless.
+        if ($originalSheet->hasUidColumn(true) === true || $originalSheet->getFilters()->isEmpty() === false) {
             $check_sheet->addFilterFromColumnValues($originalSheet->getUidColumn());
             $check_sheet->dataRead();
         }
