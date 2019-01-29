@@ -178,6 +178,7 @@
     "PAGE.DATA_SOURCE_EDITOR.CURRENT_CONFIG": "Current Configuration",
     "PAGE.DATA_SOURCE_EDITOR.COPY_CONNECTION": "Copy current connection",
     "PAGE.DATA_SOURCE_EDITOR.EDIT_CONNECTION": "Edit current connection",
+    "PAGE.DATA_TYPES.SHOW_MESSAGE_EDITOR": "Error Message",
     "PAGE.USERS.CREDENTIALS": "Credentials",
     "PAGE.DOCS.READ": "Read",
     "PAGE.ATTRIBUTES.DISPLAY_ORDER": "Disp. Pos.",
