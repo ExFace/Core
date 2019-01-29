@@ -224,8 +224,10 @@ class TimeStampingBehavior extends AbstractBehavior
     protected function readCurrentData(DataSheetInterface $originalSheet) : DataSheetInterface
     {
         $check_sheet = $originalSheet->copy()->removeRows();
-        $check_sheet->addFilterFromColumnValues($originalSheet->getUidColumn());
-        $check_sheet->dataRead();
+        if ($originalSheet->hasUidColumn(true) === true) {
+            $check_sheet->addFilterFromColumnValues($originalSheet->getUidColumn());
+            $check_sheet->dataRead();
+        }
         return $check_sheet;
     }
     
