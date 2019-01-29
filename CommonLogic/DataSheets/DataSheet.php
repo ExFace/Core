@@ -429,11 +429,20 @@ class DataSheet implements DataSheetInterface
                 $subsheet_attribute_alias = RelationPath::relationPathAdd($rel_path_in_subsheet, $attribute->getAlias());
                 if ($attribute_aggregator) {
                     $subsheet_attribute_alias = DataAggregation::addAggregatorToAlias($subsheet_attribute_alias, $attribute_aggregator);
+                    // If the attribute, we are looking for has an aggregator, we need to aggregate
+                    // the subsheet over the key, that we are going to use for our join later on.
+                    $needGroup = true;
+                } else {
+                    $needGroup = false;
                 }
                 $subsheet->getColumns()->addFromExpression($subsheet_attribute_alias);
                 // Add the related object key alias of the relation to the subsheet to that subsheet. This will be the right key in the future JOIN.
                 if ($rel_path_to_subsheet_right_key = $sheetObject->getRelation($rel_path_to_subsheet)->getRightKeyAttribute()->getAlias()) {
-                    $subsheet->getColumns()->addFromExpression(RelationPath::relationPathAdd($rel_path_in_main_ds, $rel_path_to_subsheet_right_key));
+                    $keyAlias = RelationPath::relationPathAdd($rel_path_in_main_ds, $rel_path_to_subsheet_right_key);
+                    $subsheet->getColumns()->addFromExpression($keyAlias);
+                    if ($needGroup === true) {
+                       $subsheet->getAggregations()->addFromString($keyAlias); 
+                    }
                 } else {
                     throw new DataSheetUidColumnNotFoundError($this, 'Cannot find UID (primary key) for subsheet: no key alias can be determined for the relation "' . $rel_path_to_subsheet . '" from "' . $sheetObject->getAliasWithNamespace() . '" to "' . $sheetObject->getRelation($rel_path_to_subsheet)->getRightObject()->getAliasWithNamespace() . '"!');
                 }
