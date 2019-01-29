@@ -1217,12 +1217,12 @@ class MetaObject implements MetaObjectInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\MetaObjectInterface::isWritable()
      */
-    public function isWritable()
+    public function isWritable(bool $ignoreSourceSettings = false)
     {
         if (! $this->hasDataSource()) {
             return false;
         }
-        if ($this->writable && ! $this->getDataSource()->isWritable()){
+        if ($this->writable && $ignoreSourceSettings === false && ! $this->getDataSource()->isWritable()){
             return false;
         }
         return $this->writable;

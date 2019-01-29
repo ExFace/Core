@@ -502,12 +502,15 @@ interface MetaObjectInterface extends WorkbenchDependantInterface, AliasInterfac
      * Returns TRUE if writing operations on the data source of the object are allowed 
      * and FALSE otherwise (e.g. for a DB view).
      * 
-     * Note: an object is considered not writable regardless of its own settings
-     * if its data source is not writable.
+     * Note: by default, an object is considered not writable regardless of its own settings
+     * if its data source is not writable. Use the $ignoreSourceSetting parameter to
+     * find out if the object itself is marked non-writable in this case.
+     * 
+     * @param bool $ignoreSourceSettings
      * 
      * @return boolean
      */
-    public function isWritable();
+    public function isWritable(bool $ignoreSourceSettings = false);
     
     /**
      * Marks the object as writable (TRUE) or not (FALSE).

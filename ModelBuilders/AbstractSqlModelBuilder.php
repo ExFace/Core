@@ -105,7 +105,7 @@ abstract class AbstractSqlModelBuilder extends AbstractModelBuilder implements M
         $imported_rows = $this->getAttributeDataFromTableColumns($meta_object, $meta_object->getDataAddress());
         foreach ($imported_rows as $row) {
             if (empty($meta_object->findAttributesByDataAddress($row['DATA_ADDRESS']))) {
-                if ($meta_object->isWritable() === false) {
+                if ($meta_object->isWritable(true) === false) {
                     $row['WRITABLEFLAG'] = false;
                     $row['EDITABLEFLAG'] = false;
                 }
