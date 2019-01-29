@@ -77,7 +77,7 @@
     "rows": [
         {
             "CREATED_ON": "2007-01-01 00:00:00",
-            "MODIFIED_ON": "2017-10-17 12:30:17",
+            "MODIFIED_ON": "2019-01-29 09:39:26",
             "CREATED_BY_USER": "",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x32360000000000000000000000000000",
@@ -90,7 +90,7 @@
             "SHORT_DESCRIPTION": "",
             "PARENT_OBJECT": "",
             "DATA_ADDRESS_PROPS": null,
-            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Form\",\"widgets\":[{\"attribute_alias\":\"APP\"},{\"attribute_alias\":\"ALIAS\"},{\"attribute_alias\":\"NAME\"},{\"attribute_alias\":\"PROTOTYPE\"},{\"attribute_alias\":\"VALIDATION_ERROR\"},{\"attribute_alias\":\"SHORT_DESCRIPTION\",\"width\":\"max\",\"height\":2},{\"attribute_alias\":\"CONFIG_UXON\",\"width\":\"max\"},{\"attribute_alias\":\"DEFAULT_EDITOR_UXON\",\"width\":\"max\"}]}",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Dialog\",\"widgets\":[{\"attribute_alias\":\"APP\"},{\"attribute_alias\":\"ALIAS\"},{\"attribute_alias\":\"NAME\"},{\"attribute_alias\":\"PROTOTYPE\"},{\"attribute_alias\":\"VALIDATION_ERROR\",\"id\":\"message_selector\"},{\"attribute_alias\":\"SHORT_DESCRIPTION\",\"width\":\"max\",\"height\":2},{\"attribute_alias\":\"CONFIG_UXON\",\"width\":\"max\"},{\"attribute_alias\":\"DEFAULT_EDITOR_UXON\",\"width\":\"max\"}],\"buttons\":[{\"close_dialog\":false,\"caption\":\"=TRANSLATE('exface.Core', 'PAGE.DATA_TYPES.SHOW_MESSAGE_EDITOR')\",\"disable_condition\":{\"widget_link\":\"message_selector!UID\",\"comparator\":\"==\",\"value\":\"\"},\"action\":{\"alias\":\"exface.Core.ShowObjectEditDialog\",\"object_alias\":\"exface.Core.MESSAGE\"}}]}",
             "LABEL": "Data Type",
             "ALIAS": "DATATYPE",
             "DATA_ADDRESS": "exf_data_type"

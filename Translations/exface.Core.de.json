@@ -177,6 +177,7 @@
     "PAGE.DATA_SOURCE_EDITOR.CURRENT_CONFIG": "Aktuelle Einstellungen",
     "PAGE.DATA_SOURCE_EDITOR.COPY_CONNECTION": "Akt. Verbindung kopieren",
     "PAGE.DATA_SOURCE_EDITOR.EDIT_CONNECTION": "Akt. Verbindung bearbeiten",
+    "PAGE.DATA_TYPES.SHOW_MESSAGE_EDITOR": "Fehler-Message",
     "PAGE.USERS.CREDENTIALS": "Zugangsdaten",
     "PAGE.DOCS.READ": "Lesen",
     "PAGE.ATTRIBUTES.DISPLAY_ORDER": "Anzeige-Pos.",
