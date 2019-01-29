@@ -158,7 +158,7 @@ class StringDataType extends AbstractDataType
         // validate against regex
         if ($this->getValidatorRegex()){
             try {
-                $match = preg_match("'" . $this->getValidatorRegex() . "'", $value);
+                $match = preg_match($this->getValidatorRegex(), $value);
             } catch (\Throwable $e) {
                 $match = 0;
             }
