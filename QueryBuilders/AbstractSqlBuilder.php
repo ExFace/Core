@@ -614,7 +614,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      */
     protected function prepareInputValue($value, DataTypeInterface $data_type, $sql_data_type = NULL)
     {
-        $value = $data_type::cast($value);
+        $value = $data_type->parse($value);
         if ($data_type instanceof StringDataType) {
             // JSON values are strings too, but their columns should be null even if the value is an
             // empty object or empty array (otherwise the cells would never be null)
