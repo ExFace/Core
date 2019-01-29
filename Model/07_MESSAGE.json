@@ -1565,14 +1565,14 @@
         },
         {
             "CREATED_ON": "2017-10-13 15:35:07",
-            "MODIFIED_ON": "2017-10-16 05:18:09",
+            "MODIFIED_ON": "2019-01-29 09:41:09",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e7b02c1305514998350205857feb80",
             "APP": "0x31000000000000000000000000000000",
             "CODE": "6XDP7LI",
-            "TITLE": "Model entity aliases cannot start with '_', '=', or '~'!",
-            "DESCRIPTION": "Aliases of meta model entities can contain any characters, but may not start with and underscore \"_\", equals-sign \"=\", or tilde \"~\".",
+            "TITLE": "Model entity aliases can only contain letters, digits and '_', but may not start with '_'!",
+            "DESCRIPTION": "Aliases of meta model entities can only contain any upper and lower case letters, digits and underscores. However they may not start with an underscore '_'.",
             "HINT": "",
             "TYPE": "ERROR",
             "DOCS": ""
