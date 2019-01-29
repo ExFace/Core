@@ -42,7 +42,11 @@ class HexadecimalNumberDataType extends NumberDataType
      */
     public function parse($string)
     {
-        $number = parent::parse($string);
+        try {
+            $number = parent::parse($string);
+        } catch (\Throwable $e) {
+            throw $this->createValidationError($e->getMessage(), $e->getCode(), $e);
+        }
         
         /* TODO
         if (! is_null($this->getMin()) && $number < $this->getMin()) {

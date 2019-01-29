@@ -57,10 +57,9 @@ trait EnumDynamicDataTypeTrait {
     public function parse($string)
     {
         if (! array_key_exists($string, $this->values)) {
-            throw new DataTypeValidationError($this, 'Value "' . $string . '" not part of enumeration data type ' . $this->getAliasWithNamespace() . '!', '6XGN2H6');
+            throw $this->createValidationError('Value "' . $string . '" not part of enumeration data type ' . $this->getAliasWithNamespace() . '!', '6XGN2H6');
         }
         
         return $string;
     }
-    
 }
