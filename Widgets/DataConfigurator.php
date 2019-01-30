@@ -11,6 +11,7 @@ use exface\Core\Interfaces\Model\MetaRelationInterface;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Exceptions\Widgets\WidgetLogicError;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
+use exface\Core\Exceptions\Widgets\WidgetPropertyUnknownError;
 
 /**
  * The configurator for data widgets contains tabs for filters and sorters.
@@ -158,32 +159,39 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
             throw new WidgetPropertyInvalidValueError($this, 'Cannot create a filter for attribute alias "' . $attribute_alias . '" in widget "' . $this->getId() . '": attribute not found for object "' . $this->getMetaObject()->getAliasWithNamespace() . '"!', '6T91AR9', $e);
         }
         
-        // determine the widget for the filter
-        $uxon = $attr->getDefaultEditorUxon()->copy();
+        // determine the input widget for the filter
+        // Try to extend the default editor widget, by also keep the original UXON of the filter: see below, why.
+        $editorUxon = $attr->getDefaultEditorUxon()->copy();
         if ($uxon_object) {
-            $uxon = $uxon->extend($uxon_object);
+            $editorUxon = $editorUxon->extend($uxon_object);
+            $userUxon = $uxon_object;
+        } else {
+            $userUxon = new UxonObject();
         }
         // Set a special caption for filters on relations, which is derived from the relation itself
         // IDEA this might be obsolete since it probably allways returns the attribute name anyway, but I'm not sure
-        if (! $uxon->hasProperty('caption') && $attr->isRelation()) {
-            $uxon->setProperty('caption', $this->getMetaObject()->getRelation($attribute_alias)->getName());
+        if (! $editorUxon->hasProperty('caption') && $attr->isRelation()) {
+            $editorUxon->setProperty('caption', $this->getMetaObject()->getRelation($attribute_alias)->getName());
         }
         $page = $this->getPage();
         
         // Set properties of the filter explicitly while passing everything else to it's input widget.
         // TODO move this to the filter's importUxonObject() method.
-        if ($uxon->hasProperty('comparator')) {
-            $comparator = $uxon->getProperty('comparator');
-            $uxon->unsetProperty('comparator');
+        if ($editorUxon->hasProperty('comparator')) {
+            $comparator = $editorUxon->getProperty('comparator');
+            $editorUxon->unsetProperty('comparator');
+            $userUxon->unsetProperty('comparator');
         }
-        if ($uxon->hasProperty('apply_on_change')) {
-            $apply_on_change = $uxon->getProperty('apply_on_change');
-            $uxon->unsetProperty('apply_on_change');
+        if ($editorUxon->hasProperty('apply_on_change')) {
+            $apply_on_change = $editorUxon->getProperty('apply_on_change');
+            $editorUxon->unsetProperty('apply_on_change');
+            $userUxon->unsetProperty('apply_on_change');
         } 
         if ($uxon_object !== null && $uxon_object->hasProperty('required')) {
             // A filter is only required, if a user explicitly marked it as required in the filter's UXON
             $required = $uxon_object->getProperty('required');
-            $uxon->unsetProperty('required');
+            $editorUxon->unsetProperty('required');
+            $userUxon->unsetProperty('required');
         } 
         
         $filter = $this->getPage()->createWidget('Filter', $this->getFilterTab());
@@ -191,7 +199,21 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
         if (isset($apply_on_change)){
             $filter->setApplyOnChange($apply_on_change);
         }
-        $filter->setInputWidget(WidgetFactory::createFromUxon($page, $uxon, $filter));
+        
+        // Create the input widget
+        // If the merged UXON from the default editor and the filter does not work,
+        // create a widget from the explicitly defined filter UXON. This can happen
+        // if the default editor presumes a widget type, that is not compatible with
+        // properties, defined for the filter.
+        // TODO this is not a very elegant solution: need a better way, to handle
+        // conflicts between the default editor and the filter definition!
+        try {
+            $inputWidget = WidgetFactory::createFromUxon($page, $editorUxon, $filter);
+        } catch (WidgetPropertyUnknownError $e) {
+            $inputWidget = WidgetFactory::createFromUxon($page, $userUxon, $filter);
+        }
+        
+        $filter->setInputWidget($inputWidget);
         
         // Set the required option after instantiation to ensure the input widget gets it too.
         if (isset($required)) {
