@@ -378,7 +378,7 @@ class SqlModelLoader implements ModelLoaderInterface
         
         // Control flags
         if (! is_null($row['attribute_readable_flag'])){
-            $attr->setWritable($row['attribute_readable_flag']);
+            $attr->setReadable($row['attribute_readable_flag']);
         }
         if (! is_null($row['attribute_writable_flag'])){
             $attr->setWritable($row['attribute_writable_flag']);
