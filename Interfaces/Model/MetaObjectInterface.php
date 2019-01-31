@@ -111,7 +111,7 @@ interface MetaObjectInterface extends WorkbenchDependantInterface, AliasInterfac
      * @param string $alias
      * @return boolean
      */
-    public function hasAttribute($alias);
+    public function hasAttribute(string $alias) : bool;
     
     /**
      * Returns the object related to the current one via the given relation path string

@@ -392,13 +392,13 @@ class MetaObject implements MetaObjectInterface
      * @param string $alias            
      * @return boolean
      */
-    public function hasAttribute($alias)
+    public function hasAttribute(string $alias) : bool
     {
         $cache = $this->getAttributeCache($alias);
         if ($cache === false){
             return false;
         } elseif ($cache instanceof MetaAttributeInterface){
-            return $cache;
+            return true;
         }
         
         try {
