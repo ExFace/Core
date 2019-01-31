@@ -74,8 +74,8 @@
             "attribute_alias": "COMMENTS"
         },
         {
-            "name": "LABEL",
-            "attribute_alias": "LABEL"
+            "name": "NAME",
+            "attribute_alias": "NAME"
         },
         {
             "name": "ALIAS",
@@ -178,7 +178,7 @@
             "DELETE_WITH_RELATED_OBJECT": "1",
             "DEFAULT_DISPLAY_UXON": null,
             "COMMENTS": "",
-            "LABEL": "User",
+            "NAME": "User",
             "ALIAS": "USER",
             "DATATYPE": "0x11e8091315d97da6b5b5e4b318306b9a",
             "DATA_ADDRESS": "user_oid",
@@ -219,7 +219,7 @@
             "DELETE_WITH_RELATED_OBJECT": null,
             "DEFAULT_DISPLAY_UXON": null,
             "COMMENTS": "",
-            "LABEL": "Data Connector Configuration",
+            "NAME": "Data Connector Configuration",
             "ALIAS": "DATA_CONNECTOR_CONFIG",
             "DATATYPE": "0x31300000000000000000000000000000",
             "DATA_ADDRESS": "data_connector_config",
@@ -260,7 +260,7 @@
             "DELETE_WITH_RELATED_OBJECT": null,
             "DEFAULT_DISPLAY_UXON": null,
             "COMMENTS": "",
-            "LABEL": "Credential Set",
+            "NAME": "Credential Set",
             "ALIAS": "NAME",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "name",

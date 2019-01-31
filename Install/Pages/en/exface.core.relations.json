@@ -37,7 +37,7 @@
                 "attribute_alias": "DIRECTION"
             },
             {
-                "attribute_alias": "RIGHT_OBJECT__LABEL"
+                "attribute_alias": "RIGHT_OBJECT__NAME"
             },
             {
                 "attribute_alias": "RIGHT_OBJECT__APP__ALIAS",
