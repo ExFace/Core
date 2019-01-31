@@ -182,7 +182,7 @@ class ModelValidatingBehavior extends AbstractBehavior
             $messageList->addMessageByCode('734GWLL', 'Object has no attributes!');
         }
         
-        if ($object->isReadable() === false && $object->getAttributes()->getReadable()) {
+        if ($object->isReadable() === false && $object->getAttributes()->getReadable()->isEmpty() === false) {
             $messageList->addMessageByCode('734GZDR', 'Object is not readable, but has readable attributes!');
         }
     }
