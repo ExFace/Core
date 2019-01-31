@@ -15,8 +15,11 @@ class QueryPartSelect extends QueryPartAttribute
     
     public function isValid()
     {
-        if ($this->getAttribute()->getDataAddress() != '')
+        if ($this->getAttribute()->getDataAddress() != '') {
             return true;
+        } elseif (empty($this->getAttribute()->getDataAddressProperties()) === false) {
+            return true;
+        }
         return false;
     }
     
