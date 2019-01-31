@@ -730,7 +730,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         $attribute = $qpart->getAttribute();
         
         // skip attributes with no select (e.g. calculated from other values via formatters)
-        if (! $attribute->getDataAddress() && ! $attribute->getDataAddressProperty('SQL_SELECT') && ! $attribute->getDataAddressProperty('SQL_SELECT_DATA_ADDRESS')) {
+        if (! $qpart->getDataAddress() && ! $qpart->getDataAddressProperty('SQL_SELECT') && ! $qpart->getDataAddressProperty('SQL_SELECT_DATA_ADDRESS')) {
             return;
         }
         
@@ -780,16 +780,16 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             if ($select_column) {
                 // if the column to select is explicitly defined, just select it
                 $output = $select_from . $this->getAliasDelim() . $select_column;
-            } elseif ($this->checkForSqlStatement($attribute->getDataAddress())) {
+            } elseif ($this->checkForSqlStatement($qpart->getDataAddress())) {
                 // see if the attribute is a statement. If so, just replace placeholders
-                $output = $this->replacePlaceholdersInSqlAddress($attribute->getDataAddress(), $qpart->getAttribute()->getRelationPath(), ['~alias' => $select_from], $select_from);
-            } elseif ($custom_select = $attribute->getDataAddressProperty('SQL_SELECT')){
+                $output = $this->replacePlaceholdersInSqlAddress($qpart->getDataAddress(), $qpart->getAttribute()->getRelationPath(), ['~alias' => $select_from], $select_from);
+            } elseif ($custom_select = $qpart->getDataAddressProperty('SQL_SELECT')){
                 // IF there is a custom SQL_SELECT statement, use it.
                 $output = $this->replacePlaceholdersInSqlAddress($custom_select, $qpart->getAttribute()->getRelationPath(), ['~alias' => $select_from], $select_from);
             } else {
                 // otherwise get the select from the attribute
-                if (! $data_address = $attribute->getDataAddressProperty('SQL_SELECT_DATA_ADDRESS')){
-                    $data_address = $attribute->getDataAddress();
+                if (! $data_address = $qpart->getDataAddressProperty('SQL_SELECT_DATA_ADDRESS')){
+                    $data_address = $qpart->getDataAddress();
                 }
                 $output = $select_from . $this->getAliasDelim() . $data_address;
             }
@@ -1546,7 +1546,16 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                     $rev_rel_path = $prefix_rel_path->copy()->appendRelation($start_rel);
                     $relq->setFiltersConditionGroup($this->getFilters()->getConditionGroup()->rebase($rev_rel_path->toString(), $relq_condition_filter));
                 }
-                $relq->addAttribute($start_rel->getRightKeyAttribute()->getAlias());
+                $relqKeyPart = $relq->addAttribute($start_rel->getRightKeyAttribute()->getAlias());
+                
+                // If the key attribute does not have a data address, but we use a custom join we can 
+                // select all (*) - that's OK because custom JOINs use WHERE EXISTS
+                if ($relqKeyPart->getDataAddress() === '' 
+                    && ! $relqKeyPart->getDataAddressProperty('SQL_SELECT') 
+                    && ! $relqKeyPart->getDataAddressProperty('SQL_SELECT_DATA_ADDRESS')
+                    && $relqKeyPart->getDataAddressProperty('SQL_JOIN_ON')) {
+                    $relqKeyPart->setDataAddressProperty('SQL_SELECT', '*');
+                }
                 
                 // Add the filter relative to the first reverse relation with the same $value and $comparator
                 if ($qpart->isValueDataAddress()) {
