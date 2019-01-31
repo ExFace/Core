@@ -30,7 +30,7 @@ class MSSqlModelBuilder extends AbstractSqlModelBuilder
         $rows = array();
         foreach ($columns_array as $col) {
             $rows[] = array(
-                'LABEL' => $this->generateLabel($col['COLUMN_NAME']),
+                'NAME' => $this->generateLabel($col['COLUMN_NAME']),
                 'ALIAS' => $col['COLUMN_NAME'],
                 'DATATYPE' => $this->getDataTypeId($this->guessDataType($meta_object->getWorkbench(), $col['TYPE_NAME'], $col['PRECISION'], $col['SCALE'])),
                 'DATA_ADDRESS' => $col['COLUMN_NAME'],
