@@ -202,7 +202,7 @@
         },
         {
             "CREATED_ON": "2007-01-01 00:00:00",
-            "MODIFIED_ON": "2019-01-31 09:08:49",
+            "MODIFIED_ON": "2019-01-31 11:15:05",
             "CREATED_BY_USER": "",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x31303200000000000000000000000000",
@@ -219,7 +219,7 @@
             "DELETE_WITH_RELATED_OBJECT": "0",
             "DEFAULT_DISPLAY_UXON": null,
             "COMMENTS": "",
-            "NAME": "Attr. Alias",
+            "NAME": "Attribute Alias",
             "ALIAS": "ALIAS",
             "DATATYPE": "0x11e7b02bbffd277c98350205857feb80",
             "DATA_ADDRESS": "attribute_alias",
