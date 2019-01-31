@@ -730,8 +730,9 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         $attribute = $qpart->getAttribute();
         
         // skip attributes with no select (e.g. calculated from other values via formatters)
-        if (! $attribute->getDataAddress())
+        if (! $attribute->getDataAddress() && ! $attribute->getDataAddressProperty('SQL_SELECT') && ! $attribute->getDataAddressProperty('SQL_SELECT_DATA_ADDRESS')) {
             return;
+        }
         
         if (! $select_from) {
             // if it's a relation, we need to select from a joined table except for reverse relations
@@ -800,6 +801,10 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             if ($qpart->getDataType() instanceof NumberDataType) {
                 $output = $this->buildSqlSelectNullCheck($output, 0);
             }
+        }
+        
+        if ($output === '*') {
+            return $output;
         }
         
         if ($select_as) {
