@@ -74,8 +74,8 @@
             "attribute_alias": "COMMENTS"
         },
         {
-            "name": "LABEL",
-            "attribute_alias": "LABEL"
+            "name": "NAME",
+            "attribute_alias": "NAME"
         },
         {
             "name": "ALIAS",
@@ -161,7 +161,7 @@
     "rows": [
         {
             "CREATED_ON": "2017-11-28 09:47:04",
-            "MODIFIED_ON": "2017-11-28 10:21:49",
+            "MODIFIED_ON": "2019-01-31 09:21:11",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e7d420ecc080c8a3da0205857feb80",
@@ -178,7 +178,7 @@
             "DELETE_WITH_RELATED_OBJECT": "0",
             "DEFAULT_DISPLAY_UXON": null,
             "COMMENTS": "",
-            "LABEL": "App",
+            "NAME": "App",
             "ALIAS": "APP",
             "DATATYPE": "0x31000000000000000000000000000000",
             "DATA_ADDRESS": "",
@@ -202,7 +202,7 @@
         },
         {
             "CREATED_ON": "2017-11-28 09:48:03",
-            "MODIFIED_ON": "2017-11-28 10:21:56",
+            "MODIFIED_ON": "2019-01-31 09:21:11",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e7d421107edd14a3da0205857feb80",
@@ -219,7 +219,7 @@
             "DELETE_WITH_RELATED_OBJECT": "0",
             "DEFAULT_DISPLAY_UXON": null,
             "COMMENTS": "",
-            "LABEL": "Data Source",
+            "NAME": "Data Source",
             "ALIAS": "DATA_SOURCE",
             "DATATYPE": "0x31000000000000000000000000000000",
             "DATA_ADDRESS": "",
@@ -243,7 +243,7 @@
         },
         {
             "CREATED_ON": "2017-11-28 09:48:55",
-            "MODIFIED_ON": "2017-11-29 10:39:58",
+            "MODIFIED_ON": "2019-01-31 09:21:11",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e7d4212f20a0afa3da0205857feb80",
@@ -260,7 +260,7 @@
             "DELETE_WITH_RELATED_OBJECT": null,
             "DEFAULT_DISPLAY_UXON": null,
             "COMMENTS": "",
-            "LABEL": "Object Data Address Mask",
+            "NAME": "Object Data Address Mask",
             "ALIAS": "OBJECT_DATA_ADDRESS_MASK",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "",
@@ -284,7 +284,7 @@
         },
         {
             "CREATED_ON": "2017-11-28 09:51:26",
-            "MODIFIED_ON": "2017-11-28 10:22:12",
+            "MODIFIED_ON": "2019-01-31 09:21:11",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e7d421896342b4a3da0205857feb80",
@@ -301,7 +301,7 @@
             "DELETE_WITH_RELATED_OBJECT": "0",
             "DEFAULT_DISPLAY_UXON": null,
             "COMMENTS": "",
-            "LABEL": "Object",
+            "NAME": "Object",
             "ALIAS": "OBJECT",
             "DATATYPE": "0x31000000000000000000000000000000",
             "DATA_ADDRESS": "",

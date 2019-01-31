@@ -74,8 +74,8 @@
             "attribute_alias": "COMMENTS"
         },
         {
-            "name": "LABEL",
-            "attribute_alias": "LABEL"
+            "name": "NAME",
+            "attribute_alias": "NAME"
         },
         {
             "name": "ALIAS",
@@ -178,7 +178,7 @@
             "DELETE_WITH_RELATED_OBJECT": null,
             "DEFAULT_DISPLAY_UXON": null,
             "COMMENTS": "",
-            "LABEL": "Property",
+            "NAME": "Property",
             "ALIAS": "PROPERTY",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "uxon-property",
@@ -219,7 +219,7 @@
             "DELETE_WITH_RELATED_OBJECT": null,
             "DEFAULT_DISPLAY_UXON": null,
             "COMMENTS": "",
-            "LABEL": "Type",
+            "NAME": "Type",
             "ALIAS": "TYPE",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "uxon-type",
@@ -260,7 +260,7 @@
             "DELETE_WITH_RELATED_OBJECT": "0",
             "DEFAULT_DISPLAY_UXON": null,
             "COMMENTS": "",
-            "LABEL": "Template",
+            "NAME": "Template",
             "ALIAS": "TEMPLATE",
             "DATATYPE": "0x11e7b02848321d2398350205857feb80",
             "DATA_ADDRESS": "uxon-template",
@@ -301,7 +301,7 @@
             "DELETE_WITH_RELATED_OBJECT": "0",
             "DEFAULT_DISPLAY_UXON": null,
             "COMMENTS": "",
-            "LABEL": "Default",
+            "NAME": "Default",
             "ALIAS": "DEFAULT",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "uxon-default",

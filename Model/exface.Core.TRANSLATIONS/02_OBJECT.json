@@ -38,6 +38,10 @@
             "attribute_alias": "DOCS"
         },
         {
+            "name": "NAME",
+            "attribute_alias": "NAME"
+        },
+        {
             "name": "DATA_SOURCE",
             "attribute_alias": "DATA_SOURCE"
         },
@@ -62,10 +66,6 @@
             "attribute_alias": "DEFAULT_EDITOR_UXON"
         },
         {
-            "name": "LABEL",
-            "attribute_alias": "LABEL"
-        },
-        {
             "name": "ALIAS",
             "attribute_alias": "ALIAS"
         },
@@ -85,13 +85,13 @@
             "WRITABLE_FLAG": "1",
             "COMMENTS": "",
             "DOCS": "",
+            "NAME": "Translations",
             "DATA_SOURCE": "0x11e6afd8d2fa47e78943e4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
             "SHORT_DESCRIPTION": "",
             "PARENT_OBJECT": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Panel\",\"widgets\":[{\"attribute_alias\":\"PATHNAME_ABSOLUTE\",\"width\":\"100%\",\"disabled\":false},{\"attribute_alias\":\"CONTENTS\",\"widget_type\":\"InputJson\",\"height\":12}]}",
-            "LABEL": "Translations",
             "ALIAS": "TRANSLATIONS",
             "DATA_ADDRESS": "*\/*\/Translations\/*.json"
         }

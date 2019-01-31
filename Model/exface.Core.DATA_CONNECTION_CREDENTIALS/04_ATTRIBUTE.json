@@ -74,8 +74,8 @@
             "attribute_alias": "COMMENTS"
         },
         {
-            "name": "LABEL",
-            "attribute_alias": "LABEL"
+            "name": "NAME",
+            "attribute_alias": "NAME"
         },
         {
             "name": "ALIAS",
@@ -178,7 +178,7 @@
             "DELETE_WITH_RELATED_OBJECT": "1",
             "DEFAULT_DISPLAY_UXON": null,
             "COMMENTS": "",
-            "LABEL": "Data Connection",
+            "NAME": "Data Connection",
             "ALIAS": "DATA_CONNECTION",
             "DATATYPE": "0x11e8091315d97da6b5b5e4b318306b9a",
             "DATA_ADDRESS": "data_connection_oid",
@@ -219,7 +219,7 @@
             "DELETE_WITH_RELATED_OBJECT": "1",
             "DEFAULT_DISPLAY_UXON": null,
             "COMMENTS": "",
-            "LABEL": "Credentials",
+            "NAME": "Credentials",
             "ALIAS": "USER_CREDENTIALS",
             "DATATYPE": "0x11e8091315d97da6b5b5e4b318306b9a",
             "DATA_ADDRESS": "user_credentials_oid",

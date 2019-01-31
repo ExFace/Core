@@ -39,7 +39,7 @@
         ],
         "columns": [
             {
-                "attribute_alias": "APP__LABEL"
+                "attribute_alias": "APP__ALIAS"
             },
             {
                 "attribute_alias": "ALIAS"

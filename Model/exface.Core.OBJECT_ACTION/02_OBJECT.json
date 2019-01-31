@@ -38,6 +38,10 @@
             "attribute_alias": "DOCS"
         },
         {
+            "name": "NAME",
+            "attribute_alias": "NAME"
+        },
+        {
             "name": "DATA_SOURCE",
             "attribute_alias": "DATA_SOURCE"
         },
@@ -62,10 +66,6 @@
             "attribute_alias": "DEFAULT_EDITOR_UXON"
         },
         {
-            "name": "LABEL",
-            "attribute_alias": "LABEL"
-        },
-        {
             "name": "ALIAS",
             "attribute_alias": "ALIAS"
         },
@@ -77,7 +77,7 @@
     "rows": [
         {
             "CREATED_ON": "2017-01-24 09:32:09",
-            "MODIFIED_ON": "2018-12-23 11:49:44",
+            "MODIFIED_ON": "2019-01-31 09:13:01",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e6e217f7f91457a3d9e4b318306b9a",
@@ -85,13 +85,13 @@
             "WRITABLE_FLAG": "1",
             "COMMENTS": "",
             "DOCS": "",
+            "NAME": "Object Action",
             "DATA_SOURCE": "0x32000000000000000000000000000000",
             "APP": "0x31000000000000000000000000000000",
             "SHORT_DESCRIPTION": "Actions aplicable to a meta object",
             "PARENT_OBJECT": "",
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Dialog\",\"widgets\":[{\"attribute_alias\":\"OBJECT\"},{\"attribute_alias\":\"ACTION_PROTOTYPE\"},{\"attribute_alias\":\"APP\"},{\"attribute_alias\":\"ALIAS\"},{\"attribute_alias\":\"NAME\"},{\"attribute_alias\":\"SHORT_DESCRIPTION\"},{\"attribute_alias\":\"DOCS\"},{\"attribute_alias\":\"CONFIG_UXON\",\"width\":2,\"height\":15},{\"attribute_alias\":\"USE_IN_OBJECT_BASKET_FLAG\"}]}",
-            "LABEL": "Object Action",
             "ALIAS": "OBJECT_ACTION",
             "DATA_ADDRESS": "exf_object_action"
         }

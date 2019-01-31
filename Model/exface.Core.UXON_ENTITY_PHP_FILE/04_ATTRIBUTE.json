@@ -74,8 +74,8 @@
             "attribute_alias": "COMMENTS"
         },
         {
-            "name": "LABEL",
-            "attribute_alias": "LABEL"
+            "name": "NAME",
+            "attribute_alias": "NAME"
         },
         {
             "name": "ALIAS",
@@ -178,7 +178,7 @@
             "DELETE_WITH_RELATED_OBJECT": "0",
             "DEFAULT_DISPLAY_UXON": null,
             "COMMENTS": "",
-            "LABEL": "Class annotation",
+            "NAME": "Class annotation",
             "ALIAS": "CLASS_ANNOTATION",
             "DATATYPE": "0x11e7b93f315ab6ca84cce4b318306b9a",
             "DATA_ADDRESS": "pathname_relative",

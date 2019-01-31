@@ -74,8 +74,8 @@
             "attribute_alias": "COMMENTS"
         },
         {
-            "name": "LABEL",
-            "attribute_alias": "LABEL"
+            "name": "NAME",
+            "attribute_alias": "NAME"
         },
         {
             "name": "ALIAS",
@@ -178,7 +178,7 @@
             "DELETE_WITH_RELATED_OBJECT": null,
             "DEFAULT_DISPLAY_UXON": null,
             "COMMENTS": "",
-            "LABEL": "First Name",
+            "NAME": "First Name",
             "ALIAS": "FIRST_NAME",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "first_name",
@@ -219,7 +219,7 @@
             "DELETE_WITH_RELATED_OBJECT": null,
             "DEFAULT_DISPLAY_UXON": null,
             "COMMENTS": "",
-            "LABEL": "Last Name",
+            "NAME": "Last Name",
             "ALIAS": "LAST_NAME",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "last_name",
@@ -260,7 +260,7 @@
             "DELETE_WITH_RELATED_OBJECT": null,
             "DEFAULT_DISPLAY_UXON": null,
             "COMMENTS": "",
-            "LABEL": "Username",
+            "NAME": "Username",
             "ALIAS": "USERNAME",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "username",
@@ -301,7 +301,7 @@
             "DELETE_WITH_RELATED_OBJECT": null,
             "DEFAULT_DISPLAY_UXON": null,
             "COMMENTS": "",
-            "LABEL": "Locale",
+            "NAME": "Locale",
             "ALIAS": "LOCALE",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "locale",
@@ -342,7 +342,7 @@
             "DELETE_WITH_RELATED_OBJECT": null,
             "DEFAULT_DISPLAY_UXON": null,
             "COMMENTS": "",
-            "LABEL": "Email",
+            "NAME": "Email",
             "ALIAS": "EMAIL",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "email",

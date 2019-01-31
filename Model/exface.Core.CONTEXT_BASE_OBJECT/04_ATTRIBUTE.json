@@ -74,8 +74,8 @@
             "attribute_alias": "COMMENTS"
         },
         {
-            "name": "LABEL",
-            "attribute_alias": "LABEL"
+            "name": "NAME",
+            "attribute_alias": "NAME"
         },
         {
             "name": "ALIAS",
@@ -178,7 +178,7 @@
             "DELETE_WITH_RELATED_OBJECT": null,
             "DEFAULT_DISPLAY_UXON": null,
             "COMMENTS": "",
-            "LABEL": "Id",
+            "NAME": "Id",
             "ALIAS": "ID",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "",
@@ -219,7 +219,7 @@
             "DELETE_WITH_RELATED_OBJECT": null,
             "DEFAULT_DISPLAY_UXON": null,
             "COMMENTS": "",
-            "LABEL": "Title",
+            "NAME": "Title",
             "ALIAS": "TITLE",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "",

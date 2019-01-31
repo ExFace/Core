@@ -66,7 +66,7 @@
             "PROTOTYPE": "exface\/Core\/DataTypes\/StringDataType.php",
             "CONFIG_UXON": null,
             "VALIDATION_ERROR": "",
-            "DEFAULT_EDITOR_UXON": "{\"widget_type\": \"Input\"}",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Input\"}",
             "ALIAS": "String",
             "SHORT_DESCRIPTION": ""
         },
@@ -111,7 +111,7 @@
             "PROTOTYPE": "exface\/Core\/DataTypes\/TextDataType.php",
             "CONFIG_UXON": null,
             "VALIDATION_ERROR": "",
-            "DEFAULT_EDITOR_UXON": "{\"widget_type\": \"InputText\"}",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"InputText\"}",
             "ALIAS": "Text",
             "SHORT_DESCRIPTION": "A text field is longer than a string an may contain multiple lines"
         },
@@ -156,7 +156,7 @@
             "PROTOTYPE": "exface\/Core\/DataTypes\/HTMLDataType.php",
             "CONFIG_UXON": null,
             "VALIDATION_ERROR": "",
-            "DEFAULT_EDITOR_UXON": "{\"widget_type\": \"InputText\"}",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"InputText\"}",
             "ALIAS": "HTML",
             "SHORT_DESCRIPTION": ""
         },
@@ -186,7 +186,7 @@
             "PROTOTYPE": "exface\/Core\/DataTypes\/DateDataType.php",
             "CONFIG_UXON": null,
             "VALIDATION_ERROR": "",
-            "DEFAULT_EDITOR_UXON": "{\"widget_type\": \"InputDate\"}",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"InputDate\"}",
             "ALIAS": "Date",
             "SHORT_DESCRIPTION": ""
         },
@@ -201,7 +201,7 @@
             "PROTOTYPE": "exface\/Core\/DataTypes\/TimestampDataType.php",
             "CONFIG_UXON": null,
             "VALIDATION_ERROR": "",
-            "DEFAULT_EDITOR_UXON": "{\"widget_type\": \"InputDateTime\"}",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"InputDateTime\"}",
             "ALIAS": "Timestamp",
             "SHORT_DESCRIPTION": ""
         },
@@ -231,7 +231,7 @@
             "PROTOTYPE": "exface\/Core\/DataTypes\/BooleanDataType.php",
             "CONFIG_UXON": null,
             "VALIDATION_ERROR": "",
-            "DEFAULT_EDITOR_UXON": "{\"widget_type\": \"InputCheckBox\"}",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"InputCheckBox\"}",
             "ALIAS": "Boolean",
             "SHORT_DESCRIPTION": ""
         },
@@ -334,7 +334,7 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Meta Model Alias",
             "PROTOTYPE": "exface\/Core\/DataTypes\/StringDataType.php",
-            "CONFIG_UXON": "{\"validator_regex\":\"\/^[^_~=][a-zA-Z0-9_]*$\/\"}",
+            "CONFIG_UXON": "{\"validator_regex\":\"\\\/^[^_~=][a-zA-Z0-9_]*$\\\/\"}",
             "VALIDATION_ERROR": "0x11e7b02c1305514998350205857feb80",
             "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Input\"}",
             "ALIAS": "MetaModelAlias",

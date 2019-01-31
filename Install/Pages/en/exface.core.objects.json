@@ -13,7 +13,7 @@
         "widget_type": "DataTable",
         "filters": [
             {
-                "attribute_alias": "LABEL"
+                "attribute_alias": "NAME"
             },
             {
                 "attribute_alias": "APP"
@@ -44,7 +44,7 @@
         ],
         "columns": [
             {
-                "attribute_alias": "LABEL"
+                "attribute_alias": "NAME"
             },
             {
                 "attribute_alias": "APP__ALIAS",
