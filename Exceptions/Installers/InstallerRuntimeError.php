@@ -21,7 +21,7 @@ class InstallerRuntimeError extends RuntimeException implements InstallerExcepti
     {
         if ($installer instanceof AppInstallerInterface) {
             try {
-                $message = 'Error installing app ' . $installer->getApp()->getAliasWithNamespace() . '.' . $message;
+                $message = 'Error installing app ' . $installer->getApp()->getAliasWithNamespace() . '. ' . $message;
             } catch (\Throwable $e) {
                 // ignore errors! Just leave the message as it is then.
             }
