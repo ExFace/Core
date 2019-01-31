@@ -32,7 +32,7 @@ class MySqlModelBuilder extends AbstractSqlModelBuilder
         $rows = array();
         foreach ($columns_array as $col) {
             $rows[] = array(
-                'LABEL' => $this->generateLabel($col['Field'], $col['Comment']),
+                'NAME' => $this->generateLabel($col['Field'], $col['Comment']),
                 'ALIAS' => $col['Field'],
                 'DATATYPE' => $this->getDataTypeId($this->guessDataType($meta_object->getWorkbench(), $col['Type'])),
                 'DATA_ADDRESS' => $col['Field'],
@@ -78,10 +78,10 @@ class MySqlModelBuilder extends AbstractSqlModelBuilder
             $filter = "AND table_name LIKE '{$mask}'";
         }
         
-        $sql = "SELECT table_name as ALIAS, table_name as LABEL, table_name as DATA_ADDRESS, table_comment as SHORT_DESCRIPTION FROM information_schema.tables where table_schema='{$this->getDataConnection()->getDbase()}' {$filter}";
+        $sql = "SELECT table_name as ALIAS, table_name as NAME, table_name as DATA_ADDRESS, table_comment as SHORT_DESCRIPTION FROM information_schema.tables where table_schema='{$this->getDataConnection()->getDbase()}' {$filter}";
         $rows = $this->getDataConnection()->runSql($sql)->getResultArray();
         foreach ($rows as $nr => $row) {
-            $rows[$nr]['LABEL'] = $this->generateLabel($row['LABEL'], $row['SHORT_DESCRIPTION']);
+            $rows[$nr]['NAME'] = $this->generateLabel($row['NAME'], $row['SHORT_DESCRIPTION']);
         }
         return $rows;
     }

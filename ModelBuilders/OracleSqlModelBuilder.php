@@ -40,7 +40,7 @@ class OracleSqlModelBuilder extends AbstractSqlModelBuilder
         $rows = array();
         foreach ($columns_array as $col) {
             $rows[] = array(
-                'LABEL' => $this->generateLabel($col['COLUMN_NAME'], $col['COMMENTS']),
+                'NAME' => $this->generateLabel($col['COLUMN_NAME'], $col['COMMENTS']),
                 'ALIAS' => $col['COLUMN_NAME'],
                 'DATATYPE' => $this->getDataTypeId($this->guessDataType($meta_object->getWorkbench(), $col['DATA_TYPE'], ($col['DATA_PRECISION'] ? $col['DATA_PRECISION'] : $col['DATA_LENGTH']), $col['DATA_SCALE'])),
                 'DATA_ADDRESS' => $col['COLUMN_NAME'],
@@ -66,10 +66,10 @@ class OracleSqlModelBuilder extends AbstractSqlModelBuilder
         }
         $owner = mb_strtolower($this->getDataConnection()->getUser());
         
-        $sql = "SELECT table_name AS LABEL, table_name AS DATA_ADDRESS, table_name AS ALIAS FROM all_tables WHERE LOWER(OWNER)='{$owner}' {$filter}";
+        $sql = "SELECT table_name AS NAME, table_name AS DATA_ADDRESS, table_name AS ALIAS FROM all_tables WHERE LOWER(OWNER)='{$owner}' {$filter}";
         $rows = $this->getDataConnection()->runSql($sql)->getResultArray();
         foreach ($rows as $nr => $row) {
-            $rows[$nr]['LABEL'] = $this->generateLabel($row['LABEL']);
+            $rows[$nr]['NAME'] = $this->generateLabel($row['NAME']);
         }
         return $rows;
     }
