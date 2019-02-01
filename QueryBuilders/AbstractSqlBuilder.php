@@ -1563,14 +1563,15 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                     // Otherwise just add a regular filter
                     $relq->addFilterFromString($rel_filter_alias, $qpart->getCompareValue(), $qpart->getComparator());
                 }
-                // FIXME add support for related_object_special_key_alias
+                
                 if (! $prefix_rel_path->isEmpty()) {
+                    // FIXME add support for related_object_special_key_alias
                     $prefix_rel_str = RelationPath::relationPathAdd($prefix_rel_path->toString(), $this->getMainObject()->getRelatedObject($prefix_rel_path->toString())->getUidAttributeAlias());
                     $prefix_rel_qpart = new QueryPartSelect($prefix_rel_str, $this, DataColumn::sanitizeColumnName($prefix_rel_str));
                     $junction = $this->buildSqlSelect($prefix_rel_qpart, null, null, '');
                 } else {
-                    $junctionTableAlias = $this->getMainTableAlias();
-                    $junctionDataAddress = $this->getMainObject()->getUidAttribute()->getDataAddress();
+                    $junctionTableAlias = $this->getShortAlias($start_rel->getLeftObject()->getAlias() . $this->getQueryId());
+                    $junctionDataAddress = $start_rel->getLeftKeyAttribute()->getDataAddress();;
                     if ($this->checkForSqlStatement($junctionDataAddress) === true) {
                         $junction = $this->replacePlaceholdersInSqlAddress($junctionDataAddress, null, null, $junctionTableAlias);
                     } else {
