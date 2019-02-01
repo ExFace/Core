@@ -9,6 +9,7 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Model\ModelInterface;
 use exface\Core\Exceptions\Model\MetaRelationAliasAmbiguousError;
+use exface\Core\DataTypes\RelationCardinalityDataType;
 
 class Relation implements MetaRelationInterface
 {
@@ -35,6 +36,8 @@ class Relation implements MetaRelationInterface
     private $rightKeyAttribute = null;
 
     private $type = null;
+    
+    private $cardinalty = null;
 
     private $inherited_from_object_id = null;
     
@@ -56,7 +59,7 @@ class Relation implements MetaRelationInterface
      */
     public function __construct(
         Workbench $workbench,
-        RelationTypeDataType $type,
+        RelationCardinalityDataType $cardinality,
         string $uid,
         string $alias,
         string $aliasModifier = '',
@@ -75,7 +78,7 @@ class Relation implements MetaRelationInterface
         $this->leftKeyAttribute = $leftKeyAttribute;
         $this->rightObjectUid = $rightObjectUid;
         $this->rightKeyAttributeUid = $rightObjectKeyAttributeUid;
-        $this->type = $type;
+        $this->cardinalty = $cardinality;
     }
     
     /**
@@ -213,7 +216,27 @@ class Relation implements MetaRelationInterface
      */
     public function getType() : RelationTypeDataType
     {
+        if ($this->type === null) {
+            switch ($this->getCardinality()->__toString()) {
+                case RelationCardinalityDataType::N_TO_ONE:
+                case RelationCardinalityDataType::ONE_TO_ONE:
+                    $this->type = RelationTypeDataType::REGULAR($this->getWorkbench());
+                    break;
+                default:
+                    $this->type = RelationTypeDataType::REVERSE($this->getWorkbench());
+            }
+        }
         return $this->type;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::getCardinality()
+     */
+    public function getCardinality() : RelationCardinalityDataType
+    {
+        return $this->cardinalty;
     }
 
     /**
@@ -305,7 +328,8 @@ class Relation implements MetaRelationInterface
      */
     public function isReverseRelation() : bool
     {
-        return $this->getType()->__toString() == RelationTypeDataType::REVERSE ? true : false;
+        $card = $this->getCardinality()->__toString();
+        return $card === RelationCardinalityDataType::ONE_TO_N || $card === RelationCardinalityDataType::N_TO_M;
     }
 
     /**
@@ -315,17 +339,7 @@ class Relation implements MetaRelationInterface
      */
     public function isForwardRelation() : bool
     {
-        return $this->getType()->__toString() == RelationTypeDataType::REGULAR ? true : false;
-    }
-
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\MetaRelationInterface::isOneToOneRelation()
-     */
-    public function isOneToOneRelation() : bool
-    {
-        return $this->getType()->__toString() == RelationTypeDataType::ONE_TO_ONE ? true : false;
+        return $this->isReverseRelation() === false;
     }
 
     /**
@@ -335,7 +349,7 @@ class Relation implements MetaRelationInterface
      */
     public function is(MetaRelationInterface $other_relation) : bool
     {
-        return $this->getId() === $other_relation->getId() && $this->getType()->equals($other_relation->getType()) ? true : false;
+        return $this->getId() === $other_relation->getId() && $this->getCardinality()->equals($other_relation->getCardinality());
     }
 
     /**

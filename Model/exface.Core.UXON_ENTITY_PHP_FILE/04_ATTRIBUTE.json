@@ -78,6 +78,10 @@
             "attribute_alias": "NAME"
         },
         {
+            "name": "RELATION_CARDINALITY",
+            "attribute_alias": "RELATION_CARDINALITY"
+        },
+        {
             "name": "ALIAS",
             "attribute_alias": "ALIAS"
         },
@@ -179,6 +183,7 @@
             "DEFAULT_DISPLAY_UXON": null,
             "COMMENTS": "",
             "NAME": "Class annotation",
+            "RELATION_CARDINALITY": "",
             "ALIAS": "CLASS_ANNOTATION",
             "DATATYPE": "0x11e7b93f315ab6ca84cce4b318306b9a",
             "DATA_ADDRESS": "pathname_relative",

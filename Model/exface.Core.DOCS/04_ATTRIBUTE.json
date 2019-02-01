@@ -78,6 +78,10 @@
             "attribute_alias": "NAME"
         },
         {
+            "name": "RELATION_CARDINALITY",
+            "attribute_alias": "RELATION_CARDINALITY"
+        },
+        {
             "name": "ALIAS",
             "attribute_alias": "ALIAS"
         },
@@ -179,6 +183,7 @@
             "DEFAULT_DISPLAY_UXON": null,
             "COMMENTS": "",
             "NAME": "Title",
+            "RELATION_CARDINALITY": "",
             "ALIAS": "TITLE",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "line(1)",

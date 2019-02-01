@@ -53,9 +53,7 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
                     $this->getParent()->addColumnsForSystemAttributes($rel_path);
                 } elseif ($rel->isReverseRelation()) {
                     // TODO Concatennate UIDs here?
-                } elseif ($rel->isOneToOneRelation()) {
-                    // TODO
-                }
+                } 
             }
         }
         

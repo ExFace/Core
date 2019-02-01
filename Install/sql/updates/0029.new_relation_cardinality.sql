@@ -1,0 +1,1 @@
+ALTER TABLE `exf_attribute` ADD `relation_cardinality` VARCHAR(2) NOT NULL DEFAULT '' AFTER `related_object_special_key_attribute_oid`;

@@ -78,6 +78,10 @@
             "attribute_alias": "NAME"
         },
         {
+            "name": "RELATION_CARDINALITY",
+            "attribute_alias": "RELATION_CARDINALITY"
+        },
+        {
             "name": "ALIAS",
             "attribute_alias": "ALIAS"
         },
@@ -179,6 +183,7 @@
             "DEFAULT_DISPLAY_UXON": null,
             "COMMENTS": "",
             "NAME": "First Name",
+            "RELATION_CARDINALITY": "",
             "ALIAS": "FIRST_NAME",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "first_name",
@@ -220,6 +225,7 @@
             "DEFAULT_DISPLAY_UXON": null,
             "COMMENTS": "",
             "NAME": "Last Name",
+            "RELATION_CARDINALITY": "",
             "ALIAS": "LAST_NAME",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "last_name",
@@ -261,6 +267,7 @@
             "DEFAULT_DISPLAY_UXON": null,
             "COMMENTS": "",
             "NAME": "Username",
+            "RELATION_CARDINALITY": "",
             "ALIAS": "USERNAME",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "username",
@@ -302,6 +309,7 @@
             "DEFAULT_DISPLAY_UXON": null,
             "COMMENTS": "",
             "NAME": "Locale",
+            "RELATION_CARDINALITY": "",
             "ALIAS": "LOCALE",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "locale",
@@ -343,6 +351,7 @@
             "DEFAULT_DISPLAY_UXON": null,
             "COMMENTS": "",
             "NAME": "Email",
+            "RELATION_CARDINALITY": "",
             "ALIAS": "EMAIL",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "email",

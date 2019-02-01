@@ -78,6 +78,10 @@
             "attribute_alias": "NAME"
         },
         {
+            "name": "RELATION_CARDINALITY",
+            "attribute_alias": "RELATION_CARDINALITY"
+        },
+        {
             "name": "ALIAS",
             "attribute_alias": "ALIAS"
         },
@@ -179,6 +183,7 @@
             "DEFAULT_DISPLAY_UXON": null,
             "COMMENTS": "",
             "NAME": "App Alias",
+            "RELATION_CARDINALITY": "",
             "ALIAS": "ALIAS",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "app_alias",
@@ -220,6 +225,7 @@
             "DEFAULT_DISPLAY_UXON": null,
             "COMMENTS": "",
             "NAME": "App",
+            "RELATION_CARDINALITY": "",
             "ALIAS": "NAME",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "app_name",
@@ -261,6 +267,7 @@
             "DEFAULT_DISPLAY_UXON": null,
             "COMMENTS": "",
             "NAME": "Package",
+            "RELATION_CARDINALITY": "",
             "ALIAS": "PACKAGE",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "REPLACE([#~alias#].app_alias, '.', '\/')",
@@ -302,6 +309,7 @@
             "DEFAULT_DISPLAY_UXON": null,
             "COMMENTS": "",
             "NAME": "Default Language",
+            "RELATION_CARDINALITY": "",
             "ALIAS": "DEFAULT_LANGUAGE_CODE",
             "DATATYPE": "0x11e7bf02824f925f9c0f0205857feb80",
             "DATA_ADDRESS": "default_language_code",
@@ -343,6 +351,7 @@
             "DEFAULT_DISPLAY_UXON": null,
             "COMMENTS": "",
             "NAME": "Last model modification",
+            "RELATION_CARDINALITY": "",
             "ALIAS": "MODEL_MODIFIED_ON",
             "DATATYPE": "0x33000000000000000000000000000000",
             "DATA_ADDRESS": "GREATEST(\n\t[#~alias#].modified_on, \n    IFNULL((SELECT GREATEST(IFNULL(MAX([#~alias#]_o.modified_on), 1970-01-01), IFNULL(MAX([#~alias#]_at.modified_on), 1970-01-01)) FROM exf_attribute [#~alias#]_at LEFT JOIN exf_object [#~alias#]_o ON [#~alias#]_o.oid = [#~alias#]_at.object_oid WHERE [#~alias#]_o.oid = [#~alias#].oid), 1970-01-01),\n   \t\/*IFNULL((SELECT MAX([#~alias#]_dt.modified_on) FROM exf_data_source [#~alias#]_dt WHERE [#~alias#]_dt.app_oid = [#~alias#].oid), 1970-01-01), -- ignore data sources because of possible custom connections and query builders *\/\n    IFNULL((SELECT MAX([#~alias#]_ob.modified_on) FROM exf_object_behaviors [#~alias#]_ob WHERE [#~alias#]_ob.behavior_app_oid = [#~alias#].oid), 1970-01-01),\n    IFNULL((SELECT MAX([#~alias#]_dc.modified_on) FROM exf_data_connection [#~alias#]_dc WHERE [#~alias#]_dc.app_oid = [#~alias#].oid), 1970-01-01),\n    IFNULL((SELECT MAX([#~alias#]_er.modified_on) FROM exf_message [#~alias#]_er WHERE [#~alias#]_er.app_oid = [#~alias#].oid), 1970-01-01),\n    IFNULL((SELECT MAX([#~alias#]_oa.modified_on) FROM exf_object_action [#~alias#]_oa WHERE [#~alias#]_oa.action_app_oid = [#~alias#].oid), 1970-01-01)\n)",

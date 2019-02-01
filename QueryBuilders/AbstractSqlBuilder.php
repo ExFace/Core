@@ -1077,8 +1077,6 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                         $joins[$right_table_alias] = $join;
                         // continue with the related object
                         $left_table_alias = $right_table_alias;
-                    } elseif ($rel->isOneToOneRelation() === true) {
-                        // TODO 1-to-1 relations
                     } else {
                         // stop joining as all the following joins will be add in subselects of the enrichment select
                         break;

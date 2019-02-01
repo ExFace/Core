@@ -78,6 +78,10 @@
             "attribute_alias": "NAME"
         },
         {
+            "name": "RELATION_CARDINALITY",
+            "attribute_alias": "RELATION_CARDINALITY"
+        },
+        {
             "name": "ALIAS",
             "attribute_alias": "ALIAS"
         },
@@ -179,6 +183,7 @@
             "DEFAULT_DISPLAY_UXON": null,
             "COMMENTS": "",
             "NAME": "Created on",
+            "RELATION_CARDINALITY": "",
             "ALIAS": "CREATED_ON",
             "DATATYPE": "0x33000000000000000000000000000000",
             "DATA_ADDRESS": "created_on",
@@ -220,6 +225,7 @@
             "DEFAULT_DISPLAY_UXON": null,
             "COMMENTS": "",
             "NAME": "Modified on",
+            "RELATION_CARDINALITY": "",
             "ALIAS": "MODIFIED_ON",
             "DATATYPE": "0x33000000000000000000000000000000",
             "DATA_ADDRESS": "modified_on",
@@ -261,6 +267,7 @@
             "DEFAULT_DISPLAY_UXON": null,
             "COMMENTS": "",
             "NAME": "Created by",
+            "RELATION_CARDINALITY": "",
             "ALIAS": "CREATED_BY_USER",
             "DATATYPE": "0x11e8091315d97da6b5b5e4b318306b9a",
             "DATA_ADDRESS": "created_by_user_oid",
@@ -302,6 +309,7 @@
             "DEFAULT_DISPLAY_UXON": null,
             "COMMENTS": "",
             "NAME": "Modified by",
+            "RELATION_CARDINALITY": "",
             "ALIAS": "MODIFIED_BY_USER",
             "DATATYPE": "0x11e8091315d97da6b5b5e4b318306b9a",
             "DATA_ADDRESS": "modified_by_user_oid",
@@ -343,6 +351,7 @@
             "DEFAULT_DISPLAY_UXON": null,
             "COMMENTS": "",
             "NAME": "UID",
+            "RELATION_CARDINALITY": "",
             "ALIAS": "UID",
             "DATATYPE": "0x11e8091315d97da6b5b5e4b318306b9a",
             "DATA_ADDRESS": "oid",

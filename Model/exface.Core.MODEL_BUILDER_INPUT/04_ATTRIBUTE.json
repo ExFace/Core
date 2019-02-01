@@ -78,6 +78,10 @@
             "attribute_alias": "NAME"
         },
         {
+            "name": "RELATION_CARDINALITY",
+            "attribute_alias": "RELATION_CARDINALITY"
+        },
+        {
             "name": "ALIAS",
             "attribute_alias": "ALIAS"
         },
@@ -179,6 +183,7 @@
             "DEFAULT_DISPLAY_UXON": null,
             "COMMENTS": "",
             "NAME": "App",
+            "RELATION_CARDINALITY": "",
             "ALIAS": "APP",
             "DATATYPE": "0x31000000000000000000000000000000",
             "DATA_ADDRESS": "",
@@ -220,6 +225,7 @@
             "DEFAULT_DISPLAY_UXON": null,
             "COMMENTS": "",
             "NAME": "Data Source",
+            "RELATION_CARDINALITY": "",
             "ALIAS": "DATA_SOURCE",
             "DATATYPE": "0x31000000000000000000000000000000",
             "DATA_ADDRESS": "",
@@ -261,6 +267,7 @@
             "DEFAULT_DISPLAY_UXON": null,
             "COMMENTS": "",
             "NAME": "Object Data Address Mask",
+            "RELATION_CARDINALITY": "",
             "ALIAS": "OBJECT_DATA_ADDRESS_MASK",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "",
@@ -302,6 +309,7 @@
             "DEFAULT_DISPLAY_UXON": null,
             "COMMENTS": "",
             "NAME": "Object",
+            "RELATION_CARDINALITY": "",
             "ALIAS": "OBJECT",
             "DATATYPE": "0x31000000000000000000000000000000",
             "DATA_ADDRESS": "",
