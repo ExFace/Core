@@ -78,6 +78,10 @@
             "attribute_alias": "NAME"
         },
         {
+            "name": "RELATION_CARDINALITY",
+            "attribute_alias": "RELATION_CARDINALITY"
+        },
+        {
             "name": "ALIAS",
             "attribute_alias": "ALIAS"
         },
@@ -179,6 +183,7 @@
             "DEFAULT_DISPLAY_UXON": null,
             "COMMENTS": "",
             "NAME": "Connection",
+            "RELATION_CARDINALITY": "",
             "ALIAS": "LABEL",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "name",
@@ -220,6 +225,7 @@
             "DEFAULT_DISPLAY_UXON": null,
             "COMMENTS": "",
             "NAME": "Connector",
+            "RELATION_CARDINALITY": "",
             "ALIAS": "CONNECTOR",
             "DATATYPE": "0x11e7b93f315ab6ca84cce4b318306b9a",
             "DATA_ADDRESS": "data_connector",
@@ -261,6 +267,7 @@
             "DEFAULT_DISPLAY_UXON": null,
             "COMMENTS": "",
             "NAME": "Configuration",
+            "RELATION_CARDINALITY": "",
             "ALIAS": "CONFIG",
             "DATATYPE": "0x31300000000000000000000000000000",
             "DATA_ADDRESS": "data_connector_config",
@@ -302,6 +309,7 @@
             "DEFAULT_DISPLAY_UXON": null,
             "COMMENTS": "",
             "NAME": "Read-Only",
+            "RELATION_CARDINALITY": "",
             "ALIAS": "READONLY",
             "DATATYPE": "0x37000000000000000000000000000000",
             "DATA_ADDRESS": "read_only_flag",
@@ -343,6 +351,7 @@
             "DEFAULT_DISPLAY_UXON": null,
             "COMMENTS": "",
             "NAME": "Alias",
+            "RELATION_CARDINALITY": "",
             "ALIAS": "ALIAS",
             "DATATYPE": "0x30000000000000000000000000000000",
             "DATA_ADDRESS": "alias",
@@ -384,6 +393,7 @@
             "DEFAULT_DISPLAY_UXON": null,
             "COMMENTS": "",
             "NAME": "Filter Context",
+            "RELATION_CARDINALITY": "",
             "ALIAS": "FILTER_CONTEXT",
             "DATATYPE": "0x31310000000000000000000000000000",
             "DATA_ADDRESS": "filter_context_uxon",
@@ -425,6 +435,7 @@
             "DEFAULT_DISPLAY_UXON": null,
             "COMMENTS": "",
             "NAME": "App",
+            "RELATION_CARDINALITY": "",
             "ALIAS": "APP",
             "DATATYPE": "0x11e8091315d97da6b5b5e4b318306b9a",
             "DATA_ADDRESS": "app_oid",

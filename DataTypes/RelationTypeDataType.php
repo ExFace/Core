@@ -5,11 +5,10 @@ use exface\Core\CommonLogic\DataTypes\EnumStaticDataTypeTrait;
 use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
 
 /**
- * Enumeration of relation types: 1n, 11, n1.
+ * Enumeration of relation types: n1 (regular) and 1n (reverse).
  * 
  * @method RelationTypeDataType REGULAR(\exface\Core\CommonLogic\Workbench $workbench)
  * @method RelationTypeDataType REVERSE(\exface\Core\CommonLogic\Workbench $workbench)
- * @method RelationTypeDataType ONE_TO_ONE(\exface\Core\CommonLogic\Workbench $workbench)
  * 
  * @author Andrej Kabachnik
  *
@@ -20,7 +19,6 @@ class RelationTypeDataType extends StringDataType implements EnumDataTypeInterfa
     
     const REGULAR = "N1";
     const REVERSE = "1N";
-    const ONE_TO_ONE = "11";
     
     /**
      * 

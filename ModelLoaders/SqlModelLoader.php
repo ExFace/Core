@@ -41,6 +41,8 @@ use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Exceptions\UserNotFoundError;
 use exface\Core\Exceptions\UserNotUniqueError;
 use exface\Core\DataTypes\StringDataType;
+use exface\Core\DataTypes\RelationDataType;
+use exface\Core\DataTypes\RelationCardinalityDataType;
 
 class SqlModelLoader implements ModelLoaderInterface
 {
@@ -284,9 +286,25 @@ class SqlModelLoader implements ModelLoaderInterface
                         throw new MetaModelLoadingFailedError('Object with UID "' . $row['object_oid'] . '" does not exist, but is referenced by the attribute "' . $row['attribute_alias'] . '" (UID "' . $row['uid'] . '"). Please repair the model or delete the orphaned attribute!', '70UJ2GV');
                     }
                     
+                    switch ($row['relation_cardinality']) {
+                        case 'NM':
+                            $cardinality = RelationCardinalityDataType::N_TO_M($exface);
+                            break;
+                        case '11': 
+                            $cardinality = RelationCardinalityDataType::ONE_TO_ONE($exface);
+                            break;
+                        // case '1N':
+                            // There cannot be an attribute for a 1-to-n relation in the DB because
+                            // this relation would need to be a defined as n-to-1 at it's other end then.
+                        default: 
+                            // An regular n-to-1 relation pointing to our attribute is a reversed one (1-to-n)
+                            // from it's point of view.
+                            $cardinality = RelationCardinalityDataType::ONE_TO_N($exface);
+                    }
+                    
                     $rel = new Relation(
                         $exface,
-                        RelationTypeDataType::REVERSE($exface),
+                        $cardinality,
                         $row['oid'], // relation id
                         $row['rev_relation_alias'], // relation alias
                         $row['attribute_alias'], // relation modifier: the alias of the right key attribute
@@ -306,9 +324,13 @@ class SqlModelLoader implements ModelLoaderInterface
                 } elseif ($attr) {
                     // At this point, we know, it is a direct relation. This can only happen if the object has a corresponding direct
                     // attribute. This is why the elseif($attr) is there.
+                    
+                    // Relation cardinality in the DB is empty if it's a regular n-to-1 relation!
+                    $cardinality = $row['relation_cardinality'] ? RelationCardinalityDataType::fromValue($exface, $row['relation_cardinality']) : RelationCardinalityDataType::N_TO_ONE($exface);
+                    
                     $rel = new Relation(
                         $exface,
-                        RelationTypeDataType::REGULAR($exface),
+                        $cardinality,
                         $attr->getId(), // relation id
                         $attr->getAlias(), // relation alias
                         '', // alias modifier allways empty for direct regular relations

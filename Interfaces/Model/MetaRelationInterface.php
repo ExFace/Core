@@ -6,6 +6,7 @@ use exface\Core\CommonLogic\Workbench;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\DataTypes\RelationTypeDataType;
 use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
+use exface\Core\DataTypes\RelationCardinalityDataType;
 
 /**
  * A relation in the metamodel symbolizes a key-based relationship between to objects.
@@ -36,7 +37,7 @@ interface MetaRelationInterface extends WorkbenchDependantInterface
     /**
      * 
      * @param Workbench $workbench
-     * @param RelationTypeDataType $type
+     * @param RelationCardinalityDataType $cardinality
      * @param string $uid
      * @param string $alias
      * @param string $aliasModifier
@@ -48,7 +49,7 @@ interface MetaRelationInterface extends WorkbenchDependantInterface
      */
     public function __construct(
         Workbench $workbench, 
-        RelationTypeDataType $type, 
+        RelationCardinalityDataType $cardinality, 
         string $uid, 
         string $alias, 
         string $aliasModifier = '', 
@@ -126,7 +127,17 @@ interface MetaRelationInterface extends WorkbenchDependantInterface
     
     public function getLeftObject() : MetaObjectInterface;
     
+    /**
+     * 
+     * @return RelationTypeDataType
+     */
     public function getType() : RelationTypeDataType;
+    
+    /**
+     * 
+     * @return RelationCardinalityDataType
+     */
+    public function getCardinality() : RelationCardinalityDataType;
     
     /**
      * Returns the UID of the object, this attribute was inherited from or NULL if it is a direct attribute of it's object
@@ -192,25 +203,30 @@ interface MetaRelationInterface extends WorkbenchDependantInterface
     public function getModel() : ModelInterface;
     
     /**
-     * Returns TRUE if this is a reverse relation and FALSE otherwise
+     * Returns TRUE if this is a reverse relation and FALSE otherwise.
+     * 
+     * Reverse relations have a cardinality of N (or M :) a the right end. This
+     * can be a 1-to-n or an n-to-m relation. This means, that any number of right 
+     * instances correspond to a left instances. 
+     * 
+     * Note, that an n-to-m relatoin is a reversed on for both of it's ends!
      *
      * @return bool
      */
     public function isReverseRelation() : bool;
     
     /**
-     * Returns TRUE if this is a regular (forward) relation and FALSE otherwise
+     * Returns TRUE if this is a regular (forward) relation and FALSE otherwise.
+     * 
+     * Forward relations have a cardinality of 1 at the right end (1-to-1 or n-to-1).
+     * In the world of relational databases, this would be a foreign key, which
+     * means, that any number of left instances point to a single right instance.
+     * 
+     * Note, that a 1-to-1 relation is a regular one for both of it's ends!
      *
      * @return bool
      */
     public function isForwardRelation() : bool;
-    
-    /**
-     * Returns TRUE if this is a one-to-one relation and FALSE otherwise
-     *
-     * @return bool
-     */
-    public function isOneToOneRelation() : bool;
     
     /**
      * Returns TRUE if this relation equals the given relation or is derived (inherited) from it and FALSE otherwise.
