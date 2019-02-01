@@ -1294,8 +1294,9 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             return false;
         }
         
-        if ($qpart->getFirstRelation(RelationTypeDataType::REVERSE) || ($rely_on_joins == false && count($qpart->getUsedRelations()) > 0)) {
-            // Use subqueries for attributes with reverse relations and in case we know, tha main query will not have any joins (e.g. UPDATE queries)
+        if (! $customWhereClause && ($qpart->getFirstRelation(RelationTypeDataType::REVERSE) || ($rely_on_joins == false && count($qpart->getUsedRelations()) > 0))) {
+            // Use subqueries for attributes with reverse relations (unless a custom WHERE is defined)
+            // or in case we know, tha main query will not have any joins (e.g. UPDATE queries)
             $output = $this->buildSqlWhereSubquery($qpart, $rely_on_joins);
         } else {
             // build the where
