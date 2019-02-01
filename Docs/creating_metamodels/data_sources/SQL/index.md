@@ -14,4 +14,5 @@ See the description of the query builder for your SQL dialect at Administration 
 
 ## Usefull examples
 
-- [Relations to specific rows in a dependant SQL table](Relations_to_specific_child_rows.md)
+- [Relation from parent-table to child-table with additional JOIN conditions (where child has certain value)](Relations_to_specific_child_rows.md)
+- [N-to-M relations with multicolumn JOINs instead of foreign keys](N-to-M_relations_with_multicolumn_JOINs.md)
