@@ -446,7 +446,7 @@ class Workbench implements WorkbenchInterface
     public function getCache(): WorkbenchCacheInterface
     {
         if ($this->cache === null) {
-            $this->cache = WorkbenchCache::createDefaultPool($this, WorkbenchCache::createDefaultPool($this));
+            $this->cache = new WorkbenchCache($this, WorkbenchCache::createDefaultPool($this));
         }
         return $this->cache;
     }
