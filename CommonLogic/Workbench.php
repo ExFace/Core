@@ -13,6 +13,7 @@ use exface\Core\Interfaces\Events\EventManagerInterface;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\Interfaces\ConfigurationInterface;
 use exface\Core\Interfaces\DebuggerInterface;
+use exface\Core\Interfaces\WorkbenchCacheInterface;
 use exface\Core\CoreApp;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Exceptions\Configuration\ConfigOptionNotFoundError;
@@ -47,6 +48,8 @@ class Workbench implements WorkbenchInterface
     private $debugger;
 
     private $logger;
+    
+    private $cache = null;
 
     private $context;
 
@@ -363,30 +366,6 @@ class Workbench implements WorkbenchInterface
     }
     
     /**
-     * Empties all caches of this workbench: internal cache, CMS cache, etc.
-     * 
-     * @return \exface\Core\CommonLogic\Workbench
-     */
-    public function clearCache()
-    {
-        // Clear CMS cache
-        $this->getCMS()->clearCmsCache();
-        
-        // TODO clear other caches
-        
-        // Clear main cache folder. Mute errors since this is method is often called in background
-        // IDEA introduce a special exception instead of muting to give dependants
-        // more control.
-        try {
-            $filemanager = $this->filemanager();
-            $filemanager->emptyDir($this->filemanager()->getPathToCacheFolder());
-        } catch (\Throwable $e){
-            $this->getLogger()->logException($e);
-        }
-        return $this;
-    }
-    
-    /**
      * Makes the given app get automatically instantiated every time the workbench
      * is started.
      * 
@@ -459,5 +438,17 @@ class Workbench implements WorkbenchInterface
         return str_replace(AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER, DIRECTORY_SEPARATOR, $selector->getAppAlias());
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\WorkbenchInterface::getCache()
+     */
+    public function getCache(): WorkbenchCacheInterface
+    {
+        if ($this->cache === null) {
+            $this->cache = WorkbenchCache::createDefaultPool($this, WorkbenchCache::createDefaultPool($this));
+        }
+        return $this->cache;
+    }
 }
 ?>

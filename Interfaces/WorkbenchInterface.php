@@ -113,13 +113,6 @@ interface WorkbenchInterface extends TaskHandlerInterface
     public function getLogger();
     
     /**
-     * Empties all caches of this workbench: internal cache, CMS cache, etc.
-     *
-     * @return \exface\Core\CommonLogic\Workbench
-     */
-    public function clearCache();
-    
-    /**
      * Makes the given app get automatically instantiated every time the workbench
      * is started.
      *
@@ -144,4 +137,11 @@ interface WorkbenchInterface extends TaskHandlerInterface
      * @return \exface\Core\CommonLogic\Workbench
      */
     public function removeAutorunApp(AppInterface $app);
+    
+    /**
+     * Returns the workbench cache.
+     * 
+     * @return WorkbenchCacheInterface
+     */
+    public function getCache() : WorkbenchCacheInterface;
 }
