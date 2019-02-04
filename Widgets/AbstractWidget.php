@@ -29,6 +29,7 @@ use exface\Core\Events\Widget\OnBeforePrefillEvent;
 use exface\Core\Events\Widget\OnPrefillEvent;
 use exface\Core\Interfaces\Events\EventInterface;
 use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
+use exface\Core\Factories\DataSheetFactory;
 
 /**
  * Basic ExFace widget
@@ -305,7 +306,7 @@ abstract class AbstractWidget implements WidgetInterface
 
     protected function createDataSheet()
     {
-        return $this->getWorkbench()->data()->createDataSheet($this->getMetaObject());
+        return DataSheetFactory::createFromObject($this->getMetaObject());
     }
 
     /**
