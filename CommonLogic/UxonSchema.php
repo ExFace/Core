@@ -181,6 +181,10 @@ class UxonSchema implements WorkbenchDependantInterface
             return $cache;
         }
         
+        if ($cache = $this->getCache($entityClass, 'properties')) {
+            return DataSheetFactory::createFromUxon($this->getWorkbench(), $cache);
+        }
+        
         $filepathRelative = $this->getFilenameForEntity($entityClass);
         $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.UXON_PROPERTY_ANNOTATION');
         $ds->getColumns()->addMultiple(['PROPERTY', 'TYPE', 'TEMPLATE', 'DEFAULT']);
@@ -191,8 +195,20 @@ class UxonSchema implements WorkbenchDependantInterface
             // TODO
         }
         $this->entityPropCache[$entityClass] = $ds;
+        $this->setCache($entityClass, 'properties', $ds->exportUxonObject());
         
         return $ds;
+    }
+    
+    protected function getCache(string $entityClass, string $key)
+    {
+        return $this->getWorkbench()->getCache()->getPool('uxon.schema')->get($key . '.' . str_replace("\\", '.', $entityClass));
+    }
+    
+    protected function setCache(string $entityClass, string $key, $data) : UxonSchema
+    {
+        $this->getWorkbench()->getCache()->getPool('uxon.schema')->set($key . '.' . str_replace("\\", '.', $entityClass), $data);
+        return $this;
     }
 
     /**
@@ -411,10 +427,18 @@ class UxonSchema implements WorkbenchDependantInterface
      */
     protected function getMetamodelWidgetTypes() : array
     {
+        if ($cache = $this->getCache('', 'widgetTypes')) {
+            return $cache;
+        }
+        
         $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.WIDGET');
         $ds->getColumns()->addFromExpression('NAME');
         $ds->dataRead();
-        return $ds->getColumns()->get('NAME')->getValues(false);
+        $types = $ds->getColumns()->get('NAME')->getValues(false);
+        
+        $this->setCache('', 'widgetTypes', $types);
+        
+        return $types;
     }
     
     /**
@@ -423,6 +447,10 @@ class UxonSchema implements WorkbenchDependantInterface
      */
     protected function getMetamodelActionAliases() : array
     {
+        if ($cache = $this->getCache('', 'actionAliases')) {
+            return $cache;
+        }
+        
         $options = [];
         $dot = AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER;
         
@@ -442,6 +470,8 @@ class UxonSchema implements WorkbenchDependantInterface
         foreach ($ds->getRows() as $row) {
             $options[] = $row['APP__ALIAS'] . $dot . $row['ALIAS'];
         }
+        
+        $this->setCache('', 'actionAliases', $options);
         
         return $options;
     }
