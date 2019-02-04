@@ -43,7 +43,7 @@ class CacheClearingBehavior extends AbstractBehavior
     public function handleEvent(DataSheetEventInterface $event)
     {
         if ($event->getDataSheet()->getMetaObject()->is($this->getObject())) {
-            $event->getWorkbench()->clearCache();
+            $event->getWorkbench()->getCache()->clear();
         }
     }
 
