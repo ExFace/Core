@@ -144,7 +144,12 @@ class WorkbenchCache implements WorkbenchCacheInterface
         return $this->mainPool->delete($key);
     }
     
-    
+    /**
+     * 
+     * @param WorkbenchInterface $workbench
+     * @param string $name
+     * @return CacheInterface
+     */
     public static function createDefaultPool(WorkbenchInterface $workbench, string $name = null): CacheInterface
     {
         return new FilesystemCache($name ?? '_workbench', 0, $workbench->filemanager()->getPathToCacheFolder());
@@ -185,5 +190,15 @@ class WorkbenchCache implements WorkbenchCacheInterface
         }
         
         return $this->pools[$name];
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\WorkbenchCacheInterface::getPoolDefault()
+     */
+    public function getPoolDefault()
+    {
+        return $this->mainPool;
     }
 }
