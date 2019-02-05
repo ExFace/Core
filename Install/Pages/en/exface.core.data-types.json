@@ -28,7 +28,19 @@
         ],
         "columns": [
             {
-                "attribute_group_alias": "~VISIBLE"
+                "attribute_alias": "APP__ALIAS"
+            },
+            {
+                "attribute_alias": "ALIAS"
+            },
+            {
+                "attribute_alias": "NAME"
+            },
+            {
+                "attribute_alias": "PROTOTYPE"
+            },
+            {
+                "attribute_alias": "SHORT_DESCRIPTION"
             }
         ],
         "buttons": [
