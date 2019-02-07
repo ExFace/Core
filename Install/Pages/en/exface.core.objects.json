@@ -97,7 +97,24 @@
                 "bind_to_double_click": true
             },
             {
-                "action_alias": "exface.Core.ShowObjectCopyDialog"
+                "widget_type": "MenuButton",
+                "caption": "=TRANSLATE('exface.Core.', 'ACTION.SHOWOBJECTCOPYDIALOG.NAME')",
+                "icon": "clone",
+                "buttons": [
+                    {
+                        "caption": "=TRANSLATE('exface.Core', 'PAGE.OBJECTS.COPY_OBJECT')",
+                        "action_alias": "exface.Core.ShowObjectCopyDialog"
+                    },
+                    {
+                        "caption": "=TRANSLATE('exface.Core', 'PAGE.OBJECTS.COPY_OBJECT_WITH_ATTRIBUTES')",
+                        "action": {
+                            "alias": "exface.Core.ShowObjectCopyDialog",
+                            "copy_related_objects": [
+                                "ATTRIBUTE"
+                            ]
+                        }
+                    }
+                ]
             },
             {
                 "action_alias": "exface.Core.DeleteObject"

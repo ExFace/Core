@@ -168,6 +168,8 @@
     "PAGE.ATTRIBUTE_EDITOR.COMMENTS": "Comments (internal - for app designers only!)",
     "PAGE.ATTRIBUTE_EDITOR.CUSTOMIZING": "Customizing",
     "PAGE.OBJECTS.APP_ALIAS": "App alias",
+    "PAGE.OBJECTS.COPY_OBJECT": "Copy Object",
+    "PAGE.OBJECTS.COPY_OBJECT_WITH_ATTRIBUTES": "Copy Object incl. Attributes",
     "PAGE.OBJECT_EDITOR.RELATION_TO": "Relation to",
     "PAGE.OBJECT_EDITOR.DEFAULT_EDITOR": "Default Editor",
     "PAGE.OBJECT_EDITOR.DATA_ADDRESS": "Data Address",
