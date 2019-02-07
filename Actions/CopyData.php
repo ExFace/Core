@@ -262,7 +262,8 @@ class CopyData extends SaveData implements iCreateData
      * Define an array of action aliases, whose right obects should be copied too.
      *
      * @uxon-property copy_related_objects
-     * @uxon-type array
+     * @uxon-type metamodel:relation[]
+     * @uxon-template [""]
      *
      * @param UxonObject $relationAliases
      * @return CopyData
