@@ -33,7 +33,7 @@ class Debugger implements DebuggerInterface
         if (! $exception instanceof \Exception){
             if ($exception instanceof \Error){
                 $error = $exception;
-                $exception = new \ErrorException('Legacy PHP error detected: see description below!', $error->getCode(), null, $error->getFile(), $error->getLine(), $error);
+                $exception = new \ErrorException('Internal PHP error: see description below!', $error->getCode(), null, $error->getFile(), $error->getLine(), $error);
             } else {
                 throw new RuntimeException('Cannot print exception of type ' . gettype($exception) . ' (' . get_class($exception) . ')!');
             }
