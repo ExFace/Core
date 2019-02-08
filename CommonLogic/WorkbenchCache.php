@@ -81,21 +81,25 @@ class WorkbenchCache implements WorkbenchCacheInterface
     public function clear()
     {
         // Clear main cache pool
-        $ok = $this->mainPool->clear();
+        try {
+            $ok = $this->mainPool->clear();
+        } catch (\Throwable $e) {
+            $ok = false;
+            $this->workbench->getLogger()->logException($e);
+        }
         
         // Clear CMS cache
         try {
-            $this->workbench->getCMS()->clearCmsCache();
+            @ $this->workbench->getCMS()->clearCmsCache();
         } catch (\Throwable $e) {
             $ok = false;
             $this->workbench->getLogger()->logException($e);
         }
         
         // Empty cache dir
-        $filemanager = $this->workbench->filemanager();
         try {
-            $filemanager = $this->filemanager();
-            $filemanager->emptyDir($this->filemanager()->getPathToCacheFolder());
+            $filemanager = $this->workbench->filemanager();
+            $filemanager->emptyDir($filemanager->getPathToCacheFolder());
         } catch (\Throwable $e){
             $ok = false;
             $this->workbench->getLogger()->logException($e);
