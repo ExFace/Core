@@ -34,7 +34,7 @@ class Text extends Display implements iShowText, iHaveColor
      * This property has the same effect as setting `value`. It also supports formulas.
      * 
      * @uxon-property text
-     * @uxon-type string
+     * @uxon-type string|metamodel:formula
      * 
      * @param string $value
      * @return \exface\Core\Widgets\Text

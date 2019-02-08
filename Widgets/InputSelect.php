@@ -221,6 +221,7 @@ class InputSelect extends Input implements iSupportMultiSelect
      *
      * @uxon-property selectable_options
      * @uxon-type object
+     * @uxon-template {"": ""}
      *
      * When adding options programmatically an assotiative array can be used or separate arrays 
      * with equal length: one for values and one for the text labels.

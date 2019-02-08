@@ -1157,7 +1157,7 @@ class Data
      * The text may contain any template-specific formatting: e.g. HTML for HTML-templates.
      *
      * @uxon-property empty_text
-     * @uxon-type boolean
+     * @uxon-type string|metamodel:formula
      *
      * @param string $value            
      * @return Data
@@ -1598,7 +1598,7 @@ class Data
      * Overrides the text shown if autoload_data is set to FALSE.
      * 
      * @uxon-property autoload_disabled_hint
-     * @uxon-type string
+     * @uxon-type string|metamodel:formula
      * 
      * @param string $text
      * @return Data

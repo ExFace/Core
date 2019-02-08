@@ -419,7 +419,7 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
      * The default placeholder is defined by the core translation of WIDGET.TEXT.EMPTY_TEXT.
      *
      * @uxon-property empty_text
-     * @uxon-type string
+     * @uxon-type string|metamodel:formula
      *
      * @see \exface\Core\Interfaces\Widgets\iHaveValue::setEmptyText()
      */
