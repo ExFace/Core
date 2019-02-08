@@ -211,7 +211,7 @@ class ChartSeries extends AbstractWidget implements iHaveColor
      * The caption for a series can either be set directly, or will be inherited from the used data column.
      *
      * @uxon-property caption
-     * @uxon-type string
+     * @uxon-type string|metamodel:formula
      *
      * {@inheritdoc}
      *

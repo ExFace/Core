@@ -329,7 +329,7 @@ abstract class AbstractWidget implements WidgetInterface
      * Sets the caption or title of the widget.
      *
      * @uxon-property caption
-     * @uxon-type string
+     * @uxon-type string|metamodel:formula
      *
      * {@inheritdoc}
      *
@@ -979,7 +979,7 @@ else {
      * The hint will typically be used for pop-overs, etc.
      *
      * @uxon-property hint
-     * @uxon-type string
+     * @uxon-type string|metamodel:formula
      *
      * {@inheritdoc}
      *

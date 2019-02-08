@@ -157,7 +157,7 @@ class Tile extends Button implements iHaveColor
      * Sets the subtite of the tile - if not set, the tile will ony have a title.
      * 
      * @uxon-property subtitle
-     * @uxon-type string
+     * @uxon-type string|metamodel:formula
      * 
      * @param mixed $subtitle
      * @return Tile
