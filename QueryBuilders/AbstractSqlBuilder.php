@@ -365,7 +365,6 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         // show up as a value here. Still that value is required!
         if ($uid_qpart === null) {
             $uid_qpart = $this->addAttribute($this->getMainObject()->getUidAttributeAlias());
-            $columns[$uid_qpart->getDataAddress()] = $uid_qpart->getDataAddress();
         }
         
         // If the UID query part has a custom SQL insert statement, render it here and make sure it's saved
@@ -379,6 +378,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 $this->prepareInputValue('', $uid_qpart->getAttribute()->getDataType(), $uid_qpart->getDataAddressProperty('SQL_DATA_TYPE'))
             ), $uid_generator);
             
+            $columns[$uid_qpart->getDataAddress()] = $uid_qpart->getDataAddress();
             $last_uid_sql_var = '@last_uid';
             foreach ($values as $nr => $row) {
                 $values[$nr][$uid_qpart->getDataAddress()] = $last_uid_sql_var . ' := ' . $uid_generator;
