@@ -216,7 +216,7 @@ class ObjectBasketContext extends AbstractContext
             if ($data_sheet instanceof DataSheetInterface){
                 $i += $data_sheet->countRows();
             } elseif ($data_sheet instanceof UxonObject) {
-                $i += count($data_sheet->getProperty('rows'));
+                $i += $data_sheet->hasProperty('rows') ? $data_sheet->getProperty('rows')->countProperties() : 0;
             }
         }
         return $i;
