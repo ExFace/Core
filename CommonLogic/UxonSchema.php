@@ -16,6 +16,8 @@ use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Factories\ExpressionFactory;
+use exface\Core\DataTypes\StringDataType;
+use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 
 /**
  * This class provides varios tools to analyse and validate a generic UXON object.
@@ -41,6 +43,7 @@ use exface\Core\Factories\ExpressionFactory;
  * - metamodel:page
  * - metamodel:comparator
  * - metamodel:connection
+ * - metamodel:formula
  * - uxon:path - where path is a JSONpath relative to the current field
  * - [enum,values] - enumeration of commma-separated values (in square brackets)
  * 
@@ -266,11 +269,23 @@ class UxonSchema implements WorkbenchDependantInterface
     public function getValidValues(UxonObject $uxon, array $path, string $search = null) : array
     {
         $options = [];
-        $prop = mb_strtolower(end($path));
         
-        $entityClass = $this->getEntityClass($uxon, $path);
-        $propertyTypes = $this->getPropertyTypes($entityClass, $prop);
-        $firstType = trim($propertyTypes[0]);
+        $prop = mb_strtolower(end($path));
+        if (true === is_numeric($prop)) {
+            // If we are in an array, use the data from the parent property (= the array)
+            // for every item within the array.
+            $prop = mb_strtolower($path[(count($path)-2)]);
+            $entityClass = $this->getEntityClass($uxon, $path);
+            $propertyTypes = $this->getPropertyTypes($entityClass, $prop);
+            $firstType = trim($propertyTypes[0]);
+            $firstType = rtrim($firstType, "[]");
+        } else {
+            // In all other cases, try to find something for the top-most property in the path
+            $entityClass = $this->getEntityClass($uxon, $path);
+            $propertyTypes = $this->getPropertyTypes($entityClass, $prop);
+            $firstType = trim($propertyTypes[0]);
+        }
+        
         switch (true) {
             case $this->isPropertyTypeEnum($firstType) === true:
                 $options = explode(',', trim($firstType, "[]"));
@@ -294,9 +309,14 @@ class UxonSchema implements WorkbenchDependantInterface
                 $options = $this->getMetamodelComparators($search);
                 break;
             case strcasecmp($firstType, 'metamodel:attribute') === 0:
+            case strcasecmp($firstType, 'metamodel:relation') === 0:
                 try {
                     $object = $this->getMetaObject($uxon, $path);
-                    $options = $this->getMetamodelAttributeAliases($object, $search);
+                    if (strcasecmp($firstType, 'metamodel:attribute') === 0) {
+                        $options = $this->getMetamodelAttributeAliases($object, $search);
+                    } else {
+                        $options = $this->getMetamodelRelationAliases($object, $search);
+                    }
                 } catch (MetaObjectNotFoundError $e) {
                     $options = [];
                 }
@@ -419,6 +439,19 @@ class UxonSchema implements WorkbenchDependantInterface
         }
         
         return $values;
+    }
+    
+    protected function getMetamodelRelationAliases(MetaObjectInterface $object, string $search = null) : array
+    {
+        $attrAliases = $this->getMetamodelAttributeAliases($object, $search);
+        $relAliases = [];
+        $relSep = RelationPath::getRelationSeparator();
+        foreach ($attrAliases as $alias) {
+            if (true === StringDataType::endsWith($alias, $relSep)) {
+                $relAliases[] = StringDataType::substringBefore($alias, $relSep);  
+            } 
+        }
+        return $relAliases;
     }
     
     /**
