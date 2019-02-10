@@ -23,38 +23,30 @@ use exface\Core\Interfaces\Selectors\DataTypeSelectorInterface;
 interface DataTypeInterface extends WorkbenchDependantInterface, AliasInterface, iCanBeCopied, iCanBeConvertedToUxon, MetaModelPrototypeInterface, ValueObjectInterface
 {
     /**
-     * @param string $string
-     * @return DataTypeInterface
-     */
-    public function setAlias($string);
-    
-    /**
-     *
-     * @return Model
-     */
-    public function getModel();
-
-    /**
      * Returns the string name of the data type (e.g.
      * Number, String, etc.)
      *
      * @return string
      */
     public function getName();
-    
-    /**
-     * @return DataTypeInterface
-     */
-    public function setName($string);
 
     /**
-     * Returns TRUE if the current data type equals is derived from the given one (e.g.
-     * Integer::is('exface.Core.Number') = true) and FALSE otherwise.
+     * Returns TRUE if the current data type's prototype equals or is derived from the given one (e.g.
+     * Integer::is('exface.Core.Number') => true) and FALSE otherwise.
      *
      * @param DataTypeInterface|string $data_type_or_resolvable_name
      * @return boolean
      */
-    public function is($data_type_or_resolvable_name);
+    public function is($data_type_or_resolvable_name) : bool;
+
+    /**
+     * Returns TRUE if this data type matches the given one (i.e. their qualified aliases match exactly) 
+     * and FALSE otherwise.
+     * 
+     * @param DataTypeInterface|string $data_type_or_resolvable_name
+     * @return bool
+     */
+    public function isExactly($data_type_or_resolvable_name) : bool;
 
     /**
      * Returns a normalized representation of the given string matching the data prototype, but 
@@ -165,13 +157,6 @@ interface DataTypeInterface extends WorkbenchDependantInterface, AliasInterface,
      * @return AppInterface
      */
     public function getApp();
-    
-    /**
-     * 
-     * @param AppInterface $app
-     * @return DataTypeInterface
-     */
-    public function setApp(AppInterface $app);
     
     /**
      * @return string

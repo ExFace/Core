@@ -58,17 +58,6 @@ abstract class AbstractDataType implements DataTypeInterface
     {
         return 'DataType';
     }
-    
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\DataTypes\DataTypeInterface::getModel()
-     */
-    public function getModel()
-    {
-        return $this->getWorkbench()->model();
-    }
 
     /**
      *
@@ -109,15 +98,43 @@ abstract class AbstractDataType implements DataTypeInterface
      *
      * @see \exface\Core\Interfaces\DataTypes\DataTypeInterface::is()
      */
-    public function is($data_type_or_resolvable_name)
+    public function is($data_type_or_resolvable_name) : bool
     {
         if ($data_type_or_resolvable_name instanceof AbstractDataType) {
-            $class = get_class($data_type_or_resolvable_name);
+            $otherType = $data_type_or_resolvable_name;
+            $otherClass = get_class($otherType);
         } else {
-            $data_type = DataTypeFactory::createFromString($this->getWorkbench(), $data_type_or_resolvable_name);
-            $class = get_class($data_type);
+            $otherType = DataTypeFactory::createFromString($this->getWorkbench(), $data_type_or_resolvable_name);
+            $otherClass = get_class($otherType);
         }
-        return ($this instanceof $class);
+        
+        if ($this instanceof $otherClass) {
+            // A this point, we know, this type is based on the same prototype or on it's derivativ.
+            // This means, if the type compared to is one of the prototypes (and not a model type built on-top of it),
+            // this type is it's subtype: e.g. MyCustomInteger ($this) is a Number ($otherType) because it is based 
+            // on the prototype Integer, which is a derivativ of Number, but MyCustomInteger ($this) is not a 
+            // NumericId ($otherType) becuase while they are based on the same prototype Integer, NumericId is a (possibly very
+            // different) model-based derivative.
+            $otherBaseType = DataTypeFactory::createFromString($this->getWorkbench(), get_class($otherType));
+            return $otherType->isExactly($otherBaseType);
+        }
+        
+        return false;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataTypes\DataTypeInterface::isExactly()
+     */
+    public function isExactly($data_type_or_resolvable_name) : bool
+    {
+        if (is_object($data_type_or_resolvable_name) && $data_type_or_resolvable_name instanceof DataTypeInterface) {
+            $otherType = $data_type_or_resolvable_name;
+        } else {
+            $otherType = DataTypeFactory::createFromString($this->getWorkbench(), $data_type_or_resolvable_name);
+        }
+        return $this->getAliasWithNamespace() === $otherType->getAliasWithNamespace();
     }
 
     /**
