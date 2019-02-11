@@ -1954,6 +1954,20 @@
             "HINT": "Use existing objects instead of creating new ones.",
             "TYPE": "ERROR",
             "DOCS": ""
+        },
+        {
+            "CREATED_ON": "2019-02-11 09:28:46",
+            "MODIFIED_ON": "2019-02-11 09:28:46",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e92ddf6e60c5579d88e4b318306b9a",
+            "APP": "0x31000000000000000000000000000000",
+            "CODE": "74BKHZL",
+            "TITLE": "Invalid time format",
+            "DESCRIPTION": "Supported input formats are:\n \n - `hh:mm`, `hh:mm AM\/PM` (e.g. \"13:59\" or \"01:59 PM\")\n - `hh:mm:ss`, `hh:mm:ss AM\/PM` (e.g. \"13:59:31\" or \"01:59:31 PM\")\n - `hhmm` (eg. 1359)",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         }
     ],
     "totals_rows": [],
