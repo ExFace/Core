@@ -31,8 +31,23 @@ interface DataTypeInterface extends WorkbenchDependantInterface, AliasInterface,
     public function getName();
 
     /**
-     * Returns TRUE if the current data type's prototype equals or is derived from the given one (e.g.
-     * Integer::is('exface.Core.Number') => true) and FALSE otherwise.
+     * Returns TRUE if the current data type equals or is derived from the given one.
+     * 
+     * Example: concider prototypes Integer extends Number with respective models and
+     * model-defined types NumericId (based on Integer prototype), PositiveNumber and
+     * NegativeNumber (based on Number). 
+     * 
+     * - Number::is(Integer) => false
+     * - NumericId::is(Integer) => true
+     * - NumericId::is(Number) => true
+     * - NumericId::is(PositiveNumber) => false
+     * - Integer::is('exface.Core.Number') => true // both are prototypes and Integer is subclass of Number.
+     * - Integer::is(Number) => true
+     * - Integer::is(NumericId) => false
+     * - PositiveNumber::is(Number) => true
+     * - PositiveNumber::is(NegativeNuber) => false
+     * - PositiveNumber::is(NumericId) => false
+     * - Number::is(Number) => true
      *
      * @param DataTypeInterface|string $data_type_or_resolvable_name
      * @return boolean
