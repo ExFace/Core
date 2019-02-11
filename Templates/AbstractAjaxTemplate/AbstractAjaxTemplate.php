@@ -41,6 +41,8 @@ use exface\Core\DataTypes\StringDataType;
 use exface\Core\Events\Widget\OnRemoveEvent;
 use exface\Core\Interfaces\Tasks\ResultTextContentInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\DataTypes\TimeDataType;
+use exface\Core\Templates\AbstractAjaxTemplate\Formatters\JsTimeFormatter;
 
 /**
  * 
@@ -337,6 +339,7 @@ abstract class AbstractAjaxTemplate extends AbstractHttpTemplate
             case $dataType instanceof EnumDataTypeInterface: return new JsEnumFormatter($dataType);
             case $dataType instanceof NumberDataType: return new JsNumberFormatter($dataType);
             case $dataType instanceof DateDataType: return new JsDateFormatter($dataType);
+            case $dataType instanceof TimeDataType: return new JsTimeFormatter($dataType);
             case $dataType instanceof BooleanDataType: return new JsBooleanFormatter($dataType);
         }
         return new JsTransparentFormatter($dataType);
