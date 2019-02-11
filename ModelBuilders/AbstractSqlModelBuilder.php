@@ -22,6 +22,7 @@ use exface\Core\DataTypes\StringDataType;
 use exface\Core\DataTypes\TextDataType;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\DataTypes\HexadecimalNumberDataType;
+use exface\Core\DataTypes\TimeDataType;
 
 /**
  * This is the base for all SQL model builders in the core.
@@ -237,6 +238,9 @@ abstract class AbstractSqlModelBuilder extends AbstractModelBuilder implements M
                         $data_type->setPrecision($scale);
                     }
                 }
+                break;
+            case 'TIME':
+                $data_type = DataTypeFactory::createFromString($workbench, TimeDataType::class);
                 break;
             case 'TIMESTAMP':
             case 'DATETIME':
