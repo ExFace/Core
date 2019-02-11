@@ -365,12 +365,12 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         // possibility of mixed creates and updates among multiple rows. But an empty non-required attribute will never
         // show up as a value here. Still that value is required!
         if ($uid_qpart === null) {
-            $uid_qpart = $this->addAttribute($this->getMainObject()->getUidAttributeAlias());
+            $uid_qpart = $this->addValue($this->getMainObject()->getUidAttributeAlias(), '');
         }
         
         // If the UID query part has a custom SQL insert statement, render it here and make sure it's saved
         // into a variable because all sorts of last_insert_id() function will not return such a value.
-        if ($uid_generator = $uid_qpart->getDataAddressProperty('SQL_INSERT')) {
+        if ($uid_qpart->hasValues() === false && $uid_generator = $uid_qpart->getDataAddressProperty('SQL_INSERT')) {
             $uid_generator = str_replace(array(
                 '[#~alias#]',
                 '[#~value#]'
