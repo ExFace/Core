@@ -6,6 +6,10 @@ use exface\Core\DataTypes\TimeDataType;
 /**
  * An input-field for time-values (without date).
  * 
+ * The look and handling of the time-input depends on the template used. It is recommended to 
+ * render time spinners (an input with up/down buttons) or other types of selectors: a clock 
+ * (like android) or hour/minute sliders (like iOS).
+ * 
  * Example:
  * 
  * ```
@@ -35,6 +39,8 @@ class InputTime extends Input
     private $showSeconds = null;
     
     private $amPm = null;
+    
+    private $stepMinutes = 60;
     
     /**
      * @return string|null
@@ -118,5 +124,29 @@ class InputTime extends Input
         $this->amPm = $value;
         return $this;
     }
+    
+    /**
+     *
+     * @return int
+     */
+    public function getStepMinutes() : int
+    {
+        return $this->stepMinutes;
+    }
+    
+    /**
+     * The step (in minutes) to increment/decrease time if a spinner with buttons is used.
+     * 
+     * @uxon-property step_minutes
+     * @uxon-type integer
+     * @uxon-default 60
+     * 
+     * @param int $value
+     * @return InputTime
+     */
+    public function setStepMinutes(int $value) : InputTime
+    {
+        $this->stepMinutes = $value;
+        return $this;
+    }   
 }
-?>
