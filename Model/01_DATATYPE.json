@@ -537,7 +537,7 @@
         },
         {
             "CREATED_ON": "2019-02-11 09:27:09",
-            "MODIFIED_ON": "2019-02-11 09:29:16",
+            "MODIFIED_ON": "2019-02-11 10:05:39",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e92ddf34bc53e29d88e4b318306b9a",
@@ -546,7 +546,7 @@
             "PROTOTYPE": "exface\/Core\/DataTypes\/TimeDataType.php",
             "CONFIG_UXON": null,
             "VALIDATION_ERROR": "0x11e92ddf6e60c5579d88e4b318306b9a",
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"InputTime\"}",
             "ALIAS": "Time",
             "SHORT_DESCRIPTION": ""
         }
