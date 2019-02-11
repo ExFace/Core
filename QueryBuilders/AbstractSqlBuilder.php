@@ -30,6 +30,7 @@ use exface\Core\CommonLogic\DataQueries\DataQueryResultData;
 use exface\Core\Interfaces\DataSources\DataQueryResultDataInterface;
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 use exface\Core\DataTypes\JsonDataType;
+use exface\Core\DataTypes\TimeDataType;
 
 /**
  * A query builder for generic SQL syntax.
@@ -625,26 +626,32 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     protected function prepareInputValue($value, DataTypeInterface $data_type, $sql_data_type = NULL)
     {
         $value = $data_type->parse($value);
-        if ($data_type instanceof StringDataType) {
-            // JSON values are strings too, but their columns should be null even if the value is an
-            // empty object or empty array (otherwise the cells would never be null)
-            if (($data_type instanceof JsonDataType) && $data_type::isEmptyValue($value) === true) {
-                $value = 'NULL';
-            } else {
-                $value = $value === null ? 'NULL' : "'" . $this->escapeString($value) . "'";
-            }            
-        } elseif ($data_type instanceof BooleanDataType) {
-            if ($data_type::isEmptyValue($value) === true) {
-                $value = 'NULL';
-            } else {
-                $value = $value ? 1 : 0;
-            }
-        } elseif ($data_type instanceof NumberDataType) {
-            $value = $data_type::isEmptyValue($value) === true ? 'NULL' : $value;
-        } elseif ($data_type instanceof DateDataType) {
-            $value = $data_type::isEmptyValue($value) === true ? 'NULL' : "'" . $this->escapeString($value) . "'";
-        } else {
-            $value = "'" . $this->escapeString($value) . "'";
+        switch (true) {
+            case $data_type instanceof StringDataType:
+                // JSON values are strings too, but their columns should be null even if the value is an
+                // empty object or empty array (otherwise the cells would never be null)
+                if (($data_type instanceof JsonDataType) && $data_type::isEmptyValue($value) === true) {
+                    $value = 'NULL';
+                } else {
+                    $value = $value === null ? 'NULL' : "'" . $this->escapeString($value) . "'";
+                }  
+                break;
+            case $data_type instanceof BooleanDataType:
+                if ($data_type::isEmptyValue($value) === true) {
+                    $value = 'NULL';
+                } else {
+                    $value = $value ? 1 : 0;
+                }
+                break;
+            case $data_type instanceof NumberDataType:
+                $value = $data_type::isEmptyValue($value) === true ? 'NULL' : $value;
+                break;
+            case $data_type instanceof DateDataType:
+            case $data_type instanceof TimeDataType:
+                $value = $data_type::isEmptyValue($value) === true ? 'NULL' : "'" . $this->escapeString($value) . "'";
+                break;
+            default:
+                $value = "'" . $this->escapeString($value) . "'";
         }
         return $value;
     }
