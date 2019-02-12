@@ -41,12 +41,16 @@ class Image extends Display implements iShowImage, iCanBeAligned, iCanUseProxyTe
     {
         $uri = parent::getValue();
         
-        if ($base = $this->getBaseUrl()) {
-            $uri = rtrim($base, "/") . '/' . ltrim($uri, "/");
-        }
-        
-        if ($uri !== null && $this->getUseProxy()) {
-            return $this->buildProxyUrl($uri);
+        // Add base and proxy to URI if it is not empty. Be carefull not to modify
+        // anything on empty values as they will become non-empty!!!
+        if ($uri) {
+            if ($base = $this->getBaseUrl()) {
+                $uri = rtrim($base, "/") . '/' . ltrim($uri, "/");
+            }
+            
+            if ($uri !== null && $this->getUseProxy()) {
+                return $this->buildProxyUrl($uri);
+            }
         }
         
         return $uri;
