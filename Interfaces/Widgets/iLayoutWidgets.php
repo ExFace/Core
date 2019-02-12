@@ -2,31 +2,29 @@
 namespace exface\Core\Interfaces\Widgets;
 
 /**
- * This interface is meant for container widgets, which take care of positioning their contents according
- * to certaine layout rules: e.g.
- * the panel.
+ * This interface defines a container, that takes care of positioning their contents according
+ * to certaine layout rules - mostly in a grid: e.g. the WidgetGrid, the Panel, etc.
  *
  * @author Andrej Kabachnik
  *        
  */
 interface iLayoutWidgets extends iContainOtherWidgets
 {
-
     /**
      * Returns the number of columns in the layout.
      * 
      * Returns NULL if the creator of the widget had made no preference and 
      * thus the number of columns is completely upto the template. 
      *
-     * @return integer
+     * @return int|NULL
      */
-    public function getNumberOfColumns();
+    public function getColumnsInGrid() : ?int;
 
     /**
      * Set the number of columns in the layout. The default depends on the template.
      *
-     * @param integer $value
+     * @param int $value
      * @return iLayoutWidgets            
      */
-    public function setNumberOfColumns($value);
+    public function setColumnsInGrid(int $value) : iLayoutWidgets;
 }
