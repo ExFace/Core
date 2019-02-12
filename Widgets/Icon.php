@@ -137,7 +137,11 @@ class Icon extends Display implements iHaveColor
     }
     
     /**
-     * Sets the name of the icon to be displayed - any name supported by the template is OK.
+     * The name of the icon to be displayed.
+     * 
+     * Refer to the documentation of the template for supported icon names. Most
+     * templates will support font awesome icons and some poprietary icon set
+     * additionally.
      * 
      * @uxon-property icon
      * @uxon-type icon|string

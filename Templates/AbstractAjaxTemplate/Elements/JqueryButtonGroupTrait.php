@@ -69,7 +69,7 @@ trait JqueryButtonGroupTrait
             $this->more_buttons_menu = $widget->getPage()->createWidget('MenuButton', $widget);
             $this->more_buttons_menu->setCaption($this->getMoreButtonsMenuCaption());
             if (! $icon){
-                $this->more_buttons_menu->setHideButtonIcon(true);
+                $this->more_buttons_menu->setShowIcon(false);
             } else {
                 $this->more_buttons_menu->setIcon($icon);
             }
