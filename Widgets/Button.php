@@ -14,6 +14,7 @@ use exface\Core\Widgets\Traits\iCanBeAlignedTrait;
 use exface\Core\Interfaces\Widgets\iUseInputWidget;
 use exface\Core\Widgets\Traits\iUseInputWidgetTrait;
 use exface\Core\Interfaces\Widgets\iDefineAction;
+use exface\Core\Widgets\Traits\iHaveIconTrait;
 
 /**
  * A Button is the primary widget for triggering actions.
@@ -29,6 +30,10 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iDefin
     
     use iUseInputWidgetTrait;
     
+    use iHaveIconTrait {
+        getIcon as getIconViaTrait;
+    }
+    
     private $action_alias = null;
 
     private $action = null;
@@ -43,15 +48,9 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iDefin
 
     private $hotkey = null;
 
-    private $icon = null;
-
     private $refresh_input = true;
 
     private $refresh_widget_link = null;
-
-    private $hide_button_text = false;
-
-    private $hide_button_icon = false;
 
     public function getAction()
     {
@@ -220,31 +219,18 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iDefin
         return $this;
     }
 
-    public function getIcon()
-    {
-        if (! $this->icon && $this->getAction()) {
-            $this->icon = $this->getAction()->getIcon();
-        }
-        return $this->icon;
-    }
-
     /**
-     * Specifies the name of the icon to be displayed by this button.
-     *
-     * There are some default icons defined in the core, but every template is free to add more icons. The names of the latter
-     * are, of course, absolutely template specific.
-     *
-     * @uxon-property icon
-     * @uxon-type string
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\Widgets\iHaveIcon::setIcon()
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveIcon::getIcon()
      */
-    public function setIcon($value)
+    public function getIcon() : ?string
     {
-        $this->icon = $value;
-        return $this;
+        $icon = $this->getIconViaTrait();
+        if (! $icon && $this->getAction()) {
+            return $this->getAction()->getIcon();
+        }
+        return $icon;
     }
 
     public function getRefreshInput()
@@ -264,48 +250,6 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iDefin
     public function setRefreshInput($value)
     {
         $this->refresh_input = $value;
-        return $this;
-    }
-
-    public function getHideButtonText()
-    {
-        return $this->hide_button_text;
-    }
-
-    /**
-     * Set to TRUE to hide the button's caption leaving only the icon.
-     * Default: FALSE.
-     *
-     * @uxon-property hide_button_text
-     * @uxon-type boolean
-     *
-     * @param boolean $value  
-     * @return Button          
-     */
-    public function setHideButtonText($value)
-    {
-        $this->hide_button_text = $value;
-        return $this;
-    }
-
-    public function getHideButtonIcon()
-    {
-        return $this->hide_button_icon;
-    }
-
-    /**
-     * Set to TRUE to hide the button's icon leaving only the caption.
-     * Default: FALSE.
-     *
-     * @uxon-property hide_button_icon
-     * @uxon-type boolean
-     *
-     * @param boolean $value 
-     * @return Button           
-     */
-    public function setHideButtonIcon($value)
-    {
-        $this->hide_button_icon = $value;
         return $this;
     }
 
@@ -394,6 +338,5 @@ class Button extends AbstractWidget implements iHaveIcon, iTriggerAction, iDefin
     public function getHint()
     {
         return parent::getHint() ? parent::getHint() : $this->getCaption();
-    }
+    }    
 }
-?>
