@@ -219,13 +219,6 @@ interface CmsConnectorInterface extends WorkbenchDependantInterface
     public function deletePage(UiPageInterface $page) : CmsConnectorInterface;
 
     /**
-     * Clears the recycle bin of the CMS (if present)
-     * 
-     * @return CmsConnectorInterface
-     */
-    public function clearCmsRecycleBin();
-
-    /**
      * Returns if the page exists in the CMS.
      * 
      * @param UiPageSelectorInterface|string $selectorOrString
