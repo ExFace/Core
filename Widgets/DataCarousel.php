@@ -16,7 +16,7 @@ use exface\Core\Interfaces\Widgets\iShowData;
  * 
  * ## Similar widgets and alternatives
  * 
- * Use `ImageCarousel` to build a carousel of images. By default, it will use the `DataImageGallery`
+ * Use `ImageCarousel` to build a carousel of images. By default, it will use the `Imagegallery`
  * as data widget and show a larger version of each image in the details. You can define a custom
  * detail-widget to display additional information about the image or even create editors.
  * 

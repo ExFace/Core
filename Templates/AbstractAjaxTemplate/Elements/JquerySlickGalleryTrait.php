@@ -3,7 +3,7 @@ namespace exface\Core\Templates\AbstractAjaxTemplate\Elements;
 
 use exface\Core\Widgets\ImageCarousel;
 use exface\Core\DataTypes\UrlDataType;
-use exface\Core\Widgets\DataImageGallery;
+use exface\Core\Widgets\Imagegallery;
 
 /**
  * Helps implement ImageCarousel widgets with jQuery and the slick carousel.
@@ -31,7 +31,7 @@ use exface\Core\Widgets\DataImageGallery;
  * 
  * @author Andrej Kabachnik
  * 
- * @method DataImageGallery getWidget()
+ * @method Imagegallery getWidget()
  *        
  */
 trait JquerySlickGalleryTrait

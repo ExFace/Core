@@ -29,7 +29,7 @@ use exface\Core\CommonLogic\UxonObject;
  * 
  * ```
  * {
- *  "widget_type": "DataImageGallery",
+ *  "widget_type": "Imagegallery",
  *  "object_alias": "my.App.images",
  *  "image_url_attribute_alias": "uri",
  *  "image_title_attribute_alias": "description"
@@ -52,7 +52,7 @@ use exface\Core\CommonLogic\UxonObject;
  * 
  * ```
  * {
- *  "widget_type": "DataImageGallery",
+ *  "widget_type": "Imagegallery",
  *  "object_alias": "my.App.product_images",
  *  "image_url_attribute_alias": "uri",
  *  "image_title_attribute_alias": "description",
@@ -81,7 +81,7 @@ use exface\Core\CommonLogic\UxonObject;
  * There is another handy image widget called `ImageCarousel`: it adds a details-widget
  * (by default a large image) to the gallery, which is being displayed once a user
  * selects an image. Instead of a larger image, any other widget - even a `Form` can
- * be used to display details of a gallery image. Similarly to `DataImageGallery` simplifying, 
+ * be used to display details of a gallery image. Similarly to `Imagegallery` simplifying, 
  * image handling in `Data` widgets, the `ImageCarousel` makes it easy to use galleries within
  * `DataCarousel` widgets. 
  * 
@@ -91,7 +91,7 @@ use exface\Core\CommonLogic\UxonObject;
  * @author Andrej Kabachnik
  *
  */
-class DataImageGallery extends Data implements iCanUseProxyTemplate
+class ImageGallery extends Data implements iCanUseProxyTemplate
 {
     use iCanUseProxyTemplateTrait;
     
@@ -165,9 +165,9 @@ class DataImageGallery extends Data implements iCanUseProxyTemplate
      * @uxon-type metamodel:attribute
      * 
      * @param string $value
-     * @return DataImageGallery
+     * @return ImageGallery
      */
-    public function setImageUrlAttributeAlias(string $value) : DataImageGallery
+    public function setImageUrlAttributeAlias(string $value) : Imagegallery
     {
         $this->image_url_attribute_alias = $value;
         $col = $this->createColumnFromAttribute($this->getMetaObject()->getAttribute($value), null, true);
@@ -183,9 +183,9 @@ class DataImageGallery extends Data implements iCanUseProxyTemplate
      * @uxon-type metamodel:attribute
      * 
      * @param string $value
-     * @return DataImageGallery
+     * @return ImageGallery
      */
-    public function setImageTitleAttributeAlias(string $value) : DataImageGallery
+    public function setImageTitleAttributeAlias(string $value) : Imagegallery
     {
         $this->image_title_attribute_alias = $value;
         $col = $this->createColumnFromAttribute($this->getMetaObject()->getAttribute($value), null, true);
@@ -237,14 +237,14 @@ class DataImageGallery extends Data implements iCanUseProxyTemplate
      * @uxon-type [vertical,horizontal]
      * 
      * @param ?string $value
-     * @return DataImageGallery
+     * @return ImageGallery
      */
-    public function setOrientation(?string $value) : DataImageGallery
+    public function setOrientation(?string $value) : Imagegallery
     {
         $value = trim(strtolower($value));
         
         if ($value !== self::ORIENTATION_HORIZONTAL && $value !== self::ORIENTATION_VERTICAL) {
-            throw new WidgetConfigurationError($this, 'Invalid DataImageGallery orientation "' . $value . '": only "vertical" or "horizontal" are allowed!');
+            throw new WidgetConfigurationError($this, 'Invalid Imagegallery orientation "' . $value . '": only "vertical" or "horizontal" are allowed!');
         }
         
         $this->orientation = $value;
