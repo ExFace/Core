@@ -182,10 +182,7 @@ class ShowObjectInfoDialog extends ShowDialog
             // of the object in that panel.
             // IDEA A separate method "create_object_editor" would probably be handy, once we have attribute groups and
             // other information, that would enable us to build better editors (with tabs, etc.)
-            // FIXME Adding a form here is actually a workaround for wrong width calculation in the AdmnLTE template. It currently works only for forms there, not for panels.
-            $panel = WidgetFactory::create($page, 'Form', $dialog);
-            $panel->addWidgets($this->createWidgetsForAttributes($panel));
-            $dialog->addWidget($panel);
+            $dialog->addWidgets($this->createWidgetsForAttributes($dialog));
         }
         return $dialog;
     }
