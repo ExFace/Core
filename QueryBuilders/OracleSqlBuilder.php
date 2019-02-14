@@ -17,6 +17,8 @@ use exface\Core\Interfaces\DataSources\SqlDataConnectorInterface;
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 use exface\Core\CommonLogic\DataQueries\DataQueryResultData;
 use exface\Core\Interfaces\DataSources\DataQueryResultDataInterface;
+use exface\Core\Interfaces\Selectors\QueryBuilderSelectorInterface;
+use exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder;
 
 /**
  * A query builder for Oracle SQL. 
@@ -30,36 +32,29 @@ use exface\Core\Interfaces\DataSources\DataQueryResultDataInterface;
  */
 class OracleSqlBuilder extends AbstractSqlBuilder
 {
+    
+    /**
+     * 
+     * @param QueryBuilderSelectorInterface $selector
+     */
+    public function __construct(QueryBuilderSelectorInterface $selector)
+    {
+        parent::__construct($selector);
+        $reservedWords = $this->getReservedWords();
+        $reservedWords[] = 'COMMENT';
+        $this->setReservedWords($reservedWords);
+    }
 
-    // CONFIG
-    protected $short_alias_max_length = 28;
-
-    // maximum length of SELECT AS aliases
-    protected $short_alias_remove_chars = array(
-        '.',
-        '>',
-        '<',
-        '-',
-        '(',
-        ')',
-        ':'
-    );
-
-    // forbidden chars in SELECT AS aliases
-    protected $short_alias_forbidden = array(
-        'SIZE',
-        'SELECT',
-        'FROM',
-        'AS',
-        'PARENT',
-        'ID',
-        'LEVEL',
-        'ORDER',
-        'GROUP',
-        'COMMENT'
-    );
-
-    // forbidden SELECT AS aliases
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\QueryBuilders\AbstractSqlBuilder::getShortAliasMaxLength()
+     */
+    protected function getShortAliasMaxLength() : int
+    {
+        return 28;
+    }
+    
     public function buildSqlQuerySelect()
     {
         $filter_object_ids = array();

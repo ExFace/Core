@@ -23,11 +23,15 @@ use exface\Core\Interfaces\DataSources\DataQueryResultDataInterface;
  */
 class MySqlBuilder extends AbstractSqlBuilder
 {
-
-    // CONFIG
-    protected $short_alias_max_length = 64;
-
-    // maximum length of SELECT AS aliases
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\QueryBuilders\AbstractSqlBuilder::getShortAliasMaxLength()
+     */
+    protected function getShortAliasMaxLength() : int
+    {
+        return 64;
+    }
     
     /**
      * In MySQL the select query is pretty straight-forward: there is no need to create nested queries,
