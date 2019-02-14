@@ -229,6 +229,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         $query = $this->buildSqlQuerySelect();
         $q = new SqlDataQuery();
         $q->setSql($query);
+        /* @var $qr \exface\Core\CommonLogic\DataQueries\SqlDataQuery */
         $qr = $data_connection->query($q);
         // first do the main query
         if ($rows = $qr->getResultArray()) {
@@ -249,12 +250,13 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 }
             }
         }
+        // If the query already includes a total row counter, use it!
+        $result_total_count = $qr->getResultRowCounter();
         $qr->freeResult();
         
         // then do the totals query if needed
         $result_totals = [];
         if ($this->hasTotals() === true) {
-            $result_total_count = null;
             $totals_query = $this->buildSqlQueryTotals();
             $qrt = $data_connection->runSql($totals_query);
             if ($totals = $qrt->getResultArray()) {
