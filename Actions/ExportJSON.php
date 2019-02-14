@@ -12,6 +12,7 @@ use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\Widgets\iShowData;
+use exface\Core\Exceptions\Actions\ActionLogicError;
 
 /**
  * This action exports data as a JSON array of key-value-pairs.
@@ -187,6 +188,18 @@ class ExportJSON extends ReadData implements iExportData
         // DataSheet vorbereiten
         $dataSheetMaster = $this->getDataSheetToRead($task);
         $dataSheetMaster->setAutoCount(false);
+         
+        // If there we expect to do split requests, we MUST sort over a unique attribute!
+        // Otherwise, the results of subsequent requests may contain data in different order
+        // resulting in dublicate or missing rows from the point of view of the entire
+        // (combined) export.
+        if ($this->getLimitRowsPerRequest() > 0) {
+            if ($dataSheetMaster->getMetaObject()->hasUidAttribute()) {
+                $dataSheetMaster->getSorters()->addFromString($dataSheetMaster->getMetaObject()->getUidAttributeAlias());
+            } else {
+                throw new ActionLogicError($this, 'Cannot export data for meta object ' . $dataSheetMaster->getMetaObject()->getAliasWithNamespace() . ': corrupted data expected due to lack of a UID attribute!');
+            }
+        }
         
         $widget = $this->getWidgetToReadFor($task);
         /* @var $widget \exface\Core\Interfaces\Widgets\iShowData */
