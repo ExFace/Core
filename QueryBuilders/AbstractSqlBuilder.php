@@ -160,27 +160,8 @@ use exface\Core\DataTypes\TimeDataType;
  */
 abstract class AbstractSqlBuilder extends AbstractQueryBuilder
 {
-
-    // CONFIG
-    protected $short_alias_max_length = 30;
-
-    // maximum length of SELECT AS aliases
-    protected $short_alias_remove_chars = array(
-        '.',
-        '>',
-        '<',
-        '-',
-        '(',
-        ')',
-        ':',
-        ' ',
-        '='
-    );
-
-    // forbidden chars in SELECT AS aliases
-    protected $short_alias_replacer = '_';
-
-    protected $short_alias_forbidden = array(
+    // Config
+    private $reserved_words = array(
         'SIZE',
         'SELECT',
         'FROM',
@@ -191,16 +172,30 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         'ORDER',
         'GROUP'
     );
+    
+    // Aliases
+    private $short_alias_remove_chars = array(
+        '.',
+        '>',
+        '<',
+        '-',
+        '(',
+        ')',
+        ':',
+        ' ',
+        '='
+    );
+    
+    private $short_alias_replacer = '_';
+    
+    private $short_alias_prefix = 'S';
 
-    // forbidden SELECT AS aliases
-    protected $short_alias_prefix = 'S';
+    private $short_aliases = array();
 
-    // other vars
-    protected $select_distinct = false;
+    private $short_alias_index = 0;
 
-    protected $short_aliases = array();
-
-    protected $short_alias_index = 0;
+    // Runtime vars
+    private $select_distinct = false;
 
     private $binary_columns = array();
 
@@ -1674,13 +1669,13 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     }
 
     /**
-     * Shortens an alias (or any string) to $short_alias_max_length by cutting off the rest and appending
+     * Shortens an alias (or any string) to $getShortAliasMaxLength() by cutting off the rest and appending
      * a unique id.
      * Also replaces forbidden words and characters ($short_alias_forbidden and $short_alias_remove_chars).
      * The result can be translated back to the original via get_full_alias($short_alias)
      * Every SQL-alias (like "SELECT xxx AS alias" or "SELECT * FROM table1 alias") should be shortened
      * because most SQL dialects only allow a limited number of characters in an alias (this number should
-     * be set in $short_alias_max_length).
+     * be set in $getShortAliasMaxLength()).
      *
      * @param string $full_alias            
      * @return string
@@ -1689,11 +1684,11 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     {
         if (isset($this->short_aliases[$full_alias])) {
             $short_alias = $this->short_aliases[$full_alias];
-        } elseif (strlen($full_alias) <= $this->short_alias_max_length && $this->getCleanAlias($full_alias) == $full_alias && ! in_array($full_alias, $this->short_alias_forbidden)) {
+        } elseif (strlen($full_alias) <= $this->getShortAliasMaxLength() && $this->getCleanAlias($full_alias) == $full_alias && ! in_array($full_alias, $this->getReservedWords())) {
             $short_alias = $full_alias;
         } else {
             $this->short_alias_index ++;
-            $short_alias = $this->short_alias_prefix . str_pad($this->short_alias_index, 3, '0', STR_PAD_LEFT) . $this->short_alias_replacer . substr($this->getCleanAlias($full_alias), - 1 * ($this->short_alias_max_length - 3 - 1 - 1));
+            $short_alias = $this->short_alias_prefix . str_pad($this->short_alias_index, 3, '0', STR_PAD_LEFT) . $this->short_alias_replacer . substr($this->getCleanAlias($full_alias), - 1 * ($this->getShortAliasMaxLength() - 3 - 1 - 1));
             $this->short_aliases[$full_alias] = $short_alias;
         }
         
@@ -1703,7 +1698,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     protected function getCleanAlias($alias)
     {
         $output = '';
-        $output = str_replace($this->short_alias_remove_chars, '_', $alias);
+        $output = str_replace($this->getShortAliasForbiddenChars(), '_', $alias);
         return $output;
     }
 
@@ -1890,6 +1885,58 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     protected function addFilterSql(string $sqlPredicate) : AbstractSqlBuilder
     {
         $this->customFilterSqlPredicates[] = $sqlPredicate;
+        return $this;
+    }
+    
+    /**
+     * Returns the maximum number of characters allowed in a field or table alias.
+     * 
+     * Override this method to match the requirements of a specific SQL engine.
+     * 
+     * @return int
+     */
+    protected function getShortAliasMaxLength() : int
+    {
+        return 30;
+    }
+    
+    /**
+     *
+     * @return array
+     */
+    protected function getShortAliasForbiddenChars() : array
+    {
+        return $this->short_alias_remove_chars;
+    }
+    
+    /**
+     * 
+     * @param array $value
+     * @return AbstractSqlBuilder
+     */
+    protected function setShortAliasForbiddenChars(array $value) : AbstractSqlBuilder
+    {
+        $this->short_alias_remove_chars = $value;
+        return $this;
+    }
+    
+    /**
+     *
+     * @return array
+     */
+    protected function getReservedWords() : array
+    {
+        return $this->reserved_words;
+    }
+    
+    /**
+     * 
+     * @param array $value
+     * @return AbstractSqlBuilder
+     */
+    protected function setReservedWords(array $value) : AbstractSqlBuilder
+    {
+        $this->reserved_words = $value;
         return $this;
     }
 }
