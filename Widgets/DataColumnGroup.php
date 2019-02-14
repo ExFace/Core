@@ -38,7 +38,7 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\iHaveColumns::addColumn()
      */
-    public function addColumn(DataColumn $column, $position = NULL)
+    public function addColumn(DataColumn $column, int $position = NULL) : iHaveColumns
     {
         $column->setMetaObject($this->getMetaObject());
         if ($column->isEditable()) {
@@ -73,7 +73,7 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\iHaveColumns::removeColumn()
      */
-    public function removeColumn(DataColumn $column)
+    public function removeColumn(DataColumn $column) : iHaveColumns
     {
         $key = array_search($column, $this->columns);
         if ($key !== false){
@@ -91,10 +91,9 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
      * 
      * For relations the column will automatically show the label of the related object
      *
-     * @param MetaAttributeInterface $attribute            
-     * @return \exface\Core\Widgets\DataColumn
+     * @see iHaveColumns::createColumnFromAttribute
      */
-    function createColumnFromAttribute(MetaAttributeInterface $attribute, $caption = null, $hidden = null)
+    function createColumnFromAttribute(MetaAttributeInterface $attribute, string $caption = null, bool $hidden = null) : DataColumn
     {
         if ($attribute->isRelation()) {
             $attribute = $this->getMetaObject()->getAttribute(RelationPath::relationPathAdd($attribute->getAlias(), $this->getMetaObject()->getRelatedObject($attribute->getAlias())->getLabelAttributeAlias()));
@@ -222,7 +221,12 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
         return empty($this->columns) ? true : false;
     }
 
-    public function getColumns()
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveColumns::getColumns()
+     */
+    public function getColumns() : array
     {
         return $this->columns;
     }
@@ -230,28 +234,28 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
     /**
      * Returns the data column matching the given id.
      *
-     * @param string $column_id            
+     * @param string $widgetId            
      * @return \exface\Core\Widgets\DataColumn|NULL
      */
-    public function getColumn($column_id, $use_data_column_names_as_fallback = true)
+    public function getColumn(string $widgetId, $use_data_column_names_as_fallback = true) : ?DataColumn
     {
         foreach ($this->getColumns() as $col) {
-            if ($col->getId() === $column_id) {
+            if ($col->getId() === $widgetId) {
                 return $col;
             }
         }
         if ($use_data_column_names_as_fallback) {
-            return $this->getColumnByDataColumnName($column_id);
+            return $this->getColumnByDataColumnName($widgetId);
         }
         return null;
     }
 
     /**
      * 
-     * @param string $alias_with_relation_path
-     * @return \exface\Core\Widgets\DataColumn|NULL
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveColumns::getColumnByAttributeAlias()
      */
-    public function getColumnByAttributeAlias($alias_with_relation_path)
+    public function getColumnByAttributeAlias(string $alias_with_relation_path) : ?DataColumn
     {
         foreach ($this->getColumns() as $col) {
             if ($col->getAttributeAlias() === $alias_with_relation_path) {
@@ -263,10 +267,10 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
 
     /**
      * 
-     * @param string $data_sheet_column_name
-     * @return \exface\Core\Widgets\DataColumn|NULL
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveColumns::getColumnByDataColumnName()
      */
-    public function getColumnByDataColumnName($data_sheet_column_name)
+    public function getColumnByDataColumnName(string $data_sheet_column_name) : ?DataColumn
     {
         foreach ($this->getColumns() as $col) {
             if ($col->getDataColumnName() === $data_sheet_column_name) {
@@ -284,7 +288,7 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
      *
      * @see \exface\Core\Interfaces\Widgets\iHaveColumns::setColumns()
      */
-    public function setColumns(UxonObject $columns)
+    public function setColumns(UxonObject $columns) : iHaveColumns
     {
         foreach ($columns as $c) {
             if ($c->hasProperty('attribute_group_alias')) {
@@ -300,11 +304,10 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
     
     /**
      * 
-     * 
-     * @param UxonObject $uxon
-     * @return DataColumn
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveColumns::createColumnFromUxon()
      */
-    public function createColumnFromUxon(UxonObject $uxon)
+    public function createColumnFromUxon(UxonObject $uxon) : DataColumn
     {
         // Create the column
         $column = WidgetFactory::createFromUxon($this->getPage(), $uxon, $this, $this->getColumnDefaultWidgetType());
@@ -329,11 +332,11 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
     }
 
     /**
-     * Returns the number of columns in this group (including hidden columns!)
-     *
-     * @return integer
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveColumns::countColumns()
      */
-    public function countColumns()
+    public function countColumns() : int
     {
         return count($this->getColumns());
     }
@@ -343,7 +346,7 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\iHaveColumns::hasColumns()
      */
-    public function hasColumns()
+    public function hasColumns() : bool
     {
         return empty($this->columns) ? false : true;
     }
