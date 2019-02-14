@@ -1920,6 +1920,11 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         return $this;
     }
     
+    protected function getShortAliases() : array
+    {
+        return $this->short_aliases;
+    }
+    
     /**
      *
      * @return array
