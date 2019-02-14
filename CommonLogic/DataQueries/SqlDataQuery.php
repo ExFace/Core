@@ -13,6 +13,8 @@ class SqlDataQuery extends AbstractDataQuery
     private $result_array = null;
 
     private $result_resource = null;
+    
+    private $result_row_counter = null;
 
     private $connection = null;
 
@@ -99,6 +101,26 @@ class SqlDataQuery extends AbstractDataQuery
     public function getLastInsertId()
     {
         return $this->getConnection()->getInsertId($this);
+    }
+    
+    /**
+     * 
+     * @return int|NULL
+     */
+    public function getResultRowCounter() : ?int
+    {
+        return $this->result_row_counter;
+    }
+    
+    /**
+     * 
+     * @param int $number
+     * @return SqlDataQuery
+     */
+    public function setResultRowCounter(int $number) : SqlDataQuery
+    {
+        $this->result_row_counter = $number;
+        return $this;
     }
 
     /**
