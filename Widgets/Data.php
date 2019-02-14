@@ -142,7 +142,7 @@ class Data
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\iHaveColumns::addColumn()
      */
-    public function addColumn(DataColumn $column, $position = NULL)
+    public function addColumn(DataColumn $column, int $position = NULL) : iHaveColumns
     {
         $this->getColumnGroupMain()->addColumn($column, $position);
         return $this;
@@ -155,21 +155,19 @@ class Data
      * 
      * For relations the column will automatically show the label of the related object
      *
-     * @param MetaAttributeInterface $attribute            
-     * @return \exface\Core\Widgets\DataColumn
+     * @see iHaveColumns::createColumnFromAttribute()
      */
-    public function createColumnFromAttribute(MetaAttributeInterface $attribute, $caption = null, $hidden = null)
+    public function createColumnFromAttribute(MetaAttributeInterface $attribute, string $caption = null, bool $hidden = null) : DataColumn
     {
         return $this->getColumnGroupMain()->createColumnFromAttribute($attribute, $caption, $hidden);
     }
     
     /**
-     * The column is not automatically added to the column group - use addColumn() explicitly!
-     * 
-     * @param UxonObject $uxon
-     * @return \exface\Core\Widgets\DataColumn
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveColumns::createColumnFromUxon()
      */
-    public function createColumnFromUxon(UxonObject $uxon)
+    public function createColumnFromUxon(UxonObject $uxon) : DataColumn
     {
         return $this->getColumnGroupMain()->createColumnFromUxon($uxon);
     }
@@ -179,7 +177,7 @@ class Data
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\iHaveColumns::removeColumn()
      */
-    public function removeColumn(DataColumn $column)
+    public function removeColumn(DataColumn $column) : iHaveColumns
     {
         foreach ($this->getColumnGroups() as $grp) {
             $grp->removeColumn($column);
@@ -358,7 +356,7 @@ class Data
      *
      * @return DataColumn[]
      */
-    public function getColumns()
+    public function getColumns() : array
     {
         // If no columns explicitly specified, add the default columns
         if (count($this->getColumnGroups()) == 1 && $this->getColumnGroupMain()->isEmpty()) {
@@ -381,9 +379,9 @@ class Data
      * Returns the number of currently contained columns over all column groups.
      * NOTE: This does not trigger the creation of any default columns!
      *
-     * @return number
+     * @return int
      */
-    public function countColumns()
+    public function countColumns() : int
     {
         $count = 0;
         foreach ($this->getColumnGroups() as $group) {
@@ -397,7 +395,7 @@ class Data
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Widgets\iHaveColumns::hasColumns()
      */
-    public function hasColumns()
+    public function hasColumns() : bool
     {
         foreach ($this->getColumnGroups() as $group){
             if ($group->hasColumns()){
@@ -426,13 +424,13 @@ class Data
 
     /**
      * 
-     * @param string $column_id
-     * @return \exface\Core\Widgets\DataColumn|NULL
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveColumns::getColumn()
      */
-    function getColumn($column_id)
+    public function getColumn(string $widgetId) : ?DataColumn
     {
         foreach ($this->getColumns() as $col) {
-            if ($col->getId() === $column_id) {
+            if ($col->getId() === $widgetId) {
                 return $col;
             }
         }
@@ -440,12 +438,11 @@ class Data
     }
 
     /**
-     * Returns the first column with a matching attribute alias.
-     *
-     * @param string $alias_with_relation_path            
-     * @return \exface\Core\Widgets\DataColumn|NULL
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveColumns::getColumnByAttributeAlias()
      */
-    public function getColumnByAttributeAlias($alias_with_relation_path)
+    public function getColumnByAttributeAlias(string $alias_with_relation_path) : ?DataColumn
     {
         foreach ($this->getColumns() as $col) {
             if ($col->getAttributeAlias() === $alias_with_relation_path) {
@@ -456,11 +453,11 @@ class Data
     }
 
     /**
-     *
-     * @param string $data_sheet_column_name            
-     * @return \exface\Core\Widgets\DataColumn|NULL
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveColumns::getColumnByDataColumnName()
      */
-    public function getColumnByDataColumnName($data_sheet_column_name)
+    public function getColumnByDataColumnName(string $data_sheet_column_name) : ?DataColumn
     {
         foreach ($this->getColumns() as $col) {
             if ($col->getDataColumnName() === $data_sheet_column_name) {
@@ -475,7 +472,7 @@ class Data
      *
      * @return \exface\Core\Widgets\DataColumn[]
      */
-    public function getColumnsWithSystemAttributes()
+    public function getColumnsWithSystemAttributes() : array
     {
         $result = array();
         foreach ($this->getColumns() as $col) {
@@ -527,7 +524,7 @@ class Data
      *
      * @see \exface\Core\Interfaces\Widgets\iHaveColumns::setColumns()
      */
-    public function setColumns(UxonObject $columns)
+    public function setColumns(UxonObject $columns) : iHaveColumns
     {
         $column_groups = array();
         $last_element_was_a_column_group = false;
@@ -857,6 +854,11 @@ class Data
         return $this->getConfiguratorWidget()->hasFilters();
     }
 
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\AbstractWidget::getChildren()
+     */
     public function getChildren() : \Iterator
     {
         yield $this->getConfiguratorWidget();
@@ -888,6 +890,10 @@ class Data
         return $this->paginate;
     }
     
+    /**
+     * 
+     * @return DataPaginator
+     */
     public function getPaginator() : DataPaginator
     {
         if ($this->paginator === null) {
@@ -1619,6 +1625,11 @@ class Data
         return 'DataColumn';
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iCanPreloadData::prepareDataSheetToPreload()
+     */
     public function prepareDataSheetToPreload(DataSheetInterface $dataSheet) : DataSheetInterface
     {
         $dataSheet = $this->prepareDataSheetToPreloadViaTrait($dataSheet);
