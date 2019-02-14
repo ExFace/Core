@@ -1,72 +1,92 @@
 <?php
 namespace exface\Core\Widgets;
 
-use exface\Core\Interfaces\Widgets\iCanUseProxyTemplate;
-use exface\Core\Widgets\Traits\iCanUseProxyTemplateTrait;
+use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
+use exface\Core\Interfaces\Widgets\iShowData;
 
 /**
- * Shows an image carousel with images from data rows.
+ * Shows an carousel with image thumbnails and a large image for the selected thumbnail.
+ * 
+ * 
  * 
  * @author Andrej Kabachnik
+ * 
+ * @method Imagegallery getDataWidget()
  *
  */
-class ImageCarousel extends DataCards implements iCanUseProxyTemplate
+class ImageCarousel extends DataCarousel
 {
-    use iCanUseProxyTemplateTrait;
-
-    private $image_url_column_id = null;
-
-    private $image_title_column_id = null;
-
-    public function getImageUrlColumnId()
-    {
-        return $this->image_url_column_id;
-    }
-
+    private $image_title_attribute_alias = null;
+    
+    private $image_url_attribute_alias = null;
+    
     /**
-     * The id of the column holding image URLs
-     * 
-     * @uxon-property image_url_column_id
-     * @uxon-type uxon:.columns..id
-     * 
-     * @param string $value
-     * @return \exface\Core\Widgets\ImageCarousel
-     */
-    public function setImageUrlColumnId($value)
-    {
-        $this->image_url_column_id = $value;
-        return $this;
-    }
-
-    public function getImageTitleColumnId()
-    {
-        return $this->image_title_column_id;
-    }
-
-    /**
-     * The id of the column holding image titles
-     * 
-     * @uxon-property image_title_column_id
-     * @uxon-type uxon:.columns..id
-     * 
-     * @param string $value
-     * @return \exface\Core\Widgets\ImageCarousel
-     */
-    public function setImageTitleColumnId($value)
-    {
-        $this->image_title_column_id = $value;
-        return $this;
-    }
-
-    /**
-     * Keine sinnvolle Funktion fuer ImageCarousel, gibt daher immer true zurueck.
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Widgets\DataCards::getAutoloadData()
+     * @see \exface\Core\Widgets\DataCarousel::initDataWidget()
      */
-    public function getAutoloadData()
+    protected function initDataWidget(iShowData $widget) : iShowData
     {
-        return true;
+        if (! ($widget instanceof Imagegallery)) {
+            throw new WidgetConfigurationError($this, 'Invalid data widget type ' . get_class($widget) . ' for ImageCarousel: The data widget of an ImageCarousel MUST be a Imagegallery or a derivative!');
+        }
+        
+        $widget = parent::initDataWidget($widget);
+        
+        if ($this->image_url_attribute_alias !== null) {
+            $widget->setImageUrlAttributeAlias($this->image_url_attribute_alias);
+        }
+        
+        if ($this->image_title_attribute_alias !== null) {
+            $widget->setImageTitleAttributeAlias($this->image_title_attribute_alias);
+        }
+        
+        return $widget;
+    }
+    
+    /**
+     * The alias of the attribute with the image URLs
+     * 
+     * @uxon-property image_url_attribute_alias
+     * @uxon-type metamodel:attribute
+     * 
+     * @param string $value
+     * @return ImageCarousel
+     */
+    public function setImageUrlAttributeAlias(string $value) : ImageCarousel
+    {
+        $this->image_url_attribute_alias = $value;
+        if ($this->isDataInitialized() === true) {
+            $this->getDataWidget()->setImageUrlAttributeAlias($value);
+        }        
+        return $this;
+    }
+    
+    /**
+     * The alias of the attribute with the image titles
+     * 
+     * @uxon-property image_title_attribute_alias
+     * @uxon-type metamodel:attribute
+     * 
+     * @param string $value
+     * @return ImageCarousel
+     */
+    public function setImageTitleAttributeAlias(string $value) : ImageCarousel
+    {
+        $this->image_title_attribute_alias = $value;
+        if ($this->isDataInitialized() === true) {
+            $this->getDataWidget()->setImageTitleAttributeAlias($value);
+        }
+        return $this;
+    }    
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\DataCarousel::getDefaultDataWidgetType()
+     */
+    protected function getDefaultDataWidgetType() : string
+    {
+        return 'Imagegallery';
     }
 }
-?>
