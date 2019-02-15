@@ -1064,7 +1064,7 @@ class Data
      */
     public function hasAggregations()
     {
-        return count($this->getAggregations()) > 0 ? true : false;
+        return empty($this->getAggregations()) === FALSE;
     }
 
     /**
