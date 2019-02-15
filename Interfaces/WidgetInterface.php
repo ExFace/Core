@@ -405,26 +405,6 @@ interface WidgetInterface extends WorkbenchDependantInterface, iCanBeCopied
     public function isExactly($widget_type);
 
     /**
-     * Returns all actions callable from this widget or it's children as an array.
-     * Optional filters can be used to
-     * return only actions with a specified id (would be a single one in most cases) or qualified action alias (e.g. "exface.ShowObjectEditDialog")
-     *
-     * @param string $qualified_action_alias            
-     * @param string $action_type            
-     * @return ActionInterface[]
-     */
-    public function getActions($qualified_action_alias = null, $action_id = null);
-
-    /**
-     * Returns aliases of attributes used to aggregate data
-     * TODO Not sure, if this should be a method of the abstract widget or a specific widget type.
-     * Can any widget have aggregators?
-     *
-     * @return array
-     */
-    public function getAggregations();
-
-    /**
      * Explicitly tells the widget to use the given data connection to fetch data (instead of the one specified on the base
      * object's data source)
      *
