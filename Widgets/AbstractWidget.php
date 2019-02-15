@@ -1134,40 +1134,6 @@ else {
     }
 
     /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\WidgetInterface::getActions()
-     */
-    public function getActions($qualified_action_alias = null, $action_id = null)
-    {
-        $actions = array();
-        foreach ($this->getChildren() as $child) {
-            // If the child triggers an action itself, check if the action fits the filters an add it to the array
-            if ($child instanceof iTriggerAction) {
-                if (($qualified_action_alias && $child->getAction()->getAliasWithNamespace() == $qualified_action_alias) || ($action_id && $child->getAction()->getId() == $action_id) || (! $qualified_action_alias && ! $action_id)) {
-                    $actions[] = $child->getAction();
-                }
-            }
-            
-            // If the child has children itself, call the method recursively
-            $actions = array_merge($actions, $child->getActions($qualified_action_alias, $action_id));
-        }
-        return $actions;
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \exface\Core\Interfaces\WidgetInterface::getAggregations()
-     */
-    public function getAggregations()
-    {
-        return array();
-    }
-
-    /**
      * Forces the widget to use the specified data connection.
      * 
      * Use with care: if widgets on a single page use different connections for the same
