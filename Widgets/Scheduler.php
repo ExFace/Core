@@ -4,6 +4,7 @@ namespace exface\Core\Widgets;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Widgets\Parts\DataTimeline;
 use exface\Core\Widgets\Parts\DataCalendarItem;
+use exface\Core\Widgets\Parts\DataSchedulerResource;
 
 /**
  * Shows a timeline with events per resource (lane) - like Outlook scheduling assistant.
@@ -13,9 +14,11 @@ use exface\Core\Widgets\Parts\DataCalendarItem;
  */
 class Scheduler extends Data
 {
-    private $timeline = null;
+    private $timelinePart = null;
     
-    private $calendarItem = null;
+    private $calendarItemPart = null;
+    
+    private $schedulerResourcePart = null;
     
     /**
      *
@@ -23,10 +26,10 @@ class Scheduler extends Data
      */
     public function getTimelineConfig() : DataTimeline
     {
-        if ($this->timeline === null) {
-            $this->timeline = new DataTimeline($this);
+        if ($this->timelinePart === null) {
+            $this->timelinePart = new DataTimeline($this);
         }
-        return $this->timeline;
+        return $this->timelinePart;
     }
     
     /**
@@ -41,7 +44,7 @@ class Scheduler extends Data
      */
     public function setTimeline(UxonObject $uxon) : Scheduler
     {
-        $this->timeline = new DataTimeline($this, $uxon);
+        $this->timelinePart = new DataTimeline($this, $uxon);
         return $this;
     }
     
@@ -64,10 +67,10 @@ class Scheduler extends Data
      */
     public function getItemsConfig() : DataCalendarItem
     {
-        if ($this->calendarItem === null) {
-            $this->calendarItem = new DataCalendarItem($this);
+        if ($this->calendarItemPart === null) {
+            $this->calendarItemPart = new DataCalendarItem($this);
         }
-        return $this->calendarItem;
+        return $this->calendarItemPart;
     }
     
     /**
@@ -75,14 +78,48 @@ class Scheduler extends Data
      * 
      * @uxon-property items
      * @uxon-type \exface\Core\Widgets\Parts\DataCalendarItem
-     * @uxon-template {"start_time": "", "end_time": ""}
+     * @uxon-template {"start_time": ""}
      * 
      * @param DataCalendarItem $uxon
      * @return Scheduler
      */
     public function setItems(UxonObject $uxon) : Scheduler
     {
-        $this->calendarItem = new DataCalendarItem($this, $uxon);
+        $this->calendarItemPart = new DataCalendarItem($this, $uxon);
         return $this;
+    }
+    
+    /**
+     *
+     * @return DataSchedulerResource
+     */
+    public function getResourcesConfig() : DataSchedulerResource
+    {
+        return $this->schedulerResourcePart;
+    }
+    
+    /**
+     * Defines the resources (swimlanes) to be used in the scheduler.
+     * 
+     * @uxon-property resources
+     * @uxon-type \exface\Core\Widgets\Parts\DataSchedulerResource
+     * @uxon-template {"title": ""}
+     * 
+     * @param DataSchedulerResource $value
+     * @return Scheduler
+     */
+    public function setResources(UxonObject $uxon) : Scheduler
+    {
+        $this->schedulerResourcePart = new DataSchedulerResource($this, $uxon);
+        return $this;
+    }
+
+    /**
+     * 
+     * @return bool
+     */
+    public function hasResources() : bool
+    {
+        return $this->schedulerResourcePart !== null;
     }
 }
