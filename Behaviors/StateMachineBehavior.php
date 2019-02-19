@@ -109,16 +109,15 @@ class StateMachineBehavior extends AbstractBehavior
         foreach ($this->getStates() as $state) {
             $enumVals[$state->getStateId()] = $state->getName(! $this->getHideStateIds());
         }
-        $configUxon = new UxonObject(['values' => $enumVals]);
+        // Set show_values to FALSE in the UXON because they are already included in the labels
+        $configUxon = new UxonObject(['values' => $enumVals, 'show_values' => false]);
         
         $attr->setCustomDataTypeUxon($configUxon);
         
         if (! ($type instanceof EnumDataTypeInterface)) {
             if ($type instanceof NumberDataType) {
-                $enumType = NumberEnumDataType::class;
                 $enumType = '0x11e7c39621725c1e8001e4b318306b9a';
             } else {
-                $enumType = StringEnumDataType::class;
                 $enumType = '0x11e7c3960c3586c38001e4b318306b9a';
             }
             $attr->setDataType($enumType);
