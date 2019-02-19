@@ -24,6 +24,12 @@
             {
                 "attribute_alias": "UID",
                 "widget_type": "input"
+            },
+            {
+                "attribute_alias": "CONFIG_UXON",
+                "widget_type": "input",
+                "height": 1,
+                "width": 1
             }
         ],
         "columns": [
@@ -38,6 +44,11 @@
             },
             {
                 "attribute_alias": "PROTOTYPE"
+            },
+            {
+                "attribute_alias": "ATTRIBUTE__UID:COUNT",
+                "caption": "Used",
+                "hint": "Used in meta attributes"
             },
             {
                 "attribute_alias": "SHORT_DESCRIPTION"
