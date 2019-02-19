@@ -5,6 +5,7 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\DataConnectors\MySqlConnector;
+use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 
 /**
  * 
@@ -34,7 +35,7 @@ class MySqlModelBuilder extends AbstractSqlModelBuilder
             $rows[] = array(
                 'NAME' => $this->generateLabel($col['Field'], $col['Comment']),
                 'ALIAS' => $col['Field'],
-                'DATATYPE' => $this->getDataTypeId($this->guessDataType($meta_object->getWorkbench(), $col['Type'])),
+                'DATATYPE' => $this->getDataTypeId($this->guessDataType($meta_object, $col['Type'])),
                 'DATA_ADDRESS' => $col['Field'],
                 'OBJECT' => $meta_object->getId(),
                 'REQUIREDFLAG' => ($col['Null'] == 'NO' ? 1 : 0),
@@ -49,7 +50,7 @@ class MySqlModelBuilder extends AbstractSqlModelBuilder
      * {@inheritDoc}
      * @see \exface\Core\ModelBuilders\AbstractSqlModelBuilder::guessDataType()
      */
-    protected function guessDataType(Workbench $workbench, $data_type, $length = null, $number_scale = null)
+    protected function guessDataType(MetaObjectInterface $object, string $data_type, $length = null, $number_scale = null) : DataTypeInterface
     {
         $data_type = trim($data_type);
         $details = [];
@@ -64,7 +65,7 @@ class MySqlModelBuilder extends AbstractSqlModelBuilder
                 break;
         }
         
-        return parent::guessDataType($workbench, $type, $details[0], $details[1]);
+        return parent::guessDataType($object, $type, trim($details[0]), trim($details[1]));
     }
     
     /**
