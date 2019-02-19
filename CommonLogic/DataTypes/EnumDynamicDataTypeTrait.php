@@ -34,7 +34,9 @@ trait EnumDynamicDataTypeTrait {
 
         if ($this->getShowValues() === true) {
             foreach ($labels as $val => $label) {
-                $labels[$val] = $val . $this->getValueLabelDelimiter() . $label;
+                if (strcasecmp($val, $label) !== 0) {
+                    $labels[$val] = $val . $this->getValueLabelDelimiter() . $label;
+                }
             }
         }
         
