@@ -12,6 +12,7 @@ use exface\Core\Exceptions\Templates\TemplateRoutingError;
 use exface\Core\Exceptions\Templates\TemplateIncompatibleError;
 use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\Factories\TemplateFactory;
+use GuzzleHttp\Psr7\Response;
 
 /**
  * This PSR-15 middleware will look for a template responsible for the given request
@@ -50,8 +51,8 @@ class TemplateResolverMiddleware implements MiddlewareInterface
         try {
             $template = $this->getTemplateForUri($request->getUri());
         } catch (TemplateRoutingError $e) {
-            $this->workbench->getLogger()->logException($e, LoggerInterface::WARNING);
-            return $handler->handle($request);
+            $this->workbench->getLogger()->logException($e);
+            return new Response(500, [], $e->getMessage());
         }
         
         if (! ($template instanceof RequestHandlerInterface)) {
@@ -70,11 +71,15 @@ class TemplateResolverMiddleware implements MiddlewareInterface
     protected function getTemplateForUri(UriInterface $uri) : HttpTemplateInterface
     {
         $url = $uri->getPath() . '?' . $uri->getQuery();
-        foreach ($this->workbench->getConfig()->getOption('TEMPLATES.ROUTES') as $pattern => $templateAlias) {
+        $routes = $this->workbench->getConfig()->getOption('TEMPLATES.ROUTES');
+        if ($routes->isEmpty()) {
+            throw new TemplateRoutingError('No route configuration found is system config option TEMPLATES.ROUTES - (re)install at least one template!');
+        }
+        foreach ($routes as $pattern => $templateAlias) {
             if (preg_match($pattern, $url) === 1) {
                 return TemplateFactory::createFromString($templateAlias, $this->workbench);
             }
         }
-        throw new TemplateRoutingError('No route can be found for URL "' . $url . '" - please check system configuration option TEMPLATES.ROUTES!');
+        throw new TemplateRoutingError('No route can be found for URL "' . $url . '" - please check system configuration option TEMPLATES.ROUTES or reinstall your template!');
     }
 }
