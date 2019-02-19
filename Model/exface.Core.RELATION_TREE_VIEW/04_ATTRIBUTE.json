@@ -371,7 +371,7 @@
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": "{\"values\":{\"regular\":\"Regular\",\"reverse\":\"Reverse\"}}"
+            "CUSTOM_DATA_TYPE": "{\"show_values\": false, \"values\":{\"regular\":\"Regular\",\"reverse\":\"Reverse\"}}"
         },
         {
             "CREATED_ON": "2018-06-13 14:43:31",
@@ -413,7 +413,7 @@
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": "{\"values\":{\"regular\":\"&rArr;\",\"reverse\":\"&lArr;\"}}"
+            "CUSTOM_DATA_TYPE": "{\"show_values\": false, \"values\":{\"regular\":\"&rArr;\",\"reverse\":\"&lArr;\"}}"
         },
         {
             "CREATED_ON": "2018-06-14 08:50:29",
