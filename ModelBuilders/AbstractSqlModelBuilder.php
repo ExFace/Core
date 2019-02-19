@@ -23,6 +23,8 @@ use exface\Core\DataTypes\TextDataType;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\DataTypes\HexadecimalNumberDataType;
 use exface\Core\DataTypes\TimeDataType;
+use exface\Core\Interfaces\DataTypes\DataTypeInterface;
+use exface\Core\CommonLogic\UxonObject;
 
 /**
  * This is the base for all SQL model builders in the core.
@@ -113,11 +115,12 @@ abstract class AbstractSqlModelBuilder extends AbstractModelBuilder implements M
                 $result_data_sheet->addRow($row);
             }
         }
-        $result_data_sheet->setCounterForRowsInDataSource(count($imported_rows));
         
         if (! $result_data_sheet->isEmpty()) {
             $result_data_sheet->dataCreate(false, $transaction);
         }
+        
+        $result_data_sheet->setCounterForRowsInDataSource(count($imported_rows));
         
         return $result_data_sheet;
     }
@@ -156,7 +159,6 @@ abstract class AbstractSqlModelBuilder extends AbstractModelBuilder implements M
                 $newObjectsSheet->addRow($row);
             }
         }
-        $newObjectsSheet->setCounterForRowsInDataSource(count($imported_rows));
         
         if (! $newObjectsSheet->isEmpty()) {
             $newObjects = [];
@@ -176,6 +178,8 @@ abstract class AbstractSqlModelBuilder extends AbstractModelBuilder implements M
         }
         
         $transaction->commit();
+        
+        $newObjectsSheet->setCounterForRowsInDataSource(count($imported_rows));
         
         return $newObjectsSheet;
     }
@@ -211,12 +215,18 @@ abstract class AbstractSqlModelBuilder extends AbstractModelBuilder implements M
     abstract protected function findObjectTables(string $data_address_mask = null) : array;
     
     /**
+     * Returns the meta data type, that fit's the given db type best.
+     *
+     * @param MetaObjectInterface $object
+     * @param string $source_data_type
+     * @param mixed $length
+     * @param mixed $scale
      * 
-     * {@inheritDoc}
-     * @see \exface\Core\CommonLogic\ModelBuilders\AbstractModelBuilder::guessDataType()
+     * @return DataTypeInterface
      */
-    protected function guessDataType(Workbench $workbench, $sql_data_type, $length = null, $scale = null)
+    protected function guessDataType(MetaObjectInterface $object, string $sql_data_type, $length = null, $scale = null) : DataTypeInterface
     {
+        $workbench = $object->getWorkbench();
         switch (strtoupper($sql_data_type)) {
             case 'BIGINT':
             case 'INT':
@@ -260,6 +270,18 @@ abstract class AbstractSqlModelBuilder extends AbstractModelBuilder implements M
                 $data_type = DataTypeFactory::createFromString($workbench, StringDataType::class);
         }
         return $data_type;
+    }
+    
+    /**
+     * Returns a UXON configuration object for the given meta data type and the correspoinding
+     * data type in the data source.
+     *
+     * @param DataTypeInterface $type
+     * @param string $source_data_type
+     */
+    protected function getDataTypeConfig(DataTypeInterface $type, string $source_data_type, $length = null, $scale = null) : UxonObject
+    {
+        return new UxonObject();
     }
 
     /**

@@ -42,7 +42,7 @@ class OracleSqlModelBuilder extends AbstractSqlModelBuilder
             $rows[] = array(
                 'NAME' => $this->generateLabel($col['COLUMN_NAME'], $col['COMMENTS']),
                 'ALIAS' => $col['COLUMN_NAME'],
-                'DATATYPE' => $this->getDataTypeId($this->guessDataType($meta_object->getWorkbench(), $col['DATA_TYPE'], ($col['DATA_PRECISION'] ? $col['DATA_PRECISION'] : $col['DATA_LENGTH']), $col['DATA_SCALE'])),
+                'DATATYPE' => $this->getDataTypeId($this->guessDataType($meta_object, $col['DATA_TYPE'], ($col['DATA_PRECISION'] ? $col['DATA_PRECISION'] : $col['DATA_LENGTH']), $col['DATA_SCALE'])),
                 'DATA_ADDRESS' => $col['COLUMN_NAME'],
                 'OBJECT' => $meta_object->getId(),
                 'REQUIREDFLAG' => ($col['NULLABLE'] == 'N' ? 1 : 0),

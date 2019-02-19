@@ -8,15 +8,15 @@ use exface\Core\Interfaces\AppInterface;
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 use exface\Core\Interfaces\DataSources\DataSourceInterface;
 use exface\Core\Factories\DataSheetFactory;
-use exface\Core\CommonLogic\Workbench;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\CommonLogic\UxonObject;
 
 abstract class AbstractModelBuilder implements ModelBuilderInterface
 {
     private $data_types = null;
     
-    private $modelBuilder = 'en';
+    private $modelLanguage = 'en';
     
     public function __construct(DataConnectionInterface $data_connector)
     {
@@ -59,21 +59,33 @@ abstract class AbstractModelBuilder implements ModelBuilderInterface
      * @param DataTypeInterface $type
      * @return string|null
      */
-    protected function getDataTypeId(DataTypeInterface $type)
+    protected function getDataTypeId(DataTypeInterface $type, $useCacheOnly = false) : ?string
     {
         if (is_null($this->data_types)) {
             $this->data_types = DataSheetFactory::createFromObjectIdOrAlias($type->getWorkbench(), 'exface.Core.DATATYPE');
             $this->data_types->getColumns()->addMultiple([
                 $this->data_types->getMetaObject()->getUidAttributeAlias(),
-                'ALIAS'
+                'ALIAS',
+                'APP__ALIAS'
             ]);
             $this->data_types->dataRead();
         }
         
-        return $this->data_types->getUidColumn()->getCellValue($this->data_types->getColumns()->get('ALIAS')->findRowByValue($type->getAlias()));
+        $aliasRows = $this->data_types->getColumns()->get('ALIAS')->findRowsByValue($type->getAlias());
+        
+        foreach ($aliasRows as $rowNr){
+            if ($this->data_types->getCellValue('APP__ALIAS', $rowNr) === $type->getNamespace()) {
+                $uid = $this->data_types->getUidColumn()->getCellValue($rowNr);
+            }
+        }
+        
+        if ($uid === null && $useCacheOnly === false) {
+            $this->data_types->dataRead();
+            return $this->getDataTypeId($type, true);
+        }
+        
+        return $uid;
     }
-    
-    
     
     /**
      *
@@ -94,13 +106,4 @@ abstract class AbstractModelBuilder implements ModelBuilderInterface
         $this->modelLanguage = $value;
         return $this;
     }
-    
-    /**
-     * 
-     * @param Workbench $workbench
-     * @param string $source_data_type
-     * @param array $options
-     * @return DataTypeInterface
-     */
-    protected abstract function guessDataType(Workbench $workbench, $source_data_type);
 }

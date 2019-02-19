@@ -17,6 +17,8 @@ use exface\Core\Interfaces\Selectors\ContextSelectorInterface;
 use exface\Core\CommonLogic\Selectors\ContextSelector;
 use exface\Core\Interfaces\Selectors\DataTypeSelectorInterface;
 use exface\Core\CommonLogic\Selectors\DataTypeSelector;
+use exface\Core\Interfaces\AppInterface;
+use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 
 /**
  * Static factory for selectors
@@ -36,8 +38,20 @@ abstract class SelectorFactory extends AbstractStaticFactory
      */
     public static function createFromString(WorkbenchInterface $workbench, string $selectorString, string $selectorClass) : SelectorInterface
     {
-        $class = $selectorClass;
-        return new $class($workbench, $selectorString);
+        return new $selectorClass($workbench, $selectorString);
+    }
+    
+    /**
+     * 
+     * @param AppInterface $app
+     * @param string $alias
+     * @param string $selectorClass
+     * @return SelectorInterface
+     */
+    public static function createFromAlias(AppInterface $app, string $alias, string $selectorClass) : SelectorInterface
+    {
+        $qualifiedAlias = $app->getAliasWithNamespace() . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER . $alias;
+        return static::createFromString($app->getWorkbench(), $qualifiedAlias, $selectorClass);
     }
     
     /**
