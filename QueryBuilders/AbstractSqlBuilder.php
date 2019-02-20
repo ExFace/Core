@@ -1198,7 +1198,12 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         $table_alias = $this->getShortAlias($object_alias . $this->getQueryId());
         // doublecheck that the attribut is known
         if (! ($select || $customWhereClause) || $val === '') {
-            throw new QueryBuilderException('Illegal filter on object "' . $this->getMainObject()->getAlias() . ', expression "' . $qpart->getAlias() . '", Value: "' . $val . '".');
+            if ($val === '') {
+                $hint = ' (the value is empty)';
+            } else {
+                $hint = ' (neither a data address, nor a custom SQL_WHERE found for the attribute)';
+            }
+            throw new QueryBuilderException('Illegal SQL HAVING clause for object "' . $this->getMainObject()->getName() . '" (' . $this->getMainObject()->getAlias() . '): expression "' . $qpart->getAlias() . '", Value: "' . $val . '"' . $hint);
             return false;
         }
         
@@ -1320,7 +1325,12 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         
         // doublecheck that the attribute is known
         if (! ($select || $customWhereClause) || $val === '') {
-            throw new QueryBuilderException('Illegal filter on object "' . $this->getMainObject()->getAlias() . ', expression "' . $qpart->getAlias() . '", Value: "' . $val . '".');
+            if ($val === '') {
+                $hint = ' (the value is empty)';
+            } else {
+                $hint = ' (neither a data address, nor a custom SQL_WHERE found for the attribute)';
+            } 
+            throw new QueryBuilderException('Illegal SQL WHERE clause for object "' . $this->getMainObject()->getName() . '" (' . $this->getMainObject()->getAlias() . '): expression "' . $qpart->getAlias() . '", Value: "' . $val . '"' . $hint);
             return false;
         }
         
