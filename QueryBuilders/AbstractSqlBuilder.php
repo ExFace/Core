@@ -224,27 +224,9 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         $query = $this->buildSqlQuerySelect();
         $q = new SqlDataQuery();
         $q->setSql($query);
-        /* @var $qr \exface\Core\CommonLogic\DataQueries\SqlDataQuery */
-        $qr = $data_connection->query($q);
         // first do the main query
-        if ($rows = $qr->getResultArray()) {
-            foreach ($this->getBinaryColumns() as $full_alias) {
-                $short_alias = $this->getShortAlias($full_alias);
-                foreach ($rows as $nr => $row) {
-                    $rows[$nr][$full_alias] = $this->decodeBinary($row[$short_alias]);
-                }
-            }
-            // TODO filter away the EXFRN column!
-            foreach ($this->short_aliases as $short_alias) {
-                $full_alias = $this->getFullAlias($short_alias);
-                if ($full_alias !== $short_alias) {
-                    foreach ($rows as $nr => $row) {
-                        $rows[$nr][$full_alias] = $row[$short_alias];
-                        unset($rows[$nr][$short_alias]);
-                    }
-                }
-            }
-        }
+        $qr = $data_connection->query($q);
+        $rows = $this->getReadResultRows($qr);
         // If the query already includes a total row counter, use it!
         $result_total_count = $qr->getResultRowCounter();
         $qr->freeResult();
@@ -279,6 +261,40 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         }
         
         return new DataQueryResultData($rows, $affectedCounter, $hasMoreRows, $result_total_count, $result_totals);
+    }
+    
+    /**
+     * Transforms the query result into rows of the future data sheet.
+     * 
+     * Override this method if you need special treatment for data types, 
+     * value decoding, etc.
+     * 
+     * @param SqlDataQuery $query
+     * @return array
+     */
+    protected function getReadResultRows(SqlDataQuery $query) : array
+    {
+        if ($rows = $query->getResultArray()) {
+            foreach ($this->getBinaryColumns() as $full_alias) {
+                $short_alias = $this->getShortAlias($full_alias);
+                foreach ($rows as $nr => $row) {
+                    $rows[$nr][$full_alias] = $this->decodeBinary($row[$short_alias]);
+                }
+            }
+            // TODO filter away the EXFRN column!
+            foreach ($this->short_aliases as $short_alias) {
+                $full_alias = $this->getFullAlias($short_alias);
+                if ($full_alias !== $short_alias) {
+                    foreach ($rows as $nr => $row) {
+                        $rows[$nr][$full_alias] = $row[$short_alias];
+                        unset($rows[$nr][$short_alias]);
+                    }
+                }
+            }
+        } else {
+            $rows = [];
+        }
+        return $rows;
     }
 
     /**
