@@ -198,7 +198,7 @@ class OracleSqlBuilder extends AbstractSqlBuilder
                 $enrichment_joins = array_merge($enrichment_joins, $this->buildSqlJoins($qpart, 'exfcoreq'));
             }
             
-            $core_select = str_replace(',,', ',', implode(',', $core_selects));
+            $core_select = str_replace(',,', ',', implode(',', array_filter($core_selects)));
             $core_from = $this->buildSqlFrom();
             $core_join = implode(' ', $core_joins);
             $where = $where ? "\n WHERE " . $where : '';

@@ -51,6 +51,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
         $select = '';
         $joins = array();
         $join = '';
+        $enrichment_selects = [];
         $enrichment_select = '';
         $enrichment_joins = array();
         $enrichment_join = '';
@@ -104,10 +105,10 @@ else {
             // otherwise the enrichment joins won't work!
             if ($group_by && $qpart->getAttribute()->getAlias() === $qpart->getAttribute()->getObject()->getUidAttributeAlias() && ! $has_attributes_with_reverse_relations) {
                 $selects[] = $this->buildSqlSelect($qpart, null, null, null, new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::MAX));
-                $enrichment_select .= ', ' . $this->buildSqlSelect($qpart, 'EXFCOREQ', $qpart->getAttribute()->getObject()->getUidAttributeAlias());
+                $enrichment_selects[] = $this->buildSqlSelect($qpart, 'EXFCOREQ', $qpart->getAttribute()->getObject()->getUidAttributeAlias());
                 $group_safe_attribute_aliases[] = $qpart->getAttribute()->getAliasWithRelationPath();
-            } // If we are not aggregating or the attribute has a group function, add it regulary
-elseif (! $group_by || $qpart->getAggregator() || $this->getAggregation($qpart->getAlias())) {
+            } elseif (! $group_by || $qpart->getAggregator() || $this->getAggregation($qpart->getAlias())) {
+                // If we are not aggregating or the attribute has a group function, add it regulary
                 $selects[] = $this->buildSqlSelect($qpart);
                 $joins = array_merge($joins, $this->buildSqlJoins($qpart));
                 $group_safe_attribute_aliases[] = $qpart->getAttribute()->getAliasWithRelationPath();
@@ -121,7 +122,7 @@ elseif (! $group_by || $qpart->getAggregator() || $this->getAggregation($qpart->
                     // IDEA this does not support relations based on custom sql. Perhaps this needs to change
                     $selects[] = $this->buildSqlSelect($first_rel_qpart, null, null, $first_rel_qpart->getAttribute()->getDataAddress(), ($group_by ? new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::MAX) : null));
                 }
-                $enrichment_select .= ', ' . $this->buildSqlSelect($qpart);
+                $enrichment_selects[] = $this->buildSqlSelect($qpart);
                 $enrichment_joins = array_merge($enrichment_joins, $this->buildSqlJoins($qpart, 'exfcoreq'));
                 $joins = array_merge($joins, $this->buildSqlJoins($qpart));
                 $group_safe_attribute_aliases[] = $qpart->getAttribute()->getAliasWithRelationPath();
@@ -137,14 +138,16 @@ elseif (! $group_by || $qpart->getAggregator() || $this->getAggregation($qpart->
             // If we have attributes, that need reverse relations, we must move the group by to the outer (enrichment) query, because
             // the subselects of the subqueries will reference UIDs of the core rows, thus making grouping in the core query impossible
             if (! $skipped && $group_by && $has_attributes_with_reverse_relations) {
-                $enrichment_select .= ', ' . $this->buildSqlSelect($qpart, 'EXFCOREQ', $this->getShortAlias($qpart->getColumnKey()));
+                $enrichment_selects[] = $this->buildSqlSelect($qpart, 'EXFCOREQ', $this->getShortAlias($qpart->getColumnKey()));
             }
         }
-        $select = implode(', ', array_unique($selects));
-        if ($group_by && $has_attributes_with_reverse_relations) {
-            $enrichment_select = substr($enrichment_select, 2);
-        } else {
-            $enrichment_select = 'EXFCOREQ' . $this->getAliasDelim() . '*' . ($enrichment_select ? ', ' . substr($enrichment_select, 2) : '');
+        // Core SELECT
+        $select = implode(', ', array_unique(array_filter($selects)));
+        
+        // Enrichment SELECT
+        $enrichment_select = implode(', ', array_unique(array_filter($enrichment_selects)));
+        if (! ($group_by && $has_attributes_with_reverse_relations)) {
+            $enrichment_select = 'EXFCOREQ' . $this->getAliasDelim() . '*' . ($enrichment_select ? ', ' . $enrichment_select : '');
         }
         
         // FROM
