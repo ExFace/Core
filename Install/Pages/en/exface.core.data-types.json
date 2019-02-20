@@ -52,6 +52,12 @@
             },
             {
                 "attribute_alias": "SHORT_DESCRIPTION"
+            },
+            {
+                "attribute_alias": "CREATED_ON"
+            },
+            {
+                "attribute_alias": "CREATED_BY_USER__LABEL"
             }
         ],
         "buttons": [
@@ -67,6 +73,12 @@
             },
             {
                 "action_alias": "exface.Core.DeleteObject"
+            }
+        ],
+        "sorters": [
+            {
+                "attribute_alias": "CREATED_ON",
+                "direction": "desc"
             }
         ]
     }
