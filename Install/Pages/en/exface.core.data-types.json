@@ -47,8 +47,8 @@
             },
             {
                 "attribute_alias": "ATTRIBUTE__UID:COUNT",
-                "caption": "Used",
-                "hint": "Used in meta attributes"
+                "caption": "=TRANSLATE('exface.Core', 'PAGE.DATA_TYPES.USED')",
+                "hint": "=TRANSLATE('exface.Core', 'PAGE.DATA_TYPES.USED_HINT')"
             },
             {
                 "attribute_alias": "SHORT_DESCRIPTION"
