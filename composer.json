@@ -50,8 +50,8 @@
         "app": {
             "app_uid": "0x31000000000000000000000000000000",
             "app_alias": "exface.Core",
-            "model_md5": "6c48b663683783bab437704bc2c83941",
-            "model_timestamp": "2019-02-20 08:47:59"
+            "model_md5": "f451075e6209956e373909a86da5397d",
+            "model_timestamp": "2019-02-20 10:41:57"
         }
     },
     "autoload": {
