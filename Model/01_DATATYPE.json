@@ -549,6 +549,21 @@
             "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"InputTime\"}",
             "ALIAS": "Time",
             "SHORT_DESCRIPTION": ""
+        },
+        {
+            "CREATED_ON": "2019-02-20 08:26:23",
+            "MODIFIED_ON": "2019-02-20 08:47:59",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e934e93024d2a790270205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Numeric String",
+            "PROTOTYPE": "exface\/Core\/DataTypes\/StringDataType.php",
+            "CONFIG_UXON": "{\"validator_regex\":\"\\\/^[\\\\d]+$\\\/\"}",
+            "VALIDATION_ERROR": "",
+            "DEFAULT_EDITOR_UXON": null,
+            "ALIAS": "NumericString",
+            "SHORT_DESCRIPTION": "A string with numbers only (0-9). In contrast to a nubmer, it can have leading zeroes. But no \"-\" sign or decimals are allowed. This type is meant for numeric ids stored as strings in the data source."
         }
     ],
     "totals_rows": [],
