@@ -54,6 +54,7 @@ class MySqlBuilder extends AbstractSqlBuilder
         $select = '';
         $joins = array();
         $join = '';
+        $enrichment_selects = [];
         $enrichment_select = '';
         $enrichment_joins = array();
         $enrichment_join = '';
@@ -101,7 +102,7 @@ class MySqlBuilder extends AbstractSqlBuilder
                 // otherwise the enrichment joins won't work! Be carefull to apply this rule only to the plain UID column, not to columns
                 // using the UID with aggregate functions
                 $selects[] = $this->buildSqlSelect($qpart, null, null, null, new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::MAX));
-                $enrichment_select .= ', ' . $this->buildSqlSelect($qpart, 'EXFCOREQ', $this->getShortAlias($qpart->getColumnKey()));
+                $enrichment_selects[] = $this->buildSqlSelect($qpart, 'EXFCOREQ', $this->getShortAlias($qpart->getColumnKey()));
             } elseif (! $group_by || $qpart->getAggregator() || $this->getAggregation($qpart->getAlias())) {
                 // If we are not aggregating or the attribute has a group function, add it regulary
                 $selects[] = $this->buildSqlSelect($qpart);
@@ -117,7 +118,7 @@ class MySqlBuilder extends AbstractSqlBuilder
                     // IDEA this does not support relations based on custom sql. Perhaps this needs to change
                     $selects[] = $this->buildSqlSelect($first_rel_qpart, null, null, $first_rel_qpart->getAttribute()->getDataAddress(), ($group_by ? new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::MAX) : null));
                 }
-                $enrichment_select .= ', ' . $this->buildSqlSelect($qpart);
+                $enrichment_select[] = $this->buildSqlSelect($qpart);
                 $enrichment_joins = array_merge($enrichment_joins, $this->buildSqlJoins($qpart, 'exfcoreq'));
                 $joins = array_merge($joins, $this->buildSqlJoins($qpart));
                 $group_safe_attribute_aliases[] = $qpart->getAttribute()->getAliasWithRelationPath();
@@ -129,13 +130,21 @@ class MySqlBuilder extends AbstractSqlBuilder
                 $group_safe_attribute_aliases[] = $qpart->getAttribute()->getAliasWithRelationPath();
             }
         }
-        $select = implode(', ', array_unique($selects));
+        
+        // Core SELECT
+        $select = implode(', ', array_unique(array_filter($selects)));
+        
+        // Enrichment SELECT
+        $enrichment_select = implode(', ', array_unique(array_filter($enrichment_selects)));
         $enrichment_select = 'EXFCOREQ' . $this->getAliasDelim() . '*' . ($enrichment_select ? ', ' . substr($enrichment_select, 2) : '');
+        
         // FROM
         $from = $this->buildSqlFrom();
+        
         // JOINs
         $join = implode(' ', $joins);
         $enrichment_join = implode(' ', $enrichment_joins);
+        
         // ORDER BY
         foreach ($this->getSorters() as $qpart) {
             // A sorter can only be used, if there is no GROUP BY, or the sorted attribute has unique values within the group
