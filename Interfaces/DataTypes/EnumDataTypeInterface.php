@@ -25,5 +25,12 @@ interface EnumDataTypeInterface extends DataTypeInterface
      * @return array [ $value => $label ]
      */
     public function getLabels();
+    
+    /**
+     * Returns an array [ value => label ].
+     * 
+     * @return array
+     */
+    public function toArray() : array;
 }
 ?>

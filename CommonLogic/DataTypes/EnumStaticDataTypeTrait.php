@@ -143,4 +143,14 @@ trait EnumStaticDataTypeTrait {
     {
         return DataTypeFactory::createFromPrototype($workbench, __CLASS__)->withValue(strtoupper($value));
     }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataTypes\EnumDataTypeInterface::toArray()
+     */
+    public function toArray() : array
+    {
+        return $this->getValues();
+    }
 }

@@ -134,4 +134,14 @@ trait EnumDynamicDataTypeTrait {
         $this->valueLabelDelimiter = $string;
         return $this;
     }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataTypes\EnumDataTypeInterface::toArray()
+     */
+    public function toArray() : array
+    {
+        return $this->values;
+    }
 }
