@@ -76,6 +76,13 @@
             {
                 "action_alias": "exface.Core.ShowModelBuilderDialog",
                 "caption": "=TRANSLATE('exface.Core', 'ACTION.SHOWMODELBUILDERDIALOG.NAME')"
+            },
+            {
+                "caption": "=TRANSLATE('exface.Core', 'GLOBAL.MODEL.OBJECTS')",
+                "action": {
+                    "alias": "exface.Core.GoToPage",
+                    "page_alias": "exface.core.objects"
+                }
             }
         ]
     }
