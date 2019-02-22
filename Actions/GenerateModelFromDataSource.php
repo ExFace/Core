@@ -23,15 +23,12 @@ class GenerateModelFromDataSource extends AbstractAction
         $this->setIcon(Icons::COGS);
         $this->setInputRowsMin(1);
         $this->setInputRowsMax(null);
+        $this->setInputObjectAlias('exface.Core.MODEL_BUILDER_INPUT');
     }
 
     protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {
         $input_data = $this->getInputDataSheet($task);
-        
-        if (! $input_data->getMetaObject()->is('exface.Core.MODEL_BUILDER_INPUT')) {
-            throw new ActionInputInvalidObjectError($this, 'Action "' . $this->getAlias() . '" exprects exface.Core.MODEL_BUILDER_INPUT as input, "' . $input_data->getMetaObject()->getAliasWithNamespace() . '" given instead!');
-        }
         
         $obj_col = $input_data->getColumns()->getByExpression('OBJECT');
         $data_src_col = $input_data->getColumns()->getByExpression('DATA_SOURCE');

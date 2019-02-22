@@ -29,7 +29,8 @@ use exface\Core\Interfaces\Selectors\ActionSelectorInterface;
 use exface\Core\Factories\SelectorFactory;
 use exface\Core\Events\Action\OnBeforeActionPerformedEvent;
 use exface\Core\Events\Action\OnActionPerformedEvent;
-use exface\Core\Interfaces\WorkbenchInterface;
+use exface\Core\Exceptions\Actions\ActionInputError;
+use exface\Core\Exceptions\Actions\ActionInputInvalidObjectError;
 
 /**
  * The abstract action is a generic implementation of the ActionInterface, that simplifies 
@@ -97,6 +98,10 @@ abstract class AbstractAction implements ActionInterface
     private $meta_object = null;
 
     private $autocommit = true;
+    
+    private $input_object_alias = null;
+    
+    private $result_object_alias = null;
 
     /**
      *
@@ -946,6 +951,16 @@ abstract class AbstractAction implements ActionInterface
             }
         }
         
+        // Check if, there are restrictions on input data.
+        if ($sheet->countRows() < $this->getInputRowsMin()) {
+            throw new ActionInputError($this, 'Too few rows of input data for action ' . $this->getAliasWithNamespace() . ': need at least' . $this->getInputRowsMin() . ', received ' . $sheet->countRows() . ' instead.');
+        }
+        if ($this->getInputRowsMax() !== null && $sheet->countRows() < $this->getInputRowsMax()) {
+            throw new ActionInputError($this, 'Too many rows of input data for action ' . $this->getAliasWithNamespace() . ': max. ' . $this->getInputRowsMax() . ' allowed, received ' . $sheet->countRows() . ' instead.');
+        }
+        if (true === $this->hasInputObjectRestriction() && false === $sheet->getMetaObject()->is($this->getInputObjectExpected())) {
+            throw new ActionInputInvalidObjectError($this, 'Invalid input meta object for action "' . $this->getAlias() . '": exprecting "' . $this->getInputObjectExpected()->getAliasWithNamespace() . '", received "' . $sheet->getMetaObject()->getAliasWithNamespace() . '" instead!');
+        }
         return $sheet;
     }
     
@@ -967,6 +982,58 @@ abstract class AbstractAction implements ActionInterface
     public function getSelector() : ActionSelectorInterface
     {
         return new ActionSelector($this->getWorkbench(), $this->getAliasWithNamespace());
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::setInputObjectAlias()
+     */
+    public function setInputObjectAlias(string $aliasWithNamespace) : ActionInterface
+    {
+        $this->input_object_alias = $aliasWithNamespace;
+        return $this;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\ActionInterface::setResultObjectAlias()
+     */
+    public function setResultObjectAlias(string $aliasWithNamespace) : ActionInterface
+    {
+        $this->result_object_alias = $aliasWithNamespace;
+        return $this;
+    }
+    
+    /**
+     * Returns TRUE if the action only accepts input based on a certain meta object and FALSE otherwise.
+     * 
+     * @return bool
+     */
+    protected function hasInputObjectRestriction() : bool
+    {
+        return $this->input_object_alias !== null;
+    }
+    
+    /**
+     * Returns the meta object, that the input of the action must be based on - or NULL if not restricted.
+     * 
+     * @return MetaObjectInterface|NULL
+     */
+    protected function getInputObjectExpected() : ?MetaObjectInterface
+    {
+        return $this->hasInputObjectRestriction() ? $this->getWorkbench()->model()->getObject($this->input_object_alias) : null;
+    }
+    
+    protected function hasResultObjectRestriction() : bool
+    {
+        return $this->result_object_alias !== null;
+    }
+    
+    protected function getResultObjectExpected() : ?MetaObjectInterface
+    {
+        return $this->hasResultObjectRestriction() ? $this->getWorkbench()->model()->getObject($this->result_object_alias) : null;
     }
 }
 ?>

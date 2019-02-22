@@ -70,24 +70,15 @@ class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuer
         return $this;
     }
 
-    public function getAplicableToObjectAlias()
-    {
-        return $this->aplicable_to_object_alias;
-    }
-
     /**
-     *
-     * @return MetaObjectInterface
+     * @deprecated use setInputObjectAlias() instead.
+     * 
+     * @param string $value
+     * @return \exface\Core\Interfaces\Actions\ActionInterface
      */
-    public function getAplicableToObject()
-    {
-        return $this->getWorkbench()->model()->getObject($this->getAplicableToObjectAlias());
-    }
-
     public function setAplicableToObjectAlias($value)
     {
-        $this->aplicable_to_object_alias = $value;
-        return $this;
+        return $this->setInputObjectAlias($value);
     }
 
     /**
@@ -99,12 +90,6 @@ class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuer
     {
         $counter = 0;
         $data_sheet = $this->getInputDataSheet($task);
-        // Check if the action is aplicable to the input object
-        if ($this->getAplicableToObjectAlias()) {
-            if (! $data_sheet->getMetaObject()->is($this->getAplicableToObjectAlias())) {
-                throw new ActionInputInvalidObjectError($this, 'Cannot perform action "' . $this->getAliasWithNamespace() . '" on object "' . $data_sheet->getMetaObject()->getAliasWithNamespace() . '": action only aplicable to "' . $this->getAplicableToObjectAlias() . '"!', '6T5DMU');
-            }
-        }
         
         // Start transaction
         $transaction->addDataConnection($this->getDataConnection());
