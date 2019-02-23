@@ -10,6 +10,7 @@ use exface\Core\CommonLogic\Selectors\DataTypeSelector;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\Selectors\SelectorInterface;
+use exface\Core\Exceptions\DataTypes\DataTypeNotFoundError;
 
 abstract class DataTypeFactory extends AbstractSelectableComponentFactory
 {
@@ -107,6 +108,27 @@ abstract class DataTypeFactory extends AbstractSelectableComponentFactory
         }
         $data_type->importUxonObject($uxon);
         return $data_type;
+    }
+    
+    /**
+     * 
+     * @param WorkbenchInterface $workbench
+     * @param UxonObject $uxon
+     * @throws DataTypeNotFoundError
+     * @return DataTypeInterface
+     */
+    public function createFromUxon(WorkbenchInterface $workbench, UxonObject $uxon) : DataTypeInterface
+    {
+        $alias = $uxon->getProperty('alias');
+        
+        if (! $alias) {
+            throw new DataTypeNotFoundError('Cannot create data type from UXON: missing alias!');
+        }
+        
+        $selector = new DataTypeSelector($workbench, $alias);
+        $type = static::create($selector);
+        $type->importUxonObject($uxon);
+        return $type;
     }
 }
 ?>
