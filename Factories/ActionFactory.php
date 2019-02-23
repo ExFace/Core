@@ -13,6 +13,7 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Selectors\ActionSelectorInterface;
 use exface\Core\CommonLogic\Selectors\ActionSelector;
+use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 
 /**
  * Instantiates actions
@@ -113,6 +114,19 @@ abstract class ActionFactory extends AbstractSelectableComponentFactory
             $action->importUxonObject($uxon_description);
         }
         return $action;
+    }
+    
+    /**
+     * 
+     * @param AppInterface $app
+     * @param string $alias
+     * @param WidgetInterface $trigger_widget
+     * @return ActionInterface
+     */
+    public static function createFromAlias(AppInterface $app, string $alias, WidgetInterface $trigger_widget = null) : ActionInterface
+    {
+        $qualifiedAlias = $app->getAliasWithNamespace() . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER . $alias;
+        return static::createFromString($app->getWorkbench(), $qualifiedAlias, $trigger_widget);
     }
 }
 ?>
