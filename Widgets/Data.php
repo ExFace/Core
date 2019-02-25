@@ -1335,7 +1335,7 @@ class Data
          *
          * @var DataTable $table
          */
-        $table = WidgetFactory::create($help_container->getPage(), 'DataTable', $help_container);
+        $table = WidgetFactory::create($help_container->getPage(), 'DataTableResponsive', $help_container);
         $object = $this->getWorkbench()->model()->getObject('exface.Core.USER_HELP_ELEMENT');
         $table->setMetaObject($object);
         $table->setCaption($this->getWidgetType() . ($this->getCaption() ? '"' . $this->getCaption() . '"' : ''));
