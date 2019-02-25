@@ -5,6 +5,7 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\DataTypes\FlagTreeFolderDataType;
 use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
 
 class DataTree extends DataTable
 {
@@ -80,7 +81,9 @@ class DataTree extends DataTable
     public function getTreeFolderFlagAttributeAlias()
     {
         if (! $this->tree_folder_flag_attribute_alias) {
-            $flags = $this->getMetaObject()->getAttributes()->getByDataPrototypeClass(FlagTreeFolderDataType::getPrototypeClassName());
+            $flags = $this->getMetaObject()->getAttributes()->filter(function(MetaAttributeInterface $attr){
+                return $attr->getDataType()->is(FlagTreeFolderDataType::getPrototypeClassName());
+            });
             if ($flags->count() == 1) {
                 $flag = $flags->getFirst();
                 $this->setTreeFolderFlagAttributeAlias($flag->getAlias());

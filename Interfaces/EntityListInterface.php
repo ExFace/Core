@@ -124,5 +124,20 @@ interface EntityListInterface extends iCanBeConvertedToUxon, \IteratorAggregate
      * @return EntityListInterface
      */
     public function merge(EntityListInterface $other_list);
+    
+    /**
+     * Returns a new entity list, that only contains those members of the current one, for which the callback returns TRUE.
+     * @param callable $callback
+     * @return EntityListInterface
+     */
+    public function filter(callable $callback) : EntityListInterface;
+    
+    /**
+     * Sorts this entity list via usort() - i.e. keeping key-entity-assotiations.
+     * 
+     * @param callable $callback
+     * @return EntityListInterface
+     */
+    public function sort(callable $callback) : EntityListInterface;
 }
 ?>

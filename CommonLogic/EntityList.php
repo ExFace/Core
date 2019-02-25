@@ -327,5 +327,32 @@ class EntityList extends AbstractExfaceClass implements EntityListInterface
         }
         return $result;
     }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\EntityListInterface::filter()
+     */
+    public function filter(callable $callback) : EntityListInterface
+    {
+        $result = new static($this->getWorkbench(), $this->getParent());
+        foreach ($this->getAll() as $key => $entity) {
+            if (true === call_user_func($callback, $entity)) {
+                $result->add($entity, $key);
+            }
+        }
+        return $result;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\EntityListInterface::sort()
+     */
+    public function sort(callable $callback) : EntityListInterface
+    {
+        uasort($this->content_array, $callback);
+        return $this;
+    }
 }
 ?>

@@ -27,14 +27,6 @@ interface MetaAttributeListInterface extends EntityListInterface
     public function setMetaObject(MetaObjectInterface $meta_object);
     
     /**
-     * Returns the attribute matching the given alias or FALSE if no such attribute is found
-     *
-     * @param string $alias
-     * @return MetaAttributeInterface|boolean
-     */
-    public function getByAttributeAlias($alias);
-    
-    /**
      * Returns the attribute matching the given UID or FALSE if no such attribute is found
      *
      * @param string $uid
