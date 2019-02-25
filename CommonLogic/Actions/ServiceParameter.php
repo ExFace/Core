@@ -1,16 +1,16 @@
 <?php
 namespace exface\Core\CommonLogic\Actions;
 
-use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\DataTypeFactory;
-use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\Actions\ActionInterface;
-use exface\Core\Interfaces\Actions\iCallRemoteFunction;
+use exface\Core\Interfaces\Actions\iCallService;
+use exface\Core\Interfaces\Actions\ServiceParameterInterface;
+use exface\Core\Exceptions\Actions\ActionInputMissingError;
 
-class RemoteFunctionParameter implements iCanBeConvertedToUxon, WorkbenchDependantInterface
+class ServiceParameter implements ServiceParameterInterface
 {
     use ImportUxonObjectTrait;
     
@@ -30,6 +30,11 @@ class RemoteFunctionParameter implements iCanBeConvertedToUxon, WorkbenchDependa
         $this->importUxonObject($uxon);
     }
     
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::exportUxonObject()
+     */
     public function exportUxonObject()
     {
         return new UxonObject();
@@ -47,9 +52,9 @@ class RemoteFunctionParameter implements iCanBeConvertedToUxon, WorkbenchDependa
     /**
      * 
      * @param string $value
-     * @return RemoteFunctionParameter
+     * @return ServiceParameter
      */
-    public function setName(string $value) : Odata2FunctionImportParameter
+    public function setName(string $value) : ServiceParameter
     {
         $this->name = $value;
         return $this;
@@ -70,9 +75,9 @@ class RemoteFunctionParameter implements iCanBeConvertedToUxon, WorkbenchDependa
     /**
      *
      * @param UxonObject $value
-     * @return RemoteFunctionParameter
+     * @return ServiceParameter
      */
-    public function setDataType(UxonObject $uxon) : Odata2FunctionImportParameter
+    public function setDataType(UxonObject $uxon) : ServiceParameter
     {
         $this->dataType = null;
         $this->dataTypeUxon = $uxon;
@@ -91,15 +96,15 @@ class RemoteFunctionParameter implements iCanBeConvertedToUxon, WorkbenchDependa
     /**
      * 
      * @param bool $value
-     * @return RemoteFunctionParameter
+     * @return ServiceParameter
      */
-    public function setRequired(bool $value) : Odata2FunctionImportParameter
+    public function setRequired(bool $value) : ServiceParameter
     {
         $this->required = $value;
         return $this;
     }
     
-    public function getAction() : iCallRemoteFunction
+    public function getAction() : iCallService
     {
         return $this->action;
     }
@@ -112,6 +117,13 @@ class RemoteFunctionParameter implements iCanBeConvertedToUxon, WorkbenchDependa
     public function getWorkbench()
     {
         return $this->action->getWorkbench();
+    }
+    
+    public function sanitize($val) : bool
+    {
+        if ($this->isRequired() && $this->getDataType()->isEmptyValue($val)) {
+            throw new ActionInputMissingError($this->getAction(), 'Service parameter "' . $this->getName() . '" cannot be empty!');
+        }
     }
   
 }
