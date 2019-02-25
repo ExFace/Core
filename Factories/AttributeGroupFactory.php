@@ -4,6 +4,8 @@ namespace exface\Core\Factories;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\CommonLogic\Model\AttributeGroup;
 use exface\Core\Interfaces\Model\MetaAttributeGroupInterface;
+use exface\Core\Interfaces\Model\MetaAttributeListInterface;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
 
 abstract class AttributeGroupFactory extends AbstractStaticFactory
 {
@@ -19,9 +21,10 @@ abstract class AttributeGroupFactory extends AbstractStaticFactory
         $exface = $object->getWorkbench();
         $group = new AttributeGroup($exface, $object);
         $group->setAlias($alias);
-        switch ($alias) {
-            case MetaAttributeGroupInterface::ALL:
-                // The ~ALL should list visible hidden attributes at the very end
+        
+        if (substr($alias, 0, 1) === '~') {
+            if (strcasecmp($alias, MetaAttributeGroupInterface::ALL) === 0) {
+                // The ~ALL group should list visible hidden attributes at the very end
                 $hidden_attrs = [];
                 foreach ($object->getAttributes() as $attr) {
                     if ($attr->isHidden() === false) {
@@ -30,57 +33,75 @@ abstract class AttributeGroupFactory extends AbstractStaticFactory
                         $hidden_attrs[] = $attr;
                     }
                 }
-                
                 if (empty($hidden_attrs) === false) {
                     foreach ($hidden_attrs as $attr) {
                         $group->add($attr);
                     }
                 }
-                
-                break;
-            case MetaAttributeGroupInterface::VISIBLE:
-                foreach ($object->getAttributes() as $attr) {
-                    if (! $attr->isHidden()) {
-                        $group->add($attr);
-                    }
-                }
-                break;
-            case MetaAttributeGroupInterface::EDITABLE:
-                foreach ($object->getAttributes() as $attr) {
-                    if ($attr->isEditable()) {
-                        $group->add($attr);
-                    }
-                }
-                break;
-            case MetaAttributeGroupInterface::REQUIRED:
-                foreach ($object->getRequiredAttributes() as $attr) {
+            } else {
+                $spells = explode('~', substr($alias, 1));
+                foreach (static::getAttributesByMagic($object->getAttributes(), $spells) as $attr) {
                     $group->add($attr);
                 }
-                break;
-            case MetaAttributeGroupInterface::DEFAULT_DISPLAY:
-                foreach ($object->getAttributes()->getDefaultDisplayList() as $attr) {
-                    $group->add($attr);
-                }
-                break;
-            case MetaAttributeGroupInterface::WRITABLE:
-                foreach ($object->getAttributes() as $attr) {
-                    if ($attr->isWritable()) {
-                        $group->add($attr);
-                    }
-                }
-                break;
-            case MetaAttributeGroupInterface::READABLE:
-                foreach ($object->getAttributes() as $attr) {
-                    if ($attr->isReadable()) {
-                        $group->add($attr);
-                    }
-                }
-                break;
-            default:
-                // TODO load group from DB
-                break;
+            }
+        } else {
+            // TODO Load alises from group models (as soon as attribute groups become available in the model)
         }
         return $group;
+    }
+    
+    protected static function getAttributesByMagic(MetaAttributeListInterface $attributeList, array $spells) : MetaAttributeListInterface
+    {
+        if (empty($spells)) {
+            return $attributeList;
+        }
+        
+        $spell = array_shift($spells);
+        if (substr($spell, 0, 1) === '!') {
+            $invert = true;
+            $alias = '~' . substr($spell, 1);
+        } else {
+            $invert = false;
+            $alias = '~' . $spell;
+        }
+        
+        switch ($alias) {
+            case MetaAttributeGroupInterface::VISIBLE:
+                $attributeList = $attributeList->filter(function(MetaAttributeInterface $attr) use ($invert) {
+                    return $invert XOR ! $attr->isHidden();
+                });
+                break;
+            case MetaAttributeGroupInterface::EDITABLE:
+                $attributeList = $attributeList->filter(function(MetaAttributeInterface $attr) use ($invert) {
+                   return $invert XOR $attr->isEditable(); 
+                });
+                break;
+            case MetaAttributeGroupInterface::REQUIRED:
+                $attributeList = $attributeList->filter(function(MetaAttributeInterface $attr) use ($invert) {
+                    return $invert XOR $attr->isRequired();
+                });
+                break;
+            case MetaAttributeGroupInterface::DEFAULT_DISPLAY:
+                $attributeList = $attributeList->filter(function(MetaAttributeInterface $attr) use ($invert) {
+                    return $invert XOR $attr->getDefaultDisplayOrder() > 0;
+                });
+                $attributeList->sort(function(MetaAttributeInterface $a, MetaAttributeInterface $b) {
+                    return intval($a->getDefaultDisplayOrder()) - intval($b->getDefaultDisplayOrder());
+                });
+                break;
+            case MetaAttributeGroupInterface::WRITABLE:
+                $attributeList = $attributeList->filter(function(MetaAttributeInterface $attr) use ($invert) {
+                    return $invert XOR $attr->isWritable();
+                });
+                break;
+            case MetaAttributeGroupInterface::READABLE:
+                $attributeList = $attributeList->filter(function(MetaAttributeInterface $attr) use ($invert) {
+                    return $invert XOR $attr->isReadable();
+                });
+                break;
+        }
+        
+        return static::getAttributesByMagic($attributeList, $spells);
     }
 }
 ?>

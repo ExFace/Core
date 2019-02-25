@@ -62,26 +62,6 @@ class AttributeList extends EntityList implements MetaAttributeListInterface
     }
 
     /**
-     *
-     * {@inheritdoc}
-     * @see MetaAttributeListInterface::getByAttributeAlias()
-     */
-    public function getByAttributeAlias($alias)
-    {
-        // Most attributes stored here will have no relation path, so for now this fallback to iterating over all members is OK.
-        if ($attr = $this->get($alias)) {
-            return $attr;
-        } else {
-            foreach ($this->getAll() as $attr) {
-                if (strcasecmp($attr->getAliasWithRelationPath(), $alias) == 0) {
-                    return $attr;
-                }
-            }
-        }
-        return false;
-    }
-
-    /**
      * 
      * {@inheritdoc}
      * @see MetaAttributeListInterface::getByAttributeId()
@@ -95,24 +75,6 @@ class AttributeList extends EntityList implements MetaAttributeListInterface
         }
         return false;
     }
-    
-    /**
-     * 
-     * 
-     * @param string $classname
-     * @return \exface\Core\CommonLogic\Model\AttributeList
-     */
-    public function getByDataPrototypeClass($classname)
-    {
-        $object = $this->getMetaObject();
-        $result = AttributeListFactory::createForObject($object);
-        foreach ($this->getAll() as $key => $attr) {
-            if ($attr->getDataType()->getPrototypeClassName() === $classname) {
-                $result->add($attr, $key);
-            }
-        }
-        return $result;
-    }
 
     /**
      * 
@@ -121,14 +83,9 @@ class AttributeList extends EntityList implements MetaAttributeListInterface
      */
     public function getRequired()
     {
-        $object = $this->getMetaObject();
-        $output = AttributeListFactory::createForObject($object);
-        foreach ($this->getAll() as $key => $attr) {
-            if ($attr->isRequired()) {
-                $output->add($attr, $key);
-            }
-        }
-        return $output;
+        return $this->filter(function(MetaAttributeInterface $attr) {
+            return $attr->isRequired();
+        });
     }
     
     /**
@@ -138,7 +95,9 @@ class AttributeList extends EntityList implements MetaAttributeListInterface
      */
     public function getWritable() : MetaAttributeListInterface
     {
-        return $this->getMetaObject()->getAttributeGroup(AttributeGroup::WRITABLE);
+        return $this->filter(function(MetaAttributeInterface $attr) {
+            return $attr->isWritable();
+        });
     }
 
     /**
@@ -148,7 +107,9 @@ class AttributeList extends EntityList implements MetaAttributeListInterface
      */
     public function getReadable() : MetaAttributeListInterface
     {
-        return $this->getMetaObject()->getAttributeGroup(AttributeGroup::READABLE);
+        return $this->filter(function(MetaAttributeInterface $attr) {
+            return $attr->isReadable();
+        });
     }
     
     /**
@@ -158,7 +119,9 @@ class AttributeList extends EntityList implements MetaAttributeListInterface
      */
     public function getEditable() : MetaAttributeListInterface
     {
-        return $this->getMetaObject()->getAttributeGroup(AttributeGroup::EDITABLE);
+        return $this->filter(function(MetaAttributeInterface $attr) {
+            return $attr->isEditable();
+        });
     }
     
     /**
@@ -168,14 +131,9 @@ class AttributeList extends EntityList implements MetaAttributeListInterface
      */
     public function getSystem()
     {
-        $object = $this->getMetaObject();
-        $output = AttributeListFactory::createForObject($object);
-        foreach ($this->getAll() as $key => $attr) {
-            if ($attr->isSystem()) {
-                $output->add($attr, $key);
-            }
-        }
-        return $output;
+        return $this->filter(function(MetaAttributeInterface $attr) {
+            return $attr->isSystem();
+        });
     }
 
     /**
