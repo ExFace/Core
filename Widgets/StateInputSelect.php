@@ -105,10 +105,9 @@ class StateInputSelect extends InputSelect
     }
 
     /**
-     * Uses possibly existing name and name_translation_key attributes of StateMachineStates for displaying options.
+     * Uses possibly existing name attributes of StateMachineStates for displaying options.
      *
-     * @param
-     *            $options
+     * @param unknown $options
      * @return array
      */
     protected function applyStateNames($options)
@@ -123,7 +122,7 @@ class StateInputSelect extends InputSelect
         foreach ($states as $stateNum => $stateObject) {
             if ($appliedOptions[$stateNum])
                 continue;
-            $name = $stateObject->getStateName($this->getAttribute()->getObject()->getApp()->getTranslator());
+            $name = $stateObject->getName();
             $appliedOptions[$stateNum] = $name;
         }
         

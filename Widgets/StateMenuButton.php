@@ -64,7 +64,7 @@ class StateMenuButton extends MenuButton
                     $button = $menu->createButton($uxon);
                     /** @var StateMachineState $stateObject */
                     $stateObject = $states[$target_state];
-                    $name = $stateObject->getStateName($this->getMetaObject()->getApp()->getTranslator());
+                    $name = $stateObject->getName();
                     if ($name)
                         $button->setCaption($name);
                         

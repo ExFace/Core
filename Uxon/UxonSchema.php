@@ -46,6 +46,7 @@ use exface\Core\CommonLogic\UxonObject;
  * - metamodel:connection
  * - metamodel:formula
  * - metamodel:widget_link
+ * - metamodel:event
  * - uxon:path - where path is a JSONpath relative to the current field
  * - [enum,values] - enumeration of commma-separated values (in square brackets)
  * 

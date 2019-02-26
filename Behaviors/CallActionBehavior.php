@@ -80,7 +80,7 @@ class CallActionBehavior extends AbstractBehavior
      * (e.g. 'DataSheet.CreateData.After').
      * 
      * @uxon-property event_alias
-     * @uxon-type string
+     * @uxon-type metamodel:event
      * 
      * @param string $aliasWithNamespace
      * @return CallActionBehavior
@@ -107,7 +107,8 @@ class CallActionBehavior extends AbstractBehavior
      * Sets the action which is executed upon the configured event.
      * 
      * @uxon-property action
-     * @uxon-type object
+     * @uxon-type \exface\Core\CommonLogic\AbstractAction
+     * @uxon-template {"alias": ""}
      * 
      * @param UxonObject|string $action
      * @return BehaviorInterface

@@ -9,6 +9,11 @@ use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\Actions\iModifyData;
 use exface\Core\Interfaces\Actions\iCreateData;
+use exface\Core\CommonLogic\Model\Formula;
+use exface\Core\CommonLogic\Model\Expression;
+use exface\Core\Factories\ExpressionFactory;
+use exface\Core\Behaviors\StateMachineBehavior;
+use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
 
 /**
  * Defines a state for the StateMachineBehavior.
@@ -35,6 +40,13 @@ class StateMachineState
     private $name_translation_key = null;
     
     private $color = null;
+    
+    private $stateMachine = null;
+    
+    public function __construct(StateMachineBehavior $stateMachine)
+    {
+        $this->stateMachine = $stateMachine;
+    }
 
     /**
      * Returns the state id.
@@ -72,26 +84,40 @@ class StateMachineState
      * Defines the buttons for the state.
      *
      * Example:
-     *  {
-     *      "20": {
-     *          "caption": "20 Annahme bestätigen",
-     *          "action": {
-     *              "alias": "exface.Core.UpdateData",
-     *              "input_data_sheet": {
-     *                  "object_alias": "alexa.RMS.CUSTOMER_COMPLAINT",
-     *                  "columns": [
-     *                      {
-     *                          "attribute_alias": "STATE_ID",
-     *                          "formula": "=NumberValue('20')"
-     *                      },
-     *                      {
-     *                          "attribute_alias": "TS_UPDATE"
+     * 
+     * ```
+     * {
+     *  "states": [
+     *      "10": { 
+     *          "name": "Created",
+     *          "buttons": [
+     *              {
+     *                  "caption": "20 Confirm",
+     *                  "action": {
+     *                      "alias": "exface.Core.UpdateData",
+     *                      "input_data_sheet": {
+     *                          "object_alias": "alexa.RMS.CUSTOMER_COMPLAINT",
+     *                          "columns": [
+     *                              {
+     *                                  "attribute_alias": "STATE_ID",
+     *                                  "formula": "=NumberValue('20')"
+     *                              },
+     *                              {
+     *                                  "attribute_alias": "TS_UPDATE"
+     *                              }
+     *                          ]
      *                      }
-     *                  ]
+     *                  }
      *              }
-     *          }
+     *          ]
      *      }
      *  }
+     *  
+     * ```
+     * 
+     * @uxon-property buttons
+     * @uxon-type \exface\Core\Widgets\Button[]
+     * @uxon-template [{"action": {"alias": ""}}]
      *
      * @param UxonObject $value            
      * @return \exface\Core\CommonLogic\Model\Behaviors\StateMachineState
@@ -106,10 +132,26 @@ class StateMachineState
      * Defines the disabled attributes aliases for the state.
      *
      * Example:
-     *  [
-     *      "COMPLAINT_NO"
+     * 
+     * ```
+     * {
+     *  "states": [
+     *      "20": {
+     *          "name": "Confirmed",
+     *          "disabled_attribute_aliases": [
+     *              "DOCUMENT_NO",
+     *              "DOCUMENT_DATE"
+     *          ]
+     *      }
      *  ]
-     *
+     * }
+     *  
+     * ```
+     * 
+     * @uxon-property disabled_attributes_aliases
+     * @uxon-type metamodel:attribute[]
+     * @uxon-template [""]
+     * 
      * @param UxonObject|string[] $value            
      * @return \exface\Core\CommonLogic\Model\Behaviors\StateMachineState
      */
@@ -182,6 +224,10 @@ class StateMachineState
      *          transitions: []
      *      }
      *  } 
+     *  
+     * @uxon-property transitions
+     * @uxon-type array
+     * @uxon-template [""]
      *
      * @param UxonObject|integer[] $value            
      * @return \exface\Core\CommonLogic\Model\Behaviors\StateMachineState
@@ -200,7 +246,10 @@ class StateMachineState
     }
 
     /**
-     * Defines the name for the state.
+     * Defines the name for the state (use =TRANSLATE() for translatable names).
+     * 
+     * @uxon-property name
+     * @uxon-type string|metamodel:formula
      *
      * @param string $name            
      */
@@ -216,51 +265,14 @@ class StateMachineState
      */
     public function getName($prependId = false)
     {
-        return ($prependId === true ? $this->getStateId() . ' ' : '') . $this->name;
-    }
-
-    /**
-     * Defines the name_translation_key for the state.
-     *
-     * @param null $name_translation_key            
-     */
-    public function setNameTranslationKey($name_translation_key)
-    {
-        $this->name_translation_key = $name_translation_key;
-    }
-
-    /**
-     * Returns the name_translation_key of the state.
-     *
-     * @return string
-     */
-    public function getNameTranslationKey()
-    {
-        return $this->name_translation_key;
-    }
-
-    /**
-     *
-     * @param TranslationInterface $translator            
-     *
-     * @return mixed
-     */
-    public function getStateName($translator)
-    {
-        $nameTranslationKey = $this->getNameTranslationKey();
-        if ($nameTranslationKey) {
-            $translation = $translator->translate($nameTranslationKey);
-            if ($translation && $translation != $nameTranslationKey) {
-                return $translation;
+        if (Expression::detectFormula($this->name)) {
+            $expr = ExpressionFactory::createForObject($this->getStateMachine()->getObject(), $this->name);
+            if (false === $expr->isFormula() || false === $expr->isStatic()) {
+                throw new BehaviorConfigurationError($this->getStateMachine()->getObject(), 'Invalid value for state name "' . $this->name . '": only strings and static formulas like =TRANSLATE() are allowed!');
             }
+            $this->name = $expr->evaluate();
         }
-        
-        $name = $this->getName();
-        if ($name) {
-            return $name;
-        }
-        
-        return false;
+        return ($prependId === true ? $this->getStateId() . ' ' : '') . $this->name;
     }
     
     /**
@@ -269,7 +281,7 @@ class StateMachineState
      * You can use hexadecimal color codes or HTML color names.
      * 
      * @uxon-property color
-     * @uxon-type string
+     * @uxon-type color
      * 
      * @param string $color_name_or_code
      * @return StateMachineState
@@ -305,6 +317,7 @@ class StateMachineState
      * 
      * @uxon-property disable_editing
      * @uxon-type bool
+     * @uxon-default false
      * 
      * @param int|string|bool $trueOrFalse
      * @return StateMachineState
@@ -329,6 +342,7 @@ class StateMachineState
      * 
      * @uxon-property disable_delete
      * @uxon-type boolean
+     * @uxon-default false
      * 
      * @param int|string|bool $trueOrFalse
      * @return StateMachineState
@@ -372,5 +386,14 @@ class StateMachineState
     public function isActionDisabled(ActionInterface $action) : bool
     {
         return $this->getDisableEditing() === true && ($action instanceof iModifyData) && ! ($action instanceof iCreateData);
+    }
+    
+    /**
+     * 
+     * @return StateMachineBehavior
+     */
+    public function getStateMachine() : StateMachineBehavior
+    {
+        return $this->stateMachine;
     }
 }
