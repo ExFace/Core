@@ -52,4 +52,12 @@ interface WorkbenchCacheInterface extends CacheInterface, WorkbenchDependantInte
      * @param CacheInterface|CacheItemPoolInterface $psr6or16
      */
     public function addPool(string $name, $psr6or16) : WorkbenchCacheInterface;
+    
+    /**
+     * Returns a valid cache key generated from the given subject string.
+     * 
+     * @param string $subject
+     * @return string
+     */
+    //public function getKey(string $subject) : string;
 }

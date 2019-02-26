@@ -7,11 +7,14 @@ use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Factories\ResultFactory;
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\CommonLogic\UxonWidgetSchema;
-use exface\Core\CommonLogic\UxonSchema;
-use exface\Core\CommonLogic\UxonDatatypeSchema;
-use exface\Core\CommonLogic\UxonActionSchema;
-use exface\Core\CommonLogic\UxonBehaviorSchema;
+use exface\Core\Uxon\UxonSchema;
+use exface\Core\Uxon\WidgetSchema;
+use exface\Core\Uxon\ActionSchema;
+use exface\Core\Uxon\DatatypeSchema;
+use exface\Core\Uxon\BehaviorSchema;
+use exface\Core\DataTypes\StringDataType;
+use exface\Core\Exceptions\Model\MetaObjectNotFoundError;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 
 class UxonAutosuggest extends AbstractAction
 {
@@ -32,39 +35,54 @@ class UxonAutosuggest extends AbstractAction
         $type = $task->getParameter('input');
         $uxon = UxonObject::fromJson($task->getParameter('uxon'));
         $schema = $task->getParameter('schema');
-        $rootEntityClass = $task->getParameter('rootEntity');
-        $rootObject = $task->getParameter('rootObject');
+        
+        if ($rootObjectSelector = $task->getParameter('object')) {
+            try {
+                $rootObject = $this->getWorkbench()->model()->getObject($rootObjectSelector);
+            } catch (MetaObjectNotFoundError $e) {
+                $rootObject = null;  
+            }
+        }
+        
+        if ($rootPrototypeSelector = trim($task->getParameter('prototype'))) {
+            if (StringDataType::endsWith($rootPrototypeSelector, '.php', false)) {
+                $rootPrototypeClass = str_replace("/", "\\", substr($rootPrototypeSelector, 0, -4));
+                $rootPrototypeClass = "\\" . ltrim($rootPrototypeClass, "\\");
+            } else {
+                $rootPrototypeClass = $rootPrototypeSelector;
+            }
+        }
         
         switch (mb_strtolower($schema)) {
             case self::SCHEMA_WIDGET: 
-                $schema = new UxonWidgetSchema($this->getWorkbench());
+                $schema = new WidgetSchema($this->getWorkbench());
                 break;
             case self::SCHEMA_ACTION:
-                $schema = new UxonActionSchema($this->getWorkbench());
+                $schema = new ActionSchema($this->getWorkbench());
                 break;
             case self::SCHEMA_DATATYPE:
-                $schema = new UxonDatatypeSchema($this->getWorkbench());
+                $schema = new DatatypeSchema($this->getWorkbench());
                 break;
             case self::SCHEMA_BEHAVIOR:
-                $schema = new UxonBehaviorSchema($this->getWorkbench());
+                $schema = new BehaviorSchema($this->getWorkbench());
                 break;
         }
         
         if (strcasecmp($type, self::TYPE_FIELD) === 0) {
-            $options = $this->suggestPropertyNames($schema, $uxon, $path, $rootEntityClass);
+            $options = $this->suggestPropertyNames($schema, $uxon, $path, $rootPrototypeClass);
         } else {
-            $options = $this->suggestPropertyValues($schema, $uxon, $path, $currentText, $rootEntityClass, $rootObject);
+            $options = $this->suggestPropertyValues($schema, $uxon, $path, $currentText, $rootPrototypeClass, $rootObject);
         }
         
         return ResultFactory::createJSONResult($task, $options);
     }
     
-    protected function suggestPropertyNames(UxonSchema $schema, UxonObject $uxon, array $path, string $rootEntityClass = null) : array
+    protected function suggestPropertyNames(UxonSchema $schema, UxonObject $uxon, array $path, string $rootPrototypeClass = null) : array
     {
-        if ($rootEntityClass === null) {
+        if ($rootPrototypeClass === null) {
             $entityClass = $schema->getEntityClass($uxon, $path);
         } else {
-            $entityClass = $schema->getEntityClass($uxon, $path, $rootEntityClass);
+            $entityClass = $schema->getEntityClass($uxon, $path, $rootPrototypeClass);
         }
         return [
             'values' => $schema->getProperties($entityClass),
@@ -72,8 +90,8 @@ class UxonAutosuggest extends AbstractAction
         ];
     }
     
-    protected function suggestPropertyValues(UxonSchema $schema, UxonObject $uxon, array $path, string $valueText, string $rootEntityClass = null, string $rootObject = null) : array
+    protected function suggestPropertyValues(UxonSchema $schema, UxonObject $uxon, array $path, string $valueText, string $rootPrototypeClass = null, MetaObjectInterface $rootObject = null) : array
     {
-        return ['values' => $schema->getValidValues($uxon, $path, $valueText)];
+        return ['values' => $schema->getValidValues($uxon, $path, $valueText, $rootPrototypeClass, $rootObject)];
     }
 }

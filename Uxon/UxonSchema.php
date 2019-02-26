@@ -1,5 +1,5 @@
 <?php
-namespace exface\Core\CommonLogic;
+namespace exface\Core\Uxon;
 
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Factories\DataSheetFactory;
@@ -18,6 +18,7 @@ use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Factories\ExpressionFactory;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\Model\MetaRelationPathInterface;
+use exface\Core\CommonLogic\UxonObject;
 
 /**
  * This class provides varios tools to analyse and validate a generic UXON object.
@@ -44,15 +45,16 @@ use exface\Core\Interfaces\Model\MetaRelationPathInterface;
  * - metamodel:comparator
  * - metamodel:connection
  * - metamodel:formula
+ * - metamodel:widget_link
  * - uxon:path - where path is a JSONpath relative to the current field
  * - [enum,values] - enumeration of commma-separated values (in square brackets)
  * 
  * There are dedicated schema-classes for some UXON schemas:
  * 
- * @see UxonWidgetSchema
- * @see UxonActionSchema
- * @see UxonDatatypeSchema
- * @see UxonBehaviorSchema
+ * @see WidgetSchema
+ * @see ActionSchema
+ * @see DatatypeSchema
+ * @see BehaviorSchema
  * 
  * @author Andrej Kabachnik
  *
@@ -82,32 +84,32 @@ class UxonSchema implements WorkbenchDependantInterface
      * 
      * @param UxonObject $uxon
      * @param array $path
-     * @param string $rootEntityClass
+     * @param string $rootPrototypeClass
      * @return string
      */
-    public function getEntityClass(UxonObject $uxon, array $path, string $rootEntityClass) : string
+    public function getEntityClass(UxonObject $uxon, array $path, string $rootPrototypeClass) : string
     {
         if (count($path) > 1) {
             $prop = array_shift($path);
             
             if (is_numeric($prop) === false) {
-                $propType = $this->getPropertyTypes($rootEntityClass, $prop)[0];
+                $propType = $this->getPropertyTypes($rootPrototypeClass, $prop)[0];
                 if (substr($propType, 0, 1) === '\\') {
                     $class = $propType;
                     $class = str_replace('[]', '', $class);
                 } else {
-                    $class = $rootEntityClass;
+                    $class = $rootPrototypeClass;
                 }
             } else {
-                $class = $rootEntityClass;
+                $class = $rootPrototypeClass;
             }
             
-            $schema = $class === $rootEntityClass ? $this : $this->getSchemaForClass($class);
+            $schema = $class === $rootPrototypeClass ? $this : $this->getSchemaForClass($class);
             
             return $schema->getEntityClass($uxon->getProperty($prop), $path, $class);
         }
         
-        return $rootEntityClass;
+        return $rootPrototypeClass;
     }
     
     /**
@@ -145,22 +147,22 @@ class UxonSchema implements WorkbenchDependantInterface
     /**
      * Returns an array with names of all properties of a given entity class.
      * 
-     * @param string $entityClass
+     * @param string $prototypeClass
      * @return string[]
      */
-    public function getProperties(string $entityClass) : array
+    public function getProperties(string $prototypeClass) : array
     {
-        if ($col = $this->getPropertiesSheet($entityClass)->getColumns()->get('PROPERTY')) {
+        if ($col = $this->getPropertiesSheet($prototypeClass)->getColumns()->get('PROPERTY')) {
             return $col->getValues(false);
         }
             
         return [];
     }
     
-    public function getPropertiesTemplates(string $entityClass) : array
+    public function getPropertiesTemplates(string $prototypeClass) : array
     {
         $tpls = [];
-        $ds = $this->getPropertiesSheet($entityClass);
+        $ds = $this->getPropertiesSheet($prototypeClass);
         if ($col = $ds->getColumns()->get('TEMPLATE')) {
             $propertyCol = $ds->getColumns()->get('PROPERTY');
             foreach ($col->getValues() as $r => $tpl) {
@@ -175,20 +177,20 @@ class UxonSchema implements WorkbenchDependantInterface
     
     /**
      * 
-     * @param string $entityClass
+     * @param string $prototypeClass
      * @return DataSheetInterface
      */
-    protected function getPropertiesSheet(string $entityClass) : DataSheetInterface
+    protected function getPropertiesSheet(string $prototypeClass) : DataSheetInterface
     {
-        if ($cache = $this->entityPropCache[$entityClass]) {
+        if ($cache = $this->entityPropCache[$prototypeClass]) {
             return $cache;
         }
         
-        if ($cache = $this->getCache($entityClass, 'properties')) {
+        if ($cache = $this->getCache($prototypeClass, 'properties')) {
             return DataSheetFactory::createFromUxon($this->getWorkbench(), $cache);
         }
         
-        $filepathRelative = $this->getFilenameForEntity($entityClass);
+        $filepathRelative = $this->getFilenameForEntity($prototypeClass);
         $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.UXON_PROPERTY_ANNOTATION');
         $ds->getColumns()->addMultiple(['PROPERTY', 'TYPE', 'TEMPLATE', 'DEFAULT']);
         $ds->addFilterFromString('FILE', $filepathRelative);
@@ -197,31 +199,31 @@ class UxonSchema implements WorkbenchDependantInterface
         } catch (\Throwable $e) {
             // TODO
         }
-        $this->entityPropCache[$entityClass] = $ds;
-        $this->setCache($entityClass, 'properties', $ds->exportUxonObject());
+        $this->entityPropCache[$prototypeClass] = $ds;
+        $this->setCache($prototypeClass, 'properties', $ds->exportUxonObject());
         
         return $ds;
     }
     
-    protected function getCache(string $entityClass, string $key)
+    protected function getCache(string $prototypeClass, string $key)
     {
-        return $this->getWorkbench()->getCache()->getPool('uxon.schema')->get($key . '.' . str_replace("\\", '.', $entityClass));
+        return $this->getWorkbench()->getCache()->getPool('uxon.schema')->get($key . '.' . str_replace("\\", '.', $prototypeClass));
     }
     
-    protected function setCache(string $entityClass, string $key, $data) : UxonSchema
+    protected function setCache(string $prototypeClass, string $key, $data) : UxonSchema
     {
-        $this->getWorkbench()->getCache()->getPool('uxon.schema')->set($key . '.' . str_replace("\\", '.', $entityClass), $data);
+        $this->getWorkbench()->getCache()->getPool('uxon.schema')->set($key . '.' . str_replace("\\", '.', $prototypeClass), $data);
         return $this;
     }
 
     /**
      * 
-     * @param string $entityClass
+     * @param string $prototypeClass
      * @return string
      */
-    protected function getFilenameForEntity(string $entityClass) : string
+    protected function getFilenameForEntity(string $prototypeClass) : string
     {
-        $path = str_replace('\\', '/', $entityClass);
+        $path = str_replace('\\', '/', $prototypeClass);
         return ltrim($path, "/") . '.php';
     }
     
@@ -232,13 +234,13 @@ class UxonSchema implements WorkbenchDependantInterface
      * (separated by a pipe (|) in the UXON annotations). The array elements
      * have the same order, as the types in the annotation.
      * 
-     * @param string $entityClass
+     * @param string $prototypeClass
      * @param string $property
      * @return string[]
      */
-    public function getPropertyTypes(string $entityClass, string $property) : array
+    public function getPropertyTypes(string $prototypeClass, string $property) : array
     {
-        foreach ($this->getPropertiesSheet($entityClass)->getRows() as $row) {
+        foreach ($this->getPropertiesSheet($prototypeClass)->getRows() as $row) {
             if (strcasecmp($row['PROPERTY'], $property) === 0) {
                 $type = $row['TYPE'];
                 break;
@@ -259,14 +261,14 @@ class UxonSchema implements WorkbenchDependantInterface
     }
     
     /**
-     * Returns an array of valid values for properties with fixe values (or an empty array for non-enum properties).
+     * Returns an array of valid values for properties with fixed values (or an empty array for non-enum properties).
      * 
      * @param UxonObject $uxon
      * @param array $path
      * @param string $search
      * @return string[]
      */
-    public function getValidValues(UxonObject $uxon, array $path, string $search = null) : array
+    public function getValidValues(UxonObject $uxon, array $path, string $search = null, string $rootPropertyClass = null, MetaObjectInterface $rootObject = null) : array
     {
         $options = [];
         
@@ -275,14 +277,14 @@ class UxonSchema implements WorkbenchDependantInterface
             // If we are in an array, use the data from the parent property (= the array)
             // for every item within the array.
             $prop = mb_strtolower($path[(count($path)-2)]);
-            $entityClass = $this->getEntityClass($uxon, $path);
-            $propertyTypes = $this->getPropertyTypes($entityClass, $prop);
+            $prototypeClass = $this->getEntityClass($uxon, $path, $rootPropertyClass);
+            $propertyTypes = $this->getPropertyTypes($prototypeClass, $prop);
             $firstType = trim($propertyTypes[0]);
             $firstType = rtrim($firstType, "[]");
         } else {
             // In all other cases, try to find something for the top-most property in the path
-            $entityClass = $this->getEntityClass($uxon, $path);
-            $propertyTypes = $this->getPropertyTypes($entityClass, $prop);
+            $prototypeClass = $this->getEntityClass($uxon, $path, $rootPropertyClass);
+            $propertyTypes = $this->getPropertyTypes($prototypeClass, $prop);
             $firstType = trim($propertyTypes[0]);
         }
         
@@ -311,7 +313,7 @@ class UxonSchema implements WorkbenchDependantInterface
             case strcasecmp($firstType, 'metamodel:attribute') === 0:
             case strcasecmp($firstType, 'metamodel:relation') === 0:
                 try {
-                    $object = $this->getMetaObject($uxon, $path);
+                    $object = $this->getMetaObject($uxon, $path, $rootObject);
                     if (strcasecmp($firstType, 'metamodel:attribute') === 0) {
                         $options = $this->getMetamodelAttributeAliases($object, $search);
                     } else {
@@ -323,7 +325,7 @@ class UxonSchema implements WorkbenchDependantInterface
                 break;
             case strcasecmp($firstType, 'metamodel:expression') === 0:
                 try {
-                    $object = $this->getMetaObject($uxon, $path);
+                    $object = $this->getMetaObject($uxon, $path, $rootObject);
                     $ex = ExpressionFactory::createFromString($this->getWorkbench(), $search, $object);
                     if ($ex->isFormula() === true) {
                         // TODO
@@ -542,30 +544,30 @@ class UxonSchema implements WorkbenchDependantInterface
     
     /**
      * 
-     * @param string $entityClass
+     * @param string $prototypeClass
      * @return bool
      */
-    protected function validateEntityClass(string $entityClass) : bool
+    protected function validateEntityClass(string $prototypeClass) : bool
     {
-        return class_exists($entityClass);
+        return class_exists($prototypeClass);
     }
     
     /**
      * Returns the schema instance matching the given entity class: e.g. widget schema for widgets, etc.
      * 
-     * @param string $entityClass
+     * @param string $prototypeClass
      * @return UxonSchema
      */
-    protected function getSchemaForClass(string $entityClass) : UxonSchema
+    protected function getSchemaForClass(string $prototypeClass) : UxonSchema
     {
-        if (is_subclass_of($entityClass, WidgetInterface::class)) {
-            $class = UxonWidgetSchema::class;
-        } elseif (is_subclass_of($entityClass, ActionInterface::class)) {
-            $class = UxonActionSchema::class;
-        } elseif (is_subclass_of($entityClass, DataTypeInterface::class)) {
-            $class = UxonDatatypeSchema::class;
-        } elseif (is_subclass_of($entityClass, BehaviorInterface::class)) {
-            $class = UxonBehaviorSchema::class;
+        if (is_subclass_of($prototypeClass, WidgetInterface::class)) {
+            $class = WidgetSchema::class;
+        } elseif (is_subclass_of($prototypeClass, ActionInterface::class)) {
+            $class = ActionSchema::class;
+        } elseif (is_subclass_of($prototypeClass, DataTypeInterface::class)) {
+            $class = DatatypeSchema::class;
+        } elseif (is_subclass_of($prototypeClass, BehaviorInterface::class)) {
+            $class = BehaviorSchema::class;
         }
         
         if ($class === null || is_subclass_of($this, $class)) {

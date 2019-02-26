@@ -4,6 +4,7 @@ namespace exface\Core\Widgets;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\Factories\ExpressionFactory;
+use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 
 /**
  * A UXON editor with autosuggest, templates and validation.
@@ -15,9 +16,9 @@ class InputUxon extends InputJson
 {
     private $autosuggest = true;
     
-    private $rootEntity = null;
+    private $prototype = null;
     
-    private $rootObjectAlias = null;
+    private $rootObjectSelector = null;
     
     /**
      * Specifies the UXON schema: widget, action, datatype, behavior, etc.
@@ -72,28 +73,33 @@ class InputUxon extends InputJson
      *
      * @return ExpressionInterface|NULL
      */
-    public function getRootEntity() : ?ExpressionInterface
+    public function getRootPrototype() : ?ExpressionInterface
     {
-        return $this->rootEntity;
+        return $this->prototype;
     }
     
     /**
-     * Specify the the root UXON entity class for this input widget: e.g. a specific widget or action class.
+     * Specify the the root UXON prototype selector for this input widget: e.g. a specific widget or action.
      * 
-     * The entity class can either be specified directly or via widget link.
+     * The prototype selector can either be a qualified class name or a path to a PHP file relative to the
+     * vendor folder in this installation. The prototype can either be specified directly or via widget link.
      * 
      * If not set explicitly, the default entity for the selected UXON schema will be used (e.g.
      * `\exface\Core\Widgets\AbstractWidget` for the widget schema).
      * 
-     * @uxon-property root_entity
+     * @uxon-property root_prototype
      * @uxon-type string
      * 
      * @param string $value
      * @return InputUxon
      */
-    public function setRootEntity(string $value) : InputUxon
+    public function setRootPrototype(string $value) : InputUxon
     {
-        $this->rootEntity = ExpressionFactory::createForObject($this->getMetaObject(), $value);
+        $expr = ExpressionFactory::createForObject($this->getMetaObject(), $value);
+        if (! $expr->isConstant() && ! $expr->isReference()) {
+            throw new WidgetPropertyInvalidValueError($this, 'Invalid value "' . $value . '" for property root_prototype of widget ' . $this->getWidgetType() . ': expecting an object selector string or a widget link!');
+        }
+        $this->prototype = $expr;
         return $this;
     }
     
@@ -101,26 +107,30 @@ class InputUxon extends InputJson
      *
      * @return ExpressionInterface|NULL
      */
-    public function getRootObjectAlias() : ?ExpressionInterface
+    public function getRootObject() : ?ExpressionInterface
     {
-        return $this->rootObjectAlias;
+        return $this->rootObjectSelector;
     }
     
     /**
-     * Specify the meta object of the root level of the UXON: either directly or via widget link.
+     * The meta object of the root level of the UXON: either an object selector (uid or alias) or via widget link to a selector.
      * 
      * If no meta object alias is specified, the root UXON entity must have an `object_alias`
      * property.
      * 
-     * @uxon-property root_object_alias
-     * @uxon-type metamodel:object
+     * @uxon-property root_object
+     * @uxon-type metamodel:object|metamodel:widget_link
      * 
      * @param string $value
      * @return InputUxon
      */
-    public function setRootObjectAlias(string $value) : InputUxon
+    public function setRootObject(string $value) : InputUxon
     {
-        $this->rootObjectAlias = ExpressionFactory::createForObject($this->getMetaObject(), $value);
+        $expr = ExpressionFactory::createForObject($this->getMetaObject(), $value);
+        if (! $expr->isConstant() && ! $expr->isReference()) {
+            throw new WidgetPropertyInvalidValueError($this, 'Invalid value "' . $value . '" for property root_object of widget ' . $this->getWidgetType() . ': expecting an object selector string or a widget link!');
+        }
+        $this->rootObjectSelector = $expr;
         return $this;
     }
 }

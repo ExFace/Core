@@ -64,7 +64,7 @@ JS;
                        		   } else {
                                     editor._autosuggestPending = true;
                                     var uxon = JSON.stringify(editor.get());
-                                    return {$this->buildJsFunctionPrefix()}_fetchAutosuggest('{$widget->getSchema()}', text, path, input, uxon, resolve, reject)
+                                    return {$this->buildJsFunctionPrefix()}_fetchAutosuggest(text, path, input, uxon, resolve, reject)
                            			.then(json => {
                    				         if (json !== undefined) {
                            					editor._autosuggestPending = false;
@@ -102,13 +102,15 @@ JS;
         
         return <<<JS
 
-    function {$this->buildJsFunctionPrefix()}_fetchAutosuggest(schema, text, path, input, uxon, resolve, reject) {
+    function {$this->buildJsFunctionPrefix()}_fetchAutosuggest(text, path, input, uxon, resolve, reject) {
         var formData = new URLSearchParams({
     		action: 'exface.Core.UxonAutosuggest',
     		text: text,
     		path: JSON.stringify(path),
     		input: input,
-    		schema: schema,
+    		schema: '{$widget->getSchema()}',
+            prototype: {$this->buildJsRootPrototypeGetter()},
+            object: {$this->buildJsRootObjectGetter()},
     		uxon: uxon
     	});
     	return fetch('{$this->getAjaxUrl()}', {
@@ -230,20 +232,37 @@ JS;
         return 'true';
     }
     
-    protected function buildJsUxonRootEntity() : string
+    protected function buildJsRootPrototypeGetter() : string
     {
         $widget = $this->getWidget();
         if ($widget instanceof InputUxon) {
-            $expr = $widget->getRootEntity();
+            $expr = $widget->getRootPrototype();
             if ($expr !== null) {
                 if ($expr->isString() === true) {
                     return '"' . $expr->toString() . '"';
                 } elseif ($expr->isReference() === true) {
-                        
-                    
+                    $link = $expr->getWidgetLink($widget);
+                    return $this->getTemplate()->getElement($link->getTargetWidget())->buildJsValueGetter($link->getTargetColumnId());
                 }
             }
         }
-        return '';
+        return '""';
+    }
+    
+    protected function buildJsRootObjectGetter() : string
+    {
+        $widget = $this->getWidget();
+        if ($widget instanceof InputUxon) {
+            $expr = $widget->getRootObject();
+            if ($expr !== null) {
+                if ($expr->isString() === true) {
+                    return '"' . $expr->toString() . '"';
+                } elseif ($expr->isReference() === true) {
+                    $link = $expr->getWidgetLink($widget);
+                    return $this->getTemplate()->getElement($link->getTargetWidget())->buildJsValueGetter($link->getTargetColumnId());
+                }
+            }
+        }
+        return '""';
     }
 }
