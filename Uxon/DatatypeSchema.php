@@ -18,35 +18,35 @@ class DatatypeSchema extends UxonSchema
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Uxon\UxonSchema::getEntityClass()
+     * @see \exface\Core\Uxon\UxonSchema::getPrototypeClass()
      */
-    public function getEntityClass(UxonObject $uxon, array $path, string $rootPrototypeClass = '\exface\Core\CommonLogic\DataTypes\AbstractDataType') : string
+    public function getPrototypeClass(UxonObject $uxon, array $path, string $rootPrototypeClass = '\exface\Core\CommonLogic\DataTypes\AbstractDataType') : string
     {
         $name = $rootPrototypeClass;
         
         foreach ($uxon as $key => $value) {
             if (strcasecmp($key, 'alias') === 0) {
-                $w = $this->getEntityClassFromSelector($value);
-                if ($this->validateEntityClass($w) === true) {
+                $w = $this->getPrototypeClassFromSelector($value);
+                if ($this->validatePrototypeClass($w) === true) {
                     $name = $w;
                 }
             }
         }
         
         if (count($path) > 1) {
-            return parent::getEntityClass($uxon, $path, $name);
+            return parent::getPrototypeClass($uxon, $path, $name);
         }
         
         return $name;
     }
     
     /**
-     * Returns the entity class for a given data type selector (e.g. alias).
+     * Returns the prototype class for a given data type selector (e.g. alias).
      * 
      * @param string $selectorString
      * @return string
      */
-    protected function getEntityClassFromSelector(string $selectorString) : string
+    protected function getPrototypeClassFromSelector(string $selectorString) : string
     {
         try {
             $selector = SelectorFactory::createDataTypeSelector($this->getWorkbench(), $selectorString);

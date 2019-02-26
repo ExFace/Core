@@ -61,7 +61,7 @@ use exface\Core\CommonLogic\UxonObject;
  */
 class UxonSchema implements WorkbenchDependantInterface
 {    
-    private $entityPropCache = [];
+    private $prototypePropCache = [];
     
     private $schemaCache = [];
     
@@ -80,14 +80,14 @@ class UxonSchema implements WorkbenchDependantInterface
     }
     
     /**
-     * Returns the entity class for a given path.
+     * Returns the prototype class for a given path.
      * 
      * @param UxonObject $uxon
      * @param array $path
      * @param string $rootPrototypeClass
      * @return string
      */
-    public function getEntityClass(UxonObject $uxon, array $path, string $rootPrototypeClass) : string
+    public function getPrototypeClass(UxonObject $uxon, array $path, string $rootPrototypeClass) : string
     {
         if (count($path) > 1) {
             $prop = array_shift($path);
@@ -106,7 +106,7 @@ class UxonSchema implements WorkbenchDependantInterface
             
             $schema = $class === $rootPrototypeClass ? $this : $this->getSchemaForClass($class);
             
-            return $schema->getEntityClass($uxon->getProperty($prop), $path, $class);
+            return $schema->getPrototypeClass($uxon->getProperty($prop), $path, $class);
         }
         
         return $rootPrototypeClass;
@@ -116,7 +116,7 @@ class UxonSchema implements WorkbenchDependantInterface
      * Returns the value of an inheritable property from the point of view of the end of the given path.
      * 
      * This is usefull for common properties like `object_alias`, that get inherited from the parent 
-     * entity automatically, but can be specified explicitly by the user.
+     * prototype automatically, but can be specified explicitly by the user.
      * 
      * @param UxonObject $uxon
      * @param array $path
@@ -145,7 +145,7 @@ class UxonSchema implements WorkbenchDependantInterface
     }
     
     /**
-     * Returns an array with names of all properties of a given entity class.
+     * Returns an array with names of all properties of a given prototype class.
      * 
      * @param string $prototypeClass
      * @return string[]
@@ -182,7 +182,7 @@ class UxonSchema implements WorkbenchDependantInterface
      */
     protected function getPropertiesSheet(string $prototypeClass) : DataSheetInterface
     {
-        if ($cache = $this->entityPropCache[$prototypeClass]) {
+        if ($cache = $this->prototypePropCache[$prototypeClass]) {
             return $cache;
         }
         
@@ -199,7 +199,7 @@ class UxonSchema implements WorkbenchDependantInterface
         } catch (\Throwable $e) {
             // TODO
         }
-        $this->entityPropCache[$prototypeClass] = $ds;
+        $this->prototypePropCache[$prototypeClass] = $ds;
         $this->setCache($prototypeClass, 'properties', $ds->exportUxonObject());
         
         return $ds;
@@ -228,7 +228,7 @@ class UxonSchema implements WorkbenchDependantInterface
     }
     
     /**
-     * Returns an array of UXON types valid for the given entity class property.
+     * Returns an array of UXON types valid for the given prototype class property.
      * 
      * The result is an array, because a property may accept multiple types
      * (separated by a pipe (|) in the UXON annotations). The array elements
@@ -268,7 +268,7 @@ class UxonSchema implements WorkbenchDependantInterface
      * @param string $search
      * @return string[]
      */
-    public function getValidValues(UxonObject $uxon, array $path, string $search = null, string $rootPropertyClass = null, MetaObjectInterface $rootObject = null) : array
+    public function getValidValues(UxonObject $uxon, array $path, string $search = null, string $rootPrototypeClass = null, MetaObjectInterface $rootObject = null) : array
     {
         $options = [];
         
@@ -277,13 +277,13 @@ class UxonSchema implements WorkbenchDependantInterface
             // If we are in an array, use the data from the parent property (= the array)
             // for every item within the array.
             $prop = mb_strtolower($path[(count($path)-2)]);
-            $prototypeClass = $this->getEntityClass($uxon, $path, $rootPropertyClass);
+            $prototypeClass = $rootPrototypeClass !== null ? $this->getPrototypeClass($uxon, $path, $rootPrototypeClass) : $this->getPrototypeClass($uxon, $path);
             $propertyTypes = $this->getPropertyTypes($prototypeClass, $prop);
             $firstType = trim($propertyTypes[0]);
             $firstType = rtrim($firstType, "[]");
         } else {
             // In all other cases, try to find something for the top-most property in the path
-            $prototypeClass = $this->getEntityClass($uxon, $path, $rootPropertyClass);
+            $prototypeClass = $rootPrototypeClass !== null ? $this->getPrototypeClass($uxon, $path, $rootPrototypeClass) : $this->getPrototypeClass($uxon, $path);
             $propertyTypes = $this->getPropertyTypes($prototypeClass, $prop);
             $firstType = trim($propertyTypes[0]);
         }
@@ -348,7 +348,7 @@ class UxonSchema implements WorkbenchDependantInterface
     }
     
     /**
-     * Returns the meta object for the entity at the end of the path.
+     * Returns the meta object for the prototype at the end of the path.
      * 
      * @param UxonObject $uxon
      * @param array $path
@@ -547,13 +547,13 @@ class UxonSchema implements WorkbenchDependantInterface
      * @param string $prototypeClass
      * @return bool
      */
-    protected function validateEntityClass(string $prototypeClass) : bool
+    protected function validatePrototypeClass(string $prototypeClass) : bool
     {
         return class_exists($prototypeClass);
     }
     
     /**
-     * Returns the schema instance matching the given entity class: e.g. widget schema for widgets, etc.
+     * Returns the schema instance matching the given prototype class: e.g. widget schema for widgets, etc.
      * 
      * @param string $prototypeClass
      * @return UxonSchema

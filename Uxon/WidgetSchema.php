@@ -17,23 +17,23 @@ class WidgetSchema extends UxonSchema
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Uxon\UxonSchema::getEntityClass()
+     * @see \exface\Core\Uxon\UxonSchema::getPrototypeClass()
      */
-    public function getEntityClass(UxonObject $uxon, array $path, string $rootPrototypeClass = '\exface\Core\Widgets\AbstractWidget') : string
+    public function getPrototypeClass(UxonObject $uxon, array $path, string $rootPrototypeClass = '\exface\Core\Widgets\AbstractWidget') : string
     {
         $name = $rootPrototypeClass;
         
         foreach ($uxon as $key => $value) {
             if (strcasecmp($key, 'widget_type') === 0) {
-                $w = $this->getEntityClassFromWidgetType($value);
-                if ($this->validateEntityClass($w) === true) {
+                $w = $this->getPrototypeClassFromWidgetType($value);
+                if ($this->validatePrototypeClass($w) === true) {
                     $name = $w;
                 }
             }
         }
         
         if (count($path) > 1) {
-            return parent::getEntityClass($uxon, $path, $name);
+            return parent::getPrototypeClass($uxon, $path, $name);
         }
         
         return $name;
@@ -44,7 +44,7 @@ class WidgetSchema extends UxonSchema
      * @param string $widgetType
      * @return string
      */
-    protected function getEntityClassFromWidgetType(string $widgetType) : string
+    protected function getPrototypeClassFromWidgetType(string $widgetType) : string
     {
         return WidgetFactory::getWidgetClassFromType($widgetType);
     }
