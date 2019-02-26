@@ -238,7 +238,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             $qrt = $data_connection->runSql($totals_query);
             if ($totals = $qrt->getResultArray()) {
                 // the total number of rows is treated differently, than the other totals.
-                $result_total_count = $totals[0]['EXFCNT'];
+                $result_total_count = $result_total_count ?? $totals[0]['EXFCNT'];
                 // now save the custom totals.
                 foreach ($this->getTotals() as $qpart) {
                     $result_totals[$qpart->getRow()][$qpart->getColumnKey()] = $totals[0][$this->getShortAlias($qpart->getColumnKey())];
