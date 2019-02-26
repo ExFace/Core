@@ -77,7 +77,7 @@
     "rows": [
         {
             "CREATED_ON": "2016-04-25 13:19:43",
-            "MODIFIED_ON": "2018-04-18 10:47:01",
+            "MODIFIED_ON": "2019-02-26 10:31:22",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e60ad7563429b089840050568905af",
@@ -91,7 +91,7 @@
             "SHORT_DESCRIPTION": "",
             "PARENT_OBJECT": "",
             "DATA_ADDRESS_PROPS": null,
-            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Panel\",\"widgets\":[{\"attribute_alias\":\"NAME\"},{\"attribute_alias\":\"OBJECT\"},{\"attribute_alias\":\"BEHAVIOR\"},{\"attribute_alias\":\"APP\"},{\"attribute_alias\":\"CONFIG_UXON\",\"height\":15},{\"attribute_alias\":\"DESCRIPTION\",\"width\":2,\"height\":4}]}",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"Panel\",\"widgets\":[{\"attribute_alias\":\"NAME\"},{\"attribute_alias\":\"OBJECT\",\"id\":\"object_selector\"},{\"attribute_alias\":\"BEHAVIOR\",\"id\":\"prototype_selector\"},{\"attribute_alias\":\"APP\"},{\"attribute_alias\":\"CONFIG_UXON\",\"widget_type\":\"InputUxon\",\"schema\":\"behavior\",\"height\":15,\"root_object\":\"=object_selector\",\"root_prototype\":\"=prototype_selector\"},{\"attribute_alias\":\"DESCRIPTION\",\"width\":2,\"height\":4}]}",
             "ALIAS": "OBJECT_BEHAVIORS",
             "DATA_ADDRESS": "exf_object_behaviors"
         }
