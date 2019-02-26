@@ -80,13 +80,13 @@ class UxonAutosuggest extends AbstractAction
     protected function suggestPropertyNames(UxonSchema $schema, UxonObject $uxon, array $path, string $rootPrototypeClass = null) : array
     {
         if ($rootPrototypeClass === null) {
-            $entityClass = $schema->getEntityClass($uxon, $path);
+            $prototypeClass = $schema->getPrototypeClass($uxon, $path);
         } else {
-            $entityClass = $schema->getEntityClass($uxon, $path, $rootPrototypeClass);
+            $prototypeClass = $schema->getPrototypeClass($uxon, $path, $rootPrototypeClass);
         }
         return [
-            'values' => $schema->getProperties($entityClass),
-            'templates' => $schema->getPropertiesTemplates($entityClass)
+            'values' => $schema->getProperties($prototypeClass),
+            'templates' => $schema->getPropertiesTemplates($prototypeClass)
         ];
     }
     
