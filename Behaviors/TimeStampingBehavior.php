@@ -37,7 +37,16 @@ class TimeStampingBehavior extends AbstractBehavior
         return $this->created_on_attribute_alias;
     }
 
-    public function setCreatedOnAttributeAlias($value)
+    /**
+     * Alias of the attribute, where the creation time is saved.
+     * 
+     * @uxon-property created_on_attribute_alias
+     * @uxon-type metamodel:attribute
+     * 
+     * @param string $value
+     * @return \exface\Core\Behaviors\TimeStampingBehavior
+     */
+    public function setCreatedOnAttributeAlias(string $value) : TimeStampingBehavior
     {
         $this->created_on_attribute_alias = $value;
         return $this;
@@ -48,7 +57,16 @@ class TimeStampingBehavior extends AbstractBehavior
         return $this->updated_on_attribute_alias;
     }
 
-    public function setUpdatedOnAttributeAlias($value)
+    /**
+     * Alias of the attribute, where the last update time is saved.
+     *
+     * @uxon-property updated_on_attribute_alias
+     * @uxon-type metamodel:attribute
+     *
+     * @param string $value
+     * @return \exface\Core\Behaviors\TimeStampingBehavior
+     */
+    public function setUpdatedOnAttributeAlias(string $value) : TimeStampingBehavior
     {
         $this->updated_on_attribute_alias = $value;
         return $this;
@@ -59,7 +77,17 @@ class TimeStampingBehavior extends AbstractBehavior
         return $this->check_for_conflicts_on_update;
     }
 
-    public function setCheckForConflictsOnUpdate($value)
+    /**
+     * Set to FALSE to disable automatic race condition prevention.
+     *
+     * @uxon-property created_on_attribute_alias
+     * @uxon-type bool
+     * @uxon-default true
+     *
+     * @param string $value
+     * @return \exface\Core\Behaviors\TimeStampingBehavior
+     */
+    public function setCheckForConflictsOnUpdate(bool $value) : TimeStampingBehavior
     {
         $this->check_for_conflicts_on_update = $value;
         return $this;

@@ -254,7 +254,7 @@ class StateMachineBehavior extends AbstractBehavior
      * Defines the attribute alias, that holds the state id.
      *
      * @uxon-property state_attribute_alias
-     * @uxon-type string
+     * @uxon-type metamodel:attribute
      *
      * @param string $value            
      * @return \exface\Core\Behaviors\StateMachineBehavior
@@ -287,12 +287,15 @@ class StateMachineBehavior extends AbstractBehavior
     }
 
     /**
-     * Defines the default state id, which is to be used if no object state can be determined
-     * (e.g.
-     * to determine possible values for the StateMenuButton).
+     * Defines the default state id, which is to be used if no object state can be determined.
+     * 
+     * The default state is used, for example, to determine possible values for the StateMenuButton.
+     * 
+     * If not specified explicitly, the first state in the list will be assumed to be the
+     * default one.
      *
      * @uxon-property default_state
-     * @uxon-type number
+     * @uxon-type string
      *
      * @param integer|string|StateMachineState $value            
      * @return \exface\Core\Behaviors\StateMachineBehavior
@@ -347,6 +350,7 @@ class StateMachineBehavior extends AbstractBehavior
      * The states are set by a JSON object or array with state ids for keys and an objects describing the state for values.
      *
      * Example:
+     * ```
      *  "states": {
      *      "10": {
      *          "buttons": {
@@ -389,9 +393,12 @@ class StateMachineBehavior extends AbstractBehavior
      *          ...
      *      }
      *  }
+     *  
+     * ```
      *
      * @uxon-property states
-     * @uxon-type object
+     * @uxon-type \exface\Core\CommonLogic\Model\Behaviors\StateMachineState[]
+     * @uxon-template {"": {"name": ""}}
      *
      * @param UxonObject|StateMachineState[] $value            
      * @throws BehaviorConfigurationError
@@ -406,7 +413,7 @@ class StateMachineBehavior extends AbstractBehavior
                 if (is_numeric($state) === false) {
                     $this->hasNumericIds = false;
                 }
-                $smstate = new StateMachineState();
+                $smstate = new StateMachineState($this);
                 $smstate->setStateId($state);
                 if ($uxon_smstate) {
                     try {
@@ -679,6 +686,7 @@ class StateMachineBehavior extends AbstractBehavior
      * 
      * @uxon-property override_attribute_display_widget
      * @uxon-type boolean
+     * @uxon-default true
      * 
      * @param bool|string $value
      * @return StateMachineBehavior
@@ -703,6 +711,7 @@ class StateMachineBehavior extends AbstractBehavior
      * 
      * @uxon-property override_attribute_editor_widget
      * @uxon-type boolean
+     * @uxon-default true
      * 
      * @param bool|string $value
      * @return StateMachineBehavior
@@ -727,6 +736,7 @@ class StateMachineBehavior extends AbstractBehavior
      * 
      * @uxon-property override_attribute_data_type
      * @uxon-type boolean
+     * @uxon-default true
      *
      * @param bool|string $value
      * @return StateMachineBehavior
@@ -751,6 +761,7 @@ class StateMachineBehavior extends AbstractBehavior
      * 
      * @uxon-property hide_state_ids
      * @uxon-type boolean
+     * @uxon-default true
      * 
      * @param bool|string $value
      * @return StateMachineBehavior
