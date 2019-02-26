@@ -131,7 +131,7 @@ class MetaObject implements MetaObjectInterface
         $result = array();
         foreach ($this->relations as $set) {
             foreach ($set as $rel) {
-                if ($type === null || $type->equals($rel->getType())) {
+                if ($type === null || $type->isEqual($rel->getType())) {
                     $alias = $rel->getAliasWithModifier();
                     $result[$alias] = $rel;
                 }
@@ -587,7 +587,7 @@ class MetaObject implements MetaObjectInterface
         }
         foreach ($this->getRelations() as $rel) {
             try {
-                if ($rel->getRightObject()->is($related_object_id) && ($type === null || $type->equals($rel->getType())))
+                if ($rel->getRightObject()->is($related_object_id) && ($type === null || $type->isEqual($rel->getType())))
                     $rels[] = $rel;
             } catch (MetaObjectNotFoundError $e) {
                 // FIXME for some reason calling find_relations on alexa.RMS.STYLE produces a relation with the object 0x11E678F8FD442F59ACD40205857FEB80,

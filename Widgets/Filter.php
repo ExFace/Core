@@ -13,6 +13,7 @@ use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\DataTypes\ComparatorDataType;
 
 /**
  * A filter is a wrapper widget, which typically consist of one or more input widgets.
@@ -62,20 +63,18 @@ class Filter extends Container implements iTakeInput, iShowSingleAttribute
     public function setInputWidget($widget_or_uxon_object)
     {
         $page = $this->getPage();
-        $this->widget = WidgetFactory::createFromAnything($page, $widget_or_uxon_object, $this);
+        $this->widget = $input = WidgetFactory::createFromAnything($page, $widget_or_uxon_object, $this);
         
         // Some widgets need to be transformed to be a meaningfull filter
-        if ($this->widget->is('InputCheckBox')) {
-            $this->widget = $this->widget->transformIntoSelect();
+        if ($input->is('InputCheckBox')) {
+            $input = $input->transformIntoSelect();
         }
         
         // Set a default comparator
         if (is_null($this->comparator)) {
-            // If the input widget will produce multiple values, use the IN comparator
-            if ($this->widget->implementsInterface('iSupportMultiselect') && $this->widget->getMultiSelect()) {
-                $this->setComparator(EXF_COMPARATOR_IN);
+            if ($defaultComparator = $this->getDefaultComparator($input)) {
+                $this->setComparator($defaultComparator->__toString());
             }
-            // Otherwise leave the comparator null for other parts of the logic to use their defaults
         }
         
         // If the filter has a specific comparator, that is non-intuitive, add a corresponding suffix to
@@ -85,23 +84,23 @@ class Filter extends Container implements iTakeInput, iShowSingleAttribute
             case EXF_COMPARATOR_GREATER_THAN_OR_EQUALS:
             case EXF_COMPARATOR_LESS_THAN:
             case EXF_COMPARATOR_LESS_THAN_OR_EQUALS:
-                $this->widget->setCaption($this->getInputWidget()->getCaption() . ' (' . $this->getComparator() . ')');
+                $input->setCaption($this->getInputWidget()->getCaption() . ' (' . $this->getComparator() . ')');
                 break;
         }
         
         // The widgets in the filter should not be required accept for the case if the filter itself is marked
         // as required (see set_required()). This is important because, inputs based on required attributes are
         // marked required by default: this should not be the case for filters, however!
-        if ($this->widget instanceof iCanBeRequired) {
-            $this->widget->setRequired(false);
+        if ($input instanceof iCanBeRequired) {
+            $input->setRequired(false);
         }
         
         // Filters do not have default values, because they are empty if nothing has been entered. It is important
         // to tell the underlying widget to ignore defaults as it will use the default value of the meta attribute
         // otherwise. You can still set the value of the filter. This only prevents filling the value automatically
         // via the meta model defaults.
-        if ($this->widget instanceof iHaveValue) {
-            $this->widget->setIgnoreDefaultValue(true);
+        if ($input instanceof iHaveValue) {
+            $input->setIgnoreDefaultValue(true);
         }
         
         // The filter should be enabled all the time, except for the case, when it is diabled explicitly
@@ -110,6 +109,22 @@ class Filter extends Container implements iTakeInput, iShowSingleAttribute
         }
         
         return $this;
+    }
+    
+    protected function getDefaultComparator(WidgetInterface $input) : ?ComparatorDataType
+    {
+        switch (true) {
+            case $input->implementsInterface('iSupportMultiselect') && $input->getMultiSelect():
+                // If the input widget will produce multiple values, use the IN comparator
+                return ComparatorDataType::IN($this->getWorkbench());
+                break;
+            case $input instanceof InputSelect:
+                return ComparatorDataType::EQUALS($this->getWorkbench());
+                break;
+            default:
+                // Otherwise leave the comparator null for other parts of the logic to use their defaults
+                return null;
+        }
     }
 
     /**
