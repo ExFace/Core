@@ -349,7 +349,7 @@ class Relation implements MetaRelationInterface
      */
     public function is(MetaRelationInterface $other_relation) : bool
     {
-        return $this->getId() === $other_relation->getId() && $this->getCardinality()->equals($other_relation->getCardinality());
+        return $this->getId() === $other_relation->getId() && $this->getCardinality()->isEqual($other_relation->getCardinality());
     }
 
     /**

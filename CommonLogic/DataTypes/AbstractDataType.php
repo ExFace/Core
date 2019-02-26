@@ -466,7 +466,7 @@ abstract class AbstractDataType implements DataTypeInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\ValueObjectInterface::equals()
      */
-    public final function equals(ValueObjectInterface $valueObject) : bool
+    public final function isEqual(ValueObjectInterface $valueObject) : bool
     {
         // TODO compare uxon configuration
         return $this->getValue() === $valueObject->getValue() && $this->getAliasWithNamespace() === $valueObject->getAliasWithNamespace() && get_called_class() == get_class($valueObject);
