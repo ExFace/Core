@@ -1,5 +1,5 @@
 <?php
-namespace exface\Core\CommonLogic;
+namespace exface\Core\Uxon;
 
 /**
  * UXON-schema class for meta object behaviors.
@@ -9,6 +9,6 @@ namespace exface\Core\CommonLogic;
  * @author Andrej Kabachnik
  *
  */
-class UxonBehaviorSchema extends UxonSchema
+class BehaviorSchema extends UxonSchema
 {    
 }

@@ -1,7 +1,8 @@
 <?php
-namespace exface\Core\CommonLogic;
+namespace exface\Core\Uxon;
 
 use exface\Core\Factories\WidgetFactory;
+use exface\Core\CommonLogic\UxonObject;
 
 /**
  * UXON-schema class for widgets.
@@ -11,16 +12,16 @@ use exface\Core\Factories\WidgetFactory;
  * @author Andrej Kabachnik
  *
  */
-class UxonWidgetSchema extends UxonSchema
+class WidgetSchema extends UxonSchema
 {
     /**
      * 
      * {@inheritDoc}
-     * @see \exface\Core\CommonLogic\UxonSchema::getEntityClass()
+     * @see \exface\Core\Uxon\UxonSchema::getEntityClass()
      */
-    public function getEntityClass(UxonObject $uxon, array $path, string $rootEntityClass = '\exface\Core\Widgets\AbstractWidget') : string
+    public function getEntityClass(UxonObject $uxon, array $path, string $rootPrototypeClass = '\exface\Core\Widgets\AbstractWidget') : string
     {
-        $name = $rootEntityClass;
+        $name = $rootPrototypeClass;
         
         foreach ($uxon as $key => $value) {
             if (strcasecmp($key, 'widget_type') === 0) {
