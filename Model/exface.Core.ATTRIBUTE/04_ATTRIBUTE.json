@@ -1673,7 +1673,7 @@
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": "{\"show_values\": false, \"values\":{\"11\":\"1-to-1\",\"\":\"n-to-1 (regular relation)\",\"NM\":\"n-to-m\"}}"
+            "CUSTOM_DATA_TYPE": "{\"show_values\":false,\"values\":{\"11\":\"1-to-1\",\"\":\"n-to-1 (regular relation)\",\"NM\":\"n-to-m\"}}"
         }
     ],
     "totals_rows": [],
