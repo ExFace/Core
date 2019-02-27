@@ -13,6 +13,10 @@ use exface\Core\Events\Model\OnMetaAttributeModelValidatedEvent;
 use exface\Core\Events\Action\OnActionPerformedEvent;
 use exface\Core\Interfaces\Widgets\iHaveValue;
 use exface\Core\Interfaces\Exceptions\ExceptionInterface;
+use exface\Core\Interfaces\Tasks\ResultDataInterface;
+use exface\Core\Factories\WidgetFactory;
+use exface\Core\Factories\UiPageFactory;
+use exface\Core\Exceptions\RuntimeException;
 
 /**
  * This behavior validates the model when an editor is opened for the object, it is attached to.
@@ -39,13 +43,96 @@ class ModelValidatingBehavior extends AbstractBehavior
      */
     public function register() : BehaviorInterface
     {
-        $handler = [
+        // Add messages to model editors
+        $this->getWorkbench()->eventManager()->addListener(OnActionPerformedEvent::getEventName(), [
             $this,
             'handleObjectEditDialog'
-        ];
-        $this->getWorkbench()->eventManager()->addListener(OnActionPerformedEvent::getEventName(), $handler);
+        ]);
+        
+        // Add checks when saving model data
+        $this->getWorkbench()->eventManager()->addListener(OnActionPerformedEvent::getEventName(), [
+            $this,
+            'handleModelDataSave'
+        ]);
+        
         $this->setRegistered(true);
         return $this;
+    }
+    
+    public function handleModelDataSave(OnActionPerformedEvent $event)
+    {
+        $action = $event->getAction();
+        
+        if (! ($action->is('exface.Core.SaveData'))) {
+            return;
+        }
+        
+        $result = $event->getResult();
+        if (! ($result instanceof ResultDataInterface) || ! $result->hasData()) {
+            return;
+        }
+        
+        if ($result->getData()->getMetaObject()->is('exface.Core.OBJECT')) {
+            $data = $result->getData();
+            if (false === $data->hasUidColumn(true)) {
+                return;
+            }
+            foreach ($data->getUidColumn()->getValues(false) as $objectUid) {
+                try {
+                    $object = $this->getWorkbench()->model()->getObject($objectUid);
+                    $object = $this->getWorkbench()->model()->reloadObject($object);
+                    $messageList = WidgetFactory::create(UiPageFactory::createBlank($this->getWorkbench(), ''), 'MessageList');
+                    $this->validateObject($object, $messageList);
+                    //$this->getWorkbench()->eventManager()->dispatch(new OnMetaObjectModelValidatedEvent($object, $messageList));
+                } catch (\Throwable $e) {
+                    $code = ($e instanceof ExceptionInterface) ? $e->getAlias() : null;
+                    
+                    $objectData = $data->getRow($data->getUidColumn()->findRowByValue($objectUid));
+                    if ($objectData['NAME'] !== null) {
+                        $objectText = '"' . $objectData['NAME'] . '" ';
+                    }
+                    $objectText .= '[' . ($objectData['ALIAS'] ?? $objectData['UID']) . ']';
+                    
+                    throw new RuntimeException('Error in object ' . $objectText . ': ' . $e->getMessage(), $code, $e);
+                }
+            }
+        }
+        
+        if ($result->getData()->getMetaObject()->is('exface.Core.ATTRIBUTE')) {
+            $data = $result->getData();
+            if (! $objectCol = $data->getColumns()->get('OBJECT')) {
+                return;
+            }
+            foreach ($data->getRows() as $rownr => $row) {
+                $objectUid = $objectCol->getCellValue($rownr);
+                $attributeAlias = $row['ALIAS'];
+                try {
+                    $object = $this->getWorkbench()->model()->getObject($objectUid);
+                    $object = $this->getWorkbench()->model()->reloadObject($object);
+                    $attribute = $object->getAttribute($attributeAlias);
+                    $messageList = WidgetFactory::create(UiPageFactory::createBlank($this->getWorkbench(), ''), 'MessageList');
+                    $this->validateAttribute($attribute, $messageList);
+                    //$this->getWorkbench()->eventManager()->dispatch(new OnMetaAttributeModelValidatedEvent($attribute, $messageList));
+                } catch (\Throwable $e) {
+                    $code = ($e instanceof ExceptionInterface) ? $e->getAlias() : null;
+                    
+                    $row = $data->getRow($data->getUidColumn()->findRowByValue($objectUid));
+                    if ($row['NAME'] !== null) {
+                        $attrText = '"' . $row['NAME'] . '" ';
+                    }
+                    $attrText .= '[' . ($row['ALIAS'] ?? $row['UID']) . ']';
+                    
+                    if ($object instanceof MetaObjectInterface) {
+                        $objectText = '"' . $object->getName() . '" [' . $object->getAliasWithNamespace() . ']';
+                    } else {
+                        $objectText = $row['OBJECT'];
+                    }
+                    
+                    throw new RuntimeException('Error in attribute ' . $attrText . ' of object ' . $objectText . ': ' . $e->getMessage(), $code, $e);
+                }
+            }
+        }
+        return;
     }
     
     /**
@@ -80,7 +167,7 @@ class ModelValidatingBehavior extends AbstractBehavior
                             $this->validateObject($object, $widget->getMessageList());
                             $this->getWorkbench()->eventManager()->dispatch(new OnMetaObjectModelValidatedEvent($object, $widget->getMessageList()));
                         } catch (\Throwable $e) {
-                            $code = ($e instanceof ExceptionInterface) ? ': error ' . $e->getCode() : '';
+                            $code = ($e instanceof ExceptionInterface) ? ': error ' . $e->getAlias() : '';
                             $widget->getMessageList()->addError($e->getMessage(), 'Failed loading meta object' . $code . '!');
                             $this->getWorkbench()->getLogger()->logException($e);
                         }
@@ -129,18 +216,46 @@ class ModelValidatingBehavior extends AbstractBehavior
         }
     }
     
-    protected function validateObject(MetaObjectInterface $object, MessageList $messageList)
+    /**
+     * 
+     * @param MetaObjectInterface $object
+     * @param MessageList $messageList
+     * @return \Throwable[]
+     */
+    protected function validateObject(MetaObjectInterface $object, MessageList $messageList) : array
     {
-        $this->validateObjectAttributes($object, $messageList);
-        $this->validateObjectUid($object, $messageList);
-        $this->validateObjectLabel($object, $messageList);
-        $this->validateObjectDataSource($object, $messageList);
-        return;
+        $exceptions = [];
+        try {
+            $this->validateObjectAttributes($object, $messageList);
+        } catch (\Throwable $e) {
+            $exceptions[] = $e;
+        }
+        try {
+            $this->validateObjectUid($object, $messageList);
+        } catch (\Throwable $e) {
+            $exceptions[] = $e;
+        }
+        try {
+            $this->validateObjectLabel($object, $messageList);
+        } catch (\Throwable $e) {
+            $exceptions[] = $e;
+        }
+        try {
+            $this->validateObjectDataSource($object, $messageList);
+        } catch (\Throwable $e) {
+            $exceptions[] = $e;
+        }
+        return $exceptions;
     }
     
     protected function validateAttribute(MetaAttributeInterface $attribute, MessageList $messageList)
     {
-        // TODO add validation for attributes
+        // Try to load all the lazy loaded sub-models - they might throw an error!
+        $attribute->getDataType();
+        $attribute->getDefaultEditorUxon();
+        $attribute->getDefaultDisplayUxon();
+        
+        // TODO add more validation for attributes
         return;
     }
     

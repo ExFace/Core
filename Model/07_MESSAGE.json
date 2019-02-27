@@ -1982,6 +1982,20 @@
             "HINT": "Numeric strings can only conatin number characters (0-9) - no minuses, delimiters, spaces, etc.",
             "TYPE": "ERROR",
             "DOCS": ""
+        },
+        {
+            "CREATED_ON": "2019-02-27 11:07:17",
+            "MODIFIED_ON": "2019-02-27 11:18:19",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e93a7fc1c5bb2c8c660205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "CODE": "74JU2AU",
+            "TITLE": "Invalid UXON property",
+            "DESCRIPTION": "The provided UXON configuration cannot be applied to the selected prototype because the prototype does not recognize one of the properties.\n\nThis is a typical error for misspelled or misplaced UXON properties. You can find all UXON properties supported by a prototype in the documentation: go to Administration > Documentation and navigate to the desired prototype section (e.g. widgets, actions, etc.).",
+            "HINT": "Please, correct the UXON code shown in the tab \"UXON\" of this error message or pick another prototype.",
+            "TYPE": "ERROR",
+            "DOCS": ""
         }
     ],
     "totals_rows": [],
