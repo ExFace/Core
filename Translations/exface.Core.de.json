@@ -161,6 +161,7 @@
     "MESSAGE.TYPES.HINT": "Tip",
     
     "PAGE.APPS.REPAIR": "Reparieren",
+    "PAGE.ATTRIBUTES.OPEN_OBJECT": "Objekt öffnen",
     "PAGE.ATTRIBUTE_EDITOR.DATA_ADDRESS": "Datenadresse",
     "PAGE.ATTRIBUTE_EDITOR.RELATION": "Relation",
     "PAGE.ATTRIBUTE_EDITOR.DEFAULTS": "Standard-Werte",

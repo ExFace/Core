@@ -14,10 +14,10 @@
         "multi_select": true,
         "filters": [
             {
-                "attribute_alias": "OBJECT"
+                "attribute_alias": "NAME"
             },
             {
-                "attribute_alias": "OBJECT__DATA_SOURCE"
+                "attribute_alias": "ALIAS"
             },
             {
                 "attribute_alias": "DATA_ADDRESS",
@@ -30,22 +30,31 @@
                 "height": 1
             },
             {
-                "attribute_alias": "LABEL"
+                "attribute_alias": "SHORT_DESCRIPTION",
+                "widget_type": "input",
+                "height": 1,
+                "width": 1
             },
             {
-                "attribute_alias": "ALIAS"
+                "attribute_alias": "OBJECT"
             },
             {
                 "attribute_alias": "OBJECT__APP"
             },
             {
+                "attribute_alias": "OBJECT__DATA_SOURCE"
+            },
+            {
                 "attribute_alias": "DATATYPE"
             },
             {
-                "attribute_alias": "FORMATTER"
+                "attribute_alias": "CUSTOM_DATA_TYPE",
+                "widget_type": "Input",
+                "height": 1,
+                "width": 1
             },
             {
-                "attribute_alias": "UID"
+                "attribute_alias": "FORMATTER"
             },
             {
                 "attribute_alias": "DEFAULT_EDITOR_UXON",
@@ -60,10 +69,13 @@
                 "width": 1
             },
             {
-                "attribute_alias": "CUSTOM_DATA_TYPE",
-                "widget_type": "Input",
-                "height": 1,
-                "width": 1
+                "attribute_alias": "UID"
+            },
+            {
+                "attribute_alias": "EDITABLEFLAG"
+            },
+            {
+                "attribute_alias": "HIDDENFLAG"
             }
         ],
         "columns": [
@@ -119,6 +131,21 @@
             }
         ],
         "buttons": [
+            {
+                "caption": "=TRANSLATE('exface.Core', 'PAGE.ATTRIBUTES.OPEN_OBJECT')",
+                "action": {
+                    "alias": "exface.Core.ShowObjectEditDialog",
+                    "object_alias": "exface.Core.OBJECT",
+                    "input_mapper": {
+                        "column_to_column_mappings": [
+                            {
+                                "from": "OBJECT",
+                                "to": "UID"
+                            }
+                        ]
+                    }
+                }
+            },
             {
                 "action_alias": "exface.Core.ShowObjectCreateDialog"
             },
