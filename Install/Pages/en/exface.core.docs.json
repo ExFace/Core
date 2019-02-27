@@ -4,7 +4,7 @@
     "menu_parent_page_alias": "exface.core.documentation",
     "menu_index": "0",
     "menu_visible": true,
-    "name": "Docs",
+    "name": "App-Docs",
     "description": "Read app documentation",
     "intro": "",
     "replaces_page_alias": null,

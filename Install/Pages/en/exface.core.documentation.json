@@ -9,6 +9,7 @@
     "intro": "",
     "replaces_page_alias": null,
     "contents": {
-        "extend_widget": "[exface.core.docs]"
+        "widget_type": "NavTiles",
+        "object_alias": "exface.Core.PAGE"
     }
 }
