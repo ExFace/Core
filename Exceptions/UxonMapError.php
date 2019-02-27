@@ -16,5 +16,13 @@ use exface\Core\Interfaces\Exceptions\UxonExceptionInterface;
  */
 class UxonMapError extends UxonParserError
 {
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Exceptions\RuntimeException::getDefaultAlias()
+     */
+    public function getDefaultAlias(){
+        return '74JU2AU';
+    }
 }
 ?>
