@@ -67,7 +67,7 @@ class Filter extends Container implements iTakeInput, iShowSingleAttribute
         
         // Some widgets need to be transformed to be a meaningfull filter
         if ($input->is('InputCheckBox')) {
-            $input = $input->transformIntoSelect();
+            $this->widget = $input->transformIntoSelect();
         }
         
         // Set a default comparator
