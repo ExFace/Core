@@ -163,6 +163,7 @@
     "MESSAGE.TYPES.HINT": "Hint",
     
     "PAGE.APPS.REPAIR": "Repair",
+    "PAGE.ATTRIBUTES.OPEN_OBJECT": "Open Object",
     "PAGE.ATTRIBUTE_EDITOR.DATA_ADDRESS": "Data Address",
     "PAGE.ATTRIBUTE_EDITOR.RELATION": "Relation",
     "PAGE.ATTRIBUTE_EDITOR.DEFAULTS": "Defaults",
