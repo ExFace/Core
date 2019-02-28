@@ -4,6 +4,7 @@ namespace exface\Core\Templates\AbstractAjaxTemplate\Formatters;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\DataTypes\DateDataType;
 use exface\Core\DataTypes\TimestampDataType;
+use exface\Core\DataTypes\DateTimeDataType;
 
 /**
  * This formatter generates javascript code to format and parse date/time via the library date.js.
@@ -345,7 +346,8 @@ JS;
      */
     protected function buildJsDateFormatInternal()
     {
-        return $this->getDataType() instanceof TimestampDataType ? "yyyy-MM-dd HH:mm:ss" : "yyyy-MM-dd";
+        $type = $this->getDataType();
+        return ($type instanceof TimestampDataType) || ($type instanceof DateTimeDataType) ? "yyyy-MM-dd HH:mm:ss" : "yyyy-MM-dd";
     }
     
     /**
@@ -360,7 +362,7 @@ JS;
     {
         if (is_null($this->format)) {
             $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
-            if ($this->getDataType() instanceof TimestampDataType) {
+            if ($this->getDataType() instanceof TimestampDataType || $this->getDataType() instanceof DateTimeDataType) {
                 $this->format = $translator->translate('LOCALIZATION.DATE.DATETIME_FORMAT_JS');
             } else {
                 $this->format = $translator->translate('LOCALIZATION.DATE.DATE_FORMAT_JS');

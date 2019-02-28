@@ -25,6 +25,7 @@ use exface\Core\DataTypes\HexadecimalNumberDataType;
 use exface\Core\DataTypes\TimeDataType;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\DataTypes\DateTimeDataType;
 
 /**
  * This is the base for all SQL model builders in the core.
@@ -253,8 +254,10 @@ abstract class AbstractSqlModelBuilder extends AbstractModelBuilder implements M
                 $data_type = DataTypeFactory::createFromString($workbench, TimeDataType::class);
                 break;
             case 'TIMESTAMP':
-            case 'DATETIME':
                 $data_type = DataTypeFactory::createFromString($workbench, TimestampDataType::class);
+                break;
+            case 'DATETIME':
+                $data_type = DataTypeFactory::createFromString($workbench, DateTimeDataType::class);
                 break;
             case 'DATE':
                 $data_type = DataTypeFactory::createFromString($workbench, DateDataType::class);
