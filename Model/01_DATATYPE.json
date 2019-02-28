@@ -564,6 +564,21 @@
             "DEFAULT_EDITOR_UXON": null,
             "ALIAS": "NumericString",
             "SHORT_DESCRIPTION": "A string with numbers only (0-9). In contrast to a nubmer, it can have leading zeroes. But no \"-\" sign or decimals are allowed. This type is meant for numeric ids stored as strings in the data source."
+        },
+        {
+            "CREATED_ON": "2019-02-28 11:24:03",
+            "MODIFIED_ON": "2019-02-28 11:24:03",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11e93b4b3d1f22188c660205857feb80",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Date & Time",
+            "PROTOTYPE": "exface\/Core\/DataTypes\/DateTimeDataType.php",
+            "CONFIG_UXON": null,
+            "VALIDATION_ERROR": "",
+            "DEFAULT_EDITOR_UXON": "{\"widget_type\":\"InputDateTime\"}",
+            "ALIAS": "DateTime",
+            "SHORT_DESCRIPTION": ""
         }
     ],
     "totals_rows": [],
