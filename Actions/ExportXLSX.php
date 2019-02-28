@@ -18,6 +18,7 @@ use exface\Core\CommonLogic\Utils\XLSXWriter;
 use exface\Core\DataTypes\PriceDataType;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\Widgets\iShowData;
+use exface\Core\DataTypes\DateTimeDataType;
 
 /**
  * Exports data to an Excel file (XLSX).
@@ -108,7 +109,7 @@ class ExportXLSX extends ExportJSON
             $headerTypes[$colName] = $this->getExcelDataType($col->getDataType());
             
             // Width
-            if ($col->getDataType() instanceof TimestampDataType) {
+            if ($col->getDataType() instanceof TimestampDataType || $col->getDataType() instanceof DateTimeDataType) {
                 $colOptions['width'] = '19';
             } elseif ($col->getDataType() instanceof StringDataType) {
                 $colOptions['width'] = '25';
@@ -326,7 +327,8 @@ class ExportXLSX extends ExportJSON
         switch (true) {
             case ($dataType instanceof BooleanDataType): 
                 return 'integer';
-            case ($dataType instanceof TimestampDataType);
+            case ($dataType instanceof TimestampDataType):
+            case ($dataType instanceof DateTimeDataType):
                 return $this->getWorkbench()->getCoreApp()->getTranslator()->translate('LOCALIZATION.DATE.DATETIME_FORMAT_EXCEL');
             case ($dataType instanceof DateDataType):
                 return $this->getWorkbench()->getCoreApp()->getTranslator()->translate('LOCALIZATION.DATE.DATE_FORMAT_EXCEL');
