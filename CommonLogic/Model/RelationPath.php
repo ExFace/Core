@@ -323,7 +323,7 @@ class RelationPath implements MetaRelationPathInterface
         if (is_null($length)) {
             $end_index = $this->countRelations();
         } elseif ($length < 0) {
-            $end_index = $this->countRelations() - $length;
+            $end_index = $this->countRelations() + $length;
         } else {
             $end_index = $this->countRelations() > ($start_index + $length) ? $start_index + $length : $this->countRelations();
         }
