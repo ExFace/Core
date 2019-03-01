@@ -985,6 +985,10 @@ abstract class AbstractAction implements ActionInterface
     }
     
     /**
+     * Only allow input data with this object.
+     * 
+     * @uxon-property input_object_alias
+     * @uxon-type metamodel:object
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Actions\ActionInterface::setInputObjectAlias()
