@@ -61,6 +61,18 @@ class ShowObjectInfoDialog extends ShowDialog
         // Disable prefilling the widget from contexts as we only whant to fill in data that actually comes from the data source
         $this->setPrefillWithFilterContext(false);
     }
+    
+    /**
+     * 
+     * @return bool
+     */
+    protected function isObjectWritable() : bool
+    {
+        if ($this->getMetaObject()->hasDataSource()) {
+            return $this->getMetaObject()->isWritable();
+        } 
+        return true;
+    }
 
     /**
      * Create editors for all editable attributes of the object
@@ -73,18 +85,7 @@ class ShowObjectInfoDialog extends ShowDialog
         $editors = [];
         $cnt = 0;
         
-        if ($object->hasDataSource()) {
-            $objectWritable = $object->isWritable();
-        } else {
-            $objectWritable = true;
-        }
-        
-        if ($objectWritable === false){
-            $editors[] = WidgetFactory::createFromUxon($parent_widget->getPage(), 'Message', $parent_widget)
-            ->setType(MessageTypeDataType::WARNING)
-            ->setWidth('100%')
-            ->setText($this->getApp()->getTranslator()->translate('ACTION.SHOWOBJECTEDITDIALOG.DATA_SOURCE_NOT_WRITABLE'));
-        }
+        $objectWritable = $this->isObjectWritable();
         
         /* @var $attr \exface\Core\Interfaces\Model\MetaAttributeInterface */
         foreach ($object->getAttributes() as $attr) {

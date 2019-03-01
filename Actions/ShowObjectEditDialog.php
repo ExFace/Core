@@ -7,6 +7,8 @@ use exface\Core\Widgets\Button;
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Factories\WidgetFactory;
+use exface\Core\DataTypes\MessageTypeDataType;
 
 class ShowObjectEditDialog extends ShowObjectInfoDialog
 {
@@ -35,7 +37,15 @@ class ShowObjectEditDialog extends ShowObjectInfoDialog
      */
     protected function createEditors(AbstractWidget $parent_widget)
     {
-        return parent::createWidgetsForAttributes($parent_widget);
+        $editors = [];
+        if ($this->isObjectWritable() === false){
+            $editors[] = WidgetFactory::create($parent_widget->getPage(), 'Message', $parent_widget)
+            ->setType(MessageTypeDataType::WARNING)
+            ->setWidth('100%')
+            ->setText($this->getApp()->getTranslator()->translate('ACTION.SHOWOBJECTEDITDIALOG.DATA_SOURCE_NOT_WRITABLE'));
+        }
+        $editors = array_merge($editors, parent::createWidgetsForAttributes($parent_widget));
+        return $editors;
     }
 
     /**
