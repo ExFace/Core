@@ -7,6 +7,10 @@ use exface\Core\CommonLogic\Workbench;
 use exface\Core\CommonLogic\DataSheets\DataSheet;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Exceptions\InvalidArgumentException;
+use exface\Core\Interfaces\DataSheets\DataSheetSubsheetInterface;
+use exface\Core\CommonLogic\DataSheets\DataSheetSubsheet;
+use exface\Core\Interfaces\Model\MetaRelationInterface;
+use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 
 abstract class DataSheetFactory extends AbstractUxonFactory
 {
@@ -98,6 +102,19 @@ abstract class DataSheetFactory extends AbstractUxonFactory
         } else {
             throw new InvalidArgumentException('Cannot create data sheet from "' . get_class($data_sheet_or_uxon) . '"!');
         }
+    }
+    
+    /**
+     * 
+     * @param DataSheetInterface $parentSheet
+     * @param MetaObjectInterface $subsheetObject
+     * @param string $joinKeyAliasOfSubsheet
+     * @param string $joinKeyAliasOfParentSheet
+     * @return DataSheetSubsheetInterface
+     */
+    public static function createSubsheet(DataSheetInterface $parentSheet, MetaObjectInterface $subsheetObject, string $joinKeyAliasOfSubsheet, string $joinKeyAliasOfParentSheet) : DataSheetSubsheetInterface
+    {
+        return new DataSheetSubsheet($subsheetObject, $parentSheet, $joinKeyAliasOfSubsheet, $joinKeyAliasOfParentSheet);
     }
 }
 ?>
