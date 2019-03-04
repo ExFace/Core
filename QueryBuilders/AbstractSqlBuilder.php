@@ -1970,14 +1970,4 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         $this->reserved_words = $value;
         return $this;
     }
-    
-    protected function isAggregatedBy(string $sql) : bool
-    {
-        foreach ($this->getAggregations() as $qpart) {
-            if ($qpart->getDataAddress() === $sql) {
-                return true;
-            }
-        }
-        return false;
-    }
 }
