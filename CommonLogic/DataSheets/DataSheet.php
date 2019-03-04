@@ -428,11 +428,12 @@ class DataSheet implements DataSheetInterface
                     }
                     $lastRelPath = $relPath;
                 }
+                
                 // Create a subsheet for the relation if not yet existent and add the required attribute
                 if (! $subsheet = $this->getSubsheets()->get($relPathToSubsheet->toString())) {
                     $subsheet_object = $relPathToSubsheet->getEndObject();
                     $parentSheetKeyAlias = $relPathInParentSheet->getAttributeOfEndObject($relPathToSubsheet->getRelationLast()->getLeftKeyAttribute()->getAlias())->getAliasWithRelationPath();
-                    $subsheetKeyAlias = $relPathToSubsheet->getRelationLast()->getLeftKeyAttribute()->getAlias();
+                    $subsheetKeyAlias = $relPathToSubsheet->getRelationLast()->getRightKeyAttribute()->getAlias();
                     $subsheet = DataSheetFactory::createSubsheet($this, $subsheet_object, $subsheetKeyAlias, $parentSheetKeyAlias);
                     $this->getSubsheets()->add($subsheet, $relPathToSubsheet->toString());
                     if (false === $relPathToSubsheet->getRelationLast()->isReverseRelation()) {
@@ -444,6 +445,7 @@ class DataSheet implements DataSheetInterface
                         $this->getColumns()->addFromExpression($relPathToSubsheet->toString(), '', true);
                     }
                 }
+                
                 // Add the current attribute to the subsheet prefixing it with it's relation path relative to the subsheet's object
                 $subsheet_attribute_alias = $relPathInSubsheet->getAttributeOfEndObject($attribute->getAlias())->getAliasWithRelationPath();
                 if ($attribute_aggregator) {
@@ -455,15 +457,11 @@ class DataSheet implements DataSheetInterface
                     $needGroup = false;
                 }
                 $subsheet->getColumns()->addFromExpression($subsheet_attribute_alias);
+                
                 // Add the related object key alias of the relation to the subsheet to that subsheet. This will be the right key in the future JOIN.
-                if ($relPathToSubsheetRightKey = $relPathToSubsheet->getRelationLast()->getRightKeyAttribute()->getAlias()) {
-                    $keyAlias = $relPathInSubsheet->getAttributeOfEndObject($relPathToSubsheetRightKey)->getAliasWithRelationPath();
-                    $subsheet->getColumns()->addFromExpression($keyAlias);
-                    if ($needGroup === true) {
-                       $subsheet->getAggregations()->addFromString($keyAlias); 
-                    }
-                } else {
-                    throw new DataSheetUidColumnNotFoundError($this, 'Cannot find UID (primary key) for subsheet: no key alias can be determined for the relation "' . $relPathToSubsheet->toString() . '" from "' . $sheetObject->getAliasWithNamespace() . '" to "' . $relPathToSubsheet->getEndObject()->getAliasWithNamespace() . '"!');
+                $subsheet->getColumns()->addFromExpression($subsheet->getJoinKeyAliasOfSubsheet());
+                if ($needGroup === true) {
+                    $subsheet->getAggregations()->addFromString($subsheet->getJoinKeyAliasOfSubsheet()); 
                 }
             } else {
                 throw new DataSheetReadError($this, 'QueryBuilder "' . get_class($query) . '" cannot read attribute "' . $attribute->getAliasWithRelationPath() . '" of object "' . $attribute->getObject()->getAliasWithNamespace() .'"!');
