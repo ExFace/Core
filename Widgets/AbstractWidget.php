@@ -265,7 +265,7 @@ abstract class AbstractWidget implements WidgetInterface
     public function prepareDataSheetToRead(DataSheetInterface $data_sheet = null)
     {
         if (is_null($data_sheet)) {
-            $data_sheet = $this->createDataSheet();
+            $data_sheet = DataSheetFactory::createFromObject($this->getMetaObject());
         }
         return $data_sheet;
     }
@@ -279,7 +279,7 @@ abstract class AbstractWidget implements WidgetInterface
     public function prepareDataSheetToPrefill(DataSheetInterface $data_sheet = null) : DataSheetInterface
     {
         if (is_null($data_sheet)) {
-            $data_sheet = $this->createDataSheet();
+            $data_sheet = DataSheetFactory::createFromObject($this->getMetaObject());
         }
         return $data_sheet;
     }
@@ -302,11 +302,6 @@ abstract class AbstractWidget implements WidgetInterface
     public function isPrefilled() : bool
     {
         return $this->prefill_data !== null;
-    }
-
-    protected function createDataSheet()
-    {
-        return DataSheetFactory::createFromObject($this->getMetaObject());
     }
 
     /**
