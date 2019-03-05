@@ -964,7 +964,7 @@ else {
     public function getHint()
     {
         if (! $this->hint && ($this instanceof iShowSingleAttribute) && $this->isBoundToAttribute() && $this->getAttribute()) {
-            $this->setHint($this->getAttribute()->getHint());
+            $this->setHint($this->getAttribute()->getHint() . ' [' . $this->getAttribute()->getAlias() . ']');
         }
         return $this->hint;
     }
