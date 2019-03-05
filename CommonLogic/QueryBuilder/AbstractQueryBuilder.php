@@ -629,4 +629,22 @@ abstract class AbstractQueryBuilder implements QueryBuilderInterface
     {
         return $this->canReadAttribute($this->getMainObject()->getAttribute($modelAliasExpression));
     }
+    
+    /**
+     * 
+     * @param QueryPartAttribute $qpart
+     * @return bool
+     */
+    protected function isAggregatedBy(QueryPartAttribute $qpart) : bool
+    {
+        foreach ($this->getAggregations() as $qpartAggr) {
+            if ($qpartAggr->getAlias() === $qpart->getAlias()) {
+                return true;
+            }
+            if ($qpartAggr->getDataAddress() === $qpart->getDataAddress()) {
+                return true;
+            }
+        }
+        return false;
+    }
 }

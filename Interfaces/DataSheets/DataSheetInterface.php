@@ -41,7 +41,7 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
     public function addRow(array $row, bool $merge_uid_dublicates = false, bool $auto_add_columns = true) : DataSheetInterface;
 
     /**
-     * Makes this data sheet LEFT JOIN the other data sheet ON $this.$left_key_column = $data_sheet.right_key_column
+     * Makes this data sheet LEFT OUTER JOIN the other data sheet ON $this.$left_key_column = $data_sheet.$right_key_column
      * All joined columns are prefixed with the $column_prefix.
      *
      * IDEA improve performance by checking, which data sheet has less rows and iterating through that one instead of alwasy the left one.
