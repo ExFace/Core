@@ -434,16 +434,13 @@ class DataSheet implements DataSheetInterface
                     $subsheet_object = $relPathToSubsheet->getEndObject();
                     $parentSheetKeyAlias = $relPathInParentSheet->getAttributeOfEndObject($relPathToSubsheet->getRelationLast()->getLeftKeyAttribute()->getAlias())->getAliasWithRelationPath();
                     $subsheetKeyAlias = $relPathToSubsheet->getRelationLast()->getRightKeyAttribute()->getAlias();
-                    $subsheet = DataSheetFactory::createSubsheet($this, $subsheet_object, $subsheetKeyAlias, $parentSheetKeyAlias);
+                    $subsheet = DataSheetFactory::createSubsheet($this, $subsheet_object, $subsheetKeyAlias, $parentSheetKeyAlias, $relPathToSubsheet);
                     $this->getSubsheets()->add($subsheet, $relPathToSubsheet->toString());
-                    if (false === $relPathToSubsheet->getRelationLast()->isReverseRelation()) {
-                        // add the foreign key to the main query and to this sheet
-                        $query->addAttribute($relPathToSubsheet->toString());
-                        // IDEA do we need to add the column to the sheet? This is just useless data...
-                        // Additionally it would make trouble when the column has formatters...
-                        
-                        $this->getColumns()->addFromExpression($relPathToSubsheet->toString(), '', true);
-                    }
+                    // add the foreign key to the main query and to this sheet
+                    $query->addAttribute($parentSheetKeyAlias);
+                    // IDEA do we need to add the column to the sheet? This is just useless data...
+                    // Additionally it would make trouble when the column has formatters...
+                    $this->getColumns()->addFromExpression($parentSheetKeyAlias, null, true);
                 }
                 
                 // Add the current attribute to the subsheet prefixing it with it's relation path relative to the subsheet's object
@@ -538,23 +535,16 @@ class DataSheet implements DataSheetInterface
         $this->dataSourceHasMoreRows = $result->hasMoreRows();
         
         // load data for subsheets if needed
-        if ($this->countRows()) {
-            foreach ($this->getSubsheets() as $rel_path => $subsheet) {
-                $rel = $thisObject->getRelation($rel_path);
-                if (! $rel->isReverseRelation()) {
-                    $foreign_keys = $this->getColumnValues($rel_path);
-                    $subsheet->addFilterFromString($rel->getRightKeyAttribute()->getAlias(), implode($rel->getRightKeyAttribute()->getValueListDelimiter(), array_unique($foreign_keys)), EXF_COMPARATOR_IN);
-                    $left_key_column = $this->getColumns()->getByAttribute($thisObject->getAttribute($rel_path))->getName();
-                    $right_key_column = $subsheet->getColumns()->getByAttribute($rel->getRightKeyAttribute())->getName();
-                } else {
-                    $foreign_keys = $this->getColumnValues($rel->getLeftKeyAttribute()->getAlias(), false);
-                    $subsheet->addFilterFromString($rel->getRightKeyAttribute()->getAlias(), implode($rel->getRightKeyAttribute()->getValueListDelimiter(), array_unique($foreign_keys)), EXF_COMPARATOR_IN);
-                    $left_key_column = $this->getColumns()->getByAttribute($rel->getLeftKeyAttribute())->getName();
-                    $right_key_column = $subsheet->getColumns()->getByAttribute($rel->getRightKeyAttribute())->getName();
-                }
+        if ($this->isEmpty() === false) {
+            foreach ($this->getSubsheets() as $subsheet) {
+                // Add filter over parent keys
+                $parentSheetKeyCol = $subsheet->getJoinKeyColumnOfParentSheet();
+                $foreign_keys = $parentSheetKeyCol->getValues(false);
+                $subsheet->addFilterFromString($subsheet->getJoinKeyAliasOfSubsheet(), implode($parentSheetKeyCol->getAttribute()->getValueListDelimiter(), array_unique($foreign_keys)), EXF_COMPARATOR_IN);
+                // Read data
                 $subsheet->dataRead();
-                // add the columns from the sub-sheets, but prefix their names with the relation alias, because they came from this relation!
-                $this->joinLeft($subsheet, $left_key_column, $right_key_column, $rel_path);
+                // Do the JOIN
+                $this->joinLeft($subsheet, $parentSheetKeyCol->getName(), $subsheet->getJoinKeyColumnOfSubsheet()->getName(), ($subsheet->hasRelationToParent() ? $subsheet->getRelationPathFromParentSheet()->toString() : ''));
             }
         }
         
