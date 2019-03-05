@@ -216,13 +216,19 @@ trait JqueryButtonTrait {
         $prefill_param = '';
         $filters_param = '';
         if (! $widget->getPage()->is($action->getPageAlias())) {
+            $output = <<<JS
+
+            {$this->buildJsRequestDataCollector($action, $input_element)}	
+
+JS;
             if ($action->getPrefillWithPrefillData()){
                 $output = <<<JS
-    				{$this->buildJsRequestDataCollector($action, $input_element)}
-    				var prefillRows = [];
-    				if (requestData.rows && requestData.rows.length > 0 && requestData.rows[0]["{$widget->getMetaObject()->getUidAttributeAlias()}"]){
-    					prefillRows.push({{$widget->getMetaObject()->getUidAttributeAlias()}: requestData.rows[0]["{$widget->getMetaObject()->getUidAttributeAlias()}"]});
-    				}
+
+			var prefillRows = [];
+			if (requestData.rows && requestData.rows.length > 0 && requestData.rows[0]["{$widget->getMetaObject()->getUidAttributeAlias()}"]){
+				prefillRows.push({{$widget->getMetaObject()->getUidAttributeAlias()}: requestData.rows[0]["{$widget->getMetaObject()->getUidAttributeAlias()}"]});
+			}
+
 JS;
                 $prefill_param = '&prefill={"meta_object_id":"'.$widget->getMetaObject()->getId().'","rows": \' + JSON.stringify(prefillRows) + \'}';
             } 
