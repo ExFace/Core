@@ -87,9 +87,13 @@
                 "action_alias": "exface.Core.DeleteObject"
             },
             {
-                "action_alias": "exface.Core.GoToPage",
-                "action_page_alias": "exface.core.objects",
-                "caption": "=TRANSLATE('exface.Core', 'GLOBAL.MODEL.OBJECTS')"
+                "caption": "=TRANSLATE('exface.Core', 'GLOBAL.MODEL.OBJECTS')",
+                "action": {
+                    "alias": "exface.Core.GoToPage",
+                    "page_alias": "exface.core.objects",
+                    "input_rows_min": 1,
+                    "input_rows_max": 1
+                }
             },
             {
                 "action_alias": "axenox.PackageManager.ExportAppModel"
