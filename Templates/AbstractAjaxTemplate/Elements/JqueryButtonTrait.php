@@ -222,7 +222,7 @@ trait JqueryButtonTrait {
 
 JS;
             if ($action->getPrefillWithPrefillData()){
-                $output = <<<JS
+                $output .= <<<JS
 
 			var prefillRows = [];
 			if (requestData.rows && requestData.rows.length > 0 && requestData.rows[0]["{$widget->getMetaObject()->getUidAttributeAlias()}"]){
