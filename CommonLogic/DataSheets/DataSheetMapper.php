@@ -229,7 +229,7 @@ class DataSheetMapper implements DataSheetMapperInterface {
     /**
      * Creates filters from the values of a column
      * 
-     * @uxon-property column_to_column_mappings
+     * @uxon-property column_to_filter_mappings
      * @uxon-type \exface\Core\CommonLogic\DataSheets\DataColumnToFilterMapping[]
      * @uxon-template [{"from": "", "to": "", "comparator": "["}]
      * 
