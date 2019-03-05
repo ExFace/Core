@@ -110,11 +110,11 @@ abstract class DataSheetFactory extends AbstractUxonFactory
      * @param MetaObjectInterface $subsheetObject
      * @param string $joinKeyAliasOfSubsheet
      * @param string $joinKeyAliasOfParentSheet
+     * @param MetaRelationPathInterface $relationPathFromParentSheet
      * @return DataSheetSubsheetInterface
      */
-    public static function createSubsheet(DataSheetInterface $parentSheet, MetaObjectInterface $subsheetObject, string $joinKeyAliasOfSubsheet, string $joinKeyAliasOfParentSheet) : DataSheetSubsheetInterface
+    public static function createSubsheet(DataSheetInterface $parentSheet, MetaObjectInterface $subsheetObject, string $joinKeyAliasOfSubsheet, string $joinKeyAliasOfParentSheet, MetaRelationPathInterface $relationPathFromParentSheet = null) : DataSheetSubsheetInterface
     {
-        return new DataSheetSubsheet($subsheetObject, $parentSheet, $joinKeyAliasOfSubsheet, $joinKeyAliasOfParentSheet);
+        return new DataSheetSubsheet($subsheetObject, $parentSheet, $joinKeyAliasOfSubsheet, $joinKeyAliasOfParentSheet, $relationPathFromParentSheet);
     }
 }
-?>
